@@ -14,6 +14,7 @@
 
 #ifdef MOZ_WIDGET_GTK
 #  include <gtk/gtk.h>
+#  include <gdk/gdkx.h>
 #endif
 
 #include "nsIFile.h"
@@ -221,7 +222,7 @@ void PluginModuleChild::SetFlashRoamingPath(const std::wstring& aRoamingPath) {
 bool PluginModuleChild::InitForChrome(const std::string& aPluginFilename,
                                       base::ProcessId aParentPid,
                                       MessageLoop* aIOLoop,
-                                      IPC::Channel* aChannel) {
+                                      UniquePtr<IPC::Channel> aChannel) {
   NS_ASSERTION(aChannel, "need a channel");
 
 #if defined(OS_WIN) && defined(MOZ_SANDBOX)
@@ -277,7 +278,7 @@ bool PluginModuleChild::InitForChrome(const std::string& aPluginFilename,
 
   CommonInit();
 
-  if (!Open(aChannel, aParentPid, aIOLoop)) {
+  if (!Open(std::move(aChannel), aParentPid, aIOLoop)) {
     return false;
   }
 
@@ -659,7 +660,7 @@ mozilla::ipc::IPCResult PluginModuleChild::RecvNPP_ClearSiteData(
 mozilla::ipc::IPCResult PluginModuleChild::RecvNPP_GetSitesWithData(
     const uint64_t& aCallbackId) {
   char** result = mFunctions.getsiteswithdata();
-  InfallibleTArray<nsCString> array;
+  nsTArray<nsCString> array;
   if (!result) {
     SendReturnSitesWithData(array, aCallbackId);
     return IPC_OK();
@@ -714,8 +715,8 @@ mozilla::ipc::IPCResult PluginModuleChild::RecvInitPluginFunctionBroker(
 }
 
 mozilla::ipc::IPCResult PluginModuleChild::AnswerInitCrashReporter(
-    Shmem&& aShmem, mozilla::dom::NativeThreadId* aOutId) {
-  CrashReporterClient::InitSingletonWithShmem(aShmem);
+    mozilla::dom::NativeThreadId* aOutId) {
+  CrashReporterClient::InitSingleton();
   *aOutId = CrashReporter::CurrentThreadId();
 
   return IPC_OK();
@@ -1356,7 +1357,7 @@ void _poppopupsenabledstate(NPP aNPP) {
 NPError _getvalueforurl(NPP npp, NPNURLVariable variable, const char* url,
                         char** value, uint32_t* len) {
   PLUGIN_LOG_DEBUG_FUNCTION;
-  #if 0
+  #if 0  
   AssertPluginThread();
   #endif
 
@@ -1559,6 +1560,12 @@ NPError PluginModuleChild::DoNP_Initialize(const PluginSettings& aSettings) {
 #endif
 
 #ifdef MOZ_X11
+#  ifdef MOZ_WIDGET_GTK
+  if (!GDK_IS_X11_DISPLAY(gdk_display_get_default())) {
+    // We don't support NPAPI plugins on Wayland.
+    return NPERR_GENERIC_ERROR;
+  }
+#  endif
   // Send the parent our X socket to act as a proxy reference for our X
   // resources.
   int xSocketFd = ConnectionNumber(DefaultXDisplay());
@@ -1578,8 +1585,8 @@ NPError PluginModuleChild::DoNP_Initialize(const PluginSettings& aSettings) {
 }
 
 PPluginInstanceChild* PluginModuleChild::AllocPPluginInstanceChild(
-    const nsCString& aMimeType, const InfallibleTArray<nsCString>& aNames,
-    const InfallibleTArray<nsCString>& aValues) {
+    const nsCString& aMimeType, const nsTArray<nsCString>& aNames,
+    const nsTArray<nsCString>& aValues) {
   PLUGIN_LOG_DEBUG_METHOD;
   AssertPluginThread();
 
@@ -1619,8 +1626,7 @@ mozilla::ipc::IPCResult PluginModuleChild::AnswerModuleSupportsAsyncRender(
 
 mozilla::ipc::IPCResult PluginModuleChild::RecvPPluginInstanceConstructor(
     PPluginInstanceChild* aActor, const nsCString& aMimeType,
-    InfallibleTArray<nsCString>&& aNames,
-    InfallibleTArray<nsCString>&& aValues) {
+    nsTArray<nsCString>&& aNames, nsTArray<nsCString>&& aValues) {
   PLUGIN_LOG_DEBUG_METHOD;
   AssertPluginThread();
 

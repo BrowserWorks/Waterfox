@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label "Kurier Poczty">
+<!ENTITY enbPluginCheckMailNews.accesskey "K">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label "Kurier Poczty">
+<!ENTITY mail.accesskey "K">
+<!ENTITY addressbook.label "Książka adresowa">
+<!ENTITY addressbook.accesskey "a">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label "Wiadomości">
+<!ENTITY notifications.label "Powiadomienia">
+<!ENTITY address.label "Adresowanie">
+<!ENTITY composingMessages.label "Tworzenie">
+<!ENTITY format.label "Formatowanie">
+<!ENTITY return.label "Potwierdzenia">
+<!ENTITY junk.label "Niechciane i podejrzane wiadomości">
+<!ENTITY tags.label "Etykiety">
+<!ENTITY characterEncoding2.label "Kodowanie tekstu">
+<!ENTITY networkStorage.label "Sieć i miejsce na dysku">

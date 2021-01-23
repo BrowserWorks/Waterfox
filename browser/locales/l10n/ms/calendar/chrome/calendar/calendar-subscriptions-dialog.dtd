@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "Langgan Kalendar">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Papar kalendar yang mengandungi:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Cari">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Pilih kalendar untuk dilanggan:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Langgan">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Batal langganan">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Cari…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Tiada padanan ditemui.">

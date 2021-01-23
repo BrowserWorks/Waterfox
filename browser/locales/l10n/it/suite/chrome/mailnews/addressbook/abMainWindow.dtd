@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Rubrica">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!ENTITY blankResultsPaneMessage.label                  "Questa rubrica mostra i contatti solo dopo una ricerca">
+<!ENTITY localResultsOnlyMessage.label                  "I contatti di rubriche remote non vengono visualizzati fino a quando non si effettua una ricerca">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Contatto…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Lista di distribuzione…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Rubrica…">
+<!ENTITY newAddressBookCmd.accesskey                    "R">
+<!ENTITY newLDAPDirectoryCmd.label                      "Directory LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Stampa contatto…">
+<!ENTITY printContactViewCmd.accesskey                  "p">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Anteprima di stampa contatto">
+<!ENTITY printPreviewContactViewCmd.accesskey           "A">
+<!ENTITY printAddressBook.label                         "Stampa rubrica…">
+<!ENTITY printAddressBook.accesskey                     "r">
+<!ENTITY printPreviewAddressBook.label                  "Anteprima di stampa rubrica">
+<!ENTITY printPreviewAddressBook.accesskey              "u">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Elimina rubrica">
+<!ENTITY deleteContactCmd.label                         "Elimina il contatto">
+<!ENTITY deleteContactsCmd.label                        "Elimina contatti selezionati">
+<!ENTITY deleteListCmd.label                            "Elimina lista">
+<!ENTITY deleteListsCmd.label                           "Elimina elementi selezionati">
+<!ENTITY deleteItemsCmd.label                           "Elimina elementi selezionati">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Scambia Nome/Cognome">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "m">
+<!ENTITY propertiesCmd.label                            "Proprietà…">
+<!ENTITY propertiesCmd.accesskey                        "o">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Barra della rubrica">
+<!ENTITY showAbToolbarCmd.accesskey                     "R">
+<!ENTITY layoutMenu.label                               "Struttura">
+<!ENTITY layoutMenu.accesskey                           "S">
+<!ENTITY showDirectoryPane.label                        "Pannello Rubrica">
+<!ENTITY showDirectoryPane.accesskey                    "R">
+<!ENTITY showContactPane2.label                         "Pannello Contatti">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "Visualizza nome come">
+<!ENTITY menu_ShowNameAs.accesskey                      "V">
+<!ENTITY firstLastCmd.label                             "Nome Cognome">
+<!ENTITY firstLastCmd.accesskey                         "N">
+<!ENTITY lastFirstCmd.label                             "Cognome, Nome">
+<!ENTITY lastFirstCmd.accesskey                         "C">
+<!ENTITY displayNameCmd.label                           "Nome visualizzato">
+<!ENTITY displayNameCmd.accesskey                       "v">
+
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importa…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Esporta…">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Nuovo contatto">
+<!ENTITY newContactButton.accesskey                     "c">
+<!ENTITY newlistButton.label                            "Nuova lista">
+<!ENTITY newlistButton.accesskey                        "N">
+<!ENTITY editItemButton.label                           "Proprietà">
+<!ENTITY editItemButton.accesskey                       "P">
+<!ENTITY newmsgButton.label                             "Scrivi">
+<!ENTITY newmsgButton.accesskey                         "C">
+<!ENTITY deleteItemButton.label                         "Elimina">
+<!ENTITY deleteItemButton.accesskey                     "E">
+<!ENTITY newimButton.label                              "Messaggio istantaneo">
+<!ENTITY newimButton.accesskey                          "M">
+<!ENTITY printButton.label                              "Stampa">
+<!ENTITY printButton.accesskey                          "m">
+<!ENTITY searchNameAndEmail.placeholder                 "Cerca per nome ed email">
+<!ENTITY searchBox.title                                "Cerca">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Barra della Rubrica">
+<!ENTITY newContactButton.tooltip                       "Crea un nuovo contatto in rubrica">
+<!ENTITY newlistButton.tooltip                          "Crea una nuova lista">
+<!ENTITY editItemButton.tooltip                         "Modifica elemento selezionato">
+<!ENTITY newmsgButton.tooltip                           "Crea un nuovo messaggio">
+<!ENTITY newIM.tooltip                                  "Spedisce un messaggio o avvia la chat">
+<!ENTITY printButton.tooltip                            "Stampa l'elemento selezionato">
+<!ENTITY deleteItemButton.tooltip                       "Rimuovi elemento selezionato">
+<!ENTITY throbber.tooltip                               "Vai alla pagina iniziale di &vendorShortName;">
+<!ENTITY throbber.tooltip2                              "Vai alla pagina iniziale di &brandShortName;">
+<!ENTITY advancedButton.tooltip                         "Apre la finestra di dialogo per la ricerca indirizzi">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Rubriche">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Contatto">
+<!ENTITY home.heading                                   "Pagina iniziale">
+<!ENTITY other.heading                                  "Altro">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Telefono">
+<!ENTITY work.heading                                   "Lavoro">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Descrizione">
+<!ENTITY addresses.heading                              "Indirizzi">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Ottieni mappa">
+<!ENTITY mapIt.tooltip                                  "Mostra mappa di questo indirizzo via web">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

@@ -1,0 +1,181 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messengerWindow.title "E-post og nyheitsgrupper">
+<!ENTITY titleModifier.label "&brandShortName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- tabmail -->
+<!ENTITY tabmailClose.label "Lat att fane">
+<!ENTITY tabmailClose.tooltip "Lat att fane">
+<!ENTITY tabmailNewButton.tooltip "Dupliser denne fana">
+<!ENTITY tabmailCloseButton.tooltip "Lat att denne fana">
+
+<!-- menu items: the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY newMessage.label "Ny melding">
+<!ENTITY newMessage.accesskey "m">
+<!ENTITY newFolderCmd.label "Mappe…">
+<!ENTITY newFolderCmd.accesskey "p">
+<!ENTITY newVirtualFolderCmd.label "Lagra søk…">
+<!ENTITY newVirtualFolderCmd.accesskey "L">
+<!ENTITY newTabCmd.label "Dupliser fane">
+<!ENTITY newTabCmd.accesskey "D">
+<!ENTITY newTabCmd.key "t">
+<!ENTITY closeTabCmd.label "Lat att fane">
+<!ENTITY closeTabCmd.accesskey "L">
+<!ENTITY newAccountCmd.label "Konto…">
+<!ENTITY newAccountCmd.accesskey "K">
+<!ENTITY openMessageFileCmd.label "Opne fil…">
+<!ENTITY openMessageFileCmd.accesskey "O">
+<!ENTITY openAttachmentCmd.label "Vedlegg">
+<!ENTITY openAttachmentCmd.accesskey "d">
+<!ENTITY saveAsMenu.label "Lagre som">
+<!ENTITY saveAsMenu.accesskey "s">
+<!ENTITY saveAsFileCmd.label "Fil">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Mal">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY getNewMsgCmd.label "Hent nye meldingar">
+<!ENTITY getNewMsgCmd.accesskey "m">
+<!ENTITY getNewMsgCmd2.key "d">
+<!ENTITY getNewMsgForCmd.label "Hent nye meldingar for">
+<!ENTITY getNewMsgForCmd.accesskey "f">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Alle kontoar">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "A">
+<!ENTITY getNextNMsgCmd.label "Hent neste 500 meldingar i nyheitsgruppa">
+<!ENTITY getNextNMsgCmd.accesskey "N">
+<!ENTITY subscribeCmd.label "Abonner…">
+<!ENTITY subscribeCmd.accesskey "A">
+
+<!-- Edit Menu -->
+<!ENTITY unsubscribeNewsgroupCmd.label "Avslutt abonnementet">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "n">
+<!ENTITY undoDefaultCmd.label "Angre">
+<!ENTITY redoDefaultCmd.label "Gjer om">
+
+<!-- View Menu -->
+<!ENTITY showSearchToolbarCmd.label "Søkjelinje">
+<!ENTITY showSearchToolbarCmd.accesskey "S">
+
+<!ENTITY messagePaneClassic.label "Klassisk vising">
+<!ENTITY messagePaneClassic.accesskey "K">
+
+<!-- sortMenu is also used by addressbook -->
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (quickFilterBar.show.key2):
+     This is the key used to show the Lightning quick filter bar. -->
+
+<!-- Go Menu -->
+
+<!ENTITY nextMenu.label "Neste">
+<!ENTITY nextMenu.accesskey "N">
+<!ENTITY nextMsgCmd.label "Melding">
+<!ENTITY nextMsgCmd.accesskey "M">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Ulest melding">
+<!ENTITY nextUnreadMsgCmd.accesskey "U">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextFlaggedMsgCmd.label "Flagga melding">
+<!ENTITY nextFlaggedMsgCmd.accesskey "F">
+<!ENTITY nextUnreadThread.label "Ulest tråd">
+<!ENTITY nextUnreadThread.accesskey "t">
+<!ENTITY nextUnreadThread.key "t">
+
+<!-- Message Menu -->
+<!ENTITY openFeedWebPageInWindow.label "Nettside i nytt vindauge">
+<!ENTITY openFeedSummaryInWindow.label "Oppsummering i nytt vindauge">
+
+<!-- Tools Menu -->
+<!ENTITY importCmd.label "Importer…">
+<!ENTITY importCmd.accesskey "I">
+
+<!-- Folder Pane -->
+<!ENTITY nameColumn.label "Namn">
+
+<!-- Toolbar items -->
+<!ENTITY nextButton.label "Neste">
+<!ENTITY goBackButton.label "Gå tilbake">
+<!ENTITY goForwardButton.label "Gå fram">
+<!ENTITY deleteButton.label "Slett">
+<!ENTITY undeleteButton.label "Angre sletting">
+<!ENTITY markButton.label "Merk">
+<!ENTITY stopButton.label "Stopp">
+<!ENTITY junkButton.label "Uønskt">
+<!ENTITY notJunkButton.label "Denne er ønskt">
+<!ENTITY searchButton.title "Avansert søk">
+
+<!-- Tooltips -->
+<!ENTITY menuBar.tooltip "Menylinje">
+<!ENTITY mailToolbar.tooltip "E-postverktøylinje">
+<!ENTITY searchToolbar.tooltip "Søkjelinje">
+<!ENTITY advancedButton.tooltip "Avansert meldingssøk">
+<!ENTITY getMsgButton.tooltip "Hent nye meldingar">
+<!ENTITY newMsgButton.tooltip "Skriv ei ny melding">
+<!ENTITY replyButton.tooltip "Svar til avsendar">
+<!ENTITY replyAllButton.tooltip "Svar til avsendar og alle mottakarar">
+<!ENTITY replyAllButtonNews.tooltip "Svar til avsendar og nyheitsgruppe">
+<!ENTITY forwardButton.tooltip "Vidaresend vald melding">
+<!ENTITY fileButton.tooltip "Arkiver vald melding">
+<!ENTITY nextButton.tooltip "Hopp til neste uleste melding">
+<!ENTITY goBackButton.tooltip "Gå tilbake ei melding">
+<!ENTITY goForwardButton.tooltip "Gå fram ei melding">
+<!ENTITY deleteButton.tooltip "Slett vald melding eller mappe">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "Vis eksternt innhald i denne meldinga">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "s">
+
+<!-- Statusbar -->
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextOpenNewWindow.label "Opne melding i nytt vindauge">
+<!ENTITY contextArchive.label "Arkiver">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextMoveMsgMenu.label "Flytt til">
+<!ENTITY contextMoveMsgMenu.accesskey "F">
+<!ENTITY contextCopyMsgMenu.label "Kopier til">
+<!ENTITY contextSaveAs.label "Lagre som…">
+<!ENTITY contextSaveAs.accesskey "L">
+<!ENTITY contextPrint.label "Skriv ut…">
+<!ENTITY contextPrint.accesskey "u">
+<!ENTITY contextPrintPreview.label "Førehandsvis side">
+<!ENTITY contextPrintPreview.accesskey "v">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextRemove.label "Slett">
+<!ENTITY folderContextRemove.accesskey "S">
+<!ENTITY folderContextCompact.label "Komprimer denne mappa">
+<!ENTITY folderContextCompact.accesskey "o">
+<!ENTITY folderContextEmptyTrash.label "Tøm søppelkassa">
+<!ENTITY folderContextEmptyTrash.accesskey "T">
+<!ENTITY folderContextEmptyJunk.label "Tøm søppelkassa">
+<!ENTITY folderContextEmptyJunk.accesskey "T">
+<!ENTITY folderContextSendUnsentMessages.label "Send usende meldingar">
+<!ENTITY folderContextSendUnsentMessages.accesskey "u">
+<!ENTITY folderContextUnsubscribe.label "Avslutt abonnementet">
+<!ENTITY folderContextUnsubscribe.accesskey "a">
+<!ENTITY folderContextSubscribe.label "Abonner…">
+<!ENTITY folderContextSubscribe.accesskey "a">
+<!ENTITY folderContextProperties.label "Eigenskapar…">
+<!ENTITY folderContextProperties.accesskey "a">
+<!ENTITY folderContextSettings.label "Innstillingar…">
+<!ENTITY folderContextSettings.accesskey "I">
+
+<!-- focusSearchInput.key also used by addressbook -->
+<!ENTITY focusSearchInput.key "k">
+<!ENTITY advancedButton.label "Avansert…">
+<!ENTITY advancedButton.accesskey "A">
+<!ENTITY searchButton.label "Søk i meldinger…">
+<!ENTITY searchButton.accesskey "S">
+
+<!ENTITY all.label "Alle">
+<!ENTITY all.accesskey "A">

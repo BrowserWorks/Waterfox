@@ -13,6 +13,12 @@ endif
 
 INSTALLER_FILES = \
 	app.tag \
+	nsis/content/installing.html \
+	nsis/content/installing.js \
+	nsis/content/profile_cleanup.html \
+	nsis/content/profile_cleanup.js \
+	nsis/content/stub_common.css \
+	nsis/content/stub_common.js \
 	nsis/installer.nsi \
 	nsis/uninstaller.nsi \
 	nsis/stub.nsi \
@@ -27,10 +33,11 @@ INSTALLER_FILES += \
 endif
 
 BRANDING_FILES = \
-	bgstub.jpg \
-	bgstub_2x.jpg \
 	branding.nsi \
 	firefox64.ico \
+	stubinstaller/bgstub.jpg \
+	stubinstaller/installing_page.css \
+	stubinstaller/profile_cleanup_page.css \
 	wizHeader.bmp \
 	wizHeaderRTL.bmp \
 	wizWatermark.bmp \
@@ -55,14 +62,14 @@ $(CONFIG_DIR)/setup.exe::
 	$(INSTALL) $(addprefix $(topsrcdir)/$(MOZ_BRANDING_DIRECTORY)/,$(BRANDING_FILES)) $(CONFIG_DIR)
 	$(call py_action,preprocessor,-Fsubstitution $(DEFINES) $(ACDEFINES) \
 	  $(srcdir)/nsis/defines.nsi.in -o $(CONFIG_DIR)/defines.nsi)
-	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	$(PYTHON3) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
 	  --preprocess-locale $(topsrcdir) \
 	  $(PPL_LOCALE_ARGS) $(AB_CD) $(CONFIG_DIR)
-	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	$(PYTHON3) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
 	  --preprocess-single-file $(topsrcdir) \
 	  $(PPL_LOCALE_ARGS) $(CONFIG_DIR) \
 	  nsisstrings.properties nsisstrings.nlf
-	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
+	$(PYTHON3) $(topsrcdir)/toolkit/mozapps/installer/windows/nsis/preprocess-locale.py \
 	  --convert-utf8-utf16le \
 	  $(srcdir)/nsis/extensionsLocale.nsh $(CONFIG_DIR)/extensionsLocale.nsh
 

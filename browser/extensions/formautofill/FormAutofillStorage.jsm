@@ -161,7 +161,7 @@ ChromeUtils.defineModuleGetter(
 ChromeUtils.defineModuleGetter(
   this,
   "OSKeyStore",
-  "resource://formautofill/OSKeyStore.jsm"
+  "resource://gre/modules/OSKeyStore.jsm"
 );
 ChromeUtils.defineModuleGetter(
   this,
@@ -1505,10 +1505,9 @@ class Addresses extends AutofillRecords {
     if (!("country-name" in address)) {
       if (address.country) {
         try {
-          address["country-name"] = Services.intl.getRegionDisplayNames(
-            undefined,
-            [address.country]
-          );
+          address[
+            "country-name"
+          ] = Services.intl.getRegionDisplayNames(undefined, [address.country]);
         } catch (e) {
           address["country-name"] = "";
         }

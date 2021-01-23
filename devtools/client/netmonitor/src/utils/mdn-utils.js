@@ -4,7 +4,9 @@
 
 "use strict";
 
-const { SUPPORTED_HTTP_CODES } = require("../constants");
+const {
+  SUPPORTED_HTTP_CODES,
+} = require("devtools/client/netmonitor/src/constants");
 
 /**
  * A mapping of header names to external documentation. Any header included
@@ -71,6 +73,11 @@ const SUPPORTED_HEADERS = [
   "Referer",
   "Referrer-Policy",
   "Retry-After",
+  "Save-Data",
+  "Sec-Fetch-Dest",
+  "Sec-Fetch-Mode",
+  "Sec-Fetch-Site",
+  "Sec-Fetch-User",
   "Server",
   "Server-Timing",
   "Set-Cookie",

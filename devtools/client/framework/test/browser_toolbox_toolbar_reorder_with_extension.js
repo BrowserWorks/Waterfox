@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -21,10 +19,17 @@ const TEST_STARTING_ORDER = [
   "netmonitor",
   "storage",
   "accessibility",
+  "application",
   EXTENSION,
 ];
 
 add_task(async function() {
+  // Temporarily disable the panel added in Bug 1594885.
+  // Should be cleaned up when the panel is properly implemented.
+  await pushPref("devtools.whatsnew.enabled", false);
+  // Enable the Application panel (atm it's only available on Nightly)
+  await pushPref("devtools.application.enabled", true);
+
   const extension = ExtensionTestUtils.loadExtension({
     useAddonManager: "temporary",
     manifest: {
@@ -93,6 +98,7 @@ add_task(async function() {
     "netmonitor",
     "storage",
     "accessibility",
+    "application",
   ];
   prepareToolTabReorderTest(toolbox, TEST_STARTING_ORDER);
   await dndToolTab(toolbox, dragTarget, dropTarget);
@@ -116,6 +122,7 @@ add_task(async function() {
     "memory",
     "netmonitor",
     "accessibility",
+    "application",
     EXTENSION,
   ];
   await dndToolTab(toolbox, dragTarget, dropTarget);
@@ -137,6 +144,7 @@ add_task(async function() {
     "netmonitor",
     "storage",
     "accessibility",
+    "application",
   ];
   await dndToolTab(toolbox, dragTarget, dropTarget);
   assertToolTabPreferenceOrder(expectedOrder);

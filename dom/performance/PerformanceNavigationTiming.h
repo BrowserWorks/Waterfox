@@ -8,7 +8,6 @@
 #define mozilla_dom_PerformanceNavigationTiming_h___
 
 #include "nsCOMPtr.h"
-#include "nsIChannel.h"
 #include "nsITimedChannel.h"
 #include "nsRFPService.h"
 #include "mozilla/dom/PerformanceResourceTiming.h"
@@ -37,12 +36,7 @@ class PerformanceNavigationTiming final : public PerformanceResourceTiming {
   }
 
   DOMHighResTimeStamp Duration() const override {
-    DOMHighResTimeStamp rawDuration = LoadEventEnd() - StartTime();
-    if (mPerformance->IsSystemPrincipal()) {
-      return rawDuration;
-    }
-    return nsRFPService::ReduceTimePrecisionAsMSecs(
-        rawDuration, mPerformance->GetRandomTimelineSeed());
+    return LoadEventEnd() - StartTime();
   }
 
   DOMHighResTimeStamp StartTime() const override { return 0; }
@@ -65,8 +59,14 @@ class PerformanceNavigationTiming final : public PerformanceResourceTiming {
   void UpdatePropertiesFromHttpChannel(nsIHttpChannel* aHttpChannel,
                                        nsITimedChannel* aChannel);
 
+  /*
+   * For use with the WebIDL Func attribute to determine whether
+   * window.PerformanceNavigationTiming is exposed.
+   */
+  static bool Enabled(JSContext* aCx, JSObject* aGlobal);
+
  private:
-  ~PerformanceNavigationTiming() {}
+  ~PerformanceNavigationTiming() = default;
 };
 
 }  // namespace dom

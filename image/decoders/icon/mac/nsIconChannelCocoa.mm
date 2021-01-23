@@ -6,20 +6,19 @@
 
 #include "nsContentUtils.h"
 #include "nsIconChannel.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/EndianUtils.h"
 #include "nsIIconURI.h"
-#include "nsIServiceManager.h"
+#include "nsIInputStream.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsString.h"
 #include "nsMimeTypes.h"
 #include "nsMemory.h"
-#include "nsIStringStream.h"
 #include "nsIURL.h"
 #include "nsNetCID.h"
 #include "nsIPipe.h"
 #include "nsIOutputStream.h"
-#include "nsIMIMEService.h"
 #include "nsCExternalHandlerService.h"
 #include "nsILocalFileMac.h"
 #include "nsIFileURL.h"
@@ -39,7 +38,7 @@ nsIconChannel::nsIconChannel() {}
 
 nsIconChannel::~nsIconChannel() {
   if (mLoadInfo) {
-    NS_ReleaseOnMainThreadSystemGroup("nsIconChannel::mLoadInfo", mLoadInfo.forget());
+    NS_ReleaseOnMainThread("nsIconChannel::mLoadInfo", mLoadInfo.forget());
   }
 }
 
@@ -67,7 +66,16 @@ NS_IMETHODIMP
 nsIconChannel::GetStatus(nsresult* status) { return mPump->GetStatus(status); }
 
 NS_IMETHODIMP
-nsIconChannel::Cancel(nsresult status) { return mPump->Cancel(status); }
+nsIconChannel::Cancel(nsresult status) {
+  mCanceled = true;
+  return mPump->Cancel(status);
+}
+
+NS_IMETHODIMP
+nsIconChannel::GetCanceled(bool* result) {
+  *result = mCanceled;
+  return NS_OK;
+}
 
 NS_IMETHODIMP
 nsIconChannel::Suspend(void) { return mPump->Suspend(); }
@@ -183,9 +191,10 @@ nsIconChannel::AsyncOpen(nsIStreamListener* aListener) {
   }
 
   MOZ_ASSERT(
-      !mLoadInfo || mLoadInfo->GetSecurityMode() == 0 || mLoadInfo->GetInitialSecurityCheckDone() ||
+      mLoadInfo->GetSecurityMode() == 0 || mLoadInfo->GetInitialSecurityCheckDone() ||
           (mLoadInfo->GetSecurityMode() == nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
-           nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
+           mLoadInfo->GetLoadingPrincipal() &&
+           mLoadInfo->GetLoadingPrincipal()->IsSystemPrincipal()),
       "security flags in loadInfo but doContentSecurityCheck() not called");
 
   nsCOMPtr<nsIInputStream> inStream;
@@ -287,11 +296,17 @@ nsresult nsIconChannel::MakeInputStream(nsIInputStream** _retval, bool aNonBlock
   //  - 1 byte for the image width, as u8
   //  - 1 byte for the image height, as u8
   //  - the raw image data as BGRA, width * height * 4 bytes.
-  size_t bufferCapacity = 2 + width * height * 4;
+  size_t bufferCapacity = 4 + width * height * 4;
   UniquePtr<uint8_t[]> fileBuf = MakeUnique<uint8_t[]>(bufferCapacity);
   fileBuf[0] = uint8_t(width);
   fileBuf[1] = uint8_t(height);
-  uint8_t* imageBuf = &fileBuf[2];
+  fileBuf[2] = uint8_t(mozilla::gfx::SurfaceFormat::B8G8R8A8);
+
+  // Clear all bits to ensure in nsIconDecoder we assume we are already color
+  // managed and premultiplied.
+  fileBuf[3] = 0;
+
+  uint8_t* imageBuf = &fileBuf[4];
 
   // Create a CGBitmapContext around imageBuf and draw iconImage to it.
   // This gives us the image data in the format we want: BGRA, four bytes per
@@ -306,7 +321,7 @@ nsresult nsIconChannel::MakeInputStream(nsIInputStream** _retval, bool aNonBlock
   [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:ctx
                                                                                   flipped:NO]];
 
-  [iconImage drawInRect:NSMakeRect(0, 0, width, height) fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
+  [iconImage drawInRect:NSMakeRect(0, 0, width, height)];
 
   [NSGraphicsContext setCurrentContext:oldContext];
 
@@ -343,6 +358,12 @@ NS_IMETHODIMP
 nsIconChannel::SetLoadFlags(uint32_t aLoadAttributes) {
   return mPump->SetLoadFlags(aLoadAttributes);
 }
+
+NS_IMETHODIMP
+nsIconChannel::GetTRRMode(nsIRequest::TRRMode* aTRRMode) { return GetTRRModeImpl(aTRRMode); }
+
+NS_IMETHODIMP
+nsIconChannel::SetTRRMode(nsIRequest::TRRMode aTRRMode) { return SetTRRModeImpl(aTRRMode); }
 
 NS_IMETHODIMP
 nsIconChannel::GetIsDocument(bool* aIsDocument) {

@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Reolennoù silañ">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Anv ar sil :">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Lastez">
+<!ENTITY notJunk.label "Prizius">
+
+<!ENTITY lowestPriorityCmd.label "Izelañ">
+<!ENTITY lowPriorityCmd.label "Izel">
+<!ENTITY normalPriorityCmd.label "Reizh">
+<!ENTITY highPriorityCmd.label "Uhel">
+<!ENTITY highestPriorityCmd.label "Uhelañ">
+
+<!ENTITY contextDesc.label "Arloañ ar sil pa vez:">
+<!ENTITY contextIncomingMail.label "Kerc'het kemennadennoù nevez :">
+<!ENTITY contextIncomingMail.accesskey "K">
+<!ENTITY contextManual.label "Lañset dre zorn">
+<!ENTITY contextManual.accesskey "r">
+<!ENTITY contextBeforeCls.label "Silañ a-raok dinoadur ar posteloù lastez">
+<!ENTITY contextAfterCls.label "Silañ goude dinoadur ar posteloù lastez">
+<!ENTITY contextOutgoing.label "Goude bezañ bet kaset">
+<!ENTITY contextOutgoing.accesskey "S">
+<!ENTITY contextArchive.label "Diellerezh">
+<!ENTITY contextArchive.accesskey "D">
+
+<!ENTITY filterActionDesc.label "Lañsañ ar gwezhioù da-heul :">
+<!ENTITY filterActionDesc.accesskey "o">
+
+<!ENTITY filterActionOrderWarning.label "Notenn : Loc'het e vo gwezhioù ar siloù dre un urzh disheñvel.">
+<!ENTITY filterActionOrder.label "Gwelout urzh loc'hañ ar gwezhioù">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "Dilec'hiañ ar gemennadenn etrezek">
+<!ENTITY copyMessage.label "Eilañ ar gemennadenn e">
+<!ENTITY forwardTo.label "Kas ar gemennadenn en-dro da">
+<!ENTITY replyWithTemplate.label "Respont gant ur patrom">
+<!ENTITY markMessageRead.label "Merkañ evel Lennet">
+<!ENTITY markMessageUnread.label "Merkañ evel Anlennet">
+<!ENTITY markMessageStarred.label "Ouzhpennañ ur steredenn">
+<!ENTITY setPriority.label "Lakaat tevet da">
+<!ENTITY addTag.label "Kemennadenn gant ur merk">
+<!ENTITY setJunkScore.label "Lakaat ar stad « Lastez » war">
+<!ENTITY deleteMessage.label "Dilemel ar gemennadenn">
+<!ENTITY deleteFromPOP.label "Lemel kuit diouzh an dafariad POP">
+<!ENTITY fetchFromPOP.label "Kerc'hat adalek an dafariad POP">
+<!ENTITY ignoreThread.label "Leuskel an neudennad a-gostez">
+<!ENTITY ignoreSubthread.label "Leuskel an isneudennad a-gostez">
+<!ENTITY watchThread.label "Sellout ouzh an neudennad">
+<!ENTITY stopExecution.label "Paouez erounezadur ar sil">
+
+<!ENTITY addAction.tooltip "Ouzhpennañ ur gwezh nevez">
+<!ENTITY removeAction.tooltip "Lemel ar gwezh-mañ">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

@@ -28,7 +28,7 @@ include root.mk
 
 # Main rules (export, compile, libs and tools) call recurse_* rules.
 # This wrapping is only really useful for build status.
-$(TIERS)::
+$(RUNNABLE_TIERS)::
 	$(if $(filter $@,$(MAKECMDGOALS)),$(call BUILDSTATUS,TIERS $@),)
 	$(call BUILDSTATUS,TIER_START $@)
 	+$(MAKE) recurse_$@
@@ -41,7 +41,7 @@ binaries::
 # Carefully avoid $(eval) type of rule generation, which makes pymake slower
 # than necessary.
 # Get current tier and corresponding subtiers from the data in root.mk.
-CURRENT_TIER := $(filter $(foreach tier,$(TIERS) $(non_default_tiers),recurse_$(tier) $(tier)-deps),$(MAKECMDGOALS))
+CURRENT_TIER := $(filter $(foreach tier,$(RUNNABLE_TIERS) $(non_default_tiers),recurse_$(tier) $(tier)-deps),$(MAKECMDGOALS))
 ifneq (,$(filter-out 0 1,$(words $(CURRENT_TIER))))
 $(error $(CURRENT_TIER) not supported on the same make command line)
 endif
@@ -129,7 +129,7 @@ else
 # Don't recurse if MAKELEVEL is NO_RECURSE_MAKELEVEL as defined above
 ifeq ($(NO_RECURSE_MAKELEVEL),$(MAKELEVEL))
 
-$(TIERS)::
+$(RUNNABLE_TIERS)::
 
 else
 #########################
@@ -144,7 +144,7 @@ $(1):: $$(SUBMAKEFILES)
 
 endef
 
-$(foreach subtier,$(filter-out compile,$(TIERS)),$(eval $(call CREATE_SUBTIER_TRAVERSAL_RULE,$(subtier))))
+$(foreach subtier,$(filter-out compile,$(RUNNABLE_TIERS)),$(eval $(call CREATE_SUBTIER_TRAVERSAL_RULE,$(subtier))))
 
 ifndef TOPLEVEL_BUILD
 ifdef COMPILE_ENVIRONMENT
@@ -171,31 +171,77 @@ accessible/xpcom/export: xpcom/xpidl/export
 widget/android/bindings/export: mobile/android/base/export
 
 # The widget JNI wrapper generator code needs to build the GeckoView
-# and Fennec source code in order to find JNI wrapper annotations.
-widget/android/fennec/export: mobile/android/base/export
+# source code in order to find JNI wrapper annotations.
 widget/android/export: mobile/android/base/export
-
-# .xpt generation needs the xpidl lex/yacc files
-xpcom/xpidl/export: xpcom/idl-parser/xpidl/export
 
 # CSS2Properties.webidl needs ServoCSSPropList.py from layout/style
 dom/bindings/export: layout/style/export
 
+# Various telemetry histogram files need ServoCSSPropList.py from layout/style
+toolkit/components/telemetry/export: layout/style/export
+
+# The update agent needs to link to the updatecommon library, but the build system does not
+# currently have a good way of expressing this dependency.
+toolkit/components/updateagent/target: toolkit/mozapps/update/common/target
+
 ifdef ENABLE_CLANG_PLUGIN
-$(filter-out config/host build/unix/stdc++compat/% build/clang-plugin/%,$(compile_targets)): build/clang-plugin/host build/clang-plugin/tests/target
-build/clang-plugin/tests/target: build/clang-plugin/host
+# Only target rules use the clang plugin.
+$(filter %/target %/target-objects,$(filter-out config/export config/host build/unix/stdc++compat/% build/clang-plugin/%,$(compile_targets))): build/clang-plugin/host build/clang-plugin/tests/target-objects
+build/clang-plugin/tests/target-objects: build/clang-plugin/host
+# clang-plugin tests require js-confdefs.h on js standalone builds and mozilla-config.h on
+# other builds, because they are -include'd.
+ifdef JS_STANDALONE
+# The js/src/export target only exists when CURRENT_TIER is export. If we're in a later tier,
+# we can assume js/src/export has happened anyways.
+ifeq ($(CURRENT_TIER),export)
+build/clang-plugin/tests/target-objects: js/src/export
+endif
+else
+build/clang-plugin/tests/target-objects: mozilla-config.h
+endif
 endif
 
 # Interdependencies that moz.build world don't know about yet for compilation.
 # Note some others are hardcoded or "guessed" in recursivemake.py and emitter.py
-ifeq ($(MOZ_WIDGET_TOOLKIT),gtk3)
+ifeq ($(MOZ_WIDGET_TOOLKIT),gtk)
 toolkit/library/target: widget/gtk/mozgtk/gtk3/target
 endif
-ifdef MOZ_LDAP_XPCOM
-ldap/target: security/target mozglue/build/target
-toolkit/library/target: ldap/target
+
+ifndef MOZ_FOLD_LIBS
+ifndef MOZ_SYSTEM_NSS
+netwerk/test/http3server/target: security/nss/lib/nss/nss_nss3/target security/nss/lib/ssl/ssl_ssl3/target
+endif
+ifndef MOZ_SYSTEM_NSPR
+netwerk/test/http3server/target: config/external/nspr/pr/target
+endif
+else
+ifndef MOZ_SYSTEM_NSS
+netwerk/test/http3server/target: security/target
 endif
 endif
+
 # Most things are built during compile (target/host), but some things happen during export
 # Those need to depend on config/export for system wrappers.
 $(addprefix build/unix/stdc++compat/,target host) build/clang-plugin/host: config/export
+
+# Rust targets, and export targets that run cbindgen need
+# $topobjdir/.cargo/config to be preprocessed first. Ideally, we'd only set it
+# as a dependency of the rust targets, but unfortunately, that pushes Make to
+# execute them much later than we'd like them to be when the file doesn't exist
+# prior to Make running. So we also set it as a dependency of pre-export, which
+# ensures it exists before recursing the rust targets and the export targets
+# that run cbindgen, tricking Make into keeping them early.
+$(rust_targets) gfx/webrender_bindings/export layout/style/export xpcom/base/export: $(DEPTH)/.cargo/config
+ifndef TEST_MOZBUILD
+pre-export:: $(DEPTH)/.cargo/config
+endif
+
+# When building gtest as part of the build (LINK_GTEST_DURING_COMPILE),
+# force the build system to get to it first, so that it can be linked
+# quickly without LTO, allowing the build system to go ahead with
+# plain gkrust and libxul while libxul-gtest is being linked and
+# dump-sym'ed.
+ifneq (,$(filter toolkit/library/gtest/rust/target,$(compile_targets)))
+toolkit/library/rust/target: toolkit/library/gtest/rust/target
+endif
+endif

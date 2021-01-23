@@ -2,11 +2,16 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * https://html.spec.whatwg.org/multipage/#dragevent
  */
 
-[Constructor(DOMString type, optional DragEventInit eventInitDict)]
+[Exposed=Window]
 interface DragEvent : MouseEvent
 {
+  constructor(DOMString type, optional DragEventInit eventInitDict = {});
+
   readonly attribute DataTransfer? dataTransfer;
 
   void initDragEvent(DOMString type,

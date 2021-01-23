@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "პირად მონაცემთა დასუფთავება">
+<!ENTITY sanitizeItems.label             "შემდეგი ელემენტების ახლავე ამოშლა:">
+
+<!ENTITY itemHistory.label               "ისტორია">
+<!ENTITY itemHistory.accesskey           "B">
+<!ENTITY itemUrlBar.label                "მისამართების პანელის ისტორია">
+<!ENTITY itemUrlBar.accesskey            "L">
+<!ENTITY itemDownloads.label             "ჩამოტვირთვების ისტორია">
+<!ENTITY itemDownloads.accesskey         "D">
+<!ENTITY itemFormSearchHistory.label     "შენახული ფორმა და ძიების ისტორია">
+<!ENTITY itemFormSearchHistory.accesskey "F">
+<!ENTITY itemCache.label                 "ბუფერი">
+<!ENTITY itemCache.accesskey             "a">
+<!ENTITY itemCookies.label               "ფუნთუშები">
+<!ENTITY itemCookies.accesskey           "ფ">
+<!ENTITY itemOfflineApps.label           "გარე ვებსაიტის მონაცემები">
+<!ENTITY itemOfflineApps.accesskey       "O">
+<!ENTITY itemPasswords.label             "შენახული პაროლები">
+<!ENTITY itemPasswords.accesskey         "P">
+<!ENTITY itemSessions.label              "ანგარიშზე შესვლის სეანსები">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "პირად მონაცემთა გასუფთავება ახლავე">

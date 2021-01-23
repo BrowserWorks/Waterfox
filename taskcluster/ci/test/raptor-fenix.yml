@@ -1,0 +1,183 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+job-defaults:
+    max-run-time: 1800
+    suite: raptor
+    workdir: /builds/worker
+    run-on-projects: []
+    tier: 1
+    target:
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.nightly.latest
+                name: build/arm64-v8a/geckoNightly/target.apk
+            default:
+                index: project.mobile.fenix.v2.nightly.latest
+                name: build/armeabi-v7a/geckoNightly/target.apk
+    e10s: true
+    virtualization: hardware
+    mozharness:
+        script: raptor_script.py
+        config:
+            - raptor/android_hw_config.py
+        extra-options:
+            - --app=fenix
+            - --binary-path=org.mozilla.fenix.nightly
+            - --activity=org.mozilla.fenix.IntentReceiverActivity
+
+raptor-scn-power-idle-fenix:
+    description: "Raptor idle-browser power-usage test on Fenix"
+    try-name: raptor-scn-power-idle-fenix
+    treeherder-symbol: Rap-fenix(idl-p)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle
+            - --power-test
+
+raptor-scn-cpu-memory-idle-fenix:
+    description: "Raptor idle-browser cpu/memory on Fenix"
+    try-name: raptor-scn-cpu-memory-idle-fenix
+    treeherder-symbol: Rap-fenix(idl-cm)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle
+            - --cpu-test
+            - --memory-test
+
+raptor-scn-cpu-memory-power-idle-fenix:
+    description: "Raptor idle-browser cpu/memory/power on Fenix"
+    try-name: raptor-scn-cpu-memory-power-idle-fenix
+    treeherder-symbol: Rap-fenix(idl-cmp)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle
+            - --cpu-test
+            - --memory-test
+            - --power-test
+
+raptor-scn-power-idle-bg-fenix:
+    description: "Raptor idle-browser (backgrounded) power-usage measurement on Fenix"
+    try-name: raptor-scn-power-idle-bg-fenix
+    treeherder-symbol: Rap-fenix(idlbg-p)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle-bg
+            - --power-test
+
+raptor-scn-cpu-memory-idle-bg-fenix:
+    description: "Raptor idle-browser (backgrounded) cpu/memory on Fenix"
+    try-name: raptor-scn-cpu-memory-idle-bg-fenix
+    treeherder-symbol: Rap-fenix(idlbg-cm)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle-bg
+            - --cpu-test
+            - --memory-test
+
+raptor-scn-cpu-memory-power-idle-bg-fenix:
+    description: "Raptor idle-browser (backgrounded) cpu/memory/power on Fenix"
+    try-name: raptor-scn-cpu-memory-power-idle-bg-fenix
+    treeherder-symbol: Rap-fenix(idlbg-cmp)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle-bg
+            - --cpu-test
+            - --memory-test
+            - --power-test
+
+raptor-youtube-playback-fenix:
+    description: "Raptor YouTube Playback on Fenix"
+    try-name: raptor-youtube-playback-fenix
+    treeherder-symbol: Rap-fenix(ytp)
+    run-on-projects: []
+    max-run-time: 3600
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback
+            # Bug 1558456 - Stop tracking youtube-playback-test on motoG5 for >1080p cases
+            # - --test-url-params is dynamically added from setup_raptor transform depending
+            # on platform and project
+
+raptor-youtube-playback-av1-sfr-fenix:
+    description: "Raptor YouTube Playback AV1 SFR on Fenix"
+    try-name: raptor-youtube-playback-av1-sfr-fenix
+    treeherder-symbol: Rap-fenix(ytp-av1-sfr)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-av1-sfr
+
+raptor-youtube-playback-h264-sfr-fenix:
+    description: "Raptor YouTube Playback H264 SFR on Fenix"
+    try-name: raptor-youtube-playback-h264-sfr-fenix
+    treeherder-symbol: Rap-fenix(ytp-h264-sfr)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-h264-sfr
+
+raptor-youtube-playback-vp9-sfr-fenix:
+    description: "Raptor YouTube Playback VP9 SFR on Fenix"
+    try-name: raptor-youtube-playback-vp9-sfr-fenix
+    treeherder-symbol: Rap-fenix(ytp-vp9-sfr)
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-vp9-sfr
+
+raptor-youtube-playback-widevine-hfr-fenix:
+    description: "Raptor YouTube Playback Widevine HFR on Fenix"
+    try-name: raptor-youtube-playback-widevine-hfr-fenix
+    treeherder-symbol: Rap-fenix(ytp-widevine-hfr)
+    max-run-time: 3000
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-widevine-hfr
+
+raptor-youtube-playback-widevine-h264-sfr-fenix:
+    description: "Raptor YouTube Playback Widevine H264 SFR on Fenix"
+    try-name: raptor-youtube-playback-widevine-h264-sfr
+    treeherder-symbol: Rap-fenix(ytp-widevine-h264-sfr)
+    max-run-time: 3000
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-widevine-h264-sfr
+
+raptor-youtube-playback-widevine-vp9-sfr-fenix:
+    description: "Raptor YouTube Playback Widevine VP9 SFR on Fenix"
+    try-name: raptor-youtube-playback-widevine-vp9-sfr
+    treeherder-symbol: Rap-fenix(ytp-widevine-vp9-sfr)
+    max-run-time: 3000
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-widevine-vp9-sfr
+
+raptor-speedometer-fenix:
+    description: "Raptor Speedometer on Fenix"
+    try-name: raptor-speedometer-fenix
+    treeherder-symbol: Rap-fenix(sp)
+    max-run-time: 2000
+    mozharness:
+        extra-options:
+            - --test=raptor-speedometer
+
+raptor-speedometer-fenix-power:
+    description: "Raptor Speedometer power on Fenix"
+    try-name: raptor-speedometer-fenix-power
+    treeherder-symbol: Rap-fenix(sp-p)
+    max-run-time: 2000
+    mozharness:
+        extra-options:
+            - --test=raptor-speedometer
+            - --power-test

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Priodweddau'r Ardal Testun">
+
+<!ENTITY Settings.label "Gosodiadau">
+
+<!ENTITY TextAreaName.label "Enw Maes:">
+<!ENTITY TextAreaName.accessKey "E">
+<!ENTITY TextAreaRows.label "Rhesi:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Colofnau:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "Darllen yn unig">
+<!ENTITY TextAreaReadOnly.accessKey "D">
+<!ENTITY TextAreaDisabled.label "Anablwyd">
+<!ENTITY TextAreaDisabled.accessKey "A">
+<!ENTITY TextAreaTabIndex.label "Mynegai Tab:">
+<!ENTITY TextAreaTabIndex.accessKey "M">
+<!ENTITY TextAreaAccessKey.label "Allwedd Mynediad:">
+<!ENTITY TextAreaAccessKey.accessKey "A">
+<!ENTITY InitialText.label "Testun Cychwynnol:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Modd Amlapio:">
+<!ENTITY TextAreaWrap.accessKey "M">
+<!ENTITY WrapDefault.value "Rhagosodiad">
+<!ENTITY WrapOff.value "Diffodd">
+<!ENTITY WrapHard.value "Caled">
+<!ENTITY WrapSoft.value "Meddal">
+<!ENTITY WrapPhysical.value "Corfforol">
+<!ENTITY WrapVirtual.value "Rhithiol">

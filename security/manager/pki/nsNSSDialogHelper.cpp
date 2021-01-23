@@ -8,8 +8,6 @@
 
 #include "mozilla/dom/ScriptSettings.h"
 #include "nsCOMPtr.h"
-#include "nsIDOMWindow.h"
-#include "nsIServiceManager.h"
 #include "nsIWindowWatcher.h"
 
 static const char kOpenDialogParam[] = "centerscreen,chrome,modal,titlebar";

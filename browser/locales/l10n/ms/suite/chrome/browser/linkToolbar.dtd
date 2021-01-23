@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Bar Navigasi Laman Web">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "Bar Navigasi Laman Web">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Sentiasa Papar">
+<!ENTITY linkToolbarAlways.accesskey "S">
+<!ENTITY linkToolbarAsNeeded.label "Papar Hanya Bila Diperlukan">
+<!ENTITY linkToolbarAsNeeded.accesskey "H">
+<!ENTITY linkToolbarNever.label "Sentiasa Sorok">
+<!ENTITY linkToolbarNever.accesskey "S">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Atas">
+<!ENTITY upButton.label "Ke Atas">
+<!ENTITY firstButton.label "Pertama">
+<!ENTITY prevButton.label "Dahulu">
+<!ENTITY nextButton.label "Berikut">
+<!ENTITY lastButton.label "Akhir">
+
+<!ENTITY documentButton.label "Dokumen">
+
+<!ENTITY tocButton.label "Jadual Kandungan">
+<!ENTITY chapterButton.label "Bab">
+<!ENTITY sectionButton.label "Bahagian">
+<!ENTITY subSectionButton.label "Sub-bahagian">
+<!ENTITY appendixButton.label "Apendiks">
+<!ENTITY glossaryButton.label "Glosari">
+<!ENTITY indexButton.label "Indeks">
+
+<!ENTITY moreButton.label "Selanjutnya">
+
+<!ENTITY helpButton.label "Bantuan">
+<!ENTITY searchButton.label "Cari">
+
+<!ENTITY authorButton.label "Pengarang">
+<!ENTITY copyrightButton.label "Hak cipta">
+
+<!ENTITY bookmarkButton.label "Tandabuku">
+
+<!ENTITY alternateButton.label "Versi Lain">
+
+<!ENTITY feedButton.label "Langgan">

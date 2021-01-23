@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label "Выключэнні">
+<!ENTITY treehead.sitename.label "Пляцоўка Сеціва">
+<!ENTITY treehead.status.label "Статус">
+<!ENTITY remove.label "Прыняць сеціўную пляцоўку">
+<!ENTITY remove.accesskey "П">
+<!ENTITY removeall.label "Прыняць усе сеціўныя пляцоўкі">
+<!ENTITY removeall.accesskey "у">
+<!ENTITY address.label "Адрас пляцоўкі сеціва:">
+<!ENTITY address.accesskey "А">
+<!ENTITY block.label "Блакаваць">
+<!ENTITY block.accesskey "Б">
+<!ENTITY session.label "Дазволіць на сэсію">
+<!ENTITY session.accesskey "с">
+<!ENTITY allow.label "Дазволіць">
+<!ENTITY allow.accesskey "Д">

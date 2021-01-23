@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator "  -  ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+
+
+<!ENTITY compositionToolbar.tooltip "Afeggag n isefka n usuddes">
+<!ENTITY previewToolbarCmd.label "Ḍum">
+<!ENTITY previewToolbarCmd.tooltip "Sali-d asebter-agi ɣef iminig">
+<!-- File menu items -->
+
+<!ENTITY exportToTextCmd.label "Sifeḍ ɣer uḍris…">
+<!ENTITY exportToTextCmd.accesskey "S">
+<!ENTITY previewCmd.label "Snirem asebter">
+<!ENTITY previewCmd.accesskey "i">
+<!ENTITY sendPageCmd.label "Azen asebter…">
+<!ENTITY sendPageCmd.accesskey "A">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Afeggag n isefka n usuddes">
+<!ENTITY compositionToolbarCmd.accesskey "s">
+<!ENTITY formattingToolbarCmd.label "Msel afeggag n ifecka">
+<!ENTITY formattingToolbarCmd.accesskey "M">
+<!ENTITY editmodeToolbarCmd.label "Ẓreg afeggag n ifecka">
+<!ENTITY editmodeToolbarCmd.accesskey "Ẓ">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Amasal">
+<!ENTITY formatMenu.accesskey "a">
+<!ENTITY grid.label "Asideg n iẓiki">
+<!ENTITY grid.accesskey "d">
+<!ENTITY pageProperties.label "Azwel b taɣaṛa n usebtar…">
+<!ENTITY pageProperties.accesskey "b">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "Seɣbel HTML">
+<!ENTITY validateCmd.accesskey "l">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "Amagnu">
+<!ENTITY NormalMode.label "Askar n teẓrigt amagnu">
+<!ENTITY NormalMode.accesskey "k">
+<!ENTITY NormalMode.tooltip "Sken timiwa n tfelwit d timedyin ittuseman">
+<!ENTITY AllTagsModeTab.label "Tiṛekkazin HTML">
+<!ENTITY AllTagsMode.label "Tiṛekkazin HTML">
+<!ENTITY AllTagsMode.accesskey "k">
+<!ENTITY AllTagsMode.tooltip "Sken tigniwin n tṛekkazin HTML imaṛṛa">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Aɣbalu">
+<!ENTITY HTMLSourceMode.label "Aɣbalu HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Ẓreg aɣbalu HTML">
+<!ENTITY PreviewModeTab.label "Taskant">
+<!ENTITY PreviewMode.label "Taskant">
+<!ENTITY PreviewMode.accesskey "T">
+<!ENTITY PreviewMode.tooltip "Sken am WYSIWYG (am akken tettwaliḍ ɣef iminig)">

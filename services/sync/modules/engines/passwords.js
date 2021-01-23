@@ -14,7 +14,7 @@ const { SCORE_INCREMENT_XLARGE } = ChromeUtils.import(
 const { CollectionValidator } = ChromeUtils.import(
   "resource://services-sync/collection_validator.js"
 );
-const { Store, SyncEngine, Tracker } = ChromeUtils.import(
+const { Store, SyncEngine, LegacyTracker } = ChromeUtils.import(
   "resource://services-sync/engines.js"
 );
 const { Svc, Utils } = ChromeUtils.import("resource://services-sync/util.js");
@@ -134,14 +134,14 @@ PasswordEngine.prototype = {
     }
 
     let logins = Services.logins.findLogins(
-      login.hostname,
-      login.formSubmitURL,
+      login.origin,
+      login.formActionOrigin,
       login.httpRealm
     );
 
     await Async.promiseYield(); // Yield back to main thread after synchronous operation.
 
-    // Look for existing logins that match the hostname, but ignore the password.
+    // Look for existing logins that match the origin, but ignore the password.
     for (let local of logins) {
       if (login.matches(local, true) && local instanceof Ci.nsILoginMetaInfo) {
         return local.guid;
@@ -190,6 +190,10 @@ PasswordStore.prototype = {
       return x == undefined ? null : x;
     }
 
+    function stringifyNullUndefined(x) {
+      return x == undefined || x == null ? "" : x;
+    }
+
     if (record.formSubmitURL && record.httpRealm) {
       this._log.warn(
         "Record " +
@@ -206,7 +210,7 @@ PasswordStore.prototype = {
       record.hostname,
       nullUndefined(record.formSubmitURL),
       nullUndefined(record.httpRealm),
-      record.username,
+      stringifyNullUndefined(record.username),
       record.password,
       record.usernameField,
       record.passwordField
@@ -214,10 +218,13 @@ PasswordStore.prototype = {
 
     info.QueryInterface(Ci.nsILoginMetaInfo);
     info.guid = record.id;
-    if (record.timeCreated) {
+    if (record.timeCreated && !isNaN(new Date(record.timeCreated).getTime())) {
       info.timeCreated = record.timeCreated;
     }
-    if (record.timePasswordChanged) {
+    if (
+      record.timePasswordChanged &&
+      !isNaN(new Date(record.timePasswordChanged).getTime())
+    ) {
       info.timePasswordChanged = record.timePasswordChanged;
     }
 
@@ -247,7 +254,7 @@ PasswordStore.prototype = {
     for (let i = 0; i < logins.length; i++) {
       // Skip over Weave password/passphrase entries.
       let metaInfo = logins[i].QueryInterface(Ci.nsILoginMetaInfo);
-      if (Utils.getSyncCredentialsHosts().has(metaInfo.hostname)) {
+      if (Utils.getSyncCredentialsHosts().has(metaInfo.origin)) {
         continue;
       }
 
@@ -289,8 +296,8 @@ PasswordStore.prototype = {
       return record;
     }
 
-    record.hostname = login.hostname;
-    record.formSubmitURL = login.formSubmitURL;
+    record.hostname = login.origin;
+    record.formSubmitURL = login.formActionOrigin;
     record.httpRealm = login.httpRealm;
     record.username = login.username;
     record.password = login.password;
@@ -317,7 +324,7 @@ PasswordStore.prototype = {
         JSON.stringify(login.httpRealm) +
         "; " +
         "formSubmitURL: " +
-        JSON.stringify(login.formSubmitURL)
+        JSON.stringify(login.formActionOrigin)
     );
     Services.logins.addLogin(login);
   },
@@ -356,10 +363,10 @@ PasswordStore.prototype = {
 };
 
 function PasswordTracker(name, engine) {
-  Tracker.call(this, name, engine);
+  LegacyTracker.call(this, name, engine);
 }
 PasswordTracker.prototype = {
-  __proto__: Tracker.prototype,
+  __proto__: LegacyTracker.prototype,
 
   onStart() {
     Svc.Obs.add("passwordmgr-storage-changed", this.asyncObserver);
@@ -411,7 +418,7 @@ PasswordTracker.prototype = {
   },
 
   async _trackLogin(login) {
-    if (Utils.getSyncCredentialsHosts().has(login.hostname)) {
+    if (Utils.getSyncCredentialsHosts().has(login.origin)) {
       // Skip over Weave password/passphrase changes.
       return false;
     }
@@ -442,7 +449,7 @@ class PasswordValidator extends CollectionValidator {
     let syncHosts = Utils.getSyncCredentialsHosts();
     let result = logins
       .map(l => l.QueryInterface(Ci.nsILoginMetaInfo))
-      .filter(l => !syncHosts.has(l.hostname));
+      .filter(l => !syncHosts.has(l.origin));
     return Promise.resolve(result);
   }
 

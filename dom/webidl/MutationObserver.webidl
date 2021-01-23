@@ -7,7 +7,8 @@
  * http://dom.spec.whatwg.org
  */
 
-[ProbablyShortLivingWrapper]
+[ProbablyShortLivingWrapper,
+ Exposed=Window]
 interface MutationRecord {
   [Constant]
   readonly attribute DOMString type;
@@ -37,10 +38,13 @@ interface MutationRecord {
   readonly attribute sequence<Animation> removedAnimations;
 };
 
-[Constructor(MutationCallback mutationCallback)]
+[Exposed=Window]
 interface MutationObserver {
   [Throws]
-  void observe(Node target, optional MutationObserverInit options);
+  constructor(MutationCallback mutationCallback);
+
+  [Throws]
+  void observe(Node target, optional MutationObserverInit options = {});
   void disconnect();
   sequence<MutationRecord> takeRecords();
 

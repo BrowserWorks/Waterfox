@@ -14,11 +14,11 @@
 #include "nsFrameLoader.h"
 #include "nsFrameLoaderOwner.h"
 #include "nsGenericHTMLElement.h"
-#include "nsIDOMEventListener.h"
 #include "nsIMozBrowserFrame.h"
 
 namespace mozilla {
 namespace dom {
+class BrowserParent;
 template <typename>
 struct Nullable;
 class WindowProxyHolder;
@@ -49,7 +49,6 @@ class nsGenericHTMLFrameElement : public nsGenericHTMLElement,
         mSrcLoadHappened(false),
         mNetworkCreated(aFromParser == mozilla::dom::FROM_PARSER_NETWORK),
         mBrowserFrameListenersRegistered(false),
-        mFrameLoaderCreationDisallowed(false),
         mReallyIsBrowser(false) {}
 
   NS_DECL_ISUPPORTS_INHERITED
@@ -62,10 +61,8 @@ class nsGenericHTMLFrameElement : public nsGenericHTMLElement,
   // nsIContent
   virtual bool IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
                                int32_t* aTabIndex) override;
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
   virtual void DestroyContent() override;
 
   nsresult CopyInnerTo(mozilla::dom::Element* aDest);
@@ -86,22 +83,12 @@ class nsGenericHTMLFrameElement : public nsGenericHTMLElement,
   void SwapFrameLoaders(nsFrameLoaderOwner* aOtherLoaderOwner,
                         mozilla::ErrorResult& rv);
 
-  void PresetOpenerWindow(const mozilla::dom::Nullable<
-                              mozilla::dom::WindowProxyHolder>& aOpenerWindow,
-                          mozilla::ErrorResult& aRv);
-
-  static void InitStatics();
-  static bool BrowserFramesEnabled();
-
   /**
-   * Helper method to map a HTML 'scrolling' attribute value to a nsIScrollable
-   * enum value.  scrolling="no" (and its synonyms) maps to
-   * nsIScrollable::Scrollbar_Never, and anything else (including nullptr) maps
-   * to nsIScrollable::Scrollbar_Auto.
-   * @param aValue the attribute value to map or nullptr
-   * @return nsIScrollable::Scrollbar_Never or nsIScrollable::Scrollbar_Auto
+   * Helper method to map a HTML 'scrolling' attribute value (which can be null)
+   * to a ScrollbarPreference value value.  scrolling="no" (and its synonyms)
+   * map to Never, and anything else to Auto.
    */
-  static int32_t MapScrollingAttribute(const nsAttrValue* aValue);
+  static mozilla::ScrollbarPreference MapScrollingAttribute(const nsAttrValue*);
 
   nsIPrincipal* GetSrcTriggeringPrincipal() const {
     return mSrcTriggeringPrincipal;
@@ -131,8 +118,6 @@ class nsGenericHTMLFrameElement : public nsGenericHTMLElement,
                                           const nsAttrValueOrString& aValue,
                                           bool aNotify) override;
 
-  RefPtr<mozilla::dom::BrowsingContext> mOpenerWindow;
-
   nsCOMPtr<nsIPrincipal> mSrcTriggeringPrincipal;
 
   /**
@@ -148,7 +133,6 @@ class nsGenericHTMLFrameElement : public nsGenericHTMLElement,
   bool mNetworkCreated;
 
   bool mBrowserFrameListenersRegistered;
-  bool mFrameLoaderCreationDisallowed;
   bool mReallyIsBrowser;
 
   // This flag is only used by <iframe>. See HTMLIFrameElement::

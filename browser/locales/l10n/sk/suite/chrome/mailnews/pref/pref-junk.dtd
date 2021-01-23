@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Nevyžiadaná pošta">
+<!ENTITY pref.junk.title "Nevyžiadaná a podozrivá pošta">
+<!ENTITY junkSettings.caption "Globálne nastavenia pre nevyžiadanú poštu">
+<!ENTITY junkMail.intro "Ak chcete zmeniť špecifické nastavenia nevyžiadanej pošty svojho účtu, prejdite do jeho nastavenia.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Keď manuálne označím správy ako nevyžiadané:">
+<!ENTITY manualMark.accesskey           "K">
+<!ENTITY manualMarkModeMove.label       "Presunúť ich do priečinka &quot;SPAM&quot; v danom účte">
+<!ENTITY manualMarkModeMove.accesskey   "s">
+<!ENTITY manualMarkModeDelete.label     "Odstrániť ich">
+<!ENTITY manualMarkModeDelete.accesskey "d">
+
+<!ENTITY markAsRead.intro               "Označiť správy ako prečítané:">
+<!ENTITY autoMarkAsRead.label           "Keď ich &brandShortName; označí ako nevyžiadané">
+<!ENTITY autoMarkAsRead.accesskey       "e">
+<!ENTITY manualMarkAsRead.label         "Keď ich manuálne označím ako nevyžiadané">
+<!ENTITY manualMarkAsRead.accesskey     "c">
+
+<!ENTITY enableJunkLogging.label        "Povoliť protokol z rozpoznávania nevyžiadanej pošty">
+<!ENTITY enableJunkLogging.accesskey    "o">
+<!ENTITY openJunkLog.label              "Zobraziť protokol">
+<!ENTITY openJunkLog.accesskey          "Z">
+<!ENTITY resetTrainingData.label        "Vymazať zozbierané údaje">
+<!ENTITY resetTrainingData.accesskey    "V">
+
+<!ENTITY pref.suspectMail.caption       "Podozrivá pošta">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Podvodné správy">
+<!ENTITY enablePhishingDetector.label     "Upozorniť v prípade, ak je čítaná správa podozrivá">
+<!ENTITY enablePhishingDetector.accesskey "U">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Antivírus">
+<!ENTITY antiVirus.label                  "Povoliť antivírusovým klientom prehliadať jednotlivé doručené správy">
+<!ENTITY antiVirus.accesskey              "n">

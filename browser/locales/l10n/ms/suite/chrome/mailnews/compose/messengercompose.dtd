@@ -1,0 +1,134 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Karang: (tiada subjek)">
+
+<!ENTITY fromAddr.label "Daripada:">
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY subject.label  "Subjek:">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachments.label "Lampiran:">
+<!ENTITY attachments.accesskey "p">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Simpan">
+<!ENTITY saveCmd.accesskey "n">
+<!ENTITY saveAsCmd.label "Simpan Sebagai">
+<!ENTITY saveAsCmd.accesskey "S">
+<!ENTITY saveAsFileCmd.label "Fail…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Draf">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "Templat">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY attachMenu.label "Lampir">
+<!ENTITY attachMenu.accesskey "r">
+<!ENTITY attachFileCmd.label "Fail…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Halaman Web…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Kad Peribadi (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "Hantar Sekarang">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "t">
+<!ENTITY sendLaterCmd.label "Hantar Kemudian">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "K">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Balut semula">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "l">
+<!ENTITY accountManagerCmd.label "Tetapan Akaun Mel &amp; Kumpulan berita…">
+<!ENTITY accountManagerCmd.accesskey "m">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Bar alatan Mel">
+<!ENTITY showComposeToolbarCmd.accesskey "e">
+<!ENTITY showFormatToolbarCmd.label "Bar alatan Format">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Pilihan">
+<!ENTITY optionsMenu.accesskey "n">
+
+<!ENTITY quoteCmd.label "Mesej Petikan">
+<!ENTITY quoteCmd.accesskey "P">
+<!ENTITY selectAddressCmd.label "Pilih Alamat…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "A">
+
+<!ENTITY priorityMenu.label "Prioriti">
+<!ENTITY priorityMenu.accesskey "i">
+<!ENTITY lowestPriorityCmd.label "Paling rendah">
+<!ENTITY lowestPriorityCmd.accesskey "r">
+<!ENTITY lowPriorityCmd.label "Rendah">
+<!ENTITY lowPriorityCmd.accesskey "d">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "m">
+<!ENTITY highPriorityCmd.label "Tinggi">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "Paling tinggi">
+<!ENTITY highestPriorityCmd.accesskey "P">
+
+<!ENTITY returnReceiptMenu.label "Resit Pemberitahu Serahan">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Notifikasi Status Penghantaran">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "Format">
+<!ENTITY outputFormatMenu.accesskey  "t">
+<!ENTITY autoFormatCmd.label "Auto-Kesan">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Teks Biasa Sahaja">
+<!ENTITY plainTextFormatCmd.accesskey "s">
+<!ENTITY htmlFormatCmd.label "Teks Beraneka (HTML) Sahaja">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "Teks Biasa dan Beraneka (HTML)">
+<!ENTITY bothFormatCmd.accesskey "d">
+
+<!ENTITY fileCarbonCopyCmd.label "Hantar satu Salinan Kepada">
+<!ENTITY fileCarbonCopyCmd.accesskey "r">
+<!ENTITY fileHereMenu.label "Failkan Di sini">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Hantar">
+<!ENTITY addressButton.label "Alamat">
+<!ENTITY attachButton.label "Lampir">
+<!ENTITY spellingButton.label "Ejaan">
+<!ENTITY saveButton.label "Simpan">
+<!ENTITY stopButton.label "Berhenti">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Bar Alamat">
+<!ENTITY formatToolbar.tooltip "Bar alatan Format">
+<!ENTITY sendButton.tooltip "Hantar mesej ini sekarang"> 
+<!ENTITY sendlaterButton.tooltip "Hantar mesej ini kemudian"> 
+<!ENTITY addressButton.tooltip "Pilih penerima dalam Buku Alamat"> 
+<!ENTITY attachButton.tooltip "Sertakan lampiran"> 
+<!ENTITY saveButton.tooltip "Simpan mesej ini"> 
+<!ENTITY stopButton.tooltip "Hentikan pemindahan semasa"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Buka">
+<!ENTITY openAttachment.accesskey "B">
+<!ENTITY renameAttachment.label "Namakan semula…">
+<!ENTITY renameAttachment.accesskey "N">
+<!ENTITY deleteAttachment.accesskey "B">
+<!ENTITY selectAllAttachments.accesskey "P">
+<!ENTITY attachFile.label "Lampirkan Fail…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachPage.label "Lampir Halaman Web…">
+<!ENTITY attachPage.accesskey "W">

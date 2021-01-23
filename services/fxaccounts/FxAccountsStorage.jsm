@@ -55,7 +55,7 @@ var FxAccountsStorageManager = function(options = {}) {
   this._promiseStorageComplete = Promise.resolve();
 };
 
-this.FxAccountsStorageManager.prototype = {
+FxAccountsStorageManager.prototype = {
   _initialized: false,
   _needToReadSecure: true,
 
@@ -572,7 +572,7 @@ LoginManagerStorage.prototype = {
       );
       let login = new loginInfo(
         FXA_PWDMGR_HOST,
-        null, // aFormSubmitURL,
+        null, // aFormActionOrigin,
         FXA_PWDMGR_REALM, // aHttpRealm,
         uid, // aUsername
         JSON.stringify(contents), // aPassword

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Ponašanje linka">
+<!ENTITY newWindow.label "Ponašanje pri otvaranju linka">
+<!ENTITY newWindowDescription.label "Otvorite linkove koji žele da otvore novi prozor u:">
+<!ENTITY newWindowRestriction.label "Kada skripte žele otvoriti novi prozor:">
+<!ENTITY external.label "Linkovi iz drugih aplikacija">
+<!ENTITY externalDescription.label "Otvorite linkove prenesene iz drugih aplikacija u:">
+
+<!ENTITY openCurrent.label "Trenutni tab/prozor">
+
+<!ENTITY openTab.label "Novi tab u trenutnom prozoru">
+
+<!ENTITY openWindow.label "Novi prozor">
+
+<!ENTITY divertAll.label "Uvijek preusmjeravaj prozore u tabove">
+<!ENTITY divertNoFeatures.label "Ne preusmjeravaj prilagođene prozore u tabove">
+<!ENTITY dontDivert.label "Uvijek otvori novi prozor">

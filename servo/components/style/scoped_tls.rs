@@ -15,6 +15,9 @@ use std::ops::DerefMut;
 ///
 /// We use this on Servo to construct thread-local contexts, but clear them once
 /// we're done with restyling.
+///
+/// Note that the cleanup is done on the thread that owns the scoped TLS, thus
+/// the Send bound.
 pub struct ScopedTLS<'scope, T: Send> {
     pool: &'scope rayon::ThreadPool,
     slots: Box<[RefCell<Option<T>>]>,
@@ -68,9 +71,8 @@ impl<'scope, T: Send> ScopedTLS<'scope, T> {
         RefMut::map(opt, |x| x.as_mut().unwrap())
     }
 
-    /// Unsafe access to the slots. This can be used to access the TLS when
-    /// the caller knows that the pool does not have access to the TLS.
-    pub unsafe fn unsafe_get(&self) -> &[RefCell<Option<T>>] {
-        &self.slots
+    /// Returns the slots, consuming the scope.
+    pub fn into_slots(self) -> Box<[RefCell<Option<T>>]> {
+        self.slots
     }
 }

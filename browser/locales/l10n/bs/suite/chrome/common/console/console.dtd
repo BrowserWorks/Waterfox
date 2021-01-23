@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Konzola greške">
+
+<!ENTITY errFile.label        "Izvorna datoteka:">
+<!ENTITY errLine.label        "Linija:">
+<!ENTITY errColumn.label      "Kolona:">
+
+<!ENTITY all.label            "Sve">
+<!ENTITY errors.label         "Greške">
+<!ENTITY warnings.label       "Upozorenja">
+<!ENTITY messages.label       "Poruke">
+<!ENTITY clear.label          "Očisti">
+<!ENTITY codeEval.label       "Kod:">
+<!ENTITY evaluate.label       "Procijeni">
+<!ENTITY filter2.label        "Filter:">
+
+<!ENTITY copyCmd.label         "Kopiraj">
+<!ENTITY sortFirst.label       "Sortiranje po rastućem redoslijedu">
+<!ENTITY sortLast.label        "Sortiranje po opadajućem redoslijedu">
+
+<!ENTITY menuBar.tooltip       "Traka menija">
+<!ENTITY modeToolbar.tooltip   "Alatna traka načina rada">
+<!ENTITY entryToolbar.tooltip  "Alatna traka za Javascript unos">
+<!ENTITY toolbarsCmd.label     "Prikaži/sakrij">
+<!ENTITY toolbarMode.label     "Način rada">
+<!ENTITY toolbarEval.label     "JavaScript unos">

@@ -8,7 +8,6 @@
 #include "MediaContainerType.h"
 #include "nsMimeTypes.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/Telemetry.h"
 
 #include "OggDecoder.h"
 #include "OggDemuxer.h"
@@ -144,15 +143,17 @@ static CanPlayStatus CanHandleCodecsType(
 
 static CanPlayStatus CanHandleMediaType(
     const MediaContainerType& aType, DecoderDoctorDiagnostics* aDiagnostics) {
+  if (DecoderTraits::IsHttpLiveStreamingType(aType)) {
+    Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
+  }
 #ifdef MOZ_ANDROID_HLS_SUPPORT
   if (HLSDecoder::IsSupportedType(aType)) {
+    Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_SUPPORTED, true);
     return CANPLAY_MAYBE;
   }
 #endif
 
-  if (DecoderTraits::IsHttpLiveStreamingType(aType)) {
-    Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
-  } else if (DecoderTraits::IsMatroskaType(aType)) {
+  if (DecoderTraits::IsMatroskaType(aType)) {
     Telemetry::Accumulate(Telemetry::MEDIA_MKV_CANPLAY_REQUESTED, true);
   }
 
@@ -231,33 +232,50 @@ bool DecoderTraits::ShouldHandleMediaType(
 }
 
 /* static */
-MediaFormatReader* DecoderTraits::CreateReader(const MediaContainerType& aType,
-                                               MediaFormatReaderInit& aInit) {
+already_AddRefed<MediaDataDemuxer> DecoderTraits::CreateDemuxer(
+    const MediaContainerType& aType, MediaResource* aResource) {
   MOZ_ASSERT(NS_IsMainThread());
-  MediaFormatReader* decoderReader = nullptr;
-  MediaResource* resource = aInit.mResource;
+  RefPtr<MediaDataDemuxer> demuxer;
 
 #ifdef MOZ_FMP4
   if (MP4Decoder::IsSupportedType(aType,
                                   /* DecoderDoctorDiagnostics* */ nullptr)) {
-    decoderReader = new MediaFormatReader(aInit, new MP4Demuxer(resource));
+    demuxer = new MP4Demuxer(aResource);
   } else
 #endif
       if (MP3Decoder::IsSupportedType(aType)) {
-    decoderReader = new MediaFormatReader(aInit, new MP3Demuxer(resource));
+    demuxer = new MP3Demuxer(aResource);
   } else if (ADTSDecoder::IsSupportedType(aType)) {
-    decoderReader = new MediaFormatReader(aInit, new ADTSDemuxer(resource));
+    demuxer = new ADTSDemuxer(aResource);
   } else if (WaveDecoder::IsSupportedType(aType)) {
-    decoderReader = new MediaFormatReader(aInit, new WAVDemuxer(resource));
+    demuxer = new WAVDemuxer(aResource);
   } else if (FlacDecoder::IsSupportedType(aType)) {
-    decoderReader = new MediaFormatReader(aInit, new FlacDemuxer(resource));
+    demuxer = new FlacDemuxer(aResource);
   } else if (OggDecoder::IsSupportedType(aType)) {
-    RefPtr<OggDemuxer> demuxer = new OggDemuxer(resource);
-    decoderReader = new MediaFormatReader(aInit, demuxer);
-    demuxer->SetChainingEvents(&decoderReader->TimedMetadataProducer(),
-                               &decoderReader->MediaNotSeekableProducer());
+    demuxer = new OggDemuxer(aResource);
   } else if (WebMDecoder::IsSupportedType(aType)) {
-    decoderReader = new MediaFormatReader(aInit, new WebMDemuxer(resource));
+    demuxer = new WebMDemuxer(aResource);
+  }
+
+  return demuxer.forget();
+}
+
+/* static */
+MediaFormatReader* DecoderTraits::CreateReader(const MediaContainerType& aType,
+                                               MediaFormatReaderInit& aInit) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  RefPtr<MediaDataDemuxer> demuxer = CreateDemuxer(aType, aInit.mResource);
+  if (!demuxer) {
+    return nullptr;
+  }
+
+  MediaFormatReader* decoderReader = new MediaFormatReader(aInit, demuxer);
+
+  if (OggDecoder::IsSupportedType(aType)) {
+    static_cast<OggDemuxer*>(demuxer.get())
+        ->SetChainingEvents(&decoderReader->TimedMetadataProducer(),
+                            &decoderReader->MediaNotSeekableProducer());
   }
 
   return decoderReader;

@@ -10,57 +10,62 @@ with Files('**'):
 # export required interfaces, even if --disable-cookies has been given
 XPIDL_SOURCES += [
     'nsICookie.idl',
-    'nsICookie2.idl',
+    'nsICookieJarSettings.idl',
     'nsICookieManager.idl',
     'nsICookiePermission.idl',
     'nsICookieService.idl',
-    'nsICookieSettings.idl',
 ]
 
 XPIDL_MODULE = 'necko_cookie'
 
-if CONFIG['NECKO_COOKIES']:
-    EXPORTS += [
-        'nsCookiePermission.h',
-    ]
 
-    EXPORTS.mozilla.net = [
-        'CookieServiceChild.h',
-        'CookieServiceParent.h',
-        'CookieSettings.h',
-        'nsCookieKey.h',
-    ]
-    UNIFIED_SOURCES += [
-        'CookieServiceChild.cpp',
-        'CookieServiceParent.cpp',
-        'CookieSettings.cpp',
-        'nsCookie.cpp',
-        'nsCookiePermission.cpp',
-    ]
-    # nsCookieService.cpp can't be unified because of symbol conflicts
-    SOURCES += [
-        'nsCookieService.cpp',
-    ]
-    LOCAL_INCLUDES += [
-        '/dom/base',
-        '/extensions/permissions',
-        '/intl/uconv',
-    ]
+EXPORTS.mozilla.net = [
+    'CookieJarSettings.h',
+    'CookieKey.h',
+    'CookiePersistentStorage.h',
+    'CookiePrivateStorage.h',
+    'CookieService.h',
+    'CookieServiceChild.h',
+    'CookieServiceParent.h',
+    'CookieStorage.h',
+]
+UNIFIED_SOURCES += [
+    'Cookie.cpp',
+    'CookieCommons.cpp',
+    'CookieJarSettings.cpp',
+    'CookieLogging.cpp',
+    'CookiePersistentStorage.cpp',
+    'CookiePrivateStorage.cpp',
+    'CookieService.cpp',
+    'CookieServiceChild.cpp',
+    'CookieServiceParent.cpp',
+    'CookieStorage.cpp',
+]
+XPCSHELL_TESTS_MANIFESTS += [
+    'test/unit/xpcshell.ini',
+]
 
-    XPCSHELL_TESTS_MANIFESTS += [
-        'test/unit/xpcshell.ini',
-    ]
+BROWSER_CHROME_MANIFESTS += [
+    'test/browser/browser.ini',
+]
 
-    BROWSER_CHROME_MANIFESTS += [
-        'test/browser/browser.ini',
-    ]
-
-    MOCHITEST_MANIFESTS += [
-        'test/mochitest/mochitest.ini',
-    ]
+MOCHITEST_MANIFESTS += [
+    'test/mochitest/mochitest.ini',
+]
 
 IPDL_SOURCES = [
     'PCookieService.ipdl',
+]
+
+LOCAL_INCLUDES += [
+    '/dom/base',
+    '/intl/uconv',
+    '/netwerk/base',
+    '/netwerk/protocol/http',
+]
+
+TESTING_JS_MODULES += [
+    'CookieXPCShellUtils.jsm',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

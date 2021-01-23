@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Gwenog">
+<!ENTITY insertSmiley.accesskey "G">
+
+<!ENTITY smiley1Cmd.label "Gwên">
+<!ENTITY smiley1Cmd.accesskey "w">
+<!ENTITY smiley1Cmd.tooltip "Mewnosod wyneb gwenog">
+<!ENTITY smiley2Cmd.label "Gwg">
+<!ENTITY smiley2Cmd.accesskey "G">
+<!ENTITY smiley2Cmd.tooltip "Mewnosod wyneb gwg">
+<!ENTITY smiley3Cmd.label "Chwinc">
+<!ENTITY smiley3Cmd.accesskey "C">
+<!ENTITY smiley3Cmd.tooltip "Mewnosod wyneb chwinciog">
+<!ENTITY smiley4Cmd.label "Tafod allan">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "Mewnosod wyneb tafod hir">
+<!ENTITY smiley5Cmd.label "Chwerthin">
+<!ENTITY smiley5Cmd.accesskey "C">
+<!ENTITY smiley5Cmd.tooltip "Mewnosod wyneb chwerthin">
+<!ENTITY smiley6Cmd.label "Embaras">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "Mewnosod wyneb embaras">
+<!ENTITY smiley7Cmd.label "Heb benderfynu">
+<!ENTITY smiley7Cmd.accesskey "H">
+<!ENTITY smiley7Cmd.tooltip "Mewnosod wyneb heb benderfynu">
+<!ENTITY smiley8Cmd.label "Syndod">
+<!ENTITY smiley8Cmd.accesskey "S">
+<!ENTITY smiley8Cmd.tooltip "Mewnosod wyneb syn">
+<!ENTITY smiley9Cmd.label "Cusan">
+<!ENTITY smiley9Cmd.accesskey "u">
+<!ENTITY smiley9Cmd.tooltip "Mewnosod wyneb cusan">
+<!ENTITY smiley10Cmd.label "Gwaedd">
+<!ENTITY smiley10Cmd.accesskey "e">
+<!ENTITY smiley10Cmd.tooltip "Mewnosod wyneb gweiddi">
+<!ENTITY smiley11Cmd.label "Cwl">
+<!ENTITY smiley11Cmd.accesskey "l">
+<!ENTITY smiley11Cmd.tooltip "Mewnosod wyneb cwl">
+<!ENTITY smiley12Cmd.label "Ceg Aur">
+<!ENTITY smiley12Cmd.accesskey "A">
+<!ENTITY smiley12Cmd.tooltip "Mewnosod wyneb ceg arian">
+<!ENTITY smiley13Cmd.label "Ceg Fawr">
+<!ENTITY smiley13Cmd.accesskey "F">
+<!ENTITY smiley13Cmd.tooltip "Mewnosod wyneb ceg fawr">
+<!ENTITY smiley14Cmd.label "Diniwed">
+<!ENTITY smiley14Cmd.accesskey "D">
+<!ENTITY smiley14Cmd.tooltip "Mewnosod wyneb diniwed">
+<!ENTITY smiley15Cmd.label "Crio">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "Mewnosod wyneb crio">
+<!ENTITY smiley16Cmd.label "Dim Gair!">
+<!ENTITY smiley16Cmd.accesskey "D">
+<!ENTITY smiley16Cmd.tooltip "Mewnosod wyneb dim gair">
+<!ENTITY SmileButton.label "Mewnosod Gwenoglun">
+<!ENTITY SmileButton.tooltip "Mewnosod wyneb gwenog">

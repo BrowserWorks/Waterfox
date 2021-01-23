@@ -19,11 +19,17 @@
  * these gets focus, it redirects focus to the appropriate button. This avoids
  * the need to continually manage the tabindex of toolbar buttons in response to
  * toolbarchanges.
+ * In addition to linear navigation with tab and arrows, users can also type
+ * the first (or first few) characters of a button's name to jump directly to
+ * that button.
  */
 
 ToolbarKeyboardNavigator = {
   // Toolbars we want to be keyboard navigable.
   kToolbars: [CustomizableUI.AREA_NAVBAR, CustomizableUI.AREA_BOOKMARKS],
+  // Delay (in ms) after which to clear any search text typed by the user if
+  // the user hasn't typed anything further.
+  kSearchClearTimeout: 1000,
 
   _isButton(aElem) {
     return (
@@ -80,6 +86,16 @@ ToolbarKeyboardNavigator = {
     return aRoot._toolbarKeyNavWalker;
   },
 
+  _initTabStops(aRoot) {
+    for (let stop of aRoot.getElementsByTagName("toolbartabstop")) {
+      // These are invisible, but because they need to be in the tab order,
+      // they can't get display: none or similar. They must therefore be
+      // explicitly hidden for accessibility.
+      stop.setAttribute("aria-hidden", "true");
+      stop.addEventListener("focus", this);
+    }
+  },
+
   init() {
     for (let id of this.kToolbars) {
       let toolbar = document.getElementById(id);
@@ -87,16 +103,11 @@ ToolbarKeyboardNavigator = {
       // We manage toolbar focus completely. This attribute ensures that CSS
       // doesn't set -moz-user-focus: normal.
       toolbar.setAttribute("keyNav", "true");
-      for (let stop of toolbar.getElementsByTagName("toolbartabstop")) {
-        // These are invisible, but because they need to be in the tab order,
-        // they can't get display: none or similar. They must therefore be
-        // explicitly hidden for accessibility.
-        stop.setAttribute("aria-hidden", "true");
-        stop.addEventListener("focus", this);
-      }
+      this._initTabStops(toolbar);
       toolbar.addEventListener("keydown", this);
       toolbar.addEventListener("keypress", this);
     }
+    CustomizableUI.addListener(this);
   },
 
   uninit() {
@@ -109,6 +120,19 @@ ToolbarKeyboardNavigator = {
       toolbar.removeEventListener("keypress", this);
       toolbar.removeAttribute("keyNav");
     }
+    CustomizableUI.removeListener(this);
+  },
+
+  // CustomizableUI event handler
+  onWidgetAdded(aWidgetId, aArea, aPosition) {
+    if (!this.kToolbars.includes(aArea)) {
+      return;
+    }
+    let widget = document.getElementById(aWidgetId);
+    if (!widget) {
+      return;
+    }
+    this._initTabStops(widget);
   },
 
   _focusButton(aButton) {
@@ -162,6 +186,42 @@ ToolbarKeyboardNavigator = {
     walker.currentNode = aEvent.target;
     let button = walker.nextNode();
     if (!button || !this._isButton(button)) {
+      // If we think we're moving backward, and focus came from outside the
+      // toolbox, we might actually have wrapped around. This currently only
+      // happens in popup windows (because in normal windows, focus first
+      // goes to the tabstrip, where we don't have tabstops). In this case,
+      // the event target was the first tabstop. If we can't find a button,
+      // e.g. because we're in a popup where most buttons are hidden, we
+      // should ensure focus keeps moving forward:
+      if (
+        oldFocus &&
+        this._isFocusMovingBackward &&
+        !gNavToolbox.contains(oldFocus)
+      ) {
+        let allStops = Array.from(
+          gNavToolbox.querySelectorAll("toolbartabstop")
+        );
+        // Find the previous toolbartabstop:
+        let earlierVisibleStopIndex = allStops.indexOf(aEvent.target) - 1;
+        // Then work out if any of the earlier ones are in a visible
+        // toolbar:
+        while (earlierVisibleStopIndex >= 0) {
+          let stopToolbar = allStops[earlierVisibleStopIndex].closest(
+            "toolbar"
+          );
+          if (
+            window.windowUtils.getBoundsWithoutFlushing(stopToolbar).height > 0
+          ) {
+            break;
+          }
+          earlierVisibleStopIndex--;
+        }
+        // If we couldn't find any earlier visible stops, we're not moving
+        // backwards, we're moving forwards and wrapped around:
+        if (earlierVisibleStopIndex == -1) {
+          this._isFocusMovingBackward = false;
+        }
+      }
       // No navigable buttons for this tab stop. Skip it.
       if (this._isFocusMovingBackward) {
         document.commandDispatcher.rewindFocus();
@@ -195,6 +255,20 @@ ToolbarKeyboardNavigator = {
   _onKeyDown(aEvent) {
     let focus = document.activeElement;
     if (
+      aEvent.key != " " &&
+      aEvent.key.length == 1 &&
+      this._isButton(focus) &&
+      // Don't handle characters if the user is focused in a panel anchored
+      // to the toolbar.
+      !focus.closest("panel")
+    ) {
+      this._onSearchChar(aEvent.currentTarget, aEvent.key);
+      return;
+    }
+    // Anything that doesn't trigger search should clear the search.
+    this._clearSearch();
+
+    if (
       aEvent.altKey ||
       aEvent.controlKey ||
       aEvent.metaKey ||
@@ -217,6 +291,83 @@ ToolbarKeyboardNavigator = {
         return;
     }
     aEvent.preventDefault();
+  },
+
+  _clearSearch() {
+    this._searchText = "";
+    if (this._clearSearchTimeout) {
+      clearTimeout(this._clearSearchTimeout);
+      this._clearSearchTimeout = null;
+    }
+  },
+
+  _onSearchChar(aToolbar, aChar) {
+    if (this._clearSearchTimeout) {
+      // The user just typed a character, so reset the timer.
+      clearTimeout(this._clearSearchTimeout);
+    }
+    // Convert to lower case so we can do case insensitive searches.
+    let char = aChar.toLowerCase();
+    // If the user has only typed a single character and they type the same
+    // character again, they want to move to the next item starting with that
+    // same character. Effectively, it's as if there was no existing search.
+    // In that case, we just leave this._searchText alone.
+    if (!this._searchText) {
+      this._searchText = char;
+    } else if (this._searchText != char) {
+      this._searchText += char;
+    }
+    // Clear the search if the user doesn't type anything more within the timeout.
+    this._clearSearchTimeout = setTimeout(
+      this._clearSearch.bind(this),
+      this.kSearchClearTimeout
+    );
+
+    let oldFocus = document.activeElement;
+    let walker = this._getWalker(aToolbar);
+    // Search forward after the current control.
+    walker.currentNode = oldFocus;
+    for (
+      let newFocus = walker.nextNode();
+      newFocus;
+      newFocus = walker.nextNode()
+    ) {
+      if (this._doesSearchMatch(newFocus)) {
+        this._focusButton(newFocus);
+        return;
+      }
+    }
+    // No match, so search from the start until the current control.
+    walker.currentNode = walker.root;
+    for (
+      let newFocus = walker.firstChild();
+      newFocus && newFocus != oldFocus;
+      newFocus = walker.nextNode()
+    ) {
+      if (this._doesSearchMatch(newFocus)) {
+        this._focusButton(newFocus);
+        return;
+      }
+    }
+  },
+
+  _doesSearchMatch(aElem) {
+    if (!this._isButton(aElem)) {
+      return false;
+    }
+    for (let attrib of ["aria-label", "label", "tooltiptext"]) {
+      let label = aElem.getAttribute(attrib);
+      if (!label) {
+        continue;
+      }
+      // Convert to lower case so we do a case insensitive comparison.
+      // (this._searchText is already lower case.)
+      label = label.toLowerCase();
+      if (label.startsWith(this._searchText)) {
+        return true;
+      }
+    }
+    return false;
   },
 
   _onKeyPress(aEvent) {

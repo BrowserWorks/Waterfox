@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title                     "Aadressiraamatu importimine">
+<!ENTITY fieldMapImport.size                      "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber              "Kirje:">
+<!ENTITY fieldMapImport.next.label                "Järgmine">
+<!ENTITY fieldMapImport.next.accesskey            "J">
+<!ENTITY fieldMapImport.previous.label            "Eelmine">
+<!ENTITY fieldMapImport.previous.accesskey        "E">
+<!ENTITY fieldMapImport.text                      "Kasuta Liiguta üles ja Liiguta alla, et ühtlustada aadressiraamatu väljad vasakul õige imporditava infoga paremal. Eemalda linnuke elementidelt, mida sa ei soovi importida.">
+<!ENTITY fieldMapImport.up.label                  "Liiguta üles">
+<!ENTITY fieldMapImport.up.accesskey              "L">
+<!ENTITY fieldMapImport.down.label                "Liiguta alla">
+<!ENTITY fieldMapImport.down.accesskey            "a">
+<!ENTITY fieldMapImport.fieldListTitle            "Aadressiraamatu väljad">
+<!ENTITY fieldMapImport.dataTitle                 "Imporditavad kirjed">
+<!ENTITY fieldMapImport.skipFirstRecord.label     "Esimene kirje sisaldab väljanimesid">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "E">
+

@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 var EXPORTED_SYMBOLS = ["PromptUtils", "EnableDelayHelper"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -75,7 +79,7 @@ var EnableDelayHelper = function({ enableDialog, disableDialog, focusTarget }) {
   this.startOnFocusDelay();
 };
 
-this.EnableDelayHelper.prototype = {
+EnableDelayHelper.prototype = {
   get delayTime() {
     return Services.prefs.getIntPref("security.dialog_enable_delay");
   },

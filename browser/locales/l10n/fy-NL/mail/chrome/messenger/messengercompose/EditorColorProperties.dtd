@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sidekleuren en eftergrûn">
+<!ENTITY pageColors.label "Sidekleuren">
+<!ENTITY defaultColorsRadio.label "Standertkleuren fan lêzer (kleuren net yn side fêstlizze)">
+<!ENTITY defaultColorsRadio.accessKey "S">
+<!ENTITY defaultColorsRadio.tooltip "Allinnich de kleurynstellingen fan de browser fan de lêzer brûke">
+<!ENTITY customColorsRadio.label "Oanpaste kleuren brûke:">
+<!ENTITY customColorsRadio.accessKey "p">
+<!ENTITY customColorsRadio.tooltip "Dizze kleurynstellingen oerskriuwe de browserynstellingen fan de lêzer">
+
+<!ENTITY normalText.label "Normale tekst">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Keppelingstekst">
+<!ENTITY linkText.accessKey "e">
+<!ENTITY activeLinkText.label "Aktive keppeling">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Besochte keppeling">
+<!ENTITY visitedLinkText.accessKey "B">
+<!ENTITY background.label "Eftergrûn:">
+<!ENTITY background.accessKey "t">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Eftergrûnôfbylding:">
+<!ENTITY backgroundImage.accessKey "f">
+<!ENTITY backgroundImage.tooltip "In ôfbyldingsbestân as eftergrûn foar jo side brûke">
+<!ENTITY backgroundImage.shortenedDataURI "Ynkoarte URI-gegevens (kopiearjen sil de folsleine URI op it klamboerd sette)">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Thuộc tính">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Thuộc tính sổ địa chỉ">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Thuộc tính liên hệ">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Thuộc tính danh sách gửi thư">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Hiển thị menu ngữ cảnh sổ địa chỉ">
+<!ENTITY addressbookPicker.label            "Sổ địa chỉ:">
+<!ENTITY addressbookPicker.accesskey        "S">
+<!ENTITY searchContacts.label               "Tìm liên lạc:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Tên hoặc email">
+
+<!ENTITY addtoToFieldMenu.label             "Thêm vào trường Tới">
+<!ENTITY addtoToFieldMenu.accesskey         "A">
+<!ENTITY addtoCcFieldMenu.label             "Thêm vào trường Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Thêm vào trường Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Xóa">
+<!ENTITY deleteAddrBookCard.accesskey       "D">
+<!ENTITY propertiesContext.label            "Thuộc tính">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Thuộc tính">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Chỉnh sửa liên hệ">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "Chỉnh sửa danh sách">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "Liên hệ mới">
+<!ENTITY newContactAbContext.accesskey      "C">
+<!ENTITY newListAbContext.label             "Danh sách mới">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Thêm vào Tới:">
+<!ENTITY toButton.accesskey                 "T">
+<!ENTITY ccButton.label                     "Thêm vào Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Thêm vào Bcc:">
+<!ENTITY bccButton.accesskey                "B">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "ჯართი და საეჭვო წერილები">
+<!ENTITY junkSettings.caption "ჯართის გლობალური პარამეტრები">
+<!ENTITY junkMail.intro "გადასვლა ანგარიშის პარამეტრებზე ჯართის სპეციფიური პარამეტრების მისათითებლად.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "წერილების ჯართად მონიშვნისას:">
+<!ENTITY manualMark.accesskey           "W">
+<!ENTITY manualMarkModeMove.label       "მათი ანგარიშის &quot;ჯართის&quot; საქაღალდეში გადატანა">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "მათი წაშლა">
+<!ENTITY manualMarkModeDelete.accesskey "D">
+
+<!ENTITY markAsRead.intro               "წერილების მითითება წაკითხულად:">
+<!ENTITY autoMarkAsRead.label           "როცა &brandShortName; მათ ჯართად ამოიცნობს">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "როცა მე მათ ხელით მივუთითებ ჯართად">
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "ჯართის ფილტრის დავთრის წარმოების ჩართვა">
+<!ENTITY enableJunkLogging.accesskey    "E">
+<!ENTITY openJunkLog.label              "დავთრის ჩვენება">
+<!ENTITY openJunkLog.accesskey          "S">
+<!ENTITY resetTrainingData.label        "წვრთნის მონაცემტა განულება">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "საეჭვო ფოსტა">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "უსარგებლო ელგფოსტა">
+<!ENTITY enablePhishingDetector.label     "შეტყობინება მიმდინარე წერილის სეჭვო სტატუსის შემთხვევაში">
+<!ENTITY enablePhishingDetector.accesskey "T">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "ანტივირუსი">
+<!ENTITY antiVirus.label                  "ანტივირუსებისთვის შემომავალი ელფოსტის შემოწმების გაიოლება">
+<!ENTITY antiVirus.accesskey              "A">

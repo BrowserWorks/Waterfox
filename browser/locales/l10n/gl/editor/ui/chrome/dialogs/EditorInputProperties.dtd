@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propiedades do campo do formulario">
+<!ENTITY windowTitleImage.label "Propiedades do campo do formulario">
+
+<!ENTITY InputType.label "Tipo de campo">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Texto">
+<!ENTITY password.value "Contrasinal">
+<!ENTITY checkbox.value "Caixa de verificación">
+<!ENTITY radio.value "Botón de opción">
+<!ENTITY submit.value "Botón Enviar">
+<!ENTITY reset.value "Botón Restabelecer">
+<!ENTITY file.value "Ficheiro">
+<!ENTITY hidden.value "Agochado">
+<!ENTITY image.value "Imaxe">
+<!ENTITY button.value "Botón">
+
+<!ENTITY InputSettings.label "Configuración de campo">
+<!ENTITY InputName.label "Nome do campo:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nome do grupo:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valor do campo:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valor inicial:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Verificado inicialmente">
+<!ENTITY InputChecked.accesskey "c">
+<!ENTITY InputSelected.label "Seleccionado inicialmente">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Só de lectura">
+<!ENTITY InputReadOnly.accesskey "l">
+<!ENTITY InputDisabled.label "Desactivado">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Índice de tabulación:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY TextSize.label "Tamaño do campo:">
+<!ENTITY TextSize.accesskey "T">
+<!ENTITY TextLength.label "Lonxitude máxima:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Tecla de acceso:">
+<!ENTITY AccessKey.accesskey "a">
+<!ENTITY Accept.label "Tipos de aceptación:">
+<!ENTITY Accept.accesskey "c">
+
+<!ENTITY ImageProperties.label "Propiedades da imaxe…">
+<!ENTITY ImageProperties.accesskey "P">

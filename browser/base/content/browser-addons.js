@@ -301,7 +301,7 @@ var gXPInstallObserver = {
       i => i.addon.signedState <= AddonManager.SIGNEDSTATE_MISSING
     );
     let someUnsigned =
-      unsigned.length > 0 && unsigned.length < installInfo.installs.length;
+      !!unsigned.length && unsigned.length < installInfo.installs.length;
 
     options.eventCallback = aEvent => {
       switch (aEvent) {
@@ -361,7 +361,7 @@ var gXPInstallObserver = {
       );
       notification.setAttribute("warning", "true");
       options.learnMoreURL += "unsigned-addons";
-    } else if (unsigned.length == 0) {
+    } else if (!unsigned.length) {
       // All add-ons are verified or don't need to be verified
       messageString = gNavigatorBundle.getString("addonConfirmInstall.message");
       notification.removeAttribute("warning");
@@ -437,14 +437,41 @@ var gXPInstallObserver = {
     "xpinstall-disabled",
   ],
 
-  // Remove all opened addon installation notifications
+  /**
+   * Remove all opened addon installation notifications
+   *
+   * @param {*} browser - Browser to remove notifications for
+   * @returns {boolean} - true if notifications have been removed.
+   */
   removeAllNotifications(browser) {
-    this.NOTIFICATION_IDS.forEach(id => {
-      let notification = PopupNotifications.getNotification(id, browser);
-      if (notification) {
-        PopupNotifications.remove(notification);
-      }
-    });
+    let notifications = this.NOTIFICATION_IDS.map(id =>
+      PopupNotifications.getNotification(id, browser)
+    ).filter(notification => notification != null);
+
+    PopupNotifications.remove(notifications, true);
+
+    return !!notifications.length;
+  },
+
+  logWarningFullScreenInstallBlocked() {
+    // If notifications have been removed, log a warning to the website console
+    let consoleMsg = Cc["@mozilla.org/scripterror;1"].createInstance(
+      Ci.nsIScriptError
+    );
+    let message = gBrowserBundle.GetStringFromName(
+      "addonInstallFullScreenBlocked"
+    );
+    consoleMsg.initWithWindowID(
+      message,
+      gBrowser.currentURI.spec,
+      null,
+      0,
+      0,
+      Ci.nsIScriptError.warningFlag,
+      "FullScreen",
+      gBrowser.selectedBrowser.innerWindowID
+    );
+    Services.console.logMessage(consoleMsg);
   },
 
   observe(aSubject, aTopic, aData) {
@@ -516,6 +543,11 @@ var gXPInstallObserver = {
           secondaryActions,
           options
         );
+        break;
+      }
+      case "addon-install-fullscreen-blocked": {
+        // AddonManager denied installation because we are in DOM fullscreen
+        this.logWarningFullScreenInstallBlocked();
         break;
       }
       case "addon-install-origin-blocked": {
@@ -639,8 +671,8 @@ var gXPInstallObserver = {
             "xpinstallPromptMessage.neverAllow.accesskey"
           ),
           callback: () => {
-            SitePermissions.set(
-              browser.currentURI,
+            SitePermissions.setForPrincipal(
+              browser.contentPrincipal,
               "install",
               SitePermissions.BLOCK
             );
@@ -693,14 +725,6 @@ var gXPInstallObserver = {
         options.sourceURI = browser.currentURI;
         options.eventCallback = function(aEvent) {
           switch (aEvent) {
-            case "shown":
-              let notificationElement = [...this.owner.panel.children].find(
-                n => n.notification == this
-              );
-              if (notificationElement) {
-                notificationElement.setAttribute("mainactiondisabled", "true");
-              }
-              break;
             case "removed":
               options.contentWindow = null;
               options.sourceURI = null;
@@ -712,6 +736,7 @@ var gXPInstallObserver = {
           accessKey: gNavigatorBundle.getString(
             "addonInstall.acceptButton2.accesskey"
           ),
+          disabled: true,
           callback: () => {},
         };
         let secondaryAction = {
@@ -978,6 +1003,89 @@ var gExtensionsNotifications = {
         PanelUI.hide();
         ExtensionsUI.showSideloaded(gBrowser, addon);
       });
+    }
+  },
+};
+
+var BrowserAddonUI = {
+  promptRemoveExtension(addon) {
+    let { name } = addon;
+    let brand = document
+      .getElementById("bundle_brand")
+      .getString("brandShorterName");
+    let { getFormattedString, getString } = gNavigatorBundle;
+    let title = getFormattedString("webext.remove.confirmation.title", [name]);
+    let message = getFormattedString("webext.remove.confirmation.message", [
+      name,
+      brand,
+    ]);
+    let btnTitle = getString("webext.remove.confirmation.button");
+    let {
+      BUTTON_TITLE_IS_STRING: titleString,
+      BUTTON_TITLE_CANCEL: titleCancel,
+      BUTTON_POS_0,
+      BUTTON_POS_1,
+      confirmEx,
+    } = Services.prompt;
+    let btnFlags = BUTTON_POS_0 * titleString + BUTTON_POS_1 * titleCancel;
+    let checkboxState = { value: false };
+    let checkboxMessage = null;
+
+    // Enable abuse report checkbox in the remove extension dialog,
+    // if enabled by the about:config prefs and the addon type
+    // is currently supported.
+    if (
+      gAddonAbuseReportEnabled &&
+      ["extension", "theme"].includes(addon.type)
+    ) {
+      checkboxMessage = getFormattedString(
+        "webext.remove.abuseReportCheckbox.message",
+        [document.getElementById("bundle_brand").getString("vendorShortName")]
+      );
+    }
+    const result = confirmEx(
+      null,
+      title,
+      message,
+      btnFlags,
+      btnTitle,
+      null,
+      null,
+      checkboxMessage,
+      checkboxState
+    );
+    return { remove: result === 0, report: checkboxState.value };
+  },
+
+  async reportAddon(addonId, reportEntryPoint) {
+    const win = await BrowserOpenAddonsMgr("addons://list/extension");
+
+    win.openAbuseReport({ addonId, reportEntryPoint });
+  },
+
+  async removeAddon(addonId, eventObject) {
+    let addon = addonId && (await AddonManager.getAddonByID(addonId));
+    if (!addon || !(addon.permissions & AddonManager.PERM_CAN_UNINSTALL)) {
+      return;
+    }
+
+    let { remove, report } = this.promptRemoveExtension(addon);
+
+    AMTelemetry.recordActionEvent({
+      object: eventObject,
+      action: "uninstall",
+      value: remove ? "accepted" : "cancelled",
+      extra: { addonId },
+    });
+
+    if (remove) {
+      // Leave the extension in pending uninstall if we are also reporting the
+      // add-on.
+      await addon.uninstall(report);
+
+      if (report) {
+        await this.reportAddon(addon.id, "uninstall");
+      }
     }
   },
 };

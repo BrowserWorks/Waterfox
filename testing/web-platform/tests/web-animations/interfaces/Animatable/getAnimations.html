@@ -42,6 +42,81 @@ test(t => {
 }, 'Returns only the animations specific to each parent/child element');
 
 test(t => {
+  const divParent = createDiv(t);
+  const divChild = createDiv(t);
+  divParent.appendChild(divChild);
+  const divGrandChildA = createDiv(t);
+  const divGrandChildB = createDiv(t);
+  divChild.appendChild(divGrandChildA);
+  divChild.appendChild(divGrandChildB);
+
+  // Trigger the animations in a somewhat random order
+  const animGrandChildB = divGrandChildB.animate(null, 100 * MS_PER_SEC);
+  const animChild = divChild.animate(null, 100 * MS_PER_SEC);
+  const animGrandChildA = divGrandChildA.animate(null, 100 * MS_PER_SEC);
+
+  assert_array_equals(
+    divParent.getAnimations({ subtree: true }),
+    [animGrandChildB, animChild, animGrandChildA],
+    'Returns expected animations from parent'
+  );
+  assert_array_equals(
+    divChild.getAnimations({ subtree: true }),
+    [animGrandChildB, animChild, animGrandChildA],
+    'Returns expected animations from child'
+  );
+  assert_array_equals(
+    divGrandChildA.getAnimations({ subtree: true }),
+    [animGrandChildA],
+    'Returns expected animations from grandchild A'
+  );
+}, 'Returns animations on descendants when subtree: true is specified');
+
+test(t => {
+  createStyle(t, {
+    '@keyframes anim': '',
+    [`.pseudo::before`]: 'animation: anim 100s; ' + "content: '';",
+  });
+  const div = createDiv(t);
+  div.classList.add('pseudo');
+
+  assert_equals(
+    div.getAnimations().length,
+    0,
+    'Returns no animations when subtree is false'
+  );
+  assert_equals(
+    div.getAnimations({ subtree: true }).length,
+    1,
+    'Returns one animation when subtree is true'
+  );
+}, 'Returns animations on pseudo-elements when subtree: true is specified');
+
+test(t => {
+  const host = createDiv(t);
+  const shadow = host.attachShadow({ mode: 'open' });
+
+  const elem = createDiv(t);
+  shadow.appendChild(elem);
+
+  const elemChild = createDiv(t);
+  elem.appendChild(elemChild);
+
+  elemChild.animate(null, 100 * MS_PER_SEC);
+
+  assert_equals(
+    host.getAnimations({ subtree: true }).length,
+    0,
+    'Returns no animations with subtree:true when called on the host'
+  );
+  assert_equals(
+    elem.getAnimations({ subtree: true }).length,
+    1,
+    'Returns one animation when called on a parent in the shadow tree'
+  );
+}, 'Does NOT cross shadow-tree boundaries when subtree: true is specified');
+
+test(t => {
   const foreignElement
     = document.createElementNS('http://example.org/test', 'test');
   document.body.appendChild(foreignElement);
@@ -120,7 +195,19 @@ test(t => {
   animation.finish();
   animation.playbackRate = 0;
   animation.currentTime = 200 * MS_PER_SEC;
+  assert_array_equals(div.getAnimations(), []);
 }, 'Does not return animations with zero playback rate in after phase');
+
+test(t => {
+  const div = createDiv(t);
+  const effect = new KeyframeEffect(div, {}, 225);
+  const animation = new Animation(effect, new DocumentTimeline());
+  animation.reverse();
+  animation.pause();
+  animation.playbackRate = -1;;
+  animation.updatePlaybackRate(1);
+  assert_array_equals(div.getAnimations(), []);
+}, 'Does not return an animation that has recently been made not current by setting the playback rate');
 
 test(t => {
   const div = createDiv(t);
@@ -208,6 +295,33 @@ test(t => {
                       + ' clipped end of the active interval');
 }, 'Returns animations based on dynamic changes to individual'
    + ' animations\' current time');
+
+promise_test(async t => {
+  const div = createDiv(t);
+
+  const animA = div.animate({ opacity: 1 }, { duration: 1, fill: 'forwards' });
+  const animB = div.animate({ opacity: 1 }, { duration: 1, fill: 'forwards' });
+  await animA.finished;
+  // It is not guaranteed that the mircrotask PerformCheckpoint() happens before
+  // the animation finish promised got resolved, because the microtask
+  // checkpoint could also be triggered from other source such as the event_loop
+  // Thus we wait for one animation frame to make sure the finished animation is
+  // properly removed.
+  await waitForNextFrame(1);
+  assert_array_equals(div.getAnimations(), [animB]);
+}, 'Does not return an animation that has been removed');
+
+promise_test(async t => {
+  const div = createDiv(t);
+
+  const animA = div.animate({ opacity: 1 }, { duration: 1, fill: 'forwards' });
+  const animB = div.animate({ opacity: 1 }, { duration: 1, fill: 'forwards' });
+  await animA.finished;
+
+  animA.persist();
+
+  assert_array_equals(div.getAnimations(), [animA, animB]);
+}, 'Returns an animation that has been persisted');
 
 promise_test(async t => {
   const div = createDiv(t);

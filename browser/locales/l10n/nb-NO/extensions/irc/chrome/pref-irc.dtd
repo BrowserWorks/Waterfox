@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref-irc.window.title "ChatZilla">
+
+<!ENTITY pref-irc.open.title     "ChatZilla-innstillinger">
+<!ENTITY pref-irc.open.desc      "ChatZilla-innstillingene er altfor store til å passe i dette innstillingsvinduet. Du kan isteden åpne innstillingene fra her.">
+<!ENTITY pref-irc.open.label     "Åpne ChatZillas innstillinger">
+<!ENTITY pref-irc.open.accesskey "Å">
+<!ENTITY startup.chat.label "ChatZilla">
+<!ENTITY startup.chat.accesskey "Z">

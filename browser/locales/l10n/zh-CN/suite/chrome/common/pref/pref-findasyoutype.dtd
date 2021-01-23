@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "输入时同步查找">
+<!ENTITY findAsYouTypeBehavior.label "输入时同步查找">
+<!ENTITY findAsYouTypeTip.label "小提示:手动启动输入时同步查找，请输入/ (或 \')+自定义文本,以查找文本(或链接)。">
+<!ENTITY findAsYouTypeTimeout.label "一段时间无操作则清除当前搜索结果">
+<!ENTITY findAsYouTypeTimeout.accesskey "C">
+<!ENTITY findAsYouTypeSound.label "没有找到输入的文本时播放声音">
+<!ENTITY findAsYouTypeSound.accesskey "P">
+<!ENTITY findAsYouTypeEnableAuto.label "在网页内自动查找输入的文本：">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "F">
+<!ENTITY findAsYouTypeAutoText.label "页面内的任何文字">
+<!ENTITY findAsYouTypeAutoText.accesskey "A">
+<!ENTITY findAsYouTypeAutoLinks.label "仅查找链接">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "L">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "输入同步查找时显示查找工具栏">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "S">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "说明：输入同步查找时如果不显示查找栏便无法支持国际化的文本内容。">

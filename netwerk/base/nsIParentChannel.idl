@@ -10,12 +10,12 @@ interface nsIRemoteTab;
 %{C++
 namespace mozilla {
 namespace net {
-class HttpChannelParentListener;
+class ParentChannelListener;
 }
 }
 %}
 
-[ptr] native HttpChannelParentListener(mozilla::net::HttpChannelParentListener);
+[ptr] native ParentChannelListener(mozilla::net::ParentChannelListener);
 
 /**
  * Implemented by chrome side of IPC protocols.
@@ -25,27 +25,9 @@ class HttpChannelParentListener;
 interface nsIParentChannel : nsIStreamListener
 {
   /**
-   * Called to set the HttpChannelParentListener object (optional).
+   * Called to set the ParentChannelListener object (optional).
    */
-  [noscript] void setParentListener(in HttpChannelParentListener listener);
-
-  /**
-   * Called to notify the HttpChannelChild that channel classifier protection
-   * was disabled for this load.
-   */
-  [noscript] void notifyChannelClassifierProtectionDisabled(in uint32_t aAcceptedReason);
-
-  /**
-   * Called to notify the HttpChannelChild that cookie has been allowed for
-   * this load.
-   */
-  [noscript] void notifyCookieAllowed();
-
-  /**
-   * Called to notify the HttpChannelChild that cookie has been blocked for
-   * this load.
-   */
-  [noscript] void notifyCookieBlocked(in uint32_t aRejectedReason);
+  [noscript] void setParentListener(in ParentChannelListener listener);
 
   /**
    * Called to notify the HttpChannelChild that flash plugin state has changed.

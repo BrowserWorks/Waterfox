@@ -8,6 +8,11 @@
 const TEST_ENGINE_BASENAME = "searchSuggestionEngine.xml";
 
 add_task(async function checkCtrlWorks() {
+  registerCleanupFunction(async function() {
+    await PlacesUtils.history.clear();
+    await UrlbarTestUtils.formHistory.clear();
+  });
+
   let defaultEngine = await Services.search.getDefault();
   let testcases = [
     ["example", "http://www.example.com/", { ctrlKey: true }],
@@ -27,7 +32,6 @@ add_task(async function checkCtrlWorks() {
     ["ex-ample.foo", "http://ex-ample.foo/", { ctrlKey: true }],
     ["example.foo/bar ", "http://example.foo/bar", { ctrlKey: true }],
     ["1.1.1.1", "http://1.1.1.1/", { ctrlKey: true }],
-    ["ftp://example", "ftp://example/", { ctrlKey: true }],
     ["ftp.example.bar", "http://ftp.example.bar/", { ctrlKey: true }],
     [
       "ex ample",
@@ -35,6 +39,12 @@ add_task(async function checkCtrlWorks() {
       { ctrlKey: true },
     ],
   ];
+
+  if (Services.prefs.getBoolPref("network.ftp.enabled")) {
+    // Include FTP testcase only if FTP protocol handler is enabled, otherwise
+    // the test would hang on external application chooser popup.
+    testcases.push(["ftp://example", "ftp://example/", { ctrlKey: true }]);
+  }
 
   // Disable autoFill for this test, since it could mess up the results.
   await SpecialPowers.pushPrefEnv({
@@ -50,11 +60,16 @@ add_task(async function checkCtrlWorks() {
       expectedURL,
       gBrowser.selectedBrowser
     );
+    let promiseStopped = BrowserTestUtils.browserStopped(
+      gBrowser.selectedBrowser,
+      undefined,
+      true
+    );
     gURLBar.focus();
     gURLBar.inputField.value = inputValue.slice(0, -1);
     EventUtils.sendString(inputValue.slice(-1));
     EventUtils.synthesizeKey("KEY_Enter", options);
-    await promiseLoad;
+    await Promise.all([promiseLoad, promiseStopped]);
   }
 });
 

@@ -28,7 +28,7 @@ PaymentAddress::PaymentAddress(
     const nsAString& aSortingCode, const nsAString& aOrganization,
     const nsAString& aRecipient, const nsAString& aPhone)
     : mCountry(aCountry),
-      mAddressLine(aAddressLine),
+      mAddressLine(aAddressLine.Clone()),
       mRegion(aRegion),
       mRegionCode(aRegionCode),
       mCity(aCity),
@@ -45,7 +45,7 @@ void PaymentAddress::GetCountry(nsAString& aRetVal) const {
 }
 
 void PaymentAddress::GetAddressLine(nsTArray<nsString>& aRetVal) const {
-  aRetVal = mAddressLine;
+  aRetVal = mAddressLine.Clone();
 }
 
 void PaymentAddress::GetRegion(nsAString& aRetVal) const { aRetVal = mRegion; }
@@ -78,7 +78,7 @@ void PaymentAddress::GetRecipient(nsAString& aRetVal) const {
 
 void PaymentAddress::GetPhone(nsAString& aRetVal) const { aRetVal = mPhone; }
 
-PaymentAddress::~PaymentAddress() {}
+PaymentAddress::~PaymentAddress() = default;
 
 JSObject* PaymentAddress::WrapObject(JSContext* aCx,
                                      JS::Handle<JSObject*> aGivenProto) {

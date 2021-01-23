@@ -20,12 +20,14 @@
 
 namespace mozilla {
 namespace ipc {
-class PrincipalInfo;
 class AutoIPCStream;
+class PBackgroundChild;
+class PrincipalInfo;
 }  // namespace ipc
 
 namespace dom {
 
+class IPCInternalResponse;
 class InternalHeaders;
 
 class InternalResponse final {
@@ -37,6 +39,16 @@ class InternalResponse final {
   InternalResponse(
       uint16_t aStatus, const nsACString& aStatusText,
       RequestCredentials aCredentialsMode = RequestCredentials::Omit);
+
+  static RefPtr<InternalResponse> FromIPC(
+      const IPCInternalResponse& aIPCResponse);
+
+  // Note: the AutoIPCStreams must outlive the IPCInternalResponse.
+  void ToIPC(
+      IPCInternalResponse* aIPCResponse,
+      mozilla::ipc::PBackgroundChild* aManager,
+      UniquePtr<mozilla::ipc::AutoIPCStream>& aAutoBodyStream,
+      UniquePtr<mozilla::ipc::AutoIPCStream>& aAutoAlternativeBodyStream);
 
   enum CloneType {
     eCloneInputStream,
@@ -99,6 +111,12 @@ class InternalResponse final {
     }
 
     return GetURLList(aURLList);
+  }
+
+  nsTArray<nsCString> GetUnfilteredURLList() const {
+    nsTArray<nsCString> list;
+    GetUnfilteredURLList(list);
+    return list;
   }
 
   void SetURLList(const nsTArray<nsCString>& aURLList) {
@@ -211,6 +229,24 @@ class InternalResponse final {
 
   void SetPaddingSize(int64_t aPaddingSize);
 
+  void SetAlternativeDataType(const nsACString& aAltDataType) {
+    if (mWrappedResponse) {
+      return mWrappedResponse->SetAlternativeDataType(aAltDataType);
+    }
+
+    MOZ_DIAGNOSTIC_ASSERT(mAlternativeDataType.IsEmpty());
+
+    mAlternativeDataType.Assign(aAltDataType);
+  }
+
+  const nsCString& GetAlternativeDataType() {
+    if (mWrappedResponse) {
+      return mWrappedResponse->GetAlternativeDataType();
+    }
+
+    return mAlternativeDataType;
+  }
+
   void SetAlternativeBody(nsIInputStream* aAlternativeBody) {
     if (mWrappedResponse) {
       return mWrappedResponse->SetAlternativeBody(aAlternativeBody);
@@ -303,7 +339,6 @@ class InternalResponse final {
   already_AddRefed<InternalResponse> CreateIncompleteCopy();
 
   ResponseType mType;
-  nsCString mTerminationReason;
   // A response has an associated url list (a list of zero or more fetch URLs).
   // Unless stated otherwise, it is the empty list. The current url is the last
   // element in mURLlist
@@ -323,6 +358,7 @@ class InternalResponse final {
   RequestCredentials mCredentialsMode;
 
   // For alternative data such as JS Bytecode cached in the HTTP cache.
+  nsCString mAlternativeDataType;
   nsCOMPtr<nsIInputStream> mAlternativeBody;
   nsMainThreadPtrHandle<nsICacheInfoChannel> mCacheInfoChannel;
 

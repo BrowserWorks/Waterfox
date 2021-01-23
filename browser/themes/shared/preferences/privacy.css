@@ -1,0 +1,383 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Permissions */
+
+.content-blocking-icon,
+.permission-icon,
+.content-blocking-checkbox {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+.permission-icon {
+  margin-inline-end: 0.2em;
+}
+
+.content-blocking-checkbox .checkbox-icon {
+  margin-inline: 4px 8px;
+  width: 16px;
+}
+
+#contentBlockingTrackingProtectionCheckbox > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/tracker-image.svg");
+}
+
+#contentBlockingTrackingProtectionCheckbox[checked] > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/tracker-image-disabled.svg");
+}
+
+#contentBlockingBlockCookiesCheckbox > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/3rdpartycookies.svg");
+}
+
+#contentBlockingBlockCookiesCheckbox[checked] > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/3rdpartycookies-disabled.svg");
+}
+
+#contentBlockingCryptominersCheckbox > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/cryptominers.svg");
+}
+
+#contentBlockingCryptominersCheckbox[checked] > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/cryptominers-disabled.svg");
+}
+
+#contentBlockingFingerprintersCheckbox > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/fingerprinters.svg");
+}
+
+#contentBlockingFingerprintersCheckbox[checked] > .checkbox-label-box {
+  list-style-image: url("chrome://browser/skin/controlcenter/fingerprinters-disabled.svg");
+}
+
+.content-blocking-icon,
+.permission-icon,
+.content-blocking-category .checkbox-label-box,
+.extra-information-label > image,
+.arrowhead,
+.content-blocking-info-image,
+.reload-tabs-button,
+.content-blocking-warning-image {
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+.content-blocking-icon[disabled] {
+  fill: GrayText;
+}
+
+.geo-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/geo.svg);
+}
+
+.xr-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/xr.svg);
+}
+
+.camera-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/camera.svg);
+}
+
+.microphone-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/microphone.svg);
+}
+
+.desktop-notification-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/desktop-notification.svg);
+}
+
+.autoplay-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/autoplay-media-detailed.svg);
+}
+
+.midi-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/midi.svg);
+}
+
+/* Content Blocking */
+
+/* Override styling that sets descriptions as grey */
+#trackingGroup description.indent,
+#trackingGroup .indent > description {
+  color: inherit;
+}
+
+[data-subcategory="trackingprotection"] {
+  margin-top: 10px;
+}
+
+#contentBlockingCategories {
+  margin-top: 16px;
+}
+
+#trackingProtectionShield {
+  list-style-image: url("chrome://browser/skin/controlcenter/tracking-protection.svg");
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+  fill-opacity: 0.5;
+  width: 64px;
+  height: 64px;
+  margin-inline-end: 10px;
+}
+
+.content-blocking-category {
+  border-radius: 4px;
+  margin: 3px 0;
+  padding: 9px;
+  border: 1px solid var(--in-content-border-color);
+  background-color: rgba(215, 215, 219, 0.2);
+}
+
+.content-blocking-category.disabled {
+  opacity: 0.5;
+}
+
+.content-blocking-category.disabled .radio-check {
+  opacity: 1;
+}
+
+.content-blocking-warning > .indent,
+.content-blocking-category > .indent {
+  margin-inline-end: 28px;
+}
+
+.arrowhead {
+  -moz-appearance: none;
+  border: none;
+  border-radius: 2px;
+  min-height: 20px;
+  min-width: 20px;
+  max-height: 20px;
+  max-width: 20px;
+  list-style-image: url("chrome://global/skin/icons/arrow-dropdown-12.svg");
+  background-color: transparent;
+  padding: 3px;
+}
+
+.arrowhead:not([disabled]):hover {
+  cursor: pointer;
+  background-color: var(--grey-90-a10);
+}
+
+.arrowhead:not([disabled]):hover:active {
+  background-color: var(--grey-90-a20);
+}
+
+.arrowhead.up {
+  list-style-image: url("chrome://global/skin/icons/arrow-up-12.svg");
+}
+
+.arrowhead > .button-box {
+  padding: 0 !important;
+}
+
+.content-blocking-category.expanded:not(.selected) .reload-tabs {
+  display: none;
+}
+
+.content-blocking-warning.reload-tabs:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  /* Match .indent's horizontal padding: */
+  padding-inline: 28px;
+}
+
+.content-blocking-reload-desc-container {
+  /* 345px is enough for (almost) twice the size of the default English
+   * string at default font sizes. If this and the button do not fit
+   * on one line, the button will get wrapped to the next line and this
+   * item will stretch to fill all available space. */
+  flex: 1 1 345px;
+  display: flex;
+}
+
+.content-blocking-reload-description {
+  line-height: 1.8em;
+  margin-inline-end: 5px;
+}
+
+.content-blocking-reload-desc-container > .content-blocking-info-image {
+  list-style-image: url(chrome://global/skin/icons/identity-icon.svg);
+  margin-inline-end: 12px;
+  margin-top: 0.4em;
+  flex-shrink: 0;
+  align-self: start;
+}
+
+.reload-tabs-button {
+  max-height: 30px;
+  min-height: 30px;
+  padding: 0 20px;
+  list-style-image: url("chrome://browser/skin/reload.svg");
+  background-color: var(--blue-50);
+  align-self: center;
+}
+
+.reload-tabs-button:not([disabled="true"]):hover {
+  background-color: var(--blue-60);
+}
+
+.reload-tabs-button:not([disabled="true"]):hover:active {
+  background-color: var(--blue-70);
+}
+
+.reload-tabs-button .button-icon {
+  margin: 0 6px;
+  color: white;
+}
+
+.reload-tabs-button .button-text {
+  color: white;
+}
+
+.content-blocking-category.expanded:not(.selected) .content-blocking-warning {
+  background-color: var(--grey-90-a10);
+}
+
+.content-blocking-category.selected .arrowhead {
+  display: none;
+}
+
+.content-blocking-category.selected {
+  border: 1px solid #45A1FF;
+  background-color: rgba(69, 161, 255, 0.2);
+}
+
+.content-blocking-warning-title,
+.content-blocking-category .radio-label-box {
+  font-weight: bold;
+}
+
+.content-blocking-extra-information {
+  visibility: collapse;
+}
+
+.extra-information-label {
+  margin-top: 18px;
+}
+
+/* Apply display: block to the containers of all the category information, as
+ * without this the flex-wrapped blocks inside don't stretch vertically to
+ * enclose their content. */
+.content-blocking-category > .indent {
+  display: block;
+}
+
+.content-blocking-category.expanded .content-blocking-extra-information,
+.content-blocking-category.selected .content-blocking-extra-information {
+  visibility: visible;
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+}
+
+.content-blocking-extra-information > .indent {
+  margin-bottom: 18px;
+}
+
+.content-blocking-extra-information > .custom-option {
+  margin: 10px 0;
+}
+
+.content-blocking-warning {
+  background-color: rgba(69, 161, 255, 0.2);
+  border-radius: 4px;
+  padding: 10px 0;
+  margin: 10px 0;
+}
+
+.content-blocking-warning:not([hidden]) + .content-blocking-warning {
+  margin-top: 0;
+}
+
+.content-blocking-trackers-image {
+  list-style-image: url("chrome://browser/skin/controlcenter/tracker-image-disabled.svg");
+  margin-inline-end: 5px;
+}
+
+.content-blocking-social-media-image {
+  list-style-image: url("chrome://browser/skin/controlcenter/socialblock-disabled.svg");
+  margin-inline-end: 5px;
+}
+
+.content-blocking-cookies-image {
+  list-style-image: url("chrome://browser/skin/controlcenter/3rdpartycookies-disabled.svg");
+  margin-inline-end: 5px;
+}
+
+.content-blocking-cryptominers-image {
+  list-style-image: url("chrome://browser/skin/controlcenter/cryptominers-disabled.svg");
+  margin-inline-end: 5px;
+}
+
+.content-blocking-fingerprinters-image {
+  list-style-image: url("chrome://browser/skin/controlcenter/fingerprinters-disabled.svg");
+  margin-inline-end: 5px;
+}
+
+.content-blocking-warning-image {
+  list-style-image: url("chrome://global/skin/icons/warning.svg");
+  margin-inline: 4px 8px;
+}
+
+#blockCookiesMenu {
+  width: 450px;
+}
+
+#blockCookiesMenu,
+#trackingProtectionMenu {
+  margin: 0;
+}
+
+#changeBlockListLink {
+  margin-inline-start: 56px;
+}
+
+#telemetry-container {
+  border-radius: 4px;
+  background-color: rgba(12,12,13,0.2);
+  font-size: 85%;
+  padding: 3px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  width: 100%;
+}
+
+#dataDescriptionBox {
+  line-height: 1.3;
+}
+
+.content-blocking-category-description {
+  font-size: 90%;
+  opacity: 0.6;
+}
+
+.warning-description {
+  background: url(chrome://browser/skin/controlcenter/warning.svg) no-repeat 0 5px;
+  opacity: 0.6;
+  -moz-context-properties: fill, stroke;
+  fill: #d7b600;
+  stroke: white;
+  padding-inline-start: 20px;
+}
+
+.reject-trackers-warning-icon:-moz-locale-dir(rtl) {
+  background-position-x: right 0;
+}
+
+#contentBlockingChangeCookieSettings {
+  padding: 0.25em 0.75em;
+  margin: 4px 8px;
+}
+
+#deleteOnCloseNote {
+  margin-bottom: 0 !important; /* Overrides .info-panel margin-bottom. */
+  margin-inline-end: 32px;
+}
+
+#submitHealthReportBox {
+  display: -moz-inline-box;
+}

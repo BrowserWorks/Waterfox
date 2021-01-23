@@ -13,7 +13,7 @@ var factory = {
     throw new Error("There is no history service");
   },
   lockFactory() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   QueryInterface: ChromeUtils.generateQI([Ci.nsIFactory]),
 };
@@ -46,9 +46,9 @@ function GetPermissionsFile(profile) {
  */
 
 add_task(function test() {
-  /* Create and set up the permissions database */
-  let profile = do_get_profile();
+  // Create and set up the permissions database.
   Services.prefs.setCharPref("permissions.manager.defaultsUrl", "");
+  let profile = do_get_profile();
 
   // Make sure that we can't resolve the nsINavHistoryService
   try {
@@ -131,6 +131,7 @@ add_task(function test() {
   }
 
   // Add some rows to the database
+  // eslint-disable-next-line no-unused-vars
   let created = [
     insertHost("foo.com", "A", 1, 0, 0, 0, 0, false),
     insertHost("foo.com", "C", 1, 0, 0, 0, 0, false),
@@ -211,8 +212,8 @@ add_task(function test() {
   // This will force the permission-manager to reload the data.
   Services.obs.notifyObservers(null, "testonly-reload-permissions-from-disk");
 
-  // Force initialization of the nsPermissionManager
-  for (let permission of Services.perms.enumerator) {
+  // Force initialization of the PermissionManager
+  for (let permission of Services.perms.all) {
     let isExpected = false;
 
     expected.forEach((it, i) => {

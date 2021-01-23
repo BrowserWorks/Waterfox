@@ -27,9 +27,7 @@ static RefPtr<nsThread> GetUiThread() {
 }
 #endif  // defined(MOZ_WIDGET_ANDROID)
 
-static bool IsOnUiThread() {
-  return GetUiThread()->SerialEventTarget()->IsOnCurrentThread();
-}
+static bool IsOnUiThread() { return GetUiThread()->IsOnCurrentThread(); }
 
 namespace mozilla {
 namespace layers {
@@ -114,14 +112,6 @@ bool UiCompositorControllerChild::SetFixedBottomOffset(int32_t aOffset) {
   return SendFixedBottomOffset(aOffset);
 }
 
-bool UiCompositorControllerChild::SetPinned(const bool& aPinned,
-                                            const int32_t& aReason) {
-  if (!mIsOpen) {
-    return false;
-  }
-  return SendPinned(aPinned, aReason);
-}
-
 bool UiCompositorControllerChild::ToolbarAnimatorMessageFromUI(
     const int32_t& aMessage) {
   if (!mIsOpen) {
@@ -130,10 +120,9 @@ bool UiCompositorControllerChild::ToolbarAnimatorMessageFromUI(
 
   if (aMessage == IS_COMPOSITOR_CONTROLLER_OPEN) {
     RecvToolbarAnimatorMessageFromCompositor(COMPOSITOR_CONTROLLER_OPEN);
-    return true;
   }
 
-  return SendToolbarAnimatorMessageFromUI(aMessage);
+  return true;
 }
 
 bool UiCompositorControllerChild::SetDefaultClearColor(const uint32_t& aColor) {
@@ -165,15 +154,6 @@ bool UiCompositorControllerChild::EnableLayerUpdateNotifications(
   return SendEnableLayerUpdateNotifications(aEnable);
 }
 
-bool UiCompositorControllerChild::ToolbarPixelsToCompositor(
-    Shmem& aMem, const ScreenIntSize& aSize) {
-  if (!mIsOpen) {
-    return false;
-  }
-
-  return SendToolbarPixelsToCompositor(std::move(aMem), aSize);
-}
-
 void UiCompositorControllerChild::Destroy() {
   if (!IsOnUiThread()) {
     GetUiThread()->Dispatch(
@@ -186,9 +166,9 @@ void UiCompositorControllerChild::Destroy() {
   if (mWidget) {
     // Dispatch mWidget to main thread to prevent it from being destructed by
     // the ui thread.
-    RefPtr<nsIWidget> widget = mWidget.forget();
-    NS_ReleaseOnMainThreadSystemGroup("UiCompositorControllerChild::mWidget",
-                                      widget.forget());
+    RefPtr<nsIWidget> widget = std::move(mWidget);
+    NS_ReleaseOnMainThread("UiCompositorControllerChild::mWidget",
+                           widget.forget());
   }
 
   if (mIsOpen) {
@@ -200,12 +180,6 @@ void UiCompositorControllerChild::Destroy() {
 
 void UiCompositorControllerChild::SetBaseWidget(nsBaseWidget* aWidget) {
   mWidget = aWidget;
-}
-
-bool UiCompositorControllerChild::AllocPixelBuffer(const int32_t aSize,
-                                                   Shmem* aMem) {
-  MOZ_ASSERT(aSize > 0);
-  return AllocShmem(aSize, ipc::SharedMemory::TYPE_BASIC, aMem);
 }
 
 bool UiCompositorControllerChild::DeallocPixelBuffer(Shmem& aMem) {
@@ -223,7 +197,7 @@ void UiCompositorControllerChild::ActorDestroy(ActorDestroyReason aWhy) {
   }
 }
 
-void UiCompositorControllerChild::DeallocPUiCompositorControllerChild() {
+void UiCompositorControllerChild::ActorDealloc() {
   if (mParent) {
     mParent = nullptr;
   }
@@ -232,8 +206,10 @@ void UiCompositorControllerChild::DeallocPUiCompositorControllerChild() {
 
 void UiCompositorControllerChild::ProcessingError(Result aCode,
                                                   const char* aReason) {
-  MOZ_RELEASE_ASSERT(aCode == MsgDropped,
-                     "Processing error in UiCompositorControllerChild");
+  if (aCode != MsgDropped) {
+    gfxDevCrash(gfx::LogReason::ProcessingError)
+        << "Processing error in UiCompositorControllerChild: " << int(aCode);
+  }
 }
 
 void UiCompositorControllerChild::HandleFatalError(const char* aMsg) const {
@@ -279,13 +255,12 @@ UiCompositorControllerChild::UiCompositorControllerChild(
     const uint64_t& aProcessToken)
     : mIsOpen(false), mProcessToken(aProcessToken), mWidget(nullptr) {}
 
-UiCompositorControllerChild::~UiCompositorControllerChild() {}
+UiCompositorControllerChild::~UiCompositorControllerChild() = default;
 
 void UiCompositorControllerChild::OpenForSameProcess() {
   MOZ_ASSERT(IsOnUiThread());
 
-  mIsOpen = Open(mParent->GetIPCChannel(),
-                 mozilla::layers::CompositorThreadHolder::Loop(),
+  mIsOpen = Open(mParent->GetIPCChannel(), mozilla::layers::CompositorThread(),
                  mozilla::ipc::ChildSide);
 
   if (!mIsOpen) {

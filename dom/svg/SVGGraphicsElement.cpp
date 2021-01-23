@@ -6,6 +6,8 @@
 
 #include "mozilla/dom/SVGGraphicsElement.h"
 
+#include "mozilla/dom/BindContext.h"
+
 namespace mozilla {
 namespace dom {
 
@@ -28,6 +30,8 @@ SVGGraphicsElement::SVGGraphicsElement(
 
 bool SVGGraphicsElement::IsSVGFocusable(bool* aIsFocusable,
                                         int32_t* aTabIndex) {
+  // XXXedgar, maybe we could factor out the common code for SVG, HTML and
+  // MathML elements, see bug 1586011.
   Document* doc = GetComposedDoc();
   if (!doc || doc->HasFlag(NODE_IS_EDITABLE)) {
     // In designMode documents we only allow focusing the document.
@@ -48,7 +52,7 @@ bool SVGGraphicsElement::IsSVGFocusable(bool* aIsFocusable,
 
   // If a tabindex is specified at all, or the default tabindex is 0, we're
   // focusable
-  *aIsFocusable = tabIndex >= 0 || HasAttr(nsGkAtoms::tabindex);
+  *aIsFocusable = tabIndex >= 0 || GetTabIndexAttrValue().isSome();
 
   return false;
 }
@@ -58,6 +62,19 @@ bool SVGGraphicsElement::IsFocusableInternal(int32_t* aTabIndex,
   bool isFocusable = false;
   IsSVGFocusable(&isFocusable, aTabIndex);
   return isFocusable;
+}
+
+nsresult SVGGraphicsElement::BindToTree(BindContext& aContext,
+                                        nsINode& aParent) {
+  nsresult rv = SVGGraphicsElementBase::BindToTree(aContext, aParent);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (IsFocusable() && HasAttr(nsGkAtoms::autofocus) &&
+      aContext.AllowsAutoFocus()) {
+    aContext.OwnerDoc().SetAutoFocusElement(this);
+  }
+
+  return NS_OK;
 }
 
 }  // namespace dom

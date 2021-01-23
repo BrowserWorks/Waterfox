@@ -1,16 +1,22 @@
-import {ModalOverlayWrapper} from "content-src/asrouter/components/ModalOverlay/ModalOverlay";
-import {mount} from "enzyme";
+import { ModalOverlayWrapper } from "content-src/asrouter/components/ModalOverlay/ModalOverlay";
+import { mount } from "enzyme";
 import React from "react";
 
 describe("ModalOverlayWrapper", () => {
   let fakeDoc;
   let sandbox;
+  let header;
   beforeEach(() => {
     sandbox = sinon.createSandbox();
+    header = document.createElement("div");
+
     fakeDoc = {
       addEventListener: sandbox.stub(),
       removeEventListener: sandbox.stub(),
-      body: {classList: {add: sandbox.stub(), remove: sandbox.stub()}},
+      body: { classList: { add: sandbox.stub(), remove: sandbox.stub() } },
+      getElementById() {
+        return header;
+      },
     };
   });
   afterEach(() => {
@@ -36,7 +42,7 @@ describe("ModalOverlayWrapper", () => {
 
     // Simulate onkeydown being called
     const [, callback] = fakeDoc.addEventListener.firstCall.args;
-    callback({key: "Escape"});
+    callback({ key: "Escape" });
 
     assert.calledOnce(onClose);
   });
@@ -47,8 +53,17 @@ describe("ModalOverlayWrapper", () => {
 
     // Simulate onkeydown being called
     const [, callback] = fakeDoc.addEventListener.firstCall.args;
-    callback({key: "Ctrl"});
+    callback({ key: "Ctrl" });
 
+    assert.notCalled(onClose);
+  });
+
+  it("should not call props.onClose when clicked outside dialog", async () => {
+    const onClose = sandbox.stub();
+    const wrapper = mount(
+      <ModalOverlayWrapper document={fakeDoc} onClose={onClose} />
+    );
+    wrapper.find("div.modalOverlayOuter.active").simulate("click");
     assert.notCalled(onClose);
   });
 });

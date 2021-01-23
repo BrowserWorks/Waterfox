@@ -7,7 +7,7 @@ use crate::ir::condcodes::{CondCode, FloatCC, IntCC};
 use crate::ir::dfg::ValueDef;
 use crate::ir::immediates::{Imm64, Offset32};
 use crate::ir::instructions::{Opcode, ValueList};
-use crate::ir::{Ebb, Function, Inst, InstBuilder, InstructionData, MemFlags, Type, Value};
+use crate::ir::{Block, Function, Inst, InstBuilder, InstructionData, MemFlags, Type, Value};
 use crate::isa::TargetIsa;
 use crate::timing;
 
@@ -18,7 +18,7 @@ struct CmpBrInfo {
     /// The icmp, icmp_imm, or fcmp instruction.
     cmp_inst: Inst,
     /// The destination of the branch.
-    destination: Ebb,
+    destination: Block,
     /// The arguments of the branch.
     args: ValueList,
     /// The first argument to the comparison. The second is in the `kind` field.
@@ -45,7 +45,7 @@ fn optimize_cpu_flags(
     pos: &mut EncCursor,
     inst: Inst,
     last_flags_clobber: Option<Inst>,
-    isa: &TargetIsa,
+    isa: &dyn TargetIsa,
 ) {
     // Look for compare and branch patterns.
     // This code could be considerably simplified with non-lexical lifetimes.
@@ -179,7 +179,7 @@ struct MemOpInfo {
     offset: Offset32,
 }
 
-fn optimize_complex_addresses(pos: &mut EncCursor, inst: Inst, isa: &TargetIsa) {
+fn optimize_complex_addresses(pos: &mut EncCursor, inst: Inst, isa: &dyn TargetIsa) {
     // Look for simple loads and stores we can optimize.
     let info = match pos.func.dfg[inst] {
         InstructionData::Load {
@@ -357,13 +357,14 @@ fn optimize_complex_addresses(pos: &mut EncCursor, inst: Inst, isa: &TargetIsa) 
 //
 // The main post-opt pass.
 
-pub fn do_postopt(func: &mut Function, isa: &TargetIsa) {
+pub fn do_postopt(func: &mut Function, isa: &dyn TargetIsa) {
     let _tt = timing::postopt();
     let mut pos = EncCursor::new(func, isa);
-    while let Some(_ebb) = pos.next_ebb() {
+    let is_mach_backend = isa.get_mach_backend().is_some();
+    while let Some(_block) = pos.next_block() {
         let mut last_flags_clobber = None;
         while let Some(inst) = pos.next_inst() {
-            if isa.uses_cpu_flags() {
+            if !is_mach_backend && isa.uses_cpu_flags() {
                 // Optimize instructions to make use of flags.
                 optimize_cpu_flags(&mut pos, inst, last_flags_clobber, isa);
 

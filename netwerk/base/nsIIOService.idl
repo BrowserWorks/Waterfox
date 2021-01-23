@@ -74,11 +74,20 @@ interface nsIIOService : nsISupports
      * @param aFile specifies the file path
      * @return reference to a new nsIURI object
      *
-     * Note: in the future, for perf reasons we should allow 
+     * Note: in the future, for perf reasons we should allow
      * callers to specify whether this is a file or directory by
      * splitting this  into newDirURI() and newActualFileURI().
      */
     nsIURI newFileURI(in nsIFile aFile);
+
+    /**
+     * Converts an internal URI (e.g. one that has a username and password in
+     * it) into one which we can expose to the user, for example on the URL bar.
+     *
+     * @param  aURI The URI to be converted.
+     * @return nsIURI The converted, exposable URI.
+     */
+    nsIURI createExposableURI(in nsIURI aURI);
 
     /**
      * Creates a channel for a given URI.
@@ -117,6 +126,7 @@ interface nsIIOService : nsISupports
                                                       in const_MaybeServiceWorkerDescriptorRef aController,
                                                       in unsigned long aSecurityFlags,
                                                       in unsigned long aContentPolicyType,
+                                                      in unsigned long aSandboxFlags,
                                                       out nsIChannel aResult);
 
     /**
@@ -138,10 +148,10 @@ interface nsIIOService : nsISupports
                           in unsigned long aContentPolicyType);
 
     /**
-     * Returns true if networking is in "offline" mode. When in offline mode, 
-     * attempts to access the network will fail (although this does not 
-     * necessarily correlate with whether there is actually a network 
-     * available -- that's hard to detect without causing the dialer to 
+     * Returns true if networking is in "offline" mode. When in offline mode,
+     * attempts to access the network will fail (although this does not
+     * necessarily correlate with whether there is actually a network
+     * available -- that's hard to detect without causing the dialer to
      * come up).
      *
      * Changing this fires observer notifications ... see below.
@@ -190,6 +200,14 @@ interface nsIIOService : nsISupports
     boolean hostnameIsLocalIPAddress(in nsIURI aURI);
 
     /**
+     * Checks if a URI host is a shared IPv4 address literal.
+     *
+     * @param nsIURI the URI that contains the hostname to check
+     * @return true if the URI hostname is a shared IP address
+     */
+    boolean hostnameIsSharedIPAddress(in nsIURI aURI);
+
+    /**
      * While this is set, IOService will monitor an nsINetworkLinkService
      * (if available) and set its offline status to "true" whenever
      * isLinkUp is false.
@@ -234,6 +252,11 @@ interface nsIIOService : nsISupports
                                                in nsIPrincipal aTriggeringPrincipal,
                                                in unsigned long aSecurityFlags,
                                                in unsigned long aContentPolicyType);
+
+    /**
+     * Return true if socket process is launched.
+     */
+    readonly attribute boolean socketProcessLaunched;
 };
 
 %{C++

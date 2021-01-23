@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 from distutils.version import StrictVersion
 
@@ -65,7 +65,8 @@ class MachCommands(MachCommandBase):
                                          '--show-process-coalition',
                                          '--show-process-gpu',
                                          '-n', '1',
-                                         '-i', interval])
+                                         '-i', interval],
+                                        universal_newlines=True)
 
         # When run with --show-process-coalition, |powermetrics| groups outputs
         # into process coalitions, each of which has a leader.

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vložiť znaky">
+<!ENTITY category.label "Kategória:">
+<!ENTITY letter.label "Písmeno:">
+<!ENTITY letter.accessKey "P">
+<!ENTITY character.label "Znak:">
+<!ENTITY character.accessKey "n">
+<!ENTITY accentUpper.label "Veľké s dĺžňom">
+<!ENTITY accentLower.label "Malé s dĺžňom">
+<!ENTITY otherUpper.label "Veľké iné">
+<!ENTITY otherLower.label "Malé iné">
+<!ENTITY commonSymbols.label "Obvyklé symboly">
+<!ENTITY insertButton.label "Vložiť">
+<!ENTITY closeButton.label "Zavrieť">

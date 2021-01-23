@@ -21,11 +21,6 @@ class TaskQueue;
 class TaskDispatcher;
 
 /*
- * NOTE: PLEASE AVOID USE OF AbstractThread OUTSIDE MEDIA CODE WHEN POSSIBLE.
- * The nsISerialEventTarget interface should be preferred. AbstractThread
- * has unusual "tail dispatch" semantics that usually are not needed outside
- * of media code.
- *
  * We often want to run tasks on a target that guarantees that events will never
  * run in parallel. There are various target types that achieve this - namely
  * nsIThread and TaskQueue. Note that nsIThreadPool (which implements
@@ -34,10 +29,17 @@ class TaskDispatcher;
  * the structures we might use here and provides a consistent interface.
  *
  * At present, the supported AbstractThread implementations are TaskQueue,
- * AbstractThread::MainThread() and DocGroup::AbstractThreadFor().
- * If you add support for another thread that is not the MainThread, you'll need
- * to figure out how to make it unique such that comparing AbstractThread
- * pointers is equivalent to comparing nsIThread pointers.
+ * AbstractThread::MainThread() and XPCOMThreadWrapper which can wrap any
+ * nsThread.
+ *
+ * The primary use of XPCOMThreadWrapper is to allow any threads to provide
+ * Direct Task dispatching which is similar (but not identical to) the microtask
+ * semantics of JS promises. Instantiating a XPCOMThreadWrapper on the current
+ * nsThread is sufficient to enable direct task dispatching.
+ *
+ * You shouldn't use pointers when comparing AbstractThread or nsIThread to
+ * determine if you are currently on the thread, but instead use the
+ * nsISerialEventTarget::IsOnCurrentThread() method.
  */
 class AbstractThread : public nsISerialEventTarget {
  public:
@@ -50,17 +52,9 @@ class AbstractThread : public nsISerialEventTarget {
 
   // Returns an AbstractThread wrapper of a nsIThread.
   static already_AddRefed<AbstractThread> CreateXPCOMThreadWrapper(
-      nsIThread* aThread, bool aRequireTailDispatch);
+      nsIThread* aThread, bool aRequireTailDispatch, bool aOnThread = false);
 
-  // Returns an AbstractThread wrapper of a non-nsIThread EventTarget on the
-  // main thread.
-  static already_AddRefed<AbstractThread> CreateEventTargetWrapper(
-      nsIEventTarget* aEventTarget, bool aRequireTailDispatch);
-
-  // AbstractThreads preserve their refcounts when recording/replaying, as
-  // otherwise the thread which releases the last reference may vary between
-  // recording and replaying.
-  NS_DECL_THREADSAFE_ISUPPORTS_WITH_RECORDING(recordreplay::Behavior::Preserve)
+  NS_DECL_THREADSAFE_ISUPPORTS
 
   // We don't use NS_DECL_NSIEVENTTARGET so that we can remove the default
   // |flags| parameter from Dispatch. Otherwise, a single-argument Dispatch call
@@ -90,6 +84,10 @@ class AbstractThread : public nsISerialEventTarget {
   // Returns false if we definitely don't have any tail tasks.
   virtual bool MightHaveTailTasks() { return true; }
 
+  // Returns true if the tail dispatcher is available. In certain edge cases
+  // like shutdown, it might not be.
+  virtual bool IsTailDispatcherAvailable() { return true; }
+
   // Helper functions for methods on the tail TasklDispatcher. These check
   // HasTailTasks to avoid allocating a TailDispatcher if it isn't
   // needed.
@@ -115,26 +113,14 @@ class AbstractThread : public nsISerialEventTarget {
   // Must be called exactly once during startup.
   static void InitTLS();
   static void InitMainThread();
+  static void ShutdownMainThread();
 
   void DispatchStateChange(already_AddRefed<nsIRunnable> aRunnable);
 
   static void DispatchDirectTask(already_AddRefed<nsIRunnable> aRunnable);
 
-  struct AutoEnter {
-    explicit AutoEnter(AbstractThread* aThread) {
-      MOZ_ASSERT(aThread);
-      mLastCurrentThread = sCurrentThreadTLS.get();
-      sCurrentThreadTLS.set(aThread);
-    }
-
-    ~AutoEnter() { sCurrentThreadTLS.set(mLastCurrentThread); }
-
-   private:
-    AbstractThread* mLastCurrentThread = nullptr;
-  };
-
  protected:
-  virtual ~AbstractThread() {}
+  virtual ~AbstractThread() = default;
   static MOZ_THREAD_LOCAL(AbstractThread*) sCurrentThreadTLS;
 
   // True if we want to require that every task dispatched from tasks running in

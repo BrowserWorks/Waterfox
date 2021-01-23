@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Prenumerera">
+<!ENTITY subscribeButton.label        "Prenumerera">
+<!ENTITY subscribeButton.accesskey    "P">
+<!ENTITY unsubscribeButton.label			"Säg upp prenumeration">
+<!ENTITY unsubscribeButton.accesskey  "ä">
+<!ENTITY newGroupsTab.label           "Nya grupper">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Uppdatera">
+<!ENTITY refreshButton.accesskey      "a">
+<!ENTITY stopButton.label             "Avbryt">
+<!ENTITY stopButton.accesskey         "b">
+<!ENTITY server.label                 "Konto:">
+<!ENTITY server.accesskey             "K">
+<!ENTITY subscribedHeader.label       "Prenumerera">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Meddelanden"> -->
+<!ENTITY namefield.label              "Visa dem som innehåller:">
+<!ENTITY namefield.accesskey          "V">

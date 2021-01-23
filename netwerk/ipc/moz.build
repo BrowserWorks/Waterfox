@@ -5,12 +5,23 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.net += [
+    'ADocumentChannelBridge.h',
     'ChannelEventQueue.h',
+    'DocumentChannel.h',
+    'DocumentChannelChild.h',
+    'DocumentChannelParent.h',
+    'DocumentLoadListener.h',
+    'InputChannelThrottleQueueChild.h',
+    'InputChannelThrottleQueueParent.h',
     'NeckoChild.h',
     'NeckoCommon.h',
     'NeckoMessageUtils.h',
     'NeckoParent.h',
     'NeckoTargetHolder.h',
+    'ParentProcessDocumentChannel.h',
+    'ProxyConfigLookup.h',
+    'ProxyConfigLookupChild.h',
+    'ProxyConfigLookupParent.h',
     'SocketProcessBridgeChild.h',
     'SocketProcessBridgeParent.h',
     'SocketProcessChild.h',
@@ -21,10 +32,19 @@ EXPORTS.mozilla.net += [
 
 UNIFIED_SOURCES += [
     'ChannelEventQueue.cpp',
+    'DocumentChannel.cpp',
+    'DocumentChannelChild.cpp',
+    'DocumentChannelParent.cpp',
+    'DocumentLoadListener.cpp',
+    'InputChannelThrottleQueueChild.cpp',
+    'InputChannelThrottleQueueParent.cpp',
     'NeckoChild.cpp',
-    'NeckoCommon.cpp',
     'NeckoParent.cpp',
     'NeckoTargetHolder.cpp',
+    'ParentProcessDocumentChannel.cpp',
+    'ProxyConfigLookup.cpp',
+    'ProxyConfigLookupChild.cpp',
+    'ProxyConfigLookupParent.cpp',
     'SocketProcessBridgeChild.cpp',
     'SocketProcessBridgeParent.cpp',
     'SocketProcessChild.cpp',
@@ -37,8 +57,11 @@ IPDL_SOURCES = [
     'NeckoChannelParams.ipdlh',
     'PChannelDiverter.ipdl',
     'PDataChannel.ipdl',
+    'PDocumentChannel.ipdl',
     'PFileChannel.ipdl',
+    'PInputChannelThrottleQueue.ipdl',
     'PNecko.ipdl',
+    'PProxyConfigLookup.ipdl',
     'PSimpleChannel.ipdl',
     'PSocketProcess.ipdl',
     'PSocketProcessBridge.ipdl'
@@ -48,7 +71,8 @@ IPDL_SOURCES = [
 if not CONFIG['MOZ_WEBRTC']:
   IPDL_SOURCES += [
       '../../media/mtransport/ipc/PStunAddrsRequest.ipdl',
-      '../../media/mtransport/ipc/PWebrtcProxyChannel.ipdl',
+      '../../media/mtransport/ipc/PWebrtcTCPSocket.ipdl',
+      '../../media/mtransport/ipc/WebrtcProxyConfig.ipdlh',
   ]
   EXPORTS.mozilla.net += [
       '../../media/mtransport/ipc/NrIceStunAddrMessageUtils.h',
@@ -67,6 +91,7 @@ LOCAL_INCLUDES += [
     '/modules/libjar',
     '/netwerk/base',
     '/netwerk/protocol/http',
+    '/security/manager/ssl',
     '/xpcom/threads'
 ]
 

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# secarica <orice@secarica.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY securityTitle.label "Securitate">
+<!ENTITY securityTab.label "Securitate">
+<!ENTITY securityHeading.label "Pentru a trimite și primi mesaje semnate electronic sau criptate, ar trebui să specificați un certificat pentru semnătură electronică precum și unul pentru criptare.">
+<!ENTITY encryptionGroupTitle.label "Criptare">
+<!ENTITY encryptionChoiceLabel.label "Modul de criptare implicit la trimiterea mesajelor:">
+<!ENTITY neverEncrypt.label "Nu cripta">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "Criptează întotdeauna (mesajul se trimite doar dacă toți destinatarii au certificate)">
+<!ENTITY alwaysEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert.message "Folosește acest certificat pentru a cripta și decripta mesajele pe care le primesc:">
+<!ENTITY digitalSign.certificate.button "Selectează…">
+<!ENTITY digitalSign.certificate.accesskey "F">
+<!ENTITY digitalSign.certificate_clear.button "Șterge">
+<!ENTITY digitalSign.certificate_clear.accesskey "A">
+<!ENTITY encryption.certificate.button "Selectează…">
+<!ENTITY encryption.certificate.accesskey "u">
+<!ENTITY encryption.certificate_clear.button "Șterge">
+<!ENTITY encryption.certificate_clear.accesskey "l">
+<!ENTITY signingGroupTitle.label "Semnătură electronică">
+<!ENTITY signMessage.label "Semnează (implicit) mesajele">
+<!ENTITY signMessage.accesskey "S">
+<!ENTITY signingCert.message "Folosește acest certificat pentru a semna electronic mesajele pe care le trimit:">
+
+<!ENTITY certificates.label "Certificate">
+<!ENTITY manageCerts.label "Gestionează certificatele...">
+<!ENTITY manageCerts.accesskey "G">
+<!ENTITY manageDevices.label "Gestionează dispozitivele de securitate...">
+<!ENTITY manageDevices.accesskey "G">

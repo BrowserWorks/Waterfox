@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label "Nombre:">
+<!ENTITY editBookmarkOverlay.name.accesskey "N">
+<!ENTITY editBookmarkOverlay.location.label "Dirección:">
+<!ENTITY editBookmarkOverlay.location.accesskey "D">
+<!ENTITY editBookmarkOverlay.feedLocation.label "Dirección del canal:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey "i">
+<!ENTITY editBookmarkOverlay.siteLocation.label "Dirección del sitio:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey "r">
+<!ENTITY editBookmarkOverlay.folder.label "Carpeta:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip "Mostrar todas las carpetas de marcadores">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip "Ocultar">
+<!ENTITY editBookmarkOverlay.tags.label "Etiquetas:">
+<!ENTITY editBookmarkOverlay.tags.accesskey "E">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label "Separe las etiquetas con comas">
+<!ENTITY editBookmarkOverlay.description.label "Descripción:">
+<!ENTITY editBookmarkOverlay.description.accesskey "s">
+<!ENTITY editBookmarkOverlay.keyword.label "Palabra clave:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey "P">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip "Mostrar todas las etiquetas">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label "Cargar este marcador en el panel lateral">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey "C">
+<!ENTITY editBookmarkOverlay.choose.label "Elegir…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label "Nueva carpeta">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey "u">

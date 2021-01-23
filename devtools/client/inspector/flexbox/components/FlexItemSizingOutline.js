@@ -8,7 +8,7 @@ const { PureComponent } = require("devtools/client/shared/vendor/react");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
-const Types = require("../types");
+const Types = require("devtools/client/inspector/flexbox/types");
 
 class FlexItemSizingOutline extends PureComponent {
   static get propTypes() {
@@ -34,7 +34,7 @@ class FlexItemSizingOutline extends PureComponent {
     });
   }
 
-  renderFinalOutline(mainFinalSize, mainMaxSize, mainMinSize, isClamped) {
+  renderFinalOutline(isClamped) {
     return dom.div({
       className: "flex-outline-final" + (isClamped ? " clamped" : ""),
     });
@@ -42,6 +42,7 @@ class FlexItemSizingOutline extends PureComponent {
 
   renderPoint(className, label = className) {
     return dom.div({
+      key: className,
       className: `flex-outline-point ${className}`,
       "data-label": label,
     });
@@ -161,12 +162,7 @@ class FlexItemSizingOutline extends PureComponent {
         showMax ? this.renderPoint("max") : null,
         this.renderBasisOutline(mainBaseSize),
         this.renderDeltaOutline(mainDeltaSize),
-        this.renderFinalOutline(
-          mainFinalSize,
-          mainMaxSize,
-          mainMinSize,
-          clampState !== "unclamped"
-        )
+        this.renderFinalOutline(clampState !== "unclamped")
       )
     );
   }

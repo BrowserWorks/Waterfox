@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "מאפייני כפתור">
+
+<!ENTITY Settings.label "הגדרות">
+
+<!ENTITY ButtonType.label "סוג">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "שלח">
+<!ENTITY reset.value "איפוס">
+<!ENTITY button.value "כפתור">
+
+<!ENTITY ButtonName.label "שם:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "ערך:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "מפתח טאב:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "לא מאופשר">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "מקש גישה:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "הסר כפתור">
+<!ENTITY RemoveButton.accesskey "R">
+
+

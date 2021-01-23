@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpserver = new HttpServer();
@@ -203,6 +205,6 @@ function handler(metadata, response) {
   bos.setOutputStream(response.bodyOutputStream);
 
   response.processAsync();
-  bos.writeByteArray(tests[index].body, tests[index].body.length);
+  bos.writeByteArray(tests[index].body);
   response.finish();
 }

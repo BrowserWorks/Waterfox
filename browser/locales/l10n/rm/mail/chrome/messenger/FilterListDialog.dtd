@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filters da messadi">
+<!ENTITY nameColumn.label "Num dal filter">
+<!ENTITY activeColumn.label "Activà">
+<!ENTITY newButton.label "Nov…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Copiar…">
+<!ENTITY newButton.popupCopy.accesskey "C">
+<!ENTITY editButton.label "Modifitgar…">
+<!ENTITY editButton.accesskey "M">
+<!ENTITY deleteButton.label "Stizzar">
+<!ENTITY deleteButton.accesskey "z">
+<!ENTITY reorderTopButton "Plazzar sisum">
+<!ENTITY reorderTopButton.accessKey "i">
+<!ENTITY reorderTopButton.toolTip "Spustar il filter uschia ch'el vegn exequì avant tut ils auters">
+<!ENTITY reorderUpButton.label "Ensi">
+<!ENTITY reorderUpButton.accesskey "E">
+<!ENTITY reorderDownButton.label "Engiu">
+<!ENTITY reorderDownButton.accesskey "g">
+<!ENTITY reorderBottomButton "Plazzar giusut">
+<!ENTITY reorderBottomButton.accessKey "u">
+<!ENTITY reorderBottomButton.toolTip "Spustar il filter uschia ch'el vegn exequì suenter tut ils auters">
+<!ENTITY filterHeader.label "Filters activads vegnan exequids automaticamain en la suandanta successiun.">
+<!ENTITY filtersForPrefix.label "Filters per:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Protocol da filters">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Exequir ussa">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "Fermar">
+<!ENTITY stopFilters.accesskey "F">
+<!ENTITY folderPickerPrefix.label "Exequir ils filters tschernids en:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "Agid">
+<!ENTITY helpButton.accesskey "A">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Tschertgar filters tenor num…">
+
+
+

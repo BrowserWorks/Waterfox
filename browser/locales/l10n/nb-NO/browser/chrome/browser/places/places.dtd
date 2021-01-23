@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Arkiv">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organiser">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organiser bokmerkene">
+
+<!ENTITY file.close.label               "Lukk">
+<!ENTITY file.close.accesskey           "L">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Visning">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Endre visning">
+<!ENTITY view.columns.label             "Vis kolonner">
+<!ENTITY view.columns.accesskey         "V">
+<!ENTITY view.sort.label                "Sorter">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Usortert">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "Stigende sorteringsrekkefølge">
+<!ENTITY view.sortAscending.accesskey   "S">
+<!ENTITY view.sortDescending.label      "Synkende sorteringsrekkefølge">
+<!ENTITY view.sortDescending.accesskey  "y">
+
+<!ENTITY importBookmarksFromHTML.label     "Importer bokmerker fra HTML …">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksporter bokmerker til HTML …">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importer data fra en annen nettleser …">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Sikkerhetskopier …">
+<!ENTITY cmd.backup.accesskey           "S">
+<!ENTITY cmd.restore2.label             "Gjenopprett">
+<!ENTITY cmd.restore2.accesskey         "G">
+<!ENTITY cmd.restoreFromFile.label      "Velg fil …">
+<!ENTITY cmd.restoreFromFile.accesskey  "V">
+
+<!ENTITY col.name.label          "Navn">
+<!ENTITY col.tags.label          "Etiketter">
+<!ENTITY col.url.label           "Adresse">
+<!ENTITY col.mostrecentvisit.label "Sist besøkt">
+<!ENTITY col.visitcount.label    "Antall besøk">
+<!ENTITY col.dateadded.label     "Lagt til">
+<!ENTITY col.lastmodified.label  "Sist endret">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importer og sikkerhetskopier">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importer og sikkerhetskopier bokmerkene">
+
+<!ENTITY backButton.tooltip  "Gå tilbake">
+
+<!ENTITY forwardButton.tooltip  "Gå frem">
+
+<!ENTITY detailsPane.selectAnItemText.description "Velg elementet du vil vise og redigere">
+

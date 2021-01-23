@@ -16,6 +16,11 @@ ChromeUtils.defineModuleGetter(
   "BrowserUtils",
   "resource://gre/modules/BrowserUtils.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "FinderIterator",
+  "resource://gre/modules/FinderIterator.jsm"
+);
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
@@ -50,7 +55,7 @@ function Finder(docShell) {
     .QueryInterface(Ci.nsIInterfaceRequestor)
     .getInterface(Ci.nsIWebProgress)
     .addProgressListener(this, Ci.nsIWebProgress.NOTIFY_LOCATION);
-  BrowserUtils.getRootWindow(this._docShell).addEventListener(
+  docShell.domWindow.addEventListener(
     "unload",
     this.onLocationChange.bind(this, { isTopLevel: true })
   );
@@ -58,13 +63,9 @@ function Finder(docShell) {
 
 Finder.prototype = {
   get iterator() {
-    if (this._iterator) {
-      return this._iterator;
+    if (!this._iterator) {
+      this._iterator = new FinderIterator();
     }
-    this._iterator = ChromeUtils.import(
-      "resource://gre/modules/FinderIterator.jsm",
-      null
-    ).FinderIterator;
     return this._iterator;
   },
 
@@ -99,7 +100,7 @@ Finder.prototype = {
     this._listeners = this._listeners.filter(l => l != aListener);
   },
 
-  _notify(options) {
+  _setResults(options, mode) {
     if (typeof options.storeResult != "boolean") {
       options.storeResult = true;
     }
@@ -112,35 +113,12 @@ Finder.prototype = {
     let foundLink = this._fastFind.foundLink;
     let linkURL = null;
     if (foundLink) {
-      let docCharset = null;
-      let ownerDoc = foundLink.ownerDocument;
-      if (ownerDoc) {
-        docCharset = ownerDoc.characterSet;
-      }
-
-      linkURL = Services.textToSubURI.unEscapeURIForUI(
-        docCharset,
-        foundLink.href
-      );
+      linkURL = Services.textToSubURI.unEscapeURIForUI(foundLink.href);
     }
 
     options.linkURL = linkURL;
     options.rect = this._getResultRect();
     options.searchString = this._searchString;
-
-    if (
-      !this.iterator.continueRunning({
-        caseSensitive: this._fastFind.caseSensitive,
-        entireWord: this._fastFind.entireWord,
-        linksOnly: options.linksOnly,
-        word: options.searchString,
-      })
-    ) {
-      this.iterator.stop();
-    }
-
-    this.highlighter.update(options);
-    this.requestMatchesCount(options.searchString, options.linksOnly);
 
     this._outlineLink(options.drawOutline);
 
@@ -183,6 +161,14 @@ Finder.prototype = {
     this.iterator.reset();
   },
 
+  set matchDiacritics(aMatchDiacritics) {
+    if (this._fastFind.matchDiacritics === aMatchDiacritics) {
+      return;
+    }
+    this._fastFind.matchDiacritics = aMatchDiacritics;
+    this.iterator.reset();
+  },
+
   set entireWord(aEntireWord) {
     if (this._fastFind.entireWord === aEntireWord) {
       return;
@@ -216,44 +202,116 @@ Finder.prototype = {
 
   /**
    * Used for normal search operations, highlights the first match.
+   * This method is used only for compatibility with non-remote browsers.
    *
    * @param aSearchString String to search for.
    * @param aLinksOnly Only consider nodes that are links for the search.
    * @param aDrawOutline Puts an outline around matched links.
    */
   fastFind(aSearchString, aLinksOnly, aDrawOutline) {
-    this._lastFindResult = this._fastFind.find(aSearchString, aLinksOnly);
+    this._lastFindResult = this._fastFind.find(
+      aSearchString,
+      aLinksOnly,
+      Ci.nsITypeAheadFind.FIND_INITIAL,
+      false
+    );
     let searchString = this._fastFind.searchString;
-    this._notify({
+
+    let results = {
       searchString,
       result: this._lastFindResult,
       findBackwards: false,
       findAgain: false,
       drawOutline: aDrawOutline,
       linksOnly: aLinksOnly,
-    });
+      useSubFrames: true,
+    };
+
+    this._setResults(results);
+    this.updateHighlightAndMatchCount(results);
+
+    return this._lastFindResult;
   },
 
   /**
    * Repeat the previous search. Should only be called after a previous
    * call to Finder.fastFind.
+   * This method is used only for compatibility with non-remote browsers.
    *
+   * @param aSearchString String to search for.
    * @param aFindBackwards Controls the search direction:
    *    true: before current match, false: after current match.
    * @param aLinksOnly Only consider nodes that are links for the search.
    * @param aDrawOutline Puts an outline around matched links.
    */
-  findAgain(aFindBackwards, aLinksOnly, aDrawOutline) {
-    this._lastFindResult = this._fastFind.findAgain(aFindBackwards, aLinksOnly);
+  findAgain(aSearchString, aFindBackwards, aLinksOnly, aDrawOutline) {
+    let mode = aFindBackwards
+      ? Ci.nsITypeAheadFind.FIND_PREVIOUS
+      : Ci.nsITypeAheadFind.FIND_NEXT;
+    this._lastFindResult = this._fastFind.find(
+      aFindBackwards,
+      aLinksOnly,
+      mode,
+      false
+    );
     let searchString = this._fastFind.searchString;
-    this._notify({
+
+    let results = {
       searchString,
       result: this._lastFindResult,
       findBackwards: aFindBackwards,
       findAgain: true,
       drawOutline: aDrawOutline,
       linksOnly: aLinksOnly,
-    });
+      useSubFrames: true,
+    };
+    this._setResults(results);
+    this.updateHighlightAndMatchCount(results);
+
+    return this._lastFindResult;
+  },
+
+  /**
+   * Used for normal search operations, highlights the first or
+   * subsequent match depending on the mode.
+   *
+   * Options are:
+   *  searchString String to search for.
+   *  findAgain True if this a find again operation.
+   *  mode Search mode from nsITypeAheadFind.
+   *  linksOnly Only consider nodes that are links for the search.
+   *  drawOutline Puts an outline around matched links.
+   *  useSubFrames True to iterate over subframes.
+   *  caseSensitive True for case sensitive searching.
+   *  entireWord True to match entire words.
+   *  matchDiacritics True to match diacritics.
+   */
+  find(options) {
+    this.caseSensitive = options.caseSensitive;
+    this.entireWord = options.entireWord;
+    this.matchDiacritics = options.matchDiacritics;
+
+    this._lastFindResult = this._fastFind.find(
+      options.searchString,
+      options.linksOnly,
+      options.mode,
+      !options.useSubFrames
+    );
+    let searchString = this._fastFind.searchString;
+    let results = {
+      searchString,
+      result: this._lastFindResult,
+      findBackwards:
+        options.mode == Ci.nsITypeAheadFind.FIND_PREVIOUS ||
+        options.mode == Ci.nsITypeAheadFind.FIND_LAST,
+      findAgain: options.findAgain,
+      drawOutline: options.drawOutline,
+      linksOnly: options.linksOnly,
+      entireWord: this._fastFind.entireWord,
+      useSubFrames: options.useSubFrames,
+    };
+    this._setResults(results, options.mode);
+    return new Promise(resolve => resolve(results));
   },
 
   /**
@@ -261,24 +319,66 @@ Finder.prototype = {
    * selected text in the window, on supported platforms (i.e. OSX).
    */
   setSearchStringToSelection() {
-    let searchString = this.getActiveSelectionText();
+    let searchInfo = this.getActiveSelectionText();
 
-    // Empty strings are rather useless to search for.
-    if (!searchString.length) {
-      return null;
+    // If an empty string is returned or a subframe is focused, don't
+    // assign the search string.
+    if (searchInfo.selectedText) {
+      this.clipboardSearchString = searchInfo.selectedText;
     }
 
-    this.clipboardSearchString = searchString;
-    return searchString;
+    return searchInfo;
   },
 
-  async highlight(aHighlight, aWord, aLinksOnly) {
-    await this.highlighter.highlight(aHighlight, aWord, aLinksOnly);
+  async highlight(aHighlight, aWord, aLinksOnly, aUseSubFrames = true) {
+    return this.highlighter.highlight(
+      aHighlight,
+      aWord,
+      aLinksOnly,
+      false,
+      aUseSubFrames
+    );
+  },
+
+  async updateHighlightAndMatchCount(aArgs) {
+    this._lastFindResult = aArgs;
+
+    if (
+      !this.iterator.continueRunning({
+        caseSensitive: this._fastFind.caseSensitive,
+        entireWord: this._fastFind.entireWord,
+        linksOnly: aArgs.linksOnly,
+        matchDiacritics: this._fastFind.matchDiacritics,
+        word: aArgs.searchString,
+        useSubFrames: aArgs.useSubFrames,
+      })
+    ) {
+      this.iterator.stop();
+    }
+
+    let highlightPromise = this.highlighter.update(
+      aArgs,
+      aArgs.useSubFrames ? false : aArgs.foundInThisFrame
+    );
+    let matchCountPromise = this.requestMatchesCount(
+      aArgs.searchString,
+      aArgs.linksOnly,
+      aArgs.useSubFrames
+    );
+
+    let results = await Promise.all([highlightPromise, matchCountPromise]);
+    if (results[1]) {
+      return Object.assign(results[1], results[0]);
+    } else if (results[0]) {
+      return results[0];
+    }
+
+    return null;
   },
 
   getInitialSelection() {
     this._getWindow().setTimeout(() => {
-      let initialSelection = this.getActiveSelectionText();
+      let initialSelection = this.getActiveSelectionText().selectedText;
       for (let l of this._listeners) {
         try {
           l.onCurrentSelection(initialSelection, true);
@@ -298,6 +398,19 @@ Finder.prototype = {
 
     let selText;
 
+    // If this is a remote subframe, return an empty string but
+    // indiciate which browsing context was focused.
+    if (
+      focusedElement &&
+      "frameLoader" in focusedElement &&
+      focusedElement.browsingContext instanceof BrowsingContext
+    ) {
+      return {
+        focusedChildBrowserContextId: focusedElement.browsingContext.id,
+        selectedText: "",
+      };
+    }
+
     if (focusedElement && focusedElement.editor) {
       // The user may have a selection in an input or textarea.
       selText = focusedElement.editor.selectionController
@@ -309,7 +422,7 @@ Finder.prototype = {
     }
 
     if (!selText) {
-      return "";
+      return { selectedText: "" };
     }
 
     // Process our text to get rid of unwanted characters.
@@ -323,7 +436,7 @@ Finder.prototype = {
       selText = selText.substr(0, truncLength);
     }
 
-    return selText;
+    return { selectedText: selText };
   },
 
   enableSelection() {
@@ -333,10 +446,15 @@ Finder.prototype = {
     this._restoreOriginalOutline();
   },
 
-  removeSelection() {
+  removeSelection(keepHighlight) {
     this._fastFind.collapseSelection();
     this.enableSelection();
-    this.highlighter.clear(this._getWindow());
+    let window = this._getWindow();
+    if (keepHighlight) {
+      this.highlighter.clearCurrentOutline(window);
+    } else {
+      this.highlighter.clear(window);
+    }
   },
 
   focusContent() {
@@ -441,9 +559,10 @@ Finder.prototype = {
     }
   },
 
-  _notifyMatchesCount(result = this._currentMatchesCountResult) {
+  _notifyMatchesCount(aWord, result = this._currentMatchesCountResult) {
     // The `_currentFound` property is only used for internal bookkeeping.
     delete result._currentFound;
+    result.searchString = aWord;
     result.limit = this.matchesCountLimit;
     if (result.total == result.limit) {
       result.total = -1;
@@ -456,20 +575,20 @@ Finder.prototype = {
     }
 
     this._currentMatchesCountResult = null;
+    return result;
   },
 
-  requestMatchesCount(aWord, aLinksOnly) {
+  async requestMatchesCount(aWord, aLinksOnly, aUseSubFrames = true) {
     if (
       this._lastFindResult == Ci.nsITypeAheadFind.FIND_NOTFOUND ||
       this.searchString == "" ||
       !aWord ||
       !this.matchesCountLimit
     ) {
-      this._notifyMatchesCount({
+      return this._notifyMatchesCount(aWord, {
         total: 0,
         current: 0,
       });
-      return;
     }
 
     this._currentFoundRange = this._fastFind.getFoundRange();
@@ -478,32 +597,31 @@ Finder.prototype = {
       caseSensitive: this._fastFind.caseSensitive,
       entireWord: this._fastFind.entireWord,
       linksOnly: aLinksOnly,
+      matchDiacritics: this._fastFind.matchDiacritics,
       word: aWord,
+      useSubFrames: aUseSubFrames,
     };
     if (!this.iterator.continueRunning(params)) {
       this.iterator.stop();
     }
 
-    this.iterator
-      .start(
-        Object.assign(params, {
-          finder: this,
-          limit: this.matchesCountLimit,
-          listener: this,
-          useCache: true,
-        })
-      )
-      .then(() => {
-        // Without a valid result, there's nothing to notify about. This happens
-        // when the iterator was started before and won the race.
-        if (
-          !this._currentMatchesCountResult ||
-          !this._currentMatchesCountResult.total
-        ) {
-          return;
-        }
-        this._notifyMatchesCount();
-      });
+    await this.iterator.start(
+      Object.assign(params, {
+        finder: this,
+        limit: this.matchesCountLimit,
+        listener: this,
+        useCache: true,
+        useSubFrames: aUseSubFrames,
+      })
+    );
+
+    // Without a valid result, there's nothing to notify about. This happens
+    // when the iterator was started before and won the race.
+    if (!this._currentMatchesCountResult) {
+      return null;
+    }
+
+    return this._notifyMatchesCount(aWord);
   },
 
   // FinderIterator listener implementation
@@ -528,8 +646,8 @@ Finder.prototype = {
 
   onIteratorReset() {},
 
-  onIteratorRestart({ word, linksOnly }) {
-    this.requestMatchesCount(word, linksOnly);
+  onIteratorRestart({ word, linksOnly, useSubFrames }) {
+    this.requestMatchesCount(word, linksOnly, useSubFrames);
   },
 
   onIteratorStart() {

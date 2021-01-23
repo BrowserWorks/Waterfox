@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Setări pentru mesaje nesolicitate">
+<!ENTITY trainingDescription.label "Dacă este activată, trebuie să antrenezi &brandShortName; să identifice mesajele nesolicitate folosind butonul de mesaje nesolicitate din bara de unelte pentru a marca mesajele ca nesolicitate sau nu. Trebuie să identifici atât mesajele nesolicitate, cât și mesajele care nu sunt nesolicitate. După aceea, &brandShortName; va putea marca automat mesajele nesolicitate.">
+<!ENTITY level.label "Activează controalele adaptive de mesaje nesolicitate pentru acest cont">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Mută mesajele nesolicitate noi în:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "Dosarul cu „mesaje nesolicitate” din:">
+<!ENTITY junkFolderOn.accesskey "j">
+<!ENTITY otherFolder.label "Altul:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Șterge automat mesajele nesolicitate mai vechi de">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "zile">
+
+<!ENTITY whitelistHeader.label "Nu marca acest mesaj ca nesolicitat dacă expeditorul este în: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "Dacă este activată, &brandShortName; va considera automat mesajele marcate de clasificarea externă ca și spam.">
+<!ENTITY ispHeaders.label "Ai încredere în marcările de nesolicitare făcute de: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Selecție">
+<!ENTITY junkActions.label "Destinație și păstrare">
+
+<!ENTITY globalJunkPrefs.label "Preferințe globale pentru mesajele nesolicitate…">
+<!ENTITY globalJunkPrefs.accesskey "G">

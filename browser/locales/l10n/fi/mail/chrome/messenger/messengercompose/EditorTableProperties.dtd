@@ -1,0 +1,76 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                 "Taulukon ominaisuudet">
+<!ENTITY applyButton.label                 "Käytä">
+<!ENTITY applyButton.accesskey             "K">
+<!ENTITY closeButton.label                 "Sulje">
+<!ENTITY tableTab.label                    "Taulukko">
+<!ENTITY cellTab.label                     "Solut">
+<!ENTITY tableRows.label                   "Rivit:">
+<!ENTITY tableRows.accessKey               "R">
+<!ENTITY tableColumns.label                "Sarakkeet:">
+<!ENTITY tableColumns.accessKey            "S">
+<!ENTITY tableHeight.label                 "Korkeus:">
+<!ENTITY tableHeight.accessKey             "o">
+<!ENTITY tableWidth.label                  "Leveys:">
+<!ENTITY tableWidth.accessKey              "e">
+<!ENTITY tableBorderSpacing.label          "Reunukset ja välit">
+<!ENTITY tableBorderWidth.label            "Reunus:">
+<!ENTITY tableBorderWidth.accessKey        "u">
+<!ENTITY tableSpacing.label                "Väli:">
+<!ENTITY tableSpacing.accessKey            "l">
+<!ENTITY tablePadding.label                "Täyte:">
+<!ENTITY tablePadding.accessKey            "T">
+<!ENTITY tablePxBetwCells.label            "pikseliä solujen välissä">
+<!ENTITY tablePxBetwBrdrCellContent.label  "pikseliä solujen reunuksen ja sisällön välissä">
+<!ENTITY tableAlignment.label              "Taulukon tasaus:">
+<!ENTITY tableAlignment.accessKey          "n">
+<!ENTITY tableCaption.label                "Selite:">
+<!ENTITY tableCaption.accessKey            "e">
+<!ENTITY tableCaptionAbove.label           "Taulukon yläpuolella">
+<!ENTITY tableCaptionBelow.label           "Taulukon alapuolella">
+<!ENTITY tableCaptionLeft.label            "Taulukon vasemmalla puolella">
+<!ENTITY tableCaptionRight.label           "Taulukon oikealla puolella">
+<!ENTITY tableCaptionNone.label            "Ei mitään">
+<!ENTITY tableInheritColor.label            "(Anna sivun värin näkyä läpi)">
+
+<!ENTITY cellSelection.label               "Valinta">
+<!ENTITY cellSelectCell.label              "Solu">
+<!ENTITY cellSelectRow.label               "Rivi">
+<!ENTITY cellSelectColumn.label            "Sarake">
+<!ENTITY cellSelectNext.label              "Seuraava">
+<!ENTITY cellSelectNext.accessKey          "S">
+<!ENTITY cellSelectPrevious.label          "Edellinen">
+<!ENTITY cellSelectPrevious.accessKey      "E">
+<!ENTITY applyBeforeChange.label          "Tehdyt muutokset toteutetaan ennen kuin valintaa muutetaan.">
+<!-- LOCALIZATION NOTE Next 2 form 1 sentence (we don't want to use HTML tag to wrap) -->
+<!ENTITY cellContentAlignment.label        "Sisällön tasaus">
+<!ENTITY cellHorizontal.label              "Vaaka:">
+<!ENTITY cellHorizontal.accessKey          "V">
+<!ENTITY cellVertical.label                "Pysty:">
+<!ENTITY cellVertical.accessKey            "P">
+<!ENTITY cellStyle.label                   "Solun tyyli:">
+<!ENTITY cellStyle.accessKey               "o">
+<!ENTITY cellNormal.label                  "Normaali">
+<!ENTITY cellHeader.label                  "Otsikko">
+<!ENTITY cellTextWrap.label                "Tekstin rivitys:">
+<!ENTITY cellTextWrap.accessKey            "r">
+<!ENTITY cellWrap.label                    "Rivitä">
+<!ENTITY cellNoWrap.label                  "Älä rivitä">
+<!ENTITY cellAlignTop.label                "Ylä">
+<!ENTITY cellAlignMiddle.label             "Keski">
+<!ENTITY cellAlignBottom.label             "Ala">
+<!ENTITY cellAlignJustify.label            "Tasan">
+<!ENTITY cellInheritColor.label            "(Anna taulukon värin näkyä läpi)">
+<!ENTITY cellUseCheckboxHelp.label         "Käytä valintaruutuja osoittamaan, mitkä ominaisuudet koskevat valittua solua">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                        "Koko">
+<!ENTITY pixels.label                      "kuvapistettä">
+<!ENTITY backgroundColor.label             "Taustaväri:">
+<!ENTITY backgroundColor.accessKey         "i">
+<!ENTITY AlignLeft.label                   "Vasen">
+<!ENTITY AlignCenter.label                 "Keskitetty">
+<!ENTITY AlignRight.label                  "Oikea">

@@ -1,3 +1,5 @@
+"use strict";
+
 var dns = Cc["@mozilla.org/network/dns-service;1"].getService(Ci.nsIDNSService);
 
 var hostname1 = "";
@@ -17,7 +19,7 @@ var requestList2Canceled;
 var requestList2NotCanceled;
 
 var listener1 = {
-  onLookupComplete: function(inRequest, inRecord, inStatus) {
+  onLookupComplete(inRequest, inRecord, inStatus) {
     // One request should be resolved and two request should be canceled.
     if (inRequest == requestList1NotCanceled) {
       // This request should not be canceled.
@@ -26,16 +28,11 @@ var listener1 = {
       do_test_finished();
     }
   },
-  QueryInterface: function(aIID) {
-    if (aIID.equals(Ci.nsIDNSListener) || aIID.equals(Ci.nsISupports)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIDNSListener"]),
 };
 
 var listener2 = {
-  onLookupComplete: function(inRequest, inRecord, inStatus) {
+  onLookupComplete(inRequest, inRecord, inStatus) {
     // One request should be resolved and the other canceled.
     if (inRequest == requestList2NotCanceled) {
       // The request should not be canceled.
@@ -44,12 +41,7 @@ var listener2 = {
       do_test_finished();
     }
   },
-  QueryInterface: function(aIID) {
-    if (aIID.equals(Ci.nsIDNSListener) || aIID.equals(Ci.nsISupports)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIDNSListener"]),
 };
 
 const defaultOriginAttributes = {};

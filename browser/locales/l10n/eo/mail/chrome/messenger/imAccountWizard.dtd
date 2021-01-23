@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Tujmesaĝila kont‑kreilo">
+
+<!ENTITY accountProtocolTitle.label   "Reto de tujmesaĝilo">
+<!ENTITY accountProtocolInfo.label    "Bonvolu elekti reton de via konto de tujmesaĝilo.">
+<!ENTITY accountProtocolField.label   "Reto:">
+<!ENTITY accountProtocolGetMore.label "Pli…">
+
+<!ENTITY accountUsernameTitle.label   "Nomo de uzanto">
+<!ENTITY accountUsernameDuplicate.label "Tiu ĉi konto jam estas agordita!">
+
+<!ENTITY accountPasswordTitle.label   "Pasvorto">
+<!ENTITY accountPasswordInfo.label    "Bonvolu entajpi pasvorton en la tekstujon sube.">
+<!ENTITY accountPasswordField.label   "Pasvorto:">
+<!ENTITY accountPasswordManager.label "Entajpita pasvorto estos konservita en la pasvortan administrilon. Lasu la kampon malplena por ke vi estu demandata pri pasvorto je ĉiufoje, kiam vi konektas la konton.">
+
+<!ENTITY accountAdvancedTitle.label   "Spertulaj agordoj">
+<!ENTITY accountAdvancedInfo.label    "Eblas preterpasi tion ĉi.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Sciigi pri novaj retleteroj">
+<!ENTITY accountAliasGroupbox.caption "Loka kromnomo">
+<!ENTITY accountAliasField.label      "Kromnomo:">
+<!ENTITY accountAliasInfo.label       "Loka kromnomo estos montrata nur por vi dum interparoladoj, aliaj uzantoj ne vidos ĝin.">
+<!ENTITY accountProxySettings.caption "Agordoj de retperanto">
+<!ENTITY accountProxySettings.change.label     "Ŝanĝi…">
+<!ENTITY accountProxySettings.change.accessKey "i">
+
+<!ENTITY accountSummaryTitle.label   "Sumigo">
+<!ENTITY accountSummaryInfo.label    "Sube troviĝas la sumigo de antaŭe enigitaj datumoj. Bonvolu kontroli korektecon de informoj antaŭ krei konton.">
+<!ENTITY accountSummary.connectNow.label "Konekti tiun ĉi konton nun.">

@@ -1,0 +1,22 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "המר לטבלה">
+<!ENTITY instructions1.label   "Composer יוצר שורת טבלה חדשה לכל פסקה בקטע הנבחר.">
+<!ENTITY instructions2.label   "בחר את התו המשמש להפריד את הקטע הנבחר לעמודות:">
+<!ENTITY commaRadio.label      "פסיק">
+<!ENTITY spaceRadio.label      "רווח">
+<!ENTITY otherRadio.label      "תו אחר:">
+<!ENTITY deleteCharCheck.label "מחק תו מפריד">
+<!ENTITY collapseSpaces.label  "התעלם מרווחים עודפים">
+<!ENTITY collapseSpaces.tooltip "המר מרווחים סמוכים למפריד אחד">
+

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Forigi">
+<!ENTITY editContactPanelDeleteContact.accesskey "i">
+
+<!ENTITY editContactName.label "Montrata nomo:">
+<!ENTITY editContactName.accesskey "n">
+
+<!ENTITY editContactEmail.label "Retpoŝto:">
+<!ENTITY editContactEmail.accesskey "R">
+
+<!ENTITY editContactAddressBook.label "Adresaro:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "Farita">
+<!ENTITY editContactPanelDone.accesskey "F">
+
+<!ENTITY contactMoveDisabledWarning.description "Ne eblas ŝanĝi adresaron, ĉar la kontakto estas en la dissendolisto.">

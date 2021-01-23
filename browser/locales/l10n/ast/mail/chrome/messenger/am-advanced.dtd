@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Configuración del sirvidor de salida (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Al alministrar les tos identidaes pues usar un sirvidor d'esta llista seleicionándolu como sirvidor de salida (SMTP), o pues usar el sirvidor predetermináu seleicionando nesta llista &quot;Usar sirvidor predetermináu&quot;.">
+
+<!ENTITY smtpListAdd.label  "Amestar…">
+<!ENTITY smtpListAdd.accesskey  "s">
+<!ENTITY smtpListEdit.label "Editar…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Desaniciar">
+<!ENTITY smtpListDelete.accesskey "D">
+<!ENTITY smtpListSetDefault.label "Afitar predetermináu">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "Detalles del sirvidor esbilláu:">
+<!ENTITY serverDescription.label "Descripción: ">
+<!ENTITY serverName.label "Nome del sirvidor: ">
+<!ENTITY serverPort.label "Puertu: ">
+<!ENTITY userName.label   "Nome d'usuariu: ">
+<!ENTITY connectionSecurity.label "Seguridá de la conexón: ">
+<!ENTITY authMethod.label   "Métodu d'identificación: ">

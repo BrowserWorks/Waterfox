@@ -14,9 +14,10 @@ transforms:
 job-defaults:
     run-on-projects: []  # to make sure this never runs in CI
     shipping-phase: promote
+    worker-type: balrog
     worker:
         implementation: balrog
-        balrog-action: submit-toplevel
+        balrog-action: v2-submit-toplevel
         require-mirrors: true
         archive-domain:
             by-release-level:
@@ -45,8 +46,7 @@ jobs:
                 by-release-type:
                     beta: ["firefox-beta-cdntest", "firefox-beta-localtest"]
                     release(-rc)?: ["firefox-release-cdntest", "firefox-release-localtest"]
-                    esr68: ["firefox-esr68-cdntest", "firefox-esr68-localtest"]
-                    esr60: ["firefox-esr60-cdntest", "firefox-esr60-localtest"]
+                    esr78: ["firefox-esr78-cdntest", "firefox-esr78-localtest"]
                     default: []
             platforms: ["linux", "linux64", "macosx64", "win32", "win64", "win64-aarch64"]
         treeherder:

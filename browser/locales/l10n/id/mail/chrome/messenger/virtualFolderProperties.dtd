@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Folder Pencarian Tersimpan Baru">
+<!ENTITY name.label                 "Nama:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Buat sebagai subfolder dari:">
+<!ENTITY description.accesskey      "B">
+
+<!ENTITY searchTermCaption.label "Atur kriteria pencarian untuk folder pencarian tersimpan ini: ">
+
+<!ENTITY folderSelectionCaption.label "Pilih folder untuk dicari: ">
+<!ENTITY chooseFoldersButton.label "Pilih…">
+<!ENTITY chooseFoldersButton.accesskey "P">
+
+<!ENTITY searchOnline.label "Pencarian Daring (untuk memberikan hasil terbaru pada folder IMAP dan news walaupun menjadikan waktu membuka folder lebih lama)">
+<!ENTITY searchOnline.accesskey "D">
+<!ENTITY newFolderButton.label       "Buat">
+<!ENTITY newFolderButton.accesskey   "t">
+<!ENTITY editFolderButton.label      "Perbarui">
+<!ENTITY editFolderButton.accesskey  "i">

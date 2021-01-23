@@ -9,6 +9,8 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
 
+#include <algorithm>
+
 #include "ds/MemoryProtectionExceptionHandler.h"
 
 #ifdef LIFO_CHUNK_PROTECT
@@ -156,13 +158,13 @@ static size_t NextSize(size_t start, size_t used) {
   // Double the size, up to 1 MB.
   const size_t mb = 1 * 1024 * 1024;
   if (used < mb) {
-    return Max(start, used);
+    return std::max(start, used);
   }
 
   // After 1 MB, grow more gradually, to waste less memory.
   // The sequence (in megabytes) begins:
   // 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, ...
-  return JS_ROUNDUP(used / 8, mb);
+  return RoundUp(used / 8, mb);
 }
 
 LifoAlloc::UniqueBumpChunk LifoAlloc::newChunkWithCapacity(size_t n,
@@ -360,7 +362,7 @@ void LifoAlloc::steal(LifoAlloc* other) {
   defaultChunkSize_ = other->defaultChunkSize_;
   oversizeThreshold_ = other->oversizeThreshold_;
   curSize_ = other->curSize_;
-  peakSize_ = Max(peakSize_, other->peakSize_);
+  peakSize_ = std::max(peakSize_, other->peakSize_);
   smallAllocsSize_ = other->smallAllocsSize_;
 #if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
   fallibleScope_ = other->fallibleScope_;

@@ -26,32 +26,11 @@ ChromeUtils.defineModuleGetter(
  * `nsINavBookmarksService`, with special handling for
  * tags, keywords, synced annotations, and missing parents.
  */
-var PlacesSyncUtils = {
-  /**
-   * Auxiliary generator function that yields an array in chunks
-   *
-   * @param  array
-   * @param  chunkLength
-   * @yields {Array}
-   *         New Array with the next chunkLength elements of array.
-   *         If the array has less than chunkLength elements, yields all of them
-   */
-  *chunkArray(array, chunkLength) {
-    if (!array.length || chunkLength <= 0) {
-      return;
-    }
-    let startIndex = 0;
-    while (startIndex < array.length) {
-      yield [startIndex, array.slice(startIndex, startIndex + chunkLength)];
-      startIndex += chunkLength;
-    }
-  },
-};
+var PlacesSyncUtils = {};
 
 const { SOURCE_SYNC } = Ci.nsINavBookmarksService;
 
 const MICROSECONDS_PER_SECOND = 1000000;
-const SQLITE_MAX_VARIABLE_NUMBER = 999;
 
 const MOBILE_BOOKMARKS_PREF = "browser.bookmarks.showMobileBookmarks";
 
@@ -258,10 +237,7 @@ const HistorySyncUtils = (PlacesSyncUtils.history = Object.freeze({
     // aren't stored in the database.
     let db = await PlacesUtils.promiseDBConnection();
     let nonSyncableGuids = [];
-    for (let [, chunk] of PlacesSyncUtils.chunkArray(
-      guids,
-      SQLITE_MAX_VARIABLE_NUMBER
-    )) {
+    for (let chunk of PlacesUtils.chunkArray(guids, db.variableLimit)) {
       let rows = await db.execute(
         `
         SELECT DISTINCT p.guid FROM moz_places p
@@ -343,7 +319,7 @@ const HistorySyncUtils = (PlacesSyncUtils.history = Object.freeze({
         WHERE url_hash = hash(:page_url) AND url = :page_url`,
       { page_url: canonicalURL.href }
     );
-    if (rows.length == 0) {
+    if (!rows.length) {
       return null;
     }
     return rows[0].getResultByName("guid");
@@ -359,7 +335,7 @@ const HistorySyncUtils = (PlacesSyncUtils.history = Object.freeze({
     let db = await PlacesUtils.promiseDBConnection();
     let rows = await db.executeCached(
       `
-      SELECT url, IFNULL(title, "") AS title, frecency
+      SELECT url, IFNULL(title, '') AS title, frecency
       FROM moz_places
       WHERE guid = :guid`,
       { guid }
@@ -1483,7 +1459,7 @@ const BookmarkSyncUtils = (PlacesSyncUtils.bookmarks = Object.freeze({
       db,
       PlacesUtils.bookmarks.mobileGuid
     );
-    let hasMobileBookmarks = mobileChildGuids.length > 0;
+    let hasMobileBookmarks = !!mobileChildGuids.length;
 
     Services.prefs.setBoolPref(MOBILE_BOOKMARKS_PREF, hasMobileBookmarks);
   },
@@ -1623,9 +1599,7 @@ var reparentOrphans = async function(db, item) {
       // Reparenting can fail if we have a corrupted or incomplete tree
       // where an item's parent is one of its descendants.
       BookmarkSyncLog.trace(
-        `reparentOrphans: Attempting to move item ${
-          orphanGuids[i]
-        } to new parent ${item.recordId}`
+        `reparentOrphans: Attempting to move item ${orphanGuids[i]} to new parent ${item.recordId}`
       );
       await PlacesUtils.bookmarks.update({
         guid: orphanGuids[i],
@@ -1635,9 +1609,7 @@ var reparentOrphans = async function(db, item) {
       });
     } catch (ex) {
       BookmarkSyncLog.error(
-        `reparentOrphans: Failed to reparent item ${orphanGuids[i]} to ${
-          item.recordId
-        }`,
+        `reparentOrphans: Failed to reparent item ${orphanGuids[i]} to ${item.recordId}`,
         ex
       );
     }
@@ -1659,9 +1631,7 @@ async function insertSyncBookmark(db, insertInfo) {
     );
   } else {
     BookmarkSyncLog.debug(
-      `insertSyncBookmark: Item ${insertInfo.recordId} is an orphan: parent ${
-        insertInfo.parentRecordId
-      } doesn't exist; reparenting to unfiled`
+      `insertSyncBookmark: Item ${insertInfo.recordId} is an orphan: parent ${insertInfo.parentRecordId} doesn't exist; reparenting to unfiled`
     );
     insertInfo.parentRecordId = "unfiled";
   }
@@ -1826,9 +1796,7 @@ async function updateSyncBookmark(db, updateInfo) {
     if (BookmarkSyncLog.level <= Log.Level.Warn) {
       let oldRecordId = BookmarkSyncUtils.guidToRecordId(oldBookmarkItem.guid);
       BookmarkSyncLog.warn(
-        `updateSyncBookmark: Local ${oldRecordId} kind = ${oldKind}; remote ${
-          updateInfo.recordId
-        } kind = ${updateInfo.kind}. Deleting and recreating`
+        `updateSyncBookmark: Local ${oldRecordId} kind = ${oldKind}; remote ${updateInfo.recordId} kind = ${updateInfo.kind}. Deleting and recreating`
       );
     }
   }
@@ -1878,9 +1846,7 @@ async function updateSyncBookmark(db, updateInfo) {
         // the item as an orphan. We'll annotate it with its real parent after
         // updating.
         BookmarkSyncLog.trace(
-          `updateSyncBookmark: Item ${
-            updateInfo.recordId
-          } is an orphan: could not find parent ${requestedParentRecordId}`
+          `updateSyncBookmark: Item ${updateInfo.recordId} is an orphan: could not find parent ${requestedParentRecordId}`
         );
         delete updateInfo.parentRecordId;
       }
@@ -2022,11 +1988,11 @@ function tagItem(item, tags) {
   // tag IDs, we temporarily tag a dummy URI, ensuring the tags exist.
   let dummyURI = PlacesUtils.toURI("about:weave#BStore_tagURI");
   let bookmarkURI = PlacesUtils.toURI(item.url.href);
-  if (newTags && newTags.length > 0) {
+  if (newTags && newTags.length) {
     PlacesUtils.tagging.tagURI(dummyURI, newTags, SOURCE_SYNC);
   }
   PlacesUtils.tagging.untagURI(bookmarkURI, null, SOURCE_SYNC);
-  if (newTags && newTags.length > 0) {
+  if (newTags && newTags.length) {
     PlacesUtils.tagging.tagURI(bookmarkURI, newTags, SOURCE_SYNC);
   }
   PlacesUtils.tagging.untagURI(dummyURI, null, SOURCE_SYNC);

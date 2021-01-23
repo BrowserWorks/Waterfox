@@ -82,7 +82,7 @@ AOMDecoder::AOMDecoder(const CreateDecoderParams& aParams)
   PodZero(&mCodec);
 }
 
-AOMDecoder::~AOMDecoder() {}
+AOMDecoder::~AOMDecoder() = default;
 
 RefPtr<ShutdownPromise> AOMDecoder::Shutdown() {
   RefPtr<AOMDecoder> self = this;
@@ -200,11 +200,14 @@ RefPtr<MediaDataDecoder::DecodePromise> AOMDecoder::ProcessDecode(
         b.mYUVColorSpace = YUVColorSpace::BT2020;
         break;
       case AOM_CICP_MC_BT_709:
-      default:
-        // Set 709 as default, as it's the most sane default.
         b.mYUVColorSpace = YUVColorSpace::BT709;
         break;
+      default:
+        b.mYUVColorSpace = DefaultColorSpace({img->d_w, img->d_h});
+        break;
     }
+    b.mColorRange = img->range == AOM_CR_FULL_RANGE ? ColorRange::FULL
+                                                    : ColorRange::LIMITED;
 
     RefPtr<VideoData> v;
     v = VideoData::CreateAndCopyData(mInfo, mImageContainer, aSample->mOffset,

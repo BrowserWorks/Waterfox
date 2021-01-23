@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY referencesField4.label "Atsauces">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY hdrTrashButton1.label "Dzēst">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY saveAsMenuItem1.label "Saglabāt kā…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+
+
+
+
+<!-- Attachment bar context menu items -->
+
+<!-- Attachment context menu items -->
+
+<!ENTITY openAttachmentCmd.label    "Atvērt">
+<!ENTITY openAttachmentCmd.accesskey    "A">
+<!ENTITY saveAsAttachmentCmd.label    "Saglabāt kā…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+
+
+<!ENTITY deleteAttachmentCmd.label    "Dzēst">
+<!ENTITY deleteAttachmentCmd.accesskey    "D">
+
+
+<!ENTITY saveAllAttachmentsCmd.label    "Saglabāt kā…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+
+
+
+
+
+<!-- Attachment toolbar items -->
+
+<!ENTITY saveAttachmentButton1.label       "Saglabāt">
+
+<!ENTITY saveAllAttachmentsButton1.label   "Saglabāt visu">
+
+
+
+
+
+
+
+
+

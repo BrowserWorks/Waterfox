@@ -9,13 +9,13 @@
 #ifndef mozilla_Tuple_h
 #define mozilla_Tuple_h
 
-#include "mozilla/Move.h"
-#include "mozilla/Pair.h"
-#include "mozilla/TemplateLib.h"
-#include "mozilla/TypeTraits.h"
-
 #include <stddef.h>
+
+#include <type_traits>
 #include <utility>
+
+#include "mozilla/CompactPair.h"
+#include "mozilla/TemplateLib.h"
 
 namespace mozilla {
 
@@ -48,14 +48,15 @@ template <typename Source, typename Target, bool SameSize>
 struct CheckConvertibilityImpl;
 
 template <typename Source, typename Target>
-struct CheckConvertibilityImpl<Source, Target, false> : FalseType {};
+struct CheckConvertibilityImpl<Source, Target, false> : std::false_type {};
 
 template <typename... SourceTypes, typename... TargetTypes>
 struct CheckConvertibilityImpl<Group<SourceTypes...>, Group<TargetTypes...>,
                                true>
-    : IntegralConstant<
+    : std::integral_constant<
           bool,
-          tl::And<IsConvertible<SourceTypes, TargetTypes>::value...>::value> {};
+          tl::And<std::is_convertible_v<SourceTypes, TargetTypes>...>::value> {
+};
 
 template <typename Source, typename Target>
 struct CheckConvertibility;
@@ -65,6 +66,19 @@ struct CheckConvertibility<Group<SourceTypes...>, Group<TargetTypes...>>
     : CheckConvertibilityImpl<Group<SourceTypes...>, Group<TargetTypes...>,
                               sizeof...(SourceTypes) ==
                                   sizeof...(TargetTypes)> {};
+
+/*
+ * Helper type for Tie(args...) to allow ignoring specific elements
+ * during Tie unpacking.  Supports assignment from any type.
+ *
+ * Not for direct usage; instead, use mozilla::Ignore in calls to Tie.
+ */
+struct IgnoreImpl {
+  template <typename T>
+  constexpr const IgnoreImpl& operator=(const T&) const {
+    return *this;
+  }
+};
 
 /*
  * TupleImpl is a helper class used to implement mozilla::Tuple.
@@ -135,10 +149,10 @@ struct TupleImpl<Index, HeadT, TailT...>
   // This constructor is enabled only when the argument types are actually
   // convertible to the element types, otherwise it could become a better
   // match for certain invocations than the copy constructor.
-  template <typename OtherHeadT, typename... OtherTailT,
-            typename = typename EnableIf<
-                CheckConvertibility<Group<OtherHeadT, OtherTailT...>,
-                                    Group<HeadT, TailT...>>::value>::Type>
+  template <
+      typename OtherHeadT, typename... OtherTailT,
+      typename = std::enable_if_t<CheckConvertibility<
+          Group<OtherHeadT, OtherTailT...>, Group<HeadT, TailT...>>::value>>
   explicit TupleImpl(OtherHeadT&& aHead, OtherTailT&&... aTail)
       : Base(std::forward<OtherTailT>(aTail)...),
         mHead(std::forward<OtherHeadT>(aHead)) {}
@@ -155,8 +169,8 @@ struct TupleImpl<Index, HeadT, TailT...>
   // Assign from a tuple whose elements are convertible to the elements
   // of this tuple.
   template <typename... OtherElements,
-            typename = typename EnableIf<sizeof...(OtherElements) ==
-                                         sizeof...(TailT) + 1>::Type>
+            typename = std::enable_if_t<sizeof...(OtherElements) ==
+                                        sizeof...(TailT) + 1>>
   TupleImpl& operator=(const TupleImpl<Index, OtherElements...>& aOther) {
     typedef TupleImpl<Index, OtherElements...> OtherT;
     Head(*this) = OtherT::Head(aOther);
@@ -164,8 +178,8 @@ struct TupleImpl<Index, HeadT, TailT...>
     return *this;
   }
   template <typename... OtherElements,
-            typename = typename EnableIf<sizeof...(OtherElements) ==
-                                         sizeof...(TailT) + 1>::Type>
+            typename = std::enable_if_t<sizeof...(OtherElements) ==
+                                        sizeof...(TailT) + 1>>
   TupleImpl& operator=(TupleImpl<Index, OtherElements...>&& aOther) {
     typedef TupleImpl<Index, OtherElements...> OtherT;
     Head(*this) = std::move(OtherT::Head(aOther));
@@ -214,8 +228,8 @@ struct TupleImpl<Index, HeadT, TailT...>
 
 /**
  * Tuple is a class that stores zero or more objects, whose types are specified
- * as template parameters. It can be thought of as a generalization of Pair,
- * (which can be thought of as a 2-tuple).
+ * as template parameters. It can be thought of as a generalization of
+ * std::pair, (which can be thought of as a 2-tuple).
  *
  * Tuple allows index-based access to its elements (with the index having to be
  * known at compile time) via the non-member function 'Get<N>(tuple)'.
@@ -235,9 +249,9 @@ class Tuple : public detail::TupleImpl<0, Elements...> {
   // actually instantiates the constructor with an empty parameter pack -
   // that's probably a bug) and we compile with warnings-as-errors.
   template <typename OtherHead, typename... OtherTail,
-            typename = typename EnableIf<detail::CheckConvertibility<
+            typename = std::enable_if_t<detail::CheckConvertibility<
                 detail::Group<OtherHead, OtherTail...>,
-                detail::Group<Elements...>>::value>::Type>
+                detail::Group<Elements...>>::value>>
   explicit Tuple(OtherHead&& aHead, OtherTail&&... aTail)
       : Impl(std::forward<OtherHead>(aHead),
              std::forward<OtherTail>(aTail)...) {}
@@ -245,15 +259,15 @@ class Tuple : public detail::TupleImpl<0, Elements...> {
   Tuple(Tuple&& aOther) : Impl(std::move(aOther)) {}
 
   template <typename... OtherElements,
-            typename = typename EnableIf<sizeof...(OtherElements) ==
-                                         sizeof...(Elements)>::Type>
+            typename = std::enable_if_t<sizeof...(OtherElements) ==
+                                        sizeof...(Elements)>>
   Tuple& operator=(const Tuple<OtherElements...>& aOther) {
     static_cast<Impl&>(*this) = aOther;
     return *this;
   }
   template <typename... OtherElements,
-            typename = typename EnableIf<sizeof...(OtherElements) ==
-                                         sizeof...(Elements)>::Type>
+            typename = std::enable_if_t<sizeof...(OtherElements) ==
+                                        sizeof...(Elements)>>
   Tuple& operator=(Tuple<OtherElements...>&& aOther) {
     static_cast<Impl&>(*this) = std::move(aOther);
     return *this;
@@ -273,7 +287,7 @@ class Tuple : public detail::TupleImpl<0, Elements...> {
 
 /**
  * Specialization of Tuple for two elements.
- * This is created to support construction and assignment from a Pair or
+ * This is created to support construction and assignment from a CompactPair or
  * std::pair.
  */
 template <typename A, typename B>
@@ -287,15 +301,15 @@ class Tuple<A, B> : public detail::TupleImpl<0, A, B> {
   Tuple() : Impl() {}
   explicit Tuple(const A& aA, const B& aB) : Impl(aA, aB) {}
   template <typename AArg, typename BArg,
-            typename = typename EnableIf<detail::CheckConvertibility<
-                detail::Group<AArg, BArg>, detail::Group<A, B>>::value>::Type>
+            typename = std::enable_if_t<detail::CheckConvertibility<
+                detail::Group<AArg, BArg>, detail::Group<A, B>>::value>>
   explicit Tuple(AArg&& aA, BArg&& aB)
       : Impl(std::forward<AArg>(aA), std::forward<BArg>(aB)) {}
   Tuple(const Tuple& aOther) : Impl(aOther) {}
   Tuple(Tuple&& aOther) : Impl(std::move(aOther)) {}
-  explicit Tuple(const Pair<A, B>& aOther)
+  explicit Tuple(const CompactPair<A, B>& aOther)
       : Impl(aOther.first(), aOther.second()) {}
-  explicit Tuple(Pair<A, B>&& aOther)
+  explicit Tuple(CompactPair<A, B>&& aOther)
       : Impl(std::forward<A>(aOther.first()),
              std::forward<B>(aOther.second())) {}
   explicit Tuple(const std::pair<A, B>& aOther)
@@ -322,13 +336,13 @@ class Tuple<A, B> : public detail::TupleImpl<0, A, B> {
     return *this;
   }
   template <typename AArg, typename BArg>
-  Tuple& operator=(const Pair<AArg, BArg>& aOther) {
+  Tuple& operator=(const CompactPair<AArg, BArg>& aOther) {
     Impl::Head(*this) = aOther.first();
     Impl::Tail(*this).Head(*this) = aOther.second();
     return *this;
   }
   template <typename AArg, typename BArg>
-  Tuple& operator=(Pair<AArg, BArg>&& aOther) {
+  Tuple& operator=(CompactPair<AArg, BArg>&& aOther) {
     Impl::Head(*this) = std::forward<AArg>(aOther.first());
     Impl::Tail(*this).Head(*this) = std::forward<BArg>(aOther.second());
     return *this;
@@ -458,11 +472,25 @@ void ForEach(Tuple<Elements...>&& aTuple, const F& aFunc) {
  * auto tuple = MakeTuple(42, 0.5f, 'c');  // has type Tuple<int, float, char>
  */
 template <typename... Elements>
-inline Tuple<typename Decay<Elements>::Type...> MakeTuple(
-    Elements&&... aElements) {
-  return Tuple<typename Decay<Elements>::Type...>(
-      std::forward<Elements>(aElements)...);
+inline Tuple<std::decay_t<Elements>...> MakeTuple(Elements&&... aElements) {
+  return Tuple<std::decay_t<Elements>...>(std::forward<Elements>(aElements)...);
 }
+
+/**
+ * A helper placholder to allow ignoring specific elements during Tie unpacking.
+ * Can be used with any type and any number of elements in a call to Tie.
+ *
+ * Usage of Ignore with Tie is equivalent to using std::ignore with
+ * std::tie.
+ *
+ * Example:
+ *
+ * int i;
+ * float f;
+ * char c;
+ * Tie(i, Ignore, f, c, Ignore) = FunctionThatReturnsATuple();
+ */
+constexpr detail::IgnoreImpl Ignore;
 
 /**
  * A convenience function for constructing a tuple of references to a

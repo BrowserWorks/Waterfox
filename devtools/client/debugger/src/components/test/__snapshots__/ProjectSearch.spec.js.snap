@@ -13,10 +13,12 @@ exports[`ProjectSearch found no search results 1`] = `
       <SearchInput
         count={0}
         expanded={false}
-        handleClose={[MockFunction]}
+        handleClose={[Function]}
         hasPrefix={false}
         isLoading={false}
+        onBlur={[Function]}
         onChange={[Function]}
+        onFocus={[Function]}
         onHistoryScroll={[Function]}
         onKeyDown={[Function]}
         placeholder="Find in files…"
@@ -114,10 +116,12 @@ exports[`ProjectSearch found search results 1`] = `
         <SearchInput
           count={5}
           expanded={false}
-          handleClose={[MockFunction]}
+          handleClose={[Function]}
           hasPrefix={false}
           isLoading={false}
+          onBlur={[Function]}
           onChange={[Function]}
+          onFocus={[Function]}
           onHistoryScroll={[Function]}
           onKeyDown={[Function]}
           placeholder="Find in files…"
@@ -150,7 +154,9 @@ exports[`ProjectSearch found search results 1`] = `
                 aria-autocomplete="list"
                 aria-controls="result-list"
                 className=""
+                onBlur={[Function]}
                 onChange={[Function]}
+                onFocus={[Function]}
                 onKeyDown={[Function]}
                 placeholder="Find in files…"
                 spellCheck={false}
@@ -163,11 +169,11 @@ exports[`ProjectSearch found search results 1`] = `
               </div>
               <CloseButton
                 buttonClass="big"
-                handleClick={[MockFunction]}
+                handleClick={[Function]}
               >
                 <button
                   className="close-btn big"
-                  onClick={[MockFunction]}
+                  onClick={[Function]}
                 >
                   <AccessibleImage
                     className="close"
@@ -337,7 +343,7 @@ exports[`ProjectSearch found search results 1`] = `
                   role="treeitem"
                 >
                   <span
-                    className="tree-indent"
+                    className="tree-indent tree-last-indent"
                   >
                     ​
                   </span>
@@ -405,7 +411,7 @@ exports[`ProjectSearch found search results 1`] = `
                   role="treeitem"
                 >
                   <span
-                    className="tree-indent"
+                    className="tree-indent tree-last-indent"
                   >
                     ​
                   </span>
@@ -473,7 +479,7 @@ exports[`ProjectSearch found search results 1`] = `
                   role="treeitem"
                 >
                   <span
-                    className="tree-indent"
+                    className="tree-indent tree-last-indent"
                   >
                     ​
                   </span>
@@ -613,7 +619,7 @@ exports[`ProjectSearch found search results 1`] = `
                   role="treeitem"
                 >
                   <span
-                    className="tree-indent"
+                    className="tree-indent tree-last-indent"
                   >
                     ​
                   </span>
@@ -681,7 +687,7 @@ exports[`ProjectSearch found search results 1`] = `
                   role="treeitem"
                 >
                   <span
-                    className="tree-indent"
+                    className="tree-indent tree-last-indent"
                   >
                     ​
                   </span>
@@ -741,10 +747,12 @@ exports[`ProjectSearch should display loading message while search is in progres
       <SearchInput
         count={0}
         expanded={false}
-        handleClose={[MockFunction]}
+        handleClose={[Function]}
         hasPrefix={false}
         isLoading={true}
+        onBlur={[Function]}
         onChange={[Function]}
+        onFocus={[Function]}
         onHistoryScroll={[Function]}
         onKeyDown={[Function]}
         placeholder="Find in files…"
@@ -778,10 +786,12 @@ exports[`ProjectSearch showErrorEmoji false if not done & no results 1`] = `
       <SearchInput
         count={0}
         expanded={false}
-        handleClose={[MockFunction]}
+        handleClose={[Function]}
         hasPrefix={false}
         isLoading={true}
+        onBlur={[Function]}
         onChange={[Function]}
+        onFocus={[Function]}
         onHistoryScroll={[Function]}
         onKeyDown={[Function]}
         placeholder="Find in files…"
@@ -815,10 +825,12 @@ exports[`ProjectSearch showErrorEmoji false if not done & results 1`] = `
       <SearchInput
         count={5}
         expanded={false}
-        handleClose={[MockFunction]}
+        handleClose={[Function]}
         hasPrefix={false}
         isLoading={true}
+        onBlur={[Function]}
         onChange={[Function]}
+        onFocus={[Function]}
         onHistoryScroll={[Function]}
         onKeyDown={[Function]}
         placeholder="Find in files…"
@@ -860,10 +872,12 @@ exports[`ProjectSearch turns off shortcuts on unmount 1`] = `
       <SearchInput
         count={0}
         expanded={false}
-        handleClose={[MockFunction]}
+        handleClose={[Function]}
         hasPrefix={false}
         isLoading={false}
+        onBlur={[Function]}
         onChange={[Function]}
+        onFocus={[Function]}
         onHistoryScroll={[Function]}
         onKeyDown={[Function]}
         placeholder="Find in files…"
@@ -892,10 +906,12 @@ exports[`ProjectSearch where <Enter> has not been pressed 1`] = `
       <SearchInput
         count={0}
         expanded={false}
-        handleClose={[MockFunction]}
+        handleClose={[Function]}
         hasPrefix={false}
         isLoading={false}
+        onBlur={[Function]}
         onChange={[Function]}
+        onFocus={[Function]}
         onHistoryScroll={[Function]}
         onKeyDown={[Function]}
         placeholder="Find in files…"

@@ -8,13 +8,14 @@
 
 #include "JavaBuiltins.h"
 #include "nsAppShell.h"
-#include "nsIXPConnect.h"
 #include "nsJSUtils.h"
+#include "js/Array.h"  // JS::GetArrayLength, JS::IsArrayObject, JS::NewArrayObject
 #include "js/Warnings.h"  // JS::WarnUTF8
 #include "xpcpublic.h"
 
 #include "mozilla/ScopeExit.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/java/EventCallbackWrappers.h"
 
 // Disable the C++ 2a warning. See bug #1509926
 #if defined(__clang__)
@@ -128,7 +129,7 @@ nsresult BoxArrayObject(JSContext* aCx, JS::HandleObject aData,
 nsresult BoxArray(JSContext* aCx, JS::HandleObject aData,
                   jni::Object::LocalRef& aOut) {
   uint32_t length = 0;
-  NS_ENSURE_TRUE(CheckJS(aCx, JS_GetArrayLength(aCx, aData, &length)),
+  NS_ENSURE_TRUE(CheckJS(aCx, JS::GetArrayLength(aCx, aData, &length)),
                  NS_ERROR_FAILURE);
 
   if (!length) {
@@ -185,7 +186,7 @@ nsresult BoxArray(JSContext* aCx, JS::HandleObject aData,
     bool array = false;
     JS::RootedObject obj(aCx, &val.toObject());
     // We don't support array of arrays.
-    return CheckJS(aCx, JS_IsArrayObject(aCx, obj, &array)) && !array;
+    return CheckJS(aCx, JS::IsArrayObject(aCx, obj, &array)) && !array;
   };
 
   if (element.isNullOrUndefined() || isObject(element)) {
@@ -213,7 +214,7 @@ nsresult BoxObject(JSContext* aCx, JS::HandleValue aData,
   JS::RootedObject obj(aCx, &aData.toObject());
 
   bool isArray = false;
-  if (CheckJS(aCx, JS_IsArrayObject(aCx, obj, &isArray)) && isArray) {
+  if (CheckJS(aCx, JS::IsArrayObject(aCx, obj, &isArray)) && isArray) {
     return BoxArray(aCx, obj, aOut);
   }
 
@@ -425,7 +426,7 @@ nsresult UnboxArrayPrimitive(JSContext* aCx, const jni::Object::LocalRef& aData,
   }
 
   JS::RootedObject obj(aCx,
-                       JS_NewArrayObject(aCx, JS::HandleValueArray(elements)));
+                       JS::NewArrayObject(aCx, JS::HandleValueArray(elements)));
   NS_ENSURE_TRUE(CheckJS(aCx, !!obj), NS_ERROR_FAILURE);
 
   aOut.setObject(*obj);
@@ -450,7 +451,7 @@ nsresult UnboxArrayObject(JSContext* aCx, const jni::Object::LocalRef& aData,
   jni::ObjectArray::LocalRef array(aData.Env(),
                                    jni::ObjectArray::Ref::From(aData));
   const size_t len = array->Length();
-  JS::RootedObject obj(aCx, JS_NewArrayObject(aCx, len));
+  JS::RootedObject obj(aCx, JS::NewArrayObject(aCx, len));
   NS_ENSURE_TRUE(CheckJS(aCx, !!obj), NS_ERROR_FAILURE);
 
   for (size_t i = 0; i < len; i++) {
@@ -467,49 +468,21 @@ nsresult UnboxArrayObject(JSContext* aCx, const jni::Object::LocalRef& aData,
   return NS_OK;
 }
 
-template <class T>
-jfieldID GetValueFieldID(const char* aType) {
-  MOZ_ASSERT(NS_IsMainThread());
-  JNIEnv* const env = jni::GetGeckoThreadEnv();
-  const jfieldID id = env->GetFieldID(
-      typename T::Context(env, nullptr).ClassRef(), "value", aType);
-  env->ExceptionClear();
-  return id;
-}
-
 nsresult UnboxValue(JSContext* aCx, const jni::Object::LocalRef& aData,
                     JS::MutableHandleValue aOut) {
-  static jfieldID booleanValueField = GetValueFieldID<java::sdk::Boolean>("Z");
-  static jfieldID intValueField = GetValueFieldID<java::sdk::Integer>("I");
-  static jfieldID doubleValueField = GetValueFieldID<java::sdk::Double>("D");
+  using jni::Java2Native;
 
   if (!aData) {
     aOut.setNull();
   } else if (aData.IsInstanceOf<jni::Boolean>()) {
-    if (booleanValueField) {
-      aOut.setBoolean(aData.Env()->GetBooleanField(
-                          aData.Get(), booleanValueField) != JNI_FALSE);
-      MOZ_CATCH_JNI_EXCEPTION(aData.Env());
-    } else {
-      aOut.setBoolean(java::sdk::Boolean::Ref::From(aData)->BooleanValue());
-    }
+    aOut.setBoolean(Java2Native<bool>(aData, aData.Env()));
   } else if (aData.IsInstanceOf<jni::Integer>()) {
-    if (intValueField) {
-      aOut.setInt32(aData.Env()->GetIntField(aData.Get(), intValueField));
-      MOZ_CATCH_JNI_EXCEPTION(aData.Env());
-    } else {
-      aOut.setInt32(java::sdk::Number::Ref::From(aData)->IntValue());
-    }
+    aOut.setInt32(Java2Native<int>(aData, aData.Env()));
   } else if (aData.IsInstanceOf<jni::Byte>() ||
              aData.IsInstanceOf<jni::Short>()) {
     aOut.setInt32(java::sdk::Number::Ref::From(aData)->IntValue());
   } else if (aData.IsInstanceOf<jni::Double>()) {
-    if (doubleValueField) {
-      aOut.setNumber(
-          aData.Env()->GetDoubleField(aData.Get(), doubleValueField));
-    } else {
-      aOut.setNumber(java::sdk::Number::Ref::From(aData)->DoubleValue());
-    }
+    aOut.setNumber(Java2Native<double>(aData, aData.Env()));
   } else if (aData.IsInstanceOf<jni::Float>() ||
              aData.IsInstanceOf<jni::Long>()) {
     aOut.setNumber(java::sdk::Number::Ref::From(aData)->DoubleValue());
@@ -870,13 +843,13 @@ nsresult EventDispatcher::IterateEvents(JSContext* aCx, JS::HandleValue aEvents,
 
   bool isArray = false;
   NS_ENSURE_TRUE(aEvents.isObject(), NS_ERROR_INVALID_ARG);
-  NS_ENSURE_TRUE(CheckJS(aCx, JS_IsArrayObject(aCx, aEvents, &isArray)),
+  NS_ENSURE_TRUE(CheckJS(aCx, JS::IsArrayObject(aCx, aEvents, &isArray)),
                  NS_ERROR_INVALID_ARG);
   NS_ENSURE_TRUE(isArray, NS_ERROR_INVALID_ARG);
 
   JS::RootedObject events(aCx, &aEvents.toObject());
   uint32_t length = 0;
-  NS_ENSURE_TRUE(CheckJS(aCx, JS_GetArrayLength(aCx, events, &length)),
+  NS_ENSURE_TRUE(CheckJS(aCx, JS::GetArrayLength(aCx, events, &length)),
                  NS_ERROR_INVALID_ARG);
   NS_ENSURE_TRUE(length, NS_ERROR_INVALID_ARG);
 

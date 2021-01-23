@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Dibab ar kemmoù embann">
+<!ENTITY conflictWarning.label "Ar bajenn-mañ a zo bet kemmet gant ur goulev all, met ez eus kemmoù dienrollet er Composer.">
+<!ENTITY conflictResolve.label "Dibabit pe handelv a fell deoc'h mirout:">
+<!ENTITY keepCurrentPageButton.label "Mirout kemmoù ar bajenn-mañ">
+<!ENTITY useOtherPageButton.label "Lakaat ar kemmoù all e-lec'h ar bajenn-mañ">

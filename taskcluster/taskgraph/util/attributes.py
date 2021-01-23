@@ -6,9 +6,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import re
 
+import six
+
 
 INTEGRATION_PROJECTS = {
-    'mozilla-inbound',
     'autoland',
 }
 
@@ -18,12 +19,10 @@ RELEASE_PROJECTS = {
     'mozilla-central',
     'mozilla-beta',
     'mozilla-release',
-    'mozilla-esr60',
-    'mozilla-esr68',
+    'mozilla-esr78',
     'comm-central',
     'comm-beta',
-    'comm-esr60',
-    'comm-esr68',
+    'comm-esr78',
     'oak',
 }
 
@@ -34,19 +33,23 @@ RELEASE_PROMOTION_PROJECTS = {
     'try-comm-central',
 } | RELEASE_PROJECTS
 
-_OPTIONAL_ATTRIBUTES = (
+_COPYABLE_ATTRIBUTES = (
+    'accepted-mar-channel-ids',
+    'artifact_map',
     'artifact_prefix',
+    'build_platform',
+    'build_type',
     'l10n_chunk',
     'locale',
+    'mar-channel-id',
     'nightly',
     'required_signoffs',
-    'signed',
+    'shippable',
     'shipping_phase',
     'shipping_product',
+    'signed',
     'stub-installer',
     'update-channel',
-    'shippable',
-    'release-type',
 )
 
 
@@ -58,7 +61,7 @@ def attrmatch(attributes, **kwargs):
     must be in the set.  A callable is called with the attribute value.  If an
     attribute is specified as a keyword argument but not present in the
     attributes, the result is False."""
-    for kwkey, kwval in kwargs.iteritems():
+    for kwkey, kwval in six.iteritems(kwargs):
         if kwkey not in attributes:
             return False
         attval = attributes[kwkey]
@@ -83,7 +86,7 @@ def keymatch(attributes, target):
         return [attributes[target]]
 
     # regular expression match
-    matches = [v for k, v in attributes.iteritems() if re.match(k + '$', target)]
+    matches = [v for k, v in six.iteritems(attributes) if re.match(k + '$', target)]
     if matches:
         return matches
 
@@ -126,18 +129,11 @@ def match_run_on_hg_branches(hg_branch, run_on_hg_branches):
     return False
 
 
-def copy_attributes_from_dependent_job(dep_job):
-    attributes = {
-        'build_platform': dep_job.attributes.get('build_platform'),
-        'build_type': dep_job.attributes.get('build_type'),
-    }
-
-    attributes.update({
+def copy_attributes_from_dependent_job(dep_job, denylist=()):
+    return {
         attr: dep_job.attributes[attr]
-        for attr in _OPTIONAL_ATTRIBUTES if attr in dep_job.attributes
-    })
-
-    return attributes
+        for attr in _COPYABLE_ATTRIBUTES if attr in dep_job.attributes and attr not in denylist
+    }
 
 
 def sorted_unique_list(*args):

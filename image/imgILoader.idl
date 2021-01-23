@@ -14,8 +14,11 @@ interface nsILoadGroup;
 interface nsIPrincipal;
 interface nsIStreamListener;
 interface nsIURI;
+interface nsIReferrerInfo;
 
 interface nsISimpleEnumerator;
+
+webidl Document;
 
 #include "nsIRequest.idl" // for nsLoadFlags
 #include "nsIContentPolicy.idl" // for nsContentPolicyType
@@ -40,14 +43,11 @@ interface imgILoader : nsISupports
    * @param aURI the URI to load
    * @param aInitialDocumentURI the URI that 'initiated' the load -- used for
    *           3rd party cookie blocking
-   * @param aReferrerURI the 'referring' URI
-   * @param aReferrerPolicy the policy to apply to sending referrers.
-   *           examples: "default", "never", "always", "origin"
-   *           (see W3C referrer-policy spec for valid policy strings)
+   * @param aReferrerInfo the referrer info to compute sending referrer.
    * @param aLoadingPrincipal the principal of the loading document
    * @param aLoadGroup Loadgroup to put the image load into
    * @param aObserver the observer (may be null)
-   * @param aCX some random data
+   * @param aLoadingDocument loading document
    * @param aLoadFlags Load flags for the request
    * @param aCacheKey cache key to use for a load if the original
    *                  image came from a request that had post data
@@ -63,12 +63,11 @@ interface imgILoader : nsISupports
    */
   imgIRequest loadImageXPCOM(in nsIURI aURI,
                              in nsIURI aInitialDocumentURL,
-                             in nsIURI aReferrerURI,
-                             in AString aReferrerPolicy,
+                             in nsIReferrerInfo aReferrerInfo,
                              in nsIPrincipal aLoadingPrincipal,
                              in nsILoadGroup aLoadGroup,
                              in imgINotificationObserver aObserver,
-                             in nsISupports aCX,
+                             in Document aLoadingDocument,
                              in nsLoadFlags aLoadFlags,
                              in nsISupports cacheKey,
                              [optional]
@@ -77,10 +76,10 @@ interface imgILoader : nsISupports
   /**
    * Start the load and decode of an image.
    * @param aChannel the channel to load the image from.  This must
-   *                 already be opened before ths method is called, and there
+   *                 already be opened before this method is called, and there
    *                 must have been no OnDataAvailable calls for it yet.
    * @param aObserver the observer (may be null)
-   * @param cx some random data
+   * @param aLoadingDocument loading document
    * @param aListener [out]
    *        A listener that you must send the channel's notifications and data
    *        to.  Can be null, in which case imagelib has found a cached image
@@ -93,6 +92,6 @@ interface imgILoader : nsISupports
    */
   imgIRequest loadImageWithChannelXPCOM(in nsIChannel aChannel,
                                         in imgINotificationObserver aObserver,
-                                        in nsISupports cx,
+                                        in Document aLoadingDocument,
                                         out nsIStreamListener aListener);
 };

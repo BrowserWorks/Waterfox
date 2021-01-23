@@ -151,13 +151,21 @@ class FFSetup(object):
         profile.addons.install(extensions)
 
         # installing webextensions
+        webextensions_to_install = []
+        webextensions_folder = self.test_config.get('webextensions_folder', None)
+        if isinstance(webextensions_folder, basestring):
+            folder = utils.interpolate(webextensions_folder)
+            for file in os.listdir(folder):
+                if file.endswith(".xpi"):
+                    webextensions_to_install.append(os.path.join(folder, file))
+
         webextensions = self.test_config.get('webextensions', None)
         if isinstance(webextensions, basestring):
-            webextensions = [webextensions]
+            webextensions_to_install.append(webextensions)
 
-        if webextensions is not None:
+        if webextensions_to_install is not None:
             LOG.info("Installing Webextensions:")
-            for webext in webextensions:
+            for webext in webextensions_to_install:
                 filename = utils.interpolate(webext)
                 if mozinfo.os == 'win':
                     filename = filename.replace('/', '\\')
@@ -306,6 +314,7 @@ class FFSetup(object):
             raise
         self._init_gecko_profile()
         LOG.info('Browser initialized.')
+        LOG.info('Fission enabled: %s' % self.browser_config.get('enable_fission', False))
         # remove ccov files before actual tests start
         if self.browser_config.get('code_coverage', False):
             # if the Firefox build was instrumented for ccov, initializing the browser

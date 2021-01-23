@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "සැකසුම් වෙනස්කමි තේරීම">
+<!ENTITY conflictWarning.label "වෙනත් යෙදුමක් විසින්ද මෙම පිටුවට වෙනස්කම් සිදුකර ඇත, නමුත් නොසුරකින ලද වෙනස්කම් ඔබගේ සකසනය තුළද ඇත.">
+<!ENTITY conflictResolve.label "කවර නිකුතුව තබාගන්නේදැයි තෝරන්න:">
+<!ENTITY keepCurrentPageButton.label "දැන් පවතික පිටුවේ වෙනස්කම් තබාගන්න">
+<!ENTITY useOtherPageButton.label "අනෙක් වෙනස්කම් මගින් දැන් පවතික පිටුව ප්‍රතිස්ථාපනය කරන්න">

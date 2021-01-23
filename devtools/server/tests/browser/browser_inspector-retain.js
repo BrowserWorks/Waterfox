@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -71,7 +70,7 @@ add_task(async function testRetain() {
 
   // Change the source of the iframe, which should kill the retained orphan.
   const onMutations = waitForMutation(walker, isUnretained);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     content.document.querySelector("#childFrame").src =
       "data:text/html,<html>new child</html>";
   });
@@ -91,7 +90,7 @@ add_task(async function testWinRace() {
 
   const front = await walker.querySelector(walker.rootNode, "#a");
   const onMutation = waitForMutation(walker, isChildList);
-  ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const contentNode = content.document.querySelector("#a");
     contentNode.remove();
   });
@@ -121,7 +120,7 @@ add_task(async function testLoseRace() {
 
   const front = await walker.querySelector(walker.rootNode, "#z");
   const onMutation = walker.once("new-mutations");
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const contentNode = content.document.querySelector("#z");
     contentNode.remove();
   });

@@ -132,7 +132,7 @@ const EXPECTED_REQUESTS = [
 ];
 
 add_task(async function() {
-  const { monitor } = await initNetMonitor(FILTERING_URL);
+  const { monitor } = await initNetMonitor(FILTERING_URL, { requestCount: 1 });
   info("Starting test... ");
 
   // It seems that this test may be slow on Ubuntu builds running on ec2.
@@ -169,7 +169,7 @@ add_task(async function() {
     "The first item should be selected in the requests menu."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     true,
     "The network details panel should be visible after toggle button was pressed."
   );
@@ -298,7 +298,7 @@ add_task(async function() {
       "The first item should be still selected after filtering."
     );
     is(
-      !!document.querySelector(".network-details-panel"),
+      !!document.querySelector(".network-details-bar"),
       true,
       "The network details panel should still be visible after filtering."
     );
@@ -307,18 +307,18 @@ add_task(async function() {
     const visibleItems = getDisplayedRequests(store.getState());
 
     is(
-      items.size,
+      items.length,
       visibility.length,
       "There should be a specific amount of items in the requests menu."
     );
     is(
-      visibleItems.size,
+      visibleItems.length,
       visibility.filter(e => e).length,
       "There should be a specific amount of visible items in the requests menu."
     );
 
     for (let i = 0; i < visibility.length; i++) {
-      const itemId = items.get(i).id;
+      const itemId = items[i].id;
       const shouldBeVisible = !!visibility[i];
       const isThere = visibleItems.some(r => r.id == itemId);
       is(
@@ -335,7 +335,7 @@ add_task(async function() {
           verifyRequestItemTarget(
             document,
             getDisplayedRequests(store.getState()),
-            getSortedRequests(store.getState()).get(i),
+            getSortedRequests(store.getState())[i],
             method,
             url,
             data

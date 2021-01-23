@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Yangi saqlangan izlash jildi">
+<!ENTITY name.label                 "Nomi:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Ichki jild kabi yaratish">
+<!ENTITY description.accesskey      "y">
+
+<!ENTITY searchTermCaption.label "Qidiruv tamoyilini moslashdan ushbu saqlangan qidiruv jildi uchun foydalaniladi: ">
+
+<!ENTITY folderSelectionCaption.label "Izlash uchun jildlarni tanlang: ">
+<!ENTITY chooseFoldersButton.label "Tanlash…">
+<!ENTITY chooseFoldersButton.accesskey "T">
+
+<!ENTITY searchOnline.label "Onlayn izlash (IMAP va Yangiliklar jildi uchun eng yangi natijalarni beradi, ammo jildni ochish vaqtini uzaytiradi)">
+<!ENTITY searchOnline.accesskey "i">
+<!ENTITY newFolderButton.label       "Yaratish">
+<!ENTITY newFolderButton.accesskey   "Y">
+<!ENTITY editFolderButton.label      "Yangilash">
+<!ENTITY editFolderButton.accesskey  "Y">

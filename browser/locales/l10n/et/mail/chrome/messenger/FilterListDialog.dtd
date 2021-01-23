@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Kirjade filtrid">
+<!ENTITY nameColumn.label "Filtri nimi">
+<!ENTITY activeColumn.label "Lubatud">
+<!ENTITY newButton.label "Uus...">
+<!ENTITY newButton.accesskey "U">
+<!ENTITY newButton.popupCopy.label "Kopeeri…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Redigeeri...">
+<!ENTITY editButton.accesskey "R">
+<!ENTITY deleteButton.label "Kustuta">
+<!ENTITY deleteButton.accesskey "K">
+<!ENTITY reorderTopButton "Liiguta esimeseks">
+<!ENTITY reorderTopButton.accessKey "g">
+<!ENTITY reorderTopButton.toolTip "Liiguta filter esimeseks, nii et see käivituks enne teisi">
+<!ENTITY reorderUpButton.label "Liiguta üles">
+<!ENTITY reorderUpButton.accesskey "t">
+<!ENTITY reorderDownButton.label "Liiguta alla">
+<!ENTITY reorderDownButton.accesskey "a">
+<!ENTITY reorderBottomButton "Liiguta viimaseks">
+<!ENTITY reorderBottomButton.accessKey "v">
+<!ENTITY reorderBottomButton.toolTip "Liiguta filter viimaseks, nii et see käivituks pärast teisi">
+<!ENTITY filterHeader.label "Aktiivsed filtrid rakenduvad alljärgnevas järjestuses.">
+<!ENTITY filtersForPrefix.label "Filtrid kontole:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filtri logi">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Käivita kohe">
+<!ENTITY runFilters.accesskey "K">
+<!ENTITY stopFilters.label "Peata">
+<!ENTITY stopFilters.accesskey "P">
+<!ENTITY folderPickerPrefix.label "Rakenda valitud filtrit (filtreid) kaustale:">
+<!ENTITY folderPickerPrefix.accesskey "i">
+<!ENTITY helpButton.label "Abi">
+<!ENTITY helpButton.accesskey "A">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Otsi filtrit nime järgi…">
+
+
+

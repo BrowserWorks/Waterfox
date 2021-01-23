@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire.accesskey "E">
+
+<!ENTITY menu_securitySign.label "Tandatangani Mesej Ini Secara Digital">
+<!ENTITY menu_securitySign.accesskey "M">
+
+<!ENTITY menu_securityStatus.label "Papar Info Keselamatan">
+<!ENTITY menu_securityStatus.accesskey "I">
+
+<!ENTITY securityButton.label "Keselamatan">
+<!ENTITY securityButton.tooltip "Papar atau tukar tetapan keselamatan">
+
+<!ENTITY menu_viewSecurityStatus.label "Info Keselamatan Mesej">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

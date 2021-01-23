@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Tablo Özellikleri">
+<!ENTITY applyButton.label                "Uygula">
+<!ENTITY applyButton.accesskey            "U">
+<!ENTITY closeButton.label                "Kapat">
+<!ENTITY tableTab.label                   "Tablo">
+<!ENTITY cellTab.label                    "Hücreler">
+<!ENTITY tableRows.label                  "Satır:">
+<!ENTITY tableRows.accessKey              "S">
+<!ENTITY tableColumns.label               "Sütun:">
+<!ENTITY tableColumns.accessKey           "n">
+<!ENTITY tableHeight.label                "Yükseklik:">
+<!ENTITY tableHeight.accessKey            "Y">
+<!ENTITY tableWidth.label                 "Genişlik:">
+<!ENTITY tableWidth.accessKey             "G">
+<!ENTITY tableBorderSpacing.label         "Kenarlıklar ve Boşluklar">
+<!ENTITY tableBorderWidth.label           "Kenarlık:">
+<!ENTITY tableBorderWidth.accessKey       "r">
+<!ENTITY tableSpacing.label               "Aralık:">
+<!ENTITY tableSpacing.accessKey           "A">
+<!ENTITY tablePadding.label               "Dolgu:">
+<!ENTITY tablePadding.accessKey           "o">
+<!ENTITY tablePxBetwCells.label           "piksel, hücreler arasında">
+<!ENTITY tablePxBetwBrdrCellContent.label "piksel, hücre kenarlığı ile içerik arasında">
+<!ENTITY tableAlignment.label             "Tablo Hizalama:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Altyazı:">
+<!ENTITY tableCaption.accessKey           "t">
+<!ENTITY tableCaptionAbove.label          "Tablonun Üstü">
+<!ENTITY tableCaptionBelow.label          "Tablonun Altı">
+<!ENTITY tableCaptionLeft.label           "Tablonun Solu">
+<!ENTITY tableCaptionRight.label          "Tablonun Sağı">
+<!ENTITY tableCaptionNone.label           "Hiçbiri">
+<!ENTITY tableInheritColor.label           "(Sayfa rengi geçirgen olsun)">
+
+<!ENTITY cellSelection.label              "Seçim">
+<!ENTITY cellSelectCell.label             "Hücre">
+<!ENTITY cellSelectRow.label              "Satır">
+<!ENTITY cellSelectColumn.label           "Sütun">
+<!ENTITY cellSelectNext.label             "Sonraki">
+<!ENTITY cellSelectNext.accessKey         "n">
+<!ENTITY cellSelectPrevious.label         "Önceki">
+<!ENTITY cellSelectPrevious.accessKey     "k">
+<!ENTITY applyBeforeChange.label          "Mevcut değişiklikler, seçim değişikliğinden önce uygulanacak.">
+<!ENTITY cellContentAlignment.label       "İçerik Hizalama">
+<!ENTITY cellHorizontal.label             "Yatay:">
+<!ENTITY cellHorizontal.accessKey         "t">
+<!ENTITY cellVertical.label               "Dikey:">
+<!ENTITY cellVertical.accessKey           "D">
+<!ENTITY cellStyle.label                  "Hücre Biçemi:">
+<!ENTITY cellStyle.accessKey              "H">
+<!ENTITY cellNormal.label                 "Normal">
+<!ENTITY cellHeader.label                 "Başlık">
+<!ENTITY cellTextWrap.label               "Metin Kaydırma:">
+<!ENTITY cellTextWrap.accessKey           "M">
+<!ENTITY cellWrap.label                   "Kaydır">
+<!ENTITY cellNoWrap.label                 "Kaydırma">
+<!ENTITY cellAlignTop.label               "Üst">
+<!ENTITY cellAlignMiddle.label            "Orta">
+<!ENTITY cellAlignBottom.label            "Alt">
+<!ENTITY cellAlignJustify.label           "İki Yana Hizalı">
+<!ENTITY cellInheritColor.label           "(Tablo rengi geçirgen olsun)">
+<!ENTITY cellUseCheckboxHelp.label        "Tüm seçilen hücrelere hangi özelliklerin uygulanacağını belirlemek için onay kutularını kullanın">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Boyut">
+<!ENTITY pixels.label                     "piksel">
+<!ENTITY backgroundColor.label            "Arka Plan Rengi:">
+<!ENTITY backgroundColor.accessKey        "P">
+<!ENTITY AlignLeft.label                  "Sol">
+<!ENTITY AlignCenter.label                "Orta">
+<!ENTITY AlignRight.label                 "Sağ">

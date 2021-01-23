@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Thanh công cụ lịch">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "Thanh công cụ nhiệm vụ">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Đồng bộ hoá">
+<!ENTITY lightning.toolbar.sync.tooltip "Tải lại lịch và đồng bộ hóa các thay đổi">
+<!ENTITY lightning.toolbar.delete.label "Xóa">
+<!ENTITY lightning.toolbar.delete.tooltip "Xóa các sự kiện hoặc nhiệm vụ được chọn">
+<!ENTITY lightning.toolbar.edit.label "Chỉnh sửa">
+<!ENTITY lightning.toolbar.edit.tooltip "Chỉnh sửa sự kiện hoặc nhiệm vụ được chọn">
+<!ENTITY lightning.toolbar.gototoday.label "Đi đến hôm nay">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Đi đến hôm nay">
+<!ENTITY lightning.toolbar.print.label "In">
+<!ENTITY lightning.toolbar.print.tooltip "In sự kiện hoặc nhiệm vụ">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Lịch">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Chuyển sang thẻ lịch">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "Nhiệm vụ">
+<!ENTITY lightning.toolbar.task.tooltip       "Chuyển sang thẻ nhiệm vụ">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Sự kiện">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Tạo một sự kiện mới">
+<!ENTITY lightning.toolbar.newtask.label      "Nhiệm vụ">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Tạo một nhiệm vụ mới">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Ngày">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Tuần">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "Nhiều tuần">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "Tháng">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Trình đơn ứng dụng">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Hiển thị menu &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Ngăn lịch">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "Hiển thị ngăn lịch">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

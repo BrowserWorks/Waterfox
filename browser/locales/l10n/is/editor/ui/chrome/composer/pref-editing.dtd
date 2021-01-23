@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.editing.title "Nýjar síðustillingar">
+<!ENTITY authorName.label "Hönnuður:">
+<!ENTITY authorName.accesskey "u">
+<!ENTITY pageColorHeader "Sjálfgefið síðuútlit">
+<!ENTITY defaultColors.label "Sjálfgefnir litir lesara (Ekki breyta litum í síðu)">
+<!ENTITY defaultColors.accesskey "S">
+<!ENTITY customColors.label "Nota sérsniðna liti:">
+<!ENTITY customColors.accesskey "o">
+<!ENTITY normalText.label "Venjulegur texti">
+<!ENTITY normalText.accesskey "n">
+<!ENTITY linkText.label "Texti Tengils">
+<!ENTITY linkText.accesskey "l">
+<!ENTITY activeLinkText.label "Virkur texta tengill">
+<!ENTITY activeLinkText.accesskey "a">
+<!ENTITY visitedLinkText.label "Heimsóttur texta tengill">
+<!ENTITY visitedLinkText.accesskey "H">
+<!ENTITY background.label "Bakgrunnur:">
+<!ENTITY background.accesskey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Bakgrunnsmynd:">
+<!ENTITY backgroundImage.accesskey "m">
+<!ENTITY chooseFile.label "Veldu skrá…">
+<!ENTITY chooseFile.accesskey "V">

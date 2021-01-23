@@ -2,6 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
+
+import os
 import sys
 
 from mozbuild.backend.test_manifest import TestManifestBackend
@@ -20,6 +23,10 @@ def gen_test_backend():
         # to be re-created if configure runs. If the file doesn't exist,
         # mozbuild continually thinks the TestManifest backend is out of date
         # and tries to regenerate it.
+
+        if not os.path.isdir(build_obj.topobjdir):
+            os.makedirs(build_obj.topobjdir)
+
         config_status = mozpath.join(build_obj.topobjdir, 'config.status')
         open(config_status, 'w').close()
 

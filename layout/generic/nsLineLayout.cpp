@@ -710,8 +710,9 @@ static bool IsPercentageAware(const nsIFrame* aFrame, WritingMode aWM) {
     // We need to check for frames that shrink-wrap when they're auto
     // width.
     const nsStyleDisplay* disp = aFrame->StyleDisplay();
-    if (disp->mDisplay == StyleDisplay::InlineBlock ||
-        disp->mDisplay == StyleDisplay::InlineTable ||
+    if ((disp->DisplayOutside() == StyleDisplayOutside::Inline &&
+         (disp->DisplayInside() == StyleDisplayInside::FlowRoot ||
+          disp->DisplayInside() == StyleDisplayInside::Table)) ||
         fType == LayoutFrameType::HTMLButtonControl ||
         fType == LayoutFrameType::GfxButtonControl ||
         fType == LayoutFrameType::FieldSet ||
@@ -1475,9 +1476,9 @@ bool nsLineLayout::TryToPlaceFloat(nsIFrame* aFloat) {
 bool nsLineLayout::NotifyOptionalBreakPosition(nsIFrame* aFrame,
                                                int32_t aOffset, bool aFits,
                                                gfxBreakPriority aPriority) {
-  MOZ_ASSERT(!aFits || !mNeedBackup,
-             "Shouldn't be updating the break position with a break that fits "
-             "after we've already flagged an overrun");
+  NS_ASSERTION(!aFits || !mNeedBackup,
+               "Shouldn't be updating the break position with a break that fits"
+               " after we've already flagged an overrun");
   MOZ_ASSERT(mCurrentSpan, "Should be doing line layout");
   if (mCurrentSpan->mNoWrap) {
     FlushNoWrapFloats();
@@ -1672,7 +1673,7 @@ void nsLineLayout::AdjustLeadings(nsIFrame* spanFrame, PerSpanData* psd,
     requiredStartLeading += leadings.mStart;
     requiredEndLeading += leadings.mEnd;
   }
-  if (aStyleText->HasTextEmphasis()) {
+  if (aStyleText->HasEffectiveTextEmphasis()) {
     nscoord bsize = GetBSizeOfEmphasisMarks(spanFrame, aInflation);
     LogicalSide side = aStyleText->TextEmphasisSide(mRootSpan->mWritingMode);
     if (side == eLogicalSideBStart) {
@@ -2029,9 +2030,16 @@ void nsLineLayout::VerticalAlignFrames(PerSpanData* psd) {
         default:
         case StyleVerticalAlignKeyword::Baseline:
           if (lineWM.IsVertical() && !lineWM.IsSideways()) {
+            // FIXME: We should really use a central baseline from the
+            // baseline table of the font, rather than assuming it's in
+            // the middle.
             if (frameSpan) {
+              nscoord borderBoxBSize = pfd->mBounds.BSize(lineWM);
+              nscoord bStartBP = pfd->mBorderPadding.BStart(lineWM);
+              nscoord bEndBP = pfd->mBorderPadding.BEnd(lineWM);
+              nscoord contentBoxBSize = borderBoxBSize - bStartBP - bEndBP;
               pfd->mBounds.BStart(lineWM) =
-                  revisedBaselineBCoord - pfd->mBounds.BSize(lineWM) / 2;
+                  revisedBaselineBCoord - contentBoxBSize / 2 - bStartBP;
             } else {
               pfd->mBounds.BStart(lineWM) = revisedBaselineBCoord -
                                             logicalBSize / 2 +
@@ -2279,7 +2287,7 @@ void nsLineLayout::VerticalAlignFrames(PerSpanData* psd) {
             fm, minimumLineBSize, lineWM.IsLineInverted());
         nscoord blockEnd = blockStart + minimumLineBSize;
 
-        if (mStyleText->HasTextEmphasis()) {
+        if (mStyleText->HasEffectiveTextEmphasis()) {
           nscoord fontMaxHeight = fm->MaxHeight();
           nscoord emphasisHeight =
               GetBSizeOfEmphasisMarks(spanFrame, inflation);
@@ -2290,7 +2298,7 @@ void nsLineLayout::VerticalAlignFrames(PerSpanData* psd) {
               nscoord ascent = fm->MaxAscent();
               nscoord descent = fm->MaxDescent();
               if (lineWM.IsLineInverted()) {
-                Swap(ascent, descent);
+                std::swap(ascent, descent);
               }
               blockStart = -ascent;
               blockEnd = descent;
@@ -2650,7 +2658,7 @@ struct nsLineLayout::JustificationComputationState {
 };
 
 static bool IsRubyAlignSpaceAround(nsIFrame* aRubyBase) {
-  return aRubyBase->StyleText()->mRubyAlign == NS_STYLE_RUBY_ALIGN_SPACE_AROUND;
+  return aRubyBase->StyleText()->mRubyAlign == StyleRubyAlign::SpaceAround;
 }
 
 /**
@@ -2932,14 +2940,14 @@ void nsLineLayout::ExpandRubyBox(PerFrameData* aFrame, nscoord aReservedISize,
   WritingMode lineWM = mRootSpan->mWritingMode;
   auto rubyAlign = aFrame->mFrame->StyleText()->mRubyAlign;
   switch (rubyAlign) {
-    case NS_STYLE_RUBY_ALIGN_START:
+    case StyleRubyAlign::Start:
       // do nothing for start
       break;
-    case NS_STYLE_RUBY_ALIGN_SPACE_BETWEEN:
-    case NS_STYLE_RUBY_ALIGN_SPACE_AROUND: {
+    case StyleRubyAlign::SpaceBetween:
+    case StyleRubyAlign::SpaceAround: {
       int32_t opportunities = aFrame->mJustificationInfo.mInnerOpportunities;
       int32_t gaps = opportunities * 2;
-      if (rubyAlign == NS_STYLE_RUBY_ALIGN_SPACE_AROUND) {
+      if (rubyAlign == StyleRubyAlign::SpaceAround) {
         // Each expandable ruby box with ruby-align space-around has a
         // gap at each of its sides. For rb/rbc, see comment in
         // AssignInterframeJustificationGaps; for rt/rtc, see comment
@@ -2953,9 +2961,9 @@ void nsLineLayout::ExpandRubyBox(PerFrameData* aFrame, nscoord aReservedISize,
       }
       // If there are no justification opportunities for space-between,
       // fall-through to center per spec.
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     }
-    case NS_STYLE_RUBY_ALIGN_CENTER:
+    case StyleRubyAlign::Center:
       // Indent all children by half of the reserved inline size.
       for (PerFrameData* child = aFrame->mSpan->mFirstFrame; child;
            child = child->mNext) {
@@ -3069,30 +3077,16 @@ void nsLineLayout::TextAlignLine(nsLineBox* aLine, bool aIsLastLine) {
          availISize, aLine->IStart(), aLine->ISize(), remainingISize);
 #endif
 
-  // 'text-align-last: auto' is equivalent to the value of the 'text-align'
-  // property except when 'text-align' is set to 'justify', in which case it
-  // is 'justify' when 'text-justify' is 'distribute' and 'start' otherwise.
-  //
-  // XXX: the code below will have to change when we implement text-justify
-  //
   nscoord dx = 0;
-  uint8_t textAlign = mStyleText->mTextAlign;
-  if (aIsLastLine) {
-    if (mStyleText->mTextAlignLast == NS_STYLE_TEXT_ALIGN_AUTO) {
-      if (textAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY) {
-        textAlign = NS_STYLE_TEXT_ALIGN_START;
-      }
-    } else {
-      textAlign = mStyleText->mTextAlignLast;
-    }
-  }
+  StyleTextAlign textAlign =
+      aIsLastLine ? mStyleText->TextAlignForLastLine() : mStyleText->mTextAlign;
 
   bool isSVG = nsSVGUtils::IsInSVGTextSubtree(mBlockReflowInput->mFrame);
   bool doTextAlign = remainingISize > 0;
 
   int32_t additionalGaps = 0;
   if (!isSVG &&
-      (mHasRuby || (doTextAlign && textAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY))) {
+      (mHasRuby || (doTextAlign && textAlign == StyleTextAlign::Justify))) {
     JustificationComputationState computeState;
     ComputeFrameJustification(psd, computeState);
     if (mHasRuby && computeState.mFirstParticipant) {
@@ -3119,7 +3113,7 @@ void nsLineLayout::TextAlignLine(nsLineBox* aLine, bool aIsLastLine) {
 
   if (!isSVG && doTextAlign) {
     switch (textAlign) {
-      case NS_STYLE_TEXT_ALIGN_JUSTIFY: {
+      case StyleTextAlign::Justify: {
         int32_t opportunities =
             psd->mFrame->mJustificationInfo.mInnerOpportunities;
         if (opportunities > 0) {
@@ -3140,33 +3134,35 @@ void nsLineLayout::TextAlignLine(nsLineBox* aLine, bool aIsLastLine) {
         }
         // Fall through to the default case if we could not justify to fill
         // the space.
-        MOZ_FALLTHROUGH;
+        [[fallthrough]];
       }
 
-      case NS_STYLE_TEXT_ALIGN_START:
-        // default alignment is to start edge so do nothing
+      case StyleTextAlign::Start:
+      case StyleTextAlign::Char:
+        // default alignment is to start edge so do nothing.
+        // Char is for tables so treat as start if we find it in block layout.
         break;
 
-      case NS_STYLE_TEXT_ALIGN_LEFT:
-      case NS_STYLE_TEXT_ALIGN_MOZ_LEFT:
-        if (!lineWM.IsBidiLTR()) {
+      case StyleTextAlign::Left:
+      case StyleTextAlign::MozLeft:
+        if (lineWM.IsBidiRTL()) {
           dx = remainingISize;
         }
         break;
 
-      case NS_STYLE_TEXT_ALIGN_RIGHT:
-      case NS_STYLE_TEXT_ALIGN_MOZ_RIGHT:
+      case StyleTextAlign::Right:
+      case StyleTextAlign::MozRight:
         if (lineWM.IsBidiLTR()) {
           dx = remainingISize;
         }
         break;
 
-      case NS_STYLE_TEXT_ALIGN_END:
+      case StyleTextAlign::End:
         dx = remainingISize;
         break;
 
-      case NS_STYLE_TEXT_ALIGN_CENTER:
-      case NS_STYLE_TEXT_ALIGN_MOZ_CENTER:
+      case StyleTextAlign::Center:
+      case StyleTextAlign::MozCenter:
         dx = remainingISize / 2;
         break;
     }
@@ -3177,7 +3173,7 @@ void nsLineLayout::TextAlignLine(nsLineBox* aLine, bool aIsLastLine) {
   }
 
   if (mPresContext->BidiEnabled() &&
-      (!mPresContext->IsVisualMode() || !lineWM.IsBidiLTR())) {
+      (!mPresContext->IsVisualMode() || lineWM.IsBidiRTL())) {
     PerFrameData* startFrame = psd->mFirstFrame;
     MOZ_ASSERT(startFrame, "empty line?");
     if (startFrame->mIsMarker) {
@@ -3279,7 +3275,8 @@ void nsLineLayout::RelativePositionFrames(PerSpanData* psd,
     if (frame->HasView())
       nsContainerFrame::SyncFrameViewAfterReflow(
           mPresContext, frame, frame->GetView(),
-          pfd->mOverflowAreas.VisualOverflow(), NS_FRAME_NO_SIZE_VIEW);
+          pfd->mOverflowAreas.VisualOverflow(),
+          nsIFrame::ReflowChildFlags::NoSizeView);
 
     // Note: the combined area of a child is in its coordinate
     // system. We adjust the childs combined area into our coordinate
@@ -3302,7 +3299,7 @@ void nsLineLayout::RelativePositionFrames(PerSpanData* psd,
         // (4) When there are text strokes
         if (pfd->mRecomputeOverflow ||
             frame->Style()->HasTextDecorationLines() ||
-            frame->StyleText()->HasTextEmphasis() ||
+            frame->StyleText()->HasEffectiveTextEmphasis() ||
             frame->StyleText()->HasWebkitTextStroke()) {
           nsTextFrame* f = static_cast<nsTextFrame*>(frame);
           r = f->RecomputeOverflow(mBlockReflowInput->mFrame);
@@ -3326,7 +3323,7 @@ void nsLineLayout::RelativePositionFrames(PerSpanData* psd,
     if (frame->HasView())
       nsContainerFrame::SyncFrameViewAfterReflow(
           mPresContext, frame, frame->GetView(), r.VisualOverflow(),
-          NS_FRAME_NO_MOVE_VIEW);
+          nsIFrame::ReflowChildFlags::NoMoveView);
 
     overflowAreas.UnionWith(r + frame->GetPosition());
   }

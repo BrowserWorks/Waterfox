@@ -7,6 +7,8 @@
 #ifndef util_Unicode_h
 #define util_Unicode_h
 
+#include "mozilla/Casting.h"  // mozilla::AssertedCast
+
 #include "jspubtd.h"
 
 #include "util/UnicodeNonBMP.h"
@@ -66,8 +68,6 @@ const uint8_t UNICODE_ID_CONTINUE = UNICODE_ID_START + UNICODE_ID_CONTINUE_ONLY;
 
 constexpr char16_t NO_BREAK_SPACE = 0x00A0;
 constexpr char16_t MICRO_SIGN = 0x00B5;
-constexpr char16_t LATIN_CAPITAL_LETTER_A_WITH_GRAVE = 0x00C0;
-constexpr char16_t MULTIPLICATION_SIGN = 0x00D7;
 constexpr char16_t LATIN_SMALL_LETTER_SHARP_S = 0x00DF;
 constexpr char16_t LATIN_SMALL_LETTER_A_WITH_GRAVE = 0x00E0;
 constexpr char16_t DIVISION_SIGN = 0x00F7;
@@ -80,7 +80,6 @@ constexpr char16_t GREEK_SMALL_LETTER_SIGMA = 0x03C3;
 constexpr char16_t LINE_SEPARATOR = 0x2028;
 constexpr char16_t PARA_SEPARATOR = 0x2029;
 constexpr char16_t REPLACEMENT_CHARACTER = 0xFFFD;
-constexpr char16_t BYTE_ORDER_MARK2 = 0xFFFE;
 
 const char16_t LeadSurrogateMin = 0xD800;
 const char16_t LeadSurrogateMax = 0xDBFF;
@@ -204,19 +203,28 @@ inline bool IsUnicodeIDStart(uint32_t codePoint) {
   return IsUnicodeIDStart(char16_t(codePoint));
 }
 
+// IsSpace checks if a code point is included in the merged set of WhiteSpace
+// and LineTerminator specified by #sec-white-space and #sec-line-terminators.
+// We combine them because nearly every calling function wants this, excepting
+// only some tokenizer code that necessarily handles LineTerminator specially
+// due to UTF-8/UTF-16 template specialization.
 inline bool IsSpace(char16_t ch) {
-  /*
-   * IsSpace checks if some character is included in the merged set
-   * of WhiteSpace and LineTerminator, specified by ES2016 11.2 and 11.3.
-   * We combined them, because in practice nearly every
-   * calling function wants this, except some code in the tokenizer.
-   *
-   * We use a lookup table for ASCII-7 characters, because they are
-   * very common and must be handled quickly in the tokenizer.
-   * NO-BREAK SPACE is supposed to be the most common character not in
-   * this range, so we inline this case, too.
-   */
+  // ASCII code points are very common and must be handled quickly, so use a
+  // lookup table for them.
+  if (ch < 128) {
+    return js_isspace[ch];
+  }
 
+  // NO-BREAK SPACE is supposed to be the most common non-ASCII WhiteSpace code
+  // point, so inline its handling too.
+  if (ch == NO_BREAK_SPACE) {
+    return true;
+  }
+
+  return CharInfo(ch).isSpace();
+}
+
+inline bool IsSpace(JS::Latin1Char ch) {
   if (ch < 128) {
     return js_isspace[ch];
   }
@@ -225,24 +233,31 @@ inline bool IsSpace(char16_t ch) {
     return true;
   }
 
-  return CharInfo(ch).isSpace();
+  MOZ_ASSERT(!CharInfo(ch).isSpace());
+  return false;
 }
 
-inline bool IsSpaceOrBOM2(char32_t ch) {
+inline bool IsSpace(char ch) {
+  return IsSpace(static_cast<JS::Latin1Char>(ch));
+}
+
+// IsSpace(char32_t) must additionally exclude everything non-BMP.
+inline bool IsSpace(char32_t ch) {
   if (ch < 128) {
     return js_isspace[ch];
   }
 
-  /* We accept BOM2 (0xFFFE) for compatibility reasons in the parser. */
-  if (ch == NO_BREAK_SPACE || ch == BYTE_ORDER_MARK2) {
+  if (ch == NO_BREAK_SPACE) {
     return true;
   }
 
+  // An assertion in make_unicode.py:make_unicode_file guarantees that there are
+  // no Space_Separator (Zs) code points outside the BMP.
   if (ch >= NonBMPMin) {
     return false;
   }
 
-  return CharInfo(ch).isSpace();
+  return CharInfo(mozilla::AssertedCast<char16_t>(ch)).isSpace();
 }
 
 /*
@@ -279,6 +294,27 @@ inline char16_t ToLowerCase(char16_t ch) {
   const CharacterInfo& info = CharInfo(ch);
 
   return uint16_t(ch) + info.lowerCase;
+}
+
+extern const JS::Latin1Char latin1ToLowerCaseTable[];
+
+/*
+ * Returns the simple lower case mapping (possibly the identity mapping; see
+ * ChangesWhenUpperCasedSpecialCasing for details) of the given Latin-1 code
+ * point.
+ */
+inline JS::Latin1Char ToLowerCase(JS::Latin1Char ch) {
+  return latin1ToLowerCaseTable[ch];
+}
+
+/*
+ * Returns the simple lower case mapping (possibly the identity mapping; see
+ * ChangesWhenUpperCasedSpecialCasing for details) of the given ASCII code
+ * point.
+ */
+inline char ToLowerCase(char ch) {
+  MOZ_ASSERT(static_cast<unsigned char>(ch) < 128);
+  return latin1ToLowerCaseTable[uint8_t(ch)];
 }
 
 /**
@@ -327,15 +363,7 @@ inline bool ChangesWhenLowerCased(char16_t ch) {
 
 // Returns true iff ToLowerCase(ch) != ch.
 inline bool ChangesWhenLowerCased(JS::Latin1Char ch) {
-  if (MOZ_LIKELY(ch < 128)) {
-    return ch >= 'A' && ch <= 'Z';
-  }
-
-  // U+00C0 to U+00DE, except U+00D7, have a lowercase form.
-  bool hasLower = ((ch & ~0x1F) == LATIN_CAPITAL_LETTER_A_WITH_GRAVE) &&
-                  ((ch & MULTIPLICATION_SIGN) != MULTIPLICATION_SIGN);
-  MOZ_ASSERT(hasLower == ChangesWhenLowerCased(char16_t(ch)));
-  return hasLower;
+  return latin1ToLowerCaseTable[ch] != ch;
 }
 
 #define CHECK_RANGE(FROM, TO, LEAD, TRAIL_FROM, TRAIL_TO, DIFF) \

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Viestien luku">
+<!ENTITY style.label                      "Tyyli:">
+<!ENTITY style.accesskey                  "y">
+<!ENTITY regular.label                    "Normaali">
+<!ENTITY bold.label                       "Lihavoitu">
+<!ENTITY italic.label                     "Kursivoitu">
+<!ENTITY boldItalic.label                 "Lihavoitu kursivoitu">
+<!ENTITY size.label                       "Koko:">
+<!ENTITY size.accesskey                   "o">
+<!ENTITY bigger.label                     "Suurempi">
+<!ENTITY smaller.label                    "Pienempi">
+<!ENTITY color.label                      "Väri:">
+<!ENTITY color.accesskey                  "V">
+<!ENTITY displayPlainText.caption         "Pelkkä teksti -viestit">
+<!ENTITY fontPlainText.label              "Kirjasinlaji:">
+<!ENTITY fontPlainText.accesskey          "i">
+<!ENTITY displayQuoted.label              "Lainattujen viestien asetukset:">
+<!ENTITY wrapInMsg.label                  "Rivitä teksti">
+<!ENTITY wrapInMsg.accesskey              "R">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Näytä hymiöt kuvina">
+<!ENTITY convertEmoticons.accesskey       "ä">
+<!ENTITY generalMessageDisplay.caption    "Yleiset">
+<!ENTITY autoMarkAsRead.label             "Merkitse viesti luetuksi">
+<!ENTITY autoMarkAsRead.accesskey         "M">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Kun se on ollut esillä">
+<!ENTITY markAsReadAfter.accesskey        "K">
+<!ENTITY secondsLabel.label               "sekuntia">
+
+<!ENTITY openingMessages.label            "Avattaessa viestiä, näytä se:">
+<!ENTITY newWindowRadio.label             "Uudessa ikkunassa">
+<!ENTITY newWindowRadio.accesskey         "U">
+<!ENTITY existingWindowRadio.label        "Olemassa olevassa ikkunassa">
+<!ENTITY existingWindowRadio.accesskey    "O">
+<!ENTITY disableContent.label             "Estä etälähteistä ladattavat kuvat ja muu sisältö">
+<!ENTITY disableContent.accesskey         "E">
+<!ENTITY showCondensedAddresses.label     "Näytä osoitekirjassa olevista henkilöistä vain kokonimi">
+<!ENTITY showCondensedAddresses.accesskey "N">
+<!ENTITY closeMsgWindowOnDelete.label     "Sulje viesti-ikkuna siinä auki olleen viestin poistamisen jälkeen">
+<!ENTITY closeMsgWindowOnDelete.accesskey "S">

@@ -19,8 +19,7 @@
 #include "jit/BaselineJIT.h"
 #include "jit/CompileInfo.h"
 #include "jit/ICStubSpace.h"
-#include "jit/IonCode.h"
-#include "jit/IonControlFlow.h"
+#include "jit/JitCode.h"
 #include "jit/JitFrames.h"
 #include "jit/shared/Assembler-shared.h"
 #include "js/GCHashTable.h"
@@ -121,10 +120,8 @@ class BaselineICFallbackCode {
 
 enum class DebugTrapHandlerKind { Interpreter, Compiler, Count };
 
-typedef void (*EnterJitCode)(void* code, unsigned argc, Value* argv,
-                             InterpreterFrame* fp, CalleeToken calleeToken,
-                             JSObject* envChain, size_t numStackValues,
-                             Value* vp);
+using EnterJitCode = void (*)(void*, unsigned int, Value*, InterpreterFrame*,
+                              CalleeToken, JSObject*, size_t, Value*);
 
 class JitcodeGlobalTable;
 
@@ -132,22 +129,24 @@ class JitRuntime {
  private:
   friend class JitRealm;
 
-  // Executable allocator for all code except wasm code.
-  MainThreadData<ExecutableAllocator> execAlloc_;
+  MainThreadData<uint64_t> nextCompilationId_{0};
 
-  MainThreadData<uint64_t> nextCompilationId_;
+  // Buffer for OSR from baseline to Ion. To avoid holding on to this for too
+  // long it's also freed in EnterBaseline and EnterJit (after returning from
+  // JIT code).
+  MainThreadData<js::UniquePtr<uint8_t>> ionOsrTempData_{nullptr};
 
   // Shared exception-handler tail.
-  WriteOnceData<uint32_t> exceptionTailOffset_;
+  WriteOnceData<uint32_t> exceptionTailOffset_{0};
 
   // Shared post-bailout-handler tail.
-  WriteOnceData<uint32_t> bailoutTailOffset_;
+  WriteOnceData<uint32_t> bailoutTailOffset_{0};
 
   // Shared profiler exit frame tail.
-  WriteOnceData<uint32_t> profilerExitFrameTailOffset_;
+  WriteOnceData<uint32_t> profilerExitFrameTailOffset_{0};
 
   // Trampoline for entering JIT code.
-  WriteOnceData<uint32_t> enterJITOffset_;
+  WriteOnceData<uint32_t> enterJITOffset_{0};
 
   // Vector mapping frame class sizes to bailout tables.
   struct BailoutTable {
@@ -160,56 +159,46 @@ class JitRuntime {
   WriteOnceData<BailoutTableVector> bailoutTables_;
 
   // Generic bailout table; used if the bailout table overflows.
-  WriteOnceData<uint32_t> bailoutHandlerOffset_;
+  WriteOnceData<uint32_t> bailoutHandlerOffset_{0};
 
   // Argument-rectifying thunk, in the case of insufficient arguments passed
   // to a function call site.
-  WriteOnceData<uint32_t> argumentsRectifierOffset_;
-  WriteOnceData<uint32_t> argumentsRectifierReturnOffset_;
+  WriteOnceData<uint32_t> argumentsRectifierOffset_{0};
+  WriteOnceData<uint32_t> argumentsRectifierReturnOffset_{0};
 
   // Thunk that invalides an (Ion compiled) caller on the Ion stack.
-  WriteOnceData<uint32_t> invalidatorOffset_;
+  WriteOnceData<uint32_t> invalidatorOffset_{0};
 
   // Thunk that calls the GC pre barrier.
-  WriteOnceData<uint32_t> valuePreBarrierOffset_;
-  WriteOnceData<uint32_t> stringPreBarrierOffset_;
-  WriteOnceData<uint32_t> objectPreBarrierOffset_;
-  WriteOnceData<uint32_t> shapePreBarrierOffset_;
-  WriteOnceData<uint32_t> objectGroupPreBarrierOffset_;
+  WriteOnceData<uint32_t> valuePreBarrierOffset_{0};
+  WriteOnceData<uint32_t> stringPreBarrierOffset_{0};
+  WriteOnceData<uint32_t> objectPreBarrierOffset_{0};
+  WriteOnceData<uint32_t> shapePreBarrierOffset_{0};
+  WriteOnceData<uint32_t> objectGroupPreBarrierOffset_{0};
 
   // Thunk to call malloc/free.
-  WriteOnceData<uint32_t> mallocStubOffset_;
-  WriteOnceData<uint32_t> freeStubOffset_;
+  WriteOnceData<uint32_t> freeStubOffset_{0};
 
   // Thunk called to finish compilation of an IonScript.
-  WriteOnceData<uint32_t> lazyLinkStubOffset_;
+  WriteOnceData<uint32_t> lazyLinkStubOffset_{0};
 
   // Thunk to enter the interpreter from JIT code.
-  WriteOnceData<uint32_t> interpreterStubOffset_;
+  WriteOnceData<uint32_t> interpreterStubOffset_{0};
 
   // Thunk to convert the value in R0 to int32 if it's a double.
   // Note: this stub treats -0 as +0 and may clobber R1.scratchReg().
-  WriteOnceData<uint32_t> doubleToInt32ValueStubOffset_;
+  WriteOnceData<uint32_t> doubleToInt32ValueStubOffset_{0};
 
   // Thunk used by the debugger for breakpoint and step mode.
   mozilla::EnumeratedArray<DebugTrapHandlerKind, DebugTrapHandlerKind::Count,
                            WriteOnceData<JitCode*>>
       debugTrapHandlers_;
 
-  // Thunk used to fix up on-stack recompile of baseline scripts.
-  WriteOnceData<JitCode*> baselineDebugModeOSRHandler_;
-  WriteOnceData<void*> baselineDebugModeOSRHandlerNoFrameRegPopAddr_;
-
   // BaselineInterpreter state.
   BaselineInterpreter baselineInterpreter_;
 
   // Code for trampolines and VMFunction wrappers.
-  WriteOnceData<JitCode*> trampolineCode_;
-
-  // Map VMFunction addresses to the offset of the wrapper in
-  // trampolineCode_.
-  using VMWrapperMap = HashMap<const VMFunction*, uint32_t, VMFunction>;
-  WriteOnceData<VMWrapperMap*> functionWrappers_;
+  WriteOnceData<JitCode*> trampolineCode_{nullptr};
 
   // Maps VMFunctionId to the offset of the wrapper code in trampolineCode_.
   using VMWrapperOffsets = Vector<uint32_t, 0, SystemAllocPolicy>;
@@ -222,31 +211,41 @@ class JitRuntime {
   MainThreadData<BaselineICFallbackCode> baselineICFallbackCode_;
 
   // Global table of jitcode native address => bytecode address mappings.
-  UnprotectedData<JitcodeGlobalTable*> jitcodeGlobalTable_;
+  UnprotectedData<JitcodeGlobalTable*> jitcodeGlobalTable_{nullptr};
 
 #ifdef DEBUG
-  // The number of possible bailing places encounters before forcefully bailing
-  // in that place. Zero means inactive.
-  MainThreadData<uint32_t> ionBailAfter_;
+  // The number of possible bailing places encountered before forcefully bailing
+  // in that place if the counter reaches zero. Note that zero also means
+  // inactive.
+  MainThreadData<uint32_t> ionBailAfterCounter_{0};
+
+  // Whether the bailAfter mechanism is enabled. Used to avoid generating the
+  // Ion code instrumentation for ionBailAfterCounter_ if the testing function
+  // isn't used.
+  MainThreadData<bool> ionBailAfterEnabled_{false};
 #endif
 
   // Number of Ion compilations which were finished off thread and are
   // waiting to be lazily linked. This is only set while holding the helper
   // thread state lock, but may be read from at other times.
-  typedef mozilla::Atomic<size_t, mozilla::SequentiallyConsistent,
-                          mozilla::recordreplay::Behavior::DontPreserve>
-      NumFinishedBuildersType;
-  NumFinishedBuildersType numFinishedBuilders_;
+  typedef mozilla::Atomic<size_t, mozilla::SequentiallyConsistent>
+      NumFinishedOffThreadTasksType;
+  NumFinishedOffThreadTasksType numFinishedOffThreadTasks_{0};
 
   // List of Ion compilation waiting to get linked.
-  using IonBuilderList = mozilla::LinkedList<js::jit::IonBuilder>;
-  MainThreadData<IonBuilderList> ionLazyLinkList_;
-  MainThreadData<size_t> ionLazyLinkListSize_;
+  using IonCompileTaskList = mozilla::LinkedList<js::jit::IonCompileTask>;
+  MainThreadData<IonCompileTaskList> ionLazyLinkList_;
+  MainThreadData<size_t> ionLazyLinkListSize_{0};
 
   // Counter used to help dismbiguate stubs in CacheIR
-  MainThreadData<uint64_t> disambiguationId_;
+  MainThreadData<uint64_t> disambiguationId_{0};
 
- private:
+#ifdef DEBUG
+  // Flag that can be set from JIT code to indicate it's invalid to call
+  // arbitrary JS code in a particular region. This is checked in RunScript.
+  MainThreadData<uint32_t> disallowArbitraryCode_{false};
+#endif
+
   bool generateTrampolines(JSContext* cx);
   bool generateBaselineICFallbackCode(JSContext* cx);
 
@@ -266,11 +265,8 @@ class JitRuntime {
   void generateInvalidator(MacroAssembler& masm, Label* bailoutTail);
   uint32_t generatePreBarrier(JSContext* cx, MacroAssembler& masm,
                               MIRType type);
-  void generateMallocStub(MacroAssembler& masm);
   void generateFreeStub(MacroAssembler& masm);
   JitCode* generateDebugTrapHandler(JSContext* cx, DebugTrapHandlerKind kind);
-  JitCode* generateBaselineDebugModeOSRHandler(
-      JSContext* cx, uint32_t* noFrameRegPopOffsetOut);
 
   bool generateVMWrapper(JSContext* cx, MacroAssembler& masm,
                          const VMFunctionData& f, void* nativeFun,
@@ -300,16 +296,13 @@ class JitRuntime {
   }
 
  public:
-  JitRuntime();
+  JitRuntime() = default;
   ~JitRuntime();
   MOZ_MUST_USE bool initialize(JSContext* cx);
 
   static void Trace(JSTracer* trc, const js::AutoAccessAtomsZone& access);
-  static void TraceJitcodeGlobalTableForMinorGC(JSTracer* trc);
   static MOZ_MUST_USE bool MarkJitcodeGlobalTableIteratively(GCMarker* marker);
-  static void SweepJitcodeGlobalTable(JSRuntime* rt);
-
-  ExecutableAllocator& execAlloc() { return execAlloc_.ref(); }
+  static void TraceWeakJitcodeGlobalTable(JSRuntime* rt, JSTracer* trc);
 
   const BaselineICFallbackCode& baselineICFallbackCode() const {
     return baselineICFallbackCode_.ref();
@@ -319,7 +312,16 @@ class JitRuntime {
     return IonCompilationId(nextCompilationId_++);
   }
 
-  TrampolinePtr getVMWrapper(const VMFunction& f) const;
+#ifdef DEBUG
+  bool disallowArbitraryCode() const { return disallowArbitraryCode_; }
+  void clearDisallowArbitraryCode() { disallowArbitraryCode_ = false; }
+  const void* addressOfDisallowArbitraryCode() const {
+    return &disallowArbitraryCode_.refNoCheck();
+  }
+#endif
+
+  uint8_t* allocateIonOsrTempData(size_t size);
+  void freeIonOsrTempData();
 
   TrampolinePtr getVMWrapper(VMFunctionId funId) const {
     MOZ_ASSERT(trampolineCode_);
@@ -331,8 +333,6 @@ class JitRuntime {
   }
 
   JitCode* debugTrapHandler(JSContext* cx, DebugTrapHandlerKind kind);
-  JitCode* getBaselineDebugModeOSRHandler(JSContext* cx);
-  void* getBaselineDebugModeOSRHandlerAddress(JSContext* cx, bool popFrameReg);
 
   BaselineInterpreter& baselineInterpreter() { return baselineInterpreter_; }
 
@@ -389,8 +389,6 @@ class JitRuntime {
     }
   }
 
-  TrampolinePtr mallocStub() const { return trampolineCode(mallocStubOffset_); }
-
   TrampolinePtr freeStub() const { return trampolineCode(freeStubOffset_); }
 
   TrampolinePtr lazyLinkStub() const {
@@ -420,25 +418,29 @@ class JitRuntime {
   }
 
 #ifdef DEBUG
-  void* addressOfIonBailAfter() { return &ionBailAfter_; }
+  void* addressOfIonBailAfterCounter() { return &ionBailAfterCounter_; }
 
   // Set after how many bailing places we should forcefully bail.
   // Zero disables this feature.
-  void setIonBailAfter(uint32_t after) { ionBailAfter_ = after; }
+  void setIonBailAfterCounter(uint32_t after) { ionBailAfterCounter_ = after; }
+  bool ionBailAfterEnabled() const { return ionBailAfterEnabled_; }
+  void setIonBailAfterEnabled(bool enabled) { ionBailAfterEnabled_ = enabled; }
 #endif
 
-  size_t numFinishedBuilders() const { return numFinishedBuilders_; }
-  NumFinishedBuildersType& numFinishedBuildersRef(
+  size_t numFinishedOffThreadTasks() const {
+    return numFinishedOffThreadTasks_;
+  }
+  NumFinishedOffThreadTasksType& numFinishedOffThreadTasksRef(
       const AutoLockHelperThreadState& locked) {
-    return numFinishedBuilders_;
+    return numFinishedOffThreadTasks_;
   }
 
-  IonBuilderList& ionLazyLinkList(JSRuntime* rt);
+  IonCompileTaskList& ionLazyLinkList(JSRuntime* rt);
 
   size_t ionLazyLinkListSize() const { return ionLazyLinkListSize_; }
 
-  void ionLazyLinkListRemove(JSRuntime* rt, js::jit::IonBuilder* builder);
-  void ionLazyLinkListAdd(JSRuntime* rt, js::jit::IonBuilder* builder);
+  void ionLazyLinkListRemove(JSRuntime* rt, js::jit::IonCompileTask* task);
+  void ionLazyLinkListAdd(JSRuntime* rt, js::jit::IonCompileTask* task);
 
   uint64_t nextDisambiguationId() { return disambiguationId_++; }
 };
@@ -482,16 +484,14 @@ struct CacheIRStubKey : public DefaultHasher<CacheIRStubKey> {
 
 template <typename Key>
 struct IcStubCodeMapGCPolicy {
-  static bool needsSweep(Key*, WeakHeapPtrJitCode* value) {
-    return IsAboutToBeFinalized(value);
+  static bool traceWeak(JSTracer* trc, Key*, WeakHeapPtrJitCode* value) {
+    return TraceWeakEdge(trc, value, "traceWeak");
   }
 };
 
 class JitZone {
   // Allocated space for optimized baseline stubs.
   OptimizedICStubSpace optimizedStubSpace_;
-  // Allocated space for cached cfg.
-  CFGSpace cfgSpace_;
 
   // Set of CacheIRStubInfo instances used by Ion stubs in this Zone.
   using IonCacheIRStubInfoSet =
@@ -504,15 +504,17 @@ class JitZone {
                 SystemAllocPolicy, IcStubCodeMapGCPolicy<CacheIRStubKey>>;
   BaselineCacheIRStubCodeMap baselineCacheIRStubCodes_;
 
+  // Executable allocator for all code except wasm code.
+  MainThreadData<ExecutableAllocator> execAlloc_;
+
  public:
-  void sweep();
+  void traceWeak(JSTracer* trc);
 
   void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
-                              size_t* jitZone, size_t* baselineStubsOptimized,
-                              size_t* cachedCFG) const;
+                              JS::CodeSizes* code, size_t* jitZone,
+                              size_t* baselineStubsOptimized) const;
 
   OptimizedICStubSpace* optimizedStubSpace() { return &optimizedStubSpace_; }
-  CFGSpace* cfgSpace() { return &cfgSpace_; }
 
   JitCode* getBaselineCacheIRStubCode(const CacheIRStubKey::Lookup& key,
                                       CacheIRStubInfo** stubInfo) {
@@ -544,6 +546,9 @@ class JitZone {
     return ionCacheIRStubInfoSet_.add(p, std::move(key));
   }
   void purgeIonCacheIRStubInfo() { ionCacheIRStubInfoSet_.clearAndCompact(); }
+
+  ExecutableAllocator& execAlloc() { return execAlloc_.ref(); }
+  const ExecutableAllocator& execAlloc() const { return execAlloc_.ref(); }
 };
 
 class JitRealm {
@@ -622,7 +627,7 @@ class JitRealm {
     return stubs_[StringConcat];
   }
 
-  void sweep(JS::Realm* realm);
+  void traceWeak(JSTracer* trc, JS::Realm* realm);
 
   void discardStubs() {
     for (WeakHeapPtrJitCode& stubRef : stubs_) {
@@ -696,8 +701,8 @@ class JitRealm {
 };
 
 // Called from Zone::discardJitCode().
-void InvalidateAll(FreeOp* fop, JS::Zone* zone);
-void FinishInvalidation(FreeOp* fop, JSScript* script);
+void InvalidateAll(JSFreeOp* fop, JS::Zone* zone);
+void FinishInvalidation(JSFreeOp* fop, JSScript* script);
 
 // This class ensures JIT code is executable on its destruction. Creators
 // must call makeWritable(), and not attempt to write to the buffer if it fails.
@@ -728,7 +733,7 @@ class MOZ_RAII AutoWritableJitCodeFallible {
   }
 
   ~AutoWritableJitCodeFallible() {
-    if (!ExecutableAllocator::makeExecutable(addr_, size_)) {
+    if (!ExecutableAllocator::makeExecutableAndFlushICache(addr_, size_)) {
       MOZ_CRASH();
     }
     rt_->toggleAutoWritableJitCodeActive(false);
@@ -750,22 +755,6 @@ class MOZ_RAII AutoWritableJitCode : private AutoWritableJitCodeFallible {
   explicit AutoWritableJitCode(JitCode* code)
       : AutoWritableJitCode(code->runtimeFromMainThread(), code->raw(),
                             code->bufferSize()) {}
-};
-
-class MOZ_STACK_CLASS MaybeAutoWritableJitCode {
-  mozilla::Maybe<AutoWritableJitCode> awjc_;
-
- public:
-  MaybeAutoWritableJitCode(void* addr, size_t size, ReprotectCode reprotect) {
-    if (reprotect) {
-      awjc_.emplace(addr, size);
-    }
-  }
-  MaybeAutoWritableJitCode(JitCode* code, ReprotectCode reprotect) {
-    if (reprotect) {
-      awjc_.emplace(code);
-    }
-  }
 };
 
 }  // namespace jit

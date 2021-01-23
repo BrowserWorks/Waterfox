@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Табу және алмастыру">
+<!ENTITY findField.label "Мәтінді табу:">
+<!ENTITY findField.accesskey "т">
+<!ENTITY replaceField.label "Немен алмастыру:">
+<!ENTITY replaceField.accesskey "е">
+<!ENTITY caseSensitiveCheckbox.label "Регистрді сәйкестеу">
+<!ENTITY caseSensitiveCheckbox.accesskey "к">
+<!ENTITY wrapCheckbox.label "Парақтың басынан">
+<!ENTITY wrapCheckbox.accesskey "П">
+<!ENTITY backwardsCheckbox.label "Кері бағытта іздеу">
+<!ENTITY backwardsCheckbox.accesskey "б">
+<!ENTITY findNextButton.label "Келесіні табу">
+<!ENTITY findNextButton.accesskey "К">
+<!ENTITY replaceButton.label "Алмастыру">
+<!ENTITY replaceButton.accesskey "А">
+<!ENTITY replaceAndFindButton.label "Алмастыру және табу">
+<!ENTITY replaceAndFindButton.accesskey "н">
+<!ENTITY replaceAllButton.label "Барлығын алмастыру">
+<!ENTITY replaceAllButton.accesskey "а">
+<!ENTITY closeButton.label "Жабу">
+<!ENTITY closeButton.accesskey "Ж">

@@ -23,6 +23,75 @@
 namespace mozilla {
 namespace wr {
 
+void wr_compositor_add_surface(void* aCompositor, wr::NativeSurfaceId aId,
+                               wr::DeviceIntPoint aPosition,
+                               wr::DeviceIntRect aClipRect) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->AddSurface(aId, aPosition, aClipRect);
+}
+
+void wr_compositor_begin_frame(void* aCompositor) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->CompositorBeginFrame();
+}
+
+void wr_compositor_bind(void* aCompositor, wr::NativeTileId aId,
+                        wr::DeviceIntPoint* aOffset, uint32_t* aFboId,
+                        wr::DeviceIntRect aDirtyRect,
+                        wr::DeviceIntRect aValidRect) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->Bind(aId, aOffset, aFboId, aDirtyRect, aValidRect);
+}
+
+void wr_compositor_create_surface(void* aCompositor, wr::NativeSurfaceId aId,
+                                  wr::DeviceIntPoint aVirtualOffset,
+                                  wr::DeviceIntSize aTileSize, bool aIsOpaque) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->CreateSurface(aId, aVirtualOffset, aTileSize, aIsOpaque);
+}
+
+void wr_compositor_create_tile(void* aCompositor, wr::NativeSurfaceId aId,
+                               int32_t aX, int32_t aY) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->CreateTile(aId, aX, aY);
+}
+
+void wr_compositor_destroy_tile(void* aCompositor, wr::NativeSurfaceId aId,
+                                int32_t aX, int32_t aY) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->DestroyTile(aId, aX, aY);
+}
+
+void wr_compositor_destroy_surface(void* aCompositor, NativeSurfaceId aId) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->DestroySurface(aId);
+}
+
+void wr_compositor_end_frame(void* aCompositor) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->CompositorEndFrame();
+}
+
+void wr_compositor_enable_native_compositor(void* aCompositor, bool aEnable) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->EnableNativeCompositor(aEnable);
+}
+
+CompositorCapabilities wr_compositor_get_capabilities(void* aCompositor) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  return compositor->GetCompositorCapabilities();
+}
+
+void wr_compositor_unbind(void* aCompositor) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->Unbind();
+}
+
+void wr_compositor_deinit(void* aCompositor) {
+  RenderCompositor* compositor = static_cast<RenderCompositor*>(aCompositor);
+  compositor->DeInit();
+}
+
 /* static */
 UniquePtr<RenderCompositor> RenderCompositor::Create(
     RefPtr<widget::CompositorWidget>&& aWidget) {
@@ -51,9 +120,15 @@ UniquePtr<RenderCompositor> RenderCompositor::Create(
 RenderCompositor::RenderCompositor(RefPtr<widget::CompositorWidget>&& aWidget)
     : mWidget(aWidget) {}
 
-RenderCompositor::~RenderCompositor() {}
+RenderCompositor::~RenderCompositor() = default;
 
 bool RenderCompositor::MakeCurrent() { return gl()->MakeCurrent(); }
+
+bool RenderCompositor::IsContextLost() {
+  // XXX Add glGetGraphicsResetStatus handling for checking rendering context
+  // has not been lost
+  return false;
+}
 
 }  // namespace wr
 }  // namespace mozilla

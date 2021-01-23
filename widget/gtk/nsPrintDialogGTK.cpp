@@ -8,22 +8,18 @@
 #include <stdlib.h>
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Services.h"
 
-#include "mozcontainer.h"
+#include "MozContainer.h"
 #include "nsIPrintSettings.h"
 #include "nsIWidget.h"
 #include "nsPrintDialogGTK.h"
 #include "nsPrintSettingsGTK.h"
 #include "nsString.h"
 #include "nsReadableUtils.h"
-#include "nsIFile.h"
 #include "nsIStringBundle.h"
 #include "nsIPrintSettingsService.h"
-#include "nsIDOMWindow.h"
 #include "nsPIDOMWindow.h"
-#include "nsIBaseWindow.h"
-#include "nsIDocShellTreeItem.h"
-#include "nsIDocShell.h"
 #include "nsIGIOService.h"
 #include "WidgetUtils.h"
 #include "nsIObserverService.h"
@@ -34,6 +30,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <gio/gunixfdlist.h>
+#include "gfxPlatformGtk.h"
 
 // for dlsym
 #include <dlfcn.h>
@@ -138,9 +135,6 @@ class nsPrintDialogWidgetGTK {
 
  private:
   GtkWidget* dialog;
-  GtkWidget* radio_as_laid_out;
-  GtkWidget* radio_selected_frame;
-  GtkWidget* radio_separate_frames;
   GtkWidget* shrink_to_fit_toggle;
   GtkWidget* print_bg_colors_toggle;
   GtkWidget* print_bg_images_toggle;
@@ -160,7 +154,6 @@ class nsPrintDialogWidgetGTK {
    *   "Import" means to copy from NS to GTK
    *   "Export" means to copy from GTK to NS
    */
-  void ExportFramePrinting(nsIPrintSettings* aNS, GtkPrintSettings* aSettings);
   void ExportHeaderFooter(nsIPrintSettings* aNS);
 };
 
@@ -193,49 +186,6 @@ nsPrintDialogWidgetGTK::nsPrintDialogWidgetGTK(nsPIDOMWindowOuter* aParent,
   gtk_container_set_border_width(GTK_CONTAINER(custom_options_tab), 12);
   GtkWidget* tab_label =
       gtk_label_new(GetUTF8FromBundle("optionsTabLabelGTK").get());
-
-  int16_t frameUIFlag;
-  aSettings->GetHowToEnableFrameUI(&frameUIFlag);
-  radio_as_laid_out = gtk_radio_button_new_with_mnemonic(
-      nullptr, GetUTF8FromBundle("asLaidOut").get());
-  if (frameUIFlag == nsIPrintSettings::kFrameEnableNone)
-    gtk_widget_set_sensitive(radio_as_laid_out, FALSE);
-
-  radio_selected_frame = gtk_radio_button_new_with_mnemonic_from_widget(
-      GTK_RADIO_BUTTON(radio_as_laid_out),
-      GetUTF8FromBundle("selectedFrame").get());
-  if (frameUIFlag == nsIPrintSettings::kFrameEnableNone ||
-      frameUIFlag == nsIPrintSettings::kFrameEnableAsIsAndEach)
-    gtk_widget_set_sensitive(radio_selected_frame, FALSE);
-
-  radio_separate_frames = gtk_radio_button_new_with_mnemonic_from_widget(
-      GTK_RADIO_BUTTON(radio_as_laid_out),
-      GetUTF8FromBundle("separateFrames").get());
-  if (frameUIFlag == nsIPrintSettings::kFrameEnableNone)
-    gtk_widget_set_sensitive(radio_separate_frames, FALSE);
-
-  // "Print Frames" options label, bold and center-aligned
-  GtkWidget* print_frames_label = gtk_label_new(nullptr);
-  char* pangoMarkup = g_markup_printf_escaped(
-      "<b>%s</b>", GetUTF8FromBundle("printFramesTitleGTK").get());
-  gtk_label_set_markup(GTK_LABEL(print_frames_label), pangoMarkup);
-  g_free(pangoMarkup);
-  gtk_misc_set_alignment(GTK_MISC(print_frames_label), 0, 0);
-
-  // Align the radio buttons slightly so they appear to fall under the
-  // aforementioned label as per the GNOME HIG
-  GtkWidget* frames_radio_container = gtk_alignment_new(0, 0, 0, 0);
-  gtk_alignment_set_padding(GTK_ALIGNMENT(frames_radio_container), 8, 0, 12, 0);
-
-  // Radio buttons for the print frames options
-  GtkWidget* frames_radio_list = gtk_vbox_new(TRUE, 2);
-  gtk_box_pack_start(GTK_BOX(frames_radio_list), radio_as_laid_out, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(frames_radio_list), radio_selected_frame, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(frames_radio_list), radio_separate_frames, FALSE,
-                     FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(frames_radio_container), frames_radio_list);
 
   // Check buttons for shrink-to-fit and print selection
   GtkWidget* check_buttons_container = gtk_vbox_new(TRUE, 2);
@@ -277,7 +227,7 @@ nsPrintDialogWidgetGTK::nsPrintDialogWidgetGTK(nsPIDOMWindowOuter* aParent,
 
   // "Appearance" options label, bold and center-aligned
   GtkWidget* appearance_label = gtk_label_new(nullptr);
-  pangoMarkup = g_markup_printf_escaped(
+  char* pangoMarkup = g_markup_printf_escaped(
       "<b>%s</b>", GetUTF8FromBundle("printBGOptions").get());
   gtk_label_set_markup(GTK_LABEL(appearance_label), pangoMarkup);
   g_free(pangoMarkup);
@@ -355,10 +305,6 @@ nsPrintDialogWidgetGTK::nsPrintDialogWidgetGTK(nsPIDOMWindowOuter* aParent,
                      header_footer_container, FALSE, FALSE, 0);
 
   // Construction of everything
-  gtk_box_pack_start(GTK_BOX(custom_options_tab), print_frames_label, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(custom_options_tab), frames_radio_container, FALSE,
-                     FALSE, 0);
   gtk_box_pack_start(GTK_BOX(custom_options_tab), check_buttons_container,
                      FALSE, FALSE, 10);  // 10px padding
   gtk_box_pack_start(GTK_BOX(custom_options_tab), appearance_vertical_squasher,
@@ -395,20 +341,6 @@ gint nsPrintDialogWidgetGTK::Run() {
   const gint response = gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_hide(dialog);
   return response;
-}
-
-void nsPrintDialogWidgetGTK::ExportFramePrinting(nsIPrintSettings* aNS,
-                                                 GtkPrintSettings* aSettings) {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radio_as_laid_out)))
-    aNS->SetPrintFrameType(nsIPrintSettings::kFramesAsIs);
-  else if (gtk_toggle_button_get_active(
-               GTK_TOGGLE_BUTTON(radio_selected_frame)))
-    aNS->SetPrintFrameType(nsIPrintSettings::kSelectedFrame);
-  else if (gtk_toggle_button_get_active(
-               GTK_TOGGLE_BUTTON(radio_separate_frames)))
-    aNS->SetPrintFrameType(nsIPrintSettings::kEachFrameSep);
-  else
-    aNS->SetPrintFrameType(nsIPrintSettings::kNoFrames);
 }
 
 void nsPrintDialogWidgetGTK::ExportHeaderFooter(nsIPrintSettings* aNS) {
@@ -472,7 +404,6 @@ nsresult nsPrintDialogWidgetGTK::ExportSettings(nsIPrintSettings* aNSSettings) {
   GtkPrinter* printer =
       gtk_print_unix_dialog_get_selected_printer(GTK_PRINT_UNIX_DIALOG(dialog));
   if (settings && setup && printer) {
-    ExportFramePrinting(aNSSettings, settings);
     ExportHeaderFooter(aNSSettings);
 
     aNSSettings->SetOutputFormat(nsIPrintSettings::kOutputFormatNative);
@@ -555,9 +486,9 @@ GtkWidget* nsPrintDialogWidgetGTK::ConstructHeaderFooterDropdown(
 
 NS_IMPL_ISUPPORTS(nsPrintDialogServiceGTK, nsIPrintDialogService)
 
-nsPrintDialogServiceGTK::nsPrintDialogServiceGTK() {}
+nsPrintDialogServiceGTK::nsPrintDialogServiceGTK() = default;
 
-nsPrintDialogServiceGTK::~nsPrintDialogServiceGTK() {}
+nsPrintDialogServiceGTK::~nsPrintDialogServiceGTK() = default;
 
 NS_IMETHODIMP
 nsPrintDialogServiceGTK::Init() { return NS_OK; }
@@ -599,7 +530,7 @@ static void wayland_window_handle_exported(GdkWindow* window,
 static gboolean window_export_handle(GtkWindow* window,
                                      GtkWindowHandleExported callback,
                                      gpointer user_data) {
-  if (GDK_IS_X11_DISPLAY(gtk_widget_get_display(GTK_WIDGET(window)))) {
+  if (gfxPlatformGtk::GetPlatform()->IsX11Display()) {
     GdkWindow* gdk_window = gtk_widget_get_window(GTK_WIDGET(window));
     char* handle_str;
     guint32 xid = (guint32)gdk_x11_window_get_xid(gdk_window);
@@ -754,7 +685,7 @@ void nsFlatpakPrintPortal::PreparePrint(GtkWindow* aWindow,
 
   // We need to remember GtkWindow to unexport window handle after it is
   // no longer needed by the portal dialog (apply only on non-X11 sessions).
-  if (!GDK_IS_X11_DISPLAY(gdk_display_get_default())) {
+  if (gfxPlatformGtk::GetPlatform()->IsWaylandDisplay()) {
     mParentWindow = aWindow;
   }
 
@@ -988,8 +919,7 @@ nsFlatpakPrintPortal::~nsFlatpakPrintPortal() {
 
 NS_IMETHODIMP
 nsPrintDialogServiceGTK::Show(nsPIDOMWindowOuter* aParent,
-                              nsIPrintSettings* aSettings,
-                              nsIWebBrowserPrint* aWebBrowserPrint) {
+                              nsIPrintSettings* aSettings) {
   MOZ_ASSERT(aParent, "aParent must not be null");
   MOZ_ASSERT(aSettings, "aSettings must not be null");
 
@@ -1013,7 +943,6 @@ nsPrintDialogServiceGTK::Show(nsPIDOMWindowOuter* aParent,
     // This blocks until nsFlatpakPrintPortal::FinishPrintDialog is called
     GtkPrintOperationResult printDialogResult = fpPrintPortal->GetResult();
 
-    rv = NS_OK;
     switch (printDialogResult) {
       case GTK_PRINT_OPERATION_RESULT_APPLY: {
         nsCOMPtr<nsIObserverService> os =
@@ -1086,7 +1015,7 @@ nsPrintDialogServiceGTK::ShowPageSetup(nsPIDOMWindowOuter* aParent,
     nsString printName;
     aNSSettings->GetPrinterName(printName);
     if (printName.IsVoid()) {
-      psService->GetDefaultPrinterName(printName);
+      psService->GetLastUsedPrinterName(printName);
       aNSSettings->SetPrinterName(printName);
     }
     psService->InitPrintSettingsFromPrefs(aNSSettings, true,
@@ -1106,8 +1035,11 @@ nsPrintDialogServiceGTK::ShowPageSetup(nsPIDOMWindowOuter* aParent,
   g_object_unref(newPageSetup);
 
   if (psService)
-    psService->SavePrintSettingsToPrefs(aNSSettings, true,
-                                        nsIPrintSettings::kInitSaveAll);
+    psService->SavePrintSettingsToPrefs(
+        aNSSettings, true,
+        nsIPrintSettings::kInitSaveOrientation |
+            nsIPrintSettings::kInitSavePaperSize |
+            nsIPrintSettings::kInitSaveUnwriteableMargins);
 
   return NS_OK;
 }

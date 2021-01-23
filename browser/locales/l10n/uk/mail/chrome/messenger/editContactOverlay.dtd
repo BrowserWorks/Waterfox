@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Видалити">
+<!ENTITY editContactPanelDeleteContact.accesskey "В">
+
+<!ENTITY editContactName.label "Ім’я:">
+<!ENTITY editContactName.accesskey "І">
+
+<!ENTITY editContactEmail.label "Email:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Адресна книга:">
+<!ENTITY editContactAddressBook.accesskey "А">
+
+<!ENTITY editContactPanelDone.label "Готово">
+<!ENTITY editContactPanelDone.accesskey "Г">
+
+<!ENTITY contactMoveDisabledWarning.description "Ви не можете змінити адресну книгу бо контакт є у списку розсилки.">

@@ -25,20 +25,32 @@ const TEST_TYPES = {
 };
 
 const SUITES = {
-  "aboutdebugging-new": {
-    path: "../aboutdebugging-new/test/jest",
+  aboutdebugging: {
+    path: "../aboutdebugging/test/node",
+    type: TEST_TYPES.JEST,
+  },
+  accessibility: {
+    path: "../accessibility/test/node",
+    type: TEST_TYPES.JEST,
+  },
+  application: {
+    path: "../application/test/node",
+    type: TEST_TYPES.JEST,
+  },
+  compatibility: {
+    path: "../inspector/compatibility/test/node",
     type: TEST_TYPES.JEST,
   },
   framework: {
-    path: "../framework/test/jest",
+    path: "../framework/test/node",
     type: TEST_TYPES.JEST,
   },
   netmonitor: {
-    path: "../netmonitor/test",
+    path: "../netmonitor/test/node",
     type: TEST_TYPES.JEST,
   },
   webconsole: {
-    path: "../webconsole/test",
+    path: "../webconsole/test/node",
     type: TEST_TYPES.MOCHA,
   },
 };
@@ -58,22 +70,44 @@ function execOut(...args) {
 function getErrors(suite, out, err) {
   switch (SUITES[suite].type) {
     case TEST_TYPES.JEST:
-      // jest errors are logged in the `err` buffer.
-      return parseErrorsFromLogs(err, / {4}✕\s*(.*)/);
+      return getJestErrors(out, err);
     case TEST_TYPES.MOCHA:
-      // mocha errors are logged in the `out` buffer, and will either log Error or
-      // TypeError depending on the error detected.
-      return parseErrorsFromLogs(out, / {4}((?:Type)?Error\:.*)/);
+      return getMochaErrors(out, err);
     default:
       throw new Error("Unsupported suite type: " + SUITES[suite].type);
   }
 }
 
-function parseErrorsFromLogs(text, regExp) {
-  text = text || "";
-  const globalRegexp = new RegExp(regExp, "g");
-  const matches = text.match(globalRegexp) || [];
-  return matches.map(m => m.match(regExp)[1]);
+function getJestErrors(out, err) {
+  // The string out has extra content before the JSON object starts.
+  const jestJsonOut = out.substring(out.indexOf("{"), out.lastIndexOf("}") + 1);
+  const results = JSON.parse(jestJsonOut);
+
+  // The individual failing tests are jammed into the same message string :/
+  return results.testResults.reduce((p, testResult) => {
+    const failures = testResult.message
+      .split("\n")
+      .filter(l => l.includes("●"));
+    return p.concat(failures);
+  }, []);
+}
+
+function getMochaErrors(out, err) {
+  // With mocha tests, the command itself contains curly braces already so we need
+  // to find the first brace after the first line.
+  const firstRelevantBracket = out.indexOf("{", out.indexOf("--reporter json"));
+  const mochaJsonOut = out.substring(
+    firstRelevantBracket,
+    out.lastIndexOf("}") + 1
+  );
+  const results = JSON.parse(mochaJsonOut);
+  if (!results.failures) {
+    // No failures, return an empty array.
+    return [];
+  }
+  return results.failures.map(
+    failure => failure.fullTitle + " | " + failure.err.message
+  );
 }
 
 function runTests() {
@@ -90,13 +124,25 @@ function runTests() {
   const testPath = path.join(__dirname, SUITES[suite].path);
   chdir(testPath);
 
+  console.log("[devtools-node-test-runner] Check `yarn` is available");
+  try {
+    // This will throw if yarn is unavailable
+    execFileSync("yarn", ["--version"]);
+  } catch (e) {
+    console.log(
+      "[devtools-node-test-runner] ERROR: `yarn` is not installed. " +
+        "See https://yarnpkg.com/docs/install/ "
+    );
+    return false;
+  }
+
   console.log("[devtools-node-test-runner] Run `yarn` in test folder");
   execOut("yarn");
 
   console.log(`TEST START | ${SUITES[suite].type} | ${suite}`);
 
   console.log("[devtools-node-test-runner] Run `yarn test` in test folder");
-  const { out, err } = execOut("yarn", ["test"]);
+  const { out, err } = execOut("yarn", ["test-ci"]);
 
   if (err) {
     console.log("[devtools-node-test-runner] Error log");
@@ -110,9 +156,18 @@ function runTests() {
       `TEST-UNEXPECTED-FAIL | ${SUITES[suite].type} | ${suite} | ${error}`
     );
   }
-  return errors.length === 0;
+
+  const success = errors.length === 0;
+  if (success) {
+    console.log(`[devtools-node-test-runner] Test suite [${suite}] succeeded`);
+  } else {
+    console.log(`[devtools-node-test-runner] Test suite [${suite}] failed`);
+    console.log(
+      "[devtools-node-test-runner] You can find documentation about the " +
+        "devtools node tests at https://docs.firefox-dev.tools/tests/node-tests.html"
+    );
+  }
+  return success;
 }
 
-const success = runTests();
-
-process.exitCode = success ? 0 : 1;
+process.exitCode = runTests() ? 0 : 1;

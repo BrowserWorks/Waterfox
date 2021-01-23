@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "افزودن ریاضی">
+
+<!ENTITY sourceEditField.label "وارد کردن کد منبع LaTeX:">
+
+<!ENTITY options.label "گزینه‌ها">
+<!ENTITY optionInline.label "حالت درون خطی">
+<!ENTITY optionInline.accesskey "د">
+<!ENTITY optionDisplay.label "حالت نمایش">
+<!ENTITY optionDisplay.accesskey "ن">
+<!ENTITY optionLTR.label "جهت از چپ-به-راست">
+<!ENTITY optionLTR.accesskey "چ">
+<!ENTITY optionRTL.label "جهت از راست-به-چپ">
+<!ENTITY optionRTL.accesskey "ر">
+
+<!ENTITY insertButton.label "Insert">
+<!ENTITY insertButton.accesskey "I">

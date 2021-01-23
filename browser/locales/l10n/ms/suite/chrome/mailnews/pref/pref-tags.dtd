@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Tag">
+<!ENTITY pref.tags.caption          "Penyesuaian Tag">
+<!ENTITY pref.tags.description      "Tag boleh digunakan untuk mengelaskan dan mengutamakan mesej. Ubah penampilan dan kepentingan tag menggunakan tetapan di bawah. Tag yang di atas adalah lebih penting daripada yang di bawah.">
+<!ENTITY tagColumn.label            "Tag">
+<!ENTITY colorColumn.label          "Warna">
+<!ENTITY defaultTagName.label       "Tag Tiada Tajuk">
+<!ENTITY addTagButton.label         "Tambah">
+<!ENTITY addTagButton.accesskey     "T">
+<!ENTITY deleteTagButton.label      "Buang">
+<!ENTITY deleteTagButton.accesskey  "B">
+<!ENTITY raiseTagButton.label       "Tingkatkan Kepentingan">
+<!ENTITY raiseTagButton.accesskey   "K">
+<!ENTITY lowerTagButton.label       "Kepentingan Lebih Rendah">
+<!ENTITY lowerTagButton.accesskey   "R">
+<!ENTITY restoreButton.label        "Pulih Piawai">
+<!ENTITY restoreButton.accesskey    "h">

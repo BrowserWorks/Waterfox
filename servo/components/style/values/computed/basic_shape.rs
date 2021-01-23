@@ -10,17 +10,15 @@
 use crate::values::computed::url::ComputedUrl;
 use crate::values::computed::{Image, LengthPercentage, NonNegativeLengthPercentage};
 use crate::values::generics::basic_shape as generic;
-use std::fmt::{self, Write};
-use style_traits::{CssWriter, ToCss};
 
 /// A computed alias for FillRule.
 pub use crate::values::generics::basic_shape::FillRule;
 
-/// A computed clipping shape.
-pub type ClippingShape = generic::ClippingShape<BasicShape, ComputedUrl>;
+/// A computed `clip-path` value.
+pub type ClipPath = generic::GenericClipPath<BasicShape, ComputedUrl>;
 
-/// A computed float area shape.
-pub type FloatAreaShape = generic::FloatAreaShape<BasicShape, Image>;
+/// A computed `shape-outside` value.
+pub type ShapeOutside = generic::GenericShapeOutside<BasicShape, Image>;
 
 /// A computed basic shape.
 pub type BasicShape = generic::GenericBasicShape<
@@ -42,34 +40,3 @@ pub type Ellipse =
 
 /// The computed value of `ShapeRadius`
 pub type ShapeRadius = generic::GenericShapeRadius<NonNegativeLengthPercentage>;
-
-impl ToCss for Circle {
-    fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
-    where
-        W: Write,
-    {
-        dest.write_str("circle(")?;
-        self.radius.to_css(dest)?;
-        dest.write_str(" at ")?;
-        self.position.to_css(dest)?;
-        dest.write_str(")")
-    }
-}
-
-impl ToCss for Ellipse {
-    fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
-    where
-        W: Write,
-    {
-        dest.write_str("ellipse(")?;
-        if (self.semiaxis_x, self.semiaxis_y) != Default::default() {
-            self.semiaxis_x.to_css(dest)?;
-            dest.write_str(" ")?;
-            self.semiaxis_y.to_css(dest)?;
-            dest.write_str(" ")?;
-        }
-        dest.write_str("at ")?;
-        self.position.to_css(dest)?;
-        dest.write_str(")")
-    }
-}

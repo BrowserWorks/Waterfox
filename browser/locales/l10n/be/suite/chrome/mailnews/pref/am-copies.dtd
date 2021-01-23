@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY copyAndFolderTitle.label "Копіі і папкі">
+<!ENTITY sendingPrefix.label "Калі дасылаюцца лісты:">
+<!ENTITY fccMailFolder.label "Самастойна змясціць копію ў:">
+<!ENTITY fccMailFolder.accesskey "з">
+<!ENTITY fccReplyFollowsParent.label "Змяшчаць адказы ў папку ліста, на які даецца адказ">
+<!ENTITY fccReplyFollowsParent.accesskey "а">
+<!ENTITY ccAddress.label "Даслаць таксама на гэтыя адрасы (СА):">
+<!ENTITY ccAddress.accesskey "к">
+<!ENTITY ccAddressList.placeholder "Аддзяляць адрасы коскамі">
+<!ENTITY bccAddress.label "Дасылаць схаваныя копіі на гэтыя адрасы э-пошты:">
+<!ENTITY bccAddress.accesskey "С">
+<!ENTITY bccAddressList.placeholder "Аддзяляць адрасы коскамі">
+<!ENTITY saveMessageDlg.label "Паказваць дыялог пацвярджэння пасля захавання ліста">
+<!ENTITY saveMessageDlg.accesskey "П">
+<!ENTITY sentFolderOn.label "Папку &quot;Дасланыя&quot; ў:">
+<!ENTITY sentFolderOn.accesskey "Д">
+<!ENTITY sentInOtherFolder.label "Іншай:">
+<!ENTITY sentInOtherFolder.accesskey "І">
+<!ENTITY archivesTitle.label "Архівы лістоў">
+<!ENTITY keepArchives.label "Трымаць архівы лістоў у:">
+<!ENTITY keepArchives.accesskey "Т">
+<!ENTITY archiveHierarchyButton.label "Наладжванні архівацыі…">
+<!ENTITY archiveHierarchyButton.accesskey "А">
+<!ENTITY archivesFolderOn.label "Папцы &quot;Архівы&quot; у:">
+<!ENTITY archivesFolderOn.accesskey "А">
+<!ENTITY archiveInOtherFolder.label "Іншай:">
+<!ENTITY archiveInOtherFolder.accesskey "І">
+<!ENTITY specialFolders.label "Чарнавікі і Ўзоры">
+<!ENTITY keepDrafts.label "Трымаць чарнавікі лістоў у:">
+<!ENTITY draftsFolderOn.label "Папцы &quot;Чарнавікі&quot; ў:">
+<!ENTITY draftsFolderOn.accesskey "Ч">
+<!ENTITY draftInOtherFolder.label "Іншай:">
+<!ENTITY draftInOtherFolder.accesskey "І">
+<!ENTITY keepTemplates.label "Трымаць узоры лістоў у:">
+<!ENTITY templatesFolderOn.label "Папцы &quot;Узоры&quot; ў:">
+<!ENTITY templatesFolderOn.accesskey "У">
+<!ENTITY templateInOtherFolder.label "Іншай:">
+<!ENTITY templateInOtherFolder.accesskey "І">

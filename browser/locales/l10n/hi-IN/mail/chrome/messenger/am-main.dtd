@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "खाता जमावट">
+<!ENTITY accountName.label "खाता नाम:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "मूलभूत पहचान">
+<!ENTITY identityDesc.label "हर खाता का अपना पहचान है, जो सूचना है जिसे अन्य व्यक्ति देखते हैं जब वे आपका संदेश पढते हैं.">
+<!ENTITY name.label "आपका नाम:">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "ईमेल पता:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "पता को जबाव दें:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY organization.label "संगठन:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY edit.label "संपादित करें...">
+<!ENTITY choose.label "चुनें...">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "संपाजन कार्ड...">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "मेरे vCard को संदेश में संलग्न करें">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "पहचान प्रबंधित करें...">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Outgoing Server (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "मूलभूत सर्वर प्रयोग करें">
+

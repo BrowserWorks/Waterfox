@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Kalenteri">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Tapahtuma…">
+<!ENTITY lightning.menupopup.new.event.accesskey "T">
+<!ENTITY lightning.menupopup.new.task.label     "Tehtävä…">
+<!ENTITY lightning.menupopup.new.task.accesskey "e">
+<!ENTITY lightning.menupopup.new.calendar.label "Kalenteri…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "l">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Avaa">
+<!ENTITY lightning.menupopup.open.accesskey           "A">
+<!ENTITY lightning.menupopup.open.message.label       "Tallennettu viesti…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "T">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Kalenteritiedosto…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "K">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Kalenteri">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Tehtävät">
+<!ENTITY lightning.menu.view.tasks.accesskey           "T">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Tapahtumat ja tehtävät">
+<!ENTITY lightning.menu.eventtask.accesskey            "a">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Sähköposti:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Suosi asiakaspuolen sähköpostien ajastusta">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Voit ottaa tämän ominaisuuden käyttöön kalenterin asentamisen jälkeen sallimalla ominaisuuden kalenterin ominaisuusikkunassa, jos palvelin tukee ajastamista.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Tämä asetus on käytettävissä vain, jos kalenteripalvelin tukee ajastamista. Ominaisuuden salliminen palauttaa ajastamisen sähköpostipohjaiseen ajastukseen palvelimen suorittaman ajastuksen sijaan.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Hyväksy">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Hyväksy tapahtumakutsu">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Hyväksy kaikki">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Hyväksy tapahtumakutsu koskien kaikkia tapahtuman tapauksia">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Lisää">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Lisää tapahtuma kalenteriin">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Hylkää">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Hylkää tapahtumakutsu">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Hylkää kaikki">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Hylkää tapahtumakutsu koskien kaikkia tapahtuman tapauksia">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Hylkää">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Hylkää vastaehdotus">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Poista">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Poista kalenterista">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Lisätiedot…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Näytä lisää tietoa tapahtumasta">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Älä näytä näitä viestejä">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Kalenteri">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Siirry Kalenteri-välilehteen">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Lisää">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Napsauta, niin näet lisää valintoja">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Vahvista uudelleen">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Lähettää järjestäjälle uudelleenvahvistuksen">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Ajoita uudelleen">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Ajoita tapahtuma uudelleen">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Tallenna kopio">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Tallenna kalenteriin kopio tapahtumasta ilman, että järjestäjä saa tietää. Osallistujaluettelo tyhjennetään.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Alustava">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Hyväksy tapahtumakutsu alustavasti">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Alustavasti kaikki">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Hyväksy kaikki tapahtuman esiintymät alustavasti">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Päivitä">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Päivitä tapahtumaa kalenterissa">
+<!ENTITY lightning.imipbar.description                                      "Tässä viestissä on kutsu tapahtumaan.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Lähetä vastaus nyt">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Lähetä vastaus järjestäjälle">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Lähetä vastaus kaikille järjestäjille">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Älä lähetä vastausta">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Muuta osallistumistilaasi ilman vastauksen lähettämistä tapahtuman järjestäjälle">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Muuta osallistumistilaasi ilman vastauksen lähettämistä tapahtumasarjan järjestäjälle">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Luo uusi kalenteri">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Näytä pienoiskuukausi">
+<!ENTITY todaypane.showMinimonth.accesskey "N">
+<!ENTITY todaypane.showMiniday.label "Näytä pienoispäivä">
+<!ENTITY todaypane.showMiniday.accesskey  "N">
+<!ENTITY todaypane.showNone.label "Älä näytä mitään">
+<!ENTITY todaypane.showNone.accesskey "n">
+<!ENTITY todaypane.showTodayPane.label "Näytä tänään-ruutu">
+<!ENTITY todaypane.showTodayPane.accesskey "N">
+<!ENTITY todaypane.statusButton.label "Tänään-ruutu">

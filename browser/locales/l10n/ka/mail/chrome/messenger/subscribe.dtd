@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "გამოწერა">
+<!ENTITY subscribeButton.label        "გამოწერა">
+<!ENTITY subscribeButton.accesskey    "გ">
+<!ENTITY unsubscribeButton.label      "გამოწერის გაუქმება">
+<!ENTITY unsubscribeButton.accesskey  "უ">
+<!ENTITY newGroupsTab.label           "ახალი ჯგუფები">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "განახლება">
+<!ENTITY refreshButton.accesskey      "ნ">
+<!ENTITY stopButton.label             "შეჩერება">
+<!ENTITY stopButton.accesskey         "T">
+<!ENTITY server.label                 "ანგარიში:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "გამოწერა">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "ელემენტების ჩვენება რომლებიც შეიცავენ:">
+<!ENTITY namefield.accesskey          "O">

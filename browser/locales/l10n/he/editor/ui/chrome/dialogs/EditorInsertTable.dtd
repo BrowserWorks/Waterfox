@@ -1,0 +1,31 @@
+<!--
+# Translator(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "הכנסת טבלה">
+
+<!ENTITY size.label "גודל">
+<!ENTITY numRowsEditField.label "שורות:">
+<!ENTITY numRowsEditField.accessKey "ש">
+<!ENTITY numColumnsEditField.label "עמודות:">
+<!ENTITY numColumnsEditField.accessKey "ע">
+<!ENTITY widthEditField.label "רוחב:">
+<!ENTITY widthEditField.accessKey "ר">
+<!ENTITY borderEditField.label "גבול:">
+<!ENTITY borderEditField.accessKey "ג">
+<!ENTITY borderEditField.tooltip "הקלד מספר לגבול הטבלה, או הקלד אפס (0) להישאר ללא גבול">
+<!ENTITY pixels.label "פיקסלים">
+

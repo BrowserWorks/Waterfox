@@ -10,15 +10,14 @@ EXPORTS.mozilla.interceptor += [
     'PatcherBase.h',
     'PatcherDetour.h',
     'PatcherNopSpace.h',
+    'RangeMap.h',
     'TargetFunction.h',
     'Trampoline.h',
     'VMSharingPolicies.h',
 ]
 
 if CONFIG['CPU_ARCH'] == 'aarch64':
-    Library('interceptor')
-
-    DEFINES['IMPL_MFBT'] = True
+    FINAL_LIBRARY = 'mozglue'
 
     UNIFIED_SOURCES += [
         'Arm64.cpp',

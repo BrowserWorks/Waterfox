@@ -104,6 +104,51 @@ void nsAbsoluteContainingBlock::RemoveFrame(nsIFrame* aDelegatingFrame,
   mAbsoluteFrames.DestroyFrame(aOldFrame);
 }
 
+static void MaybeMarkAncestorsAsHavingDescendantDependentOnItsStaticPos(
+    nsIFrame* aFrame, nsIFrame* aContainingBlockFrame) {
+  MOZ_ASSERT(aFrame->HasAnyStateBits(NS_FRAME_OUT_OF_FLOW));
+  if (!aFrame->StylePosition()->NeedsHypotheticalPositionIfAbsPos()) {
+    return;
+  }
+  // We should have set the bit when reflowing the previous continuations
+  // already.
+  if (aFrame->GetPrevContinuation()) {
+    return;
+  }
+
+  auto* placeholder = aFrame->GetPlaceholderFrame();
+  MOZ_ASSERT(placeholder);
+
+  // Only fixed-pos frames can escape their containing block.
+  if (!placeholder->HasAnyStateBits(PLACEHOLDER_FOR_FIXEDPOS)) {
+    return;
+  }
+
+  for (nsIFrame* ancestor = placeholder->GetParent(); ancestor;
+       ancestor = ancestor->GetParent()) {
+    // Walk towards the ancestor's first continuation. That's the only one that
+    // really matters, since it's the only one restyling will look at. We also
+    // flag the following continuations just so it's caught on the first
+    // early-return ones just to avoid walking them over and over.
+    do {
+      if (ancestor->DescendantMayDependOnItsStaticPosition()) {
+        return;
+      }
+      // Moving the containing block or anything above it would move our static
+      // position as well, so no need to flag it or any of its ancestors.
+      if (aFrame == aContainingBlockFrame) {
+        return;
+      }
+      ancestor->SetDescendantMayDependOnItsStaticPosition(true);
+      nsIFrame* prev = ancestor->GetPrevContinuation();
+      if (!prev) {
+        break;
+      }
+      ancestor = prev;
+    } while (true);
+  }
+}
+
 void nsAbsoluteContainingBlock::Reflow(nsContainerFrame* aDelegatingFrame,
                                        nsPresContext* aPresContext,
                                        const ReflowInput& aReflowInput,
@@ -124,6 +169,12 @@ void nsAbsoluteContainingBlock::Reflow(nsContainerFrame* aDelegatingFrame,
         FrameDependsOnContainer(
             kidFrame, !!(aFlags & AbsPosReflowFlags::CBWidthChanged),
             !!(aFlags & AbsPosReflowFlags::CBHeightChanged));
+
+    if (NS_SUBTREE_DIRTY(kidFrame)) {
+      MaybeMarkAncestorsAsHavingDescendantDependentOnItsStaticPos(
+          kidFrame, aDelegatingFrame);
+    }
+
     nscoord availBSize = aReflowInput.AvailableBSize();
     const nsRect& cb =
         isGrid ? nsGridContainerFrame::GridItemCB(kidFrame) : aContainingBlock;
@@ -170,8 +221,7 @@ void nsAbsoluteContainingBlock::Reflow(nsContainerFrame* aDelegatingFrame,
         if (!nextFrame) {
           nextFrame = aPresContext->PresShell()
                           ->FrameConstructor()
-                          ->CreateContinuingFrame(aPresContext, kidFrame,
-                                                  aDelegatingFrame);
+                          ->CreateContinuingFrame(kidFrame, aDelegatingFrame);
         }
         // Add it as an overflow container.
         // XXXfr This is a hack to fix some of our printing dataloss.
@@ -207,7 +257,7 @@ void nsAbsoluteContainingBlock::Reflow(nsContainerFrame* aDelegatingFrame,
     // the case enough of an edge case, that this is probably better.
     if (kidNeedsReflow && aPresContext->CheckForInterrupt(aDelegatingFrame)) {
       if (aDelegatingFrame->GetStateBits() & NS_FRAME_IS_DIRTY) {
-        kidFrame->AddStateBits(NS_FRAME_IS_DIRTY);
+        kidFrame->MarkSubtreeDirty();
       } else {
         kidFrame->AddStateBits(NS_FRAME_HAS_DIRTY_CHILDREN);
       }
@@ -236,20 +286,8 @@ bool nsAbsoluteContainingBlock::FrameDependsOnContainer(nsIFrame* f,
                                                         bool aCBHeightChanged) {
   const nsStylePosition* pos = f->StylePosition();
   // See if f's position might have changed because it depends on a
-  // placeholder's position
-  // This can happen in the following cases:
-  // 1) Vertical positioning.  "top" must be auto and "bottom" must be auto
-  //    (otherwise the vertical position is completely determined by
-  //    whichever of them is not auto and the height).
-  // 2) Horizontal positioning.  "left" must be auto and "right" must be auto
-  //    (otherwise the horizontal position is completely determined by
-  //    whichever of them is not auto and the width).
-  // See ReflowInput::InitAbsoluteConstraints -- these are the
-  // only cases when we call CalculateHypotheticalBox().
-  if ((pos->mOffset.Get(eSideTop).IsAuto() &&
-       pos->mOffset.Get(eSideBottom).IsAuto()) ||
-      (pos->mOffset.Get(eSideLeft).IsAuto() &&
-       pos->mOffset.Get(eSideRight).IsAuto())) {
+  // placeholder's position.
+  if (pos->NeedsHypotheticalPositionIfAbsPos()) {
     return true;
   }
   if (!aCBWidthChanged && !aCBHeightChanged) {
@@ -363,7 +401,7 @@ void nsAbsoluteContainingBlock::MarkAllFramesDirty() {
 void nsAbsoluteContainingBlock::DoMarkFramesDirty(bool aMarkAllDirty) {
   for (nsIFrame* kidFrame : mAbsoluteFrames) {
     if (aMarkAllDirty) {
-      kidFrame->AddStateBits(NS_FRAME_IS_DIRTY);
+      kidFrame->MarkSubtreeDirty();
     } else if (FrameDependsOnContainer(kidFrame, true, true)) {
       // Add the weakest flags that will make sure we reflow this frame later
       kidFrame->AddStateBits(NS_FRAME_HAS_DIRTY_CHILDREN);
@@ -483,16 +521,17 @@ static nscoord OffsetToAlignedStaticPos(const ReflowInput& aKidReflowInput,
                                     : alignAreaSize.BSize(pcWM);
 
   AlignJustifyFlags flags = AlignJustifyFlags::IgnoreAutoMargins;
-  uint16_t alignConst = aPlaceholderContainer->CSSAlignmentForAbsPosChild(
-      aKidReflowInput, pcAxis);
+  StyleAlignFlags alignConst =
+      aPlaceholderContainer->CSSAlignmentForAbsPosChild(aKidReflowInput,
+                                                        pcAxis);
   // If the safe bit in alignConst is set, set the safe flag in |flags|.
   // Note: If no <overflow-position> is specified, we behave as 'unsafe'.
   // This doesn't quite match the css-align spec, which has an [at-risk]
   // "smart default" behavior with some extra nuance about scroll containers.
-  if (alignConst & NS_STYLE_ALIGN_SAFE) {
+  if (alignConst & StyleAlignFlags::SAFE) {
     flags |= AlignJustifyFlags::OverflowSafe;
   }
-  alignConst &= ~NS_STYLE_ALIGN_FLAG_BITS;
+  alignConst &= ~StyleAlignFlags::FLAG_BITS;
 
   // Find out if placeholder-container & the OOF child have the same start-sides
   // in the placeholder-container's pcAxis.
@@ -688,16 +727,23 @@ void nsAbsoluteContainingBlock::ReflowAbsoluteFrame(
 
   bool constrainBSize =
       (aReflowInput.AvailableBSize() != NS_UNCONSTRAINEDSIZE) &&
-      (aFlags & AbsPosReflowFlags::ConstrainHeight) &&
+
       // Don't split if told not to (e.g. for fixed frames)
-      !aDelegatingFrame->IsInlineFrame() &&
+      (aFlags & AbsPosReflowFlags::ConstrainHeight) &&
+
       // XXX we don't handle splitting frames for inline absolute containing
       // blocks yet
+      !aDelegatingFrame->IsInlineFrame() &&
+
+      // Bug 1588623: Support splitting absolute positioned multicol containers.
+      !aKidFrame->IsColumnSetWrapperFrame() &&
+
+      // Don't split things below the fold. (Ideally we shouldn't *have*
+      // anything totally below the fold, but we can't position frames
+      // across next-in-flow breaks yet.
       (aKidFrame->GetLogicalRect(aContainingBlock.Size()).BStart(wm) <=
        aReflowInput.AvailableBSize());
-  // Don't split things below the fold. (Ideally we shouldn't *have*
-  // anything totally below the fold, but we can't position frames
-  // across next-in-flow breaks yet.
+
   if (constrainBSize) {
     kidReflowInput.AvailableBSize() =
         aReflowInput.AvailableBSize() -

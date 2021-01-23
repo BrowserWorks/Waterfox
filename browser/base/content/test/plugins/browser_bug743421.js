@@ -7,7 +7,6 @@ var gTestBrowser = null;
 add_task(async function() {
   registerCleanupFunction(async function() {
     clearAllPluginPermissions();
-    Services.prefs.clearUserPref("plugins.click_to_play");
     setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Test Plug-in");
     setTestPluginEnabledState(
       Ci.nsIPluginTag.STATE_ENABLED,
@@ -17,7 +16,6 @@ add_task(async function() {
       gTestRoot + "blockNoPlugins",
       gTestBrowser
     );
-    resetBlocklist();
     gBrowser.removeCurrentTab();
     window.focus();
     gTestBrowser = null;
@@ -30,7 +28,6 @@ add_task(async function() {
   gTestBrowser = gBrowser.selectedBrowser;
 
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
 
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_CLICKTOPLAY, "Test Plug-in");
   setTestPluginEnabledState(
@@ -60,7 +57,7 @@ add_task(async function() {
   );
   ok(!notification, "Test 1a, Should not have a click-to-play notification");
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     new XPCNativeWrapper(XPCNativeWrapper.unwrap(content).addPlugin());
   });
 
@@ -68,13 +65,9 @@ add_task(async function() {
 });
 
 add_task(async function() {
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementsByTagName("embed")[0];
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    Assert.ok(
-      !objLoadingContent.activated,
-      "Test 1b, Plugin should not be activated"
-    );
+    Assert.ok(!plugin.activated, "Test 1b, Plugin should not be activated");
   });
 
   // Click the activate button on doorhanger to make sure it works
@@ -87,13 +80,9 @@ add_task(async function() {
 
   PopupNotifications.panel.firstElementChild.button.click();
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementsByTagName("embed")[0];
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    Assert.ok(
-      objLoadingContent.activated,
-      "Test 1b, Plugin should be activated"
-    );
+    Assert.ok(plugin.activated, "Test 1b, Plugin should be activated");
   });
 });
 
@@ -104,25 +93,20 @@ add_task(async function() {
   );
   ok(notification, "Test 1c, Should still have a click-to-play notification");
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     new XPCNativeWrapper(XPCNativeWrapper.unwrap(content).addPlugin());
     let plugin = content.document.getElementsByTagName("embed")[1];
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
     Assert.ok(
-      objLoadingContent.activated,
+      plugin.activated,
       "Test 1c, Newly inserted plugin in activated page should be activated"
     );
   });
 });
 
 add_task(async function() {
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementsByTagName("embed")[1];
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    Assert.ok(
-      objLoadingContent.activated,
-      "Test 1d, Plugin should be activated"
-    );
+    Assert.ok(plugin.activated, "Test 1d, Plugin should be activated");
 
     let promise = ContentTaskUtils.waitForEvent(content, "hashchange");
     content.location += "#anchorNavigation";
@@ -131,33 +115,21 @@ add_task(async function() {
 });
 
 add_task(async function() {
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     new XPCNativeWrapper(XPCNativeWrapper.unwrap(content).addPlugin());
     let plugin = content.document.getElementsByTagName("embed")[2];
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    Assert.ok(
-      objLoadingContent.activated,
-      "Test 1e, Plugin should be activated"
-    );
+    Assert.ok(plugin.activated, "Test 1e, Plugin should be activated");
   });
 });
 
 add_task(async function() {
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementsByTagName("embed")[2];
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    Assert.ok(
-      objLoadingContent.activated,
-      "Test 1f, Plugin should be activated"
-    );
+    Assert.ok(plugin.activated, "Test 1f, Plugin should be activated");
 
     content.history.replaceState({}, "", "replacedState");
     new XPCNativeWrapper(XPCNativeWrapper.unwrap(content).addPlugin());
     plugin = content.document.getElementsByTagName("embed")[3];
-    objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    Assert.ok(
-      objLoadingContent.activated,
-      "Test 1g, Plugin should be activated"
-    );
+    Assert.ok(plugin.activated, "Test 1g, Plugin should be activated");
   });
 });

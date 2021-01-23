@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "ਨਾਂ ਸੰਭਾਲ ਖੋਜ ਫੋਲਡਰ">
+<!ENTITY name.label                 "ਨਾਂ:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "ਇਸ ਦੇ ਅਧੀਨ-ਫੋਲਡਰ ਦੇ ਤੌਰ ਉੱਤੇ ਬਣਾਓ:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "ਇਸ ਸੰਭਾਲੇ ਖੋਜ ਫੋਲਡਰ ਲਈ ਖੋਜ ਸੀਮਾ ਸੰਰਚਨਾ: ">
+
+<!ENTITY folderSelectionCaption.label "ਖੋਜ ਲਈ ਫੋਲਡਰ ਚੁਣੋ: ">
+<!ENTITY chooseFoldersButton.label "ਚੋਣ...">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "ਆਨਲਾਈਨ ਖੋਜ ( IMAP ਅਤੇ ਖਬਰ ਫੋਲਡਰਾਂ ਲਈ ਖੋਜ ਰੱਦ ਹੋ ਜਾਵੇਗੀ, ਪਰ ਫੋਲਡਰ ਖੋਲਣ ਲਈ ਵਧੇਰੇ ਸਮਾਂ ਲੱਗੇਗਾ)">
+<!ENTITY searchOnline.accesskey "O">
+<!ENTITY newFolderButton.label       "Create">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Update">
+<!ENTITY editFolderButton.accesskey  "U">

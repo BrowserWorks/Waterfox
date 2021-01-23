@@ -12,7 +12,6 @@ add_task(async function() {
       Ci.nsIPluginTag.STATE_ENABLED,
       "Second Test Plug-in"
     );
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     gNewWindow.close();
     await BrowserTestUtils.waitForEvent(gNewWindow, "unload", true);
@@ -22,7 +21,6 @@ add_task(async function() {
 });
 
 add_task(async function() {
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
 
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
@@ -126,9 +124,9 @@ add_task(async function() {
   );
   ok(!pluginInfo.activated, "plugin should not be activated");
 
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     gNewWindow.gBrowser.selectedBrowser,
-    {},
+    [],
     async function() {
       let doc = content.document;
       let plugin = doc.getElementById("test");

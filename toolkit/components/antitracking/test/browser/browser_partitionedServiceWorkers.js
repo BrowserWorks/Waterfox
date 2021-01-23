@@ -1,6 +1,6 @@
-/* import-globals-from storageprincipal_head.js */
+/* import-globals-from partitionedstorage_head.js */
 
-StoragePrincipalHelper.runTest(
+PartitionedStorageHelper.runTest(
   "ServiceWorkers",
   async (win3rdParty, win1stParty, allowed) => {
     // ServiceWorkers are not supported. Always blocked.
@@ -39,7 +39,7 @@ StoragePrincipalHelper.runTest(
   ]
 );
 
-StoragePrincipalHelper.runTest(
+PartitionedStorageHelper.runTest(
   "ServiceWorkers - MatchAll",
   async (win3rdParty, win1stParty, allowed) => {
     if (!win1stParty.sw) {

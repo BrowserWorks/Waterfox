@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Josh Wolfe. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -133,4 +132,5 @@ assert.sameValue({
     return '900719925474099102';
   }
 } == 900719925474099101n, false, 'The result of (({toString: function() {return "900719925474099102";}}) == 900719925474099101n) is false');
+
 reportCompare(0, 0);

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Pretraživanje interneta">
+<!ENTITY legendHeader                     "Glavni pretraživač">
+<!ENTITY defaultSearchEngine.label        "Traži pomoću:">
+
+<!ENTITY engineManager.label              "Upravljanje pretraživačima…">
+
+<!ENTITY searchResults.label              "Rezultati pretrage">
+
+<!ENTITY openInTab.label                  "Otvorite nove tabove za rezultate bočne trake">
+<!ENTITY openContextSearchTab.label       "Otvorite tab umjesto prozora za web pretraživanje u kontekstnom meniju">
+<!ENTITY openSidebarSearchPanel.label     "Kada pokrenete pretragu, otvorite tab za pretragu u bočnoj traci">

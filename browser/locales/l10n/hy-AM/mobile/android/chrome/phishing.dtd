@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Դուրս բեր ինձ այստեղից:">
+<!ENTITY safeb.palm.decline.label "Անտեսել այս զգուշացումը">
+<!ENTITY safeb.palm.reportPage.label "Ինչու՞ է այս էջը արգելափակված:">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Խորհրդակցությունը տրամադրել է՝ <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Բողոքել և պիտակել որպես հաձակողական էջ:">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Տեղեկություն կա այն մասին, որ  <span id='malware_sitename'/> կայքը կիրառվում է համակարգիչների վրա գրոհելու համար: Համաձայն ձեր անվտանգության կարգավորումների՝ այն արգելափակված է:">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Հարձակվող էջերը փորձում են տեղադրել ծրագրեր, որոնք գողանում են անձնական տվյալներ, օգտագործում են ձեր համակարգիչը այլ համակարգիչների վրա հարձակման համար:</p><p>Որոշ հարձակվող էջեր դիտմամբ են տարածում վնասակար ծրագրեր, բայց շատերը դա անում են առանց սեփականատերերի գիտության կամ համաձայնության:</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Խաբուսիկ կայք">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Տեղեկություն կա այն մասին, որ  <span id='phishing_sitename'/> կայքը կիրառվում է համակարգիչների վրա գրոհելու համար: Համաձայն ձեր անվտանգության կարգավորումների՝ այն արգելափակված է:">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Խաբուսիկ կայքերը նախագծված են դրդելու ձեզ կատարել վտանգավոր գործողություններ, ինչպես օրինակ տեղադրել ծրագրեր կամ ցուցադրել ձեր անձնական տեղեկությունները՝ գաղտնաբառեր, հեռախոսահամարներ կամ բանկային քարտեր:</p><p>Այս էջում ցանկացած տեղեկության մուտքագրումը կարող է հանգեցնել անձնական տվյալների կորստի կամ այլ վնասների:</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Անցանկալի ծրագրերի կայք">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Տեղեկություն կա այն մասին, որ <span id='unwanted_sitename'/> կայքը կիրառվում է համակարգիչների վրա գրոհելու համար: Համաձայն անվտանգության կարգավորումների՝ այն արգելափակված է:">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Անցանկալի ծրագրերի կայքը փորձում է տեղադրել ծրագիր, որը կարող է վնասել Ձեր համակարգիչը:">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Կայքը կարող է պարունակել վնասագիր">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName;-ը արգելափակված, քանի որ այն կարող է փորձել տեղադրել վտանգավոր հավելվածներ, որոնք կգողանան կամ կջնջեն ձեր տյլաները (օրինակ՝ լուսանկարներ, գաղտնաբառեր, հաղորդագրություններ և բանկային քարտ):">

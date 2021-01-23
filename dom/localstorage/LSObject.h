@@ -8,6 +8,7 @@
 #define mozilla_dom_localstorage_LSObject_h
 
 #include "mozilla/dom/Storage.h"
+#include "mozilla/UniquePtr.h"
 
 class nsGlobalWindowInner;
 class nsIPrincipal;
@@ -60,8 +61,8 @@ class LSObject final : public Storage {
 
   friend nsGlobalWindowInner;
 
-  nsAutoPtr<PrincipalInfo> mPrincipalInfo;
-  nsAutoPtr<PrincipalInfo> mStoragePrincipalInfo;
+  UniquePtr<PrincipalInfo> mPrincipalInfo;
+  UniquePtr<PrincipalInfo> mStoragePrincipalInfo;
 
   RefPtr<LSDatabase> mDatabase;
   RefPtr<LSObserver> mObserver;
@@ -172,6 +173,9 @@ class LSObject final : public Storage {
 
   void EndExplicitSnapshot(nsIPrincipal& aSubjectPrincipal,
                            ErrorResult& aError) override;
+
+  bool GetHasActiveSnapshot(nsIPrincipal& aSubjectPrincipal,
+                            ErrorResult& aError) override;
 
   //////////////////////////////////////////////////////////////////////////////
 

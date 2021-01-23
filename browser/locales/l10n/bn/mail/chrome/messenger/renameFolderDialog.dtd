@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY renameFolderDialog.title "ফোল্ডারের নাম পরিবর্তন করা হবে">
+<!ENTITY rename.label "আপনার ফোল্ডারের নতুন নাম দেয়া হবে (E):">
+<!ENTITY rename.accesskey "E">
+<!ENTITY accept.label "পুনরায় নামকরণ (R)">
+<!ENTITY accept.accesskey "R">

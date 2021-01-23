@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Réduire">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "Zoom">
+<!ENTITY navigatorCmd.label "Navigateur">
+<!ENTITY navigatorCmd.accesskey "N">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composeur">
+<!ENTITY editorCmd.accesskey "o">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Console d’erreurs">
+<!ENTITY errorConsoleCmd.accesskey "s">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Navigateur">
+<!ENTITY taskComposer.tooltip "Composeur">
+
+<!ENTITY webDevelopment.label "Développement web">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "Fenêtre">
+<!ENTITY windowMenu.accesskey "t">
+
+<!ENTITY tasksMenu.label "Outils">
+<!ENTITY tasksMenu.accesskey "O">
+
+<!ENTITY datamanCmd.label "Gestion des données personnelles">
+<!ENTITY datamanCmd.accesskey "d">
+
+<!ENTITY passwordManagerCmd.label "Mots de passe">
+<!ENTITY passwordManagerCmd.accesskey "M">
+
+<!ENTITY passwordDisplayCmd.label "Gérer les mots de passe">
+<!ENTITY passwordDisplayCmd.accesskey "r">
+
+<!ENTITY passwordExpireCmd.label "Se déconnecter">
+<!ENTITY passwordExpireCmd.accesskey "S">
+
+<!ENTITY downloadManagerCmd.label "Téléchargements">
+<!ENTITY downloadManagerCmd.accesskey "T">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Modules complémentaires">
+<!ENTITY addOnsManagerCmd.accesskey "e">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Changer de profil…">
+<!ENTITY switchProfileCmd.accesskey "h">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Configurer Sync…">
+<!ENTITY syncSetup.accesskey "Y">
+<!ENTITY syncSyncNowItem.label "Synchroniser maintenant">
+<!ENTITY syncSyncNowItem.accesskey "S">

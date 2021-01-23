@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Բացել ֆայլ…">
+<!ENTITY openFileCmd.accesskey "Բ">
+<!ENTITY openFileCmd.key "Բ">
+<!ENTITY openRemoteCmd.label "Բացել վեբ տեղադրությունը...">
+<!ENTITY openRemoteCmd.accesskey "Բ">
+<!ENTITY openRemoteCmd.key "Բ">
+<!ENTITY fileRecentMenu.label "Վերջին էջերը">
+<!ENTITY fileRecentMenu.accesskey "Վ">
+<!ENTITY saveCmd.label "Պահպանել">
+<!ENTITY saveCmd.accesskey "Պ">
+<!ENTITY saveAsCmd.label "Պահպանել որպես…">
+<!ENTITY saveAsCmd.accesskey "ո">
+<!ENTITY saveAsChangeEncodingCmd2.label "Պահպանել և փոխել գրանշանի կոդավորումը">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "կ">
+<!ENTITY publishCmd.label "Հրապարակել">
+<!ENTITY publishCmd.accesskey "Հ">
+<!ENTITY publishCmd.key "Հ">
+<!ENTITY publishAsCmd.label "Հրապարակել որպես...">
+<!ENTITY publishAsCmd.accesskey "Հ">
+<!ENTITY fileRevert.label "Հետադարձել">
+<!ENTITY fileRevert.accesskey "լ">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Հրապարակվող կայքի կարգավորումները...">
+<!ENTITY publishSettings.accesskey "Հ">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Նոր">
+<!ENTITY newToolbarCmd.tooltip "Ստեղծել նոր էջ">
+<!ENTITY openToolbarCmd.label "Բացել">
+<!ENTITY openToolbarCmd.tooltip "Բացել համակարգչային ֆայլ">
+<!ENTITY saveToolbarCmd.tooltip "Պահպանել ֆայլը համակարգչում">
+<!ENTITY publishToolbarCmd.tooltip "Վերբեռնել ֆայլը հեռակա տեղ">
+<!ENTITY printToolbarCmd.label "Տպել">
+<!ENTITY printToolbarCmd.tooltip "Տպել այս էջը">

@@ -63,7 +63,7 @@ bool DeclarationKindIsParameter(DeclarationKind kind) {
 bool UsedNameTracker::noteUse(JSContext* cx, JSAtom* name, uint32_t scriptId,
                               uint32_t scopeId) {
   if (UsedNameMap::AddPtr p = map_.lookupForAdd(name)) {
-    if (!p || !p->value().noteUsedInScope(scriptId, scopeId)) {
+    if (!p->value().noteUsedInScope(scriptId, scopeId)) {
       return false;
     }
   } else {
@@ -146,7 +146,7 @@ bool ParseContext::Scope::propagateAndMarkAnnexBFunctionBoxes(
     uint32_t unused;
     for (FunctionBox* funbox : *possibleAnnexBFunctionBoxes_) {
       if (pc->annexBAppliesToLexicalFunctionInInnermostScope(funbox)) {
-        name = funbox->function()->explicitName()->asPropertyName();
+        name = funbox->explicitName()->asPropertyName();
         if (!pc->tryDeclareVar(
                 name, DeclarationKind::VarForAnnexBLexicalFunction,
                 DeclaredNameInfo::npos, &redeclaredKind, &unused)) {
@@ -220,7 +220,7 @@ void ParseContext::Scope::removeCatchParameters(ParseContext* pc,
 
 ParseContext::ParseContext(JSContext* cx, ParseContext*& parent,
                            SharedContext* sc, ErrorReporter& errorReporter,
-                           class UsedNameTracker& usedNames,
+                           CompilationInfo& compilationInfo,
                            Directives* newDirectives, bool isFull)
     : Nestable<ParseContext>(&parent),
       traceLog_(sc->cx_,
@@ -233,18 +233,17 @@ ParseContext::ParseContext(JSContext* cx, ParseContext*& parent,
       varScope_(nullptr),
       positionalFormalParameterNames_(cx->frontendCollectionPool()),
       closedOverBindingsForLazy_(cx->frontendCollectionPool()),
-      innerFunctionsForLazy(cx, GCVector<JSFunction*, 8>(cx)),
+      innerFunctionIndexesForLazy(cx),
       newDirectives(newDirectives),
       lastYieldOffset(NoYieldOffset),
       lastAwaitOffset(NoAwaitOffset),
-      scriptId_(usedNames.nextScriptId()),
-      isStandaloneFunctionBody_(false),
+      scriptId_(compilationInfo.usedNames.nextScriptId()),
       superScopeNeedsHomeObject_(false) {
   if (isFunctionBox()) {
-    if (functionBox()->function()->isNamedLambda()) {
-      namedLambdaScope_.emplace(cx, parent, usedNames);
+    if (functionBox()->isNamedLambda()) {
+      namedLambdaScope_.emplace(cx, parent, compilationInfo.usedNames);
     }
-    functionScope_.emplace(cx, parent, usedNames);
+    functionScope_.emplace(cx, parent, compilationInfo.usedNames);
   }
 }
 
@@ -259,19 +258,18 @@ bool ParseContext::init() {
   if (isFunctionBox()) {
     // Named lambdas always need a binding for their own name. If this
     // binding is closed over when we finish parsing the function in
-    // finishExtraFunctionScopes, the function box needs to be marked as
+    // finishFunctionScopes, the function box needs to be marked as
     // needing a dynamic DeclEnv object.
-    RootedFunction fun(cx, functionBox()->function());
-    if (fun->isNamedLambda()) {
+    if (functionBox()->isNamedLambda()) {
       if (!namedLambdaScope_->init(this)) {
         return false;
       }
-      AddDeclaredNamePtr p =
-          namedLambdaScope_->lookupDeclaredNameForAdd(fun->explicitName());
+      AddDeclaredNamePtr p = namedLambdaScope_->lookupDeclaredNameForAdd(
+          functionBox()->explicitName());
       MOZ_ASSERT(!p);
-      if (!namedLambdaScope_->addDeclaredName(this, p, fun->explicitName(),
-                                              DeclarationKind::Const,
-                                              DeclaredNameInfo::npos)) {
+      if (!namedLambdaScope_->addDeclaredName(
+              this, p, functionBox()->explicitName(), DeclarationKind::Const,
+              DeclaredNameInfo::npos)) {
         return false;
       }
     }
@@ -296,8 +294,7 @@ bool ParseContext::annexBAppliesToLexicalFunctionInInnermostScope(
     FunctionBox* funbox) {
   MOZ_ASSERT(!sc()->strict());
 
-  RootedPropertyName name(sc()->cx_,
-                          funbox->function()->explicitName()->asPropertyName());
+  RootedPropertyName name(sc()->cx_, funbox->explicitName()->asPropertyName());
   Maybe<DeclarationKind> redeclaredKind = isVarRedeclaredInInnermostScope(
       name, DeclarationKind::VarForAnnexBLexicalFunction);
 
@@ -309,7 +306,7 @@ bool ParseContext::annexBAppliesToLexicalFunctionInInnermostScope(
       // function scope, which encloses the var scope. This means the
       // isVarRedeclaredInInnermostScope call above would not catch this
       // case, so test it manually.
-      if (AddDeclaredNamePtr p = funScope.lookupDeclaredNameForAdd(name)) {
+      if (DeclaredNamePtr p = funScope.lookupDeclaredName(name)) {
         DeclarationKind declaredKind = p->value()->kind();
         if (DeclarationKindIsParameter(declaredKind)) {
           redeclaredKind = Some(declaredKind);
@@ -341,10 +338,6 @@ Maybe<DeclarationKind> ParseContext::isVarRedeclaredInEval(
 
   // In the case of eval, we also need to check enclosing VM scopes to see
   // if the var declaration is allowed in the context.
-  //
-  // This check is necessary in addition to
-  // js::CheckEvalDeclarationConflicts because we only know during parsing
-  // if a var is bound by for-of.
   js::Scope* enclosingScope = sc()->compilationEnclosingScope();
   js::Scope* varScope = EvalScope::nearestVarScopeForDirectEval(enclosingScope);
   MOZ_ASSERT(varScope);
@@ -497,18 +490,17 @@ bool ParseContext::declareFunctionThis(const UsedNameTracker& usedNames,
     return true;
   }
 
-  // Derived class constructors emit JSOP_CHECKRETURN, which requires
+  // Derived class constructors emit JSOp::CheckReturn, which requires
   // '.this' to be bound.
   FunctionBox* funbox = functionBox();
   HandlePropertyName dotThis = sc()->cx_->names().dotThis;
 
   bool declareThis;
   if (canSkipLazyClosedOverBindings) {
-    declareThis = funbox->function()->lazyScript()->hasThisBinding();
+    declareThis = funbox->functionHasThisBinding();
   } else {
     declareThis = hasUsedFunctionSpecialName(usedNames, dotThis) ||
-                  funbox->function()->kind() ==
-                      JSFunction::FunctionKind::ClassConstructor;
+                  funbox->isClassConstructor();
   }
 
   if (declareThis) {
@@ -519,7 +511,7 @@ bool ParseContext::declareFunctionThis(const UsedNameTracker& usedNames,
                                   DeclaredNameInfo::npos)) {
       return false;
     }
-    funbox->setHasThisBinding();
+    funbox->setFunctionHasThisBinding();
   }
 
   return true;
@@ -531,6 +523,7 @@ bool ParseContext::declareFunctionArgumentsObject(
   ParseContext::Scope& funScope = functionScope();
   ParseContext::Scope& _varScope = varScope();
 
+  bool usesArguments = false;
   bool hasExtraBodyVarScope = &funScope != &_varScope;
 
   // Time to implement the odd semantics of 'arguments'.
@@ -538,8 +531,7 @@ bool ParseContext::declareFunctionArgumentsObject(
 
   bool tryDeclareArguments;
   if (canSkipLazyClosedOverBindings) {
-    tryDeclareArguments =
-        funbox->function()->lazyScript()->shouldDeclareArguments();
+    tryDeclareArguments = funbox->shouldDeclareArguments();
   } else {
     tryDeclareArguments = hasUsedFunctionSpecialName(usedNames, argumentsName);
   }
@@ -559,7 +551,7 @@ bool ParseContext::declareFunctionArgumentsObject(
     if (hasExtraBodyVarScope) {
       tryDeclareArguments = true;
     } else {
-      funbox->usesArguments = true;
+      usesArguments = true;
     }
   }
 
@@ -571,32 +563,24 @@ bool ParseContext::declareFunctionArgumentsObject(
                                     DeclaredNameInfo::npos)) {
         return false;
       }
-      funbox->declaredArguments = true;
-      funbox->usesArguments = true;
+      funbox->setShouldDeclareArguments();
+      usesArguments = true;
     } else if (hasExtraBodyVarScope) {
       // Formal parameters shadow the arguments object.
       return true;
     }
   }
 
-  // Compute if we need an arguments object.
-  if (funbox->usesArguments) {
+  if (usesArguments) {
     // There is an 'arguments' binding. Is the arguments object definitely
     // needed?
     //
     // Also see the flags' comments in ContextFlags.
-    funbox->setArgumentsHasLocalBinding();
+    funbox->setArgumentsHasVarBinding();
 
     // Dynamic scope access destroys all hope of optimization.
     if (sc()->bindingsAccessedDynamically()) {
-      funbox->setDefinitelyNeedsArgsObj();
-    }
-
-    // If a script contains the debugger statement either directly or
-    // within an inner function, the arguments object should be created
-    // eagerly so the Debugger API may observe bindings.
-    if (sc()->hasDebuggerStatement()) {
-      funbox->setDefinitelyNeedsArgsObj();
+      funbox->setAlwaysNeedsArgsObj();
     }
   }
 

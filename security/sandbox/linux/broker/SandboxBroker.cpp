@@ -22,17 +22,17 @@
 #  include <sys/prctl.h>
 #endif
 
+#include <utility>
+
+#include "SpecialSystemDirectory.h"
 #include "base/string_util.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Move.h"
-#include "mozilla/NullPtr.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/ipc/FileDescriptor.h"
-#include "nsDirectoryServiceDefs.h"
 #include "nsAppDirectoryServiceDefs.h"
+#include "nsDirectoryServiceDefs.h"
 #include "nsThreadUtils.h"
-#include "SpecialSystemDirectory.h"
 #include "sandbox/linux/system_headers/linux_syscalls.h"
 
 namespace mozilla {
@@ -61,6 +61,15 @@ SandboxBroker::SandboxBroker(UniquePtr<const Policy> aPolicy, int aChildPid,
     close(aClientFd);
     mFileDesc = -1;
     aClientFd = -1;
+  }
+  nsCOMPtr<nsIFile> tmpDir;
+  nsresult rv = NS_GetSpecialDirectory(NS_APP_CONTENT_PROCESS_TEMP_DIR,
+                                       getter_AddRefs(tmpDir));
+  if (NS_SUCCEEDED(rv)) {
+    rv = tmpDir->GetNativePath(mContentTempPath);
+    if (NS_FAILED(rv)) {
+      mContentTempPath.Truncate();
+    }
   }
 }
 
@@ -540,17 +549,12 @@ size_t SandboxBroker::RemapTempDirs(char* aPath, size_t aBufSize,
         Substring(path, prefixLen, path.Length() - prefixLen);
 
     // Only now try to get the content process temp dir
-    nsCOMPtr<nsIFile> tmpDir;
-    nsresult rv = NS_GetSpecialDirectory(NS_APP_CONTENT_PROCESS_TEMP_DIR,
-                                         getter_AddRefs(tmpDir));
-    if (NS_SUCCEEDED(rv)) {
+    if (!mContentTempPath.IsEmpty()) {
       nsAutoCString tmpPath;
-      rv = tmpDir->GetNativePath(tmpPath);
-      if (NS_SUCCEEDED(rv)) {
-        tmpPath.Append(cutPath);
-        base::strlcpy(aPath, tmpPath.get(), aBufSize);
-        return strlen(aPath);
-      }
+      tmpPath.Assign(mContentTempPath);
+      tmpPath.Append(cutPath);
+      base::strlcpy(aPath, tmpPath.get(), aBufSize);
+      return strlen(aPath);
     }
   }
 
@@ -623,6 +627,8 @@ void SandboxBroker::ThreadMain(void) {
   char threadName[16];
   SprintfLiteral(threadName, "FS Broker %d", mChildPid);
   PlatformThread::SetName(threadName);
+
+  AUTO_PROFILER_REGISTER_THREAD(threadName);
 
   // Permissive mode can only be enabled through an environment variable,
   // therefore it is sufficient to fetch the value once

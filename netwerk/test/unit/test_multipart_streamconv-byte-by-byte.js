@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpserver = null;
@@ -57,22 +59,16 @@ var multipartListener = {
   _buffer: "",
   _index: 0,
 
-  QueryInterface: function(iid) {
-    if (
-      iid.equals(Ci.nsIStreamListener) ||
-      iid.equals(Ci.nsIRequestObserver) ||
-      iid.equals(Ci.nsISupports)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIStreamListener",
+    "nsIRequestObserver",
+  ]),
 
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     this._buffer = "";
   },
 
-  onDataAvailable: function(request, stream, offset, count) {
+  onDataAvailable(request, stream, offset, count) {
     try {
       this._buffer = this._buffer.concat(read_stream(stream, count));
       dump("BUFFEEE: " + this._buffer + "\n\n");
@@ -81,7 +77,7 @@ var multipartListener = {
     }
   },
 
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     this._index++;
     // Second part should be last part
     Assert.equal(

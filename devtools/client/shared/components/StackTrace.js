@@ -11,7 +11,7 @@ const {
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const { LocalizationHelper } = require("devtools/shared/l10n");
-const Frame = createFactory(require("./Frame"));
+const Frame = createFactory(require("devtools/client/shared/components/Frame"));
 
 const l10n = new LocalizationHelper(
   "devtools/client/locales/webconsole.properties"
@@ -39,19 +39,17 @@ class StackTrace extends Component {
     return {
       stacktrace: PropTypes.array.isRequired,
       onViewSourceInDebugger: PropTypes.func.isRequired,
-      onViewSourceInScratchpad: PropTypes.func,
       // Service to enable the source map feature.
       sourceMapService: PropTypes.object,
     };
   }
 
   render() {
-    const {
-      stacktrace,
-      onViewSourceInDebugger,
-      onViewSourceInScratchpad,
-      sourceMapService,
-    } = this.props;
+    const { stacktrace, onViewSourceInDebugger, sourceMapService } = this.props;
+
+    if (!stacktrace || !stacktrace.length) {
+      return null;
+    }
 
     const frames = [];
     stacktrace.forEach((s, i) => {
@@ -80,9 +78,7 @@ class StackTrace extends Component {
           showFunctionName: true,
           showAnonymousFunctionName: true,
           showFullSourceUrl: true,
-          onClick: /^Scratchpad\/\d+$/.test(source)
-            ? onViewSourceInScratchpad
-            : onViewSourceInDebugger,
+          onClick: onViewSourceInDebugger,
           sourceMapService,
         }),
         "\n"

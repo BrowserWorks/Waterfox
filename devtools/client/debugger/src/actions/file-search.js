@@ -35,8 +35,8 @@ type Match = Object;
 
 export function doSearch(cx: Context, query: string, editor: Editor) {
   return ({ getState, dispatch }: ThunkArgs) => {
-    const selectedSourceWithContent = getSelectedSourceWithContent(getState());
-    if (!selectedSourceWithContent || !selectedSourceWithContent.content) {
+    const selectedSource = getSelectedSourceWithContent(getState());
+    if (!selectedSource || !selectedSource.content) {
       return;
     }
 
@@ -52,8 +52,8 @@ export function doSearchForHighlight(
   ch: number
 ) {
   return async ({ getState, dispatch }: ThunkArgs) => {
-    const selectedSourceWithContent = getSelectedSourceWithContent(getState());
-    if (!selectedSourceWithContent || !selectedSourceWithContent.content) {
+    const selectedSource = getSelectedSourceWithContent(getState());
+    if (!selectedSource?.content) {
       return;
     }
     dispatch(searchContentsForHighlight(query, editor, line, ch));
@@ -105,19 +105,18 @@ export function searchContents(
 ) {
   return async ({ getState, dispatch }: ThunkArgs) => {
     const modifiers = getFileSearchModifiers(getState());
-    const selectedSourceWithContent = getSelectedSourceWithContent(getState());
+    const selectedSource = getSelectedSourceWithContent(getState());
 
     if (
       !editor ||
-      !selectedSourceWithContent ||
-      !selectedSourceWithContent.content ||
-      !isFulfilled(selectedSourceWithContent.content) ||
+      !selectedSource ||
+      !selectedSource.content ||
+      !isFulfilled(selectedSource.content) ||
       !modifiers
     ) {
       return;
     }
-    const selectedSource = selectedSourceWithContent.source;
-    const selectedContent = selectedSourceWithContent.content.value;
+    const selectedContent = selectedSource.content.value;
 
     const ctx = { ed: editor, cm: editor.codeMirror };
 
@@ -126,7 +125,6 @@ export function searchContents(
       return;
     }
 
-    const _modifiers = modifiers.toJS();
     let text;
     if (selectedContent.type === "wasm") {
       text = renderWasmText(selectedSource.id, selectedContent).join("\n");
@@ -134,9 +132,9 @@ export function searchContents(
       text = selectedContent.value;
     }
 
-    const matches = await getMatches(query, text, _modifiers);
+    const matches = await getMatches(query, text, modifiers);
 
-    const res = find(ctx, query, true, _modifiers, focusFirstResult);
+    const res = find(ctx, query, true, modifiers, focusFirstResult);
     if (!res) {
       return;
     }
@@ -168,9 +166,7 @@ export function searchContentsForHighlight(
     }
 
     const ctx = { ed: editor, cm: editor.codeMirror };
-    const _modifiers = modifiers.toJS();
-
-    searchSourceForHighlight(ctx, false, query, true, _modifiers, line, ch);
+    searchSourceForHighlight(ctx, false, query, true, modifiers, line, ch);
   };
 }
 
@@ -192,7 +188,7 @@ export function traverseResults(cx: Context, rev: boolean, editor: Editor) {
 
     if (modifiers) {
       const matchedLocations = matches || [];
-      const findArgs = [ctx, query, true, modifiers.toJS()];
+      const findArgs = [ctx, query, true, modifiers];
       const results = rev ? findPrev(...findArgs) : findNext(...findArgs);
 
       if (!results) {

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Түс">
+<!ENTITY lastPickedColor.label "Соңғы таңдалған түс">
+<!ENTITY lastPickedColor.accessKey "о">
+<!ENTITY chooseColor1.label "Түсті таңдаңыз:">
+<!ENTITY chooseColor2.label "HTML түс жолын енгізіңіз">
+<!ENTITY chooseColor2.accessKey "т">
+<!ENTITY setColorExample.label "(мысалы, &quot;#0000ff&quot; немесе &quot;blue&quot;):">
+<!ENTITY default.label "Әдетті">
+<!ENTITY default.accessKey "Ә">
+<!ENTITY palette.label "Палитра:">
+<!ENTITY standardPalette.label "Қалыпты">
+<!ENTITY webPalette.label "Барлық веб түстері">
+<!ENTITY background.label "Фон, келесі үшін:">
+<!ENTITY background.accessKey "Ф">
+<!ENTITY table.label "Кесте">
+<!ENTITY table.accessKey "К">
+<!ENTITY cell.label "Ұяшық(тар)">
+<!ENTITY cell.accessKey "я">

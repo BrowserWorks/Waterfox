@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "তারিখ অনুসারে পড়া বার্তাগুলোকে চিহ্নিত করা হবে">
+<!ENTITY markByDateLower.label "বার্তাকে এখান থেকে পড়া হয়েছে হিসেবে চিহ্নিত করা (f):">
+<!ENTITY markByDateLower.accesskey "f">
+<!ENTITY markByDateUpper.label "প্রাপক (T):">
+<!ENTITY markByDateUpper.accesskey "T">

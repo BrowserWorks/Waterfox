@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "导入向导">
+
+<!ENTITY importFromWin.label            "导入选项、账户设置、通讯录、过滤器以及其他数据，来自：">
+<!ENTITY importFromNonWin.label         "导入首选项、账户设置、通讯录、过滤器以及其他数据，来自：">
+<!ENTITY importSourceNotFound.label     "没有找到可导入数据的应用程序。">
+
+<!ENTITY importFromNothing.label        "不导入任何数据">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 或更高">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "导入设置以及邮件夹">
+<!ENTITY importItems.title              "导入项">
+<!ENTITY importItems.label              "选择要导入的项：">
+
+<!ENTITY migrating.title                "正在导入…">
+<!ENTITY migrating.label                "下列项正在被导入…">
+
+<!ENTITY selectProfile.title            "选择配置文件">
+<!ENTITY selectProfile.label            "下列配置文件可供导入，从：">
+
+<!ENTITY done.title                     "导入完成">
+<!ENTITY done.label                     "下列项已成功导入...">

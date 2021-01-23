@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Adresnik">
+<!ENTITY blankResultsPaneMessage.label                  "Tutón adresnik kontakty jenož po pytanju pokazuje">
+<!ENTITY localResultsOnlyMessage.label                  "Kontakty ze zdalenych adresnikow so njepokazuja, doniž njepytaće">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Dataja">
+<!ENTITY fileMenu.accesskey                             "D">
+<!ENTITY newMenu.label                                  "Nowy">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "Adresnikowy kontakt…">
+<!ENTITY newContact.accesskey                           "e">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Rozesyłanska lisćina…">
+<!ENTITY newListCmd.accesskey                           "R">
+<!ENTITY newAddressBookCmd.label                        "Adresnik…">
+<!ENTITY newAddressBookCmd.accesskey                    "A">
+<!ENTITY newCardDAVBookCmd.label                        "CardDAV-adresnik…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "C">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-zapis…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newMessageCmd.label                            "Powěsć">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "P">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Adresnik Mac OS X wužiwać">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Začinić">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "Z">
+<!ENTITY printSetupCmd.label                            "Stronu připrawić…">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "Ćišćerski přehlad kontakta">
+<!ENTITY printPreviewContactCmd.accesskey               "h">
+<!ENTITY printPreviewAddressBook.label                  "Ćišćerski přehlad adresnika">
+<!ENTITY printPreviewAddressBook.accesskey              "i">
+<!ENTITY printContactCmd.label                          "Kontakt ćišćeć…">
+<!ENTITY printContactCmd.accesskey                      "K">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Adresnik ćišćeć…">
+<!ENTITY printAddressBook.accesskey                     "A">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Wobdźěłać">
+<!ENTITY editMenu.accesskey                             "b">
+<!ENTITY deleteCmd.label                                "Zhašeć">
+<!ENTITY deleteAbCmd.label                              "Adresnik zhašeć">
+<!ENTITY deleteContactCmd.label                         "Kontakt zhašeć">
+<!ENTITY deleteContactsCmd.label                        "Kontakty zhašeć">
+<!ENTITY deleteListCmd.label                            "Lisćinu zhašeć">
+<!ENTITY deleteListsCmd.label                           "Lisćiny zhašeć">
+<!ENTITY deleteItemsCmd.label                           "Zapiski zhašeć">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Kajkosće">
+<!ENTITY propertiesMenu.accesskey                       "a">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Kajkosće adresnika">
+<!ENTITY abPropertiesMenu.accesskey                     "o">
+<!ENTITY contactPropertiesMenu.label                    "Kontaktowe kajkosće">
+<!ENTITY contactPropertiesMenu.accesskey                "t">
+<!ENTITY mailingListPropertiesMenu.label                "Kajkosće rozesyłanskeje lisćiny">
+<!ENTITY mailingListPropertiesMenu.accesskey            "r">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Napohlad">
+<!ENTITY viewMenu.accesskey                             "N">
+<!ENTITY viewToolbarsMenu.label                         "Symbolowe lajsty">
+<!ENTITY viewToolbarsMenu.accesskey                     "S">
+<!ENTITY menubarCmd.label                               "Menijowa lajsta">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Adresnikowa lajsta">
+<!ENTITY showAbToolbarCmd.accesskey                     "A">
+<!ENTITY showTaskbarCmd.label                           "Statusowa lajsta">
+<!ENTITY showTaskbarCmd.accesskey                       "t">
+<!ENTITY customizeToolbar.label                         "Přiměrić…">
+<!ENTITY customizeToolbar.accesskey                     "i">
+<!ENTITY layoutMenu.label                               "Wuhotowanje">
+<!ENTITY layoutMenu.accesskey                           "h">
+<!ENTITY showDirectoryPane.label                        "Wobłuk rjadowakow">
+<!ENTITY showDirectoryPane.accesskey                    "r">
+<!ENTITY showContactPane2.label                         "Wobłuk kontaktow">
+<!ENTITY showContactPane2.accesskey                     "k">
+<!ENTITY menu_ShowNameAs.label                          "Mjeno pokazać jako">
+<!ENTITY menu_ShowNameAs.accesskey                      "M">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Předmjeno swójbne mjeno">
+<!ENTITY firstLastCmd2.accesskey                        "P">
+<!ENTITY lastFirstCmd.label                             "Swójbne mjeno, předmjeno">
+<!ENTITY lastFirstCmd.accesskey                         "b">
+<!ENTITY displayNameCmd.label                           "Wužiwarske mjeno">
+<!ENTITY displayNameCmd.accesskey                       "u">
+<!ENTITY sortMenu.label                                 "Sortěrować po">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Nastroje">
+<!ENTITY tasksMenu.accesskey                            "t">
+<!ENTITY messengerCmd.label                             "E-mejl a diskusijne skupiny">
+<!ENTITY messengerCmd.accesskey                         "E">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Adresy pytać…">
+<!ENTITY searchAddressesCmd.accesskey                   "A">
+<!ENTITY importCmd.label                                "Importować…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksportować…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Nastajenja">
+<!ENTITY preferencesCmd2.accesskey                      "N">
+<!ENTITY preferencesCmdUnix.label                       "Nastajenja">
+<!ENTITY preferencesCmdUnix.accesskey                   "N">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Nowy kontakt">
+<!ENTITY newContactButton.accesskey                     "N">
+<!ENTITY newlistButton.label                            "Nowa lisćina">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY showAsDefault.label                            "Standardny startowy zapis">
+<!ENTITY showAsDefault.accesskey                        "S">
+<!ENTITY editPropertiesButton.label                     "Wobdźěłać">
+<!ENTITY propertiesContext.label                        "Kajkosće">
+<!ENTITY propertiesContext.accesskey                    "k">
+<!ENTITY abPropertiesContext.label                      "Kajkosće">
+<!ENTITY abPropertiesContext.accesskey                  "k">
+<!ENTITY syncContext.label                              "Synchronizować">
+<!ENTITY syncContext.accesskey                          "y">
+<!ENTITY editContactContext.label                       "Kontakt wobdźěłać">
+<!ENTITY editContactContext.accesskey                   "K">
+<!ENTITY editMailingListContext.label                   "Lisćinu wobdźěłać">
+<!ENTITY editMailingListContext.accesskey               "L">
+<!ENTITY newmsgButton.label                             "Pisać">
+<!ENTITY newmsgButton.accesskey                         "P">
+<!ENTITY newIM.label                                    "Hnydomna powěsć">
+<!ENTITY newIM.accesskey                                "H">
+<!ENTITY printButton.label                              "Ćišćeć…">
+<!ENTITY printButton.accesskey                          "i">
+<!ENTITY deleteButton2.label                            "Zhašeć">
+<!ENTITY deleteButton2.accesskey                        "Z">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Wubjerće špałty, kotrež maja so zwobraznić">
+<!ENTITY newContactButton.tooltip                       "Nowy adresnikowy kontakt wutworić">
+<!ENTITY newlistButton.tooltip                          "Nowu lisćinu wutworić">
+<!ENTITY editPropertiesButton.tooltip                   "Wubrany zapisk wobdźěłać">
+<!ENTITY editAbPropertiesButton.tooltip                 "Kajkosće wubraneho adresnika wobdźěłać">
+<!ENTITY editContactPropertiesButton.tooltip            "Wubrany kontakt wobdźěłać">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Wubranu rozesyłansku lisćinu wobdźěłać">
+<!ENTITY newmsgButton.tooltip                           "E-mejlowu powěsć pósłać">
+<!ENTITY newIM.tooltip                                  "Hnydomnu powěsć pósłać abo bjesadować">
+<!ENTITY deleteButton2.tooltip                          "Wubrany zapisk zhašeć">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Mjeno abo e-mejl">
+<!ENTITY SearchNameOrEmail.accesskey                    "M">
+<!ENTITY advancedButton.tooltip                         "Rozšěrjene adresnikowe pytanje">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Spěšne pytanje">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Adresnik">
+<!ENTITY Addrbook.accesskey                             "A">
+<!ENTITY GeneratedName.label                            "Mjeno">
+<!ENTITY GeneratedName.accesskey                        "M">
+<!ENTITY PrimaryEmail.label                             "E-mejl">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Chattowe mjeno">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "Organizacija">
+<!ENTITY Company.accesskey                              "O">
+<!ENTITY NickName.label                                 "Přimjeno">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "Přidatna e-mejl">
+<!ENTITY SecondEmail.accesskey                          "d">
+<!ENTITY Department.label                               "Wotdźěl">
+<!ENTITY Department.accesskey                           "W">
+<!ENTITY JobTitle.label                                 "Titul">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "Mobilny telefon">
+<!ENTITY CellularNumber.accesskey                       "b">
+<!ENTITY PagerNumber.label                              "Pager">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Faks">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Priwatny telefon">
+<!ENTITY HomePhone.accesskey                            "r">
+<!ENTITY WorkPhone.label                                "Słužbny telefon">
+<!ENTITY WorkPhone.accesskey                            "u">
+<!ENTITY sortAscending.label                            "Postupowacy">
+<!ENTITY sortAscending.accesskey                        "t">
+<!ENTITY sortDescending.label                           "Spadowacy">
+<!ENTITY sortDescending.accesskey                       "S">
+<!ENTITY _PhoneticName.label                            "Fonetiske mjeno">
+<!ENTITY _PhoneticName.accesskey                        "F">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Doma">
+<!ENTITY other.heading                                  "Druhi">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Słužbny">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Wopisanje">
+<!ENTITY addresses.heading                              "Adresy">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Mapu wobstarać">
+<!ENTITY mapIt.tooltip                                  "Mapu tuteje adresy z weba zwobraznić">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Wokno">
+<!ENTITY minimizeWindow.label                           "Miniměrować">
+<!ENTITY minimizeWindow.key                             "M">
+<!ENTITY bringAllToFront.label                          "Do prědka přinjesć">
+<!ENTITY zoomWindow.label                               "Skalować">

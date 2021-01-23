@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "P'aforrar espaciu en discu, nun descargar:">
+<!ENTITY doNotDownloadNntp.label "P'aforrar espaciu en discu, nun descargar pal so usu ensin conexón:">
+<!ENTITY doNotDownloadImap.label "P'aforrar espaciu en discu, la descarga de mensaxes del sirvidor y el so almacenamientu llocal pa usu ensin conexón pue restrinxise por antigüedá o tamañu.">
+<!ENTITY offlineNotDownload.label "Mensaxes de tamañu superior a">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "Nun descargar mensaxes mayores de">
+<!ENTITY autosyncNotDownload.accesskey "c">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "díes d'antigüedá">
+<!ENTITY message.label "mensaxes más recientes">
+<!ENTITY nntpNotDownloadRead.label "Mensaxes lleíos">
+<!ENTITY nntpNotDownloadRead.accesskey "l">
+<!ENTITY nntpDownloadMsg.label "Mensaxes de más de">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Pa recuperar espaciu en discu, los mensaxes antiguos puen desaniciase ensembre.">
+<!ENTITY retentionCleanupImap.label "Pa recuperar espaciu en discu, los mensaxes antiguos puen desaniciase ensembre, tanto les copies llocales como los orixinales nel sirvidor remotu.">
+<!ENTITY retentionCleanupPop.label "Pa recuperar espaciu en discu, los mensaxes antiguos puen desaniciase ensembre, incluyendo los orixinales nel sirvidor remotu.">
+<!ENTITY retentionKeepMsg.label "Desaniciar mensaxes con más de">
+<!ENTITY retentionKeepMsg.accesskey "r">
+<!ENTITY retentionKeepAll.label "Nun desaniciar dengún mensaxe">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Desaniciar toos sacante los">
+<!ENTITY retentionKeepRecent.accesskey "a">
+<!ENTITY retentionApplyToFlagged.label "Caltener siempre los mensaxes con estrella">
+<!ENTITY retentionApplyToFlagged.accesskey "i">
+<!ENTITY nntpRemoveMsgBody.label "Desaniciar el cuerpu de los mensaxes de más de">
+<!ENTITY nntpRemoveMsgBody.accesskey "d">
+<!ENTITY offlineSelectNntp.label "Esbillar grupos de noticies pal so usu ensin conexón…">
+<!ENTITY offlineSelectNntp.accesskey "E">
+<!ENTITY offlineImapAdvancedOffline.label "Avanzaes…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "v">
+<!ENTITY syncGroupTitle.label "Sincronización de mensaxes">
+<!ENTITY diskspaceGroupTitle.label "Espaciu en discu">
+
+<!ENTITY allAutosync.label "Sincronizar tolos mensaxes llocalmente ensin importar l'antigüedá">
+<!ENTITY allAutosync.accesskey "t">
+<!ENTITY ageAutosyncBefore.label "Sincronizar los ">
+<!ENTITY ageAutosync.accesskey "z">
+<!ENTITY ageAutosyncMiddle.label "">
+<!ENTITY dayAgeInterval.label "Díes">
+<!ENTITY weekAgeInterval.label "Selmanes">
+<!ENTITY monthAgeInterval.label "Meses">
+<!ENTITY yearAgeInterval.label "Años">
+<!ENTITY ageAutosyncAfter.label "más recientes">

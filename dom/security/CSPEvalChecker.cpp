@@ -5,12 +5,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/CSPEvalChecker.h"
+#include "mozilla/dom/Document.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerRunnable.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/ErrorResult.h"
+#include "nsIParentChannel.h"
 #include "nsGlobalWindowInner.h"
-#include "mozilla/dom/Document.h"
-#include "nsContentSecurityManager.h"
+#include "nsContentSecurityUtils.h"
 #include "nsContentUtils.h"
 #include "nsCOMPtr.h"
 #include "nsJSUtils.h"
@@ -31,14 +33,17 @@ nsresult CheckInternal(nsIContentSecurityPolicy* aCSP,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aAllowed);
 
-#if defined(DEBUG) && !defined(ANDROID)
-  JSContext* cx = nsContentUtils::GetCurrentJSContext();
-  nsContentSecurityManager::AssertEvalNotUsingSystemPrincipal(aSubjectPrincipal,
-                                                              cx);
-#endif
-
   // The value is set at any "return", but better to have a default value here.
   *aAllowed = false;
+
+#if !defined(ANDROID)
+  JSContext* cx = nsContentUtils::GetCurrentJSContext();
+  if (!nsContentSecurityUtils::IsEvalAllowed(
+          cx, aSubjectPrincipal->IsSystemPrincipal(), aExpression)) {
+    *aAllowed = false;
+    return NS_OK;
+  }
+#endif
 
   if (!aCSP) {
     *aAllowed = true;
@@ -123,12 +128,7 @@ nsresult CSPEvalChecker::CheckForWindow(JSContext* aCx,
     return NS_OK;
   }
 
-  nsCOMPtr<nsIContentSecurityPolicy> csp;
-  nsresult rv = doc->NodePrincipal()->GetCsp(getter_AddRefs(csp));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    *aAllowEval = false;
-    return rv;
-  }
+  nsresult rv = NS_OK;
 
   // Get the calling location.
   uint32_t lineNum = 0;
@@ -139,6 +139,7 @@ nsresult CSPEvalChecker::CheckForWindow(JSContext* aCx,
     fileNameString.AssignLiteral("unknown");
   }
 
+  nsCOMPtr<nsIContentSecurityPolicy> csp = doc->GetCsp();
   rv = CheckInternal(csp, nullptr /* no CSPEventListener for window */,
                      doc->NodePrincipal(), aExpression, fileNameString, lineNum,
                      columnNum, aAllowEval);

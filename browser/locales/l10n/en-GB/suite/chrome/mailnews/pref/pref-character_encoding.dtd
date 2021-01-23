@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Text Encoding">
+<!ENTITY messageDisplay.caption          "Message Display">
+<!ENTITY viewFallbackCharset2.label      "Fallback Text Encoding:">
+<!ENTITY viewFallbackCharset2.accesskey  "E">
+<!ENTITY viewFallbackCharset.desc        "(Used for legacy content that does not declare its encoding.)">
+
+<!ENTITY composingMessages.caption       "Composing Messages">
+<!ENTITY useMIME.label                   "For messages that contain 8-bit characters, use 'quoted printable' MIME encoding. Leave unticked to send the messages as is.">
+<!ENTITY useMIME.accesskey               "F">
+<!ENTITY sendDefaultCharset2.label       "Default Text Encoding:">
+<!ENTITY sendDefaultCharset2.accesskey   "T">
+<!ENTITY replyInDefaultCharset3.label    "When possible, use this default text encoding in replies. (When unticked, only new messages use this default.)">
+<!ENTITY replyInDefaultCharset3.accesskey "W">

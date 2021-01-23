@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Caută și înlocuiește">
+<!ENTITY findField.label "Caută text:">
+<!ENTITY findField.accesskey "a">
+<!ENTITY replaceField.label "Înlocuiește cu:">
+<!ENTITY replaceField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "Corelează litere mari și mici">
+<!ENTITY caseSensitiveCheckbox.accesskey "M">
+<!ENTITY wrapCheckbox.label "Încadrare de jur-împrejur">
+<!ENTITY wrapCheckbox.accesskey "p">
+<!ENTITY backwardsCheckbox.label "Caută înapoi">
+<!ENTITY backwardsCheckbox.accesskey "a">
+<!ENTITY findNextButton.label "Mergi la rezultatul următor">
+<!ENTITY findNextButton.accesskey "G">
+<!ENTITY replaceButton.label "Înlocuiește">
+<!ENTITY replaceButton.accesskey "o">
+<!ENTITY replaceAndFindButton.label "Caută și înlocuiește">
+<!ENTITY replaceAndFindButton.accesskey "g">
+<!ENTITY replaceAllButton.label "Înlocuiește toate">
+<!ENTITY replaceAllButton.accesskey "t">
+<!ENTITY closeButton.label "Închide">
+<!ENTITY closeButton.accesskey "C">

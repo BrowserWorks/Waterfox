@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,6 +6,7 @@
 const {
   APPEND_TO_HISTORY,
   CLEAR_HISTORY,
+  EVALUATE_EXPRESSION,
   HISTORY_LOADED,
   UPDATE_HISTORY_POSITION,
   HISTORY_BACK,
@@ -16,6 +15,8 @@ const {
   REVERSE_SEARCH_INPUT_CHANGE,
   REVERSE_SEARCH_BACK,
   REVERSE_SEARCH_NEXT,
+  SET_TERMINAL_INPUT,
+  SET_TERMINAL_EAGER_RESULT,
 } = require("devtools/client/webconsole/constants");
 
 /**
@@ -40,12 +41,16 @@ function getInitialState() {
     reverseSearchEnabled: false,
     currentReverseSearchResults: null,
     currentReverseSearchResultsPosition: null,
+
+    terminalInput: null,
+    terminalEagerResult: null,
   };
 }
 
 function history(state = getInitialState(), action, prefsState) {
   switch (action.type) {
     case APPEND_TO_HISTORY:
+    case EVALUATE_EXPRESSION:
       return appendToHistory(state, prefsState, action.expression);
     case CLEAR_HISTORY:
       return clearHistory(state);
@@ -61,6 +66,10 @@ function history(state = getInitialState(), action, prefsState) {
       return reverseSearchBack(state);
     case REVERSE_SEARCH_NEXT:
       return reverseSearchNext(state);
+    case SET_TERMINAL_INPUT:
+      return setTerminalInput(state, action.expression);
+    case SET_TERMINAL_EAGER_RESULT:
+      return setTerminalEagerResult(state, action.result);
   }
   return state;
 }
@@ -214,6 +223,21 @@ function reverseSearchNext(state) {
   return {
     ...state,
     currentReverseSearchResultsPosition: previousPosition,
+  };
+}
+
+function setTerminalInput(state, expression) {
+  return {
+    ...state,
+    terminalInput: expression,
+    terminalEagerResult: !expression ? null : state.terminalEagerResult,
+  };
+}
+
+function setTerminalEagerResult(state, result) {
+  return {
+    ...state,
+    terminalEagerResult: result,
   };
 }
 

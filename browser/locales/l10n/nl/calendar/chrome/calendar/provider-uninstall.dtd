@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Een provider de-installeren">
+<!ENTITY providerUninstall.accept.label                    "Geselecteerde afmelden">
+<!ENTITY providerUninstall.accept.accesskey                "G">
+<!ENTITY providerUninstall.cancel.label                    "Add-on behouden">
+<!ENTITY providerUninstall.cancel.accesskey                "A">
+<!ENTITY providerUninstall.preName.label                   "U hebt gevraagd het volgende te de-installeren of uit te schakelen:">
+<!ENTITY providerUninstall.postName.label                  "Dit zal ervoor zorgen dat de onderstaande agenda’s worden uitgeschakeld.">
+<!ENTITY providerUninstall.reinstallNote.label             "Tenzij u van plan bent deze provider opnieuw te installeren, kunt u zich desgewenst afmelden bij de agenda’s van deze provider.">

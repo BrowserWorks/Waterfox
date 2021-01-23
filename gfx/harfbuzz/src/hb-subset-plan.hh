@@ -40,11 +40,21 @@ struct hb_subset_plan_t
   hb_object_header_t header;
 
   bool drop_hints : 1;
-  bool drop_layout : 1;
   bool desubroutinize : 1;
+  bool retain_gids : 1;
+  bool name_legacy : 1;
 
   // For each cp that we'd like to retain maps to the corresponding gid.
   hb_set_t *unicodes;
+
+  // name_ids we would like to retain
+  hb_set_t *name_ids;
+
+  // name_languages we would like to retain
+  hb_set_t *name_languages;
+
+  // Tables which should be dropped.
+  hb_set_t *drop_tables;
 
   // The glyph subset
   hb_map_t *codepoint_to_glyph;
@@ -59,16 +69,36 @@ struct hb_subset_plan_t
 
   unsigned int _num_output_glyphs;
   hb_set_t *_glyphset;
+  hb_set_t *_glyphset_gsub;
+
+  //active lookups we'd like to retain
+  hb_map_t *gsub_lookups;
+  hb_map_t *gpos_lookups;
+
+  //active features we'd like to retain
+  hb_map_t *gsub_features;
+  hb_map_t *gpos_features;
 
  public:
 
   /*
    * The set of input glyph ids which will be retained in the subset.
+   * Does NOT include ids kept due to retain_gids. You probably want to use
+   * glyph_map/reverse_glyph_map.
    */
   inline const hb_set_t *
   glyphset () const
   {
     return _glyphset;
+  }
+
+  /*
+   * The set of input glyph ids which will be retained in the subset.
+   */
+  inline const hb_set_t *
+  glyphset_gsub () const
+  {
+    return _glyphset_gsub;
   }
 
   /*
@@ -90,7 +120,7 @@ struct hb_subset_plan_t
   }
 
   inline bool new_gid_for_codepoint (hb_codepoint_t codepoint,
-                                     hb_codepoint_t *new_gid) const
+				     hb_codepoint_t *new_gid) const
   {
     hb_codepoint_t old_gid = codepoint_to_glyph->get (codepoint);
     if (old_gid == HB_MAP_VALUE_INVALID)
@@ -100,7 +130,7 @@ struct hb_subset_plan_t
   }
 
   inline bool new_gid_for_old_gid (hb_codepoint_t old_gid,
-                                   hb_codepoint_t *new_gid) const
+				   hb_codepoint_t *new_gid) const
   {
     hb_codepoint_t gid = glyph_map->get (old_gid);
     if (gid == HB_MAP_VALUE_INVALID)
@@ -111,7 +141,7 @@ struct hb_subset_plan_t
   }
 
   inline bool old_gid_for_new_gid (hb_codepoint_t  new_gid,
-                                   hb_codepoint_t *old_gid) const
+				   hb_codepoint_t *old_gid) const
   {
     hb_codepoint_t gid = reverse_glyph_map->get (new_gid);
     if (gid == HB_MAP_VALUE_INVALID)
@@ -139,7 +169,7 @@ typedef struct hb_subset_plan_t hb_subset_plan_t;
 
 HB_INTERNAL hb_subset_plan_t *
 hb_subset_plan_create (hb_face_t           *face,
-                       hb_subset_input_t   *input);
+		       hb_subset_input_t   *input);
 
 HB_INTERNAL void
 hb_subset_plan_destroy (hb_subset_plan_t *plan);

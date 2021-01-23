@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "Nowa rozesyłanska lisćina">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "Typ adresnika: ">
+<!ENTITY addToAddressBook.accesskey     "d">
+<!ENTITY ListName.label                 "Mjeno z lisćiny: ">
+<!ENTITY ListName.accesskey             "M">
+<!ENTITY ListNickName.label             "Přimjeno z lisćiny: ">
+<!ENTITY ListNickName.accesskey         "P">
+<!ENTITY ListDescription.label          "Wopisanje: ">
+<!ENTITY ListDescription.accesskey      "W">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Zapisajće e-mejlowe adresy, zo byšće je rozesyłanskej lisćinje přidał:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Horje">
+<!ENTITY DownButton.label               "Dele">
+

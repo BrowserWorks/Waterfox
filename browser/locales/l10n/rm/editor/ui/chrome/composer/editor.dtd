@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Trav d'utensils per rediger">
+<!ENTITY previewToolbarCmd.label "Navigar">
+<!ENTITY previewToolbarCmd.tooltip "Chargiar questa pagina en il navigatur">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Exportar sco text…">
+<!ENTITY exportToTextCmd.accesskey "T">
+<!ENTITY previewCmd.label "Mussar la pagina en il navigatur">
+<!ENTITY previewCmd.accesskey "n">
+<!ENTITY sendPageCmd.label "Trametter la pagina">
+<!ENTITY sendPageCmd.accesskey "t">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Trav d'utensils per rediger">
+<!ENTITY compositionToolbarCmd.accesskey "r">
+<!ENTITY formattingToolbarCmd.label "Trav d'utensils da format">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Trav d'utensils dal modus per editar">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Griglia da posiziunar">
+<!ENTITY grid.accesskey "G">
+<!ENTITY pageProperties.label "Titel e caracteristicas da la pagina…">
+<!ENTITY pageProperties.accesskey "T">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Validar HTML">
+<!ENTITY validateCmd.accesskey "V">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Modus normal d'editar">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Mussar ils urs da la tabella e las ancras cun num">
+<!ENTITY AllTagsModeTab.label "Tags da HTML">
+<!ENTITY AllTagsMode.label "Tags da HTML">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Mussar simbols per tut ils tags da HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Funtauna">
+<!ENTITY HTMLSourceMode.label "Code da funtauna">
+<!ENTITY HTMLSourceMode.accesskey "f">
+<!ENTITY HTMLSourceMode.tooltip "Editar il code da funtauna HTML">
+<!ENTITY PreviewModeTab.label "Prevista">
+<!ENTITY PreviewMode.label "Prevista">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "Visualisar a moda WYSIWYG (sco en il navigatur)">

@@ -13,8 +13,6 @@
 #include <sys/stat.h>
 #include "nsString.h"
 #include "nsIFile.h"
-#include "nsIPrefBranch.h"
-#include "nsIPrefService.h"
 
 #define LOCAL_PLUGIN_DLL_SUFFIX ".so"
 #if defined(__hpux)
@@ -62,7 +60,7 @@ bool nsPluginsDir::IsPluginFile(nsIFile* file) {
 
 nsPluginFile::nsPluginFile(nsIFile* file) : mPlugin(file) {}
 
-nsPluginFile::~nsPluginFile() {}
+nsPluginFile::~nsPluginFile() = default;
 
 nsresult nsPluginFile::LoadPlugin(PRLibrary** outLibrary) {
   PRLibSpec libSpec;

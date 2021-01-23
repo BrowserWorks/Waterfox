@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -163,15 +161,11 @@ UpdateProcess.prototype = {
  *        Inspector toolbox panel
  * @param {Document} document
  *        The document that will contain the computed view.
- * @param {PageStyleFront} pageStyle
- *        Front for the page style actor that will be providing
- *        the style information.
  */
-function CssComputedView(inspector, document, pageStyle) {
+function CssComputedView(inspector, document) {
   this.inspector = inspector;
   this.styleDocument = document;
   this.styleWindow = this.styleDocument.defaultView;
-  this.pageStyle = pageStyle;
 
   this.propertyViews = [];
 
@@ -185,6 +179,7 @@ function CssComputedView(inspector, document, pageStyle) {
   this._onCopy = this._onCopy.bind(this);
   this._onFilterStyles = this._onFilterStyles.bind(this);
   this._onIncludeBrowserStyles = this._onIncludeBrowserStyles.bind(this);
+  this.refreshPanel = this.refreshPanel.bind(this);
 
   const doc = this.styleDocument;
   this.element = doc.getElementById("computed-property-container");
@@ -224,6 +219,22 @@ function CssComputedView(inspector, document, pageStyle) {
     );
   }
 
+  if (!this.inspector.is3PaneModeEnabled) {
+    // When the rules view is added in 3 pane mode, refresh the Computed view whenever
+    // the rules are changed.
+    this.inspector.on(
+      "ruleview-added",
+      () => {
+        this.ruleView.on("ruleview-changed", this.refreshPanel);
+      },
+      { once: true }
+    );
+  }
+
+  if (this.ruleView) {
+    this.ruleView.on("ruleview-changed", this.refreshPanel);
+  }
+
   this.searchClearButton.hidden = true;
 
   // No results text.
@@ -237,6 +248,8 @@ function CssComputedView(inspector, document, pageStyle) {
 
   // The element that we're inspecting, and the document that it comes from.
   this._viewedElement = null;
+  // The PageStyle front related to the currently selected element
+  this.viewedElementPageStyle = null;
 
   this.createStyleViews();
 
@@ -278,7 +291,7 @@ CssComputedView.prototype = {
 
   get contextMenu() {
     if (!this._contextMenu) {
-      this._contextMenu = new StyleInspectorMenu(this, { isRuleView: false });
+      this._contextMenu = new StyleInspectorMenu(this);
     }
 
     return this._contextMenu;
@@ -294,15 +307,18 @@ CssComputedView.prototype = {
     return this._highlighters;
   },
 
-  setPageStyle: function(pageStyle) {
-    this.pageStyle = pageStyle;
-  },
-
   get includeBrowserStyles() {
     return this.includeBrowserStylesCheckbox.checked;
   },
 
-  _handlePrefChange: function(event, data) {
+  get ruleView() {
+    return (
+      this.inspector.hasPanel("ruleview") &&
+      this.inspector.getPanel("ruleview").view
+    );
+  },
+
+  _handlePrefChange: function() {
     if (this._computed) {
       this.refreshPanel();
     }
@@ -316,8 +332,15 @@ CssComputedView.prototype = {
    *        The highlighted node to get styles for.
    * @returns a promise that will be resolved when highlighting is complete.
    */
-  selectElement: function(element) {
+  selectElement: async function(element) {
     if (!element) {
+      if (this.viewedElementPageStyle) {
+        this.viewedElementPageStyle.off(
+          "stylesheet-updated",
+          this.refreshPanel
+        );
+        this.viewedElementPageStyle = null;
+      }
       this._viewedElement = null;
       this.noResults.hidden = false;
 
@@ -335,7 +358,14 @@ CssComputedView.prototype = {
       return promise.resolve(undefined);
     }
 
+    if (this.viewedElementPageStyle) {
+      this.viewedElementPageStyle.off("stylesheet-updated", this.refreshPanel);
+    }
+    this.viewedElementPageStyle = element.inspectorFront.pageStyle;
+    this.viewedElementPageStyle.on("stylesheet-updated", this.refreshPanel);
+
     this._viewedElement = element;
+
     this.refreshSourceFilter();
 
     return this.refreshPanel();
@@ -353,6 +383,7 @@ CssComputedView.prototype = {
    * - value {Object} Depends on the type of the node
    * returns null if the node isn't anything we care about
    */
+  // eslint-disable-next-line complexity
   getNodeInfo: function(node) {
     if (!node) {
       return null;
@@ -513,11 +544,21 @@ CssComputedView.prototype = {
     return this._createViewsPromise;
   },
 
+  isPanelVisible: function() {
+    return (
+      this.inspector.toolbox &&
+      this.inspector.sidebar &&
+      this.inspector.toolbox.currentToolId === "inspector" &&
+      this.inspector.sidebar.getCurrentTabID() == "computedview"
+    );
+  },
+
   /**
-   * Refresh the panel content.
+   * Refresh the panel content. This could be called by a "ruleview-changed" event, but
+   * we avoid the extra processing unless the panel is visible.
    */
   refreshPanel: function() {
-    if (!this._viewedElement) {
+    if (!this._viewedElement || !this.isPanelVisible()) {
       return promise.resolve();
     }
 
@@ -528,7 +569,7 @@ CssComputedView.prototype = {
     return promise
       .all([
         this._createPropertyViews(),
-        this.pageStyle.getComputed(this._viewedElement, {
+        this.viewedElementPageStyle.getComputed(this._viewedElement, {
           filter: this._sourceFilter,
           onlyMatched: !this.includeBrowserStyles,
           markMatched: true,
@@ -800,6 +841,10 @@ CssComputedView.prototype = {
    */
   destroy: function() {
     this._viewedElement = null;
+    if (this.viewedElementPageStyle) {
+      this.viewedElementPageStyle.off("stylesheet-updated", this.refreshPanel);
+      this.viewedElementPageStyle = null;
+    }
     this._outputParser = null;
 
     this._prefObserver.off("devtools.defaultColorUnit", this._handlePrefChange);
@@ -836,6 +881,10 @@ CssComputedView.prototype = {
       "input",
       this._onIncludeBrowserStyles
     );
+
+    if (this.ruleView) {
+      this.ruleView.off("ruleview-changed", this.refreshPanel);
+    }
 
     // Nodes used in templating
     this.element = null;
@@ -1149,7 +1198,7 @@ PropertyView.prototype = {
     }
 
     if (this.matchedExpanded && hasMatchedSelectors) {
-      return this.tree.pageStyle
+      return this.tree.viewedElementPageStyle
         .getMatchedSelectors(this.tree._viewedElement, this.name)
         .then(matched => {
           if (!this.matchedExpanded) {
@@ -1470,13 +1519,12 @@ SelectorView.prototype = {
     // editor else we display it in the view source window.
     const parentStyleSheet = rule.parentStyleSheet;
     if (!parentStyleSheet || parentStyleSheet.isSystem) {
-      const toolbox = gDevTools.getToolbox(inspector.target);
-      toolbox.viewSource(rule.href, rule.line);
+      inspector.toolbox.viewSource(rule.href, rule.line);
       return;
     }
 
     const { href, line, column } = this.currentLocation;
-    const target = inspector.target;
+    const target = inspector.currentTarget;
     if (ToolDefinitions.styleEditor.isTargetSupported(target)) {
       gDevTools.showToolbox(target, "styleeditor").then(function(toolbox) {
         toolbox.getCurrentPanel().selectStyleSheet(href, line, column);
@@ -1489,7 +1537,7 @@ SelectorView.prototype = {
    */
   destroy: function() {
     const rule = this.selectorInfo.rule;
-    if (rule && rule.parentStyleSheet && rule.type != ELEMENT_STYLE) {
+    if (rule?.parentStyleSheet && rule.type != ELEMENT_STYLE) {
       const url = rule.parentStyleSheet.href || rule.parentStyleSheet.nodeHref;
       this.sourceMapURLService.unsubscribe(
         url,
@@ -1505,11 +1553,7 @@ function ComputedViewTool(inspector, window) {
   this.inspector = inspector;
   this.document = window.document;
 
-  this.computedView = new CssComputedView(
-    this.inspector,
-    this.document,
-    this.inspector.pageStyle
-  );
+  this.computedView = new CssComputedView(this.inspector, this.document);
 
   this.onDetachedFront = this.onDetachedFront.bind(this);
   this.onSelected = this.onSelected.bind(this);
@@ -1520,7 +1564,6 @@ function ComputedViewTool(inspector, window) {
   this.inspector.selection.on("new-node-front", this.onSelected);
   this.inspector.selection.on("pseudoclass", this.refresh);
   this.inspector.sidebar.on("computedview-selected", this.onPanelSelected);
-  this.inspector.pageStyle.on("stylesheet-updated", this.refresh);
   this.inspector.styleChangeTracker.on("style-changed", this.refresh);
 
   this.computedView.selectElement(null);
@@ -1529,18 +1572,18 @@ function ComputedViewTool(inspector, window) {
 }
 
 ComputedViewTool.prototype = {
-  isSidebarActive: function() {
+  isPanelVisible: function() {
     if (!this.computedView) {
       return false;
     }
-    return this.inspector.sidebar.getCurrentTabID() == "computedview";
+    return this.computedView.isPanelVisible();
   },
 
   onDetachedFront: function() {
     this.onSelected(false);
   },
 
-  onSelected: function(selectElement = true) {
+  onSelected: async function(selectElement = true) {
     // Ignore the event if the view has been destroyed, or if it's inactive.
     // But only if the current selection isn't null. If it's been set to null,
     // let the update go through as this is needed to empty the view on
@@ -1550,12 +1593,10 @@ ComputedViewTool.prototype = {
     }
 
     const isInactive =
-      !this.isSidebarActive() && this.inspector.selection.nodeFront;
+      !this.isPanelVisible() && this.inspector.selection.nodeFront;
     if (isInactive) {
       return;
     }
-
-    this.computedView.setPageStyle(this.inspector.pageStyle);
 
     if (
       !this.inspector.selection.isConnected() ||
@@ -1567,16 +1608,13 @@ ComputedViewTool.prototype = {
 
     if (selectElement) {
       const done = this.inspector.updating("computed-view");
-      this.computedView
-        .selectElement(this.inspector.selection.nodeFront)
-        .then(() => {
-          done();
-        });
+      await this.computedView.selectElement(this.inspector.selection.nodeFront);
+      done();
     }
   },
 
   refresh: function() {
-    if (this.isSidebarActive()) {
+    if (this.isPanelVisible()) {
       this.computedView.refreshPanel();
     }
   },
@@ -1598,9 +1636,6 @@ ComputedViewTool.prototype = {
     this.inspector.selection.off("new-node-front", this.onSelected);
     this.inspector.selection.off("detached-front", this.onDetachedFront);
     this.inspector.sidebar.off("computedview-selected", this.onPanelSelected);
-    if (this.inspector.pageStyle) {
-      this.inspector.pageStyle.off("stylesheet-updated", this.refresh);
-    }
 
     this.computedView.destroy();
 

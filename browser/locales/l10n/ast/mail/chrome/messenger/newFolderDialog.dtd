@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newFolderDialog.title "Nueva carpeta">
+<!ENTITY name.label "Nome:">
+<!ENTITY name.accesskey "n">
+<!ENTITY description.label "Crear como subcarpeta de:">
+<!ENTITY description.accesskey "C">
+<!ENTITY folderRestriction1.label "Esti sirvidor restrinxe les carpetes a dos tribes especiales.">
+<!ENTITY folderRestriction2.label "Permitir que la to nueva carpeta contenga:">
+<!ENTITY foldersOnly.label "Namái carpetes">
+<!ENTITY messagesOnly.label "Namái mensaxes">
+<!ENTITY accept.label "Crear carpeta">
+<!ENTITY accept.accesskey "a">

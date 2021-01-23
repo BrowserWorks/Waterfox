@@ -9,7 +9,6 @@
 
 #include "mozilla/dom/BindingUtils.h"
 #include "nsContentUtils.h"
-#include "nsIXPConnect.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -23,7 +22,7 @@ CustomEvent::CustomEvent(mozilla::dom::EventTarget* aOwner,
 
 CustomEvent::~CustomEvent() { mozilla::DropJSObjects(this); }
 
-NS_IMPL_CYCLE_COLLECTION_CLASS(CustomEvent)
+NS_IMPL_CYCLE_COLLECTION_MULTI_ZONE_JSHOLDER_CLASS(CustomEvent)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(CustomEvent, Event)
   tmp->mDetail.setUndefined();
   mozilla::DropJSObjects(this);
@@ -44,7 +43,7 @@ NS_INTERFACE_MAP_END_INHERITING(Event)
 
 already_AddRefed<CustomEvent> CustomEvent::Constructor(
     const GlobalObject& aGlobal, const nsAString& aType,
-    const CustomEventInit& aParam, ErrorResult& aRv) {
+    const CustomEventInit& aParam) {
   nsCOMPtr<mozilla::dom::EventTarget> t =
       do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<CustomEvent> e = new CustomEvent(t, nullptr, nullptr);

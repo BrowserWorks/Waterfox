@@ -10,7 +10,9 @@
 add_task(async function() {
   const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
-  const { tab, monitor } = await initNetMonitor(SIMPLE_SJS);
+  const { tab, monitor } = await initNetMonitor(SIMPLE_SJS, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -32,12 +34,12 @@ add_task(async function() {
     "There shouldn't be any selected item in the requests menu."
   );
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     1,
     "The requests menu should not be empty after the first request."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The network details panel should still be hidden after first request."
   );
@@ -57,7 +59,7 @@ add_task(async function() {
     "The first item should be selected in the requests menu."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     true,
     "The network details panel should not be hidden after toggle button was pressed."
   );
@@ -83,11 +85,9 @@ add_task(async function() {
 
   async function testHeadersTab() {
     const tabEl = document.querySelectorAll(
-      ".network-details-panel .tabs-menu a"
+      ".network-details-bar .tabs-menu a"
     )[0];
-    const tabpanel = document.querySelector(
-      ".network-details-panel .tab-panel"
-    );
+    const tabpanel = document.querySelector("#headers-panel");
 
     is(
       tabEl.getAttribute("aria-selected"),
@@ -96,21 +96,16 @@ add_task(async function() {
     );
     // Request URL
     is(
-      tabpanel.querySelectorAll(".tabpanel-summary-value")[0].innerText,
+      tabpanel.querySelector(".url-preview .url").innerText,
       SIMPLE_SJS,
       "The url summary value is incorrect."
     );
+
     // Request method
     is(
-      tabpanel.querySelectorAll(".tabpanel-summary-value")[1].innerText,
+      tabpanel.querySelectorAll(".treeLabel")[0].innerText,
       "GET",
       "The method summary value is incorrect."
-    );
-    // Remote address
-    is(
-      tabpanel.querySelectorAll(".tabpanel-summary-value")[2].innerText,
-      "127.0.0.1:8888",
-      "The remote address summary value is incorrect."
     );
     // Status code
     is(
@@ -119,13 +114,13 @@ add_task(async function() {
       "The status summary code is incorrect."
     );
     is(
-      tabpanel.querySelector(".status-text").getAttribute("value"),
+      tabpanel.querySelector(".status").childNodes[1].textContent,
       "Och Aye",
       "The status summary value is incorrect."
     );
     // Version
     is(
-      tabpanel.querySelectorAll(".tabpanel-summary-value")[4].innerText,
+      tabpanel.querySelectorAll(".tabpanel-summary-value")[1].innerText,
       "HTTP/1.1",
       "The HTTP version is incorrect."
     );
@@ -133,38 +128,38 @@ add_task(async function() {
     await waitForRequestData(store, ["requestHeaders", "responseHeaders"]);
 
     is(
-      tabpanel.querySelectorAll(".treeTable tbody .tree-section").length,
+      tabpanel.querySelectorAll(".accordion-item").length,
       2,
       "There should be 2 header scopes displayed in this tabpanel."
     );
 
     is(
-      tabpanel.querySelectorAll(":not(.tree-section) > .treeLabelCell").length,
+      tabpanel.querySelectorAll(".accordion .treeLabelCell").length,
       23,
       "There should be 23 header values displayed in this tabpanel."
     );
 
-    const headersTable = tabpanel.querySelector(".treeTable tbody");
+    const headersTable = tabpanel.querySelector(".accordion");
     const responseScope = headersTable.querySelectorAll(
-      "tr[id^='/Response headers']"
+      "tr[id^='/Response Headers']"
     );
     const requestScope = headersTable.querySelectorAll(
-      "tr[id^='/Request headers']"
+      "tr[id^='/Request Headers']"
+    );
+
+    const headerLabels = headersTable.querySelectorAll(
+      ".accordion-item .accordion-header-label"
     );
 
     ok(
-      headersTable
-        .querySelectorAll(".tree-section .treeLabel")[0]
-        .innerHTML.match(
-          new RegExp(L10N.getStr("responseHeaders") + " \\([0-9]+ .+\\)")
-        ),
+      headerLabels[0].innerHTML.match(
+        new RegExp(L10N.getStr("responseHeaders") + " \\([0-9]+ .+\\)")
+      ),
       "The response headers scope doesn't have the correct title."
     );
 
     ok(
-      headersTable
-        .querySelectorAll(".tree-section .treeLabel")[1]
-        .innerHTML.includes(L10N.getStr("requestHeaders") + " ("),
+      headerLabels[1].innerHTML.includes(L10N.getStr("requestHeaders") + " ("),
       "The request headers scope doesn't have the correct title."
     );
 
@@ -202,13 +197,13 @@ add_task(async function() {
     ];
     responseHeaders.forEach(header => {
       is(
-        responseScope[header.index].querySelector(".treeLabel").innerHTML,
+        responseScope[header.index - 1].querySelector(".treeLabel").innerHTML,
         header.name,
         `The ${header.pos} response header name was incorrect.`
       );
       is(
-        responseScope[header.index].querySelector(".objectBox").innerHTML,
-        header.value,
+        responseScope[header.index - 1].querySelector(".objectBox").innerHTML,
+        `${header.value}`,
         `The ${header.pos} response header value was incorrect.`
       );
     });
@@ -241,13 +236,13 @@ add_task(async function() {
     ];
     requestHeaders.forEach(header => {
       is(
-        requestScope[header.index].querySelector(".treeLabel").innerHTML,
+        requestScope[header.index - 1].querySelector(".treeLabel").innerHTML,
         header.name,
         `The ${header.pos} request header name was incorrect.`
       );
       is(
-        requestScope[header.index].querySelector(".objectBox").innerHTML,
-        header.value,
+        requestScope[header.index - 1].querySelector(".objectBox").innerHTML,
+        `${header.value}`,
         `The ${header.pos} request header value was incorrect.`
       );
     });
@@ -256,27 +251,36 @@ add_task(async function() {
   async function testCookiesTab() {
     const tabpanel = await selectTab(PANELS.COOKIES, 1);
 
-    const cookieTable = tabpanel.querySelector(".treeTable tbody");
+    const cookieAccordion = tabpanel.querySelector(".accordion");
+
     is(
-      cookieTable.querySelectorAll(".tree-section").length,
+      cookieAccordion.querySelectorAll(".accordion-item").length,
       2,
       "There should be 2 cookie scopes displayed in this tabpanel."
     );
     // 2 Cookies in response - 1 httpOnly and 1 value for each cookie - total 6
+
+    const resCookiesTable = cookieAccordion.querySelector(
+      "li[id='responseCookies'] .accordion-content .treeTable"
+    );
     is(
-      cookieTable.querySelectorAll("tr[id^='/Response cookies/'").length,
+      resCookiesTable.querySelectorAll("tr.treeRow").length,
       6,
       "There should be 6 rows displayed in response cookies table"
     );
+
+    const reqCookiesTable = cookieAccordion.querySelector(
+      "li[id='requestCookies'] .accordion-content .treeTable"
+    );
     is(
-      cookieTable.querySelectorAll("tr[id^='/Request cookies/'").length,
+      reqCookiesTable.querySelectorAll("tr.treeRow").length,
       2,
       "There should be 2 cookie values displayed in request cookies table."
     );
   }
 
   async function testParamsTab() {
-    const tabpanel = await selectTab(PANELS.PARAMS, 2);
+    const tabpanel = await selectTab(PANELS.REQUEST, 2);
 
     is(
       tabpanel.querySelectorAll(".panel-container").length,
@@ -292,16 +296,16 @@ add_task(async function() {
 
   async function testResponseTab() {
     const tabpanel = await selectTab(PANELS.RESPONSE, 3);
-    await waitForDOM(document, ".treeTable tbody");
+    await waitForDOM(document, ".accordion .source-editor-mount");
 
-    const responseTable = tabpanel.querySelector(".treeTable tbody");
+    const responseAccordion = tabpanel.querySelector(".accordion");
     is(
-      responseTable.querySelectorAll(".tree-section").length,
+      responseAccordion.querySelectorAll(".accordion-item").length,
       1,
       "There should be 1 response scope displayed in this tabpanel."
     );
     is(
-      responseTable.querySelectorAll(".editor-row-container").length,
+      responseAccordion.querySelectorAll(".source-editor-mount").length,
       1,
       "The response payload tab should be open initially."
     );
@@ -345,7 +349,7 @@ add_task(async function() {
 
   async function selectTab(tabName, pos) {
     const tabEl = document.querySelectorAll(
-      ".network-details-panel .tabs-menu a"
+      ".network-details-bar .tabs-menu a"
     )[pos];
 
     const onPanelOpen = waitForDOM(document, `#${tabName}-panel`);
@@ -358,7 +362,7 @@ add_task(async function() {
       `The ${tabName} tab in the network details pane should be selected.`
     );
 
-    return document.querySelector(".network-details-panel .tab-panel");
+    return document.querySelector(".network-details-bar .tab-panel");
   }
 
   // This test will timeout on failure
@@ -366,11 +370,11 @@ add_task(async function() {
     EventUtils.sendKey("ESCAPE", window);
 
     await waitUntil(() => {
-      return document.querySelector(".network-details-panel") == null;
+      return document.querySelector(".network-details-bar") == null;
     });
 
     is(
-      document.querySelectorAll(".network-details-panel").length,
+      document.querySelectorAll(".network-details-bar").length,
       0,
       "Network details panel should close on ESC key"
     );

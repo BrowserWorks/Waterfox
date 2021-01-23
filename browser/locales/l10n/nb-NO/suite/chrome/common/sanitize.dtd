@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Slett private data">
+<!ENTITY sanitizeItems.label             "Slett disse elementene nå:">
+
+<!ENTITY itemHistory.label               "Nettleserhistorikk">
+<!ENTITY itemHistory.accesskey           "N">
+<!ENTITY itemUrlBar.label                "Adresselinjehistorikk">
+<!ENTITY itemUrlBar.accesskey            "r">
+<!ENTITY itemDownloads.label             "Nedlastingshistorikk">
+<!ENTITY itemDownloads.accesskey         "d">
+<!ENTITY itemFormSearchHistory.label     "Søkehistorikk og lagrede skjemaer">
+<!ENTITY itemFormSearchHistory.accesskey "S">
+<!ENTITY itemCache.label                 "Hurtiglager">
+<!ENTITY itemCache.accesskey             "H">
+<!ENTITY itemCookies.label               "Infokapsler">
+<!ENTITY itemCookies.accesskey           "I">
+<!ENTITY itemOfflineApps.label           "Frakoblet nettsidedata">
+<!ENTITY itemOfflineApps.accesskey       "F">
+<!ENTITY itemPasswords.label             "Lagrede passord">
+<!ENTITY itemPasswords.accesskey         "L">
+<!ENTITY itemSessions.label              "Autentiserte økter">
+<!ENTITY itemSessions.accesskey          "A">
+
+<!ENTITY sanitizeButton.label            "Slett private data nå">

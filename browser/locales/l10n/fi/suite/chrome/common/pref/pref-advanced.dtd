@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Lisäasetukset">
+
+<!ENTITY systemPref.caption               "Järjestelmän asetukset">
+<!ENTITY systemPrefCheck.label            "Käytä järjestelmän omia asetuksia">
+<!ENTITY systemPrefCheck.accesskey        "K">
+<!ENTITY systemPref.desc                  "Jos valitset tämän, &brandShortName; hakee asetuksensa järjestelmältä. Näitä järjestelmäasetuksia noudatetaan mieluummin kuin &brandShortName;n omia asetuksia.">
+
+<!ENTITY prefCheckDefault.caption         "Järjestelmäintegraatio">
+<!ENTITY prefCheckDefaultClient.label     "Tarkista oletussovellusten asetukset käynnistyksen yhteydessä">
+<!ENTITY prefCheckDefaultClient.accesskey "T">
+
+<!ENTITY crashReports.caption             "Kaatumisilmoitin">
+<!ENTITY submitCrashes.label              "Lähetä kaatumisilmoitukset">
+<!ENTITY submitCrashes.accesskey          "L">
+
+<!ENTITY devTools.caption                 "Kehittäjien työkalut">
+<!ENTITY allowDebugger.label              "Salli virheenjäljittimen yhdistää &brandShortName;hin">
+<!ENTITY allowDebugger.accesskey          "S">
+<!ENTITY allowRemoteConnections.label     "Salli yhteydet muihin tietokoneisiin">
+<!ENTITY allowRemoteConnections.accesskey "a">
+<!ENTITY connectionPrompt.label           "Kysy sisäänpäin suuntautuvista yhteyksistä">
+<!ENTITY connectionPrompt.accesskey       "K">
+<!ENTITY remoteDebuggerPort.label         "Porttinumero yhteyttä varten:">
+<!ENTITY remoteDebuggerPort.accesskey     "P">

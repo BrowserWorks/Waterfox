@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ჰორიზონტული ხაზის პარამეტრები">
+
+<!ENTITY dimensionsBox.label "ზომები">
+<!ENTITY heightEditField.label "სიმაღლე:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "სიგანე:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "პიქსელი">
+<!ENTITY alignmentBox.label "განთავსება">
+<!ENTITY leftRadio.label "მარცხნივ">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "ცენტრში">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "მარჯვნივ">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3-D ჩრდილი">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "ძირითადი">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "ამ პარამეტრების გამოყენება ახალი ჰორიზონტული ხაზების ჩამატებისას">

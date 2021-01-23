@@ -37,12 +37,19 @@ class KeyPath {
 
   explicit KeyPath(int aDummy) : mType(NONEXISTENT) { MOZ_COUNT_CTOR(KeyPath); }
 
+  KeyPath(KeyPath&& aOther) {
+    MOZ_COUNT_CTOR(KeyPath);
+    *this = std::move(aOther);
+  }
+  KeyPath& operator=(KeyPath&&) = default;
+
   KeyPath(const KeyPath& aOther) {
     MOZ_COUNT_CTOR(KeyPath);
     *this = aOther;
   }
+  KeyPath& operator=(const KeyPath&) = default;
 
-  ~KeyPath() { MOZ_COUNT_DTOR(KeyPath); }
+  MOZ_COUNTED_DTOR(KeyPath)
 
   static nsresult Parse(const nsAString& aString, KeyPath* aKeyPath);
 
@@ -87,7 +94,7 @@ class KeyPath {
 
   KeyPathType mType;
 
-  nsTArray<nsString> mStrings;
+  CopyableTArray<nsString> mStrings;
 };
 
 }  // namespace indexedDB

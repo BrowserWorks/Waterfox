@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Майстер імпорту">
+
+<!ENTITY importFromWin.label            "Імпорт налаштувань, параметрів облікового запису, адресної книги, фільтрів та інших даних із:">
+<!ENTITY importFromNonWin.label         "Імпорт налаштувань, параметрів облікового запису, адресної книги, фільтрів та інших даних із:">
+<!ENTITY importSourceNotFound.label     "Не знайдено програми для імпорту даних.">
+
+<!ENTITY importFromNothing.label        "Не імпортувати нічого">
+<!ENTITY importFromNothing.accesskey    "н">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 та старше">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Імпорт налаштувань і даних з">
+<!ENTITY importItems.title              "Об’єкти для імпорту">
+<!ENTITY importItems.label              "Виберіть об’єкти для імпорту:">
+
+<!ENTITY migrating.title                "Імпортую…">
+<!ENTITY migrating.label                "Зараз триває імпорт наступних об'єктів…">
+
+<!ENTITY selectProfile.title            "Вибір профілю">
+<!ENTITY selectProfile.label            "Імпорт може бути здійснений з наступних профілів:">
+
+<!ENTITY done.title                     "Імпорт завершений">
+<!ENTITY done.label                     "Наступні об’єкти були успішно імпортовані:">

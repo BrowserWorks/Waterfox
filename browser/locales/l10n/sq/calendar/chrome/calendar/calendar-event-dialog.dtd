@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Përpunoni Objektin" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Mbajeni zgjatjen kur ndërrohet data e përfundimit">
+<!ENTITY event.dialog.keepDurationButton.accesskey "M">
+
+<!ENTITY newevent.from.label                "Nga" >
+<!ENTITY newevent.to.label                  "Për" >
+
+<!ENTITY newevent.status.label                    "Gjendje" >
+<!ENTITY newevent.status.accesskey                "G" >
+<!ENTITY newevent.eventStatus.none.label          "E pacaktuar" >
+<!ENTITY newevent.eventStatus.none.accesskey      "p" >
+<!ENTITY newevent.todoStatus.none.label           "E pacaktuar" >
+<!ENTITY newevent.eventStatus.cancelled.label     "E anuluar" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "a" >
+<!ENTITY newevent.todoStatus.cancelled.label      "E anuluar" >
+<!ENTITY newevent.status.tentative.label          "Përpjekje" >
+<!ENTITY newevent.status.tentative.accesskey      "P" >
+<!ENTITY newevent.status.confirmed.label          "E konfirmuar" >
+<!ENTITY newevent.status.confirmed.accesskey      "r" >
+<!ENTITY newevent.status.needsaction.label        "Lyp Veprim" >
+<!ENTITY newevent.status.inprogress.label         "Në Proces" >
+<!ENTITY newevent.status.completed.label          "Plotësuar më" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; e plotësuar">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Njoftoni pjesëmarrësit">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "Ndaji ftesat sipas pjesëmarrësve">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "N">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Kjo mundësi bën të dërgohet një email ftesë për pjesëmarrës. Çdo ftesë përmban vetëm pjesëmarrësin të cilit i dërgohet, kështu që identitetet e pjesëmarrësve të tjerë nuk zbulohen.">
+<!ENTITY event.attendees.disallowcounter.label       "Çaktivizoje matjen e kohës">
+<!ENTITY event.attendees.disallowcounter.accesskey   "Ç">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Tregon se s&apos;të pranoni kundërpropozime">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "I ri">
+<!ENTITY  event.menu.item.new.accesskey                   "r">
+<!ENTITY  event.menu.item.new.event.label                 "Veprimtari">
+<!ENTITY  event.menu.item.new.event.accesskey             "V">
+<!ENTITY  event.menu.item.new.task.label                  "Punë">
+<!ENTITY  event.menu.item.new.task.accesskey              "P">
+<!ENTITY  event.menu.item.new.message.label               "Mesazh">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "Kontakt Libri Adresash">
+<!ENTITY  event.menu.item.new.contact.accesskey           "K">
+<!ENTITY  event.menu.item.close.label                     "Mbylleni">
+<!ENTITY  event.menu.item.close.accesskey                 "M">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Ruaje">
+<!ENTITY  event.menu.item.save.accesskey                  "R">
+<!ENTITY  event.menu.item.save.tab.accesskey              "s">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Ruaje dhe Mbylle">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "l">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "l">
+
+<!ENTITY  event.menu.item.delete.label                    "Fshini…">
+<!ENTITY  event.menu.item.delete.accesskey                "F">
+<!ENTITY  event.menu.item.page.setup.label                "Rregullim Faqeje">
+<!ENTITY  event.menu.item.page.setup.accesskey            "R">
+<!ENTITY  event.menu.item.print.label                     "Shtype">
+<!ENTITY  event.menu.item.print.accesskey                 "S">
+
+<!ENTITY  event.menu.edit.label                           "Përpunoni">
+<!ENTITY  event.menu.edit.accesskey                       "P">
+<!ENTITY  event.menu.edit.undo.label                      "Zhbëje">
+<!ENTITY  event.menu.edit.undo.accesskey                  "Z">
+<!ENTITY  event.menu.edit.redo.label                      "Ribëje">
+<!ENTITY  event.menu.edit.redo.accesskey                  "R">
+<!ENTITY  event.menu.edit.cut.label                       "Prije">
+<!ENTITY  event.menu.edit.cut.accesskey                   "P">
+<!ENTITY  event.menu.edit.copy.label                      "Kopjoje">
+<!ENTITY  event.menu.edit.copy.accesskey                  "K">
+<!ENTITY  event.menu.edit.paste.label                     "Ngjite">
+<!ENTITY  event.menu.edit.paste.accesskey                 "N">
+<!ENTITY  event.menu.edit.select.all.label                "Përzgjidhe Krejt">
+<!ENTITY  event.menu.edit.select.all.accesskey            "t">
+
+<!ENTITY  event.menu.view.label                           "Shfaqje">
+<!ENTITY  event.menu.view.accesskey                       "S">
+<!ENTITY  event.menu.view.toolbars.label                  "Panele">
+<!ENTITY  event.menu.view.toolbars.accesskey              "P">
+<!ENTITY  event.menu.view.toolbars.event.label            "Panel Veprimtarish">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "N">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Përshtateni…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "a">
+<!ENTITY  event.menu.view.showlink.label                  "Shfaq Lidhje të Afërta">
+<!ENTITY  event.menu.view.showlink.accesskey              "S">
+
+<!ENTITY  event.menu.options.label                            "Mundësi">
+<!ENTITY  event.menu.options.accesskey                        "M">
+<!ENTITY  event.menu.options.attendees.label                  "Ftoni Pjesëmarrës…">
+<!ENTITY  event.menu.options.attendees.accesskey              "F">
+<!ENTITY  event.menu.options.timezone2.label                  "Shfaq Zona Kohore">
+<!ENTITY  event.menu.options.timezone2.accesskey              "Z">
+<!ENTITY  event.menu.options.priority2.label                  "Përparësi">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "E pacaktuar">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "c">
+<!ENTITY  event.menu.options.priority.low.label               "E ulët">
+<!ENTITY  event.menu.options.priority.low.accesskey           "u">
+<!ENTITY  event.menu.options.priority.normal.label            "Normale">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "E lartë">
+<!ENTITY  event.menu.options.priority.high.accesskey          "a">
+<!ENTITY  event.menu.options.privacy.label                    "Privatësi">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "Veprimtari Publike">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "e">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Shfaq Vetëm Kohë dhe Datë">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "h">
+<!ENTITY  event.menu.options.privacy.private.label            "Veprimtari Private">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Kohën Shfaqe si">
+<!ENTITY  event.menu.options.show.time.accesskey              "o">
+<!ENTITY  event.menu.options.show.time.busy.label             "I zënë">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "ë">
+<!ENTITY  event.menu.options.show.time.free.label             "I lirë">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "i">
+
+<!ENTITY event.invite.attendees.label                     "Ftoni Pjesëmarrës…">
+<!ENTITY event.invite.attendees.accesskey                 "F">
+<!ENTITY event.email.attendees.label                      "Hartoni Email për Tërë Pjesëmarrësit…">
+<!ENTITY event.email.attendees.accesskey                  "T">
+<!ENTITY event.email.tentative.attendees.label            "Hartoni Email për Pjesëmarrësit e Pavendosur…">
+<!ENTITY event.email.tentative.attendees.accesskey        "V">
+<!ENTITY event.remove.attendees.label2                    "Hiqi tërë pjesëmarrësit">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Hiqe pjesëmarrësin">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Ruaje">
+<!ENTITY  event.toolbar.saveandclose.label                "Ruaje dhe Mbylle">
+<!ENTITY  event.toolbar.delete.label                      "Fshije">
+<!ENTITY  event.toolbar.attendees.label                   "Ftoni Pjesëmarrës">
+<!ENTITY  event.toolbar.privacy.label                     "Privatësi">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Ruajeni">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Ruajeni dhe Mbylleni">
+<!ENTITY  event.toolbar.delete.tooltip                    "Fshijeni">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Ftoni Pjesëmarrës">
+<!ENTITY  event.toolbar.attachments.tooltip               "Shtoni Bashkëngjitje">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Ndryshojini Privatësinë">
+<!ENTITY  event.toolbar.priority.tooltip                  "Ndryshojini Përparësinë">
+<!ENTITY  event.toolbar.status.tooltip                    "Ndryshojini Gjendjen">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Nryshojini kohën I lirë/I zënë">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Zbatoje propozimin">
+<!ENTITY counter.button.proposal.accesskey                "b">
+<!ENTITY counter.button.proposal.tooltip2                 "Fushat e veprimtarive do të plotësohen duke përdorur vlera nga kundëpropozimi, vetëm ruajtja me ose pa ndryshime shtesë do të shkaktojë njoftimin e pjesëmarrësve">
+<!ENTITY counter.button.original.label                    "Zbato të dhënat origjinale">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Fushat do të plotësohen me vlerat nga veprimtaria origjinale, të kohës përpara se të bëhej kundërpropozimi origjinal">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Titull:" >
+<!ENTITY event.title.textbox.accesskey                    "T">
+<!ENTITY event.location.label                             "Vendndodhje:" >
+<!ENTITY event.location.accesskey                         "V">
+<!ENTITY event.categories.label                           "Kategori:">
+<!ENTITY event.categories.accesskey                       "o">
+<!ENTITY event.categories.textbox.label                   "Shtoni kategori të re" >
+<!ENTITY event.calendar.label                             "Kalendar:" >
+<!ENTITY event.calendar.accesskey                         "l">
+<!ENTITY event.attendees.label                            "Pjesëmarrës:" >
+<!ENTITY event.attendees.accesskey                        "m">
+<!ENTITY event.alldayevent.label                          "Gjatë Krejt ditës" >
+<!ENTITY event.alldayevent.accesskey                      "G">
+<!ENTITY event.from.label                                 "Nisje:" >
+<!ENTITY event.from.accesskey                             "N">
+<!ENTITY task.from.label                                  "Nisje:" >
+<!ENTITY task.from.accesskey                              "i">
+<!ENTITY event.to.label                                   "Përfundim:" >
+<!ENTITY event.to.accesskey                               "P">
+<!ENTITY task.to.label                                    "Datë Afati:" >
+<!ENTITY task.to.accesskey                                "D">
+<!ENTITY task.status.label                                "Gjendje:" >
+<!ENTITY task.status.accesskey                            "e">
+<!ENTITY event.repeat.label                               "Përsëritje:" >
+<!ENTITY event.repeat.accesskey                           "r">
+<!ENTITY event.until.label                                "Deri më:">
+<!ENTITY event.until.accesskey                            "D">
+<!ENTITY event.reminder.label                             "Kujtues:" >
+<!ENTITY event.reminder.accesskey                         "u">
+<!ENTITY event.description.label                          "Përshkrim:" >
+<!ENTITY event.description.accesskey                      "ë">
+<!ENTITY event.attachments.label                          "Bashkëngjitje:" >
+<!ENTITY event.attachments.accesskey                      "B" >
+<!ENTITY event.attachments.menubutton.label               "Bashkëngjitni">
+<!ENTITY event.attachments.menubutton.accesskey           "B">
+<!ENTITY event.attachments.url.label                      "Faqe Web…">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "Hiqe" >
+<!ENTITY event.attachments.popup.remove.accesskey         "H" >
+<!ENTITY event.attachments.popup.open.label               "Hape" >
+<!ENTITY event.attachments.popup.open.accesskey           "a" >
+<!ENTITY event.attachments.popup.removeAll.label          "Hiqi Krejt" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "K" >
+<!ENTITY event.attachments.popup.attachPage.label         "Bashkëngjitini Faqe Web…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "F" >
+<!ENTITY event.url.label                                  "Lidhje të Afërta:" >
+<!ENTITY event.priority2.label                            "Përparësi:">
+
+<!ENTITY event.reminder.none.label                        "Pa kujtues " >
+<!ENTITY event.reminder.0minutes.before.label             "0 minuta para" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minuta para" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minuta para" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minuta para" >
+<!ENTITY event.reminder.1hour.before.label                "1 orë para" >
+<!ENTITY event.reminder.2hours.before.label               "2 orë para" >
+<!ENTITY event.reminder.12hours.before.label              "12 orë para" >
+<!ENTITY event.reminder.1day.before.label                 "1 ditë para" >
+<!ENTITY event.reminder.2days.before.label                "2 ditë para" >
+<!ENTITY event.reminder.1week.before.label                "1 javë para" >
+<!ENTITY event.reminder.custom.label                      "Vetjake…" >
+
+<!ENTITY event.reminder.multiple.label                    "Kujtues të Shumëfishtë…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Kohë sipas:">
+<!ENTITY event.statusbarpanel.privacy.label               "Privatësi:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Përpunoni Ripërsëritje">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Nuk përsëritet">
+<!ENTITY event.repeat.daily.label                       "Përditë">
+<!ENTITY event.repeat.weekly.label                      "Përjavë">
+<!ENTITY event.repeat.every.weekday.label               "Çdo Ditë">
+<!ENTITY event.repeat.bi.weekly.label                   "Përdyjavshëm">
+<!ENTITY event.repeat.monthly.label                     "Përmuajshëm">
+<!ENTITY event.repeat.yearly.label                      "Përvitshëm">
+<!ENTITY event.repeat.custom.label                      "Vetjake…">
+
+<!ENTITY event.recurrence.pattern.label                 "Rregull ripërsëritjeje">
+<!ENTITY event.recurrence.occurs.label                  "Përsërite" >
+<!ENTITY event.recurrence.day.label                     "përditë" >
+<!ENTITY event.recurrence.week.label                    "përjavë" >
+<!ENTITY event.recurrence.month.label                   "përmuajshëm" >
+<!ENTITY event.recurrence.year.label                    "përvitshëm" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Çdo" >
+<!ENTITY repeat.units.days.both                         "Ditë" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Çdo ditë" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Çdo" >
+<!ENTITY repeat.units.weeks.both                        "Javë" >
+<!ENTITY event.recurrence.on.label                      "Më:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Çdo" >
+<!ENTITY repeat.units.months.both                       "Muaj" >
+<!ENTITY event.recurrence.monthly.every.label           "Çdo" >
+<!ENTITY event.recurrence.monthly.first.label           "E parë">
+<!ENTITY event.recurrence.monthly.second.label          "E dytë">
+<!ENTITY event.recurrence.monthly.third.label           "E tretë">
+<!ENTITY event.recurrence.monthly.fourth.label          "E katërt">
+<!ENTITY event.recurrence.monthly.fifth.label           "E pestë">
+<!ENTITY event.recurrence.monthly.last.label            "E fundit">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Të dielën" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Të hënën" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Të martën" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Të mërkurën" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Të enjten" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Të premten" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Të shtunën" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Ditë e muajit">
+<!ENTITY event.recurrence.repeat.recur.label            "Ripërsërite më ditë">
+
+<!ENTITY event.recurrence.every.label                        "Çdo:" >
+<!ENTITY repeat.units.years.both                             "Vit(e)" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Çdo" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Janar" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Shkurt" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Mars" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Prill" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Maj" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Qershor" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Korrik" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Gusht" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Shtator" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Tetor" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Nëntor" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Dhjetor" >
+<!ENTITY event.recurrence.yearly.every.label                 "Çdo">
+<!ENTITY event.recurrence.yearly.first.label                 "E parë">
+<!ENTITY event.recurrence.yearly.second.label                "E dytë">
+<!ENTITY event.recurrence.yearly.third.label                 "E tretë">
+<!ENTITY event.recurrence.yearly.fourth.label                "E katërt">
+<!ENTITY event.recurrence.yearly.fifth.label                 "E pestë">
+<!ENTITY event.recurrence.yearly.last.label                  "E fundit">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Të dielën" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Të hënën" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Të martën" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Të mërkurën" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Të enjten" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Të premten" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Të shtunën" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "ditën" >
+<!ENTITY event.recurrence.of.label                           "e" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "të Janarit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "të Shkurtit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "të Marsit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "të Prillit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "të Majit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "të Qershorit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "të Korrikut" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "të Gushtit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "të Shtatorit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "të Tetorit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "të Nëntorit" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "të Dhjetorit" >
+
+<!ENTITY event.recurrence.range.label                   "Hapësirë ripërsëritjeje">
+<!ENTITY event.recurrence.forever.label                 "Pa datë përfundimi" >
+<!ENTITY event.recurrence.repeat.for.label              "Krijoni" >
+<!ENTITY event.recurrence.appointments.label            "Takim(e)" >
+<!ENTITY event.repeat.until.label                       "Përsërite deri më" >
+<!ENTITY event.recurrence.preview.label                 "Paraparje">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Ftoni Pjesëmarrës">
+<!ENTITY event.organizer.label                  "Organizues">
+<!ENTITY event.freebusy.suggest.slot            "Këshilloni kohë të përshtatshme:">
+<!ENTITY event.freebusy.button.next.slot        "Koha pasuese">
+<!ENTITY event.freebusy.button.previous.slot    "Koha e mëparshme">
+<!ENTITY event.freebusy.zoom                    "Zoom:">
+<!ENTITY event.freebusy.legend.free             "I lirë" >
+<!ENTITY event.freebusy.legend.busy             "I zënë" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Përpjekje" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Jashtë Zyre" >
+<!ENTITY event.freebusy.legend.unknown          "Nuk ka të Dhëna" >
+<!ENTITY event.attendee.role.required           "Pjesëmarrës i Domosdoshëm">
+<!ENTITY event.attendee.role.optional           "Pjesëmarrës Opsional">
+<!ENTITY event.attendee.role.chair              "Kryetar">
+<!ENTITY event.attendee.role.nonparticipant     "Jo Pjesëmarrës">
+<!ENTITY event.attendee.usertype.individual     "Individual">
+<!ENTITY event.attendee.usertype.group          "Grup">
+<!ENTITY event.attendee.usertype.resource       "Burim">
+<!ENTITY event.attendee.usertype.room           "Sallë">
+<!ENTITY event.attendee.usertype.unknown        "I panjohur">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Ju lutemi, Përcaktoni Zonën Kohore">
+<!ENTITY event.timezone.custom.label     "Më Tepër Zona Kohore…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Të përgjithshme">
+<!ENTITY read.only.title.label           "Titull:">
+<!ENTITY read.only.calendar.label        "Kalendar:">
+<!ENTITY read.only.event.start.label     "Datë Fillimi:">
+<!ENTITY read.only.task.start.label      "Datë Fillimi:">
+<!ENTITY read.only.event.end.label       "Datë Mbarimi:">
+<!ENTITY read.only.task.due.label        "Datë Afati:">
+<!ENTITY read.only.repeat.label          "Përsëritje:">
+<!ENTITY read.only.location.label        "Vendndodhje:">
+<!ENTITY read.only.category.label        "Kategori:">
+<!ENTITY read.only.organizer.label       "Organizues:">
+<!ENTITY read.only.reminder.label        "Kujtues:">
+<!ENTITY read.only.attachments.label     "Bashkëngjitje:">
+<!ENTITY read.only.attendees.label       "Pjesëmarrës">
+<!ENTITY read.only.description.label     "Përshkrim">
+<!ENTITY read.only.link.label            "Lidhje e Afërt">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Ruaje dhe Mbylle">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Ruajini ndryshimet dhe mbylleni dritaren pa ndryshuar gjendjen e pjesëmarrjes dhe pa dërguar një përgjigje">
+<!ENTITY summary.dialog.accept.label            "Pranoje">
+<!ENTITY summary.dialog.accept.tooltiptext      "Pranoni ftesën">
+<!ENTITY summary.dialog.tentative.label         "Përpjekje">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Pranoni përkohësisht ftesën">
+<!ENTITY summary.dialog.decline.label           "Hidhe poshtë">
+<!ENTITY summary.dialog.decline.tooltiptext     "Hidhni poshtë ftesën">
+<!ENTITY summary.dialog.dontsend.label          "Mos dërgo përgjigje">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Ndryshoni gjendjen e pjesëmarrjes tuaj pa dërguar përgjigje për organizuesin dhe mbylleni dritaren">
+<!ENTITY summary.dialog.send.label              "Dërgoni një përgjigje tani">
+<!ENTITY summary.dialog.send.tooltiptext        "Dërgoni një përgjigje organizuesit dhe mbylleni dritaren">

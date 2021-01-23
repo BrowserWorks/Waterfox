@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Sự kiện Mới…">
+<!ENTITY event.new.event.accesskey              "S">
+
+<!ENTITY event.new.task                         "Nhiệm vụ mới…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Nhập…">
+<!ENTITY calendar.import.accesskey              "N">
+
+<!ENTITY calendar.export.label                  "Xuất…">
+<!ENTITY calendar.export.accesskey              "X">
+
+<!ENTITY calendar.publish.label                 "Xuất bản…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Xóa Lịch Đã Chọn…">
+<!ENTITY calendar.deletecalendar.accesskey      "X">
+<!ENTITY calendar.unsubscribecalendar.label     "Hủy đăng ký lịch đã chọn…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Xóa lịch đã chọn…">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "Tùy biến…">
+<!ENTITY calendar.menu.customize.accesskey      "T">
+
+<!ENTITY showUnifinderCmd.label                 "Tìm Sự Kiện">
+<!ENTITY showUnifinderCmd.accesskey             "m">
+<!ENTITY showUnifinderCmd.tooltip               "Chuyển đến khung tìm sự kiện">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Hiện các Tác vụ trong Lịch">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "v">
+
+<!ENTITY goTodayCmd.label                       "Hôm nay">
+<!ENTITY goTodayCmd.accesskey                   "H">
+
+<!ENTITY showCurrentView.label                  "Hiển thị Hiện tại">
+<!ENTITY showCurrentView.accesskey              "H">
+
+<!ENTITY calendar.properties.label              "Thuộc tính Lịch…">
+<!ENTITY calendar.properties.accesskey          "c">

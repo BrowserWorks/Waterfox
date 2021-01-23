@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!-- extracted from am-copies.xul -->
+<!ENTITY sendingPrefix.label "Wanneer boodskappe gestuur word, doen die volgende outomaties: ">
+<!ENTITY fccMailFolder.label "Bêre 'n afskrif in:">
+<!ENTITY fccMailFolder.accesskey "B">
+
+
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Stuur aan hierdie e-posadresse in CC:">
+<!ENTITY ccAddress.accesskey "C">
+
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Stuur aan hierdie e-posadresse in BCC:">
+<!ENTITY bccAddress.accesskey "B">
+
+<!ENTITY saveMessageDlg.label "Wys bevestigingdialoog wanneer boodskappe gestoor word">
+<!ENTITY saveMessageDlg.accesskey "W">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+
+<!ENTITY sentInOtherFolder.label "Ander:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+
+
+
+
+
+
+<!ENTITY archiveInOtherFolder.label "Ander:">
+<!ENTITY archiveInOtherFolder.accesskey "A">
+<!ENTITY specialFolders.label "Onvoltooid en sjablone">
+
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+
+<!ENTITY draftInOtherFolder.label "Ander:">
+<!ENTITY draftInOtherFolder.accesskey "n">
+<!ENTITY keepTemplates.label "Hou boodskapsjablone in:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+
+<!ENTITY templateInOtherFolder.label "Ander:">
+<!ENTITY templateInOtherFolder.accesskey "A">

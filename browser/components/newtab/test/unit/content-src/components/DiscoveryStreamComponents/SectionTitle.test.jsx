@@ -1,12 +1,12 @@
 import React from "react";
-import {SectionTitle} from "content-src/components/DiscoveryStreamComponents/SectionTitle/SectionTitle";
-import {shallowWithIntl} from "test/unit/utils";
+import { SectionTitle } from "content-src/components/DiscoveryStreamComponents/SectionTitle/SectionTitle";
+import { shallow } from "enzyme";
 
 describe("<SectionTitle>", () => {
   let wrapper;
 
   beforeEach(() => {
-    wrapper = shallowWithIntl(<SectionTitle header={{}} />);
+    wrapper = shallow(<SectionTitle header={{}} />);
   });
 
   it("should render", () => {
@@ -15,7 +15,7 @@ describe("<SectionTitle>", () => {
   });
 
   it("should render a subtitle", () => {
-    wrapper.setProps({header: {title: "Foo", subtitle: "Bar"}});
+    wrapper.setProps({ header: { title: "Foo", subtitle: "Bar" } });
 
     assert.equal(wrapper.find(".subtitle").text(), "Bar");
   });

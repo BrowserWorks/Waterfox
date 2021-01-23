@@ -31,6 +31,7 @@ class TouchBlockState;
 class WheelBlockState;
 class DragBlockState;
 class PanGestureBlockState;
+class PinchGestureBlockState;
 class KeyboardBlockState;
 class AsyncDragMetrics;
 class QueuedInput;
@@ -112,6 +113,7 @@ class InputQueue {
   WheelBlockState* GetCurrentWheelBlock() const;
   DragBlockState* GetCurrentDragBlock() const;
   PanGestureBlockState* GetCurrentPanGestureBlock() const;
+  PinchGestureBlockState* GetCurrentPinchGestureBlock() const;
   KeyboardBlockState* GetCurrentKeyboardBlock() const;
   /**
    * Returns true iff the pending block at the head of the queue is a touch
@@ -139,6 +141,8 @@ class InputQueue {
    * use the provided |aOnScrollbar| to populate that information.
    */
   bool IsDragOnScrollbar(bool aOnScrollbar);
+
+  InputBlockState* GetBlockForId(uint64_t aInputBlockId);
 
  private:
   ~InputQueue();
@@ -189,6 +193,10 @@ class InputQueue {
       const RefPtr<AsyncPanZoomController>& aTarget,
       TargetConfirmationFlags aFlags, const PanGestureInput& aEvent,
       uint64_t* aOutInputBlockId);
+  nsEventStatus ReceivePinchGestureInput(
+      const RefPtr<AsyncPanZoomController>& aTarget,
+      TargetConfirmationFlags aFlags, const PinchGestureInput& aEvent,
+      uint64_t* aOutInputBlockId);
   nsEventStatus ReceiveKeyboardInput(
       const RefPtr<AsyncPanZoomController>& aTarget,
       const KeyboardInput& aEvent, uint64_t* aOutInputBlockId);
@@ -225,6 +233,7 @@ class InputQueue {
   RefPtr<WheelBlockState> mActiveWheelBlock;
   RefPtr<DragBlockState> mActiveDragBlock;
   RefPtr<PanGestureBlockState> mActivePanGestureBlock;
+  RefPtr<PinchGestureBlockState> mActivePinchGestureBlock;
   RefPtr<KeyboardBlockState> mActiveKeyboardBlock;
 
   // The APZC to which the last event was delivered

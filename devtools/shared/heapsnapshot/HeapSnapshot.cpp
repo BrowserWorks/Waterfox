@@ -9,6 +9,7 @@
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
+#include "js/Array.h"  // JS::NewArrayObject
 #include "js/Debug.h"
 #include "js/TypeDecls.h"
 #include "js/UbiNodeBreadthFirst.h"
@@ -35,7 +36,6 @@
 #include "jsfriendapi.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsCRTGlue.h"
-#include "nsDirectoryServiceDefs.h"
 #include "nsIFile.h"
 #include "nsIOutputStream.h"
 #include "nsISupportsImpl.h"
@@ -44,6 +44,7 @@
 #include "prerror.h"
 #include "prio.h"
 #include "prtypes.h"
+#include "SpecialSystemDirectory.h"
 
 namespace mozilla {
 namespace devtools {
@@ -631,7 +632,7 @@ void HeapSnapshot::ComputeShortestPaths(JSContext* cx, uint64_t start,
         }
       }
 
-      RootedObject pathObj(cx, JS_NewArrayObject(cx, pathValues));
+      RootedObject pathObj(cx, JS::NewArrayObject(cx, pathValues));
       return pathObj && paths.append(ObjectValue(*pathObj));
     });
 
@@ -640,7 +641,7 @@ void HeapSnapshot::ComputeShortestPaths(JSContext* cx, uint64_t start,
       return;
     }
 
-    JS::RootedObject pathsArray(cx, JS_NewArrayObject(cx, paths));
+    JS::RootedObject pathsArray(cx, JS::NewArrayObject(cx, paths));
     if (NS_WARN_IF(!pathsArray)) {
       rv.Throw(NS_ERROR_OUT_OF_MEMORY);
       return;
@@ -1010,7 +1011,7 @@ class MOZ_STACK_CLASS StreamWriter : public CoreDumpWriter {
     // that the 64MB size limit used by Coded{Output,Input}Stream to prevent
     // integer overflow is enforced per message rather than on the whole stream.
     ::google::protobuf::io::CodedOutputStream codedStream(&stream);
-    codedStream.WriteVarint32(message.ByteSize());
+    codedStream.WriteVarint32(message.ByteSizeLong());
     message.SerializeWithCachedSizes(&codedStream);
     return !codedStream.HadError();
   }
@@ -1287,7 +1288,13 @@ class MOZ_STACK_CLASS HeapSnapshotHandler {
     if (!first) return true;
 
     CoreDumpWriter::EdgePolicy policy;
-    if (!ShouldIncludeEdge(compartments, origin, edge, &policy)) return true;
+    if (!ShouldIncludeEdge(compartments, origin, edge, &policy)) {
+      // Because ShouldIncludeEdge considers the |origin| node as well, we don't
+      // want to consider this node 'visited' until we write it to the core
+      // dump.
+      traversal.doNotMarkReferentAsVisited();
+      return true;
+    }
 
     nodeCount++;
 
@@ -1334,8 +1341,9 @@ static unsigned long msSinceProcessCreation(const TimeStamp& now) {
 already_AddRefed<nsIFile> HeapSnapshot::CreateUniqueCoreDumpFile(
     ErrorResult& rv, const TimeStamp& now, nsAString& outFilePath,
     nsAString& outSnapshotId) {
+  MOZ_RELEASE_ASSERT(XRE_IsParentProcess());
   nsCOMPtr<nsIFile> file;
-  rv = NS_GetSpecialDirectory(NS_OS_TEMP_DIR, getter_AddRefs(file));
+  rv = GetSpecialSystemDirectory(OS_TemporaryDirectory, getter_AddRefs(file));
   if (NS_WARN_IF(rv.Failed())) return nullptr;
 
   nsAutoString tempPath;
@@ -1498,6 +1506,15 @@ void ChromeUtils::SaveHeapSnapshotShared(
 }
 
 /* static */
+uint64_t ChromeUtils::GetObjectNodeId(GlobalObject& global,
+                                      JS::HandleObject val) {
+  JS::RootedObject obj(global.Context(), val);
+
+  JS::ubi::Node node(obj);
+  return node.identifier();
+}
+
+/* static */
 void ChromeUtils::SaveHeapSnapshot(GlobalObject& global,
                                    const HeapSnapshotBoundaries& boundaries,
                                    nsAString& outFilePath, ErrorResult& rv) {
@@ -1518,7 +1535,7 @@ already_AddRefed<HeapSnapshot> ChromeUtils::ReadHeapSnapshot(
     GlobalObject& global, const nsAString& filePath, ErrorResult& rv) {
   auto start = TimeStamp::Now();
 
-  UniquePtr<char[]> path(ToNewCString(filePath));
+  UniquePtr<char[]> path(ToNewCString(filePath, mozilla::fallible));
   if (!path) {
     rv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;

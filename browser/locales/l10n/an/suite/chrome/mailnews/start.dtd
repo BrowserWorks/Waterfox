@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Welcome to &brandShortName; Mail &amp; Newsgroups">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label 'Welcome to <a id="vendorURL" href="">&brandShortName;</a> Mail &amp; Newsgroups!'>
+<!ENTITY description.label "&brandShortName; Mail &amp; Newsgroups is a powerful open-source mail and news
+client, supporting advanced junk mail detection and other useful features.">
+<!ENTITY features.title "Caracteristicas">
+<!ENTITY feat_multiacc.label "Admite multiples cuentas">
+<!ENTITY feat_junk.label "Detección de correu vasuera">
+<!ENTITY feat_feeds.label "Lector de canals">
+<!ENTITY feat_filters.label "Filtros de mensaches">
+<!ENTITY feat_htmlmsg.label "Suporte de mensaches HTML">
+<!ENTITY feat_abook.label "Libreta d'adrezas">
+<!ENTITY feat_tags.label "Etiquetas y vistas de correu personalizables">
+<!ENTITY feat_integration.label "Fuerte integración con a suite d'aplicacions &brandShortName;">
+<!ENTITY dict.title "Diccionarios">
+<!ENTITY dict_intro.label "Os diccionarios s'usan ta comprobar a ortografía d'os suyos mensaches.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label 'Pueden instalar muitos mas idiomas dende a 
+sección de <a id="dictURL" href="">diccionarios</a> de 
+ <a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>.'>
+<!ENTITY info.title "Mas información">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label '<a href="http://www.mozilla.org/mailnews/">Nusatros</a> agradeixemos los informes 
+de fallos y solicitutz de nuevas caracteristicas, pero por favor antes leiga las 
+<a id="releaseNotesURL" href="">notas de publicación</a> y consulte <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

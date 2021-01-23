@@ -217,18 +217,18 @@ stun_get_win32_addrs(nr_local_addr addrs[], int maxaddrs, int *count)
 
           strlcpy(addrs[n].addr.ifname, hex_hashed_ifname, sizeof(addrs[n].addr.ifname));
           if (tmpAddress->IfType == IF_TYPE_ETHERNET_CSMACD) {
-            addrs[n].interface.type = NR_INTERFACE_TYPE_WIRED;
+            addrs[n].Interface.type = NR_INTERFACE_TYPE_WIRED;
           } else if (tmpAddress->IfType == IF_TYPE_IEEE80211) {
             /* Note: this only works for >= Win Vista */
-            addrs[n].interface.type = NR_INTERFACE_TYPE_WIFI;
+            addrs[n].Interface.type = NR_INTERFACE_TYPE_WIFI;
           } else {
-            addrs[n].interface.type = NR_INTERFACE_TYPE_UNKNOWN;
+            addrs[n].Interface.type = NR_INTERFACE_TYPE_UNKNOWN;
           }
 #if (_WIN32_WINNT >= 0x0600)
           /* Note: only >= Vista provide link speed information */
-          addrs[n].interface.estimated_speed = tmpAddress->TransmitLinkSpeed / 1000;
+          addrs[n].Interface.estimated_speed = tmpAddress->TransmitLinkSpeed / 1000;
 #else
-          addrs[n].interface.estimated_speed = 0;
+          addrs[n].Interface.estimated_speed = 0;
 #endif
           if (++n >= maxaddrs)
             goto done;
@@ -297,11 +297,11 @@ stun_getifaddrs(nr_local_addr addrs[], int maxaddrs, int *count)
             {
                /* For wireless network, we won't get ethtool, it's a wired
                 * connection */
-               addrs[*count].interface.type = NR_INTERFACE_TYPE_WIRED;
+               addrs[*count].Interface.type = NR_INTERFACE_TYPE_WIRED;
 #ifdef DONT_HAVE_ETHTOOL_SPEED_HI
-               addrs[*count].interface.estimated_speed = ecmd.speed;
+               addrs[*count].Interface.estimated_speed = ecmd.speed;
 #else
-               addrs[*count].interface.estimated_speed = ((ecmd.speed_hi << 16) | ecmd.speed) * 1000;
+               addrs[*count].Interface.estimated_speed = ((ecmd.speed_hi << 16) | ecmd.speed) * 1000;
 #endif
             }
 
@@ -309,20 +309,20 @@ stun_getifaddrs(nr_local_addr addrs[], int maxaddrs, int *count)
             e = ioctl(s, SIOCGIWRATE, &wrq);
             if (e == 0)
             {
-               addrs[*count].interface.type = NR_INTERFACE_TYPE_WIFI;
-               addrs[*count].interface.estimated_speed = wrq.u.bitrate.value / 1000;
+               addrs[*count].Interface.type = NR_INTERFACE_TYPE_WIFI;
+               addrs[*count].Interface.estimated_speed = wrq.u.bitrate.value / 1000;
             }
 
             close(s);
 
             if (if_addr->ifa_flags & IFF_POINTOPOINT)
             {
-               addrs[*count].interface.type = NR_INTERFACE_TYPE_UNKNOWN | NR_INTERFACE_TYPE_VPN;
+               addrs[*count].Interface.type = NR_INTERFACE_TYPE_UNKNOWN | NR_INTERFACE_TYPE_VPN;
                /* TODO (Bug 896913): find backend network type of this VPN */
             }
 #else
-            addrs[*count].interface.type = NR_INTERFACE_TYPE_UNKNOWN;
-            addrs[*count].interface.estimated_speed = 0;
+            addrs[*count].Interface.type = NR_INTERFACE_TYPE_UNKNOWN;
+            addrs[*count].Interface.estimated_speed = 0;
 #endif
             (void)strlcpy(addrs[*count].addr.ifname, if_addr->ifa_name, sizeof(addrs[*count].addr.ifname));
             ++(*count);
@@ -377,7 +377,7 @@ nr_stun_remove_duplicate_addrs(nr_local_addr addrs[], int remove_loopback, int r
 
     for (i = 0; i < *count; ++i) {
         if (nr_transport_addr_is_teredo(&addrs[i].addr)) {
-            addrs[i].interface.type |= NR_INTERFACE_TYPE_TEREDO;
+            addrs[i].Interface.type |= NR_INTERFACE_TYPE_TEREDO;
         }
         else if (addrs[i].addr.ip_version == NR_IPV6 &&
                  !nr_transport_addr_is_mac_based(&addrs[i].addr)) {
@@ -436,6 +436,11 @@ nr_stun_get_addrs(nr_local_addr addrs[], int maxaddrs, int *count)
     int _status=0;
     int i;
     char typestr[100];
+
+    // Ensure output records are always fully defined.  See bug 1589990.
+    if (maxaddrs > 0) {
+       memset(addrs, 0, maxaddrs * sizeof(nr_local_addr));
+    }
 
 #ifdef WIN32
     _status = stun_get_win32_addrs(addrs, maxaddrs, count);

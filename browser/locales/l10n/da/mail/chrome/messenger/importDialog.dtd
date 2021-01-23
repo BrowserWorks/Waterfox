@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importer">
+<!ENTITY importAll.label          "Importer alt">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "Mail">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "Feed-abonnementer">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Adressebøger">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Indstillinger">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Filtre">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; import-guide">
+<!ENTITY importShortDesc.label    "Importer mails, adressebøger, indstillinger og filtre fra andre programmer">
+
+<!ENTITY importDescription1.label "Denne guide vil importere mailmeddelelser, adressebogsindhold, indstillinger og/eller filtre fra andre mailprogrammer og standard adressebogsformater til &brandShortName;.">
+<!ENTITY importDescription2.label "Når de er blevet importeret, kan du få adgang til dem i &brandShortName;.">
+
+<!ENTITY selectDescription.label "Vælg den type fil, du ønsker at importere:">
+<!ENTITY selectDescriptionB.label "Vælg en eksisterende konto eller opret en ny konto:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label           "Navn:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Kunne ikke finde et program eller en fil til at importere data fra.">
+
+<!ENTITY back.label "&lt; Tilbage">
+<!ENTITY forward.label "Næste &gt;">
+<!ENTITY finish.label "Færdig">
+<!ENTITY cancel.label "Annuller">
+
+<!ENTITY select.label "eller vælg den type materiale, der skal importeres:">
+
+<!ENTITY title.label "Titel">
+<!ENTITY processing.label "Importerer…">

@@ -9,7 +9,7 @@ const {
   BATCH_ENABLE,
   BATCH_RESET,
   BATCH_FLUSH,
-} = require("../constants");
+} = require("devtools/client/netmonitor/src/constants");
 
 const REQUESTS_REFRESH_RATE = 50; // ms
 
@@ -39,7 +39,7 @@ function batchingMiddleware(store) {
         return flushQueue();
       }
 
-      if (action.meta && action.meta.batch) {
+      if (action.meta?.batch) {
         if (!enabled) {
           next(action);
           return Promise.resolve();

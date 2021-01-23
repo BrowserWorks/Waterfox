@@ -86,6 +86,7 @@ is{
         car{"karíbamál"}
         cay{"kajúga"}
         cch{"atsam"}
+        ccp{"tsjakma"}
         ce{"tsjetsjenska"}
         ceb{"kebúanó"}
         cgg{"kíga"}
@@ -153,6 +154,7 @@ is{
         eu{"baskneska"}
         ewo{"evondó"}
         fa{"persneska"}
+        fa_AF{"darí"}
         fan{"fang"}
         fat{"fantí"}
         ff{"fúla"}
@@ -196,7 +198,6 @@ is{
         gwi{"gvísín"}
         ha{"hása"}
         hai{"haída"}
-        hak{"hak"}
         haw{"havaíska"}
         he{"hebreska"}
         hi{"hindí"}
@@ -206,7 +207,6 @@ is{
         ho{"hírímótú"}
         hr{"króatíska"}
         hsb{"hásorbneska"}
-        hsn{"hsn"}
         ht{"haítíska"}
         hu{"ungverska"}
         hup{"húpa"}
@@ -340,7 +340,6 @@ is{
         myv{"ersja"}
         mzn{"masanderaní"}
         na{"nárúska"}
-        nan{"nan"}
         nap{"napólíska"}
         naq{"nama"}
         nb{"norskt bókmál"}
@@ -366,7 +365,7 @@ is{
         nus{"núer"}
         nv{"navahó"}
         nwc{"klassísk nevaríska"}
-        ny{"njanja; sísjeva; sjeva"}
+        ny{"nýanja"}
         nym{"njamvesí"}
         nyn{"nyankole"}
         nyo{"njóró"}
@@ -519,7 +518,6 @@ is{
         was{"vasjó"}
         wbp{"varlpiri"}
         wo{"volof"}
-        wuu{"wuu"}
         xal{"kalmúkska"}
         xh{"sósa"}
         xog{"sóga"}
@@ -543,10 +541,16 @@ is{
         zxx{"ekkert tungumálaefni"}
         zza{"zázáíska"}
     }
+    Languages%long{
+        zh_Hans{"mandarín (einfölduð)"}
+        zh_Hant{"mandarín (hefðbundin)"}
+    }
+    Languages%menu{
+        yue{"kínverska, kantónska"}
+        zh{"kínverska, mandarín"}
+    }
     Languages%short{
-        az{"aserska"}
         en_GB{"enska (bresk)"}
-        en_US{"enska (BNA)"}
     }
     Scripts{
         Arab{"arabískt"}
@@ -751,7 +755,7 @@ is{
             vaii{"Vai-tölustafir"}
         }
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} — allt"}
         category-list{"{0}: {1}"}

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Tocca chi pe ativâ o plugin.">
+<!ENTITY clickToActivatePlugin                               "Ativa plugin.">
+<!ENTITY checkForUpdates                                     "Contròlla agiornamenti…">
+<!ENTITY blockedPlugin.label                                 "Sto plugin o l'é blocòu pe motivi de seguessa.">
+<!ENTITY hidePluginBtn.label                                 "Ascondi plugin">
+<!ENTITY managePlugins                                       "Gestion plugin…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Carega torna a pagina">
+<!ENTITY reloadPlugin.post                                   " per preuva torna.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Segnala">
+<!ENTITY report.submitting                                   "Son derê a mandâ…">
+<!ENTITY report.submitted                                    "Segnalaçion mandâ….">
+<!ENTITY report.disabled                                     "Invio de segnalaçioin dizativou.">
+<!ENTITY report.failed                                       "Invio segnalaçion no ariescto.">
+<!ENTITY report.unavailable                                  "Niscinn-a segnalaçion.">
+<!ENTITY report.comment                                      "Azonzi 'n comento (i comenti en vixibili pubricamente)">
+<!ENTITY report.pageURL                                      "Includdi URL da pagina">
+
+<!ENTITY plugin.file                                         "Schedaio">
+<!ENTITY plugin.mimeTypes                                    "Tipi MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Ativa mòddo proteto in Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Blòcca contegui Flash grammi e pericolozi">

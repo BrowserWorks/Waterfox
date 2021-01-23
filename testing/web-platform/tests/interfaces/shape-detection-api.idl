@@ -4,8 +4,9 @@
 // Source: Accelerated Shape Detection in Images (https://wicg.github.io/shape-detection-api/)
 
 [Exposed=(Window,Worker),
- Constructor(optional FaceDetectorOptions faceDetectorOptions)]
+ SecureContext]
 interface FaceDetector {
+  constructor(optional FaceDetectorOptions faceDetectorOptions = {});
   Promise<sequence<DetectedFace>> detect(ImageBitmapSource image);
 };
 
@@ -14,10 +15,9 @@ dictionary FaceDetectorOptions {
   boolean fastMode;
 };
 
-[Serializable]
-interface DetectedFace {
-  [SameObject] readonly attribute DOMRectReadOnly boundingBox;
-  [SameObject] readonly attribute FrozenArray<Landmark>? landmarks;
+dictionary DetectedFace {
+  required DOMRectReadOnly boundingBox;
+  required FrozenArray<Landmark>? landmarks;
 };
 
 dictionary Landmark {
@@ -32,8 +32,9 @@ enum LandmarkType {
 };
 
 [Exposed=(Window,Worker),
- Constructor(optional BarcodeDetectorOptions barcodeDetectorOptions)]
+ SecureContext]
 interface BarcodeDetector {
+  constructor(optional BarcodeDetectorOptions barcodeDetectorOptions = {});
   static Promise<sequence<BarcodeFormat>> getSupportedFormats();
 
   Promise<sequence<DetectedBarcode>> detect(ImageBitmapSource image);
@@ -43,12 +44,11 @@ dictionary BarcodeDetectorOptions {
   sequence<BarcodeFormat> formats;
 };
 
-[Serializable]
-interface DetectedBarcode {
-  [SameObject] readonly attribute DOMRectReadOnly boundingBox;
-  [SameObject] readonly attribute DOMString rawValue;
-  [SameObject] readonly attribute BarcodeFormat format;
-  [SameObject] readonly attribute FrozenArray<Point2D> cornerPoints;
+dictionary DetectedBarcode {
+  required DOMRectReadOnly boundingBox;
+  required DOMString rawValue;
+  required BarcodeFormat format;
+  required FrozenArray<Point2D> cornerPoints;
 };
 
 enum BarcodeFormat {

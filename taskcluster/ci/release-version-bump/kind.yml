@@ -16,11 +16,7 @@ job-defaults:
     description: Release Promotion version bump/tag
     run-on-projects: []
     shipping-phase: ship
-    worker-type:
-        by-project:
-            mozilla-(beta|release|esr.*): scriptworker-k8s/gecko-3-tree
-            maple: scriptworker-k8s/gecko-3-tree
-            default: scriptworker-k8s/gecko-1-tree
+    worker-type: tree
     worker:
         implementation: treescript
         dontbuild: true
@@ -44,29 +40,20 @@ job-defaults:
                 default: false
 
 jobs:
-    fennec-beta:
-        attributes:
-            release-type: beta
-        name: fennec-beta-version-bump
-        shipping-product: fennec
-        worker:
-            bump-files:
-                - mobile/android/config/version-files/beta/version_display.txt
-
-    fennec-release:
-        attributes:
-            release-type: release
-        name: fennec-release-version-bump
-        shipping-product: fennec
-        worker:
-            bump-files:
-                - mobile/android/config/version-files/release/version.txt
-                - mobile/android/config/version-files/release/version_display.txt
-
     firefox:
         name: firefox-version-bump
         shipping-product: firefox
+        treeherder:
+            platform: firefox-release/opt
+            symbol: Rel(VerBump)
+            tier: 1
+            kind: build
 
     devedition:
         name: devedition-version-bump
         shipping-product: devedition
+        treeherder:
+            platform: devedition-release/opt
+            symbol: Rel(VerBump)
+            tier: 1
+            kind: build

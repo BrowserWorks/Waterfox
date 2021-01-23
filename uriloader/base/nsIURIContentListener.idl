@@ -14,22 +14,11 @@ interface nsIURI;
  * want to know (and have a chance to handle) a particular content type.
  * Typical usage scenarios will include running applications which register
  * a nsIURIContentListener for each of its content windows with the uri
- * dispatcher service. 
+ * dispatcher service.
  */
 [scriptable, uuid(10a28f38-32e8-4c63-8aa1-12eaaebc369a)]
 interface nsIURIContentListener : nsISupports
 {
- /**
-  * Gives the original content listener first crack at stopping a load before
-  * it happens.
-  *
-  * @param aURI   URI that is being opened.
-  *
-  * @return       <code>false</code> if the load can continue;
-  *               <code>true</code> if the open should be aborted.
-  */
-  boolean onStartURIOpen(in nsIURI aURI);
-
  /**
   * Notifies the content listener to hook up an nsIStreamListener capable of
   * consuming the data stream.
@@ -50,7 +39,7 @@ interface nsIURIContentListener : nsISupports
   *                             causes the URI Loader do nothing else...
   *                             <code>false</code> if the URI Loader should
   *                             continue handling the load and call the
-  *                             returned streamlistener's methods. 
+  *                             returned streamlistener's methods.
   */
   boolean doContent(in ACString aContentType,
                     in boolean aIsContentPreferred,
@@ -58,7 +47,7 @@ interface nsIURIContentListener : nsISupports
                     out nsIStreamListener aContentHandler);
 
  /**
-  * When given a uri to dispatch, if the URI is specified as 'preferred 
+  * When given a uri to dispatch, if the URI is specified as 'preferred
   * content' then the uri loader tries to find a preferred content handler
   * for the content type. The thought is that many content listeners may
   * be able to handle the same content type if they have to. i.e. the mail
@@ -108,8 +97,8 @@ interface nsIURIContentListener : nsISupports
   * application content listener that sits at the top of the docshell
   * hierarchy.
   */
-  boolean canHandleContent(in string aContentType, 
-                           in boolean aIsContentPreferred, 
+  boolean canHandleContent(in string aContentType,
+                           in boolean aIsContentPreferred,
                            out string aDesiredContentType);
 
  /**

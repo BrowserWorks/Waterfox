@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਹਰੀਜੱਟਲ ਲਾਈਨ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY dimensionsBox.label "ਮਾਪ">
+<!ENTITY heightEditField.label "ਉਚਾਈ:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "ਚੌੜਾਈ:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "ਪਿਕਸਲ">
+<!ENTITY alignmentBox.label "ਸਥਿਤੀ">
+<!ENTITY leftRadio.label "ਖੱਬੇ">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "ਸੈਂਟਰ">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "ਸੱਜੇ">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3-D ਸ਼ੇਡਿੰਗ">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "ਡਿਫਾਲਟ ਵਜੋਂ ਵਰਤੋਂ">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "ਨਵੀਂ ਹਰੀਜੱਟਲ ਲਾਈਨਾਂ ਖਿੱਚਣ ਸਮੇਂ ਇਹ ਸੈਟਿੰਗਾਂ ਵਰਤੋਂ">

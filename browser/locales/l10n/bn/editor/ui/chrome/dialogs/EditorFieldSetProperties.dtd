@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ক্ষেত্র সমষ্টির বৈশিষ্ট্য">
+
+<!ENTITY Legend.label "ব্যাখ্যা (L)">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "ব্যাখ্যা সম্পাদনা (t):">
+<!ENTITY EditLegendText.accesskey "t">
+<!ENTITY LegendAlign.label "ব্যাখ্যা সাজানো (A):">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "পূর্বনির্ধারিত">
+<!ENTITY AlignLeft.label "বাম">
+<!ENTITY AlignCenter.label "কেন্দ্র">
+<!ENTITY AlignRight.label "ডান">
+
+<!ENTITY RemoveFieldSet.label "ক্ষেত্র সমষ্টি মুছে দেয়া (R)">
+<!ENTITY RemoveFieldSet.accesskey "R">

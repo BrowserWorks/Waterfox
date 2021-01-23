@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "Webbplatsens URL:">
+<!ENTITY docSubdir.label       "Underkatalog för dokument:">
+<!ENTITY otherSubdir.label     "Underkatalog för bilder:">
+
+<!ENTITY status.label          "Publicerar...">
+<!ENTITY fileList.label        "Publiceringsstatus">
+<!ENTITY succeeded.label       "Klart">
+<!ENTITY failed.label          "Misslyckades">
+
+<!ENTITY keepOpen     	       "Låt detta fönster förbli öppet efter att publiceringen är klar.">
+<!ENTITY closeButton.label     "Stäng">

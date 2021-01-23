@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Socruithe Dramhphoist">
+<!ENTITY trainingDescription.label "Leis an rogha seo, caithfidh tú an dóigh le dramhphost a aithint a mhúineadh do &brandShortName; tríd an gcnaipe Dramhphost a chliceáil ar an mbarra uirlisí. Caithfidh tú dramhphost a mharcáil chomh maith leis na teachtaireachtaí nach dramhphost iad. Tar éis sin, beidh &brandShortName; in ann dramhphost a aithint go huathoibríoch.">
+<!ENTITY level.label "Cumasaigh rialtáin oiriúnaitheacha dramhphoist don chuntas seo">
+<!ENTITY level.accesskey "C">
+
+<!ENTITY move.label "Bog teachtaireachtaí nua dramhphoist go:">
+<!ENTITY move.accesskey "m">
+<!ENTITY junkFolderOn.label "Fillteán &quot;Dramhphost&quot; ar:">
+<!ENTITY junkFolderOn.accesskey "D">
+<!ENTITY otherFolder.label "Eile:">
+<!ENTITY otherFolder.accesskey "E">
+<!ENTITY purge1.label "Scrios uathoibríoch dramhphoist níos sine ná">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "lá anuas">
+
+<!ENTITY whitelistHeader.label "Ná marcáil mar dhramhphost go huathoibríoch má tá an seoltóir i: ">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "Leis an rogha seo, glacfaidh &brandShortName; le teachtaireachtaí marcáilte ag an aicmitheoir seachtrach seo mar dhramhphost.">
+<!ENTITY ispHeaders.label "Cuir muinín i gceanntásca dramhphoist a shocraigh:">
+<!ENTITY ispHeaders.accesskey "t">
+
+<!ENTITY junkClassification.label "Rogha">
+<!ENTITY junkActions.label "Ceann Scríbe agus Coinneáil">
+
+<!ENTITY globalJunkPrefs.label "Sainroghanna Comhchoiteanna Dramhphoist…">
+<!ENTITY globalJunkPrefs.accesskey "g">

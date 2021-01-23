@@ -16,7 +16,7 @@ TextureWrapperImage::TextureWrapperImage(TextureClient* aClient,
       mPictureRect(aPictureRect),
       mTextureClient(aClient) {}
 
-TextureWrapperImage::~TextureWrapperImage() {}
+TextureWrapperImage::~TextureWrapperImage() = default;
 
 gfx::IntSize TextureWrapperImage::GetSize() const {
   return mTextureClient->GetSize();
@@ -41,7 +41,7 @@ already_AddRefed<gfx::SourceSurface> TextureWrapperImage::GetAsSourceSurface() {
 }
 
 TextureClient* TextureWrapperImage::GetTextureClient(
-    KnowsCompositor* aForwarder) {
+    KnowsCompositor* aKnowsCompositor) {
   return mTextureClient;
 }
 

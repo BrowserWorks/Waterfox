@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Ելքային սպասարկիչի (SMTP) կարգավորումներ">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "ពេល​គ្រប់គ្រង​អត្តសញ្ញាណ​របស់​អ្នក អ្នក​អាច​ប្រើ​ម៉ាស៊ីន​មេ​ពី​បញ្ជី​នេះ​បាន​ដោយ​ជ្រើស​វា​ជា​ម៉ាស៊ីន​មេ​ចេញ (SMTP), ឬ​អ្នក​អាច​ប្រើ​វា​ជា​ម៉ាស៊ីន​មេ​លំនាំដើម​ពី​បញ្ជី​នេះ​ដោយ​ជ្រើស &quot;ប្រើ​ម៉ាស៊ីន​មេ​លំនាំដើម&quot; ។">
+
+<!ENTITY smtpListAdd.label  "Ավելացնել...">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "Խմբագրել...">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Ջնջել">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "Նշել հինականը">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDescription.label "Նկարագրությունը.">
+<!ENTITY serverName.label "Սպասարկիչի անունը.">
+<!ENTITY serverPort.label "Պորտը.">
+<!ENTITY userName.label   "Օգտվողի անունը.">
+<!ENTITY connectionSecurity.label "Միացման անվտանգությունը.">
+<!ENTITY authMethod.label   "Վավերացման եղանակը.">

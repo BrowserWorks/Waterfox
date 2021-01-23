@@ -5,17 +5,8 @@
 "use strict";
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
-const Telemetry = require("devtools/client/shared/telemetry");
-const telemetry = new Telemetry();
 
 const DEVTOOLS_ENABLED_PREF = "devtools.enabled";
-
-const TELEMETRY_OPENED_KEY = "DEVTOOLS_ABOUT_DEVTOOLS_OPENED_KEY";
-const TELEMETRY_OPENED_REASON = "DEVTOOLS_ABOUT_DEVTOOLS_OPENED_REASON";
-const TELEMETRY_OPENED = "devtools.aboutdevtools.opened";
-const TELEMETRY_INSTALLED = "devtools.aboutdevtools.installed";
-const TELEMETRY_NOINSTALL_EXITS = "devtools.aboutdevtools.noinstall_exits";
 
 const MESSAGES = {
   AboutDebugging: "about-debugging-message",
@@ -39,11 +30,7 @@ const keyShortcutsBundle = Services.strings.createBundle(KEY_SHORTCUTS_STRINGS);
 // we have to use http in order to have working searchParams.
 const url = new URL(window.location.href.replace("about:", "http://"));
 const reason = url.searchParams.get("reason");
-const keyid = url.searchParams.get("keyid");
 const tabid = parseInt(url.searchParams.get("tabid"), 10);
-
-// Keep track of the initial devtools.enabled value to track exits in telemetry.
-let isEnabledOnLoad;
 
 function getToolboxShortcut() {
   const modifier = Services.appinfo.OS == "Darwin" ? "Cmd+Opt+" : "Ctrl+Shift+";
@@ -54,12 +41,6 @@ function getToolboxShortcut() {
 
 function onInstallButtonClick() {
   Services.prefs.setBoolPref("devtools.enabled", true);
-
-  try {
-    telemetry.scalarAdd(TELEMETRY_INSTALLED, 1);
-  } catch (e) {
-    dump("about:devtools oninstall telemetry failed: " + e + "\n");
-  }
 }
 
 function onCloseButtonClick() {
@@ -162,14 +143,18 @@ function createFeatureEl(feature) {
 
   const { icon, link, title, desc } = feature;
   // eslint-disable-next-line no-unsanitized/property
-  li.innerHTML = `<a class="feature-link" href="${link}" target="_blank">
-       <img class="feature-icon" src="${icon}"/>
-     </a>
-     <h3 class="feature-name" data-l10n-id="${title}"></h3>
-     <p class="feature-desc" data-l10n-id="${desc}">
-       <a class="external feature-link" href="${link}"
-          target="_blank" data-l10n-name="learn-more"></a>
-     </p>`;
+  li.innerHTML = `
+    <h3 class="feature-name">
+      <a class="feature-link" href="${link}" target="_blank">
+        <img class="feature-icon" src="${icon}" alt="" />
+        <span data-l10n-id="${title}"></span>
+      </a>
+    </h3>
+    <p class="feature-desc" data-l10n-id="${desc}">
+      <a class="feature-more-link external" href="${link}"
+         aria-hidden="true" tabindex="-1"
+         target="_blank" data-l10n-name="learn-more"></a>
+    </p>`;
 
   return li;
 }
@@ -215,7 +200,7 @@ window.addEventListener(
     }
 
     // Add Google Analytics parameters to all the external links.
-    const externalLinks = [...document.querySelectorAll("a.external")];
+    const externalLinks = document.querySelectorAll("a[href*='mozilla.org']");
     for (const link of externalLinks) {
       const linkUrl = new URL(link.getAttribute("href"));
       GA_PARAMETERS.forEach(([key, value]) =>
@@ -226,20 +211,6 @@ window.addEventListener(
 
     // Update the current page based on the current value of DEVTOOLS_ENABLED_PREF.
     updatePage();
-
-    try {
-      if (reason) {
-        telemetry.getHistogramById(TELEMETRY_OPENED_REASON).add(reason);
-      }
-
-      if (keyid) {
-        telemetry.getHistogramById(TELEMETRY_OPENED_KEY).add(keyid);
-      }
-
-      telemetry.scalarAdd(TELEMETRY_OPENED, 1);
-    } catch (e) {
-      dump("about:devtools onload telemetry failed: " + e + "\n");
-    }
   },
   { once: true }
 );
@@ -277,15 +248,6 @@ window.addEventListener(
       .getElementById("close")
       .removeEventListener("click", onCloseButtonClick);
     Services.prefs.removeObserver(DEVTOOLS_ENABLED_PREF, updatePage);
-
-    const isEnabled = Services.prefs.getBoolPref("devtools.enabled");
-    if (!isEnabledOnLoad && !isEnabled) {
-      try {
-        telemetry.scalarAdd(TELEMETRY_NOINSTALL_EXITS, 1);
-      } catch (e) {
-        dump("about:devtools onunload telemetry failed: " + e + "\n");
-      }
-    }
   },
   { once: true }
 );

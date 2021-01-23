@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Aktifkan pembaruan untuk semua umpan">
+<!ENTITY biffAll.accesskey             "E">
+
+<!ENTITY newFeedSettings.label         "Pengaturan Asal untuk Umpan Baru">
+
+<!ENTITY manageSubscriptions.label     "Kelola Langganan…">
+<!ENTITY manageSubscriptions.accesskey "K">
+
+<!ENTITY feedWindowTitle.label         "Wisaya Akun Umpan">
+<!ENTITY feeds.accountName             "Feed Blog &amp; Berita">

@@ -5,6 +5,7 @@
 CORE_DEPTH	= ../..
 
 LIBRARY_NAME	= sectool
+SHARED_LIBRARY = $(NULL)
 
 # MODULE public and private header  directories are implicitly REQUIRED.
 MODULE		= nss
@@ -37,3 +38,5 @@ CSRCS	= basicutil.c \
 endif
 
 NO_MD_RELEASE	= 1
+
+USE_STATIC_LIBS = 1

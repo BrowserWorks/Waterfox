@@ -206,6 +206,8 @@ const sdp_attrarray_t sdp_attr[SDP_MAX_ATTR_TYPES] =
       sdp_parse_attr_simple_u32, sdp_build_attr_simple_u32},
     {"max-message-size", sizeof("max-message-size"),
       sdp_parse_attr_simple_u32, sdp_build_attr_simple_u32},
+    {"ssrc-group", sizeof("ssrc-group"), sdp_parse_attr_ssrc_group,
+      sdp_build_attr_ssrc_group},
 };
 
 /* Note: These *must* be in the same order as the enum types. */
@@ -269,9 +271,7 @@ const sdp_namearray_t sdp_transport[SDP_MAX_TRANSPORT_TYPES] =
     {"RTP/AVPF",     sizeof("RTP/AVPF")},
     {"UDP/TLS/RTP/SAVP", sizeof("UDP/TLS/RTP/SAVP")},
     {"UDP/TLS/RTP/SAVPF", sizeof("UDP/TLS/RTP/SAVPF")},
-    {"TCP/TLS/RTP/SAVP", sizeof("TCP/TLS/RTP/SAVP")},
     {"TCP/DTLS/RTP/SAVP", sizeof("TCP/DTLS/RTP/SAVP")},
-    {"TCP/TLS/RTP/SAVPF", sizeof("TCP/TLS/RTP/SAVPF")},
     {"TCP/DTLS/RTP/SAVPF", sizeof("TCP/DTLS/RTP/SAVPF")},
     {"UDP/DTLS/SCTP",    sizeof("UDP/DTLS/SCTP")},
     {"TCP/DTLS/SCTP",    sizeof("TCP/DTLS/SCTP")},
@@ -441,7 +441,9 @@ const sdp_namearray_t sdp_fmtp_codec_param[SDP_MAX_FMTP_PARAM] =
     {"maxcodedaudiobandwidth",          sizeof("maxcodedaudiobandwidth")}, /* 47 */
     {"cbr",                             sizeof("cbr")}, /* 48 */
     {"max-fr",                          sizeof("max-fr")}, /* 49 */
-    {"maxplaybackrate",                 sizeof("maxplaybackrate")} /* 50 */
+    {"maxplaybackrate",                 sizeof("maxplaybackrate")}, /* 50 */
+    {"apt",                             sizeof("apt")}, /* 51 */
+    {"rtx-time",                         sizeof("rtx-time")} /* 52 */
 } ;
 
 /* Note: These *must* be in the same order as the enum type. */
@@ -464,6 +466,14 @@ const sdp_namearray_t sdp_group_attr_val[SDP_MAX_GROUP_ATTR_VAL] =
     {"LS",                  sizeof("LS")},
     {"ANAT",                sizeof("ANAT")},
     {"BUNDLE",              sizeof("BUNDLE")}
+};
+
+const sdp_namearray_t sdp_ssrc_group_attr_val[SDP_MAX_SSRC_GROUP_ATTR_VAL] = {
+    {"DUP", sizeof("DUP")},
+    {"FEC", sizeof("FEC")},
+    {"FEC-FR", sizeof("FEC-FR")},
+    {"FID", sizeof("FID")},
+    {"SIM", sizeof("SIM")}
 };
 
 const sdp_namearray_t sdp_srtp_context_crypto_suite[SDP_SRTP_MAX_NUM_CRYPTO_SUITES] =
@@ -496,7 +506,8 @@ const sdp_namearray_t sdp_rtcp_fb_type_val[SDP_MAX_RTCP_FB] =
     SDP_NAME("ccm"),
     SDP_NAME("nack"),
     SDP_NAME("trr-int"),
-    SDP_NAME("goog-remb")
+    SDP_NAME("goog-remb"),
+    SDP_NAME("transport-cc")
 };
 
 /* Maintain the same order as defined in typdef sdp_rtcp_fb_nack_type_e */
@@ -783,6 +794,17 @@ const char *sdp_get_group_attr_name (sdp_group_attr_e group_attr_type)
         return ("Invalid a=group: attribute type");
     } else {
         return (sdp_group_attr_val[group_attr_type].name);
+    }
+}
+
+const char *sdp_get_ssrc_group_attr_name(
+    sdp_ssrc_group_attr_e ssrc_group_attr_type) {
+    if (ssrc_group_attr_type == SDP_SSRC_GROUP_ATTR_UNSUPPORTED) {
+        return (SDP_UNSUPPORTED);
+    } else if (ssrc_group_attr_type >= SDP_MAX_SSRC_GROUP_ATTR_VAL) {
+        return ("Invalid a=ssrc-group: attribute type");
+    } else {
+        return (sdp_ssrc_group_attr_val[ssrc_group_attr_type].name);
     }
 }
 

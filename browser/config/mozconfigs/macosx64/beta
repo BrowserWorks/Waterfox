@@ -2,6 +2,4 @@
 
 ac_add_options --enable-official-branding
 
-export MOZ_LTO=1
-
 . "$topsrcdir/build/mozconfig.common.override"

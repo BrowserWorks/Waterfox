@@ -13,7 +13,8 @@
 #include "mozilla/layers/SourceSurfaceSharedData.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
 #include "mozilla/layers/RenderRootStateManager.h"
-#include "mozilla/SystemGroup.h"  // for SystemGroup
+#include "mozilla/SchedulerGroup.h"
+#include "mozilla/StaticPrefs_image.h"
 
 namespace mozilla {
 namespace layers {
@@ -41,7 +42,7 @@ SharedSurfacesChild::ImageKeyData& SharedSurfacesChild::ImageKeyData::operator=(
   return *this;
 }
 
-SharedSurfacesChild::ImageKeyData::~ImageKeyData() {}
+SharedSurfacesChild::ImageKeyData::~ImageKeyData() = default;
 
 void SharedSurfacesChild::ImageKeyData::MergeDirtyRect(
     const Maybe<IntRect>& aDirtyRect) {
@@ -78,7 +79,7 @@ void SharedSurfacesChild::SharedUserData::Destroy(void* aClosure) {
   RefPtr<SharedUserData> data =
       dont_AddRef(static_cast<SharedUserData*>(aClosure));
   if (data->mShared || !data->mKeys.IsEmpty()) {
-    SystemGroup::Dispatch(TaskCategory::Other, data.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, data.forget());
   }
 }
 
@@ -120,14 +121,14 @@ wr::ImageKey SharedSurfacesChild::SharedUserData::UpdateKey(
       if (!ownsKey) {
         entry.mImageKey = wrBridge->GetNextImageKey();
         entry.TakeDirtyRect();
-        aResources.AddExternalImage(mId, entry.mImageKey);
+        aResources.AddSharedExternalImage(mId, entry.mImageKey);
       } else {
         entry.MergeDirtyRect(aDirtyRect);
         Maybe<IntRect> dirtyRect = entry.TakeDirtyRect();
         if (dirtyRect) {
           MOZ_ASSERT(mShared);
-          aResources.UpdateExternalImage(mId, entry.mImageKey,
-                                         ViewAs<ImagePixel>(dirtyRect.ref()));
+          aResources.UpdateSharedExternalImage(
+              mId, entry.mImageKey, ViewAs<ImagePixel>(dirtyRect.ref()));
         }
       }
 
@@ -144,7 +145,7 @@ wr::ImageKey SharedSurfacesChild::SharedUserData::UpdateKey(
     key = aManager->WrBridge()->GetNextImageKey();
     ImageKeyData data(aManager, key);
     mKeys.AppendElement(std::move(data));
-    aResources.AddExternalImage(mId, key);
+    aResources.AddSharedExternalImage(mId, key);
   }
 
   return key;
@@ -278,8 +279,8 @@ void SharedSurfacesChild::Share(SourceSurfaceSharedData* aSurface) {
       RefPtr<SourceSurfaceSharedData> mSurface;
     };
 
-    SystemGroup::Dispatch(TaskCategory::Other,
-                          MakeAndAddRef<ShareRunnable>(aSurface));
+    SchedulerGroup::Dispatch(TaskCategory::Other,
+                             MakeAndAddRef<ShareRunnable>(aSurface));
     return;
   }
 
@@ -477,18 +478,15 @@ nsresult SharedSurfacesChild::UpdateAnimation(ImageContainer* aContainer,
 
 AnimationImageKeyData::AnimationImageKeyData(RenderRootStateManager* aManager,
                                              const wr::ImageKey& aImageKey)
-    : SharedSurfacesChild::ImageKeyData(aManager, aImageKey),
-      mRecycling(false) {}
+    : SharedSurfacesChild::ImageKeyData(aManager, aImageKey) {}
 
 AnimationImageKeyData::AnimationImageKeyData(AnimationImageKeyData&& aOther)
     : SharedSurfacesChild::ImageKeyData(std::move(aOther)),
-      mPendingRelease(std::move(aOther.mPendingRelease)),
-      mRecycling(aOther.mRecycling) {}
+      mPendingRelease(std::move(aOther.mPendingRelease)) {}
 
 AnimationImageKeyData& AnimationImageKeyData::operator=(
     AnimationImageKeyData&& aOther) {
   mPendingRelease = std::move(aOther.mPendingRelease);
-  mRecycling = aOther.mRecycling;
   SharedSurfacesChild::ImageKeyData::operator=(std::move(aOther));
   return *this;
 }
@@ -504,7 +502,7 @@ void SharedSurfacesAnimation::Destroy() {
     nsCOMPtr<nsIRunnable> task =
         NewRunnableMethod("SharedSurfacesAnimation::Destroy", this,
                           &SharedSurfacesAnimation::Destroy);
-    SystemGroup::Dispatch(TaskCategory::Other, task.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, task.forget());
     return;
   }
 
@@ -514,7 +512,7 @@ void SharedSurfacesAnimation::Destroy() {
 
   for (const auto& entry : mKeys) {
     MOZ_ASSERT(!entry.mManager->IsDestroyed());
-    if (entry.mRecycling) {
+    if (StaticPrefs::image_animated_decode_on_demand_recycle_AtStartup()) {
       entry.mManager->DeregisterAsyncAnimation(entry.mImageKey);
     }
     entry.mManager->AddImageKeyForDiscard(entry.mImageKey);
@@ -530,11 +528,7 @@ void SharedSurfacesAnimation::HoldSurfaceForRecycling(
     return;
   }
 
-  if (!aEntry.mRecycling) {
-    aEntry.mManager->RegisterAsyncAnimation(aEntry.mImageKey, this);
-    aEntry.mRecycling = true;
-  }
-
+  MOZ_ASSERT(StaticPrefs::image_animated_decode_on_demand_recycle_AtStartup());
   aEntry.mPendingRelease.AppendElement(aParentSurface);
 }
 
@@ -563,8 +557,8 @@ nsresult SharedSurfacesAnimation::SetCurrentFrame(
     if (dirtyRect) {
       HoldSurfaceForRecycling(entry, aParentSurface, aSurface);
       auto& resourceUpdates = entry.mManager->AsyncResourceUpdates();
-      resourceUpdates.UpdateExternalImage(mId, entry.mImageKey,
-                                          ViewAs<ImagePixel>(dirtyRect.ref()));
+      resourceUpdates.UpdateSharedExternalImage(
+          mId, entry.mImageKey, ViewAs<ImagePixel>(dirtyRect.ref()));
     }
   }
 
@@ -582,7 +576,7 @@ nsresult SharedSurfacesAnimation::UpdateKey(
   }
 
   MOZ_ASSERT(data);
-  if (mId.mHandle != data->Id().mHandle) {
+  if (wr::AsUint64(mId) != wr::AsUint64(data->Id())) {
     mKeys.Clear();
     mId = data->Id();
   }
@@ -610,7 +604,7 @@ nsresult SharedSurfacesAnimation::UpdateKey(
       if (!ownsKey) {
         entry.mImageKey = wrBridge->GetNextImageKey();
         HoldSurfaceForRecycling(entry, aParentSurface, aSurface);
-        aResources.AddExternalImage(mId, entry.mImageKey);
+        aResources.AddSharedExternalImage(mId, entry.mImageKey);
       } else {
         MOZ_ASSERT(entry.mDirtyRect.isNothing());
       }
@@ -623,10 +617,14 @@ nsresult SharedSurfacesAnimation::UpdateKey(
 
   if (!found) {
     aKey = aManager->WrBridge()->GetNextImageKey();
+    if (StaticPrefs::image_animated_decode_on_demand_recycle_AtStartup()) {
+      aManager->RegisterAsyncAnimation(aKey, this);
+    }
+
     AnimationImageKeyData data(aManager, aKey);
     HoldSurfaceForRecycling(data, aParentSurface, aSurface);
     mKeys.AppendElement(std::move(data));
-    aResources.AddExternalImage(mId, aKey);
+    aResources.AddSharedExternalImage(mId, aKey);
   }
 
   return NS_OK;

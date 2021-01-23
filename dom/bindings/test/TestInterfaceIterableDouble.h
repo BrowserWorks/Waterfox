@@ -8,6 +8,7 @@
 #define mozilla_dom_TestInterfaceIterableDouble_h
 
 #include "nsCOMPtr.h"
+#include "nsString.h"
 #include "nsTArray.h"
 #include "nsWrapperCache.h"
 
@@ -41,7 +42,7 @@ class TestInterfaceIterableDouble final : public nsISupports,
   nsAString& GetValueAtIndex(uint32_t aIndex);
 
  private:
-  virtual ~TestInterfaceIterableDouble() {}
+  virtual ~TestInterfaceIterableDouble() = default;
   nsCOMPtr<nsPIDOMWindowInner> mParent;
   nsTArray<std::pair<nsString, nsString>> mValues;
 };

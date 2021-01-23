@@ -1,0 +1,78 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "D'ainm:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "D'ainm, mar a thaispeántar é do dhaoine eile">
+<!ENTITY email.label                     "Seoladh ríomhphoist:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY password.label                  "Focal Faire:">
+<!ENTITY password.accesskey              "F">
+<!ENTITY password.placeholder            "Focal Faire">
+<!ENTITY password.text                   "Roghnach, úsáidfear é chun an t-ainm úsáideoira a bhailíochtú amháin">
+<!ENTITY rememberPassword.label          "Meabhraigh focal faire">
+<!ENTITY rememberPassword.accesskey      "M">
+
+<!ENTITY imapLong.label                  "IMAP (fillteáin i gcéin)">
+<!ENTITY pop3Long.label                  "POP3 (coimeád ríomhphost ar do ríomhaire)">
+
+<!ENTITY incoming.label                  "Isteach:">
+<!ENTITY outgoing.label                  "Amach:">
+<!ENTITY username.label                  "Ainm úsáideora:">
+<!ENTITY auth.label                      "Fíordheimhniú">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Braith go hUathoibríoch">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Gan sonrú">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "Ardchumraíocht">
+<!ENTITY advancedSetup.accesskey         "A">
+<!ENTITY cancel.label                    "Cealaigh">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Ar Aghaidh">
+<!ENTITY continue.accesskey              "A">
+<!ENTITY stop.label                      "Stad">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Tástáil Arís">
+<!ENTITY half-manual-test.accesskey      "T">
+
+
+<!ENTITY warning.label                   "Rabhadh!">
+<!ENTITY incomingSettings.label          "Socruithe isteach:">
+<!ENTITY outgoingSettings.label          "Socruithe amach:">
+<!ENTITY technicaldetails.label          "Mionsonraí Teicniúla">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Tuigim na contúirtí.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Críochnaithe">
+<!ENTITY doneAccount.accesskey           "C">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Athraigh Socruithe">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "Is féidir le &brandShortName; do chuid ríomhphoist a fháil leis an gcumraíocht soláthraithe. Ba cheart duit le do riarthóir nó do sholáthraí ríomhphoist maidir leis na ceangail mhíchuí seo, áfach. Feic ceisteanna coitianta Thunderbird le haghaidh tuilleadh eolais.">
+
+<!ENTITY insecureServer.tooltip.title    "Rabhadh! Freastalaí neamhshlán é seo.">
+<!ENTITY insecureServer.tooltip.details  "Cliceáil ar an gciorcal chun tuilleadh sonraí a fháil.">
+
+<!ENTITY insecureUnencrypted.description "Seoltar do ríomhphost agus fíordheimhniú gan criptiúchán, agus d'fhéadfadh daoine eile d'fhocal faire agus do theachtaireacht a léamh go furasta. Ligfidh  &brandShortName; leat do chuid ríomhphoist a fháil, ach ba cheart duit iarraidh ar do sholáthraí ríomhphoist an freastalaí a chumrú le ceangal slán.">
+<!ENTITY insecureSelfSigned.description  "Úsáideann an freastalaí teastas nach féidir muinín a bheith againn as, agus mar sin ní féidir bheith cinnte nach bhfuil an trácht idir &brandShortName; agus do fhreastalaí á hidircheapadh. Ligfidh  &brandShortName; leat do chuid ríomhphoist a fháil, ach ba cheart duit iarraidh ar do sholáthraí ríomhphoist an freastalaí a chumrú le teastas iontaofa.">
+<!ENTITY secureServer.description        "Comhghairdeas! Is freastalaí slán é seo.">

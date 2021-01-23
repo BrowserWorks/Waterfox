@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Emoticon">
+<!ENTITY insertSmiley.accesskey "Z">
+
+<!ENTITY smiley1Cmd.label "Zâmbet">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Inserează un chip zâmbitor">
+<!ENTITY smiley2Cmd.label "Încruntat">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "Inserează un chip încruntat">
+<!ENTITY smiley3Cmd.label "Făcând cu ochiul">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "Inserează un chip care face cu ochiul">
+<!ENTITY smiley4Cmd.label "Cu limba scoasă">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "Inserează un chip care scoate limba">
+<!ENTITY smiley5Cmd.label "Râzând">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "Inserează un chip care râde">
+<!ENTITY smiley6Cmd.label "Rușinat">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "Inserează un chip rușinat">
+<!ENTITY smiley7Cmd.label "Nehotărât">
+<!ENTITY smiley7Cmd.accesskey "N">
+<!ENTITY smiley7Cmd.tooltip "Inserează un chip nehotărât">
+<!ENTITY smiley8Cmd.label "Surprins">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "Inserează un chip surprins">
+<!ENTITY smiley9Cmd.label "Sărut">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Inserează un chip care trimite un sărut">
+<!ENTITY smiley10Cmd.label "Țipăt">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "Inserează un chip care țipă">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Inserează un chip cool">
+<!ENTITY smiley12Cmd.label "Cu bani în gură">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "Inserează un chip cu bani în gură">
+<!ENTITY smiley13Cmd.label "Cu piciorul în gură">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "Inserează un chip care are un picior în gură">
+<!ENTITY smiley14Cmd.label "Inocent">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "Inserează un chip inocent">
+<!ENTITY smiley15Cmd.label "Plânset">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "Inserează un chip care plânge">
+<!ENTITY smiley16Cmd.label "Cu buzele pecetluite">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "Inserează un chip cu buzele pecetluite">
+<!ENTITY SmileButton.label "Inserează smiley">
+<!ENTITY SmileButton.tooltip "Inserează un chip zâmbitor">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Čarobnjak uvoza">
+
+<!ENTITY importFromWin.label            "Uvezi postavke, postavke računa, adresar, filtere i ostale podatke iz:">
+<!ENTITY importFromNonWin.label         "Uvezi postavke, postavke računa, adresar, filteri i ostale podatke iz:">
+<!ENTITY importSourceNotFound.label     "Niti jedna aplikacija za uvoz podataka nije pronađena.">
+
+<!ENTITY importFromNothing.label        "Ne uvozi ništa">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 ili noviji">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Uvezi postavke i mape pošte">
+<!ENTITY importItems.title              "Stavke za uvoz">
+<!ENTITY importItems.label              "Odaberite koje stavke želite uvesti:">
+
+<!ENTITY migrating.title                "Uvoz…">
+<!ENTITY migrating.label                "Sljedeće stavke se trenutno uvoze…">
+
+<!ENTITY selectProfile.title            "Odaberite profil">
+<!ENTITY selectProfile.label            "Sljedeći profili su dostupni za uvoz iz:">
+
+<!ENTITY done.title                     "Uvoz završen">
+<!ENTITY done.label                     "Sljedeće stavke su uspješno uvezene:">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Aplicativos web sen conexión">
+<!ENTITY pref.offlineCache.caption          "Datos de usuario e contido web sen conexión">
+
+<!ENTITY clearOfflineAppCache.label         "Limpar">
+<!ENTITY clearOfflineAppCache.accesskey     "L">
+
+<!ENTITY offlineNotify.label                "Avisarme cando un sitio web quere almacenar os datos para a súa utilización sen conexión.">
+<!ENTITY offlineNotify.accesskey            "n">
+<!ENTITY offlineNotifyPermissions.label     "Xestionar permisos">
+<!ENTITY offlineNotifyPermissions.accesskey "p">
+
+<!ENTITY offlineAppsList.label              "Os seguintes sitios web poden almacenar datos para a súa utilización sen conexión:">
+<!ENTITY offlineAppsListRemove.label        "Limpar datos…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

@@ -11,8 +11,10 @@
  * and create derivative works of this document.
  */
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLDetailsElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
   [CEReactions, SetterThrows]
   attribute boolean open;
 };

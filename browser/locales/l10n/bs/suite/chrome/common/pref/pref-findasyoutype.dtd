@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Nađi tokom kucanja">
+<!ENTITY findAsYouTypeBehavior.label "Nađi tokom kucanja">
+<!ENTITY findAsYouTypeTip.label "Savjet: Da biste ručno pokrenuli Nađi tokom kucanja, ukucajte / da nađete tekst ili ' da nađete linkove, praćeno tekstom koji želite naći.">
+<!ENTITY findAsYouTypeTimeout.label "Očisti trenutnu pretragu nakon nekoliko sekundi neaktivnosti">
+<!ENTITY findAsYouTypeSound.label "Pusti zvuk kada ukucani tekst nije pronađen">
+<!ENTITY findAsYouTypeEnableAuto.label "Nađi automatski pri kucanju na web stranici:">
+<!ENTITY findAsYouTypeAutoText.label "Bilo koji tekst na stranici">
+<!ENTITY findAsYouTypeAutoLinks.label "Samo linkove">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Prikaži alatnu traku za traženje tokom traženja dok kucate">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Napomena: Nađi tokom kucanja bez pokazivanja trake za traženje ne dozvoljava unos međunarodnog teskta.">

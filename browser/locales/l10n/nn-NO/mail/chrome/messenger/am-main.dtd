@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Kontoinnstillingar">
+<!ENTITY accountName.label "Kontonamn:">
+<!ENTITY accountName.accesskey "K">
+<!ENTITY identityTitle.label "Standardidentitet">
+<!ENTITY identityDesc.label "Kvar konto kan ha sin eigen identitet, som er den informasjonen andre personar ser når dei les meldingar du har sendt.">
+<!ENTITY name.label "Namn:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "E-postadresse:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Svar fra denne identiteten når leveranse-header samsvarar med:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Svaradresse:">
+<!ENTITY replyTo.accesskey "a">
+<!ENTITY replyTo.placeholder "Mottakarar vil svare til denne alternative adressa">
+<!ENTITY organization.label "Organisasjon:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Signaturtekst:">
+<!ENTITY signatureText.accesskey "S">
+<!ENTITY signatureHtml.label "Bruk HTML (t.d., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "T">
+<!ENTITY signatureFile.label "Legg ved signaturen frå ei fil i staden (tekst, HTML, eller bilde):">
+<!ENTITY signatureFile.accesskey "L">
+<!ENTITY edit.label "Rediger …">
+<!ENTITY choose.label "Vel…">
+<!ENTITY choose.accesskey "V">
+<!ENTITY editVCard.label "Rediger adressekort …">
+<!ENTITY editVCard.accesskey "e">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Legg ved adressekortet mitt (vCard)">
+<!ENTITY attachVCard.accesskey "m">
+
+<!ENTITY manageIdentities.label "Handsame identitetar …">
+<!ENTITY manageIdentities.accesskey "H">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Utgåande tenar (SMTP):">
+<!ENTITY smtpName.accesskey "U">
+<!ENTITY smtpDefaultServer.label "Bruk standardtenar">
+
+<!ENTITY smtpServerEdit.label "Rediger SMTP-server…">
+<!ENTITY smtpServerEdit.accesskey "P">

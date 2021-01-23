@@ -5,10 +5,13 @@
 
 const {
   Component,
-  createElement,
+  createFactory,
 } = require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
+const GridElementWidthResizer = createFactory(
+  require("devtools/client/shared/components/splitter/GridElementWidthResizer")
+);
 loader.lazyRequireGetter(
   this,
   "dom",
@@ -32,11 +35,6 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
-  "SplitBox",
-  "devtools/client/shared/components/splitter/SplitBox"
-);
-loader.lazyRequireGetter(
-  this,
   "reps",
   "devtools/client/shared/components/reps/reps"
 );
@@ -52,8 +50,8 @@ class SideBar extends Component {
     return {
       serviceContainer: PropTypes.object,
       dispatch: PropTypes.func.isRequired,
-      sidebarVisible: PropTypes.bool,
-      grip: PropTypes.object,
+      front: PropTypes.object,
+      onResized: PropTypes.func,
     };
   }
 
@@ -63,11 +61,8 @@ class SideBar extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    const { grip, sidebarVisible } = nextProps;
-
-    return (
-      sidebarVisible !== this.props.sidebarVisible || grip !== this.props.grip
-    );
+    const { front } = nextProps;
+    return front !== this.props.front;
   }
 
   onClickSidebarClose() {
@@ -75,55 +70,56 @@ class SideBar extends Component {
   }
 
   render() {
-    if (!this.props.sidebarVisible) {
-      return null;
-    }
+    const { front, serviceContainer } = this.props;
 
-    const { grip, serviceContainer } = this.props;
-
-    const objectInspector = getObjectInspector(grip, serviceContainer, {
+    const objectInspector = getObjectInspector(front, serviceContainer, {
       autoExpandDepth: 1,
       mode: reps.MODE.SHORT,
       autoFocusRoot: true,
+      pathPrefix: "WebConsoleSidebar",
+      customFormat: false,
     });
 
-    const endPanel = dom.aside(
-      {
-        className: "sidebar-wrapper",
-      },
-      dom.header(
-        {
-          className: "devtools-toolbar webconsole-sidebar-toolbar",
-        },
-        dom.button({
-          className: "devtools-button sidebar-close-button",
-          title: l10n.getStr("webconsole.closeSidebarButton.tooltip"),
-          onClick: this.onClickSidebarClose,
-        })
-      ),
+    return [
       dom.aside(
         {
-          className: "sidebar-contents",
+          className: "sidebar",
+          key: "sidebar",
+          ref: node => {
+            this.node = node;
+          },
         },
-        objectInspector
-      )
-    );
-
-    return createElement(SplitBox, {
-      className: "sidebar",
-      endPanel,
-      endPanelControl: true,
-      initialSize: "200px",
-      minSize: "100px",
-      vert: true,
-    });
+        dom.header(
+          {
+            className: "devtools-toolbar webconsole-sidebar-toolbar",
+          },
+          dom.button({
+            className: "devtools-button sidebar-close-button",
+            title: l10n.getStr("webconsole.closeSidebarButton.tooltip"),
+            onClick: this.onClickSidebarClose,
+          })
+        ),
+        dom.aside(
+          {
+            className: "sidebar-contents",
+          },
+          objectInspector
+        )
+      ),
+      GridElementWidthResizer({
+        key: "resizer",
+        enabled: true,
+        position: "start",
+        className: "sidebar-resizer",
+        getControlledElementNode: () => this.node,
+      }),
+    ];
   }
 }
 
 function mapStateToProps(state, props) {
   return {
-    sidebarVisible: state.ui.sidebarVisible,
-    grip: state.ui.gripInSidebar,
+    front: state.ui.frontInSidebar,
   };
 }
 

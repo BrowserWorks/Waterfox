@@ -109,7 +109,13 @@ class JsepAudioCodecDescription : public JsepCodecDescription {
         mMaxPlaybackRate(0),
         mForceMono(false),
         mFECEnabled(false),
-        mDtmfEnabled(false) {}
+        mDtmfEnabled(false),
+        mMaxAverageBitrate(0),
+        mDTXEnabled(false),
+        mFrameSizeMs(0),
+        mMinFrameSizeMs(0),
+        mMaxFrameSizeMs(0),
+        mCbrEnabled(false) {}
 
   JSEP_CODEC_CLONE(JsepAudioCodecDescription)
 
@@ -154,11 +160,17 @@ class JsepAudioCodecDescription : public JsepCodecDescription {
       if (mMaxPlaybackRate) {
         opusParams.maxplaybackrate = mMaxPlaybackRate;
       }
+      opusParams.maxAverageBitrate = mMaxAverageBitrate;
       if (mChannels == 2 && !mForceMono) {
         // We prefer to receive stereo, if available.
         opusParams.stereo = 1;
       }
       opusParams.useInBandFec = mFECEnabled ? 1 : 0;
+      opusParams.useDTX = mDTXEnabled;
+      opusParams.frameSizeMs = mFrameSizeMs;
+      opusParams.minFrameSizeMs = mMinFrameSizeMs;
+      opusParams.maxFrameSizeMs = mMaxFrameSizeMs;
+      opusParams.useCbr = mCbrEnabled;
       msection.SetFmtp(SdpFmtpAttributeList::Fmtp(mDefaultPt, opusParams));
     } else if (mName == "telephone-event") {
       // add the default dtmf tones
@@ -181,6 +193,25 @@ class JsepAudioCodecDescription : public JsepCodecDescription {
       // at the received side is declarative and can be negotiated
       // separately for either media direction.
       mFECEnabled = opusParams.useInBandFec;
+      if ((opusParams.maxAverageBitrate >= 6000) &&
+          (opusParams.maxAverageBitrate <= 510000)) {
+        mMaxAverageBitrate = opusParams.maxAverageBitrate;
+      }
+      mDTXEnabled = opusParams.useDTX;
+      if (remoteMsection.GetAttributeList().HasAttribute(
+              SdpAttribute::kPtimeAttribute)) {
+        mFrameSizeMs = remoteMsection.GetAttributeList().GetPtime();
+      } else {
+        mFrameSizeMs = opusParams.frameSizeMs;
+      }
+      mMinFrameSizeMs = opusParams.minFrameSizeMs;
+      if (remoteMsection.GetAttributeList().HasAttribute(
+              SdpAttribute::kMaxptimeAttribute)) {
+        mFrameSizeMs = remoteMsection.GetAttributeList().GetMaxptime();
+      } else {
+        mMaxFrameSizeMs = opusParams.maxFrameSizeMs;
+      }
+      mCbrEnabled = opusParams.useCbr;
     }
 
     return true;
@@ -190,6 +221,12 @@ class JsepAudioCodecDescription : public JsepCodecDescription {
   bool mForceMono;
   bool mFECEnabled;
   bool mDtmfEnabled;
+  uint32_t mMaxAverageBitrate;
+  bool mDTXEnabled;
+  uint32_t mFrameSizeMs;
+  uint32_t mMinFrameSizeMs;
+  uint32_t mMaxFrameSizeMs;
+  bool mCbrEnabled;
 };
 
 class JsepVideoCodecDescription : public JsepCodecDescription {
@@ -202,6 +239,8 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
         mTmmbrEnabled(false),
         mRembEnabled(false),
         mFECEnabled(false),
+        mTransportCCEnabled(false),
+        mRtxEnabled(false),
         mREDPayloadType(0),
         mULPFECPayloadType(0),
         mProfileLevelId(0),
@@ -249,6 +288,19 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
     mFECEnabled = true;
     mREDPayloadType = redPt;
     mULPFECPayloadType = ulpfecPt;
+  }
+
+  virtual void EnableTransportCC() {
+    if (!mTransportCCEnabled) {
+      mTransportCCEnabled = true;
+      mOtherFbTypes.push_back(
+          {"", SdpRtcpFbAttributeList::kTransportCC, "", ""});
+    }
+  }
+
+  void EnableRtx(const std::string& rtxPayloadType) {
+    mRtxEnabled = true;
+    mRtxPayloadType = rtxPayloadType;
   }
 
   void AddParametersToMSection(SdpMediaSection& msection) const override {
@@ -302,6 +354,20 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
         msection.SetFmtp(SdpFmtpAttributeList::Fmtp(mDefaultPt, vp8Params));
       }
     }
+
+    if (mRtxEnabled && mDirection == sdp::kRecv) {
+      SdpFmtpAttributeList::RtxParameters params(
+          GetRtxParameters(mDefaultPt, msection));
+      uint16_t apt;
+      if (SdpHelper::GetPtAsInt(mDefaultPt, &apt)) {
+        if (apt <= 127) {
+          msection.AddCodec(mRtxPayloadType, "rtx", mClock, mChannels);
+
+          params.apt = apt;
+          msection.SetFmtp(SdpFmtpAttributeList::Fmtp(mRtxPayloadType, params));
+        }
+      }
+    }
   }
 
   void AddRtcpFbsToMSection(SdpMediaSection& msection) const {
@@ -352,6 +418,45 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
       result = static_cast<const SdpFmtpAttributeList::RedParameters&>(*params);
     }
 
+    return result;
+  }
+
+  SdpFmtpAttributeList::RtxParameters GetRtxParameters(
+      const std::string& pt, const SdpMediaSection& msection) const {
+    SdpFmtpAttributeList::RtxParameters result;
+    const auto* params = msection.FindFmtp(pt);
+
+    if (params && params->codec_type == SdpRtpmapAttributeList::kRtx) {
+      result = static_cast<const SdpFmtpAttributeList::RtxParameters&>(*params);
+    }
+
+    return result;
+  }
+
+  Maybe<std::string> GetRtxPtByApt(const std::string& apt,
+                                   const SdpMediaSection& msection) const {
+    Maybe<std::string> result;
+    uint16_t aptAsInt;
+    if (!SdpHelper::GetPtAsInt(apt, &aptAsInt)) {
+      return result;
+    }
+
+    const SdpAttributeList& attrs = msection.GetAttributeList();
+    if (attrs.HasAttribute(SdpAttribute::kFmtpAttribute)) {
+      for (const auto& fmtpAttr : attrs.GetFmtp().mFmtps) {
+        if (fmtpAttr.parameters) {
+          auto* params = fmtpAttr.parameters.get();
+          if (params && params->codec_type == SdpRtpmapAttributeList::kRtx) {
+            const SdpFmtpAttributeList::RtxParameters* rtxParams =
+                static_cast<const SdpFmtpAttributeList::RtxParameters*>(params);
+            if (rtxParams->apt == aptAsInt) {
+              result = Some(fmtpAttr.format);
+              break;
+            }
+          }
+        }
+      }
+    }
     return result;
   }
 
@@ -446,6 +551,16 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
 
         mConstraints.maxFs = vp8Params.max_fs;
         mConstraints.maxFps = vp8Params.max_fr;
+      }
+    }
+
+    if (mRtxEnabled && (mDirection == sdp::kSend || isOffer)) {
+      Maybe<std::string> rtxPt = GetRtxPtByApt(mDefaultPt, remoteMsection);
+      if (rtxPt.isSome()) {
+        EnableRtx(*rtxPt);
+      } else {
+        mRtxEnabled = false;
+        mRtxPayloadType = "";
       }
     }
 
@@ -651,6 +766,15 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
     return false;
   }
 
+  virtual bool RtcpFbTransportCCIsSet() const {
+    for (const auto& fb : mOtherFbTypes) {
+      if (fb.type == SdpRtcpFbAttributeList::kTransportCC) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   virtual void UpdateRedundantEncodings(
       const std::vector<UniquePtr<JsepCodecDescription>>& codecs) {
     for (const auto& codec : codecs) {
@@ -674,8 +798,11 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
   bool mTmmbrEnabled;
   bool mRembEnabled;
   bool mFECEnabled;
+  bool mTransportCCEnabled;
+  bool mRtxEnabled;
   uint8_t mREDPayloadType;
   uint8_t mULPFECPayloadType;
+  std::string mRtxPayloadType;
   std::vector<uint8_t> mRedundantEncodings;
 
   // H264-specific stuff

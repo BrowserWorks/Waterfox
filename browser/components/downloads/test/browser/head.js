@@ -141,9 +141,10 @@ async function setDownloadDir() {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.download.folderList", 2],
-      ["browser.download.dir", tmpDir, Ci.nsIFile],
+      ["browser.download.dir", tmpDir.path],
     ],
   });
+  return tmpDir.path;
 }
 
 let gHttpServer = null;
@@ -184,7 +185,7 @@ function httpUrl(aFileName) {
 
 function openLibrary(aLeftPaneRoot) {
   let library = window.openDialog(
-    "chrome://browser/content/places/places.xul",
+    "chrome://browser/content/places/places.xhtml",
     "",
     "chrome,toolbar=yes,dialog=no,resizable",
     aLeftPaneRoot

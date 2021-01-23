@@ -68,11 +68,33 @@ def main():
         description='Upload symbols in ZIP using token from Taskcluster secrets service.')
     parser.add_argument('zip',
                         help='Symbols zip file - URL or path to local file')
+    parser.add_argument('--ignore-missing',
+                        help='No error on missing files',
+                        action='store_true')
     args = parser.parse_args()
 
-    if not args.zip.startswith('http') and not os.path.isfile(args.zip):
-        log.error('Error: zip file "{0}" does not exist!'.format(args.zip))
-        return 1
+    def check_file_exists(url):
+        for i, _ in enumerate(redo.retrier(attempts=MAX_RETRIES), start=1):
+            try:
+                resp = requests.head(url, allow_redirects=True)
+                return resp.status_code == requests.codes.ok
+            except requests.exceptions.RequestException as e:
+                log.error('Error: {0}'.format(e))
+            log.info('Retrying...')
+        return False
+
+    if args.zip.startswith('http'):
+        is_existing = check_file_exists(args.zip)
+    else:
+        is_existing = os.path.isfile(args.zip)
+
+    if not is_existing:
+        if args.ignore_missing:
+            log.info('Zip file "{0}" does not exist!'.format(args.zip))
+            return 0
+        else:
+            log.error('Error: zip file "{0}" does not exist!'.format(args.zip))
+            return 1
 
     secret_name = os.environ.get('SYMBOL_SECRET')
     if secret_name is not None:
@@ -113,9 +135,9 @@ def main():
                 # in front of symbols.mozilla.org has a 300 second timeout, so we'll use that.
                 timeout=(10, 300),
                 **zip_arg)
-            # 500 is likely to be a transient failure.
+            # 429 or any 5XX is likely to be a transient failure.
             # Break out for success or other error codes.
-            if r.status_code < 500:
+            if r.ok or (r.status_code < 500 and r.status_code != 429):
                 break
             print_error(r)
         except requests.exceptions.RequestException as e:

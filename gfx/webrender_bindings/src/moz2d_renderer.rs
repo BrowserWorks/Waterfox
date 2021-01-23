@@ -1,3 +1,6 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #![deny(missing_docs)]
 
 //! Provides the webrender-side implementation of gecko blob images.
@@ -6,22 +9,25 @@
 //! it also handles merging "partial" blob images (see `merge_blob_images`) and
 //! registering fonts found in the blob (see `prepare_request`).
 
-use webrender::api::*;
-use webrender::api::units::{BlobDirtyRect, BlobToDeviceTranslation};
-use bindings::{ByteSlice, MutByteSlice, wr_moz2d_render_cb, ArcVecU8, gecko_profiler_start_marker, gecko_profiler_end_marker};
-use rayon::ThreadPool;
+use bindings::{
+    gecko_profiler_end_marker, gecko_profiler_start_marker, wr_moz2d_render_cb, ArcVecU8, ByteSlice, MutByteSlice,
+};
 use rayon::prelude::*;
+use rayon::ThreadPool;
+use webrender::api::units::{BlobDirtyRect, BlobToDeviceTranslation, DeviceIntRect};
+use webrender::api::*;
 
-use std::collections::hash_map::HashMap;
-use std::collections::hash_map;
+use euclid::Rect;
+use std;
 use std::collections::btree_map::BTreeMap;
+use std::collections::hash_map;
+use std::collections::hash_map::HashMap;
 use std::collections::Bound::Included;
+use std::i32;
 use std::mem;
-use std::os::raw::{c_void, c_char};
+use std::os::raw::{c_char, c_void};
 use std::ptr;
 use std::sync::Arc;
-use std::i32;
-use std;
 
 #[cfg(target_os = "windows")]
 use dwrote;
@@ -45,12 +51,10 @@ fn dump_bounds(blob: &[u8], dirty_rect: Box2d) {
     let mut index = BlobReader::new(blob);
     while index.reader.has_more() {
         let e = index.read_entry();
-        dlog!("  {:?} {}", e.bounds,
-                 if e.bounds.contained_by(&dirty_rect) {
-                    "*"
-                 } else {
-                    ""
-                 }
+        dlog!(
+            "  {:?} {}",
+            e.bounds,
+            if e.bounds.contained_by(&dirty_rect) { "*" } else { "" }
         );
     }
 }
@@ -67,28 +71,27 @@ fn dump_index(blob: &[u8]) -> () {
     }
 }
 
-
-
 /// Handles the interpretation and rasterization of gecko-based (moz2d) WR blob images.
 pub struct Moz2dBlobImageHandler {
     workers: Arc<ThreadPool>,
+    workers_low_priority: Arc<ThreadPool>,
     blob_commands: HashMap<BlobImageKey, BlobCommand>,
+    enable_multithreading: bool,
 }
 
 /// Transmute some bytes into a value.
 ///
-/// Wow this is dangerous if non-POD values are read!
 /// FIXME: kill this with fire and/or do a super robust security audit
-unsafe fn convert_from_bytes<T>(slice: &[u8]) -> T {
+unsafe fn convert_from_bytes<T: Copy>(slice: &[u8]) -> T {
     assert!(mem::size_of::<T>() <= slice.len());
-    ptr::read(slice.as_ptr() as *const T)
+    ptr::read_unaligned(slice.as_ptr() as *const T)
 }
 
 /// Transmute a value into some bytes.
 fn convert_to_bytes<T>(x: &T) -> &[u8] {
     unsafe {
         let ip: *const T = x;
-        let bp: *const u8 = ip as * const _;
+        let bp: *const u8 = ip as *const _;
         ::std::slice::from_raw_parts(bp, mem::size_of::<T>())
     }
 }
@@ -96,14 +99,14 @@ fn convert_to_bytes<T>(x: &T) -> &[u8] {
 /// A simple helper for deserializing a bunch of transmuted POD data from bytes.
 struct BufReader<'a> {
     /// The buffer to read from.
-    buf: &'a[u8],
+    buf: &'a [u8],
     /// Where we currently are reading from.
     pos: usize,
 }
 
 impl<'a> BufReader<'a> {
     /// Creates a reader over the given input.
-    fn new(buf: &'a[u8]) -> BufReader<'a> {
+    fn new(buf: &'a [u8]) -> BufReader<'a> {
         BufReader { buf: buf, pos: 0 }
     }
 
@@ -113,7 +116,7 @@ impl<'a> BufReader<'a> {
     ///
     /// To limit the scope of this unsafety, please don't call this directly.
     /// Make a helper method for each whitelisted type.
-    unsafe fn read<T>(&mut self) -> T {
+    unsafe fn read<T: Copy>(&mut self) -> T {
         let ret = convert_from_bytes(&self.buf[self.pos..]);
         self.pos += mem::size_of::<T>();
         ret
@@ -174,6 +177,12 @@ struct BlobReader<'a> {
     begin: usize,
 }
 
+#[derive(PartialEq, Debug, Eq, Clone, Copy)]
+struct IntPoint {
+    x: i32,
+    y: i32,
+}
+
 /// The metadata for each display item in a blob image (doesn't match the serialized layout).
 ///
 /// See BlobReader above for detailed docs of the blob image format.
@@ -190,12 +199,16 @@ struct Entry {
 
 impl<'a> BlobReader<'a> {
     /// Creates a new BlobReader for the given buffer.
-    fn new(buf: &'a[u8]) -> BlobReader<'a> {
+    fn new(buf: &'a [u8]) -> BlobReader<'a> {
         // The offset of the index is at the end of the buffer.
-        let index_offset_pos = buf.len()-mem::size_of::<usize>();
+        let index_offset_pos = buf.len() - mem::size_of::<usize>();
+        assert!(index_offset_pos < buf.len());
         let index_offset = unsafe { convert_from_bytes::<usize>(&buf[index_offset_pos..]) };
 
-        BlobReader { reader: BufReader::new(&buf[index_offset..index_offset_pos]), begin: 0 }
+        BlobReader {
+            reader: BufReader::new(&buf[index_offset..index_offset_pos]),
+            begin: 0,
+        }
     }
 
     /// Reads the next display item's metadata.
@@ -203,7 +216,12 @@ impl<'a> BlobReader<'a> {
         let end = self.reader.read_usize();
         let extra_end = self.reader.read_usize();
         let bounds = self.reader.read_box();
-        let ret = Entry { begin: self.begin, end, extra_end, bounds };
+        let ret = Entry {
+            begin: self.begin,
+            end,
+            extra_end,
+            bounds,
+        };
         self.begin = extra_end;
         ret
     }
@@ -216,20 +234,24 @@ struct BlobWriter {
     /// The buffer that the data and extra data for the items is accumulated.
     data: Vec<u8>,
     /// The buffer that the metadata for the items is accumulated.
-    index: Vec<u8>
+    index: Vec<u8>,
 }
 
 impl BlobWriter {
     /// Creates an empty BlobWriter.
     fn new() -> BlobWriter {
-        BlobWriter { data: Vec::new(), index: Vec::new() }
+        BlobWriter {
+            data: Vec::new(),
+            index: Vec::new(),
+        }
     }
 
     /// Writes a display item to the blob.
     fn new_entry(&mut self, extra_size: usize, bounds: Box2d, data: &[u8]) {
         self.data.extend_from_slice(data);
         // Write 'end' to the index: the offset where the regular data ends and the extra data starts.
-        self.index.extend_from_slice(convert_to_bytes(&(self.data.len() - extra_size)));
+        self.index
+            .extend_from_slice(convert_to_bytes(&(self.data.len() - extra_size)));
         // Write 'extra_end' to the index: the offset where the extra data ends.
         self.index.extend_from_slice(convert_to_bytes(&self.data.len()));
         // XXX: we can aggregate these writes
@@ -262,16 +284,48 @@ struct Box2d {
     /// Bottom-right x
     x2: i32,
     /// Bottom-right y
-    y2: i32
+    y2: i32,
 }
 
 impl Box2d {
     /// Returns whether `self` is contained by `other` (inclusive).
+    /// an empty self is contained in every rect
     fn contained_by(&self, other: &Box2d) -> bool {
-        self.x1 >= other.x1 &&
-        self.x2 <= other.x2 &&
-        self.y1 >= other.y1 &&
-        self.y2 <= other.y2
+        self.is_empty() || (self.x1 >= other.x1 && self.x2 <= other.x2 && self.y1 >= other.y1 && self.y2 <= other.y2)
+    }
+
+    fn intersection(&self, other: &Box2d) -> Box2d {
+        let result = Box2d {
+            x1: self.x1.max(other.x1),
+            y1: self.y1.max(other.y1),
+            x2: self.x2.min(other.x2),
+            y2: self.y2.min(other.y2),
+        };
+        if self.is_empty() || other.is_empty() {
+            assert!(result.is_empty());
+        }
+        result
+    }
+
+    fn is_empty(&self) -> bool {
+        self.x2 <= self.x1 || self.y2 <= self.y1
+    }
+}
+
+impl<T> From<Rect<i32, T>> for Box2d {
+    fn from(rect: Rect<i32, T>) -> Box2d {
+        (&rect).into()
+    }
+}
+
+impl<T> From<&Rect<i32, T>> for Box2d {
+    fn from(rect: &Rect<i32, T>) -> Box2d {
+        Box2d {
+            x1: rect.min_x(),
+            y1: rect.min_y(),
+            x2: rect.max_x(),
+            y2: rect.max_y(),
+        }
     }
 }
 
@@ -289,13 +343,17 @@ struct CachedReader<'a> {
     /// Cached entries that have been read but not yet requested by our consumer.
     cache: BTreeMap<(Box2d, u32), Entry>,
     /// The current number of internally read display items, used to preserve list order.
-    cache_index_counter: u32
+    cache_index_counter: u32,
 }
 
 impl<'a> CachedReader<'a> {
     /// Creates a new CachedReader.
-    pub fn new(buf: &'a[u8]) -> CachedReader {
-        CachedReader{ reader: BlobReader::new(buf), cache: BTreeMap::new(), cache_index_counter: 0 }
+    pub fn new(buf: &'a [u8]) -> CachedReader {
+        CachedReader {
+            reader: BlobReader::new(buf),
+            cache: BTreeMap::new(),
+            cache_index_counter: 0,
+        }
     }
 
     /// Tries to find the given bounds in the cache of internally read items, removing it if found.
@@ -304,12 +362,20 @@ impl<'a> CachedReader<'a> {
             return None;
         }
 
-        let key_to_delete = match self.cache.range((Included((*bounds, 0u32)), Included((*bounds, std::u32::MAX)))).next() {
+        let key_to_delete = match self
+            .cache
+            .range((Included((*bounds, 0u32)), Included((*bounds, std::u32::MAX))))
+            .next()
+        {
             Some((&key, _)) => key,
             None => return None,
         };
 
-        Some(self.cache.remove(&key_to_delete).expect("We just got this key from range, it needs to be present"))
+        Some(
+            self.cache
+                .remove(&key_to_delete)
+                .expect("We just got this key from range, it needs to be present"),
+        )
     }
 
     /// Yields the next item in the blob image with the given bounds.
@@ -333,7 +399,6 @@ impl<'a> CachedReader<'a> {
         }
     }
 }
-
 
 /// Merges a new partial blob image into an existing complete one.
 ///
@@ -370,17 +435,25 @@ impl<'a> CachedReader<'a> {
 /// the first not-yet-copied item with those bounds in the old list and copy that.
 /// Any items found in the old list but not the new one can be safely assumed to
 /// have been deleted.
-fn merge_blob_images(old_buf: &[u8], new_buf: &[u8], dirty_rect: Box2d) -> Vec<u8> {
-
+fn merge_blob_images(
+    old_buf: &[u8],
+    new_buf: &[u8],
+    dirty_rect: Box2d,
+    old_visible_rect: Box2d,
+    new_visible_rect: Box2d,
+) -> Vec<u8> {
     let mut result = BlobWriter::new();
     dlog!("dirty rect: {:?}", dirty_rect);
     dlog!("old:");
     dump_bounds(old_buf, dirty_rect);
     dlog!("new:");
     dump_bounds(new_buf, dirty_rect);
+    dlog!("old visibile rect: {:?}", old_visible_rect);
+    dlog!("new visibile rect: {:?}", new_visible_rect);
 
     let mut old_reader = CachedReader::new(old_buf);
     let mut new_reader = BlobReader::new(new_buf);
+    let preserved_rect = old_visible_rect.intersection(&new_visible_rect);
 
     // Loop over both new and old entries merging them.
     // Both new and old must have the same number of entries that
@@ -389,7 +462,8 @@ fn merge_blob_images(old_buf: &[u8], new_buf: &[u8], dirty_rect: Box2d) -> Vec<u
     while new_reader.reader.has_more() {
         let new = new_reader.read_entry();
         dlog!("bounds: {} {} {:?}", new.end, new.extra_end, new.bounds);
-        if new.bounds.contained_by(&dirty_rect) {
+        let preserved_bounds = new.bounds.intersection(&preserved_rect);
+        if preserved_bounds.contained_by(&dirty_rect) {
             result.new_entry(new.extra_end - new.end, new.bounds, &new_buf[new.begin..new.extra_end]);
         } else {
             let old = old_reader.next_entry_with_bounds(&new.bounds, &dirty_rect);
@@ -407,10 +481,10 @@ fn merge_blob_images(old_buf: &[u8], new_buf: &[u8], dirty_rect: Box2d) -> Vec<u
     while old_reader.reader.reader.has_more() {
         let old = old_reader.reader.read_entry();
         dlog!("new bounds: {} {} {:?}", old.end, old.extra_end, old.bounds);
-        assert!(old.bounds.contained_by(&dirty_rect));
+        //assert!(old.bounds.contained_by(&dirty_rect));
     }
 
-    assert!(old_reader.cache.is_empty());
+    //assert!(old_reader.cache.is_empty());
 
     let result = result.finish();
     dump_index(&result);
@@ -419,6 +493,7 @@ fn merge_blob_images(old_buf: &[u8], new_buf: &[u8], dirty_rect: Box2d) -> Vec<u
 
 /// A font used by a blob image.
 #[repr(C)]
+#[derive(Copy, Clone)]
 struct BlobFont {
     /// The font key.
     font_instance_key: FontInstanceKey,
@@ -431,24 +506,32 @@ struct BlobFont {
 struct BlobCommand {
     /// The blob.
     data: Arc<BlobImageData>,
-    /// The size of the tiles to use in rasterization, if tiling should be used.
-    tile_size: Option<TileSize>,
+    /// What part of the blob should be rasterized (visible_rect's top-left corresponds to
+    /// (0,0) in the blob's rasterization)
+    visible_rect: DeviceIntRect,
+    /// The size of the tiles to use in rasterization.
+    tile_size: TileSize,
 }
 
- struct Job {
+struct Job {
     request: BlobImageRequest,
     descriptor: BlobImageDescriptor,
     commands: Arc<BlobImageData>,
     dirty_rect: BlobDirtyRect,
-    tile_size: Option<TileSize>,
+    visible_rect: DeviceIntRect,
+    tile_size: TileSize,
 }
 
 /// Rasterizes gecko blob images.
 struct Moz2dBlobRasterizer {
     /// Pool of rasterizers.
     workers: Arc<ThreadPool>,
+    /// Pool of low priority rasterizers.
+    workers_low_priority: Arc<ThreadPool>,
     /// Blobs to rasterize.
     blob_commands: HashMap<BlobImageKey, BlobCommand>,
+    ///
+    enable_multithreading: bool,
 }
 
 struct GeckoProfilerMarker {
@@ -457,38 +540,53 @@ struct GeckoProfilerMarker {
 
 impl GeckoProfilerMarker {
     pub fn new(name: &'static [u8]) -> GeckoProfilerMarker {
-        unsafe { gecko_profiler_start_marker(name.as_ptr() as *const c_char); }
+        unsafe {
+            gecko_profiler_start_marker(name.as_ptr() as *const c_char);
+        }
         GeckoProfilerMarker { name }
     }
 }
 
 impl Drop for GeckoProfilerMarker {
     fn drop(&mut self) {
-        unsafe { gecko_profiler_end_marker(self.name.as_ptr() as *const c_char); }
+        unsafe {
+            gecko_profiler_end_marker(self.name.as_ptr() as *const c_char);
+        }
     }
 }
 
 impl AsyncBlobImageRasterizer for Moz2dBlobRasterizer {
-
-    fn rasterize(&mut self, requests: &[BlobImageParams], low_priority: bool) -> Vec<(BlobImageRequest, BlobImageResult)> {
+    fn rasterize(
+        &mut self,
+        requests: &[BlobImageParams],
+        low_priority: bool,
+    ) -> Vec<(BlobImageRequest, BlobImageResult)> {
         // All we do here is spin up our workers to callback into gecko to replay the drawing commands.
         let _marker = GeckoProfilerMarker::new(b"BlobRasterization\0");
 
-        let requests: Vec<Job> = requests.into_iter().map(|params| {
-            let command = &self.blob_commands[&params.request.key];
-            let blob = Arc::clone(&command.data);
-            Job {
-                request: params.request,
-                descriptor: params.descriptor,
-                commands: blob,
-                dirty_rect: params.dirty_rect,
-                tile_size: command.tile_size,
-            }
-        }).collect();
+        let requests: Vec<Job> = requests
+            .into_iter()
+            .map(|params| {
+                let command = &self.blob_commands[&params.request.key];
+                let blob = Arc::clone(&command.data);
+                assert!(params.descriptor.rect.size.width > 0 && params.descriptor.rect.size.height > 0);
+
+                Job {
+                    request: params.request,
+                    descriptor: params.descriptor,
+                    commands: blob,
+                    visible_rect: command.visible_rect,
+                    dirty_rect: params.dirty_rect,
+                    tile_size: command.tile_size,
+                }
+            })
+            .collect();
 
         // If we don't have a lot of blobs it is probably not worth the initial cost
         // of installing work on rayon's thread pool so we do it serially on this thread.
-        let should_parallelize = if low_priority {
+        let should_parallelize = if !self.enable_multithreading {
+            false
+        } else if low_priority {
             requests.len() > 2
         } else {
             // For high priority requests we don't "risk" the potential priority inversion of
@@ -501,9 +599,14 @@ impl AsyncBlobImageRasterizer for Moz2dBlobRasterizer {
             // Parallel version synchronously installs a job on the thread pool which will
             // try to do the work in parallel.
             // This thread is blocked until the thread pool is done doing the work.
-            self.workers.install(||{
-                requests.into_par_iter().map(rasterize_blob).collect()
-            })
+            let lambda = || requests.into_par_iter().map(rasterize_blob).collect();
+            if low_priority {
+                //TODO --bpe runtime flag to A/B test these two
+                self.workers_low_priority.install(lambda)
+            //self.workers.install(lambda)
+            } else {
+                self.workers.install(lambda)
+            }
         } else {
             requests.into_iter().map(rasterize_blob).collect()
         }
@@ -512,9 +615,8 @@ impl AsyncBlobImageRasterizer for Moz2dBlobRasterizer {
 
 fn rasterize_blob(job: Job) -> (BlobImageRequest, BlobImageResult) {
     let descriptor = job.descriptor;
-    let buf_size = (descriptor.rect.size.width
-        * descriptor.rect.size.height
-        * descriptor.format.bytes_per_pixel()) as usize;
+    let buf_size =
+        (descriptor.rect.size.width * descriptor.rect.size.height * descriptor.format.bytes_per_pixel()) as usize;
 
     let mut output = vec![0u8; buf_size];
 
@@ -522,15 +624,16 @@ fn rasterize_blob(job: Job) -> (BlobImageRequest, BlobImageResult) {
         DirtyRect::Partial(rect) => Some(rect),
         DirtyRect::All => None,
     };
+    assert!(descriptor.rect.size.width > 0 && descriptor.rect.size.height > 0);
 
     let result = unsafe {
         if wr_moz2d_render_cb(
             ByteSlice::new(&job.commands[..]),
-            descriptor.rect.size.width,
-            descriptor.rect.size.height,
             descriptor.format,
-            job.tile_size.as_ref(),
-            job.request.tile.as_ref(),
+            &descriptor.rect,
+            &job.visible_rect,
+            job.tile_size,
+            &job.request.tile,
             dirty_rect.as_ref(),
             MutByteSlice::new(output.as_mut_slice()),
         ) {
@@ -553,15 +656,35 @@ fn rasterize_blob(job: Job) -> (BlobImageRequest, BlobImageResult) {
 }
 
 impl BlobImageHandler for Moz2dBlobImageHandler {
-    fn add(&mut self, key: BlobImageKey, data: Arc<BlobImageData>, tile_size: Option<TileSize>) {
+    fn create_similar(&self) -> Box<dyn BlobImageHandler> {
+        Box::new(Self::new(
+            Arc::clone(&self.workers),
+            Arc::clone(&self.workers_low_priority),
+        ))
+    }
+
+    fn add(&mut self, key: BlobImageKey, data: Arc<BlobImageData>, visible_rect: &DeviceIntRect, tile_size: TileSize) {
         {
             let index = BlobReader::new(&data);
             assert!(index.reader.has_more());
         }
-        self.blob_commands.insert(key, BlobCommand { data: Arc::clone(&data), tile_size });
+        self.blob_commands.insert(
+            key,
+            BlobCommand {
+                data: Arc::clone(&data),
+                visible_rect: *visible_rect,
+                tile_size,
+            },
+        );
     }
 
-    fn update(&mut self, key: BlobImageKey, data: Arc<BlobImageData>, dirty_rect: &BlobDirtyRect) {
+    fn update(
+        &mut self,
+        key: BlobImageKey,
+        data: Arc<BlobImageData>,
+        visible_rect: &DeviceIntRect,
+        dirty_rect: &BlobDirtyRect,
+    ) {
         match self.blob_commands.entry(key) {
             hash_map::Entry::Occupied(mut e) => {
                 let command = e.get_mut();
@@ -580,9 +703,18 @@ impl BlobImageHandler for Moz2dBlobImageHandler {
                         y2: i32::MAX,
                     }
                 };
-                command.data = Arc::new(merge_blob_images(&command.data, &data, dirty_rect));
+                command.data = Arc::new(merge_blob_images(
+                    &command.data,
+                    &data,
+                    dirty_rect,
+                    command.visible_rect.into(),
+                    visible_rect.into(),
+                ));
+                command.visible_rect = *visible_rect;
             }
-            _ => { panic!("missing image key"); }
+            _ => {
+                panic!("missing image key");
+            }
         }
     }
 
@@ -590,42 +722,51 @@ impl BlobImageHandler for Moz2dBlobImageHandler {
         self.blob_commands.remove(&key);
     }
 
-    fn create_blob_rasterizer(&mut self) -> Box<AsyncBlobImageRasterizer> {
+    fn create_blob_rasterizer(&mut self) -> Box<dyn AsyncBlobImageRasterizer> {
         Box::new(Moz2dBlobRasterizer {
             workers: Arc::clone(&self.workers),
+            workers_low_priority: Arc::clone(&self.workers_low_priority),
             blob_commands: self.blob_commands.clone(),
+            enable_multithreading: self.enable_multithreading,
         })
     }
 
     fn delete_font(&mut self, font: FontKey) {
-        unsafe { DeleteFontData(font); }
+        unsafe {
+            DeleteFontData(font);
+        }
     }
 
     fn delete_font_instance(&mut self, key: FontInstanceKey) {
-        unsafe { DeleteBlobFont(key); }
+        unsafe {
+            DeleteBlobFont(key);
+        }
     }
 
     fn clear_namespace(&mut self, namespace: IdNamespace) {
-        unsafe { ClearBlobImageResources(namespace); }
+        unsafe {
+            ClearBlobImageResources(namespace);
+        }
     }
 
-    fn prepare_resources(
-        &mut self,
-        resources: &BlobImageResources,
-        requests: &[BlobImageParams]
-    ) {
+    fn prepare_resources(&mut self, resources: &dyn BlobImageResources, requests: &[BlobImageParams]) {
         for params in requests {
             let commands = &self.blob_commands[&params.request.key];
             let blob = Arc::clone(&commands.data);
             self.prepare_request(&blob, resources);
         }
     }
+
+    fn enable_multithreading(&mut self, enable: bool) {
+        self.enable_multithreading = enable;
+    }
 }
 
-use bindings::{WrFontKey, WrFontInstanceKey, WrIdNamespace};
+use bindings::{WrFontInstanceKey, WrFontKey, WrIdNamespace};
 
 #[allow(improper_ctypes)] // this is needed so that rustc doesn't complain about passing the &Arc<Vec> to an extern function
 extern "C" {
+    fn HasFontData(key: WrFontKey) -> bool;
     fn AddFontData(key: WrFontKey, data: *const u8, size: usize, index: u32, vec: &ArcVecU8);
     fn AddNativeFontHandle(key: WrFontKey, handle: *mut c_void, index: u32);
     fn DeleteFontData(key: WrFontKey);
@@ -645,21 +786,25 @@ extern "C" {
 
 impl Moz2dBlobImageHandler {
     /// Create a new BlobImageHandler with the given thread pool.
-    pub fn new(workers: Arc<ThreadPool>) -> Self {
+    pub fn new(workers: Arc<ThreadPool>, workers_low_priority: Arc<ThreadPool>) -> Self {
         Moz2dBlobImageHandler {
             blob_commands: HashMap::new(),
             workers: workers,
+            workers_low_priority: workers_low_priority,
+            enable_multithreading: true,
         }
     }
 
     /// Does early preprocessing of a blob's resources.
     ///
     /// Currently just sets up fonts found in the blob.
-    fn prepare_request(&self, blob: &[u8], resources: &BlobImageResources) {
+    fn prepare_request(&self, blob: &[u8], resources: &dyn BlobImageResources) {
         #[cfg(target_os = "windows")]
         fn process_native_font_handle(key: FontKey, handle: &NativeFontHandle) {
             let file = dwrote::FontFile::new_from_path(&handle.path).unwrap();
-            let face = file.create_face(handle.index, dwrote::DWRITE_FONT_SIMULATIONS_NONE).unwrap();
+            let face = file
+                .create_face(handle.index, dwrote::DWRITE_FONT_SIMULATIONS_NONE)
+                .unwrap();
             unsafe { AddNativeFontHandle(key, face.as_ptr() as *mut c_void, 0) };
         }
 
@@ -676,7 +821,7 @@ impl Moz2dBlobImageHandler {
 
         fn process_fonts(
             mut extra_data: BufReader,
-            resources: &BlobImageResources,
+            resources: &dyn BlobImageResources,
             unscaled_fonts: &mut Vec<FontKey>,
             scaled_fonts: &mut Vec<FontInstanceKey>,
         ) {
@@ -690,13 +835,15 @@ impl Moz2dBlobImageHandler {
                 if let Some(instance) = resources.get_font_instance_data(font.font_instance_key) {
                     if !unscaled_fonts.contains(&instance.font_key) {
                         unscaled_fonts.push(instance.font_key);
-                        let template = resources.get_font_data(instance.font_key);
-                        match template {
-                            &FontTemplate::Raw(ref data, ref index) => {
-                                unsafe { AddFontData(instance.font_key, data.as_ptr(), data.len(), *index, data); }
-                            }
-                            &FontTemplate::Native(ref handle) => {
-                                process_native_font_handle(instance.font_key, handle);
+                        if !unsafe { HasFontData(instance.font_key) } {
+                            let template = resources.get_font_data(instance.font_key);
+                            match template {
+                                &FontTemplate::Raw(ref data, ref index) => unsafe {
+                                    AddFontData(instance.font_key, data.as_ptr(), data.len(), *index, data);
+                                },
+                                &FontTemplate::Native(ref handle) => {
+                                    process_native_font_handle(instance.font_key, handle);
+                                }
                             }
                         }
                     }
@@ -704,7 +851,7 @@ impl Moz2dBlobImageHandler {
                         AddBlobFont(
                             font.font_instance_key,
                             instance.font_key,
-                            instance.size.to_f32_px(),
+                            instance.size,
                             instance.options.as_ref(),
                             instance.platform_options.as_ref(),
                             instance.variations.as_ptr(),
@@ -720,7 +867,7 @@ impl Moz2dBlobImageHandler {
             let mut unscaled_fonts = Vec::new();
             let mut scaled_fonts = Vec::new();
             while index.reader.pos < index.reader.buf.len() {
-                let e  = index.read_entry();
+                let e = index.read_entry();
                 process_fonts(
                     BufReader::new(&blob[e.end..e.extra_end]),
                     resources,
@@ -731,4 +878,3 @@ impl Moz2dBlobImageHandler {
         }
     }
 }
-

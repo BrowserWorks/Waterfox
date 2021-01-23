@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title          "設定移行ウィザード">
+
+<!ENTITY importAllFrom.label            "オプション、ブックマーク、履歴、パスワードその他のデータをインポートする対象を選んでください:">
+<!ENTITY importBookmarksFrom.label      "ブックマークをインポートする対象を選んでください:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "ファイルからインポート">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "設定をインポートしない">
+<!ENTITY importFromNothing.accesskey     "D">
+
+<!ENTITY importSource.title             "設定とデータのインポート元">
+<!ENTITY importItems.title              "インポートする項目">
+<!ENTITY importItems.label              "インポートする項目を選択してください:">
+
+<!ENTITY selectProfile.title            "プロファイルの選択">
+<!ENTITY selectProfile.label            "インポートするプロファイルを選択してください:">
+
+<!ENTITY migrating.title                "インポートしています...">
+<!ENTITY migrating.label                "次の項目を現在インポートしています...">
+
+<!ENTITY done.title                     "インポート完了">
+<!ENTITY done.label                     "次のデータが正常にインポートされました:">

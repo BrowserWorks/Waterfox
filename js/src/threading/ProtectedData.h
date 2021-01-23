@@ -7,8 +7,13 @@
 #ifndef threading_ProtectedData_h
 #define threading_ProtectedData_h
 
+#include "mozilla/Atomics.h"
 #include "jstypes.h"
-#include "threading/Thread.h"
+#include "threading/LockGuard.h"
+#include "threading/Mutex.h"
+#include "threading/ThreadId.h"
+
+struct JS_PUBLIC_API JSContext;
 
 namespace JS {
 class JS_PUBLIC_API Zone;
@@ -58,9 +63,7 @@ namespace js {
 class MOZ_RAII AutoNoteSingleThreadedRegion {
  public:
 #ifdef JS_HAS_PROTECTED_DATA_CHECKS
-  static mozilla::Atomic<size_t, mozilla::SequentiallyConsistent,
-                         mozilla::recordreplay::Behavior::DontPreserve>
-      count;
+  static mozilla::Atomic<size_t, mozilla::SequentiallyConsistent> count;
   AutoNoteSingleThreadedRegion() { count++; }
   ~AutoNoteSingleThreadedRegion() { count--; }
 #else
@@ -189,6 +192,19 @@ class ProtectedDataZoneArg : public ProtectedData<Check, T> {
   using Base::operator=;
 };
 
+// Intermediate class for protected data whose checks take a JSContext.
+template <typename Check, typename T>
+class ProtectedDataContextArg : public ProtectedData<Check, T> {
+  using Base = ProtectedData<Check, T>;
+
+ public:
+  template <typename... Args>
+  explicit ProtectedDataContextArg(JSContext* cx, Args&&... args)
+      : ProtectedData<Check, T>(Check(cx), std::forward<Args>(args)...) {}
+
+  using Base::operator=;
+};
+
 class CheckUnprotected {
 #ifdef JS_HAS_PROTECTED_DATA_CHECKS
  public:
@@ -204,18 +220,38 @@ using UnprotectedData = ProtectedDataNoCheckArgs<CheckUnprotected, T>;
 
 class CheckThreadLocal {
 #ifdef JS_HAS_PROTECTED_DATA_CHECKS
-  Thread::Id id;
+  ThreadId id;
 
  public:
-  CheckThreadLocal() : id(ThisThread::GetId()) {}
+  CheckThreadLocal() : id(ThreadId::ThisThreadId()) {}
 
   void check() const;
+#endif
+};
+
+class CheckContextLocal {
+#ifdef JS_HAS_PROTECTED_DATA_CHECKS
+  JSContext* cx_;
+
+ public:
+  explicit CheckContextLocal(JSContext* cx) : cx_(cx) {}
+
+  void check() const;
+#else
+ public:
+  explicit CheckContextLocal(JSContext* cx) {}
 #endif
 };
 
 // Data which may only be accessed by the thread on which it is created.
 template <typename T>
 using ThreadData = ProtectedDataNoCheckArgs<CheckThreadLocal, T>;
+
+// Data which belongs to a JSContext and should only be accessed from that
+// JSContext's thread. Note that a JSContext may not have a thread currently
+// associated with it and any associated thread may change over time.
+template <typename T>
+using ContextData = ProtectedDataContextArg<CheckContextLocal, T>;
 
 // Enum describing which helper threads (GC tasks or Ion compilations) may
 // access data even though they do not have exclusive access to any zone.

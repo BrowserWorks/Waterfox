@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Nieuwepagina-instellingen">
+
+<!ENTITY  authorName.label          "Auteur:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Standaard paginaweergave">
+
+<!ENTITY defaultColors.label        "Standaardkleuren van lezer (kleuren niet in pagina instellen)">
+<!ENTITY defaultColors.accesskey    "S">
+<!ENTITY customColors.label         "Aangepaste kleuren gebruiken:">
+<!ENTITY customColors.accesskey     "A">
+
+<!ENTITY normalText.label           "Normale tekst">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Koppelingstekst">
+<!ENTITY linkText.accesskey         "K">
+<!ENTITY activeLinkText.label       "Actieve koppeling">
+<!ENTITY activeLinkText.accesskey   "e">
+<!ENTITY visitedLinkText.label      "Bezochte koppeling">
+<!ENTITY visitedLinkText.accesskey  "z">
+<!ENTITY background.label           "Achtergrond:">
+<!ENTITY background.accesskey       "c">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Achtergrondafbeelding:">
+<!ENTITY backgroundImage.accesskey  "t">
+<!ENTITY chooseFile.label           "Bestand kiezen…">
+<!ENTITY chooseFile.accesskey       "B">

@@ -18,30 +18,12 @@
 
 namespace js {
 
-class GlobalObject;
 class SharedArrayRawBuffer;
 
 class AtomicsObject : public NativeObject {
  public:
-  static const Class class_;
-  static JSObject* initClass(JSContext* cx, Handle<GlobalObject*> global);
-  static MOZ_MUST_USE bool toString(JSContext* cx, unsigned int argc,
-                                    Value* vp);
+  static const JSClass class_;
 };
-
-MOZ_MUST_USE bool atomics_compareExchange(JSContext* cx, unsigned argc,
-                                          Value* vp);
-MOZ_MUST_USE bool atomics_exchange(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_load(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_store(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_add(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_sub(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_and(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_or(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_xor(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_isLockFree(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_wait(JSContext* cx, unsigned argc, Value* vp);
-MOZ_MUST_USE bool atomics_notify(JSContext* cx, unsigned argc, Value* vp);
 
 class FutexThread {
   friend class AutoLockFutexAPI;
@@ -133,15 +115,11 @@ class FutexThread {
   // Shared futex lock for all runtimes.  We can perhaps do better,
   // but any lock will need to be per-domain (consider SharedWorker)
   // or coarser.
-  static mozilla::Atomic<js::Mutex*, mozilla::SequentiallyConsistent,
-                         mozilla::recordreplay::Behavior::DontPreserve>
-      lock_;
+  static mozilla::Atomic<js::Mutex*, mozilla::SequentiallyConsistent> lock_;
 
   // A flag that controls whether waiting is allowed.
   ThreadData<bool> canWait_;
 };
-
-JSObject* InitAtomicsClass(JSContext* cx, Handle<GlobalObject*> global);
 
 // Go to sleep if the int32_t value at the given address equals `value`.
 MOZ_MUST_USE FutexThread::WaitResult atomics_wait_impl(

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Assistent per contos da chat">
+
+<!ENTITY accountProtocolTitle.label   "Rait da chat">
+<!ENTITY accountProtocolInfo.label    "Tscherna per plaschair la rait da tes conto da chat.">
+<!ENTITY accountProtocolField.label   "Rait:">
+<!ENTITY accountProtocolGetMore.label "Dapli…">
+
+<!ENTITY accountUsernameTitle.label   "Num d'utilisader">
+<!ENTITY accountUsernameDuplicate.label "Quest conto è gia configurà!">
+
+<!ENTITY accountPasswordTitle.label   "Pled-clav">
+<!ENTITY accountPasswordInfo.label    "Endatescha per plaschair tes pled-clav en il champ sutvart.">
+<!ENTITY accountPasswordField.label   "Pled-clav:">
+<!ENTITY accountPasswordManager.label "Il pled-clav endatà qua vegn memorisà en l'administratur da pleds-clav. Lascha vid quest champ sche tes pled-clav duai vegnir dumandà mintga giada che ti connecteschas.">
+
+<!ENTITY accountAdvancedTitle.label   "Opziuns extendidas">
+<!ENTITY accountAdvancedInfo.label    "Ti pos sursiglir quest pass sche ti vuls.">
+<!ENTITY accountAdvanced.newMailNotification.label   "M'infurmar davart novs e-mails">
+<!ENTITY accountAliasGroupbox.caption "Alias local">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Quai cumpara mo en tia conversaziun, tes contacts na vegnan betg a vesair quai.">
+<!ENTITY accountProxySettings.caption "Parameters da Proxy">
+<!ENTITY accountProxySettings.change.label     "Midar…">
+<!ENTITY accountProxySettings.change.accessKey "M">
+
+<!ENTITY accountSummaryTitle.label   "Resumaziun">
+<!ENTITY accountSummaryInfo.label    "Ina resumaziun da las infurmaziuns endatadas vegn mussada sutvart. La controllescha avant che crear il conto.">
+<!ENTITY accountSummary.connectNow.label "Colliar ussa quest conto.">

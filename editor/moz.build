@@ -18,14 +18,11 @@ XPIDL_SOURCES += [
     'nsIEditorMailSupport.idl',
     'nsIEditorObserver.idl',
     'nsIEditorSpellCheck.idl',
-    'nsIEditorStyleSheets.idl',
     'nsIHTMLAbsPosEditor.idl',
     'nsIHTMLEditor.idl',
     'nsIHTMLInlineTableEditor.idl',
     'nsIHTMLObjectResizer.idl',
-    'nsIPlaintextEditor.idl',
     'nsITableEditor.idl',
-    'nsIURIRefObject.idl',
 ]
 
 XPIDL_MODULE = 'editor'
@@ -35,4 +32,4 @@ TESTING_JS_MODULES += [
 ]
 
 with Files('**'):
-    BUG_COMPONENT = ('Core', 'Editor')
+    BUG_COMPONENT = ('Core', 'DOM: Editor')

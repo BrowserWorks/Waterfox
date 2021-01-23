@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
@@ -22,14 +24,14 @@ function make_channel(url, flags, usePrivateBrowsing) {
   var securityFlags = Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL;
 
   var uri = Services.io.newURI(url);
-  var principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {
+  var principal = Services.scriptSecurityManager.createContentPrincipal(uri, {
     privateBrowsingId: usePrivateBrowsing ? 1 : 0,
   });
 
   var req = NetUtil.newChannel({
-    uri: uri,
+    uri,
     loadingPrincipal: principal,
-    securityFlags: securityFlags,
+    securityFlags,
     contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER,
   });
 
@@ -65,27 +67,21 @@ Test.prototype = {
   _buffer: "",
   _isFromCache: false,
 
-  QueryInterface: function(iid) {
-    if (
-      iid.equals(Ci.nsIStreamListener) ||
-      iid.equals(Ci.nsIRequestObserver) ||
-      iid.equals(Ci.nsISupports)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIStreamListener",
+    "nsIRequestObserver",
+  ]),
 
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     var cachingChannel = request.QueryInterface(Ci.nsICacheInfoChannel);
     this._isFromCache = request.isPending() && cachingChannel.isFromCache();
   },
 
-  onDataAvailable: function(request, stream, offset, count) {
+  onDataAvailable(request, stream, offset, count) {
     this._buffer = this._buffer.concat(read_stream(stream, count));
   },
 
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     Assert.equal(Components.isSuccessCode(status), this.expectSuccess);
     Assert.equal(this._isFromCache, this.readFromCache);
     Assert.equal(gHitServer, this.hitServer);
@@ -93,7 +89,7 @@ Test.prototype = {
     do_timeout(0, run_next_test);
   },
 
-  run: function() {
+  run() {
     dump(
       "Running:" +
         "\n  " +

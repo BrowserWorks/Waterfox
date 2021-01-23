@@ -7,8 +7,6 @@
 
 "use strict";
 
-const BROWSER_SEARCH_PREF = "browser.search.";
-
 add_task(async function test() {
   await Services.search.init();
 
@@ -70,7 +68,6 @@ add_task(async function test() {
               purpose: undefined,
             },
           ],
-          mozparams: {},
         },
         {
           type: "application/x-suggestions+json",

@@ -5,6 +5,8 @@
 
 #include "ChromiumCDMCallbackProxy.h"
 
+#include <type_traits>
+
 #include "ChromiumCDMProxy.h"
 #include "content_decryption_module.h"
 
@@ -15,9 +17,9 @@ void ChromiumCDMCallbackProxy::DispatchToMainThread(const char* const aLabel,
                                                     Func aFunc,
                                                     Args&&... aArgs) {
   mMainThread->Dispatch(
-      // Use Decay to ensure all the types are passed by value not by reference.
-      NewRunnableMethod<typename Decay<Args>::Type...>(
-          aLabel, mProxy, aFunc, std::forward<Args>(aArgs)...),
+      // Use decay to ensure all the types are passed by value not by reference.
+      NewRunnableMethod<std::decay_t<Args>...>(aLabel, mProxy, aFunc,
+                                               std::forward<Args>(aArgs)...),
       NS_DISPATCH_NORMAL);
 }
 
@@ -41,11 +43,16 @@ void ChromiumCDMCallbackProxy::ResolvePromise(uint32_t aPromiseId) {
 }
 
 void ChromiumCDMCallbackProxy::RejectPromise(uint32_t aPromiseId,
-                                             nsresult aException,
+                                             ErrorResult&& aException,
                                              const nsCString& aErrorMessage) {
-  DispatchToMainThread("ChromiumCDMProxy::RejectPromise",
-                       &ChromiumCDMProxy::RejectPromise, aPromiseId, aException,
-                       aErrorMessage);
+  // Use CopyableErrorResult to store our exception in the runnable,
+  // because ErrorResult is not OK to move across threads.
+  DispatchToMainThread<decltype(&ChromiumCDMProxy::RejectPromiseOnMainThread),
+                       int32_t, StoreCopyPassByRRef<CopyableErrorResult>,
+                       const nsCString&>(
+      "ChromiumCDMProxy::RejectPromise",
+      &ChromiumCDMProxy::RejectPromiseOnMainThread, aPromiseId,
+      std::move(aException), aErrorMessage);
 }
 
 static dom::MediaKeyMessageType ToDOMMessageType(uint32_t aMessageType) {

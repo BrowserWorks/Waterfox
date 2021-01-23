@@ -95,9 +95,11 @@ class DeclarationBlock final {
       // copied. As a result the new value does not replace rule node tree until
       // traversal happens.
       //
-      // FIXME(emilio): This is a hack for ::first-line and transitions starting
-      // due to CSSOM changes when other transitions are already running. Try
-      // to simplify this setup.
+      // FIXME(emilio, bug 1606413): This is a hack for ::first-line and
+      // transitions starting due to CSSOM changes when other transitions are
+      // already running. Try to simplify this setup, so that rule tree updates
+      // find the mutated declaration block properly rather than having to
+      // insert the cloned declaration in the tree.
       return Clone();
     }
 
@@ -141,6 +143,8 @@ class DeclarationBlock final {
 
   bool IsReadOnly() const;
 
+  size_t SizeofIncludingThis(MallocSizeOf);
+
   static already_AddRefed<DeclarationBlock> FromCssText(
       const nsAString& aCssText, URLExtraData* aExtraData,
       nsCompatibility aMode, css::Loader* aLoader);
@@ -171,31 +175,28 @@ class DeclarationBlock final {
 
   uint32_t Count() const { return Servo_DeclarationBlock_Count(mRaw); }
 
-  bool GetNthProperty(uint32_t aIndex, nsAString& aReturn) const {
+  bool GetNthProperty(uint32_t aIndex, nsACString& aReturn) const {
     aReturn.Truncate();
     return Servo_DeclarationBlock_GetNthProperty(mRaw, aIndex, &aReturn);
   }
 
-  void GetPropertyValue(const nsAString& aProperty, nsAString& aValue) const {
-    NS_ConvertUTF16toUTF8 property(aProperty);
-    Servo_DeclarationBlock_GetPropertyValue(mRaw, &property, &aValue);
+  void GetPropertyValue(const nsACString& aProperty, nsAString& aValue) const {
+    Servo_DeclarationBlock_GetPropertyValue(mRaw, &aProperty, &aValue);
   }
 
   void GetPropertyValueByID(nsCSSPropertyID aPropID, nsAString& aValue) const {
     Servo_DeclarationBlock_GetPropertyValueById(mRaw, aPropID, &aValue);
   }
 
-  bool GetPropertyIsImportant(const nsAString& aProperty) const {
-    NS_ConvertUTF16toUTF8 property(aProperty);
-    return Servo_DeclarationBlock_GetPropertyIsImportant(mRaw, &property);
+  bool GetPropertyIsImportant(const nsACString& aProperty) const {
+    return Servo_DeclarationBlock_GetPropertyIsImportant(mRaw, &aProperty);
   }
 
   // Returns whether the property was removed.
-  bool RemoveProperty(const nsAString& aProperty,
+  bool RemoveProperty(const nsACString& aProperty,
                       DeclarationBlockMutationClosure aClosure = {}) {
     AssertMutable();
-    NS_ConvertUTF16toUTF8 property(aProperty);
-    return Servo_DeclarationBlock_RemoveProperty(mRaw, &property, aClosure);
+    return Servo_DeclarationBlock_RemoveProperty(mRaw, &aProperty, aClosure);
   }
 
   // Returns whether the property was removed.

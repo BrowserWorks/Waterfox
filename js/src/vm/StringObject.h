@@ -7,23 +7,21 @@
 #ifndef vm_StringObject_h
 #define vm_StringObject_h
 
-#include "builtin/String.h"
-
 #include "vm/JSObject.h"
 #include "vm/Shape.h"
 
 namespace js {
 
-class GlobalObject;
-
 class StringObject : public NativeObject {
   static const unsigned PRIMITIVE_VALUE_SLOT = 0;
   static const unsigned LENGTH_SLOT = 1;
 
+  static const ClassSpec classSpec_;
+
  public:
   static const unsigned RESERVED_SLOTS = 2;
 
-  static const Class class_;
+  static const JSClass class_;
 
   /*
    * Creates a new String object boxing the given string.  The object's
@@ -57,15 +55,13 @@ class StringObject : public NativeObject {
   static inline bool init(JSContext* cx, Handle<StringObject*> obj,
                           HandleString str);
 
+  static JSObject* createPrototype(JSContext* cx, JSProtoKey key);
+
   void setStringThis(JSString* str) {
     MOZ_ASSERT(getReservedSlot(PRIMITIVE_VALUE_SLOT).isUndefined());
     setFixedSlot(PRIMITIVE_VALUE_SLOT, StringValue(str));
     setFixedSlot(LENGTH_SLOT, Int32Value(int32_t(str->length())));
   }
-
-  /* For access to init, as String.prototype is special. */
-  friend JSObject* js::InitStringClass(JSContext* cx,
-                                       Handle<GlobalObject*> global);
 };
 
 }  // namespace js

@@ -15,9 +15,11 @@ class BytecodeIterator {
   BytecodeLocation current_;
 
  public:
-  explicit BytecodeIterator(const JSScript* script);
+  inline explicit BytecodeIterator(const JSScript* script);
 
   explicit BytecodeIterator(BytecodeLocation loc) : current_(loc) {}
+
+  BytecodeIterator& operator=(const BytecodeIterator&) = default;
 
   bool operator==(const BytecodeIterator& other) const {
     return other.current_ == current_;
@@ -39,8 +41,9 @@ class BytecodeIterator {
 
   // Post-increment
   BytecodeIterator operator++(int) {
+    BytecodeIterator previous(*this);
     current_ = current_.next();
-    return *this;
+    return previous;
   }
 };
 
@@ -51,6 +54,27 @@ class AllBytecodesIterable {
 
  public:
   explicit AllBytecodesIterable(const JSScript* script) : script_(script) {}
+
+  BytecodeIterator begin();
+  BytecodeIterator end();
+};
+
+// Construct a range based iterator that will visit all bytecode locations
+// between two given bytecode locations.
+// `beginLoc_` is the bytecode location where the iterator will start, and
+// `endLoc_` is the bytecode location where the iterator will end.
+class BytecodeLocationRange {
+  BytecodeLocation beginLoc_;
+  BytecodeLocation endLoc_;
+
+ public:
+  explicit BytecodeLocationRange(BytecodeLocation beginLoc,
+                                 BytecodeLocation endLoc)
+      : beginLoc_(beginLoc), endLoc_(endLoc) {
+#ifdef DEBUG
+    MOZ_ASSERT(beginLoc.hasSameScript(endLoc));
+#endif
+  }
 
   BytecodeIterator begin();
   BytecodeIterator end();

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Prenosi">
+<!ENTITY aboutDownloads.header                     "Vaši prenosi">
+<!ENTITY aboutDownloads.empty                      "Ni prenosov">
+
+<!ENTITY aboutDownloads.open                       "Odpri">
+<!ENTITY aboutDownloads.remove                     "Izbriši">
+<!ENTITY aboutDownloads.removeAll                  "Izbriši vse">
+<!ENTITY aboutDownloads.pause                      "Ustavi">
+<!ENTITY aboutDownloads.resume                     "Nadaljuj">
+<!ENTITY aboutDownloads.cancel                     "Prekliči">
+<!ENTITY aboutDownloads.retry                      "Poskusi znova">

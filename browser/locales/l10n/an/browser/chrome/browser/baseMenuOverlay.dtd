@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Arredol d'o &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "d">
+
+<!ENTITY preferencesCmdMac.label        "Preferencias…">
+
+<!ENTITY servicesMenuMac.label          "Servicios">
+
+<!ENTITY hideThisAppCmdMac2.label       "Amagar o &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Amagar os atros">
+
+<!ENTITY showAllAppsCmdMac.label        "Amostrar-lo tot">
+
+<!ENTITY touchBarCmdMac.label           "Personalizar la barra de toques…">

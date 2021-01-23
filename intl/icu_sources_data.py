@@ -10,6 +10,7 @@
 # This script expects to be run from `update-icu.sh` after the in-tree
 # copy of ICU has been updated.
 
+from __future__ import absolute_import
 from __future__ import print_function
 
 import glob
@@ -212,6 +213,7 @@ def update_data_file(topsrcdir):
     # bug 1262101 - these should be shared with the moz.build files
     env.update({
         'CPPFLAGS': ('-DU_NO_DEFAULT_INCLUDE_UTF_HEADERS=1 ' +
+                     '-DU_HIDE_OBSOLETE_UTF_OLD_H=1' +
                      '-DUCONFIG_NO_LEGACY_CONVERSION ' +
                      '-DUCONFIG_NO_TRANSLITERATION ' +
                      '-DUCONFIG_NO_REGULAR_EXPRESSIONS ' +

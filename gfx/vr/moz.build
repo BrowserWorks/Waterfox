@@ -6,8 +6,9 @@
 
 EXPORTS += [
     'external_api/moz_external_vr.h',
+    'FxROutputHandler.h',
+    'FxRWindowManager.h',
     'gfxVR.h',
-    'gfxVRExternal.h',
     'ipc/VRChild.h',
     'ipc/VRGPUChild.h',
     'ipc/VRGPUParent.h',
@@ -21,9 +22,10 @@ EXPORTS += [
     'ipc/VRProcessParent.h',
     'service/VRService.h',
     'VRDisplayClient.h',
-    'VRDisplayHost.h',
     'VRDisplayPresentation.h',
     'VRManager.h',
+    'VRPuppetCommandBuffer.h',
+    'VRShMem.h',
     'VRThread.h',
 ]
 
@@ -38,8 +40,6 @@ UNIFIED_SOURCES += [
     'ipc/VRChild.cpp',
     'ipc/VRGPUChild.cpp',
     'ipc/VRGPUParent.cpp',
-    'ipc/VRLayerChild.cpp',
-    'ipc/VRLayerParent.cpp',
     'ipc/VRManagerChild.cpp',
     'ipc/VRManagerParent.cpp',
     'ipc/VRParent.cpp',
@@ -48,18 +48,15 @@ UNIFIED_SOURCES += [
     'ipc/VRProcessParent.cpp',
     'VRDisplayClient.cpp',
     'VRDisplayPresentation.cpp',
-    'VRManager.cpp',
     'VRThread.cpp',
 ]
 
-# VRDisplayHost includes MacIOSurface.h which includes Mac headers
-# which define Size and Points types in the root namespace that
-# often conflict with our own types.
 SOURCES += [
-    'gfxVRExternal.cpp',
-    'gfxVRPuppet.cpp',
-    'VRDisplayHost.cpp',
-    'VRDisplayLocal.cpp',
+    'ipc/VRLayerChild.cpp',
+    'ipc/VRLayerParent.cpp',
+    'VRManager.cpp',
+    'VRPuppetCommandBuffer.cpp',
+    'VRShMem.cpp'
 ]
 
 if CONFIG['OS_TARGET'] == 'Android':
@@ -67,6 +64,9 @@ if CONFIG['OS_TARGET'] == 'Android':
 else:
     DIRS += [
         'service',
+    ]
+    UNIFIED_SOURCES += [
+        'VRServiceHost.cpp',
     ]
 
 # Only target x64 for vrhost since WebVR is only supported on 64bit.
@@ -82,6 +82,26 @@ IPDL_SOURCES = [
     'ipc/PVRLayer.ipdl',
     'ipc/PVRManager.ipdl',
 ]
+
+# For now, only enable FxR CLH for Windows Nightly builds (BUG 1565349)
+if CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['NIGHTLY_BUILD']:
+    XPCOM_MANIFESTS += [
+      'components.conf',
+    ]
+    SOURCES += [
+      'nsFxrCommandLineHandler.cpp',
+    ]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    LOCAL_INCLUDES += [
+      '/layout/generic',
+      '/widget',
+      '/widget/windows'
+    ]
+    SOURCES += [
+      'FxROutputHandler.cpp',
+      'FxRWindowManager.cpp'
+    ]
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']

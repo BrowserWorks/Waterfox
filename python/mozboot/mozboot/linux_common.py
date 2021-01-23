@@ -6,7 +6,7 @@
 # needed to install Stylo and Node dependencies.  This class must come before
 # BaseBootstrapper in the inheritance list.
 
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 
@@ -23,6 +23,39 @@ class SccacheInstall(object):
         from mozboot import sccache
 
         self.install_toolchain_artifact(state_dir, checkout_root, sccache.LINUX_SCCACHE)
+
+
+class FixStacksInstall(object):
+    def __init__(self, **kwargs):
+        pass
+
+    def ensure_fix_stacks_packages(self, state_dir, checkout_root):
+        from mozboot import fix_stacks
+
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        fix_stacks.LINUX_FIX_STACKS)
+
+
+class LucetcInstall(object):
+    def __init__(self, **kwargs):
+        pass
+
+    def ensure_lucetc_packages(self, state_dir, checkout_root):
+        from mozboot import lucetc
+
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        lucetc.LINUX_LUCETC)
+
+
+class WasiSysrootInstall(object):
+    def __init__(self, **kwargs):
+        pass
+
+    def ensure_wasi_sysroot_packages(self, state_dir, checkout_root):
+        from mozboot import wasi_sysroot
+
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        wasi_sysroot.LINUX_WASI_SYSROOT)
 
 
 class StyloInstall(object):
@@ -82,3 +115,29 @@ class ClangStaticAnalysisInstall(object):
         from mozboot import static_analysis
         self.install_toolchain_static_analysis(
             state_dir, checkout_root, static_analysis.LINUX_CLANG_TIDY)
+
+
+class MinidumpStackwalkInstall(object):
+    def __init__(self, **kwargs):
+        pass
+
+    def ensure_minidump_stackwalk_packages(self, state_dir, checkout_root):
+        from mozboot import minidump_stackwalk
+
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        minidump_stackwalk.LINUX_MINIDUMP_STACKWALK)
+
+
+class LinuxBootstrapper(
+        ClangStaticAnalysisInstall,
+        FixStacksInstall,
+        LucetcInstall,
+        MinidumpStackwalkInstall,
+        NasmInstall,
+        NodeInstall,
+        SccacheInstall,
+        StyloInstall,
+        WasiSysrootInstall):
+
+    def __init__(self, **kwargs):
+        pass

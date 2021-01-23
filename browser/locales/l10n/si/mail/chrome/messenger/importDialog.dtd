@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurances of the word
+"&brandShortName;" below.
+--> 
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "ආයාත කිරීම">
+<!ENTITY importAll.label          "සියල්ල ආයාත කිරීම">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "ලිපි">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "පෝෂක දායකත්වයන්">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "ලිපින පොත්">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "සැකසුම්">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "පෙරහන්">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; ලිපි ආයාත කිරීම් විශාරද">
+<!ENTITY importShortDesc.label    "වෙනත් යෙඳුම් වෙතින් ලිපි, ලිපින පොත්, සැකසුම්, සහ පෙරහන් ආයාත කිරීම">
+
+<!ENTITY importDescription1.label "මෙම විශාරද ක්‍රියාවලිය වෙනත් යෙඳුම් වෙතින් ලිපි, ලිපින පොත්, සැකසුම්, සහ පෙරහන් &brandShortName; තුළට ආයාත කරයි.">
+
+<!ENTITY importDescription2.label "ආයාත කළ පසු, ඒවා &brandShortName; තුළ ලිපි හා/හෝ ලිපින පොත් ලෙස භාවිතා තඛ හැකිය.">
+
+<!ENTITY selectDescription.label  "ඔබ ආයාත කරන්නේ කවර වැඩසටහනින්දැයි තෝරන්න :">
+<!ENTITY selectDescriptionB.label "පවතින ගිණුමත් තෝරන්න හෝ නව ගිණුමක් සාදන්න:">
+<!ENTITY selectDescription.accesskey "P">
+
+<!ENTITY acctName.label           "නම:">
+<!ENTITY acctName.accesskey       "N">
+
+<!ENTITY back.label               "&lt; පසුපසට">
+<!ENTITY forward.label            "ඊළඟ &gt;">
+<!ENTITY finish.label             "අවසානයි">
+<!ENTITY cancel.label             "එපා">
+
+<!ENTITY select.label             "ආයාත කිරීමට අවශ්‍ය ද්‍රව්‍ය ආකාරය තෝරන්න:">
+
+<!ENTITY title.label              "සිරස්තලය">
+<!ENTITY processing.label         "ආයාත කරමින් සිටියි...">
+

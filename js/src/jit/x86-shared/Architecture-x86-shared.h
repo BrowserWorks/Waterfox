@@ -22,15 +22,6 @@
 namespace js {
 namespace jit {
 
-// Does this architecture support SIMD conversions between Uint32x4 and
-// Float32x4?
-static constexpr bool SupportsUint32x4FloatConversions = false;
-
-// Does this architecture support comparisons of unsigned integer vectors?
-static constexpr bool SupportsUint8x16Compares = false;
-static constexpr bool SupportsUint16x8Compares = false;
-static constexpr bool SupportsUint32x4Compares = false;
-
 #if defined(JS_CODEGEN_X86)
 // In bytes: slots needed for potential memory->memory move spills.
 //   +8 for cycles
@@ -66,8 +57,8 @@ static const uint32_t JumpImmediateRange = INT32_MAX;
 
 class Registers {
  public:
-  typedef uint8_t Code;
-  typedef X86Encoding::RegisterID Encoding;
+  using Code = uint8_t;
+  using Encoding = X86Encoding::RegisterID;
 
   // Content spilled during bailouts.
   union RegisterContent {
@@ -75,7 +66,7 @@ class Registers {
   };
 
 #if defined(JS_CODEGEN_X86)
-  typedef uint8_t SetType;
+  using SetType = uint8_t;
 
   static const char* GetName(Code code) {
     return X86Encoding::GPRegName(Encoding(code));
@@ -86,7 +77,7 @@ class Registers {
   static const uint32_t Allocatable = 7;
 
 #elif defined(JS_CODEGEN_X64)
-  typedef uint16_t SetType;
+  using SetType = uint16_t;
 
   static const char* GetName(Code code) {
     static const char* const Names[] = {
@@ -180,16 +171,23 @@ class Registers {
   static const SetType AllocatableMask = AllMask & ~NonAllocatableMask;
 };
 
-typedef Registers::SetType PackedRegisterMask;
+using PackedRegisterMask = Registers::SetType;
 
 class FloatRegisters {
  public:
-  typedef X86Encoding::XMMRegisterID Encoding;
+  using Encoding = X86Encoding::XMMRegisterID;
+
+  // Observe that there is a Simd128 type on both x86 and x64 whether SIMD is
+  // implemented/enabled or not, and that the RegisterContent union is large
+  // enough for a V128 datum always.  Producers and consumers of a register dump
+  // must be aware of this even if they don't need to save/restore values in the
+  // high lanes of the SIMD registers.  See the DumpAllRegs() implementations,
+  // for example.
 
   enum ContentType {
     Single,   // 32-bit float.
     Double,   // 64-bit double.
-    Simd128,  // 128-bit SIMD type (int32x4, bool16x8, etc).
+    Simd128,  // 128-bit Wasm SIMD type.
     NumTypes
   };
 
@@ -197,8 +195,7 @@ class FloatRegisters {
   union RegisterContent {
     float s;
     double d;
-    int32_t i4[4];
-    float s4[4];
+    uint8_t v128[16];
   };
 
   static const char* GetName(Encoding code) {
@@ -220,12 +217,12 @@ class FloatRegisters {
   static const uint32_t Total = 8 * NumTypes;
   static const uint32_t TotalPhys = 8;
   static const uint32_t Allocatable = 7;
-  typedef uint32_t SetType;
+  using SetType = uint32_t;
 #elif defined(JS_CODEGEN_X64)
   static const uint32_t Total = 16 * NumTypes;
   static const uint32_t TotalPhys = 16;
   static const uint32_t Allocatable = 15;
-  typedef uint64_t SetType;
+  using SetType = uint64_t;
 #endif
 
   static_assert(sizeof(SetType) * 8 >= Total,
@@ -279,10 +276,10 @@ template <typename T>
 class TypedRegisterSet;
 
 struct FloatRegister {
-  typedef FloatRegisters Codes;
-  typedef size_t Code;
-  typedef Codes::Encoding Encoding;
-  typedef Codes::SetType SetType;
+  using Codes = FloatRegisters;
+  using Code = size_t;
+  using Encoding = Codes::Encoding;
+  using SetType = Codes::SetType;
   static uint32_t SetSize(SetType x) {
     // Count the number of non-aliased registers, for the moment.
     //

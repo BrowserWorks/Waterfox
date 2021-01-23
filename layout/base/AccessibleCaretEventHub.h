@@ -8,6 +8,7 @@
 #define mozilla_AccessibleCaretEventHub_h
 
 #include "mozilla/EventForwards.h"
+#include "mozilla/MouseEvents.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "nsCOMPtr.h"
@@ -51,13 +52,10 @@ class WidgetTouchEvent;
 // platform lacks eMouseLongTap. Turn on this preference
 // "layout.accessiblecaret.use_long_tap_injector" for the fake long-tap events.
 //
-// State transition diagram:
-// https://hg.mozilla.org/mozilla-central/raw-file/default/layout/base/doc/AccessibleCaretEventHubStates.png
-// Source code of the diagram:
-// https://hg.mozilla.org/mozilla-central/file/default/layout/base/doc/AccessibleCaretEventHubStates.dot
-//
-// Please see the wiki page for more information.
-// https://wiki.mozilla.org/AccessibleCaret
+// Please see the in-tree document for state transition diagram and more
+// information.
+// HTML: https://firefox-source-docs.mozilla.org/layout/AccessibleCaret.html
+// Source rst: layout/docs/AccessibleCaret.rst
 //
 class AccessibleCaretEventHub : public nsIReflowObserver,
                                 public nsIScrollObserver,
@@ -98,6 +96,8 @@ class AccessibleCaretEventHub : public nsIReflowObserver,
   MOZ_CAN_RUN_SCRIPT
   void OnSelectionChange(dom::Document* aDocument, dom::Selection* aSelection,
                          int16_t aReason);
+
+  bool ShouldDisableApz() const;
 
  protected:
   virtual ~AccessibleCaretEventHub() = default;
@@ -196,7 +196,8 @@ class AccessibleCaretEventHub::State {
 
   MOZ_CAN_RUN_SCRIPT
   virtual nsEventStatus OnMove(AccessibleCaretEventHub* aContext,
-                               const nsPoint& aPoint) {
+                               const nsPoint& aPoint,
+                               WidgetMouseEvent::Reason aReason) {
     return nsEventStatus_eIgnore;
   }
 

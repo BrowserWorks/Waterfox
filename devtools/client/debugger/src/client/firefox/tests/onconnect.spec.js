@@ -6,15 +6,8 @@
 
 import { onConnect } from "../../firefox";
 
-const tabTarget = {
+const threadFront = {
   on: () => {},
-  _form: {
-    url: "url",
-  },
-};
-
-const threadClient = {
-  addListener: () => {},
   reconfigure: () => {},
   getSources: () => {
     return {
@@ -33,7 +26,17 @@ const threadClient = {
   },
 };
 
-const debuggerClient = {
+const targetList = {
+  targetFront: {
+    on: () => {},
+    _form: {
+      url: "url",
+    },
+    threadFront,
+  },
+};
+
+const devToolsClient = {
   mainRoot: {
     traits: {},
   },
@@ -57,11 +60,8 @@ describe("firefox onConnect", () => {
   it("wait for sources at startup", async () => {
     await onConnect(
       {
-        tabConnection: {
-          tabTarget,
-          threadClient,
-          debuggerClient,
-        },
+        targetList,
+        devToolsClient,
       },
       actions
     );

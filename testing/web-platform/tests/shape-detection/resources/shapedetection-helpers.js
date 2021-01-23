@@ -10,7 +10,7 @@
 //   --enable-blink-features=MojoJS,MojoJSTest
 
 let loadChromiumResources = Promise.resolve().then(() => {
-  if (!MojoInterfaceInterceptor) {
+  if (!('MojoInterfaceInterceptor' in self)) {
     // Do nothing on non-Chromium-based browsers or when the Mojo bindings are
     // not present in the global namespace.
     return;
@@ -21,15 +21,17 @@ let loadChromiumResources = Promise.resolve().then(() => {
   [
     '/gen/layout_test_data/mojo/public/js/mojo_bindings.js',
     '/gen/mojo/public/mojom/base/big_buffer.mojom.js',
-    '/gen/skia/public/interfaces/image_info.mojom.js',
-    '/gen/skia/public/interfaces/bitmap.mojom.js',
-    '/gen/ui/gfx/geometry/mojo/geometry.mojom.js',
+    '/gen/skia/public/mojom/image_info.mojom.js',
+    '/gen/skia/public/mojom/bitmap.mojom.js',
+    '/gen/ui/gfx/geometry/mojom/geometry.mojom.js',
     `${prefix}/barcodedetection.mojom.js`,
     `${prefix}/barcodedetection_provider.mojom.js`,
     `${prefix}/facedetection.mojom.js`,
     `${prefix}/facedetection_provider.mojom.js`,
+    `${prefix}/textdetection.mojom.js`,
     '/resources/chromium/mock-barcodedetection.js',
     '/resources/chromium/mock-facedetection.js',
+    '/resources/chromium/mock-textdetection.js',
   ].forEach(path => {
     // Use importScripts for workers.
     if (typeof document === 'undefined') {
@@ -51,7 +53,8 @@ let loadChromiumResources = Promise.resolve().then(() => {
 /**
  * @param {String} detectionTestName
  * name of mock shape detection test interface,
- * must be the item of ["FaceDetectionTest", "BarcodeDetectionTest"]
+ * must be the item of ["FaceDetectionTest", "BarcodeDetectionTest",
+ * "TextDetectionTest"]
 */
 async function initialize_detection_tests(detectionTestName) {
   let detectionTest;

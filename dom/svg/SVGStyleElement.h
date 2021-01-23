@@ -8,8 +8,8 @@
 #define mozilla_dom_SVGStyleElement_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/LinkStyle.h"
 #include "SVGElement.h"
-#include "nsStyleLinkElement.h"
 #include "nsStubMutationObserver.h"
 
 nsresult NS_NewSVGStyleElement(
@@ -21,8 +21,8 @@ namespace dom {
 typedef SVGElement SVGStyleElementBase;
 
 class SVGStyleElement final : public SVGStyleElementBase,
-                              public nsStyleLinkElement,
-                              public nsStubMutationObserver {
+                              public nsStubMutationObserver,
+                              public LinkStyle {
  protected:
   friend nsresult(::NS_NewSVGStyleElement(
       nsIContent** aResult,
@@ -40,10 +40,8 @@ class SVGStyleElement final : public SVGStyleElementBase,
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(SVGStyleElement, SVGStyleElementBase)
 
   // nsIContent
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
@@ -78,7 +76,9 @@ class SVGStyleElement final : public SVGStyleElementBase,
   // completely optimized away.
   inline nsresult Init() { return NS_OK; }
 
-  // nsStyleLinkElement overrides
+  // LinkStyle overrides
+  nsIContent& AsContent() final { return *this; }
+  const LinkStyle* AsLinkStyle() const final { return this; }
   Maybe<SheetInfo> GetStyleSheetInfo() final;
 
   /**

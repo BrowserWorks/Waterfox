@@ -23,11 +23,11 @@ function getMap(_path) {
   return fs.readFileSync(mapPath, "utf8");
 }
 
-async function setupBundleFixture(name) {
+async function setupBundleFixtureAndData(name) {
   const source = {
     id: `${name}.js`,
     sourceMapURL: `${name}.js.map`,
-    url: `http://example.com/${name}.js`,
+    sourceMapBaseURL: `http://example.com/${name}.js`,
   };
 
   require("devtools-utils/src/network-request").mockImplementationOnce(() => {
@@ -37,10 +37,16 @@ async function setupBundleFixture(name) {
 
   return getOriginalURLs(source);
 }
+async function setupBundleFixture(name) {
+  const data = await setupBundleFixtureAndData(name);
+
+  return data.map(item => item.url);
+}
 
 module.exports = {
   formatLocations,
   formatLocation,
   setupBundleFixture,
+  setupBundleFixtureAndData,
   getMap,
 };

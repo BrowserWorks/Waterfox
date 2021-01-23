@@ -8,8 +8,7 @@
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/MathAlgorithms.h"
-
-#include "jsutil.h"
+#include "mozilla/Maybe.h"
 
 #include "gc/Marking.h"
 #include "jit/arm64/Architecture-arm64.h"
@@ -36,6 +35,7 @@ ABIArg ABIArgGenerator::next(MIRType type) {
     case MIRType::Int64:
     case MIRType::Pointer:
     case MIRType::RefOrNull:
+    case MIRType::StackResults:
       if (intRegIndex_ == NumIntArgRegs) {
         current_ = ABIArg(stackOffset_);
         stackOffset_ += sizeof(uintptr_t);
@@ -52,13 +52,17 @@ ABIArg ABIArgGenerator::next(MIRType type) {
         stackOffset_ += sizeof(double);
         break;
       }
-      current_ = ABIArg(FloatRegister(
-          floatRegIndex_, type == MIRType::Double ? FloatRegisters::Double
-                                                  : FloatRegisters::Single));
+      current_ = ABIArg(FloatRegister(FloatRegisters::Encoding(floatRegIndex_),
+                                      type == MIRType::Double
+                                          ? FloatRegisters::Double
+                                          : FloatRegisters::Single));
       floatRegIndex_++;
       break;
 
     default:
+      // Note that in Assembler-x64.cpp there's a special case for Win64 which
+      // does not allow passing SIMD by value.  Since there's Win64 on ARM64 we
+      // may need to duplicate that logic here.
       MOZ_CRASH("Unexpected argument type");
   }
   return current_;
@@ -148,7 +152,7 @@ BufferOffset Assembler::emitExtendedJumpTable() {
   return tableOffset;
 }
 
-void Assembler::executableCopy(uint8_t* buffer, bool flushICache) {
+void Assembler::executableCopy(uint8_t* buffer) {
   // Copy the code and all constant pools into the output buffer.
   armbuffer_.executableCopy(buffer);
 
@@ -182,10 +186,6 @@ void Assembler::executableCopy(uint8_t* buffer, bool flushICache) {
       // will work.
     }
   }
-
-  if (flushICache) {
-    AutoFlushICache::setRange(uintptr_t(buffer), armbuffer_.size());
-  }
 }
 
 BufferOffset Assembler::immPool(ARMRegister dest, uint8_t* value,
@@ -203,11 +203,6 @@ BufferOffset Assembler::immPool64(ARMRegister dest, uint64_t value,
                                   ARMBuffer::PoolEntry* pe) {
   return immPool(dest, (uint8_t*)&value, vixl::LDR_x_lit, LiteralDoc(value),
                  pe);
-}
-
-BufferOffset Assembler::immPool64Branch(RepatchLabel* label,
-                                        ARMBuffer::PoolEntry* pe, Condition c) {
-  MOZ_CRASH("immPool64Branch");
 }
 
 BufferOffset Assembler::fImmPool(ARMFPRegister dest, uint8_t* value,
@@ -291,28 +286,6 @@ void Assembler::bind(Label* label, BufferOffset targetOffset) {
   label->bind(targetOffset.getOffset());
 }
 
-void Assembler::bind(RepatchLabel* label) {
-  BufferOffset next = nextOffset();
-
-  // Nothing has seen the label yet: just mark the location.
-  // If we've run out of memory, don't attempt to modify the buffer which may
-  // not be there. Just mark the label as bound to nextOffset().
-  if (!label->used() || oom()) {
-    label->bind(next.getOffset());
-    return;
-  }
-  int branchOffset = label->offset();
-  Instruction* branch = getInstructionAt(BufferOffset(branchOffset));
-  MOZ_ASSERT(branch->IsUncondB());
-
-  // The branch must be able to reach the label.
-  ptrdiff_t relativeByteOffset = next.getOffset() - branchOffset;
-  MOZ_ASSERT(branch->IsTargetReachable(branch + relativeByteOffset));
-  branch->SetImmPCOffsetTarget(branch + relativeByteOffset);
-
-  label->bind(next.getOffset());
-}
-
 void Assembler::addJumpRelocation(BufferOffset src, RelocationKind reloc) {
   // Only JITCODE relocations are patchable at runtime.
   MOZ_ASSERT(reloc == RelocationKind::JITCODE);
@@ -356,47 +329,16 @@ size_t Assembler::addPatchableJump(BufferOffset src, RelocationKind reloc) {
   return extendedTableIndex;
 }
 
-// PatchJump() is only used by the IonCacheIRCompiler and patches code generated
-// by jumpWithPatch.
-//
-// The CodeLocationJump is the jump to be patched.
-// The code for the jump is emitted by jumpWithPatch().
-void PatchJump(CodeLocationJump& jump_, CodeLocationLabel label) {
-  MOZ_ASSERT(label.isSet());
-
-  Instruction* load = (Instruction*)jump_.raw();
-  MOZ_ASSERT(load->IsLDR());
-
-  Instruction* branch = (Instruction*)load->NextInstruction()->skipPool();
-  MOZ_ASSERT(branch->IsUncondB());
-
-  if (branch->IsTargetReachable((Instruction*)label.raw())) {
-    branch->SetImmPCOffsetTarget((Instruction*)label.raw());
-  } else {
-    // Set the literal read by the load instruction to the target.
-    load->SetLiteral64(uint64_t(label.raw()));
-    // Get the scratch register set by the load instruction.
-    vixl::Register loadTarget = vixl::Register(load->Rt(), 64);
-    // Overwrite the branch instruction to branch on the same register as the
-    // load instruction.
-    Assembler::br(branch, loadTarget);
-    MOZ_ASSERT(branch->IsBR());
-    MOZ_ASSERT(load->Rt() == branch->Rn());
-  }
-}
-
 void Assembler::PatchWrite_NearCall(CodeLocationLabel start,
                                     CodeLocationLabel toCall) {
   Instruction* dest = (Instruction*)start.raw();
   ptrdiff_t relTarget = (Instruction*)toCall.raw() - dest;
   ptrdiff_t relTarget00 = relTarget >> 2;
   MOZ_RELEASE_ASSERT((relTarget & 0x3) == 0);
-  MOZ_RELEASE_ASSERT(vixl::is_int26(relTarget00));
+  MOZ_RELEASE_ASSERT(vixl::IsInt26(relTarget00));
 
   // printf("patching %p with call to %p\n", start.raw(), toCall.raw());
   bl(dest, relTarget00);
-
-  AutoFlushICache::flush(uintptr_t(dest), 4);
 }
 
 void Assembler::PatchDataWithValueCheck(CodeLocationLabel label,
@@ -420,11 +362,9 @@ void Assembler::ToggleToJmp(CodeLocationLabel inst_) {
 
   // Refer to instruction layout in ToggleToCmp().
   int imm19 = (int)i->Bits(23, 5);
-  MOZ_ASSERT(vixl::is_int19(imm19));
+  MOZ_ASSERT(vixl::IsInt19(imm19));
 
   b(i, imm19, Always);
-
-  AutoFlushICache::flush(uintptr_t(i), 4);
 }
 
 void Assembler::ToggleToCmp(CodeLocationLabel inst_) {
@@ -434,7 +374,7 @@ void Assembler::ToggleToCmp(CodeLocationLabel inst_) {
   int imm19 = i->ImmCondBranch();
   // bit 23 is reserved, and the simulator throws an assertion when this happens
   // It'll be messy to decode, but we can steal bit 30 or bit 31.
-  MOZ_ASSERT(vixl::is_int18(imm19));
+  MOZ_ASSERT(vixl::IsInt18(imm19));
 
   // 31 - 64-bit if set, 32-bit if unset. (OK!)
   // 30 - sub if set, add if unset. (OK!)
@@ -448,8 +388,6 @@ void Assembler::ToggleToCmp(CodeLocationLabel inst_) {
   Emit(i, vixl::ThirtyTwoBits | vixl::AddSubImmediateFixed | vixl::SUB |
               Flags(vixl::SetFlags) | Rd(vixl::xzr) |
               (imm19 << vixl::Rn_offset));
-
-  AutoFlushICache::flush(uintptr_t(i), 4);
 }
 
 void Assembler::ToggleCall(CodeLocationLabel inst_, bool enabled) {
@@ -497,13 +435,10 @@ void Assembler::ToggleCall(CodeLocationLabel inst_, bool enabled) {
     //   ldr x17, [pc, offset]
     //   blr x17
     int32_t offset = (int)load->ImmPCRawOffset();
-    MOZ_ASSERT(vixl::is_int19(offset));
+    MOZ_ASSERT(vixl::IsInt19(offset));
     ldr(load, ScratchReg2_64, int32_t(offset));
     blr(call, ScratchReg2_64);
   }
-
-  AutoFlushICache::flush(uintptr_t(first), 4);
-  AutoFlushICache::flush(uintptr_t(call), 8);
 }
 
 // Patches loads generated by MacroAssemblerCompat::mov(CodeLabel*, Register).
@@ -611,6 +546,8 @@ void Assembler::TraceJumpRelocations(JSTracer* trc, JitCode* code,
 /* static */
 void Assembler::TraceDataRelocations(JSTracer* trc, JitCode* code,
                                      CompactBufferReader& reader) {
+  mozilla::Maybe<AutoWritableJitCode> awjc;
+
   uint8_t* buffer = code->raw();
 
   while (reader.more()) {
@@ -624,22 +561,35 @@ void Assembler::TraceDataRelocations(JSTracer* trc, JitCode* code,
     uintptr_t* literalAddr = load->LiteralAddress<uintptr_t*>();
     uintptr_t literal = *literalAddr;
 
-    // All pointers on AArch64 will have the top bits cleared.
-    // If those bits are not cleared, this must be a Value.
+    // Data relocations can be for Values or for raw pointers. If a Value is
+    // zero-tagged, we can trace it as if it were a raw pointer. If a Value
+    // is not zero-tagged, we have to interpret it as a Value to ensure that the
+    // tag bits are masked off to recover the actual pointer.
+
     if (literal >> JSVAL_TAG_SHIFT) {
+      // This relocation is a Value with a non-zero tag.
       Value v = Value::fromRawBits(literal);
-      TraceManuallyBarrieredEdge(trc, &v, "ion-masm-value");
+      TraceManuallyBarrieredEdge(trc, &v, "jit-masm-value");
       if (*literalAddr != v.asRawBits()) {
-        // Only update the code if the value changed, because the code
-        // is not writable if we're not moving objects.
+        if (awjc.isNothing()) {
+          awjc.emplace(code);
+        }
         *literalAddr = v.asRawBits();
       }
       continue;
     }
 
+    // This relocation is a raw pointer or a Value with a zero tag.
     // No barriers needed since the pointers are constants.
-    TraceManuallyBarrieredGenericPointerEdge(
-        trc, reinterpret_cast<gc::Cell**>(literalAddr), "ion-masm-ptr");
+    gc::Cell* cell = reinterpret_cast<gc::Cell*>(literal);
+    MOZ_ASSERT(gc::IsCellPointerValid(cell));
+    TraceManuallyBarrieredGenericPointerEdge(trc, &cell, "jit-masm-ptr");
+    if (uintptr_t(cell) != literal) {
+      if (awjc.isNothing()) {
+        awjc.emplace(code);
+      }
+      *literalAddr = uintptr_t(cell);
+    }
   }
 }
 

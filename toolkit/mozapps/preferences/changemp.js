@@ -37,8 +37,7 @@ function process() {
     let msgBox = document.getElementById("message");
     if ((token.needsLogin() && token.needsUserInit) || !token.needsLogin()) {
       oldpwbox.setAttribute("hidden", "true");
-      document.l10n.setAttributes(msgBox, "password-not-set");
-      msgBox.setAttribute("hidden", "false");
+      msgBox.removeAttribute("hidden");
 
       if (!token.needsLogin()) {
         oldpwbox.setAttribute("inited", "empty");
@@ -50,11 +49,18 @@ function process() {
       document.getElementById("pw1").focus();
     } else {
       // Select old password field
-      oldpwbox.setAttribute("hidden", "false");
+      oldpwbox.removeAttribute("hidden");
       msgBox.setAttribute("hidden", "true");
       oldpwbox.setAttribute("inited", "false");
       oldpwbox.focus();
     }
+  }
+
+  if (
+    !token.hasPassword &&
+    !Services.policies.isAllowed("removeMasterPassword")
+  ) {
+    document.getElementById("admin").hidden = false;
   }
 
   if (params) {
@@ -123,6 +129,7 @@ function setPassword() {
         createAlert("pw-change-failed-title", "incorrect-pw");
       }
     } catch (e) {
+      Cu.reportError(e);
       createAlert("pw-change-failed-title", "failed-pw-change");
     }
   } else {
@@ -188,7 +195,7 @@ function setPasswordStrength() {
 function checkPasswords() {
   var pw1 = document.getElementById("pw1").value;
   var pw2 = document.getElementById("pw2").value;
-  var ok = document.documentElement.getButton("accept");
+  var ok = document.getElementById("changemp").getButton("accept");
 
   var oldpwbox = document.getElementById("oldpw");
   if (oldpwbox) {
@@ -204,7 +211,10 @@ function checkPasswords() {
     }
   }
 
-  if (pw1 == pw2) {
+  if (
+    pw1 == pw2 &&
+    (pw1 != "" || Services.policies.isAllowed("removeMasterPassword"))
+  ) {
     ok.setAttribute("disabled", "false");
   } else {
     ok.setAttribute("disabled", "true");

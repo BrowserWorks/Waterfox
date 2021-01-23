@@ -17,14 +17,20 @@ pub mod attributes {
     }
 
     pub fn repr_list(which_ones: &[&str]) -> TokenStream {
-        let which_ones = which_ones.iter().cloned().map(|one| TokenStream::from_str(one).expect("repr to be valid"));
+        let which_ones = which_ones
+            .iter()
+            .cloned()
+            .map(|one| TokenStream::from_str(one).expect("repr to be valid"));
         quote! {
             #[repr( #( #which_ones ),* )]
         }
     }
 
     pub fn derives(which_ones: &[&str]) -> TokenStream {
-        let which_ones = which_ones.iter().cloned().map(|one| Ident::new(one, Span::call_site()));
+        let which_ones = which_ones
+            .iter()
+            .cloned()
+            .map(|one| Ident::new(one, Span::call_site()));
         quote! {
             #[derive( #( #which_ones ),* )]
         }
@@ -97,7 +103,10 @@ pub fn blob(ctx: &BindgenContext, layout: Layout) -> TokenStream {
 }
 
 /// Integer type of the same size as the given `Layout`.
-pub fn integer_type(ctx: &BindgenContext, layout: Layout) -> Option<TokenStream> {
+pub fn integer_type(
+    ctx: &BindgenContext,
+    layout: Layout,
+) -> Option<TokenStream> {
     let name = Layout::known_type_for_size(ctx, layout.size)?;
     let name = Ident::new(name, Span::call_site());
     Some(quote! { #name })
@@ -131,8 +140,29 @@ pub mod ast_ty {
     use ir::function::FunctionSig;
     use ir::layout::Layout;
     use ir::ty::FloatKind;
-    use std::str::FromStr;
     use proc_macro2::{self, TokenStream};
+    use std::str::FromStr;
+
+    pub fn c_void(ctx: &BindgenContext) -> TokenStream {
+        // ctypes_prefix takes precedence
+        match ctx.options().ctypes_prefix {
+            Some(ref prefix) => {
+                let prefix = TokenStream::from_str(prefix.as_str()).unwrap();
+                quote! {
+                    #prefix::c_void
+                }
+            }
+            None => {
+                if ctx.options().use_core &&
+                    ctx.options().rust_features.core_ffi_c_void
+                {
+                    quote! { ::core::ffi::c_void }
+                } else {
+                    quote! { ::std::os::raw::c_void }
+                }
+            }
+        }
+    }
 
     pub fn raw_type(ctx: &BindgenContext, name: &str) -> TokenStream {
         let ident = ctx.rust_ident_raw(name);
@@ -171,7 +201,8 @@ pub mod ast_ty {
                             8 => quote! { f64 },
                             // TODO(emilio): If rust ever gains f128 we should
                             // use it here and below.
-                            _ => super::integer_type(ctx, layout).unwrap_or(quote! { f64 }),
+                            _ => super::integer_type(ctx, layout)
+                                .unwrap_or(quote! { f64 }),
                         }
                     }
                     None => {
@@ -219,10 +250,7 @@ pub mod ast_ty {
         }
     }
 
-    pub fn float_expr(
-        ctx: &BindgenContext,
-        f: f64,
-    ) -> Result<TokenStream, ()> {
+    pub fn float_expr(ctx: &BindgenContext, f: f64) -> Result<TokenStream, ()> {
         if f.is_finite() {
             let val = proc_macro2::Literal::f64_unsuffixed(f);
 
@@ -261,17 +289,16 @@ pub mod ast_ty {
         signature
             .argument_types()
             .iter()
-            .map(|&(ref name, _ty)| {
-                match *name {
-                    Some(ref name) => {
-                        let name = ctx.rust_ident(name);
-                        quote! { #name }
-                    }
-                    None => {
-                        unnamed_arguments += 1;
-                        let name = ctx.rust_ident(format!("arg{}", unnamed_arguments));
-                        quote! { #name }
-                    }
+            .map(|&(ref name, _ty)| match *name {
+                Some(ref name) => {
+                    let name = ctx.rust_ident(name);
+                    quote! { #name }
+                }
+                None => {
+                    unnamed_arguments += 1;
+                    let name =
+                        ctx.rust_ident(format!("arg{}", unnamed_arguments));
+                    quote! { #name }
                 }
             })
             .collect()

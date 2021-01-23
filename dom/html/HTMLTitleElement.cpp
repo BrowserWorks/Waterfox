@@ -23,7 +23,7 @@ HTMLTitleElement::HTMLTitleElement(
   AddMutationObserver(this);
 }
 
-HTMLTitleElement::~HTMLTitleElement() {}
+HTMLTitleElement::~HTMLTitleElement() = default;
 
 NS_IMPL_ISUPPORTS_INHERITED(HTMLTitleElement, nsGenericHTMLElement,
                             nsIMutationObserver)
@@ -63,11 +63,9 @@ void HTMLTitleElement::ContentRemoved(nsIContent* aChild,
   SendTitleChangeEvent(false);
 }
 
-nsresult HTMLTitleElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                      nsIContent* aBindingParent) {
+nsresult HTMLTitleElement::BindToTree(BindContext& aContext, nsINode& aParent) {
   // Let this fall through.
-  nsresult rv =
-      nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
+  nsresult rv = nsGenericHTMLElement::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   SendTitleChangeEvent(true);
@@ -75,11 +73,11 @@ nsresult HTMLTitleElement::BindToTree(Document* aDocument, nsIContent* aParent,
   return NS_OK;
 }
 
-void HTMLTitleElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void HTMLTitleElement::UnbindFromTree(bool aNullParent) {
   SendTitleChangeEvent(false);
 
   // Let this fall through.
-  nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
+  nsGenericHTMLElement::UnbindFromTree(aNullParent);
 }
 
 void HTMLTitleElement::DoneAddingChildren(bool aHaveNotified) {

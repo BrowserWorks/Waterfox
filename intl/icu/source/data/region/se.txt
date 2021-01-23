@@ -179,7 +179,6 @@ se{
         MF{"Frankriikka Saint Martin"}
         MG{"Madagaskar"}
         MH{"Marshallsullot"}
-        MK{"Makedonia"}
         ML{"Mali"}
         MM{"Burma"}
         MN{"Mongolia"}
@@ -288,11 +287,7 @@ se{
         ZZ{"dovdameahttun guovlu"}
     }
     Countries%short{
-        GB{"Stuorra-Británnia"}
-        HK{"Hongkong"}
-        MO{"Makáo"}
-        PS{"Palestina"}
         US{"USA"}
     }
-    Version{"2.1.48.4"}
+    Version{"37"}
 }

@@ -70,6 +70,11 @@ function elementForTarget(aTarget) {
   return aTarget;
 }
 
+// Given an event target which may be a window or an element, get the associatd nsIDOMWindowUtils.
+function utilsForTarget(aTarget) {
+  return SpecialPowers.getDOMWindowUtils(windowForTarget(aTarget));
+}
+
 // Given a pixel scrolling delta, converts it to the platform's native units.
 function nativeScrollUnits(aTarget, aDimen) {
   switch (getPlatform()) {
@@ -159,7 +164,9 @@ function getBoundingClientRectRelativeToVisualViewport(aElement) {
 // to device pixels relative to the screen.
 function coordinatesRelativeToScreen(aX, aY, aTarget) {
   var targetWindow = windowForTarget(aTarget);
-  var deviceScale = targetWindow.devicePixelRatio;
+  var utils = SpecialPowers.getDOMWindowUtils(window);
+  var deviceScale = utils.screenPixelsPerCSSPixel;
+  var deviceScaleNoOverride = utils.screenPixelsPerCSSPixelNoOverride;
   var resolution = getResolution();
   var rect =
     aTarget instanceof Window
@@ -167,18 +174,24 @@ function coordinatesRelativeToScreen(aX, aY, aTarget) {
       : getBoundingClientRectRelativeToVisualViewport(aTarget);
   // moxInnerScreen{X,Y} are in CSS coordinates of the browser chrome.
   // The device scale applies to them, but the resolution only zooms the content.
+  // In addition, if we're inside RDM, RDM overrides the device scale;
+  // the overridden scale only applies to the content inside the RDM
+  // document, not to mozInnerScreen{X,Y}.
   return {
     x:
-      (targetWindow.mozInnerScreenX + (rect.left + aX) * resolution) *
-      deviceScale,
+      targetWindow.mozInnerScreenX * deviceScaleNoOverride +
+      (rect.left + aX) * resolution * deviceScale,
     y:
-      (targetWindow.mozInnerScreenY + (rect.top + aY) * resolution) *
-      deviceScale,
+      targetWindow.mozInnerScreenY * deviceScaleNoOverride +
+      (rect.top + aY) * resolution * deviceScale,
   };
 }
 
 // Get the bounding box of aElement, and return it in device pixels
 // relative to the screen.
+// TODO: This function should probably take into account the resolution
+//       and use getBoundingClientRectRelativeToVisualViewport()
+//       like coordinatesRelativeToScreen() does.
 function rectRelativeToScreen(aElement) {
   var targetWindow = aElement.ownerDocument.defaultView;
   var scale = targetWindow.devicePixelRatio;
@@ -209,7 +222,7 @@ function synthesizeNativeWheel(aTarget, aX, aY, aDeltaX, aDeltaY, aObserver) {
   var msg = aDeltaX
     ? nativeHorizontalWheelEventMsg()
     : nativeVerticalWheelEventMsg();
-  var utils = SpecialPowers.getDOMWindowUtils(windowForTarget(aTarget));
+  var utils = utilsForTarget(aTarget);
   var element = elementForTarget(aTarget);
   utils.sendNativeMouseScrollEvent(
     pt.x,
@@ -300,7 +313,7 @@ function synthesizeNativeWheelAndWaitForScrollEvent(
 // aX and aY are relative to the top-left of |aTarget|'s bounding rect.
 function synthesizeNativeMouseMove(aTarget, aX, aY) {
   var pt = coordinatesRelativeToScreen(aX, aY, aTarget);
-  var utils = SpecialPowers.getDOMWindowUtils(windowForTarget(aTarget));
+  var utils = utilsForTarget(aTarget);
   var element = elementForTarget(aTarget);
   utils.sendNativeMouseEvent(pt.x, pt.y, nativeMouseMoveEventMsg(), 0, element);
   return true;
@@ -339,7 +352,7 @@ function synthesizeNativeTouch(
   aTouchId = 0
 ) {
   var pt = coordinatesRelativeToScreen(aX, aY, aTarget);
-  var utils = SpecialPowers.getDOMWindowUtils(windowForTarget(aTarget));
+  var utils = utilsForTarget(aTarget);
   utils.sendNativeTouchPoint(aTouchId, aType, pt.x, pt.y, 1, 90, aObserver);
   return true;
 }
@@ -380,9 +393,7 @@ function* synthesizeNativeTouchSequences(
     if (aPositions[i].length != aTouchIds.length) {
       throw new Error(
         `aPositions[${i}] did not have the expected number of positions; ` +
-          `expected ${aTouchIds.length} touch points but found ${
-            aPositions[i].length
-          }`
+          `expected ${aTouchIds.length} touch points but found ${aPositions[i].length}`
       );
     }
     for (let j = 0; j < aTouchIds.length; j++) {
@@ -497,12 +508,11 @@ function synthesizeNativeTap(aElement, aX, aY, aObserver = null) {
   return true;
 }
 
-function synthesizeNativeMouseEvent(aElement, aX, aY, aType, aObserver = null) {
-  var pt = coordinatesRelativeToScreen(aX, aY, aElement);
-  var utils = SpecialPowers.getDOMWindowUtils(
-    aElement.ownerDocument.defaultView
-  );
-  utils.sendNativeMouseEvent(pt.x, pt.y, aType, 0, aElement, aObserver);
+function synthesizeNativeMouseEvent(aTarget, aX, aY, aType, aObserver = null) {
+  var pt = coordinatesRelativeToScreen(aX, aY, aTarget);
+  var utils = utilsForTarget(aTarget);
+  var element = elementForTarget(aTarget);
+  utils.sendNativeMouseEvent(pt.x, pt.y, aType, 0, element, aObserver);
   return true;
 }
 
@@ -529,6 +539,23 @@ function synthesizeNativeClick(aElement, aX, aY, aObserver = null) {
     }
   );
   return true;
+}
+
+function synthesizeNativeClickAndWaitForClickEvent(
+  aElement,
+  aX,
+  aY,
+  aCallback
+) {
+  var targetWindow = windowForTarget(aElement);
+  targetWindow.addEventListener(
+    "click",
+    function(e) {
+      setTimeout(aCallback, 0);
+    },
+    { capture: true, once: true }
+  );
+  return synthesizeNativeClick(aElement, aX, aY);
 }
 
 // Move the mouse to (dx, dy) relative to |target|, and scroll the wheel
@@ -574,7 +601,21 @@ function moveMouseAndScrollWheelOver(
   );
 }
 
-// Synthesizes events to drag |element|'s vertical scrollbar by the distance
+// Same as moveMouseAndScrollWheelOver, but returns a promise instead of taking
+// a callback function. Eventually we should convert all these callback-taking
+// functions into promise-producing functions but for now this is a stopgap.
+function promiseMoveMouseAndScrollWheelOver(
+  target,
+  dx,
+  dy,
+  waitForScroll = true
+) {
+  return new Promise(resolve => {
+    moveMouseAndScrollWheelOver(target, dx, dy, resolve, waitForScroll);
+  });
+}
+
+// Synthesizes events to drag |target|'s vertical scrollbar by the distance
 // specified, synthesizing a mousemove for each increment as specified.
 // Returns false if the element doesn't have a vertical scrollbar. Otherwise,
 // returns a generator that should be invoked after the mousemoves have been
@@ -584,20 +625,24 @@ function moveMouseAndScrollWheelOver(
 // mousemove, such as the scroll event resulting from the scrollbar drag.
 // Note: helper_scrollbar_snap_bug1501062.html contains a copy of this code
 // with modifications. Fixes here should be copied there if appropriate.
+// |target| can be an element (for subframes) or a window (for root frames).
 function* dragVerticalScrollbar(
-  element,
+  target,
   testDriver,
   distance = 20,
   increment = 5
 ) {
-  var boundingClientRect = element.getBoundingClientRect();
-  var verticalScrollbarWidth = boundingClientRect.width - element.clientWidth;
+  var targetElement = elementForTarget(target);
+  var w = {},
+    h = {};
+  utilsForTarget(target).getScrollbarSizes(targetElement, w, h);
+  var verticalScrollbarWidth = w.value;
   if (verticalScrollbarWidth == 0) {
     return false;
   }
 
   var upArrowHeight = verticalScrollbarWidth; // assume square scrollbar buttons
-  var mouseX = element.clientWidth + verticalScrollbarWidth / 2;
+  var mouseX = targetElement.clientWidth + verticalScrollbarWidth / 2;
   var mouseY = upArrowHeight + 5; // start dragging somewhere in the thumb
 
   dump(
@@ -606,13 +651,13 @@ function* dragVerticalScrollbar(
       ", " +
       mouseY +
       " from top-left of #" +
-      element.id +
+      targetElement.id +
       "\n"
   );
 
   // Move the mouse to the scrollbar thumb and drag it down
   yield synthesizeNativeMouseEvent(
-    element,
+    target,
     mouseX,
     mouseY,
     nativeMouseMoveEventMsg(),
@@ -620,7 +665,7 @@ function* dragVerticalScrollbar(
   );
   // mouse down
   yield synthesizeNativeMouseEvent(
-    element,
+    target,
     mouseX,
     mouseY,
     nativeMouseDownEventMsg(),
@@ -629,7 +674,7 @@ function* dragVerticalScrollbar(
   // drag vertically by |increment| until we reach the specified distance
   for (var y = increment; y < distance; y += increment) {
     yield synthesizeNativeMouseEvent(
-      element,
+      target,
       mouseX,
       mouseY + y,
       nativeMouseMoveEventMsg(),
@@ -637,7 +682,7 @@ function* dragVerticalScrollbar(
     );
   }
   yield synthesizeNativeMouseEvent(
-    element,
+    target,
     mouseX,
     mouseY + distance,
     nativeMouseMoveEventMsg(),
@@ -646,13 +691,71 @@ function* dragVerticalScrollbar(
 
   // and return a generator to call afterwards to finish up the drag
   return function*() {
-    dump("Finishing drag of #" + element.id + "\n");
+    dump("Finishing drag of #" + targetElement.id + "\n");
     yield synthesizeNativeMouseEvent(
-      element,
+      target,
       mouseX,
       mouseY + distance,
       nativeMouseUpEventMsg(),
       testDriver
     );
   };
+}
+
+// Synthesizes a native touch sequence of events corresponding to a pinch-zoom-in
+// at the given focus point.
+function* pinchZoomInTouchSequence(focusX, focusY) {
+  // prettier-ignore
+  var zoom_in = [
+      [ { x: focusX - 25, y: focusY - 50 }, { x: focusX + 25, y: focusY + 50 } ],
+      [ { x: focusX - 30, y: focusY - 80 }, { x: focusX + 30, y: focusY + 80 } ],
+      [ { x: focusX - 35, y: focusY - 110 }, { x: focusX + 40, y: focusY + 110 } ],
+      [ { x: focusX - 40, y: focusY - 140 }, { x: focusX + 45, y: focusY + 140 } ],
+      [ { x: focusX - 45, y: focusY - 170 }, { x: focusX + 50, y: focusY + 170 } ],
+      [ { x: focusX - 50, y: focusY - 200 }, { x: focusX + 55, y: focusY + 200 } ],
+  ];
+
+  var touchIds = [0, 1];
+  yield* synthesizeNativeTouchSequences(document.body, zoom_in, null, touchIds);
+}
+
+// Returns a promise that is resolved when the observer service dispatches a
+// message with the given topic.
+function promiseTopic(aTopic) {
+  return new Promise((resolve, reject) => {
+    SpecialPowers.Services.obs.addObserver(function observer(
+      subject,
+      topic,
+      data
+    ) {
+      try {
+        SpecialPowers.Services.obs.removeObserver(observer, topic);
+        resolve([subject, data]);
+      } catch (ex) {
+        SpecialPowers.Services.obs.removeObserver(observer, topic);
+        reject(ex);
+      }
+    },
+    aTopic);
+  });
+}
+
+// This generates a touch-based pinch zoom-in gesture that is expected
+// to succeed. It returns after APZ has completed the zoom and reaches the end
+// of the transform.
+async function pinchZoomInWithTouch(focusX, focusY) {
+  // Register the listener for the TransformEnd observer topic
+  let transformEndPromise = promiseTopic("APZ:TransformEnd");
+
+  // Dispatch all the touch events
+  let generator = pinchZoomInTouchSequence(focusX, focusY);
+  while (true) {
+    let yieldResult = generator.next();
+    if (yieldResult.done) {
+      break;
+    }
+  }
+
+  // Wait for TransformEnd to fire.
+  await transformEndPromise;
 }

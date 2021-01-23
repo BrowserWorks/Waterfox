@@ -7,13 +7,19 @@
 #ifndef mozilla_net_UrlClassifierCommon_h
 #define mozilla_net_UrlClassifierCommon_h
 
+#include "mozilla/Logging.h"
 #include "nsString.h"
-#include "mozilla/AntiTrackingCommon.h"
+
+#include <vector>
 
 class nsIChannel;
 class nsIURI;
 
 #define UC_LOG(args) MOZ_LOG(UrlClassifierCommon::sLog, LogLevel::Info, args)
+#define UC_LOG_DEBUG(args) \
+  MOZ_LOG(UrlClassifierCommon::sLog, LogLevel::Debug, args)
+#define UC_LOG_WARN(args) \
+  MOZ_LOG(UrlClassifierCommon::sLog, LogLevel::Warning, args)
 #define UC_LOG_ENABLED() MOZ_LOG_TEST(UrlClassifierCommon::sLog, LogLevel::Info)
 
 namespace mozilla {
@@ -26,9 +32,6 @@ class UrlClassifierCommon final {
   static LazyLogModule sLog;
 
   static bool AddonMayLoad(nsIChannel* aChannel, nsIURI* aURI);
-
-  static void NotifyChannelClassifierProtectionDisabled(
-      nsIChannel* aChannel, uint32_t aAcceptedReason);
 
   static bool ShouldEnableClassifier(nsIChannel* aChannel);
 
@@ -46,16 +49,15 @@ class UrlClassifierCommon final {
   static nsresult CreatePairwiseWhiteListURI(nsIChannel* aChannel,
                                              nsIURI** aURI);
 
-  static void AnnotateChannel(
-      nsIChannel* aChannel,
-      AntiTrackingCommon::ContentBlockingAllowListPurpose aPurpose,
-      uint32_t aClassificationFlags, uint32_t aLoadingState);
+  static void AnnotateChannel(nsIChannel* aChannel,
+                              uint32_t aClassificationFlags,
+                              uint32_t aLoadingState);
 
-  static bool IsAllowListed(
-      nsIChannel* aChannel,
-      AntiTrackingCommon::ContentBlockingAllowListPurpose aPurpose);
+  static bool IsAllowListed(nsIChannel* aChannel);
 
   static bool IsTrackingClassificationFlag(uint32_t aFlag);
+
+  static bool IsSocialTrackingClassificationFlag(uint32_t aFlag);
 
   static bool IsCryptominingClassificationFlag(uint32_t aFlag);
 
@@ -75,12 +77,13 @@ class UrlClassifierCommon final {
       const nsTArray<nsCString>& aList,
       const std::vector<ClassificationData>& aData, uint32_t aDefaultFlag);
 
- private:
-  // aBlockedReason must be one of the nsIWebProgressListener state.
-  static void NotifyChannelBlocked(nsIChannel* aChannel,
-                                   nsIURI* aURIBeingLoaded,
-                                   unsigned aBlockedReason);
+  static bool IsPassiveContent(nsIChannel* aChannel);
 
+  static void SetClassificationFlagsHelper(nsIChannel* aChannel,
+                                           uint32_t aClassificationFlags,
+                                           bool aIsThirdParty);
+
+ private:
   static uint32_t TableToClassificationFlag(
       const nsACString& aTable, const std::vector<ClassificationData>& aData);
 };

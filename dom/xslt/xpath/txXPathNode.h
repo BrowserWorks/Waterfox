@@ -6,7 +6,6 @@
 #ifndef txXPathNode_h__
 #define txXPathNode_h__
 
-#include "nsAutoPtr.h"
 #include "nsIContent.h"
 #include "mozilla/dom/Document.h"
 #include "nsINode.h"
@@ -41,13 +40,7 @@ class txXPathNode {
     }
   }
 
-  static nsINode* RootOf(nsINode* aNode) {
-    nsINode *ancestor, *root = aNode;
-    while ((ancestor = root->GetParentNode())) {
-      root = ancestor;
-    }
-    return root;
-  }
+  static nsINode* RootOf(nsINode* aNode) { return aNode->SubtreeRoot(); }
   nsINode* Root() const { return RootOf(mNode); }
   nsINode* GetRootToAddRef() const { return mRefCountRoot ? Root() : nullptr; }
 

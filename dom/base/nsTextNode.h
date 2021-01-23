@@ -46,10 +46,8 @@ class nsTextNode : public mozilla::dom::Text {
   virtual already_AddRefed<CharacterData> CloneDataNode(
       mozilla::dom::NodeInfo* aNodeInfo, bool aCloneText) const override;
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
 
   nsresult AppendTextForNormalize(const char16_t* aBuffer, uint32_t aLength,
                                   bool aNotify, nsIContent* aNextSibling);

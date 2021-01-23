@@ -10,7 +10,7 @@
  *
  * The |Animations| actor is the main entry point. It is used to discover
  * animation players on given nodes.
- * There should only be one instance per debugger server.
+ * There should only be one instance per devtools server.
  *
  * The |AnimationPlayer| actor provides attributes and methods to inspect an
  * animation as well as pause/resume/seek it.
@@ -32,7 +32,9 @@ const {
   animationPlayerSpec,
   animationsSpec,
 } = require("devtools/shared/specs/animation");
-const { ANIMATION_TYPE_FOR_LONGHANDS } = require("./animation-type-longhand");
+const {
+  ANIMATION_TYPE_FOR_LONGHANDS,
+} = require("devtools/server/actors/animation-type-longhand");
 
 // Types of animations.
 const ANIMATION_TYPES = {
@@ -108,7 +110,18 @@ var AnimationPlayerActor = protocol.ActorClassWithSpec(animationPlayerSpec, {
   },
 
   get isPseudoElement() {
-    return !!this.player.effect.target.element;
+    return !!this.player.effect.pseudoElement;
+  },
+
+  get pseudoElemenName() {
+    if (!this.isPseudoElement) {
+      return null;
+    }
+
+    return `_moz_generated_content_${this.player.effect.pseudoElement.replace(
+      /^::/,
+      ""
+    )}`;
   },
 
   get node() {
@@ -116,11 +129,26 @@ var AnimationPlayerActor = protocol.ActorClassWithSpec(animationPlayerSpec, {
       return this.player.effect.target;
     }
 
-    const pseudo = this.player.effect.target;
-    const treeWalker = this.walker.getDocumentWalker(pseudo.element);
-    return pseudo.type === "::before"
-      ? treeWalker.firstChild()
-      : treeWalker.lastChild();
+    const pseudoElementName = this.pseudoElemenName;
+    const originatingElem = this.player.effect.target;
+    const treeWalker = this.walker.getDocumentWalker(originatingElem);
+
+    // When the animated node is a pseudo-element, we need to walk the children
+    // of the target node and look for it.
+    for (
+      let next = treeWalker.firstChild();
+      next;
+      next = treeWalker.nextSibling()
+    ) {
+      if (next.nodeName === pseudoElementName) {
+        return next;
+      }
+    }
+
+    console.warn(
+      `Pseudo element ${this.player.effect.pseudoElement} is not found`
+    );
+    return originatingElem;
   },
 
   get document() {

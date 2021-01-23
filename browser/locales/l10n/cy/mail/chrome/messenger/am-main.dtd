@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Gosodiadau'r Cyfrif">
+<!ENTITY accountName.label "Enw Cyfrif:">
+<!ENTITY accountName.accesskey "C">
+<!ENTITY identityTitle.label "Hunaniaeth Rhagosodedig">
+<!ENTITY identityDesc.label "Mae gan bob cyfrif hunaniaeth, sef y wybodaeth mae pobl eraill yn ei weld pan yn darllen eich negeseuon.">
+<!ENTITY name.label "Eich Enw:">
+<!ENTITY name.accesskey "E">
+<!ENTITY email.label "Cyfeiriad E-bost:">
+<!ENTITY email.accesskey "y">
+<!ENTITY catchAll.label "Ymateb o'r hunaniaeth hon pan fydd y penynnau dosbarthu yn cyfateb:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Cyfeiriad Ateb Iddo:">
+<!ENTITY replyTo.accesskey "A">
+<!ENTITY replyTo.placeholder "Derbynwyr i ateb i gyfeiriad arall">
+<!ENTITY organization.label "Corff:">
+<!ENTITY organization.accesskey "o">
+<!ENTITY signatureText.label "Testun llofnod:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "Defnyddio HTML (e.e., &lt;b&gt;trwm&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Atodi llofnod o ffeil (testun, HTML neu ddelwedd):">
+<!ENTITY signatureFile.accesskey "A">
+<!ENTITY edit.label "Golygu…">
+<!ENTITY choose.label "Dewis…">
+<!ENTITY choose.accesskey "D">
+<!ENTITY editVCard.label "Golygu Cerdyn…">
+<!ENTITY editVCard.accesskey "G">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Atodi fy vCard i negeseuon">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Rheoli Hunaniaeth…">
+<!ENTITY manageIdentities.accesskey "H">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Gweinydd Anfon (SMTP):">
+<!ENTITY smtpName.accesskey "A">
+<!ENTITY smtpDefaultServer.label "Defnyddio'r Gweinydd Rhagosodedig">
+
+<!ENTITY smtpServerEdit.label "Golygu gweinydd SMTP…">
+<!ENTITY smtpServerEdit.accesskey "S">

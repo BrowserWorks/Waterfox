@@ -7,6 +7,7 @@
 #include "mozilla/ProcInfo.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/Logging.h"
+#include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "nsAutoRef.h"
 #include "nsLocalFile.h"
 #include "nsNetCID.h"
@@ -81,28 +82,30 @@ class StatReader {
     nsresult rv = NS_OK;
     // see the proc documentation for fields index references.
     switch (aIndex) {
-      case 15:
+      case 13:
         // Amount of time that this process has been scheduled
         // in user mode, measured in clock ticks
         aInfo.cpuUser = GetCPUTime(aToken, &rv);
         NS_ENSURE_SUCCESS(rv, rv);
         break;
-      case 16:
+      case 14:
         // Amount of time that this process has been scheduled
         // in kernel mode, measured in clock ticks
         aInfo.cpuKernel = GetCPUTime(aToken, &rv);
         NS_ENSURE_SUCCESS(rv, rv);
         break;
-      case 24:
+      case 22:
         // Virtual memory size in bytes.
         aInfo.virtualMemorySize = Get64Value(aToken, &rv);
         NS_ENSURE_SUCCESS(rv, rv);
         break;
-      case 25:
+      case 23:
         // Resident Set Size: number of pages the process has
         // in real memory.
-        aInfo.residentSetSize = Get64Value(aToken, &rv);
+        uint64_t pageCount = Get64Value(aToken, &rv);
         NS_ENSURE_SUCCESS(rv, rv);
+        uint64_t pageSize = sysconf(_SC_PAGESIZE);
+        aInfo.residentSetSize = pageCount * pageSize;
         break;
     }
     return rv;
@@ -207,7 +210,8 @@ class ThreadInfoReader final : public StatReader {
 };
 
 RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
-                                    const ProcType& type) {
+                                    const ProcType& type,
+                                    const nsAString& origin) {
   auto holder = MakeUnique<MozPromiseHolder<ProcInfoPromise>>();
   RefPtr<ProcInfoPromise> promise = holder->Ensure(__func__);
   nsresult rv = NS_OK;
@@ -219,8 +223,11 @@ RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
     return promise;
   }
 
+  // Ensure that the string is still alive when the runnable is called.
+  nsString originCopy(origin);
   RefPtr<nsIRunnable> r = NS_NewRunnableFunction(
-      __func__, [holder = std::move(holder), pid, type, childId]() {
+      __func__, [holder = std::move(holder), pid, type,
+                 originCopy = std::move(originCopy), childId]() {
         // opening the stat file and reading its content
         StatReader reader(pid);
         ProcInfo info;
@@ -230,8 +237,10 @@ RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
           return;
         }
         // Extra info
+        info.pid = pid;
         info.childId = childId;
         info.type = type;
+        info.origin = originCopy;
 
         // Let's look at the threads
         nsCString taskPath;

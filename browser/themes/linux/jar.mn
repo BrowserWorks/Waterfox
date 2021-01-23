@@ -11,11 +11,11 @@ browser.jar:
 * skin/classic/browser/compacttheme.css
   skin/classic/browser/monitor-base.png
   skin/classic/browser/monitor-border.png
-* skin/classic/browser/pageInfo.css
+  skin/classic/browser/pageInfo.css
   skin/classic/browser/pageInfo.png
 * skin/classic/browser/searchbar.css
   skin/classic/browser/slowStartup-16.png
-  skin/classic/browser/webRTC-indicator.css  (../shared/webRTC-indicator.css)
+  skin/classic/browser/webRTC-legacy-indicator.css  (../shared/webRTC-legacy-indicator.css)
 * skin/classic/browser/controlcenter/panel.css        (controlcenter/panel.css)
 * skin/classic/browser/customizableui/panelUI.css (customizableui/panelUI.css)
 * skin/classic/browser/downloads/allDownloadsView.css   (downloads/allDownloadsView.css)
@@ -26,13 +26,10 @@ browser.jar:
   skin/classic/browser/places/editBookmark.css        (places/editBookmark.css)
 * skin/classic/browser/places/sidebar.css             (places/sidebar.css)
   skin/classic/browser/places/organizer.css           (places/organizer.css)
-  skin/classic/browser/places/toolbarDropMarker.png   (places/toolbarDropMarker.png)
   skin/classic/browser/preferences/alwaysAsk.png      (preferences/alwaysAsk.png)
-  skin/classic/browser/preferences/preferences.css    (preferences/preferences.css)
-* skin/classic/browser/preferences/in-content/preferences.css (preferences/in-content/preferences.css)
-* skin/classic/browser/preferences/in-content/dialog.css      (preferences/in-content/dialog.css)
+* skin/classic/browser/preferences/preferences.css    (preferences/preferences.css)
+* skin/classic/browser/preferences/dialog.css         (preferences/dialog.css)
   skin/classic/browser/preferences/applications.css   (preferences/applications.css)
-  skin/classic/browser/tabbrowser/tabDragIndicator.png      (tabbrowser/tabDragIndicator.png)
   skin/classic/browser/window-controls/close.svg                 (window-controls/close.svg)
   skin/classic/browser/window-controls/minimize.svg              (window-controls/minimize.svg)
   skin/classic/browser/window-controls/restore.svg               (window-controls/restore.svg)

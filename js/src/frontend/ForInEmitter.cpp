@@ -11,6 +11,7 @@
 #include "frontend/SourceNotes.h"
 #include "vm/Opcodes.h"
 #include "vm/Scope.h"
+#include "vm/StencilEnums.h"  // TryNoteKind
 
 using namespace js;
 using namespace js::frontend;
@@ -36,34 +37,28 @@ bool ForInEmitter::emitInitialize() {
   MOZ_ASSERT(state_ == State::Iterated);
   tdzCacheForIteratedValue_.reset();
 
-  if (!bce_->emit1(JSOP_ITER)) {
+  if (!bce_->emit1(JSOp::Iter)) {
     //              [stack] ITER
-    return false;
-  }
-
-  // For-in loops have both the iterator and the value on the stack. Push
-  // undefined to balance the stack.
-  if (!bce_->emit1(JSOP_UNDEFINED)) {
-    //              [stack] ITER ITERVAL
     return false;
   }
 
   loopInfo_.emplace(bce_, StatementKind::ForInLoop);
 
-  // Annotate so IonMonkey can find the loop-closing jump.
-  if (!bce_->newSrcNote(SRC_FOR_IN, &noteIndex_)) {
-    return false;
-  }
-
-  // Jump down to the loop condition to minimize overhead (assuming at
-  // least one iteration, just like the other loop forms).
-  if (!loopInfo_->emitEntryJump(bce_)) {
-    //              [stack] ITER ITERVAL
-    return false;
-  }
-
   if (!loopInfo_->emitLoopHead(bce_, Nothing())) {
-    //              [stack] ITER ITERVAL
+    //              [stack] ITER
+    return false;
+  }
+
+  if (!bce_->emit1(JSOp::MoreIter)) {
+    //              [stack] ITER NEXTITERVAL?
+    return false;
+  }
+  if (!bce_->emit1(JSOp::IsNoIter)) {
+    //              [stack] ITER NEXTITERVAL? ISNOITER
+    return false;
+  }
+  if (!bce_->emitJump(JSOp::IfNe, &loopInfo_->breaks)) {
+    //              [stack] ITER NEXTITERVAL?
     return false;
   }
 
@@ -77,11 +72,11 @@ bool ForInEmitter::emitInitialize() {
     // closed-over bindings inducing an environment, recreate the
     // current environment.
     MOZ_ASSERT(headLexicalEmitterScope_ == bce_->innermostEmitterScope());
-    MOZ_ASSERT(headLexicalEmitterScope_->scope(bce_)->kind() ==
+    MOZ_ASSERT(headLexicalEmitterScope_->scope(bce_).kind() ==
                ScopeKind::Lexical);
 
     if (headLexicalEmitterScope_->hasEnvironment()) {
-      if (!bce_->emit1(JSOP_RECREATELEXICALENV)) {
+      if (!bce_->emit1(JSOp::RecreateLexicalEnv)) {
         //          [stack] ITER ITERVAL
         return false;
       }
@@ -98,7 +93,7 @@ bool ForInEmitter::emitInitialize() {
 #endif
   MOZ_ASSERT(loopDepth_ >= 2);
 
-  if (!bce_->emit1(JSOP_ITERNEXT)) {
+  if (!bce_->emit1(JSOp::IterNext)) {
     //              [stack] ITER ITERVAL
     return false;
   }
@@ -124,8 +119,6 @@ bool ForInEmitter::emitBody() {
 bool ForInEmitter::emitEnd(const Maybe<uint32_t>& forPos) {
   MOZ_ASSERT(state_ == State::Body);
 
-  loopInfo_->setContinueTarget(bce_->bytecodeSection().offset());
-
   if (forPos) {
     // Make sure this code is attributed to the "for".
     if (!bce_->updateSourceCoordNotes(*forPos)) {
@@ -133,51 +126,30 @@ bool ForInEmitter::emitEnd(const Maybe<uint32_t>& forPos) {
     }
   }
 
-  if (!loopInfo_->emitLoopEntry(bce_, Nothing())) {
+  if (!loopInfo_->emitContinueTarget(bce_)) {
     //              [stack] ITER ITERVAL
     return false;
   }
-  if (!bce_->emit1(JSOP_POP)) {
+
+  if (!bce_->emit1(JSOp::Pop)) {
     //              [stack] ITER
     return false;
   }
-  if (!bce_->emit1(JSOP_MOREITER)) {
-    //              [stack] ITER NEXTITERVAL?
-    return false;
-  }
-  if (!bce_->emit1(JSOP_ISNOITER)) {
-    //              [stack] ITER NEXTITERVAL? ISNOITER
-    return false;
-  }
-
-  if (!loopInfo_->emitLoopEnd(bce_, JSOP_IFEQ)) {
-    //              [stack] ITER NEXTITERVAL
-    return false;
-  }
-
-  // Set the srcnote offset so we can find the closing jump.
-  if (!bce_->setSrcNoteOffset(noteIndex_, SrcNote::ForIn::BackJumpOffset,
-                              loopInfo_->loopEndOffsetFromEntryJump())) {
-    return false;
-  }
-
-  if (!loopInfo_->patchBreaksAndContinues(bce_)) {
-    return false;
-  }
-
-  // Pop the enumeration value.
-  if (!bce_->emit1(JSOP_POP)) {
+  if (!loopInfo_->emitLoopEnd(bce_, JSOp::Goto, TryNoteKind::ForIn)) {
     //              [stack] ITER
     return false;
   }
 
-  if (!bce_->addTryNote(JSTRY_FOR_IN, bce_->bytecodeSection().stackDepth(),
-                        loopInfo_->headOffset(),
-                        bce_->bytecodeSection().offset())) {
-    return false;
-  }
+  // When we leave the loop body and jump to this point, the iteration value is
+  // still on the stack. Account for that by updating the stack depth manually.
+  int32_t stackDepth = bce_->bytecodeSection().stackDepth() + 1;
+  MOZ_ASSERT(stackDepth == loopDepth_);
+  bce_->bytecodeSection().setStackDepth(stackDepth);
 
-  if (!bce_->emit1(JSOP_ENDITER)) {
+  //                [stack] ITER ITERVAL
+
+  // Pop the value and iterator and close the iterator.
+  if (!bce_->emit1(JSOp::EndIter)) {
     //              [stack]
     return false;
   }

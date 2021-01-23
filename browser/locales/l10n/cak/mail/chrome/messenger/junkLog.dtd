@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Cha'el Kitz'ib'anik Seq' Taqoya'l">
+<!ENTITY adaptiveJunkLogInfo.label "Ruchajinik rusamaj rutz'ib'anik cha'el seq' taqoya'l.">
+<!ENTITY clearLog.label "Tijosq'ïx tz'ib'anïk">
+<!ENTITY clearLog.accesskey "j">
+<!ENTITY closeLog.label "Titz'apïx">
+<!ENTITY closeLog.accesskey "a">

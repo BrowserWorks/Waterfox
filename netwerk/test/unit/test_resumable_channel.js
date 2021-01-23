@@ -1,4 +1,5 @@
 /* Tests various aspects of nsIResumableChannel in combination with HTTP */
+"use strict";
 
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
@@ -23,12 +24,7 @@ AuthPrompt2.prototype = {
   user: "guest",
   pass: "guest",
 
-  QueryInterface: function authprompt2_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIAuthPrompt2)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIAuthPrompt2"]),
 
   promptAuth: function ap2_promptAuth(channel, level, authInfo) {
     authInfo.username = this.user;
@@ -44,12 +40,7 @@ AuthPrompt2.prototype = {
 function Requestor() {}
 
 Requestor.prototype = {
-  QueryInterface: function requestor_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIInterfaceRequestor)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIInterfaceRequestor"]),
 
   getInterface: function requestor_gi(iid) {
     if (iid.equals(Ci.nsIAuthPrompt2)) {
@@ -60,7 +51,7 @@ Requestor.prototype = {
       return this.prompt2;
     }
 
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
   prompt2: null,
@@ -351,13 +342,11 @@ function handleAuth(metadata, response) {
     response.setHeader("WWW-Authenticate", 'Basic realm="secret"', false);
 
     return true;
-  } else {
-    // didn't know guest:guest, failure
-    response.setStatusLine(metadata.httpVersion, 401, "Unauthorized");
-    response.setHeader("WWW-Authenticate", 'Basic realm="secret"', false);
-
-    return false;
   }
+  // didn't know guest:guest, failure
+  response.setStatusLine(metadata.httpVersion, 401, "Unauthorized");
+  response.setHeader("WWW-Authenticate", 'Basic realm="secret"', false);
+  return false;
 }
 
 // /auth

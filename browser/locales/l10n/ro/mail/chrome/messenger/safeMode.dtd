@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; - Modul sigur">
+<!ENTITY window.width                     "40em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; rulează acum în modul sigur, ceea ce înseamnă că sunt dezactivate temporar setările personalizate, temele și extensiile tale.">
+<!ENTITY safeModeDescription2.label       "Poți face permanente una sau mai multe din aceste schimbări:">
+
+<!ENTITY disableAddons.label              "Dezactivează toate extensiile">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Resetează barele de unelte și comenzile">
+<!ENTITY resetToolbars.accesskey          "R">
+
+<!ENTITY changeAndRestartButton.label     "Fă schimbările și repornește">
+<!ENTITY changeAndRestartButton.accesskey "m">
+
+<!ENTITY continueButton.label             "Continuă în modul sigur">
+<!ENTITY continueButton.accesskey         "C">

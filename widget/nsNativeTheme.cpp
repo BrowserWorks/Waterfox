@@ -12,9 +12,7 @@
 #include "nsPresContext.h"
 #include "nsString.h"
 #include "nsNameSpaceManager.h"
-#include "nsIDOMXULMenuListElement.h"
 #include "nsStyleConsts.h"
-#include "nsIComponentManager.h"
 #include "nsPIDOMWindow.h"
 #include "nsProgressFrame.h"
 #include "nsMeterFrame.h"
@@ -28,7 +26,7 @@
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLProgressElement.h"
 #include "mozilla/PresShell.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "mozilla/dom/DocumentInlines.h"
 #include <algorithm>
 
@@ -55,16 +53,6 @@ EventStates nsNativeTheme::GetContentState(nsIFrame* aFrame,
   if (frameContent->IsElement()) {
     flags = frameContent->AsElement()->State();
 
-    // <input type=number> needs special handling since its nested native
-    // anonymous <input type=text> takes focus for it.
-    if (aAppearance == StyleAppearance::NumberInput &&
-        frameContent->IsHTMLElement(nsGkAtoms::input)) {
-      nsNumberControlFrame* numberControlFrame = do_QueryFrame(aFrame);
-      if (numberControlFrame && numberControlFrame->IsFocused()) {
-        flags |= NS_EVENT_STATE_FOCUS;
-      }
-    }
-
     nsNumberControlFrame* numberControlFrame =
         nsNumberControlFrame::GetNumberControlFrameForSpinButton(aFrame);
     if (numberControlFrame &&
@@ -74,33 +62,14 @@ EventStates nsNativeTheme::GetContentState(nsIFrame* aFrame,
     }
   }
 
-  if (isXULCheckboxRadio && aAppearance == StyleAppearance::Radio) {
-    if (IsFocused(aFrame)) flags |= NS_EVENT_STATE_FOCUS;
+  if (isXULCheckboxRadio && aAppearance == StyleAppearance::Radio &&
+      IsFocused(aFrame)) {
+    flags |= NS_EVENT_STATE_FOCUS;
+    nsPIDOMWindowOuter* window = aFrame->GetContent()->OwnerDoc()->GetWindow();
+    if (window && window->ShouldShowFocusRing()) {
+      flags |= NS_EVENT_STATE_FOCUSRING;
+    }
   }
-
-  // On Windows and Mac, only draw focus rings if they should be shown. This
-  // means that focus rings are only shown once the keyboard has been used to
-  // focus something in the window.
-#if defined(XP_MACOSX)
-  // Mac always draws focus rings for textboxes and lists.
-  if (aAppearance == StyleAppearance::MenulistTextfield ||
-      aAppearance == StyleAppearance::NumberInput ||
-      aAppearance == StyleAppearance::Textfield ||
-      aAppearance == StyleAppearance::Textarea ||
-      aAppearance == StyleAppearance::Searchfield ||
-      aAppearance == StyleAppearance::Listbox) {
-    return flags;
-  }
-#endif
-#if defined(XP_WIN)
-  // On Windows, focused buttons are always drawn as such by the native theme.
-  if (aAppearance == StyleAppearance::Button) return flags;
-#endif
-#if defined(XP_MACOSX) || defined(XP_WIN)
-  Document* doc = aFrame->GetContent()->OwnerDoc();
-  nsPIDOMWindowOuter* window = doc->GetWindow();
-  if (window && !window->ShouldShowFocusRing()) flags &= ~NS_EVENT_STATE_FOCUS;
-#endif
 
   return flags;
 }
@@ -301,12 +270,10 @@ bool nsNativeTheme::IsWidgetStyled(nsPresContext* aPresContext,
           aAppearance == StyleAppearance::Textarea ||
           aAppearance == StyleAppearance::Listbox ||
           aAppearance == StyleAppearance::Menulist ||
-          (aAppearance == StyleAppearance::MenulistButton &&
-           StaticPrefs::layout_css_webkit_appearance_enabled())) &&
+          aAppearance == StyleAppearance::MenulistButton) &&
          aFrame->GetContent()->IsHTMLElement() &&
          aPresContext->HasAuthorSpecifiedRules(
-             aFrame,
-             NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND);
+             aFrame, NS_AUTHOR_SPECIFIED_BORDER_OR_BACKGROUND);
 }
 
 bool nsNativeTheme::IsDisabled(nsIFrame* aFrame, EventStates aEventStates) {
@@ -336,10 +303,10 @@ bool nsNativeTheme::IsFrameRTL(nsIFrame* aFrame) {
   if (!aFrame) {
     return false;
   }
-  WritingMode wm = aFrame->GetWritingMode();
-  return !(wm.IsVertical() ? wm.IsVerticalLR() : wm.IsBidiLTR());
+  return aFrame->GetWritingMode().IsPhysicalRTL();
 }
 
+/* static */
 bool nsNativeTheme::IsHTMLContent(nsIFrame* aFrame) {
   if (!aFrame) {
     return false;
@@ -571,10 +538,9 @@ bool nsNativeTheme::QueueAnimatedContentForRefresh(nsIContent* aContent,
     mAnimatedContentTimeout = timeout;
   }
 
-  if (!mAnimatedContentList.AppendElement(aContent)) {
-    NS_WARNING("Out of memory!");
-    return false;
-  }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  mAnimatedContentList.AppendElement(aContent);
 
   return true;
 }
@@ -652,6 +618,7 @@ static nsIFrame* GetBodyFrame(nsIFrame* aCanvasFrame) {
   return body->GetPrimaryFrame();
 }
 
+/* static */
 bool nsNativeTheme::IsDarkBackground(nsIFrame* aFrame) {
   nsIScrollableFrame* scrollFrame = nullptr;
   while (!scrollFrame && aFrame) {
@@ -701,6 +668,8 @@ bool nsNativeTheme::IsWidgetScrollbarPart(StyleAppearance aAppearance) {
     case StyleAppearance::ScrollbarbuttonRight:
     case StyleAppearance::ScrollbarthumbVertical:
     case StyleAppearance::ScrollbarthumbHorizontal:
+    case StyleAppearance::ScrollbartrackHorizontal:
+    case StyleAppearance::ScrollbartrackVertical:
     case StyleAppearance::Scrollcorner:
       return true;
     default:

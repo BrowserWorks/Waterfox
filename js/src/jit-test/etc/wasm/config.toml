@@ -1,0 +1,68 @@
+# Standard 'directives.txt' prologues for jit-tests
+harness_directive = "|jit-test| skip-if: true"
+directive = "|jit-test| test-also=--wasm-compiler=ion; test-also=--wasm-compiler=baseline; test-also=--test-wasm-await-tier2; test-also=--disable-wasm-huge-memory; skip-variant-if: --disable-wasm-huge-memory, !wasmHugeMemoryIsSupported(); include:wasm-testharness.js; local-include:harness/sync_index.js"
+
+# Failing tests across all testsuites
+excluded_tests = [
+  # false-positive windows-specific failures
+  "align.wast",
+  # bulk-memory-operations/issues/133 (data.wast:161)
+  "data.wast",
+  # testing that multiple tables fail (imports.wast:309)
+  "imports.wast",
+  # bulk-memory-operations/issues/133 (linking.wast:206)
+  "linking.wast",
+  # bulk-memory-operations/issues/133 (elem.wast:142)
+  "elem.wast",
+  # test harness doesn't acquire global values correctly
+  "exports.wast",
+  # false-positive windows-specific failure
+  "memory_trap.wast",
+  # false-positive error on duplicate export name (names.wast:19)
+  "names.wast",
+  # false-positive error on invalid UTF-8 custom section name (utf8-custom-section-id.wast:6)
+  "utf8-custom-section-id.wast",
+  # invalid table maximum length for web embeddings
+  "table.wast",
+]
+
+[[repos]]
+name = "spec"
+url = "https://github.com/WebAssembly/spec"
+excluded_tests = []
+
+[[repos]]
+name = "threads"
+url = "https://github.com/WebAssembly/threads"
+parent = "spec"
+excluded_tests = [
+  "atomic.wast",
+  # testing that multi-value isn't implemented (func.wast:492)
+  "func.wast",
+  # testing that multi-value isn't implemented (type.wast:52)
+  "type.wast"
+]
+# Skip in WPT where we can't guard on features being enabled
+skip_wpt = true
+# Skip in jit-test when it's not enabled
+directive = "; skip-if: !wasmThreadsSupported()"
+
+[[repos]]
+name = "bulk-memory-operations"
+url = "https://github.com/WebAssembly/bulk-memory-operations"
+parent = "spec"
+excluded_tests = []
+# Skip in WPT where we can't guard on features being enabled
+skip_wpt = true
+# Skip in jit-test when it's not enabled
+directive = "; skip-if: !wasmBulkMemSupported()"
+
+[[repos]]
+name = "reference-types"
+url = "https://github.com/WebAssembly/reference-types"
+parent = "spec"
+excluded_tests = []
+# Skip in WPT where we can't guard on features being enabled
+skip_wpt = true
+# Skip in jit-test when it's not enabled
+directive = "; skip-if: !wasmBulkMemSupported() || !wasmReftypesEnabled()"

@@ -10,7 +10,6 @@ from __future__ import absolute_import, print_function
 
 import logging
 import os
-import subprocess
 import sys
 import time
 
@@ -22,12 +21,15 @@ from mozbuild.base import MachCommandConditions
 from mozbuild.frontend.emitter import TreeMetadataEmitter
 from mozbuild.frontend.reader import BuildReader
 from mozbuild.mozinfo import write_mozinfo
-from mozbuild.util import FileAvoidWrite
 from itertools import chain
 
 from mozbuild.backend import (
     backends,
     get_backend_class,
+)
+from mozbuild.util import (
+    FileAvoidWrite,
+    process_time,
 )
 
 
@@ -80,14 +82,14 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
 
     if 'CONFIG_FILES' in os.environ:
         raise Exception('Using the CONFIG_FILES environment variable is not '
-            'supported.')
+                        'supported.')
     if 'CONFIG_HEADERS' in os.environ:
         raise Exception('Using the CONFIG_HEADERS environment variable is not '
-            'supported.')
+                        'supported.')
 
     if not os.path.isabs(topsrcdir):
         raise Exception('topsrcdir must be defined as an absolute directory: '
-            '%s' % topsrcdir)
+                        '%s' % topsrcdir)
 
     default_backends = ['RecursiveMake']
     default_backends = (substs or {}).get('BUILD_BACKENDS', ['RecursiveMake'])
@@ -109,16 +111,16 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
 
     # Without -n, the current directory is meant to be the top object directory
     if not options.not_topobjdir:
-        topobjdir = os.path.abspath('.')
+        topobjdir = os.path.realpath('.')
 
     env = ConfigEnvironment(topsrcdir, topobjdir, defines=defines,
-            non_global_defines=non_global_defines, substs=substs,
-            source=source, mozconfig=mozconfig)
+                            non_global_defines=non_global_defines, substs=substs,
+                            source=source, mozconfig=mozconfig)
 
     with FileAvoidWrite(os.path.join(topobjdir, 'mozinfo.json')) as f:
         write_mozinfo(f, env, os.environ)
 
-    cpu_start = time.clock()
+    cpu_start = process_time()
     time_start = time.time()
 
     # Make appropriate backend instances, defaulting to RecursiveMakeBackend,
@@ -154,7 +156,7 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
             summary = obj.gyp_summary()
             print(summary, file=sys.stderr)
 
-    cpu_time = time.clock() - cpu_start
+    cpu_time = process_time() - cpu_start
     wall_time = time.time() - time_start
     efficiency = cpu_time / wall_time if wall_time else 100
     untracked = wall_time - execution_time

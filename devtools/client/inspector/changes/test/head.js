@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -56,6 +55,7 @@ function getDeclarations(panelDoc, selector = "", containerNode = null) {
       return {
         property: el.querySelector(".changes__declaration-name").textContent,
         value: el.querySelector(".changes__declaration-value").textContent,
+        element: el,
       };
     });
 }
@@ -89,4 +89,14 @@ function getAddedSelectors(panelDoc) {
 
 function getRemovedSelectors(panelDoc) {
   return getSelectors(panelDoc, ".diff-remove");
+}
+
+async function getChangesContextMenu(changesView, element) {
+  const onContextMenu = changesView.contextMenu.once("open");
+  info(`Trigger context menu for element: ${element}`);
+  synthesizeContextMenuEvent(element);
+  info(`Wait for context menu to show`);
+  await onContextMenu;
+
+  return changesView.contextMenu;
 }

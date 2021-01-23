@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Editor de proprietates avantiate">
+<!ENTITY AttName.label                  "Attributo: ">
+<!ENTITY AttValue.label                 "Valor: ">
+<!ENTITY PropertyName.label             "Proprietate: ">
+<!ENTITY currentattributesfor.label     "Attributos actual pro:">
+<!ENTITY tree.attributeHeader.label     "Attributo">
+<!ENTITY tree.propertyHeader.label      "Proprietate">
+<!ENTITY tree.valueHeader.label         "Valor">
+<!ENTITY tabHTML.label                  "Attributos HTML">
+<!ENTITY tabCSS.label                   "Stilo incorporate">
+<!ENTITY tabJSE.label                   "Eventos JavaScript">
+
+<!ENTITY editAttribute.label    "Clicca sur un elemento supra pro modificar su valor">
+<!ENTITY removeAttribute.label  "Remover">

@@ -15,11 +15,15 @@ import type { ActiveSearchType } from "../reducers/ui";
 
 import "./WelcomeBox.css";
 
+type OwnProps = {|
+  horizontal: boolean,
+  toggleShortcutsModal: () => void,
+|};
 type Props = {
   horizontal: boolean,
   endPanelCollapsed: boolean,
   togglePaneCollapse: Function,
-  setActiveSearch: (?ActiveSearchType) => any,
+  setActiveSearch: (ActiveSearchType | void) => any,
   openQuickOpen: typeof actions.openQuickOpen,
   toggleShortcutsModal: () => void,
 };
@@ -85,11 +89,8 @@ const mapStateToProps = state => ({
   endPanelCollapsed: getPaneCollapse(state, "end"),
 });
 
-export default connect(
-  mapStateToProps,
-  {
-    togglePaneCollapse: actions.togglePaneCollapse,
-    setActiveSearch: actions.setActiveSearch,
-    openQuickOpen: actions.openQuickOpen,
-  }
-)(WelcomeBox);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  togglePaneCollapse: actions.togglePaneCollapse,
+  setActiveSearch: actions.setActiveSearch,
+  openQuickOpen: actions.openQuickOpen,
+})(WelcomeBox);

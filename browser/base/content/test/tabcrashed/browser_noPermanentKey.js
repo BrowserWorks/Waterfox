@@ -20,10 +20,10 @@ add_task(async function test_without_dump() {
     async function(browser) {
       delete browser.permanentKey;
 
-      await BrowserTestUtils.crashBrowser(browser);
+      await BrowserTestUtils.crashFrame(browser);
       let crashReport = promiseCrashReport();
 
-      await ContentTask.spawn(browser, null, async function() {
+      await SpecialPowers.spawn(browser, [], async function() {
         let doc = content.document;
         Assert.ok(
           doc.documentElement.classList.contains("crashDumpAvailable"),

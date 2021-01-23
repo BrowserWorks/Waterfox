@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Van mrežne web aplikacije">
+<!ENTITY pref.offlineCache.caption          "Van mrežni web sadržaj i podaci korisnika">
+
+<!ENTITY clearOfflineAppCache.label         "Očisti">
+
+<!ENTITY offlineAlwaysAllow.label           "Dozvolite svim web stranicama da pohranjuju podatke za van mrežno korištenje">
+<!ENTITY offlineExplicit.label              "Dozvolite samo web stranicama s eksplicitnim dozvolama">
+<!ENTITY offlineNotifyAsk.label             "Obavijesti me kada web stranica želi pohraniti podatke za van mrežno korištenje">
+<!ENTITY offlineNotifyPermissions.label     "Upravljajte dozvolama">
+
+<!ENTITY offlineAppsUsage.label             "Sljedeće web stranice koriste van mrežna spremišta:">
+<!ENTITY offlineAppsListRemove.label        "Očisti podatke…">

@@ -18,6 +18,12 @@ loader.lazyRequireGetter(
   "resource://gre/modules/AppConstants.jsm",
   true
 );
+loader.lazyRequireGetter(
+  this,
+  "openDocLink",
+  "devtools/client/shared/link",
+  true
+);
 
 exports.OptionsPanel = OptionsPanel;
 
@@ -93,7 +99,7 @@ OptionsPanel.prototype = {
     this.setupToolsList();
     this.setupToolbarButtonsList();
     this.setupThemeList();
-    this.setupNightlyOptions();
+    this.setupAdditionalOptions();
     await this.populatePreferences();
     this.isReady = true;
     this.emit("ready");
@@ -181,6 +187,7 @@ OptionsPanel.prototype = {
       const commandButton = toolbarButtons.filter(
         toggleableButton => toggleableButton.id === checkbox.id
       )[0];
+
       Services.prefs.setBoolPref(
         commandButton.visibilityswitch,
         checkbox.checked
@@ -195,6 +202,7 @@ OptionsPanel.prototype = {
       const checkboxInput = this.panelDoc.createElement("input");
       checkboxInput.setAttribute("type", "checkbox");
       checkboxInput.setAttribute("id", button.id);
+
       if (Services.prefs.getBoolPref(button.visibilityswitch, true)) {
         checkboxInput.setAttribute("checked", true);
       }
@@ -205,6 +213,7 @@ OptionsPanel.prototype = {
 
       checkboxLabel.appendChild(checkboxInput);
       checkboxLabel.appendChild(checkboxSpanLabel);
+
       return checkboxLabel;
     };
 
@@ -279,6 +288,23 @@ OptionsPanel.prototype = {
 
       checkboxLabel.appendChild(checkboxInput);
       checkboxLabel.appendChild(checkboxSpanLabel);
+
+      // TODO: remove in Firefox 71, with bug #1519103
+      if (tool.deprecated) {
+        const deprecationURL = this.panelDoc.createElement("a");
+        deprecationURL.title = deprecationURL.href = tool.deprecationURL;
+        deprecationURL.textContent = L10N.getStr("options.deprecationNotice");
+        // Cannot use a real link when we are in the Browser Toolbox.
+        deprecationURL.addEventListener("click", e => {
+          e.preventDefault();
+          openDocLink(tool.deprecationURL, { relatedToCurrent: true });
+        });
+
+        const checkboxSpanDeprecated = this.panelDoc.createElement("span");
+        checkboxSpanDeprecated.className = "deprecation-notice";
+        checkboxLabel.appendChild(checkboxSpanDeprecated);
+        checkboxSpanDeprecated.appendChild(deprecationURL);
+      }
 
       return checkboxLabel;
     };
@@ -391,26 +417,61 @@ OptionsPanel.prototype = {
   },
 
   /**
-   * Add common preferences enabled only on Nightly.
+   * Add extra checkbox options bound to a boolean preference.
    */
-  setupNightlyOptions: function() {
-    const isNightly = AppConstants.NIGHTLY_BUILD;
-    if (!isNightly) {
-      return;
-    }
+  setupAdditionalOptions: function() {
+    const prefDefinitions = [];
 
-    // Labels for these new buttons are nightly only and mostly intended for working on
-    // devtools.
-    const prefDefinitions = [
-      {
+    const isNightly = AppConstants.NIGHTLY_BUILD;
+    if (isNightly) {
+      // Labels are hardcoded in english because this checkbox is Nightly only.
+      prefDefinitions.push({
         pref: "devtools.performance.new-panel-enabled",
         label: "Enable new performance recorder (then re-open DevTools)",
         id: "devtools-new-performance",
         parentId: "context-options",
-      },
-    ];
+      });
+    }
 
-    const createPreferenceOption = ({ pref, label, id }) => {
+    if (this.target.isParentProcess) {
+      // The Multiprocess Browser Toolbox is only displayed in the settings
+      // panel for the Browser Toolbox, or when debugging the main process in
+      // remote debugging.
+      prefDefinitions.push({
+        pref: "devtools.browsertoolbox.fission",
+        label: L10N.getStr("options.enableMultiProcessToolbox"),
+        id: "devtools-browsertoolbox-fission",
+        parentId: "context-options",
+        // createPreferenceOption already updates the value of the preference
+        // for the current profile when the checkbox changes. Here we need a
+        // custom behavior for the Browser Toolbox, so we pass an additional
+        // onChange callback.
+        onChange: async checked => {
+          if (!this.toolbox.isBrowserToolbox()) {
+            // If we are debugging a parent process, but the toolbox is not a
+            // Browser Toolbox, it means we are remote debugging another
+            // browser. In this case, the value of devtools.browsertoolbox.fission
+            // should not be updated in the target browser.
+            return;
+          }
+
+          // When setting this preference from the BrowserToolbox, we need to
+          // update the preference on the debugged Firefox profile as well.
+          // The devtools.browsertoolbox.fission preference is copied from the
+          // regular Firefox Profile to the Browser Toolbox profile.
+          // If the preference is not updated on the regular Firefox profile, the
+          // new value will be lost on the next Browser Toolbox restart.
+          const { mainRoot } = this.target.client;
+          const preferenceFront = await mainRoot.getFront("preference");
+          preferenceFront.setBoolPref(
+            "devtools.browsertoolbox.fission",
+            checked
+          );
+        },
+      });
+    }
+
+    const createPreferenceOption = ({ pref, label, id, onChange }) => {
       const inputLabel = this.panelDoc.createElement("label");
       const checkbox = this.panelDoc.createElement("input");
       checkbox.setAttribute("type", "checkbox");
@@ -420,6 +481,9 @@ OptionsPanel.prototype = {
       checkbox.setAttribute("id", id);
       checkbox.addEventListener("change", e => {
         SetPref(pref, e.target.checked);
+        if (onChange) {
+          onChange(e.target.checked);
+        }
       });
 
       const inputSpanLabel = this.panelDoc.createElement("span");
@@ -444,7 +508,6 @@ OptionsPanel.prototype = {
         createPreferenceOption(prefDefinition),
         referenceElement
       );
-      parent.removeAttribute("hidden");
     }
   },
 

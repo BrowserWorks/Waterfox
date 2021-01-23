@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "gc/Zone.h"
+#include "js/Array.h"  // JS::GetArrayLength
 #include "jsapi-tests/tests.h"
 #include "vm/Realm.h"
 
@@ -53,7 +54,7 @@ bool checkSize(JS::HandleObject map, uint32_t expected) {
   CHECK(JS_NondeterministicGetWeakMapKeys(cx, map, &keys));
 
   uint32_t length;
-  CHECK(JS_GetArrayLength(cx, keys, &length));
+  CHECK(JS::GetArrayLength(cx, keys, &length));
   CHECK(length == expected);
 
   return true;
@@ -97,8 +98,8 @@ BEGIN_TEST(testWeakMap_keyDelegates) {
   CHECK(newCCW(map, delegateRoot));
   js::SliceBudget budget(js::WorkBudget(1000000));
   cx->runtime()->gc.startDebugGC(GC_NORMAL, budget);
-  while (JS::IsIncrementalGCInProgress(cx)) {
-    cx->runtime()->gc.debugGCSlice(budget);
+  if (JS::IsIncrementalGCInProgress(cx)) {
+    cx->runtime()->gc.finishGC(JS::GCReason::DEBUG_GC);
   }
 #ifdef DEBUG
   CHECK(map->zone()->lastSweepGroupIndex() <
@@ -116,8 +117,8 @@ BEGIN_TEST(testWeakMap_keyDelegates) {
   CHECK(newCCW(map, delegateRoot));
   budget = js::SliceBudget(js::WorkBudget(100000));
   cx->runtime()->gc.startDebugGC(GC_NORMAL, budget);
-  while (JS::IsIncrementalGCInProgress(cx)) {
-    cx->runtime()->gc.debugGCSlice(budget);
+  if (JS::IsIncrementalGCInProgress(cx)) {
+    cx->runtime()->gc.finishGC(JS::GCReason::DEBUG_GC);
   }
   CHECK(checkSize(map, 1));
 
@@ -150,12 +151,12 @@ static size_t DelegateObjectMoved(JSObject* obj, JSObject* old) {
 }
 
 JSObject* newKey() {
-  static const js::Class keyClass = {
+  static const JSClass keyClass = {
       "keyWithDelegate", JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
       JS_NULL_CLASS_OPS, JS_NULL_CLASS_SPEC,
       JS_NULL_CLASS_EXT, JS_NULL_OBJECT_OPS};
 
-  JS::RootedObject key(cx, JS_NewObject(cx, Jsvalify(&keyClass)));
+  JS::RootedObject key(cx, JS_NewObject(cx, &keyClass));
   if (!key) {
     return nullptr;
   }
@@ -192,24 +193,25 @@ JSObject* newCCW(JS::HandleObject sourceZone, JS::HandleObject destZone) {
 }
 
 JSObject* newDelegate() {
-  static const js::ClassOps delegateClassOps = {
-      nullptr, /* addProperty */
-      nullptr, /* delProperty */
-      nullptr, /* enumerate */
-      nullptr, /* newEnumerate */
-      nullptr, /* resolve */
-      nullptr, /* mayResolve */
-      nullptr, /* finalize */
-      nullptr, /* call */
-      nullptr, /* hasInstance */
-      nullptr, /* construct */
-      JS_GlobalObjectTraceHook,
+  static const JSClassOps delegateClassOps = {
+      nullptr,                   // addProperty
+      nullptr,                   // delProperty
+      nullptr,                   // enumerate
+      nullptr,                   // newEnumerate
+      nullptr,                   // resolve
+      nullptr,                   // mayResolve
+      nullptr,                   // finalize
+      nullptr,                   // call
+      nullptr,                   // hasInstance
+      nullptr,                   // construct
+      JS_GlobalObjectTraceHook,  // trace
   };
 
   static const js::ClassExtension delegateClassExtension = {
-      DelegateObjectMoved};
+      DelegateObjectMoved,  // objectMovedOp
+  };
 
-  static const js::Class delegateClass = {
+  static const JSClass delegateClass = {
       "delegate",
       JSCLASS_GLOBAL_FLAGS | JSCLASS_HAS_RESERVED_SLOTS(1),
       &delegateClassOps,
@@ -219,9 +221,9 @@ JSObject* newDelegate() {
 
   /* Create the global object. */
   JS::RealmOptions options;
-  JS::RootedObject global(
-      cx, JS_NewGlobalObject(cx, Jsvalify(&delegateClass), nullptr,
-                             JS::FireOnNewGlobalHook, options));
+  JS::RootedObject global(cx,
+                          JS_NewGlobalObject(cx, &delegateClass, nullptr,
+                                             JS::FireOnNewGlobalHook, options));
   if (!global) {
     return nullptr;
   }
@@ -235,7 +237,7 @@ bool checkSize(JS::HandleObject map, uint32_t expected) {
   CHECK(JS_NondeterministicGetWeakMapKeys(cx, map, &keys));
 
   uint32_t length;
-  CHECK(JS_GetArrayLength(cx, keys, &length));
+  CHECK(JS::GetArrayLength(cx, keys, &length));
   CHECK(length == expected);
 
   return true;

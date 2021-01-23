@@ -19,6 +19,7 @@
 #include "SVGTextFrame.h"
 
 using namespace mozilla;
+using namespace mozilla::dom;
 using namespace mozilla::image;
 
 NS_QUERYFRAME_HEAD(nsSVGContainerFrame)
@@ -45,12 +46,12 @@ NS_IMPL_FRAMEARENA_HELPERS(nsSVGContainerFrame)
 
 void nsSVGContainerFrame::AppendFrames(ChildListID aListID,
                                        nsFrameList& aFrameList) {
-  InsertFrames(aListID, mFrames.LastChild(), aFrameList);
+  InsertFrames(aListID, mFrames.LastChild(), nullptr, aFrameList);
 }
 
-void nsSVGContainerFrame::InsertFrames(ChildListID aListID,
-                                       nsIFrame* aPrevFrame,
-                                       nsFrameList& aFrameList) {
+void nsSVGContainerFrame::InsertFrames(
+    ChildListID aListID, nsIFrame* aPrevFrame,
+    const nsLineList::iterator* aPrevFrameLine, nsFrameList& aFrameList) {
   NS_ASSERTION(aListID == kPrincipalList, "unexpected child list");
   NS_ASSERTION(!aPrevFrame || aPrevFrame->GetParent() == this,
                "inserting after sibling frame with different parent");
@@ -141,9 +142,9 @@ void nsSVGDisplayContainerFrame::BuildDisplayList(
   return BuildDisplayListForNonBlockChildren(aBuilder, aLists);
 }
 
-void nsSVGDisplayContainerFrame::InsertFrames(ChildListID aListID,
-                                              nsIFrame* aPrevFrame,
-                                              nsFrameList& aFrameList) {
+void nsSVGDisplayContainerFrame::InsertFrames(
+    ChildListID aListID, nsIFrame* aPrevFrame,
+    const nsLineList::iterator* aPrevFrameLine, nsFrameList& aFrameList) {
   // memorize first old frame after insertion point
   // XXXbz once again, this would work a lot better if the nsIFrame
   // methods returned framelist iterators....
@@ -152,7 +153,8 @@ void nsSVGDisplayContainerFrame::InsertFrames(ChildListID aListID,
   nsIFrame* firstNewFrame = aFrameList.FirstChild();
 
   // Insert the new frames
-  nsSVGContainerFrame::InsertFrames(aListID, aPrevFrame, aFrameList);
+  nsSVGContainerFrame::InsertFrames(aListID, aPrevFrame, aPrevFrameLine,
+                                    aFrameList);
 
   // If we are not a non-display SVG frame and we do not have a bounds update
   // pending, then we need to schedule one for our new children:
@@ -314,7 +316,6 @@ void nsSVGDisplayContainerFrame::ReflowSVG() {
     if (SVGFrame) {
       MOZ_ASSERT(!(kid->GetStateBits() & NS_FRAME_IS_NONDISPLAY),
                  "Check for this explicitly in the |if|, then");
-      kid->AddStateBits(mState & NS_FRAME_IS_DIRTY);
       SVGFrame->ReflowSVG();
 
       // We build up our child frame overflows here instead of using
@@ -415,7 +416,7 @@ gfxMatrix nsSVGDisplayContainerFrame::GetCanvasTM() {
 
     gfxMatrix tm = content->PrependLocalTransformsTo(parent->GetCanvasTM());
 
-    mCanvasTM = new gfxMatrix(tm);
+    mCanvasTM = MakeUnique<gfxMatrix>(tm);
   }
 
   return *mCanvasTM;

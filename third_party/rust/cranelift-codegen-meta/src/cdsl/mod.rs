@@ -6,10 +6,12 @@
 #[macro_use]
 pub mod ast;
 pub mod cpu_modes;
+pub mod encodings;
 pub mod formats;
-pub mod inst;
+pub mod instructions;
 pub mod isa;
 pub mod operands;
+pub mod recipes;
 pub mod regs;
 pub mod settings;
 pub mod type_inference;
@@ -37,6 +39,7 @@ macro_rules! predicate {
     };
 }
 
+/// A macro that joins boolean settings into a list (e.g. `preset!(feature_a && feature_b)`).
 #[macro_export]
 macro_rules! preset {
     () => {

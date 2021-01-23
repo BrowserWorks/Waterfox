@@ -33,6 +33,7 @@ class nsColumnSetFrame final : public nsContainerFrame {
                            nsFrameList& aChildList) override;
   void AppendFrames(ChildListID aListID, nsFrameList& aFrameList) override;
   void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                    const nsLineList::iterator* aPrevFrameLine,
                     nsFrameList& aFrameList) override;
   void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 #endif
@@ -86,44 +87,39 @@ class nsColumnSetFrame final : public nsContainerFrame {
    * These are the parameters that control the layout of columns.
    */
   struct ReflowConfig {
-    // The number of columns that we want to balance across. If we're not
-    // balancing, this will be set to INT32_MAX.
-    int32_t mBalanceColCount = INT32_MAX;
+    // The optimal number of columns that we want to use. This is computed from
+    // column-count, column-width, available inline-size, etc.
+    int32_t mUsedColCount = INT32_MAX;
 
     // The inline-size of each individual column.
-    nscoord mColISize = NS_INTRINSICSIZE;
+    nscoord mColISize = NS_UNCONSTRAINEDSIZE;
 
     // The amount of inline-size that is expected to be left over after all the
     // columns and column gaps are laid out.
     nscoord mExpectedISizeLeftOver = 0;
 
     // The width (inline-size) of each column gap.
-    nscoord mColGap = NS_INTRINSICSIZE;
+    nscoord mColGap = NS_UNCONSTRAINEDSIZE;
 
     // The maximum bSize of any individual column during a reflow iteration.
     // This parameter is set during each iteration of the binary search for
     // the best column block-size.
-    nscoord mColMaxBSize = NS_INTRINSICSIZE;
+    nscoord mColMaxBSize = NS_UNCONSTRAINEDSIZE;
 
-    // A boolean controlling whether or not we are balancing. This should be
-    // equivalent to mBalanceColCount != INT32_MAX.
+    // A boolean controlling whether or not we are balancing.
     bool mIsBalancing = false;
+
+    // A boolean controlling whether or not we are forced to fill columns
+    // sequentially.
+    bool mForceAuto = false;
 
     // The last known column block-size that was 'feasible'. A column bSize is
     // feasible if all child content fits within the specified bSize.
-    nscoord mKnownFeasibleBSize = NS_INTRINSICSIZE;
+    nscoord mKnownFeasibleBSize = NS_UNCONSTRAINEDSIZE;
 
     // The last known block-size that was 'infeasible'. A column bSize is
     // infeasible if not all child content fits within the specified bSize.
     nscoord mKnownInfeasibleBSize = 0;
-
-    // block-size of the column set frame
-    nscoord mComputedBSize = NS_INTRINSICSIZE;
-
-    // The block-size "consumed" by previous-in-flows.
-    // The computed block-size should be equal to the block-size of the element
-    // (i.e. the computed block-size itself) plus the consumed block-size.
-    nscoord mConsumedBSize = 0;
   };
 
   // Collect various block-size data calculated in ReflowChildren(), which are
@@ -200,13 +196,6 @@ class nsColumnSetFrame final : public nsContainerFrame {
                             ColumnBalanceData aColData,
                             ReflowOutput& aDesiredSize,
                             bool aUnboundedLastColumn, nsReflowStatus& aStatus);
-
-  /**
-   * Retrieve the available block-size for content of this frame. The available
-   * content block-size is the available block-size for the frame, minus borders
-   * and padding.
-   */
-  nscoord GetAvailableContentBSize(const ReflowInput& aReflowInput) const;
 
   void ForEachColumnRule(
       const std::function<void(const nsRect& lineRect)>& aSetLineRect,

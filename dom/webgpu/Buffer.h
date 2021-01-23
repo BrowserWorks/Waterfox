@@ -3,34 +3,58 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_BUFFER_H_
-#define WEBGPU_BUFFER_H_
+#ifndef GPU_BUFFER_H_
+#define GPU_BUFFER_H_
 
+#include "js/RootingAPI.h"
 #include "mozilla/dom/Nullable.h"
-#include "mozilla/dom/TypedArray.h"
+#include "mozilla/webgpu/WebGPUTypes.h"
 #include "ObjectModel.h"
 
 namespace mozilla {
+namespace ipc {
+class Shmem;
+}  // namespace ipc
 namespace webgpu {
 
 class Device;
 
-class Buffer final : public ChildOf<Device> {
+class Buffer final : public ObjectBase, public ChildOf<Device> {
  public:
-  JS::Heap<JSObject*> mMapping;
+  GPU_DECL_CYCLE_COLLECTION(Buffer)
+  GPU_DECL_JS_WRAP(Buffer)
 
-  WEBGPU_DECL_GOOP(Buffer)
+  struct Mapping final {
+    UniquePtr<ipc::Shmem> mShmem;
+    JS::Heap<JSObject*> mArrayBuffer;
+    const bool mWrite;
+
+    Mapping(ipc::Shmem&& aShmem, JSObject* aArrayBuffer, bool aWrite);
+  };
+
+  Buffer(Device* const aParent, RawId aId, BufferAddress aSize);
+  void InitMapping(ipc::Shmem&& aShmem, JSObject* aArrayBuffer, bool aWrite);
+
+  const RawId mId;
 
  private:
-  explicit Buffer(Device* parent);
   virtual ~Buffer();
+  void Cleanup();
+
+  // Note: we can't map a buffer with the size that don't fit into `size_t`
+  // (which may be smaller than `BufferAddress`), but general not all buffers
+  // are mapped.
+  const BufferAddress mSize;
+  nsString mLabel;
+  Maybe<Mapping> mMapping;
 
  public:
-  void GetMapping(JSContext* cx, JS::MutableHandle<JSObject*> out) const;
-  void Unmap() const;
+  already_AddRefed<dom::Promise> MapReadAsync(ErrorResult& aRv);
+  void Unmap(JSContext* aCx, ErrorResult& aRv);
+  void Destroy();
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_BUFFER_H_
+#endif  // GPU_BUFFER_H_

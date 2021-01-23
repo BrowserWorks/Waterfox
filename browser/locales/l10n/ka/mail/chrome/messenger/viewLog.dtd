@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "ფილტრების დავთარი">
+<!ENTITY viewLogInfo.text "ფილტრების დავთარში აღირიცხება რომელი ფილტრები იყო გამოყენებული.  გამოიყენეთ ქვედა ჩამრთველი მის გასააქტივებლად.">
+<!ENTITY clearLog.label "დავთრის გასუფთავება">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "ფილტრების დავთრის ჩართვა">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "დახურვა">
+<!ENTITY closeLog.accesskey "o">

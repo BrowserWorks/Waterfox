@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Tulajdonságok">
+<!ENTITY propertiesMenu.accesskey           "u">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Címjegyzék tulajdonságai">
+<!ENTITY abPropertiesMenu.accesskey         "C">
+<!ENTITY contactPropertiesMenu.label        "Partner tulajdonságai">
+<!ENTITY contactPropertiesMenu.accesskey    "P">
+<!ENTITY mailingListPropertiesMenu.label    "Levelezőlista tulajdonságai">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "A címjegyzék környezeti menüjének megjelenítése">
+<!ENTITY addressbookPicker.label            "Címjegyzék:">
+<!ENTITY addressbookPicker.accesskey        "C">
+<!ENTITY searchContacts.label               "Partnerek keresése:">
+<!ENTITY searchContacts.accesskey           "P">
+<!ENTITY SearchNameOrEmail.label            "Név vagy e-mail">
+
+<!ENTITY addtoToFieldMenu.label             "Hozzáadás a Címzett mezőhöz">
+<!ENTITY addtoToFieldMenu.accesskey         "C">
+<!ENTITY addtoCcFieldMenu.label             "Hozzáadás a Másolat mezőhöz">
+<!ENTITY addtoCcFieldMenu.accesskey         "M">
+<!ENTITY addtoBccFieldMenu.label            "Hozzáadás a Rejtett másolat mezőhöz">
+<!ENTITY addtoBccFieldMenu.accesskey        "R">
+<!ENTITY deleteAddrBookCard.label           "Törlés">
+<!ENTITY deleteAddrBookCard.accesskey       "T">
+<!ENTITY propertiesContext.label            "Tulajdonságok">
+<!ENTITY propertiesContext.accesskey        "u">
+<!ENTITY abPropertiesContext.label          "Tulajdonságok">
+<!ENTITY abPropertiesContext.accesskey      "u">
+<!ENTITY editContactContext.label           "Partner szerkesztése">
+<!ENTITY editContactContext.accesskey       "P">
+<!ENTITY editMailingListContext.label       "Lista szerkesztése">
+<!ENTITY editMailingListContext.accesskey   "L">
+
+<!ENTITY newContactAbContext.label          "Új névjegy">
+<!ENTITY newContactAbContext.accesskey      "n">
+<!ENTITY newListAbContext.label             "Új lista">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Címzett:">
+<!ENTITY toButton.accesskey                 "C">
+<!ENTITY ccButton.label                     "Másolat:">
+<!ENTITY ccButton.accesskey                 "M">
+<!ENTITY bccButton.label                    "Rejtett másolat:">
+<!ENTITY bccButton.accesskey                "R">

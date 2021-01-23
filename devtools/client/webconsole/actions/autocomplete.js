@@ -18,16 +18,21 @@ const {
  *                         from the cache).
  * @param {Array<String>} getterPath: Array representing the getter access (i.e.
  *                                    `a.b.c.d.` is described as ['a', 'b', 'c', 'd'] ).
+ * @param {Array<String>} expressionVars: Array of the variables defined in the expression.
  */
-function autocompleteUpdate(force, getterPath) {
-  return ({ dispatch, getState, services }) => {
-    if (services.inputHasSelection()) {
+function autocompleteUpdate(force, getterPath, expressionVars) {
+  return async ({ dispatch, getState, webConsoleUI, hud }) => {
+    if (hud.inputHasSelection()) {
       return dispatch(autocompleteClear());
     }
 
-    const inputValue = services.getInputValue();
-    const { frameActor: frameActorId, client } = services.getFrameActor();
-    const cursor = services.getInputCursor();
+    const inputValue = hud.getInputValue();
+    const frameActorId = await webConsoleUI.getFrameActor();
+    const webconsoleFront = await webConsoleUI.getWebconsoleFront({
+      frameActorId,
+    });
+
+    const cursor = webConsoleUI.getInputCursor();
 
     const state = getState().autocomplete;
     const { cache } = state;
@@ -76,9 +81,10 @@ function autocompleteUpdate(force, getterPath) {
       autocompleteDataFetch({
         input,
         frameActorId,
-        client,
+        webconsoleFront,
         authorizedEvaluations,
         force,
+        expressionVars,
       })
     );
   };
@@ -118,7 +124,7 @@ function generateRequestId() {
  *        - {String} input: the expression that we want to complete.
  *        - {String} frameActorId: The id of the frame we want to autocomplete in.
  *        - {Boolean} force: true if the user forced an autocompletion (with Ctrl+Space).
- *        - {WebConsoleClient} client: The webconsole client.
+ *        - {WebConsoleFront} client: The webconsole front.
  *        - {Array} authorizedEvaluations: Array of the properties access which can be
  *                  executed by the engine.
  *                   Example: [["x", "myGetter"], ["x", "myGetter", "y", "glitter"]]
@@ -128,20 +134,23 @@ function autocompleteDataFetch({
   input,
   frameActorId,
   force,
-  client,
+  webconsoleFront,
   authorizedEvaluations,
+  expressionVars,
 }) {
-  return ({ dispatch, services }) => {
-    const selectedNodeActor = services.getSelectedNodeActor();
+  return async ({ dispatch, webConsoleUI }) => {
+    const selectedNodeActor = webConsoleUI.getSelectedNodeActorID();
     const id = generateRequestId();
     dispatch({ type: AUTOCOMPLETE_PENDING_REQUEST, id });
-    client
+
+    webconsoleFront
       .autocomplete(
         input,
         undefined,
         frameActorId,
         selectedNodeActor,
-        authorizedEvaluations
+        authorizedEvaluations,
+        expressionVars
       )
       .then(data => {
         dispatch(
@@ -152,6 +161,7 @@ function autocompleteDataFetch({
             frameActorId,
             data,
             authorizedEvaluations,
+            expressionVars,
           })
         );
       })

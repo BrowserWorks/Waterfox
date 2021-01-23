@@ -9,13 +9,14 @@
 #ifndef _ComputedStyle_h_
 #define _ComputedStyle_h_
 
-#include "nsIMemoryReporter.h"
 #include <algorithm>
 #include "mozilla/Assertions.h"
 #include "mozilla/CachedInheritingStyles.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/PseudoStyleType.h"
 #include "mozilla/ServoComputedData.h"
+#include "mozilla/ServoComputedDataInlines.h"
+#include "mozilla/ServoStyleConsts.h"
 #include "mozilla/ServoTypes.h"
 #include "mozilla/ServoUtils.h"
 #include "nsCSSAnonBoxes.h"
@@ -61,32 +62,19 @@ class ComputedStyle;
  *  4. media_queries::Device, which holds the initial value of every property
  */
 
-// Various bits used by both Servo and Gecko.
-//
-// Please add an assert that this matches the Servo bit in
-// computed_value_flags::assert_match().
-//
-// FIXME(emilio): Would be nice to use cbindgen when it can handle bitflags!
-// without macro expansion, see https://github.com/eqrion/cbindgen/issues/100.
-enum class ComputedStyleBit : uint16_t {
-  HasTextDecorationLines = 1 << 0,
-  SuppressLineBreak = 1 << 1,
-  IsTextCombined = 1 << 2,
-  RelevantLinkVisited = 1 << 3,
-  HasPseudoElementData = 1 << 4,
-  DependsOnFontMetrics = 1 << 9,
-};
-
-MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(ComputedStyleBit)
-
 class ComputedStyle {
-  using Bit = ComputedStyleBit;
+  using Flag = StyleComputedValueFlags;
+
+  const StyleComputedValueFlags& Flags() const { return mSource.flags; }
 
  public:
   ComputedStyle(PseudoStyleType aPseudoType,
                 ServoComputedDataForgotten aComputedValues);
 
-  Bit Bits() const { return static_cast<Bit>(mSource.flags.mFlags); }
+  // Returns the computed (not resolved) value of the given property.
+  void GetComputedPropertyValue(nsCSSPropertyID aId, nsAString& aOut) const {
+    Servo_GetPropertyValue(this, aId, &aOut);
+  }
 
   // Return the ComputedStyle whose style data should be used for the R,
   // G, and B components of color, background-color, and border-*-color
@@ -135,12 +123,25 @@ class ComputedStyle {
     return mPseudoType != PseudoStyleType::NotPseudo;
   }
 
+  // Whether there are author-specified rules for padding properties.
+  // Only returns something meaningful if the appearance property is not `none`.
+  bool HasAuthorSpecifiedPadding() const {
+    return bool(Flags() & Flag::HAS_AUTHOR_SPECIFIED_PADDING);
+  }
+
+  // Whether there are author-specified rules for border or background
+  // properties.
+  // Only returns something meaningful if the appearance property is not `none`.
+  bool HasAuthorSpecifiedBorderOrBackground() const {
+    return bool(Flags() & Flag::HAS_AUTHOR_SPECIFIED_BORDER_BACKGROUND);
+  }
+
   // Does this ComputedStyle or any of its ancestors have text
   // decoration lines?
   // Differs from nsStyleTextReset::HasTextDecorationLines, which tests
   // only the data for a single context.
   bool HasTextDecorationLines() const {
-    return bool(Bits() & Bit::HasTextDecorationLines);
+    return bool(Flags() & Flag::HAS_TEXT_DECORATION_LINES);
   }
 
   // Whether any line break inside should be suppressed? If this returns
@@ -151,17 +152,17 @@ class ComputedStyle {
   // NOTE: for nsTextFrame, use nsTextFrame::ShouldSuppressLineBreak()
   // instead of this method.
   bool ShouldSuppressLineBreak() const {
-    return bool(Bits() & Bit::SuppressLineBreak);
+    return bool(Flags() & Flag::SHOULD_SUPPRESS_LINEBREAK);
   }
 
   // Is this horizontal-in-vertical (tate-chu-yoko) text? This flag is
   // only set on ComputedStyles whose pseudo is nsCSSAnonBoxes::mozText().
-  bool IsTextCombined() const { return bool(Bits() & Bit::IsTextCombined); }
+  bool IsTextCombined() const { return bool(Flags() & Flag::IS_TEXT_COMBINED); }
 
   // Is this horizontal-in-vertical (tate-chu-yoko) text? This flag is
   // only set on ComputedStyles whose pseudo is nsCSSAnonBoxes::mozText().
   bool DependsOnFontMetrics() const {
-    return bool(Bits() & Bit::DependsOnFontMetrics);
+    return bool(Flags() & Flag::DEPENDS_ON_FONT_METRICS);
   }
 
   // Does this ComputedStyle represent the style for a pseudo-element or
@@ -169,14 +170,23 @@ class ComputedStyle {
   // is equivalent to whether it or any of its ancestors returns
   // non-null for IsPseudoElement().
   bool HasPseudoElementData() const {
-    return bool(Bits() & Bit::HasPseudoElementData);
+    return bool(Flags() & Flag::IS_IN_PSEUDO_ELEMENT_SUBTREE);
   }
 
   // Is the only link whose visitedness is allowed to influence the
   // style of the node this ComputedStyle is for (which is that element
   // or its nearest ancestor that is a link) visited?
   bool RelevantLinkVisited() const {
-    return bool(Bits() & Bit::RelevantLinkVisited);
+    return bool(Flags() & Flag::IS_RELEVANT_LINK_VISITED);
+  }
+
+  // Whether this style is for the root element of the document.
+  bool IsRootElementStyle() const {
+    return bool(Flags() & Flag::IS_ROOT_ELEMENT_STYLE);
+  }
+
+  bool IsInOpacityZeroSubtree() const {
+    return bool(Flags() & Flag::IS_IN_OPACITY_ZERO_SUBTREE);
   }
 
   ComputedStyle* GetCachedInheritingAnonBoxStyle(
@@ -194,8 +204,6 @@ class ComputedStyle {
   void SetCachedLazyPseudoStyle(ComputedStyle* aStyle) {
     MOZ_ASSERT(aStyle->IsPseudoElement());
     MOZ_ASSERT(!GetCachedLazyPseudoStyle(aStyle->GetPseudoType()));
-    MOZ_ASSERT(!IsLazilyCascadedPseudoElement(),
-               "lazy pseudos can't inherit lazy pseudos");
     MOZ_ASSERT(aStyle->IsLazilyCascadedPseudoElement());
 
     // Since we're caching lazy pseudo styles on the ComputedValues of the
@@ -242,6 +250,10 @@ class ComputedStyle {
   nsChangeHint CalcStyleDifference(const ComputedStyle& aNewContext,
                                    uint32_t* aEqualStructs) const;
 
+#ifdef DEBUG
+  bool EqualForCachedAnonymousContentStyle(const ComputedStyle&) const;
+#endif
+
  public:
   /**
    * Get a color that depends on link-visitedness using this and
@@ -252,7 +264,7 @@ class ComputedStyle {
    *               been listed in nsCSSVisitedDependentPropList.h.
    */
   template <typename T, typename S>
-  nscolor GetVisitedDependentColor(T S::*aField);
+  nscolor GetVisitedDependentColor(T S::*aField) const;
 
   /**
    * aColors should be a two element array of nscolor in which the first
@@ -282,6 +294,8 @@ class ComputedStyle {
   // value is added. It's done that way because the callers know which value
   // the size should be added to.
   void AddSizeOfIncludingThis(nsWindowSizes& aSizes, size_t* aCVsSize) const;
+
+  StyleWritingMode WritingMode() const { return {mSource.WritingMode().mBits}; }
 
  protected:
   // Needs to be friend so that it can call the destructor without making it

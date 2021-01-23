@@ -3,7 +3,7 @@
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
-    mod(require("../lib/codemirror"));
+    mod(require("devtools/client/shared/sourceeditor/codemirror/lib/codemirror"));
   else if (typeof define == "function" && define.amd) // AMD
     define(["../lib/codemirror"], mod);
   else // Plain browser env
@@ -369,6 +369,7 @@
 
     "Ctrl-/": repeated("undo"), "Shift-Ctrl--": repeated("undo"),
     "Ctrl-Z": repeated("undo"), "Cmd-Z": repeated("undo"),
+    "Shift-Ctrl-Z": "redo",
     "Shift-Alt-,": "goDocStart", "Shift-Alt-.": "goDocEnd",
     "Ctrl-S": "findPersistentNext", "Ctrl-R": "findPersistentPrev", "Ctrl-G": quit, "Shift-Alt-5": "replace",
     "Alt-/": "autocomplete",

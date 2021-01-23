@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Lliwiau Tudalen a Chefndir">
+<!ENTITY pageColors.label "Lliwiau Tudalen">
+<!ENTITY defaultColorsRadio.label "Lliwiau Rhagosodedig y Darllenydd (Peidio gosod lliwiau ar y dudalen)">
+<!ENTITY defaultColorsRadio.accessKey "L">
+<!ENTITY defaultColorsRadio.tooltip "Defnyddio gosodiad lliw porwr y gwyliwr (darllenydd) yn unig">
+<!ENTITY customColorsRadio.label "Defnyddio lliwiau addasu:">
+<!ENTITY customColorsRadio.accessKey "D">
+<!ENTITY customColorsRadio.tooltip "Mae'r gosodiadau lliw hyn yn drech na gosodiadau'r porwr">
+
+<!ENTITY normalText.label "Testun arferol">
+<!ENTITY normalText.accessKey "T">
+<!ENTITY linkText.label "Testun dolen">
+<!ENTITY linkText.accessKey "d">
+<!ENTITY activeLinkText.label "Cyswllt testun gweithredol">
+<!ENTITY activeLinkText.accessKey "g">
+<!ENTITY visitedLinkText.label "Testun dolen wedi ymweld">
+<!ENTITY visitedLinkText.accessKey "o">
+<!ENTITY background.label "Cefndir:">
+<!ENTITY background.accessKey "e">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Delweddau Cefndir:">
+<!ENTITY backgroundImage.accessKey "D">
+<!ENTITY backgroundImage.tooltip "Defnyddio ffeil delwedd fel cefndir ar gyfer eich tudalen">
+<!ENTITY backgroundImage.shortenedDataURI "URI data byrrach (bydd copi'n gosod yr URI llawn ar i'r clipfwrdd)">

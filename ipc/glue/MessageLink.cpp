@@ -10,6 +10,7 @@
 #include "mozilla/ipc/BrowserProcessSubThread.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "chrome/common/ipc_channel.h"
+#include "base/task.h"
 
 #include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
@@ -20,7 +21,6 @@
 #include "nsXULAppAPI.h"
 
 using namespace mozilla;
-using namespace std;
 
 // We rely on invariants about the lifetime of the transport:
 //
@@ -47,28 +47,29 @@ MessageLink::~MessageLink() {
 }
 
 ProcessLink::ProcessLink(MessageChannel* aChan)
-    : MessageLink(aChan),
-      mTransport(nullptr),
-      mIOLoop(nullptr),
-      mExistingListener(nullptr) {}
+    : MessageLink(aChan), mIOLoop(nullptr), mExistingListener(nullptr) {}
 
 ProcessLink::~ProcessLink() {
+  // Dispatch the delete of the transport to the IO thread.
+  RefPtr<DeleteTask<IPC::Channel>> task =
+      new DeleteTask<IPC::Channel>(mTransport.release());
+  XRE_GetIOMessageLoop()->PostTask(task.forget());
+
 #ifdef DEBUG
-  mTransport = nullptr;
   mIOLoop = nullptr;
   mExistingListener = nullptr;
 #endif
 }
 
-void ProcessLink::Open(mozilla::ipc::Transport* aTransport,
-                       MessageLoop* aIOLoop, Side aSide) {
+void ProcessLink::Open(UniquePtr<Transport> aTransport, MessageLoop* aIOLoop,
+                       Side aSide) {
   mChan->AssertWorkerThread();
 
   MOZ_ASSERT(aTransport, "need transport layer");
 
   // FIXME need to check for valid channel
 
-  mTransport = aTransport;
+  mTransport = std::move(aTransport);
 
   // FIXME figure out whether we're in parent or child, grab IO loop
   // appropriately
@@ -148,7 +149,7 @@ void ProcessLink::SendMessage(Message* msg) {
         nsDependentCString(msg->name()));
     CrashReporter::AnnotateCrashReport(
         CrashReporter::Annotation::IPCMessageSize,
-        static_cast<int>(msg->size()));
+        static_cast<unsigned int>(msg->size()));
     MOZ_CRASH("IPC message size is too large");
   }
 
@@ -157,8 +158,10 @@ void ProcessLink::SendMessage(Message* msg) {
   }
   mChan->mMonitor->AssertCurrentThreadOwns();
 
+  msg->AssertAsLargeAsHeader();
+
   mIOLoop->PostTask(NewNonOwningRunnableMethod<Message*>(
-      "IPC::Channel::Send", mTransport, &Transport::Send, msg));
+      "IPC::Channel::Send", mTransport.get(), &Transport::Send, msg));
 }
 
 void ProcessLink::SendClose() {

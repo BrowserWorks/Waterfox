@@ -14,19 +14,27 @@
 #include "pk11pqg.h"
 #include "pk11pub.h"
 #include "pkcs11uri.h"
+#include "secmod.h"
 
 struct ScopedDelete {
   void operator()(CERTCertificate* cert) { CERT_DestroyCertificate(cert); }
   void operator()(CERTCertificateList* list) {
     CERT_DestroyCertificateList(list);
   }
+  void operator()(CERTDistNames* names) { CERT_FreeDistNames(names); }
   void operator()(CERTName* name) { CERT_DestroyName(name); }
   void operator()(CERTCertList* list) { CERT_DestroyCertList(list); }
   void operator()(CERTSubjectPublicKeyInfo* spki) {
     SECKEY_DestroySubjectPublicKeyInfo(spki);
   }
+  void operator()(PK11Context* context) { PK11_DestroyContext(context, true); }
+  void operator()(PK11GenericObject* obj) { PK11_DestroyGenericObject(obj); }
   void operator()(PK11SlotInfo* slot) { PK11_FreeSlot(slot); }
+  void operator()(PK11SlotList* slots) { PK11_FreeSlotList(slots); }
   void operator()(PK11SymKey* key) { PK11_FreeSymKey(key); }
+  void operator()(PK11URI* uri) { PK11URI_DestroyURI(uri); }
+  void operator()(PLArenaPool* arena) { PORT_FreeArena(arena, PR_FALSE); }
+  void operator()(PQGParams* pqg) { PK11_PQG_DestroyParams(pqg); }
   void operator()(PRFileDesc* fd) { PR_Close(fd); }
   void operator()(SECAlgorithmID* id) { SECOID_DestroyAlgorithmID(id, true); }
   void operator()(SECKEYEncryptedPrivateKeyInfo* e) {
@@ -38,15 +46,10 @@ struct ScopedDelete {
   void operator()(SECKEYPrivateKeyList* list) {
     SECKEY_DestroyPrivateKeyList(list);
   }
-  void operator()(PK11URI* uri) { PK11URI_DestroyURI(uri); }
-  void operator()(PLArenaPool* arena) { PORT_FreeArena(arena, PR_FALSE); }
-  void operator()(PK11Context* context) { PK11_DestroyContext(context, true); }
-  void operator()(PK11GenericObject* obj) { PK11_DestroyGenericObject(obj); }
-  void operator()(PQGParams* pqg) { PK11_PQG_DestroyParams(pqg); }
+  void operator()(SECMODModule* module) { SECMOD_DestroyModule(module); }
   void operator()(SEC_PKCS12DecoderContext* dcx) {
     SEC_PKCS12DecoderFinish(dcx);
   }
-  void operator()(CERTDistNames* names) { CERT_FreeDistNames(names); }
 };
 
 template <class T>
@@ -61,33 +64,36 @@ struct ScopedMaybeDelete {
 
 #define SCOPED(x) typedef std::unique_ptr<x, ScopedMaybeDelete<x> > Scoped##x
 
+SCOPED(CERTCertList);
 SCOPED(CERTCertificate);
 SCOPED(CERTCertificateList);
-SCOPED(CERTCertList);
+SCOPED(CERTDistNames);
 SCOPED(CERTName);
 SCOPED(CERTSubjectPublicKeyInfo);
+SCOPED(PK11Context);
+SCOPED(PK11GenericObject);
 SCOPED(PK11SlotInfo);
+SCOPED(PK11SlotList);
 SCOPED(PK11SymKey);
+SCOPED(PK11URI);
+SCOPED(PLArenaPool);
 SCOPED(PQGParams);
 SCOPED(PRFileDesc);
 SCOPED(SECAlgorithmID);
-SCOPED(SECKEYEncryptedPrivateKeyInfo);
 SCOPED(SECItem);
-SCOPED(SECKEYPublicKey);
+SCOPED(SECKEYEncryptedPrivateKeyInfo);
 SCOPED(SECKEYPrivateKey);
 SCOPED(SECKEYPrivateKeyList);
-SCOPED(PK11URI);
-SCOPED(PLArenaPool);
-SCOPED(PK11Context);
-SCOPED(PK11GenericObject);
+SCOPED(SECKEYPublicKey);
+SCOPED(SECMODModule);
 SCOPED(SEC_PKCS12DecoderContext);
-SCOPED(CERTDistNames);
 
 #undef SCOPED
 
 struct StackSECItem : public SECItem {
   StackSECItem() : SECItem({siBuffer, nullptr, 0}) {}
-  ~StackSECItem() { SECITEM_FreeItem(this, PR_FALSE); }
+  ~StackSECItem() { Reset(); }
+  void Reset() { SECITEM_FreeItem(this, PR_FALSE); }
 };
 
 #endif  // nss_scoped_ptrs_h__

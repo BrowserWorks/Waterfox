@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName;i ohutu režiim">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; töötab nüüd ohutus režiimis, mis ajutiselt keelab kõik sinu kohandatud sätted, teemad ja laiendused.">
+<!ENTITY safeModeDescription2.label       "Sa võid teha mõned või kõik neist muudatustest jäädavaks:">
+
+<!ENTITY disableAddons.label              "Kõik lisad keelatakse">
+<!ENTITY disableAddons.accesskey          "K">
+
+<!ENTITY resetToolbars.label              "Tööriistaribad ja nupud lähtestatakse">
+<!ENTITY resetToolbars.accesskey          "T">
+
+<!ENTITY changeAndRestartButton.label     "Rakenda muudatused ja taaskäivita">
+<!ENTITY changeAndRestartButton.accesskey "R">
+
+<!ENTITY continueButton.label             "Jätka ohutus režiimis">
+<!ENTITY continueButton.accesskey         "J">

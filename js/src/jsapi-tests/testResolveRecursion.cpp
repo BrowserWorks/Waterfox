@@ -12,11 +12,19 @@
  * prevented.
  */
 BEGIN_TEST(testResolveRecursion) {
-  static const JSClassOps my_resolve_classOps = {nullptr,  // add
-                                                 nullptr,  // delete
-                                                 nullptr,  // enumerate
-                                                 nullptr,  // newEnumerate
-                                                 my_resolve};
+  static const JSClassOps my_resolve_classOps = {
+      nullptr,     // addProperty
+      nullptr,     // delProperty
+      nullptr,     // enumerate
+      nullptr,     // newEnumerate
+      my_resolve,  // resolve
+      nullptr,     // mayResolve
+      nullptr,     // finalize
+      nullptr,     // call
+      nullptr,     // hasInstance
+      nullptr,     // construct
+      nullptr,     // trace
+  };
 
   static const JSClass my_resolve_class = {"MyResolve", JSCLASS_HAS_PRIVATE,
                                            &my_resolve_classOps};
@@ -70,10 +78,10 @@ bool doResolve(JS::HandleObject obj, JS::HandleId id, bool* resolvedp) {
 
   CHECK(JSID_IS_STRING(id));
 
-  JSFlatString* str = JS_FlattenString(cx, JSID_TO_STRING(id));
+  JSLinearString* str = JS_EnsureLinearString(cx, JSID_TO_STRING(id));
   CHECK(str);
   JS::RootedValue v(cx);
-  if (JS_FlatStringEqualsAscii(str, "x")) {
+  if (JS_LinearStringEqualsLiteral(str, "x")) {
     if (obj == obj1) {
       /* First resolve hook invocation. */
       CHECK_EQUAL(resolveEntryCount, 1);
@@ -89,7 +97,7 @@ bool doResolve(JS::HandleObject obj, JS::HandleId id, bool* resolvedp) {
       *resolvedp = false;
       return true;
     }
-  } else if (JS_FlatStringEqualsAscii(str, "y")) {
+  } else if (JS_LinearStringEqualsLiteral(str, "y")) {
     if (obj == obj2) {
       CHECK_EQUAL(resolveEntryCount, 2);
       CHECK(JS_DefinePropertyById(cx, obj, id, JS::NullHandleValue,
@@ -142,17 +150,19 @@ BEGIN_TEST(testResolveRecursion_InitStandardClasses) {
 }
 
 const JSClass* getGlobalClass() override {
-  static const JSClassOps myGlobalClassOps = {nullptr,  // add
-                                              nullptr,  // delete
-                                              nullptr,  // enumerate
-                                              nullptr,  // newEnumerate
-                                              my_resolve,
-                                              nullptr,  // mayResolve
-                                              nullptr,  // finalize
-                                              nullptr,  // call
-                                              nullptr,  // hasInstance
-                                              nullptr,  // construct
-                                              JS_GlobalObjectTraceHook};
+  static const JSClassOps myGlobalClassOps = {
+      nullptr,                   // addProperty
+      nullptr,                   // delProperty
+      nullptr,                   // enumerate
+      nullptr,                   // newEnumerate
+      my_resolve,                // resolve
+      nullptr,                   // mayResolve
+      nullptr,                   // finalize
+      nullptr,                   // call
+      nullptr,                   // hasInstance
+      nullptr,                   // construct
+      JS_GlobalObjectTraceHook,  // trace
+  };
 
   static const JSClass myGlobalClass = {
       "testResolveRecursion_InitStandardClasses_myGlobalClass",

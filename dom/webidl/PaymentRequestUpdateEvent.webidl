@@ -10,11 +10,13 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor(DOMString type,
-             optional PaymentRequestUpdateEventInit eventInitDict),
- SecureContext,
- Func="mozilla::dom::PaymentRequest::PrefEnabled"]
+[SecureContext,
+ Func="mozilla::dom::PaymentRequest::PrefEnabled",
+ Exposed=Window]
 interface PaymentRequestUpdateEvent : Event {
+  constructor(DOMString type,
+              optional PaymentRequestUpdateEventInit eventInitDict = {});
+
   [Throws]
   void updateWith(Promise<PaymentDetailsUpdate> detailsPromise);
 };

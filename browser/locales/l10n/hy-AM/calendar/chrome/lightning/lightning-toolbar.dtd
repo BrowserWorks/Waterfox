@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Օրացույցի գործիքագոտի">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "Առաջադրանքների Գործիքագոտի">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Համաժամել">
+<!ENTITY lightning.toolbar.sync.tooltip "Վերբեռնել օրացույցերը և համաժամեցնել փոփոխությունները">
+<!ENTITY lightning.toolbar.delete.label "Ջնջել">
+<!ENTITY lightning.toolbar.delete.tooltip "Ջնջել ընտրված իրադարձությունները կամ առաջադրանքները">
+<!ENTITY lightning.toolbar.edit.label "Խմբագրել">
+<!ENTITY lightning.toolbar.edit.tooltip "Խմբագրել ընտրված իրադարձությունը կամ առաջադրանքը">
+<!ENTITY lightning.toolbar.gototoday.label "Դեպի այսօր">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Դեպի այսօր">
+<!ENTITY lightning.toolbar.print.label "Տպել">
+<!ENTITY lightning.toolbar.print.tooltip "Տպել իրադարձություններ կամ առաջադրանքներ">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Օրացույց">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Բացել օրացույցի ներդիրը">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "Առաջադրանքներ">
+<!ENTITY lightning.toolbar.task.tooltip       "Բացել առաջադրանքների ներդիրը">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Իրադարձություն">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Ստեղծել նոր իրադարձություն">
+<!ENTITY lightning.toolbar.newtask.label      "Առաջադրանք">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Ստեղծել նոր առաջադրանք">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Օր">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Շաբաթ">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "Բազում շաբաթներ">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "Ամիս">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Ցուցադրել &brandShortName; Ընտրացանկը">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Օրացույցի փեղկ">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "Ցուցադրել օրացույցի փեղկը">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

@@ -31,7 +31,7 @@ struct ParamTraits<mozilla::VideoInfo> {
     WriteParam(aMsg, aParam.mRotation);
     WriteParam(aMsg, aParam.mColorDepth);
     WriteParam(aMsg, aParam.mColorSpace);
-    WriteParam(aMsg, aParam.mFullRange);
+    WriteParam(aMsg, aParam.mColorRange);
     WriteParam(aMsg, aParam.HasAlpha());
   }
 
@@ -49,7 +49,7 @@ struct ParamTraits<mozilla::VideoInfo> {
         ReadParam(aMsg, aIter, &aResult->mRotation) &&
         ReadParam(aMsg, aIter, &aResult->mColorDepth) &&
         ReadParam(aMsg, aIter, &aResult->mColorSpace) &&
-        ReadParam(aMsg, aIter, &aResult->mFullRange) &&
+        ReadParam(aMsg, aIter, &aResult->mColorRange) &&
         ReadParam(aMsg, aIter, &alphaPresent)) {
       aResult->SetImageRect(imageRect);
       aResult->SetAlpha(alphaPresent);
@@ -164,6 +164,31 @@ struct ParamTraits<mozilla::media::TimeInterval> {
     }
     return false;
   }
+};
+
+template <>
+struct ParamTraits<mozilla::MediaResult> {
+  typedef mozilla::MediaResult paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam) {
+    WriteParam(aMsg, aParam.Code());
+    WriteParam(aMsg, aParam.Message());
+    WriteParam(aMsg, aParam.GPUCrashTimeStamp());
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter,
+                   paramType* aResult) {
+    nsresult result;
+    nsCString message;
+    mozilla::TimeStamp timeStamp;
+    if (ReadParam(aMsg, aIter, &result) && ReadParam(aMsg, aIter, &message) &&
+        ReadParam(aMsg, aIter, &timeStamp)) {
+      *aResult = paramType(result, std::move(message));
+      aResult->SetGPUCrashTimeStamp(timeStamp);
+      return true;
+    }
+    return false;
+  };
 };
 
 }  // namespace IPC

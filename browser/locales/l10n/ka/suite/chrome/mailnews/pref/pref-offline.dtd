@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "ქსელი და საცავი">
+<!ENTITY pref.offline.caption             "კავშირგარეშე რეჟიმი">
+<!ENTITY textStartUp                      "სეანსის დაწყებისას:">
+<!ENTITY textStartUp.accesskey            "დ">
+<!ENTITY menuitemRememberPrevState        "წინა რეჟიმის სტატუსის შენახვა">
+<!ENTITY menuitemAskMe                    "შეკითხვა ყოველი გაშვებისას, კავშირზე გასვლის შესახებ">
+<!ENTITY menuitemAlwaysOnline             "დაწყება ყოველთვის კავშირის რეჟიმში">
+<!ENTITY menuitemAlwaysOffline            "ყოველთვის კავშირგარეშე რეჟიმში გაშვება">
+<!ENTITY menuitemAutomatic                "თვითამოცნობა (თუ შესაძლებელია)">
+<!ENTITY textGoingOnline                  "გაიგზავნოს გასაგზავნი წერილები კავშირის რეჟიმში შესვლისას?">
+<!ENTITY radioAutoSend                    "დიახ">
+<!ENTITY radioAutoSend.accesskey          "დ">
+<!ENTITY radioNotSend                     "არა">
+<!ENTITY radioNotSend.accesskey           "ა">
+<!ENTITY radioAskUnsent                   "შეკითხვა ყოველ ჯერზე">
+<!ENTITY radioAskUnsent.accesskey         "ე">
+<!ENTITY textGoingOffline                 "ჩამოიტვირთოს წერილები კავშირგარეშე რეჟიმში სამუშაოდ?">
+<!ENTITY radioAutoDownload                "დიახ">
+<!ENTITY radioAutoDownload.accesskey      "დ">
+<!ENTITY radioNotDownload                 "არა">
+<!ENTITY radioNotDownload.accesskey       "ა">
+<!ENTITY radioAskDownload                 "შეკითხვა ყოველ ჯერზე">
+<!ENTITY radioAskDownload.accesskey       "ე">
+<!ENTITY mailConnections.caption          "საფოსტო კავშირი">
+<!ENTITY mailnewsTimeout.label            "კავშირის ვადა:">
+<!ENTITY mailnewsTimeout.accesskey        "ა">
+<!ENTITY mailnewsTimeoutSeconds.label     "წამი">
+<!ENTITY Diskspace                        "სივრცე დისკზე">
+<!ENTITY offlineCompactFolders.label      "ყველა საქაღალდის შეკუმშვა, თუ მეტ სივრცეს გამოათავისუფლებს">
+<!ENTITY offlineCompactFolders.accesskey  "უ">
+<!ENTITY offlineCompactFoldersMB.label    "მბ სულ">

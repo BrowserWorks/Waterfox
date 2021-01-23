@@ -17,11 +17,15 @@ class nsOSPermissionRequest : public nsOSPermissionRequestBase {
 
   NS_IMETHOD GetVideoCapturePermissionState(uint16_t* aVideo) override;
 
+  NS_IMETHOD GetScreenCapturePermissionState(uint16_t* aScreen) override;
+
   NS_IMETHOD RequestVideoCapturePermission(
       JSContext* aCx, mozilla::dom::Promise** aPromiseOut) override;
 
   NS_IMETHOD RequestAudioCapturePermission(
       JSContext* aCx, mozilla::dom::Promise** aPromiseOut) override;
+
+  NS_IMETHOD MaybeRequestScreenCapturePermission() override;
 };
 
 #endif

@@ -67,16 +67,16 @@ nsChangeHint SVGTransformableElement::GetAttributeChangeHint(
                  "Unknown modification type.");
       if (!mTransforms || !mTransforms->HasTransform()) {
         // New value is empty, treat as removal.
+        // FIXME: Should we just rely on CreatedOrRemovedOnLastChange?
         isAdditionOrRemoval = true;
-      } else if (mTransforms->RequiresFrameReconstruction()) {
+      } else if (mTransforms->CreatedOrRemovedOnLastChange()) {
         // Old value was empty, treat as addition.
         isAdditionOrRemoval = true;
       }
     }
 
     if (isAdditionOrRemoval) {
-      // Reconstruct the frame tree to handle stacking context changes:
-      retval |= nsChangeHint_ReconstructFrame;
+      retval |= nsChangeHint_ComprehensiveAddOrRemoveTransform;
     } else {
       // We just assume the old and new transforms are different.
       retval |= nsChangeHint_UpdatePostTransformOverflow |
@@ -100,7 +100,8 @@ gfxMatrix SVGTransformableElement::PrependLocalTransformsTo(
     // must override this function and handle that themselves.)
     return aMatrix;
   }
-  return GetUserToParentTransform(mAnimateMotionTransform, mTransforms) *
+  return GetUserToParentTransform(mAnimateMotionTransform.get(),
+                                  mTransforms.get()) *
          aMatrix;
 }
 
@@ -117,7 +118,8 @@ void SVGTransformableElement::SetAnimateMotionTransform(
   }
   bool transformSet = mTransforms && mTransforms->IsExplicitlySet();
   bool prevSet = mAnimateMotionTransform || transformSet;
-  mAnimateMotionTransform = aMatrix ? new gfx::Matrix(*aMatrix) : nullptr;
+  mAnimateMotionTransform =
+      aMatrix ? MakeUnique<gfx::Matrix>(*aMatrix) : nullptr;
   bool nowSet = mAnimateMotionTransform || transformSet;
   int32_t modType;
   if (prevSet && !nowSet) {
@@ -143,9 +145,9 @@ void SVGTransformableElement::SetAnimateMotionTransform(
 SVGAnimatedTransformList* SVGTransformableElement::GetAnimatedTransformList(
     uint32_t aFlags) {
   if (!mTransforms && (aFlags & DO_ALLOCATE)) {
-    mTransforms = new SVGAnimatedTransformList();
+    mTransforms = MakeUnique<SVGAnimatedTransformList>();
   }
-  return mTransforms;
+  return mTransforms.get();
 }
 
 SVGElement* SVGTransformableElement::GetNearestViewportElement() {
@@ -156,20 +158,22 @@ SVGElement* SVGTransformableElement::GetFarthestViewportElement() {
   return SVGContentUtils::GetOuterSVGElement(this);
 }
 
-already_AddRefed<SVGIRect> SVGTransformableElement::GetBBox(
-    const SVGBoundingBoxOptions& aOptions, ErrorResult& rv) {
+static already_AddRefed<SVGRect> ZeroBBox(SVGTransformableElement& aOwner) {
+  return MakeAndAddRef<SVGRect>(&aOwner, Rect{0, 0, 0, 0});
+}
+
+already_AddRefed<SVGRect> SVGTransformableElement::GetBBox(
+    const SVGBoundingBoxOptions& aOptions) {
   nsIFrame* frame = GetPrimaryFrame(FlushType::Layout);
 
   if (!frame || (frame->GetStateBits() & NS_FRAME_IS_NONDISPLAY)) {
-    rv.Throw(NS_ERROR_FAILURE);
-    return nullptr;
+    return ZeroBBox(*this);
   }
   nsSVGDisplayableFrame* svgframe = do_QueryFrame(frame);
 
   if (!svgframe) {
     if (!nsSVGUtils::IsInSVGTextSubtree(frame)) {
-      rv.Throw(NS_ERROR_NOT_IMPLEMENTED);  // XXX: outer svg
-      return nullptr;
+      return ZeroBBox(*this);
     }
 
     // For <tspan>, <textPath>, the frame is an nsInlineFrame or
@@ -186,8 +190,7 @@ already_AddRefed<SVGIRect> SVGTransformableElement::GetBBox(
             frame->GetParent(), LayoutFrameType::SVGText));
 
     if (text->HasAnyStateBits(NS_FRAME_IS_NONDISPLAY)) {
-      rv.Throw(NS_ERROR_FAILURE);
-      return nullptr;
+      return ZeroBBox(*this);
     }
 
     gfxRect rec = text->TransformFrameRectFromTextChild(
@@ -199,14 +202,14 @@ already_AddRefed<SVGIRect> SVGTransformableElement::GetBBox(
     rec.x += float(text->GetPosition().x) / AppUnitsPerCSSPixel();
     rec.y += float(text->GetPosition().y) / AppUnitsPerCSSPixel();
 
-    return NS_NewSVGRect(this, ToRect(rec));
+    return do_AddRef(new SVGRect(this, ToRect(rec)));
   }
 
   if (!NS_SVGNewGetBBoxEnabled()) {
-    return NS_NewSVGRect(
+    return do_AddRef(new SVGRect(
         this, ToRect(nsSVGUtils::GetBBox(
                   frame, nsSVGUtils::eBBoxIncludeFillGeometry |
-                             nsSVGUtils::eUseUserSpaceOfUseElement)));
+                             nsSVGUtils::eUseUserSpaceOfUseElement))));
   }
   uint32_t flags = 0;
   if (aOptions.mFill) {
@@ -222,14 +225,15 @@ already_AddRefed<SVGIRect> SVGTransformableElement::GetBBox(
     flags |= nsSVGUtils::eBBoxIncludeClipped;
   }
   if (flags == 0) {
-    return NS_NewSVGRect(this, 0, 0, 0, 0);
+    return do_AddRef(new SVGRect(this, gfx::Rect()));
   }
   if (flags == nsSVGUtils::eBBoxIncludeMarkers ||
       flags == nsSVGUtils::eBBoxIncludeClipped) {
     flags |= nsSVGUtils::eBBoxIncludeFill;
   }
   flags |= nsSVGUtils::eUseUserSpaceOfUseElement;
-  return NS_NewSVGRect(this, ToRect(nsSVGUtils::GetBBox(frame, flags)));
+  return do_AddRef(
+      new SVGRect(this, ToRect(nsSVGUtils::GetBBox(frame, flags))));
 }
 
 already_AddRefed<SVGMatrix> SVGTransformableElement::GetCTM() {

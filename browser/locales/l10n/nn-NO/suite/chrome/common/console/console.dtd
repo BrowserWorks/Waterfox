@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Feilmeldingar">
+
+<!ENTITY errFile.label        "Kjeldefil:">
+<!ENTITY errLine.label        "Linje:">
+<!ENTITY errColumn.label      "Kolonne:">
+
+<!ENTITY all.label            "Alle">
+<!ENTITY all.accesskey        "A">
+<!ENTITY errors.label         "Feil">
+<!ENTITY errors.accesskey     "e">
+<!ENTITY warnings.label       "Åtvaringar">
+<!ENTITY warnings.accesskey   "Å">
+<!ENTITY messages.label       "Meldingar">
+<!ENTITY messages.accesskey   "M">
+<!ENTITY clear.label          "Tøm">
+<!ENTITY clear.accesskey      "m">
+<!ENTITY codeEval.label       "Kode:">
+<!ENTITY codeEval.accesskey   "o">
+<!ENTITY evaluate.label       "Evaluer">
+<!ENTITY evaluate.accesskey   "u">
+<!ENTITY filter2.label        "Filter:">
+<!ENTITY filter2.accesskey    "i">
+
+<!ENTITY copyCmd.label         "Kopier">
+<!ENTITY copyCmd.accesskey     "K">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Første -> Siste sorteringsrekkjefølgje">
+<!ENTITY sortFirst.accesskey   "F">
+<!ENTITY sortLast.label        "Siste > Første sorteringsrekkjefølgje">
+<!ENTITY sortLast.accesskey    "S">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Menylinje">
+<!ENTITY modeToolbar.tooltip   "Modus-verktøylinje">
+<!ENTITY entryToolbar.tooltip  "Javascript-inntastingsverktøylinje">
+<!ENTITY toolbarsCmd.label     "Vis/Gøym">
+<!ENTITY toolbarsCmd.accesskey "G">
+<!ENTITY toolbarMode.label     "Modus">
+<!ENTITY toolbarMode.accesskey "M">
+<!ENTITY toolbarEval.label     "JavaScript-inntasting">
+<!ENTITY toolbarEval.accesskey "J">

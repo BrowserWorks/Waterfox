@@ -6,9 +6,8 @@
 #ifndef MOZILLA_MEDIASEGMENT_H_
 #define MOZILLA_MEDIASEGMENT_H_
 
+#include "PrincipalHandle.h"
 #include "nsTArray.h"
-#include "nsIPrincipal.h"
-#include "nsProxyRelease.h"
 #ifdef MOZILLA_INTERNAL_API
 #  include "mozilla/TimeStamp.h"
 #endif
@@ -26,28 +25,28 @@ const int64_t TRACK_RATE_MAX_BITS = 20;
 const TrackRate TRACK_RATE_MAX = 1 << TRACK_RATE_MAX_BITS;
 
 /**
- * A number of ticks at a rate determined by some underlying track (e.g.
- * audio sample rate). We want to make sure that multiplying TrackTicks by
- * a TrackRate doesn't overflow, so we set its max accordingly.
- * StreamTime should be used instead when we're working with MediaStreamGraph's
- * rate, but TrackTicks can be used outside MediaStreams when we have data
- * at a different rate.
+ * A number of ticks at a rate determined by some underlying track (e.g., audio
+ * sample rate). We want to make sure that multiplying TrackTicks by a TrackRate
+ * doesn't overflow, so we set its max accordingly.
+ * TrackTime should be used instead when we're working with MediaTrackGraph's
+ * rate, but TrackTicks can be used outside MediaTracks when we have data at a
+ * different rate.
  */
 typedef int64_t TrackTicks;
 const int64_t TRACK_TICKS_MAX = INT64_MAX >> TRACK_RATE_MAX_BITS;
 
 /**
  * We represent media times in 64-bit audio frame counts or ticks.
- * All tracks in a MediaStreamGraph have the same rate.
+ * All tracks in a MediaTrackGraph have the same rate.
  */
 typedef int64_t MediaTime;
 const int64_t MEDIA_TIME_MAX = TRACK_TICKS_MAX;
 
 /**
- * Media time relative to the start of a StreamTracks.
+ * Media time relative to the start of a MediaTrack.
  */
-typedef MediaTime StreamTime;
-const StreamTime STREAM_TIME_MAX = MEDIA_TIME_MAX;
+typedef MediaTime TrackTime;
+const TrackTime TRACK_TIME_MAX = MEDIA_TIME_MAX;
 
 /**
  * Media time relative to the start of the graph timeline.
@@ -55,64 +54,39 @@ const StreamTime STREAM_TIME_MAX = MEDIA_TIME_MAX;
 typedef MediaTime GraphTime;
 const GraphTime GRAPH_TIME_MAX = MEDIA_TIME_MAX;
 
+/* Time conversion helper functions */
+inline TrackTicks RateConvertTicksRoundDown(TrackRate aOutRate,
+                                            TrackRate aInRate,
+                                            TrackTicks aTicks) {
+  MOZ_ASSERT(0 < aOutRate && aOutRate <= TRACK_RATE_MAX, "Bad out rate");
+  MOZ_ASSERT(0 < aInRate && aInRate <= TRACK_RATE_MAX, "Bad in rate");
+  MOZ_ASSERT(0 <= aTicks && aTicks <= TRACK_TICKS_MAX, "Bad ticks");
+  return (aTicks * aOutRate) / aInRate;
+}
+
+inline TrackTicks RateConvertTicksRoundUp(TrackRate aOutRate, TrackRate aInRate,
+                                          TrackTicks aTicks) {
+  MOZ_ASSERT(0 < aOutRate && aOutRate <= TRACK_RATE_MAX, "Bad out rate");
+  MOZ_ASSERT(0 < aInRate && aInRate <= TRACK_RATE_MAX, "Bad in rate");
+  MOZ_ASSERT(0 <= aTicks && aTicks <= TRACK_TICKS_MAX, "Bad ticks");
+  return (aTicks * aOutRate + aInRate - 1) / aInRate;
+}
+
 /**
  * The number of chunks allocated by default for a MediaSegment.
  * Appending more chunks than this will cause further allocations.
  *
  * 16 is an arbitrary number intended to cover the most common cases in the
- * MediaStreamGraph (1 with silence and 1-2 with data for a realtime track)
+ * MediaTrackGraph (1 with silence and 1-2 with data for a realtime track)
  * with some margin.
  */
 const size_t DEFAULT_SEGMENT_CAPACITY = 16;
 
 /**
- * We pass the principal through the MediaStreamGraph by wrapping it in a thread
- * safe nsMainThreadPtrHandle, since it cannot be used directly off the main
- * thread. We can compare two PrincipalHandles to each other on any thread, but
- * they can only be created and converted back to nsIPrincipal* on main thread.
- */
-typedef nsMainThreadPtrHandle<nsIPrincipal> PrincipalHandle;
-
-inline PrincipalHandle MakePrincipalHandle(nsIPrincipal* aPrincipal) {
-  RefPtr<nsMainThreadPtrHolder<nsIPrincipal>> holder =
-      new nsMainThreadPtrHolder<nsIPrincipal>(
-          "MakePrincipalHandle::nsIPrincipal", aPrincipal);
-  return PrincipalHandle(holder);
-}
-
-#define PRINCIPAL_HANDLE_NONE nullptr
-
-inline nsIPrincipal* GetPrincipalFromHandle(
-    const PrincipalHandle& aPrincipalHandle) {
-  MOZ_ASSERT(NS_IsMainThread());
-  return aPrincipalHandle.get();
-}
-
-inline bool PrincipalHandleMatches(const PrincipalHandle& aPrincipalHandle,
-                                   nsIPrincipal* aOther) {
-  if (!aOther) {
-    return false;
-  }
-
-  nsIPrincipal* principal = GetPrincipalFromHandle(aPrincipalHandle);
-  if (!principal) {
-    return false;
-  }
-
-  bool result;
-  if (NS_FAILED(principal->Equals(aOther, &result))) {
-    NS_ERROR("Principal check failed");
-    return false;
-  }
-
-  return result;
-}
-
-/**
  * A MediaSegment is a chunk of media data sequential in time. Different
  * types of data have different subclasses of MediaSegment, all inheriting
  * from MediaSegmentBase.
- * All MediaSegment data is timed using StreamTime. The actual tick rate
+ * All MediaSegment data is timed using TrackTime. The actual tick rate
  * is defined on a per-track basis. For some track types, this can be
  * a fixed constant for all tracks of that type (e.g. 1MHz for video).
  *
@@ -125,14 +99,14 @@ class MediaSegment {
   MediaSegment(const MediaSegment&) = delete;
   MediaSegment& operator=(const MediaSegment&) = delete;
 
-  virtual ~MediaSegment() { MOZ_COUNT_DTOR(MediaSegment); }
+  MOZ_COUNTED_DTOR_VIRTUAL(MediaSegment)
 
   enum Type { AUDIO, VIDEO, TYPE_COUNT };
 
   /**
    * Gets the total duration of the segment.
    */
-  StreamTime GetDuration() const { return mDuration; }
+  TrackTime GetDuration() const { return mDuration; }
   Type GetType() const { return mType; }
 
   /**
@@ -142,7 +116,7 @@ class MediaSegment {
     return mLastPrincipalHandle;
   }
   /**
-   * Called by the MediaStreamGraph as it appends a chunk with a different
+   * Called by the MediaTrackGraph as it appends a chunk with a different
    * principal id than the current one.
    */
   void SetLastPrincipalHandle(PrincipalHandle aLastPrincipalHandle) {
@@ -155,6 +129,11 @@ class MediaSegment {
   virtual bool IsNull() const = 0;
 
   /**
+   * Returns true if this segment contains no chunks.
+   */
+  virtual bool IsEmpty() const = 0;
+
+  /**
    * Create a MediaSegment of the same type.
    */
   virtual MediaSegment* CreateEmptyClone() const = 0;
@@ -165,24 +144,24 @@ class MediaSegment {
   /**
    * Append a slice of aSource to this segment.
    */
-  virtual void AppendSlice(const MediaSegment& aSource, StreamTime aStart,
-                           StreamTime aEnd) = 0;
+  virtual void AppendSlice(const MediaSegment& aSource, TrackTime aStart,
+                           TrackTime aEnd) = 0;
   /**
    * Replace all contents up to aDuration with null data.
    */
-  virtual void ForgetUpTo(StreamTime aDuration) = 0;
+  virtual void ForgetUpTo(TrackTime aDuration) = 0;
   /**
    * Forget all data buffered after a given point
    */
-  virtual void FlushAfter(StreamTime aNewEnd) = 0;
+  virtual void FlushAfter(TrackTime aNewEnd) = 0;
   /**
    * Insert aDuration of null data at the start of the segment.
    */
-  virtual void InsertNullDataAtStart(StreamTime aDuration) = 0;
+  virtual void InsertNullDataAtStart(TrackTime aDuration) = 0;
   /**
    * Insert aDuration of null data at the end of the segment.
    */
-  virtual void AppendNullData(StreamTime aDuration) = 0;
+  virtual void AppendNullData(TrackTime aDuration) = 0;
   /**
    * Replace contents with disabled (silence/black) data of the same duration
    */
@@ -219,10 +198,10 @@ class MediaSegment {
     MOZ_COUNT_CTOR(MediaSegment);
   }
 
-  StreamTime mDuration;  // total of mDurations of all chunks
+  TrackTime mDuration;  // total of mDurations of all chunks
   Type mType;
 
-  // The latest principal handle that the MediaStreamGraph has processed for
+  // The latest principal handle that the MediaTrackGraph has processed for
   // this segment.
   PrincipalHandle mLastPrincipalHandle;
 };
@@ -243,30 +222,31 @@ class MediaSegmentBase : public MediaSegment {
     }
     return true;
   }
+  bool IsEmpty() const override { return mChunks.IsEmpty(); }
   MediaSegment* CreateEmptyClone() const override { return new C(); }
   void AppendFrom(MediaSegment* aSource) override {
     NS_ASSERTION(aSource->GetType() == C::StaticType(), "Wrong type");
     AppendFromInternal(static_cast<C*>(aSource));
   }
   void AppendFrom(C* aSource) { AppendFromInternal(aSource); }
-  void AppendSlice(const MediaSegment& aSource, StreamTime aStart,
-                   StreamTime aEnd) override {
+  void AppendSlice(const MediaSegment& aSource, TrackTime aStart,
+                   TrackTime aEnd) override {
     NS_ASSERTION(aSource.GetType() == C::StaticType(), "Wrong type");
     AppendSliceInternal(static_cast<const C&>(aSource), aStart, aEnd);
   }
-  void AppendSlice(const C& aOther, StreamTime aStart, StreamTime aEnd) {
+  void AppendSlice(const C& aOther, TrackTime aStart, TrackTime aEnd) {
     AppendSliceInternal(aOther, aStart, aEnd);
   }
   /**
    * Replace the first aDuration ticks with null media data, because the data
    * will not be required again.
    */
-  void ForgetUpTo(StreamTime aDuration) override {
+  void ForgetUpTo(TrackTime aDuration) override {
     if (mChunks.IsEmpty() || aDuration <= 0) {
       return;
     }
     if (mChunks[0].IsNull()) {
-      StreamTime extraToForget =
+      TrackTime extraToForget =
           std::min(aDuration, mDuration) - mChunks[0].GetDuration();
       if (extraToForget > 0) {
         RemoveLeading(extraToForget, 1);
@@ -279,13 +259,15 @@ class MediaSegmentBase : public MediaSegment {
     mChunks.InsertElementAt(0)->SetNull(aDuration);
     mDuration += aDuration;
   }
-  void FlushAfter(StreamTime aNewEnd) override {
+  void FlushAfter(TrackTime aNewEnd) override {
     if (mChunks.IsEmpty()) {
       return;
     }
 
-    if (mChunks[0].IsNull()) {
-      StreamTime extraToKeep = aNewEnd - mChunks[0].GetDuration();
+    if (!aNewEnd) {
+      Clear();
+    } else if (mChunks[0].IsNull()) {
+      TrackTime extraToKeep = aNewEnd - mChunks[0].GetDuration();
       if (extraToKeep < 0) {
         // reduce the size of the Null, get rid of everthing else
         mChunks[0].SetNull(aNewEnd);
@@ -301,7 +283,7 @@ class MediaSegmentBase : public MediaSegment {
     }
     mDuration = aNewEnd;
   }
-  void InsertNullDataAtStart(StreamTime aDuration) override {
+  void InsertNullDataAtStart(TrackTime aDuration) override {
     if (aDuration <= 0) {
       return;
     }
@@ -312,7 +294,7 @@ class MediaSegmentBase : public MediaSegment {
     }
     mDuration += aDuration;
   }
-  void AppendNullData(StreamTime aDuration) override {
+  void AppendNullData(TrackTime aDuration) override {
     if (aDuration <= 0) {
       return;
     }
@@ -330,7 +312,7 @@ class MediaSegmentBase : public MediaSegment {
     ReplaceWithNull();
   }
   void ReplaceWithNull() override {
-    StreamTime duration = GetDuration();
+    TrackTime duration = GetDuration();
     Clear();
     AppendNullData(duration);
   }
@@ -367,7 +349,7 @@ class MediaSegmentBase : public MediaSegment {
     uint32_t mIndex;
   };
 
-  void RemoveLeading(StreamTime aDuration) { RemoveLeading(aDuration, 0); }
+  void RemoveLeading(TrackTime aDuration) { RemoveLeading(aDuration, 0); }
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override {
     size_t amount = mChunks.ShallowSizeOfExcludingThis(aMallocSizeOf);
@@ -425,17 +407,17 @@ class MediaSegmentBase : public MediaSegment {
   }
 
   void AppendSliceInternal(const MediaSegmentBase<C, Chunk>& aSource,
-                           StreamTime aStart, StreamTime aEnd) {
+                           TrackTime aStart, TrackTime aEnd) {
     MOZ_ASSERT(aStart <= aEnd, "Endpoints inverted");
     NS_ASSERTION(aStart >= 0 && aEnd <= aSource.mDuration,
                  "Slice out of range");
     mDuration += aEnd - aStart;
-    StreamTime offset = 0;
+    TrackTime offset = 0;
     for (uint32_t i = 0; i < aSource.mChunks.Length() && offset < aEnd; ++i) {
       const Chunk& c = aSource.mChunks[i];
-      StreamTime start = std::max(aStart, offset);
-      StreamTime nextOffset = offset + c.GetDuration();
-      StreamTime end = std::min(aEnd, nextOffset);
+      TrackTime start = std::max(aStart, offset);
+      TrackTime nextOffset = offset + c.GetDuration();
+      TrackTime end = std::min(aEnd, nextOffset);
       if (start < end) {
         if (!mChunks.IsEmpty() &&
             mChunks[mChunks.Length() - 1].CanCombineWithFollowing(c)) {
@@ -450,7 +432,7 @@ class MediaSegmentBase : public MediaSegment {
     }
   }
 
-  Chunk* AppendChunk(StreamTime aDuration) {
+  Chunk* AppendChunk(TrackTime aDuration) {
     MOZ_ASSERT(aDuration >= 0);
     Chunk* c = mChunks.AppendElement();
     c->mDuration = aDuration;
@@ -458,9 +440,9 @@ class MediaSegmentBase : public MediaSegment {
     return c;
   }
 
-  void RemoveLeading(StreamTime aDuration, uint32_t aStartIndex) {
+  void RemoveLeading(TrackTime aDuration, uint32_t aStartIndex) {
     NS_ASSERTION(aDuration >= 0, "Can't remove negative duration");
-    StreamTime t = aDuration;
+    TrackTime t = aDuration;
     uint32_t chunksToRemove = 0;
     for (uint32_t i = aStartIndex; i < mChunks.Length() && t > 0; ++i) {
       Chunk* c = &mChunks[i];
@@ -483,23 +465,21 @@ class MediaSegmentBase : public MediaSegment {
                "Capacity must be retained after removing chunks");
   }
 
-  void RemoveTrailing(StreamTime aKeep, uint32_t aStartIndex) {
+  void RemoveTrailing(TrackTime aKeep, uint32_t aStartIndex) {
     NS_ASSERTION(aKeep >= 0, "Can't keep negative duration");
-    StreamTime t = aKeep;
+    TrackTime t = aKeep;
     uint32_t i;
-    for (i = aStartIndex; i < mChunks.Length(); ++i) {
+    for (i = aStartIndex; i < mChunks.Length() && t; ++i) {
       Chunk* c = &mChunks[i];
       if (c->GetDuration() > t) {
         c->SliceTo(0, t);
         break;
       }
       t -= c->GetDuration();
-      if (t == 0) {
-        break;
-      }
     }
-    if (i + 1 < mChunks.Length()) {
-      mChunks.RemoveElementsAt(i + 1, mChunks.Length() - (i + 1));
+    // At this point `i` is already advanced due to last check in the loop.
+    if (i < mChunks.Length()) {
+      mChunks.RemoveElementsAt(i, mChunks.Length() - i);
     }
     MOZ_ASSERT(mChunks.Capacity() >= DEFAULT_SEGMENT_CAPACITY,
                "Capacity must be retained after removing chunks");

@@ -11,7 +11,6 @@
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/Unused.h"
-#include "nsAutoPtr.h"
 
 namespace mozilla {
 
@@ -88,17 +87,12 @@ void ServiceWorkerManagerService::PropagateRegistration(
     return;
   }
 
-  DebugOnly<bool> parentFound = false;
   for (auto iter = mAgents.Iter(); !iter.Done(); iter.Next()) {
     RefPtr<ServiceWorkerManagerParent> parent = iter.Get()->GetKey();
     MOZ_ASSERT(parent);
 
     if (parent->ID() != aParentID) {
       Unused << parent->SendNotifyRegister(aData);
-#ifdef DEBUG
-    } else {
-      parentFound = true;
-#endif
     }
   }
 
@@ -110,16 +104,13 @@ void ServiceWorkerManagerService::PropagateRegistration(
         nsTArray<ContentParent*> cps;
         ContentParent::GetAll(cps);
         for (auto* cp : cps) {
-          nsCOMPtr<nsIPrincipal> principal = PrincipalInfoToPrincipal(pi);
-          if (principal) {
+          auto principalOrErr = PrincipalInfoToPrincipal(pi);
+          if (principalOrErr.isOk()) {
+            nsCOMPtr<nsIPrincipal> principal = principalOrErr.unwrap();
             cp->TransmitPermissionsForPrincipal(principal);
           }
         }
       }));
-
-#ifdef DEBUG
-  MOZ_ASSERT(parentFound);
-#endif
 }
 
 void ServiceWorkerManagerService::PropagateSoftUpdate(
@@ -131,34 +122,19 @@ void ServiceWorkerManagerService::PropagateSoftUpdate(
     return;
   }
 
-  DebugOnly<bool> parentFound = false;
   for (auto iter = mAgents.Iter(); !iter.Done(); iter.Next()) {
     RefPtr<ServiceWorkerManagerParent> parent = iter.Get()->GetKey();
     MOZ_ASSERT(parent);
 
     nsString scope(aScope);
     Unused << parent->SendNotifySoftUpdate(aOriginAttributes, scope);
-
-#ifdef DEBUG
-    if (parent->ID() == aParentID) {
-      parentFound = true;
-    }
-#endif
   }
-
-#ifdef DEBUG
-  MOZ_ASSERT(parentFound);
-#endif
 }
 
 void ServiceWorkerManagerService::PropagateUnregister(
     uint64_t aParentID, const PrincipalInfo& aPrincipalInfo,
     const nsAString& aScope) {
   AssertIsOnBackgroundThread();
-
-  if (ServiceWorkerParentInterceptEnabled()) {
-    return;
-  }
 
   RefPtr<dom::ServiceWorkerRegistrar> service =
       dom::ServiceWorkerRegistrar::Get();
@@ -169,7 +145,18 @@ void ServiceWorkerManagerService::PropagateUnregister(
   service->UnregisterServiceWorker(aPrincipalInfo,
                                    NS_ConvertUTF16toUTF8(aScope));
 
-  DebugOnly<bool> parentFound = false;
+  // There is no longer any point to propagating because the only sender is the
+  // one and only ServiceWorkerManager, but it is necessary for us to have run
+  // the unregister call above because until Bug 1183245 is fixed,
+  // nsIServiceWorkerManager.propagateUnregister() is a de facto API for
+  // clearing ServiceWorker registrations by Sanitizer.jsm via
+  // ServiceWorkerCleanUp.jsm, as well as devtools "unregister" affordance and
+  // the no-longer-relevant about:serviceworkers UI.
+
+  if (ServiceWorkerParentInterceptEnabled()) {
+    return;
+  }
+
   for (auto iter = mAgents.Iter(); !iter.Done(); iter.Next()) {
     RefPtr<ServiceWorkerManagerParent> parent = iter.Get()->GetKey();
     MOZ_ASSERT(parent);
@@ -177,16 +164,8 @@ void ServiceWorkerManagerService::PropagateUnregister(
     if (parent->ID() != aParentID) {
       nsString scope(aScope);
       Unused << parent->SendNotifyUnregister(aPrincipalInfo, scope);
-#ifdef DEBUG
-    } else {
-      parentFound = true;
-#endif
     }
   }
-
-#ifdef DEBUG
-  MOZ_ASSERT(parentFound);
-#endif
 }
 
 void ServiceWorkerManagerService::PropagateRemove(uint64_t aParentID,
@@ -197,7 +176,6 @@ void ServiceWorkerManagerService::PropagateRemove(uint64_t aParentID,
     return;
   }
 
-  DebugOnly<bool> parentFound = false;
   for (auto iter = mAgents.Iter(); !iter.Done(); iter.Next()) {
     RefPtr<ServiceWorkerManagerParent> parent = iter.Get()->GetKey();
     MOZ_ASSERT(parent);
@@ -205,16 +183,8 @@ void ServiceWorkerManagerService::PropagateRemove(uint64_t aParentID,
     if (parent->ID() != aParentID) {
       nsCString host(aHost);
       Unused << parent->SendNotifyRemove(host);
-#ifdef DEBUG
-    } else {
-      parentFound = true;
-#endif
     }
   }
-
-#ifdef DEBUG
-  MOZ_ASSERT(parentFound);
-#endif
 }
 
 void ServiceWorkerManagerService::PropagateRemoveAll(uint64_t aParentID) {
@@ -230,23 +200,14 @@ void ServiceWorkerManagerService::PropagateRemoveAll(uint64_t aParentID) {
 
   service->RemoveAll();
 
-  DebugOnly<bool> parentFound = false;
   for (auto iter = mAgents.Iter(); !iter.Done(); iter.Next()) {
     RefPtr<ServiceWorkerManagerParent> parent = iter.Get()->GetKey();
     MOZ_ASSERT(parent);
 
     if (parent->ID() != aParentID) {
       Unused << parent->SendNotifyRemoveAll();
-#ifdef DEBUG
-    } else {
-      parentFound = true;
-#endif
     }
   }
-
-#ifdef DEBUG
-  MOZ_ASSERT(parentFound);
-#endif
 }
 
 void ServiceWorkerManagerService::ProcessUpdaterActor(

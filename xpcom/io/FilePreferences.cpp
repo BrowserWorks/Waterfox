@@ -6,10 +6,12 @@
 
 #include "FilePreferences.h"
 
+#include "mozilla/Atomics.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/TextUtils.h"
 #include "mozilla/Tokenizer.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceDefs.h"
@@ -32,13 +34,18 @@ static WinPaths& PathWhitelist() {
 }
 
 #ifdef XP_WIN
+const auto kDevicePathSpecifier = NS_LITERAL_STRING("\\\\?\\");
+
 typedef char16_t char_path_t;
 #else
 typedef char char_path_t;
 #endif
 
-// Initially false to make concurrent consumers acquire the lock and sync
+// Initially false to make concurrent consumers acquire the lock and sync.
+// The plain bool is synchronized with sMutex, the atomic one is for a quick
+// check w/o the need to acquire the lock on the hot path.
 static bool sBlacklistEmpty = false;
+static Atomic<bool, Relaxed> sBlacklistEmptyQuickCheck{false};
 
 typedef nsTArray<nsTString<char_path_t>> Paths;
 static StaticAutoPtr<Paths> sBlacklist;
@@ -92,7 +99,7 @@ void InitPrefs() {
   StaticMutexAutoLock lock(sMutex);
 
   if (blacklist.IsEmpty()) {
-    sBlacklistEmpty = true;
+    sBlacklistEmptyQuickCheck = (sBlacklistEmpty = true);
     return;
   }
 
@@ -108,7 +115,7 @@ void InitPrefs() {
     Unused << p.CheckChar(',');
   }
 
-  sBlacklistEmpty = PathBlacklist().Length() == 0;
+  sBlacklistEmptyQuickCheck = (sBlacklistEmpty = PathBlacklist().Length() == 0);
 }
 
 void InitDirectoriesWhitelist() {
@@ -219,6 +226,28 @@ class TNormalizer : public TTokenizer<TChar> {
   nsTArray<nsTDependentSubstring<TChar>> mStack;
 };
 
+#ifdef XP_WIN
+bool IsDOSDevicePathWithDrive(const nsAString& aFilePath) {
+  if (!StringBeginsWith(aFilePath, kDevicePathSpecifier)) {
+    return false;
+  }
+
+  const auto pathNoPrefix =
+      nsDependentSubstring(aFilePath, kDevicePathSpecifier.Length());
+
+  // After the device path specifier, the rest of file path can be:
+  // - starts with the volume or drive. e.g. \\?\C:\...
+  // - UNCs. e.g. \\?\UNC\Server\Share\Test\Foo.txt
+  // - device UNCs. e.g. \\?\server1\e:\utilities\\filecomparer\...
+  // The first case should not be blocked by IsBlockedUNCPath.
+  if (!StartsWithDiskDesignatorAndBackslash(pathNoPrefix)) {
+    return false;
+  }
+
+  return true;
+}
+#endif
+
 }  // namespace
 
 bool IsBlockedUNCPath(const nsAString& aFilePath) {
@@ -230,6 +259,15 @@ bool IsBlockedUNCPath(const nsAString& aFilePath) {
   if (!StringBeginsWith(aFilePath, NS_LITERAL_STRING("\\\\"))) {
     return false;
   }
+
+#ifdef XP_WIN
+  // ToDo: We don't need to check this once we can check if there is a valid
+  // server or host name that is prefaced by "\\".
+  // https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats
+  if (IsDOSDevicePathWithDrive(aFilePath)) {
+    return false;
+  }
+#endif
 
   nsAutoString normalized;
   if (!Normalizer(aFilePath, Normalizer::Token::Char('\\')).Get(normalized)) {
@@ -268,14 +306,13 @@ const char kPathSeparator = '/';
 bool IsAllowedPath(const nsTSubstring<char_path_t>& aFilePath) {
   typedef TNormalizer<char_path_t> Normalizer;
 
-  // A quick check out of the lock.
-  if (sBlacklistEmpty) {
+  // An atomic quick check out of the lock, because this is mostly `true`.
+  if (sBlacklistEmptyQuickCheck) {
     return true;
   }
 
   StaticMutexAutoLock lock(sMutex);
 
-  // Recheck the flag under the lock to reload it.
   if (sBlacklistEmpty) {
     return true;
   }
@@ -305,6 +342,18 @@ bool IsAllowedPath(const nsTSubstring<char_path_t>& aFilePath) {
 
   return true;
 }
+
+#ifdef XP_WIN
+bool StartsWithDiskDesignatorAndBackslash(const nsAString& aAbsolutePath) {
+  // aAbsolutePath can only be (in regular expression):
+  // UNC path: ^\\\\.*
+  // A single backslash: ^\\.*
+  // A disk designator with a backslash: ^[A-Za-z]:\\.*
+  return aAbsolutePath.Length() >= 3 && IsAsciiAlpha(aAbsolutePath.CharAt(0)) &&
+         aAbsolutePath.CharAt(1) == L':' &&
+         aAbsolutePath.CharAt(2) == kPathSeparator;
+}
+#endif
 
 void testing::SetBlockUNCPaths(bool aBlock) { sBlockUNCPaths = aBlock; }
 

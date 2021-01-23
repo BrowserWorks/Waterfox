@@ -18,7 +18,7 @@ class EmptyEnumeratorImpl : public nsSimpleEnumerator,
                             public nsIUTF8StringEnumerator,
                             public nsIStringEnumerator {
  public:
-  EmptyEnumeratorImpl() {}
+  EmptyEnumeratorImpl() = default;
 
   // nsISupports interface. Not really inherited, but no mRefCnt.
   NS_DECL_ISUPPORTS_INHERITED
@@ -241,9 +241,6 @@ nsresult NS_NewUnionEnumerator(nsISimpleEnumerator** aResult,
     *aResult = aFirstEnumerator;
   } else {
     auto* enumer = new nsUnionEnumerator(aFirstEnumerator, aSecondEnumerator);
-    if (!enumer) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
     *aResult = enumer;
   }
   NS_ADDREF(*aResult);

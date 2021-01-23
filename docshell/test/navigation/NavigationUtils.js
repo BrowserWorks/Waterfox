@@ -56,10 +56,12 @@ function navigateByHyperlink(name) {
 // Functions that call into Mochitest framework
 // /////////////////////////////////////////////////////////////////////////
 
-function isNavigated(wnd, message) {
+async function isNavigated(wnd, message) {
   var result = null;
   try {
-    result = SpecialPowers.wrap(wnd).document.body.innerHTML.trim();
+    result = await SpecialPowers.spawn(wnd, [], () =>
+      this.content.document.body.innerHTML.trim()
+    );
   } catch (ex) {
     result = ex;
   }
@@ -94,131 +96,108 @@ function isInaccessible(wnd, message) {
   }
 }
 
+function delay(msec) {
+  return new Promise(resolve => setTimeout(resolve, msec));
+}
+
 // /////////////////////////////////////////////////////////////////////////
-// Functions that require UniversalXPConnect privilege
+// Functions that uses SpecialPowers.spawn
 // /////////////////////////////////////////////////////////////////////////
-// Replacing the getService with Services.ww format causes test errors, so ignore for now
-/* eslint-disable mozilla/use-services */
-function xpcEnumerateContentWindows(callback) {
-  var Ci = SpecialPowers.Ci;
-  var ww = SpecialPowers.Cc[
-    "@mozilla.org/embedcomp/window-watcher;1"
-  ].getService(Ci.nsIWindowWatcher);
 
-  var contentWindows = [];
+async function waitForFinishedFrames(numFrames) {
+  SimpleTest.requestFlakyTimeout("Polling");
 
-  for (let win of ww.getWindowEnumerator()) {
-    if (win.isChromeWindow) {
-      var docshellTreeNode = win.docShell;
-      var childCount = docshellTreeNode.childCount;
-      for (var i = 0; i < childCount; ++i) {
-        var childTreeNode = docshellTreeNode.getChildAt(i);
+  var finishedWindows = new Set();
 
-        // we're only interested in content docshells
-        if (
-          SpecialPowers.unwrap(childTreeNode.itemType) !=
-          Ci.nsIDocShellTreeItem.typeContent
-        ) {
-          continue;
+  async function searchForFinishedFrames(win) {
+    try {
+      let { href, bodyText, readyState } = await SpecialPowers.spawn(
+        win,
+        [],
+        () => {
+          return {
+            href: this.content.location.href,
+            bodyText:
+              this.content.document.body &&
+              this.content.document.body.textContent.trim(),
+            readyState: this.content.document.readyState,
+          };
         }
+      );
 
-        var webNav = childTreeNode.QueryInterface(Ci.nsIWebNavigation);
-        contentWindows.push(webNav.document.defaultView);
+      if (
+        (href.endsWith(target_url) || href.endsWith(target_popup_url)) &&
+        (bodyText == body || bodyText == popup_body) &&
+        readyState == "complete"
+      ) {
+        finishedWindows.add(SpecialPowers.getBrowsingContextID(win));
       }
-    } else {
-      contentWindows.push(win);
+    } catch (e) {
+      // This may throw if a frame is not fully initialized, in which
+      // case we'll handle it in a later iteration.
+    }
+
+    for (let i = 0; i < win.frames.length; i++) {
+      await searchForFinishedFrames(win.frames[i]);
     }
   }
 
-  while (contentWindows.length > 0) {
-    callback(contentWindows.pop());
+  while (finishedWindows.size < numFrames) {
+    await delay(500);
+
+    for (let win of SpecialPowers.getGroupTopLevelWindows(window)) {
+      win = SpecialPowers.unwrap(win);
+      await searchForFinishedFrames(win);
+    }
+  }
+
+  if (finishedWindows.size > numFrames) {
+    throw new Error("Too many frames loaded.");
   }
 }
-/* eslint-enable mozilla/use-services */
 
-// Note: This only searches for top-level frames with this name.
-function xpcGetFramesByName(name) {
-  var results = [];
-
-  xpcEnumerateContentWindows(function(win) {
-    if (win.name == name) {
+async function getFramesByName(name) {
+  let results = [];
+  for (let win of SpecialPowers.getGroupTopLevelWindows(window)) {
+    win = SpecialPowers.unwrap(win);
+    if (
+      (await SpecialPowers.spawn(win, [], () => this.content.name)) === name
+    ) {
       results.push(win);
     }
-  });
+  }
 
   return results;
 }
 
-function xpcCleanupWindows() {
-  xpcEnumerateContentWindows(function(win) {
+async function cleanupWindows() {
+  for (let win of SpecialPowers.getGroupTopLevelWindows(window)) {
+    win = SpecialPowers.unwrap(win);
+    if (win.closed) {
+      continue;
+    }
+
+    let href = "";
+    try {
+      href = await SpecialPowers.spawn(
+        win,
+        [],
+        () =>
+          this.content && this.content.location && this.content.location.href
+      );
+    } catch (error) {
+      // SpecialPowers.spawn(win, ...) throws if win is closed. We did
+      // our best to not call it on a closed window, but races happen.
+      if (!win.closed) {
+        throw error;
+      }
+    }
+
     if (
-      win.location &&
-      (win.location.href.endsWith(target_url) ||
-        win.location.href.endsWith(target_popup_url))
+      href &&
+      (href.endsWith(target_url) || href.endsWith(target_popup_url))
     ) {
       win.close();
     }
-  });
-}
-
-function xpcWaitForFinishedFrames(callback, numFrames) {
-  var finishedFrameCount = 0;
-  function frameFinished() {
-    finishedFrameCount++;
-
-    if (finishedFrameCount == numFrames) {
-      clearInterval(frameWaitInterval);
-      setTimeout(callback, 0);
-      return;
-    }
-
-    if (finishedFrameCount > numFrames) {
-      throw new Error("Too many frames loaded.");
-    }
   }
-
-  var finishedWindows = [];
-
-  function contains(obj, arr) {
-    for (var i = 0; i < arr.length; i++) {
-      if (obj === arr[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function searchForFinishedFrames(win) {
-    if (
-      (win.location.href.endsWith(target_url) ||
-        win.location.href.endsWith(target_popup_url)) &&
-      win.document &&
-      win.document.body &&
-      (win.document.body.textContent.trim() == body ||
-        win.document.body.textContent.trim() == popup_body) &&
-      win.document.readyState == "complete"
-    ) {
-      var windowId = win.windowUtils.outerWindowID;
-      if (!contains(windowId, finishedWindows)) {
-        finishedWindows.push(windowId);
-        frameFinished();
-      }
-    }
-    for (var i = 0; i < win.frames.length; i++) {
-      searchForFinishedFrames(win.frames[i]);
-    }
-  }
-
-  function poll() {
-    try {
-      // This only gives us UniversalXPConnect for the current stack frame
-      // We're using setInterval, so the main page's privileges are still normal
-      xpcEnumerateContentWindows(searchForFinishedFrames);
-    } catch (ex) {
-      // We might be accessing windows before they are fully constructed,
-      // which can throw.  We'll find those frames on our next poll().
-    }
-  }
-
-  var frameWaitInterval = setInterval(poll, 500);
 }

@@ -12,6 +12,8 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MathAlgorithms.h"
 
+#include "gc/Zone.h"
+
 #if defined(JS_CODEGEN_X86)
 #  include "jit/x86/MacroAssembler-x86-inl.h"
 #elif defined(JS_CODEGEN_X64)
@@ -114,7 +116,7 @@ void MacroAssembler::appendSignatureType(MoveOp::Type type) {
       signature_ |= ArgType_General;
       break;
     case MoveOp::DOUBLE:
-      signature_ |= ArgType_Double;
+      signature_ |= ArgType_Float64;
       break;
     case MoveOp::FLOAT32:
       signature_ |= ArgType_Float32;
@@ -147,6 +149,7 @@ ABIFunctionType MacroAssembler::signature() const {
     case Args_Double_DoubleDouble:
     case Args_Double_IntDouble:
     case Args_Int_IntDouble:
+    case Args_Int_DoubleInt:
     case Args_Int_DoubleIntInt:
     case Args_Int_IntDoubleIntInt:
     case Args_Double_DoubleDoubleDouble:
@@ -324,16 +327,6 @@ void MacroAssembler::branchIfRope(Register str, Label* label) {
   branchTest32(Assembler::Zero, flags, Imm32(JSString::LINEAR_BIT), label);
 }
 
-void MacroAssembler::branchIfRopeOrExternal(Register str, Register temp,
-                                            Label* label) {
-  Address flags(str, JSString::offsetOfFlags());
-  move32(Imm32(JSString::TYPE_FLAGS_MASK), temp);
-  and32(flags, temp);
-
-  branchTest32(Assembler::Zero, temp, Imm32(JSString::LINEAR_BIT), label);
-  branch32(Assembler::Equal, temp, Imm32(JSString::EXTERNAL_FLAGS), label);
-}
-
 void MacroAssembler::branchIfNotRope(Register str, Label* label) {
   Address flags(str, JSString::offsetOfFlags());
   branchTest32(Assembler::NonZero, flags, Imm32(JSString::LINEAR_BIT), label);
@@ -347,6 +340,11 @@ void MacroAssembler::branchLatin1String(Register string, Label* label) {
 void MacroAssembler::branchTwoByteString(Register string, Label* label) {
   branchTest32(Assembler::Zero, Address(string, JSString::offsetOfFlags()),
                Imm32(JSString::LATIN1_CHARS_BIT), label);
+}
+
+void MacroAssembler::branchIfNegativeBigInt(Register bigInt, Label* label) {
+  branchTest32(Assembler::NonZero, Address(bigInt, BigInt::offsetOfFlags()),
+               Imm32(BigInt::signBitMask()), label);
 }
 
 void MacroAssembler::branchTestFunctionFlags(Register fun, uint32_t flags,
@@ -367,20 +365,50 @@ void MacroAssembler::branchTestFunctionFlags(Register fun, uint32_t flags,
 void MacroAssembler::branchIfFunctionHasNoJitEntry(Register fun,
                                                    bool isConstructing,
                                                    Label* label) {
-  int32_t flags = JSFunction::INTERPRETED;
+  int32_t flags = FunctionFlags::BASESCRIPT | FunctionFlags::SELFHOSTLAZY;
   if (!isConstructing) {
-    flags |= JSFunction::WASM_JIT_ENTRY;
+    flags |= FunctionFlags::WASM_JIT_ENTRY;
   }
   branchTestFunctionFlags(fun, flags, Assembler::Zero, label);
 }
 
 void MacroAssembler::branchIfInterpreted(Register fun, bool isConstructing,
                                          Label* label) {
-  int32_t flags = JSFunction::INTERPRETED | JSFunction::INTERPRETED_LAZY;
+  int32_t flags = FunctionFlags::BASESCRIPT | FunctionFlags::SELFHOSTLAZY;
   if (!isConstructing) {
-    flags |= JSFunction::WASM_JIT_ENTRY;
+    flags |= FunctionFlags::WASM_JIT_ENTRY;
   }
   branchTestFunctionFlags(fun, flags, Assembler::NonZero, label);
+}
+
+void MacroAssembler::branchIfScriptHasJitScript(Register script, Label* label) {
+  static_assert(ScriptWarmUpData::JitScriptTag == 0,
+                "Code below depends on tag value");
+  branchTestPtr(Assembler::Zero,
+                Address(script, JSScript::offsetOfWarmUpData()),
+                Imm32(ScriptWarmUpData::TagMask), label);
+}
+
+void MacroAssembler::branchIfScriptHasNoJitScript(Register script,
+                                                  Label* label) {
+  static_assert(ScriptWarmUpData::JitScriptTag == 0,
+                "Code below depends on tag value");
+  branchTestPtr(Assembler::NonZero,
+                Address(script, JSScript::offsetOfWarmUpData()),
+                Imm32(ScriptWarmUpData::TagMask), label);
+}
+
+void MacroAssembler::loadJitScript(Register script, Register dest) {
+#ifdef DEBUG
+  Label ok;
+  branchIfScriptHasJitScript(script, &ok);
+  assumeUnreachable("Script has no JitScript!");
+  bind(&ok);
+#endif
+
+  static_assert(ScriptWarmUpData::JitScriptTag == 0,
+                "Code below depends on tag value");
+  loadPtr(Address(script, JSScript::offsetOfWarmUpData()), dest);
 }
 
 void MacroAssembler::branchIfObjectEmulatesUndefined(Register objReg,
@@ -393,13 +421,13 @@ void MacroAssembler::branchIfObjectEmulatesUndefined(Register objReg,
 
   branchTestClassIsProxy(true, scratch, slowCheck);
 
-  Address flags(scratch, Class::offsetOfFlags());
+  Address flags(scratch, JSClass::offsetOfFlags());
   branchTest32(Assembler::NonZero, flags, Imm32(JSCLASS_EMULATES_UNDEFINED),
                label);
 }
 
 void MacroAssembler::branchFunctionKind(Condition cond,
-                                        JSFunction::FunctionKind kind,
+                                        FunctionFlags::FunctionKind kind,
                                         Register fun, Register scratch,
                                         Label* label) {
   // 16-bit loads are slow and unaligned 32-bit loads may be too so
@@ -407,16 +435,15 @@ void MacroAssembler::branchFunctionKind(Condition cond,
   MOZ_ASSERT(JSFunction::offsetOfNargs() % sizeof(uint32_t) == 0);
   MOZ_ASSERT(JSFunction::offsetOfFlags() == JSFunction::offsetOfNargs() + 2);
   Address address(fun, JSFunction::offsetOfNargs());
-  int32_t mask = IMM32_16ADJ(JSFunction::FUNCTION_KIND_MASK);
-  int32_t bit = IMM32_16ADJ(kind << JSFunction::FUNCTION_KIND_SHIFT);
+  int32_t mask = IMM32_16ADJ(FunctionFlags::FUNCTION_KIND_MASK);
+  int32_t bit = IMM32_16ADJ(kind << FunctionFlags::FUNCTION_KIND_SHIFT);
   load32(address, scratch);
   and32(Imm32(mask), scratch);
   branch32(cond, scratch, Imm32(bit), label);
 }
 
 void MacroAssembler::branchTestObjClass(Condition cond, Register obj,
-                                        const js::Class* clasp,
-                                        Register scratch,
+                                        const JSClass* clasp, Register scratch,
                                         Register spectreRegToZero,
                                         Label* label) {
   MOZ_ASSERT(obj != scratch);
@@ -432,7 +459,7 @@ void MacroAssembler::branchTestObjClass(Condition cond, Register obj,
 }
 
 void MacroAssembler::branchTestObjClassNoSpectreMitigations(
-    Condition cond, Register obj, const js::Class* clasp, Register scratch,
+    Condition cond, Register obj, const JSClass* clasp, Register scratch,
     Label* label) {
   loadPtr(Address(obj, JSObject::offsetOfGroup()), scratch);
   branchPtr(cond, Address(scratch, ObjectGroup::offsetOfClasp()), ImmPtr(clasp),
@@ -584,8 +611,8 @@ void MacroAssembler::branchTestObjGroupNoSpectreMitigations(Condition cond,
 void MacroAssembler::branchTestClassIsProxy(bool proxy, Register clasp,
                                             Label* label) {
   branchTest32(proxy ? Assembler::NonZero : Assembler::Zero,
-               Address(clasp, Class::offsetOfFlags()), Imm32(JSCLASS_IS_PROXY),
-               label);
+               Address(clasp, JSClass::offsetOfFlags()),
+               Imm32(JSCLASS_IS_PROXY), label);
 }
 
 void MacroAssembler::branchTestObjectIsProxy(bool proxy, Register object,
@@ -742,7 +769,8 @@ template void MacroAssembler::storeDouble(FloatRegister src,
 template void MacroAssembler::storeDouble(FloatRegister src,
                                           const BaseIndex& dest);
 
-void MacroAssembler::boxDouble(FloatRegister src, const Address& dest) {
+template <class T>
+void MacroAssembler::boxDouble(FloatRegister src, const T& dest) {
   storeDouble(src, dest);
 }
 
@@ -756,6 +784,46 @@ template void MacroAssembler::storeFloat32(FloatRegister src,
                                            const Address& dest);
 template void MacroAssembler::storeFloat32(FloatRegister src,
                                            const BaseIndex& dest);
+
+template <typename T>
+void MacroAssembler::fallibleUnboxInt32(const T& src, Register dest,
+                                        Label* fail) {
+  // Int32Value can be unboxed efficiently with unboxInt32, so use that.
+  branchTestInt32(Assembler::NotEqual, src, fail);
+  unboxInt32(src, dest);
+}
+
+template <typename T>
+void MacroAssembler::fallibleUnboxBoolean(const T& src, Register dest,
+                                          Label* fail) {
+  // BooleanValue can be unboxed efficiently with unboxBoolean, so use that.
+  branchTestBoolean(Assembler::NotEqual, src, fail);
+  unboxBoolean(src, dest);
+}
+
+template <typename T>
+void MacroAssembler::fallibleUnboxObject(const T& src, Register dest,
+                                         Label* fail) {
+  fallibleUnboxPtr(src, dest, JSVAL_TYPE_OBJECT, fail);
+}
+
+template <typename T>
+void MacroAssembler::fallibleUnboxString(const T& src, Register dest,
+                                         Label* fail) {
+  fallibleUnboxPtr(src, dest, JSVAL_TYPE_STRING, fail);
+}
+
+template <typename T>
+void MacroAssembler::fallibleUnboxSymbol(const T& src, Register dest,
+                                         Label* fail) {
+  fallibleUnboxPtr(src, dest, JSVAL_TYPE_SYMBOL, fail);
+}
+
+template <typename T>
+void MacroAssembler::fallibleUnboxBigInt(const T& src, Register dest,
+                                         Label* fail) {
+  fallibleUnboxPtr(src, dest, JSVAL_TYPE_BIGINT, fail);
+}
 
 //}}} check_macroassembler_style
 // ===============================================================

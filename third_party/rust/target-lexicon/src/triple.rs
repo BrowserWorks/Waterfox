@@ -2,11 +2,12 @@
 
 use crate::parse_error::ParseError;
 use crate::targets::{
-    default_binary_format, Architecture, BinaryFormat, Environment, OperatingSystem, Vendor,
+    default_binary_format, Architecture, ArmArchitecture, BinaryFormat, Environment,
+    OperatingSystem, Vendor,
 };
+use alloc::borrow::ToOwned;
 use core::fmt;
 use core::str::FromStr;
-use std::borrow::ToOwned;
 
 /// The target memory endianness.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -52,12 +53,25 @@ impl PointerWidth {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[allow(missing_docs)]
 pub enum CallingConvention {
+    /// "System V", which is used on most Unix-like platfoms. Note that the
+    /// specific conventions vary between hardware architectures; for example,
+    /// x86-32's "System V" is entirely different from x86-64's "System V".
     SystemV,
+
+    /// The WebAssembly C ABI.
+    /// https://github.com/WebAssembly/tool-conventions/blob/master/BasicCABI.md
+    WasmBasicCAbi,
+
+    /// "Windows Fastcall", which is used on Windows. Note that like "System V",
+    /// this varies between hardware architectures. On x86-32 it describes what
+    /// Windows documentation calls "fastcall", and on x86-64 it describes what
+    /// Windows documentation often just calls the Windows x64 calling convention
+    /// (though the compiler still recognizes "fastcall" as an alias for it).
     WindowsFastcall,
 }
 
-/// A target "triple", because historically such things had three fields, though
-/// they've grown more features over time.
+/// A target "triple". Historically such things had three fields, though they've
+/// added additional fields over time.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Triple {
     /// The "architecture" (and sometimes the subarchitecture).
@@ -66,7 +80,8 @@ pub struct Triple {
     pub vendor: Vendor,
     /// The "operating system" (sometimes also the environment).
     pub operating_system: OperatingSystem,
-    /// The "environment" on top of the operating system.
+    /// The "environment" on top of the operating system (often omitted for
+    /// operating systems with a single predominant environment).
     pub environment: Environment,
     /// The "binary format" (rarely used).
     pub binary_format: BinaryFormat,
@@ -96,12 +111,19 @@ impl Triple {
             | OperatingSystem::Ios
             | OperatingSystem::L4re
             | OperatingSystem::Linux
-            | OperatingSystem::Nebulet
+            | OperatingSystem::MacOSX { .. }
             | OperatingSystem::Netbsd
             | OperatingSystem::Openbsd
             | OperatingSystem::Redox
             | OperatingSystem::Solaris => CallingConvention::SystemV,
             OperatingSystem::Windows => CallingConvention::WindowsFastcall,
+            OperatingSystem::Nebulet
+            | OperatingSystem::Emscripten
+            | OperatingSystem::Wasi
+            | OperatingSystem::Unknown => match self.architecture {
+                Architecture::Wasm32 => CallingConvention::WasmBasicCAbi,
+                _ => return Err(()),
+            },
             _ => return Err(()),
         })
     }
@@ -157,19 +179,22 @@ impl fmt::Display for Triple {
         if self.vendor == Vendor::Unknown
             && ((self.operating_system == OperatingSystem::Linux
                 && (self.environment == Environment::Android
-                    || self.environment == Environment::Androideabi))
+                    || self.environment == Environment::Androideabi
+                    || self.environment == Environment::Kernel))
                 || self.operating_system == OperatingSystem::Fuchsia
+                || self.operating_system == OperatingSystem::Wasi
                 || (self.operating_system == OperatingSystem::None_
-                    && (self.architecture == Architecture::Armebv7r
-                        || self.architecture == Architecture::Armv7r
-                        || self.architecture == Architecture::Thumbv6m
-                        || self.architecture == Architecture::Thumbv7em
-                        || self.architecture == Architecture::Thumbv7m
-                        || self.architecture == Architecture::Thumbv8mBase
-                        || self.architecture == Architecture::Thumbv8mMain
-                        || self.architecture == Architecture::Msp430)))
+                    && (self.architecture == Architecture::Arm(ArmArchitecture::Armebv7r)
+                        || self.architecture == Architecture::Arm(ArmArchitecture::Armv7r)
+                        || self.architecture == Architecture::Arm(ArmArchitecture::Thumbv6m)
+                        || self.architecture == Architecture::Arm(ArmArchitecture::Thumbv7em)
+                        || self.architecture == Architecture::Arm(ArmArchitecture::Thumbv7m)
+                        || self.architecture == Architecture::Arm(ArmArchitecture::Thumbv8mBase)
+                        || self.architecture == Architecture::Arm(ArmArchitecture::Thumbv8mMain)
+                        || self.architecture == Architecture::Msp430
+                        || self.architecture == Architecture::X86_64)))
         {
-            // As a special case, omit the vendor for Android, Fuchsia, and sometimes
+            // As a special case, omit the vendor for Android, Fuchsia, Wasi, and sometimes
             // None_, depending on the hardware architecture. This logic is entirely
             // ad-hoc, and is just sufficient to handle the current set of recognized
             // triples.
@@ -252,24 +277,26 @@ impl FromStr for Triple {
         }
 
         if let Some(s) = current_part {
-            Err(if !has_vendor {
-                ParseError::UnrecognizedVendor(s.to_owned())
-            } else if !has_operating_system {
-                ParseError::UnrecognizedOperatingSystem(s.to_owned())
-            } else if !has_environment {
-                ParseError::UnrecognizedEnvironment(s.to_owned())
-            } else if !has_binary_format {
-                ParseError::UnrecognizedBinaryFormat(s.to_owned())
-            } else {
-                ParseError::UnrecognizedField(s.to_owned())
-            })
+            Err(
+                if !has_vendor && !has_operating_system && !has_environment && !has_binary_format {
+                    ParseError::UnrecognizedVendor(s.to_owned())
+                } else if !has_operating_system && !has_environment && !has_binary_format {
+                    ParseError::UnrecognizedOperatingSystem(s.to_owned())
+                } else if !has_environment && !has_binary_format {
+                    ParseError::UnrecognizedEnvironment(s.to_owned())
+                } else if !has_binary_format {
+                    ParseError::UnrecognizedBinaryFormat(s.to_owned())
+                } else {
+                    ParseError::UnrecognizedField(s.to_owned())
+                },
+            )
         } else {
             Ok(result)
         }
     }
 }
 
-/// A convenient syntax for triple "literals".
+/// A convenient syntax for triple literals.
 ///
 /// This currently expands to code that just calls `Triple::from_str` and does
 /// an `expect`, though in the future it would be cool to use procedural macros
@@ -294,10 +321,6 @@ mod tests {
         assert_eq!(
             Triple::from_str("foo"),
             Err(ParseError::UnrecognizedArchitecture("foo".to_owned()))
-        );
-        assert_eq!(
-            Triple::from_str("unknown-foo"),
-            Err(ParseError::UnrecognizedVendor("foo".to_owned()))
         );
         assert_eq!(
             Triple::from_str("unknown-unknown-foo"),

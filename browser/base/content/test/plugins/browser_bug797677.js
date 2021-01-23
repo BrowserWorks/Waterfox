@@ -43,8 +43,7 @@ add_task(async function() {
     "plugin should not have been found."
   );
 
-  // simple cpows
-  await ContentTask.spawn(gTestBrowser, null, function() {
+  await SpecialPowers.spawn(gTestBrowser, [], function() {
     let plugin = content.document.getElementById("plugin");
     ok(plugin, "plugin should be in the page");
   });

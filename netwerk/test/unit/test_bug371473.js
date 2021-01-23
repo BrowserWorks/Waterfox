@@ -1,3 +1,5 @@
+"use strict";
+
 function test_not_too_long() {
   var ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
@@ -29,9 +31,7 @@ function test_too_long() {
     // do not crash here and thus an exception is caught
     // we have passed the test.
     var newURI = ios.newURI(spec);
-  } catch (e) {
-    return;
-  }
+  } catch (e) {}
 }
 
 function run_test() {

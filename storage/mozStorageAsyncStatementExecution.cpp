@@ -4,8 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsAutoPtr.h"
-
 #include "sqlite3.h"
 
 #include "mozIStorageStatementCallback.h"
@@ -76,7 +74,8 @@ nsresult AsyncExecuteStatements::execute(
 AsyncExecuteStatements::AsyncExecuteStatements(
     StatementDataArray& aStatements, Connection* aConnection,
     sqlite3* aNativeConnection, mozIStorageStatementCallback* aCallback)
-    : mConnection(aConnection),
+    : Runnable("AsyncExecuteStatements"),
+      mConnection(aConnection),
       mNativeConnection(aNativeConnection),
       mHasTransaction(false),
       mCallback(aCallback),
@@ -319,16 +318,20 @@ nsresult AsyncExecuteStatements::notifyComplete() {
 
   // Handle our transaction, if we have one
   if (mHasTransaction) {
+    SQLiteMutexAutoLock lockedScope(mDBMutex);
     if (mState == COMPLETED) {
-      nsresult rv = mConnection->commitTransactionInternal(mNativeConnection);
+      nsresult rv = mConnection->commitTransactionInternal(lockedScope,
+                                                           mNativeConnection);
       if (NS_FAILED(rv)) {
         mState = ERROR;
+        // We cannot hold the DB mutex while calling notifyError.
+        SQLiteMutexAutoUnlock unlockedScope(mDBMutex);
         (void)notifyError(mozIStorageError::ERROR,
                           "Transaction failed to commit");
       }
     } else {
-      DebugOnly<nsresult> rv =
-          mConnection->rollbackTransactionInternal(mNativeConnection);
+      DebugOnly<nsresult> rv = mConnection->rollbackTransactionInternal(
+          lockedScope, mNativeConnection);
       NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Transaction failed to rollback");
     }
     mHasTransaction = false;
@@ -352,7 +355,7 @@ nsresult AsyncExecuteStatements::notifyCompleteOnCallingThread() {
   // notifyErrorOnCallingThread calls on the stack spinning the event loop have
   // guaranteed their safety by creating their own strong reference before
   // invoking the callback.
-  nsCOMPtr<mozIStorageStatementCallback> callback = mCallback.forget();
+  nsCOMPtr<mozIStorageStatementCallback> callback = std::move(mCallback);
   if (callback) {
     Unused << callback->HandleCompletion(mState);
   }
@@ -431,8 +434,8 @@ nsresult AsyncExecuteStatements::notifyResultsOnCallingThread(
   return NS_OK;
 }
 
-NS_IMPL_ISUPPORTS(AsyncExecuteStatements, nsIRunnable,
-                  mozIStoragePendingStatement)
+NS_IMPL_ISUPPORTS_INHERITED(AsyncExecuteStatements, Runnable,
+                            mozIStoragePendingStatement)
 
 bool AsyncExecuteStatements::statementsNeedTransaction() {
   // If there is more than one write statement, run in a transaction.
@@ -486,16 +489,20 @@ AsyncExecuteStatements::Run() {
   }
   if (mState == CANCELED) return notifyComplete();
 
-  if (statementsNeedTransaction() && mConnection->getAutocommit()) {
-    if (NS_SUCCEEDED(mConnection->beginTransactionInternal(
-            mNativeConnection, mozIStorageConnection::TRANSACTION_IMMEDIATE))) {
-      mHasTransaction = true;
-    }
+  if (statementsNeedTransaction()) {
+    SQLiteMutexAutoLock lockedScope(mDBMutex);
+    if (!mConnection->transactionInProgress(lockedScope)) {
+      if (NS_SUCCEEDED(mConnection->beginTransactionInternal(
+              lockedScope, mNativeConnection,
+              mozIStorageConnection::TRANSACTION_IMMEDIATE))) {
+        mHasTransaction = true;
+      }
 #ifdef DEBUG
-    else {
-      NS_WARNING("Unable to create a transaction for async execution.");
-    }
+      else {
+        NS_WARNING("Unable to create a transaction for async execution.");
+      }
 #endif
+    }
   }
 
   // Execute each statement, giving the callback results if it returns any.

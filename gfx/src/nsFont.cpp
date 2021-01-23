@@ -26,7 +26,7 @@ nsFont::nsFont(StyleGenericFontFamily aGenericType, nscoord aSize)
 
 nsFont::nsFont(const nsFont& aOther) = default;
 
-nsFont::~nsFont() {}
+nsFont::~nsFont() = default;
 
 bool nsFont::Equals(const nsFont& aOther) const {
   return CalcDifference(aOther) == MaxDifference::eNone;
@@ -48,8 +48,7 @@ nsFont::MaxDifference nsFont::CalcDifference(const nsFont& aOther) const {
       (variantLigatures != aOther.variantLigatures) ||
       (variantNumeric != aOther.variantNumeric) ||
       (variantPosition != aOther.variantPosition) ||
-      (variantWidth != aOther.variantWidth) ||
-      (alternateValues != aOther.alternateValues)) {
+      (variantWidth != aOther.variantWidth)) {
     return MaxDifference::eLayoutAffecting;
   }
 
@@ -62,11 +61,6 @@ nsFont::MaxDifference nsFont::CalcDifference(const nsFont& aOther) const {
 }
 
 nsFont& nsFont::operator=(const nsFont& aOther) = default;
-
-void nsFont::CopyAlternates(const nsFont& aOther) {
-  variantAlternates = aOther.variantAlternates;
-  alternateValues = aOther.alternateValues;
-}
 
 // mapping from bitflag to font feature tag/value pair
 //
@@ -173,15 +167,22 @@ void nsFont::AddFontFeaturesToStyle(gfxFontStyle* aStyle,
   }
 
   // -- alternates
-  if (variantAlternates & NS_FONT_VARIANT_ALTERNATES_HISTORICAL) {
-    setting.mValue = 1;
-    setting.mTag = TRUETYPE_TAG('h', 'i', 's', 't');
-    aStyle->featureSettings.AppendElement(setting);
+  //
+  // NOTE(emilio): We handle historical-forms here because it doesn't depend on
+  // other values set by @font-face and thus may be less expensive to do here
+  // than after font-matching.
+  for (auto& alternate : variantAlternates.AsSpan()) {
+    if (alternate.IsHistoricalForms()) {
+      setting.mValue = 1;
+      setting.mTag = TRUETYPE_TAG('h', 'i', 's', 't');
+      aStyle->featureSettings.AppendElement(setting);
+      break;
+    }
   }
 
   // -- copy font-specific alternate info into style
   //    (this will be resolved after font-matching occurs)
-  aStyle->alternateValues.AppendElements(alternateValues);
+  aStyle->variantAlternates = variantAlternates;
 
   // -- caps
   aStyle->variantCaps = variantCaps;
@@ -245,6 +246,15 @@ void nsFont::AddFontFeaturesToStyle(gfxFontStyle* aStyle,
   aStyle->noFallbackVariantFeatures =
       (aStyle->variantCaps == NS_FONT_VARIANT_CAPS_NORMAL) &&
       (variantPosition == NS_FONT_VARIANT_POSITION_NORMAL);
+
+  // If the feature list is not empty, we insert a "fake" feature with tag=0
+  // as delimiter between the above "high-level" features from font-variant-*
+  // etc and those coming from the low-level font-feature-settings property.
+  // This will allow us to distinguish high- and low-level settings when it
+  // comes to potentially disabling ligatures because of letter-spacing.
+  if (!aStyle->featureSettings.IsEmpty() || !fontFeatureSettings.IsEmpty()) {
+    aStyle->featureSettings.AppendElement(gfxFontFeature{0, 0});
+  }
 
   // add in features from font-feature-settings
   aStyle->featureSettings.AppendElements(fontFeatureSettings);

@@ -24,10 +24,16 @@ void StyleSheet::SetURIs(nsIURI* aSheetURI, nsIURI* aOriginalSheetURI,
 }
 
 dom::ParentObject StyleSheet::GetParentObject() const {
+  if (mRelevantGlobal) {
+    return dom::ParentObject(mRelevantGlobal);
+  }
+  if (IsConstructed()) {
+    return dom::ParentObject(mConstructorDocument.get());
+  }
   if (mOwningNode) {
     return dom::ParentObject(mOwningNode);
   }
-  return dom::ParentObject(mParent);
+  return dom::ParentObject(mParentSheet);
 }
 
 }  // namespace mozilla

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Message Header View Popup -->
+
+<!ENTITY AddToAddressBook.label            "Afegeix a la llibreta d'adreces…">
+<!ENTITY AddToAddressBook.accesskey        "b">
+<!ENTITY EditContact.label                 "Edita el contacte…">
+<!ENTITY EditContact.accesskey             "E">
+<!ENTITY ViewContact.label                 "Mostra el contacte">
+<!ENTITY ViewContact.accesskey             "M">
+<!ENTITY SendMailTo.label                  "Redacta un missatge per a…">
+<!ENTITY SendMailTo.accesskey              "s">
+<!ENTITY CopyEmailAddress.label            "Copia l'adreça electrònica">
+<!ENTITY CopyEmailAddress.accesskey        "C">
+<!ENTITY CreateFilterFrom.label            "Crea un filtre de…">
+<!ENTITY CreateFilterFrom.accesskey        "f">
+<!ENTITY openInBrowser.label               "Obre en el navegador">
+<!ENTITY openInBrowser.accesskey           "O">
+<!ENTITY bookmarkLinkCmd.label             "Afegeix a les adreces d'interès...">
+<!ENTITY bookmarkLinkCmd.accesskey         "A">
+<!ENTITY copyLinkCmd.label                 "Copia l'enllaç">
+<!ENTITY copyLinkCmd.accesskey             "C">
+<!ENTITY CopyMessageId.label               "Copia l'identificador del missatge">
+<!ENTITY CopyMessageId.accesskey           "C">
+<!ENTITY OpenMessageForMsgId.label         "Obre el missatge per identificador">
+<!ENTITY OpenMessageForMsgId.accesskey     "O">
+<!ENTITY OpenBrowserWithMsgId.label        "Obre el navegador amb l'identificador del missatge">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "b">

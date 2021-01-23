@@ -15,7 +15,7 @@ namespace mozilla {
 
 class RsdparsaSdp;
 class RsdparsaSdpMediaSection;
-class SdpErrorHolder;
+class SdpParser;
 
 class RsdparsaSdpAttributeList : public SdpAttributeList {
   friend class RsdparsaSdpMediaSection;
@@ -42,6 +42,7 @@ class RsdparsaSdpAttributeList : public SdpAttributeList {
   const SdpRemoteCandidatesAttribute& GetRemoteCandidates() const override;
   const SdpSetupAttribute& GetSetup() const override;
   const SdpSsrcAttributeList& GetSsrc() const override;
+  const SdpSsrcGroupAttributeList& GetSsrcGroup() const override;
   const SdpDtlsMessageAttribute& GetDtlsMessage() const override;
 
   // These attributes can appear multiple times, so the returned
@@ -118,6 +119,7 @@ class RsdparsaSdpAttributeList : public SdpAttributeList {
   void LoadDtlsMessage(RustAttributeList* attributeList);
   void LoadSetup(RustAttributeList* attributeList);
   void LoadSsrc(RustAttributeList* attributeList);
+  void LoadSsrcGroup(RustAttributeList* attributeList);
   void LoadRtpmap(RustAttributeList* attributeList);
   void LoadFmtp(RustAttributeList* attributeList);
   void LoadPtime(RustAttributeList* attributeList);
@@ -141,8 +143,7 @@ class RsdparsaSdpAttributeList : public SdpAttributeList {
   void LoadCandidate(RustAttributeList* attributeList);
 
   void WarnAboutMisplacedAttribute(SdpAttribute::AttributeType type,
-                                   uint32_t lineNumber,
-                                   SdpErrorHolder& errorHolder);
+                                   uint32_t lineNumber, SdpParser& errorHolder);
 
   SdpAttribute* mAttributes[kNumAttributeTypes];
 

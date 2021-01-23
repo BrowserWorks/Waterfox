@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Lagrade kakor">
+<!ENTITY     tab.bannedservers.label        "Kakor och webbplatser">
+<!ENTITY     div.bannedservers.label        "Hantera webbplatser som får eller inte får lagra kakor på din dator.">
+<!ENTITY     div.cookiesonsystem.label      "Visa och ta bort kakor som lagrats på din dator.">
+<!ENTITY     treehead.cookiename.label      "Kakans namn">
+<!ENTITY     treehead.cookiedomain.label    "Webbplats"> 
+<!ENTITY     treehead.cookieexpires.label   "Förfaller"> 
+<!ENTITY     treehead.infoselected.label    "Information om den valda kakan">
+<!ENTITY     button.removecookie.label      "Ta bort kakan">
+<!ENTITY     button.removecookie.accesskey  "T">
+<!ENTITY     button.removeallcookies.label  "Ta bort alla kakor">
+<!ENTITY     button.removeallcookies.accesskey "a">
+
+<!ENTITY     search.placeholder             "Sök kakor">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Namn:">
+<!ENTITY     props.value.label              "Information:">
+<!ENTITY     props.domain.label             "Värd:">
+<!ENTITY     props.path.label               "Sökväg:">
+<!ENTITY     props.secure.label             "Skicka vid:">
+<!ENTITY     props.expires.label            "Förfaller:">
+
+<!ENTITY     treehead.sitename.label        "Webbplats">
+<!ENTITY     treehead.scheme.label          "Struktur">
+<!ENTITY     treehead.status.label          "Status">
+<!ENTITY     windowtitle.label              "Kakhanteraren">
+
+<!ENTITY     blockSite.label                "Blockera">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Tillåt">
+<!ENTITY     allowSite.accesskey            "å">
+<!ENTITY     allowSiteSession.label         "Tillfälliga">
+<!ENTITY     allowSiteSession.accesskey     "f">
+<!ENTITY     removepermission.label         "Ta bort">
+<!ENTITY     removepermission.accesskey     "T">
+<!ENTITY     removeallpermissions.label     "Ta bort alla">
+<!ENTITY     removeallpermissions.accesskey "a">
+
+<!ENTITY     futureCookies.label            "Låt inte webbplatser vars kakor du har tagit bort lagra nya kakor">
+<!ENTITY     futureCookies.accesskey        "L">

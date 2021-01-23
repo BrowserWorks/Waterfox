@@ -9,7 +9,8 @@
 #ifndef gc_Policy_h
 #define gc_Policy_h
 
-#include "mozilla/TypeTraits.h"
+#include <type_traits>
+
 #include "gc/Barrier.h"
 #include "gc/Marking.h"
 #include "js/GCPolicyAPI.h"
@@ -19,10 +20,9 @@ namespace js {
 // Define the GCPolicy for all internal pointers.
 template <typename T>
 struct InternalGCPointerPolicy : public JS::GCPointerPolicy<T> {
-  using Type = typename mozilla::RemovePointer<T>::Type;
+  using Type = std::remove_pointer_t<T>;
 
-#define IS_BASE_OF_OR(_1, BaseType, _2, _3) \
-  mozilla::IsBaseOf<BaseType, Type>::value ||
+#define IS_BASE_OF_OR(_1, BaseType, _2, _3) std::is_base_of_v<BaseType, Type> ||
   static_assert(
       JS_FOR_EACH_TRACEKIND(IS_BASE_OF_OR) false,
       "InternalGCPointerPolicy must only be used for GC thing pointers");
@@ -44,9 +44,10 @@ struct InternalGCPointerPolicy : public JS::GCPointerPolicy<T> {
     }
   }
   static void trace(JSTracer* trc, T* vp, const char* name) {
-    if (*vp) {
-      TraceManuallyBarrieredEdge(trc, vp, name);
-    }
+    // It's not safe to trace unbarriered pointers except as part of root
+    // marking. If you get an assertion here you probably need to add a barrier,
+    // e.g. HeapPtr<T>.
+    TraceNullableRoot(trc, vp, name);
   }
 };
 
@@ -69,6 +70,20 @@ struct GCPolicy<js::HeapPtr<T>> {
   static bool needsSweep(js::HeapPtr<T>* thingp) {
     return js::gc::IsAboutToBeFinalized(thingp);
   }
+  static bool traceWeak(JSTracer* trc, js::HeapPtr<T>* thingp) {
+    return js::TraceWeakEdge(trc, thingp, "traceWeak");
+  }
+};
+
+template <typename T>
+struct GCPolicy<js::PreBarriered<T>> {
+  static void trace(JSTracer* trc, js::PreBarriered<T>* thingp,
+                    const char* name) {
+    js::TraceNullableEdge(trc, thingp, name);
+  }
+  static bool needsSweep(js::PreBarriered<T>* thingp) {
+    return js::gc::IsAboutToBeFinalized(thingp);
+  }
 };
 
 template <typename T>
@@ -79,6 +94,18 @@ struct GCPolicy<js::WeakHeapPtr<T>> {
   }
   static bool needsSweep(js::WeakHeapPtr<T>* thingp) {
     return js::gc::IsAboutToBeFinalized(thingp);
+  }
+  static bool traceWeak(JSTracer* trc, js::WeakHeapPtr<T>* thingp) {
+    return js::TraceWeakEdge(trc, thingp, "traceWeak");
+  }
+};
+
+template <>
+struct GCPolicy<JS::GCCellPtr> {
+  static void trace(JSTracer* trc, JS::GCCellPtr* thingp, const char* name) {
+    // It's not safe to trace unbarriered pointers except as part of root
+    // marking.
+    js::TraceGCCellPtrRoot(trc, thingp, name);
   }
 };
 

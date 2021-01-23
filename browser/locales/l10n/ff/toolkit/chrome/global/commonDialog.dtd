@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editfield0.label "Innde kuutoro:"> 
+<!ENTITY editfield1.label "Finnde:"> 
+<!ENTITY copyCmd.label    "Natto">
+<!ENTITY copyCmd.accesskey "N">
+<!ENTITY selectAllCmd.label "Labo Fof">
+<!ENTITY selectAllCmd.accesskey "F">

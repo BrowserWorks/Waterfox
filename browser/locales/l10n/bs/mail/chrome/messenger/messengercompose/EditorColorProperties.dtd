@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Boje i pozadina stranice">
+<!ENTITY pageColors.label "Boje stranice">
+<!ENTITY defaultColorsRadio.label "Izvorne boje čitača (ne postavljaj boje na stranici)">
+<!ENTITY defaultColorsRadio.accessKey "n">
+<!ENTITY defaultColorsRadio.tooltip "Koristi samo postavke boja iz browsera posjetioca (čitaoca)">
+<!ENTITY customColorsRadio.label "Koristi vlastite boje:">
+<!ENTITY customColorsRadio.accessKey "v">
+<!ENTITY customColorsRadio.tooltip "Ove postavke boja će prepisati postavke browsera čitaoca">
+
+<!ENTITY normalText.label "Obični tekst">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Tekst linka">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "Tekst aktivnog linka">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Tekst posjećenog linka">
+<!ENTITY visitedLinkText.accessKey "p">
+<!ENTITY background.label "Pozadina:">
+<!ENTITY background.accessKey "P">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Pozadinska slika:">
+<!ENTITY backgroundImage.accessKey "s">
+<!ENTITY backgroundImage.tooltip "Koristi fajl sa slikom kao pozadinu stranice">
+<!ENTITY backgroundImage.shortenedDataURI "Skraćen URI podataka (kada se kopira, cijeli URI će biti sačuvan u međuspremniku)">

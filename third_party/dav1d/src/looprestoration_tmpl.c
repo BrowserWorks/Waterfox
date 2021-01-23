@@ -172,8 +172,8 @@ static void wiener_c(pixel *p, const ptrdiff_t p_stride,
     const int round_bits_v = 11 - (bitdepth == 12) * 2;
     const int rounding_off_v = 1 << (round_bits_v - 1);
     const int round_offset = 1 << (bitdepth + (round_bits_v - 1));
-    for (int i = 0; i < w; i++) {
-        for (int j = 0; j < h; j++) {
+    for (int j = 0; j < h; j++) {
+        for (int i = 0; i < w; i++) {
             int sum = (hor[(j + 3) * REST_UNIT_STRIDE + i] << 7) - round_offset;
 
             for (int k = 0; k < 7; k++) {
@@ -573,13 +573,15 @@ static void selfguided_c(pixel *p, const ptrdiff_t p_stride,
     }
 }
 
-void bitfn(dav1d_loop_restoration_dsp_init)(Dav1dLoopRestorationDSPContext *const c) {
+COLD void bitfn(dav1d_loop_restoration_dsp_init)(Dav1dLoopRestorationDSPContext *const c, int bpc) {
     c->wiener = wiener_c;
     c->selfguided = selfguided_c;
 
 #if HAVE_ASM
 #if ARCH_AARCH64 || ARCH_ARM
-    bitfn(dav1d_loop_restoration_dsp_init_arm)(c);
+    bitfn(dav1d_loop_restoration_dsp_init_arm)(c, bpc);
+#elif ARCH_PPC64LE
+    bitfn(dav1d_loop_restoration_dsp_init_ppc)(c);
 #elif ARCH_X86
     bitfn(dav1d_loop_restoration_dsp_init_x86)(c);
 #endif

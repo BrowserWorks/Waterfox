@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "منتصف الليل" >
+<!ENTITY time.noon "الظهيرة" >
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+
+<!ENTITY day.1.Ddd "الأحد" >
+<!ENTITY day.1.Ddd.accesskey "ح">
+<!ENTITY day.2.Ddd "إثنين" >
+<!ENTITY day.2.Ddd.accesskey "ن">
+<!ENTITY day.3.Ddd "ثلاثاء" >
+<!ENTITY day.3.Ddd.accesskey "ث">
+<!ENTITY day.4.Ddd "أربعاء" >
+<!ENTITY day.4.Ddd.accesskey "ب">
+<!ENTITY day.5.Ddd "خميس" >
+<!ENTITY day.5.Ddd.accesskey "خ">
+<!ENTITY day.6.Ddd "جمعة" >
+<!ENTITY day.6.Ddd.accesskey "ج">
+<!ENTITY day.7.Ddd "سبت" >
+<!ENTITY day.7.Ddd.accesskey "س">
+
+<!ENTITY day.1.name "الأحد" >
+<!ENTITY day.2.name "الإثنين" >
+<!ENTITY day.3.name "الثلاثاء" >
+<!ENTITY day.4.name "الأربعاء" >
+<!ENTITY day.5.name "الخميس" >
+<!ENTITY day.6.name "الجمعة" >
+<!ENTITY day.7.name "السبت" >
+
+<!ENTITY month.1.name "يناير" >
+<!ENTITY month.2.name "فبراير" >
+<!ENTITY month.3.name "مارس" >
+<!ENTITY month.4.name "أبريل" >
+<!ENTITY month.5.name "مايو" >
+<!ENTITY month.6.name "يونيو" >
+<!ENTITY month.7.name "يوليو" >
+<!ENTITY month.8.name "أغسطس" >
+<!ENTITY month.9.name "سبتمبر" >
+<!ENTITY month.10.name "أكتوبر" >
+<!ENTITY month.11.name "نوفمبر" >
+<!ENTITY month.12.name "ديسمبر" >
+
+<!ENTITY onemonthbackward.tooltip "ارجع شهرا واحدا" >
+<!ENTITY onemonthforward.tooltip "تقدّم شهرا واحدا" >
+<!ENTITY showToday.tooltip "اذهب إلى اليوم">
+<!ENTITY onedayforward.tooltip "تقدّم يوما واحدا">
+<!ENTITY onedaybackward.tooltip "ارجع يوما واحدا">
+<!ENTITY showselectedday.tooltip "اعرض أحداث اليوم المحدد">

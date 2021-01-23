@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Son Sayfalar Menüsü">
+<!ENTITY  documentsInMenu.label         "Listelenecek sayfa üst sınırı:">
+<!ENTITY  documentsInMenu.accesskey     "s">
+<!ENTITY  savingFiles.title             "Sayfaları Kaydederken veya Yayımlarken">
+<!ENTITY  preserveExisting.label        "Özgün kaynak biçimlendirmesini koru">
+<!ENTITY  preserveExisting.accesskey    "Ö">
+<!ENTITY  preserveExisting.tooltip      "Satır sonlarını ve sayfaların özgün biçimlendirmesini korur">
+<!ENTITY  saveAssociatedFiles.label     "Sayfaları kaydederken resimleri ve diğer ilişkili dosyaları kaydet">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Sayfaları yayımlarken daima Yayımlama iletişim kutusunu göster">
+<!ENTITY  showPublishDialog.accesskey   "a">
+<!ENTITY  composerEditing.label         "Düzenleme">
+<!ENTITY  maintainStructure.label       "Hücre eklerken veya silerken tablo düzenini koru">
+<!ENTITY  maintainStructure.tooltip     "Hücre ekledikten veya sildikten sonra kendiliğinden hücreler ekleyerek tablonun dikdörtgen şeklini korur">
+<!ENTITY  maintainStructure.accesskey   "d">
+<!ENTITY  useCSS.label                  "HTML elementleri ve öznitelikleri yerine CSS biçemleri kullan">
+<!ENTITY  useCSS.accesskey              "u">
+<!ENTITY  crInPCreatesNewP.label        "Paragraf içinde Enter'a basmak her zaman yeni paragraf oluşturur">
+<!ENTITY  crInPCreatesNewP.accesskey    "r">

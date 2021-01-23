@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Mewnosod Mathemateg">
+
+<!ENTITY sourceEditField.label "Rhosi'r cod ffynhonnell LaTeX:">
+
+<!ENTITY options.label "Dewisiadau">
+<!ENTITY optionInline.label "Modd mewnlin">
+<!ENTITY optionInline.accesskey "m">
+<!ENTITY optionDisplay.label "Modd dangos">
+<!ENTITY optionDisplay.accesskey "d">
+<!ENTITY optionLTR.label "Cyfeiriad chwith i'r dde">
+<!ENTITY optionLTR.accesskey "c">
+<!ENTITY optionRTL.label "Cyfeiriad de i'r chwith">
+<!ENTITY optionRTL.accesskey "d">
+
+<!ENTITY insertButton.label "Mewnosod">
+<!ENTITY insertButton.accesskey "M">

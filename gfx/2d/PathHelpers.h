@@ -16,8 +16,7 @@ namespace mozilla {
 namespace gfx {
 
 struct PathOp {
-  PathOp() {}
-  ~PathOp() {}
+  ~PathOp() = default;
 
   enum OpType {
     OP_MOVETO = 0,
@@ -31,6 +30,8 @@ struct PathOp {
   OpType mType;
   Point mP1;
 #if (!defined(__GNUC__) || __GNUC__ >= 7) && defined(__clang__)
+  PathOp() {}
+
   union {
     struct {
       Point mP2;
@@ -44,6 +45,8 @@ struct PathOp {
     };
   };
 #else
+  PathOp() = default;
+
   Point mP2;
   Point mP3;
   float mRadius;
@@ -123,7 +126,7 @@ inline void AcuteArcToBezier(T* aSink, const Point& aOrigin,
 template <typename T>
 void ArcToBezier(T* aSink, const Point& aOrigin, const Size& aRadius,
                  float aStartAngle, float aEndAngle, bool aAntiClockwise,
-                 float aRotation = 0.0f) {
+                 float aRotation = 0.0f, const Matrix& aTransform = Matrix()) {
   Float sweepDirection = aAntiClockwise ? -1.0f : 1.0f;
 
   // Calculate the total arc we're going to sweep.
@@ -148,6 +151,7 @@ void ArcToBezier(T* aSink, const Point& aOrigin, const Size& aRadius,
     transform *= Matrix::Rotation(aRotation);
   }
   transform.PostTranslate(aOrigin);
+  transform *= aTransform;
   aSink->LineTo(transform.TransformPoint(currentStartOffset));
 
   while (arcSweepLeft > 0) {

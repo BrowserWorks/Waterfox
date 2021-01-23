@@ -1,0 +1,126 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Bal tye i pango pot buk man">
+<!ENTITY retry.label "Tem Doki">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Pe romo kubo">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Kanonge man kigengo woko">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Pe kinongo lapok tic">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Rot kanonge ne pi bal me cono coc calo <strong>ww</strong>.example.com me kaka <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Search</button> </div> <li>Kacce pe i romo cano potbuk mo keken, rot data me nyonyo ni onyo kube me Wi-Fi. <button id='wifi'>Cak Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Fail pe ononge">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Rot nying fail pi nukta madongo onyo bal mogo me coyo.</li> <li>Rok me neno ka kikwanyo fail, mii nyinge nitit onyo kijwayo woko.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Kikwero woko nongo pwail ne">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Romo bedo ni kikwanyo woko, kikobo, onyo twero me pwail tye ka gengo nongo ne.</li> </ul>">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "<p>&brandShortName; pe twero cano pot buk man pi tyen lok mo.</p>">
+
+<!ENTITY malformedURI.title "Kanonge ne pe tye atir">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Kanonge me kakube pol kare kicoyo gi calo <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Yeny</button> </div> <li>Myero inen ni itye katic ki lapok me anyim (i.e. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Onongo kibalo kube woko">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Kare me Coc acoya okato woko">
+<!ENTITY notCached.longDesc "<p>Gin acoya ma ikwayo pire ni pe nonge kama &brandShortName; ogwoko iye.</p><ul><li>Me gwoke ki i peko, &brandShortName; pe nwoyo kwayo pire kene gin acoyo ma pi gi lit.</li><li>Dii Tem Doki wek i nwo kwayo gin acoya ki i kakube.</li></ul>">
+
+<!ENTITY netOffline.title "Kit mape i wiyamo">
+
+<!ENTITY contentEncodingError.title "Gin matye iye Tye ka jogo Bal">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>tim ber ikube ki wegi di bar me Web wek i mii gi ngec pi peko man.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Kit Fail Mape ogwoke maber">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>tim ber ikube ki wegi di bar me Web wek i mii gi ngec pi peko man.</li> </ul>">
+
+<!ENTITY netReset.title "Onongo kitero kube woko nitit">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Cawa me kube otum woko">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Pe kiniang ikom kanonge ne">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Myero i ket purugram mukene wek pi yabo adres man.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxi me lapok tic tye kakwero kube woko">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Rot tero proxi wek inen ni tye atira.</li> <li>Kube ki lalo kube me intanet wek inen ni lapok tic me proxi tye katic maber.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Pe romo nongo lapok tic me proxi">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Rot ter me proxy me neno ni gi tye kakare.</li> <li>Rot me neno ni nyonyo mamgei tye ki data matiyo onyo kube me Wi-Fi. <button id='wifi'>Cak Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Potbuk ne pe tye wire maber">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Peko man kare mukene twero bino pi juko onyo kwero yee
+    angija.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Lagam mape okuro ki lapok tic">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Rot me inen ni kit tic mamegi tye ki Lalo gwoko kuc pa dano kiketo woko.</li> <li>Men twero bedo pi can mogo mape mwaonya ikom lapok tic.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Gwoko kubo pe olare">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Pot buk ma itye katemo neno ne ni pe kitwero nyuto pien pe kitwero moko ada pa data ma kigamo ni.</li> <li>Tim ber i kube ki wegi kakube ne me mini gi ngec pi peko man.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Gwoko Kubo Pe olare">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Man tyero bedo peko me can pa lapok tic, onyo romo bedo ni ngat mo tye ka tuku ki lapok tic.</li> <li>Kacce i kube ki lapok tic man maber i kare mukato angec, bal man twero bedo pi tutunu, ci i romo temo doki lacen</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Twero bedo ni kakube ne pe tye pi tutunu onyo tye ki tic madwong. Tem doki i kare manok.</li> <li>Ka pe itwero cano pot buk mo keken, rot data onyo kube me Wi-Fi me nyonyo mamegi. <button id='wifi'>Cak Wi-Fi</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Kigengo ne ki Cik me Gwoko kuc pa jami matye iye">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; otyeko gengo pot buk man ki pango iyore man pien pot buk tye ki cik me jami matye iye mape yee en.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Bal me Jami Matye Iye">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Pot buk ma i tye katemo neno ne pe romo nyutu pien bal me cwalo tic onyutu.</p><ul><li>Tim ber i kube wegi di bar me web me mino gi ngec pi peko man.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Onyo itwero medo ma nikwanyo…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Kwanya woko ki kany!">
+<!ENTITY securityOverride.exceptionButtonLabel "Med ma Nikwanyo…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Pe myero imede ki yee ka itye katic ki kube me intanet mape i geno kadi acel onyo ka pwod pe i maro neno cik pi lapok tic man.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL Mape ki waya">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Tim ber i kube ki wegi di bar me Web ci i mi gi ngec pi peko man.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Pe twero kube ma ber bedo tye">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Ngec ma lamal: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Kube ni pe tye ki ber bedo">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Ngec ma lamal: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Kube ni pe tye ki ber bedo">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> tiyo ki diro me ber bedo ma con ki kiromo mwonyo ne cawa mo keken. Ngat ma omwonyo romo nyuto ngec mamegi ma itamo no ni tye maber iyoo mayot. Laloc me kakube ne myero kong oyub lapok tic ma pud pe ilimo kakube ne.</p><p>Kod me bal: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Bal me Cik me Netwak">
+<!ENTITY networkProtocolError.longDesc "<p>Potbuk ma itye ka temo neno ne ni pe kitwero nyuto pien bal ononge i cik me netwak.</p><ul><li>Tim ber i kube ki wegi kakube ne me miini gi ngec pi peko man.</li></ul>">

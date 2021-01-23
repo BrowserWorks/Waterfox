@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY tableWindow.title "Propiedaes de la tabla">
+<!ENTITY applyButton.label "Aplicar">
+<!ENTITY applyButton.accesskey "A">
+<!ENTITY closeButton.label "Zarrar">
+<!ENTITY tableTab.label "Tabla">
+<!ENTITY cellTab.label "Caxelles">
+<!ENTITY tableRows.label "Fileres:">
+<!ENTITY tableRows.accessKey "F">
+<!ENTITY tableColumns.label "Columnes:">
+<!ENTITY tableColumns.accessKey "C">
+<!ENTITY tableHeight.label "Altor:">
+<!ENTITY tableHeight.accessKey "l">
+<!ENTITY tableWidth.label "Anchor:">
+<!ENTITY tableWidth.accessKey "A">
+<!ENTITY tableBorderSpacing.label "Berbesos ya interlliñáu">
+<!ENTITY tableBorderWidth.label "Berbesu:">
+<!ENTITY tableBorderWidth.accessKey "B">
+<!ENTITY tableSpacing.label "Interlliñáu:">
+<!ENTITY tableSpacing.accessKey "I">
+<!ENTITY tablePadding.label "Rellenu:">
+<!ENTITY tablePadding.accessKey "R">
+<!ENTITY tablePxBetwCells.label "píxeles ente caxelles">
+<!ENTITY tablePxBetwBrdrCellContent.label "píxeles ente'l berbesu de la caxella y el so conteníu">
+<!ENTITY tableAlignment.label "Alliniación de la tabla:">
+<!ENTITY tableAlignment.accessKey "b">
+<!ENTITY tableCaption.label "Títulu:">
+<!ENTITY tableCaption.accessKey "T">
+<!ENTITY tableCaptionAbove.label "Encima de la tabla:">
+<!ENTITY tableCaptionBelow.label "Debaxo de la tabla:">
+<!ENTITY tableCaptionLeft.label "Izquierda de la tabla">
+<!ENTITY tableCaptionRight.label "Derecha de la tabla">
+<!ENTITY tableCaptionNone.label "Dengún">
+<!ENTITY tableInheritColor.label "(Permitir que se vea'l color de fondu de la páxina)">
+<!ENTITY cellSelection.label "Seleición">
+<!ENTITY cellSelectCell.label "Caxella">
+<!ENTITY cellSelectRow.label "Filera">
+<!ENTITY cellSelectColumn.label "Columna">
+<!ENTITY cellSelectNext.label "Siguiente">
+<!ENTITY cellSelectNext.accessKey "N">
+<!ENTITY cellSelectPrevious.label "Anterior">
+<!ENTITY cellSelectPrevious.accessKey "A">
+<!ENTITY applyBeforeChange.label "Los cambeos actuales van aplicase enantes de camudar la seleición.">
+<!ENTITY cellContentAlignment.label "Alliniación del conteníu">
+<!ENTITY cellHorizontal.label "Horizontal:">
+<!ENTITY cellHorizontal.accessKey "Z">
+<!ENTITY cellVertical.label "Vertical:">
+<!ENTITY cellVertical.accessKey "V">
+<!ENTITY cellStyle.label "Estilu de caxella:">
+<!ENTITY cellStyle.accessKey "C">
+<!ENTITY cellNormal.label "Normal">
+<!ENTITY cellHeader.label "Testera">
+<!ENTITY cellTextWrap.label "Axuste del testu:">
+<!ENTITY cellTextWrap.accessKey "T">
+<!ENTITY cellWrap.label "Permitir ocupar varies llinies">
+<!ENTITY cellNoWrap.label "El conteníu ocupa una sola llinia">
+<!ENTITY cellAlignTop.label "Parte superior">
+<!ENTITY cellAlignMiddle.label "Medio">
+<!ENTITY cellAlignBottom.label "Parte inferior">
+<!ENTITY cellAlignJustify.label "Xustificáu">
+<!ENTITY cellInheritColor.label "(Permitir que se vea'l color de fondu de la tabla)">
+<!ENTITY cellUseCheckboxHelp.label "Usa les caxelles d'escoyeta pa determinar qué propiedaes s'apliquen a toles caxelles esbillaes">
+<!ENTITY size.label "Tamañu">
+<!ENTITY pixels.label "píxeles">
+<!ENTITY backgroundColor.label "Color de fondu:">
+<!ENTITY backgroundColor.accessKey "F">
+<!ENTITY AlignLeft.label "Izquierda">
+<!ENTITY AlignCenter.label "Centru">
+<!ENTITY AlignRight.label "Derecha">

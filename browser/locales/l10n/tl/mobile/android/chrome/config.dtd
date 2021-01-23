@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Hanapin">
+
+<!ENTITY newPref.namePlaceholder       "Pangalan">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "String">
+<!ENTITY newPref.valueInteger          "Integer">
+
+<!ENTITY newPref.stringPlaceholder     "Magpasok ng isang string">
+<!ENTITY newPref.numberPlaceholder     "Magpasok ng isang numero">
+
+<!ENTITY newPref.toggleButton          "Toggle">
+<!ENTITY newPref.cancelButton          "Kanselahan">
+
+<!ENTITY contextMenu.copyPrefName      "Kopya ang Pangalan">
+<!ENTITY contextMenu.copyPrefValue     "Kopya ang Halaga">

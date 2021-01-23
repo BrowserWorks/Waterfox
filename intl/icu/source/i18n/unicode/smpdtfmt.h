@@ -28,6 +28,8 @@
 
 #include "unicode/utypes.h"
 
+#if U_SHOW_CPLUSPLUS_API
+
 /**
  * \file
  * \brief C++ API: Format and parse dates in a language-independent manner.
@@ -865,7 +867,7 @@ public:
      * @return    A copy of the object.
      * @stable ICU 2.0
      */
-    virtual Format* clone(void) const;
+    virtual SimpleDateFormat* clone() const;
 
     /**
      * Return true if the given Format objects are semantically equal. Objects
@@ -1272,6 +1274,7 @@ private:
                    int32_t count,
                    UDisplayContext capitalizationContext,
                    int32_t fieldNum,
+                   char16_t fieldToOutput,
                    FieldPositionHandler& handler,
                    Calendar& cal,
                    UErrorCode& status) const; // in case of illegal argument
@@ -1643,7 +1646,7 @@ private:
 
     UBool fHaveDefaultCentury;
 
-    BreakIterator* fCapitalizationBrkIter;
+    const BreakIterator* fCapitalizationBrkIter;
 };
 
 inline UDate
@@ -1655,6 +1658,8 @@ SimpleDateFormat::get2DigitYearStart(UErrorCode& /*status*/) const
 U_NAMESPACE_END
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif // _SMPDTFMT
 //eof

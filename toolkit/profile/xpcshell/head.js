@@ -41,7 +41,7 @@ const ShellService = {
     let factory = {
       createInstance(outer, iid) {
         if (outer != null) {
-          throw Cr.NS_ERROR_NO_AGGREGATION;
+          throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
         }
 
         return ShellService.QueryInterface(iid);
@@ -96,7 +96,7 @@ function getProfileService() {
 let PROFILE_DEFAULT = "default";
 let DEDICATED_NAME = `default-${UPDATE_CHANNEL}`;
 if (AppConstants.MOZ_DEV_EDITION) {
-  DEDICATED_NAME = PROFILE_DEFAULT = "current-default";
+  DEDICATED_NAME = PROFILE_DEFAULT = "68-edition-default";
 }
 
 /**

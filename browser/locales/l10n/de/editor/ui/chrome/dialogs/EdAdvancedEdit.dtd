@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Erweiterte Einstellungen">
+<!ENTITY AttName.label                  "Attribut: ">
+<!ENTITY AttValue.label                 "Wert: ">
+<!ENTITY PropertyName.label             "Eigenschaft:">
+<!ENTITY currentattributesfor.label     "Aktuelle Attribute für: ">
+<!ENTITY tree.attributeHeader.label     "Attribut">
+<!ENTITY tree.propertyHeader.label      "Eigenschaft">
+<!ENTITY tree.valueHeader.label         "Wert">
+<!ENTITY tabHTML.label                  "HTML-Attribute">
+<!ENTITY tabCSS.label                   "Inline Style (CSS)">
+<!ENTITY tabJSE.label                   "JavaScript-Ereignisse">
+
+<!ENTITY editAttribute.label    "Klicken Sie auf einen Eintrag oben, um seinen Wert zu bearbeiten">
+<!ENTITY removeAttribute.label  "Entfernen">

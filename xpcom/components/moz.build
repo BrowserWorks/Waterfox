@@ -38,14 +38,10 @@ if CONFIG['COMPILE_ENVIRONMENT']:
         '!Components.h',
     ]
 
-    generated = ('Components.h', 'StaticComponentData.h',
-                 'StaticComponents.cpp')
-
-    GENERATED_FILES += [generated]
-
-    gen = GENERATED_FILES[generated]
-    gen.script = 'gen_static_components.py'
-    gen.inputs += ['!manifest-lists.json', 'StaticComponents.cpp.in']
+    GeneratedFile(
+        'Components.h', 'StaticComponentData.h', 'StaticComponents.cpp',
+        script='gen_static_components.py',
+        inputs=['!manifest-lists.json', 'StaticComponents.cpp.in'])
 
 UNIFIED_SOURCES += [
     'GenericFactory.cpp',
@@ -73,10 +69,9 @@ LOCAL_INCLUDES += [
     '/modules/libjar',
 ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     CXXFLAGS += CONFIG['TK_CFLAGS']
-
-if CONFIG['MOZ_LAYOUT_DEBUGGER']:
-    DEFINES['MOZ_LAYOUT_DEBUGGER'] = True
+    if CONFIG['MOZ_ENABLE_DBUS']:
+        CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
 
 include('/ipc/chromium/chromium-config.mozbuild')

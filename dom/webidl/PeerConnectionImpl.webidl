@@ -16,8 +16,11 @@
 interface nsISupports;
 
 /* Must be created first. Observer events will be dispatched on the thread provided */
-[ChromeOnly, Constructor]
+[ChromeOnly,
+ Exposed=Window]
 interface PeerConnectionImpl  {
+  constructor();
+
   /* Must be called first. Observer events dispatched on the thread provided */
   [Throws]
   void initialize(PeerConnectionObserver observer, Window window,
@@ -26,7 +29,7 @@ interface PeerConnectionImpl  {
 
   /* JSEP calls */
   [Throws]
-  void createOffer(optional RTCOfferOptions options);
+  void createOffer(optional RTCOfferOptions options = {});
   [Throws]
   void createAnswer();
   [Throws]
@@ -34,10 +37,9 @@ interface PeerConnectionImpl  {
   [Throws]
   void setRemoteDescription(long action, DOMString sdp);
 
-  /* Stats call, calls either |onGetStatsSuccess| or |onGetStatsError| on our
-     observer. (see the |PeerConnectionObserver| interface) */
-  [Throws]
-  void getStats(MediaStreamTrack? selector);
+  Promise<RTCStatsReport> getStats(MediaStreamTrack? selector);
+
+  sequence<MediaStream> getRemoteStreams();
 
   /* Adds the tracks created by GetUserMedia */
   [Throws]
@@ -45,35 +47,12 @@ interface PeerConnectionImpl  {
                                         MediaStreamTrack? track);
   [Throws]
   boolean checkNegotiationNeeded();
-  [Throws]
-  void insertDTMF(TransceiverImpl transceiver, DOMString tones,
-                  optional unsigned long duration = 100,
-                  optional unsigned long interToneGap = 70);
-  [Throws]
-  DOMString getDTMFToneBuffer(RTCRtpSender sender);
-  [Throws]
-  sequence<RTCRtpSourceEntry> getRtpSources(MediaStreamTrack track,
-                                            DOMHighResTimeStamp rtpSourceNow);
-  DOMHighResTimeStamp getNowInRtpSourceReferenceTime();
 
   [Throws]
   void replaceTrackNoRenegotiation(TransceiverImpl transceiverImpl,
                                    MediaStreamTrack? withTrack);
   [Throws]
   void closeStreams();
-
-  [Throws]
-  void addRIDExtension(MediaStreamTrack recvTrack, unsigned short extensionId);
-  [Throws]
-  void addRIDFilter(MediaStreamTrack recvTrack, DOMString rid);
-
-  // Inserts CSRC data for the RtpSourceObserver for testing
-  [Throws]
-  void insertAudioLevelForContributingSource(MediaStreamTrack recvTrack,
-                                             unsigned long source,
-                                             DOMHighResTimeStamp timestamp,
-                                             boolean hasLevel,
-                                             byte level);
 
   [Throws]
   void enablePacketDump(unsigned long level,
@@ -115,10 +94,12 @@ interface PeerConnectionImpl  {
   readonly attribute DOMString pendingLocalDescription;
   readonly attribute DOMString currentRemoteDescription;
   readonly attribute DOMString pendingRemoteDescription;
+  readonly attribute boolean? currentOfferer;
+  readonly attribute boolean? pendingOfferer;
 
-  readonly attribute PCImplIceConnectionState iceConnectionState;
-  readonly attribute PCImplIceGatheringState iceGatheringState;
-  readonly attribute PCImplSignalingState signalingState;
+  readonly attribute RTCIceConnectionState iceConnectionState;
+  readonly attribute RTCIceGatheringState iceGatheringState;
+  readonly attribute RTCSignalingState signalingState;
   attribute DOMString id;
 
   [SetterThrows]

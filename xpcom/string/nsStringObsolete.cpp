@@ -790,12 +790,18 @@ int32_t nsTString<T>::Find(const self_type& aString, int32_t aOffset,
   return result;
 }
 
+template int32_t nsTString<char16_t>::Find(const self_type&, int32_t,
+                                           int32_t) const;
+
 template <typename T>
 template <typename Q, typename EnableIfChar16>
 int32_t nsTString<T>::Find(const char_type* aString, int32_t aOffset,
                            int32_t aCount) const {
   return Find(nsTDependentString<T>(aString), aOffset, aCount);
 }
+
+template int32_t nsTString<char16_t>::Find(const char_type*, int32_t,
+                                           int32_t) const;
 
 template <typename T>
 template <typename Q, typename EnableIfChar16>
@@ -812,12 +818,18 @@ int32_t nsTString<T>::RFind(const self_type& aString, int32_t aOffset,
   return result;
 }
 
+template int32_t nsTString<char16_t>::RFind(const self_type&, int32_t,
+                                            int32_t) const;
+
 template <typename T>
 template <typename Q, typename EnableIfChar16>
 int32_t nsTString<T>::RFind(const char_type* aString, int32_t aOffset,
                             int32_t aCount) const {
   return RFind(nsTDependentString<T>(aString), aOffset, aCount);
 }
+
+template int32_t nsTString<char16_t>::RFind(const char_type*, int32_t,
+                                            int32_t) const;
 
 template <typename T>
 template <typename Q, typename EnableIfChar16>
@@ -832,6 +844,8 @@ int32_t nsTString<T>::FindCharInSet(const char* aSet, int32_t aOffset) const {
   if (result != kNotFound) result += aOffset;
   return result;
 }
+
+template int32_t nsTString<char16_t>::FindCharInSet(const char*, int32_t) const;
 
 template <typename T>
 template <typename Q, typename EnableIfChar16>
@@ -852,14 +866,13 @@ void nsTString<T>::ReplaceChar(const char* aSet, char16_t aNewChar) {
   }
 }
 
-/**
- * nsTString::Compare,CompareWithConversion,etc.
- */
+namespace mozilla {
+namespace detail {
 
 template <typename T>
 template <typename Q, typename EnableIfChar>
-int32_t nsTString<T>::Compare(const char_type* aString, bool aIgnoreCase,
-                              int32_t aCount) const {
+int32_t nsTStringRepr<T>::Compare(const char_type* aString, bool aIgnoreCase,
+                                  int32_t aCount) const {
   uint32_t strLen = char_traits::length(aString);
 
   int32_t maxCount = int32_t(XPCOM_MIN(this->mLength, strLen));
@@ -884,10 +897,13 @@ int32_t nsTString<T>::Compare(const char_type* aString, bool aIgnoreCase,
   return result;
 }
 
+template int32_t nsTStringRepr<char>::Compare(const char_type*, bool,
+                                              int32_t) const;
+
 template <typename T>
 template <typename Q, typename EnableIfChar16>
-bool nsTString<T>::EqualsIgnoreCase(const incompatible_char_type* aString,
-                                    int32_t aCount) const {
+bool nsTStringRepr<T>::EqualsIgnoreCase(const incompatible_char_type* aString,
+                                        int32_t aCount) const {
   uint32_t strLen = nsCharTraits<char>::length(aString);
 
   int32_t maxCount = int32_t(XPCOM_MIN(this->mLength, strLen));
@@ -912,6 +928,12 @@ bool nsTString<T>::EqualsIgnoreCase(const incompatible_char_type* aString,
   }
   return result == 0;
 }
+
+template bool nsTStringRepr<char16_t>::EqualsIgnoreCase(
+    const incompatible_char_type*, int32_t) const;
+
+}  // namespace detail
+}  // namespace mozilla
 
 /**
  * nsTString::ToDouble

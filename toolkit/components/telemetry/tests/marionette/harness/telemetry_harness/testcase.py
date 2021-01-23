@@ -45,6 +45,18 @@ class TelemetryTestCase(WindowManagerMixin, MarionetteTestCase):
 
         self.ping_server.start()
 
+    def disable_telemetry(self):
+        """Disable the Firefox Data Collection and Use in the current browser."""
+        self.marionette.instance.profile.set_persistent_preferences(
+            {"datareporting.healthreport.uploadEnabled": False})
+        self.marionette.set_pref("datareporting.healthreport.uploadEnabled", False)
+
+    def enable_telemetry(self):
+        """Enable the Firefox Data Collection and Use in the current browser."""
+        self.marionette.instance.profile.set_persistent_preferences(
+            {"datareporting.healthreport.uploadEnabled": True})
+        self.marionette.set_pref("datareporting.healthreport.uploadEnabled", True)
+
     @contextlib.contextmanager
     def new_tab(self):
         """Perform operations in a new tab and then close the new tab."""
@@ -63,7 +75,8 @@ class TelemetryTestCase(WindowManagerMixin, MarionetteTestCase):
         """Perform a search via the browser's URL bar."""
 
         with self.marionette.using_context(self.marionette.CONTEXT_CHROME):
-            urlbar = self.marionette.find_element(By.ID, "urlbar")
+            self.marionette.execute_script("gURLBar.select();")
+            urlbar = self.marionette.find_element(By.ID, "urlbar-input")
             urlbar.send_keys(keys.Keys.DELETE)
             urlbar.send_keys(text + keys.Keys.ENTER)
 
@@ -140,6 +153,14 @@ class TelemetryTestCase(WindowManagerMixin, MarionetteTestCase):
         """Restarts browser while maintaining the same profile."""
         return self.marionette.restart(clean=False, in_app=True)
 
+    def start_browser(self):
+        """Start the browser."""
+        return self.marionette.start_session()
+
+    def quit_browser(self):
+        """Quit the browser."""
+        return self.marionette.quit(in_app=True)
+
     def install_addon(self):
         """Install a minimal addon and add its ID to self.addon_ids."""
 
@@ -166,6 +187,14 @@ class TelemetryTestCase(WindowManagerMixin, MarionetteTestCase):
             )
         else:
             self.addon_ids.append(addon_id)
+
+    def set_persistent_profile_preferences(self, preferences):
+        """Wrapper for setting persistent preferences on a user profile"""
+        return self.marionette.instance.profile.set_persistent_preferences(preferences)
+
+    def set_preferences(self, preferences):
+        """Wrapper for setting persistent preferences on a user profile"""
+        return self.marionette.set_prefs(preferences)
 
     @property
     def client_id(self):

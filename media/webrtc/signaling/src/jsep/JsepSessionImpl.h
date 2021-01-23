@@ -5,6 +5,7 @@
 #ifndef _JSEPSESSIONIMPL_H_
 #define _JSEPSESSIONIMPL_H_
 
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -14,8 +15,7 @@
 #include "signaling/src/jsep/JsepTrack.h"
 #include "signaling/src/jsep/JsepTransceiver.h"
 #include "signaling/src/jsep/SsrcGenerator.h"
-#include "signaling/src/sdp/RsdparsaSdpParser.h"
-#include "signaling/src/sdp/SipccSdpParser.h"
+#include "signaling/src/sdp/HybridSdpParser.h"
 #include "signaling/src/sdp/SdpHelper.h"
 
 namespace mozilla {
@@ -30,8 +30,6 @@ class JsepSessionImpl : public JsepSession {
  public:
   JsepSessionImpl(const std::string& name, UniquePtr<JsepUuidGenerator> uuidgen)
       : JsepSession(name),
-        mIsOfferer(false),
-        mWasOffererLastTime(false),
         mIceControlling(false),
         mRemoteIsIceLite(false),
         mBundlePolicy(kBundleBalanced),
@@ -41,8 +39,7 @@ class JsepSessionImpl : public JsepSession {
         mTransportIdCounter(0),
         mUuidGen(std::move(uuidgen)),
         mSdpHelper(&mLastError),
-        mRunRustParser(false),
-        mRunSdpComparer(false),
+        mParser(new HybridSdpParser()),
         mEncodeTrackId(true) {}
 
   // Implement JsepSession methods.
@@ -123,18 +120,25 @@ class JsepSessionImpl : public JsepSession {
 
   virtual bool IsIceControlling() const override { return mIceControlling; }
 
-  virtual bool IsOfferer() const override { return mIsOfferer; }
+  virtual Maybe<bool> IsPendingOfferer() const override {
+    return mIsPendingOfferer;
+  }
+
+  virtual Maybe<bool> IsCurrentOfferer() const override {
+    return mIsCurrentOfferer;
+  }
 
   virtual bool IsIceRestarting() const override {
     return !mOldIceUfrag.empty();
   }
 
-  virtual const std::vector<RefPtr<JsepTransceiver>>& GetTransceivers()
+  virtual const std::map<size_t, RefPtr<JsepTransceiver>>& GetTransceivers()
       const override {
     return mTransceivers;
   }
 
-  virtual std::vector<RefPtr<JsepTransceiver>>& GetTransceivers() override {
+  virtual std::map<size_t, RefPtr<JsepTransceiver>>& GetTransceivers()
+      override {
     return mTransceivers;
   }
 
@@ -223,14 +227,15 @@ class JsepSessionImpl : public JsepSession {
   const Sdp* GetAnswer() const;
   void SetIceRestarting(bool restarting);
 
-  // !!!NOT INDEXED BY LEVEL!!! These are in the order they were created in. The
-  // level mapping is done with JsepTransceiver::mLevel.
-  std::vector<RefPtr<JsepTransceiver>> mTransceivers;
+  // !!!NOT INDEXED BY LEVEL!!! The level mapping is done with
+  // JsepTransceiver::mLevel. The keys are opaque, stable identifiers that are
+  // unique within the JsepSession.
+  std::map<size_t, RefPtr<JsepTransceiver>> mTransceivers;
   // So we can rollback. Not as simple as just going back to the old, though...
-  std::vector<RefPtr<JsepTransceiver>> mOldTransceivers;
+  std::map<size_t, RefPtr<JsepTransceiver>> mOldTransceivers;
 
-  bool mIsOfferer;
-  bool mWasOffererLastTime;
+  Maybe<bool> mIsPendingOfferer;
+  Maybe<bool> mIsCurrentOfferer;
   bool mIceControlling;
   std::string mIceUfrag;
   std::string mIcePwd;
@@ -245,6 +250,7 @@ class JsepSessionImpl : public JsepSession {
   size_t mMidCounter;
   std::set<std::string> mUsedMids;
   size_t mTransportIdCounter;
+  size_t mTransceiverIdCounter = 0;
   std::vector<JsepExtmapMediaType> mRtpExtensions;
   UniquePtr<JsepUuidGenerator> mUuidGen;
   std::string mDefaultRemoteStreamId;
@@ -260,13 +266,10 @@ class JsepSessionImpl : public JsepSession {
   UniquePtr<Sdp> mPendingRemoteDescription;
   std::vector<UniquePtr<JsepCodecDescription>> mSupportedCodecs;
   std::string mLastError;
-  SipccSdpParser mSipccParser;
   SdpHelper mSdpHelper;
+  UniquePtr<SdpParser> mParser;
   SsrcGenerator mSsrcGenerator;
-  bool mRunRustParser;
-  bool mRunSdpComparer;
   bool mEncodeTrackId;
-  RsdparsaSdpParser mRsdparsaParser;
 };
 
 }  // namespace mozilla

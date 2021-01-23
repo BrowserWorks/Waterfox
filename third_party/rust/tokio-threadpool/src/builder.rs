@@ -1,22 +1,22 @@
 use callback::Callback;
 use config::{Config, MAX_WORKERS};
 use park::{BoxPark, BoxedPark, DefaultPark};
-use sender::Sender;
 use pool::{Pool, MAX_BACKUP};
+use shutdown::ShutdownTrigger;
 use thread_pool::ThreadPool;
 use worker::{self, Worker, WorkerId};
 
+use std::any::Any;
+use std::cmp::max;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crossbeam_deque::Injector;
 use num_cpus;
-use tokio_executor::Enter;
 use tokio_executor::park::Park;
-
-#[cfg(feature = "unstable-futures")]
-use futures2;
+use tokio_executor::Enter;
 
 /// Builds a thread pool with custom configuration values.
 ///
@@ -67,7 +67,7 @@ pub struct Builder {
     max_blocking: usize,
 
     /// Generates the `Park` instances
-    new_park: Box<Fn(&WorkerId) -> BoxPark>,
+    new_park: Box<dyn Fn(&WorkerId) -> BoxPark>,
 }
 
 impl Builder {
@@ -92,12 +92,10 @@ impl Builder {
     /// # }
     /// ```
     pub fn new() -> Builder {
-        let num_cpus = num_cpus::get();
+        let num_cpus = max(1, num_cpus::get());
 
-        let new_park = Box::new(|_: &WorkerId| {
-            Box::new(BoxedPark::new(DefaultPark::new()))
-                as BoxPark
-        });
+        let new_park =
+            Box::new(|_: &WorkerId| Box::new(BoxedPark::new(DefaultPark::new())) as BoxPark);
 
         Builder {
             pool_size: num_cpus,
@@ -109,6 +107,7 @@ impl Builder {
                 around_worker: None,
                 after_start: None,
                 before_stop: None,
+                panic_handler: None,
             },
             new_park,
         }
@@ -136,7 +135,7 @@ impl Builder {
     /// ```
     pub fn pool_size(&mut self, val: usize) -> &mut Self {
         assert!(val >= 1, "at least one thread required");
-        assert!(val <= MAX_WORKERS, "max value is {}", 32768);
+        assert!(val <= MAX_WORKERS, "max value is {}", MAX_WORKERS);
 
         self.pool_size = val;
         self
@@ -172,14 +171,14 @@ impl Builder {
         self
     }
 
-    /// Set the worker thread keep alive duration
+    /// Set the thread keep alive duration
     ///
-    /// If set, a worker thread will wait for up to the specified duration for
-    /// work, at which point the thread will shutdown. When work becomes
-    /// available, a new thread will eventually be spawned to replace the one
-    /// that shut down.
+    /// If set, a thread that has completed a `blocking` call will wait for up
+    /// to the specified duration to become a worker thread again. Once the
+    /// duration elapses, the thread will shutdown.
     ///
-    /// When the value is `None`, the thread will wait for work forever.
+    /// When the value is `None`, the thread will wait to become a worker
+    /// thread forever.
     ///
     /// The default value is `None`.
     ///
@@ -199,6 +198,34 @@ impl Builder {
     /// ```
     pub fn keep_alive(&mut self, val: Option<Duration>) -> &mut Self {
         self.config.keep_alive = val;
+        self
+    }
+
+    /// Sets a callback to be triggered when a panic during a future bubbles up
+    /// to Tokio. By default Tokio catches these panics, and they will be
+    /// ignored. The parameter passed to this callback is the same error value
+    /// returned from std::panic::catch_unwind(). To abort the process on
+    /// panics, use std::panic::resume_unwind() in this callback as shown
+    /// below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate tokio_threadpool;
+    /// # extern crate futures;
+    /// # use tokio_threadpool::Builder;
+    ///
+    /// # pub fn main() {
+    /// let thread_pool = Builder::new()
+    ///     .panic_handler(|err| std::panic::resume_unwind(err))
+    ///     .build();
+    /// # }
+    /// ```
+    pub fn panic_handler<F>(&mut self, f: F) -> &mut Self
+    where
+        F: Fn(Box<dyn Any + Send>) + Send + Sync + 'static,
+    {
+        self.config.panic_handler = Some(Arc::new(f));
         self
     }
 
@@ -281,7 +308,8 @@ impl Builder {
     ///
     /// [`Worker::run`]: struct.Worker.html#method.run
     pub fn around_worker<F>(&mut self, f: F) -> &mut Self
-        where F: Fn(&Worker, &mut Enter) + Send + Sync + 'static
+    where
+        F: Fn(&Worker, &mut Enter) + Send + Sync + 'static,
     {
         self.config.around_worker = Some(Callback::new(f));
         self
@@ -308,7 +336,8 @@ impl Builder {
     /// # }
     /// ```
     pub fn after_start<F>(&mut self, f: F) -> &mut Self
-        where F: Fn() + Send + Sync + 'static
+    where
+        F: Fn() + Send + Sync + 'static,
     {
         self.config.after_start = Some(Arc::new(f));
         self
@@ -334,7 +363,8 @@ impl Builder {
     /// # }
     /// ```
     pub fn before_stop<F>(&mut self, f: F) -> &mut Self
-        where F: Fn() + Send + Sync + 'static
+    where
+        F: Fn() + Send + Sync + 'static,
     {
         self.config.before_stop = Some(Arc::new(f));
         self
@@ -370,13 +400,12 @@ impl Builder {
     /// # }
     /// ```
     pub fn custom_park<F, P>(&mut self, f: F) -> &mut Self
-    where F: Fn(&WorkerId) -> P + 'static,
-          P: Park + Send + 'static,
-          P::Error: Error,
+    where
+        F: Fn(&WorkerId) -> P + 'static,
+        P: Park + Send + 'static,
+        P::Error: Error,
     {
-        self.new_park = Box::new(move |id| {
-            Box::new(BoxedPark::new(f(id)))
-        });
+        self.new_park = Box::new(move |id| Box::new(BoxedPark::new(f(id))));
 
         self
     }
@@ -398,31 +427,41 @@ impl Builder {
     /// # }
     /// ```
     pub fn build(&self) -> ThreadPool {
-        let mut workers = vec![];
-
         trace!("build; num-workers={}", self.pool_size);
 
-        for i in 0..self.pool_size {
-            let id = WorkerId::new(i);
-            let park = (self.new_park)(&id);
-            let unpark = park.unpark();
+        // Create the worker entry list
+        let workers: Arc<[worker::Entry]> = {
+            let mut workers = vec![];
 
-            workers.push(worker::Entry::new(park, unpark));
-        }
+            for i in 0..self.pool_size {
+                let id = WorkerId::new(i);
+                let park = (self.new_park)(&id);
+                let unpark = park.unpark();
+
+                workers.push(worker::Entry::new(park, unpark));
+            }
+
+            workers.into()
+        };
+
+        let queue = Arc::new(Injector::new());
+
+        // Create a trigger that will clean up resources on shutdown.
+        //
+        // The `Pool` contains a weak reference to it, while `Worker`s and the `ThreadPool` contain
+        // strong references.
+        let trigger = Arc::new(ShutdownTrigger::new(workers.clone(), queue.clone()));
 
         // Create the pool
-        let inner = Arc::new(
-            Pool::new(
-                workers.into_boxed_slice(),
-                self.max_blocking,
-                self.config.clone()));
+        let pool = Arc::new(Pool::new(
+            workers,
+            Arc::downgrade(&trigger),
+            self.max_blocking,
+            self.config.clone(),
+            queue,
+        ));
 
-        // Wrap with `Sender`
-        let inner = Some(Sender {
-            inner
-        });
-
-        ThreadPool { inner }
+        ThreadPool::new2(pool, trigger)
     }
 }
 

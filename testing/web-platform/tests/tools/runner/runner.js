@@ -16,22 +16,6 @@ Manifest.prototype = {
         this.generate(loaded_callback);
     },
 
-    do_load: function(loaded_callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState !== 4) {
-                return;
-            }
-            if (!(xhr.status === 200 || xhr.status === 0)) {
-                throw new Error("Manifest " + this.path + " failed to load");
-            }
-            this.data = JSON.parse(xhr.responseText);
-            loaded_callback();
-        }.bind(this);
-        xhr.open("GET", this.path);
-        xhr.send(null);
-    },
-
     generate: function(loaded_callback) {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
@@ -41,7 +25,8 @@ Manifest.prototype = {
             if (!(xhr.status === 200 || xhr.status === 0)) {
                 throw new Error("Manifest generation failed");
             }
-            this.do_load(loaded_callback);
+            this.data = JSON.parse(xhr.responseText);
+            loaded_callback();
         }.bind(this);
         xhr.open("POST", "update_manifest.py");
         xhr.send(null);
@@ -153,13 +138,22 @@ ManifestIterator.prototype = {
     },
 
     matches: function(manifest_item) {
-        return this.match_location(manifest_item.url) !== null;
+        var url_base = this.manifest.data.url_base;
+        if (url_base.charAt(url_base.length - 1) !== "/") {
+            url_base = url_base + "/";
+        }
+        var url = url_base + manifest_item.url;
+        return this.match_location(url) !== null;
     },
 
     to_test: function(manifest_item) {
+        var url_base = this.manifest.data.url_base;
+        if (url_base.charAt(url_base.length - 1) !== "/") {
+            url_base = url_base + "/";
+        }
         var test = {
             type: this.test_types[this.test_types_index],
-            url: manifest_item.url
+            url: url_base + manifest_item.url
         };
         if (manifest_item.hasOwnProperty("references")) {
             test.ref_length = manifest_item.references.length;
@@ -638,8 +632,9 @@ Results.prototype = {
     },
 
     to_json: function() {
+        var test_results = this.test_results || [];
         var data = {
-            "results": this.test_results.map(function(result) {
+            "results": test_results.map(function(result) {
                 var rv = {"test":(result.test.hasOwnProperty("ref_url") ?
                                   [result.test.url, result.test.ref_type, result.test.ref_url] :
                                   result.test.url),

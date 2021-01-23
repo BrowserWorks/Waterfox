@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Inštalácia softvéru">
+<!ENTITY addOnsTitle.label                    "Doplnky">
+<!ENTITY addOnsAllow.label                    "Povoliť webovým stránkam inštalovať rozšírenia a aktualizácie">
+<!ENTITY addOnsAllow.accesskey                "w">
+<!ENTITY allowedSitesLink.label               "Povolené stránky">
+<!ENTITY autoAddOnsUpdates.label              "Automaticky kontrolovať aktualizácie">
+<!ENTITY autoAddOnsUpdates.accesskey          "A">
+<!ENTITY daily.label                          "denne">
+<!ENTITY addOnsDaily.accesskey                "d">
+<!ENTITY weekly.label                         "týždenne">
+<!ENTITY addOnsWeekly.accesskey               "t">
+<!ENTITY addOnsModeAutomatic.label            "Aktualizácie automaticky prevziať a nainštalovať">
+<!ENTITY addOnsModeAutomatic.accesskey        "k">
+<!ENTITY enablePersonalized.label             "Personalizovať odporúčania doplnkov">
+<!ENTITY enablePersonalized.accesskey         "e">
+<!ENTITY addonManagerLink.label               "Správa doplnkov">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Automaticky kontrolovať aktualizácie">
+<!ENTITY autoAppUpdates.accesskey             "o">
+<!ENTITY appDaily.accesskey                   "e">
+<!ENTITY appWeekly.accesskey                  "n">
+<!ENTITY appModeAutomatic.label               "Aktualizácie automaticky prevziať a nainštalovať">
+<!ENTITY appModeAutomatic.accesskey           "m">
+<!ENTITY updateHistoryButton.label            "Zobraziť históriu aktualizácií">
+<!ENTITY updateHistoryButton.accesskey        "h">

@@ -4,61 +4,56 @@
 "use strict";
 
 // React
-const {
-  Component,
-  createFactory,
-} = require("devtools/client/shared/vendor/react");
-const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const { createFactory } = require("devtools/client/shared/vendor/react");
 const { div } = require("devtools/client/shared/vendor/react-dom-factories");
 
-const { L10N } = require("../utils/l10n");
-const Accessible = createFactory(require("./Accessible"));
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
+const Accessible = createFactory(
+  require("devtools/client/accessibility/components/Accessible")
+);
 const Accordion = createFactory(
   require("devtools/client/shared/components/Accordion")
 );
-const Checks = createFactory(require("./Checks"));
+const Checks = createFactory(
+  require("devtools/client/accessibility/components/Checks")
+);
 
 // Component that is responsible for rendering accessible panel's sidebar.
-class RightSidebar extends Component {
-  static get propTypes() {
-    return {
-      walker: PropTypes.object.isRequired,
-    };
-  }
+function RightSidebar({ highlightAccessible, unhighlightAccessible, toolbox }) {
+  const propertiesID = "accessibility-properties";
+  const checksID = "accessibility-checks";
 
-  /**
-   * Render the sidebar component.
-   * @returns Sidebar React component.
-   */
-  render() {
-    const propertiesHeaderID = "accessibility-properties-header";
-    const checksHeaderID = "accessibility-checks-header";
-    const { walker } = this.props;
-    return div(
-      {
-        className: "right-sidebar",
-        role: "presentation",
-      },
-      Accordion({
-        items: [
-          {
-            className: "checks",
-            component: Checks({ labelledby: checksHeaderID }),
-            header: L10N.getStr("accessibility.checks"),
-            labelledby: checksHeaderID,
-            opened: true,
+  return div(
+    {
+      className: "right-sidebar",
+      role: "presentation",
+    },
+    Accordion({
+      items: [
+        {
+          className: "checks",
+          component: Checks,
+          componentProps: { labelledby: `${checksID}-header` },
+          header: L10N.getStr("accessibility.checks"),
+          id: checksID,
+          opened: true,
+        },
+        {
+          className: "accessible",
+          component: Accessible,
+          componentProps: {
+            highlightAccessible,
+            unhighlightAccessible,
+            toolbox,
+            labelledby: `${propertiesID}-header`,
           },
-          {
-            className: "accessible",
-            component: Accessible({ walker, labelledby: propertiesHeaderID }),
-            header: L10N.getStr("accessibility.properties"),
-            labelledby: propertiesHeaderID,
-            opened: true,
-          },
-        ],
-      })
-    );
-  }
+          header: L10N.getStr("accessibility.properties"),
+          id: propertiesID,
+          opened: true,
+        },
+      ],
+    })
+  );
 }
 
 module.exports = RightSidebar;

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Netzwerk &amp; Speicherung">
+<!ENTITY pref.offline.caption             "Offline">
+<!ENTITY textStartUp                      "Beim Starten:">
+<!ENTITY textStartUp.accesskey            "B">
+<!ENTITY menuitemRememberPrevState        "Vorherigen Online-Status merken">
+<!ENTITY menuitemAskMe                    "Beim Starten nach dem Online-Status fragen">
+<!ENTITY menuitemAlwaysOnline             "Immer online starten">
+<!ENTITY menuitemAlwaysOffline            "Immer offline starten">
+<!ENTITY menuitemAutomatic                "Automatisch erkennen (wenn verfügbar)">
+<!ENTITY textGoingOnline                  "Ungesendete Nachrichten beim Online gehen absenden?">
+<!ENTITY radioAutoSend                    "Ja">
+<!ENTITY radioAutoSend.accesskey          "J">
+<!ENTITY radioNotSend                     "Nein">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Nachfragen">
+<!ENTITY radioAskUnsent.accesskey         "c">
+<!ENTITY textGoingOffline                 "Nachrichten beim Offline gehen für den Offline-Gebrauch herunterladen?">
+<!ENTITY radioAutoDownload                "Ja">
+<!ENTITY radioAutoDownload.accesskey      "a">
+<!ENTITY radioNotDownload                 "Nein">
+<!ENTITY radioNotDownload.accesskey       "e">
+<!ENTITY radioAskDownload                 "Nachfragen">
+<!ENTITY radioAskDownload.accesskey       "h">
+<!ENTITY mailConnections.caption          "Mail-Verbindungen">
+<!ENTITY mailnewsTimeout.label            "Verbindungs-Zeitlimit:">
+<!ENTITY mailnewsTimeout.accesskey        "V">
+<!ENTITY mailnewsTimeoutSeconds.label     "Sekunden">
+<!ENTITY Diskspace                        "Speicherplatz">
+<!ENTITY offlineCompactFolders.label      "Alle Ordner komprimieren, wenn dies insgesamt mehr als">
+<!ENTITY offlineCompactFolders.accesskey  "k">
+<!ENTITY offlineCompactFoldersMB.label    "MB einspart">

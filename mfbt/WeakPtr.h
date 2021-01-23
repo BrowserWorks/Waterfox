@@ -73,9 +73,9 @@
 #include "mozilla/Maybe.h"
 #include "mozilla/RefCounted.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/TypeTraits.h"
 
 #include <string.h>
+#include <type_traits>
 
 #if defined(MOZILLA_INTERNAL_API)
 // For thread safety checking.
@@ -118,6 +118,12 @@
     } while (false)
 #  define MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED(that) \
     (that)->AssertThreadSafety();
+#  define MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED_IF(that) \
+    do {                                                      \
+      if (that) {                                             \
+        (that)->AssertThreadSafety();                         \
+      }                                                       \
+    } while (false)
 
 #  define MOZ_WEAKPTR_THREAD_SAFETY_CHECKING 1
 
@@ -132,6 +138,9 @@
     } while (false)
 #  define MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED(that) \
     do {                                                   \
+    } while (false)
+#  define MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED_IF(that) \
+    do {                                                      \
     } while (false)
 
 #endif
@@ -164,7 +173,7 @@ namespace detail {
 // This can live beyond the lifetime of the class derived from
 // SupportsWeakPtr.
 template <class T>
-class WeakReference : public ::mozilla::RefCounted<WeakReference<T> > {
+class WeakReference : public ::mozilla::RefCounted<WeakReference<T>> {
  public:
   explicit WeakReference(T* p) : mPtr(p) {
     MOZ_WEAKPTR_INIT_THREAD_SAFETY_CHECK();
@@ -206,8 +215,13 @@ template <typename T>
 class SupportsWeakPtr {
  protected:
   ~SupportsWeakPtr() {
-    static_assert(IsBaseOf<SupportsWeakPtr<T>, T>::value,
+    static_assert(std::is_base_of<SupportsWeakPtr<T>, T>::value,
                   "T must derive from SupportsWeakPtr<T>");
+    DetachWeakPtr();
+  }
+
+ protected:
+  void DetachWeakPtr() {
     if (mSelfReferencingWeakPtr) {
       mSelfReferencingWeakPtr.mRef->detach();
     }
@@ -239,11 +253,17 @@ class SupportsWeakPtr {
 template <typename T>
 class WeakPtr {
   typedef detail::WeakReference<T> WeakReference;
+  using NonConstT = std::remove_const_t<T>;
 
  public:
   WeakPtr& operator=(const WeakPtr& aOther) {
+    // We must make sure the reference we have now is safe to be dereferenced
+    // before we throw it away... (this can be called from a ctor)
+    MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED_IF(mRef);
+    // ...and make sure the new reference is used on a single thread as well.
+    MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED(aOther.mRef);
+
     mRef = aOther.mRef;
-    MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED(mRef);
     return *this;
   }
 
@@ -252,7 +272,21 @@ class WeakPtr {
     *this = aOther;
   }
 
-  WeakPtr& operator=(T* aOther) {
+  WeakPtr& operator=(decltype(nullptr)) {
+    // We must make sure the reference we have now is safe to be dereferenced
+    // before we throw it away.
+    MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED_IF(mRef);
+    if (!mRef || mRef->get()) {
+      // Ensure that mRef is dereferenceable in the uninitialized state.
+      mRef = new WeakReference(nullptr);
+    }
+    return *this;
+  }
+
+  WeakPtr& operator=(SupportsWeakPtr<NonConstT> const* aOther) {
+    // We must make sure the reference we have now is safe to be dereferenced
+    // before we throw it away.
+    MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED_IF(mRef);
     if (aOther) {
       *this = aOther->SelfReferencingWeakPtr();
     } else if (!mRef || mRef->get()) {
@@ -264,10 +298,22 @@ class WeakPtr {
     return *this;
   }
 
-  MOZ_IMPLICIT WeakPtr(T* aOther) {
-    *this = aOther;
-    MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED(mRef);
+  WeakPtr& operator=(SupportsWeakPtr<NonConstT>* aOther) {
+    // We must make sure the reference we have now is safe to be dereferenced
+    // before we throw it away.
+    MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED_IF(mRef);
+    if (aOther) {
+      *this = aOther->SelfReferencingWeakPtr();
+    } else if (!mRef || mRef->get()) {
+      // Ensure that mRef is dereferenceable in the uninitialized state.
+      mRef = new WeakReference(nullptr);
+    }
+    // The thread safety check happens inside SelfReferencingWeakPtr
+    // or is initialized in the WeakReference constructor.
+    return *this;
   }
+
+  MOZ_IMPLICIT WeakPtr(T* aOther) { *this = aOther; }
 
   // Ensure that mRef is dereferenceable in the uninitialized state.
   WeakPtr() : mRef(new WeakReference(nullptr)) {}
@@ -279,7 +325,13 @@ class WeakPtr {
 
   T* get() const { return mRef->get(); }
 
-  ~WeakPtr() { MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED(mRef); }
+  already_AddRefed<WeakReference> TakeRef() { return mRef.forget(); }
+
+  ~WeakPtr() {
+    if (mRef) {
+      MOZ_WEAKPTR_ASSERT_THREAD_SAFETY_DELEGATED(mRef);
+    }
+  }
 
  private:
   friend class SupportsWeakPtr<T>;
@@ -288,6 +340,28 @@ class WeakPtr {
 
   RefPtr<WeakReference> mRef;
 };
+
+#define NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_PTR tmp->DetachWeakPtr();
+
+#define NS_IMPL_CYCLE_COLLECTION_WEAK_PTR(class_, ...) \
+  NS_IMPL_CYCLE_COLLECTION_CLASS(class_)               \
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(class_)        \
+    NS_IMPL_CYCLE_COLLECTION_UNLINK(__VA_ARGS__)       \
+    NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_PTR           \
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_END                  \
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(class_)      \
+    NS_IMPL_CYCLE_COLLECTION_TRAVERSE(__VA_ARGS__)     \
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+#define NS_IMPL_CYCLE_COLLECTION_WEAK_PTR_INHERITED(class_, super_, ...) \
+  NS_IMPL_CYCLE_COLLECTION_CLASS(class_)                                 \
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(class_, super_)        \
+    NS_IMPL_CYCLE_COLLECTION_UNLINK(__VA_ARGS__)                         \
+    NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_PTR                             \
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_END                                    \
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(class_, super_)      \
+    NS_IMPL_CYCLE_COLLECTION_TRAVERSE(__VA_ARGS__)                       \
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 }  // namespace mozilla
 

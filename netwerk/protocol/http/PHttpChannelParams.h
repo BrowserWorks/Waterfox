@@ -13,10 +13,9 @@
 #include "ipc/IPCMessageUtils.h"
 #include "nsHttp.h"
 #include "nsHttpHeaderArray.h"
+#include "nsHttpRequestHead.h"
 #include "nsHttpResponseHead.h"
 #include "mozilla/Tuple.h"
-
-#include "nsIClassInfo.h"
 
 namespace mozilla {
 namespace net {
@@ -33,7 +32,7 @@ struct RequestHeaderTuple {
   }
 };
 
-typedef nsTArray<RequestHeaderTuple> RequestHeaderTuples;
+typedef CopyableTArray<RequestHeaderTuple> RequestHeaderTuples;
 
 }  // namespace net
 }  // namespace mozilla
@@ -183,6 +182,45 @@ struct ParamTraits<mozilla::net::nsHttpHeaderArray> {
 };
 
 template <>
+struct ParamTraits<mozilla::net::nsHttpRequestHead> {
+  typedef mozilla::net::nsHttpRequestHead paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam) {
+    WriteParam(aMsg, aParam.mHeaders);
+    WriteParam(aMsg, aParam.mMethod);
+    WriteParam(aMsg, static_cast<uint32_t>(aParam.mVersion));
+    WriteParam(aMsg, aParam.mRequestURI);
+    WriteParam(aMsg, aParam.mPath);
+    WriteParam(aMsg, aParam.mOrigin);
+    WriteParam(aMsg, static_cast<uint8_t>(aParam.mParsedMethod));
+    WriteParam(aMsg, aParam.mHTTPS);
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter,
+                   paramType* aResult) {
+    uint32_t version;
+    uint8_t method;
+    if (!ReadParam(aMsg, aIter, &aResult->mHeaders) ||
+        !ReadParam(aMsg, aIter, &aResult->mMethod) ||
+        !ReadParam(aMsg, aIter, &version) ||
+        !ReadParam(aMsg, aIter, &aResult->mRequestURI) ||
+        !ReadParam(aMsg, aIter, &aResult->mPath) ||
+        !ReadParam(aMsg, aIter, &aResult->mOrigin) ||
+        !ReadParam(aMsg, aIter, &method) ||
+        !ReadParam(aMsg, aIter, &aResult->mHTTPS)) {
+      return false;
+    }
+
+    aResult->mVersion = static_cast<mozilla::net::HttpVersion>(version);
+    aResult->mParsedMethod =
+        static_cast<mozilla::net::nsHttpRequestHead::ParsedMethodType>(method);
+    return true;
+  }
+};
+
+// Note that the code below MUST be synchronized with the code in
+// nsHttpRequestHead's copy constructor.
+template <>
 struct ParamTraits<mozilla::net::nsHttpResponseHead> {
   typedef mozilla::net::nsHttpResponseHead paramType;
 
@@ -194,9 +232,15 @@ struct ParamTraits<mozilla::net::nsHttpResponseHead> {
     WriteParam(aMsg, aParam.mContentLength);
     WriteParam(aMsg, aParam.mContentType);
     WriteParam(aMsg, aParam.mContentCharset);
+    WriteParam(aMsg, aParam.mCacheControlPublic);
     WriteParam(aMsg, aParam.mCacheControlPrivate);
     WriteParam(aMsg, aParam.mCacheControlNoStore);
     WriteParam(aMsg, aParam.mCacheControlNoCache);
+    WriteParam(aMsg, aParam.mCacheControlImmutable);
+    WriteParam(aMsg, aParam.mCacheControlStaleWhileRevalidateSet);
+    WriteParam(aMsg, aParam.mCacheControlStaleWhileRevalidate);
+    WriteParam(aMsg, aParam.mCacheControlMaxAgeSet);
+    WriteParam(aMsg, aParam.mCacheControlMaxAge);
     WriteParam(aMsg, aParam.mPragmaNoCache);
   }
 
@@ -210,9 +254,16 @@ struct ParamTraits<mozilla::net::nsHttpResponseHead> {
         !ReadParam(aMsg, aIter, &aResult->mContentLength) ||
         !ReadParam(aMsg, aIter, &aResult->mContentType) ||
         !ReadParam(aMsg, aIter, &aResult->mContentCharset) ||
+        !ReadParam(aMsg, aIter, &aResult->mCacheControlPublic) ||
         !ReadParam(aMsg, aIter, &aResult->mCacheControlPrivate) ||
         !ReadParam(aMsg, aIter, &aResult->mCacheControlNoStore) ||
         !ReadParam(aMsg, aIter, &aResult->mCacheControlNoCache) ||
+        !ReadParam(aMsg, aIter, &aResult->mCacheControlImmutable) ||
+        !ReadParam(aMsg, aIter,
+                   &aResult->mCacheControlStaleWhileRevalidateSet) ||
+        !ReadParam(aMsg, aIter, &aResult->mCacheControlStaleWhileRevalidate) ||
+        !ReadParam(aMsg, aIter, &aResult->mCacheControlMaxAgeSet) ||
+        !ReadParam(aMsg, aIter, &aResult->mCacheControlMaxAge) ||
         !ReadParam(aMsg, aIter, &aResult->mPragmaNoCache))
       return false;
 

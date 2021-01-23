@@ -1,0 +1,100 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Erô into caregamento da pagina">
+<!ENTITY retry.label "Preuva Torna">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "No riescio a conetime">
+<!ENTITY connectionFailure.longDesc "<p>Sciben che o scito o pâ valido, o navegatô o no l'é riescio a stabilî 'na conescion.</p><ul><li>O scito o porieiva ese tenporaneamente no disponibile? Preuva torna dòppo.</li><li>No ti riesci a navegâ in sce di atri sciti? Contròlla a conescion do teu computer.</li><li>O teu computer ò a teu conescion en protetti da 'n firewall ò proxy? Inpostaçioin no corette peuan interferî con a navegaçion in sciâ Ræ.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "L'acesso a-a pòrta o l'é dizabilitou pe raxon de seguessa">
+<!ENTITY deniedPortAccess.longDesc "<p>A pòrta domandâ (ez. <q>mozilla.org:80</q> pa-a pòrta 80 in sciô mozilla.org) l'é uzâ pe <em>atri</em> fin che no seggian a navegaçion. O navegatô l'à scancelou a domanda pe a teu proteçion e seguessa.</p>">
+
+<!ENTITY dnsNotFound.title "Indirisso no trovou">
+<!ENTITY dnsNotFound.longDesc "<p>O navegatô o no treuva o server pe l'indirisso che t'æ scrito.</p><ul><li>T'æ miga fæto 'n erô a scrive? (ez. <q><strong>ww</strong>.mozilla.org</q> invece de <q><strong>www</strong>.mozilla.org</q>)</li><li>T'ê seguo che l'indirisso o l'exista?  Fòscia l'indirisso o l'é scheito.</li><li>Ti no riesci a navegâ inti atri sciti?  Contròlla a teu conescion e o teu DNS.</li><li>O teu computer o l'é miga protezuo da 'n firewall ò proxy?  Se ti gh'æ 'na inpostaçion sbaliâ ti no peu navega.</li></ul>">
+
+<!ENTITY fileNotFound.title "Schedaio no trovou">
+<!ENTITY fileNotFound.longDesc "<ul><li>Peu miga ese che l'ògetto o segge stæto rinominou, scancelou ò mesciou?</li><li>Gh'é quarche erô inte l'indirisso?</li><li>Ti ghe l'æ i permissi pe acede a l'ògetto?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Acesso a-o schedaio negou">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>O peu ese stæto scancelou, mesciou, ò i permissi de acesso a-o schedaio peuan proibine l'acesso.</li></ul>">
+
+<!ENTITY generic.title "No riescio a finî a domanda">
+<!ENTITY generic.longDesc "<p>No gh'é son atre informaçioin in sciô problema.</p>">
+
+<!ENTITY malformedURI.title "Indirisso no valido">
+<!ENTITY malformedURI.longDesc "<p>L'indirisso che ti me dæto o no va ben. Pe piaxei contròlla che no ghe seggian di eroî inta bara di indirissi e preuva torna.</p>">
+
+<!ENTITY netInterrupt.title "Trasferimento dæti scancellou">
+<!ENTITY netInterrupt.longDesc "<p>O navegatô o s'é conesso ma a conescion a l'é stæta fermâ fintanto che o trasferiva e informaçioin.  Pe piaxei preuva torna.</p><ul><li>No ti riesci a navegâ in sci atri sciti? Contròlla a conescion do teu computer.</li><li>Ti gh'é torna di problemi? Ciamma o teu aministratô de ræ ò fornitô de serviççi internet.</li></ul>">
+
+<!ENTITY notCached.title "Documento scheito">
+<!ENTITY notCached.longDesc "<p>O documento domandou o no gh'é inta cache do navegatô.</p><ul><li>Pe seguessa o navegatô no domanda in aotomatico documenti senscibili.</li><li>Sciacca Preuva torna pe domandâ torna o documento a-o scito .</li></ul>">
+
+<!ENTITY netOffline.title "Feua linia">
+<!ENTITY netOffline.longDesc2 "<p>O navegatô o l'é into mòddo feua linia e o no peu colegase a l'ògetto çernuo.</p><ul><li>O computer o l'é conesso a 'na ræ ativa?</li><li>Sciacca &quot;Preuva Torna&quot; pe pasâ a-o mòddo in linia e caregâ torna a pagina.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Erô de còdifica do contegnuo">
+<!ENTITY contentEncodingError.longDesc "<p>A pagina che t'eu vedde a no se peu mostrâ perché a gh'à 'na comprescion ch'a no l'é soportâ.</p><ul><li>Pe piaxei, contatta i padroin do scito pe faghe savei de questo problema.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Tipo de schedaio no segûo">
+<!ENTITY unsafeContentType.longDesc "<p>A pagina che t'eu vedde a no se peu mostrâ perché a gh'à 'na comprescion che a no l'é soportâ.</p><ul><li>Pe piaxei, contatta i padroin do scito pe faghe savei de questo problema.</li></ul>">
+
+<!ENTITY netReset.title "Conescion Scancelâ">
+<!ENTITY netReset.longDesc "<p>O colegamento o l'é stæto fermou inta negoçiaçion da conescion. Pe piaxei preuva torna.</p>">
+
+<!ENTITY netTimeout.title "A ræ a no risponde">
+<!ENTITY netTimeout.longDesc "<p>O scito che t'æ domandou o no risponde e o navegatô o no l'aspetâ ciù a risposta.</p><ul><li>Fòscia o server o gh'à 'n'erta domanda ò 'n problema tenporaneo? Preuva torna dòppo.</li><li>No ti riesci a navegâ inti atri sciti? Contròlla a conescion do teu computer.</li><li>O teu computer ò a teu conescion en protezui da 'n firewall ò proxy? Se e teu inpostaçioin son sbaliæ peuan interferî co-a navegaçion.</li><li>Ti gh'æ torna di problemi? Ciamma o teu aministratô da ræ ò fornitô de serviççi internet pe ascistensa.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Protocòllo sconosciuo">
+<!ENTITY unknownProtocolFound.longDesc "<p>L’indirisso domanda 'n protocòllo (prez. <q>wxyz://</q>) ch'o navegatô o no conosce, quindi o nn peu colegase a-o scito.</p><ul><li>Se ti ê derê a acede a serviççi moltimediali ò no de testo? Verificâ in sciô scito i requixiti necesai.</li><li>Quarche protocòllo domanda software esterni ò plugin pe poei ese riconosciui da o navegatô.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Conescion refuâ do-u server proxy">
+<!ENTITY proxyConnectFailure.longDesc "<p>O navegatô o l'é inpostou pe uzâ un server proxy ma o proxy o refua e conescioin.</p><ul><li>E inpostaçioin proxy do navegatô en giuste? Contròlla e preuva torna.</li><li>O proxy permette e conescioin da sta ræ?</li><li>Ti gh'æ torna di problemi? Ciamma o teu aministratô da ræ ò fornitô de serviççi internet pe ascistensa.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "No treuvo o proxy">
+<!ENTITY proxyResolveFailure.longDesc "<p>O navegatô o l'é inpostou pe uzâ un server proxy ma o proxy o refua e conescioin.</p><ul><li>E inpostaçioin proxy do navegatô en giuste? Contròlla e preuva torna.</li><li>O proxy permette e conescioin da sta ræ?</li><li>Ti gh'æ torna di problemi? Ciamma o teu aministratô da ræ ò fornitô de serviççi internet pe ascistensa.</li></ul>">
+
+<!ENTITY redirectLoop.title "Redireçionn-a o Loop">
+<!ENTITY redirectLoop.longDesc "<p>O navegatô o no preuva ciù a riçeive l'ògetto domandòu. O scito redireçionn-a sensa fin.</p><ul><li>T'æ dizabilitòu ò blocòu i cookie domandæ da sto scito?</li><li><em>NÒTTA</em>: Se ti acetti i cookie do scito e no ti rizòlvi o problema, aloa porieivan ese e inpostaçioin do server che no van ben e no quelle do teu computer.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Risposta Sbaliâ">
+<!ENTITY unknownSocketType.longDesc "<p>O scito risponde in 'n mòddo ch'o no capiscio e-o navegatô o no peu continoâ.</p>">
+
+<!ENTITY nssFailure2.title "Conescion segua no ariescia">
+<!ENTITY nssFailure2.longDesc2 "<p>A pagina che ti preuvi a vedde a no peu mostrase perché no l'é poscibile verificane l’aotenticitæ di dæti riçevui.</p><ul><li>Ciamma o propietaio do scito web pe informalo do problema.</li></ul>">
+
+<!ENTITY nssBadCert.title "Conescion segua no ariescia">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+<li>Sto chi peu ese un problema co-e inpostaçion do server, atrimenti ghe peu ese quarchedun ch'o preuva a fâ finta d'ese o server.</li>
+<li>Se ti te conesso sensa problemi a sto server into passou, aloa l'erô o porieiva esê tenporaneo e ti peu provâ torna dòppo.</li>
+</ul>
+">
+
+<!ENTITY securityOverride.linkText "Òpû ti peu azonze 'n eceçion…">
+<!ENTITY securityOverride.warningContent "
+<p>Sconsegemmo de azonze 'n eceçion… into caxo che t'adeuvi 'na conoescion ch'a no l'é conpletamente segua ò se l'é a prìmma vòtta che ti veddi sti avizi de seguessa pe sto server.</p>
+<p>A ògni mòddo ti peu azonze 'n eceçion… pe sto scito co-e inpostaçioin avansæ pe-a cifratua.</p>
+">
+
+<!ENTITY cspBlocked.title "Blocòu da i critei de seguessa di contegnui">
+<!ENTITY cspBlocked.longDesc "<p>O navegatô o l'à blocòu o caregamento da pagina con sta modalitæ perché a l'includde di critei de seguessa di contegnui ch'òu inpediscian.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Erô de contegnuo andæto a mâ">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A pagina che ti preuvi a vedde a no peu mostrase perché no l'é poscibile perché gh'é un erô inta trasmiscion di dæti.</p><ul><li>Ciamma o propietaio do scito web pe informalo do problema.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL Remòtto">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "A teu conescion a no l'é segua">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>o deuvia ina tecnòlogia vegia ch'a peu ese atacâ. Un bonægia o peu pigiâse con façilitæ de informaçioin che ti pensavi fisan a-o seguo. L'aministratô do scito o deve dâ revatto a sto server primma che ti peu vixitalo.</p><p>Còdice erô: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagina blocâ">
+
+<!ENTITY networkProtocolError.title "Erô de Protocòllo de ræ">
+<!ENTITY networkProtocolError.longDesc "<p>A pagina che ti veu vedde a no peu ese mostrâ perché gh'é 'n erô inta trasmiscion di dæti.</p><ul><li>Pe piaxei, ciamma o responsabile do scito pe informalo do problema.</li></ul>">

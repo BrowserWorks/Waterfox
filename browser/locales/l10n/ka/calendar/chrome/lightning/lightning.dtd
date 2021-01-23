@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "კალენდარი">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "ღონისძიება…">
+<!ENTITY lightning.menupopup.new.event.accesskey "ღ">
+<!ENTITY lightning.menupopup.new.task.label     "დავალება…">
+<!ENTITY lightning.menupopup.new.task.accesskey "დ">
+<!ENTITY lightning.menupopup.new.calendar.label "კალენდარი…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "კ">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "გახსნა">
+<!ENTITY lightning.menupopup.open.accesskey           "გ">
+<!ENTITY lightning.menupopup.open.message.label       "შენახული გზავნილი…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "გ">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "კალენდრის ფაილი…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "ლ">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "კალენდარი">
+<!ENTITY lightning.menu.view.calendar.accesskey        "ნ">
+<!ENTITY lightning.menu.view.tasks.label               "დავალებები">
+<!ENTITY lightning.menu.view.tasks.accesskey           "ბ">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "ღონისძიებები და დავალებები">
+<!ENTITY lightning.menu.eventtask.accesskey            "ვ">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "ელფოსტა:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "უპირატესია, მომხმარებლის ელფოსტის დაგეგმვა">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "ამიერიდან, ჩართვა შეგიძლიათ, მხოლოდ კალენდრის გამართვის შემდეგ, პარამეტრების გამოსულ ფანჯარაში, თუ სერვერს ექნება დაგეგმვის შესაძლებლობა.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "ეს პარამეტრი ხელმისაწვდომია მხოლოდ მაშინ, როცა სერვერს აქვს დაგეგმვის შესაძლებლობა. ჩართვის შედეგად, დაბრუნდება ჩვეულებრივი ელფოსტის დაგეგმვაზე, ამ შესაძლებლობის, სერვერისთვის დატოვების ნაცვლად.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "მიღება">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "ღონისძიებაზე მოწვევის მიღება">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "ყველას მიღება">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "მოწვევაზე თანხმობა, ღონისძიების ჩატარების ყველა თარიღისთვის">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "დამატება">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "ღონისძიების დამატება კალენდარზე">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "უარყოფა">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "ღონისძიებაზე მოწვევის უარყოფა">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "ყველას უარყოფა">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "მოწვევაზე უარი, ღონისძიების ჩატარების ყველა თარიღისთვის">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "უარყოფა">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "შემხვედრი შემოთავაზების უარყოფა">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "წაშლა">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "კალენდრიდან წაშლა">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "ვრცლად…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "ღონისძიების მონაცემების ნახვა">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "მომავალში ჩვენების გარეშე">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "კალენდარი">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "გადასვლა კალენდრის ჩანართზე">
+<!ENTITY lightning.imipbar.btnMore.label                                    "სხვა">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "დააწკაპეთ, დამატებითი პარამეტრების სანახავად">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "ხელახლა დადასტურება">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "დასტური ხელახლა გაეგზავნება ხელმძღვანელს">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "გადავადება">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "ღონისძიების გადავადება">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "კალენდარზე დატანა">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "ღონისძიების კალენდარზე დატანა, ხელმძღვანელისადმი პასუხის მიუხედავად. მონაწილეების სია წაიშლება.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "სავარაუდოდ">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "მოწვევაზე სავარაუდო თანხმობის განცხადება">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "ყველასთვის სავარაუდო">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "მოწვევაზე სავარაუდო თანხმობა, ჩატარების თითოეული თარიღისთვის">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "განახლება">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "ღონისძიების განახლება კალენდარზე">
+<!ENTITY lightning.imipbar.description                                      "გზავნილი შეიცავს ღონისძიებაზე მოწვევას.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "პასუხის ახლავე გაგზავნა">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "პასუხის ახლავე გაგზავნა ხელმძღვანელისთვის">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "სრული რიგის შესახებ პასუხის გაგზავნა ხელმძღვანელისთვის">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "პასუხის გაგზავნის გარეშე">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "მონაწილეობის შესახებ გადაწყვეტილების შეცვლა, ხელმძღვანელისთვის პასუხის გაგზავნის გარეშე">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "მონაწილეობის შესახებ გადაწყვეტილების შეცვლა მთელი რიგი ღონისძიებებისთვის, ხელმძღვანელისთვის პასუხის გაგზავნის გარეშე">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "ახალი კალენდრის შექმნა">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "მცირე კალენდრის ჩვენება">
+<!ENTITY todaypane.showMinimonth.accesskey "მ">
+<!ENTITY todaypane.showMiniday.label "კედლის კალენდრის ჩვენება">
+<!ENTITY todaypane.showMiniday.accesskey  "კ">
+<!ENTITY todaypane.showNone.label "ჩვენების გარეშე">
+<!ENTITY todaypane.showNone.accesskey "შ">
+<!ENTITY todaypane.showTodayPane.label "დღის ღონისძიებები">
+<!ENTITY todaypane.showTodayPane.accesskey "დ">
+<!ENTITY todaypane.statusButton.label "დღევანდელი დღე">

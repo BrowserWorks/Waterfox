@@ -5,13 +5,15 @@
 # This module contains code for managing WebIDL files and bindings for
 # the build system.
 
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 import errno
 import hashlib
+import io
 import json
 import logging
 import os
+import six
 
 from copy import deepcopy
 
@@ -79,9 +81,15 @@ class WebIDLCodegenManagerState(dict):
        A dictionary defining files that influence all processing. Keys
        are full filenames. Values are hexidecimal SHA-1 from the last
        processing time.
+
+    dictionaries_convertible_to_js
+       A set of names of dictionaries that are convertible to JS.
+
+    dictionaries_convertible_from_js
+       A set of names of dictionaries that are convertible from JS.
     """
 
-    VERSION = 1
+    VERSION = 3
 
     def __init__(self, fh=None):
         self['version'] = self.VERSION
@@ -106,6 +114,12 @@ class WebIDLCodegenManagerState(dict):
             self['webidls'][k]['inputs'] = set(v['inputs'])
             self['webidls'][k]['outputs'] = set(v['outputs'])
 
+        self['dictionaries_convertible_to_js'] = set(
+            state['dictionaries_convertible_to_js'])
+
+        self['dictionaries_convertible_from_js'] = set(
+            state['dictionaries_convertible_from_js'])
+
     def dump(self, fh):
         """Dump serialized state to a file handle."""
         normalized = deepcopy(self)
@@ -114,6 +128,12 @@ class WebIDLCodegenManagerState(dict):
             # Convert sets to lists because JSON doesn't support sets.
             normalized['webidls'][k]['outputs'] = sorted(v['outputs'])
             normalized['webidls'][k]['inputs'] = sorted(v['inputs'])
+
+        normalized['dictionaries_convertible_to_js'] = sorted(
+            self['dictionaries_convertible_to_js'])
+
+        normalized['dictionaries_convertible_from_js'] = sorted(
+            self['dictionaries_convertible_from_js'])
 
         json.dump(normalized, fh, sort_keys=True)
 
@@ -136,6 +156,8 @@ class WebIDLCodegenManager(LoggingMixin):
         'RegisterWorkletBindings.h',
         'UnionConversions.h',
         'UnionTypes.h',
+        'WebIDLPrefs.h',
+        'WebIDLSerializable.h',
     }
 
     # Global parser derived definition files.
@@ -146,6 +168,8 @@ class WebIDLCodegenManager(LoggingMixin):
         'RegisterWorkletBindings.cpp',
         'UnionTypes.cpp',
         'PrototypeList.cpp',
+        'WebIDLPrefs.cpp',
+        'WebIDLSerializable.cpp',
     }
 
     def __init__(self, config_path, webidl_root, inputs, exported_header_dir,
@@ -197,7 +221,7 @@ class WebIDLCodegenManager(LoggingMixin):
         self._state = WebIDLCodegenManagerState()
 
         if os.path.exists(state_path):
-            with open(state_path, 'rb') as fh:
+            with io.open(state_path, 'r') as fh:
                 try:
                     self._state = WebIDLCodegenManagerState(fh=fh)
                 except Exception as e:
@@ -264,6 +288,10 @@ class WebIDLCodegenManager(LoggingMixin):
             changed_inputs = self._compute_changed_inputs()
 
         self._state['global_depends'] = global_hashes
+        self._state['dictionaries_convertible_to_js'] = set(
+            d.identifier.name for d in self._config.getDictionariesConvertibleToJS())
+        self._state['dictionaries_convertible_from_js'] = set(
+            d.identifier.name for d in self._config.getDictionariesConvertibleFromJS())
 
         # Generate bindings from .webidl files.
         for filename in sorted(changed_inputs):
@@ -292,8 +320,10 @@ class WebIDLCodegenManager(LoggingMixin):
         if self._make_deps_path:
             mk = Makefile()
             codegen_rule = mk.create_rule([self._make_deps_target])
-            codegen_rule.add_dependencies(global_hashes.keys())
-            codegen_rule.add_dependencies(self._input_paths)
+            codegen_rule.add_dependencies(six.ensure_text(s) for s in
+                                          global_hashes.keys())
+            codegen_rule.add_dependencies(six.ensure_text(p) for p in
+                                          self._input_paths)
 
             with FileAvoidWrite(self._make_deps_path) as fh:
                 mk.dump(fh)
@@ -310,7 +340,7 @@ class WebIDLCodegenManager(LoggingMixin):
 
         example_paths = self._example_paths(interface)
         for path in example_paths:
-            print "Generating %s" % path
+            print("Generating {}".format(path))
 
         return self._maybe_write_codegen(root, *example_paths)
 
@@ -326,9 +356,9 @@ class WebIDLCodegenManager(LoggingMixin):
         parser = WebIDL.Parser(self._cache_dir)
 
         for path in sorted(self._input_paths):
-            with open(path, 'rb') as fh:
+            with io.open(path, 'r', encoding='utf-8') as fh:
                 data = fh.read()
-                hashes[path] = hashlib.sha1(data).hexdigest()
+                hashes[path] = hashlib.sha1(six.ensure_binary(data)).hexdigest()
                 parser.parse(data, path)
 
         # Only these directories may contain WebIDL files with interfaces
@@ -420,6 +450,23 @@ class WebIDLCodegenManager(LoggingMixin):
         for v in self._state['webidls'].values():
             if any(dep for dep in v['inputs'] if dep in changed_inputs):
                 changed_inputs.add(v['filename'])
+
+        # Now check for changes to the set of dictionaries that are convertible to JS
+        oldDictionariesConvertibleToJS = self._state['dictionaries_convertible_to_js']
+        newDictionariesConvertibleToJS = self._config.getDictionariesConvertibleToJS()
+        newNames = set(d.identifier.name for d in newDictionariesConvertibleToJS)
+        changedDictionaryNames = oldDictionariesConvertibleToJS ^ newNames
+
+        # Now check for changes to the set of dictionaries that are convertible from JS
+        oldDictionariesConvertibleFromJS = self._state['dictionaries_convertible_from_js']
+        newDictionariesConvertibleFromJS = self._config.getDictionariesConvertibleFromJS()
+        newNames = set(d.identifier.name for d in newDictionariesConvertibleFromJS)
+        changedDictionaryNames |= oldDictionariesConvertibleFromJS ^ newNames
+
+        for name in changedDictionaryNames:
+            d = self._config.getDictionaryIfExists(name)
+            if d:
+                changed_inputs.add(d.filename())
 
         # Only use paths that are known to our current state.
         # This filters out files that were deleted or changed type (e.g. from
@@ -518,7 +565,7 @@ class WebIDLCodegenManager(LoggingMixin):
         for f in current_files:
             # This will fail if the file doesn't exist. If a current global
             # dependency doesn't exist, something else is wrong.
-            with open(f, 'rb') as fh:
+            with io.open(f, 'rb') as fh:
                 current_hashes[f] = hashlib.sha1(fh.read()).hexdigest()
 
         # The set of files has changed.
@@ -533,7 +580,7 @@ class WebIDLCodegenManager(LoggingMixin):
         return False, current_hashes
 
     def _save_state(self):
-        with open(self._state_path, 'wb') as fh:
+        with io.open(self._state_path, 'w', newline='\n') as fh:
             self._state.dump(fh)
 
     def _maybe_write_codegen(self, obj, declare_path, define_path, result=None):
@@ -565,7 +612,7 @@ def create_build_system_manager(topsrcdir, topobjdir, dist_dir):
     obj_dir = os.path.join(topobjdir, 'dom', 'bindings')
     webidl_root = os.path.join(topsrcdir, 'dom', 'webidl')
 
-    with open(os.path.join(obj_dir, 'file-lists.json'), 'rb') as fh:
+    with io.open(os.path.join(obj_dir, 'file-lists.json'), 'r') as fh:
         files = json.load(fh)
 
     inputs = (files['webidls'], files['exported_stems'],

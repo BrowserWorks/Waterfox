@@ -9,7 +9,6 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
-#include "nsAutoPtr.h"
 #include "nsTArray.h"
 #include "mozilla/RefPtr.h"
 
@@ -24,7 +23,7 @@ class PrincipalInfo;
 namespace dom {
 
 class BroadcastChannelChild;
-class BroadcastChannelMessage;
+class RefMessageBodyService;
 class WorkerRef;
 
 class BroadcastChannel final : public DOMEventTargetHelper {
@@ -57,21 +56,35 @@ class BroadcastChannel final : public DOMEventTargetHelper {
   void Shutdown();
 
  private:
-  BroadcastChannel(nsIGlobalObject* aGlobal, const nsAString& aChannel);
+  BroadcastChannel(nsIGlobalObject* aGlobal, const nsAString& aChannel,
+                   const nsID& aPortUUID);
 
   ~BroadcastChannel();
+
+  void MessageReceived(const MessageData& aData);
+
+  void MessageDelivered(const nsID& aMessageID, uint32_t aOtherBCs);
 
   void RemoveDocFromBFCache();
 
   void DisconnectFromOwner() override;
 
+  void DispatchError(JSContext* aCx);
+
   RefPtr<BroadcastChannelChild> mActor;
+
+  RefPtr<RefMessageBodyService> mRefMessageBodyService;
 
   RefPtr<WorkerRef> mWorkerRef;
 
   nsString mChannel;
+  nsString mOriginNoSuffix;
 
   enum { StateActive, StateClosed } mState;
+
+  // This ID is used to identify the messages-by-reference sent by this port.
+  // See RefMessageBodyService.
+  nsID mPortUUID;
 };
 
 }  // namespace dom

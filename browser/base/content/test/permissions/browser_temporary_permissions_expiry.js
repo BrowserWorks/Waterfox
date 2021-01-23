@@ -18,6 +18,8 @@ PromiseTestUtils.whitelistRejectionsGlobally(/The request is not allowed/);
 const EXPIRE_TIME_MS = 100;
 const TIMEOUT_MS = 500;
 
+const kVREnabled = SpecialPowers.getBoolPref("dom.vr.enabled");
+
 // Test that temporary permissions can be re-requested after they expired
 // and that the identity block is updated accordingly.
 add_task(async function testTempPermissionRequestAfterExpiry() {
@@ -25,11 +27,18 @@ add_task(async function testTempPermissionRequestAfterExpiry() {
     set: [
       ["privacy.temporary_permission_expire_time_ms", EXPIRE_TIME_MS],
       ["media.navigator.permission.fake", true],
+      ["dom.vr.always_support_vr", true],
     ],
   });
 
-  let uri = NetUtil.newURI(ORIGIN);
+  let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+    ORIGIN
+  );
   let ids = ["geo", "camera"];
+
+  if (kVREnabled) {
+    ids.push("xr");
+  }
 
   for (let id of ids) {
     await BrowserTestUtils.withNewTab(PERMISSIONS_PAGE, async function(
@@ -39,18 +48,21 @@ add_task(async function testTempPermissionRequestAfterExpiry() {
         `.blocked-permission-icon[data-permission-id='${id}']`
       );
 
-      SitePermissions.set(
-        uri,
+      SitePermissions.setForPrincipal(
+        principal,
         id,
         SitePermissions.BLOCK,
         SitePermissions.SCOPE_TEMPORARY,
         browser
       );
 
-      Assert.deepEqual(SitePermissions.get(uri, id, browser), {
-        state: SitePermissions.BLOCK,
-        scope: SitePermissions.SCOPE_TEMPORARY,
-      });
+      Assert.deepEqual(
+        SitePermissions.getForPrincipal(principal, id, browser),
+        {
+          state: SitePermissions.BLOCK,
+          scope: SitePermissions.SCOPE_TEMPORARY,
+        }
+      );
 
       ok(
         blockedIcon.hasAttribute("showing"),
@@ -59,10 +71,13 @@ add_task(async function testTempPermissionRequestAfterExpiry() {
 
       await new Promise(c => setTimeout(c, TIMEOUT_MS));
 
-      Assert.deepEqual(SitePermissions.get(uri, id, browser), {
-        state: SitePermissions.UNKNOWN,
-        scope: SitePermissions.SCOPE_PERSISTENT,
-      });
+      Assert.deepEqual(
+        SitePermissions.getForPrincipal(principal, id, browser),
+        {
+          state: SitePermissions.UNKNOWN,
+          scope: SitePermissions.SCOPE_PERSISTENT,
+        }
+      );
 
       let popupshown = BrowserTestUtils.waitForEvent(
         PopupNotifications.panel,
@@ -89,7 +104,7 @@ add_task(async function testTempPermissionRequestAfterExpiry() {
 
       await popuphidden;
 
-      SitePermissions.remove(uri, id, browser);
+      SitePermissions.removeFromPrincipal(principal, id, browser);
     });
   }
 });

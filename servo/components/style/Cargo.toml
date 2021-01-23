@@ -8,7 +8,7 @@ publish = false
 build = "build.rs"
 
 # https://github.com/rust-lang/cargo/issues/3544
-links = "for some reason the links key is required to pass data around between build scripts"
+links = "servo_style_crate"
 
 [lib]
 name = "style"
@@ -16,32 +16,35 @@ path = "lib.rs"
 doctest = false
 
 [features]
-gecko = ["nsstring", "style_traits/gecko", "fallible/known_system_malloc"]
-use_bindgen = ["bindgen", "regex", "toml"]
+gecko = ["nsstring", "serde", "style_traits/gecko", "fallible/known_system_malloc", "bindgen", "regex", "toml"]
 servo = ["serde", "style_traits/servo", "servo_atoms", "servo_config", "html5ever",
          "cssparser/serde", "encoding_rs", "malloc_size_of/servo", "arrayvec/use_union",
          "servo_url", "string_cache", "crossbeam-channel", "to_shmem/servo", "servo_arc/servo"]
+servo-layout-2013 = []
+servo-layout-2020 = []
 gecko_debug = []
+gecko_refcount_logging = []
 gecko_profiler = []
 
 [dependencies]
 app_units = "0.7"
-arrayvec = "0.4.6"
+arrayvec = "0.5"
 atomic_refcell = "0.1"
 bitflags = "1.0"
 byteorder = "1.0"
-cssparser = "0.25"
-crossbeam-channel = { version = "0.3", optional = true }
-derive_more = "0.13"
+cssparser = "0.28"
+crossbeam-channel = { version = "0.4", optional = true }
+derive_more = "0.99"
 new_debug_unreachable = "1.0"
 encoding_rs = {version = "0.8", optional = true}
-euclid = "0.19"
+euclid = "0.20"
 fallible = { path = "../fallible" }
 fxhash = "0.2"
+hashbrown = "0.7"
 hashglobe = { path = "../hashglobe" }
-html5ever = {version = "0.22", optional = true}
+html5ever = {version = "0.24", optional = true}
 indexmap = "1.0"
-itertools = "0.7.6"
+itertools = "0.8"
 itoa = "0.4"
 lazy_static = "1"
 log = "0.4"
@@ -52,10 +55,9 @@ nsstring = {path = "../../../xpcom/rust/nsstring/", optional = true}
 num_cpus = {version = "1.1.0"}
 num-integer = "0.1"
 num-traits = "0.2"
-num-derive = "0.2"
-ordered-float = "1.0"
+num-derive = "0.3"
 owning_ref = "0.4"
-parking_lot = "0.6"
+parking_lot = "0.10"
 precomputed-hash = "0.1.1"
 rayon = "1"
 selectors = { path = "../selectors" }
@@ -64,8 +66,9 @@ servo_arc = { path = "../servo_arc" }
 servo_atoms = {path = "../atoms", optional = true}
 servo_config = {path = "../config", optional = true}
 smallbitvec = "2.3.0"
-smallvec = "0.6.6"
-string_cache = { version = "0.7", optional = true }
+smallvec = "1.0"
+static_prefs = { path = "../../../modules/libpref/init/static_prefs" }
+string_cache = { version = "0.8", optional = true }
 style_derive = {path = "../style_derive"}
 style_traits = {path = "../style_traits"}
 servo_url = {path = "../url", optional = true}
@@ -73,7 +76,7 @@ thin-slice = "0.1.0"
 to_shmem = {path = "../to_shmem"}
 to_shmem_derive = {path = "../to_shmem_derive"}
 time = "0.1"
-uluru = "0.3"
+uluru = "0.4"
 unicode-bidi = "0.3"
 unicode-segmentation = "1.0"
 void = "1.0.2"
@@ -81,7 +84,7 @@ void = "1.0.2"
 [build-dependencies]
 lazy_static = "1"
 log = "0.4"
-bindgen = {version = "0.49", optional = true, default-features = false}
-regex = {version = "1.0", optional = true}
+bindgen = {version = "0.53", optional = true, default-features = false}
+regex = {version = "1.0", optional = true, default-features = false, features = ["perf", "std"]}
 walkdir = "2.1.4"
 toml = {version = "0.4.5", optional = true, default-features = false}

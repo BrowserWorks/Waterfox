@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (title.label): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "ਕੰਪੋਜ਼ਰ">
+
+
+
+<!ENTITY  recentFiles.title         "ਤਾਜ਼ਾ ਪੇਜ਼ ਮੇਨੂ">
+<!ENTITY  documentsInMenu.label     "ਲਿਸਟ ਵਿੱਚ ਵੱਧੋ-ਵੱਧ ਪੇਜ਼ਾਂ ਦੀ ਗਿਣਤੀ:">
+<!ENTITY  documentsInMenu.accesskey "n">
+
+<!ENTITY  savingFiles.title             "ਪੇਜ਼ਾਂ ਪਬਲਿਸ਼ ਕਰਨ ਜਾਂ ਸੰਭਾਲਣ ਸਮੇਂ">
+<!ENTITY  preserveExisting.label        "ਅਸਲੀ ਸਰੋਤ ਫਾਰਮ ਨੂੰ ਸੁਰੱਖਿਅਤ ਰੱਖੋ">
+<!ENTITY  preserveExisting.accesskey    "P">
+<!ENTITY  preserveExisting.tooltip      "ਲਾਈਨ ਅੰਤਰਾਲ ਅਤੇ ਪੇਜ਼ ਦੇ ਅਸਲੀ ਫਾਰਮੈਟ ਨੂੰ ਸੁਰੱਖਿਅਤ ਰੱਖੋ">
+<!ENTITY  saveAssociatedFiles.label     "ਪੇਜ਼ ਨੂੰ ਸੰਭਾਲਣ ਸਮੇਂ ਚਿੱਤਰ ਅਤੇ ਹੋਰ ਸਬੰਧਿਤ ਫਾਇਲ ਨੂੰ ਸੰਭਾਲੋ">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "ਪੇਜ਼ਾਂ ਨੂੰ ਪਬਲਿਸ਼ ਕਰਨ ਸਮੇਂ ਹਮੇਸ਼ਾ ਪਬਲਿਸ਼ ਡਾਈਲਾਗ ਵੇਖੋ">
+<!ENTITY  showPublishDialog.accesskey   "A">
+
+<!ENTITY  composerEditing.label         "ਕੰਪੋਜ਼ਰ">
+
+<!ENTITY  maintainStructure.label       "ਸੈਲਾਂ ਨੂੰ ਸ਼ਾਮਿਲ ਜਾਂ ਹਟਾਉਣ ਸਮੇਂ ਟੇਬਲ ਲੇਆਉਟ ਦੇ ਧਿਆਨ ਰੱਖੋ">
+<!ENTITY  maintainStructure.tooltip     "ਸੈਲਾਂ ਨੂੰ ਸ਼ਾਮਿਲ ਜਾਂ ਹਟਾਉਣ ਸਮੇਂ ਆਟੋਮੈਟਿਕ ਹੀ ਟੇਬਲ ਦੀ ਚੁਭੁਜੀ ਸ਼ਕਲ ਦਾ ਧਿਆਨ ਰੱਕੋ">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "HTML ਇਕਾਈ ਅਤੇ ਗੁਣਾਂ ਦੀ ਬਜਾਏ CSS ਸਟਾਈਲ ਦੀ ਵਰਤੋਂ ਕਰੋ">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "ਪੈਰਾ ਖਤਮ ਹੋਣ ਦੀ ਸੂਰਤ ਦੀ ਸਥਿਤੀ ਵਿੱਚ ਹਮੇਸ਼ਾ ਨਵਾਂ ਪੈਰਾ ਬਣਾਓ">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

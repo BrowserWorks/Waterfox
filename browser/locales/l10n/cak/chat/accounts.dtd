@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Rub'i' taqoya'l - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Rub'anikil chanin q'asab'äl">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "K'ak'a' Rub'i' Taqoya'l">
+<!ENTITY accountManager.newAccount.accesskey "K">
+<!ENTITY accountManager.close.label          "Titz'apïx">
+<!ENTITY accountManager.close.accesskey      "x">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Majun rub'i' taqoya'l b'anon runuk'ulem">
+<!ENTITY accountManager.noAccount.description "Tipitz' ri &accountManager.newAccount.label; rupitz'b'al richin niya' &brandShortName; q'ij chawe nuk'waj ab'ey pa ri rub'eyal richin nib'an runuk'ulem.">
+<!ENTITY account.autoSignOn.label     "Tok pa ri tikirib'äl">
+<!ENTITY account.autoSignOn.accesskey "t">
+<!ENTITY account.connect.label        "Tokisäx">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Tichup">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Tiyuj">
+<!ENTITY account.delete.accesskey     "y">
+<!ENTITY account.edit.label           "Taq ichinil">
+<!ENTITY account.edit.accesskey       "i">
+<!ENTITY account.moveup.label         "Tijotob'äx el">
+<!ENTITY account.movedown.label       "Tiqasäx qa">
+<!ENTITY account.cancelReconnection.label         "Tiq'at rokem chik">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "Tiwachib'ëx Etamab'äl richin yechojmïx">
+<!ENTITY account.copyDebugLog.accesskey "w">
+<!ENTITY account.showDebugLog.label     "Titz'et ri Etamab'äl richin Nichojmïx">
+<!ENTITY account.showDebugLog.accesskey "t">
+<!ENTITY account.connecting           "Nok…">
+<!ENTITY account.disconnecting        "Nichup…">
+<!ENTITY account.disconnected         "Man okinäq ta">

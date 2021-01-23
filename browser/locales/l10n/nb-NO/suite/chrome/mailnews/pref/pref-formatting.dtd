@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Sendeformat">
+<!ENTITY sendMaildesc.label           "Ved sending av formaterte (HTML) meldinger, og en eller flere av mottakerne er oppgitt som at de ikke kan motta HTML e-post:">
+<!ENTITY askMe.label                  "Spør meg hva som skal gjøres (vil spørre om hvilket format som skal brukes)">
+<!ENTITY askMe.accesskey              "S">
+<!ENTITY convertPlain2.label          "Konverter meldingen til ren tekst (formatering kan gå tapt)">
+<!ENTITY convertPlain2.accesskey      "K">
+<!ENTITY sendHTML2.label              "Send meldingen kun som HTML-format (kan føre til visningsproblemer )">
+<!ENTITY sendHTML2.accesskey          "S">
+<!ENTITY sendBoth2.label              "Send meldingen som både ren tekst og HTML (større størrelse)">
+<!ENTITY sendBoth2.accesskey          "n">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML og tekstdomener">
+<!ENTITY domaindesc.label             "Når du sender en melding til en adresse med ett av domenenavnene i listen nedenfor, vil e-posten automatisk bli sendt i oppgitt format.">
+<!ENTITY HTMLdomaintitle.label        "HTML-domener">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Tekstdomener">
+<!ENTITY PlainTexttitle.accesskey     "k">
+<!ENTITY AddButton.label              "Legg til …">
+<!ENTITY AddHtmlDomain.accesskey      "L">
+<!ENTITY AddPlainText.accesskey       "e">
+<!ENTITY DeleteButton.label           "Slett">
+<!ENTITY DeleteHtmlDomain.accesskey   "l">
+<!ENTITY DeletePlainText.accesskey    "t">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Legg til domenenavn som støtter HTML">
+<!ENTITY add.htmldomain               "HTML domenenavn:">
+<!ENTITY add.plaintexttitle           "Legg til et domenenavn for bare tekst">
+<!ENTITY add.plaintextdomain          "Domenenavn bare for tekst:">
+
+<!ENTITY domainnameError.title        "Feil i domenenavn">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Domenenavnet @string@ er ugyldig og vil ignoreres. Gyldige domenenavn må inneholde minst ett '.', og tegn på hvert side av det.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Send automatisk meldingen som ren tekst om ingen merkbar formatering finnes (overstyrer andre alternativer)">
+<!ENTITY autoDowngrade.accesskey      "o">

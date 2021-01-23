@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Očisti privatne podatke">
+<!ENTITY sanitizeItems.label             "Očisti sljedeće stavke sada:">
+
+<!ENTITY itemHistory.label               "Historija pretraživanja">
+<!ENTITY itemUrlBar.label                "Historija adresne trake">
+<!ENTITY itemDownloads.label             "Historija preuzimanja">
+<!ENTITY itemFormSearchHistory.label     "Sačuvani obrasci i historija pretrage">
+<!ENTITY itemCache.label                 "Keš">
+<!ENTITY itemCookies.label               "Kolačići">
+<!ENTITY itemOfflineApps.label           "Van mrežni podaci web stranice">
+<!ENTITY itemPasswords.label             "Sačuvane lozinke">
+<!ENTITY itemSessions.label              "Potvrđene sesije">
+
+<!ENTITY sanitizeButton.label            "Očisti privatne podatke sada">

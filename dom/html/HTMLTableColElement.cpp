@@ -19,7 +19,7 @@ namespace dom {
 // http://lxr.mozilla.org/classic/source/lib/layout/laytable.c#46
 #define MAX_COLSPAN 1000
 
-HTMLTableColElement::~HTMLTableColElement() {}
+HTMLTableColElement::~HTMLTableColElement() = default;
 
 JSObject* HTMLTableColElement::WrapNode(JSContext* aCx,
                                         JS::Handle<JSObject*> aGivenProto) {
@@ -35,16 +35,16 @@ bool HTMLTableColElement::ParseAttribute(int32_t aNamespaceID,
                                          nsAttrValue& aResult) {
   if (aNamespaceID == kNameSpaceID_None) {
     /* ignore these attributes, stored simply as strings ch */
-    if (aAttribute == nsGkAtoms::charoff) {
-      return aResult.ParseSpecialIntValue(aValue);
-    }
     if (aAttribute == nsGkAtoms::span) {
       /* protection from unrealistic large colspan values */
       aResult.ParseClampedNonNegativeInt(aValue, 1, 1, MAX_COLSPAN);
       return true;
     }
     if (aAttribute == nsGkAtoms::width) {
-      return aResult.ParseSpecialIntValue(aValue);
+      // Spec says to use ParseNonzeroHTMLDimension, but Chrome and Safari both
+      // allow 0, and we did all along too, so keep that behavior.  See
+      // https://github.com/whatwg/html/issues/4717
+      return aResult.ParseHTMLDimension(aValue);
     }
     if (aAttribute == nsGkAtoms::align) {
       return ParseTableCellHAlignValue(aValue, aResult);

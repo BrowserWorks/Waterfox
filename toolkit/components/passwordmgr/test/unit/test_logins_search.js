@@ -1,4 +1,4 @@
-/*
+/**
  * Tests methods that find specific logins in the store (findLogins,
  * searchLogins, and countLogins).
  *
@@ -50,7 +50,7 @@ function checkSearchLogins(aQuery, aExpectedCount) {
  * Tests findLogins, searchLogins, and countLogins with the same query.
  *
  * @param aQuery
- *        The "hostname", "formSubmitURL", and "httpRealm" properties of this
+ *        The "origin", "formActionOrigin", and "httpRealm" properties of this
  *        object are passed as parameters to findLogins and countLogins.  The
  *        same object is then passed to the checkSearchLogins function.
  * @param aExpectedCount
@@ -68,16 +68,17 @@ function checkAllSearches(aQuery, aExpectedCount) {
   // The findLogins and countLogins functions support wildcard matches by
   // specifying empty strings as parameters, while searchLogins requires
   // omitting the property entirely.
-  let hostname = "hostname" in aQuery ? aQuery.hostname : "";
-  let formSubmitURL = "formSubmitURL" in aQuery ? aQuery.formSubmitURL : "";
+  let origin = "origin" in aQuery ? aQuery.origin : "";
+  let formActionOrigin =
+    "formActionOrigin" in aQuery ? aQuery.formActionOrigin : "";
   let httpRealm = "httpRealm" in aQuery ? aQuery.httpRealm : "";
 
   // Test findLogins.
-  let logins = Services.logins.findLogins(hostname, formSubmitURL, httpRealm);
+  let logins = Services.logins.findLogins(origin, formActionOrigin, httpRealm);
   LoginTestUtils.assertLoginListsEqual(logins, expectedLogins);
 
   // Test countLogins.
-  let count = Services.logins.countLogins(hostname, formSubmitURL, httpRealm);
+  let count = Services.logins.countLogins(origin, formActionOrigin, httpRealm);
   Assert.equal(count, expectedLogins.length);
 
   // Test searchLogins.
@@ -100,49 +101,49 @@ add_task(function test_initialize() {
  */
 add_task(function test_search_all_basic() {
   // Find all logins, using no filters in the search functions.
-  checkAllSearches({}, 23);
+  checkAllSearches({}, 27);
 
   // Find all form logins, then all authentication logins.
-  checkAllSearches({ httpRealm: null }, 14);
-  checkAllSearches({ formSubmitURL: null }, 9);
+  checkAllSearches({ httpRealm: null }, 17);
+  checkAllSearches({ formActionOrigin: null }, 10);
 
   // Find all form logins on one host, then all authentication logins.
-  checkAllSearches({ hostname: "http://www4.example.com", httpRealm: null }, 3);
+  checkAllSearches({ origin: "http://www4.example.com", httpRealm: null }, 3);
   checkAllSearches(
-    { hostname: "http://www2.example.org", formSubmitURL: null },
+    { origin: "http://www2.example.org", formActionOrigin: null },
     2
   );
 
-  // Verify that scheme and subdomain are distinct in the hostname.
-  checkAllSearches({ hostname: "http://www.example.com" }, 1);
-  checkAllSearches({ hostname: "https://www.example.com" }, 1);
-  checkAllSearches({ hostname: "https://example.com" }, 1);
-  checkAllSearches({ hostname: "http://www3.example.com" }, 3);
+  // Verify that scheme and subdomain are distinct in the origin.
+  checkAllSearches({ origin: "http://www.example.com" }, 1);
+  checkAllSearches({ origin: "https://www.example.com" }, 1);
+  checkAllSearches({ origin: "https://example.com" }, 1);
+  checkAllSearches({ origin: "http://www3.example.com" }, 3);
 
-  // Verify that scheme and subdomain are distinct in formSubmitURL.
-  checkAllSearches({ formSubmitURL: "http://www.example.com" }, 2);
-  checkAllSearches({ formSubmitURL: "https://www.example.com" }, 2);
-  checkAllSearches({ formSubmitURL: "http://example.com" }, 1);
+  // Verify that scheme and subdomain are distinct in formActionOrigin.
+  checkAllSearches({ formActionOrigin: "http://www.example.com" }, 2);
+  checkAllSearches({ formActionOrigin: "https://www.example.com" }, 2);
+  checkAllSearches({ formActionOrigin: "http://example.com" }, 1);
 
-  // Find by formSubmitURL on a single host.
+  // Find by formActionOrigin on a single host.
   checkAllSearches(
     {
-      hostname: "http://www3.example.com",
-      formSubmitURL: "http://www.example.com",
+      origin: "http://www3.example.com",
+      formActionOrigin: "http://www.example.com",
     },
     1
   );
   checkAllSearches(
     {
-      hostname: "http://www3.example.com",
-      formSubmitURL: "https://www.example.com",
+      origin: "http://www3.example.com",
+      formActionOrigin: "https://www.example.com",
     },
     1
   );
   checkAllSearches(
     {
-      hostname: "http://www3.example.com",
-      formSubmitURL: "http://example.com",
+      origin: "http://www3.example.com",
+      formActionOrigin: "http://example.com",
     },
     1
   );
@@ -154,15 +155,15 @@ add_task(function test_search_all_basic() {
 
   // Find by httpRealm on a single host.
   checkAllSearches(
-    { hostname: "http://example.net", httpRealm: "The HTTP Realm" },
+    { origin: "http://example.net", httpRealm: "The HTTP Realm" },
     1
   );
   checkAllSearches(
-    { hostname: "http://example.net", httpRealm: "The HTTP Realm Other" },
+    { origin: "http://example.net", httpRealm: "The HTTP Realm Other" },
     1
   );
   checkAllSearches(
-    { hostname: "ftp://example.net", httpRealm: "ftp://example.net" },
+    { origin: "ftp://example.net", httpRealm: "ftp://example.net" },
     1
   );
 });
@@ -175,14 +176,14 @@ add_task(function test_searchLogins() {
   checkSearchLogins({ passwordField: "form_field_password" }, 13);
 
   // Find all logins with an empty usernameField, including for authentication.
-  checkSearchLogins({ usernameField: "" }, 11);
+  checkSearchLogins({ usernameField: "" }, 15);
 
   // Find form logins with an empty usernameField.
-  checkSearchLogins({ httpRealm: null, usernameField: "" }, 2);
+  checkSearchLogins({ httpRealm: null, usernameField: "" }, 5);
 
   // Find logins with an empty usernameField on one host.
   checkSearchLogins(
-    { hostname: "http://www6.example.com", usernameField: "" },
+    { origin: "http://www6.example.com", usernameField: "" },
     1
   );
 });
@@ -202,14 +203,14 @@ add_task(function test_searchLogins_invalid() {
  * strict when interpreting the prePath of URIs.
  */
 add_task(function test_search_all_full_case_sensitive() {
-  checkAllSearches({ hostname: "http://www.example.com" }, 1);
-  checkAllSearches({ hostname: "http://www.example.com/" }, 0);
-  checkAllSearches({ hostname: "example.com" }, 0);
+  checkAllSearches({ origin: "http://www.example.com" }, 1);
+  checkAllSearches({ origin: "http://www.example.com/" }, 0);
+  checkAllSearches({ origin: "example.com" }, 0);
 
-  checkAllSearches({ formSubmitURL: "http://www.example.com" }, 2);
-  checkAllSearches({ formSubmitURL: "http://www.example.com/" }, 0);
-  checkAllSearches({ formSubmitURL: "http://" }, 0);
-  checkAllSearches({ formSubmitURL: "example.com" }, 0);
+  checkAllSearches({ formActionOrigin: "http://www.example.com" }, 2);
+  checkAllSearches({ formActionOrigin: "http://www.example.com/" }, 0);
+  checkAllSearches({ formActionOrigin: "http://" }, 0);
+  checkAllSearches({ formActionOrigin: "example.com" }, 0);
 
   checkAllSearches({ httpRealm: "The HTTP Realm" }, 3);
   checkAllSearches({ httpRealm: "The http Realm" }, 0);
@@ -222,12 +223,12 @@ add_task(function test_search_all_full_case_sensitive() {
  * return no values.
  */
 add_task(function test_search_all_empty() {
-  checkAllSearches({ hostname: "http://nonexistent.example.com" }, 0);
+  checkAllSearches({ origin: "http://nonexistent.example.com" }, 0);
   checkAllSearches(
-    { formSubmitURL: "http://www.example.com", httpRealm: "The HTTP Realm" },
+    { formActionOrigin: "http://www.example.com", httpRealm: "The HTTP Realm" },
     0
   );
 
-  checkSearchLogins({ hostname: "" }, 0);
+  checkSearchLogins({ origin: "" }, 0);
   checkSearchLogins({ id: "1000" }, 0);
 });

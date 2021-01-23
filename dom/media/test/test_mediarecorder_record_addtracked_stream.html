@@ -33,7 +33,7 @@ runTestWhenReady(async () => {
 
   const blobs = [];
 
-  mediaRecorder = new MediaRecorder(stream);
+  let mediaRecorder = new MediaRecorder(stream);
   is(mediaRecorder.stream, stream,
      "Media recorder stream = constructed stream at the start of recording");
 

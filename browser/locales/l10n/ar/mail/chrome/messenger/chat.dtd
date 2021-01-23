@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "جهات الاتصال عبر الإنترنت">
+<!ENTITY offlineContactsHeader.label   "جهات الاتصال خارج الإنترنت">
+<!ENTITY conversationsHeader.label     "المحادثات">
+<!ENTITY searchResultConversation.label "نتائج البحث">
+<!ENTITY chat.noConv.title             "ستُعرض المحادثات هنا.">
+<!ENTITY chat.noConv.description       "استخدم قائمة جهات الاتصال من اللوح الأيمن لبدء محادثة.">
+<!ENTITY chat.noPreviousConv.description       "لا توجد حاليا أي محادثات سابقة في &brandShortName; لجهة الاتصال هذه.">
+<!ENTITY chat.noAccount.title             "لم تُعِدّ حساب دردشة بعد.">
+<!ENTITY chat.noAccount.description       "سيرشدك &brandShortName; عبر عملية إعداد حساب دردشة.">
+<!ENTITY chat.accountWizard.button       "لنبدأ">
+<!ENTITY chat.noConnectedAccount.title             "حساباتك للدردشة ليست متصلة.">
+<!ENTITY chat.noConnectedAccount.description       "يمكنك توصيلهم من مربع 'حالة الدردشة' الحواري:">
+<!ENTITY chat.showAccountManager.button       "اعرض حالة الدردشة">
+
+<!ENTITY chat.participants             "المشاركون:">
+<!ENTITY chat.previousConversations    "المحادثات السابقة:">
+<!ENTITY chat.ongoingConversation      "محادثة جارية">
+
+<!ENTITY openConversationCmd.label     "ابدأ محادثة">
+<!ENTITY openConversationCmd.accesskey "ح">
+<!ENTITY closeConversationCmd.label    "أغلق المحادثة">
+<!ENTITY closeConversationCmd.accesskey "غ">
+<!ENTITY aliasCmd.label                "غير الاسم">
+<!ENTITY aliasCmd.accesskey            "س">
+<!ENTITY deleteCmd.label               "أزِل جهة الاتصال">
+<!ENTITY deleteCmd.accesskey           "ل">
+
+<!ENTITY openConversationButton.tooltip  "ابدأ محادثة">
+<!ENTITY closeConversationButton.tooltip "أغلق المحادثة">
+
+<!ENTITY addBuddyButton.label          "أضف جهة اتصال">
+<!ENTITY joinChatButton.label          "انضم للدردشة">
+<!ENTITY chatAccountsButton.label      "اعرض الحسابات">
+
+<!ENTITY status.available          "متفرّغ">
+<!ENTITY status.unavailable        "غير متفرّغ">
+<!ENTITY status.offline            "غير متصل">
+
+<!ENTITY openLinkCmd.label            "افتح الرابط…">
+<!ENTITY openLinkCmd.accesskey        "ر">

@@ -16,12 +16,8 @@
 #include "nsContentList.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLTextAreaElement.h"
-#include "nsIEditor.h"
 #include "nsIFormControl.h"
 #include "nsIPersistentProperties2.h"
-#include "nsISelectionController.h"
-#include "nsIServiceManager.h"
-#include "nsITextControlElement.h"
 #include "nsITextControlFrame.h"
 #include "nsNameSpaceManager.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -53,7 +49,8 @@ nsAtom* HTMLFormAccessible::LandmarkRole() const {
   // Only return xml-roles "form" if the form has an accessible name.
   nsAutoString name;
   const_cast<HTMLFormAccessible*>(this)->Name(name);
-  return name.IsEmpty() ? nullptr : nsGkAtoms::form;
+  return name.IsEmpty() ? HyperTextAccessibleWrap::LandmarkRole()
+                        : nsGkAtoms::form;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,6 +70,12 @@ uint64_t HTMLRadioButtonAccessible::NativeState() const {
 
 void HTMLRadioButtonAccessible::GetPositionAndSizeInternal(int32_t* aPosInSet,
                                                            int32_t* aSetSize) {
+  Unused << ComputeGroupAttributes(aPosInSet, aSetSize);
+}
+
+Relation HTMLRadioButtonAccessible::ComputeGroupAttributes(
+    int32_t* aPosInSet, int32_t* aSetSize) const {
+  Relation rel = Relation();
   int32_t namespaceId = mContent->NodeInfo()->NamespaceID();
   nsAutoString tagName;
   mContent->NodeInfo()->GetName(tagName);
@@ -90,7 +93,7 @@ void HTMLRadioButtonAccessible::GetPositionAndSizeInternal(int32_t* aPosInSet,
     inputElms = NS_GetContentList(formElm, namespaceId, tagName);
   else
     inputElms = NS_GetContentList(mContent->OwnerDoc(), namespaceId, tagName);
-  NS_ENSURE_TRUE_VOID(inputElms);
+  NS_ENSURE_TRUE(inputElms, rel);
 
   uint32_t inputCount = inputElms->Length(false);
 
@@ -106,12 +109,23 @@ void HTMLRadioButtonAccessible::GetPositionAndSizeInternal(int32_t* aPosInSet,
                                            name, eCaseMatters) &&
         mDoc->HasAccessible(inputElm)) {
       count++;
+      rel.AppendTarget(mDoc->GetAccessible(inputElm));
       if (inputElm == mContent) indexOf = count;
     }
   }
 
   *aPosInSet = indexOf;
   *aSetSize = count;
+  return rel;
+}
+
+Relation HTMLRadioButtonAccessible::RelationByType(RelationType aType) const {
+  if (aType == RelationType::MEMBER_OF) {
+    int32_t unusedPos, unusedSetSize;
+    return ComputeGroupAttributes(&unusedPos, &unusedSetSize);
+  }
+
+  return Accessible::RelationByType(aType);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -209,7 +223,9 @@ role HTMLTextFieldAccessible::NativeRole() const {
   if (mType == eHTMLTextPasswordFieldType) {
     return roles::PASSWORD_TEXT;
   }
-
+  if (mContent->AsElement()->HasAttr(kNameSpaceID_None, nsGkAtoms::list_)) {
+    return roles::EDITCOMBOBOX;
+  }
   return roles::ENTRY;
 }
 
@@ -338,7 +354,8 @@ uint64_t HTMLTextFieldAccessible::NativeState() const {
     return state | states::SUPPORTS_AUTOCOMPLETION | states::HASPOPUP;
 
   // Ordinal XUL textboxes don't support autocomplete.
-  if (!BindingOrWidgetParent() && Preferences::GetBool("browser.formfill.enable")) {
+  if (!BindingOrWidgetParent() &&
+      Preferences::GetBool("browser.formfill.enable")) {
     // Check to see if autocompletion is allowed on this input. We don't expose
     // it for password fields even though the entire password can be remembered
     // for a page if the user asks it to be. However, the kind of autocomplete
@@ -372,13 +389,20 @@ void HTMLTextFieldAccessible::ActionNameAt(uint8_t aIndex, nsAString& aName) {
 bool HTMLTextFieldAccessible::DoAction(uint8_t aIndex) const {
   if (aIndex != 0) return false;
 
-  TakeFocus();
+  if (FocusMgr()->IsFocused(this)) {
+    // This already has focus, so TakeFocus()will do nothing. However, the user
+    // might be activating this element because they dismissed a touch keyboard
+    // and want to bring it back.
+    DoCommand();
+  } else {
+    TakeFocus();
+  }
   return true;
 }
 
 already_AddRefed<TextEditor> HTMLTextFieldAccessible::GetEditor() const {
-  nsCOMPtr<nsITextControlElement> textControlElement =
-      do_QueryInterface(mContent);
+  RefPtr<TextControlElement> textControlElement =
+      TextControlElement::FromNodeOrNull(mContent);
   if (!textControlElement) {
     return nullptr;
   }
@@ -409,9 +433,9 @@ HTMLFileInputAccessible::HTMLFileInputAccessible(nsIContent* aContent,
 }
 
 role HTMLFileInputAccessible::NativeRole() const {
-  // JAWS wants a text container, others don't mind. No specific role in
-  // AT APIs.
-  return roles::TEXT_CONTAINER;
+  // No specific role in AT APIs. We use GROUPING so that the label will be
+  // reported by screen readers when focus enters this control .
+  return roles::GROUPING;
 }
 
 nsresult HTMLFileInputAccessible::HandleAccEvent(AccEvent* aEvent) {
@@ -462,7 +486,7 @@ Accessible* HTMLFileInputAccessible::CurrentItem() const {
 role HTMLSpinnerAccessible::NativeRole() const { return roles::SPINBUTTON; }
 
 void HTMLSpinnerAccessible::Value(nsString& aValue) const {
-  AccessibleWrap::Value(aValue);
+  HTMLTextFieldAccessible::Value(aValue);
   if (!aValue.IsEmpty()) return;
 
   // Pass NonSystem as the caller type, to be safe.  We don't expect to have a
@@ -471,28 +495,28 @@ void HTMLSpinnerAccessible::Value(nsString& aValue) const {
 }
 
 double HTMLSpinnerAccessible::MaxValue() const {
-  double value = AccessibleWrap::MaxValue();
+  double value = HTMLTextFieldAccessible::MaxValue();
   if (!IsNaN(value)) return value;
 
   return HTMLInputElement::FromNode(mContent)->GetMaximum().toDouble();
 }
 
 double HTMLSpinnerAccessible::MinValue() const {
-  double value = AccessibleWrap::MinValue();
+  double value = HTMLTextFieldAccessible::MinValue();
   if (!IsNaN(value)) return value;
 
   return HTMLInputElement::FromNode(mContent)->GetMinimum().toDouble();
 }
 
 double HTMLSpinnerAccessible::Step() const {
-  double value = AccessibleWrap::Step();
+  double value = HTMLTextFieldAccessible::Step();
   if (!IsNaN(value)) return value;
 
   return HTMLInputElement::FromNode(mContent)->GetStep().toDouble();
 }
 
 double HTMLSpinnerAccessible::CurValue() const {
-  double value = AccessibleWrap::CurValue();
+  double value = HTMLTextFieldAccessible::CurValue();
   if (!IsNaN(value)) return value;
 
   return HTMLInputElement::FromNode(mContent)->GetValueAsDecimal().toDouble();
@@ -586,6 +610,7 @@ ENameValueFlag HTMLGroupboxAccessible::NativeName(nsString& aName) const {
   if (legendContent)
     nsTextEquivUtils::AppendTextEquivFromContent(this, legendContent, &aName);
 
+  aName.CompressWhitespace();
   return eNameOK;
 }
 
@@ -632,6 +657,7 @@ ENameValueFlag HTMLFigureAccessible::NativeName(nsString& aName) const {
   if (captionContent)
     nsTextEquivUtils::AppendTextEquivFromContent(this, captionContent, &aName);
 
+  aName.CompressWhitespace();
   return eNameOK;
 }
 

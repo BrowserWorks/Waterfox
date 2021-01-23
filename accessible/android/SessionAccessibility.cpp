@@ -32,6 +32,16 @@
     } while (0)
 #endif
 
+#define FORWARD_ACTION_TO_ACCESSIBLE(funcname, ...)         \
+  if (RootAccessibleWrap* rootAcc = GetRoot()) {            \
+    AccessibleWrap* acc = rootAcc->FindAccessibleById(aID); \
+    if (!acc) {                                             \
+      return;                                               \
+    }                                                       \
+                                                            \
+    acc->funcname(__VA_ARGS__);                             \
+  }
+
 template <>
 const char nsWindow::NativePtr<mozilla::a11y::SessionAccessibility>::sName[] =
     "SessionAccessibility";
@@ -99,25 +109,45 @@ RootAccessibleWrap* SessionAccessibility::GetRoot() {
 }
 
 void SessionAccessibility::SetText(int32_t aID, jni::String::Param aText) {
-  if (RootAccessibleWrap* rootAcc = GetRoot()) {
-    AccessibleWrap* acc = rootAcc->FindAccessibleById(aID);
-    if (!acc) {
-      return;
-    }
-
-    acc->SetTextContents(aText->ToString());
-  }
+  FORWARD_ACTION_TO_ACCESSIBLE(SetTextContents, aText->ToString());
 }
 
 void SessionAccessibility::Click(int32_t aID) {
-  if (RootAccessibleWrap* rootAcc = GetRoot()) {
-    AccessibleWrap* acc = rootAcc->FindAccessibleById(aID);
-    if (!acc) {
-      return;
-    }
+  FORWARD_ACTION_TO_ACCESSIBLE(DoAction, 0);
+}
 
-    acc->DoAction(0);
-  }
+void SessionAccessibility::Pivot(int32_t aID, int32_t aGranularity,
+                                 bool aForward, bool aInclusive) {
+  FORWARD_ACTION_TO_ACCESSIBLE(Pivot, aGranularity, aForward, aInclusive);
+}
+
+void SessionAccessibility::ExploreByTouch(int32_t aID, float aX, float aY) {
+  FORWARD_ACTION_TO_ACCESSIBLE(ExploreByTouch, aX, aY);
+}
+
+void SessionAccessibility::NavigateText(int32_t aID, int32_t aGranularity,
+                                        int32_t aStartOffset,
+                                        int32_t aEndOffset, bool aForward,
+                                        bool aSelect) {
+  FORWARD_ACTION_TO_ACCESSIBLE(NavigateText, aGranularity, aStartOffset,
+                               aEndOffset, aForward, aSelect);
+}
+
+void SessionAccessibility::SetSelection(int32_t aID, int32_t aStart,
+                                        int32_t aEnd) {
+  FORWARD_ACTION_TO_ACCESSIBLE(SetSelection, aStart, aEnd);
+}
+
+void SessionAccessibility::Cut(int32_t aID) {
+  FORWARD_ACTION_TO_ACCESSIBLE(Cut);
+}
+
+void SessionAccessibility::Copy(int32_t aID) {
+  FORWARD_ACTION_TO_ACCESSIBLE(Copy);
+}
+
+void SessionAccessibility::Paste(int32_t aID) {
+  FORWARD_ACTION_TO_ACCESSIBLE(Paste);
 }
 
 SessionAccessibility* SessionAccessibility::GetInstanceFor(
@@ -300,11 +330,9 @@ void SessionAccessibility::SendTextTraversedEvent(AccessibleWrap* aAccessible,
 }
 
 void SessionAccessibility::SendClickedEvent(AccessibleWrap* aAccessible,
-                                            bool aChecked) {
+                                            uint32_t aFlags) {
   GECKOBUNDLE_START(eventInfo);
-  // Boolean::FALSE/TRUE gets clobbered by a macro, so ugh.
-  GECKOBUNDLE_PUT(eventInfo, "checked",
-                  java::sdk::Integer::ValueOf(aChecked ? 1 : 0));
+  GECKOBUNDLE_PUT(eventInfo, "flags", java::sdk::Integer::ValueOf(aFlags));
   GECKOBUNDLE_FINISH(eventInfo);
 
   mSessionAccessibility->SendEvent(
@@ -419,3 +447,11 @@ void SessionAccessibility::UpdateCachedBounds(
   mSessionAccessibility->UpdateCachedBounds(infos);
   SendWindowContentChangedEvent();
 }
+
+void SessionAccessibility::UpdateAccessibleFocusBoundaries(
+    AccessibleWrap* aFirst, AccessibleWrap* aLast) {
+  mSessionAccessibility->UpdateAccessibleFocusBoundaries(
+      aFirst ? aFirst->VirtualViewID() : AccessibleWrap::kNoID,
+      aLast ? aLast->VirtualViewID() : AccessibleWrap::kNoID);
+}
+#undef FORWARD_ACTION_TO_ACCESSIBLE

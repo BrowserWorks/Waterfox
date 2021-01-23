@@ -10,7 +10,6 @@
 
 #include "GeckoProfiler.h"
 #include "nsComponentManagerUtils.h"
-#include "nsIIdlePeriod.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "mozilla/Services.h"
@@ -151,7 +150,7 @@ nsresult LazyIdleThread::EnsureThread() {
     return NS_ERROR_UNEXPECTED;
   }
 
-  rv = NS_NewNamedThread("Lazy Idle", getter_AddRefs(mThread), runnable);
+  rv = NS_NewNamedThread(mName, getter_AddRefs(mThread), runnable);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -396,6 +395,24 @@ LazyIdleThread::DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t) {
 }
 
 NS_IMETHODIMP
+LazyIdleThread::GetRunningEventDelay(TimeDuration* aDelay, TimeStamp* aStart) {
+  if (mThread) {
+    return mThread->GetRunningEventDelay(aDelay, aStart);
+  }
+  *aDelay = TimeDuration();
+  *aStart = TimeStamp();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LazyIdleThread::SetRunningEventDelay(TimeDuration aDelay, TimeStamp aStart) {
+  if (mThread) {
+    return mThread->SetRunningEventDelay(aDelay, aStart);
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 LazyIdleThread::IsOnCurrentThread(bool* aIsOnCurrentThread) {
   if (mThread) {
     return mThread->IsOnCurrentThread(aIsOnCurrentThread);
@@ -442,6 +459,11 @@ LazyIdleThread::GetLastLongTaskEnd(TimeStamp* _retval) {
 
 NS_IMETHODIMP
 LazyIdleThread::GetLastLongNonIdleTaskEnd(TimeStamp* _retval) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+LazyIdleThread::SetNameForWakeupTelemetry(const nsACString& aName) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -523,7 +545,7 @@ LazyIdleThread::Notify(nsITimer* aTimer) {
 
 NS_IMETHODIMP
 LazyIdleThread::GetName(nsACString& aName) {
-  aName.AssignLiteral("LazyIdleThread");
+  aName.Assign(mName);
   return NS_OK;
 }
 

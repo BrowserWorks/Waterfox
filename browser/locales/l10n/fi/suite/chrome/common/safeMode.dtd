@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName;n vikasietotila">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; on nyt vikasietotilassa, joten kaikki omat asetukset, laajennukset ja teemat ovat väliaikaisesti poissa käytöstä.">
+<!ENTITY safeModeDescription2.label   "Voit tehdä joistain tai kaikista näistä asetuksista pysyviä:">
+
+<!ENTITY disableAddons.label          "Poista kaikki lisäosat käytöstä">
+<!ENTITY disableAddons.accesskey      "P">
+
+<!ENTITY resetToolbars.label          "Palauta työkalupalkit ja ikkunakoot">
+<!ENTITY resetToolbars.accesskey      "a">
+
+<!ENTITY deleteBookmarks.label        "Poista kaikki kirjanmerkit paitsi varmuuskopiot">
+<!ENTITY deleteBookmarks.accesskey    "o">
+
+<!ENTITY resetUserPrefs.label         "Palauta kaikki asetukset &brandShortName;n oletusarvoihin">
+<!ENTITY resetUserPrefs.accesskey     "l">
+
+<!ENTITY restoreSearch.label          "Palauta oletushakukoneet">
+<!ENTITY restoreSearch.accesskey      "u">
+
+<!ENTITY changeAndRestartButton.label "Toteuta muutokset ja käynnistä uudelleen">
+<!ENTITY continueButton.label         "Jatka vikasietotilassa">

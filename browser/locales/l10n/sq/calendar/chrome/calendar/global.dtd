@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Mesnatë" >
+<!ENTITY time.noon "Mesditë" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Die" >
+<!ENTITY day.1.Ddd.accesskey "D">
+<!ENTITY day.2.Ddd "Hën" >
+<!ENTITY day.2.Ddd.accesskey "H">
+<!ENTITY day.3.Ddd "Mar" >
+<!ENTITY day.3.Ddd.accesskey "M">
+<!ENTITY day.4.Ddd "Mër" >
+<!ENTITY day.4.Ddd.accesskey "R">
+<!ENTITY day.5.Ddd "Enj" >
+<!ENTITY day.5.Ddd.accesskey "E">
+<!ENTITY day.6.Ddd "Pre" >
+<!ENTITY day.6.Ddd.accesskey "P">
+<!ENTITY day.7.Ddd "Sht" >
+<!ENTITY day.7.Ddd.accesskey "S">
+
+<!ENTITY day.1.name "E diel" >
+<!ENTITY day.2.name "E hënë" >
+<!ENTITY day.3.name "E martë" >
+<!ENTITY day.4.name "E mërkurë" >
+<!ENTITY day.5.name "E enjte" >
+<!ENTITY day.6.name "E premte" >
+<!ENTITY day.7.name "E shtunë" >
+
+<!ENTITY month.1.name "Janar" >
+<!ENTITY month.2.name "Shkurt" >
+<!ENTITY month.3.name "Mars" >
+<!ENTITY month.4.name "Prill" >
+<!ENTITY month.5.name "Maj" >
+<!ENTITY month.6.name "Qershor" >
+<!ENTITY month.7.name "Korrik" >
+<!ENTITY month.8.name "Gusht" >
+<!ENTITY month.9.name "Shtator" >
+<!ENTITY month.10.name "Tetor" >
+<!ENTITY month.11.name "Nëntor" >
+<!ENTITY month.12.name "Dhjetor" >
+
+<!ENTITY onemonthbackward.tooltip "Një Muaj Prapa" >
+<!ENTITY onemonthforward.tooltip "Një Muaj Më Tej" >
+<!ENTITY oneyearbackward.tooltip "Një Vit Mbrapa" >
+<!ENTITY oneyearforward.tooltip "Një Vit Pas" >
+<!ENTITY showToday.tooltip "Shko te Sot">
+<!ENTITY onedayforward.tooltip "Një Ditë Më Tej">
+<!ENTITY onedaybackward.tooltip "Një Ditë Mbrapsht">
+<!ENTITY showselectedday.tooltip "Shfaqni veprimtari për ditën e përzgjedhur">

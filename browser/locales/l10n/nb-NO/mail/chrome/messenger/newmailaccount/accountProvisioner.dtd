@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Velkommen til &brandShortName;">
+<!ENTITY header2.label "Vil du ha en ny e-postadresse?">
+<!ENTITY other.languages "Vi viser bare tilbyderne som tilbyr adresser i ditt område.  Trykk her for å vise alle tilbydere.">
+<!ENTITY error.line1 "Beklager, vi klarte ikke finne noen foreslåtte e-postadresser.">
+<!ENTITY error.line2 "Du kan søke etter kallenavn eller andre nøkkelord for å finne flere adresser">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Du kan også prøve en av de ">
+<!ENTITY error.suggest.middle "gratis e-postalternativene">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hei ">
+<!ENTITY success.title.after ", følgende e-postadresser er tilgjengelige for deg:">
+<!ENTITY success.tip "(Du kan også forsøke søke etter kallenavn eller andre søkeord for å finne flere e-postadresser)">
+<!ENTITY partnership.description "I partnerskap med flere tilbydere kan &brandShortName; tilby deg en ny e-postkonto. Bare fyll inn fornavn og etternavn, og evt. andre ord du ønsker, i feltene nedenfor for å komme i gang.">
+<!ENTITY existing.header "Har du allerede en adresse du ønsker å bruke?">
+<!ENTITY tinyheader.title "Har adresse?">
+<!ENTITY tinyheader.existing "Hopp over og bruk eksisterende adresse">
+<!ENTITY content.close "Jeg konfigurerer kontoen senere.">
+<!ENTITY successful.title "Gratulerer!">
+<!ENTITY successful.successMessage "Du har nå satt opp kontoen.">
+<!ENTITY successful.write "Skriv en e-post">
+<!ENTITY successful.write.desc "Informer venner og familie om din nye adresse.<br/> Det er årsaken til at du fikk denne nye adressen, er det ikke?">
+<!ENTITY successful.customize "Tilpass &brandShortName; med noen snedige utvidelser">
+<!ENTITY successful.customize.desc "Der er tusenvis av utvidelser som lar deg tilpasse &brandShortName; til dine bruksbehov.">
+<!ENTITY successful.attach "Legg ved en personlig signatur på e-posten">
+<!ENTITY successful.attach.desc "Du kan automatisk legge ved en sitat eller informasjon om deg selv på slutten av hver melding du sender.">
+<!ENTITY successful.close "Lukk dette vinduet.">
+<!ENTITY input.namePlaceholder "Navnet ditt, eller kallenavnet">
+<!ENTITY input.search "Søk">
+<!ENTITY search_engine.title "Tilpass søkemotor">
+<!ENTITY search_engine.message "E-posttilbyderen din kan også gi deg søkemuligheter på nettet">
+<!ENTITY search_engine.button "Fullfør">

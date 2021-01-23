@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Zo byšće tačelowy rum zalutował, njesćehńće:">
+<!ENTITY doNotDownloadNntp.label "Zo byšće tačelowy rum zalutował, njesćehńće za wužiwanje offline:">
+<!ENTITY doNotDownloadImap.label "Zo byšće tačelowy rum zalutował, da so sćahowanje powěsće ze serwera a wobchowowanje lokalnych kopijow za wužiwanje offline po starobje abo wulkosći wobmjezować.">
+<!ENTITY allFoldersOffline2.label "Powěsće we wšěch rjadowakach za tute konto na tutym ličaku wobchować">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Kedźbu: Hdyž to změniće, so to na wšě rjadowaki w tutym konće wuskutkuje. Wužiwajće tłóčatko Rozšěrjene…, zo byšće jednotliwe rjadowaki nastajił.">
+<!ENTITY offlineNotDownload.label "Powěsće, kotrež su wjetše hač">
+<!ENTITY offlineNotDownload.accesskey "P">
+<!ENTITY autosyncNotDownload.label "Powěsće njesćahnyć, kotrež su wjetše hač">
+<!ENTITY autosyncNotDownload.accesskey "n">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "dnjow stare">
+<!ENTITY message.label "powěsćow">
+<!ENTITY nntpNotDownloadRead.label "Powěsće čitać">
+<!ENTITY nntpNotDownloadRead.accesskey "i">
+<!ENTITY nntpDownloadMsg.label "Powěsće, kotrež su wjace hač">
+<!ENTITY nntpDownloadMsg.accesskey "c">
+<!ENTITY retentionCleanup.label "Zo byšće tačelowy rum dobył, dadźa so starše powěsće na přeco zhašeć.">
+<!ENTITY retentionCleanupImap.label "Zo byšće tačelowy rum dobył, dadźa so stare powěsće na přeco zhašeć, lokalne kopije kaž tež originale na zdalenym serwerje.">
+<!ENTITY retentionCleanupPop.label "Zo byšće tačelowy rum dobył, dadźa so stare powěsće na přeco zhašeć, inkluziwnje originale na zdalenym serwerje.">
+<!ENTITY retentionKeepMsg.label "Powěsće zhašeć, kotrež su wjace hač">
+<!ENTITY retentionKeepMsg.accesskey "h">
+<!ENTITY retentionKeepAll.label "Žane powěsće njezhašeć">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Wšě zhašeć, nimo najnowšich">
+<!ENTITY retentionKeepRecent.accesskey "W">
+<!ENTITY retentionApplyToFlagged.label "Z hwěžku markěrowane powěsće přeco wobchować">
+<!ENTITY retentionApplyToFlagged.accesskey "h">
+<!ENTITY nntpRemoveMsgBody.label "Wobsah powěsćow wotstronić, kotrež su wjace hač">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "Diskusijne skupiny za wužiwanje offline wubrać…">
+<!ENTITY offlineSelectNntp.accesskey "D">
+<!ENTITY offlineImapAdvancedOffline.label "Rozšěrjene…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "R">
+<!ENTITY syncGroupTitle.label "Synchronizowanje powěsćow">
+<!ENTITY diskspaceGroupTitle.label "Tačelowy rum">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Wšě powěsće lokalnje synchronizować, njedźiwajo na starobu">
+<!ENTITY allAutosync.accesskey           "l">
+<!ENTITY ageAutosyncBefore.label         "Najnowše synchronizować">
+<!ENTITY ageAutosync.accesskey           "N">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "dnjow">
+<!ENTITY weekAgeInterval.label           "njedźelow">
+<!ENTITY monthAgeInterval.label          "měsacow">
+<!ENTITY yearAgeInterval.label           "lět">
+<!ENTITY ageAutosyncAfter.label          "">

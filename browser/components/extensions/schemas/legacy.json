@@ -14,6 +14,11 @@
               {
                 "type": "object",
                 "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["xul", "bootstrap"],
+                    "optional": true
+                  },
                   "options": {
                     "type": "object",
                     "properties": {
@@ -24,7 +29,8 @@
                         "type": "boolean",
                         "optional": true
                       }
-                    }
+                    },
+                    "optional": true
                   }
                 }
               }

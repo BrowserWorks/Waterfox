@@ -15,9 +15,10 @@ macosx64/debug:
         tier: 1
     worker-type: b-linux
     worker:
-        max-run-time: 3600
+        max-run-time: 5400
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
+            MOZ_AUTOMATION_PACKAGE_TESTS: "1"
     run:
         using: mozharness
         actions: [get-secrets, build]
@@ -29,19 +30,22 @@ macosx64/debug:
         custom-build-variant-cfg: cross-debug
         mozconfig-variant: debug
         tooltool-downloads: internal
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-sccache
-        - linux64-nasm
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
 
 macosx64/opt:
     description: "MacOS X x64 Cross-compile"
@@ -49,6 +53,7 @@ macosx64/opt:
         product: firefox
         job-name: macosx64-opt
     attributes:
+        enable-build-signing: true
         enable-full-crashsymbols: true
     treeherder:
         platform: osx-cross/opt
@@ -68,20 +73,23 @@ macosx64/opt:
         script: "mozharness/scripts/fx_desktop_build.py"
         secrets: true
         tooltool-downloads: internal
-    run-on-projects: ['mozilla-central', 'try']
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-sccache
-        - linux64-nasm
-        - linux64-node
+    run-on-projects: ['mozilla-central']
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
 
 macosx64-asan-fuzzing/opt:
     description: "MacOS X x64 Cross-compile Fuzzing ASAN"
@@ -93,7 +101,7 @@ macosx64-asan-fuzzing/opt:
         symbol: Bof
     worker-type: b-linux
     worker:
-        max-run-time: 3600
+        max-run-time: 5400
         env:
             PERFHERDER_EXTRA_OPTIONS: asan-fuzzing
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
@@ -108,19 +116,24 @@ macosx64-asan-fuzzing/opt:
         custom-build-variant-cfg: cross-fuzzing-asan
         mozconfig-variant: nightly-fuzzing-asan
         tooltool-downloads: internal
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang-macosx-cross
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-sccache
-        - linux64-nasm
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
+    optimization:
+        build-fuzzing: null
 
 macosx64-fuzzing/debug:
     description: "MacOS X x64 Cross-compile Fuzzing Debug"
@@ -134,7 +147,7 @@ macosx64-fuzzing/debug:
         symbol: Bf
     worker-type: b-linux
     worker:
-        max-run-time: 3600
+        max-run-time: 5400
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
             PERFHERDER_EXTRA_OPTIONS: fuzzing
@@ -149,40 +162,47 @@ macosx64-fuzzing/debug:
         custom-build-variant-cfg: cross-fuzzing-debug
         mozconfig-variant: debug-fuzzing
         tooltool-downloads: internal
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang-macosx-cross
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-sccache
-        - linux64-nasm
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
+    optimization:
+        build-fuzzing: null
 
-macosx64-devedition-nightly/opt:
-    description: "MacOS X Dev Edition x64 Nightly"
+macosx64-devedition/opt:
+    description: "MacOS X Dev Edition x64 (shippable)"
+    use-pgo: macosx64-shippable/opt
     attributes:
-        nightly: true
+        shippable: true
         enable-full-crashsymbols: true
     shipping-phase: build
     shipping-product: devedition
     index:
         product: devedition
         job-name: macosx64-opt
-        type: nightly
+        type: shippable
     treeherder:
         platform: osx-cross-devedition/opt
-        symbol: N
+        symbol: B
         tier: 1
     worker-type: b-linux
     worker:
         max-run-time: 7200
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
+            MOZ_AUTOMATION_PACKAGE_TESTS: "1"
     run:
         using: mozharness
         actions: [get-secrets, build]
@@ -197,18 +217,21 @@ macosx64-devedition-nightly/opt:
         tooltool-downloads: internal
         mozconfig-variant: devedition
     run-on-projects: ['mozilla-beta']
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-nasm
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
 
 macosx64-noopt/debug:
     description: "MacOS X x64 No-optimize Debug"
@@ -236,20 +259,23 @@ macosx64-noopt/debug:
         mozconfig-variant: cross-noopt-debug
         tooltool-downloads: internal
         keep-artifacts: false
-    run-on-projects: ['trunk', 'try']
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-sccache
-        - linux64-nasm
-        - linux64-node
+    run-on-projects: ['mozilla-central']
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
 
 macosx64-add-on-devel/opt:
     description: "MacOS X x64 add-on-devel"
@@ -276,23 +302,27 @@ macosx64-add-on-devel/opt:
         custom-build-variant-cfg: add-on-devel
         mozconfig-variant: add-on-devel
         tooltool-downloads: internal
-    run-on-projects: ['mozilla-beta', 'mozilla-release', 'mozilla-esr45']
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-sccache
-        - linux64-nasm
-        - linux64-node
+    run-on-projects: ['mozilla-beta', 'mozilla-release']
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
 
 macosx64-shippable/opt:
     description: "MacOS X x64 Cross-compile"
+    use-pgo: true
     attributes:
         shippable: true
         enable-full-crashsymbols: true
@@ -304,13 +334,14 @@ macosx64-shippable/opt:
         type: shippable
     treeherder:
         platform: osx-shippable/opt
-        symbol: B
+        symbol: Bpgo(B)
         tier: 1
     worker-type: b-linux
     worker:
         max-run-time: 7200
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
+            MOZ_AUTOMATION_PACKAGE_TESTS: "1"
     run:
         using: mozharness
         actions: [get-secrets, build]
@@ -321,26 +352,29 @@ macosx64-shippable/opt:
         script: "mozharness/scripts/fx_desktop_build.py"
         secrets: true
         tooltool-downloads: internal
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-nasm
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
 
-macosx64-ccov/debug:
+macosx64-ccov/opt:
     description: "MacOS X x64 Cross-compile Code Coverage"
     index:
         product: firefox
-        job-name: macosx64-ccov-debug
+        job-name: macosx64-ccov-opt
     treeherder:
-        platform: osx-cross-ccov/debug
+        platform: osx-cross-ccov/opt
         symbol: B
         tier: 1
     worker-type: b-linux
@@ -348,6 +382,8 @@ macosx64-ccov/debug:
         max-run-time: 7200
         env:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
+            RUSTC_BOOTSTRAP: '1'
+            MOZ_AUTOMATION_PACKAGE_TESTS: "1"
     run:
         using: mozharness
         actions: [get-secrets, build]
@@ -356,20 +392,115 @@ macosx64-ccov/debug:
             - builds/releng_base_mac_64_cross_builds.py
         script: "mozharness/scripts/fx_desktop_build.py"
         secrets: true
-        custom-build-variant-cfg: code-coverage-debug
-        mozconfig-variant: code-coverage-debug
+        custom-build-variant-cfg: code-coverage-opt
+        mozconfig-variant: code-coverage
         tooltool-downloads: internal
-    run-on-projects: ['mozilla-central', 'try']
-    toolchains:
-        - linux64-binutils
-        - linux64-cctools-port
-        - linux64-clang-macosx-cross
-        - linux64-hfsplus
-        - linux64-libdmg
-        - linux64-llvm-dsymutil
-        - linux64-rust-nightly-macos
-        - linux64-rust-size
-        - linux64-cbindgen
-        - linux64-sccache
-        - linux64-nasm
-        - linux64-node
+    run-on-projects: ['mozilla-central']
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
+
+macosx64-gcp/debug:
+    description: "MacOS X x64 Cross-compile - built on GCP"
+    index:
+        product: firefox
+        job-name: macosx64-gcp-debug
+    attributes:
+        enable-full-crashsymbols: true
+    treeherder:
+        platform: osx-cross/debug
+        symbol: Bg
+        tier: 3
+    worker-type: b-linux-gcp
+    worker:
+        max-run-time: 3600
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
+            PERFHERDER_EXTRA_OPTIONS: gcp
+    run:
+        using: mozharness
+        actions: [get-secrets, build]
+        config:
+            - builds/releng_base_firefox.py
+            - builds/releng_base_mac_64_cross_builds.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: cross-debug
+        mozconfig-variant: debug
+        tooltool-downloads: internal
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot
+    optimization:
+        push-interval-25:
+            - macosx
+
+macosx64-gcp/opt:
+    description: "MacOS X x64 Cross-compile - built on GCP"
+    index:
+        product: firefox
+        job-name: macosx64-gcp-opt
+    attributes:
+        enable-full-crashsymbols: true
+    treeherder:
+        platform: osx-cross/opt
+        symbol: Bg
+        tier: 3
+    worker-type: b-linux-gcp
+    worker:
+        max-run-time: 7200
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
+            PERFHERDER_EXTRA_OPTIONS: gcp
+    run:
+        using: mozharness
+        actions: [get-secrets, build]
+        config:
+            - builds/releng_base_firefox.py
+            - builds/releng_base_mac_64_cross_builds.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: internal
+    run-on-projects: ['mozilla-central']
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-port
+            - linux64-clang-macosx-cross
+            - linux64-hfsplus
+            - linux64-libdmg
+            - linux64-llvm-dsymutil
+            - linux64-rust-macos
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-sccache
+            - linux64-nasm
+            - linux64-node
+            - linux64-lucetc
+            - wasi-sysroot

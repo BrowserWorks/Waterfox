@@ -9,7 +9,6 @@
 #include <algorithm>
 #include "DOMSVGAnimatedNumberList.h"
 #include "DOMSVGAnimatedLength.h"
-#include "imgIContainer.h"
 #include "nsGkAtoms.h"
 #include "nsCOMPtr.h"
 #include "nsIFrame.h"
@@ -132,7 +131,7 @@ bool SVGFE::StyleIsSetToSRGB() {
 
   ComputedStyle* style = frame->Style();
   return style->StyleSVG()->mColorInterpolationFilters ==
-         NS_STYLE_COLOR_INTERPOLATION_SRGB;
+         StyleColorInterpolation::Srgb;
 }
 
 /* virtual */
@@ -427,7 +426,8 @@ bool SVGFELightingElement::AddLightingAttributes(
   }
 
   const nsStyleSVGReset* styleSVGReset = frame->Style()->StyleSVGReset();
-  Color color(Color::FromABGR(styleSVGReset->mLightingColor.CalcColor(frame)));
+  sRGBColor color(
+      sRGBColor::FromABGR(styleSVGReset->mLightingColor.CalcColor(frame)));
   color.a = 1.f;
   float surfaceScale = mNumberAttributes[SURFACE_SCALE].GetAnimValue();
   Size kernelUnitLength = GetKernelUnitLength(

@@ -10,6 +10,24 @@ html.private {
   --in-content-page-background: #25003e;
   --in-content-link-color-hover: white;
   --in-content-link-color-active: white;
+  --in-content-banner-background: #f9f9fe;
+  --in-content-banner-text-color: #0c0c0d;
+  --in-content-button-background-hover: rgba(12,12,13,.1);
+  --in-content-button-background-active: rgba(12,12,13,.15);
+}
+
+/**
+ * When the showBanner class is applied, the banner is displayed at the top
+ * of the page, and we need to adjust the padding, so that the banner is
+ * spread across the full page width.
+ */
+body.showBanner {
+  padding: 0 0 40px;
+  min-height: 0;
+}
+
+.showBanner > .showPrivate {
+  padding: 40px 48px 0;
 }
 
 a:link {
@@ -17,91 +35,16 @@ a:link {
   text-decoration: underline;
 }
 
+a:link:hover {
+  color: inherit;
+}
+
 .container {
-  max-width: 48em;
-}
-
-.section-main {
-  margin-bottom: 48px;
-}
-
-.section-main:last-child {
-  margin-bottom: 0;
+  max-width: 768px;
 }
 
 p {
   line-height: 1.5em;
-}
-
-.list-row {
-  display: grid;
-  column-gap: 2em;
-  grid-template-columns: repeat(auto-fill, minmax(10em, 16em));
-  margin-inline-start: 3em;
-}
-
-.list-row li {
-  margin-bottom: 0;
-  padding: .25em 0;
-  line-height: 1.5;
-}
-
-.title {
-  background-image: url("chrome://browser/skin/privatebrowsing/private-browsing.svg");
-  background-position: left center;
-  background-size: 2em;
-  line-height: 1.4;
-  padding-top: 0.3em;
-  padding-bottom: 0.3em;
-  margin-inline-start: calc(-2em - 10px);
-  padding-inline-start: calc(2em + 10px);
-}
-
-.title:dir(rtl) {
-  background-position: right center;
-}
-
-.about-subheader {
-  --icon-size: 1.5em;
-  display: flex;
-  align-items: center;
-  font-size: 1.5em;
-  font-weight: lighter;
-  background-image: url("chrome://browser/skin/privatebrowsing/tracking-protection.svg");
-  background-repeat: no-repeat;
-  background-position: left center;
-  background-size: var(--icon-size);
-  line-height: 1.5em;
-  margin-inline-start: calc((var(--icon-size) + 10px) * -1);
-  padding-inline-start: calc(var(--icon-size) + 10px);
-}
-
-.about-subheader:dir(rtl) {
-  background-position: right;
-}
-
-@media (max-width: 970px) {
-  .about-subheader {
-    --icon-size: 1em;
-    margin-inline-start: 0;
-  }
-}
-
-.about-info {
-  font-size: .9em;
-}
-
-a.button {
-  padding: 3px 20px;
-  background-color: #8000d7;
-  border: 1px solid #6000a1;
-  text-decoration: none;
-  display: inline-block;
-}
-
-a.button:hover:active {
-  color: inherit;
-  background-color: #6000a1;
 }
 
 .logo-and-wordmark {
@@ -111,27 +54,29 @@ a.button:hover:active {
   margin-bottom: 50px;
 }
 
-.search-ui .container {
-  max-width: 768px;
+.logo {
+  background: url("chrome://branding/content/about-logo.png") no-repeat center center;
+  background-size: 96px;
+  display: inline-block;
+  height: 96px;
+  width: 96px;
 }
 
-.logo {
-  background: url("chrome://branding/content/icon128.png") no-repeat center center;
-  background-size: 97px;
-  display: inline-block;
-  height: 97px;
-  width: 97px;
+@media (min-resolution: 2x) {
+  .logo {
+    background-image: url('chrome://branding/content/about-logo@2x.png');
+  }
 }
 
 .wordmark {
-  background: url("resource://activity-stream/data/content/assets/firefox-wordmark.svg") no-repeat center center;
-  background-size: 175px;
+  background: url("chrome://branding/content/firefox-wordmark.svg") no-repeat center center;
+  background-size: 172px;
   -moz-context-properties: fill;
   display: inline-block;
   fill: #fff;
-  height: 97px;
+  height: 96px;
   margin-inline-start: 15px;
-  width: 175px;
+  width: 172px;
 }
 
 .search-inner-wrapper {
@@ -143,7 +88,7 @@ a.button:hover:active {
 
 .search-handoff-button,
 .search-handoff-button:active,
-.search-handoff-button:enabled:hover:active  {
+.search-handoff-button:enabled:hover:active {
   background: #fff var(--newtab-search-icon) 12px center no-repeat;
   background-size: 24px;
   border: solid 1px rgba(249, 249, 250, 0.2);
@@ -152,9 +97,8 @@ a.button:hover:active {
   cursor: text;
   font-size: 15px;
   margin: 0;
-  padding: 0;
-  padding-inline-end: 48px;
-  padding-inline-start: 46px;
+  padding-block: 0;
+  padding-inline: 46px 48px;
   position: relative;
   opacity: 1;
   transition: opacity 500ms;
@@ -193,11 +137,11 @@ a.button:hover:active {
 .fake-editable {
   border: 0;
   height: 100%;
-  left: 0;
+  top: 0;
+  inset-inline-start: 0;
   opacity: 0;
   padding: 0;
   position: absolute;
-  top: 0;
   width: 100%;
 }
 
@@ -224,8 +168,40 @@ a.button:hover:active {
   width: 1px;
 }
 
-.dummy-input {
-  display: none;
+.search-banner {
+  width: 100%;
+  background-color: var(--in-content-banner-background);
+  color: var(--in-content-banner-text-color);
+}
+
+.banner-body {
+  margin: auto;
+  width: max-content;
+  background-image: url("chrome://browser/skin/preferences/general.svg");
+  background-position: left 0 top 50px;
+  background-repeat: no-repeat;
+  background-size: 32px;
+  letter-spacing: -.2px;
+  padding: 50px 0;
+  padding-inline-start: 44px;
+}
+
+.banner-body:dir(rtl) {
+  background-position-x: right;
+}
+
+.banner-body h1 {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--in-content-banner-text-color);
+  line-height: 1em;
+  margin: 7px 0;
+}
+
+.banner-body p {
+  font-size: 15px;
+  line-height: 1em;
+  margin: 4px 0;
 }
 
 .info {
@@ -241,7 +217,7 @@ a.button:hover:active {
 }
 
 .info:dir(rtl) {
-  background-position: right 32px top 20px;
+  background-position-x: right 32px;
 }
 
 .info h1 {
@@ -253,4 +229,26 @@ a.button:hover:active {
 .info p {
   font-size: 15px;
   line-height: 25px;
+}
+
+.search-banner-close-button {
+  float: inline-end;
+  /* min-width and min-height override values set on button elements. */
+  min-width: 28px;
+  min-height: 28px;
+  /* Forcing height and line-height ensure the button hover is displayed correctly
+     as a square box (and focus box). No text gets displayed here so that's ok. */
+  height: 28px;
+  line-height: 0;
+  margin: 16px;
+  padding: 0;
+  background-color: inherit;
+  border: 0;
+}
+
+.search-banner-close-image {
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+  fill-opacity: 0;
+  width: 28px;
 }

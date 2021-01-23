@@ -54,6 +54,10 @@ ga{
             "ARA",
             "Austral Airgintíneach",
         }
+        ARL{
+            "ARL",
+            "ARL",
+        }
         ARM{
             "ARM",
             "Peso na hAirgintíne (1881–1970)",
@@ -68,7 +72,7 @@ ga{
         }
         ATS{
             "ATS",
-            "ATS",
+            "Scilling na hOstaire",
         }
         AUD{
             "A$",
@@ -94,6 +98,10 @@ ga{
             "BAM",
             "Marg Inmhalartaithe na Boisnia-Heirseagaivéine",
         }
+        BAN{
+            "BAN",
+            "BAN",
+        }
         BBD{
             "BBD",
             "Dollar Bharbadós",
@@ -104,7 +112,7 @@ ga{
         }
         BEC{
             "BEC",
-            "BEC",
+            "Franc na Beilge (inmhalartaithe)",
         }
         BEF{
             "BEF",
@@ -112,7 +120,7 @@ ga{
         }
         BEL{
             "BEL",
-            "BEL",
+            "Franc na Beilge (airgeadais)",
         }
         BGL{
             "BGL",
@@ -145,6 +153,10 @@ ga{
         BOB{
             "BOB",
             "Boliviano",
+        }
+        BOL{
+            "BOL",
+            "BOL",
         }
         BOP{
             "BOP",
@@ -238,10 +250,6 @@ ga{
             "CLP",
             "Peso na Sile",
         }
-        CNH{
-            "CNH",
-            "CNH",
-        }
         CNY{
             "CN¥",
             "Yuan na Síne",
@@ -249,6 +257,10 @@ ga{
         COP{
             "COP",
             "Peso na Colóime",
+        }
+        COU{
+            "COU",
+            "COU",
         }
         CRC{
             "CRC",
@@ -284,7 +296,7 @@ ga{
         }
         DDM{
             "DDM",
-            "DDM",
+            "Marc Ghearmáin an Oirthir",
         }
         DEM{
             "DEM",
@@ -325,6 +337,14 @@ ga{
         ERN{
             "ERN",
             "Nakfa na hEiritré",
+        }
+        ESA{
+            "ESA",
+            "ESA",
+        }
+        ESB{
+            "ESB",
+            "ESB",
         }
         ESP{
             "ESP",
@@ -506,6 +526,14 @@ ga{
             "KPW",
             "Won na Cóiré Thuaidh",
         }
+        KRH{
+            "KRH",
+            "KRH",
+        }
+        KRO{
+            "KRO",
+            "KRO",
+        }
         KRW{
             "₩",
             "Won na Cóiré Theas",
@@ -593,6 +621,10 @@ ga{
         MKD{
             "MKD",
             "Denar na Macadóine",
+        }
+        MKN{
+            "MKN",
+            "MKN",
         }
         MLF{
             "MLF",
@@ -1050,6 +1082,14 @@ ga{
             "XPT",
             "Platanam",
         }
+        XRE{
+            "XRE",
+            "XRE",
+        }
+        XSU{
+            "XSU",
+            "XSU",
+        }
         XXX{
             "XXX",
             "Airgeadra Anaithnid",
@@ -1073,6 +1113,10 @@ ga{
         YUN{
             "YUN",
             "YUN",
+        }
+        YUR{
+            "YUR",
+            "YUR",
         }
         ZAL{
             "ZAL",
@@ -1158,6 +1202,8 @@ ga{
         LBP{"L£"}
         LKR{"Rs"}
         LRD{"$"}
+        LTL{"Lt"}
+        LVL{"Ls"}
         MGA{"Ar"}
         MMK{"K"}
         MNT{"₮"}
@@ -1616,13 +1662,6 @@ ga{
             one{"pheso na Sile"}
             other{"peso na Sile"}
             two{"pheso na Sile"}
-        }
-        CNH{
-            few{"CNH"}
-            many{"CNH"}
-            one{"CNH"}
-            other{"CNH"}
-            two{"CNH"}
         }
         CNY{
             few{"yuan na Síne"}
@@ -2162,13 +2201,6 @@ ga{
             one{"Talonas Liotuánach"}
             other{"Talonas Liotuánach"}
             two{"Talonas Liotuánach"}
-        }
-        LUC{
-            few{"LUC"}
-            many{"LUC"}
-            one{"LUC"}
-            other{"LUC"}
-            two{"LUC"}
         }
         LUF{
             few{"Franc Lucsamburg"}
@@ -3137,5 +3169,5 @@ ga{
         other{"{0} {1}"}
         two{"{0} {1}"}
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
 }

@@ -6,7 +6,9 @@
  */
 "use strict";
 
-const espree = require("espree");
+const parser = require("babel-eslint");
+const { analyze } = require("eslint-scope");
+const { KEYS: defaultVisitorKeys } = require("eslint-visitor-keys");
 const estraverse = require("estraverse");
 const path = require("path");
 const fs = require("fs");
@@ -70,7 +72,8 @@ module.exports = {
 
   /**
    * Gets the abstract syntax tree (AST) of the JavaScript source code contained
-   * in sourceText.
+   * in sourceText. This matches the results for an eslint parser, see
+   * https://eslint.org/docs/developer-guide/working-with-custom-parsers.
    *
    * @param  {String} sourceText
    *         Text containing valid JavaScript.
@@ -79,14 +82,28 @@ module.exports = {
    *         the configuration from getPermissiveConfig().
    *
    * @return {Object}
-   *         The resulting AST.
+   *         Returns an object containing `ast`, `scopeManager` and
+   *         `visitorKeys`
    */
-  getAST(sourceText, astOptions = {}) {
+  parseCode(sourceText, astOptions = {}) {
     // Use a permissive config file to allow parsing of anything that Espree
     // can parse.
     let config = { ...this.getPermissiveConfig(), ...astOptions };
 
-    return espree.parse(sourceText, config);
+    let parseResult =
+      "parseForESLint" in parser
+        ? parser.parseForESLint(sourceText, config)
+        : { ast: parser.parse(sourceText, config) };
+
+    let visitorKeys = parseResult.visitorKeys || defaultVisitorKeys;
+    visitorKeys.ExperimentalRestProperty = visitorKeys.RestElement;
+    visitorKeys.ExperimentalSpreadProperty = visitorKeys.SpreadElement;
+
+    return {
+      ast: parseResult.ast,
+      scopeManager: parseResult.scopeManager || analyze(parseResult.ast),
+      visitorKeys,
+    };
   },
 
   /**
@@ -155,11 +172,13 @@ module.exports = {
    *
    * @param  {Object} ast
    *         The AST to walk.
+   * @param  {Array} visitorKeys
+   *         The visitor keys to use for the AST.
    * @param  {Function} listener
    *         A callback function to call for the nodes. Passed three arguments,
    *         event type, node and an array of parent nodes for the current node.
    */
-  walkAST(ast, listener) {
+  walkAST(ast, visitorKeys, listener) {
     let parents = [];
 
     estraverse.traverse(ast, {
@@ -175,6 +194,8 @@ module.exports = {
         }
         parents.pop();
       },
+
+      keys: visitorKeys,
     });
     if (parents.length) {
       throw new Error("Entered more nodes than left.");
@@ -786,7 +807,7 @@ module.exports = {
 
   get globalScriptPaths() {
     return [
-      path.join(this.rootDir, "browser", "base", "content", "browser.xul"),
+      path.join(this.rootDir, "browser", "base", "content", "browser.xhtml"),
       path.join(
         this.rootDir,
         "browser",
@@ -809,5 +830,29 @@ module.exports = {
 
   getSavedRuleData(rule) {
     return require("./rules/saved-rules-data.json").rulesData[rule];
+  },
+
+  /**
+   * Extract the path of require (and require-like) helpers used in DevTools.
+   */
+  getDevToolsRequirePath(node) {
+    if (
+      node.callee.type == "Identifier" &&
+      node.callee.name == "require" &&
+      node.arguments.length == 1 &&
+      node.arguments[0].type == "Literal"
+    ) {
+      return node.arguments[0].value;
+    } else if (
+      node.callee.type == "MemberExpression" &&
+      node.callee.property.type == "Identifier" &&
+      (node.callee.property.name == "lazyRequireGetter" ||
+        node.callee.property.name == "lazyImporter") &&
+      node.arguments.length >= 3 &&
+      node.arguments[2].type == "Literal"
+    ) {
+      return node.arguments[2].value;
+    }
+    return null;
   },
 };

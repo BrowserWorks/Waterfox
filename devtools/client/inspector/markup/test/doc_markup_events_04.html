@@ -7,7 +7,7 @@
     #constructed-function-with-body-string,
     #multiple-assignment,
     #promise,
-    #arraysort,
+    #math-pow,
     #handleEvent {
       border: 1px solid #000;
       width: 200px;
@@ -16,36 +16,39 @@
     }
     </style>
     <script type="application/javascript">
-      let constructedFunc = new Function();
+      "use strict";
 
-      let constructedFuncWithBodyString =
+      const constructedFunc = new Function();
+
+      const constructedFuncWithBodyString =
         new Function('a', 'b', 'c', 'alert("constructedFuncWithBodyString");');
 
-      let multipleAssignment = foo = bar = function multi() {
+      const multipleAssignment = function multi() {
         alert("multipleAssignment");
       }
 
+      /* exported init */
       function init() {
-        let constructedFunctionNode =
+        const constructedFunctionNode =
           document.getElementById("constructed-function");
         constructedFunctionNode.addEventListener("click", constructedFunc);
 
-        let constructedFunctionWithBodyStringNode =
+        const constructedFunctionWithBodyStringNode =
           document.getElementById("constructed-function-with-body-string");
         constructedFunctionWithBodyStringNode
           .addEventListener("click", constructedFuncWithBodyString);
 
-        let multipleAssignmentNode =
+        const multipleAssignmentNode =
           document.getElementById("multiple-assignment");
         multipleAssignmentNode.addEventListener("click", multipleAssignment);
 
-        let promiseNode = document.getElementById("promise");
+        const promiseNode = document.getElementById("promise");
         new Promise((resolve, reject) => {
           promiseNode.addEventListener("click", resolve);
         });
 
-        let arraySortNode = document.getElementById("arraysort");
-        arraySortNode.addEventListener("click", Array.sort);
+        const mathPowNode = document.getElementById("math-pow");
+        mathPowNode.addEventListener("click", Math.pow);
 
         new HandleEvent();
 
@@ -69,7 +72,7 @@
       };
 
       function HandleEvent() {
-        let handleEventNode = document.getElementById("handleEvent");
+        const handleEventNode = document.getElementById("handleEvent");
         handleEventNode.addEventListener("click", this);
       }
 
@@ -81,10 +84,6 @@
           }
         }
       };
-
-      function* generator() {
-        alert("generator");
-      }
     </script>
   </head>
   <body onload="init();">
@@ -95,7 +94,7 @@
     </div>
     <div id="multiple-assignment">Multiple Assignment</div>
     <div id="promise">Promise</div>
-    <div id="arraysort">Array.sort</div>
+    <div id="math-pow">Math.pow</div>
     <div id="handleEvent">HandleEvent</div>
   </body>
 </html>

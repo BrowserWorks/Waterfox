@@ -9,31 +9,7 @@
 
 #include "gc/Zone.h"
 
-#ifdef DEBUG
-inline bool JS::Zone::requireGCTracer() const {
-  JSRuntime* rt = runtimeFromAnyThread();
-  return RuntimeHeapIsMajorCollecting() && !rt->gc.isHeapCompacting() &&
-         gcState_ != NoGC;
-}
-#endif
-
-inline void JS::Zone::updateAllGCMallocCountersOnGCStart() {
-  gcMallocCounter.updateOnGCStart();
-  jitCodeCounter.updateOnGCStart();
-}
-
-inline void JS::Zone::updateAllGCMallocCountersOnGCEnd(
-    const js::AutoLockGC& lock) {
-  auto& gc = runtimeFromAnyThread()->gc;
-  gcMallocCounter.updateOnGCEnd(gc.tunables, lock);
-  jitCodeCounter.updateOnGCEnd(gc.tunables, lock);
-}
-
-inline js::gc::TriggerKind JS::Zone::shouldTriggerGCForTooMuchMalloc() {
-  auto& gc = runtimeFromAnyThread()->gc;
-  return std::max(gcMallocCounter.shouldTriggerGC(gc.tunables),
-                  jitCodeCounter.shouldTriggerGC(gc.tunables));
-}
+#include "vm/Runtime.h"
 
 /* static */ inline js::HashNumber JS::Zone::UniqueIdToHash(uint64_t uid) {
   return mozilla::HashGeneric(uid);

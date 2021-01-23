@@ -1010,8 +1010,7 @@ bool UniCharsAndModifiers::UniCharsEqual(
 
 bool UniCharsAndModifiers::UniCharsCaseInsensitiveEqual(
     const UniCharsAndModifiers& aOther) const {
-  nsCaseInsensitiveStringComparator comp;
-  return mChars.Equals(aOther.mChars, comp);
+  return mChars.Equals(aOther.mChars, nsCaseInsensitiveStringComparator);
 }
 
 bool UniCharsAndModifiers::BeginsWith(
@@ -1306,7 +1305,7 @@ NativeKey::NativeKey(nsWindowBase* aWidget, const MSG& aMessage,
 
   MOZ_LOG(sNativeKeyLogger, LogLevel::Info,
           ("%p   NativeKey::NativeKey(), mKeyboardLayout=0x%08X, "
-           "mFocusedWndBeforeDispatch=0x%p, mDOMKeyCode=0x%04X, "
+           "mFocusedWndBeforeDispatch=0x%p, mDOMKeyCode=%s, "
            "mKeyNameIndex=%s, mCodeNameIndex=%s, mModKeyState=%s, "
            "mVirtualKeyCode=%s, mOriginalVirtualKeyCode=%s, "
            "mCommittedCharsAndModifiers=%s, mInputtingStringAndModifiers=%s, "
@@ -1560,8 +1559,10 @@ void NativeKey::InitWithKeyOrChar() {
           ComputeVirtualKeyCodeFromScanCodeEx();
       NS_ASSERTION(mVirtualKeyCode, "Failed to compute virtual keycode");
       break;
-    default:
-      MOZ_CRASH("Unsupported message");
+    default: {
+      MOZ_CRASH_UNSAFE_PRINTF("Unsupported message: 0x%04X", mMsg.message);
+      break;
+    }
   }
 
   if (!mVirtualKeyCode) {
@@ -2034,7 +2035,7 @@ nsEventStatus NativeKey::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
       if (mCharMessageHasGone) {
         aKeyEvent.PreventDefaultBeforeDispatch(CrossProcessForwarding::eAllow);
       }
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     case eKeyDownOnPlugin:
       aKeyEvent.mKeyCode = mDOMKeyCode;
       // Unique id for this keydown event and its associated keypress.
@@ -2643,7 +2644,6 @@ bool NativeKey::HandleKeyDownMessage(bool* aEventDispatched) const {
   }
 
   if (!mModKeyState.IsControl() && !mModKeyState.IsAlt() &&
-      !(mModKeyState.GetModifiers() & MODIFIER_ALTGRAPH) &&
       !mModKeyState.IsWin() && mIsPrintableKey) {
     // If this is simple KeyDown event but next message is not WM_CHAR,
     // this event may not input text, so we should ignore this event.
@@ -2907,10 +2907,12 @@ bool NativeKey::NeedsToHandleWithoutFollowingCharMessages() const {
 
   // If any modifier keys which may cause printable keys becoming non-printable
   // are not pressed, we don't need special handling for the key.
-  // Note that AltGraph may map a printable key to input no character.
-  // In such case, we need to eKeyPress event for backward compatibility.
+  // Note that if the key does not produce a character with AltGr and when
+  // AltGr key is pressed, we don't need to dispatch eKeyPress event for it
+  // because AltGr shouldn't be used for a modifier for a shortcut without
+  // Ctrl, Alt or Win.  That means that we should treat it in same path for
+  // Shift key.
   if (!mModKeyState.IsControl() && !mModKeyState.IsAlt() &&
-      !(mModKeyState.GetModifiers() & MODIFIER_ALTGRAPH) &&
       !mModKeyState.IsWin()) {
     return false;
   }
@@ -3489,6 +3491,27 @@ void NativeKey::ComputeInputtingStringWithKeyboardLayout() {
     return;
   }
 
+  // If user is inputting a Unicode character with typing Alt + Numpad
+  // keys, we shouldn't set alternative key codes because the key event
+  // shouldn't match with a mnemonic.  However, we should set only
+  // mUnshiftedString for keeping traditional behavior at WM_SYSKEYDOWN.
+  // FYI: I guess that it's okay that mUnshiftedString stays empty.  So,
+  //      if its value breaks something, you must be able to just return here.
+  if (MaybeTypingUnicodeScalarValue()) {
+    if (!mCommittedCharsAndModifiers.IsEmpty()) {
+      MOZ_ASSERT(mMsg.message == WM_SYSKEYDOWN);
+      char16_t num = mCommittedCharsAndModifiers.CharAt(0);
+      MOZ_ASSERT(num >= '0' && num <= '9');
+      mUnshiftedString.Append(num, MODIFIER_NONE);
+      return;
+    }
+    // If user presses a function key without NumLock or 3rd party utility
+    // synthesizes a function key on numpad, we should handle it as-is because
+    // the user's intention may be performing `Alt` + foo.
+    MOZ_ASSERT(!KeyboardLayout::IsPrintableCharKey(mVirtualKeyCode));
+    return;
+  }
+
   ModifierKeyState capsLockState(mModKeyState.GetModifiers() &
                                  MODIFIER_CAPSLOCK);
 
@@ -3962,6 +3985,77 @@ void KeyboardLayout::InitNativeKey(NativeKey& aNativeKey) {
       aNativeKey.mCommittedCharsAndModifiers.Append(ch, modifiers);
       return;
     }
+  }
+
+  // If the aNativeKey is in a sequence to input a Unicode character with
+  // Alt + numpad keys, we should just set the number as the inputting charcter.
+  // Note that we should compute the key value from the virtual key code
+  // because they may be mapped to alphabets, but they should be treated as
+  // Alt + [0-9] even by web apps.
+  // However, we shouldn't touch the key value if given virtual key code is
+  // not a printable key because it may be synthesized by 3rd party utility
+  // or just NumLock is unlocked and user tries to use shortcut key.  In the
+  // latter case, we cannot solve the conflict issue with Alt+foo shortcut key
+  // and inputting a Unicode scalar value like reported to bug 1606655, though,
+  // I have no better idea.  Perhaps, `Alt` shouldn't be used for shortcut key
+  // combination on Windows.
+  if (aNativeKey.MaybeTypingUnicodeScalarValue() &&
+      KeyboardLayout::IsPrintableCharKey(aNativeKey.mVirtualKeyCode)) {
+    // If the key code value is mapped to a Numpad key, let's compute the key
+    // value with it.  This is same behavior as Chrome.  In strictly speaking,
+    // I think that the else block's computation is better because it seems
+    // that Windows does not refer virtual key code value, but we should avoid
+    // web-compat issues.
+    char16_t num = '0';
+    if (aNativeKey.mVirtualKeyCode >= VK_NUMPAD0 &&
+        aNativeKey.mVirtualKeyCode <= VK_NUMPAD9) {
+      num = '0' + aNativeKey.mVirtualKeyCode - VK_NUMPAD0;
+    }
+    // Otherwise, let's use fake key value for making never match with
+    // mnemonic.
+    else {
+      switch (aNativeKey.mScanCode) {
+        case 0x0052:  // Numpad0
+          num = '0';
+          break;
+        case 0x004F:  // Numpad1
+          num = '1';
+          break;
+        case 0x0050:  // Numpad2
+          num = '2';
+          break;
+        case 0x0051:  // Numpad3
+          num = '3';
+          break;
+        case 0x004B:  // Numpad4
+          num = '4';
+          break;
+        case 0x004C:  // Numpad5
+          num = '5';
+          break;
+        case 0x004D:  // Numpad6
+          num = '6';
+          break;
+        case 0x0047:  // Numpad7
+          num = '7';
+          break;
+        case 0x0048:  // Numpad8
+          num = '8';
+          break;
+        case 0x0049:  // Numpad9
+          num = '9';
+          break;
+        default:
+          MOZ_ASSERT_UNREACHABLE(
+              "IsTypingUnicodeScalarValue() must have returned true for wrong "
+              "scancode");
+          break;
+      }
+    }
+    aNativeKey.mCommittedCharsAndModifiers.Append(num,
+                                                  aNativeKey.GetModifiers());
+    aNativeKey.mKeyNameIndex = KEY_NAME_INDEX_USE_STRING;
+    return;
   }
 
   // When it's followed by non-dead char message(s) for printable character(s),

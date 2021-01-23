@@ -9,7 +9,6 @@
 #include "xpcprivate.h"
 #include "mozilla/DeferredFinalize.h"
 #include "mozilla/Sprintf.h"
-#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "nsCCUncollectableMarker.h"
 #include "nsContentUtils.h"
 #include "nsThreadUtils.h"
@@ -142,6 +141,8 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(nsXPCWrappedJS)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsXPCWrappedJS)
   tmp->Unlink();
+  // Note: Unlink already calls ClearWeakReferences, so no need for
+  // NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_REFERENCE here.
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 // XPCJSContext keeps a table of WJS, so we can remove them from

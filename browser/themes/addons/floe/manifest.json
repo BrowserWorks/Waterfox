@@ -1,0 +1,65 @@
+{
+  "manifest_version": 2,
+  "name": "Floe",
+  "version": "1.0",
+  "description":"Light theme for Waterfox UI",
+  "applications":{
+    "gecko":{
+      "id": "floe@waterfox.net",
+      "strict_min_version": "68.0a1",
+      "strict_max_version": "88.*"
+    }
+  },
+  "theme_experiment":{
+    "stylesheet": "style.css"
+  },
+  "icons":{
+      "48": "icon.png",
+      "96": "icon@2x.png"
+  },
+  "theme": {
+      "colors":{
+	      "frame": "rgb(212,212,215)",
+	      "frame_inactive": "rgb(202,202,205)",
+	      "textcolor": "rgba(11,12,27,.7)",
+	      "toolbar": "rgb(255,255,255)",
+	      "toolbar_text": "rgba(11,12,27,.7)",
+	      "toolbar_field": "rgb(227,227,230)",
+	      "toolbar_field_text": "rgba(11,12,27,.7)",
+	      "toolbar_field_border": "transparent",
+	      "toolbar_field_separator": "rgba(33,36,54,.25)",
+	      "toolbar_field_focus": "rgb(252,252,254)",
+	      "toolbar_field_text_focus": "rgb(11,12,27)",
+	      "toolbar_field_border_focus": "rgb(3,142,206)",
+	      "toolbar_top_separator": "rgba(250,250,253,0)",
+	      "toolbar_bottom_separator": "rgb(192,192,195)",
+	      "toolbar_vertical_separator": "rgba(33,36,54,.25)",
+		  "toolbar_field_highlight": "rgb(3,142,206)",
+		  "toolbar_field_highlight_text": "rgb(255,255,255)",
+	      "icons":"rgba(11,12,27,.7)",
+	      "icons_attention": "rgb(3,142,206)",
+	      "bookmark_text":"rgba(11,12,27,.7)",
+	      "tab_text": "rgb(3,142,206)",
+	      "tab_line": "rgb(3,142,206)",
+	      "tab_loading": "rgb(3,142,206)",
+		  "tab_background_text": "rgb(11,12,27)",
+	      "tab_background_separator": "transparent",
+	      "button_background":"transparent",
+	      "button_background_hover":"rgba(212,212,215,.7)",
+	      "button_background_active":"rgba(212,212,215,.5)",
+	      "ntp_background":"rgb(240,240,243)",
+	      "ntp_text":"rgba(11,12,27,.7)",
+	      "popup": "rgb(252,252,254)",
+	      "popup_text": "rgba(11,12,27,.7)",
+	      "popup_border": "rgb(240,240,243)",
+	      "popup_highlight": "rgb(3,142,206)",
+	      "popup_highlight_text": "rgb(255,255,255)",
+	      "sidebar": "rgb(227,227,230)",
+	      "sidebar_text": "rgba(11,12,27,.7)",
+	      "sidebar_highlight": "rgba(3,142,206,.15)",
+	      "sidebar_highlight_text": "rgb(3,142,206)",
+	      "sidebar_border": "rgb(192,192,195)"
+      }
+  },
+  "author": "Stefano Rosselli"
+}

@@ -15,101 +15,21 @@ function updateBlocklist(aURL, aCallback) {
     SimpleTest.executeSoon(aCallback);
   };
   Services.obs.addObserver(observer, "plugin-blocklist-updated");
-  if (Services.prefs.getBoolPref("extensions.blocklist.useXML", true)) {
-    info("Loading plugin data " + aURL + " using xml implementation.");
-    Services.prefs.setCharPref("extensions.blocklist.url", aURL);
-    var blocklistNotifier = Cc[
-      "@mozilla.org/extensions/blocklist;1"
-    ].getService(Ci.nsITimerCallback);
-    blocklistNotifier.notify(null);
+  info("Loading plugin data " + aURL);
+  if (aURL.endsWith("blockNoPlugins")) {
+    AddonTestUtils.loadBlocklistRawData({ plugins: [] });
+  } else if (aURL.endsWith("blockPluginHard")) {
+    AddonTestUtils.loadBlocklistRawData({
+      plugins: [
+        {
+          matchFilename: "libnptest\\.so|nptest\\.dll|Test\\.plugin",
+          versionRange: [{ severity: "2" }],
+          blockID: "p9999",
+        },
+      ],
+    });
   } else {
-    info("Loading plugin data " + aURL + " using remote settings.");
-    if (aURL.endsWith("blockNoPlugins.xml")) {
-      AddonTestUtils.loadBlocklistRawData({ plugins: [] });
-    } else if (aURL.endsWith("blockPluginHard.xml")) {
-      AddonTestUtils.loadBlocklistRawData({
-        plugins: [
-          {
-            matchFilename: "libnptest\\.so|nptest\\.dll|Test\\.plugin",
-            versionRange: [{ severity: "2" }],
-            blockID: "p9999",
-          },
-        ],
-      });
-    } else {
-      ok(false, "Should never be asked to update to unknown blocklist data.");
-    }
-  }
-}
-
-var _originalBlocklistURL = null;
-function setAndUpdateBlocklist(aURL, aCallback) {
-  if (!_originalBlocklistURL) {
-    _originalBlocklistURL = Services.prefs.getCharPref(
-      "extensions.blocklist.url"
-    );
-  }
-  updateBlocklist(aURL, aCallback);
-}
-
-function resetBlocklist() {
-  Services.prefs.setCharPref("extensions.blocklist.url", _originalBlocklistURL);
-}
-
-function getXULPluginUI(plugin, anonid) {
-  if (
-    plugin.openOrClosedShadowRoot &&
-    plugin.openOrClosedShadowRoot.isUAWidget()
-  ) {
-    return plugin.openOrClosedShadowRoot.getElementById(anonid);
-  }
-  return plugin.ownerDocument.getAnonymousElementByAttribute(
-    plugin,
-    "anonid",
-    anonid
-  );
-}
-
-function assertPluginActiveState({
-  managerWindow,
-  pluginId,
-  expectedActivateState,
-}) {
-  let pluginEl = get_addon_element(managerWindow, pluginId);
-  ok(pluginEl, `Got the about:addon entry for "${pluginId}"`);
-
-  if (managerWindow.useHtmlViews) {
-    const pluginOptions = pluginEl.querySelector("plugin-options");
-    const pluginCheckedItem = pluginOptions.querySelector(
-      "panel-item[checked]"
-    );
-    is(
-      pluginCheckedItem.getAttribute("action"),
-      expectedActivateState,
-      `plugin should have ${expectedActivateState} state selected`
-    );
-  } else {
-    // Assertions for the XUL about:addons views.
-    pluginEl.parentNode.ensureElementIsVisible(pluginEl);
-    let enableButton = getXULPluginUI(pluginEl, "enable-btn");
-    let disableButton = getXULPluginUI(pluginEl, "disable-btn");
-    is_element_hidden(enableButton, "enable button should be hidden");
-    is_element_hidden(disableButton, "disable button should be hidden");
-    let menu = getXULPluginUI(pluginEl, "state-menulist");
-    is_element_visible(menu, "state menu should be visible");
-    let activateItem = getXULPluginUI(
-      pluginEl,
-      `${expectedActivateState}-menuitem`
-    );
-    ok(
-      activateItem,
-      `Got a menu item for the ${expectedActivateState} plugin activate state`
-    );
-    is(
-      menu.selectedItem,
-      activateItem,
-      `state menu should have '${expectedActivateState}' selected`
-    );
+    ok(false, "Should never be asked to update to unknown blocklist data.");
   }
 }
 
@@ -117,63 +37,10 @@ function setPluginActivateState({ managerWindow, pluginId, activateState }) {
   let pluginEl = get_addon_element(managerWindow, pluginId);
   ok(pluginEl, `Got the about:addon entry for "${pluginId}"`);
 
-  if (managerWindow.useHtmlViews) {
-    // Activate plugin on the HTML about:addons views.
-    let activateAction = pluginEl.querySelector(`[action="${activateState}"]`);
-    ok(activateAction, `Got element for ${activateState} plugin action`);
-    activateAction.click();
-  } else {
-    // Activate plugin on the XUL about:addons views.
-    let activateItem = getXULPluginUI(pluginEl, `${activateState}-menuitem`);
-    ok(
-      activateItem,
-      `Got a menu item for the ${activateState} plugin activate state`
-    );
-    let menu = getXULPluginUI(pluginEl, "state-menulist");
-    menu.selectedItem = activateItem;
-    activateItem.doCommand();
-  }
-}
-
-async function assertPluginAppDisabled({ managerWindow, pluginId }) {
-  const pluginEl = get_addon_element(managerWindow, pluginId);
-  ok(pluginEl, `Got the about:addon entry for "${pluginId}"`);
-
-  if (managerWindow.useHtmlViews) {
-    // Open the options menu (needed to check the disabled buttons).
-    const pluginOptions = pluginEl.querySelector("plugin-options");
-    pluginOptions.querySelector("panel-list").open = true;
-    // tests all buttons disabled (besides the checked one and the expand action)
-    // are expected to be disabled if locked is true.
-    for (const item of pluginOptions.querySelectorAll(
-      "panel-item:not([hidden])"
-    )) {
-      const actionName = item.getAttribute("action");
-      if (
-        !item.hasAttribute("checked") &&
-        actionName !== "expand" &&
-        actionName !== "preferences"
-      ) {
-        ok(
-          item.shadowRoot.querySelector("button").disabled,
-          `Plugin action "${actionName}" should be disabled`
-        );
-      }
-    }
-    pluginOptions.querySelector("panel-list").open = false;
-  } else {
-    // Assertions for the XUL about:addons views.
-    let menu = getXULPluginUI(pluginEl, "state-menulist");
-    pluginEl.parentNode.ensureElementIsVisible(pluginEl);
-    menu = getXULPluginUI(pluginEl, "state-menulist");
-    is(menu.disabled, true, "state menu should be disabled");
-
-    EventUtils.synthesizeMouseAtCenter(pluginEl, {}, managerWindow);
-    await BrowserTestUtils.waitForEvent(managerWindow.document, "ViewChanged");
-
-    menu = managerWindow.document.getElementById("detail-state-menulist");
-    is(menu.disabled, true, "detail state menu should be disabled");
-  }
+  // Activate plugin on the HTML about:addons views.
+  let activateAction = pluginEl.querySelector(`[action="${activateState}"]`);
+  ok(activateAction, `Got element for ${activateState} plugin action`);
+  activateAction.click();
 }
 
 async function getTestPluginAddon() {
@@ -188,8 +55,7 @@ async function getTestPluginAddon() {
   return undefined;
 }
 
-async function test_CTP_plugins(aboutAddonsType) {
-  await SpecialPowers.pushPrefEnv({ set: [["plugins.click_to_play", true]] });
+add_task(async function test_CTP_plugins() {
   let pluginTag = getTestPluginTag();
   pluginTag.enabledState = Ci.nsIPluginTag.STATE_CLICKTOPLAY;
   let managerWindow = await open_manager("addons://list/plugin");
@@ -203,11 +69,14 @@ async function test_CTP_plugins(aboutAddonsType) {
   ok(pluginEl, `Got the about:addon entry for "${testPluginId}"`);
 
   info("part3: test plugin add-on actions status");
-  assertPluginActiveState({
-    managerWindow,
-    pluginId: testPluginId,
-    expectedActivateState: "ask-to-activate",
-  });
+
+  let pluginOptions = pluginEl.querySelector("plugin-options");
+  let pluginCheckedItem = pluginOptions.querySelector("panel-item[checked]");
+  is(
+    pluginCheckedItem.getAttribute("action"),
+    "ask-to-activate",
+    "plugin should have ask-to-activate state selected"
+  );
 
   let pluginTab = await BrowserTestUtils.openNewForegroundTab(
     gBrowser,
@@ -235,18 +104,15 @@ async function test_CTP_plugins(aboutAddonsType) {
     gHttpTestRoot + "plugin_test.html"
   );
 
-  await ContentTask.spawn(pluginTab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(pluginTab.linkedBrowser, [], async function() {
     let testPlugin = content.document.getElementById("test");
     ok(testPlugin, "part5: should have a plugin element in the page");
-    let objLoadingContent = testPlugin.QueryInterface(
-      Ci.nsIObjectLoadingContent
-    );
-    let condition = () => objLoadingContent.activated;
+    let condition = () => testPlugin.activated;
     await ContentTaskUtils.waitForCondition(
       condition,
       "part5: waited too long for plugin to activate"
     );
-    ok(objLoadingContent.activated, "part6: plugin should be activated");
+    ok(testPlugin.activated, "part6: plugin should be activated");
   });
 
   BrowserTestUtils.removeTab(pluginTab);
@@ -263,23 +129,24 @@ async function test_CTP_plugins(aboutAddonsType) {
   );
   pluginBrowser = pluginTab.linkedBrowser;
 
-  await ContentTask.spawn(pluginTab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(pluginTab.linkedBrowser, [], async function() {
     let testPlugin = content.document.getElementById("test");
     ok(testPlugin, "part7: should have a plugin element in the page");
-    let objLoadingContent = testPlugin.QueryInterface(
-      Ci.nsIObjectLoadingContent
-    );
-    ok(!objLoadingContent.activated, "part7: plugin should not be activated");
+    ok(!testPlugin.activated, "part7: plugin should not be activated");
   });
 
   BrowserTestUtils.removeTab(pluginTab);
 
   info("part8: test plugin state is never-activate");
-  assertPluginActiveState({
-    managerWindow,
-    pluginId: testPluginId,
-    expectedActivateState: "never-activate",
-  });
+  pluginEl = get_addon_element(managerWindow, testPluginId);
+
+  pluginOptions = pluginEl.querySelector("plugin-options");
+  const pluginCheckItem = pluginOptions.querySelector("panel-item[checked]");
+  is(
+    pluginCheckItem.getAttribute("action"),
+    "never-activate",
+    "plugin should have never-activate state selected"
+  );
 
   info("part9: set plugin state to always-activate");
   setPluginActivateState({
@@ -294,18 +161,15 @@ async function test_CTP_plugins(aboutAddonsType) {
   );
   pluginBrowser = pluginTab.linkedBrowser;
 
-  await ContentTask.spawn(pluginTab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(pluginTab.linkedBrowser, [], async function() {
     let testPlugin = content.document.getElementById("test");
     ok(testPlugin, "part9: should have a plugin element in the page");
-    let objLoadingContent = testPlugin.QueryInterface(
-      Ci.nsIObjectLoadingContent
-    );
-    let condition = () => objLoadingContent.activated;
+    let condition = () => testPlugin.activated;
     await ContentTaskUtils.waitForCondition(
       condition,
       "part9: waited too long for plugin to activate"
     );
-    ok(objLoadingContent.activated, "part10: plugin should be activated");
+    ok(testPlugin.activated, "part10: plugin should be activated");
   });
 
   BrowserTestUtils.removeTab(pluginTab);
@@ -331,23 +195,6 @@ async function test_CTP_plugins(aboutAddonsType) {
 
   BrowserTestUtils.removeTab(pluginTab);
   await close_manager(managerWindow);
-  await SpecialPowers.popPrefEnv();
-}
-
-add_task(async function test_CTP_plugins_XUL_aboutaddons() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", false]],
-  });
-  await test_CTP_plugins("XUL");
-  await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function test_CTP_plugins_HTML_aboutaddons() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", true]],
-  });
-  await test_CTP_plugins("HTML");
-  await SpecialPowers.popPrefEnv();
 });
 
 add_task(async function test_blocklisted_plugin_disabled() {
@@ -355,35 +202,24 @@ add_task(async function test_blocklisted_plugin_disabled() {
     let pluginTag = getTestPluginTag();
     pluginTag.enabledState = Ci.nsIPluginTag.STATE_ENABLED;
     await new Promise(resolve => {
-      setAndUpdateBlocklist(gHttpTestRoot + "blockNoPlugins.xml", resolve);
+      updateBlocklist(gHttpTestRoot + "blockNoPlugins", resolve);
     });
-    resetBlocklist();
   }
 
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["extensions.blocklist.suppressUI", true],
-      ["extensions.blocklist.useXML", true],
-    ],
+    set: [["extensions.blocklist.suppressUI", true]],
   });
 
   // Causes appDisabled to be set.
-  await new Promise(async resolve => {
+  await new Promise(resolve => {
     // Ensure to reset the blocklist if this test exits earlier because
     // of a failure.
     registerCleanupFunction(ensurePluginEnabled);
-    setAndUpdateBlocklist(gHttpTestRoot + "blockPluginHard.xml", resolve);
+    updateBlocklist(gHttpTestRoot + "blockPluginHard", resolve);
   });
 
   await checkPlugins();
 
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.blocklist.useXML", false]],
-  });
-  await checkPlugins();
-
-  // Clear the blocklist and all prefs on the stack.
-  await ensurePluginEnabled();
   // Using flushPrefEnv instead of 2x popPrefEnv to work around bug 1557397.
   await SpecialPowers.flushPrefEnv();
 });
@@ -393,21 +229,33 @@ async function checkPlugins() {
   isnot(testPluginAddon, null, "Test Plug-in should exist");
   let testPluginId = testPluginAddon.id;
 
-  let managerWindow;
+  let managerWindow = await open_manager("addons://list/plugin");
 
-  info("Test blocklisted plugin actions disabled in XUL about:addons");
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", false]],
-  });
-  managerWindow = await open_manager("addons://list/plugin");
-  await assertPluginAppDisabled({ managerWindow, pluginId: testPluginId });
-  await close_manager(managerWindow);
+  let pluginEl = get_addon_element(managerWindow, testPluginId);
+  ok(pluginEl, `Got about:addons entry for ${testPluginId}`);
 
-  info("Test blocklisted plugin actions disabled in HTML about:addons");
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", true]],
-  });
-  managerWindow = await open_manager("addons://list/plugin");
-  await assertPluginAppDisabled({ managerWindow, pluginId: testPluginId });
+  // Open the options menu (needed to check the disabled buttons).
+  const pluginOptions = pluginEl.querySelector("plugin-options");
+  pluginOptions.querySelector("panel-list").open = true;
+
+  // tests all buttons disabled (besides the checked one and the expand action)
+  // are expected to be disabled if locked is true.
+  for (const item of pluginOptions.querySelectorAll(
+    "panel-item:not([hidden])"
+  )) {
+    const actionName = item.getAttribute("action");
+    if (
+      !item.hasAttribute("checked") &&
+      actionName !== "expand" &&
+      actionName !== "preferences"
+    ) {
+      ok(
+        item.shadowRoot.querySelector("button").disabled,
+        `Plugin action "${actionName}" should be disabled`
+      );
+    }
+  }
+  pluginOptions.querySelector("panel-list").open = false;
+
   await close_manager(managerWindow);
 }

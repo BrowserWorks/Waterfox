@@ -47,7 +47,7 @@ addAccessibleTask(
 
     let onReorder = waitForEvent(EVENT_REORDER, id1);
     // Create and add an element with CSS generated content to container1
-    await ContentTask.spawn(browser, id1, id => {
+    await invokeContentTask(browser, [id1], id => {
       let node = content.document.createElement("div");
       node.textContent = "text";
       node.setAttribute("class", "gentext");
@@ -70,7 +70,7 @@ addAccessibleTask(
     };
     testAccessibleTree(container1, tree);
 
-    onReorder = waitForEvent(EVENT_REORDER, id2);
+    onReorder = waitForEvent(EVENT_REORDER, "container2_child");
     // Add CSS generated content to an element in container2's subtree
     await invokeSetAttribute(browser, "container2_child", "class", "gentext");
     await onReorder;
@@ -89,5 +89,6 @@ addAccessibleTask(
       ],
     };
     testAccessibleTree(container2, tree);
-  }
+  },
+  { iframe: true, remoteIframe: true }
 );

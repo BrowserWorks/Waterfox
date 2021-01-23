@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Sideegenskaper">
+<!ENTITY location.label "Adresse:">
+<!ENTITY lastModified.label "Sist endret:">
+<!ENTITY titleInput.label "Tittel:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Forfatter:">
+<!ENTITY authorInput.accessKey "F">
+<!ENTITY descriptionInput.label "Beskrivelse:">
+<!ENTITY descriptionInput.accessKey "B">
+<!ENTITY locationNewPage.label "[Ny side, ikke lagret enda]">
+<!ENTITY EditHEADSource1.label "Avanserte brukere:">
+<!ENTITY EditHEADSource2.label "For å redigere annet innhold i &lt;head&gt;-regionen, bruk «HTML-kilde» i Vis-menyen eller verktøylinjen for redigeringsmodus.">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Opstelle &amp; adressearje">
+<!ENTITY addressingGroupTitle.label "Adressearing">
+<!ENTITY addressingText.label      "By it opsykjen fan adressen:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Myn algiemene LDAP-serverynstellingen brûke foar dit account">
+<!ENTITY useGlobal.accesskey       "M">
+<!ENTITY editDirectories.label     "Mappen bewurkje…">
+<!ENTITY editDirectories.accesskey "B">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Oare LDAP-server brûke:">
+<!ENTITY directories.accesskey     "b">
+<!ENTITY directoriesNone.label     "Gjin">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Opstelle">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Berjochten opstelle yn HTML-formaat">
+<!ENTITY useHtml.accesskey                    "o">
+<!ENTITY autoQuote.label                      "Automatysk de orizjinele tekst sitearje by antwurdzjen">
+<!ENTITY autoQuote.accesskey                  "A">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "By sitearjen,">
+<!ENTITY quoting.accesskey                    "s">
+<!ENTITY aboveQuote.label                     "myn reaksje boppe de sitearre tekst starte">
+<!ENTITY belowQuote.label                     "myn reaksje ûnder de sitearre tekst starte">
+<!ENTITY selectAndQuote.label                 "de sitearre tekst selektearje">
+<!ENTITY place.label                          "en myn ûndertekening sette">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "ûnder de sitearre tekst (oanret)">
+<!ENTITY aboveText.label                      "ûnder myn antwurd (boppe de sitearre tekst)">
+<!ENTITY includeSigOnReply.label              "Undertekening brûke by it antwurdzjen">
+<!ENTITY includeSigOnReply.accesskey          "U">
+<!ENTITY includeSigOnForward.label            "Undertekening brûke by it trochstjoeren">
+<!ENTITY includeSigOnForward.accesskey        "t">
+
+<!ENTITY globalComposingPrefs.label           "Algemiene opstelynstellingen…">
+<!ENTITY globalComposingPrefs.accesskey       "g">
+
+<!ENTITY globalAddressingPrefs.label          "Algemiene adressearringsynstellingen…">
+<!ENTITY globalAddressingPrefs.accesskey      "i">

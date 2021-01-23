@@ -422,15 +422,6 @@ void RecordSlowSQLStatement(const nsACString& statement,
                             const nsACString& dbName, uint32_t delay);
 
 /**
- * Record Webrtc ICE candidate type combinations in a 17bit bitmask
- *
- * @param iceCandidateBitmask - the bitmask representing local and remote ICE
- *                              candidate types present for the connection
- * @param success - did the peer connection connected
- */
-void RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
-                               const bool success);
-/**
  * Initialize I/O Reporting
  * Initially this only records I/O for files in the binary directory.
  *
@@ -575,6 +566,39 @@ void ScalarSet(mozilla::Telemetry::ScalarID aId, const nsAString& aKey,
 void ScalarSetMaximum(mozilla::Telemetry::ScalarID aId, const nsAString& aKey,
                       uint32_t aValue);
 
+template <ScalarID id>
+class MOZ_RAII AutoScalarTimer {
+ public:
+  explicit AutoScalarTimer(TimeStamp aStart = TimeStamp::Now()
+                               MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+      : start(aStart) {
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+  }
+
+  explicit AutoScalarTimer(const nsAString& aKey,
+                           TimeStamp aStart = TimeStamp::Now()
+                               MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+      : start(aStart), key(aKey) {
+    MOZ_ASSERT(!aKey.IsEmpty(), "The key must not be empty.");
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+  }
+
+  ~AutoScalarTimer() {
+    TimeStamp end = TimeStamp::Now();
+    uint32_t delta = static_cast<uint32_t>((end - start).ToMilliseconds());
+    if (key.IsEmpty()) {
+      mozilla::Telemetry::ScalarSet(id, delta);
+    } else {
+      mozilla::Telemetry::ScalarSet(id, key, delta);
+    }
+  }
+
+ private:
+  const TimeStamp start;
+  const nsString key;
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
 /**
  * Records an event. See the Event documentation for more information:
  * https://firefox-source-docs.mozilla.org/toolkit/components/telemetry/telemetry/collection/events.html
@@ -585,7 +609,7 @@ void ScalarSetMaximum(mozilla::Telemetry::ScalarID aId, const nsAString& aKey,
  */
 void RecordEvent(mozilla::Telemetry::EventID aId,
                  const mozilla::Maybe<nsCString>& aValue,
-                 const mozilla::Maybe<nsTArray<EventExtraEntry>>& aExtra);
+                 const mozilla::Maybe<CopyableTArray<EventExtraEntry>>& aExtra);
 
 /**
  * Enables recording of events in a category.

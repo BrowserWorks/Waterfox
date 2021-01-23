@@ -3,19 +3,7 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // Tests for preview through Babel's compile output.
-requestLongerTimeout(3);
-
-function getOriginalScope(dbg) {
-  return dbg.selectors.getSelectedOriginalScope(
-    dbg.selectors.getCurrentThread()
-  );
-}
-
-async function previewToken(dbg, line, column, value) {
-  const previewEl = await tryHovering(dbg, line, column, "previewPopup");
-  is(previewEl.innerText, value);
-  dbg.actions.clearPreview(getContext(dbg));
-}
+requestLongerTimeout(5);
 
 // Test pausing with mapScopes enabled and disabled
 add_task(async function() {
@@ -44,3 +32,15 @@ add_task(async function() {
   await previewToken(dbg, 20, 16, "undefined");
   ok(getOriginalScope(dbg) == null, "Scopes are not mapped");
 });
+
+function getOriginalScope(dbg) {
+  return dbg.selectors.getSelectedOriginalScope(
+    dbg.selectors.getCurrentThread()
+  );
+}
+
+async function previewToken(dbg, line, column, value) {
+  const previewEl = await tryHovering(dbg, line, column, "previewPopup");
+  is(previewEl.innerText, value);
+  dbg.actions.clearPreview(getContext(dbg));
+}

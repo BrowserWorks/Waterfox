@@ -92,8 +92,91 @@ this.VideoControlsWidget = class {
     delete this.impl;
   }
 
+  onPrefChange(prefName, prefValue) {
+    this.prefs[prefName] = prefValue;
+
+    if (!this.impl) {
+      return;
+    }
+
+    this.impl.onPrefChange(prefName, prefValue);
+  }
+
   static isPictureInPictureVideo(someVideo) {
     return someVideo.isCloningElementVisually;
+  }
+
+  /**
+   * Returns true if a <video> meets the requirements to show the Picture-in-Picture
+   * toggle. Those requirements currently are:
+   *
+   * 1. The video must be 45 seconds in length or longer.
+   * 2. Neither the width or the height of the video can be less than 140px.
+   * 3. The video must have audio.
+   * 4. The video must not a MediaStream video (Bug 1592539)
+   *
+   * This can be overridden via the
+   * media.videocontrols.picture-in-picture.video-toggle.always-show pref, which
+   * is mostly used for testing.
+   *
+   * @param {Object} prefs
+   *   The preferences set that was passed to the UAWidget.
+   * @param {Element} someVideo
+   *   The <video> to test.
+   * @param {Object} reflowedDimensions
+   *   An object representing the reflowed dimensions of the <video>. Properties
+   *   are:
+   *
+   *     videoWidth (Number):
+   *       The width of the video in pixels.
+   *
+   *     videoHeight (Number):
+   *       The height of the video in pixels.
+   *
+   * @return {Boolean}
+   */
+  static shouldShowPictureInPictureToggle(
+    prefs,
+    someVideo,
+    reflowedDimensions
+  ) {
+    if (
+      prefs["media.videocontrols.picture-in-picture.video-toggle.always-show"]
+    ) {
+      return true;
+    }
+
+    const MIN_VIDEO_LENGTH =
+      prefs[
+        "media.videocontrols.picture-in-picture.video-toggle.min-video-secs"
+      ];
+
+    if (someVideo.duration < MIN_VIDEO_LENGTH) {
+      return false;
+    }
+
+    const MIN_VIDEO_DIMENSION = 140; // pixels
+    if (
+      reflowedDimensions.videoWidth < MIN_VIDEO_DIMENSION ||
+      reflowedDimensions.videoHeight < MIN_VIDEO_DIMENSION
+    ) {
+      return false;
+    }
+
+    if (!someVideo.mozHasAudio) {
+      return false;
+    }
+
+    // Bug 1592539 - It's possible to confuse the underlying visual
+    // cloning mechanism by switching which video stream a <video> is
+    // rendering. We try to head that case off for now by hiding the
+    // Picture-in-Picture capability on <video> elements that have
+    // srcObject != null.
+    if (someVideo.srcObject) {
+      return false;
+    }
+
+    return true;
   }
 };
 
@@ -153,6 +236,7 @@ this.VideoControlsImplWidget = class {
         "stalled",
         "mozvideoonlyseekbegin",
         "mozvideoonlyseekcompleted",
+        "durationchange",
       ],
 
       showHours: false,
@@ -168,6 +252,7 @@ this.VideoControlsImplWidget = class {
       set isAudioOnly(val) {
         this._isAudioOnly = val;
         this.setFullscreenButtonState();
+        this.updatePictureInPictureToggleDisplay();
 
         if (!this.isTopLevelSyntheticDocument) {
           return;
@@ -277,7 +362,7 @@ this.VideoControlsImplWidget = class {
           // We have to check again if the media has audio here.
           if (!this.isAudioOnly && !this.video.mozHasAudio) {
             this.muteButton.setAttribute("noAudio", "true");
-            this.muteButton.setAttribute("disabled", "true");
+            this.muteButton.disabled = true;
           }
         }
 
@@ -321,12 +406,17 @@ this.VideoControlsImplWidget = class {
           this.setShowPictureInPictureMessage(true);
         }
 
-        if (
-          !this.pipToggleEnabled ||
-          this.isShowingPictureInPictureMessage ||
-          this.isAudioOnly
-        ) {
-          this.pictureInPictureToggleButton.setAttribute("hidden", true);
+        // Default the Picture-in-Picture toggle button to being hidden. We might unhide it
+        // later if we determine that this video is qualified to show it.
+        this.pictureInPictureToggleButton.setAttribute("hidden", true);
+
+        if (this.video.readyState >= this.video.HAVE_METADATA) {
+          // According to the spec[1], at the HAVE_METADATA (or later) state, we know
+          // the video duration and dimensions, which means we can calculate whether or
+          // not to show the Picture-in-Picture toggle now.
+          //
+          // [1]: https://www.w3.org/TR/html50/embedded-content-0.html#dom-media-have_metadata
+          this.updatePictureInPictureToggleDisplay();
         }
 
         let adjustableControls = [
@@ -441,6 +531,27 @@ this.VideoControlsImplWidget = class {
         // _volumeControlWidth, since the volume slider implementation
         // depends on it.
         this.updateVolumeControls();
+      },
+
+      updatePictureInPictureToggleDisplay() {
+        if (this.isAudioOnly) {
+          this.pictureInPictureToggleButton.setAttribute("hidden", true);
+          return;
+        }
+
+        if (
+          this.pipToggleEnabled &&
+          !this.isShowingPictureInPictureMessage &&
+          VideoControlsWidget.shouldShowPictureInPictureToggle(
+            this.prefs,
+            this.video,
+            this.reflowedDimensions
+          )
+        ) {
+          this.pictureInPictureToggleButton.removeAttribute("hidden");
+        } else {
+          this.pictureInPictureToggleButton.setAttribute("hidden", true);
+        }
       },
 
       setupNewLoadState() {
@@ -607,9 +718,13 @@ this.VideoControlsImplWidget = class {
             );
             if (!this.isAudioOnly && !this.video.mozHasAudio) {
               this.muteButton.setAttribute("noAudio", "true");
-              this.muteButton.setAttribute("disabled", "true");
+              this.muteButton.disabled = true;
             }
             this.adjustControlSize();
+            this.updatePictureInPictureToggleDisplay();
+            break;
+          case "durationchange":
+            this.updatePictureInPictureToggleDisplay();
             break;
           case "loadeddata":
             this.firstFrameShown = true;
@@ -751,9 +866,6 @@ this.VideoControlsImplWidget = class {
                 // Prevent any click event within media controls from dispatching through to video.
                 aEvent.stopPropagation();
                 break;
-              case this.pictureInPictureToggleButton:
-                this.video.togglePictureInPicture();
-                break;
             }
             break;
           case "dblclick":
@@ -767,6 +879,7 @@ this.VideoControlsImplWidget = class {
             this.updateReflowedDimensions();
             this.reflowTriggeringCallValidator.isReflowTriggeringPropsAllowed = false;
             this.adjustControlSize();
+            this.updatePictureInPictureToggleDisplay();
             break;
           case "fullscreenchange":
             this.onFullscreenChange();
@@ -1235,7 +1348,7 @@ this.VideoControlsImplWidget = class {
           }
 
           this.startFadeOut(this.controlBar, false);
-          this.textTrackList.hidden = true;
+          this.textTrackListContainer.hidden = true;
           this.window.clearTimeout(this._showControlsTimeout);
           this._controlsHiddenByTimeout = false;
         }
@@ -1450,18 +1563,18 @@ this.VideoControlsImplWidget = class {
 
       get isVideoInFullScreen() {
         return this.video.isSameNode(
-          this.video.getRootNode().mozFullScreenElement
+          this.video.getRootNode().fullscreenElement
         );
       },
 
       toggleFullscreen() {
         this.isVideoInFullScreen
-          ? this.document.mozCancelFullScreen()
-          : this.video.mozRequestFullScreen();
+          ? this.document.exitFullscreen()
+          : this.video.requestFullscreen();
       },
 
       setFullscreenButtonState() {
-        if (this.isAudioOnly || !this.document.mozFullScreenEnabled) {
+        if (this.isAudioOnly || !this.document.fullscreenEnabled) {
           this.controlBar.setAttribute("fullscreen-unavailable", true);
           this.adjustControlSize();
           return;
@@ -1732,7 +1845,7 @@ this.VideoControlsImplWidget = class {
 
       get isClosedCaptionAvailable() {
         // There is no rendering area, no need to show the caption.
-        if (!this.video.videoWidth || !this.video.videoHeight) {
+        if (this.isAudioOnly) {
           return false;
         }
         return this.overlayableTextTracks.length;
@@ -1852,11 +1965,11 @@ this.VideoControlsImplWidget = class {
           }
         }
 
-        this.textTrackList.hidden = true;
+        this.textTrackListContainer.hidden = true;
       },
 
       onControlBarAnimationFinished() {
-        this.textTrackList.hidden = true;
+        this.textTrackListContainer.hidden = true;
         this.video.dispatchEvent(
           new this.window.CustomEvent("controlbarchange")
         );
@@ -1870,10 +1983,10 @@ this.VideoControlsImplWidget = class {
       },
 
       toggleClosedCaption() {
-        if (this.textTrackList.hidden) {
-          this.textTrackList.hidden = false;
+        if (this.textTrackListContainer.hidden) {
+          this.textTrackListContainer.hidden = false;
         } else {
-          this.textTrackList.hidden = true;
+          this.textTrackListContainer.hidden = true;
         }
       },
 
@@ -2194,6 +2307,9 @@ this.VideoControlsImplWidget = class {
           "closedCaptionButton"
         );
         this.textTrackList = this.shadowRoot.getElementById("textTrackList");
+        this.textTrackListContainer = this.shadowRoot.getElementById(
+          "textTrackListContainer"
+        );
         this.pictureInPictureToggleButton = this.shadowRoot.getElementById(
           "pictureInPictureToggleButton"
         );
@@ -2288,8 +2404,6 @@ this.VideoControlsImplWidget = class {
           { el: this.video.textTracks, type: "change" },
 
           { el: this.video, type: "media-videoCasting", touchOnly: true },
-
-          { el: this.pictureInPictureToggleButton, type: "click" },
         ];
 
         for (let {
@@ -2472,13 +2586,14 @@ this.VideoControlsImplWidget = class {
      * Remove it when migrate to Fluent.
      */
     const parser = new this.window.DOMParser();
+    parser.forceEnableDTD();
     let parserDoc = parser.parseFromString(
       `<!DOCTYPE bindings [
       <!ENTITY % videocontrolsDTD SYSTEM "chrome://global/locale/videocontrols.dtd">
       %videocontrolsDTD;
       ]>
       <div class="videocontrols" xmlns="http://www.w3.org/1999/xhtml" role="none">
-        <link rel="stylesheet" type="text/css" href="chrome://global/skin/media/videocontrols.css" />
+        <link rel="stylesheet" href="chrome://global/skin/media/videocontrols.css" />
         <div id="controlsContainer" class="controlsContainer" role="none">
           <div id="statusOverlay" class="statusOverlay stackItem" hidden="true">
             <div id="statusIcon" class="statusIcon"></div>
@@ -2544,7 +2659,9 @@ this.VideoControlsImplWidget = class {
                       enterfullscreenlabel="&fullscreenButton.enterfullscreenlabel;"
                       exitfullscreenlabel="&fullscreenButton.exitfullscreenlabel;"/>
             </div>
-            <div id="textTrackList" class="textTrackList" hidden="true" offlabel="&closedCaption.off;"></div>
+            <div id="textTrackListContainer" class="textTrackListContainer" hidden="true">
+              <div id="textTrackList" class="textTrackList" offlabel="&closedCaption.off;"></div>
+            </div>
           </div>
         </div>
       </div>`,
@@ -2566,6 +2683,11 @@ this.VideoControlsImplWidget = class {
     this.Utils.terminate();
     this.TouchUtils.terminate();
     this.Utils.updateOrientationState(false);
+  }
+
+  onPrefChange(prefName, prefValue) {
+    this.prefs[prefName] = prefValue;
+    this.Utils.updatePictureInPictureToggleDisplay();
   }
 
   _setupEventListeners() {
@@ -2713,19 +2835,24 @@ this.NoControlsMobileImplWidget = class {
     this.Utils.terminate();
   }
 
+  onPrefChange(prefName, prefValue) {
+    this.prefs[prefName] = prefValue;
+  }
+
   generateContent() {
     /*
      * Pass the markup through XML parser purely for the reason of loading the localization DTD.
      * Remove it when migrate to Fluent.
      */
     const parser = new this.window.DOMParser();
+    parser.forceEnableDTD();
     let parserDoc = parser.parseFromString(
       `<!DOCTYPE bindings [
       <!ENTITY % videocontrolsDTD SYSTEM "chrome://global/locale/videocontrols.dtd">
       %videocontrolsDTD;
       ]>
       <div class="videocontrols" xmlns="http://www.w3.org/1999/xhtml" role="none">
-        <link rel="stylesheet" type="text/css" href="chrome://global/skin/media/videocontrols.css" />
+        <link rel="stylesheet" href="chrome://global/skin/media/videocontrols.css" />
         <div id="controlsContainer" class="controlsContainer" role="none" hidden="true">
           <div class="controlsOverlay stackItem">
             <div class="controlsSpacerStack">
@@ -2763,19 +2890,24 @@ this.NoControlsPictureInPictureImplWidget = class {
 
   destructor() {}
 
+  onPrefChange(prefName, prefValue) {
+    this.prefs[prefName] = prefValue;
+  }
+
   generateContent() {
     /*
      * Pass the markup through XML parser purely for the reason of loading the localization DTD.
      * Remove it when migrate to Fluent.
      */
     const parser = new this.window.DOMParser();
+    parser.forceEnableDTD();
     let parserDoc = parser.parseFromString(
       `<!DOCTYPE bindings [
       <!ENTITY % videocontrolsDTD SYSTEM "chrome://global/locale/videocontrols.dtd">
       %videocontrolsDTD;
       ]>
       <div class="videocontrols" xmlns="http://www.w3.org/1999/xhtml" role="none">
-        <link rel="stylesheet" type="text/css" href="chrome://global/skin/media/videocontrols.css" />
+        <link rel="stylesheet" href="chrome://global/skin/media/videocontrols.css" />
         <div id="controlsContainer" class="controlsContainer" role="none">
           <div class="pictureInPictureOverlay stackItem" status="pictureInPicture">
             <div id="statusIcon" class="statusIcon" type="pictureInPicture"></div>
@@ -2817,6 +2949,32 @@ this.NoControlsDesktopImplWidget = class {
             }
             break;
           }
+          case "resizevideocontrols": {
+            this.updateReflowedDimensions();
+            this.updatePictureInPictureToggleDisplay();
+            break;
+          }
+          case "durationchange":
+          // Intentional fall-through
+          case "loadedmetadata": {
+            this.updatePictureInPictureToggleDisplay();
+            break;
+          }
+        }
+      },
+
+      updatePictureInPictureToggleDisplay() {
+        if (
+          this.pipToggleEnabled &&
+          VideoControlsWidget.shouldShowPictureInPictureToggle(
+            this.prefs,
+            this.video,
+            this.reflowedDimensions
+          )
+        ) {
+          this.pictureInPictureToggleButton.removeAttribute("hidden");
+        } else {
+          this.pictureInPictureToggleButton.setAttribute("hidden", true);
         }
       },
 
@@ -2837,19 +2995,50 @@ this.NoControlsDesktopImplWidget = class {
           this.videocontrols.setAttribute("inDOMFullscreen", true);
         }
 
-        if (!this.pipToggleEnabled) {
-          this.pictureInPictureToggleButton.setAttribute("hidden", true);
+        // Default the Picture-in-Picture toggle button to being hidden. We might unhide it
+        // later if we determine that this video is qualified to show it.
+        this.pictureInPictureToggleButton.setAttribute("hidden", true);
+
+        if (this.video.readyState >= this.video.HAVE_METADATA) {
+          // According to the spec[1], at the HAVE_METADATA (or later) state, we know
+          // the video duration and dimensions, which means we can calculate whether or
+          // not to show the Picture-in-Picture toggle now.
+          //
+          // [1]: https://www.w3.org/TR/html50/embedded-content-0.html#dom-media-have_metadata
+          this.updatePictureInPictureToggleDisplay();
         }
 
         this.document.addEventListener("fullscreenchange", this, {
           capture: true,
         });
+
+        this.video.addEventListener("loadedmetadata", this);
+        this.video.addEventListener("durationchange", this);
+        this.videocontrols.addEventListener("resizevideocontrols", this);
       },
 
       terminate() {
         this.document.removeEventListener("fullscreenchange", this, {
           capture: true,
         });
+
+        this.video.removeEventListener("loadedmetadata", this);
+        this.video.removeEventListener("durationchange", this);
+        this.videocontrols.removeEventListener("resizevideocontrols", this);
+      },
+
+      updateReflowedDimensions() {
+        this.reflowedDimensions.videoHeight = this.video.clientHeight;
+        this.reflowedDimensions.videoWidth = this.video.clientWidth;
+        this.reflowedDimensions.videocontrolsWidth = this.videocontrols.clientWidth;
+      },
+
+      reflowedDimensions: {
+        // Set the dimensions to intrinsic <video> dimensions before the first
+        // update.
+        videoHeight: 150,
+        videoWidth: 300,
+        videocontrolsWidth: 0,
       },
 
       get pipToggleEnabled() {
@@ -2869,19 +3058,25 @@ this.NoControlsDesktopImplWidget = class {
     this.Utils.terminate();
   }
 
+  onPrefChange(prefName, prefValue) {
+    this.prefs[prefName] = prefValue;
+    this.Utils.updatePictureInPictureToggleDisplay();
+  }
+
   generateContent() {
     /*
      * Pass the markup through XML parser purely for the reason of loading the localization DTD.
      * Remove it when migrate to Fluent.
      */
     const parser = new this.window.DOMParser();
+    parser.forceEnableDTD();
     let parserDoc = parser.parseFromString(
       `<!DOCTYPE bindings [
       <!ENTITY % videocontrolsDTD SYSTEM "chrome://global/locale/videocontrols.dtd">
       %videocontrolsDTD;
       ]>
       <div class="videocontrols" xmlns="http://www.w3.org/1999/xhtml" role="none">
-        <link rel="stylesheet" type="text/css" href="chrome://global/skin/media/videocontrols.css" />
+        <link rel="stylesheet" href="chrome://global/skin/media/videocontrols.css" />
         <div id="controlsContainer" class="controlsContainer" role="none">
           <div class="controlsOverlay stackItem">
             <button id="pictureInPictureToggleButton" class="pictureInPictureToggleButton">

@@ -11,8 +11,10 @@
  * and create derivative works of this document.
  */
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLVideoElement : HTMLMediaElement {
+  [HTMLConstructor] constructor();
+
   [CEReactions, SetterThrows]
            attribute unsigned long width;
   [CEReactions, SetterThrows]
@@ -48,37 +50,35 @@ partial interface HTMLVideoElement {
 
   // Attributes for builtin video controls to lock screen orientation.
   // True if video controls should lock orientation when fullscreen.
-  [Pref="media.videocontrols.lock-video-orientation", Func="IsChromeOrXBLOrUAWidget"]
+  [Pref="media.videocontrols.lock-video-orientation", Func="IsChromeOrUAWidget"]
     readonly attribute boolean mozOrientationLockEnabled;
   // True if screen orientation is locked by video controls.
-  [Pref="media.videocontrols.lock-video-orientation", Func="IsChromeOrXBLOrUAWidget"]
+  [Pref="media.videocontrols.lock-video-orientation", Func="IsChromeOrUAWidget"]
     attribute boolean mozIsOrientationLocked;
 
-  // Clones the frames playing in this <video> to the target. Cloning
+  // Clones the frames playing in this <video> to the target. Cloning ends
   // when either node is removed from their DOM trees. Throws if one or
   // both <video> elements are not attached to a DOM tree.
-  [Throws, Func="IsChromeOrXBLOrUAWidget"]
-    void cloneElementVisually(HTMLVideoElement target);
+  // Returns a promise that resolves when the target's ImageContainer has been
+  // installed in this <video>'s MediaDecoder, or selected video
+  // MediaStreamTrack, whichever is available first. Note that it might never
+  // resolve.
+  [Throws, Func="IsChromeOrUAWidget"]
+    Promise<void> cloneElementVisually(HTMLVideoElement target);
 
   // Stops a <video> from cloning visually. Does nothing if the <video>
   // wasn't cloning in the first place.
-  [Func="IsChromeOrXBLOrUAWidget"]
+  [Func="IsChromeOrUAWidget"]
     void stopCloningElementVisually();
 
   // Returns true if the <video> is being cloned visually to another
   // <video> element (see cloneElementVisually).
-  [Func="IsChromeOrXBLOrUAWidget"]
+  [Func="IsChromeOrUAWidget"]
     readonly attribute boolean isCloningElementVisually;
-
-  // Fires the privileged MozTogglePictureInPicture event to enter
-  // Picture-in-Picture. Call this when triggering Picture-in-Picture
-  // from the video controls UAWidget.
-  [Throws, Func="IsChromeOrXBLOrUAWidget"]
-    void togglePictureInPicture();
 };
 
 // https://dvcs.w3.org/hg/html-media/raw-file/default/media-source/media-source.html#idl-def-HTMLVideoElement
 partial interface HTMLVideoElement {
-  [Func="mozilla::dom::MediaSource::Enabled", NewObject]
+  [Pref="media.mediasource.enabled", NewObject]
   VideoPlaybackQuality getVideoPlaybackQuality();
 };

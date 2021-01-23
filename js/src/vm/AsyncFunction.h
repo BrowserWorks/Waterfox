@@ -7,15 +7,18 @@
 #ifndef vm_AsyncFunction_h
 #define vm_AsyncFunction_h
 
-#include "builtin/Promise.h"
 #include "js/Class.h"
+#include "vm/AsyncFunctionResolveKind.h"  // AsyncFunctionResolveKind
 #include "vm/GeneratorObject.h"
 #include "vm/JSContext.h"
 #include "vm/JSObject.h"
+#include "vm/PromiseObject.h"
 
 namespace js {
 
 class AsyncFunctionGeneratorObject;
+
+extern const JSClass AsyncFunctionClass;
 
 // Resume the async function when the `await` operand resolves.
 // Split into two functions depending on whether the awaited value was
@@ -27,8 +30,6 @@ MOZ_MUST_USE bool AsyncFunctionAwaitedFulfilled(
 MOZ_MUST_USE bool AsyncFunctionAwaitedRejected(
     JSContext* cx, Handle<AsyncFunctionGeneratorObject*> generator,
     HandleValue reason);
-
-enum class AsyncFunctionResolveKind { Fulfill, Reject };
 
 // Resolve the async function's promise object with the given value and then
 // return the promise object.
@@ -45,7 +46,8 @@ class AsyncFunctionGeneratorObject : public AbstractGeneratorObject {
     RESERVED_SLOTS
   };
 
-  static const Class class_;
+  static const JSClass class_;
+  static const JSClassOps classOps_;
 
   static AsyncFunctionGeneratorObject* create(JSContext* cx,
                                               HandleFunction asyncGen);

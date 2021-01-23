@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Mga Add-ons">
+<!ENTITY aboutAddons.header2                    "Ang mga Add-ons mo">
+
+<!ENTITY addonAction.enable                     "I-enable">
+<!ENTITY addonAction.disable                    "I-disable">
+<!ENTITY addonAction.uninstall                  "I-uninstall">
+<!ENTITY addonAction.undo                       "I-undo">
+<!ENTITY addonAction.update                     "I-update">
+
+<!ENTITY addonUnsigned.message                  "Ang add-on na ito ay hindi ma-verify sa pamamagitan ng &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Alamin pa">

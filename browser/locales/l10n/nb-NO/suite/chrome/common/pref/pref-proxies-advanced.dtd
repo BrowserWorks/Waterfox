@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Avanserte proxyinnstillinger">
+<!ENTITY  protocols.caption           "Protokollspesifikke proxyer">
+<!ENTITY  protocols.description       "Normalt kan en proxy håndtere alle protokollene som er vist her.">
+<!ENTITY  http.label                  "HTTP proxy:">
+<!ENTITY  http.accesskey              "H">
+<!ENTITY  ssl.label                   "SSL proxy:">
+<!ENTITY  ssl.accesskey               "S">
+<!ENTITY  ftp.label                   "FTP:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Bruk HTTP proxy for alle protokollene">
+<!ENTITY  reuseProxy.accesskey        "u">
+<!ENTITY  port.label                  "Port:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "Generisk proxy">
+<!ENTITY  socks.description           "En SOCKS-proxy er en generisk proxy ofte brukt i store bedrifter.">
+<!ENTITY  socks.label                 "SOCKS proxy:">
+<!ENTITY  socks.accesskey             "O">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Bruk for å finne domenenavn (anbefalt for SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

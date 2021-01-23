@@ -48,6 +48,12 @@
 #include "mac/crash_generation/crash_generation_client.h"
 #endif
 
+#ifdef MOZ_PHC
+#include "PHC.h"
+#else
+namespace mozilla { namespace phc { class AddrInfo {}; } }
+#endif
+
 namespace google_breakpad {
 
 using std::string;
@@ -87,7 +93,9 @@ class ExceptionHandler {
   // exception.
   typedef bool (*MinidumpCallback)(const char *dump_dir,
                                    const char *minidump_id,
-                                   void *context, bool succeeded);
+                                   void *context,
+                                   const mozilla::phc::AddrInfo* addr_info,
+                                   bool succeeded);
 
   // A callback function which will be called directly if an exception occurs.
   // This bypasses the minidump file writing and simply gives the client
@@ -159,7 +167,8 @@ class ExceptionHandler {
   static bool WriteForwardedExceptionMinidump(int exception_type,
 					      int exception_code,
 					      int exception_subcode,
-					      mach_port_t thread);
+					      mach_port_t thread,
+					      mach_port_t task);
 
   // Returns whether out-of-process dump generation is used or not.
   bool IsOutOfProcess() const {
@@ -197,6 +206,7 @@ class ExceptionHandler {
                                   int exception_subcode,
                                   breakpad_ucontext_t *task_context,
                                   mach_port_t thread_name,
+                                  mach_port_t task_name,
                                   bool exit_after_write,
                                   bool report_current_thread);
 

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Import Buku Alamat">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Data diimport untuk Rekod: ">
+<!ENTITY fieldMapImport.next.label "Berikut">
+<!ENTITY fieldMapImport.next.accesskey "B">
+<!ENTITY fieldMapImport.previous.label "Dahulu">
+<!ENTITY fieldMapImport.previous.accesskey "D">
+<!ENTITY fieldMapImport.text "Guna Pindah Atas dan Pindah Bawah untuk memadankan medan buku alamat yang terletak pada bahagian kiri dengan data yang mahu diimport pada bahagian kanan.">
+<!ENTITY fieldMapImport.up.label "Pindah Atas">
+<!ENTITY fieldMapImport.up.accesskey "A">
+<!ENTITY fieldMapImport.down.label "Pindah Bawah">
+<!ENTITY fieldMapImport.down.accesskey "B">
+<!ENTITY fieldMapImport.fieldListTitle "Medan Buku Alamat">
+<!ENTITY fieldMapImport.dataTitle "Data rekod untuk diimport">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Rekod pertama mengandungi medan nama">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "R">
+
+

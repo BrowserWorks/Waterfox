@@ -19,22 +19,27 @@ async function init(aEvent) {
 
   var distroId = Services.prefs.getCharPref("distribution.id", "");
   if (distroId) {
-    var distroString = distroId;
-
-    var distroVersion = Services.prefs.getCharPref("distribution.version", "");
-    if (distroVersion) {
-      distroString += " - " + distroVersion;
-    }
-
-    var distroIdField = document.getElementById("distributionId");
-    distroIdField.value = distroString;
-    distroIdField.style.display = "block";
-
     var distroAbout = Services.prefs.getStringPref("distribution.about", "");
+    // If there is about text, we always show it.
     if (distroAbout) {
       var distroField = document.getElementById("distribution");
       distroField.value = distroAbout;
       distroField.style.display = "block";
+    }
+    // If it's not a mozilla distribution, show the rest,
+    // unless about text exists, then we always show.
+    if (!distroId.startsWith("mozilla-") || distroAbout) {
+      var distroVersion = Services.prefs.getCharPref(
+        "distribution.version",
+        ""
+      );
+      if (distroVersion) {
+        distroId += " - " + distroVersion;
+      }
+
+      var distroIdField = document.getElementById("distributionId");
+      distroIdField.value = distroId;
+      distroIdField.style.display = "block";
     }
   }
 
@@ -55,9 +60,11 @@ async function init(aEvent) {
     versionAttributes.isodate = `${year}-${month}-${day}`;
 
     document.getElementById("experimental").hidden = false;
-    // document.getElementById("communityDesc").hidden = true;
+    document.getElementById("communityDesc").hidden = true;
   }
 
+  let geckoVersionLabel = document.getElementById("geckoVersion");
+  geckoVersionLabel.value = Services.appinfo.version;
   // Use Fluent arguments for append version and the architecture of the build
   let versionField = document.getElementById("version");
 
@@ -89,7 +96,7 @@ async function init(aEvent) {
     }
   }
 
-  if (AppConstants.MOZ_APP_VERSION_DISPLAY.endsWith("esr")) {
+  if (AppConstants.MOZ_APP_VERSION_DISPLAY.startsWith("G3")) {
     document.getElementById("release").hidden = false;
   }
 

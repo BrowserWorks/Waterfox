@@ -31,35 +31,37 @@ function dispatchTestEvent() {
 dump("\nSPECIALPTEST:::Test script loaded " + (new Date).getTime() + "\n");
 SimpleTest.waitForExplicitFinish();
 var startTime = new Date();
-function starttest(){
+async function starttest(){
   dump("\nSPECIALPTEST:::Test script running after load " + (new Date).getTime() + "\n");
 
   /** Test for SpecialPowers extension **/
   is(SpecialPowers.sanityCheck(), "foo", "check to see whether the Special Powers extension is installed.");
 
   // Test a sync call into chrome
-  SpecialPowers.setBoolPref('extensions.checkCompatibility', true);
+  await SpecialPowers.setBoolPref('extensions.checkCompatibility', true);
   is(SpecialPowers.getBoolPref('extensions.checkCompatibility'), true, "Check to see if we can set a preference properly");
-  SpecialPowers.clearUserPref('extensions.checkCompatibility');
+  await SpecialPowers.clearUserPref('extensions.checkCompatibility');
 
   // Test a int pref
-  SpecialPowers.setIntPref('extensions.foobar', 42);
+  await SpecialPowers.setIntPref('extensions.foobar', 42);
   is(SpecialPowers.getIntPref('extensions.foobar'), 42, "Check int pref");
-  SpecialPowers.clearUserPref('extensions.foobar');
+  await SpecialPowers.clearUserPref('extensions.foobar');
 
   // Test a string pref
-  SpecialPowers.setCharPref("extensions.foobaz", "hi there");
+  await SpecialPowers.setCharPref("extensions.foobaz", "hi there");
   is(SpecialPowers.getCharPref("extensions.foobaz"), "hi there", "Check string pref");
-  SpecialPowers.clearUserPref("extensions.foobaz");
+  await SpecialPowers.clearUserPref("extensions.foobaz");
 
   // Test an invalid pref
   var retVal = null;
+  // eslint-disable-next-line mozilla/use-default-preference-values
   try {
     retVal = SpecialPowers.getBoolPref('extensions.checkCompat0123456789');
   } catch (ex) {
     retVal = ex;
   }
-  is(retVal.message, "Error getting pref 'extensions.checkCompat0123456789'", "received an exception trying to get an unset preference value");
+  is(retVal.result, SpecialPowers.Cr.NS_ERROR_UNEXPECTED,
+     "received an exception trying to get an unset preference value");
 
   SpecialPowers.addChromeEventListener("TestEvent", testEventListener, true, true);
   SpecialPowers.addChromeEventListener("TestEvent", testEventListener2, true, false);
@@ -70,7 +72,7 @@ function starttest(){
   SpecialPowers.removeChromeEventListener("TestEvent", testEventListener2, true);
   dispatchTestEvent();
   is(eventCount, 1, "Shouldn't have got an event!");
-  
+
   // Test Complex Pref - TODO: Without chrome access, I don't know how you'd actually
   // set this preference since you have to create an XPCOM object.
   // Leaving untested for now.
@@ -78,13 +80,19 @@ function starttest(){
   // Test a DOMWindowUtils method and property
   is(SpecialPowers.DOMWindowUtils.getClassName(window), "Proxy");
   is(SpecialPowers.DOMWindowUtils.docCharsetIsForced, false);
-  
+
   // QueryInterface and getPrivilegedProps tests
   is(SpecialPowers.can_QI(SpecialPowers), false);
-  ok(SpecialPowers.can_QI(window));
-  ok(SpecialPowers.do_QueryInterface(window, "nsIDOMWindow"));
-  is(SpecialPowers.getPrivilegedProps(SpecialPowers.do_QueryInterface(window, "nsIDOMWindow"), "document.nodeName"), "#document");
-  
+  let doc = SpecialPowers.wrap(document);
+  is(SpecialPowers.getPrivilegedProps(doc, "baseURIObject.fileName"), null,
+     "Should not have a fileName property yet");
+  let uri = SpecialPowers.getPrivilegedProps(doc, "baseURIObject");
+  ok(SpecialPowers.can_QI(uri));
+  ok(SpecialPowers.do_QueryInterface(uri, "nsIURL"));
+  is(SpecialPowers.getPrivilegedProps(doc, "baseURIObject.fileName"),
+     "test_SpecialPowersExtension.html",
+     "Should have a fileName property now");
+
   //try to run garbage collection
   SpecialPowers.gc();
 

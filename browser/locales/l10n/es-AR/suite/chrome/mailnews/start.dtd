@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Bienvenido a &brandShortName;, correo y grupos de noticias">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'¡Bienvenido a <a id="vendorURL" href="">&brandShortName;</a>, correo y grupos de noticias!'>
+<!ENTITY description.label
+"&brandShortName;, correo y grupo de noticias es un poderoso cliente de correo electrónico y grupos de noticias de código abierto, soportando detección avanzada de correo basura y otras características útiles.">
+<!ENTITY features.title "Características">
+<!ENTITY feat_multiacc.label "Soporte para múltiples cuentas">
+<!ENTITY feat_junk.label "Detección de correo basura">
+<!ENTITY feat_feeds.label "Lector de canales">
+<!ENTITY feat_filters.label "Filtros de mensaje">
+<!ENTITY feat_htmlmsg.label "Soporte de mensajes HTML">
+<!ENTITY feat_abook.label "Libreta de direcciones">
+<!ENTITY feat_tags.label "Etiquetas y vistas de correo personalizables">
+<!ENTITY feat_integration.label
+"Integración fuerte con la aplicación &brandShortName;">
+<!ENTITY dict.title "Diccionarios">
+<!ENTITY dict_intro.label "Los diccionarios son usados para verificar la ortografía de sus mensajes.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Muchos idiomas adicionales pueden instalarse de la sección 
+<a id="dictURL" href="">diccionarios</a> en
+<a href="https://addons.mozilla.org/seamonkey/">Complementos de Mozilla</a>.'>
+<!ENTITY dict_info.label2
+'Se pueden instalar muchos idiomas adicionales desde la sección<a id="dictURL" href="">de diccionarios</a> en<a href="https://addons.thunderbird.net/seamonkey/"> y complementos de  Thunderbird</a>.'>
+<!ENTITY info.title "Más información">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">Nosotros</a> apreciamos los informes de errores y pedidos de nuevas
+características, pero lea las <a id="releaseNotesURL" href="">notas de la versión</a> y notifique en
+<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> primero.'>

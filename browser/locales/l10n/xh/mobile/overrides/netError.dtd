@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Kukho ingxaki ekulayisheni ikhasi">
+<!ENTITY retry.label "Zama Kwakhona">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Ayikwazi kudibanisa">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Le dilesi inemida">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Iseva ayifunyenwanga">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul><li>Khangela idilesi ujonge iimpazamo zokuchwetheza njengo <strong>ww</strong>.example.com endaweni ka <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Search</button> </div> <li>Ukuba awukwazi kulowuda naliphi na iphepha, khangela idatha yesixhobo sakho okanye uqhagamshelo lweWi-F. <button id='wifi'>Vula i-Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Ifayile ayifumaneki">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Khangela igama lefayile uqwalasele ubhalo loonobumba okanye ezinye iimpazamo zokutayipha.</li> <li>Khangela ukuba ingaba ifayile yashenxiswa na, yathiywa ngokutsha okanye yacinywa na.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Ufikelelo kule fayile lwalelwe">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Kusenokwenzeka isusiwe, ikhutshiwe, okanye imvume yefayile kungenzeka ithintela ufikelelo.</li></ul>">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "<p>i-&brandShortName; ayinakho ukulowuda eli phepha ngesizathu esithile.</p>">
+
+<!ENTITY malformedURI.title "Idilesi ayisebenzi">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul>  <li>Iidilesi zeWebhu zibhalwa ngolu hlobo  <strong>http://www.example.com/</strong></li>  <div id='searchbox'>  <input id='searchtext' type='search'></input>  <button id='searchbutton'>Search</button>  </div>  <li>Qinisekisa ukuba usebenzisa izleshiz ezijonge phambili (umz.  <strong>/</strong>).</li>  </ul>">
+
+<!ENTITY netInterrupt.title "Unxibelelwano luphazanyisiwe">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Uxwebhu luphelelwe">
+<!ENTITY notCached.longDesc "<p>Uxwebhu oluceliweyo alufumaneki kwimemori esisikhuphelo se-&brandShortName;</p><ul><li>Njengesilumkiso sokhuseleko, i-&brandShortName; ayiwaceli kwakhona ngokwayo amaxwebhu anobuzaza.</li><li>Cofa uZama kwakhona ukucela kwakhona uxwebhu kwiwebhusayithi.</li></ul>">
+
+<!ENTITY netOffline.title "Imo engeyo yakusebenza">
+
+<!ENTITY contentEncodingError.title "Imposiso yekhowudi yomxholo">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Udidi lwefayile engakhuselekanga">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li> </ul>">
+
+<!ENTITY netReset.title "Umdibaniso uphinde wamiselwa">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Umdibaniso uphelelwe lixesha">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Idilesi ayiqondwanga">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Kunokudingeka ukuba ufakele enye isoftwe ukuze uvule le dilesi.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Iseva yommeli ayiluvumeli unxibelelwano">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Khangela iisethingi zommeli ukuqinisekisa ukuba zifanelekile.</li> <li>Qhagamshelana nomlawuli wakho wenethiwekhi ukuqinisekisa ukuba iseva yeproksi iyasebenza.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Ayikwazi ukufumana iseva yommeli">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Khangela iisethingi zommeli ukuqinisekisa ukuba zifanelekile.</li> <li>khangela uqinisekise ukuba ikhompyutha yakho inonxibelelwano lweengcombolo ezisebenzayo okanye i-Wi-Fi. <button id='wifi'> Vumela iWi-Fi </button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Iphepha alithumeli kwenye indawo kakuhle">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Le ngxaki maxa wambi ingabangelwa ngokungasebenzisi okanye ngokwala ukwamkela iikhuki.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Impendulo engalindelekanga kwiseva">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Khangela uqinisekise ukuba isistim yakho ine-Personal Security Manager efakelweyo.</li> <li>Oku kunokuba ngenxa yolungelelwano olungekho semgangathweni kwiseva.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Unxibelelwano lokhuseleko aluphumelelanga">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Ikhasi ozama ukulijonga alinakho ukuboniswa kuba ukufaneleka kweengcombolo ezifunyenweyo akunakuqinisekiswa.</li> <li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Unxibelelwano lokhuseleko aluphumelelanga">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Oku kusenokuba yingxaki kulungiselelo lweseva okanye mntu uthile uzama ukuzenza umnini weseva.</li> <li>Ukuba wawunxityelelwe kule seva ngempumelelo ngaphambili, imposiso isenokuba yeyethutyana kwaye ungazama kwakhona kamva.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Isayithi isenokungafumaneki okwethutyana okanye ixakeke kakhulu. Zama kwakhona emva kwemizuzwana embalwa.</li> <li>Ukuba akukwazi ukulayisha amakhasi, khangela unxibelelwano lweengcombolo zesixhobo sakho esihanjiswayo okanye i-Wi-Fi.    <button id='wifi'> Vumela i-Wi-Fi </button>   </li> </ul>">
+
+<!ENTITY cspBlocked.title "Ithintelwe nguMgaqonkqubo woKhuseleko lomXholo">
+<!ENTITY cspBlocked.longDesc "<p>i-&brandShortName; ithintele eli khasi ukuba lilayishe ngale ndlela kuba ikhasi linomgaqonkqubo wokhuseleko lomxholo elingakuvumeliyo.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Imposiso yomxholo owonakalisiweyo">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ikhasi ozama ukulijonga alinakuboniswa kuba kubhaqwe imposiso ekuthunyelweni kweengcombolo.</p><ul><li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Okanye ungongeza ieksepshini…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Ndikhuphe apha!">
+<!ENTITY securityOverride.exceptionButtonLabel "Yongeza ieksepshini…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Akumele kongeza ieksepshini ukuba usebenzisa unxibelelwano lweintanethi ongaluthembi ncam okanye ukuba akuqhelanga ukubona isilumkiso kule seva.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Susa i-XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Akunxibelelani Ngokukhuselekileyo">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Inkcazelo ehambele phambili: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Uqhagamshelo lwakho alukhuselekanga">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Inkcazelo ehambele phambili: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Uqhagamshelo lwakho alukhuselekanga">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>isebenzisa iteknoloji yokhuseleko ephelelwe lixesha nesesichengeni sokuhlaselwa. Umhlaseli unokuthi ngokulula atyhile inkcazelo obucinga ukuba ikhuselekile. Umlawuli wewebhsayithi kuya kufuneka aqale alungise iseva kuqala ngaphambi kokuba  utyelele isayithi.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+

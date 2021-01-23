@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Umbuzo Wemeyile ye-HTML">
+
+<!ENTITY recipient.label "Abanye abamkeli abadweliswanga njengabanako ukufumana imeyile ye-HTML.">
+
+<!ENTITY question.label "Ingaba ufuna ukuguqula umyalezo ube sisiqendu esingaxutywanga okanye usithumele nge-HTML nokuba sinjalo?">
+
+<!ENTITY plainTextAndHtml.label "Thumela Ngesiqendu Esingaxutywanga nange-HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Thumela Ngesiqendu Esingaxutywanga Kuphela">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "Thumela nge-HTML Kuphela">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Thumela">
+<!ENTITY send.accesskey "S">

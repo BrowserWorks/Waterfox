@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Gerer le identitates pro ce conto. Le prime identitate es utilisate como predefinite.">
+<!ENTITY identitiesListAdd.label  "Addition…">
+<!ENTITY identitiesListAdd.accesskey  "A">
+<!ENTITY identitiesListEdit.label "Rediger…">
+<!ENTITY identitiesListEdit.accesskey "R">
+<!ENTITY identitiesListDefault.label "Predefinir">
+<!ENTITY identitiesListDefault.accesskey "P">
+<!ENTITY identitiesListDelete.label "Deler">
+<!ENTITY identitiesListDelete.accesskey "D">
+<!ENTITY identitiesListClose.label "Clauder">
+<!ENTITY identitiesListClose.accesskey "C">

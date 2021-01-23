@@ -49,9 +49,8 @@ class SVGUseElement final : public SVGUseElementBase,
  public:
   NS_IMPL_FROMNODE_WITH_TAG(SVGUseElement, kNameSpaceID_SVG, use)
 
-  nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                      nsIContent* aBindingParent) override;
-  void UnbindFromTree(bool aDeep = true, bool aNullParent = true) override;
+  nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  void UnbindFromTree(bool aNullParent = true) override;
 
   // interfaces:
   NS_DECL_ISUPPORTS_INHERITED
@@ -98,7 +97,21 @@ class SVGUseElement final : public SVGUseElementBase,
                         nsIPrincipal* aSubjectPrincipal, bool aNotify) final;
 
  protected:
-  bool IsCyclicReferenceTo(const Element& aTarget) const;
+  // Information from walking our ancestors and a given target.
+  enum class ScanResult {
+    // Nothing that should stop us from rendering the shadow tree.
+    Ok,
+    // We're never going to be displayed, so no point in updating the shadow
+    // tree.
+    //
+    // However if we're referenced from another tree that tree may need to be
+    // rendered.
+    Invisible,
+    // We're a cyclic reference to either an ancestor or another shadow tree. We
+    // shouldn't render this <use> element.
+    CyclicReference,
+  };
+  ScanResult ScanAncestors(const Element& aTarget) const;
 
   /**
    * Helper that provides a reference to the element with the ID that is

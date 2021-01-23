@@ -6,13 +6,13 @@ license = "MPL-2.0"
 description = "Rust code for libxul"
 
 [features]
-bindgen = ["gkrust-shared/bindgen"]
-servo = ["gkrust-shared/servo"]
 quantum_render = ["gkrust-shared/quantum_render"]
 webrender_debugger = ["gkrust-shared/webrender_debugger"]
 cubeb-remoting = ["gkrust-shared/cubeb-remoting"]
 cubeb_pulse_rust = ["gkrust-shared/cubeb_pulse_rust"]
+cubeb_coreaudio_rust = ["gkrust-shared/cubeb_coreaudio_rust"]
 gecko_debug = ["gkrust-shared/gecko_debug"]
+gecko_refcount_logging = ["gkrust-shared/gecko_refcount_logging"]
 simd-accel = ["gkrust-shared/simd-accel"]
 moz_memory = ["gkrust-shared/moz_memory"]
 moz_places = ["gkrust-shared/moz_places"]
@@ -21,15 +21,25 @@ cranelift_x86 = ["gkrust-shared/cranelift_x86"]
 cranelift_arm32 = ["gkrust-shared/cranelift_arm32"]
 cranelift_arm64 = ["gkrust-shared/cranelift_arm64"]
 cranelift_none = ["gkrust-shared/cranelift_none"]
+smoosh = ["gkrust-shared/smoosh"]
 gecko_profiler = ["gkrust-shared/gecko_profiler"]
 gecko_profiler_parse_elf = ["gkrust-shared/gecko_profiler_parse_elf"]
 bitsdownload = ["gkrust-shared/bitsdownload"]
 new_xulstore = ["gkrust-shared/new_xulstore"]
 new_cert_storage = ["gkrust-shared/new_cert_storage"]
+fuzzing_interfaces = ["gkrust-shared/fuzzing_interfaces"]
+webrtc = ["gkrust-shared/webrtc"]
+wasm_library_sandboxing = ["gkrust-shared/wasm_library_sandboxing"]
+webgpu = ["gkrust-shared/webgpu"]
+remote_agent = ["gkrust-shared/remote"]
+glean = ["gkrust-shared/glean"]
+rust_fxa_client = ["gkrust-shared/rust_fxa_client"]
 
 [dependencies]
 gkrust-shared = { path = "shared" }
 mozilla-central-workspace-hack = { path = "../../../build/workspace-hack" }
+# Workaround for https://github.com/rust-lang/rust/issues/58393
+mozglue-static = { path = "../../../mozglue/static/rust" }
 
 [dev-dependencies]
 stylo_tests = { path = "../../../servo/ports/geckolib/tests/" }

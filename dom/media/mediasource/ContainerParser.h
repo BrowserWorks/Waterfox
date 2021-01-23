@@ -8,6 +8,8 @@
 #define MOZILLA_CONTAINERPARSER_H_
 
 #include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
+#include "MediaSpan.h"
 #include "MediaContainerType.h"
 #include "MediaResource.h"
 #include "MediaResult.h"
@@ -30,7 +32,7 @@ class ContainerParser : public DecoderDoctorLifeLogger<ContainerParser> {
   // Return NS_OK if segment is present, NS_ERROR_NOT_AVAILABLE if no sufficient
   // data is currently available to make a determination. Any other value
   // indicates an error.
-  virtual MediaResult IsInitSegmentPresent(MediaByteBuffer* aData);
+  virtual MediaResult IsInitSegmentPresent(const MediaSpan& aData);
 
   // Return true if aData starts with a media segment.
   // The base implementation exists only for debug logging and is expected
@@ -38,13 +40,13 @@ class ContainerParser : public DecoderDoctorLifeLogger<ContainerParser> {
   // Return NS_OK if segment is present, NS_ERROR_NOT_AVAILABLE if no sufficient
   // data is currently available to make a determination. Any other value
   // indicates an error.
-  virtual MediaResult IsMediaSegmentPresent(MediaByteBuffer* aData);
+  virtual MediaResult IsMediaSegmentPresent(const MediaSpan& aData);
 
   // Parse aData to extract the start and end frame times from the media
   // segment.  aData may not start on a parser sync boundary.  Return NS_OK
   // if aStart and aEnd have been updated and NS_ERROR_NOT_AVAILABLE otherwise
   // when no error were encountered.
-  virtual MediaResult ParseStartAndEndTimestamps(MediaByteBuffer* aData,
+  virtual MediaResult ParseStartAndEndTimestamps(const MediaSpan& aData,
                                                  int64_t& aStart,
                                                  int64_t& aEnd);
 
@@ -73,7 +75,8 @@ class ContainerParser : public DecoderDoctorLifeLogger<ContainerParser> {
   // range if not complete.
   MediaByteRange MediaSegmentRange();
 
-  static ContainerParser* CreateForMIMEType(const MediaContainerType& aType);
+  static UniquePtr<ContainerParser> CreateForMIMEType(
+      const MediaContainerType& aType);
 
   const MediaContainerType& ContainerType() const { return mType; }
 

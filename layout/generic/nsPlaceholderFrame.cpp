@@ -26,6 +26,7 @@
 #include "nsIContentInlines.h"
 
 using namespace mozilla;
+using namespace mozilla::dom;
 using namespace mozilla::gfx;
 
 nsPlaceholderFrame* NS_NewPlaceholderFrame(PresShell* aPresShell,
@@ -59,7 +60,7 @@ nsSize nsPlaceholderFrame::GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) {
 
 /* virtual */
 nsSize nsPlaceholderFrame::GetXULMaxSize(nsBoxLayoutState& aBoxLayoutState) {
-  nsSize size(NS_INTRINSICSIZE, NS_INTRINSICSIZE);
+  nsSize size(NS_UNCONSTRAINEDSIZE, NS_UNCONSTRAINEDSIZE);
   DISPLAY_MAX_SIZE(this, size);
   return size;
 }
@@ -112,9 +113,6 @@ void nsPlaceholderFrame::Reflow(nsPresContext* aPresContext,
   // We should be getting reflowed before our out-of-flow.
   // If this is our first reflow, and our out-of-flow has already received its
   // first reflow (before us), complain.
-  // XXXdholbert This "look for a previous continuation or IB-split sibling"
-  // code could use nsLayoutUtils::GetPrevContinuationOrIBSplitSibling(), if
-  // we ever add a function like that. (We currently have a "Next" version.)
   if ((GetStateBits() & NS_FRAME_FIRST_REFLOW) &&
       !(mOutOfFlowFrame->GetStateBits() & NS_FRAME_FIRST_REFLOW)) {
     // Unfortunately, this can currently happen when the placeholder is in a
@@ -124,8 +122,7 @@ void nsPlaceholderFrame::Reflow(nsPresContext* aPresContext,
     bool isInContinuationOrIBSplit = false;
     nsIFrame* ancestor = this;
     while ((ancestor = ancestor->GetParent())) {
-      if (ancestor->GetPrevContinuation() ||
-          ancestor->GetProperty(IBSplitPrevSibling())) {
+      if (nsLayoutUtils::GetPrevContinuationOrIBSplitSibling(ancestor)) {
         isInContinuationOrIBSplit = true;
         break;
       }
@@ -172,7 +169,7 @@ void nsPlaceholderFrame::DestroyFrom(nsIFrame* aDestructRoot,
   nsIFrame* oof = mOutOfFlowFrame;
   if (oof) {
     mOutOfFlowFrame = nullptr;
-    oof->DeleteProperty(nsIFrame::PlaceholderFrameProperty());
+    oof->RemoveProperty(nsIFrame::PlaceholderFrameProperty());
 
     // If aDestructRoot is not an ancestor of the out-of-flow frame,
     // then call RemoveFrame on it here.
@@ -207,7 +204,7 @@ ComputedStyle* nsPlaceholderFrame::GetParentComputedStyleForOutOfFlow(
       mContent ? mContent->GetFlattenedTreeParentElement() : nullptr;
   if (parentElement && Servo_Element_IsDisplayContents(parentElement)) {
     RefPtr<ComputedStyle> style =
-        PresShell()->StyleSet()->ResolveServoStyle(*parentElement);
+        ServoStyleSet::ResolveServoStyle(*parentElement);
     *aProviderFrame = nullptr;
     // See the comment in GetParentComputedStyle to see why returning this as a
     // weak ref is fine.
@@ -231,7 +228,7 @@ ComputedStyle* nsPlaceholderFrame::GetLayoutParentStyleForOutOfFlow(
 #ifdef DEBUG
 static void PaintDebugPlaceholder(nsIFrame* aFrame, DrawTarget* aDrawTarget,
                                   const nsRect& aDirtyRect, nsPoint aPt) {
-  ColorPattern cyan(ToDeviceColor(Color(0.f, 1.f, 1.f, 1.f)));
+  ColorPattern cyan(ToDeviceColor(sRGBColor(0.f, 1.f, 1.f, 1.f)));
   int32_t appUnitsPerDevPixel = aFrame->PresContext()->AppUnitsPerDevPixel();
 
   nscoord x = nsPresContext::CSSPixelsToAppUnits(-5);
@@ -268,7 +265,7 @@ nsresult nsPlaceholderFrame::GetFrameName(nsAString& aResult) const {
 }
 
 void nsPlaceholderFrame::List(FILE* out, const char* aPrefix,
-                              uint32_t aFlags) const {
+                              ListFlags aFlags) const {
   nsCString str;
   ListGeneric(str, aPrefix, aFlags);
 

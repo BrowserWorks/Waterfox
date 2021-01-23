@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-from StringIO import StringIO
+from six import StringIO
 import os
 import sys
 import textwrap
@@ -33,71 +33,45 @@ from common import (
 
 class TestChecksConfigure(unittest.TestCase):
     def test_checking(self):
-        out = StringIO()
-        sandbox = ConfigureSandbox({}, stdout=out, stderr=out)
-        base_dir = os.path.join(topsrcdir, 'build', 'moz.configure')
-        sandbox.include_file(os.path.join(base_dir, 'checks.configure'))
+        def make_test(to_exec):
+            def test(val, msg):
+                out = StringIO()
+                sandbox = ConfigureSandbox({}, stdout=out, stderr=out)
+                base_dir = os.path.join(topsrcdir, 'build', 'moz.configure')
+                sandbox.include_file(os.path.join(base_dir, 'checks.configure'))
+                exec_(to_exec, sandbox)
+                sandbox['foo'](val)
+                self.assertEqual(out.getvalue(), msg)
 
-        exec_(textwrap.dedent('''
+            return test
+
+        test = make_test(textwrap.dedent('''
             @checking('for a thing')
             def foo(value):
                 return value
-        '''), sandbox)
-
-        foo = sandbox['foo']
-
-        foo(True)
-        self.assertEqual(out.getvalue(), 'checking for a thing... yes\n')
-
-        out.truncate(0)
-        foo(False)
-        self.assertEqual(out.getvalue(), 'checking for a thing... no\n')
-
-        out.truncate(0)
-        foo(42)
-        self.assertEqual(out.getvalue(), 'checking for a thing... 42\n')
-
-        out.truncate(0)
-        foo('foo')
-        self.assertEqual(out.getvalue(), 'checking for a thing... foo\n')
-
-        out.truncate(0)
+        '''))
+        test(True, 'checking for a thing... yes\n')
+        test(False, 'checking for a thing... no\n')
+        test(42, 'checking for a thing... 42\n')
+        test('foo', 'checking for a thing... foo\n')
         data = ['foo', 'bar']
-        foo(data)
-        self.assertEqual(out.getvalue(), 'checking for a thing... %r\n' % data)
+        test(data, 'checking for a thing... %r\n' % data)
 
         # When the function given to checking does nothing interesting, the
         # behavior is not altered
-        exec_(textwrap.dedent('''
+        test = make_test(textwrap.dedent('''
             @checking('for a thing', lambda x: x)
             def foo(value):
                 return value
-        '''), sandbox)
-
-        foo = sandbox['foo']
-
-        out.truncate(0)
-        foo(True)
-        self.assertEqual(out.getvalue(), 'checking for a thing... yes\n')
-
-        out.truncate(0)
-        foo(False)
-        self.assertEqual(out.getvalue(), 'checking for a thing... no\n')
-
-        out.truncate(0)
-        foo(42)
-        self.assertEqual(out.getvalue(), 'checking for a thing... 42\n')
-
-        out.truncate(0)
-        foo('foo')
-        self.assertEqual(out.getvalue(), 'checking for a thing... foo\n')
-
-        out.truncate(0)
+        '''))
+        test(True, 'checking for a thing... yes\n')
+        test(False, 'checking for a thing... no\n')
+        test(42, 'checking for a thing... 42\n')
+        test('foo', 'checking for a thing... foo\n')
         data = ['foo', 'bar']
-        foo(data)
-        self.assertEqual(out.getvalue(), 'checking for a thing... %r\n' % data)
+        test(data, 'checking for a thing... %r\n' % data)
 
-        exec_(textwrap.dedent('''
+        test = make_test(textwrap.dedent('''
             def munge(x):
                 if not x:
                     return 'not found'
@@ -108,29 +82,13 @@ class TestChecksConfigure(unittest.TestCase):
             @checking('for a thing', munge)
             def foo(value):
                 return value
-        '''), sandbox)
-
-        foo = sandbox['foo']
-
-        out.truncate(0)
-        foo(True)
-        self.assertEqual(out.getvalue(), 'checking for a thing... yes\n')
-
-        out.truncate(0)
-        foo(False)
-        self.assertEqual(out.getvalue(), 'checking for a thing... not found\n')
-
-        out.truncate(0)
-        foo(42)
-        self.assertEqual(out.getvalue(), 'checking for a thing... 42\n')
-
-        out.truncate(0)
-        foo('foo')
-        self.assertEqual(out.getvalue(), 'checking for a thing... foo\n')
-
-        out.truncate(0)
-        foo(['foo', 'bar'])
-        self.assertEqual(out.getvalue(), 'checking for a thing... foo bar\n')
+        '''))
+        test(True, 'checking for a thing... yes\n')
+        test(False, 'checking for a thing... not found\n')
+        test(42, 'checking for a thing... 42\n')
+        test('foo', 'checking for a thing... foo\n')
+        data = ['foo', 'bar']
+        test(data, 'checking for a thing... foo bar\n')
 
     KNOWN_A = ensure_exe_extension(mozpath.abspath('/usr/bin/known-a'))
     KNOWN_B = ensure_exe_extension(mozpath.abspath('/usr/local/bin/known-b'))
@@ -214,7 +172,7 @@ class TestChecksConfigure(unittest.TestCase):
             'check_prog("FOO", ("unknown", "unknown-2", "unknown 3"), '
             'allow_missing=True)')
         self.assertEqual(status, 0)
-        self.assertEqual(config, {'FOO': ':'})
+        self.assertEqual(config, {})
         self.assertEqual(out, 'checking for foo... not found\n')
 
     @unittest.skipIf(not sys.platform.startswith('win'), 'Windows-only test')
@@ -232,7 +190,6 @@ class TestChecksConfigure(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(config, {'FOO': self.KNOWN_A})
         self.assertEqual(out, 'checking for foo... %s\n' % self.KNOWN_A)
-
 
     def test_check_prog_with_args(self):
         config, out, status = self.get_result(
@@ -407,7 +364,7 @@ class TestChecksConfigure(unittest.TestCase):
         with self.assertRaises(ConfigureError) as e:
             self.get_result('check_prog("FOO", "foo")')
 
-        self.assertEqual(e.exception.message,
+        self.assertEqual(str(e.exception),
                          'progs must resolve to a list or tuple!')
 
         with self.assertRaises(ConfigureError) as e:
@@ -416,7 +373,7 @@ class TestChecksConfigure(unittest.TestCase):
                 'check_prog("FOO", ("known-a",), input=foo)'
             )
 
-        self.assertEqual(e.exception.message,
+        self.assertEqual(str(e.exception),
                          'input must resolve to a tuple or a list with a '
                          'single element, or a string')
 
@@ -426,12 +383,13 @@ class TestChecksConfigure(unittest.TestCase):
                 'check_prog("FOO", ("known-a",), input=foo)'
             )
 
-        self.assertEqual(e.exception.message,
+        self.assertEqual(str(e.exception),
                          'input must resolve to a tuple or a list with a '
                          'single element, or a string')
 
     def test_check_prog_with_path(self):
-        config, out, status = self.get_result('check_prog("A", ("known-a",), paths=["/some/path"])')
+        config, out, status = self.get_result(
+            'check_prog("A", ("known-a",), paths=["/some/path"])')
         self.assertEqual(status, 1)
         self.assertEqual(config, {})
         self.assertEqual(out, textwrap.dedent('''\
@@ -474,7 +432,8 @@ class TestChecksConfigure(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertEqual(config, {})
         self.assertEqual(out, textwrap.dedent('''\
-            checking for a... 
+            checking for a... '''  # noqa  # trailing whitespace...
+                '''
             DEBUG: a: Trying known-a
             ERROR: Paths provided to find_program must be a list of strings, not %r
         ''' % mozpath.dirname(self.OTHER_A)))
@@ -615,20 +574,22 @@ class TestChecksConfigure(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertEqual(config, {
             'JAVA': java,
-            'JARSIGNER': ':',
         })
         self.assertEqual(out, textwrap.dedent('''\
              checking for java... %s
              checking for jarsigner... not found
-             ERROR: The program jarsigner was not found.  Set $JAVA_HOME to your Java SDK directory or use '--with-java-bin-path={java-bin-dir}'
-        ''' % (java)))
+             ERROR: The program jarsigner was not found.  Set $JAVA_HOME to your \
+Java SDK directory or use '--with-java-bin-path={java-bin-dir}'
+        ''' % (java)
+            ),
+        )
 
     def test_pkg_check_modules(self):
         mock_pkg_config_version = '0.10.0'
         mock_pkg_config_path = mozpath.abspath('/usr/bin/pkg-config')
 
         def mock_pkg_config(_, args):
-            if args[0:2] == ['--errors-to-stdout', '--print-errors']:
+            if args[0:2] == ('--errors-to-stdout', '--print-errors'):
                 assert len(args) == 3
                 package = args[2]
                 if package == 'unknown':
@@ -648,7 +609,7 @@ class TestChecksConfigure(unittest.TestCase):
                 return 0, '-l%s' % args[1], ''
             if args[0] == '--version':
                 return 0, mock_pkg_config_version, ''
-            self.fail("Unexpected arguments to mock_pkg_config: %s" % args)
+            self.fail("Unexpected arguments to mock_pkg_config: %s" % (args,))
 
         def get_result(cmd, args=[], extra_paths=None):
             return self.get_result(textwrap.dedent('''\
@@ -664,7 +625,6 @@ class TestChecksConfigure(unittest.TestCase):
         extra_paths = {
             mock_pkg_config_path: mock_pkg_config,
         }
-        includes = ('util.configure', 'checks.configure', 'pkg.configure')
 
         config, output, status = get_result("pkg_check_modules('MOZ_VALID', 'valid')")
         self.assertEqual(status, 1)
@@ -674,7 +634,6 @@ class TestChecksConfigure(unittest.TestCase):
             *** in your path, or set the PKG_CONFIG environment variable
             *** to the full path to pkg-config.
         '''))
-
 
         config, output, status = get_result("pkg_check_modules('MOZ_VALID', 'valid')",
                                             extra_paths=extra_paths)

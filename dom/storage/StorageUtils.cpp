@@ -4,68 +4,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsIURL.h"
 #include "StorageUtils.h"
+
+#include "mozilla/OriginAttributes.h"
+#include "nsDebug.h"
+#include "nsIPrincipal.h"
+#include "nsIURI.h"
+#include "nsIURL.h"
+#include "nsNetUtil.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
 namespace dom {
 namespace StorageUtils {
-
-nsresult GenerateOriginKey(nsIPrincipal* aPrincipal,
-                           nsACString& aOriginAttrSuffix,
-                           nsACString& aOriginKey) {
-  if (NS_WARN_IF(!aPrincipal)) {
-    return NS_ERROR_UNEXPECTED;
-  }
-
-  aPrincipal->OriginAttributesRef().CreateSuffix(aOriginAttrSuffix);
-
-  nsCOMPtr<nsIURI> uri;
-  nsresult rv = aPrincipal->GetURI(getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (!uri) {
-    return NS_ERROR_UNEXPECTED;
-  }
-
-  nsAutoCString domainOrigin;
-  rv = uri->GetAsciiHost(domainOrigin);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (domainOrigin.IsEmpty()) {
-    // For the file:/// protocol use the exact directory as domain.
-    bool isScheme = false;
-    if (NS_SUCCEEDED(uri->SchemeIs("file", &isScheme)) && isScheme) {
-      nsCOMPtr<nsIURL> url = do_QueryInterface(uri, &rv);
-      NS_ENSURE_SUCCESS(rv, rv);
-      rv = url->GetDirectory(domainOrigin);
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
-  }
-
-  // Append reversed domain
-  nsAutoCString reverseDomain;
-  rv = CreateReversedDomain(domainOrigin, reverseDomain);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  aOriginKey.Append(reverseDomain);
-
-  // Append scheme
-  nsAutoCString scheme;
-  rv = uri->GetScheme(scheme);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  aOriginKey.Append(':');
-  aOriginKey.Append(scheme);
-
-  // Append port if any
-  int32_t port = NS_GetRealPort(uri);
-  if (port != -1) {
-    aOriginKey.Append(nsPrintfCString(":%d", port));
-  }
-
-  return NS_OK;
-}
 
 bool PrincipalsEqual(nsIPrincipal* aObjectPrincipal,
                      nsIPrincipal* aSubjectPrincipal) {

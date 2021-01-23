@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title "Düzenleme">
+<!ENTITY generalComposing.label "Genel">
+<!ENTITY forwardMsg.label "İletileri yönlendir:">
+<!ENTITY inline.label "İleti içinde ilet">
+<!ENTITY inline.accesskey "İ">
+<!ENTITY asAttachment.label "Eklenti olarak ilet">
+<!ENTITY asAttachment.accesskey "E">
+
+<!ENTITY replyQuoteInline.label "Quote attachments viewed inline in replies">
+<!ENTITY replyQuoteInline.accesskey "Q">
+<!ENTITY warnOnSendAccelKey.label "Kısayol tuşları ileti göndermek için kullanılırsa onayla">
+<!ENTITY warnOnSendAccelKey.accesskey "K">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label "Automatically save the message every">
+<!ENTITY autoSave.accesskey "u">
+<!ENTITY autoSaveEnd.label "dakika">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label "Wrap plain text messages at">
+<!ENTITY wrapOutMsg.accesskey "W">
+<!ENTITY char.label "karakter">
+
+<!ENTITY spellingHeader.label "İmla denetimi">
+<!ENTITY spellCheck.label "Yazım hatalarını göndermeden önce denetle">
+<!ENTITY spellCheck.accesskey "a">
+<!ENTITY spellCheckInline.label "Yazarken yazım denetimini gerçekleştir">
+<!ENTITY spellCheckInline.accesskey "Y">
+<!ENTITY languagePopup.label "Dil:">
+<!ENTITY languagePopup.accessKey "i">
+<!ENTITY moreDictionaries.label "Diğer sözlükleri indir…">
+
+<!ENTITY defaultMessagesHeader.label "Defaults for HTML Messages">
+<!ENTITY font.label "Yazıtipi:">
+<!ENTITY font.accesskey "z">
+<!ENTITY size.label "Boyut:">
+<!ENTITY size.accesskey "B">
+<!ENTITY fontColor.label "Metin:">
+<!ENTITY fontColor.accesskey "t">
+<!ENTITY bgColor.label "Arkaplan:">
+<!ENTITY bgColor.accesskey "p">

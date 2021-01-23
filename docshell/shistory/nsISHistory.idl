@@ -6,17 +6,19 @@
 #include "nsISupports.idl"
 
 interface nsIBFCacheEntry;
-interface nsIDocShell;
 interface nsISHEntry;
 interface nsISHistoryListener;
 interface nsIURI;
+webidl BrowsingContext;
 
 %{C++
 #include "nsTArrayForwardDeclare.h"
+#include "mozilla/Maybe.h"
+struct EntriesAndBrowsingContextData;
 %}
 
 [ref] native nsDocshellIDArray(nsTArray<nsID>);
-
+native MaybeInt32(mozilla::Maybe<int32_t>);
 /**
  * An interface to the primary properties of the Session History
  * component. In an embedded browser environment, the nsIWebBrowser
@@ -149,13 +151,6 @@ interface nsISHistory: nsISupports
   void addEntry(in nsISHEntry aEntry, in boolean aPersist);
 
   /**
-   * Clear the reference to the toplevel docshell object that this SHistory
-   * object belongs to.
-   */
-  [noscript, notxpcom]
-  void ClearRootDocShell();
-
-  /**
    * Update the index maintained by sessionHistory
    */
   void updateIndex();
@@ -248,4 +243,33 @@ interface nsISHistory: nsISupports
    */
   [noscript, notxpcom]
   void RemoveEntries(in nsDocshellIDArray aIDs, in long aStartIndex);
+
+  /**
+   * Collect docshellIDs from aEntry's children and remove those
+   * entries from history.
+   *
+   * @param aEntry           Children docshellID's will be collected from 
+   *                         this entry and passed to RemoveEntries as aIDs.
+  */
+  [noscript, notxpcom]
+  void RemoveFrameEntries(in nsISHEntry aEntry);
+
+  [noscript]
+  void Reload(in unsigned long aReloadFlags);
+
+  [notxpcom] void EnsureCorrectEntryAtCurrIndex(in nsISHEntry aEntry);
+  
+  [notxpcom] void EvictContentViewersOrReplaceEntry(in nsISHEntry aNewSHEntry, in bool aReplace);
+
+  nsISHEntry createEntry();
+
+  [noscript] void AddToRootSessionHistory(in bool aCloneChildren, in nsISHEntry aOSHE,
+                                          in BrowsingContext aBC, in nsISHEntry aEntry,
+                                          in unsigned long aLoadType,
+                                          in bool aShouldPersist,
+                                          out MaybeInt32 aPreviousEntryIndex,
+                                          out MaybeInt32 aLoadedEntryIndex);
+
+  [noscript] void AddChildSHEntryHelper(in nsISHEntry aCloneRef, in nsISHEntry aNewEntry,
+                                        in BrowsingContext aBC, in bool aCloneChildren);
 };

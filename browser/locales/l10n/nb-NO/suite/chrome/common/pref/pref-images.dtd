@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Bilder">
+
+<!ENTITY imageBlocking.label            "Bildetillatelser">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Angi hvordan &brandShortName; håndterer bilder.">
+
+<!ENTITY loadAllImagesRadio.label       "Last alle bilder">
+<!ENTITY loadAllImagesRadio.accesskey   "L">
+<!ENTITY loadOrgImagesRadio.label       "Last bare bilder som kommer fra opprinnelig server">
+<!ENTITY loadOrgImagesRadio.accesskey   "r">
+<!ENTITY loadNoImagesRadio.label        "Ikke last noen bilder">
+<!ENTITY loadNoImagesRadio.accesskey    "I">
+<!ENTITY viewPermissions.label          "Behandle tillatelser">
+<!ENTITY viewPermissions.accesskey      "B">
+<!ENTITY animLoopingTitle.label         "Animerte bilder skal gå i løkke">
+<!ENTITY animLoopAsSpecified.label      "Så mange ganger som bildet angir">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "En gang">
+<!ENTITY animLoopOnce.accesskey         "E">
+<!ENTITY animLoopNever.label            "Aldri">
+<!ENTITY animLoopNever.accesskey        "A">

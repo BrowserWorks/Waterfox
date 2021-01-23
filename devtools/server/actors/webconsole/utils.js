@@ -1,19 +1,13 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-const { Ci, Cu } = require("chrome");
+const { Ci, Cu, Cc } = require("chrome");
 
-// Note that this is only used in WebConsoleCommands, see $0, screenshot and pprint().
+// Note that this is only used in WebConsoleCommands, see $0 and screenshot.
 if (!isWorker) {
-  loader.lazyImporter(
-    this,
-    "VariablesView",
-    "resource://devtools/client/shared/widgets/VariablesView.jsm"
-  );
   loader.lazyRequireGetter(
     this,
     "captureScreenshot",
@@ -90,11 +84,17 @@ var WebConsoleUtils = {
    * Gets the ID of the inner window of this DOM window.
    *
    * @param nsIDOMWindow window
-   * @return integer
-   *         Inner ID for the given window.
+   * @return integer|null
+   *         Inner ID for the given window, null if we can't access it.
    */
   getInnerWindowId: function(window) {
-    return window.windowUtils.currentInnerWindowID;
+    // Might throw with SecurityError: Permission denied to access property "windowUtils"
+    // on cross-origin object.
+    try {
+      return window.windowUtils.currentInnerWindowID;
+    } catch (e) {
+      return null;
+    }
   },
 
   /**
@@ -107,6 +107,10 @@ var WebConsoleUtils = {
    */
   getInnerWindowIDsForFrames: function(window) {
     const innerWindowID = this.getInnerWindowId(window);
+    if (innerWindowID === null) {
+      return [];
+    }
+
     let ids = [innerWindowID];
 
     if (window.frames) {
@@ -117,47 +121,6 @@ var WebConsoleUtils = {
     }
 
     return ids;
-  },
-
-  /**
-   * Get the property descriptor for the given object.
-   *
-   * @param object object
-   *        The object that contains the property.
-   * @param string prop
-   *        The property you want to get the descriptor for.
-   * @return object
-   *         Property descriptor.
-   */
-  getPropertyDescriptor: function(object, prop) {
-    let desc = null;
-    while (object) {
-      try {
-        if ((desc = Object.getOwnPropertyDescriptor(object, prop))) {
-          break;
-        }
-      } catch (ex) {
-        // Native getters throw here. See bug 520882.
-        // null throws TypeError.
-        if (
-          ex.name != "NS_ERROR_XPC_BAD_CONVERT_JS" &&
-          ex.name != "NS_ERROR_XPC_BAD_OP_ON_WN_PROTO" &&
-          ex.name != "TypeError"
-        ) {
-          throw ex;
-        }
-      }
-
-      try {
-        object = Object.getPrototypeOf(object);
-      } catch (ex) {
-        if (ex.name == "TypeError") {
-          return desc;
-        }
-        throw ex;
-      }
-    }
-    return desc;
   },
 
   /**
@@ -415,6 +378,8 @@ WebConsoleCommands._registerOriginal("$_", {
  *        xPath search query to execute.
  * @param [optional] Node context
  *        Context to run the xPath query on. Uses window.document if not set.
+ * @param [optional] string|number resultType
+          Specify the result type. Default value XPathResult.ANY_TYPE
  * @return array of Node
  */
 WebConsoleCommands._registerOriginal("$x", function(
@@ -424,12 +389,31 @@ WebConsoleCommands._registerOriginal("$x", function(
   resultType = owner.window.XPathResult.ANY_TYPE
 ) {
   const nodes = new owner.window.Array();
-
   // Not waiving Xrays, since we want the original Document.evaluate function,
   // instead of anything that's been redefined.
   const doc = owner.window.document;
   context = context || doc;
+  switch (resultType) {
+    case "number":
+      resultType = owner.window.XPathResult.NUMBER_TYPE;
+      break;
 
+    case "string":
+      resultType = owner.window.XPathResult.STRING_TYPE;
+      break;
+
+    case "bool":
+      resultType = owner.window.XPathResult.BOOLEAN_TYPE;
+      break;
+
+    case "node":
+      resultType = owner.window.XPathResult.FIRST_ORDERED_NODE_TYPE;
+      break;
+
+    case "nodes":
+      resultType = owner.window.XPathResult.UNORDERED_NODE_ITERATOR_TYPE;
+      break;
+  }
   const results = doc.evaluate(xPath, context, null, resultType, null);
   if (results.resultType === owner.window.XPathResult.NUMBER_TYPE) {
     return results.numberValue;
@@ -546,6 +530,27 @@ WebConsoleCommands._registerOriginal("help", function(owner) {
  *        eval scope is cleared back to its default (the top window).
  */
 WebConsoleCommands._registerOriginal("cd", function(owner, window) {
+  // Log a deprecation warning.
+  const scriptErrorClass = Cc["@mozilla.org/scripterror;1"];
+  const scriptError = scriptErrorClass.createInstance(Ci.nsIScriptError);
+
+  const deprecationMessage =
+    "The `cd` command will be disabled in a future release. " +
+    "See https://bugzilla.mozilla.org/show_bug.cgi?id=1605327 for more information.";
+
+  scriptError.initWithWindowID(
+    deprecationMessage,
+    null,
+    null,
+    0,
+    0,
+    1,
+    "content javascript",
+    owner.window.windowUtils.currentInnerWindowID
+  );
+  const Services = require("Services");
+  Services.console.logMessage(scriptError);
+
   if (!window) {
     owner.consoleActor.evalWindow = null;
     owner.helperResult = { type: "cd" };
@@ -576,82 +581,22 @@ WebConsoleCommands._registerOriginal("cd", function(owner, window) {
  * @param object object
  *        Object to inspect.
  */
-WebConsoleCommands._registerOriginal("inspect", function(owner, object) {
-  const dbgObj = owner.makeDebuggeeValue(object);
+WebConsoleCommands._registerOriginal("inspect", function(
+  owner,
+  object,
+  forceExpandInConsole = false
+) {
+  const dbgObj = owner.preprocessDebuggerObject(
+    owner.makeDebuggeeValue(object)
+  );
+
   const grip = owner.createValueGrip(dbgObj);
   owner.helperResult = {
     type: "inspectObject",
     input: owner.evalInput,
     object: grip,
+    forceExpandInConsole,
   };
-});
-
-/**
- * Prints object to the output.
- *
- * @param object object
- *        Object to print to the output.
- * @return string
- */
-WebConsoleCommands._registerOriginal("pprint", function(owner, object) {
-  if (
-    object === null ||
-    object === undefined ||
-    object === true ||
-    object === false
-  ) {
-    owner.helperResult = {
-      type: "error",
-      message: "helperFuncUnsupportedTypeError",
-    };
-    return null;
-  }
-
-  owner.helperResult = { rawOutput: true };
-
-  if (typeof object == "function") {
-    return object + "\n";
-  }
-
-  const output = [];
-
-  const obj = object;
-  for (const name in obj) {
-    const desc = WebConsoleUtils.getPropertyDescriptor(obj, name) || {};
-    if (desc.get || desc.set) {
-      // TODO: Bug 842672 - toolkit/ imports modules from browser/.
-      const getGrip = VariablesView.getGrip(desc.get);
-      const setGrip = VariablesView.getGrip(desc.set);
-      const getString = VariablesView.getString(getGrip);
-      const setString = VariablesView.getString(setGrip);
-      output.push(name + ":", "  get: " + getString, "  set: " + setString);
-    } else {
-      const valueGrip = VariablesView.getGrip(obj[name]);
-      const valueString = VariablesView.getString(valueGrip);
-      output.push(name + ": " + valueString);
-    }
-  }
-
-  return "  " + output.join("\n  ");
-});
-
-/**
- * Print the String representation of a value to the output, as-is.
- *
- * @param any value
- *        A value you want to output as a string.
- * @return void
- */
-WebConsoleCommands._registerOriginal("print", function(owner, value) {
-  owner.helperResult = { rawOutput: true };
-  if (typeof value === "symbol") {
-    return Symbol.prototype.toString.call(value);
-  }
-  // Waiving Xrays here allows us to see a closer representation of the
-  // underlying object. This may execute arbitrary content code, but that
-  // code will run with content privileges, and the result will be rendered
-  // inert by coercing it to a String.
-  return String(Cu.waiveXrays(value));
 });
 
 /**

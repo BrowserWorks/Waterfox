@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Wo &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "W">
+
+<!ENTITY preferencesCmdMac.label        "Nastajenja…">
+
+<!ENTITY servicesMenuMac.label          "Słužby">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName;me; schować">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Druhe schować">
+
+<!ENTITY showAllAppsCmdMac.label        "Wšitke pokazać">
+
+<!ENTITY touchBarCmdMac.label           "Dótknjensku lajstu přiměrić…">

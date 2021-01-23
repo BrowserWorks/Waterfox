@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Foclóir Pearsanta">
+
+<!ENTITY wordEditField.label "Focal nua:">
+<!ENTITY wordEditField.accessKey "n">
+<!ENTITY AddButton.label "Cuir Leis">
+<!ENTITY AddButton.accessKey "L">
+<!ENTITY DictionaryList.label "Focail san fhoclóir:">
+<!ENTITY DictionaryList.accessKey "F">
+<!ENTITY RemoveButton.label "Bain">
+<!ENTITY RemoveButton.accessKey "a">
+
+<!ENTITY CloseButton.label "Dún">
+<!ENTITY CloseButton.accessKey "D">

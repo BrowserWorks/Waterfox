@@ -65,7 +65,7 @@ For certain package types, e.g. exe or dmg, we extract the internal binaries
 (e.g. xul.dll) and sign them. This is true for certain zipfiles, exes, and dmgs;
 we need to sign the internals before we [re]create the package. For linux
 tarballs, we don't need special packaging, so we can sign everything in this
-task. These kinds include `build-signing`, `nightly-l10n-signing`,
+task. These kinds include `build-signing`, `shippable-l10n-signing`,
 `release-eme-free-repack-signing`, and `release-partner-repack-signing`.
 
 **Build repackage signing**: Once we take the signed internals and package them
@@ -150,7 +150,7 @@ Signing scriptworker workerTypes
 --------------------------------
 
 The `depsigning`_ pool handles all of the dep signing. These are heavily in use
-on try, mozilla-inbound, and autoland, but also other branches. These verify
+on try and autoland, but also other branches. These verify
 the `chain of trust` artifact but not its signature, and they don't have a
 gpg key to sign their own chain of trust artifact. This is by design; the chain
 of trust should and will break if a production scriptworker is downstream from
@@ -169,13 +169,13 @@ any other team.
 .. _addonscript: https://github.com/mozilla-releng/addonscript/
 .. _code signing: https://en.wikipedia.org/wiki/Code_signing
 .. _chain of trust: https://scriptworker.readthedocs.io/en/latest/chain_of_trust.html
-.. _depsigning: https://tools.taskcluster.net/provisioners/scriptworker-prov-v1/worker-types/depsigning
+.. _depsigning: https://firefox-ci-tc.services.mozilla.com/provisioners/scriptworker-k8s/worker-types/gecko-t-signing
 .. _should_sign_windows: https://github.com/mozilla-releng/signingscript/blob/65cbb99ea53896fda9f4844e050a9695c762d24f/signingscript/sign.py#L369
 .. _Encrypted Media Extensions: https://hacks.mozilla.org/2014/05/reconciling-mozillas-mission-and-w3c-eme/
 .. _signing password files: https://github.com/mozilla/build-puppet/tree/feff5e12ab70f2c060b29940464e77208c7f0ef2/modules/signing_scriptworker/templates
 .. _signingscript: https://github.com/mozilla-releng/signingscript/
-.. _signing-linux-dev: https://tools.taskcluster.net/provisioners/scriptworker-prov-v1/worker-types/signing-linux-dev
-.. _signing-linux-v1: https://tools.taskcluster.net/provisioners/scriptworker-prov-v1/worker-types/signing-linux-v1
+.. _signing-linux-dev: https://firefox-ci-tc.services.mozilla.com/provisioners/scriptworker-k8s/worker-types/gecko-t-signing-dev
+.. _signing-linux-v1: https://firefox-ci-tc.services.mozilla.com/provisioners/scriptworker-k8s/worker-types/gecko-3-signing
 .. _signtool: https://github.com/mozilla-releng/signtool
 .. _Scriptworker: https://github.com/mozilla-releng/scriptworker/
 .. _widevine site: https://www.widevine.com/wv_drm.html

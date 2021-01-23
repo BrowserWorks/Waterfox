@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Lungiselela Okubhalwa Ngasentla">
+<!ENTITY addButton.label "Fakela">
+<!ENTITY addButton.accesskey "F">
+<!ENTITY removeButton.label "Susa">
+<!ENTITY removeButton.accesskey "S">
+<!ENTITY newMsgHeader.label "Umyalezo ongasentla kwekhasi omtsha:">
+<!ENTITY newMsgHeader.accesskey "U">

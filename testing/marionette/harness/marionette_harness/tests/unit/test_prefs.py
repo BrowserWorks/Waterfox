@@ -4,14 +4,14 @@
 
 from __future__ import absolute_import
 
+import six
+
 from marionette_driver import geckoinstance
 from marionette_driver.errors import JavascriptException
 
 from marionette_harness import (
     MarionetteTestCase,
     run_if_manage_instance,
-    skip_if_desktop,
-    skip_if_mobile
 )
 
 
@@ -31,34 +31,14 @@ class TestPreferences(MarionetteTestCase):
     def test_gecko_instance_preferences(self):
         required_prefs = geckoinstance.GeckoInstance.required_prefs
 
-        for key, value in required_prefs.iteritems():
-            # The extensions.shield-recipe-client.* prefs branch
-            # is as of Firefox 60 migrated to app.normandy.*.
-            #
-            # This is a workaround that can be removed together
-            # with extensions.shield-recipe-client.api_url.
-            if key == "extensions.shield-recipe-client.api_url":
-                self.assertEqual(self.marionette.get_pref("app.normandy.api_url"), value)
-            else:
-                self.assertEqual(self.marionette.get_pref(key), value,
-                                 "Preference {} hasn't been set to {}".format(key, repr(value)))
+        for key, value in six.iteritems(required_prefs):
+            self.assertEqual(self.marionette.get_pref(key), value,
+                             "Preference {} hasn't been set to {}".format(key, repr(value)))
 
-    @skip_if_mobile("Only runnable with Firefox")
     def test_desktop_instance_preferences(self):
         required_prefs = geckoinstance.DesktopInstance.desktop_prefs
 
-        for key, value in required_prefs.iteritems():
-            if key in ["browser.tabs.remote.autostart"]:
-                return
-
-            self.assertEqual(self.marionette.get_pref(key), value,
-                             "Preference {} hasn't been set to {}".format(key, value))
-
-    @skip_if_desktop("Only runnable with Fennec")
-    def test_fennec_instance_preferences(self):
-        required_prefs = geckoinstance.FennecInstance.required_prefs
-
-        for key, value in required_prefs.iteritems():
+        for key, value in six.iteritems(required_prefs):
             if key in ["browser.tabs.remote.autostart"]:
                 return
 
@@ -96,7 +76,7 @@ class TestPreferences(MarionetteTestCase):
         self.marionette.set_pref(self.prefs["string"], "abc")
         value = self.marionette.get_pref(self.prefs["string"])
         self.assertEqual(value, "abc")
-        self.assertTrue(isinstance(value, basestring))
+        self.assertTrue(isinstance(value, six.string_types))
 
         # Test reset value
         self.marionette.set_pref(self.prefs["string"], None)

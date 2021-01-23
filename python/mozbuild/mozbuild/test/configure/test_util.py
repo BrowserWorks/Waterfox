@@ -9,9 +9,10 @@ import os
 import tempfile
 import textwrap
 import unittest
+import six
 import sys
 
-from StringIO import StringIO
+from six import StringIO
 
 from mozunit import main
 from mozpack import path as mozpath
@@ -57,7 +58,7 @@ class TestConfigureOutputHandler(unittest.TestCase):
         name = '%s.test_format' % self.__class__.__name__
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
-        handler =  ConfigureOutputHandler(out, err)
+        handler = ConfigureOutputHandler(out, err)
         handler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))
         logger.addHandler(handler)
 
@@ -79,7 +80,7 @@ class TestConfigureOutputHandler(unittest.TestCase):
         name = '%s.test_continuation' % self.__class__.__name__
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
-        handler =  ConfigureOutputHandler(out, out)
+        handler = ConfigureOutputHandler(out, out)
         handler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))
         logger.addHandler(handler)
 
@@ -138,7 +139,7 @@ class TestConfigureOutputHandler(unittest.TestCase):
         err = StringIO()
 
         logger.removeHandler(handler)
-        handler =  ConfigureOutputHandler(out, err)
+        handler = ConfigureOutputHandler(out, err)
         handler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))
         logger.addHandler(handler)
 
@@ -167,7 +168,7 @@ class TestConfigureOutputHandler(unittest.TestCase):
         name = '%s.test_queue_debug' % self.__class__.__name__
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
-        handler =  ConfigureOutputHandler(out, out, maxlen=3)
+        handler = ConfigureOutputHandler(out, out, maxlen=3)
         handler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))
         logger.addHandler(handler)
 
@@ -268,7 +269,7 @@ class TestConfigureOutputHandler(unittest.TestCase):
         name = '%s.test_queue_debug_reentrant' % self.__class__.__name__
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
-        handler =  ConfigureOutputHandler(out, out, maxlen=10)
+        handler = ConfigureOutputHandler(out, out, maxlen=10)
         handler.setFormatter(logging.Formatter('%(levelname)s| %(message)s'))
         logger.addHandler(handler)
 
@@ -424,7 +425,7 @@ class TestLogSubprocessOutput(unittest.TestCase):
         sandbox = ConfigureSandbox({}, {}, ['configure'], out, out)
 
         sandbox.include_file(mozpath.join(topsrcdir, 'build',
-                             'moz.configure', 'util.configure'))
+                                          'moz.configure', 'util.configure'))
         sandbox.include_file(mozpath.join(topsrcdir, 'python', 'mozbuild',
                                           'mozbuild', 'test', 'configure',
                                           'data', 'subprocess.configure'))
@@ -437,8 +438,8 @@ class TestLogSubprocessOutput(unittest.TestCase):
         self.assertEquals(status, 0)
         quote_char = "'"
         if getpreferredencoding().lower() == 'utf-8':
-            quote_char = '\u00B4'.encode('utf-8')
-        self.assertEquals(out.getvalue().strip(), quote_char)
+            quote_char = '\u00B4'
+        self.assertEquals(six.ensure_text(out.getvalue().strip()), quote_char)
 
 
 class TestVersion(unittest.TestCase):
@@ -474,6 +475,7 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(v.minor, 0)
         self.assertEqual(v.patch, 0)
 
+
 class TestCheckCmdOutput(unittest.TestCase):
 
     def get_result(self, command='', paths=None):
@@ -483,7 +485,7 @@ class TestCheckCmdOutput(unittest.TestCase):
         sandbox = ConfigureTestSandbox(paths, config, {}, ['/bin/configure'],
                                        out, out)
         sandbox.include_file(mozpath.join(topsrcdir, 'build',
-                             'moz.configure', 'util.configure'))
+                                          'moz.configure', 'util.configure'))
         status = 0
         try:
             exec_(command, sandbox)

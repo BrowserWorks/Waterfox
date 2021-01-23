@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -7,7 +5,9 @@
 
 const protocol = require("devtools/shared/protocol");
 const { FrontClassWithSpec } = protocol;
-const { DebuggerServerConnection } = require("devtools/server/main");
+const {
+  DevToolsServerConnection,
+} = require("devtools/server/devtools-server-connection");
 const Services = require("Services");
 
 const inContentSpec = protocol.generateActorSpec({
@@ -82,7 +82,7 @@ exports.InParentActor = protocol.ActorClassWithSpec(inParentSpec, {
       args: this.args,
       isInParent:
         Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_DEFAULT,
-      conn: this.conn instanceof DebuggerServerConnection,
+      conn: this.conn instanceof DevToolsServerConnection,
       // We don't have access to MessageListenerManager in Sandboxes,
       // so fallback to constructor name checks...
       mm: Object.getPrototypeOf(this.mm).constructor.name,

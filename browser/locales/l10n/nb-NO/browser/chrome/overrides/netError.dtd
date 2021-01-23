@@ -1,0 +1,146 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem ved lasting av side">
+<!ENTITY retry.label "Prøv igjen">
+<!ENTITY returnToPreviousPage.label "Gå tilbake">
+<!ENTITY returnToPreviousPage1.label "Gå tilbake (Anbefalt)">
+<!ENTITY advanced2.label "Avansert…">
+<!ENTITY viewCertificate.label "Vis sertifikat">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Serveren ikke funnet">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Hvis adressen er riktig, er det tre andre ting du kan prøve:</strong>
+<ul>
+  <li>Prøv igjen senere.</li>
+  <li>Sjekk nettverksforbindelsen din.</li>
+  <li>Hvis du er tilkoblet, men bak en brannmur, må du kontrollere at &brandShortName; har tillatelse til å bruke Internett.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kontroller filnavnet etter forskjeller i store/små bokstaver eller andre skrivefeil.</li> <li>Sjekk om filen er flyttet, har endret navn eller er slettet.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Den kan være fjernet, flyttet eller filrettighetene forhindrer tilgang.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; klarte ikke å laste denne siden av ukjent årsak.</p>">
+
+<!ENTITY captivePortal.title "Logg inn på nettverket">
+<!ENTITY captivePortal.longDesc2 "<p>Du må logge inn på nettverket før du får tilgang til Internett.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Åpne innloggingsside for nettverk">
+
+<!ENTITY malformedURI.pageTitle "Ugyldig nettadresse">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Det forespurte dokumentet er ikke tilgjengelig i &brandShortName; sitt hurtiglager.</p><ul><li>Av sikkerhetshensyn tillater ikke &brandShortName; å automatisk hente sensitive dokumenter på nytt.</li><li>Trykk Prøv igjen for å hente dokumentet på nytt fra nettstedet.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Trykk «Prøv igjen» for å bytte til tilkoblet modus og laste siden på nytt.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Kontakt eieren av nettstedet og informer om problemet.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Kontakt nettsideeierne og informer dem om dette problemet.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Det er mulig du må installere annen programvare for å åpne denne adressen.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kontroller at proxyinnstillingene er riktige.</li> <li>Kontakt nettverksansvarlig og forsikre deg om at proxyen virker.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Kontroller at proxyinnstillingene er riktige.</li> <li>Kontroller at datamaskinen har en virkende nettverksforbindelse.</li> <li>Dersom datamaskinen din eller nettverket er beskyttet av en brannmur eller proxy, kontroller at &brandShortName; har tillatelse til å få tilgang til Internett.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dette problemet kan av og til skyldes at infokapsler er avslått eller ved å ikke godta
+    infokapsler.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kontroller at systemet ditt har Personal Security Manager installert.</li> <li>Dette problemet kan skyldes en uvanlig konfigurasjon på serveren.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Siden du forsøker åpne kan ikke vises fordi det ikke kunne bekreftes at overført data er autentisk.</li> <li>Kontakt nettstedseieren og informer om problemet.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; oppdaget en potensiell sikkerhetstrussel og fortsatte ikke til <span class='hostname'/>. Hvis du besøker dette nettstedet, kan angriperne prøve å stjele informasjon som passord, e-post eller kredittkortdetaljer.">
+<!ENTITY certerror.sts.introPara "&brandShortName; oppdaget en potensiell sikkerhetstrussel og fortsatte ikke til <span class='hostname'/> fordi dette nettstedet krever en sikker tilkobling.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; oppdaget et problem og fortsatte ikke til <span class='hostname'/>. Nettstedet er enten feilkonfigurert eller datamaskinens klokke er innstilt til feil tid.">
+<!ENTITY certerror.expiredCert.secondPara2 "Det er sannsynligvis at nettstedets sertifikat er utløpt, noe som forhindrer &brandShortName; fra å koble til sikkert. Hvis du besøker dette nettstedet, kan angriperne prøve å stjele informasjon som passord, e-post eller kredittkortdetaljer.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Nettstedets sertifikat er sannsynligvis utløpt, noe som forhindrer &brandShortName; fra å opprette en sikker forbindelse.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Hva kan du gjøre med det?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Problemet er mest sannsynlig med nettstedet, og det er ingenting du kan gjøre for å løse det.</p>
+<p>Hvis du er på et bedriftsnettverk eller bruker antivirusprogramvare, kan du kontakte brukerstøtten for hjelp. Du kan også varsle nettstedets administrator om problemet.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Klokken på datamaskinen er satt til <span id='wrongSystemTime_systemDate2'/>. Kontroller at datamaskinen er satt til riktig dato, klokkeslett og tidssone i systeminnstillingene, og last deretter <span class='hostname'/> på nytt.</p>
+<p>Hvis klokken din allerede er satt til riktig tidspunkt, er nettstedet sannsynligvis feilkonfigurert, og det er ingenting du kan gjøre for å løse problemet. Du kan varsle nettstedets administrator om problemet.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Problemet er mest sannsynlig med nettstedet, og det er ingenting du kan gjøre for å løse det. Du kan varsle nettstedets administrator om problemet.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>Nettstedet kan være midlertidig utilgjengelig eller opptatt. Prøv igjen om en liten stund.</li> <li>Dersom du ikke klarer å laste noen sider, kontroller at datamaskinens nettverkstilkobling er i orden.</li> <li>Dersom datamaskinen er beskyttet av en brannmur eller proxy, kontroller at &brandShortName; har tillatelse til å bruke nettet (www).</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; forhindret nettsiden fra å lastes inn på denne måten fordi nettsiden har en sikkerhetspolicy som forbyr det.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; forhindret denne nettsiden i å laste i denne konteksten fordi nettsiden har en X-Frame-Options-policy som ikke tillater det.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Siden du forsøker å vise kan ikke åpnes fordi en feil i dataoverføringen ble oppdaget.</p><ul><li>Kontakt nettstedseierne og informer dem om dette problemet.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Godta risikoen og fortsett">
+
+<!ENTITY errorReporting.automatic2 "Rapporter feil som dette for å hjelpe Mozilla med å identifisere og blokkere skadelige nettsteder.">
+<!ENTITY errorReporting.learnMore "Les mer …">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakt nettstedseierne og informer dem om dette problemet.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Avansert info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Advarsel: Potensiell sikkerhetsrisiko forut">
+<!ENTITY certerror.sts.pagetitle  "Koblet ikke til: Potensielt sikkerhetsproblem">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> har en sikkerhetspolicy kalt HTTP Strict Transport Security (HSTS), som betyr at &brandShortName; bare kan koble til den sikkert. Du kan ikke legge til et unntak for å besøke dette nettstedet.">
+<!ENTITY certerror.copyToClipboard.label "Kopier tekst til utklippstavlen">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> bruker sikkerhetsteknologi som er utdatert og sårbar for angrep. En angriper kan enkelt fremskaffe informasjon som du trodde var sikker. Nettstedsadministratoren må endre serveren først, før du kan besøke nettstedet.</p><p>Feilkode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokkert side">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> er sannsynligvis et sikkert nettsted, men en sikker tilkobling kunne ikke etableres. Problemet forårsakes av <span class='mitm-name'/> som enten er et program på din datamaskin eller ditt nettverk.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Hvis antivirusprogrammet ditt inneholder en funksjon som skanner krypterte tilkoblinger (ofte kalt «webscanning» eller «https-skanning»), kan du deaktivere denne funksjonen. Hvis det ikke virker, kan du fjerne og installere antivirusprogrammet på nytt.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Om du er i et bedriftsnettverk, kan du kontakte din IT-avdeling.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Hvis du ikke kjenner til <span class='mitm-name'/>, kan dette være et angrep, og du bør ikke fortsette til nettstedet.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Hvis du ikke kjenner til <span class='mitm-name'/>, kan dette være et angrep, og det er ingenting du kan gjøre for å få tilgang til nettstedet.">
+
+<!ENTITY clockSkewError.longDesc "Datamaskinen din tror det er <span id='wrongSystemTime_systemDate1'/>, som hindrer &brandShortName; fra å koble til sikkert. For å besøke <span class='hostname'></span>, oppdater datamaskinens klokke i systeminnstillingene til gjeldende dato, klokkeslett og tidssone, og oppdater deretter <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Det ser ut til at nettverkets sikkerhetsinnstillinger kan være årsak til dette. Vil du tilbakestille til standardinnstillinger?">
+<!ENTITY prefReset.label "Gjenopprett standardinnstillinger">
+
+<!ENTITY enableTls10.longDesc "Dette nettstedet støtter kanskje ikke TLS 1.2-protokollen, som er den minste versjonen som støttes av &brandShortName;. Hvis du slår på TLS 1.0 og TLS 1.1, kan det hende at denne forbindelsen lykkes.">
+<!ENTITY enableTls10.note "TLS 1.0 og TLS 1.1 vil bli permanent deaktivert i en fremtidig utgave.">
+<!ENTITY enableTls10.label "Slå på TLS 1.0 og 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Siden du forsøker å vise kan ikke åpnes fordi en feil i nettverksprotokollen ble oppdaget.</p><ul><li>Kontakt nettstedseierne og informer dem om dette problemet.</li></ul>">

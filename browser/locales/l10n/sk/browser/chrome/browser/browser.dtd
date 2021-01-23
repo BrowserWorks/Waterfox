@@ -1,0 +1,292 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Otvorí ponuku">
+<!ENTITY navbarOverflow.label                "Ďalšie nástroje…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Pripnúť kartu">
+<!ENTITY  unpinTab.label                     "Zrušiť pripnutie karty">
+
+<!ENTITY  listAllTabs.label      "Zoznam všetkých kariet">
+
+<!ENTITY tabCmd.label "Nová karta">
+<!ENTITY openFileCmd.label "Otvoriť súbor…">
+<!ENTITY printCmd.label "Tlačiť…">
+
+<!ENTITY taskManagerCmd.label "Správca úloh">
+
+<!ENTITY menubarCmd.label "Hlavná ponuka">
+<!ENTITY menubarCmd.accesskey "H">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigácia">
+<!ENTITY personalbarCmd.label "Panel záložiek">
+<!ENTITY personalbarCmd.accesskey "z">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Záložky">
+<!ENTITY bookmarksToolbarItem.label "Položky panela záložiek">
+
+<!ENTITY fullScreenCmd.label "Na celú obrazovku">
+
+
+<!-- } is above this key on many keyboards -->
+
+
+<!ENTITY pictureInPictureHideToggle.label "Skryť prepínanie obrazu v obraze">
+<!ENTITY pictureInPictureHideToggle.accesskey "S">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Nastavenie synchronizácie">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Pripojiť ďalšie zariadenie…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Prihlásiť sa do aplikácie &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Zapnúť &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Služby aplikácie &brandProductName;">
+<!ENTITY fxa.menu.account.label "Účet">
+<!ENTITY fxa.menu.settings.label "Nastavenia">
+<!ENTITY fxa.menu.accountSettings.label "Nastavenia účtu">
+<!ENTITY fxa.menu.manageAccount2.label "Spravovať účet">
+<!ENTITY fxa.menu.signOut.label "Odhlásiť sa…">
+<!ENTITY fxa.menu.setupSync.label "Nastaviť službu &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Pošle kartu do iného zariadenia, na ktorom ste prihlásení.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "je teraz v režime celej obrazovky">
+<!ENTITY fullscreenWarning.generic.label "Tento dokument je teraz v režime celej obrazovky">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Ukončiť režim celej obrazovky (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Ukončiť režim celej obrazovky (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "má kontrolu nad vaším kurzorom. Ovládanie kurzora prevezmete stlačením klávesu Esc.">
+<!ENTITY pointerlockWarning.generic.label "Tento dokument má kontrolu nad vaším kurzorom. Ovládanie kurzora prevezmete stlačením klávesu Esc.">
+
+<!ENTITY showAllBookmarks2.label "Zobraziť všetky záložky">
+<!ENTITY recentBookmarks.label "Nedávno pridané medzi záložky">
+<!ENTITY bookmarksToolbarChevron.tooltip "Zobraziť ďalšie záložky">
+
+<!ENTITY printButton.label            "Tlačiť">
+<!ENTITY printButton.tooltip          "Umožní vytlačiť túto stránku">
+
+
+<!ENTITY searchItem.title             "Vyhľadávanie">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Domov">
+<!ENTITY homeButton.defaultPage.tooltip "Úvodná stránka prehliadača &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Záložky">
+
+<!ENTITY bookmarksSubview.label             "Záložky">
+<!ENTITY bookmarksMenuButton2.label         "Ponuka záložiek">
+<!ENTITY bookmarksMenuButton.other.label    "Ostatné záložky">
+<!ENTITY bookmarksMenuButton.mobile.label   "Záložky mobilného Waterfoxu">
+<!ENTITY viewBookmarksSidebar2.label        "Zobraziť bočný panel Záložky">
+<!ENTITY hideBookmarksSidebar.label         "Skryť bočný panel Záložky">
+<!ENTITY viewBookmarksToolbar.label         "Zobraziť panel nástrojov Záložky">
+<!ENTITY hideBookmarksToolbar.label         "Skryť panel nástrojov Záložky">
+<!ENTITY searchBookmarks.label              "Hľadať v záložkách">
+<!ENTITY bookmarkingTools.label             "Nástroje pre prácu so záložkami">
+<!ENTITY addBookmarksMenu.label             "Pridať ponuku záložiek do panela nástrojov">
+<!ENTITY removeBookmarksMenu.label          "Odstrániť ponuku záložiek z panela nástrojov">
+
+<!ENTITY historyButton.label            "História">
+
+<!ENTITY downloads.label              "Správca preberania súborov">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Prevzaté súbory">
+<!ENTITY addons.label                 "Doplnky">
+
+<!ENTITY webDeveloperMenu.label       "Webový vývojár">
+
+<!ENTITY newNavigatorCmd.label        "Nové okno">
+<!ENTITY newPrivateWindow.label     "Nové súkromné okno">
+
+<!ENTITY editMenu.label         "Upraviť">
+<!ENTITY preferencesCmd2.label       "Možnosti">
+<!ENTITY preferencesCmdUnix.label       "Možnosti">
+<!ENTITY logins.label                           "Prihlasovacie údaje">
+
+<!ENTITY overflowCustomizeToolbar.label       "Upraviť panel nástrojov…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "U">
+
+<!ENTITY historyMenu.label "História">
+<!ENTITY historyUndoMenu.label "Nedávno zatvorené karty">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Nedávno zatvorené okná">
+
+<!ENTITY appMenuHistory.showAll.label "Zobraziť celú históriu">
+<!ENTITY appMenuHistory.clearRecent.label "Vymazať nedávnu históriu…">
+<!ENTITY appMenuHistory.restoreSession.label "Obnoviť poslednú reláciu">
+<!ENTITY appMenuHistory.viewSidebar.label "Zobraziť bočný panel História">
+<!ENTITY appMenuHistory.hideSidebar.label "Skryť bočný panel História">
+<!ENTITY appMenuHistory.recentHistory.label "Nedávna história">
+<!ENTITY appMenuHelp.label "Pomocník">
+
+<!ENTITY appMenuRemoteTabs.label "Synchronizované karty">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Žiadne otvorené karty">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Zobraziť ďalšie">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Zobrazí ďalšie karty z tohto zariadenia">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Zobraziť všetky">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Zobrazí všetky karty z tohto zariadenia">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Zapnutím synchronizácie kariet zobrazíte zoznam kariet z vašich ostatných zariadení.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Chceli by ste tu vidieť vaše karty z ostatných zariadení?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Otvoriť nastavenia synchronizácie">
+<!ENTITY appMenuRemoteTabs.welcome.label "Zobraziť zoznam kariet z ostatných zariadení.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Váš účet musí byť overený.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Prihlásiť sa do služby &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Zapnúť službu &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Spravovať zariadenia…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Zobraziť synchronizované karty na bočnom paneli">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Skryť synchronizované karty na bočnom paneli">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Pripojiť ďalšie zariadenie">
+
+<!ENTITY appMenuRecentHighlights.label "Nedávno vybrané">
+
+<!ENTITY customizeMenu.addToToolbar.label "Pridať na panel nástrojov">
+<!ENTITY customizeMenu.addToToolbar.accesskey "s">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Pridať do rozširujúcej ponuky">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "k">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Zrušiť pripnutie v rozširujúcej ponuke">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "u">
+<!ENTITY customizeMenu.removeFromToolbar.label "Odstrániť z panela nástrojov">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "O">
+<!ENTITY customizeMenu.addMoreItems.label "Pridať ďalšie položky…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "P">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Viac">
+
+<!ENTITY contentSearchSubmit.tooltip  "Odoslať vyhľadávanie">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Hľadať">
+<!ENTITY searchIcon.tooltip           "Vyhľadávanie">
+
+<!ENTITY openLinkCmdInTab.accesskey   "O">
+
+<!ENTITY pageAction.copyLink.label    "Kopírovať odkaz">
+
+<!ENTITY saveToPocketCmd.label        "Uložiť stránku do Pocketu">
+<!ENTITY pocketMenuitem.label         "Zobraziť zoznam v Pockete">
+
+<!ENTITY emailPageCmd.label           "Odoslať odkaz…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Lupa">
+
+<!ENTITY sidebarCloseButton.tooltip     "Zavrieť bočný panel">
+
+<!ENTITY quitApplicationCmdWin2.label       "Ukončiť prehliadač">
+<!ENTITY quitApplicationCmdWin2.accesskey   "k">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Ukončiť prehliadač &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Ukončiť prehliadač">
+<!ENTITY quitApplicationCmd.accesskey   "k">
+<!ENTITY quitApplicationCmdMac2.label   "Ukončiť &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "o">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Upraviť blokovanie vyskakovacích okien…">
+<!ENTITY editPopupSettings.label "Upraviť blokovanie vyskakovacích okien…">
+<!ENTITY editPopupSettings.accesskey "U">
+<!ENTITY dontShowMessage.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Hľadať na tejto stránke…">
+
+<!ENTITY spellAddDictionaries.label "Pridať slovníky…">
+<!ENTITY spellAddDictionaries.accesskey "P">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Karty prehliadača">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Automaticky skrývať">
+
+
+<!ENTITY uiTour.infoPanel.close "Zavrieť">
+
+<!ENTITY panicButton.thankyou.msg1                "Vaša nedávna história je teraz vymazaná.">
+<!ENTITY panicButton.thankyou.msg2                "Prajeme bezpečné prehliadanie!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Ďakujeme!">
+
+<!ENTITY updateAvailable.panelUI.label "Prevziať aktualizáciu aplikácie &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Prevziať novú verziu aplikácie &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Ďalšie aktualizácie nie sú dostupné">
+<!ENTITY updateRestart.panelUI.label2 "Reštartovať a aktualizovať aplikáciu &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Synchronizovanie zariadení…">
+
+<!ENTITY pageAction.shareUrl.label "Zdieľať">
+<!ENTITY pageAction.shareMore.label "Viac…">
+
+<!ENTITY libraryButton.tooltip "Zobrazí históriu, uložené záložky a ďalšie">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Funkcie pre zjednodušenie ovládania povolené">

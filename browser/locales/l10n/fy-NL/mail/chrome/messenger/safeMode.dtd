@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; Feilige modus">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; wurket no yn feilige modus, wêrtroch jo persoanlike ynstellingen, tema’s en útwreidingen tydlik útskeakele binne.">
+<!ENTITY safeModeDescription2.label       "Jo kinne alle of inkelde fan dizze wizigingen permanint meitsje:">
+
+<!ENTITY disableAddons.label              "Alle add-ons útskeakelje">
+<!ENTITY disableAddons.accesskey          "t">
+
+<!ENTITY resetToolbars.label              "Arkbalken en betsjinningen werinisjalisearje">
+<!ENTITY resetToolbars.accesskey          "A">
+
+<!ENTITY changeAndRestartButton.label     "Wizigingen trochfiere en werstarte">
+<!ENTITY changeAndRestartButton.accesskey "w">
+
+<!ENTITY continueButton.label             "Trochgean yn feilige modus">
+<!ENTITY continueButton.accesskey         "T">

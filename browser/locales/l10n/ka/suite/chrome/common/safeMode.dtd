@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; უსაფრთხო რეჟიმი">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; უსაფრთხო რეჟიმშია, რომლის დროსახ თქვენი პარამეტრები, თემები და მოდულები დროებით ამორთულია.">
+<!ENTITY safeModeDescription2.label   "შეგიძლიათ ზოგი პარამეტრეის შენახვაც შემდეგი სეანსისთვის:">
+
+<!ENTITY disableAddons.label          "ყველა მოდულის ამორთვა">
+<!ENTITY disableAddons.accesskey      "D">
+
+<!ENTITY resetToolbars.label          "ხელსაწყოთა ზოლებისა და ფანჯრის ზომების აღდგენა">
+<!ENTITY resetToolbars.accesskey      "R">
+
+<!ENTITY deleteBookmarks.label        "ყველა სანიშნის წაშლა გარდა მარქაფებისა">
+<!ENTITY deleteBookmarks.accesskey    "b">
+
+<!ENTITY resetUserPrefs.label         "ყველა საკუთარი პარამეტრის შეცვლა &brandShortName; ნაგულისხმებით">
+<!ENTITY resetUserPrefs.accesskey     "p">
+
+<!ENTITY restoreSearch.label          "ნაგულისხმები საძიებო სისტემების აღდგენა">
+<!ENTITY restoreSearch.accesskey      "s">
+
+<!ENTITY changeAndRestartButton.label "ცვლილებების შეტანა და ხელახლა გახსნა">
+<!ENTITY continueButton.label         "გაგრძელება უსაფრთხო რეჟიმში">

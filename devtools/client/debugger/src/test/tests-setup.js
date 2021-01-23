@@ -8,7 +8,6 @@
 global.Worker = require("workerjs");
 
 import path from "path";
-// import getConfig from "../../bin/getConfig";
 import { readFileSync } from "fs";
 import Enzyme from "enzyme";
 // $FlowIgnore
@@ -51,6 +50,43 @@ global.L10N = require("devtools-launchpad").L10N;
 global.L10N.setBundle(getL10nBundle());
 global.jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
 global.performance = { now: () => 0 };
+global.isWorker = false;
+
+global.define = function() {};
+global.loader = {
+  lazyServiceGetter: () => {},
+  lazyGetter: (context, name, fn) => {
+    try {
+      global[name] = fn();
+    } catch (_) {}
+  },
+  lazyRequireGetter: (context, name, _path, destruct) => {
+    if (
+      !_path ||
+      _path.startsWith("resource://") ||
+      _path.match(/server\/actors/)
+    ) {
+      return;
+    }
+
+    const excluded = [
+      "Debugger",
+      "devtools/shared/event-emitter",
+      "devtools/client/shared/autocomplete-popup",
+      "devtools/client/framework/devtools",
+      "devtools/client/shared/keycodes",
+      "devtools/client/shared/sourceeditor/editor",
+      "devtools/client/shared/telemetry",
+      "devtools/shared/screenshot/save",
+      "devtools/client/shared/focus",
+    ];
+    if (!excluded.includes(_path)) {
+      // $FlowIgnore
+      const module = require(_path);
+      global[name] = destruct ? module[name] : module;
+    }
+  },
+};
 
 const { URL } = require("url");
 global.URL = URL;
@@ -64,6 +100,7 @@ function formatException(reason, p) {
 }
 
 export const parserWorker = new ParserDispatcher();
+export const evaluationsParser = new ParserDispatcher();
 
 beforeAll(() => {
   startSourceMapWorker(
@@ -74,6 +111,7 @@ beforeAll(() => {
     path.join(rootPath, "src/workers/pretty-print/worker.js")
   );
   parserWorker.start(path.join(rootPath, "src/workers/parser/worker.js"));
+  evaluationsParser.start(path.join(rootPath, "src/workers/parser/worker.js"));
   startSearchWorker(path.join(rootPath, "src/workers/search/worker.js"));
   process.on("unhandledRejection", formatException);
 });
@@ -82,6 +120,7 @@ afterAll(() => {
   stopSourceMapWorker();
   stopPrettyPrintWorker();
   parserWorker.stop();
+  evaluationsParser.stop();
   stopSearchWorker();
   process.removeListener("unhandledRejection", formatException);
 });
@@ -90,9 +129,11 @@ afterEach(() => {});
 
 beforeEach(async () => {
   parserWorker.clear();
+  evaluationsParser.clear();
   clearHistory();
   clearDocuments();
   prefs.projectDirectoryRoot = "";
+  prefs.expressions = [];
 
   // Ensures window.dbg is there to track telemetry
   setupHelper({ selectors: {} });
@@ -112,7 +153,7 @@ function mockIndexeddDB() {
 // NOTE: We polyfill finally because TRY uses node 8
 if (!global.Promise.prototype.finally) {
   global.Promise.prototype.finally = function finallyPolyfill(callback) {
-    const constructor = this.constructor;
+    const { constructor } = this;
 
     return this.then(
       function(value) {

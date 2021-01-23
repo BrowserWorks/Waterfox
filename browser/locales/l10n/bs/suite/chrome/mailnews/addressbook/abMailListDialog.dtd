@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "Mailing lista">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Dodaj u: ">
+<!ENTITY ListName.label                 "Naziv liste: ">
+<!ENTITY ListNickName.label             "Nadimak liste: ">
+<!ENTITY ListDescription.label          "Opis: ">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Upišite email adrese da ih dodate na mailing listu:">

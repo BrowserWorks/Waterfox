@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "Postituslista">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Lisää osoitekirjaan: ">
+<!ENTITY addToAddressBook.accesskey     "s">
+<!ENTITY ListName.label                 "Listan nimi: ">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Listan lempinimi: ">
+<!ENTITY ListNickName.accesskey         "i">
+<!ENTITY ListDescription.label          "Kuvaus: ">
+<!ENTITY ListDescription.accesskey      "K">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Kirjoita postituslistaan lisättävät sähköpostiosoitteet:">
+<!ENTITY AddressTitle.accesskey         "p">

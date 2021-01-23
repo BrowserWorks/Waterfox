@@ -3,58 +3,44 @@ py2:
     description: Python 2 compatibility check
     include: ['.']
     exclude:
-        - accessible/xpcom/AccEventGen.py
-        - browser
         - build
-        - client.py
-        - config
-        - configure.py
-        - devtools/shared/css/generated/mach_commands.py
         - dom
         - editor
         - gfx
-        - intl
         - ipc
         - js/src
-        - js/xpconnect
         - layout
-        - media
-        - memory
-        - mobile
         - modules
         - mozglue
         - netwerk
         - nsprpub
         - other-licenses
-        - python/devtools
-        - python/mach
-        - python/mozbuild
         - security
         - servo
         - taskcluster/docker/funsize-update-generator
-        - testing/awsy
-        - testing/firefox-ui
-        - testing/geckodriver
+        - taskcluster/docker/visual-metrics
+        - testing/condprofile
         - testing/gtest
         - testing/mochitest
         - testing/mozharness
         - testing/raptor
-        - testing/remotecppunittests.py
-        - testing/runcppunittests.py
-        - testing/runtimes
         - testing/tools
-        - testing/tps
         - testing/web-platform
         - toolkit
-        - tools/docs
-        - tools/jprof/split-profile.py
-        - tools/lint
-        - tools/mach_commands.py
-        - tools/power/mach_commands.py
-        - tools/profiler
-        - tools/rb
         - tools/update-packaging
         - xpcom
+
+        # These paths are intentionally excluded (Python 3 only)
+        - config/printconfigsetting.py
+        - config/version_win.py
+        - python/mozbuild/mozbuild/html_build_viewer.py
+        - python/mozlint
+        - python/mozperftest
+        - tools/crashreporter/system-symbols/win/symsrv-fetch.py
+        - tools/github-sync
+        - tools/lint
+        - tools/tryselect
+        - testing/performance
     extensions: ['py']
     support-files:
         - 'tools/lint/python/*compat*'

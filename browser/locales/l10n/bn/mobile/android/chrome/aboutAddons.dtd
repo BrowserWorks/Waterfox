@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "অ্যাড-অন">
+<!ENTITY aboutAddons.header2                    "আপনার অ্যাড-অন">
+
+<!ENTITY addonAction.enable                     "সক্রিয়">
+<!ENTITY addonAction.disable                    "নিষ্ক্রিয়">
+<!ENTITY addonAction.uninstall                  "আনইনস্টল">
+<!ENTITY addonAction.undo                       "পূর্বাবস্থায় ফিরিয়ে আনা হবে">
+<!ENTITY addonAction.update                     "হালনাগাদ">
+
+<!ENTITY addonUnsigned.message                  "&brandShortName; দ্বারা এই অ্যাড অন টি কে যাচাই করা যায় নি।">
+<!ENTITY addonUnsigned.learnMore                "আরও জানুন">

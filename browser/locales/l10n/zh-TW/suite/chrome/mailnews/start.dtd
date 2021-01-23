@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "歡迎來到 &brandShortName; 郵件與新聞群組">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'歡迎來到 <a id="vendorURL" href="">&brandShortName;</a> 郵件與新聞群組！'>
+<!ENTITY description.label
+"&brandShortName; 郵件與新聞群組是一個強大的開放原始碼郵件與新聞群組客戶端，支援進階垃圾郵件偵測與其他好用的功能。">
+<!ENTITY features.title "功能">
+<!ENTITY feat_multiacc.label "支援多個帳號">
+<!ENTITY feat_junk.label "垃圾郵件偵測">
+<!ENTITY feat_feeds.label "訊息來源閱讀器">
+<!ENTITY feat_filters.label "郵件篩選條件">
+<!ENTITY feat_htmlmsg.label "支援 HTML 訊息">
+<!ENTITY feat_abook.label "通訊錄">
+<!ENTITY feat_tags.label "可自訂的標籤與郵件檢視模式">
+<!ENTITY feat_integration.label
+"緊密地整合了 &brandShortName; 套裝應用程式">
+<!ENTITY dict.title "字典">
+<!ENTITY dict_intro.label "可以使用字典檢查文章當中的拼字。">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label2
+'可到 <a href="https://addons.thunderbird.net/seamonkey/">SeaMonkey 與 Thunderbird 附加元件站</a>的<a id="dictURL" href="">字典</a>區塊安裝其他語言。'>
+<!ENTITY info.title "更多資訊">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">我們</a>歡迎您回報臭蟲或提出功能請求，但請先閱讀<a id="releaseNotesURL" href="">發行公告</a>並找過 <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> 上有沒有重複的內容。
+'>

@@ -4,12 +4,11 @@
 if test `uname -s` = "Linux"; then
   # We need to indicate the target for cross builds
   ac_add_options --target=x86_64-apple-darwin
-  export MKFSHFS=$topsrcdir/hfsplus-tools/newfs_hfs
-  export DMG_TOOL=$topsrcdir/dmg/dmg
-  export HFS_TOOL=$topsrcdir/dmg/hfsplus
+  export MKFSHFS=$MOZ_FETCHES_DIR/hfsplus-tools/newfs_hfs
+  export DMG_TOOL=$MOZ_FETCHES_DIR/dmg/dmg
+  export HFS_TOOL=$MOZ_FETCHES_DIR/dmg/hfsplus
 fi
 
-ac_add_options --with-l10n-base=../../l10n
 ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 ac_add_options --with-branding=browser/branding/aurora
 
@@ -25,8 +24,5 @@ export MOZILLA_OFFICIAL=1
 # Don't autoclobber l10n, as this can lead to missing binaries and broken builds
 # Bug 1283438
 mk_add_options AUTOCLOBBER=
-
-# Enable MOZ_ALLOW_LEGACY_EXTENSIONS
-ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 
 . "$topsrcdir/build/mozconfig.common.override"

@@ -5,7 +5,6 @@
 
 #include "nsAboutCache.h"
 #include "nsIInputStream.h"
-#include "nsIStorageStream.h"
 #include "nsIURI.h"
 #include "nsCOMPtr.h"
 #include "nsNetUtil.h"
@@ -87,7 +86,7 @@ nsresult nsAboutCache::Channel::Init(nsIURI* aURI, nsILoadInfo* aLoadInfo) {
       "  <title>Network Cache Storage Information</title>\n"
       "  <meta charset=\"utf-8\">\n"
       "  <meta http-equiv=\"Content-Security-Policy\" content=\"default-src "
-      "chrome:\"/>\n"
+      "chrome:; object-src 'none'\"/>\n"
       "  <link rel=\"stylesheet\" href=\"chrome://global/skin/about.css\"/>\n"
       "  <link rel=\"stylesheet\" "
       "href=\"chrome://global/skin/aboutCache.css\"/>\n"
@@ -99,14 +98,6 @@ nsresult nsAboutCache::Channel::Init(nsIURI* aURI, nsILoadInfo* aLoadInfo) {
   mBuffer.AppendLiteral(
       "<label><input id='priv' type='checkbox'/> Private</label>\n"
       "<label><input id='anon' type='checkbox'/> Anonymous</label>\n");
-
-  // Visit scoping by browseris not implemented for the old cache, simply don't
-  // add these controls.  The inbrowser entries are already mixed in the
-  // default view anyway.
-  mBuffer.AppendLiteral(
-      "<label><input id='inbrowser' type='checkbox'/> In Browser "
-      "Element</label>\n");
-
   mBuffer.AppendLiteral(
       "<label><input id='submit' type='button' value='Update'/></label>\n");
 

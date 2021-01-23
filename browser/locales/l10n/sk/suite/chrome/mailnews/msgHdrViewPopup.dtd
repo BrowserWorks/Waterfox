@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Pridať do adresára kontaktov…">
+<!ENTITY AddToAddressBook.accesskey        "P">
+<!ENTITY EditContact.label                 "Upraviť kontakt…">
+<!ENTITY EditContact.accesskey             "U">
+<!ENTITY ViewContact.label                 "Zobraziť kontakt">
+<!ENTITY ViewContact.accesskey             "Z">
+<!ENTITY SendMailTo.label                  "Napísať správu pre…">
+<!ENTITY SendMailTo.accesskey              "s">
+<!ENTITY CopyEmailAddress.label            "Kopírovať e-mailovú adresu">
+<!ENTITY CopyEmailAddress.accesskey        "K">
+<!ENTITY CopyNameAndEmailAddress.label     "Kopírovať meno a e-mailovú adresu">
+<!ENTITY CopyNameAndEmailAddress.accesskey "m">
+<!ENTITY CreateFilterFrom.label            "Vytvoriť filter z…">
+<!ENTITY CreateFilterFrom.accesskey        "f">
+<!ENTITY openInBrowser.label               "Otvoriť v prehliadači">
+<!ENTITY openInBrowser.accesskey           "t">
+<!ENTITY bookmarkLinkCmd.label             "Pridať tento odkaz medzi záložky…">
+<!ENTITY bookmarkLinkCmd.accesskey         "d">
+<!ENTITY copyLinkCmd.label                 "Kopírovať adresu odkazu">
+<!ENTITY copyLinkCmd.accesskey             "a">
+<!ENTITY CopyMessageId.label               "Kopírovať ID správy">
+<!ENTITY CopyMessageId.accesskey           "K">
+<!ENTITY OpenMessageForMsgId.label         "Otvoriť správu s ID">
+<!ENTITY OpenMessageForMsgId.accesskey     "O">
+<!ENTITY OpenBrowserWithMsgId.label        "Otvoriť prehliadač s ID správy">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "h">

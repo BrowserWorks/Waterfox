@@ -10,7 +10,10 @@
 add_task(async function() {
   requestLongerTimeout(4);
 
-  const { tab, monitor } = await initNetMonitor(INFINITE_GET_URL, true);
+  const { tab, monitor } = await initNetMonitor(INFINITE_GET_URL, {
+    enableCache: true,
+    requestCount: 1,
+  });
   const { document, windowRequire, store } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
@@ -34,7 +37,7 @@ add_task(async function() {
   await waitSomeTime();
   ok(!scrolledToBottom(requestsContainer), "Not scrolled to bottom.");
   // save for comparison later
-  const scrollTop = requestsContainer.scrollTop;
+  const { scrollTop } = requestsContainer;
   await waitForNetworkEvents(monitor, 8);
   await waitSomeTime();
   is(requestsContainer.scrollTop, scrollTop, "Did not scroll.");
@@ -62,7 +65,7 @@ add_task(async function() {
   is(requestsContainer.scrollTop, headersHeight, "Did not scroll.");
 
   // Stop doing requests.
-  await ContentTask.spawn(tab.linkedBrowser, {}, function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], function() {
     content.wrappedJSObject.stopRequests();
   });
 

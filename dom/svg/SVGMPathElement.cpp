@@ -11,6 +11,7 @@
 #include "mozilla/dom/SVGAnimateMotionElement.h"
 #include "mozilla/dom/SVGPathElement.h"
 #include "nsContentUtils.h"
+#include "nsIReferrerInfo.h"
 #include "mozilla/dom/SVGMPathElementBinding.h"
 #include "nsIURI.h"
 
@@ -69,12 +70,10 @@ already_AddRefed<DOMSVGAnimatedString> SVGMPathElement::Href() {
 //----------------------------------------------------------------------
 // nsIContent methods
 
-nsresult SVGMPathElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                     nsIContent* aBindingParent) {
+nsresult SVGMPathElement::BindToTree(BindContext& aContext, nsINode& aParent) {
   MOZ_ASSERT(!mPathTracker.get(),
              "Shouldn't have href-target yet (or it should've been cleared)");
-  nsresult rv =
-      SVGMPathElementBase::BindToTree(aDocument, aParent, aBindingParent);
+  nsresult rv = SVGMPathElementBase::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (IsInComposedDoc()) {
@@ -83,16 +82,17 @@ nsresult SVGMPathElement::BindToTree(Document* aDocument, nsIContent* aParent,
             ? mAttrs.GetAttr(nsGkAtoms::href, kNameSpaceID_None)
             : mAttrs.GetAttr(nsGkAtoms::href, kNameSpaceID_XLink);
     if (hrefAttrValue) {
-      UpdateHrefTarget(aParent, hrefAttrValue->GetStringValue());
+      UpdateHrefTarget(nsIContent::FromNode(aParent),
+                       hrefAttrValue->GetStringValue());
     }
   }
 
   return NS_OK;
 }
 
-void SVGMPathElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void SVGMPathElement::UnbindFromTree(bool aNullParent) {
   UnlinkHrefTarget(true);
-  SVGMPathElementBase::UnbindFromTree(aDeep, aNullParent);
+  SVGMPathElementBase::UnbindFromTree(aNullParent);
 }
 
 bool SVGMPathElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
@@ -192,9 +192,8 @@ SVGPathElement* SVGMPathElement::GetReferencedPath() {
 void SVGMPathElement::UpdateHrefTarget(nsIContent* aParent,
                                        const nsAString& aHrefStr) {
   nsCOMPtr<nsIURI> targetURI;
-  nsCOMPtr<nsIURI> baseURI = GetBaseURI();
   nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), aHrefStr,
-                                            OwnerDoc(), baseURI);
+                                            OwnerDoc(), GetBaseURI());
 
   // Stop observing old target (if any)
   if (mPathTracker.get()) {
@@ -205,10 +204,10 @@ void SVGMPathElement::UpdateHrefTarget(nsIContent* aParent,
     // Pass in |aParent| instead of |this| -- first argument is only used
     // for a call to GetComposedDoc(), and |this| might not have a current
     // document yet (if our caller is BindToTree).
-    // Bug 1415044 to investigate which referrer we should use
-    mPathTracker.ResetToURIFragmentID(aParent, targetURI,
-                                      OwnerDoc()->GetDocumentURI(),
-                                      OwnerDoc()->GetReferrerPolicy());
+    nsCOMPtr<nsIReferrerInfo> referrerInfo =
+        ReferrerInfo::CreateForSVGResources(OwnerDoc());
+
+    mPathTracker.ResetToURIFragmentID(aParent, targetURI, referrerInfo);
   } else {
     // if we don't have a parent, then there's no animateMotion element
     // depending on our target, so there's no point tracking it right now.

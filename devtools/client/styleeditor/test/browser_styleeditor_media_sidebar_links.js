@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -10,7 +9,7 @@
 const asyncStorage = require("devtools/shared/async-storage");
 Services.prefs.setCharPref(
   "devtools.devices.url",
-  "http://example.com/browser/devtools/client/responsive.html/test/browser/devices.json"
+  "http://example.com/browser/devtools/client/responsive/test/browser/devices.json"
 );
 
 registerCleanupFunction(() => {
@@ -21,8 +20,7 @@ registerCleanupFunction(() => {
 loader.lazyRequireGetter(
   this,
   "ResponsiveUIManager",
-  "devtools/client/responsive.html/manager",
-  true
+  "devtools/client/responsive/manager"
 );
 
 const TESTCASE_URI = TEST_BASE_HTTPS + "media-rules.html";
@@ -36,7 +34,7 @@ add_task(async function() {
 
   const tab = gBrowser.selectedTab;
   testNumberOfLinks(editor);
-  await testMediaLink(editor, tab, ui, 2, "width", 400);
+  await testMediaLink(editor, tab, ui, 2, "width", 550);
   await testMediaLink(editor, tab, ui, 3, "height", 300);
 
   await closeRDM(tab, ui);
@@ -72,17 +70,18 @@ async function testMediaLink(editor, tab, ui, itemIndex, type, value) {
   let conditions = sidebar.querySelectorAll(".media-rule-condition");
 
   const onMediaChange = once(ui, "media-list-changed");
+  const onRDMOpened = once(ui, "responsive-mode-opened");
 
   info("Launching responsive mode");
   conditions[itemIndex].querySelector(responsiveModeToggleClass).click();
-
+  await onRDMOpened;
   const rdmUI = ResponsiveUIManager.getResponsiveUIForTab(tab);
-  const onContentResize = waitForResizeTo(rdmUI, type, value);
+
+  await waitForResizeTo(rdmUI, type, value);
   rdmUI.transitionsEnabled = false;
 
   info("Waiting for the @media list to update");
   await onMediaChange;
-  await onContentResize;
 
   ok(
     ResponsiveUIManager.isActiveForTab(tab),
@@ -144,7 +143,7 @@ function waitForResizeTo(rdmUI, type, value) {
 
 async function getSizing(rdmUI) {
   const browser = rdmUI.getViewportBrowser();
-  const sizing = await ContentTask.spawn(browser, {}, async function() {
+  const sizing = await SpecialPowers.spawn(browser, [], async function() {
     return {
       width: content.innerWidth,
       height: content.innerHeight,

@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="chrome://devtools/skin/inspector.css"/>
   <link rel="stylesheet" href="chrome://devtools/skin/badge.css"/>
   <link rel="stylesheet" href="chrome://devtools/skin/rules.css"/>
+  <link rel="stylesheet" href="chrome://devtools/skin/compatibility.css"/>
   <link rel="stylesheet" href="chrome://devtools/skin/computed.css"/>
   <link rel="stylesheet" href="chrome://devtools/skin/changes.css"/>
   <link rel="stylesheet" href="chrome://devtools/skin/fonts.css"/>
@@ -22,7 +23,7 @@
   <link rel="stylesheet" href="resource://devtools/client/shared/components/SidebarToggle.css"/>
   <link rel="stylesheet" href="resource://devtools/client/inspector/components/InspectorTabPanel.css"/>
   <link rel="stylesheet" href="resource://devtools/client/shared/components/splitter/SplitBox.css"/>
-  <link rel="stylesheet" href="resource://devtools/client/inspector/layout/components/Accordion.css"/>
+  <link rel="stylesheet" href="resource://devtools/client/shared/components/Accordion.css"/>
   <link rel="stylesheet" href="resource://devtools/client/shared/components/reps/reps.css"/>
   <link rel="stylesheet" href="resource://devtools/client/shared/components/tree/TreeView.css"/>
 
@@ -32,8 +33,8 @@
     var isInChrome = window.location.href.includes("chrome:");
     if (isInChrome) {
       var exports = {};
-      var { require, loader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-      var { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-loader.js", {});
+      var { require, loader } = Cu.import("resource://devtools/shared/Loader.jsm");
+      var { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-loader.js");
     }
   </script>
 
@@ -101,14 +102,12 @@
               <button id="pseudo-class-panel-toggle" data-localization="title=inspector.togglePseudo.tooltip" class="devtools-button"></button>
               <button id="class-panel-toggle" data-localization="title=inspector.classPanel.toggleClass.tooltip" class="devtools-button"></button>
               <button id="ruleview-add-rule-button" data-localization="title=inspector.addRule.tooltip" class="devtools-button"></button>
+              <button id="color-scheme-simulation-toggle" data-localization="title=inspector.colorSchemeSimulation.tooltip" class="devtools-button" hidden="true"></button>
               <button id="print-simulation-toggle" data-localization="title=inspector.printSimulation.tooltip" class="devtools-button" hidden="true"></button>
             </div>
           </div>
           <div id="pseudo-class-panel" class="theme-toolbar ruleview-reveal-panel" hidden="true">
-            <label><input id="pseudo-hover-toggle" type="checkbox" value=":hover" tabindex="-1" />:hover</label>
-            <label><input id="pseudo-active-toggle" type="checkbox" value=":active" tabindex="-1" />:active</label>
-            <label><input id="pseudo-focus-toggle" type="checkbox" value=":focus" tabindex="-1" />:focus</label>
-            <label><input id="pseudo-focus-within-toggle" type="checkbox" value=":focus-within" tabindex="-1" />:focus-within</label>
+            <!-- Populated with checkbox inputs once the Rules view is instantiated -->
           </div>
           <div id="ruleview-class-panel" class="theme-toolbar ruleview-reveal-panel" hidden="true"></div>
         </div>
@@ -128,6 +127,7 @@
                    data-localization="placeholder=inspector.filterStyles.placeholder"/>
             <button id="computed-searchinput-clear" class="devtools-searchinput-clear"></button>
           </div>
+          <div class="devtools-separator"></div>
           <input id="browser-style-checkbox"
                  type="checkbox"
                  class="includebrowserstyles"/>
@@ -141,10 +141,6 @@
             <div id="computed-no-results" class="devtools-sidepanel-no-result" hidden="" data-localization="content=inspector.noProperties"></div>
           </div>
         </div>
-      </div>
-
-      <div id="sidebar-panel-animationinspector" class="theme-sidebar inspector-tabpanel">
-        <iframe class="devtools-inspector-tab-frame"></iframe>
       </div>
     </div>
 

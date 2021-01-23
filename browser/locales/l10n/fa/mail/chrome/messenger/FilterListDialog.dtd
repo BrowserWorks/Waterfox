@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Message Filters">
+<!ENTITY nameColumn.label "Filter Name">
+<!ENTITY activeColumn.label "به کار افتاده">
+<!ENTITY newButton.label "New…">
+<!ENTITY newButton.accesskey "N">
+
+
+<!ENTITY editButton.label "ویرایش…">
+<!ENTITY editButton.accesskey "و">
+<!ENTITY deleteButton.label "حذف">
+<!ENTITY deleteButton.accesskey "ح">
+
+
+
+<!ENTITY reorderUpButton.label "انتقال به بالا">
+<!ENTITY reorderUpButton.accesskey "ا">
+<!ENTITY reorderDownButton.label "انتقال به پایین">
+<!ENTITY reorderDownButton.accesskey "ا">
+
+
+
+<!ENTITY filterHeader.label "Enabled filters are run automatically in the order shown below.">
+<!ENTITY filtersForPrefix.label "Filters for:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filter Log">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Run Now">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "توقف">
+<!ENTITY stopFilters.accesskey "ت">
+<!ENTITY folderPickerPrefix.label "Run selected filter(s) on:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "راهنما">
+<!ENTITY helpButton.accesskey "ر">
+<!ENTITY closeCmd.key "W"> 
+
+

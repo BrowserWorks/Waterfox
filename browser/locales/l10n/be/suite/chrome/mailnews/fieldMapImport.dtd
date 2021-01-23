@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Імпарт адраснай кнігі">
+<!ENTITY fieldMapImport.size "width: 47em; height: 35em;">
+<!ENTITY fieldMapImport.recordNumber "Імпартаваныя даныя запісу:">
+<!ENTITY fieldMapImport.next.label "Наступнае">
+<!ENTITY fieldMapImport.next.accesskey "Н">
+<!ENTITY fieldMapImport.previous.label "Папярэдняе">
+<!ENTITY fieldMapImport.previous.accesskey "П">
+<!ENTITY fieldMapImport.text "Скарыстайце Рухаць Угору і Рухаць Уніз, каб даныя для імпарту справа адпавядалі палям адраснай кнігі злева. Прыміце адзнакі з адзінак, якія вы не жадаеце імпартаваць.">
+<!ENTITY fieldMapImport.up.label "Рухаць угору">
+<!ENTITY fieldMapImport.up.accesskey "г">
+<!ENTITY fieldMapImport.down.label "Рухаць Уніз">
+<!ENTITY fieldMapImport.down.accesskey "н">
+<!ENTITY fieldMapImport.fieldListTitle "Палі адраснай кнігі">
+<!ENTITY fieldMapImport.dataTitle "Даныя запісаў для імпартавання">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Першы запіс змяшчае назвы палёў">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "П">

@@ -328,8 +328,9 @@ void Exception::Stringify(JSContext* aCx, nsString& retval) {
 }
 
 DOMException::DOMException(nsresult aRv, const nsACString& aMessage,
-                           const nsACString& aName, uint16_t aCode)
-    : Exception(aMessage, aRv, aName, nullptr, nullptr), mCode(aCode) {}
+                           const nsACString& aName, uint16_t aCode,
+                           nsIStackFrame* aLocation)
+    : Exception(aMessage, aRv, aName, aLocation, nullptr), mCode(aCode) {}
 
 void DOMException::ToString(JSContext* aCx, nsACString& aReturn) {
   aReturn.Truncate();
@@ -358,7 +359,7 @@ void DOMException::GetName(nsString& retval) { CopyUTF8toUTF16(mName, retval); }
 
 already_AddRefed<DOMException> DOMException::Constructor(
     GlobalObject& /* unused */, const nsAString& aMessage,
-    const Optional<nsAString>& aName, ErrorResult& aError) {
+    const Optional<nsAString>& aName) {
   nsresult exceptionResult = NS_OK;
   uint16_t exceptionCode = 0;
   nsCString name(NS_LITERAL_CSTRING("Error"));

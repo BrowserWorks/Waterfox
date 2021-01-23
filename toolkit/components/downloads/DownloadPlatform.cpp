@@ -3,43 +3,32 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DownloadPlatform.h"
-#include "nsAutoPtr.h"
 #include "nsNetUtil.h"
 #include "nsString.h"
 #include "nsINestedURI.h"
 #include "nsIProtocolHandler.h"
 #include "nsIURI.h"
 #include "nsIFile.h"
-#include "nsIObserverService.h"
-#include "nsISupportsPrimitives.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsThreadUtils.h"
 #include "xpcpublic.h"
 
 #include "mozilla/dom/Promise.h"
-#include "mozilla/LazyIdleThread.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 
 #define PREF_BDM_ADDTORECENTDOCS "browser.download.manager.addToRecentDocs"
 
-// The amount of time, in milliseconds, that our IO thread will stay alive after
-// the last event it processes.
-#define DEFAULT_THREAD_TIMEOUT_MS 10000
-
 #ifdef XP_WIN
 #  include <shlobj.h>
 #  include <urlmon.h>
 #  include "nsILocalFileWin.h"
+#  include "WinTaskbar.h"
 #endif
 
 #ifdef XP_MACOSX
 #  include <CoreFoundation/CoreFoundation.h>
 #  include "../../../xpcom/io/CocoaFileUtils.h"
-#endif
-
-#ifdef MOZ_WIDGET_ANDROID
-#  include "FennecJNIWrappers.h"
 #endif
 
 #ifdef MOZ_WIDGET_GTK
@@ -104,10 +93,30 @@ CFURLRef CreateCFURLFromNSIURI(nsIURI* aURI) {
 }
 #endif
 
-DownloadPlatform::DownloadPlatform() {
-  mIOThread = new LazyIdleThread(DEFAULT_THREAD_TIMEOUT_MS,
-                                 NS_LITERAL_CSTRING("DownloadPlatform"));
+#ifdef XP_WIN
+static void AddToRecentDocs(nsIFile* aTarget, nsAutoString& aPath) {
+  nsString modelId;
+  if (mozilla::widget::WinTaskbar::GetAppUserModelID(modelId)) {
+    nsCOMPtr<nsIURI> uri;
+    if (NS_SUCCEEDED(NS_NewFileURI(getter_AddRefs(uri), aTarget)) && uri) {
+      nsCString spec;
+      if (NS_SUCCEEDED(uri->GetSpec(spec))) {
+        IShellItem2* psi = nullptr;
+        if (SUCCEEDED(
+                SHCreateItemFromParsingName(NS_ConvertASCIItoUTF16(spec).get(),
+                                            nullptr, IID_PPV_ARGS(&psi)))) {
+          SHARDAPPIDINFO info = {psi, modelId.get()};
+          ::SHAddToRecentDocs(SHARD_APPIDINFO, &info);
+          psi->Release();
+          return;
+        }
+      }
+    }
+  }
+
+  ::SHAddToRecentDocs(SHARD_PATHW, aPath.get());
 }
+#endif
 
 nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIURI* aReferrer,
                                         nsIFile* aTarget,
@@ -140,15 +149,11 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIURI* aReferrer,
     // On Windows and Gtk, add the download to the system's "recent documents"
     // list, with a pref to disable.
     {
+#    ifndef MOZ_WIDGET_ANDROID
       bool addToRecentDocs = Preferences::GetBool(PREF_BDM_ADDTORECENTDOCS);
-#    ifdef MOZ_WIDGET_ANDROID
-      if (jni::IsFennec() && addToRecentDocs) {
-        java::DownloadsIntegration::ScanMedia(path, aContentType);
-      }
-#    else
       if (addToRecentDocs && !aIsPrivate) {
 #      ifdef XP_WIN
-        ::SHAddToRecentDocs(SHARD_PATHW, path.get());
+        AddToRecentDocs(aTarget, path);
 #      elif defined(MOZ_WIDGET_GTK)
         GtkRecentManager* manager = gtk_recent_manager_get_default();
 
@@ -202,35 +207,39 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIURI* aReferrer,
       nsCOMPtr<nsIURI> source(aSource);
       nsCOMPtr<nsIURI> referrer(aReferrer);
 
-      rv = mIOThread->Dispatch(NS_NewRunnableFunction(
-          "DownloadPlatform::DownloadDone",
-          [pathCFStr, isFromWeb, source, referrer, promise]() mutable {
-            CFURLRef sourceCFURL = CreateCFURLFromNSIURI(source);
-            CFURLRef referrerCFURL = CreateCFURLFromNSIURI(referrer);
+      rv = NS_DispatchBackgroundTask(
+          NS_NewRunnableFunction(
+              "DownloadPlatform::DownloadDone",
+              [pathCFStr, isFromWeb, source, referrer, promise]() mutable {
+                CFURLRef sourceCFURL = CreateCFURLFromNSIURI(source);
+                CFURLRef referrerCFURL = CreateCFURLFromNSIURI(referrer);
 
-            CocoaFileUtils::AddOriginMetadataToFile(pathCFStr, sourceCFURL,
-                                                    referrerCFURL);
-            CocoaFileUtils::AddQuarantineMetadataToFile(
-                pathCFStr, sourceCFURL, referrerCFURL, isFromWeb);
-            ::CFRelease(pathCFStr);
-            if (sourceCFURL) {
-              ::CFRelease(sourceCFURL);
-            }
-            if (referrerCFURL) {
-              ::CFRelease(referrerCFURL);
-            }
+                CocoaFileUtils::AddOriginMetadataToFile(pathCFStr, sourceCFURL,
+                                                        referrerCFURL);
+                CocoaFileUtils::AddQuarantineMetadataToFile(
+                    pathCFStr, sourceCFURL, referrerCFURL, isFromWeb);
+                ::CFRelease(pathCFStr);
+                if (sourceCFURL) {
+                  ::CFRelease(sourceCFURL);
+                }
+                if (referrerCFURL) {
+                  ::CFRelease(referrerCFURL);
+                }
 
-            DebugOnly<nsresult> rv = NS_DispatchToMainThread(
-                NS_NewRunnableFunction("DownloadPlatform::DownloadDoneResolve",
-                                       [promise = std::move(promise)]() {
-                                         promise->MaybeResolveWithUndefined();
-                                       }));
-            MOZ_ASSERT(NS_SUCCEEDED(rv));
-            // In non-debug builds, if we've for some reason failed to dispatch
-            // a runnable to the main thread to resolve the Promise, then it's
-            // unlikely we can reject it either. At that point, the Promise
-            // is going to remain in pending limbo until its global goes away.
-          }));
+                DebugOnly<nsresult> rv =
+                    NS_DispatchToMainThread(NS_NewRunnableFunction(
+                        "DownloadPlatform::DownloadDoneResolve",
+                        [promise = std::move(promise)]() {
+                          promise->MaybeResolveWithUndefined();
+                        }));
+                MOZ_ASSERT(NS_SUCCEEDED(rv));
+                // In non-debug builds, if we've for some reason failed to
+                // dispatch a runnable to the main thread to resolve the
+                // Promise, then it's unlikely we can reject it either. At that
+                // point, the Promise is going to remain in pending limbo until
+                // its global goes away.
+              }),
+          NS_DISPATCH_EVENT_MAY_BLOCK);
 
       if (NS_SUCCEEDED(rv)) {
         pendingAsyncOperations = true;

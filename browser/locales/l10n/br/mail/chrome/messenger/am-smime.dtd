@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Diuzañ…">
+<!ENTITY digitalSign.certificate.accesskey "z">
+<!ENTITY digitalSign.certificate_clear.button "Skarzhañ">
+<!ENTITY digitalSign.certificate_clear.accesskey "S">
+<!ENTITY encryption.certificate.button "Diuzañ…">
+<!ENTITY encryption.certificate.accesskey "i">
+<!ENTITY encryption.certificate_clear.button "Skarzhañ">
+<!ENTITY encryption.certificate_clear.accesskey "k">
+<!ENTITY signingGroupTitle.label "Sinañ niverel">
+<!ENTITY signMessage.accesskey "S">
+
+<!-- Strings for the cert picker dialog -->
+
+<!ENTITY certPicker.title "Diuzañ un testeni">
+<!ENTITY certPicker.info  "Testeni:">
+<!ENTITY certPicker.detailsLabel "Munudoù an testeni bet diuzet:">
+

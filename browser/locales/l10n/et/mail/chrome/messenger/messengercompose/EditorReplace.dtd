@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Otsimine ja asendamine">
+<!ENTITY findField.label "Otsitav tekst:">
+<!ENTITY findField.accesskey "O">
+<!ENTITY replaceField.label "Asendatakse tekstiga:">
+<!ENTITY replaceField.accesskey "n">
+<!ENTITY caseSensitiveCheckbox.label "Tõstutundlik">
+<!ENTITY caseSensitiveCheckbox.accesskey "T">
+<!ENTITY wrapCheckbox.label "Kogu ulatuses">
+<!ENTITY wrapCheckbox.accesskey "K">
+<!ENTITY backwardsCheckbox.label "Otsitakse tagasisuunas">
+<!ENTITY backwardsCheckbox.accesskey "g">
+<!ENTITY findNextButton.label "Leia järgmine">
+<!ENTITY findNextButton.accesskey "L">
+<!ENTITY replaceButton.label "Asenda">
+<!ENTITY replaceButton.accesskey "A">
+<!ENTITY replaceAndFindButton.label "Leia ja asenda">
+<!ENTITY replaceAndFindButton.accesskey "i">
+<!ENTITY replaceAllButton.label "Asenda kõik">
+<!ENTITY replaceAllButton.accesskey "k">
+<!ENTITY closeButton.label "Sulge">
+<!ENTITY closeButton.accesskey "S">

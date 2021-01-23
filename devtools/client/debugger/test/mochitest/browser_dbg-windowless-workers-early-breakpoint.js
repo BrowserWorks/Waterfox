@@ -1,7 +1,6 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // Test that breakpoints at worker startup are hit when using windowless workers.
 add_task(async function() {
@@ -9,12 +8,8 @@ add_task(async function() {
 
   const workerSource = findSource(dbg, "simple-worker.js");
 
-  // NOTE: by default we do not wait on worker
-  // commands to complete because the thread could be
-  // shutting down.
-  dbg.client.waitForWorkers(true);
-
   await selectSource(dbg, "simple-worker.js");
+  await waitForSelectedSource(dbg, "simple-worker.js");
   await addBreakpoint(dbg, workerSource, 1);
   invokeInTab("startWorker");
   await waitForPaused(dbg, "simple-worker.js");

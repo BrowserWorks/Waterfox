@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+
+<!ENTITY pref.locationBar.title                "Adreso laukas">
+
+<!ENTITY autoComplete.label                    "Automatinis papildymas">
+
+
+
+
+<!ENTITY autoCompleteAutoFill.label            "Automatiškai papildyti iki tinkamiausio adreso">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Rodyti tinkamų variantų sąrašą">
+<!ENTITY autoCompleteShowPopup.accesskey       "R">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Į tinkamus variantus įtraukti tik tas svetaines, kurių adresai buvo renkami">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "t">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Atitikimų ieškoti">
+<!ENTITY autoCompleteMatch.accesskey           "k">
+<!ENTITY autoCompleteMatchAnywhere             "bet kurioje adreso ar pavadinimo vietoje">
+<!ENTITY autoCompleteMatchWordsFirst           "bet kur, pirmenybę teikiant žodžių riboms">
+<!ENTITY autoCompleteMatchWords                "tik ties žodžių ribomis">
+<!ENTITY autoCompleteMatchStart                "tik adreso ar pavadinimo pradžioje">
+<!ENTITY showInternetSearch.label              "Rodyti numatytąją ieškyklę">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "Formatavimas">
+<!ENTITY domainFormatting.label                "Paryškinti bazinę vardų sritį svetainių ir FTP aplankų adresuose">
+<!ENTITY domainFormatting.accesskey            "b">
+<!ENTITY highlightSecure.label                 "Paryškinti tinklalapius, ryšys su kuriais yra aukšto saugumo lygio">
+<!ENTITY highlightSecure.accesskey             "P">
+
+<!ENTITY unknownLocations.label                "Nežinomi adresai">
+<!ENTITY domainGuessing.label                  "Neradus tinklalapio nurodytu adresu, prie jo pridėti „www“ ir „.com“">
+<!ENTITY domainGuessing.accesskey              "N">
+<!ENTITY keywords.label                        "Jei į adreso lauką įvestas ne adresas, atlikti paiešką saityne">
+<!ENTITY keywords.accesskey                    "J">

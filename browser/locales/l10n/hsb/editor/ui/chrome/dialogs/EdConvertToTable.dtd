@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Do tabele konwertować">
+<!ENTITY instructions1.label   "Editor wutworja nowu tabelowu rjadku za kóždy wotstawk we wuběrje.">
+<!ENTITY instructions2.label   "Wubjerće znamješko, kotrež dyrbi so wužiwać, zo by so wuběr do špałtow rozdźělił:">
+<!ENTITY commaRadio.label      "Koma">
+<!ENTITY spaceRadio.label      "Prózdnota">
+<!ENTITY otherRadio.label      "Druhe znamješko:">
+<!ENTITY deleteCharCheck.label "Dźělenske znamješko wotstronić">
+<!ENTITY collapseSpaces.label  "Přidatne prózdnoty ignorować">
+<!ENTITY collapseSpaces.tooltip "Zwisowacy prózdnoty do separatora konwertować">

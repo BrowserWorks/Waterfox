@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Својства водоравне линије">
+
+<!ENTITY dimensionsBox.label "Димензије">
+<!ENTITY heightEditField.label "Висина:">
+<!ENTITY heightEditField.accessKey "с">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "н">
+<!ENTITY pixelsPopup.value "пиксела">
+<!ENTITY alignmentBox.label "Поравнање">
+<!ENTITY leftRadio.label "Лево">
+<!ENTITY leftRadio.accessKey "Л">
+<!ENTITY centerRadio.label "По средини">
+<!ENTITY centerRadio.accessKey "П">
+<!ENTITY rightRadio.label "Десно">
+<!ENTITY rightRadio.accessKey "Д">
+
+<!ENTITY threeDShading.label "3Д осенчавање">
+<!ENTITY threeDShading.accessKey "е">
+<!ENTITY saveSettings.label "Користи као подразумевано">
+<!ENTITY saveSettings.accessKey "К">
+<!ENTITY saveSettings.tooltip "Сачувај ова подешавања за коришћење приликом убацивања нових линија">

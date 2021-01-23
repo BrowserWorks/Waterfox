@@ -6,9 +6,8 @@
 
 #include "shell/jsoptparse.h"
 
+#include <algorithm>
 #include <stdarg.h>
-
-#include "jsutil.h"
 
 #include "util/Unicode.h"
 
@@ -72,7 +71,7 @@ static void PrintParagraph(const char* text, unsigned startColno,
   const char* it = text;
 
   if (padFirstLine) {
-    printf("%*s", startColno, "");
+    printf("%*s", int(startColno), "");
   }
 
   /* Skip any leading spaces. */
@@ -95,7 +94,7 @@ static void PrintParagraph(const char* text, unsigned startColno,
      */
     size_t tokLen = limit - it;
     if (tokLen + colno >= limitColno) {
-      printf("\n%*s%.*s", startColno + indent, "", int(tokLen), it);
+      printf("\n%*s%.*s", int(startColno + indent), "", int(tokLen), it);
       colno = startColno + tokLen;
     } else {
       printf("%.*s", int(tokLen), it);
@@ -115,7 +114,7 @@ static void PrintParagraph(const char* text, unsigned startColno,
         break;
       case '\n':
         /* |text| wants to force a newline here. */
-        printf("\n%*s", startColno, "");
+        printf("\n%*s", int(startColno), "");
         colno = startColno;
         it = limit + 1;
         /* Could also have line-leading spaces. */
@@ -176,7 +175,7 @@ OptionParser::Result OptionParser::printHelp(const char* progname) {
     size_t fmtChars = sizeof(fmt) - 2;
     size_t lhsLen = 0;
     for (Option* arg : arguments) {
-      lhsLen = Max(lhsLen, strlen(arg->longflag) + fmtChars);
+      lhsLen = std::max(lhsLen, strlen(arg->longflag) + fmtChars);
     }
 
     for (Option* arg : arguments) {
@@ -205,7 +204,7 @@ OptionParser::Result OptionParser::printHelp(const char* progname) {
       if (opt->isValued()) {
         len += strlen(opt->asValued()->metavar);
       }
-      lhsLen = Max(lhsLen, len);
+      lhsLen = std::max(lhsLen, len);
     }
 
     /* Print option help text. */

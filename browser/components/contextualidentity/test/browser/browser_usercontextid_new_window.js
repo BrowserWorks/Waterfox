@@ -39,6 +39,7 @@ function openWindowWithUserContextId(userContextId, isPrivate) {
 
   args.appendElement(Services.scriptSecurityManager.getSystemPrincipal());
   args.appendElement(Services.scriptSecurityManager.getSystemPrincipal());
+  args.appendElement(Services.scriptSecurityManager.getSystemPrincipal());
 
   let windowPromise = BrowserTestUtils.waitForNewWindow({ url: TEST_URI });
   Services.ww.openWindow(
@@ -60,7 +61,7 @@ add_task(async function setup() {
 add_task(async function test_new_window() {
   let win = await openWindowWithUserContextId(1, false);
 
-  await ContentTask.spawn(win.gBrowser.selectedBrowser, TEST_URI, url => {
+  await SpecialPowers.spawn(win.gBrowser.selectedBrowser, [TEST_URI], url => {
     Assert.equal(content.document.URL, url, "expected document URL");
     let { originAttributes } = content.document.nodePrincipal;
     Assert.equal(originAttributes.userContextId, 1, "expected userContextId");
@@ -77,7 +78,7 @@ add_task(async function test_new_window() {
 add_task(async function test_new_private_window() {
   let win = await openWindowWithUserContextId(1, true);
 
-  await ContentTask.spawn(win.gBrowser.selectedBrowser, TEST_URI, url => {
+  await SpecialPowers.spawn(win.gBrowser.selectedBrowser, [TEST_URI], url => {
     Assert.equal(content.document.URL, url, "expected document URL");
     let { originAttributes } = content.document.nodePrincipal;
     Assert.equal(originAttributes.userContextId, 1, "expected userContextId");

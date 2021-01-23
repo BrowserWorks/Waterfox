@@ -6,7 +6,6 @@
 
 #include "FileReader.h"
 
-#include "nsIEventTarget.h"
 #include "nsIGlobalObject.h"
 #include "nsITimer.h"
 
@@ -57,6 +56,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(FileReader,
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mBlob)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mProgressNotifier)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mError)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_REFERENCE
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(FileReader, DOMEventTargetHelper)
@@ -120,7 +120,7 @@ FileReader::~FileReader() {
 
 /* static */
 already_AddRefed<FileReader> FileReader::Constructor(
-    const GlobalObject& aGlobal, ErrorResult& aRv) {
+    const GlobalObject& aGlobal) {
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<WeakWorkerRef> workerRef;
 
@@ -143,31 +143,25 @@ FileReader::GetInterface(const nsIID& aIID, void** aResult) {
   return QueryInterface(aIID, aResult);
 }
 
-void FileReader::GetResult(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
-                           ErrorResult& aRv) {
+void FileReader::GetResult(JSContext* aCx,
+                           Nullable<OwningStringOrArrayBuffer>& aResult) {
   JS::Rooted<JS::Value> result(aCx);
 
   if (mDataFormat == FILE_AS_ARRAYBUFFER) {
-    if (mReadyState == DONE && mResultArrayBuffer) {
-      result.setObject(*mResultArrayBuffer);
-    } else {
-      result.setNull();
+    if (mReadyState != DONE || !mResultArrayBuffer ||
+        !aResult.SetValue().SetAsArrayBuffer().Init(mResultArrayBuffer)) {
+      aResult.SetNull();
     }
 
-    if (!JS_WrapValue(aCx, &result)) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return;
-    }
-
-    aResult.set(result);
     return;
   }
 
-  nsString tmpResult = mResult;
-  if (!xpc::StringToJsval(aCx, tmpResult, aResult)) {
-    aRv.Throw(NS_ERROR_FAILURE);
+  if (mResult.IsVoid()) {
+    aResult.SetNull();
     return;
   }
+
+  aResult.SetValue().SetAsString() = mResult;
 }
 
 void FileReader::OnLoadEndArrayBuffer() {
@@ -209,9 +203,9 @@ void FileReader::OnLoadEndArrayBuffer() {
   }
 
   nsAutoString errorName;
-  JSFlatString* name = js::GetErrorTypeName(cx, er->exnType);
+  JSLinearString* name = js::GetErrorTypeName(cx, er->exnType);
   if (name) {
-    AssignJSFlatString(errorName, name);
+    AssignJSLinearString(errorName, name);
   }
 
   nsAutoCString errorMsg(er->message().c_str());
@@ -246,7 +240,7 @@ namespace {
 void PopulateBufferForBinaryString(char16_t* aDest, const char* aSource,
                                    uint32_t aCount) {
   // Zero-extend each char to char16_t.
-  ConvertLatin1toUTF16(MakeSpan(aSource, aCount), MakeSpan(aDest, aCount));
+  ConvertLatin1toUtf16(MakeSpan(aSource, aCount), MakeSpan(aDest, aCount));
 }
 
 nsresult ReadFuncBinaryString(nsIInputStream* aInputStream, void* aClosure,
@@ -267,26 +261,23 @@ nsresult FileReader::DoReadData(uint64_t aCount) {
 
   if (mDataFormat == FILE_AS_BINARY) {
     // Continuously update our binary string as data comes in
-    CheckedInt<uint64_t> size = mResult.Length();
+    CheckedInt<uint64_t> size{mResult.Length()};
     size += aCount;
 
     if (!size.isValid() || size.value() > UINT32_MAX || size.value() > mTotal) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
 
-    uint32_t oldLen = mResult.Length();
-    MOZ_ASSERT(oldLen == mDataLen, "unexpected mResult length");
+    uint32_t lenBeforeRead = mResult.Length();
+    MOZ_ASSERT(lenBeforeRead == mDataLen, "unexpected mResult length");
 
-    char16_t* dest = nullptr;
-    mResult.GetMutableData(&dest, size.value(), fallible);
-    NS_ENSURE_TRUE(dest, NS_ERROR_OUT_OF_MEMORY);
-
-    dest += oldLen;
+    mResult.SetLength(lenBeforeRead + aCount);
+    char16_t* currentPos = mResult.BeginWriting() + lenBeforeRead;
 
     if (NS_InputStreamIsBuffered(mAsyncStream)) {
-      nsresult rv = mAsyncStream->ReadSegments(ReadFuncBinaryString, dest,
+      nsresult rv = mAsyncStream->ReadSegments(ReadFuncBinaryString, currentPos,
                                                aCount, &bytesRead);
-      NS_ENSURE_SUCCESS(rv, rv);
+      NS_ENSURE_SUCCESS(rv, NS_OK);
     } else {
       while (aCount > 0) {
         char tmpBuffer[4096];
@@ -299,22 +290,22 @@ nsresult FileReader::DoReadData(uint64_t aCount) {
           rv = NS_OK;
         }
 
-        NS_ENSURE_SUCCESS(rv, rv);
+        NS_ENSURE_SUCCESS(rv, NS_OK);
 
         if (read == 0) {
           // The stream finished too early.
           return NS_ERROR_OUT_OF_MEMORY;
         }
 
-        PopulateBufferForBinaryString(dest, tmpBuffer, read);
+        PopulateBufferForBinaryString(currentPos, tmpBuffer, read);
 
-        dest += read;
+        currentPos += read;
         aCount -= read;
         bytesRead += read;
       }
     }
 
-    MOZ_ASSERT(size.value() == oldLen + bytesRead);
+    MOZ_ASSERT(size.value() == lenBeforeRead + bytesRead);
     mResult.Truncate(size.value());
   } else {
     CheckedInt<uint64_t> size = mDataLen;
@@ -618,7 +609,8 @@ FileReader::OnInputStreamReady(nsIAsyncInputStream* aStream) {
     if (rv == NS_BASE_STREAM_CLOSED) {
       rv = NS_OK;
     }
-    return OnLoadEnd(rv);
+    OnLoadEnd(rv);
+    return NS_OK;
   }
 
   mTransferred += count;
@@ -643,7 +635,7 @@ FileReader::GetName(nsACString& aName) {
   return NS_OK;
 }
 
-nsresult FileReader::OnLoadEnd(nsresult aStatus) {
+void FileReader::OnLoadEnd(nsresult aStatus) {
   // Cancel the progress event timer
   ClearProgressEventTimer();
 
@@ -653,20 +645,20 @@ nsresult FileReader::OnLoadEnd(nsresult aStatus) {
   // Quick return, if failed.
   if (NS_FAILED(aStatus)) {
     FreeDataAndDispatchError(aStatus);
-    return NS_OK;
+    return;
   }
 
   // In case we read a different number of bytes, we can assume that the
   // underlying storage has changed. We should not continue.
   if (mDataLen != mTotal) {
     FreeDataAndDispatchError(NS_ERROR_FAILURE);
-    return NS_OK;
+    return;
   }
 
   // ArrayBuffer needs a custom handling.
   if (mDataFormat == FILE_AS_ARRAYBUFFER) {
     OnLoadEndArrayBuffer();
-    return NS_OK;
+    return;
   }
 
   nsresult rv = NS_OK;
@@ -687,11 +679,10 @@ nsresult FileReader::OnLoadEnd(nsresult aStatus) {
 
   if (NS_WARN_IF(NS_FAILED(rv))) {
     FreeDataAndDispatchError(rv);
-    return NS_OK;
+    return;
   }
 
   FreeDataAndDispatchSuccess();
-  return NS_OK;
 }
 
 void FileReader::Abort() {

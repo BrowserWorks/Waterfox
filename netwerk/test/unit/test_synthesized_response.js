@@ -48,21 +48,21 @@ function make_channel(url, body, cb) {
       Ci.nsIInterfaceRequestor,
       Ci.nsIProgressEventSink,
     ]),
-    getInterface: function(iid) {
+    getInterface(iid) {
       return this.QueryInterface(iid);
     },
-    onProgress: function(request, context, progress, progressMax) {
+    onProgress(request, progress, progressMax) {
       gotOnProgress = true;
     },
-    onStatus: function(request, context, status, statusArg) {
+    onStatus(request, status, statusArg) {
       gotOnStatus = true;
     },
-    shouldPrepareForIntercept: function() {
+    shouldPrepareForIntercept() {
       Assert.equal(this.numChecks, 0);
       this.numChecks++;
       return true;
     },
-    channelIntercepted: function(channel) {
+    channelIntercepted(channel) {
       channel.QueryInterface(Ci.nsIInterceptedChannel);
       if (body) {
         var synthesized = Cc[
@@ -77,7 +77,7 @@ function make_channel(url, body, cb) {
         cb(channel);
       }
       return {
-        dispatch: function() {},
+        dispatch() {},
       };
     },
   };

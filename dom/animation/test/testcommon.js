@@ -136,7 +136,7 @@ function assert_properties_equal(actual, expected) {
  *   e.g. { offset: 0.1, value: '1px', composite: 'replace', easing: 'ease'}
  */
 function valueFormat(offset, value, composite, easing) {
-  return { offset: offset, value: value, easing: easing, composite: composite };
+  return { offset, value, easing, composite };
 }
 
 /**
@@ -257,12 +257,12 @@ function waitForFrame() {
  * 'dom.animations-api.timelines.enabled' prefs should be true to use this
  * function.
  */
-function waitForNextFrame() {
-  const timeAtStart = document.timeline.currentTime;
+function waitForNextFrame(aWindow = window) {
+  const timeAtStart = aWindow.document.timeline.currentTime;
   return new Promise(resolve => {
-    window.requestAnimationFrame(() => {
-      if (timeAtStart === document.timeline.currentTime) {
-        window.requestAnimationFrame(resolve);
+    aWindow.requestAnimationFrame(() => {
+      if (timeAtStart === aWindow.document.timeline.currentTime) {
+        aWindow.requestAnimationFrame(resolve);
       } else {
         resolve();
       }
@@ -274,23 +274,27 @@ function waitForNextFrame() {
  * Returns a Promise that is resolved after the given number of consecutive
  * animation frames have occured (using requestAnimationFrame callbacks).
  *
- * @param frameCount  The number of animation frames.
- * @param onFrame  An optional function to be processed in each animation frame.
+ * @param aFrameCount  The number of animation frames.
+ * @param aOnFrame  An optional function to be processed in each animation frame.
+ * @param aWindow  An optional window object to be used for requestAnimationFrame.
  */
-function waitForAnimationFrames(frameCount, onFrame) {
-  const timeAtStart = document.timeline.currentTime;
+function waitForAnimationFrames(aFrameCount, aOnFrame, aWindow = window) {
+  const timeAtStart = aWindow.document.timeline.currentTime;
   return new Promise(function(resolve, reject) {
     function handleFrame() {
-      if (onFrame && typeof onFrame === "function") {
-        onFrame();
+      if (aOnFrame && typeof aOnFrame === "function") {
+        aOnFrame();
       }
-      if (timeAtStart != document.timeline.currentTime && --frameCount <= 0) {
+      if (
+        timeAtStart != aWindow.document.timeline.currentTime &&
+        --aFrameCount <= 0
+      ) {
         resolve();
       } else {
-        window.requestAnimationFrame(handleFrame); // wait another frame
+        aWindow.requestAnimationFrame(handleFrame); // wait another frame
       }
     }
-    window.requestAnimationFrame(handleFrame);
+    aWindow.requestAnimationFrame(handleFrame);
   });
 }
 
@@ -485,6 +489,45 @@ async function waitForAnimationReadyToRestyle(aAnimation) {
   // coincide perfectly with the start time of the animation.  In this case no
   // restyling is needed in the frame so we have to wait one more frame.
   if (animationStartsRightNow(aAnimation)) {
-    await waitForNextFrame();
+    await waitForNextFrame(aAnimation.ownerGlobal);
   }
+}
+
+function getDocShellForObservingRestylesForWindow(aWindow) {
+  const docShell = SpecialPowers.wrap(aWindow).docShell;
+
+  docShell.recordProfileTimelineMarkers = true;
+  docShell.popProfileTimelineMarkers();
+
+  return docShell;
+}
+
+// Returns the animation restyle markers observed during |frameCount| refresh
+// driver ticks in this `window`.  This function is typically used to count the
+// number of restyles that take place as part of the style update that happens
+// on each refresh driver tick, as opposed to synchronous restyles triggered by
+// script.
+//
+// For the latter observeAnimSyncStyling (below) should be used.
+function observeStyling(frameCount, onFrame) {
+  return observeStylingInTargetWindow(window, frameCount, onFrame);
+}
+
+// As with observeStyling but applied to target window |aWindow|.
+function observeStylingInTargetWindow(aWindow, aFrameCount, aOnFrame) {
+  const docShell = getDocShellForObservingRestylesForWindow(aWindow);
+
+  return new Promise(resolve => {
+    return waitForAnimationFrames(aFrameCount, aOnFrame, aWindow).then(() => {
+      const markers = docShell.popProfileTimelineMarkers();
+      docShell.recordProfileTimelineMarkers = false;
+      const stylingMarkers = Array.prototype.filter.call(
+        markers,
+        (marker, index) => {
+          return marker.name == "Styles" && marker.isAnimationOnly;
+        }
+      );
+      resolve(stylingMarkers);
+    });
+  });
 }

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "සොයා යළි පිහිටුවන්න">
+<!ENTITY findField.label "පෙළ සොයන්න :">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "යළි පිහිටුවන්නේ:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "කුඩා/ලොකු අකුරු ගළපන්න">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "පේළි කඩන්න">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY backwardsCheckbox.label "පසුපසට සොයන්න">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "ඊළඟ ගැලපුම සොයන්න">
+<!ENTITY findNextButton.accesskey "F">
+<!ENTITY replaceButton.label "යළි පිහිටුවන්න">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "සොයා යළි පිහිටුවන්න">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "සියළ්ල යළි පිහිටුවන්න">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "වහන්න">
+<!ENTITY closeButton.accesskey "C">

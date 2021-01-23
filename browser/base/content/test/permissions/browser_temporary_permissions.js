@@ -3,10 +3,6 @@
 
 "use strict";
 
-const { E10SUtils } = ChromeUtils.import(
-  "resource://gre/modules/E10SUtils.jsm"
-);
-
 const ORIGIN = "https://example.com";
 const PERMISSIONS_PAGE =
   getRootDirectory(gTestPath).replace("chrome://mochitests/content", ORIGIN) +
@@ -17,19 +13,21 @@ const SUBFRAME_PAGE =
 
 // Test that setting temp permissions triggers a change in the identity block.
 add_task(async function testTempPermissionChangeEvents() {
-  let uri = NetUtil.newURI(ORIGIN);
+  let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+    ORIGIN
+  );
   let id = "geo";
 
-  await BrowserTestUtils.withNewTab(uri.spec, function(browser) {
-    SitePermissions.set(
-      uri,
+  await BrowserTestUtils.withNewTab(ORIGIN, function(browser) {
+    SitePermissions.setForPrincipal(
+      principal,
       id,
       SitePermissions.BLOCK,
       SitePermissions.SCOPE_TEMPORARY,
       browser
     );
 
-    Assert.deepEqual(SitePermissions.get(uri, id, browser), {
+    Assert.deepEqual(SitePermissions.getForPrincipal(principal, id, browser), {
       state: SitePermissions.BLOCK,
       scope: SitePermissions.SCOPE_TEMPORARY,
     });
@@ -44,7 +42,7 @@ add_task(async function testTempPermissionChangeEvents() {
       "geo anchor should be visible"
     );
 
-    SitePermissions.remove(uri, id, browser);
+    SitePermissions.removeFromPrincipal(principal, id, browser);
 
     Assert.equal(
       geoIcon.getBoundingClientRect().width,
@@ -57,6 +55,10 @@ add_task(async function testTempPermissionChangeEvents() {
 // Test that temp blocked permissions requested by subframes (with a different URI) affect the whole page.
 add_task(async function testTempPermissionSubframes() {
   let uri = NetUtil.newURI(ORIGIN);
+  let principal = Services.scriptSecurityManager.createContentPrincipal(
+    uri,
+    {}
+  );
   let id = "geo";
 
   await BrowserTestUtils.withNewTab(SUBFRAME_PAGE, async function(browser) {
@@ -65,16 +67,36 @@ add_task(async function testTempPermissionSubframes() {
       "popupshown"
     );
 
+    await new Promise(r => {
+      SpecialPowers.pushPrefEnv(
+        {
+          set: [
+            ["dom.security.featurePolicy.enabled", true],
+            ["dom.security.featurePolicy.header.enabled", true],
+            ["dom.security.featurePolicy.webidl.enabled", true],
+          ],
+        },
+        r
+      );
+    });
+
     // Request a permission.
-    await ContentTask.spawn(browser, uri.host, function(host) {
-      E10SUtils.wrapHandlingUserInput(content, true, function() {
-        let frame = content.document.getElementById("frame");
-        let frameDoc = frame.contentWindow.document;
+    await SpecialPowers.spawn(browser, [uri.host], async function(host0) {
+      let frame = content.document.getElementById("frame");
 
-        // Make sure that the origin of our test page is different.
-        Assert.notEqual(frameDoc.location.host, host);
+      await content.SpecialPowers.spawn(frame, [host0], async function(host) {
+        const { E10SUtils } = ChromeUtils.import(
+          "resource://gre/modules/E10SUtils.jsm"
+        );
 
-        frameDoc.getElementById("geo").click();
+        E10SUtils.wrapHandlingUserInput(this.content, true, function() {
+          let frameDoc = this.content.document;
+
+          // Make sure that the origin of our test page is different.
+          Assert.notEqual(frameDoc.location.host, host);
+
+          frameDoc.getElementById("geo").click();
+        });
       });
     });
 
@@ -90,7 +112,7 @@ add_task(async function testTempPermissionSubframes() {
 
     await popuphidden;
 
-    Assert.deepEqual(SitePermissions.get(uri, id, browser), {
+    Assert.deepEqual(SitePermissions.getForPrincipal(principal, id, browser), {
       state: SitePermissions.BLOCK,
       scope: SitePermissions.SCOPE_TEMPORARY,
     });

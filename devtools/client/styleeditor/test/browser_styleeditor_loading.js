@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -20,11 +19,10 @@ add_task(async function() {
 
   const toolbox = gDevTools.getToolbox(target);
   const panel = toolbox.getPanel("styleeditor");
-  const { panelWindow } = panel;
+  const { panelWindow, UI: ui } = panel;
 
-  const root = panelWindow.document.querySelector(".splitview-root");
   ok(
-    !root.classList.contains("loading"),
+    !ui._root.classList.contains("loading"),
     "style editor root element does not have 'loading' class name anymore"
   );
 

@@ -27,6 +27,52 @@ function handlePromptWhenItAppears(action, isTabModal, isSelect) {
   }, 100);
 }
 
+function checkTabModal(prompt, browser) {
+  let doc = browser.ownerDocument;
+
+  let { bottom: toolboxBottom } = doc
+    .getElementById("navigator-toolbox")
+    .getBoundingClientRect();
+
+  let { mainContainer } = prompt.ui;
+
+  let { x, y } = mainContainer.getBoundingClientRect();
+  ok(y > 0, "Container should have y > 0");
+  // Inset by 1px since the corner point doesn't return the frame due to the
+  // border-radius.
+  is(
+    doc.elementFromPoint(x + 1, y + 1).parentNode,
+    mainContainer,
+    "Check tabmodalprompt is visible"
+  );
+
+  info("Click to the left of the dialog over the content area");
+  isnot(
+    doc.elementFromPoint(x - 10, y + 50),
+    browser,
+    "Check clicks on the content area don't go to the browser"
+  );
+  is(
+    doc.elementFromPoint(x - 10, y + 50).parentNode,
+    prompt.element,
+    "Check clicks on the content area go to the prompt dialog background"
+  );
+
+  if (prompt.args.modalType == Ci.nsIPrompt.MODAL_TYPE_TAB) {
+    ok(
+      y <= toolboxBottom - 5,
+      "Dialog should overlap the toolbox by at least 5px"
+    );
+  } else {
+    ok(y >= toolboxBottom, "Dialog must not overlap with toolbox.");
+  }
+
+  ok(
+    browser.hasAttribute("tabmodalPromptShowing"),
+    "Check browser has @tabmodalPromptShowing"
+  );
+}
+
 function handlePrompt(action, isTabModal, isSelect) {
   let ui;
 
@@ -40,6 +86,7 @@ function handlePrompt(action, isTabModal, isSelect) {
     }
 
     ui = prompts[0].Dialog.ui;
+    checkTabModal(prompts[0], gBrowser.selectedBrowser);
   } else {
     let doc = getDialogDoc();
     if (!doc) {
@@ -92,8 +139,8 @@ function getPromptState(ui) {
   state.checked = state.checkHidden ? false : ui.checkbox.checked;
   // tab-modal prompts don't have an infoIcon
   state.iconClass = ui.infoIcon ? ui.infoIcon.className : null;
-  state.textValue = ui.loginTextbox.getAttribute("value");
-  state.passValue = ui.password1Textbox.getAttribute("value");
+  state.textValue = ui.loginTextbox.value;
+  state.passValue = ui.password1Textbox.value;
 
   state.butt0Label = ui.button0.label;
   state.butt1Label = ui.button1.label;
@@ -120,9 +167,9 @@ function getPromptState(ui) {
     state.focused = "button1";
   } else if (ui.button2.isSameNode(e)) {
     state.focused = "button2";
-  } else if (e.isSameNode(ui.loginTextbox.inputField)) {
+  } else if (e.isSameNode(ui.loginTextbox)) {
     state.focused = "textField";
-  } else if (e.isSameNode(ui.password1Textbox.inputField)) {
+  } else if (e.isSameNode(ui.password1Textbox)) {
     state.focused = "passField";
   } else if (ui.infoBody.isSameNode(e)) {
     state.focused = "infoBody";
@@ -138,7 +185,7 @@ function getPromptState(ui) {
     // We can't just check window.opener because that'll be
     // a content window, which therefore isn't exposed (it'll lie and
     // be null).
-    let flags = treeOwner.getInterface(Ci.nsIXULWindow).chromeFlags;
+    let flags = treeOwner.getInterface(Ci.nsIAppWindow).chromeFlags;
     state.chrome = (flags & Ci.nsIWebBrowserChrome.CHROME_OPENAS_CHROME) != 0;
     state.dialog = (flags & Ci.nsIWebBrowserChrome.CHROME_OPENAS_DIALOG) != 0;
     state.chromeDependent =
@@ -219,10 +266,10 @@ function dismissPrompt(ui, action) {
 
 function getDialogDoc() {
   // Trudge through all the open windows, until we find the one
-  // that has either commonDialog.xul or selectDialog.xul loaded.
+  // that has either commonDialog.xhtml or selectDialog.xhtml loaded.
   // var enumerator = Services.wm.getEnumerator("navigator:browser");
   for (let { docShell } of Services.wm.getEnumerator(null)) {
-    var containedDocShells = docShell.getDocShellEnumerator(
+    var containedDocShells = docShell.getAllDocShellsInSubtree(
       docShell.typeChrome,
       docShell.ENUMERATE_FORWARDS
     );
@@ -235,8 +282,9 @@ function getDialogDoc() {
       var childDoc = childDocShell.contentViewer.DOMDocument;
 
       if (
-        childDoc.location.href != "chrome://global/content/commonDialog.xul" &&
-        childDoc.location.href != "chrome://global/content/selectDialog.xul"
+        childDoc.location.href !=
+          "chrome://global/content/commonDialog.xhtml" &&
+        childDoc.location.href != "chrome://global/content/selectDialog.xhtml"
       ) {
         continue;
       }

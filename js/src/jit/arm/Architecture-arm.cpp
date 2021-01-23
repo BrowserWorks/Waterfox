@@ -15,7 +15,13 @@
 #  include <unistd.h>
 #endif
 
+#if defined(XP_IOS)
+#  include <libkern/OSCacheControl.h>
+#endif
+
 #include "jit/arm/Assembler-arm.h"
+#include "jit/arm/Simulator-arm.h"
+#include "jit/FlushICache.h"  // js::jit::FlushICache
 #include "jit/RegisterSets.h"
 
 #if !defined(__linux__) || defined(ANDROID) || defined(JS_SIMULATOR_ARM)
@@ -141,9 +147,9 @@ static uint32_t CanonicalizeARMHwCapFlags(uint32_t flags) {
   return flags;
 }
 
-volatile bool forceDoubleCacheFlush = false;
-
-bool ForceDoubleCacheFlush() { return forceDoubleCacheFlush; }
+#if !defined(JS_SIMULATOR_ARM) && (defined(__linux__) || defined(ANDROID))
+static bool forceDoubleCacheFlush = false;
+#endif
 
 // The override flags parsed from the ARMHWCAP environment variable or from the
 // --arm-hwcap js shell argument.
@@ -392,6 +398,10 @@ FloatRegisters::Code FloatRegisters::FromName(const char* name) {
 }
 
 FloatRegisterSet VFPRegister::ReduceSetForPush(const FloatRegisterSet& s) {
+#ifdef ENABLE_WASM_SIMD
+#  error "Needs more careful logic if SIMD is enabled"
+#endif
+
   LiveFloatRegisterSet mod;
   for (FloatRegisterIterator iter(s); iter.more(); ++iter) {
     if ((*iter).isSingle()) {
@@ -410,6 +420,10 @@ FloatRegisterSet VFPRegister::ReduceSetForPush(const FloatRegisterSet& s) {
 }
 
 uint32_t VFPRegister::GetPushSizeInBytes(const FloatRegisterSet& s) {
+#ifdef ENABLE_WASM_SIMD
+#  error "Needs more careful logic if SIMD is enabled"
+#endif
+
   FloatRegisterSet ss = s.reduceSetForPush();
   uint64_t bits = ss.bits();
   uint32_t ret = mozilla::CountPopulation32(bits & 0xffffffff) * sizeof(float);
@@ -417,6 +431,10 @@ uint32_t VFPRegister::GetPushSizeInBytes(const FloatRegisterSet& s) {
   return ret;
 }
 uint32_t VFPRegister::getRegisterDumpOffsetInBytes() {
+#ifdef ENABLE_WASM_SIMD
+#  error "Needs more careful logic if SIMD is enabled"
+#endif
+
   if (isSingle()) {
     return id() * sizeof(float);
   }
@@ -431,6 +449,52 @@ uint32_t FloatRegisters::ActualTotalPhys() {
     return 32;
   }
   return 16;
+}
+
+void FlushICache(void* code, size_t size) {
+#if defined(JS_SIMULATOR_ARM)
+  js::jit::SimulatorProcess::FlushICache(code, size);
+
+#elif (defined(__linux__) || defined(ANDROID)) && defined(__GNUC__)
+  void* end = (void*)(reinterpret_cast<char*>(code) + size);
+  asm volatile(
+      "push    {r7}\n"
+      "mov     r0, %0\n"
+      "mov     r1, %1\n"
+      "mov     r7, #0xf0000\n"
+      "add     r7, r7, #0x2\n"
+      "mov     r2, #0x0\n"
+      "svc     0x0\n"
+      "pop     {r7}\n"
+      :
+      : "r"(code), "r"(end)
+      : "r0", "r1", "r2");
+
+  if (forceDoubleCacheFlush) {
+    void* start = (void*)((uintptr_t)code + 1);
+    asm volatile(
+        "push    {r7}\n"
+        "mov     r0, %0\n"
+        "mov     r1, %1\n"
+        "mov     r7, #0xf0000\n"
+        "add     r7, r7, #0x2\n"
+        "mov     r2, #0x0\n"
+        "svc     0x0\n"
+        "pop     {r7}\n"
+        :
+        : "r"(start), "r"(end)
+        : "r0", "r1", "r2");
+  }
+
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+  __clear_cache(code, reinterpret_cast<char*>(code) + size);
+
+#elif defined(XP_IOS)
+  sys_icache_invalidate(code, size);
+
+#else
+#  error "Unexpected platform"
+#endif
 }
 
 }  // namespace jit

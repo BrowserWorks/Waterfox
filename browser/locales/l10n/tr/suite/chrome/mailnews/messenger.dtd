@@ -1,0 +1,560 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messengerWindow.title "Posta ve haber grupları">
+<!ENTITY titleModifier.label "&brandShortName;">
+<!ENTITY titleSeparator.label " - ">
+<!-- tabmail -->
+
+<!ENTITY tabmailClose.label "Sekmeyi kapat">
+<!ENTITY tabmailClose.tooltip "Sekmeyi kapat">
+<!ENTITY tabmailNewButton.tooltip "Geçerli sekmeyi ikile">
+<!ENTITY tabmailCloseButton.tooltip "Sekmeyi kapat">
+<!ENTITY tabmailAllTabs.tooltip "Tüm sekmeleri diz">
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+<!-- File menu items -->
+
+
+<!ENTITY newMessage.label "Yeni posta">
+<!ENTITY newMessage.accesskey "i">
+<!ENTITY newFolderCmd.label "Dizin…">
+<!ENTITY newFolderCmd.accesskey "D">
+<!ENTITY newVirtualFolderCmd.label "Kayıtlı arama sonuçları…">
+<!ENTITY newVirtualFolderCmd.accesskey "s">
+<!ENTITY newTabCmd.label "Sekmeyi ikile">
+<!ENTITY newTabCmd.accesskey "y">
+<!ENTITY newTabCmd.key "t">
+<!ENTITY closeTabCmd.label "Sekmeyi kapat">
+<!ENTITY closeTabCmd.accesskey "e">
+<!ENTITY newAccountCmd.label "Hesap…">
+<!ENTITY newAccountCmd.accesskey "H">
+<!ENTITY openMessageFileCmd.label "Dosya aç…">
+<!ENTITY openMessageFileCmd.accesskey "a">
+<!ENTITY openAttachmentCmd.label "Ekler">
+<!ENTITY openAttachmentCmd.accesskey "E">
+<!ENTITY saveAsMenu.label "Farklı kaydet">
+<!ENTITY saveAsMenu.accesskey "F">
+<!ENTITY saveAsFileCmd.label "Dosya">
+<!ENTITY saveAsFileCmd.accesskey "D">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Geçici">
+<!ENTITY saveAsTemplateCmd.accesskey "c">
+<!ENTITY getNewMsgCmd.label "Yeni postaları indir">
+<!ENTITY getNewMsgCmd.accesskey "Y">
+<!ENTITY getNewMsgCmd2.key "d">
+<!ENTITY getNewMsgForCmd.label "Yeni postalara bak">
+<!ENTITY getNewMsgForCmd.accesskey "i">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Bütün hesaplar…">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "B">
+<!ENTITY getAllNewMsgCmd.label "Tüm yeni postaları indir">
+<!ENTITY getAllNewMsgCmd2.key "d">
+<!ENTITY getNextNMsgCmd.label "Bir sonraki 500 haber iletisini indir">
+<!ENTITY getNextNMsgCmd.accesskey "5">
+<!ENTITY sendUnsentCmd.label "Gönderilmeyen postaları gönder">
+<!ENTITY sendUnsentCmd.accesskey "d">
+<!ENTITY subscribeCmd.label "Abone ol…">
+<!ENTITY subscribeCmd.accesskey "A">
+<!ENTITY renameFolder.label "Dosyanın ismini değiştir…">
+<!ENTITY renameFolder.accesskey "i">
+<!ENTITY compactFolders.label "Dizinleri sıkıştır">
+<!ENTITY compactFolders.accesskey "D">
+<!ENTITY emptyTrashCmd.label "Çöpü boşalt">
+<!ENTITY emptyTrashCmd.accesskey "p">
+<!ENTITY offlineMenu.label "Çevrim dışı">
+<!ENTITY offlineMenu.accesskey "m">
+<!ENTITY synchronizeOfflineCmd.label "Şimdi indir/eşleştir…">
+<!ENTITY synchronizeOfflineCmd.accesskey "m">
+<!ENTITY settingsOfflineCmd.label "Çevrim dışı ayarları…">
+<!ENTITY settingsOfflineCmd.accesskey "e">
+<!ENTITY downloadSelectedCmd.label "Seçili iletileri indir">
+<!ENTITY downloadSelectedCmd.accesskey "i">
+<!ENTITY downloadFlaggedCmd.label "Yıldızlı iletileri indir">
+<!ENTITY downloadFlaggedCmd.accesskey "Y">
+<!-- Edit Menu -->
+
+<!ENTITY deleteMsgCmd.label "Postayı sil">
+<!ENTITY deleteMsgCmd.accesskey "P">
+<!ENTITY undeleteMsgCmd.label "Silinen postayı geri al">
+<!ENTITY undeleteMsgCmd.accesskey "i">
+<!ENTITY cancelNewsMsgCmd.label "İletiyi iptal et">
+<!ENTITY cancelNewsMsgCmd.accesskey "y">
+<!ENTITY deleteMsgsCmd.label "Seçilmiş postaları sil">
+<!ENTITY deleteMsgsCmd.accesskey "S">
+<!ENTITY undeleteMsgsCmd.label "İşaretlenmiş silinen postaları geri al">
+<!ENTITY undeleteMsgsCmd.accesskey "a">
+<!ENTITY deleteFolderCmd.label "Dizini sil">
+<!ENTITY deleteFolderCmd.accesskey "i">
+<!ENTITY unsubscribeNewsgroupCmd.label "Abonelikten çık">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "A">
+<!ENTITY selectMenu.label "Seçin">
+<!ENTITY selectMenu.accesskey "S">
+<!ENTITY selectThreadCmd.label "Dizilim">
+<!ENTITY selectThreadCmd.accesskey "i">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Yıldızlı iletiler">
+<!ENTITY selectFlaggedCmd.accesskey "Y">
+<!ENTITY folderPropsCmd.label "Özellikler…">
+<!ENTITY folderPropsFolderCmd.label "Dizin özellikleri…">
+<!ENTITY folderPropsNewsgroupCmd.label "Haber grubu özellikleri… ">
+<!ENTITY folderPropsCmd.accesskey "e">
+<!ENTITY accountManagerCmd.label "Posta ve haber grupları ayarları…">
+<!ENTITY accountManagerCmd.accesskey "P">
+<!ENTITY undoDeleteMsgCmd.label "Silinmiş iletileri geri getir">
+<!ENTITY redoDeleteMsgCmd.label "Silinmiş postaları geri getir">
+<!ENTITY undoMoveMsgCmd.label "Taşınmış postayı geri getir">
+<!ENTITY redoMoveMsgCmd.label "Taşınan postayı geri getir">
+<!ENTITY undoCopyMsgCmd.label "Kopyalanan postayı geri getir">
+<!ENTITY redoCopyMsgCmd.label "Posta kopyalamayı yinele">
+<!ENTITY undoMarkAllCmd.label "Okunmuş olarak işaretlemeyi geri al">
+<!ENTITY redoMarkAllCmd.label "Okunmuş olarak işaretlemeyi yinele">
+<!ENTITY undoDefaultCmd.label "Geri al">
+<!ENTITY redoDefaultCmd.label "Yinele">
+<!-- View Menu -->
+
+<!ENTITY showMessengerToolbarCmd.label "Posta araç çubuğu">
+<!ENTITY showMessengerToolbarCmd.accesskey "o">
+<!ENTITY showSearchToolbarCmd.label "Arama çubuğu">
+<!ENTITY showSearchToolbarCmd.accesskey "A">
+
+<!ENTITY messagePaneLayoutStyle.label "Yerleşim">
+<!ENTITY messagePaneLayoutStyle.accesskey "l">
+<!ENTITY messagePaneClassic.label "Klasik Görünüm">
+<!ENTITY messagePaneClassic.accesskey "K">
+<!ENTITY messagePaneWide.label "Geniş Görünüm">
+<!ENTITY messagePaneWide.accesskey "n">
+<!ENTITY messagePaneVertical.label "Dikey Görünüm">
+<!ENTITY messagePaneVertical.accesskey "k">
+<!ENTITY showMessagePaneCmd.label "Posta penceresi">
+<!ENTITY showMessagePaneCmd.accesskey "P">
+<!ENTITY showThreadPaneCmd.label "Dizilimler penceresi">
+<!ENTITY showThreadPaneCmd.accesskey "z">
+<!ENTITY showFolderPaneCmd.label "Dizin penceresi">
+<!ENTITY showFolderPaneCmd.accesskey "D">
+<!-- sortMenu is also used by addressbook -->
+
+<!ENTITY sortMenu.label "Sırala">
+<!ENTITY sortMenu.accesskey "l">
+
+<!ENTITY sortByDateCmd.label "Tarih">
+<!ENTITY sortByDateCmd.accesskey "h">
+<!ENTITY sortByReceivedCmd.label "Tarih">
+<!ENTITY sortByReceivedCmd.accesskey "a">
+<!ENTITY sortByFlagCmd.label "Bayrak">
+<!ENTITY sortByFlagCmd.accesskey "y">
+<!ENTITY sortByPriorityCmd.label "Önemlilik">
+<!ENTITY sortByPriorityCmd.accesskey "n">
+<!ENTITY sortBySizeCmd.label "Boyut">
+<!ENTITY sortBySizeCmd.accesskey "t">
+<!ENTITY sortByStatusCmd.label "Durum">
+<!ENTITY sortByStatusCmd.accesskey "u">
+<!ENTITY sortByTagsCmd.label "Etiket">
+<!ENTITY sortByTagsCmd.accesskey "E">
+<!ENTITY sortByJunkStatusCmd.label "Gereksiz statüsü">
+<!ENTITY sortByJunkStatusCmd.accesskey "G">
+<!ENTITY sortBySubjectCmd.label "Konu">
+<!ENTITY sortBySubjectCmd.accesskey "K">
+<!ENTITY sortByFromCmd.label "Gönderen">
+<!ENTITY sortByFromCmd.accesskey "ö">
+<!ENTITY sortByRecipientCmd.label "Alıcı">
+<!ENTITY sortByRecipientCmd.accesskey "c">
+<!ENTITY sortByUnreadCmd.label "Okunmamış">
+<!ENTITY sortByUnreadCmd.accesskey "ş">
+<!ENTITY sortByOrderReceivedCmd.label "Kabul etme sıralaması">
+<!ENTITY sortByOrderReceivedCmd.accesskey "ı">
+<!ENTITY sortByAttachmentsCmd.label "Ekler">
+<!ENTITY sortByAttachmentsCmd.accesskey "r">
+<!ENTITY sortAscending.label "Yükselerek">
+<!ENTITY sortAscending.accesskey "Y">
+<!ENTITY sortDescending.label "Azalarak">
+<!ENTITY sortDescending.accesskey "A">
+<!ENTITY sortThreaded.label "Dizilim">
+<!ENTITY sortThreaded.accesskey "D">
+<!ENTITY sortUnthreaded.label "Dizilimsiz">
+<!ENTITY sortUnthreaded.accesskey "D">
+<!ENTITY groupBySort.label "Sıralamaları Gruplaştır">
+<!ENTITY groupBySort.accesskey "G">
+<!ENTITY msgsMenu.label "İletiler">
+<!ENTITY msgsMenu.accesskey "İ">
+<!ENTITY threads.label "Dizilimler">
+<!ENTITY threads.accesskey "D">
+<!ENTITY allMsgsCmd.label "Tamamı">
+<!ENTITY allMsgsCmd.accesskey "a">
+<!ENTITY expandAllThreadsCmd.label "Bütün dizilimleri aç">
+<!ENTITY expandAllThreadsCmd.accesskey "ü">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Tüm dizilimleri kapat">
+<!ENTITY collapseAllThreadsCmd.accesskey "T">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Okunmayanları">
+<!ENTITY unreadMsgsCmd.accesskey "O">
+<!ENTITY threadsWithUnreadCmd.label "Okunmayan dizilimleri">
+<!ENTITY threadsWithUnreadCmd.accesskey "m">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Dizilimleri okunmayan olarak takip et ">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "o">
+<!ENTITY ignoredThreadsCmd.label "Gözardı edilen dizilimler">
+<!ENTITY ignoredThreadsCmd.accesskey "l">
+
+<!ENTITY headersMenu.label "Başlıklar">
+<!ENTITY headersMenu.accesskey "B">
+<!ENTITY headersAllCmd.label "Tamamı">
+<!ENTITY headersAllCmd.accesskey "a">
+<!ENTITY headersNormalCmd.label "Normal">
+<!ENTITY headersNormalCmd.accesskey "N">
+<!ENTITY bodyMenu.label "Mesaj metni">
+<!ENTITY bodyMenu.accesskey "j">
+<!ENTITY bodyAllowHTML.label "Özgün HTML">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "Basit HTML">
+<!ENTITY bodySanitized.accesskey "B">
+<!ENTITY bodyAsPlaintext.label "Düz metin">
+<!ENTITY bodyAsPlaintext.accesskey "D">
+<!ENTITY bodyAllParts.label "All Body Parts">
+<!ENTITY bodyAllParts.accesskey "A">
+
+<!ENTITY bodyMenuFeed.label "Canlı yer imi gövdesi gösterimi">
+<!ENTITY bodyMenuFeed.accesskey "y">
+<!ENTITY viewFeedWebPage.label "Web sayfası">
+<!ENTITY viewFeedWebPage.accesskey "W">
+<!ENTITY viewFeedSummary.label "Özet">
+<!ENTITY viewFeedSummary.accesskey "z">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "Öntanımlı biçim">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "b">
+
+<!ENTITY viewAttachmentsInlineCmd.label "İçerdiği ekleri göster">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "k">
+<!ENTITY reloadCmd.label "Tazele">
+<!ENTITY reloadCmd.accesskey "T">
+<!ENTITY stopCmd.label "Dur">
+<!ENTITY stopCmd.accesskey "D">
+<!ENTITY pageSourceCmd.label "Posta kaynak metni">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.key "u">
+
+<!ENTITY findCmd.label "Find in This Message…">
+<!-- Go Menu -->
+
+
+<!ENTITY goMenu.label "Git">
+<!ENTITY goMenu.accesskey "i">
+<!ENTITY nextMenu.label "Sonraki">
+<!ENTITY nextMenu.accesskey "S">
+<!ENTITY nextMsgCmd.label "Posta">
+<!ENTITY nextMsgCmd.accesskey "P">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Okunmayan posta">
+<!ENTITY nextUnreadMsgCmd.accesskey "O">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextFlaggedMsgCmd.label "Yıldızlı iletiler">
+<!ENTITY nextFlaggedMsgCmd.accesskey "Y">
+<!ENTITY nextUnreadThread.label "Okunmamış Dizilim">
+<!ENTITY nextUnreadThread.accesskey "O">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Önceki">
+<!ENTITY prevMenu.accesskey "k">
+<!ENTITY prevMsgCmd.label "Posta">
+<!ENTITY prevMsgCmd.accesskey "P">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Okunmayan iletiler">
+<!ENTITY prevUnreadMsgCmd.accesskey "u">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goBackCmd.label "Geri">
+<!ENTITY goBackCmd.accesskey "r">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.label "Forward">
+<!ENTITY goForwardCmd.accesskey "F">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY prevFlaggedMsgCmd.label "Yıldızlı iletiler">
+<!ENTITY prevFlaggedMsgCmd.accesskey "Y">
+<!ENTITY startPageCmd.label "Posta başlangıç sayfası">
+<!ENTITY startPageCmd.accesskey "b">
+<!-- Message Menu -->
+
+<!ENTITY msgMenu.label "Posta">
+<!ENTITY msgMenu.accesskey "P">
+<!ENTITY newMsgCmd.label "Yeni posta">
+<!ENTITY newMsgCmd.accesskey "i">
+<!ENTITY newNewMsgCmd.label "Posta">
+<!ENTITY newNewMsgCmd.accesskey "P">
+<!ENTITY replyMsgCmd.label "Yanıtla">
+<!ENTITY replyMsgCmd.accesskey "Y">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Sadece göndereni yanıtla">
+<!ENTITY replySenderCmd.accesskey "r">
+<!ENTITY replyNewsgroupCmd.label "Haber grubunu yanıtla">
+<!ENTITY replyNewsgroupCmd.accesskey "a">
+<!ENTITY replyToAllMsgCmd.label "Hepsini yanıtla">
+<!ENTITY replyToAllMsgCmd.accesskey "p">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToSenderAndNewsgroupCmd.label "Gönderene ve haber grubuna yanıtla">
+<!ENTITY replyToSenderAndNewsgroupCmd.accesskey "ö">
+<!ENTITY replyToAllRecipientsCmd.label "Tüm alıcıları yanıtla">
+<!ENTITY replyToAllRecipientsCmd.accesskey "ü">
+<!ENTITY forwardMsgCmd.label "Postayı ilet">
+<!ENTITY forwardMsgCmd.accesskey "i">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Farklı ilet">
+<!ENTITY forwardAsMenu.accesskey "F">
+<!ENTITY forwardAsInline.label "İleti içinde ilet">
+<!ENTITY forwardAsInline.accesskey "d">
+<!ENTITY forwardAsAttachmentCmd.label "Ek olarak ilet">
+<!ENTITY forwardAsAttachmentCmd.accesskey "r">
+<!ENTITY editMsgAsNewCmd.label "Postayı yeni olarak düzenle">
+<!ENTITY editMsgAsNewCmd.accesskey "d">
+<!ENTITY editMsgAsNewCmd.key "e">
+<!ENTITY createFilter.label "Postadan süzgeç oluştur…">
+<!ENTITY createFilter.accesskey "a">
+<!ENTITY archiveMsgCmd.label "Arşivle">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY moveMsgToMenu.label "Taşı">
+<!ENTITY moveMsgToMenu.accesskey "T">
+<!ENTITY copyMessageLocation.label "Posta adresini kopyala">
+<!ENTITY copyMessageLocation.accesskey "i">
+<!ENTITY copyMsgToMenu.label "Buraya kopyala">
+<!ENTITY copyMsgToMenu.accesskey "k">
+<!ENTITY moveCopyMsgRecentMenu.label "Güncel">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "l">
+<!ENTITY killThreadMenu.label "Dizilimleri gözardı et">
+<!ENTITY killThreadMenu.accesskey "l">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Alt Dizilimi Gözardı Et">
+<!ENTITY killSubthreadMenu.accesskey "D">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Dizilimleri gözetle">
+<!ENTITY watchThreadMenu.accesskey "g">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY fileHereMenu.label "Buraya dosyala">
+<!ENTITY fileHereMenu.accesskey "d">
+<!ENTITY copyHereMenu.label "buraya kopyala">
+<!ENTITY copyHereMenu.accesskey "k">
+<!ENTITY tagMenu.label "Etiket">
+<!ENTITY tagMenu.accesskey "E">
+<!ENTITY tagCustomize.label "Özelleştir…">
+<!ENTITY tagCustomize.accesskey "z">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "İşaretle">
+<!ENTITY markMenu.accesskey "a">
+<!ENTITY markAsReadCmd.label "Okunmuş olarak">
+<!ENTITY markAsReadCmd.accesskey "n">
+<!ENTITY markAsReadCmd.key "m">
+<!ENTITY markThreadAsReadCmd.label "Okunmuş dizilimler olarak">
+<!ENTITY markThreadAsReadCmd.accesskey "k">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Tarihe göre okunmuş olarak…">
+<!ENTITY markReadByDateCmd.accesskey "T">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Hepsi okunmuş olarak">
+<!ENTITY markAllReadCmd.accesskey "H">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markFlaggedCmd.label "Bayrak">
+<!ENTITY markFlaggedCmd.accesskey "y">
+<!ENTITY markFlaggedCmd.key "i">
+<!ENTITY markAsJunkCmd.label "Gereksiz ">
+<!ENTITY markAsJunkCmd.accesskey "G">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label '"Gereksiz" değil'>
+<!ENTITY markAsNotJunkCmd.accesskey "d">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Gereksiz posta denetimini çalıştır">
+<!ENTITY recalculateJunkScoreCmd.accesskey "G">
+<!ENTITY markAsShowRemoteCmd.label "Harici içeriği göster">
+<!ENTITY markAsShowRemoteCmd.accesskey "H">
+<!ENTITY markAsShowRemoteCmd.key "r">
+<!ENTITY markAsNotPhishCmd.label "Yemleme değil">
+<!ENTITY markAsNotPhishCmd.accesskey "Y">
+<!ENTITY markAsNotPhishCmd.key "p">
+<!ENTITY openMessageWindowCmd.label "Postayı aç">
+<!ENTITY openMessageWindowCmd.accesskey "o">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openFeedMessage.label "Canlı yer imi iletisi açma şekli">
+<!ENTITY openFeedMessage.accesskey "a">
+<!ENTITY openFeedWebPageInWindow.label "Web sayfası olarak yeni pencerede">
+<!ENTITY openFeedWebPageInWindow.accesskey "W">
+<!ENTITY openFeedSummaryInWindow.label "Özet olarak yeni pencerede">
+<!ENTITY openFeedSummaryInWindow.accesskey "Ö">
+<!ENTITY openFeedWebPageInMP.label "Web sayfasını değiştir ve özeti ileti panelinde göster">
+<!ENTITY openFeedWebPageInMP.accesskey "d">
+<!-- Tools Menu -->
+
+<!ENTITY searchMailCmd.label "Postaları ara…">
+<!ENTITY searchMailCmd.accesskey "P">
+<!ENTITY searchMailCmd.key "s">
+<!ENTITY searchAddressesCmd.label "Adresleri ara..">
+<!ENTITY searchAddressesCmd.accesskey "d">
+<!ENTITY filtersCmd.label "Posta süzgeçleri…">
+<!ENTITY filtersCmd.accesskey "s">
+<!ENTITY filtersApply.label "Seçili dizinlerde süzgeç çalıştır">
+<!ENTITY filtersApply.accesskey "r">
+<!ENTITY filtersApplyToSelection.label "Seçili iletilerde süzgeçleri çalıştır">
+<!ENTITY filtersApplyToSelection.accesskey "S">
+<!ENTITY filtersApplyToMessage.label "Seçili iletide süzgeçleri çalıştır">
+<!ENTITY filtersApplyToMessage.accesskey "S">
+<!ENTITY runJunkControls.label "Seçili iletilerde gereksiz posta denetimini çalıştır">
+<!ENTITY runJunkControls.accesskey "d">
+<!ENTITY deleteJunk.label "Dizinde Gereksiz Posta olarak seçilenleri sil">
+<!ENTITY deleteJunk.accesskey "s">
+<!ENTITY importCmd.label "İçe aktar…">
+<!ENTITY importCmd.accesskey "t">
+<!-- Folder Pane -->
+
+<!ENTITY nameColumn.label "İsim">
+<!ENTITY unreadColumn.label "Okunmamış">
+<!ENTITY totalColumn.label "Toplam">
+<!-- Toolbar items -->
+
+<!ENTITY getMsgButton.label "İletileri indir">
+<!ENTITY newMsgButton.label "Yeni ileti">
+<!ENTITY newHTMLMessageCmd.label "HTML olarak yaz">
+<!ENTITY newHTMLMessageCmd.accesskey "H">
+<!ENTITY newPlainTextMessageCmd.label "Düz metin olarak yarat">
+<!ENTITY newPlainTextMessageCmd.accesskey "D">
+<!ENTITY replyButton.label "Yanıtla">
+<!ENTITY replyAllButton.label "Hepsini yanıtla">
+<!ENTITY forwardButton.label "İlet">
+<!ENTITY fileButton.label "Dosyala">
+<!ENTITY nextButton.label "Sonraki">
+<!ENTITY goBackButton.label "Geriye git">
+<!ENTITY goForwardButton.label "İleriye git">
+<!ENTITY deleteButton.label "Sil">
+<!ENTITY undeleteButton.label "Silmeyi geri al">
+<!ENTITY markButton.label "İşaretle">
+<!ENTITY printButton.label "Yazdır">
+<!ENTITY stopButton.label "Dur">
+<!ENTITY junkButton.label "Gereksiz">
+<!ENTITY notJunkButton.label '"Gereksiz" değil'>
+<!ENTITY searchButton.title "Advanced Search">
+<!-- Tooltips -->
+
+<!ENTITY menuBar.tooltip "Menü çubuğu">
+<!ENTITY mailToolbar.tooltip "Posta araç çubuğu">
+<!ENTITY searchToolbar.tooltip "Search Bar">
+<!ENTITY advancedButton.tooltip "Gelişmiş posta arama">
+<!ENTITY getMsgButton.tooltip "Yeni postaları indir">
+<!ENTITY newMsgButton.tooltip "Yeni posta yaz">
+<!ENTITY replyButton.tooltip "İletiyi yanıtla">
+<!ENTITY replyAllButton.tooltip "Göndereni ve tüm alıcıları yanıtla">
+<!ENTITY replyAllButtonNews.tooltip "Gönderene ve haber grubuna yanıtla">
+<!ENTITY forwardButton.tooltip "Seçilmiş postaları ilet">
+<!ENTITY fileButton.tooltip "Seçilmiş Postaları Dosyala">
+<!ENTITY nextButton.tooltip "Bir sonraki okunmamış postaya git">
+<!ENTITY goBackButton.tooltip "Bir önceki iletiye gider">
+<!ENTITY goForwardButton.tooltip "Bir sonraki iletiye gider">
+<!ENTITY deleteButton.tooltip "Seçilmiş postayı yada dizini sil">
+<!ENTITY undeleteButton.tooltip "İşaretlenmiş silinen postaları geri al">
+<!ENTITY markButton.tooltip "Postaları işaretle">
+<!ENTITY printButton.tooltip "Postayı Yazdır">
+<!ENTITY stopButton.tooltip "Şu anki aktarımı durdur">
+<!ENTITY throbber.tooltip "&vendorShortName; anasayfasına git">
+<!ENTITY junkButton.tooltip "Seçili iletileri gereksiz olarak işaretle">
+<!ENTITY notJunkButton.tooltip 'Seçili iletiyi "Gereksiz değil" olarak işaretle'>
+<!-- Statusbar -->
+
+<!ENTITY statusText.label "Tamamlandı">
+<!-- Thread Pane Context Menu -->
+
+<!ENTITY contextOpenNewWindow.label "Yeni pencerede aç">
+<!ENTITY contextOpenNewWindow.accesskey "i">
+<!ENTITY contextOpenNewTab.label "İletiyi yeni sekmede aç">
+<!ENTITY contextOpenNewTab.accesskey "k">
+<!ENTITY contextEditAsNew.label "Yeni olarak düzenle…">
+<!ENTITY contextEditAsNew.accesskey "e">
+<!ENTITY contextReplySender.label "Sadece göndereni yanıtla">
+<!ENTITY contextReplySender.accesskey "r">
+<!ENTITY contextReplyNewsgroup.label "Haber grubunu yanıtla">
+<!ENTITY contextReplyNewsgroup.accesskey "H">
+<!ENTITY contextReplyAll.label "Hepsini yanıtla">
+<!ENTITY contextReplyAll.accesskey "p">
+<!ENTITY contextReplySenderAndNewsgroup.label "Gönderene ve haber grubuna yanıtla">
+<!ENTITY contextReplySenderAndNewsgroup.accesskey "ö">
+<!ENTITY contextForward.label "İlet">
+<!ENTITY contextForward.accesskey "l">
+<!ENTITY contextForwardAsAttachment.label "Ek olarak ilet">
+<!ENTITY contextForwardAsAttachment.accesskey "a">
+<!ENTITY contextArchive.label "Arşivle">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextMoveMsgMenu.label "Taşı">
+<!ENTITY contextMoveMsgMenu.accesskey "T">
+<!ENTITY contextCopyMsgMenu.label "Buraya kopyala">
+<!ENTITY contextCopyMsgMenu.accesskey "k">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Güncel">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "l">
+<!ENTITY contextSaveAs.label "Farklı kaydet…">
+<!ENTITY contextSaveAs.accesskey "F">
+<!ENTITY contextPrint.label "Print…">
+<!ENTITY contextPrint.accesskey "P">
+<!ENTITY contextPrintPreview.label "Print Preview">
+<!ENTITY contextPrintPreview.accesskey "v">
+<!-- Folder Pane Context Menu -->
+
+<!ENTITY folderContextGetMessages.label "Hesap postalarını indir">
+<!ENTITY folderContextGetMessages.accesskey "H">
+<!ENTITY folderContextOpenNewWindow.label "Yeni pencerede aç">
+<!ENTITY folderContextOpenNewWindow.accesskey "Y">
+<!ENTITY folderContextOpenNewTab.label "Yeni sekmede aç">
+<!ENTITY folderContextOpenNewTab.accesskey "s">
+<!ENTITY folderContextRename.label "İsmini değiştir">
+<!ENTITY folderContextRename.accesskey "s">
+<!ENTITY folderContextRemove.label "Sil">
+<!ENTITY folderContextRemove.accesskey "S">
+<!ENTITY folderContextCompact.label "Bu dizini sıkıştır">
+<!ENTITY folderContextCompact.accesskey "ş">
+<!ENTITY folderContextEmptyTrash.label "Çöpü boşalt">
+<!ENTITY folderContextEmptyTrash.accesskey "Ç">
+<!ENTITY folderContextEmptyJunk.label "Gereksiz postaları sil">
+<!ENTITY folderContextEmptyJunk.accesskey "G">
+<!ENTITY folderContextSendUnsentMessages.label "Gönderilmeyen postaları gönder…">
+<!ENTITY folderContextSendUnsentMessages.accesskey "G">
+<!ENTITY folderContextUnsubscribe.label "Abonelikten çık">
+<!ENTITY folderContextUnsubscribe.accesskey "b">
+<!ENTITY folderContextMarkNewsgroupRead.label "Haber grubunu okunmuş olarak işaretle">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "o">
+<!ENTITY folderContextMarkMailFolderRead.label "Dizini okunmuş olarak işaretle">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "D">
+<!ENTITY folderContextNew.label "Yeni altdizin…">
+<!ENTITY folderContextNew.accesskey "n">
+<!ENTITY folderContextSubscribe.label "Abone ol…">
+<!ENTITY folderContextSubscribe.accesskey "A">
+<!ENTITY folderContextSearchMessages.label "Search Messages…">
+<!ENTITY folderContextSearchMessages.accesskey "S">
+<!ENTITY folderContextProperties.label "Özellikler…">
+<!ENTITY folderContextProperties.accesskey "e">
+<!ENTITY folderContextSettings.label "Ayarlar…">
+<!ENTITY folderContextSettings.accesskey "A">
+<!-- focusSearchInput.key also used by addressbook -->
+
+<!ENTITY focusSearchInput.key "k">
+<!ENTITY advancedButton.label "Gelişmiş…">
+<!ENTITY advancedButton.accesskey "e">
+<!ENTITY searchButton.label "Search Messages…">
+<!ENTITY searchButton.accesskey "S">
+
+<!ENTITY all.label "Tamamı">
+<!ENTITY all.accesskey "a">
+<!-- Junk Bar -->
+
+<!ENTITY junkBarMessage.label "&brandShortName; iletinin gereksiz olduğunu düşünüyor.">
+<!ENTITY junkBarButton.label "Gereksiz değil">
+<!ENTITY junkInfoButton.label "?">
+<!-- Remote Content Bar -->
+
+<!ENTITY remoteContentMessage.label "Özel bilgilerinizi korumak için &brandShortName; iletideki uzak içeriği engellemiştir.">
+<!ENTITY loadRemoteContentButton.label "Harici içeriği göster">
+<!-- Phishing Bar -->
+
+<!ENTITY phishingBarMessage.label "&brandShortName; iletinin sahtekârlık girişimi olduğunu düşünüyor.">
+<!ENTITY removePhishingBarButton.label "Yemleme değil">
+<!-- MDN Bar -->
+
+<!ENTITY mdnBarMessage.label "The sender of this message has asked to be notified when you read this message. Do you wish to notify the sender?">
+<!ENTITY mdnBarIgnoreButton.label "İsteği görmezden gel">
+<!ENTITY mdnBarSendButton.label "Alındı onayı gönder">

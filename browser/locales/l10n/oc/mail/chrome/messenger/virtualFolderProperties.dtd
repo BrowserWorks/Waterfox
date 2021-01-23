@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Dorsièr virtual novèl">
+<!ENTITY name.label                 "Nom :">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crear coma un sosdorsièr de :">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Configurar los critèris de recèrca utilizats per aqueste dorsièr virtual : ">
+
+<!ENTITY folderSelectionCaption.label "Causir los dorsièrs dins los quals cercar : ">
+<!ENTITY chooseFoldersButton.label "Causir…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "Cercar en linha (resultats mai a jorn suls dorsièrs IMAP e gropes mas temps de dobertura del dorsièr mai grand)">
+<!ENTITY searchOnline.accesskey "l">

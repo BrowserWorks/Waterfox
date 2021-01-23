@@ -23,6 +23,7 @@ const { renderRep, shouldRenderRootsInReps } = Utils;
 const {
   getChildrenWithEvaluations,
   getActor,
+  getEvaluatedItem,
   getParent,
   getValue,
   nodeIsPrimitive,
@@ -98,7 +99,7 @@ class ObjectInspector extends Component<Props> {
       this.focusedItem = nextProps.focusedItem;
       this.activeItem = nextProps.activeItem;
       if (this.props.rootsChanged) {
-        this.props.rootsChanged();
+        this.props.rootsChanged(this.roots);
       }
     }
   }
@@ -108,6 +109,12 @@ class ObjectInspector extends Component<Props> {
     if (this.roots !== nextProps.roots) {
       this.cachedNodes.clear();
       return;
+    }
+
+    for (const [path, properties] of nextProps.loadedProperties) {
+      if (properties !== this.props.loadedProperties.get(path)) {
+        this.cachedNodes.delete(path);
+      }
     }
 
     // If there are new evaluations, we want to remove the existing cached
@@ -134,6 +141,7 @@ class ObjectInspector extends Component<Props> {
     // - OR the focused node changed.
     // - OR the active node changed.
     return (
+      loadedProperties !== nextProps.loadedProperties ||
       loadedProperties.size !== nextProps.loadedProperties.size ||
       evaluations.size !== nextProps.evaluations.size ||
       (expandedPaths.size !== nextProps.expandedPaths.size &&
@@ -149,7 +157,7 @@ class ObjectInspector extends Component<Props> {
   }
 
   componentWillUnmount() {
-    this.props.closeObjectInspector();
+    this.props.closeObjectInspector(this.props.roots);
   }
 
   props: Props;
@@ -168,7 +176,18 @@ class ObjectInspector extends Component<Props> {
   }
 
   getRoots(): Array<Node> {
-    return this.props.roots;
+    const { evaluations, roots } = this.props;
+    const length = roots.length;
+
+    for (let i = 0; i < length; i++) {
+      let rootItem = roots[i];
+
+      if (evaluations.has(rootItem.path)) {
+        roots[i] = getEvaluatedItem(rootItem, evaluations);
+      }
+    }
+
+    return roots;
   }
 
   getNodeKey(item: Node): string {
@@ -198,6 +217,7 @@ class ObjectInspector extends Component<Props> {
       nodeExpand,
       nodeCollapse,
       recordTelemetryEvent,
+      setExpanded,
       roots,
     } = this.props;
 
@@ -209,6 +229,10 @@ class ObjectInspector extends Component<Props> {
       }
     } else {
       nodeCollapse(item);
+    }
+
+    if (setExpanded) {
+      setExpanded(item, expand);
     }
   }
 
@@ -249,6 +273,7 @@ class ObjectInspector extends Component<Props> {
     const {
       autoExpandAll = true,
       autoExpandDepth = 1,
+      initiallyExpanded,
       focusable = true,
       disableWrap = false,
       expandedPaths,
@@ -264,7 +289,7 @@ class ObjectInspector extends Component<Props> {
 
       autoExpandAll,
       autoExpandDepth,
-
+      initiallyExpanded,
       isExpanded: item => expandedPaths && expandedPaths.has(item.path),
       isExpandable: this.isNodeExpandable,
       focused: this.focusedItem,
@@ -310,7 +335,12 @@ const OI = connect(
 
 module.exports = (props: Props) => {
   const { roots } = props;
-  if (shouldRenderRootsInReps(roots)) {
+
+  if (roots.length == 0) {
+    return null;
+  }
+
+  if (shouldRenderRootsInReps(roots, props)) {
     return renderRep(roots[0], props);
   }
 

@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/LauncherResult.h"
 #include "mozilla/NativeNt.h"
 #include "mozilla/WinHeaderOnlyUtils.h"
 
@@ -82,9 +81,9 @@ inline LauncherVoidResult RestoreImportDirectory(
 
   nt::DataDirectoryEntry toWrite = realImportDirectory.unwrap();
 
-  void* remoteAddress = reinterpret_cast<char*>(
-                            nt::PEHeaders::HModuleToBaseAddr(aRemoteExeImage)) +
-                        importDirEntryRva;
+  void* remoteAddress =
+      nt::PEHeaders::HModuleToBaseAddr<char*>(aRemoteExeImage) +
+      importDirEntryRva;
 
   {  // Scope for prot
     AutoVirtualProtect prot(remoteAddress, sizeof(IMAGE_DATA_DIRECTORY),

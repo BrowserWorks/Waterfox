@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# janimo <jani@ubuntu.com>
+# stas <stas@nerd.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- address labels -->
+<!--LOCALIZATION NOTE addressingWidgetOverlay.dtd The basic mail/news composition headers as they are seen in UI -->
+<!ENTITY toAddr.label   "Pentru:"> 
+<!ENTITY ccAddr.label   "Cc:"> 
+<!ENTITY bccAddr.label  "Bcc:"> 
+<!ENTITY replyAddr.label   "Răspuns către:"> 
+<!ENTITY newsgroupsAddr.label   "Grup news:"> 
+<!ENTITY followupAddr.label   "Urmare la:"> 
+

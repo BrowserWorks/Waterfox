@@ -21,11 +21,18 @@
 #include "mozilla/BinarySearch.h"
 #include "mozilla/EnumeratedRange.h"
 
+#include <algorithm>
+
+#include "jsnum.h"
+
 #include "jit/ExecutableAllocator.h"
 #ifdef JS_ION_PERF
 #  include "jit/PerfSpewer.h"
 #endif
-#include "vtune/VTuneWrapper.h"
+#include "util/Poison.h"
+#ifdef MOZ_VTUNE
+#  include "vtune/VTuneWrapper.h"
+#endif
 #include "wasm/WasmModule.h"
 #include "wasm/WasmProcess.h"
 #include "wasm/WasmSerialize.h"
@@ -105,7 +112,7 @@ CodeSegment::~CodeSegment() {
 
 static uint32_t RoundupCodeLength(uint32_t codeLength) {
   // AllocateExecutableMemory() requires a multiple of ExecutableCodePageSize.
-  return JS_ROUNDUP(codeLength, ExecutableCodePageSize);
+  return RoundUp(codeLength, ExecutableCodePageSize);
 }
 
 /* static */
@@ -347,8 +354,7 @@ UniqueModuleSegment ModuleSegment::create(Tier tier, MacroAssembler& masm,
     return nullptr;
   }
 
-  // We'll flush the icache after static linking, in initialize().
-  masm.executableCopy(codeBytes.get(), /* flushICache = */ false);
+  masm.executableCopy(codeBytes.get());
 
   return js::MakeUnique<ModuleSegment>(tier, std::move(codeBytes), codeLength,
                                        linkData);
@@ -378,11 +384,9 @@ bool ModuleSegment::initialize(const CodeTier& codeTier,
     return false;
   }
 
-  ExecutableAllocator::cacheFlush(base(), RoundupCodeLength(length()));
-
   // Reprotect the whole region to avoid having separate RW and RX mappings.
-  if (!ExecutableAllocator::makeExecutable(base(),
-                                           RoundupCodeLength(length()))) {
+  if (!ExecutableAllocator::makeExecutableAndFlushICache(
+          base(), RoundupCodeLength(length()))) {
     return false;
   }
 
@@ -609,9 +613,14 @@ bool LazyStubSegment::addStubs(size_t codeLength,
     codeRanges_.back().offsetBy(offsetInSegment);
     i++;
 
+#ifdef ENABLE_WASM_SIMD
+    if (funcExports[funcExportIndex].funcType().hasV128ArgOrRet()) {
+      continue;
+    }
+#endif
     if (funcExports[funcExportIndex]
             .funcType()
-            .temporarilyUnsupportedAnyRef()) {
+            .temporarilyUnsupportedReftypeForEntry()) {
       continue;
     }
 
@@ -668,7 +677,13 @@ bool LazyStubTier::createMany(const Uint32Vector& funcExportIndices,
   DebugOnly<uint32_t> numExpectedRanges = 0;
   for (uint32_t funcExportIndex : funcExportIndices) {
     const FuncExport& fe = funcExports[funcExportIndex];
-    numExpectedRanges += fe.funcType().temporarilyUnsupportedAnyRef() ? 1 : 2;
+    // Entries with unsupported types get only the interp exit
+    bool unsupportedType =
+#ifdef ENABLE_WASM_SIMD
+        fe.funcType().hasV128ArgOrRet() ||
+#endif
+        fe.funcType().temporarilyUnsupportedReftypeForEntry();
+    numExpectedRanges += (unsupportedType ? 1 : 2);
     void* calleePtr =
         moduleSegmentBase + metadata.codeRange(fe).funcNormalEntry();
     Maybe<ImmPtr> callee;
@@ -695,7 +710,7 @@ bool LazyStubTier::createMany(const Uint32Vector& funcExportIndices,
 
   if (!stubSegments_.length() ||
       !stubSegments_[lastStubSegmentIndex_]->hasSpace(codeLength)) {
-    size_t newSegmentSize = Max(codeLength, ExecutableCodePageSize);
+    size_t newSegmentSize = std::max(codeLength, ExecutableCodePageSize);
     UniqueLazyStubSegment newSegment =
         LazyStubSegment::create(codeTier, newSegmentSize);
     if (!newSegment) {
@@ -716,7 +731,7 @@ bool LazyStubTier::createMany(const Uint32Vector& funcExportIndices,
                          &codePtr, &interpRangeIndex))
     return false;
 
-  masm.executableCopy(codePtr, /* flushICache = */ false);
+  masm.executableCopy(codePtr);
   PatchDebugSymbolicAccesses(codePtr, masm);
   memset(codePtr + masm.bytesNeeded(), 0, codeLength - masm.bytesNeeded());
 
@@ -724,8 +739,7 @@ bool LazyStubTier::createMany(const Uint32Vector& funcExportIndices,
     Assembler::Bind(codePtr, label);
   }
 
-  ExecutableAllocator::cacheFlush(codePtr, codeLength);
-  if (!ExecutableAllocator::makeExecutable(codePtr, codeLength)) {
+  if (!ExecutableAllocator::makeExecutableAndFlushICache(codePtr, codeLength)) {
     return false;
   }
 
@@ -751,9 +765,14 @@ bool LazyStubTier::createMany(const Uint32Vector& funcExportIndices,
     MOZ_ALWAYS_TRUE(
         exports_.insert(exports_.begin() + exportIndex, std::move(lazyExport)));
 
-    // Functions with anyref in their sig have only one entry (interp).
-    // All other functions get an extra jit entry.
-    interpRangeIndex += fe.funcType().temporarilyUnsupportedAnyRef() ? 1 : 2;
+    // Functions with unsupported types in their sig have only one entry
+    // (interp).  All other functions get an extra jit entry.
+    bool unsupportedType =
+#ifdef ENABLE_WASM_SIMD
+        fe.funcType().hasV128ArgOrRet() ||
+#endif
+        fe.funcType().temporarilyUnsupportedReftypeForEntry();
+    interpRangeIndex += (unsupportedType ? 1 : 2);
   }
 
   return true;
@@ -774,11 +793,19 @@ bool LazyStubTier::createOne(uint32_t funcExportIndex,
   const UniqueLazyStubSegment& segment = stubSegments_[stubSegmentIndex];
   const CodeRangeVector& codeRanges = segment->codeRanges();
 
-  // Functions that have anyref in their sig don't get a jit entry.
+  // Functions that have unsupported types in their sig don't get a jit
+  // entry.
   if (codeTier.metadata()
           .funcExports[funcExportIndex]
           .funcType()
-          .temporarilyUnsupportedAnyRef()) {
+          .temporarilyUnsupportedReftypeForEntry()
+#ifdef ENABLE_WASM_SIMD
+      || codeTier.metadata()
+             .funcExports[funcExportIndex]
+             .funcType()
+             .hasV128ArgOrRet()
+#endif
+  ) {
     MOZ_ASSERT(codeRanges.length() >= 1);
     MOZ_ASSERT(codeRanges.back().isInterpEntry());
     return true;
@@ -843,7 +870,7 @@ void* LazyStubTier::lookupInterpEntry(uint32_t funcIndex) const {
 
 void LazyStubTier::addSizeOfMisc(MallocSizeOf mallocSizeOf, size_t* code,
                                  size_t* data) const {
-  *data += sizeof(this);
+  *data += sizeof(*this);
   *data += exports_.sizeOfExcludingThis(mallocSizeOf);
   for (const UniqueLazyStubSegment& stub : stubSegments_) {
     stub->addSizeOfMisc(mallocSizeOf, code, data);
@@ -1070,18 +1097,8 @@ const CodeRange* CodeTier::lookupRange(const void* pc) const {
 
 bool JumpTables::init(CompileMode mode, const ModuleSegment& ms,
                       const CodeRangeVector& codeRanges) {
-  // Note a fast jit entry has two addresses, to be compatible with
-  // ion/baseline functions which have the raw vs checked args entries,
-  // both used all over the place in jit calls. This allows the fast entries
-  // to be compatible with jit code pointer loading routines.
-  // We can use the same entry for both kinds of jit entries since a wasm
-  // entry knows how to convert any kind of arguments and doesn't assume
-  // any input types.
-
   static_assert(JSScript::offsetOfJitCodeRaw() == 0,
-                "wasm fast jit entry is at (void*) jit[2*funcIndex]");
-  static_assert(JSScript::offsetOfJitCodeSkipArgCheck() == sizeof(void*),
-                "wasm fast jit entry is also at (void*) jit[2*funcIndex+1]");
+                "wasm fast jit entry is at (void*) jit[funcIndex]");
 
   mode_ = mode;
 
@@ -1105,7 +1122,7 @@ bool JumpTables::init(CompileMode mode, const ModuleSegment& ms,
   // filling/looking up the jit entries and safe (worst case we'll crash
   // because of a null deref when trying to call the jit entry of an
   // unexported function).
-  jit_ = TablePointer(js_pod_calloc<void*>(2 * numFuncs));
+  jit_ = TablePointer(js_pod_calloc<void*>(numFuncs));
   if (!jit_) {
     return false;
   }

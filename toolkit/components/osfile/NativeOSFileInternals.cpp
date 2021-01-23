@@ -18,7 +18,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsProxyRelease.h"
 
-#include "nsINativeOSFileInternals.h"
 #include "mozilla/dom/NativeOSFileInternalsBinding.h"
 
 #include "mozilla/Encoding.h"
@@ -558,8 +557,8 @@ class AbstractDoEvent : public Runnable {
       // Last ditch attempt to release on the main thread - some of
       // the members of event are not thread-safe, so letting the
       // pointer go out of scope would cause a crash.
-      NS_ReleaseOnMainThreadSystemGroup("AbstractDoEvent::OSFileErrorEvent",
-                                        event.forget());
+      NS_ReleaseOnMainThread("AbstractDoEvent::OSFileErrorEvent",
+                             event.forget());
     }
   }
 
@@ -575,8 +574,7 @@ class AbstractDoEvent : public Runnable {
       // Last ditch attempt to release on the main thread - some of
       // the members of event are not thread-safe, so letting the
       // pointer go out of scope would cause a crash.
-      NS_ReleaseOnMainThreadSystemGroup("AbstractDoEvent::SuccessEvent",
-                                        event.forget());
+      NS_ReleaseOnMainThread("AbstractDoEvent::SuccessEvent", event.forget());
     }
   }
 
@@ -764,8 +762,8 @@ class DoReadToTypedArrayEvent final : public AbstractReadEvent {
     if (!mResult) {
       return;
     }
-    NS_ReleaseOnMainThreadSystemGroup("DoReadToTypedArrayEvent::mResult",
-                                      mResult.forget());
+    NS_ReleaseOnMainThread("DoReadToTypedArrayEvent::mResult",
+                           mResult.forget());
   }
 
  protected:
@@ -802,8 +800,7 @@ class DoReadToStringEvent final : public AbstractReadEvent {
     if (!mResult) {
       return;
     }
-    NS_ReleaseOnMainThreadSystemGroup("DoReadToStringEvent::mResult",
-                                      mResult.forget());
+    NS_ReleaseOnMainThread("DoReadToStringEvent::mResult", mResult.forget());
   }
 
  protected:
@@ -834,7 +831,7 @@ class DoReadToStringEvent final : public AbstractReadEvent {
 
     CheckedInt<size_t> needed = mDecoder->MaxUTF16BufferLength(src.Length());
     if (!needed.isValid() ||
-        needed.value() > MaxValue<nsAString::size_type>::value) {
+        needed.value() > std::numeric_limits<nsAString::size_type>::max()) {
       Fail(NS_LITERAL_CSTRING("arithmetics"), mResult.forget(),
            OS_ERROR_TOO_LARGE);
       return;
@@ -911,8 +908,7 @@ class DoWriteAtomicEvent : public AbstractDoEvent {
     if (!mResult) {
       return;
     }
-    NS_ReleaseOnMainThreadSystemGroup("DoWriteAtomicEvent::mResult",
-                                      mResult.forget());
+    NS_ReleaseOnMainThread("DoWriteAtomicEvent::mResult", mResult.forget());
   }
 
   NS_IMETHODIMP Run() override {

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Effacer mes traces">
+<!ENTITY sanitizeItems.label             "Supprimer immédiatement les éléments suivants :">
+
+<!ENTITY itemHistory.label               "Historique de navigation">
+<!ENTITY itemHistory.accesskey           "n">
+<!ENTITY itemUrlBar.label                "Historique de la barre d’adresse">
+<!ENTITY itemUrlBar.accesskey            "a">
+<!ENTITY itemDownloads.label             "Historique de téléchargement">
+<!ENTITY itemDownloads.accesskey         "t">
+<!ENTITY itemFormSearchHistory.label     "Recherches et données de formulaires enregistrées">
+<!ENTITY itemFormSearchHistory.accesskey "r">
+<!ENTITY itemCache.label                 "Cache">
+<!ENTITY itemCache.accesskey             "e">
+<!ENTITY itemCookies.label               "Cookies">
+<!ENTITY itemCookies.accesskey           "C">
+<!ENTITY itemOfflineApps.label           "Données de sites web hors connexion">
+<!ENTITY itemOfflineApps.accesskey       "D">
+<!ENTITY itemPasswords.label             "Mots de passe enregistrés">
+<!ENTITY itemPasswords.accesskey         "M">
+<!ENTITY itemSessions.label              "Sessions d’identification">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "Effacer mes traces maintenant">

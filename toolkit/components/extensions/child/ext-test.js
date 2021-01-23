@@ -1,4 +1,15 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
+
+XPCOMUtils.defineLazyGetter(this, "isXpcshell", function() {
+  let env = Cc["@mozilla.org/process/environment;1"].getService(
+    Ci.nsIEnvironment
+  );
+  return env.exists("XPCSHELL_TEST_PROFILE_DIR");
+});
 
 /**
  * Checks whether the given error matches the given expectations.
@@ -105,8 +116,28 @@ this.test = class extends ExtensionAPI {
       }
     }
 
+    if (!Cu.isInAutomation && !isXpcshell) {
+      return { test: {} };
+    }
+
     return {
       test: {
+        withHandlingUserInput(callback) {
+          // TODO(Bug 1598804): remove this once we don't expose anymore the
+          // entire test API namespace based on an environment variable.
+          if (!Cu.isInAutomation) {
+            // This dangerous method should only be available if the
+            // automation pref is set, which is the case in browser tests.
+            throw new ExtensionUtils.ExtensionError(
+              "withHandlingUserInput can only be called in automation"
+            );
+          }
+          ExtensionCommon.withHandlingUserInput(
+            context.contentWindow,
+            callback
+          );
+        },
+
         sendMessage(...args) {
           extension.emit("test-message", ...args);
         },

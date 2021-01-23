@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# manuelciosici <manuelrciosici@gmail.com>
+# fedaykin <costin.gament@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY no-properties.label   "Nicio proprietate.">
+
+<!ENTITY caption.label         "Proprietăți element">
+<!ENTITY image-sec.label       "Proprietăți imagine">
+<!ENTITY image-url.label       "Locația:">
+<!ENTITY image-desc.label      "Colecție locală">
+<!ENTITY image-alt.label       "Text alternativ:">
+<!ENTITY image-width.label     "Greutate:">
+<!ENTITY image-height.label    "Înălțime:">
+<!ENTITY image-filesize.label  "Mărime fișier:">
+<!ENTITY insdel-sec.label      "Proprietăți inserare/ștergere">
+<!ENTITY insdel-cite.label     "Info:">
+<!ENTITY insdel-date.label     "Data:">
+<!ENTITY link-sec.label        "Proprietăți legătură">
+<!ENTITY link-url.label        "Adresă:">
+<!ENTITY link-target.label     "Se deschide:">
+<!ENTITY link-type.label       "Tipul destinației:">
+<!ENTITY link-lang.label       "Limba destinației:">
+<!ENTITY link-rel.label        "Relația:">
+<!ENTITY link-rev.label        "Relația în sens invers:">
+<!ENTITY misc-sec.label        "Proprietăți diverse">
+<!ENTITY misc-lang.label       "Limba textului:">
+<!ENTITY misc-title.label      "Denumire:">
+<!ENTITY misc-tblsummary.label "Sumar tabel:">
+<!ENTITY quote-sec.label       "Proprietăți citat">
+<!ENTITY quote-cite.label      "Info:">

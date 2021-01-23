@@ -89,7 +89,7 @@ class HeadlessWidget : public nsBaseWidget {
                                   nsIScreen* aTargetScreen = nullptr) override;
   virtual void Enable(bool aState) override;
   virtual bool IsEnabled() const override;
-  virtual nsresult SetFocus(bool aRaise) override;
+  virtual void SetFocus(Raise, mozilla::dom::CallerType aCallerType) override;
   virtual nsresult ConfigureChildren(
       const nsTArray<Configuration>& aConfigurations) override {
     MOZ_ASSERT_UNREACHABLE(
@@ -122,9 +122,9 @@ class HeadlessWidget : public nsBaseWidget {
 
   void SetCompositorWidgetDelegate(CompositorWidgetDelegate* delegate) override;
 
-  virtual MOZ_MUST_USE nsresult
-  AttachNativeKeyEvent(WidgetKeyboardEvent& aEvent) override;
-  virtual void GetEditCommands(NativeKeyBindingsType aType,
+  [[nodiscard]] virtual nsresult AttachNativeKeyEvent(
+      WidgetKeyboardEvent& aEvent) override;
+  virtual bool GetEditCommands(NativeKeyBindingsType aType,
                                const WidgetKeyboardEvent& aEvent,
                                nsTArray<CommandInt>& aCommands) override;
 

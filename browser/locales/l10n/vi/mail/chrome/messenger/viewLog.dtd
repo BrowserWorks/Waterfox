@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Lưu kí Bộ lọc">
+<!ENTITY viewLogInfo.text "Lưu kí Bộ lọc ghi lại các bộ lọc được chạy cho tài khoản này. Hãy dùng hộp kiểm bên dưới để kích hoạt lưu kí.">
+<!ENTITY clearLog.label "Xóa Lưu Kí">
+<!ENTITY clearLog.accesskey "X">
+<!ENTITY enableLog.label "Kích hoạt Lưu kí Bộ lọc">
+<!ENTITY enableLog.accesskey "K">
+<!ENTITY closeLog.label "Đóng">
+<!ENTITY closeLog.accesskey "g">
+

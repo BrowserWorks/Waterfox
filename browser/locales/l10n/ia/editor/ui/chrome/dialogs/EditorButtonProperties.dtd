@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietates del button">
+
+<!ENTITY Settings.label "Parametros">
+
+<!ENTITY ButtonType.label "Typo">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Submitter">
+<!ENTITY reset.value "Restabilir">
+<!ENTITY button.value "Button">
+
+<!ENTITY ButtonName.label "Nomine:">
+<!ENTITY ButtonName.accesskey "P">
+<!ENTITY ButtonValue.label "Valor:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Indice de tabulation:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Disactivate">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Clave de accesso:">
+<!ENTITY AccessKey.accesskey "C">
+
+<!ENTITY RemoveButton.label "Remover le button">
+<!ENTITY RemoveButton.accesskey "R">

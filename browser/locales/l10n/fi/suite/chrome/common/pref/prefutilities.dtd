@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY FallbackCharset.auto         "Nykyisen lokaalin oletus">
+<!-- LOCALIZATION NOTE (FallbackCharset.arabic):
+     Translate "Arabic" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.arabic       "Arabialainen">
+<!ENTITY FallbackCharset.baltic       "Balttilainen">
+<!ENTITY FallbackCharset.ceiso        "Keskieurooppalainen, ISO">
+<!ENTITY FallbackCharset.cewindows    "Keskieurooppalainen, Microsoft">
+<!-- LOCALIZATION NOTE (FallbackCharset.simplified):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.simplified   "Kiinalainen, yksinkertaistettu">
+<!-- LOCALIZATION NOTE (FallbackCharset.traditional):
+     Translate "Chinese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.traditional  "Kiinalainen, perinteinen">
+<!ENTITY FallbackCharset.cyrillic     "Kyrillinen">
+<!-- LOCALIZATION NOTE (FallbackCharset.greek):
+     Translate "Greek" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.greek        "Kreikkalainen">
+<!-- LOCALIZATION NOTE (FallbackCharset.hebrew):
+     Translate "Hebrew" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.hebrew       "Heprealainen">
+<!-- LOCALIZATION NOTE (FallbackCharset.japanese):
+     Translate "Japanese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.japanese     "Japanilainen">
+<!-- LOCALIZATION NOTE (FallbackCharset.korean):
+     Translate "Korean" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.korean       "Korealainen">
+<!-- LOCALIZATION NOTE (FallbackCharset.thai):
+     Translate "Thai" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.thai         "Thaimaalainen">
+<!-- LOCALIZATION NOTE (FallbackCharset.turkish):
+     Translate "Turkish" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.turkish      "Turkkilainen">
+<!-- LOCALIZATION NOTE (FallbackCharset.vietnamese):
+     Translate "Vietnamese" as an adjective for an encoding, not as the name of the language. -->
+<!ENTITY FallbackCharset.vietnamese   "Vietnamilainen">
+<!ENTITY FallbackCharset.other        "Muu (sisältäen länsi-Euroopan)">

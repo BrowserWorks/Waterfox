@@ -7,8 +7,6 @@
 #define mozilla_dom_XPathEvaluator_h
 
 #include "mozilla/dom/NonRefcountedDOMObject.h"
-#include "nsIWeakReference.h"
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorResult.h"
@@ -41,8 +39,7 @@ class XPathEvaluator final : public NonRefcountedDOMObject {
     nsCOMPtr<Document> doc = do_QueryReferent(mDocument);
     return doc;
   }
-  static XPathEvaluator* Constructor(const GlobalObject& aGlobal,
-                                     ErrorResult& rv);
+  static XPathEvaluator* Constructor(const GlobalObject& aGlobal);
   XPathExpression* CreateExpression(const nsAString& aExpression,
                                     XPathNSResolver* aResolver,
                                     ErrorResult& rv);

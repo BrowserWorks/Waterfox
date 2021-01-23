@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "თქვენი უფლებების შესახებ">
+<!ENTITY rights.intro "&brandFullName; ბრაუზერი უფასო, ღია კოდის პროგრამაა, რომელიც შექმნილია ათასობით მონაწილის მიერ მსოფლიოს ყველა კუთხიდან. რამდენიმე რამ, რაც უნდა იცოდეთ:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; ბრაუზერი მოგეწოდებათ ">
+<!ENTITY rights.intro-point1b "Mozilla საზოგადო ლიცენზიით">
+<!ENTITY rights.intro-point1c ". ეს ნიშნავს, რომ შეგიძლიათ &brandShortName; გამოიყენოთ, გაამრავლოთ და გაავრცელოთ.  ასევე, შეგიძლიათ შეცვალოთ პირველწყარო კოდი, რომლითაც შექმნილია &brandShortName;, თქვენი მოთხოვნების შესაბამისად. Mozilla-ს საზოგადობრივი ლიცენზია ასევე გაძლევთ უფლებას გაავრცელოთ თქვენი სახეცვლილი ვერსიები.">
+
+<!ENTITY rights.intro-point2a "Mozilla არ გაძლევთ რაიმე უფლებას ისარგებლოთ Mozilla და Waterfox სავაჭრო ნიშნებით ან ლოგოთი. დამატებითი ინფორმაცია სავაჭრო ნიშნებზე შეგიძლიათ მოიძიოთ ">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; არ გაძლევთ რაიმე უფლებას ისარგებლოთ &quot;&brandFullName;&quot; სავაჭრო ნიშნებით ან ლოგოთი. დამატებითი ინფორმაცია სავაჭრო ნიშნებზე შეგიძლიათ მოიძიოთ ">
+<!ENTITY rights.intro-point2b "ამ საიტზე">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "&brandShortName; უეცარი გათიშვის მომხსენებლით, საშუალებას გაძლევთ გამოეხმაუროთ &vendorShortName;-ს. გამოხმაურების გაგზავნით, &vendorShortName; თქვენგან იღებს უფლებას, თქვენ მიერ მიწოდებული ინფორმაცია გამოიყენოს თავისი პროგრამების გასაუმჯობესებლად, გამოაქვეყნოს კუთვნილ საიტზე და გაავრცელოს.">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "&brandShortName; უეცარი გათიშვის მომხსენებლით, საშუალებას გაძლევთ გამოეხმაუროთ &vendorShortName;-ს. გამოხმაურების გაგზავნით, &vendorShortName; თქვენგან იღებს უფლებას, თქვენ მიერ მიწოდებული ინფორმაცია გამოიყენოს პროდუქტის გასაუმჯობესებლად, გამოაქვეყნოს კუთვნილ საიტზე და გაავრცელოს.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "&vendorShortName;-ს პროდუქტების პირადულობის დებულებებს, შეგიძლიათ გაეცნოთ ">
+<!ENTITY rights.intro-point3b "ამ საიტზე">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; გთავაზობთ დამატებით მომსახურებებს საიტების მოსანახულებლად, როგორიცაა გაფართოებები და უსაფრთხო თვალიერების რეჟიმი; თუმცა, ჩვენ ვერ უზრუნველვყოფთ მათ 100&#37;-იან სიზუსტესა და უშეცდომობას. ვრცლად, მათ შორის ამ მომსახურებების გამორთვის შესახებ, შეგიძლიათ იხილოთ ">
+<!ENTITY rights.intro-point4b "მომსახურების პირობებში">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "&brandFullName; ინტერნეტ მომსახურებები">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a "&brandFullName; გთავაზობთ ინტერნეტზე დაფუძნებულ მომსახურებებს (&quot;სერვისებს&quot;), რომელიც ხელმისაწვდომია &brandShortName;-ის ორობითი კოდის ვერსიით სარგებლობისას, ქვემოთ მოცემული პირობების თანახმად.  ზოგიერთი მათგანი (მაგალითად, დამატებების შემოთავაზებისა და განახლების სერვისები, უსაფრთხო თვალიერების სერვისი, ან ადგილმდებარეობაზე დაფუძნებული მომსახურებები) ჩართულია ნაგულისხმევად.  თუ არ გსურთ რომელიმე ამ სერვისით სარგებლობა, ან მოცემული პირობები მიუღებელია, მათი გამორთვის ინსტრუქციები შეგიძლიათ იხილოთ ">
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "&vendorShortName;გთავაზობთ ინტერნეტზე დაფუძნებულ მომსახურებებს (&quot;სერვისებს&quot;), რომელიც ხელმისაწვდომია &brandShortName;-ის ორობითი კოდის ვერსიით სარგებლობისას, ქვემოთ მოცემული პირობების თანახმად. ზოგიერთი მათგანი (მაგალითად, დამატებების შემოთავაზებისა და განახლების სერვისები, უსაფრთხო თვალიერების სერვისი, ან ადგილმდებარეობაზე დაფუძნებული მომსახურებები) ჩართულია ნაგულისხმევად.  თუ არ გსურთ რომელიმე ამ სერვისით სარგებლობა, ან მოცემული პირობები მიუღებელია, მათი გამორთვის ინსტრუქციები შეგიძლიათ იხილოთ ">
+<!ENTITY rights3.webservices-b "აქ">
+<!ENTITY rights3.webservices-c ". დანარჩენი ფუნქციები და მომსახურებები შეგიძლიათ ჩართოთ, ან გამორთოთ პროგრამის პარამეტრებიდან.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "დამატების მომსახურებები: ">
+<!ENTITY rights.addons-b "ნაგულისხმევად, &brandShortName; გთავაზობთ დამატებებს &view.discover.label; გვერდზე და დროის გარკვეულ შუალედებში, მუდმივ განახლებებს.  თუ გსურთ, მათი გამორთვა, სერვერთან ინფორმაციის გადაცემის შეზღუდვის მიზნით, მიჰყევით შემდეგ მითითებებს:">
+<!ENTITY rights.addons-term1 "გახსენით პროგრამის პარამეტრები">
+<!ENTITY rights.addons-term2 "აირჩიეთ &smart.label; არე, &advance.label; კატეგორიაში">
+<!ENTITY rights.addons-term3 "მოხსენით მონიშვნები &quot;&autoAddOnsUpdates.label;&quot; და &quot;&enablePersonalized.label;&quot; პარამეტრებს">
+<!ENTITY rights.addons-term4 "დამატებების მომსახურებები უკვე გათიშულია">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "გვერდების უსაფრთხოდ მონახულება: ">
+<!ENTITY rights.safebrowsing-b "გვერდების უსაფრთხოდ მონახულების შესაძლებლობის გამორთვა არაა სასურველი, რადგან შედეგად შეიძლება ეწვიოთ სახიფათო საიტებს.  თუ მაინც გსურთ ფუნქციის სრულად გათიშვა, მიჰყევით შემდეგ მითითებებს:">
+<!ENTITY rights.safebrowsing-term1 "გახსენით პროგრამის პარამეტრები">
+<!ENTITY rights.safebrowsing-term2 "გადადით მთავარ &security.label; არეზე">
+<!ENTITY rights.safebrowsing-term3 "მოხსენით მონიშვნა &quot;&blockAttackSites.label;&quot;-ს და &quot;&blockWebForgeries.label;&quot;-ს">
+<!ENTITY rights.safebrowsing-term4 "და უსაფრთხო რეჟიმი გამოირთვება">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "გეოლოკაცია ინტერნეტში მოგზაურობისას: ">
+<!ENTITY rights.locationawarebrowsing-b "მხოლოდ თანხმობის შემთხვევაში.  მდებარეობის შესახებ ინფორმაცია, თქვენი ნებართვის გარეშე, არასდროს გაიგზავნება.  თუ გსურთ ამ შესაძლებლობის სრულად გათიშვა, მიჰყევით შემდეგ მითითებებს:">
+<!ENTITY rights.locationawarebrowsing-term1 "გახსენით პროგრამის პარამეტრები">
+<!ENTITY rights.locationawarebrowsing-term2 "გადადით მთავარ &security.label; არეზე">
+<!ENTITY rights.locationawarebrowsing-term3 "აირჩიეთ &quot;&geoDisabled.label;&quot; პარამეტრი">
+<!ENTITY rights.locationawarebrowsing-term4 "ადგილმდებარეობის დადგენა გვერდების მონახულებისას, გამოირთვება">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "&vendorShortName; და Mozilla, მისი მოხალისეები, თანამფლობელები და თანამშრომლები მუშაობენ, რომ მოგაწოდონ ხარისხიანი და თანამედროვე მომსახურება. მიუხედავად ამისა, ჩვენ სრულად ვერ უზრუნველვყოფთ, რომ მოწოდებული ინფორმაცია იქნება სრულყოფილი და უშეცდომო. მაგალითად, საიტების უსაფრთხო თვალიერების რეჟიმში, შეიძლება სწორად ვერ მოხდეს საშიში გვერდების ამოცნობა, ან კიდევ ზოგიერთი სანდო საიტი, შეიძლება შეცდომით სახიფათოდ ჩაითვალოს, ისევე როგორც, მდებარეობის დადგენისას მოწოდებული ინფორმაციაც, მხოლოდ საორიენტაციო ხასიათისაა და ვერ იქნება ზედმიწევნით ზუსტი. არც ჩვენ და არც ჩვენი მომსახურების მომწოდებლები, პასუხს არ აგებენ, მდებარეობის მოწოდებული მონაცემების უზუსტობით გამოწვეულ შედეგებზე.">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "&vendorShortName; და Mozilla, მისი მოხალისეები, თანამფლობელები და თანამშრომლები მუშაობენ, რომ მოგაწოდონ ხარისხიანი და თანამედროვე მომსახურება.  მიუხედავად ამისა, ჩვენ სრულად ვერ უზრუნველვყოფთ, რომ მოწოდებული ინფორმაცია იქნება სრულყოფილი და უშეცდომო.  მაგალითად, საიტების უსაფრთხო თვალიერების რეჟიმში, შეიძლება სწორად ვერ მოხდეს საშიში გვერდების ამოცნობა, ან კიდევ ზოგიერთი სანდო საიტი, შეიძლება შეცდომით სახიფათოდ ჩაითვალოს, ისევე როგორც, მდებარეობის დადგენისას მოწოდებული ინფორმაციაც, მხოლოდ საორიენტაციო ხასიათისაა და ვერ იქნება ზედმიწევნით ზუსტი. არც ჩვენ და არც ჩვენი მომსახურების მომწოდებლები, პასუხს არ აგებენ, მდებარეობის მოწოდებული მონაცემების უზუსტობით გამოწვეულ შედეგებზე.">
+<!ENTITY rights.webservices-term1 "&vendorShortName;-ს შეუძლია საკუთარი შეხედულებისამებრ შეწყვიტოს ან შეცვალოს მომსახურებები.">
+<!ENTITY rights.webservices-term2 "თქვენ თავისუფლად შეგიძლიათ ისარგებლოთ აღნიშნული მომსახურებებით, თანხმლებ &brandShortName;-სთან ერთად, რისი უფლებაც სრულად გეძლევათ. ამასთან, &vendorShortName; და მისი ლიცენზორები იტოვებენ ყველა სხვა დანარჩენ უფლებას მასზე. ეს პირობები, რასაკვირველია, არანაირად არ ზღუდავს ღია წყაროს ლიცენზიებით მინიჭებულ უფლებებს, რომლითაც ვრცელდება &brandShortName; და ის პირველწყარო კოდები, რომლებსაც იყენებს &brandShortName;.">
+<!ENTITY rights.webservices-term2a "თქვენ თავისუფლად შეგიძლიათ ისარგებლოთ აღნიშნული მომსახურებებით, თანხმლებ &brandShortName;-სთან ერთად, რისი უფლებაც სრულად გეძლევათ.  ამასთან, &vendorShortName; და მისი ლიცენზორები იტოვებენ ყველა სხვა დანარჩენ უფლებას მასზე.  ეს პირობები, რასაკვირველია, არანაირად არ ზღუდავს ღია წყაროს ლიცენზიებით მინიჭებულ უფლებებს, რომლითაც ვრცელდება &brandShortName; და ის პირველწყარო კოდები, რომლებსაც იყენებს &brandShortName;.">
+<!ENTITY rights.webservices-term3 "მომსახურებები მოწოდებულია «როგორც არის და რაც არის.»  &vendorShortName;, მისი შემქმნელები, ლიცენზორები და გამავრცელებლები იხსნიან ყველა სახის, ღია თუ შეფარულ, შეუზღუდავის ჩათვლით, პასუხისმგებლობას მომსახურებების კომერციულობასა და მორგებაზე თქვენი საჭიროებისამებრ.  მომსახურებების, როგორც თქვენი საჭიროებისამებრ შემრჩევს მომსახურებების ხარისხსა და წარმადობაზე სრული რისკი მთლიანად თქვენ გეკისრებათ. ზოგიერთი კანონმდებლობა არ იძლევა ირიბი პასუხისმგებლობის გამორიცხვის ან შეზღუდვის უფლებას, ამგვარად ეს უარყოფა თქვენ ვერ შეგეხებათ.">
+<!ENTITY rights.webservices-term4 "გარდა კანონის მოთხოვნების გამონაკლისებისა, &vendorShortName;, მისი შემქმნელები, ლიცენზორები და გამავრცელებლები პასუხს არ აგებენ ირიბი, განსაკუთრებული, შემთხვევითი, გამომდინარე, სადამსჯელო ან სანიმუშო დაზიანებებზე, რომლებიც &brandShortName; და მისი მომსახურებებით სარგებლობის შედეგად შეიძლება წარმოიქმნას.  კოლექტიური პასუხისმგებლობა ამ პირობების მიხედვით არ შეიძლება აჭარბებდეს $500 (ხუთას დოლარს). ზოგიერთი კანონმდებლობა არ იძლევა გარკვეული დაზიანებების გამორიცხვის ან შეზღუდვის უფლებას, ამგვარად ეს გამონაკლისი და შეზღუდვა თქვენ ვერ შეგეხებათ.">
+<!ENTITY rights.webservices-term5 "&vendorShortName;-ს დროდადრო საჭიროებისამებრ შეუძლია განაახლოს ეს პირობები. ეს პირობები ვერ შეიცვლება &vendorShortName;-ს წერილობითი თანხმობის გარეშე.">
+<!ENTITY rights.webservices-term6 "მოცემული პირობები ექვემდებარება კალიფორნიის შტატის (აშშ) კანონმდებლობას, გარდა სამართლებრივი კოლიზიის შემთხვევებისა. თუ ამ პირობებიდან რომელიმე ნაწილი მცდარი ან შეუსრულებელი აღმოჩნდება, დანარჩენი ნაწილები სრულად შეინარჩუნებს ძალას. თარგმნილსა და ინგლისურ ვერსიას შორის შეუსაბამობის შემთხვევაში, ძალაში ინგლისური ვერსია რჩება.">
+
+<!ENTITY rights.webservices-term6a "მოცემული პირობები ექვემდებარება კალიფორნიის შტატის (აშშ) კანონმდებლობას, გარდა სამართლებრივი კოლიზიის შემთხვევებისა. თუ ამ პირობებიდან რომელიმე ნაწილი მცდარი ან შეუსრულებელი აღმოჩნდება, დანარჩენი ნაწილები სრულად შეინარჩუნებს ძალას. თარგმნილსა და ინგლისურ ვერსიას შორის შეუსაბამობის შემთხვევაში, ძალაში ინგლისური ვერსია რჩება.">

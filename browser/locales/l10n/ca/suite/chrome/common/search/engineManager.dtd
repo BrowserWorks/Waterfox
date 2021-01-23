@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  engineManager.title       "Gestiona la llista de motors de cerca">
+<!ENTITY  engineManager.style       "min-width: 38em;">
+<!ENTITY  engineManager.intro       "Teniu els següents motors de cerca instal·lats:">
+
+<!ENTITY  columnLabel.name          "Nom">
+<!ENTITY  columnLabel.keyword       "Paraula clau">
+<!-- Buttons -->
+
+<!ENTITY  up.label                  "Mou amunt">
+<!ENTITY  up.accesskey              "u">
+<!ENTITY  dn.label                  "Mou avall">
+<!ENTITY  dn.accesskey              "v">
+<!ENTITY  remove.label              "Suprimeix">
+<!ENTITY  remove.accesskey          "r">
+<!ENTITY  edit.label                "Edita la paraula clau…">
+<!ENTITY  edit.accesskey            "t">
+
+<!ENTITY  addEngine.label           "Aconsegueix més motors de cerca…">
+<!ENTITY  addEngine.accesskey       "A">
+
+<!ENTITY  enableSuggest.label       "Mostra suggeriments de cerca">
+<!ENTITY  enableSuggest.accesskey   "s">
+
+<!ENTITY  restoreDefaults.label     "Restaura els motors per defecte">
+<!ENTITY  restoreDefaults.accesskey "e">

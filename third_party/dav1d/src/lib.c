@@ -31,12 +31,18 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef __linux__
+#include <dlfcn.h>
+#endif
+
 #include "dav1d/dav1d.h"
 #include "dav1d/data.h"
 
 #include "common/mem.h"
 #include "common/validate.h"
 
+#include "src/cpu.h"
+#include "src/fg_apply.h"
 #include "src/internal.h"
 #include "src/log.h"
 #include "src/obu.h"
@@ -44,19 +50,20 @@
 #include "src/ref.h"
 #include "src/thread_task.h"
 #include "src/wedge.h"
-#include "src/film_grain.h"
 
-static void init_internal(void) {
-    dav1d_init_wedge_masks();
+static COLD void init_internal(void) {
+    dav1d_init_cpu();
     dav1d_init_interintra_masks();
     dav1d_init_qm_tables();
+    dav1d_init_thread();
+    dav1d_init_wedge_masks();
 }
 
-const char *dav1d_version(void) {
+COLD const char *dav1d_version(void) {
     return DAV1D_VERSION;
 }
 
-void dav1d_default_settings(Dav1dSettings *const s) {
+COLD void dav1d_default_settings(Dav1dSettings *const s) {
     s->n_frame_threads = 1;
     s->n_tile_threads = 1;
     s->apply_grain = 1;
@@ -67,13 +74,28 @@ void dav1d_default_settings(Dav1dSettings *const s) {
     s->logger.callback = dav1d_log_default_callback;
     s->operating_point = 0;
     s->all_layers = 1; // just until the tests are adjusted
+    s->frame_size_limit = 0;
 }
 
 static void close_internal(Dav1dContext **const c_out, int flush);
 
-int dav1d_open(Dav1dContext **const c_out,
-               const Dav1dSettings *const s)
-{
+NO_SANITIZE("cfi-icall") // CFI is broken with dlsym()
+static COLD size_t get_stack_size_internal(const pthread_attr_t *const thread_attr) {
+#if defined(__linux__) && defined(HAVE_DLSYM)
+    /* glibc has an issue where the size of the TLS is subtracted from the stack
+     * size instead of allocated separately. As a result the specified stack
+     * size may be insufficient when used in an application with large amounts
+     * of TLS data. The following is a workaround to compensate for that.
+     * See https://sourceware.org/bugzilla/show_bug.cgi?id=11787 */
+    size_t (*const get_minstack)(const pthread_attr_t*) =
+        dlsym(RTLD_DEFAULT, "__pthread_get_minstack");
+    if (get_minstack)
+        return get_minstack(thread_attr) - PTHREAD_STACK_MIN;
+#endif
+    return 0;
+}
+
+COLD int dav1d_open(Dav1dContext **const c_out, const Dav1dSettings *const s) {
     static pthread_once_t initted = PTHREAD_ONCE_INIT;
     pthread_once(&initted, init_internal);
 
@@ -92,7 +114,9 @@ int dav1d_open(Dav1dContext **const c_out,
 
     pthread_attr_t thread_attr;
     if (pthread_attr_init(&thread_attr)) return DAV1D_ERR(ENOMEM);
-    pthread_attr_setstacksize(&thread_attr, 512 * 1024);
+    size_t stack_size = 1024 * 1024 + get_stack_size_internal(&thread_attr);
+
+    pthread_attr_setstacksize(&thread_attr, stack_size);
 
     Dav1dContext *const c = *c_out = dav1d_alloc_aligned(sizeof(*c), 32);
     if (!c) goto error;
@@ -103,6 +127,19 @@ int dav1d_open(Dav1dContext **const c_out,
     c->apply_grain = s->apply_grain;
     c->operating_point = s->operating_point;
     c->all_layers = s->all_layers;
+    c->frame_size_limit = s->frame_size_limit;
+
+    /* On 32-bit systems extremely large frame sizes can cause overflows in
+     * dav1d_decode_frame() malloc size calculations. Prevent that from occuring
+     * by enforcing a maximum frame size limit, chosen to roughly correspond to
+     * the largest size possible to decode without exhausting virtual memory. */
+    if (sizeof(size_t) < 8 && s->frame_size_limit - 1 >= 8192 * 8192) {
+        c->frame_size_limit = 8192 * 8192;
+        if (s->frame_size_limit)
+            dav1d_log(c, "Frame size limit reduced from %u to %u.\n",
+                      s->frame_size_limit, c->frame_size_limit);
+    }
+
     c->frame_thread.flush = &c->frame_thread.flush_mem;
     atomic_init(c->frame_thread.flush, 0);
     c->n_fc = s->n_frame_threads;
@@ -111,17 +148,15 @@ int dav1d_open(Dav1dContext **const c_out,
     memset(c->fc, 0, sizeof(*c->fc) * s->n_frame_threads);
     if (c->n_fc > 1) {
         c->frame_thread.out_delayed =
-            malloc(sizeof(*c->frame_thread.out_delayed) * c->n_fc);
+            calloc(c->n_fc, sizeof(*c->frame_thread.out_delayed));
         if (!c->frame_thread.out_delayed) goto error;
-        memset(c->frame_thread.out_delayed, 0,
-               sizeof(*c->frame_thread.out_delayed) * c->n_fc);
     }
     for (int n = 0; n < s->n_frame_threads; n++) {
         Dav1dFrameContext *const f = &c->fc[n];
         f->c = c;
         f->lf.last_sharpness = -1;
         f->n_tc = s->n_tile_threads;
-        f->tc = dav1d_alloc_aligned(sizeof(*f->tc) * s->n_tile_threads, 32);
+        f->tc = dav1d_alloc_aligned(sizeof(*f->tc) * s->n_tile_threads, 64);
         if (!f->tc) goto error;
         memset(f->tc, 0, sizeof(*f->tc) * s->n_tile_threads);
         if (f->n_tc > 1) {
@@ -140,14 +175,7 @@ int dav1d_open(Dav1dContext **const c_out,
         for (int m = 0; m < s->n_tile_threads; m++) {
             Dav1dTileContext *const t = &f->tc[m];
             t->f = f;
-            t->cf = dav1d_alloc_aligned(32 * 32 * sizeof(int32_t), 32);
-            if (!t->cf) goto error;
-            t->scratch.mem = dav1d_alloc_aligned(128 * 128 * 4, 32);
-            if (!t->scratch.mem) goto error;
-            memset(t->cf, 0, 32 * 32 * sizeof(int32_t));
-            t->emu_edge =
-                dav1d_alloc_aligned(320 * (256 + 7) * sizeof(uint16_t), 32);
-            if (!t->emu_edge) goto error;
+            memset(t->cf_16bpc, 0, sizeof(t->cf_16bpc));
             if (f->n_tc > 1) {
                 if (pthread_mutex_init(&t->tile_thread.td.lock, NULL)) goto error;
                 if (pthread_cond_init(&t->tile_thread.td.cond, NULL)) {
@@ -284,13 +312,13 @@ static int output_image(Dav1dContext *const c, Dav1dPicture *const out,
     switch (out->p.bpc) {
 #if CONFIG_8BPC
     case 8:
-        dav1d_apply_grain_8bpc(out, in);
+        dav1d_apply_grain_8bpc(&c->dsp[0].fg, out, in);
         break;
 #endif
 #if CONFIG_16BPC
     case 10:
     case 12:
-        dav1d_apply_grain_16bpc(out, in);
+        dav1d_apply_grain_16bpc(&c->dsp[(out->p.bpc >> 1) - 4].fg, out, in);
         break;
 #endif
     default:
@@ -404,8 +432,10 @@ void dav1d_flush(Dav1dContext *const c) {
 
     c->mastering_display = NULL;
     c->content_light = NULL;
+    c->itut_t35 = NULL;
     dav1d_ref_dec(&c->mastering_display_ref);
     dav1d_ref_dec(&c->content_light_ref);
+    dav1d_ref_dec(&c->itut_t35_ref);
 
     if (c->n_fc == 1) return;
 
@@ -432,12 +462,12 @@ void dav1d_flush(Dav1dContext *const c) {
     c->frame_thread.next = 0;
 }
 
-void dav1d_close(Dav1dContext **const c_out) {
+COLD void dav1d_close(Dav1dContext **const c_out) {
     validate_input(c_out != NULL);
     close_internal(c_out, 1);
 }
 
-static void close_internal(Dav1dContext **const c_out, int flush) {
+static COLD void close_internal(Dav1dContext **const c_out, int flush) {
     Dav1dContext *const c = *c_out;
     if (!c) return;
 
@@ -489,18 +519,12 @@ static void close_internal(Dav1dContext **const c_out, int flush) {
             pthread_cond_destroy(&f->tile_thread.icond);
             freep(&f->tile_thread.task_idx_to_sby_and_tile_idx);
         }
-        for (int m = 0; f->tc && m < f->n_tc; m++) {
-            Dav1dTileContext *const t = &f->tc[m];
-            dav1d_free_aligned(t->cf);
-            dav1d_free_aligned(t->scratch.mem);
-            dav1d_free_aligned(t->emu_edge);
-        }
         for (int m = 0; f->ts && m < f->n_ts; m++) {
             Dav1dTileState *const ts = &f->ts[m];
             pthread_cond_destroy(&ts->tile_thread.cond);
             pthread_mutex_destroy(&ts->tile_thread.lock);
         }
-        free(f->ts);
+        dav1d_free_aligned(f->ts);
         dav1d_free_aligned(f->tc);
         dav1d_free_aligned(f->ipred_edge[0]);
         free(f->a);
@@ -510,8 +534,8 @@ static void close_internal(Dav1dContext **const c_out, int flush) {
         free(f->lf.level);
         free(f->lf.tx_lpf_right_edge[0]);
         if (f->libaom_cm) dav1d_free_ref_mv_common(f->libaom_cm);
-        dav1d_free_aligned(f->lf.cdef_line);
-        dav1d_free_aligned(f->lf.lr_lpf_line);
+        dav1d_free_aligned(f->lf.cdef_line_buf);
+        dav1d_free_aligned(f->lf.lr_lpf_line[0]);
     }
     dav1d_free_aligned(c->fc);
     dav1d_data_unref_internal(&c->in);
@@ -536,6 +560,7 @@ static void close_internal(Dav1dContext **const c_out, int flush) {
 
     dav1d_ref_dec(&c->mastering_display_ref);
     dav1d_ref_dec(&c->content_light_ref);
+    dav1d_ref_dec(&c->itut_t35_ref);
 
     dav1d_freep_aligned(c_out);
 }

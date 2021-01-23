@@ -13,6 +13,7 @@
 #include "GMPTimerParent.h"
 #include "GMPStorageParent.h"
 #include "mozilla/gmp/PGMPParent.h"
+#include "mozilla/ipc/CrashReporterHelper.h"
 #include "nsCOMPtr.h"
 #include "nscore.h"
 #include "nsISupports.h"
@@ -22,21 +23,18 @@
 #include "mozilla/MozPromise.h"
 
 namespace mozilla {
-namespace ipc {
-class CrashReporterHost;
-}  // namespace ipc
 namespace gmp {
 
 class GMPCapability {
  public:
-  explicit GMPCapability() {}
+  explicit GMPCapability() = default;
   GMPCapability(GMPCapability&& aOther)
       : mAPIName(std::move(aOther.mAPIName)),
         mAPITags(std::move(aOther.mAPITags)) {}
   explicit GMPCapability(const nsCString& aAPIName) : mAPIName(aAPIName) {}
   explicit GMPCapability(const GMPCapability& aOther) = default;
   nsCString mAPIName;
-  nsTArray<nsCString> mAPITags;
+  CopyableTArray<nsCString> mAPITags;
 
   static bool Supports(const nsTArray<GMPCapability>& aCapabilities,
                        const nsCString& aAPI, const nsTArray<nsCString>& aTags);
@@ -54,7 +52,9 @@ enum GMPState {
 
 class GMPContentParent;
 
-class GMPParent final : public PGMPParent {
+class GMPParent final
+    : public PGMPParent,
+      public ipc::CrashReporterHelper<GeckoProcessType_GMPlugin> {
   friend class PGMPParent;
 
  public:
@@ -64,7 +64,7 @@ class GMPParent final : public PGMPParent {
 
   RefPtr<GenericPromise> Init(GeckoMediaPluginServiceParent* aService,
                               nsIFile* aPluginDir);
-  nsresult CloneFrom(const GMPParent* aOther);
+  void CloneFrom(const GMPParent* aOther);
 
   void Crash();
 
@@ -154,11 +154,8 @@ class GMPParent final : public PGMPParent {
   RefPtr<GenericPromise> ReadChromiumManifestFile(
       nsIFile* aFile);  // GMP thread.
   void AddCrashAnnotations();
-  bool GetCrashID(nsString& aResult);
+  void GetCrashID(nsString& aResult);
   void ActorDestroy(ActorDestroyReason aWhy) override;
-
-  mozilla::ipc::IPCResult RecvInitCrashReporter(
-      Shmem&& shmem, const NativeThreadId& aThreadId);
 
   mozilla::ipc::IPCResult RecvPGMPStorageConstructor(
       PGMPStorageParent* actor) override;
@@ -184,7 +181,7 @@ class GMPParent final : public PGMPParent {
   nsCString mDisplayName;  // name of plugin displayed to users
   nsCString mDescription;  // description of plugin for display to users
   nsCString mVersion;
-#ifdef XP_WIN
+#if defined(XP_WIN) || defined(XP_LINUX)
   nsCString mLibs;
 #endif
   nsString mAdapter;
@@ -216,8 +213,6 @@ class GMPParent final : public PGMPParent {
   // its reference to us, we stay alive long enough for the child process
   // to terminate gracefully.
   bool mHoldingSelfRef;
-
-  UniquePtr<ipc::CrashReporterHost> mCrashReporter;
 
   const RefPtr<AbstractThread> mMainThread;
 };

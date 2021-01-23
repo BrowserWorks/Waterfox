@@ -21,13 +21,16 @@ const kAllowedPrefs = new Set([
   "narrate.rate",
   "narrate.voice",
 
-  "privacy.trackingprotection.pbmode.enabled",
-
   "reader.font_size",
   "reader.font_type",
   "reader.color_scheme",
   "reader.content_width",
   "reader.line_height",
+
+  "security.ssl.errorReporting.automatic",
+  "security.tls.version.enable-deprecated",
+  "browser.contentblocking.report.hide_lockwise_app",
+  "browser.contentblocking.report.show_mobile_app",
 ]);
 
 const kPrefTypeMap = new Map([

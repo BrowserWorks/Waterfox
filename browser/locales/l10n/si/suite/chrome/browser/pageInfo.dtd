@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  securityView.identity.header   "වෙබ් අඩවියේ හදුනා ගැනීම">
+<!ENTITY  securityView.identity.verifier "සත්‍යායනය කළේ: ">
+<!ENTITY  generalReferrer       "අදාළ URL:">
+<!ENTITY  securityView.privacy.header                   "පෞද්ගලිකත්වය සහ අතීතය">
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "පිටපත් කරන්න">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "සියල්ල තෝරන්න">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  closeWindow.key       "w">
+<!ENTITY  generalTab            "සාමාන්‍ය">
+<!ENTITY  generalURL            "ලිපිනය:">
+<!ENTITY  generalMode           "විදැහුම් ආකාරය:">
+<!ENTITY  generalType           "ආකාරය:">
+<!ENTITY  generalSize           "විශාලත්වය:">
+<!ENTITY  generalSource         "කැච් මූලය:">
+<!ENTITY  generalModified       "වෙනස් කළේ:">
+<!ENTITY  generalEncoding       "සංකේතාංකනය:">
+<!ENTITY  generalMetaName       "නම">
+<!ENTITY  generalMetaContent    "අන්තර්ගතය">
+<!ENTITY  feedTab               "පෝෂක">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "දායකත්වය">
+<!ENTITY  feedSubscribe.accesskey "u">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaSize             "ප්‍රමාණය">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  permAllow             "අනුමත කරන්න">
+<!ENTITY  permAllowSession      "සැසිය සඳහා අනුමත කරන්න">
+<!ENTITY  permBlock             "අවහිර කරන්න">
+<!ENTITY  permCookie            "කුකී සකසන්න">
+<!ENTITY  permInstall           "ඈදුම් හෝ තේමා ස්ථාපනය කරන්න">
+<!ENTITY  permImage             "පිළිබිඹු පූරණය">
+<!ENTITY  permPopup             "පොප් අප් කවුළු විවෘත කරන්න">
+<!ENTITY  permTab               "අවසර">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "පෙරනිමිය භාවිතා කරන්න">
+<!ENTITY  permissionsFor        "අවසරයන්:">
+<!ENTITY  securityHeader        "මෙම පිටුව සඳහා ආරක්‍ෂණ තොරතුරු">
+<!ENTITY  securityTab           "ආරක්‍ෂාව">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityView.certView "සහතික දර්ශනය">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "නොදන්නා">
+<!ENTITY  securityView.identity.owner    "හිමිකරු: ">
+<!ENTITY  securityView.identity.domain   "වෙබ් අඩවිය: ">
+<!ENTITY  securityView.privacy.history                  "අද දිනට පෙර මම වෙබ් අඩවියට පිවිසුනාද?">
+<!ENTITY  securityView.privacy.cookies                  "මෙම වෙබ් අඩවිය මාගේ පරිගණකයේ තොරතුරු (කුකී) ගබඩා කගෙනර තිබේද?">
+<!ENTITY  securityView.privacy.viewCookies              "කුකි දර්ශනය">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "මම මෙම අඩවිය සඳහා රහස්පදයක් සුරකුවාද?">
+<!ENTITY  securityView.privacy.viewPasswords            "සුරකූ රහස්පද දර්ශනය">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+<!ENTITY  securityView.technical.header                 "තාක්‍ෂණික විස්තර">
+<!ENTITY  mediaTab              "මාධ්‍යය">
+<!ENTITY  mediaAltHeader        "ආදේශ පෙළ">
+<!ENTITY  mediaAddress          "ලිපිනය">
+<!ENTITY  mediaType             "වර්‍ගය">
+<!ENTITY  mediaCount            "ගණනය">
+<!ENTITY  mediaLongdesc         "දිගු විස්තරය:">
+<!ENTITY  mediaSaveAs           "සුරකින අයුර...">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaPreview          "මාධ්‍යය පූර්‍ව දසුන:">
+<!ENTITY  formsTab              "Forms">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "Form Action">
+<!ENTITY  formMethod            "Method">
+<!ENTITY  formName              "Name">
+<!ENTITY  formEncoding          "Encoding:">
+<!ENTITY  formTarget            "Target:">
+<!ENTITY  formFields            "Fields:">
+<!ENTITY  formLabel             "Label">
+<!ENTITY  formFName             "Field Name">
+<!ENTITY  formType              "Type">
+<!ENTITY  formCValue            "Current Value">
+<!ENTITY  permAllowSession      "Allow for Session">
+<!ENTITY  permissionsFor        "Permissions for:">
+<!ENTITY  securityHeader        "Security information for this page">
+<!ENTITY  securityView.privacy.history                  "Have I visited this website before today?">
+<!ENTITY  securityView.privacy.cookies                  "Is this web site storing information (cookies) on my computer?">
+<!ENTITY  securityView.privacy.passwords                "Have I saved any passwords for this web site?">
+<!ENTITY  linksTab              "Links">
+<!ENTITY  linksTab.accesskey    "L">
+<!ENTITY  linkNo                "No.">
+<!ENTITY  linkName              "Name">
+<!ENTITY  linkAddress           "Address">
+<!ENTITY  linkType              "Type">
+<!ENTITY  linkTarget            "Target">
+<!ENTITY  linkAccessKey         "Access Key">
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Address:">
+<!ENTITY  mediaAlt              "Alternate Text:">
+<!ENTITY  mediaAltHeader        "Alternate Text">
+<!ENTITY  mediaAddress          "Address">
+<!ENTITY  mediaType             "Type">
+<!ENTITY  mediaSize             "Size">
+<!ENTITY  mediaCount            "Count">
+<!ENTITY  mediaDimensions       "Specified Dimensions:">
+<!ENTITY  mediaPhysDimensions   "Actual Dimensions:">
+<!ENTITY  mediaTitle            "Title:">
+<!ENTITY  mediaLongdesc         "Long Description:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Save As…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Media Preview:">
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 30em;">
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY permGeo "Share Location">
+<!ENTITY openHelpMac.key "?">
+<!ENTITY permAskAlways "Always ask">
+<!ENTITY generalSecurityDetails "Details">
+<!ENTITY generalSecurityDetails.accesskey "D">

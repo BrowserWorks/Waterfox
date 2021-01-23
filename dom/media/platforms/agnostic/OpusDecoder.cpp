@@ -35,7 +35,9 @@ OpusDataDecoder::OpusDataDecoder(const CreateDecoderParams& aParams)
       mDecodedHeader(false),
       mPaddingDiscarded(false),
       mFrames(0),
-      mChannelMap(AudioConfig::ChannelLayout::UNKNOWN_MAP) {}
+      mChannelMap(AudioConfig::ChannelLayout::UNKNOWN_MAP),
+      mDefaultPlaybackDeviceMono(aParams.mOptions.contains(
+          CreateDecoderParams::Option::DefaultPlaybackDeviceMono)) {}
 
 OpusDataDecoder::~OpusDataDecoder() {
   if (mOpusDecoder) {
@@ -86,13 +88,20 @@ RefPtr<MediaDataDecoder::InitPromise> OpusDataDecoder::Init() {
       mOpusParser->mRate, mOpusParser->mChannels, mOpusParser->mStreams,
       mOpusParser->mCoupledStreams, mMappingTable.Elements(), &r);
 
+  if (!mOpusDecoder) {
+    OPUS_DEBUG("Error creating decoder!");
+    return InitPromise::CreateAndReject(
+        MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                    RESULT_DETAIL("Error creating decoder!")),
+        __func__);
+  }
+
   // Opus has a special feature for stereo coding where it represent wide
   // stereo channels by 180-degree out of phase. This improves quality, but
   // needs to be disabled when the output is downmixed to mono. Playback number
   // of channels are set in AudioSink, using the same method
   // `DecideAudioPlaybackChannels()`, and triggers downmix if needed.
-  if (IsDefaultPlaybackDeviceMono() ||
-      DecideAudioPlaybackChannels(mInfo) == 1) {
+  if (mDefaultPlaybackDeviceMono || DecideAudioPlaybackChannels(mInfo) == 1) {
     opus_multistream_decoder_ctl(mOpusDecoder,
                                  OPUS_SET_PHASE_INVERSION_DISABLED(1));
   }
@@ -131,7 +140,7 @@ nsresult OpusDataDecoder::DecodeHeader(const unsigned char* aData,
   MOZ_ASSERT(!mDecodedHeader);
   mDecodedHeader = true;
 
-  mOpusParser = new OpusParser;
+  mOpusParser = MakeUnique<OpusParser>();
   if (!mOpusParser->DecodeHeader(const_cast<unsigned char*>(aData), aLength)) {
     return NS_ERROR_FAILURE;
   }

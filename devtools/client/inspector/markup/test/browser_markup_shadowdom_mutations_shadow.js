@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -44,7 +43,7 @@ add_task(async function() {
 
   info("Delete a shadow dom element and check the updated markup view");
   let mutated = waitForMutation(inspector, "childList");
-  ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const shadowRoot = content.document.querySelector("test-component")
       .shadowRoot;
     const slotContainer = shadowRoot.getElementById("slot1-container");
@@ -61,7 +60,7 @@ add_task(async function() {
   await assertMarkupViewAsTree(treeAfterDelete, "test-component", inspector);
 
   mutated = inspector.once("markupmutation");
-  ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const shadowRoot = content.document.querySelector("test-component")
       .shadowRoot;
     const shadowDiv = shadowRoot.getElementById("another-div");

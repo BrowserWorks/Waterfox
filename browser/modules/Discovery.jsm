@@ -101,10 +101,10 @@ const DiscoveryInternal = {
   async update(reset = false) {
     if (reset || !Discovery.enabled) {
       for (let site of this.sites) {
-        Services.cookies.remove(site, TAAR_COOKIE_NAME, "/", false, {});
+        Services.cookies.remove(site, TAAR_COOKIE_NAME, "/", {});
         ContextualIdentityService.getPublicIdentities().forEach(identity => {
           let { userContextId } = identity;
-          Services.cookies.remove(site, TAAR_COOKIE_NAME, "/", false, {
+          Services.cookies.remove(site, TAAR_COOKIE_NAME, "/", {
             userContextId,
           });
         });
@@ -148,7 +148,7 @@ const DiscoveryInternal = {
             true, // session
             Date.now(),
             originAttributes,
-            Ci.nsICookie2.SAMESITE_LAX
+            Ci.nsICookie.SAMESITE_LAX
           );
         }
       }

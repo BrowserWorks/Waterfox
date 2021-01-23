@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Հատկություններ">
+
+<!ENTITY generalInfo.label                       "Գլխավոր տեղեկությունը">
+<!ENTITY folderCharsetFallback2.label            "Վերադարձման տեքստի կոդավորում.">
+<!ENTITY folderCharsetFallback2.accesskey        "կ">
+<!ENTITY folderCharsetEnforce2.label             "Կիրառել կոդավորումը թղթապանակի բոլոր նամակներին (գրանշանների անհատական կոդավորման կարգավորումները և ինքնորոշումը կանտեսվեն)">
+<!ENTITY folderCharsetEnforce2.accesskey         "Կ">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Վերակառուցել ֆայլի ինդեքսի արդյունքը">
+<!ENTITY folderRebuildSummaryFile2.label         "Վերականգնել">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Երբեմն թղթապանակի ինդեքսի ֆայլը (.msf) վնասվում է և նամակները կարող են երևալ բացակայող կամ ջնջված, թղթապանակի ուղղումը կարող է ուղղել այս սխալը։">
+<!ENTITY folderIncludeInGlobalSearch.label       "Ներառել նամակները Գլոբալ փնտրման արդյունքում">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Անդամակցության Քաղաքականությունը">
+<!ENTITY retentionUseAccount.label  "Օգտ. իմ փոստարկղի կարգավորումները">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "օրվա է">
+<!ENTITY message.label "նամակներ">
+<!ENTITY retentionCleanup.label "Ազատ տեղ բացելու համար՝ ջնջեք հին նամակները։">
+<!ENTITY retentionCleanupImap.label "Ազատ տեղ բացելու համար ջնջեք հին նամակները՝ և՛ տեղային պատճեները և՛ բնօրինակները հեռակա սպասարկիչում։">
+<!ENTITY retentionCleanupPop.label "Ազատ տեղ բացելու համար ջնջեք հին նամակները՝ նաև բնօրինակները հեռակա սպասարկիչում։">
+<!ENTITY retentionDeleteMsg.label "Ջնջել նամակները, որոնք՝">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Չջնջել որևէ նամակ">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Ջնջել բոլոր վերջինները">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Միշտ պահել աստղով նամակները">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Համաժամեցում">
+<!ENTITY folderCheckForNewMessages2.label         "Այս փոստարկղի նոր նամակները ստանալիս միշտ ստուգել այս թղթապանակը">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Ընտրել այս թղթապանակը «Ցանցից դուրս»-ի համար">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Ներբեռնել">
+<!ENTITY offlineFolder.button.accesskey          "Ն">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Ընտրել այս նորությունները «Ցանցից դուրս»-ի համար">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Ներբեռնել">
+<!ENTITY offlineNewsgroup.button.accesskey       "Ն">
+
+<!ENTITY folderProps.name.label                  "Անունը.">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Պատկերակի գույնը.">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Վերականգնել սկզբնադիր գույնը">
+<!ENTITY folderProps.location.label              "Տեղադրություն.">
+<!ENTITY folderProps.location.accesskey          "Տ">
+
+<!ENTITY folderSharingTab.label                  "Տարածում">
+<!ENTITY privileges.button.label                 "Արտոնությունները…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Ձեր լիազորումը.">
+<!ENTITY folderOtherUsers.label                  "Ուրիշները մուտք կունենա այս պանակին.">
+<!ENTITY folderType.label                        "Թղթապ. տեսակը.">
+
+<!ENTITY folderQuotaTab.label                    "Մեջբերում">
+<!ENTITY folderQuotaUsage.label                  "Օգտագործումը.">
+<!ENTITY folderQuotaStatus.label                 "Վիճակ.">
+
+<!ENTITY numberOfMessages.label                  "Նամակների քանակը.">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "անհայտ">
+<!ENTITY sizeOnDisk.label                        "Չափը պնակում.">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "անհայտ">

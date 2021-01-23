@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Көшірмелер және бумалар">
+<!ENTITY sendingPrefix.label "Хабарламаны жіберу кезінде, автоматты түрде: ">
+<!ENTITY fccMailFolder.label "Көшірмені қайда орналастыру:">
+<!ENTITY fccMailFolder.accesskey "К">
+<!ENTITY fccReplyFollowsParent.label "Жауаптарды түпнұсқа хабарламасы орналасқан бумаға сақтау">
+<!ENTITY fccReplyFollowsParent.accesskey "Ж">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Бұл эл. пошта адрестеріне көшірмені жіберу:">
+<!ENTITY ccAddress.accesskey "к">
+<!ENTITY ccAddressList.placeholder "Адрестерді үтірлермен ажыратыңыз">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Бұл эл. пошта адрестеріне жасырын көшірмені жіберу:">
+<!ENTITY bccAddress.accesskey "ж">
+<!ENTITY bccAddressList.placeholder "Адрестерді үтірлермен ажыратыңыз">
+<!ENTITY saveMessageDlg.label "Хабарламалар сақталған кезде растау сұхбатын көрсету">
+<!ENTITY saveMessageDlg.accesskey "е">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Жіберілген&quot; бумасының орны:">
+<!ENTITY sentFolderOn.accesskey "Ж">
+<!ENTITY sentInOtherFolder.label "Басқа:">
+<!ENTITY sentInOtherFolder.accesskey "Б">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Хабарламалар архиві">
+<!ENTITY keepArchives.label "Хабарламалар архивін қайда сақтау:">
+<!ENTITY keepArchives.accesskey "й">
+<!ENTITY archiveHierarchyButton.label "Архивтеу баптаулары…">
+<!ENTITY archiveHierarchyButton.accesskey "А">
+<!ENTITY archivesFolderOn.label "&quot;Архивтер&quot; бумасының орны:">
+<!ENTITY archivesFolderOn.accesskey "н">
+<!ENTITY archiveInOtherFolder.label "Басқа:">
+<!ENTITY archiveInOtherFolder.accesskey "а">
+<!ENTITY specialFolders.label "Шимай қағаздар және үлгілер">
+<!ENTITY keepDrafts2.label "Шимай қағаз хаттарын қайда сақтау:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Шимай қағаз&quot; бумасының орны:">
+<!ENTITY draftsFolderOn.accesskey "Ш">
+<!ENTITY draftInOtherFolder.label "Басқа:">
+<!ENTITY draftInOtherFolder.accesskey "Б">
+<!ENTITY keepTemplates.label "Хабарламалар үлгілерін қайда сақтау:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Үлгілер&quot; бумасының орны:">
+<!ENTITY templatesFolderOn.accesskey "г">
+<!ENTITY templateInOtherFolder.label "Басқа:">
+<!ENTITY templateInOtherFolder.accesskey "с">

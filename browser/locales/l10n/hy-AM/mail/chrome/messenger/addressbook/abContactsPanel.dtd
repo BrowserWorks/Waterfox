@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Հատկություններ">
+<!ENTITY propertiesMenu.accesskey           "ն">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Հասցեագրքի հատկությունները">
+<!ENTITY abPropertiesMenu.accesskey         "ն">
+<!ENTITY contactPropertiesMenu.label        "Կոնտակտի հատկությունները">
+<!ENTITY contactPropertiesMenu.accesskey    "յ">
+<!ENTITY mailingListPropertiesMenu.label    "Տեղեկագրի ցանկի հատկությունները">
+<!ENTITY mailingListPropertiesMenu.accesskey "կ">
+
+<!ENTITY abContextMenuButton.tooltip        "Ցուցադրել հասցեագրքի համագրույթի ընտրացանկը">
+<!ENTITY addressbookPicker.label            "Հասցեագիրք.">
+<!ENTITY addressbookPicker.accesskey        "ք">
+<!ENTITY searchContacts.label               "Որոնել կոնտակտներ.">
+<!ENTITY searchContacts.accesskey           "տ">
+<!ENTITY SearchNameOrEmail.label            "Անունը կամ էլ. հասցեն">
+
+<!ENTITY addtoToFieldMenu.label             "Ավելացնել Ում դաշտում">
+<!ENTITY addtoToFieldMenu.accesskey         "Ա">
+<!ENTITY addtoCcFieldMenu.label             "Ավելացնել CC դաշտում">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Ավելացնել Bcc դաշտում">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Ջնջել">
+<!ENTITY deleteAddrBookCard.accesskey       "Ջ">
+<!ENTITY propertiesContext.label            "Հատկություններ">
+<!ENTITY propertiesContext.accesskey        "ն">
+<!ENTITY abPropertiesContext.label          "Հատկություններ">
+<!ENTITY abPropertiesContext.accesskey      "ն">
+<!ENTITY editContactContext.label           "Խմբագրել կոնտակտները">
+<!ENTITY editContactContext.accesskey       "Խ">
+<!ENTITY editMailingListContext.label       "Խմբագրել ցանկը">
+<!ENTITY editMailingListContext.accesskey   "Խ">
+
+<!ENTITY newContactAbContext.label          "Նոր կապ">
+<!ENTITY newContactAbContext.accesskey      "C">
+<!ENTITY newListAbContext.label             "Նոր ցանկ">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Ավելացնել Ում.">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Ավելացնել Cc.">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Ավելացնել Bcc.">
+<!ENTITY bccButton.accesskey                "B">

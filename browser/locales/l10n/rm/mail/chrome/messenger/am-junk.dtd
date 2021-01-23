@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Parameters per e-mails nungiavischads">
+<!ENTITY trainingDescription.label "Sch'il filter per e-mails nungiavischads è activà, sto el vegnir trenà uschia che e-mails nungiavischads (Junk/Spam) vegnan identifitgads cun il temp cun auta probabilitad. Utilisescha ils buttuns &quot;Nungiavischà&quot; resp. &quot;Betg nungiavischà&quot; en la trav da simbols per classifitgar endretg messadis ch'è n'èn betg vegnids identifitgads a moda correcta. Pli tard vegn &brandShortName; ad esser abel da marcar automaticamain messadis sco nungiavischads.">
+<!ENTITY level.label "Activar en quest conto il filter intelligent per e-mails nungiavischads">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Spustar novs messadis nungiavischads en:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "L'ordinatur &quot;Nungiavischà&quot; da:">
+<!ENTITY junkFolderOn.accesskey "N">
+<!ENTITY otherFolder.label "Auter ordinatur:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Stizzar automaticamain e-mails nungiavischads ch'èn pli vegls che">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "dis">
+
+<!ENTITY whitelistHeader.label "Betg classifitgar in messadi automaticamain sco nungiavischà sche ses speditur figurescha en: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "Sche activà, tracta &brandShortName; messadis marcads da quest servetsch da classificaziun extern automaticamain sco nungiavischads.">
+<!ENTITY ispHeaders.label "Fidar a chaus-pagina da messadis nungiavischads da quest filter extern: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Selecziun">
+<!ENTITY junkActions.label "Destinaziun e retenziun">
+
+<!ENTITY globalJunkPrefs.label "Preferenzas globalas per messadis nungiavischads…">
+<!ENTITY globalJunkPrefs.accesskey "G">

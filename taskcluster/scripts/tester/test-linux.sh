@@ -4,13 +4,23 @@ set -x -e
 
 echo "running as" $(id)
 
-# Detect release version.
-. /etc/lsb-release
-if [ "${DISTRIB_RELEASE}" == "12.04" ]; then
-    echo "Ubuntu 12.04 not supported"
-    exit 1
-elif [ "${DISTRIB_RELEASE}" == "16.04" ]; then
-    UBUNTU_1604=1
+# Detect distribution
+. /etc/os-release
+if [ "${ID}" == "ubuntu" ]; then
+    DISTRIBUTION="Ubuntu"
+elif [ "${ID}" == "debian" ]; then
+    DISTRIBUTION="Debian"
+else
+    DISTRIBUTION="Unknown"
+fi
+
+# Detect release version if supported
+FILE="/etc/lsb-release"
+if [ -e $FILE ] ; then
+    . /etc/lsb-release
+    RELEASE="${DISTRIB_RELEASE}"
+else
+    RELEASE="unknown"
 fi
 
 ####
@@ -28,6 +38,7 @@ fi
 : NEED_XVFB                     ${NEED_XVFB:=true}
 : NEED_WINDOW_MANAGER           ${NEED_WINDOW_MANAGER:=false}
 : NEED_PULSEAUDIO               ${NEED_PULSEAUDIO:=false}
+: NEED_COMPIZ                   ${NEED_COPMPIZ:=false}
 : START_VNC                     ${START_VNC:=false}
 : TASKCLUSTER_INTERACTIVE       ${TASKCLUSTER_INTERACTIVE:=false}
 : mozharness args               "${@}"
@@ -44,10 +55,13 @@ fail() {
     exit 1
 }
 
+# start pulseaudio
 maybe_start_pulse() {
     if $NEED_PULSEAUDIO; then
-        pulseaudio --fail --daemonize --start
-        pactl load-module module-null-sink
+        # call pulseaudio for Ubuntu only
+        if [ $DISTRIBUTION == "Ubuntu" ]; then
+            pulseaudio --fail --daemonize --start
+        fi
     fi
 }
 
@@ -132,7 +146,15 @@ fi
 
 if $NEED_WINDOW_MANAGER; then
     # This is read by xsession to select the window manager
-    echo DESKTOP_SESSION=ubuntu > $HOME/.xsessionrc
+    . /etc/lsb-release
+    if [ $DISTRIBUTION == "Ubuntu" ] && [ $RELEASE == "16.04" ]; then
+        echo DESKTOP_SESSION=ubuntu > $HOME/.xsessionrc
+    elif [ $DISTRIBUTION == "Ubuntu" ] && [ $RELEASE == "18.04" ]; then
+        echo export DESKTOP_SESSION=gnome > $HOME/.xsessionrc
+        echo export XDG_SESSION_TYPE=x11 >> $HOME/.xsessionrc
+    else
+        :
+    fi
 
     # DISPLAY has already been set above
     # XXX: it would be ideal to add a semaphore logic to make sure that the
@@ -143,25 +165,27 @@ if $NEED_WINDOW_MANAGER; then
     gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
     gsettings set org.gnome.desktop.screensaver lock-enabled false
     gsettings set org.gnome.desktop.screensaver lock-delay 3600
+
     # Disable the screen saver
     xset s off s reset
 
     # This starts the gnome-keyring-daemon with an unlocked login keyring. libsecret uses this to
     # store secrets. Firefox uses libsecret to store a key that protects sensitive information like
     # credit card numbers.
-    eval `dbus-launch --sh-syntax`
-    eval `echo '' | /usr/bin/gnome-keyring-daemon -r -d --unlock --components=secrets`
-
-    if [ "${UBUNTU_1604}" ]; then
-        # start compiz for our window manager
-        compiz 2>&1 &
-        #TODO: how to determine if compiz starts correctly?
+    if test -z "$DBUS_SESSION_BUS_ADDRESS" ; then
+        # if not found, launch a new one
+        eval `dbus-launch --sh-syntax`
     fi
+    eval `echo '' | /usr/bin/gnome-keyring-daemon -r -d --unlock --components=secrets`
 fi
 
-if [ "${UBUNTU_1604}" ]; then
-    maybe_start_pulse
+if [ $NEED_COMPIZ == "true" ]  && [ $RELEASE == "16.04" ]; then
+    compiz 2>&1 &
+elif [ $NEED_COMPIZ == "true" ] && [ $RELEASE == "18.04" ]; then
+    compiz --replace 2>&1 &
 fi
+
+maybe_start_pulse
 
 # For telemetry purposes, the build process wants information about the
 # source it is running
@@ -209,6 +233,6 @@ fi
 # Run a custom mach command (this is typically used by action tasks to run
 # harnesses in a particular way)
 if [ "$CUSTOM_MACH_COMMAND" ]; then
-    eval "'$WORKSPACE/build/tests/mach' ${CUSTOM_MACH_COMMAND}"
+    eval "'$WORKSPACE/build/tests/mach' ${CUSTOM_MACH_COMMAND} ${@}"
     exit $?
 fi

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Sýsla með auðkenni fyrir þennan reikning. Sjálfgefið er að fyrsta auðkenni sé notað.">
+<!ENTITY identitiesListAdd.label "Bæta við…">
+<!ENTITY identitiesListAdd.accesskey "B">
+<!ENTITY identitiesListEdit.label "Breyta…">
+<!ENTITY identitiesListEdit.accesskey "B">
+<!ENTITY identitiesListDefault.label "Setja sem sjálfgefið">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "Eyða">
+<!ENTITY identitiesListDelete.accesskey "E">
+<!ENTITY identitiesListClose.label "Loka">
+<!ENTITY identitiesListClose.accesskey "L">

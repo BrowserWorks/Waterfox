@@ -3,18 +3,13 @@
 set -xe
 
 test "$TASK_ID"
-test "$SHA1_SIGNING_CERT"
-test "$SHA384_SIGNING_CERT"
+test "$SIGNING_CERT"
 
 ARTIFACTS_DIR="/home/worker/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
 
 # duplicate the functionality of taskcluster-lib-urls, but in bash..
-if [ "$TASKCLUSTER_ROOT_URL" = "https://taskcluster.net" ]; then
-    queue_base='https://queue.taskcluster.net/v1'
-else
-    queue_base="$TASKCLUSTER_ROOT_URL/api/queue/v1"
-fi
+queue_base="${TASKCLUSTER_ROOT_URL%/}/api/queue/v1"
 
 curl --location --retry 10 --retry-delay 10 -o /home/worker/task.json "$queue_base/task/$TASK_ID"
 
@@ -53,15 +48,10 @@ else
   export MBSDIFF_HOOK=
 fi
 
-if [ ! -z "$FILENAME_TEMPLATE" ]; then
-    EXTRA_PARAMS="--filename-template $FILENAME_TEMPLATE $EXTRA_PARAMS"
-fi
-
 # EXTRA_PARAMS is optional
 # shellcheck disable=SC2086
-pipenv run /home/worker/bin/funsize.py \
+python3.8 /home/worker/bin/funsize.py \
     --artifacts-dir "$ARTIFACTS_DIR" \
     --task-definition /home/worker/task.json \
-    --sha1-signing-cert "/home/worker/keys/${SHA1_SIGNING_CERT}.pubkey" \
-    --sha384-signing-cert "/home/worker/keys/${SHA384_SIGNING_CERT}.pubkey" \
+    --signing-cert "/home/worker/keys/${SIGNING_CERT}.pubkey" \
     $EXTRA_PARAMS

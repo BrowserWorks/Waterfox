@@ -1,0 +1,58 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Папраўце гэты файл і захавайце яго як userChrome.css у
+ * дырэкторыі chrome/ вашага профілю.
+ */
+
+/*
+ * Гэты файл можа ўжывацца для наладжвання выгляду інтэрфэйсу карыстальніка Mozilla.
+ * Вы мусіце выкарыстоўваць !important у правілах, якімі вы хочаце
+ * замяніць наладжванні па змоўчанню.
+ */
+
+/*
+ * Не выдаляйце радок @namespace -- ён патрабуецца для правільнага выканання.
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* прызначае змоўчную назвапрастору для XUL */
+
+
+/*
+ * Асобныя магчымыя паляпшэнні даступнасці:
+ */
+/*
+ * Зрабіць усе змоўчныя памеры шрыфтоў 20 pt:
+ *
+ * * {
+ *   font-size: 20pt !important
+ * }
+ */
+/*
+ * Зрабіць памер усіх адзінак меню роўным 15 pt замест змоўчнага памеру:
+ *
+ * menupopup > * {
+ *   font-size: 15pt !important
+ * }
+ */
+/*
+ * Ужываць шрыфты нязменнай шырыні на Паліцы Месцазнаходжання (URL)
+ *
+ * #urlbar {
+ *    font-family: monospace !important;
+ * }
+ */
+
+/*
+ * Eliminate the throbber and its annoying movement:
+ *
+ * #throbber-box {
+ *   display: none !important;
+ * }
+ */
+
+/*
+ * Наведайце http://www.mozilla.org/unix/customizing.html , каб атрымаць больш прыкладаў.
+ */
+ 

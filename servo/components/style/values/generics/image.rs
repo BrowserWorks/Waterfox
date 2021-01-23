@@ -9,50 +9,103 @@
 use crate::custom_properties;
 use crate::values::serialize_atom_identifier;
 use crate::Atom;
+use crate::Zero;
 use servo_arc::Arc;
 use std::fmt::{self, Write};
 use style_traits::{CssWriter, ToCss};
+use values::generics::position::PositionComponent;
 
-/// An [image].
+/// An `<image> | none` value.
 ///
-/// [image]: https://drafts.csswg.org/css-images/#image-values
+/// https://drafts.csswg.org/css-images/#image-values
 #[derive(
     Clone, MallocSizeOf, PartialEq, SpecifiedValueInfo, ToComputedValue, ToResolvedValue, ToShmem,
 )]
-pub enum Image<Gradient, MozImageRect, ImageUrl> {
+#[repr(C, u8)]
+pub enum GenericImage<G, MozImageRect, ImageUrl> {
+    /// `none` variant.
+    None,
     /// A `<url()>` image.
     Url(ImageUrl),
+
     /// A `<gradient>` image.  Gradients are rather large, and not nearly as
     /// common as urls, so we box them here to keep the size of this enum sane.
-    Gradient(Box<Gradient>),
+    Gradient(Box<G>),
     /// A `-moz-image-rect` image.  Also fairly large and rare.
+    // not cfg’ed out on non-Gecko to avoid `error[E0392]: parameter `MozImageRect` is never used`
+    // Instead we make MozImageRect an empty enum
     Rect(Box<MozImageRect>),
+
     /// A `-moz-element(# <element-id>)`
+    #[cfg(feature = "gecko")]
     #[css(function = "-moz-element")]
     Element(Atom),
+
     /// A paint worklet image.
     /// <https://drafts.css-houdini.org/css-paint-api/>
-    #[cfg(feature = "servo")]
+    #[cfg(feature = "servo-layout-2013")]
     PaintWorklet(PaintWorklet),
 }
+
+pub use self::GenericImage as Image;
 
 /// A CSS gradient.
 /// <https://drafts.csswg.org/css-images/#gradients>
 #[derive(Clone, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToShmem)]
-pub struct Gradient<LineDirection, Length, LengthPercentage, Position, Color, Angle> {
-    /// Gradients can be linear or radial.
-    pub kind: GradientKind<LineDirection, Length, LengthPercentage, Position, Angle>,
-    /// The color stops and interpolation hints.
-    pub items: Vec<GradientItem<Color, LengthPercentage>>,
-    /// True if this is a repeating gradient.
-    pub repeating: bool,
-    /// Compatibility mode.
-    pub compat_mode: CompatMode,
+#[repr(C)]
+pub enum GenericGradient<
+    LineDirection,
+    LengthPercentage,
+    NonNegativeLength,
+    NonNegativeLengthPercentage,
+    Position,
+    Angle,
+    AngleOrPercentage,
+    Color,
+> {
+    /// A linear gradient.
+    Linear {
+        /// Line direction
+        direction: LineDirection,
+        /// The color stops and interpolation hints.
+        items: crate::OwnedSlice<GenericGradientItem<Color, LengthPercentage>>,
+        /// True if this is a repeating gradient.
+        repeating: bool,
+        /// Compatibility mode.
+        compat_mode: GradientCompatMode,
+    },
+    /// A radial gradient.
+    Radial {
+        /// Shape of gradient
+        shape: GenericEndingShape<NonNegativeLength, NonNegativeLengthPercentage>,
+        /// Center of gradient
+        position: Position,
+        /// The color stops and interpolation hints.
+        items: crate::OwnedSlice<GenericGradientItem<Color, LengthPercentage>>,
+        /// True if this is a repeating gradient.
+        repeating: bool,
+        /// Compatibility mode.
+        compat_mode: GradientCompatMode,
+    },
+    /// A conic gradient.
+    Conic {
+        /// Start angle of gradient
+        angle: Angle,
+        /// Center of gradient
+        position: Position,
+        /// The color stops and interpolation hints.
+        items: crate::OwnedSlice<GenericGradientItem<Color, AngleOrPercentage>>,
+        /// True if this is a repeating gradient.
+        repeating: bool,
+    },
 }
 
+pub use self::GenericGradient as Gradient;
+
 #[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToShmem)]
+#[repr(u8)]
 /// Whether we used the modern notation or the compatibility `-webkit`, `-moz` prefixes.
-pub enum CompatMode {
+pub enum GradientCompatMode {
     /// Modern syntax.
     Modern,
     /// `-webkit` prefix.
@@ -61,49 +114,45 @@ pub enum CompatMode {
     Moz,
 }
 
-/// A gradient kind.
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToShmem)]
-pub enum GradientKind<LineDirection, Length, LengthPercentage, Position, Angle> {
-    /// A linear gradient.
-    Linear(LineDirection),
-    /// A radial gradient.
-    Radial(
-        EndingShape<Length, LengthPercentage>,
-        Position,
-        Option<Angle>,
-    ),
-}
-
 /// A radial gradient's ending shape.
 #[derive(
     Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToCss, ToResolvedValue, ToShmem,
 )]
-pub enum EndingShape<Length, LengthPercentage> {
+#[repr(C, u8)]
+pub enum GenericEndingShape<NonNegativeLength, NonNegativeLengthPercentage> {
     /// A circular gradient.
-    Circle(Circle<Length>),
+    Circle(GenericCircle<NonNegativeLength>),
     /// An elliptic gradient.
-    Ellipse(Ellipse<LengthPercentage>),
+    Ellipse(GenericEllipse<NonNegativeLengthPercentage>),
 }
+
+pub use self::GenericEndingShape as EndingShape;
 
 /// A circle shape.
 #[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToShmem)]
-pub enum Circle<Length> {
+#[repr(C, u8)]
+pub enum GenericCircle<NonNegativeLength> {
     /// A circle radius.
-    Radius(Length),
+    Radius(NonNegativeLength),
     /// A circle extent.
     Extent(ShapeExtent),
 }
+
+pub use self::GenericCircle as Circle;
 
 /// An ellipse shape.
 #[derive(
     Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToCss, ToResolvedValue, ToShmem,
 )]
-pub enum Ellipse<LengthPercentage> {
+#[repr(C, u8)]
+pub enum GenericEllipse<NonNegativeLengthPercentage> {
     /// An ellipse pair of radii.
-    Radii(LengthPercentage, LengthPercentage),
+    Radii(NonNegativeLengthPercentage, NonNegativeLengthPercentage),
     /// An ellipse extent.
     Extent(ShapeExtent),
 }
+
+pub use self::GenericEllipse as Ellipse;
 
 /// <https://drafts.csswg.org/css-images/#typedef-extent-keyword>
 #[allow(missing_docs)]
@@ -121,6 +170,7 @@ pub enum Ellipse<LengthPercentage> {
     ToResolvedValue,
     ToShmem,
 )]
+#[repr(u8)]
 pub enum ShapeExtent {
     ClosestSide,
     FarthestSide,
@@ -136,7 +186,7 @@ pub enum ShapeExtent {
     Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToCss, ToResolvedValue, ToShmem,
 )]
 #[repr(C, u8)]
-pub enum GenericGradientItem<Color, LengthPercentage> {
+pub enum GenericGradientItem<Color, T> {
     /// A simple color stop, without position.
     SimpleColorStop(Color),
     /// A complex color stop, with a position.
@@ -144,10 +194,10 @@ pub enum GenericGradientItem<Color, LengthPercentage> {
         /// The color for the stop.
         color: Color,
         /// The position for the stop.
-        position: LengthPercentage,
+        position: T,
     },
     /// An interpolation hint.
-    InterpolationHint(LengthPercentage),
+    InterpolationHint(T),
 }
 
 pub use self::GenericGradientItem as GradientItem;
@@ -157,17 +207,17 @@ pub use self::GenericGradientItem as GradientItem;
 #[derive(
     Clone, Copy, Debug, MallocSizeOf, PartialEq, ToComputedValue, ToCss, ToResolvedValue, ToShmem,
 )]
-pub struct ColorStop<Color, LengthPercentage> {
+pub struct ColorStop<Color, T> {
     /// The color of this stop.
     pub color: Color,
     /// The position of this stop.
-    pub position: Option<LengthPercentage>,
+    pub position: Option<T>,
 }
 
-impl<Color, LengthPercentage> ColorStop<Color, LengthPercentage> {
+impl<Color, T> ColorStop<Color, T> {
     /// Convert the color stop into an appropriate `GradientItem`.
     #[inline]
-    pub fn into_item(self) -> GradientItem<Color, LengthPercentage> {
+    pub fn into_item(self) -> GradientItem<Color, T> {
         match self.position {
             Some(position) => GradientItem::ComplexColorStop {
                 color: self.color,
@@ -188,6 +238,8 @@ pub struct PaintWorklet {
     /// The arguments for the worklet.
     /// TODO: store a parsed representation of the arguments.
     #[cfg_attr(feature = "servo", ignore_malloc_size_of = "Arc")]
+    #[compute(no_field_bound)]
+    #[resolve(no_field_bound)]
     pub arguments: Vec<Arc<custom_properties::SpecifiedValue>>,
 }
 
@@ -212,7 +264,7 @@ impl ToCss for PaintWorklet {
 ///
 /// `-moz-image-rect(<uri>, top, right, bottom, left);`
 #[allow(missing_docs)]
-#[css(comma, function)]
+#[css(comma, function = "-moz-image-rect")]
 #[derive(
     Clone,
     Debug,
@@ -224,13 +276,16 @@ impl ToCss for PaintWorklet {
     ToResolvedValue,
     ToShmem,
 )]
-pub struct MozImageRect<NumberOrPercentage, MozImageRectUrl> {
+#[repr(C)]
+pub struct GenericMozImageRect<NumberOrPercentage, MozImageRectUrl> {
     pub url: MozImageRectUrl,
     pub top: NumberOrPercentage,
     pub right: NumberOrPercentage,
     pub bottom: NumberOrPercentage,
     pub left: NumberOrPercentage,
 }
+
+pub use self::GenericMozImageRect as MozImageRect;
 
 impl<G, R, U> fmt::Debug for Image<G, R, U>
 where
@@ -254,11 +309,13 @@ where
         W: Write,
     {
         match *self {
+            Image::None => dest.write_str("none"),
             Image::Url(ref url) => url.to_css(dest),
             Image::Gradient(ref gradient) => gradient.to_css(dest),
             Image::Rect(ref rect) => rect.to_css(dest),
-            #[cfg(feature = "servo")]
+            #[cfg(feature = "servo-layout-2013")]
             Image::PaintWorklet(ref paint_worklet) => paint_worklet.to_css(dest),
+            #[cfg(feature = "gecko")]
             Image::Element(ref selector) => {
                 dest.write_str("-moz-element(#")?;
                 serialize_atom_identifier(selector, dest)?;
@@ -268,92 +325,153 @@ where
     }
 }
 
-impl<D, L, LoP, P, C, A> ToCss for Gradient<D, L, LoP, P, C, A>
+impl<D, LP, NL, NLP, P, A: Zero, AoP, C> ToCss for Gradient<D, LP, NL, NLP, P, A, AoP, C>
 where
     D: LineDirection,
-    L: ToCss,
-    LoP: ToCss,
-    P: ToCss,
-    C: ToCss,
+    LP: ToCss,
+    NL: ToCss,
+    NLP: ToCss,
+    P: PositionComponent + ToCss,
     A: ToCss,
+    AoP: ToCss,
+    C: ToCss,
 {
     fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
     where
         W: Write,
     {
-        match self.compat_mode {
-            CompatMode::WebKit => dest.write_str("-webkit-")?,
-            CompatMode::Moz => dest.write_str("-moz-")?,
+        let (compat_mode, repeating) = match *self {
+            Gradient::Linear {
+                compat_mode,
+                repeating,
+                ..
+            } => (compat_mode, repeating),
+            Gradient::Radial {
+                compat_mode,
+                repeating,
+                ..
+            } => (compat_mode, repeating),
+            Gradient::Conic { repeating, .. } => (GradientCompatMode::Modern, repeating),
+        };
+
+        match compat_mode {
+            GradientCompatMode::WebKit => dest.write_str("-webkit-")?,
+            GradientCompatMode::Moz => dest.write_str("-moz-")?,
             _ => {},
         }
 
-        if self.repeating {
+        if repeating {
             dest.write_str("repeating-")?;
         }
-        dest.write_str(self.kind.label())?;
-        dest.write_str("-gradient(")?;
-        let mut skip_comma = match self.kind {
-            GradientKind::Linear(ref direction) if direction.points_downwards(self.compat_mode) => {
-                true
+
+        match *self {
+            Gradient::Linear {
+                ref direction,
+                ref items,
+                compat_mode,
+                ..
+            } => {
+                dest.write_str("linear-gradient(")?;
+                let mut skip_comma = if !direction.points_downwards(compat_mode) {
+                    direction.to_css(dest, compat_mode)?;
+                    false
+                } else {
+                    true
+                };
+                for item in &**items {
+                    if !skip_comma {
+                        dest.write_str(", ")?;
+                    }
+                    skip_comma = false;
+                    item.to_css(dest)?;
+                }
             },
-            GradientKind::Linear(ref direction) => {
-                direction.to_css(dest, self.compat_mode)?;
-                false
-            },
-            GradientKind::Radial(ref shape, ref position, ref angle) => {
+            Gradient::Radial {
+                ref shape,
+                ref position,
+                ref items,
+                compat_mode,
+                ..
+            } => {
+                dest.write_str("radial-gradient(")?;
                 let omit_shape = match *shape {
                     EndingShape::Ellipse(Ellipse::Extent(ShapeExtent::Cover)) |
                     EndingShape::Ellipse(Ellipse::Extent(ShapeExtent::FarthestCorner)) => true,
                     _ => false,
                 };
-                if self.compat_mode == CompatMode::Modern {
+                let omit_position = position.is_center();
+                if compat_mode == GradientCompatMode::Modern {
                     if !omit_shape {
                         shape.to_css(dest)?;
-                        dest.write_str(" ")?;
+                        if !omit_position {
+                            dest.write_str(" ")?;
+                        }
                     }
-                    dest.write_str("at ")?;
-                    position.to_css(dest)?;
+                    if !omit_position {
+                        dest.write_str("at ")?;
+                        position.to_css(dest)?;
+                    }
                 } else {
-                    position.to_css(dest)?;
-                    if let Some(ref a) = *angle {
-                        dest.write_str(" ")?;
-                        a.to_css(dest)?;
+                    if !omit_position {
+                        position.to_css(dest)?;
+                        if !omit_shape {
+                            dest.write_str(", ")?;
+                        }
                     }
                     if !omit_shape {
-                        dest.write_str(", ")?;
                         shape.to_css(dest)?;
                     }
                 }
-                false
+                let mut skip_comma = omit_shape && omit_position;
+                for item in &**items {
+                    if !skip_comma {
+                        dest.write_str(", ")?;
+                    }
+                    skip_comma = false;
+                    item.to_css(dest)?;
+                }
             },
-        };
-        for item in &self.items {
-            if !skip_comma {
-                dest.write_str(", ")?;
-            }
-            skip_comma = false;
-            item.to_css(dest)?;
+            Gradient::Conic {
+                ref angle,
+                ref position,
+                ref items,
+                ..
+            } => {
+                dest.write_str("conic-gradient(")?;
+                let omit_angle = angle.is_zero();
+                let omit_position = position.is_center();
+                if !omit_angle {
+                    dest.write_str("from ")?;
+                    angle.to_css(dest)?;
+                    if !omit_position {
+                        dest.write_str(" ")?;
+                    }
+                }
+                if !omit_position {
+                    dest.write_str("at ")?;
+                    position.to_css(dest)?;
+                }
+                let mut skip_comma = omit_angle && omit_position;
+                for item in &**items {
+                    if !skip_comma {
+                        dest.write_str(", ")?;
+                    }
+                    skip_comma = false;
+                    item.to_css(dest)?;
+                }
+            },
         }
         dest.write_str(")")
-    }
-}
-
-impl<D, L, LoP, P, A> GradientKind<D, L, LoP, P, A> {
-    fn label(&self) -> &str {
-        match *self {
-            GradientKind::Linear(..) => "linear",
-            GradientKind::Radial(..) => "radial",
-        }
     }
 }
 
 /// The direction of a linear gradient.
 pub trait LineDirection {
     /// Whether this direction points towards, and thus can be omitted.
-    fn points_downwards(&self, compat_mode: CompatMode) -> bool;
+    fn points_downwards(&self, compat_mode: GradientCompatMode) -> bool;
 
     /// Serialises this direction according to the compatibility mode.
-    fn to_css<W>(&self, dest: &mut CssWriter<W>, compat_mode: CompatMode) -> fmt::Result
+    fn to_css<W>(&self, dest: &mut CssWriter<W>, compat_mode: GradientCompatMode) -> fmt::Result
     where
         W: Write;
 }

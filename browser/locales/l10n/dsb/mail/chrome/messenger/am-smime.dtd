@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Koděrowanje wót kóńca do kóńca">
+<!ENTITY e2eLearnMore.label "Dalšne informacije">
+
+<!ENTITY e2eEnc.description "Bźez koděrowanja wót kóńca do kóńca se wopśimjeśe powěsćow lažko wašomu e-mailowemu póbitowarjeju pokazujo a masowemu doglědowanjeju wustaja.">
+<!ENTITY e2eeReqWarning.description "Jolic skoděrowanju trjebaśo, aby powěsć pósłał, musyśo zjawny kluc abo certifikat kuždego dostawarja měś.">
+
+<!ENTITY e2eSigning.description "Digitalna signatura dostawarjam zmóžnja, powěsć pśeglědowaś, kótaruž sćo pósłał, a lěc jeje wopśimjeśe njejo se změniło.">
+<!ENTITY e2eTechPref.description "Preferěrowana koděrowańska technologija:">
+
+<!ENTITY doNotEncrypt.label "Koděrowanje pó standarźe njezmóžniś">
+<!ENTITY doNotEncrypt.accesskey "K">
+<!ENTITY requireEncryptMessage.label "Koděrowanje pó standarźe pominaś">
+<!ENTITY requireEncryptMessage.accesskey "d">
+<!ENTITY encryptionCert2.message "Wósobinski certifikat za skoděrowanje:">
+<!ENTITY digitalSign.certificate.button "Wubraś…">
+<!ENTITY digitalSign.certificate.accesskey "u">
+<!ENTITY digitalSign.certificate_clear.button "Wuprozniś">
+<!ENTITY digitalSign.certificate_clear.accesskey "r">
+<!ENTITY encryption.certificate.button "Wubraś…">
+<!ENTITY encryption.certificate.accesskey "b">
+<!ENTITY encryption.certificate_clear.button "Wuprozniś">
+<!ENTITY encryption.certificate_clear.accesskey "o">
+<!ENTITY signingGroupTitle.label "Digitalny pódpis">
+<!ENTITY signMessage2.label "Móju digitalnu signaturu pó standarźe pśidaś">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Wósobinski certifikat za digitalne koděrowanje:">
+
+<!ENTITY sendingDefaults.label "Standardne nastajenja za słanje powěsćow">
+
+<!ENTITY technologyAutomatic.label "Na zakłaźe k dispoziciji stojecych klucow abo certifikatow awtomatiski wubraś">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Certifikaty S/MIME zastojaś">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Wěstotne rědy S/MIME">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "S/MIME preferěrowaś">
+<!ENTITY technologyOpenPGP.label "OpenPGP preferěrowaś">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Certifikat wubraś">
+<!ENTITY certPicker.info  "Certifikat:">
+<!ENTITY certPicker.detailsLabel "Drobnostki wubranego certifikata:">
+
+<!ENTITY openpgpKey.message "Wósobinski kluc za koděrowanje a digitalne signěrowanje:">
+<!ENTITY openpgpKey.button "Wósobinski kluc nastajiś…">
+<!ENTITY openpgpKey.accesskey "s">

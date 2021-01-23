@@ -45,6 +45,14 @@ add_task(async function hide_search_engine_nomatch() {
     token
   );
   Assert.ok(!matchedEngine || matchedEngine.getResultDomain() != domain);
+  engine.hidden = false;
+  await TestUtils.waitForCondition(() =>
+    PlacesSearchAutocompleteProvider.engineForDomainPrefix(token)
+  );
+  let matchedEngine2 = await PlacesSearchAutocompleteProvider.engineForDomainPrefix(
+    token
+  );
+  Assert.ok(matchedEngine2);
 });
 
 add_task(async function add_search_engine_match() {
@@ -54,14 +62,12 @@ add_task(async function add_search_engine_match() {
     await PlacesSearchAutocompleteProvider.engineForDomainPrefix("bacon")
   );
   await Promise.all([
-    Services.search.addEngineWithDetails(
-      "bacon",
-      "",
-      "pork",
-      "Search Bacon",
-      "GET",
-      "http://www.bacon.moz/?search={searchTerms}"
-    ),
+    Services.search.addEngineWithDetails("bacon", {
+      alias: "pork",
+      description: "Search Bacon",
+      method: "GET",
+      template: "http://www.bacon.moz/?search={searchTerms}",
+    }),
     promiseTopic,
   ]);
   await promiseTopic;
@@ -108,14 +114,12 @@ add_task(async function test_aliased_search_engine_match_upper_case_alias() {
     await PlacesSearchAutocompleteProvider.engineForDomainPrefix("patch")
   );
   await Promise.all([
-    Services.search.addEngineWithDetails(
-      "patch",
-      "",
-      "PR",
-      "Search Patch",
-      "GET",
-      "http://www.patch.moz/?search={searchTerms}"
-    ),
+    Services.search.addEngineWithDetails("patch", {
+      alias: "PR",
+      description: "Search Patch",
+      method: "GET",
+      template: "http://www.patch.moz/?search={searchTerms}",
+    }),
     promiseTopic,
   ]);
   // lower case
@@ -159,7 +163,7 @@ add_task(async function test_parseSubmissionURL_basic() {
   let result = PlacesSearchAutocompleteProvider.parseSubmissionURL(
     submissionURL
   );
-  Assert.equal(result.engineName, engine.name);
+  Assert.equal(result.engine.name, engine.name);
   Assert.equal(result.terms, "terms");
 
   result = PlacesSearchAutocompleteProvider.parseSubmissionURL(
@@ -169,11 +173,21 @@ add_task(async function test_parseSubmissionURL_basic() {
 });
 
 add_task(async function test_builtin_aliased_search_engine_match() {
+  let engine = await PlacesSearchAutocompleteProvider.engineForAlias("@google");
+  Assert.ok(engine);
+  Assert.equal(engine.name, "Google");
+  let promiseTopic = promiseSearchTopic("engine-changed");
+  await Promise.all([Services.search.removeEngine(engine), promiseTopic]);
   let matchedEngine = await PlacesSearchAutocompleteProvider.engineForAlias(
     "@google"
   );
-  Assert.ok(matchedEngine);
-  Assert.equal(matchedEngine.name, "Google");
+  Assert.ok(!matchedEngine);
+  engine.hidden = false;
+  await TestUtils.waitForCondition(() =>
+    PlacesSearchAutocompleteProvider.engineForAlias("@google")
+  );
+  engine = await PlacesSearchAutocompleteProvider.engineForAlias("@google");
+  Assert.ok(engine);
 });
 
 function promiseSearchTopic(expectedVerb) {

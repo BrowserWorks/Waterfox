@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.fonts.title "Tipos de letra">
+<!ENTITY language.label "Tipos de letra para:">
+<!ENTITY language.accesskey "T">
+<!ENTITY typefaces.label "Tipo de letra">
+<!ENTITY sizes.label "Tamaño (píxeles)">
+<!ENTITY proportional.label "Proporcional:">
+<!ENTITY proportional.accesskey "P">
+<!ENTITY serif.label "Serif:">
+<!ENTITY serif.accesskey "S">
+<!ENTITY sans-serif.label "Sans-serif:">
+<!ENTITY sans-serif.accesskey "n">
+<!ENTITY monospace.label "Monoespaciado:">
+<!ENTITY monospace.accesskey "M">
+<!ENTITY fantasy.label "Fantasía:">
+<!ENTITY fantasy.accesskey "F">
+<!ENTITY cursive.label "Cursiva:">
+<!ENTITY cursive.accesskey "C">
+<!ENTITY font.langGroup.latin "Latino">
+<!ENTITY font.langGroup.japanese "Japonés">
+<!ENTITY font.langGroup.trad-chinese "Chino tradicional (Taiwan)">
+<!ENTITY font.langGroup.simpl-chinese "Chino simplificado">
+<!ENTITY font.langGroup.trad-chinese-hk "Chino tradicional (Hong Kong)">
+<!ENTITY font.langGroup.korean "Coreano">
+<!ENTITY font.langGroup.cyrillic "Cirílico">
+<!ENTITY font.langGroup.el "Griego">
+<!ENTITY font.langGroup.thai "Tailandés">
+<!ENTITY font.langGroup.hebrew "Hebreo">
+<!ENTITY font.langGroup.arabic "Árabe">
+<!ENTITY font.langGroup.devanagari "Devanagari">
+<!ENTITY font.langGroup.tamil "Tamil">
+<!ENTITY font.langGroup.armenian "Armenio">
+<!ENTITY font.langGroup.bengali "Bengalí">
+<!ENTITY font.langGroup.canadian "Silabario unificado canadiense">
+<!ENTITY font.langGroup.ethiopic "Etíope">
+<!ENTITY font.langGroup.georgian "Georgiano">
+<!ENTITY font.langGroup.gujarati "Gujarati">
+<!ENTITY font.langGroup.gurmukhi "Gurmukhi">
+<!ENTITY font.langGroup.khmer "Khmer">
+<!ENTITY font.langGroup.malayalam "Malayo">
+<!ENTITY font.langGroup.math "Matemáticas">
+<!ENTITY font.langGroup.odia "Odia">
+<!ENTITY font.langGroup.telugu "Telugu">
+<!ENTITY font.langGroup.kannada "Kannada">
+<!ENTITY font.langGroup.sinhala "Sinhala">
+<!ENTITY font.langGroup.tibetan "Tibetano">
+<!ENTITY font.langGroup.other "Otros sistemas de escritura">
+<!ENTITY minSize.label "Tamaño de letra mínimo:">
+<!ENTITY minSize.accesskey "o">
+<!ENTITY minSize.none "Ninguno">
+<!ENTITY useDefaultFontSerif.label "Serif">
+<!ENTITY useDefaultFontSansSerif.label "Sans Serif">
+<!ENTITY useDocumentFonts.label "Permitir a los documentos usar otros tipos de letra">
+<!ENTITY useDocumentFonts.accesskey "o">
+<!ENTITY header2 "Cuando una página web escoja sus propios tipos de letra">
+<!ENTITY useDefaultFont.label "Usar mis tipos de letra predeterminados, ignorando los que la página haya escogido">
+<!ENTITY useDefaultFont.accesskey "U">

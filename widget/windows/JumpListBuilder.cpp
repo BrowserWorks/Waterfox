@@ -10,11 +10,9 @@
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "nsArrayUtils.h"
-#include "nsIMutableArray.h"
 #include "nsWidgetsCID.h"
 #include "WinTaskbar.h"
 #include "nsDirectoryServiceUtils.h"
-#include "nsISimpleEnumerator.h"
 #include "mozilla/Preferences.h"
 #include "nsStringStream.h"
 #include "nsThreadUtils.h"
@@ -129,6 +127,17 @@ JumpListBuilder::JumpListBuilder()
   if (observerService) {
     observerService->AddObserver(this, TOPIC_PROFILE_BEFORE_CHANGE, false);
     observerService->AddObserver(this, TOPIC_CLEAR_PRIVATE_DATA, false);
+  }
+
+  RefPtr<ICustomDestinationList> jumpListMgr = mJumpListMgr;
+  if (!jumpListMgr) {
+    return;
+  }
+
+  // GetAppUserModelID can only be called once we're back on the main thread.
+  nsString modelId;
+  if (mozilla::widget::WinTaskbar::GetAppUserModelID(modelId)) {
+    jumpListMgr->SetAppID(modelId.get());
   }
 }
 

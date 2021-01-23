@@ -7,7 +7,7 @@
 #include <string>
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
-#include "nsIEventTarget.h"
+#include "nsISerialEventTarget.h"
 #include "nsTArray.h"
 #include "mozilla/dom/MediaStreamTrack.h"
 #include "ErrorList.h"
@@ -22,7 +22,8 @@ enum class MediaSessionConduitLocalDirection : int;
 class MediaSessionConduit;
 class VideoSessionConduit;
 class AudioSessionConduit;
-class MediaPipelineReceive;
+struct AudioCodecConfig;
+class VideoCodecConfig;  // Why is this a class, but AudioCodecConfig a struct?
 class MediaPipelineTransmit;
 class MediaPipeline;
 class MediaPipelineFilter;
@@ -31,8 +32,10 @@ class WebRtcCallWrapper;
 class JsepTrackNegotiatedDetails;
 
 namespace dom {
+class RTCDTMFSender;
 class RTCRtpTransceiver;
 struct RTCRtpSourceEntry;
+class RTCRtpReceiver;
 }  // namespace dom
 
 /**
@@ -43,18 +46,17 @@ struct RTCRtpSourceEntry;
  * Audio/VideoConduit for feeding RTP/RTCP into webrtc.org for decoding, and
  * feeding audio/video frames into webrtc.org for encoding into RTP/RTCP.
  */
-class TransceiverImpl : public nsISupports {
+class TransceiverImpl : public nsISupports, public nsWrapperCache {
  public:
   /**
-   * |aReceiveStream| is always set; this holds even if the remote end has not
-   * negotiated one for this transceiver. |aSendTrack| might or might not be
-   * set.
+   * |aSendTrack| might or might not be set.
    */
-  TransceiverImpl(const std::string& aPCHandle,
+  TransceiverImpl(nsPIDOMWindowInner* aWindow, bool aPrivacyNeeded,
+                  const std::string& aPCHandle,
                   MediaTransportHandler* aTransportHandler,
                   JsepTransceiver* aJsepTransceiver,
-                  nsIEventTarget* aMainThread, nsIEventTarget* aStsThread,
-                  dom::MediaStreamTrack* aReceiveTrack,
+                  nsISerialEventTarget* aMainThread,
+                  nsISerialEventTarget* aStsThread,
                   dom::MediaStreamTrack* aSendTrack,
                   WebRtcCallWrapper* aCallWrapper);
 
@@ -69,8 +71,6 @@ class TransceiverImpl : public nsISupports {
   nsresult UpdateTransport();
 
   nsresult UpdateConduit();
-
-  nsresult UpdatePrincipal(nsIPrincipal* aPrincipal);
 
   void ResetSync();
 
@@ -89,27 +89,21 @@ class TransceiverImpl : public nsISupports {
   RefPtr<dom::MediaStreamTrack> GetSendTrack() { return mSendTrack; }
 
   // for webidl
-  bool WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto,
-                  JS::MutableHandle<JSObject*> aReflector);
-  already_AddRefed<dom::MediaStreamTrack> GetReceiveTrack();
+  JSObject* WrapObject(JSContext* aCx,
+                       JS::Handle<JSObject*> aGivenProto) override;
+  nsPIDOMWindowInner* GetParentObject() const;
   void SyncWithJS(dom::RTCRtpTransceiver& aJsTransceiver, ErrorResult& aRv);
+  dom::RTCRtpReceiver* Receiver() const { return mReceiver; }
+  dom::RTCDTMFSender* GetDtmf() const { return mDtmf; }
 
-  void InsertDTMFTone(int tone, uint32_t duration);
-
-  bool HasReceiveTrack(const dom::MediaStreamTrack* aReceiveTrack) const;
+  bool CanSendDTMF() const;
 
   // TODO: These are for stats; try to find a cleaner way.
-  RefPtr<MediaPipeline> GetSendPipeline();
-
-  RefPtr<MediaPipeline> GetReceivePipeline();
+  RefPtr<MediaPipelineTransmit> GetSendPipeline();
 
   std::string GetTransportId() const {
     return mJsepTransceiver->mTransport.mTransportId;
   }
-
-  void AddRIDExtension(unsigned short aExtensionId);
-
-  void AddRIDFilter(const nsAString& aRid);
 
   bool IsVideo() const;
 
@@ -118,15 +112,28 @@ class TransceiverImpl : public nsISupports {
            mJsepTransceiver->mSendTrack.GetActive();
   }
 
-  void GetRtpSources(const int64_t aTimeNow,
-                     nsTArray<dom::RTCRtpSourceEntry>& outSources) const;
+  bool IsReceiving() const {
+    return !mJsepTransceiver->IsStopped() &&
+           mJsepTransceiver->mRecvTrack.GetActive();
+  }
 
-  // test-only: insert fake CSRCs and audio levels for testing
-  void InsertAudioLevelForContributingSource(uint32_t aSource,
-                                             int64_t aTimestamp, bool aHasLevel,
-                                             uint8_t aLevel);
+  MediaSessionConduit* GetConduit() const { return mConduit; }
 
-  NS_DECL_THREADSAFE_ISUPPORTS
+  // nsISupports
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(TransceiverImpl)
+
+  static nsresult NegotiatedDetailsToAudioCodecConfigs(
+      const JsepTrackNegotiatedDetails& aDetails,
+      std::vector<UniquePtr<AudioCodecConfig>>* aConfigs);
+
+  static nsresult NegotiatedDetailsToVideoCodecConfigs(
+      const JsepTrackNegotiatedDetails& aDetails,
+      std::vector<UniquePtr<VideoCodecConfig>>* aConfigs);
+
+  static void UpdateConduitRtpExtmap(
+      MediaSessionConduit& aConduit, const JsepTrackNegotiatedDetails& aDetails,
+      const MediaSessionConduitLocalDirection aDir);
 
  private:
   virtual ~TransceiverImpl();
@@ -135,25 +142,24 @@ class TransceiverImpl : public nsISupports {
   nsresult UpdateAudioConduit();
   nsresult UpdateVideoConduit();
   nsresult ConfigureVideoCodecMode(VideoSessionConduit& aConduit);
-  void UpdateConduitRtpExtmap(const JsepTrackNegotiatedDetails& aDetails,
-                              const MediaSessionConduitLocalDirection aDir);
   void Stop();
 
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
   const std::string mPCHandle;
   RefPtr<MediaTransportHandler> mTransportHandler;
   RefPtr<JsepTransceiver> mJsepTransceiver;
   std::string mMid;
-  bool mHaveStartedReceiving;
   bool mHaveSetupTransport;
-  nsCOMPtr<nsIEventTarget> mMainThread;
-  nsCOMPtr<nsIEventTarget> mStsThread;
-  RefPtr<dom::MediaStreamTrack> mReceiveTrack;
+  nsCOMPtr<nsISerialEventTarget> mMainThread;
+  nsCOMPtr<nsISerialEventTarget> mStsThread;
   RefPtr<dom::MediaStreamTrack> mSendTrack;
   // state for webrtc.org that is shared between all transceivers
   RefPtr<WebRtcCallWrapper> mCallWrapper;
   RefPtr<MediaSessionConduit> mConduit;
-  RefPtr<MediaPipelineReceive> mReceivePipeline;
   RefPtr<MediaPipelineTransmit> mTransmitPipeline;
+  RefPtr<dom::RTCRtpReceiver> mReceiver;
+  // TODO(bug 1616937): Move this to RTCRtpSender
+  RefPtr<dom::RTCDTMFSender> mDtmf;
 };
 
 }  // namespace mozilla

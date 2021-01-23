@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFilterElement : SVGElement {
   [Constant]
   readonly attribute SVGAnimatedEnumeration filterUnits;
@@ -27,5 +28,5 @@ interface SVGFilterElement : SVGElement {
   // ImageData apply(ImageData source);
 };
 
-SVGFilterElement implements SVGURIReference;
+SVGFilterElement includes SVGURIReference;
 

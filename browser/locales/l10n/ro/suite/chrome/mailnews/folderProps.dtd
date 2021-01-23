@@ -1,0 +1,80 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# Sergiu Bivol <sbivol87@gmail.com>
+# manuelciosici <manuelrciosici@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Proprietăți">
+
+<!ENTITY generalInfo.label                       "Informații generale">
+<!ENTITY folderCharsetTab.label                  "Codare caractere implicită:">
+<!ENTITY folderCharsetTab.accesskey              "e">
+<!ENTITY folderCharsetOverride.label             "Aplică această codare implicit tuturor mesajelor din dosar (se vor ignora setările din mesaje precum și detecția automată)">
+<!ENTITY folderCharsetOverride.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Rebuild Summary File Index">
+<!ENTITY folderRebuildSummaryFile2.label         "Repair Folder">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Sometimes the folder index (.msf) file becomes damaged and messages may appear missing or deleted messages continue showing; repairing the folder may fix these issues.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Include messages in this folder in Global Search results">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Politica de păstrare">
+<!ENTITY retentionUseAccount.label "Use my account settings">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "zile">
+<!ENTITY message.label "mesaj">
+<!ENTITY retentionCleanup.label "Keep messages:">
+<!ENTITY retentionCleanupImap.label "Keep messages, both the local copies and their originals on the server:">
+<!ENTITY retentionCleanupPop.label "Keep messages, including their originals on the server:">
+<!ENTITY retentionDeleteMsg.label "Șterge mesajele mai vechi de">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "All messages">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "The newest">
+<!ENTITY retentionKeepRecent.accesskey "n">
+<!-- LOCALIZATION NOTE: Unhide with .keepUnreadOnly { display: -moz-box; } -->
+<!ENTITY retentionKeepUnreadHidden.label "Always delete read messages (overrides age settings)">
+<!ENTITY retentionApplyToFlagged.label "Always keep flagged messages">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronization">
+<!ENTITY folderCheckForNewMessages2.label        "When getting new messages for this account, always check this folder">
+<!ENTITY folderCheckForNewMessages2.accesskey    "c">
+
+<!ENTITY offlineFolder.check.label               "Selectează acest dosar pentru utilizare în mod deconectat">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Descarcă acum">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Selectează acest grup de news pentru uz offline">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Descarcă acum">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Denumire:">
+<!ENTITY folderProps.name.accesskey              "n">
+<!ENTITY folderProps.location.label              "Locația:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Partajare">
+<!ENTITY privileges.button.label                 "Privilegii…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Aveți următoarele drepturi:">
+<!ENTITY folderType.label                        "Tip dosar:">
+
+<!ENTITY folderQuotaTab.label                    "Cotă">
+<!ENTITY folderQuotaRoot.label                   "Rădăcină cotă:">
+<!ENTITY folderQuotaUsage.label                  "Utilizare:">
+<!ENTITY folderQuotaStatus.label                 "Status:">

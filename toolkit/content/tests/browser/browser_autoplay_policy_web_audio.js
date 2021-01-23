@@ -8,7 +8,10 @@
  */
 "use strict";
 
-ChromeUtils.import("resource:///modules/SitePermissions.jsm", this);
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
+
 const PAGE =
   "https://example.com/browser/toolkit/content/tests/browser/file_empty.html";
 
@@ -16,7 +19,7 @@ function setup_test_preference() {
   return SpecialPowers.pushPrefEnv({
     set: [
       ["media.autoplay.default", SpecialPowers.Ci.nsIAutoplay.BLOCKED],
-      ["media.autoplay.enabled.user-gestures-needed", true],
+      ["media.autoplay.blocking_policy", 0],
       ["media.autoplay.block-webaudio", true],
       ["media.autoplay.block-event.enabled", true],
     ],
@@ -121,23 +124,23 @@ async function testAutoplayExistingPermission({ name, permission }) {
   info(`- set the 'autoplay-media' permission -`);
   const promptShow = () =>
     PopupNotifications.getNotification("autoplay-media", browser);
-  SitePermissions.set(browser.currentURI, "autoplay-media", permission);
+  PermissionTestUtils.add(browser.currentURI, "autoplay-media", permission);
   ok(!promptShow(), `should not be showing permission prompt yet`);
 
   info(`- create audio context -`);
-  loadFrameScript(browser, createAudioContext);
+  await SpecialPowers.spawn(browser, [], createAudioContext);
 
   info(`- check AudioContext status -`);
-  const isAllowedToStart = permission === SitePermissions.ALLOW;
-  await ContentTask.spawn(
+  const isAllowedToStart = permission === Services.perms.ALLOW_ACTION;
+  await SpecialPowers.spawn(
     browser,
-    isAllowedToStart,
+    [isAllowedToStart],
     checkIfAudioContextIsAllowedToStart
   );
-  await ContentTask.spawn(browser, isAllowedToStart, resumeAudioContext);
+  await SpecialPowers.spawn(browser, [isAllowedToStart], resumeAudioContext);
 
   info(`- remove tab -`);
-  SitePermissions.remove(browser.currentURI, "autoplay-media");
+  PermissionTestUtils.remove(browser.currentURI, "autoplay-media");
   await BrowserTestUtils.removeTab(tab);
 }
 
@@ -152,39 +155,39 @@ async function testAutoplayUnknownPermission({ name, method }) {
   info(`- set the 'autoplay-media' permission to UNKNOWN -`);
   const promptShow = () =>
     PopupNotifications.getNotification("autoplay-media", browser);
-  SitePermissions.set(
+  PermissionTestUtils.add(
     browser.currentURI,
     "autoplay-media",
-    SitePermissions.UNKNOWN
+    Services.perms.UNKNOWN_ACTION
   );
   ok(!promptShow(), `should not be showing permission prompt yet`);
 
   info(`- create AudioContext which should not start -`);
-  loadFrameScript(browser, createAudioContext);
-  await ContentTask.spawn(browser, false, checkIfAudioContextIsAllowedToStart);
+  await SpecialPowers.spawn(browser, [], createAudioContext);
+  await SpecialPowers.spawn(
+    browser,
+    [false],
+    checkIfAudioContextIsAllowedToStart
+  );
 
   info(`- simulate user activate the page -`);
-  await ContentTask.spawn(browser, null, () => {
+  await SpecialPowers.spawn(browser, [], () => {
     content.document.notifyUserGestureActivation();
   });
 
   info(`- try to start AudioContext -`);
-  await ContentTask.spawn(browser, method, startAudioContext);
+  await SpecialPowers.spawn(browser, [method], startAudioContext);
 
   info(`- check AudioContext status -`);
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     browser,
-    true /* allow to start */,
+    [true],
     checkIfAudioContextIsAllowedToStart
   );
-  await ContentTask.spawn(
-    browser,
-    true /* allow to start */,
-    resumeAudioContext
-  );
+  await SpecialPowers.spawn(browser, [true], resumeAudioContext);
 
   info(`- remove tab -`);
-  SitePermissions.remove(browser.currentURI, "autoplay-media");
+  PermissionTestUtils.remove(browser.currentURI, "autoplay-media");
   await BrowserTestUtils.removeTab(tab);
 }
 
@@ -194,11 +197,11 @@ add_task(async function start_tests() {
 
   await testAutoplayExistingPermission({
     name: "Prexisting allow permission",
-    permission: SitePermissions.ALLOW,
+    permission: Services.perms.ALLOW_ACTION,
   });
   await testAutoplayExistingPermission({
     name: "Prexisting block permission",
-    permission: SitePermissions.BLOCK,
+    permission: Services.perms.DENY_ACTION,
   });
   const startMethods = [
     "AudioContext",

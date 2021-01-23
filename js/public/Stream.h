@@ -78,7 +78,7 @@ namespace JS {
  */
 class JS_PUBLIC_API ReadableStreamUnderlyingSource {
  public:
-  virtual ~ReadableStreamUnderlyingSource() {}
+  virtual ~ReadableStreamUnderlyingSource() = default;
 
   /**
    * Invoked whenever a reader desires more data from this source.
@@ -166,19 +166,41 @@ extern JS_PUBLIC_API JSObject* NewReadableDefaultStreamObject(
 
 /**
  * Returns a new instance of the ReadableStream builtin class in the current
- * compartment. If a |proto| is passed, that gets set as the instance's
- * [[Prototype]] instead of the original value of |ReadableStream.prototype|.
+ * compartment.
  *
- * The instance is optimized for operating as a byte stream backed by an
- * embedding-provided underlying source, using the virtual methods of
- * |underlyingSource| as callbacks.
+ * The instance is a byte stream backed by an embedding-provided underlying
+ * source, using the virtual methods of `underlyingSource` as callbacks. The
+ * embedding must ensure that `*underlyingSource` lives as long as the new
+ * stream object. The JS engine will call the finalize() method when the stream
+ * object is destroyed.
  *
- * Note: The embedding must ensure that |*underlyingSource| lives as long as
- * the new stream object. The JS engine will call the finalize() method when
- * the stream object is destroyed.
+ * `nsISupportsObject_alreadyAddreffed` is an optional pointer that can be used
+ * to make the new stream participate in Gecko's cycle collection. Here are the
+ * rules for using this parameter properly:
+ *
+ * -   `*underlyingSource` must not be a cycle-collected object. (It would lead
+ *     to memory leaks as the cycle collector would not be able to collect
+ *     cycles containing that object.)
+ *
+ * -   `*underlyingSource` must not contain nsCOMPtrs that point to cycle-
+ *     collected objects. (Same reason.)
+ *
+ * -   `*underlyingSource` may contain a pointer to a single cycle-collected
+ *     object.
+ *
+ * -   The pointer may be stored in `*underlyingSource` as a raw pointer.
+ *
+ * -   The pointer to the nsISupports interface of the same object must be
+ *     passed as the `nsISupportsObject_alreadyAddreffed` parameter to this
+ *     function. (This is how the cycle collector knows about it, so omitting
+ *     this would again cause leaks.)
+ *
+ * If `proto` is non-null, it is used as the instance's [[Prototype]] instead
+ * of the original value of `ReadableStream.prototype`.
  */
 extern JS_PUBLIC_API JSObject* NewReadableExternalSourceStreamObject(
     JSContext* cx, ReadableStreamUnderlyingSource* underlyingSource,
+    void* nsISupportsObject_alreadyAddreffed = nullptr,
     HandleObject proto = nullptr);
 
 /**
@@ -237,6 +259,13 @@ extern JS_PUBLIC_API bool ReadableStreamReleaseExternalUnderlyingSource(
  */
 extern JS_PUBLIC_API bool ReadableStreamUpdateDataAvailableFromSource(
     JSContext* cx, HandleObject stream, uint32_t availableData);
+
+/**
+ * Break the cycle between this object and the
+ * nsISupportsObject_alreadyAddreffed passed in
+ * NewReadableExternalSourceStreamObject().
+ */
+extern JS_PUBLIC_API void ReadableStreamReleaseCCObject(JSObject* stream);
 
 /**
  * Returns true if the given object is a ReadableStream object or an
@@ -455,6 +484,21 @@ extern JS_PUBLIC_API bool ReadableStreamReaderReleaseLock(JSContext* cx,
  */
 extern JS_PUBLIC_API JSObject* ReadableStreamDefaultReaderRead(
     JSContext* cx, HandleObject reader);
+
+class JS_PUBLIC_API WritableStreamUnderlyingSink {
+ public:
+  virtual ~WritableStreamUnderlyingSink() = default;
+
+  /**
+   * Invoked when the associated WritableStream object is finalized. The
+   * stream object is not passed as an argument, as it might not be in a
+   * valid state anymore.
+   *
+   * Note: Finalization can happen on a background thread, so the embedding
+   * must be prepared for `finalize()` to be invoked from any thread.
+   */
+  virtual void finalize() = 0;
+};
 
 }  // namespace JS
 

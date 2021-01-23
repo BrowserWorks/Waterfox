@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Limpar dados pessoais">
+<!ENTITY sanitizeItems.label             "Limpar agora os seguintes itens:">
+
+<!ENTITY itemHistory.label               "Histórico de navegação">
+<!ENTITY itemHistory.accesskey           "n">
+<!ENTITY itemUrlBar.label                "Histórico da barra de localização">
+<!ENTITY itemUrlBar.accesskey            "r">
+<!ENTITY itemDownloads.label             "Histórico dos downloads">
+<!ENTITY itemDownloads.accesskey         "d">
+<!ENTITY itemFormSearchHistory.label     "Dados de formulários e histórico de buscas">
+<!ENTITY itemFormSearchHistory.accesskey "f">
+<!ENTITY itemCache.label                 "Cache">
+<!ENTITY itemCache.accesskey             "a">
+<!ENTITY itemCookies.label               "Cookies">
+<!ENTITY itemCookies.accesskey           "C">
+<!ENTITY itemOfflineApps.label           "Dados de sites em modo desconectado">
+<!ENTITY itemOfflineApps.accesskey       "o">
+<!ENTITY itemPasswords.label             "Senhas memorizadas">
+<!ENTITY itemPasswords.accesskey         "m">
+<!ENTITY itemSessions.label              "Sessões autenticadas">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "Limpar dados pessoais agora">

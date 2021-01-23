@@ -55,8 +55,8 @@ class GfxInfoBase : public nsIGfxInfo,
 
   NS_IMETHOD GetMonitors(JSContext* cx,
                          JS::MutableHandleValue _retval) override;
-  NS_IMETHOD GetFailures(uint32_t* failureCount, int32_t** indices,
-                         char*** failures) override;
+  NS_IMETHOD GetFailures(nsTArray<int32_t>& indices,
+                         nsTArray<nsCString>& failures) override;
   NS_IMETHOD_(void) LogFailure(const nsACString& failure) override;
   NS_IMETHOD GetInfo(JSContext*, JS::MutableHandle<JS::Value>) override;
   NS_IMETHOD GetFeatures(JSContext*, JS::MutableHandle<JS::Value>) override;
@@ -75,6 +75,9 @@ class GfxInfoBase : public nsIGfxInfo,
       int32_t* aOffMainThreadPaintWorkerCount) override;
   NS_IMETHOD GetTargetFrameRate(uint32_t* aTargetFrameRate) override;
 
+  // Non-XPCOM method to get IPC data:
+  void GetAllFeatures(dom::XPCOMInitData& xpcomInit);
+
   // Initialization function. If you override this, you must call this class's
   // version of Init first.
   // We need Init to be called separately from the constructor so we can
@@ -84,8 +87,8 @@ class GfxInfoBase : public nsIGfxInfo,
   // NS_GENERIC_FACTORY_CONSTRUCTOR_INIT require it be nsresult return.
   virtual nsresult Init();
 
-  // only useful on X11
-  NS_IMETHOD_(void) GetData() override {}
+  NS_IMETHOD_(void) GetData() override;
+  NS_IMETHOD_(int32_t) GetMaxRefreshRate() override { return -1; }
 
   static void AddCollector(GfxInfoCollectorBase* collector);
   static void RemoveCollector(GfxInfoCollectorBase* collector);
@@ -100,6 +103,7 @@ class GfxInfoBase : public nsIGfxInfo,
   virtual nsString Product() { return EmptyString(); }
   virtual nsString Manufacturer() { return EmptyString(); }
   virtual uint32_t OperatingSystemVersion() { return 0; }
+  virtual uint32_t OperatingSystemBuild() { return 0; }
 
   // Convenience to get the application version
   static const nsCString& GetApplicationVersion();
@@ -123,6 +127,13 @@ class GfxInfoBase : public nsIGfxInfo,
 
   virtual void DescribeFeatures(JSContext* aCx, JS::Handle<JSObject*> obj);
 
+  bool DoesDesktopEnvironmentMatch(const nsAString& aBlocklistDesktop,
+                                   const nsAString& aDesktopEnv);
+
+  virtual bool DoesWindowProtocolMatch(
+      const nsAString& aBlocklistWindowProtocol,
+      const nsAString& aWindowProtocol);
+
   bool DoesVendorMatch(const nsAString& aBlocklistVendor,
                        const nsAString& aAdapterVendor);
 
@@ -131,15 +142,21 @@ class GfxInfoBase : public nsIGfxInfo,
 
   bool InitFeatureObject(JSContext* aCx, JS::Handle<JSObject*> aContainer,
                          const char* aName,
-                         mozilla::gfx::FeatureStatus& aKnownStatus,
+                         mozilla::gfx::FeatureState& aFeatureState,
                          JS::MutableHandle<JSObject*> aOutObj);
 
   NS_IMETHOD ControlGPUProcessForXPCShell(bool aEnable, bool* _retval) override;
 
+  // Total number of pixels for all detected screens at startup.
+  int64_t mScreenPixels;
+
  private:
   virtual int32_t FindBlocklistedDeviceInList(
       const nsTArray<GfxDriverInfo>& aDriverInfo, nsAString& aSuggestedVersion,
-      int32_t aFeature, nsACString& aFailureId, OperatingSystem os);
+      int32_t aFeature, nsACString& aFailureId, OperatingSystem os,
+      bool aForAllowing);
+
+  bool IsFeatureAllowlisted(int32_t aFeature) const;
 
   void EvaluateDownloadedBlacklist(nsTArray<GfxDriverInfo>& aDriverInfo);
 

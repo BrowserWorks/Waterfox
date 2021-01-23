@@ -5,7 +5,6 @@
 description: >
   Error retrieving the constructor's `resolve` method (iterator closing)
 esid: sec-promise.race
-es6id: 25.4.4.3
 info: |
     11. Let result be PerformPromiseRace(iteratorRecord, C, promiseCapability).
     12. If result is an abrupt completion,
@@ -25,10 +24,14 @@ features: [Symbol.iterator]
 ---*/
 
 var iter = {};
+
 var returnCount = 0;
+var nextCount = 0;
+
 iter[Symbol.iterator] = function() {
   return {
     next: function() {
+      nextCount += 1;
       return {
         done: false
       };
@@ -40,13 +43,14 @@ iter[Symbol.iterator] = function() {
   };
 };
 Object.defineProperty(Promise, 'resolve', {
-  get: function() {
+  get() {
     throw new Test262Error();
   }
 });
 
 Promise.race(iter);
 
+assert.sameValue(nextCount, 0);
 assert.sameValue(returnCount, 1);
 
 reportCompare(0, 0);

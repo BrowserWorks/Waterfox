@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -70,10 +69,10 @@ async function testManualEdit(inspector, view) {
     .firstChild;
   is(colorValueElement.dataset.color, newColor, "data-color was updated");
 
-  view.styleDocument.popupNode = colorValueElement;
-
   const contextMenu = view.contextMenu;
+  contextMenu.currentTarget = colorValueElement;
   contextMenu._isColorPopup();
+
   is(contextMenu._colorToCopy, newColor, "_colorToCopy has the new value");
 }
 
@@ -93,18 +92,21 @@ async function testColorPickerEdit(inspector, view) {
   swatchElement.click();
   await onColorPickerReady;
 
-  const rgbaColor = [83, 183, 89, 1];
-  const rgbaColorText = "rgba(83, 183, 89, 1)";
-  await simulateColorPickerChange(view, picker, rgbaColor);
+  const newColor = "#53B759";
+  const { colorUtils } = require("devtools/shared/css/color");
+
+  const { r, g, b, a } = new colorUtils.CssColor(newColor).getRGBATuple();
+  await simulateColorPickerChange(view, picker, [r, g, b, a]);
 
   is(
     swatchElement.parentNode.dataset.color,
-    rgbaColorText,
+    newColor,
     "data-color was updated"
   );
-  view.styleDocument.popupNode = swatchElement;
 
   const contextMenu = view.contextMenu;
+  contextMenu.currentTarget = swatchElement;
   contextMenu._isColorPopup();
-  is(contextMenu._colorToCopy, rgbaColorText, "_colorToCopy has the new value");
+
+  is(contextMenu._colorToCopy, newColor, "_colorToCopy has the new value");
 }

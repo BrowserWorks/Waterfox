@@ -18,13 +18,12 @@
 #include "mozilla/ipc/Transport.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/webrender/WebRenderTypes.h"
-#include "nsIObserverService.h"
 #include "nsThreadUtils.h"
 class nsBaseWidget;
 
 namespace mozilla {
 class MemoryReportingProcess;
-class PVideoDecoderManagerChild;
+class PRemoteDecoderManagerChild;
 namespace layers {
 class IAPZCTreeManager;
 class CompositorOptions;
@@ -33,6 +32,7 @@ class CompositorUpdateObserver;
 class PCompositorBridgeChild;
 class PCompositorManagerChild;
 class PImageBridgeChild;
+class PVideoBridgeParent;
 class RemoteCompositorSession;
 class InProcessCompositorSession;
 class UiCompositorControllerChild;
@@ -71,6 +71,7 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
   typedef layers::PCompositorBridgeChild PCompositorBridgeChild;
   typedef layers::PCompositorManagerChild PCompositorManagerChild;
   typedef layers::PImageBridgeChild PImageBridgeChild;
+  typedef layers::PVideoBridgeParent PVideoBridgeParent;
   typedef layers::RemoteCompositorSession RemoteCompositorSession;
   typedef layers::InProcessCompositorSession InProcessCompositorSession;
   typedef layers::UiCompositorControllerChild UiCompositorControllerChild;
@@ -84,6 +85,7 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
 
   // If not using a GPU process, launch a new GPU process asynchronously.
   void LaunchGPUProcess();
+  bool IsGPUProcessLaunching();
 
   // Ensure that GPU-bound methods can be used. If no GPU process is being
   // used, or one is launched and ready, this function returns immediately.
@@ -101,8 +103,12 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
       mozilla::ipc::Endpoint<PCompositorManagerChild>* aOutCompositor,
       mozilla::ipc::Endpoint<PImageBridgeChild>* aOutImageBridge,
       mozilla::ipc::Endpoint<PVRManagerChild>* aOutVRBridge,
-      mozilla::ipc::Endpoint<PVideoDecoderManagerChild>* aOutVideoManager,
+      mozilla::ipc::Endpoint<PRemoteDecoderManagerChild>* aOutVideoManager,
       nsTArray<uint32_t>* aNamespaces);
+
+  // Initialize GPU process with consuming end of PVideoBridge.
+  void InitVideoBridge(
+      mozilla::ipc::Endpoint<PVideoBridgeParent>&& aVideoBridge);
 
   // Maps the layer tree and process together so that aOwningPID is allowed
   // to access aLayersId across process.
@@ -176,9 +182,13 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
   // Returns whether or not a GPU process was ever launched.
   bool AttemptedGPUProcess() const { return mNumProcessAttempts > 0; }
 
+  // Returns the process host
+  GPUProcessHost* Process() { return mProcess; }
+
  private:
   // Called from our xpcom-shutdown observer.
   void OnXPCOMShutdown();
+  void OnPreferenceChange(const char16_t* aData);
 
   bool CreateContentCompositorManager(
       base::ProcessId aOtherProcess,
@@ -189,9 +199,9 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
   bool CreateContentVRManager(
       base::ProcessId aOtherProcess,
       mozilla::ipc::Endpoint<PVRManagerChild>* aOutEndpoint);
-  void CreateContentVideoDecoderManager(
+  void CreateContentRemoteDecoderManager(
       base::ProcessId aOtherProcess,
-      mozilla::ipc::Endpoint<PVideoDecoderManagerChild>* aOutEndPoint);
+      mozilla::ipc::Endpoint<PRemoteDecoderManagerChild>* aOutEndPoint);
 
   // Called from RemoteCompositorSession. We track remote sessions so we can
   // notify their owning widgets that the session must be restarted.
@@ -205,6 +215,8 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
 
   void RebuildRemoteSessions();
   void RebuildInProcessSessions();
+
+  void NotifyDisablingWebRender();
 
   void FallbackToSoftware(const char* aMessage);
 
@@ -277,6 +289,10 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
   uint64_t mProcessToken;
   GPUChild* mGPUChild;
   RefPtr<VsyncBridgeChild> mVsyncBridge;
+  // Collects any pref changes that occur during process launch (after
+  // the initial map is passed in command-line arguments) to be sent
+  // when the process can receive IPC messages.
+  nsTArray<mozilla::dom::Pref> mQueuedPrefs;
 };
 
 }  // namespace gfx

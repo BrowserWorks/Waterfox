@@ -71,14 +71,14 @@ class nsMathMLContainerFrame : public nsContainerFrame, public nsMathMLFrame {
     if (aFlags & (eLineParticipant | eSupportsContainLayoutAndPaint)) {
       return false;
     }
-    return nsContainerFrame::IsFrameOfType(
-        aFlags & ~(eMathML | eExcludesIgnorableWhitespace));
+    return nsContainerFrame::IsFrameOfType(aFlags & ~eMathML);
   }
 
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
 
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
 
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
@@ -139,9 +139,9 @@ class nsMathMLContainerFrame : public nsContainerFrame, public nsMathMLFrame {
   // helper function to apply mirroring to a horizontal coordinate, if needed.
   nscoord MirrorIfRTL(nscoord aParentWidth, nscoord aChildWidth,
                       nscoord aChildLeading) {
-    return (StyleVisibility()->mDirection
-                ? aParentWidth - aChildWidth - aChildLeading
-                : aChildLeading);
+    return StyleVisibility()->mDirection == mozilla::StyleDirection::Rtl
+               ? aParentWidth - aChildWidth - aChildLeading
+               : aChildLeading;
   }
 
   // --------------------------------------------------------------------------
@@ -235,9 +235,9 @@ class nsMathMLContainerFrame : public nsContainerFrame, public nsMathMLFrame {
    * Helper to call ReportToConsole when an error occurs.
    * @param aParams see nsContentUtils::ReportToConsole
    */
-  nsresult ReportErrorToConsole(const char* aErrorMsgId,
-                                const char16_t** aParams = nullptr,
-                                uint32_t aParamCount = 0);
+  nsresult ReportErrorToConsole(
+      const char* aErrorMsgId,
+      const nsTArray<nsString>& aParams = nsTArray<nsString>());
 
   // helper method to reflow a child frame. We are inline frames, and we don't
   // know our positions until reflow is finished. That's why we ask the
@@ -400,10 +400,11 @@ class nsMathMLmathBlockFrame final : public nsBlockFrame {
   }
 
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
-    nsBlockFrame::InsertFrames(aListID, aPrevFrame, aFrameList);
+    nsBlockFrame::InsertFrames(aListID, aPrevFrame, aPrevFrameLine, aFrameList);
     if (MOZ_LIKELY(aListID == kPrincipalList))
       nsMathMLContainerFrame::ReLayoutChildren(this);
   }
@@ -417,8 +418,7 @@ class nsMathMLmathBlockFrame final : public nsBlockFrame {
   }
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override {
-    return nsBlockFrame::IsFrameOfType(
-        aFlags & ~(nsIFrame::eMathML | nsIFrame::eExcludesIgnorableWhitespace));
+    return nsBlockFrame::IsFrameOfType(aFlags & ~nsIFrame::eMathML);
   }
 
   // See nsIMathMLFrame.h
@@ -435,7 +435,7 @@ class nsMathMLmathBlockFrame final : public nsBlockFrame {
     // Bug 1301881: Do we still need to set NS_BLOCK_FLOAT_MGR?
     // AddStateBits(NS_BLOCK_FLOAT_MGR);
   }
-  virtual ~nsMathMLmathBlockFrame() {}
+  virtual ~nsMathMLmathBlockFrame() = default;
 };
 
 // --------------
@@ -467,10 +467,12 @@ class nsMathMLmathInlineFrame final : public nsInlineFrame,
   }
 
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
-    nsInlineFrame::InsertFrames(aListID, aPrevFrame, aFrameList);
+    nsInlineFrame::InsertFrames(aListID, aPrevFrame, aPrevFrameLine,
+                                aFrameList);
     if (MOZ_LIKELY(aListID == kPrincipalList))
       nsMathMLContainerFrame::ReLayoutChildren(this);
   }
@@ -484,8 +486,7 @@ class nsMathMLmathInlineFrame final : public nsInlineFrame,
   }
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override {
-    return nsInlineFrame::IsFrameOfType(
-        aFlags & ~(nsIFrame::eMathML | nsIFrame::eExcludesIgnorableWhitespace));
+    return nsInlineFrame::IsFrameOfType(aFlags & ~nsIFrame::eMathML);
   }
 
   bool IsMrowLike() override {
@@ -497,7 +498,7 @@ class nsMathMLmathInlineFrame final : public nsInlineFrame,
                                    nsPresContext* aPresContext)
       : nsInlineFrame(aStyle, aPresContext, kClassID) {}
 
-  virtual ~nsMathMLmathInlineFrame() {}
+  virtual ~nsMathMLmathInlineFrame() = default;
 };
 
 #endif /* nsMathMLContainerFrame_h___ */

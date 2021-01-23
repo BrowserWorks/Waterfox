@@ -64,7 +64,7 @@ td.integer {
 }
 
 #action-box {
-  float: right;
+  float: inline-end;
   margin-top: 2em;
   margin-bottom: 20px;
   margin-inline-start: 20px;
@@ -78,10 +78,6 @@ td.integer {
   display: none;
 }
 
-#action-box:dir(rtl) {
-  float: left;
-}
-
 #reset-box > h3 {
   margin-top: 0;
 }
@@ -90,9 +86,12 @@ td.integer {
   display: block;
 }
 
+#enumerate-database-result,
 #verify-place-result {
   max-height: 200px;
   overflow: auto;
+  text-align: left;
+  direction: ltr;
 }
 
 .hidden {

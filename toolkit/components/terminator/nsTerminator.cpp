@@ -28,10 +28,10 @@
 #include "nsAppDirectoryServiceDefs.h"
 
 #include "nsIObserverService.h"
-#include "nsIPrefService.h"
 #include "nsExceptionHandler.h"
 #include "GeckoProfiler.h"
 #include "nsThreadUtils.h"
+#include "nsXULAppAPI.h"
 
 #if defined(XP_WIN)
 #  include <windows.h>
@@ -43,12 +43,14 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/IntentionalCrash.h"
 #include "mozilla/MemoryChecking.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/LateWriteChecks.h"
 
 #include "mozilla/dom/workerinternals/RuntimeService.h"
 
@@ -90,6 +92,7 @@ static ShutdownStep sShutdownSteps[] = {
 };
 
 Atomic<bool> sShutdownNotified;
+Atomic<bool> sHasTerminatorLateWrite;
 
 // Utility function: create a thread that is non-joinable,
 // does not prevent the process from terminating, is never
@@ -141,6 +144,12 @@ struct Options {
    * How many ticks before we should crash the process.
    */
   uint32_t crashAfterTicks;
+
+  /**
+   * A reduced number of ticks to crash earlier
+   * in the event we're hung indefinitely.
+   */
+  uint32_t reportWritesAfterTicks;
 };
 
 /**
@@ -153,6 +162,7 @@ void RunWatchdog(void* arg) {
   // about.
   UniquePtr<Options> options((Options*)arg);
   uint32_t crashAfterTicks = options->crashAfterTicks;
+  uint32_t reportWritesAfterTicks = options->reportWritesAfterTicks;
   options = nullptr;
 
   const uint32_t timeToLive = crashAfterTicks;
@@ -172,10 +182,21 @@ void RunWatchdog(void* arg) {
 #else
     usleep(1000000 /* usec */);
 #endif
-
     if (gHeartbeat++ < timeToLive) {
+#if !defined(MOZ_VALGRIND) || !defined(MOZ_CODE_COVERAGE)
+      // We should not report if we are running on Valgrind because
+      // it is known to be much slower.
+      // We only also want to BeginLateWriteCheck once for the first
+      // time we exceed the reduced number of ticks.
+      if (gHeartbeat >= reportWritesAfterTicks && !sHasTerminatorLateWrite) {
+        sHasTerminatorLateWrite = true;
+        BeginLateWriteChecks();
+      }
+#endif
       continue;
     }
+
+    NoteIntentionalCrash(XRE_GetProcessTypeString());
 
     // The shutdown steps are not completed yet. Let's report the last one.
     if (!sShutdownNotified) {
@@ -379,6 +400,7 @@ void nsTerminator::Start() {
 #endif  // !defined(NS_FREE_PERMANENT_DATA)
   mInitialized = true;
   sShutdownNotified = false;
+  sHasTerminatorLateWrite = false;
 }
 
 // Prepare, allocate and start the watchdog thread.
@@ -386,6 +408,10 @@ void nsTerminator::Start() {
 void nsTerminator::StartWatchdog() {
   int32_t crashAfterMS =
       Preferences::GetInt("toolkit.asyncshutdown.crash_timeout",
+                          FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS);
+
+  int32_t reducedCrashTimeoutMS =
+      Preferences::GetInt("toolkit.asyncshutdown.report_writes_after",
                           FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS);
   // Ignore negative values
   if (crashAfterMS <= 0) {
@@ -399,6 +425,7 @@ void nsTerminator::StartWatchdog() {
     crashAfterMS = INT32_MAX;
   } else {
     crashAfterMS += ADDITIONAL_WAIT_BEFORE_CRASH_MS;
+    reducedCrashTimeoutMS += ADDITIONAL_WAIT_BEFORE_CRASH_MS;
   }
 
 #ifdef MOZ_VALGRIND
@@ -423,9 +450,11 @@ void nsTerminator::StartWatchdog() {
   UniquePtr<Options> options(new Options());
   const PRIntervalTime ticksDuration = PR_MillisecondsToInterval(1000);
   options->crashAfterTicks = crashAfterMS / ticksDuration;
+  options->reportWritesAfterTicks = reducedCrashTimeoutMS / ticksDuration;
   // Handle systems where ticksDuration is greater than crashAfterMS.
   if (options->crashAfterTicks == 0) {
     options->crashAfterTicks = crashAfterMS / 1000;
+    options->reportWritesAfterTicks = reducedCrashTimeoutMS / 1000;
   }
 
   DebugOnly<PRThread*> watchdogThread =
@@ -576,6 +605,8 @@ void nsTerminator::UpdateCrashReport(const char* aTopic) {
   Unused << CrashReporter::AnnotateCrashReport(
       CrashReporter::Annotation::ShutdownProgress, report);
 }
+
+bool nsTerminator::IsCheckingLateWrites() { return sHasTerminatorLateWrite; }
 
 void XPCOMShutdownNotified() {
   MOZ_DIAGNOSTIC_ASSERT(sShutdownNotified == false);

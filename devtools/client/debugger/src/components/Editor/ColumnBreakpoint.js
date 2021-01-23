@@ -30,15 +30,15 @@ type Props = {
 
 const breakpointButton = document.createElement("button");
 breakpointButton.innerHTML =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11 13" width="11" height="13"><path d="M5.07.5H1.5c-.54 0-1 .46-1 1v10c0 .54.46 1 1 1h3.57c.58 0 1.15-.26 1.53-.7l3.7-5.3-3.7-5.3C6.22.76 5.65.5 5.07.5z"/></svg>';
+  '<svg viewBox="0 0 11 13" width="11" height="13"><path d="M5.07.5H1.5c-.54 0-1 .46-1 1v10c0 .54.46 1 1 1h3.57c.58 0 1.15-.26 1.53-.7l3.7-5.3-3.7-5.3C6.22.76 5.65.5 5.07.5z"/></svg>';
 
 function makeBookmark({ breakpoint }, { onClick, onContextMenu }) {
   const bp = breakpointButton.cloneNode(true);
 
   const isActive = breakpoint && !breakpoint.disabled;
-  const isDisabled = breakpoint && breakpoint.disabled;
-  const condition = breakpoint && breakpoint.options.condition;
-  const logValue = breakpoint && breakpoint.options.logValue;
+  const isDisabled = breakpoint?.disabled;
+  const condition = breakpoint?.options.condition;
+  const logValue = breakpoint?.options.logValue;
 
   bp.className = classnames("column-breakpoint", {
     "has-condition": condition,
@@ -49,9 +49,7 @@ function makeBookmark({ breakpoint }, { onClick, onContextMenu }) {
 
   bp.setAttribute("title", logValue || condition || "");
   bp.onclick = onClick;
-
-  // NOTE: flow does not know about oncontextmenu
-  (bp: any).oncontextmenu = onContextMenu;
+  bp.oncontextmenu = onContextMenu;
 
   return bp;
 }
@@ -89,6 +87,13 @@ export default class ColumnBreakpoint extends PureComponent<Props> {
     event.stopPropagation();
     event.preventDefault();
     const { cx, columnBreakpoint, breakpointActions } = this.props;
+
+    // disable column breakpoint on shift-click.
+    if (event.shiftKey) {
+      const breakpoint: breakpoint = columnBreakpoint.breakpoint;
+      return breakpointActions.toggleDisabledBreakpoint(cx, breakpoint);
+    }
+
     if (columnBreakpoint.breakpoint) {
       breakpointActions.removeBreakpoint(cx, columnBreakpoint.breakpoint);
     } else {

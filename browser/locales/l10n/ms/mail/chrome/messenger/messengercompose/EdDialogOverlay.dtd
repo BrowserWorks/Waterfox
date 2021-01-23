@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Edit Lanjutan…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Tambah atau ubah atribut HTML, gaya atribut dan JavaScript">
+<!ENTITY chooseFileButton.label "Pilih Fail...">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "Pilih Fail...">
+<!ENTITY chooseFileLinkButton.accessKey "l">
+<!ENTITY makeUrlRelative.label "URL adalah relatif kepada lokasi halaman">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Tukar antara URL relatif dengan muktamad. Anda perlu simpan halaman dahulu untuk menukarkan ini.">
+
+<!ENTITY LinkURLEditField2.label "Masukkan lokasi halaman web, fail lokal, atau pilih Nama Labuh atau Tajuk daripada medan menu konteks:">
+<!ENTITY LinkURLEditField2.accessKey "w">

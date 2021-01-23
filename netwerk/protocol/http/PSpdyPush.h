@@ -25,7 +25,6 @@
 #ifndef mozilla_net_SpdyPush_Public_h
 #define mozilla_net_SpdyPush_Public_h
 
-#include "nsAutoPtr.h"
 #include "nsDataHashtable.h"
 #include "nsISupports.h"
 #include "nsStringFwd.h"
@@ -41,8 +40,8 @@ class SpdyPushCache {
   // The cache holds only weak pointers - no references
   SpdyPushCache() = default;
   virtual ~SpdyPushCache();
-  MOZ_MUST_USE bool RegisterPushedStreamHttp2(const nsCString& key,
-                                              Http2PushedStream* stream);
+  [[nodiscard]] bool RegisterPushedStreamHttp2(const nsCString& key,
+                                               Http2PushedStream* stream);
   Http2PushedStream* RemovePushedStreamHttp2(const nsCString& key);
   Http2PushedStream* RemovePushedStreamHttp2ByID(const nsCString& key,
                                                  const uint32_t& streamID);

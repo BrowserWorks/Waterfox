@@ -1,0 +1,214 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Adrešu grāmata">
+
+
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label                                 "Fails">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "Jauns">
+<!ENTITY newMenu.accesskey                              "n">
+<!ENTITY newContact.label                               "Adrešu grāmatas kontakts…">
+<!ENTITY newContact.accesskey                           "k">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Vēstkopa…">
+<!ENTITY newListCmd.accesskey                           "t">
+<!ENTITY newAddressBookCmd.label                        "Adrešu grāmata…">
+<!ENTITY newAddressBookCmd.accesskey                    "g">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP direktorija…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Vēstule">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "V">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Izmantot Mac OS X adrešu grāmatu">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Aizvērt">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "A">
+<!ENTITY printSetupCmd.label                            "Lapas iestatījumi…">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "Kontakta drukas priekšskatījums">
+<!ENTITY printPreviewContactCmd.accesskey               "s">
+<!ENTITY printPreviewAddressBook.label                  "Adrešu grāmatas drukas priekšskatījums">
+<!ENTITY printPreviewAddressBook.accesskey              "p">
+<!ENTITY printContactCmd.label                          "Drukāt kontaktu…">
+<!ENTITY printContactCmd.accesskey                      "D">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Drukāt adrešu grāmatu…">
+<!ENTITY printAddressBook.accesskey                     "r">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label                                 "Rediģēt">
+<!ENTITY editMenu.accesskey                             "e">
+<!ENTITY deleteCmd.label                                "Dzēst">
+<!ENTITY deleteAbCmd.label                              "Dzēst adrešu grāmatu">
+<!ENTITY deleteContactCmd.label                         "Dzēst kontaktu">
+<!ENTITY deleteContactsCmd.label                        "Dzēst kontaktus">
+<!ENTITY deleteListCmd.label                            "Dzēst sarakstu">
+<!ENTITY deleteListsCmd.label                           "Dzēst sarakstus">
+<!ENTITY deleteItemsCmd.label                           "Dzēst vienumus">
+<!ENTITY searchAddressesCmd.key                         "f">
+
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Īpašības">
+<!ENTITY propertiesMenu.accesskey                       "p">
+<!ENTITY propertiesCmd.key                              "i">
+
+
+
+
+
+
+<!-- View Menu -->
+
+<!ENTITY viewMenu.label                                 "Skats">
+<!ENTITY viewMenu.accesskey                             "S">
+<!ENTITY viewToolbarsMenu.label                         "Rīkjoslas">
+<!ENTITY viewToolbarsMenu.accesskey                     "R">
+
+
+
+
+<!ENTITY showTaskbarCmd.label                           "Statusa josla">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+
+
+<!ENTITY layoutMenu.label                               "Izkārtojums">
+<!ENTITY layoutMenu.accesskey                           "I">
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Vārds Uzvārds">
+<!ENTITY firstLastCmd2.accesskey                        "V">
+<!ENTITY lastFirstCmd.label                             "Uzvārds Vārds">
+<!ENTITY lastFirstCmd.accesskey                         "U">
+
+
+
+
+<!-- Tools Menu -->
+
+
+
+<!ENTITY messengerCmd.commandkey                        "1">
+
+
+<!ENTITY importCmd.label                                "Importēt…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksportēt...">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Iestatījumi">
+<!ENTITY preferencesCmd2.accesskey                      "I">
+<!ENTITY preferencesCmdUnix.label                       "Iestatījumi">
+<!ENTITY preferencesCmdUnix.accesskey                   "u">
+<!-- Address Book Toolbar and Context Menus -->
+
+
+
+
+
+<!ENTITY editPropertiesButton.label                     "Rediģēt">
+<!ENTITY propertiesContext.label                        "Īpašības">
+<!ENTITY propertiesContext.accesskey                    "p">
+<!ENTITY abPropertiesContext.label                      "Īpašības">
+<!ENTITY abPropertiesContext.accesskey                  "p">
+
+
+
+
+
+
+
+
+<!ENTITY printButton.label                              "Drukāt…">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY deleteButton2.label                            "Dzēst">
+<!ENTITY deleteButton2.accesskey                        "D">
+<!-- Address Book Toolbar Tooltips -->
+
+<!ENTITY newContactButton.tooltip                       "Izveidot jaunu kontaktu adrešu grāmatā">
+<!ENTITY newlistButton.tooltip                          "Izveidot jaunu sarakstu">
+<!ENTITY editPropertiesButton.tooltip                   "Rediģēt izvēlēto vienumu">
+
+
+
+<!ENTITY newmsgButton.tooltip                           "Nosūtīt epasta vēstuli">
+
+
+<!-- Dir Tree header -->
+
+<!-- Search Bar -->
+
+
+<!ENTITY quickSearchCmd.key                             "k">
+
+<!-- Results Pane -->
+
+<!ENTITY Addrbook.label                                 "Adrešu grāmata">
+<!ENTITY Addrbook.accesskey                             "g">
+
+
+
+
+
+
+<!ENTITY Company.label                                  "Organizācija">
+<!ENTITY Company.accesskey                              "z">
+
+
+
+
+
+
+
+
+<!ENTITY CellularNumber.label                           "Mobilais">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Peidžers">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Fakss">
+<!ENTITY FaxNumber.accesskey                            "F">
+
+
+
+
+
+
+
+
+
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+
+<!ENTITY contact.heading                                "Kontakts">
+<!ENTITY home.heading                                   "Mājas">
+<!ENTITY other.heading                                  "Cits">
+<!ENTITY chat.heading                                   "Tērzēšana">
+<!ENTITY phone.heading                                  "Tālrunis">
+<!ENTITY work.heading                                   "Darbs">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Apraksts">
+<!ENTITY addresses.heading                              "Adreses">
+<!-- For Map It! -->
+
+<!-- Status Bar -->
+
+<!ENTITY statusText.label                               "">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY windowMenu.label                               "Logs">
+<!ENTITY minimizeWindow.label                           "Minimizēt">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Nest visu uz priekšplānu">
+<!ENTITY zoomWindow.label                               "Tālummaiņa">

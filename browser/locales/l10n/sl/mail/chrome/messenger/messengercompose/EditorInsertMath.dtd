@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vstavi matematični izraz">
+
+<!ENTITY sourceEditField.label "Vstavi izvorno kodo LaTeX:">
+
+<!ENTITY options.label "Možnosti">
+<!ENTITY optionInline.label "Način v besedilu">
+<!ENTITY optionInline.accesskey "b">
+<!ENTITY optionDisplay.label "Način prikaza">
+<!ENTITY optionDisplay.accesskey "r">
+<!ENTITY optionLTR.label "Besedilo od leve proti desni">
+<!ENTITY optionLTR.accesskey "v">
+<!ENTITY optionRTL.label "Besedilo od desne proti levi">
+<!ENTITY optionRTL.accesskey "n">
+
+<!ENTITY insertButton.label "Vstavi">
+<!ENTITY insertButton.accesskey "V">

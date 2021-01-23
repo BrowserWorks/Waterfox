@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY addToAddressBook.label         "ਸ਼ਾਮਲ ਕਰੋ: ">
+
+<!-- Access Keys -->
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "ਲਿਸਟ ਨਾਂ: ">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "ਲਿਸਟ ਸੰਖੇਪ ਨਾਂ: ">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "ਵੇਰਵਾ: ">
+<!ENTITY ListDescription.accesskey      "e">
+
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "ਮੇਲਿੰਗ ਲਿਸਟ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰਨ ਵਾਸਤੇ ਈਮੇਲ ਐਡਰੈੱਸ:">
+<!ENTITY UpButton.label                 "ਉੱਤੇ ਭੇਜੋ">
+<!ENTITY DownButton.label               "ਹੇਠਾਂ ਕਰੋ">
+

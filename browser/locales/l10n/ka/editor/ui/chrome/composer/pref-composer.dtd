@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "შემდგენი">
+<!ENTITY  recentFiles.title             "ბოლო გვერდები">
+<!ENTITY  documentsInMenu.label         "სიაში გვერდების მაქსიმალური რაოდენობა:">
+<!ENTITY  documentsInMenu.accesskey     "ს">
+<!ENTITY  savingFiles.title             "გვერდების შენახვის ან გამოქვეყნებისას">
+<!ENTITY  preserveExisting.label        "პირველწყაროს ფორმატის შენარჩუნება">
+<!ENTITY  preserveExisting.accesskey    "პ">
+<!ENTITY  preserveExisting.tooltip      "პირველწყაროში სტრიქონების გადატანისა და გვერდების შენარჩუნება">
+<!ENTITY  saveAssociatedFiles.label     "გვერდების შენახვისას სურათებისა და სხვა დაკავშირებული ფაილების შენახვა">
+<!ENTITY  saveAssociatedFiles.accesskey "შ">
+<!ENTITY  showPublishDialog.label       "გამოქვეყნების დიალოგის ყოველთვის ჩვენება გვერდების გამოქვეყნებისას">
+<!ENTITY  showPublishDialog.accesskey   "ა">
+<!ENTITY  composerEditing.label         "ჩასწორება">
+<!ENTITY  maintainStructure.label       "ცხრილის ფორმატის შენარჩუნება უჯრის დამატების ან წაშლისას">
+<!ENTITY  maintainStructure.tooltip     "ინარჩუნებს ცხრილის მართკუთხა ფრომას უჯრების დამატების ან წაშლის შემთხვევაში უჯრების ავტომატური დამატებით">
+<!ENTITY  maintainStructure.accesskey   "ი">
+<!ENTITY  useCSS.label                  "CSS გაფორმების გამოყენება HTML ელემენტებისა და ატრიბუტების ნაცვლად">
+<!ENTITY  useCSS.accesskey              "ფ">
+<!ENTITY  crInPCreatesNewP.label        "პარაგრაფის წყვეტისას ყოველთვის ახალი პარაგრაფის შექმნა">
+<!ENTITY  crInPCreatesNewP.accesskey    "რ">

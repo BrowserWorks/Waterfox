@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Lagringstypeomformer for meldinger">
+<!ENTITY converterDialog.continueButton "Fortsett">
+<!ENTITY converterDialog.cancelButton "Avbryt">
+<!ENTITY converterDialog.finishButton "Fullfør">
+<!ENTITY converterDialog.complete "Konverteringen er ferdig. &brandShortName; vil nå starte om.">
+<!ENTITY converterDialog.error "Konverteringen mislyktes.">
+

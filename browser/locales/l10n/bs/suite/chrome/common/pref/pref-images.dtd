@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Slike">
+
+<!ENTITY imageBlocking.label            "Pravila prihvatanja slika">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Odredite kako &brandShortName; rukuje slikama.">
+
+<!ENTITY loadAllImagesRadio.label       "Učitaj sve slike">
+<!ENTITY loadOrgImagesRadio.label       "Učitaj slike koje dolaze samo iz originalnog servera">
+<!ENTITY loadNoImagesRadio.label        "Ne učitavaj nikakve slike">
+<!ENTITY viewPermissions.label          "Upravljanje dozvolama">
+<!ENTITY animLoopingTitle.label         "Animirane slike trebaju da kruže">
+<!ENTITY animLoopAsSpecified.label      "Koliko god puta slika određuje">
+<!ENTITY animLoopOnce.label             "Jednom">
+<!ENTITY animLoopNever.label            "Nikad">

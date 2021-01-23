@@ -4,19 +4,22 @@
 
 "use strict";
 
-const { getStr } = require("../utils/l10n");
-const { parseFontVariationAxes } = require("../utils/font-utils");
+const { getStr } = require("devtools/client/inspector/fonts/utils/l10n");
+const {
+  parseFontVariationAxes,
+} = require("devtools/client/inspector/fonts/utils/font-utils");
 
 const {
   APPLY_FONT_VARIATION_INSTANCE,
   RESET_EDITOR,
   SET_FONT_EDITOR_DISABLED,
   UPDATE_AXIS_VALUE,
-  UPDATE_CUSTOM_INSTANCE,
   UPDATE_EDITOR_STATE,
   UPDATE_PROPERTY_VALUE,
   UPDATE_WARNING_MESSAGE,
-} = require("../actions/index");
+} = require("devtools/client/inspector/fonts/actions/index");
+
+const CUSTOM_INSTANCE_NAME = getStr("fontinspector.customInstanceName");
 
 const INITIAL_STATE = {
   // Variable font axes.
@@ -29,7 +32,7 @@ const INITIAL_STATE = {
   fonts: [],
   // Current selected font variation instance.
   instance: {
-    name: getStr("fontinspector.customInstanceName"),
+    name: CUSTOM_INSTANCE_NAME,
     values: [],
   },
   // CSS font properties defined on the selected rule.
@@ -64,16 +67,17 @@ const reducers = {
   [UPDATE_AXIS_VALUE](state, { axis, value }) {
     const newState = { ...state };
     newState.axes[axis] = value;
-    return newState;
-  },
 
-  // Copy state of current axes in the format of the "values" property of a named font
-  // variation instance.
-  [UPDATE_CUSTOM_INSTANCE](state) {
-    const newState = { ...state };
-    newState.customInstanceValues = Object.keys(state.axes).map(axis => {
-      return { axis: [axis], value: state.axes[axis] };
+    // Cache the latest axes and their values to restore them when switching back from
+    // a named font variation instance to the custom font variation instance.
+    newState.customInstanceValues = Object.keys(state.axes).map(axisName => {
+      return { axis: [axisName], value: state.axes[axisName] };
     });
+
+    // As soon as an axis value is manually updated, mark the custom font variation
+    // instance as selected.
+    newState.instance.name = CUSTOM_INSTANCE_NAME;
+
     return newState;
   },
 
@@ -102,6 +106,30 @@ const reducers = {
     const match = stretch.trim().match(/^(\d+(.\d+)?)%$/);
     if (axes.wdth === undefined && match && match[1]) {
       axes.wdth = parseFloat(match[1]);
+    }
+
+    // If not defined in font-variation-settings, setup "slnt" axis with the negative
+    // of the "font-style: oblique" angle, if any.
+    const style = properties["font-style"];
+    const obliqueMatch = style.trim().match(/^oblique(?:\s*(\d+(.\d+)?)deg)?$/);
+    if (axes.slnt === undefined && obliqueMatch) {
+      if (obliqueMatch[1]) {
+        // Negate the angle because CSS and OpenType measure in opposite directions.
+        axes.slnt = -parseFloat(obliqueMatch[1]);
+      } else {
+        // Lack of an <angle> for "font-style: oblique" represents "14deg".
+        axes.slnt = -14;
+      }
+    }
+
+    // If not defined in font-variation-settings, setup "ital" axis with 0 for
+    // "font-style: normal" or 1 for "font-style: italic".
+    if (axes.ital === undefined) {
+      if (style === "normal") {
+        axes.ital = 0;
+      } else if (style === "italic") {
+        axes.ital = 1;
+      }
     }
 
     return { ...state, axes, fonts, properties, id };

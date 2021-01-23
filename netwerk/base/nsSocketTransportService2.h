@@ -15,10 +15,12 @@
 #include "prinit.h"
 #include "nsIObserver.h"
 #include "mozilla/LinkedList.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/net/DashboardTypes.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/Tuple.h"
 #include "nsITimer.h"
 #include "mozilla/UniquePtr.h"
 #include "PollableEvent.h"
@@ -30,6 +32,7 @@ class nsIPrefBranch;
 //-----------------------------------------------------------------------------
 
 namespace mozilla {
+class AbstractThread;
 namespace net {
 
 //
@@ -123,6 +126,15 @@ class nsSocketTransportService final : public nsPISocketTransportService,
 
   void SetNotTrustedMitmDetected() { mNotTrustedMitmDetected = true; }
 
+  // According the preference value of `network.socket.forcePort` this method
+  // possibly remaps the port number passed as the arg.
+  void ApplyPortRemap(uint16_t* aPort);
+
+  // Reads the preference string and updates (rewrites) the mPortRemapping
+  // array on the socket thread.  Returns true if the whole pref string was
+  // correctly formed.
+  bool UpdatePortRemapPreference(nsACString const& aPortMappingPref);
+
  protected:
   virtual ~nsSocketTransportService();
 
@@ -132,6 +144,10 @@ class nsSocketTransportService final : public nsPISocketTransportService,
   //-------------------------------------------------------------------------
 
   nsCOMPtr<nsIThread> mThread;  // protected by mLock
+  // We create an AbstractThread for mThread thread so that we can use direct
+  // task dispatching with MozPromise, which is similar (but not identical to)
+  // the microtask semantics of JS promises.
+  RefPtr<AbstractThread> mAbstractThread;
   UniquePtr<PollableEvent> mPollableEvent;
 
   // Returns mThread, protecting the get-and-addref with mLock
@@ -242,7 +258,7 @@ class nsSocketTransportService final : public nsPISocketTransportService,
 
   // Preference Monitor for SendBufferSize and Keepalive prefs.
   nsresult UpdatePrefs();
-  static void PrefCallback(const char* aPref, nsSocketTransportService* aSelf);
+  static void UpdatePrefs(const char* aPref, void* aSelf);
   void UpdateSendBufferPref();
   int32_t mSendBufferSize;
   // Number of seconds of connection is idle before first keepalive ping.
@@ -273,6 +289,19 @@ class nsSocketTransportService final : public nsPISocketTransportService,
   // will be corrupted - so do not record it.
   Atomic<bool, Relaxed> mSleepPhase;
   nsCOMPtr<nsITimer> mAfterWakeUpTimer;
+
+  // Lazily created array of forced port remappings.  The tuple members meaning
+  // is exactly:
+  // <0> the greater-or-equal port number of the range to remap
+  // <1> the less-or-equal port number of the range to remap
+  // <2> the port number to remap to, when the given port number falls to the
+  // range
+  typedef CopyableTArray<Tuple<uint16_t, uint16_t, uint16_t>> TPortRemapping;
+  Maybe<TPortRemapping> mPortRemapping;
+
+  // Called on the socket thread to apply the mapping build on the main thread
+  // from the preference.
+  void ApplyPortRemapPreference(TPortRemapping const& portRemapping);
 
   void OnKeepaliveEnabledPrefChange();
   void NotifyKeepaliveEnabledPrefChange(SocketContext* sock);

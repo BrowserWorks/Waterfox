@@ -9,6 +9,8 @@
 #include "ActorsChild.h"
 #include "IPCBlobInputStreamThread.h"
 #include "LocalStorageCommon.h"
+#include "mozilla/BasePrincipal.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/ThreadEventQueue.h"
 #include "mozilla/dom/quota/QuotaManager.h"
 #include "mozilla/ipc/BackgroundChild.h"
@@ -62,7 +64,7 @@ class NestedEventTargetWrapper final : public nsISerialEventTarget {
       : mNestedEventTarget(aNestedEventTarget), mDisconnected(false) {}
 
  private:
-  ~NestedEventTargetWrapper() {}
+  ~NestedEventTargetWrapper() = default;
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -179,7 +181,7 @@ class RequestHelper final : public Runnable, public LSRequestChildCallback {
   nsresult StartAndReturnResponse(LSRequestResponse& aResponse);
 
  private:
-  ~RequestHelper() {}
+  ~RequestHelper() = default;
 
   nsresult Start();
 
@@ -245,8 +247,7 @@ nsresult LSObject::CreateForWindow(nsPIDOMWindowInner* aWindow,
   MOZ_ASSERT(aWindow);
   MOZ_ASSERT(aStorage);
   MOZ_ASSERT(NextGenLocalStorageEnabled());
-  MOZ_ASSERT(nsContentUtils::StorageAllowedForWindow(aWindow) !=
-             nsContentUtils::StorageAccess::eDeny);
+  MOZ_ASSERT(StorageAllowedForWindow(aWindow) != StorageAccess::eDeny);
 
   nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(aWindow);
   MOZ_ASSERT(sop);
@@ -261,7 +262,7 @@ nsresult LSObject::CreateForWindow(nsPIDOMWindowInner* aWindow,
     return NS_ERROR_FAILURE;
   }
 
-  if (nsContentUtils::IsSystemPrincipal(principal)) {
+  if (principal->IsSystemPrincipal()) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -270,22 +271,23 @@ nsresult LSObject::CreateForWindow(nsPIDOMWindowInner* aWindow,
   // for the check.
   nsCString originAttrSuffix;
   nsCString originKey;
-  nsresult rv =
-      GenerateOriginKey(storagePrincipal, originAttrSuffix, originKey);
+  nsresult rv = storagePrincipal->GetStorageOriginKey(originKey);
+  storagePrincipal->OriginAttributesRef().CreateSuffix(originAttrSuffix);
+
   if (NS_FAILED(rv)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsAutoPtr<PrincipalInfo> principalInfo(new PrincipalInfo());
-  rv = PrincipalToPrincipalInfo(principal, principalInfo);
+  auto principalInfo = MakeUnique<PrincipalInfo>();
+  rv = PrincipalToPrincipalInfo(principal, principalInfo.get());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
   MOZ_ASSERT(principalInfo->type() == PrincipalInfo::TContentPrincipalInfo);
 
-  nsAutoPtr<PrincipalInfo> storagePrincipalInfo(new PrincipalInfo());
-  rv = PrincipalToPrincipalInfo(storagePrincipal, storagePrincipalInfo);
+  auto storagePrincipalInfo = MakeUnique<PrincipalInfo>();
+  rv = PrincipalToPrincipalInfo(storagePrincipal, storagePrincipalInfo.get());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -299,8 +301,8 @@ nsresult LSObject::CreateForWindow(nsPIDOMWindowInner* aWindow,
 
   nsCString suffix;
   nsCString origin;
-  rv = QuotaManager::GetInfoFromPrincipal(storagePrincipal, &suffix, nullptr,
-                                          &origin);
+  rv = QuotaManager::GetInfoFromPrincipal(storagePrincipal.get(), &suffix,
+                                          nullptr, &origin);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -354,14 +356,14 @@ nsresult LSObject::CreateForPrincipal(nsPIDOMWindowInner* aWindow,
 
   nsCString originAttrSuffix;
   nsCString originKey;
-  nsresult rv =
-      GenerateOriginKey(aStoragePrincipal, originAttrSuffix, originKey);
+  nsresult rv = aStoragePrincipal->GetStorageOriginKey(originKey);
+  aStoragePrincipal->OriginAttributesRef().CreateSuffix(originAttrSuffix);
   if (NS_FAILED(rv)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsAutoPtr<PrincipalInfo> principalInfo(new PrincipalInfo());
-  rv = PrincipalToPrincipalInfo(aPrincipal, principalInfo);
+  auto principalInfo = MakeUnique<PrincipalInfo>();
+  rv = PrincipalToPrincipalInfo(aPrincipal, principalInfo.get());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -369,8 +371,8 @@ nsresult LSObject::CreateForPrincipal(nsPIDOMWindowInner* aWindow,
   MOZ_ASSERT(principalInfo->type() == PrincipalInfo::TContentPrincipalInfo ||
              principalInfo->type() == PrincipalInfo::TSystemPrincipalInfo);
 
-  nsAutoPtr<PrincipalInfo> storagePrincipalInfo(new PrincipalInfo());
-  rv = PrincipalToPrincipalInfo(aStoragePrincipal, storagePrincipalInfo);
+  auto storagePrincipalInfo = MakeUnique<PrincipalInfo>();
+  rv = PrincipalToPrincipalInfo(aStoragePrincipal, storagePrincipalInfo.get());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -476,9 +478,16 @@ LSRequestChild* LSObject::StartRequest(nsIEventTarget* aMainEventTarget,
     return nullptr;
   }
 
-  LSRequestChild* actor = new LSRequestChild(aCallback);
+  LSRequestChild* actor = new LSRequestChild();
 
-  backgroundActor->SendPBackgroundLSRequestConstructor(actor, aParams);
+  if (!backgroundActor->SendPBackgroundLSRequestConstructor(actor, aParams)) {
+    return nullptr;
+  }
+
+  // Must set callback after calling SendPBackgroundLSRequestConstructor since
+  // it can be called synchronously when SendPBackgroundLSRequestConstructor
+  // fails.
+  actor->SetCallback(aCallback);
 
   return actor;
 }
@@ -767,6 +776,24 @@ void LSObject::EndExplicitSnapshot(nsIPrincipal& aSubjectPrincipal,
     aError.Throw(rv);
     return;
   }
+}
+
+bool LSObject::GetHasActiveSnapshot(nsIPrincipal& aSubjectPrincipal,
+                                    ErrorResult& aError) {
+  AssertIsOnOwningThread();
+
+  if (!CanUseStorage(aSubjectPrincipal)) {
+    aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
+    return 0;
+  }
+
+  if (mDatabase && mDatabase->HasActiveSnapshot()) {
+    MOZ_ASSERT(!mDatabase->IsAllowedToClose());
+
+    return true;
+  }
+
+  return false;
 }
 
 NS_IMPL_ADDREF_INHERITED(LSObject, Storage)
@@ -1112,7 +1139,8 @@ nsresult RequestHelper::StartAndReturnResponse(LSRequestResponse& aResponse) {
       {
         StaticMutexAutoLock lock(gRequestHelperMutex);
 
-        if (NS_WARN_IF(gPendingSyncMessage)) {
+        if (StaticPrefs::dom_storage_abort_on_sync_parent_to_child_messages() &&
+            NS_WARN_IF(gPendingSyncMessage)) {
           return NS_ERROR_FAILURE;
         }
 
@@ -1154,7 +1182,9 @@ nsresult RequestHelper::StartAndReturnResponse(LSRequestResponse& aResponse) {
 
             {
               StaticMutexAutoLock lock(gRequestHelperMutex);
-              if (NS_WARN_IF(gPendingSyncMessage)) {
+              if (StaticPrefs::
+                      dom_storage_abort_on_sync_parent_to_child_messages() &&
+                  NS_WARN_IF(gPendingSyncMessage)) {
                 return true;
               }
             }

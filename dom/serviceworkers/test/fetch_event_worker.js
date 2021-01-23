@@ -1,5 +1,3 @@
-var seenIndex = false;
-
 // eslint-disable-next-line complexity
 onfetch = function(ev) {
   if (ev.request.url.includes("ignore")) {
@@ -84,7 +82,7 @@ onfetch = function(ev) {
     ev.respondWith(
       new Response(
         new ReadableStream({
-          start: function(controller) {
+          start(controller) {
             controller.enqueue(
               new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x21])
             );
@@ -226,12 +224,18 @@ onfetch = function(ev) {
   } else if (ev.request.url.includes("nonexistent_worker_script.js")) {
     ev.respondWith(
       Promise.resolve(
-        new Response("postMessage('worker-intercept-success')", {})
+        new Response("postMessage('worker-intercept-success')", {
+          headers: { "Content-Type": "text/javascript" },
+        })
       )
     );
   } else if (ev.request.url.includes("nonexistent_imported_script.js")) {
     ev.respondWith(
-      Promise.resolve(new Response("check_intercepted_script();", {}))
+      Promise.resolve(
+        new Response("check_intercepted_script();", {
+          headers: { "Content-Type": "text/javascript" },
+        })
+      )
     );
   } else if (ev.request.url.includes("deliver-gzip")) {
     // Don't handle the request, this will make Necko perform a network request, at
@@ -276,23 +280,6 @@ onfetch = function(ev) {
     ev.respondWith(fetch(url));
   } else if (ev.request.url.includes("example.com")) {
     ev.respondWith(fetch(ev.request));
-  } else if (ev.request.url.includes("index.html")) {
-    if (seenIndex) {
-      let body =
-        "<script>" +
-        "opener.postMessage({status: 'ok', result: " +
-        ev.isReload +
-        "," +
-        "message: 'reload status should be indicated'}, '*');" +
-        "opener.postMessage({status: 'done'}, '*');" +
-        "</script>";
-      ev.respondWith(
-        new Response(body, { headers: { "Content-Type": "text/html" } })
-      );
-    } else {
-      seenIndex = true;
-      ev.respondWith(fetch(ev.request.url));
-    }
   } else if (ev.request.url.includes("body-")) {
     ev.respondWith(
       ev.request.text().then(function(body) {
@@ -312,11 +299,6 @@ onfetch = function(ev) {
   } else if (
     ev.request.url.includes("load_cross_origin_xml_document_synthetic.xml")
   ) {
-    if (ev.request.mode != "same-origin") {
-      ev.respondWith(Promise.reject());
-      return;
-    }
-
     ev.respondWith(
       Promise.resolve(
         new Response("<response>body</response>", {

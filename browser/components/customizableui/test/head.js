@@ -31,18 +31,12 @@ registerCleanupFunction(() =>
   Services.prefs.clearUserPref("browser.uiCustomization.skipSourceNodeCheck")
 );
 
-var {
-  synthesizeDragStart,
-  synthesizeDrop,
-  synthesizeMouseAtCenter,
-} = EventUtils;
+var { synthesizeDrop, synthesizeMouseAtCenter } = EventUtils;
 
-const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-
-const kForceOverflowWidthPx = 300;
+const kForceOverflowWidthPx = 450;
 
 function createDummyXULButton(id, label, win = window) {
-  let btn = document.createElementNS(kNSXUL, "toolbarbutton");
+  let btn = win.document.createXULElement("toolbarbutton");
   btn.id = id;
   btn.setAttribute("label", label || id);
   btn.className = "toolbarbutton-1 chromeclass-toolbar-additional";
@@ -54,7 +48,7 @@ var gAddedToolbars = new Set();
 
 function createToolbarWithPlacements(id, placements = []) {
   gAddedToolbars.add(id);
-  let tb = document.createElementNS(kNSXUL, "toolbar");
+  let tb = document.createXULElement("toolbar");
   tb.id = id;
   tb.setAttribute("customizable", "true");
   CustomizableUI.registerArea(id, {
@@ -69,24 +63,24 @@ function createToolbarWithPlacements(id, placements = []) {
 function createOverflowableToolbarWithPlacements(id, placements) {
   gAddedToolbars.add(id);
 
-  let tb = document.createElementNS(kNSXUL, "toolbar");
+  let tb = document.createXULElement("toolbar");
   tb.id = id;
   tb.setAttribute("customizationtarget", id + "-target");
 
-  let customizationtarget = document.createElementNS(kNSXUL, "hbox");
+  let customizationtarget = document.createXULElement("hbox");
   customizationtarget.id = id + "-target";
   customizationtarget.setAttribute("flex", "1");
   tb.appendChild(customizationtarget);
 
-  let overflowPanel = document.createElementNS(kNSXUL, "panel");
+  let overflowPanel = document.createXULElement("panel");
   overflowPanel.id = id + "-overflow";
   document.getElementById("mainPopupSet").appendChild(overflowPanel);
 
-  let overflowList = document.createElementNS(kNSXUL, "vbox");
+  let overflowList = document.createXULElement("vbox");
   overflowList.id = id + "-overflow-list";
   overflowPanel.appendChild(overflowList);
 
-  let chevron = document.createElementNS(kNSXUL, "toolbarbutton");
+  let chevron = document.createXULElement("toolbarbutton");
   chevron.id = id + "-chevron";
   tb.appendChild(chevron);
 
@@ -216,16 +210,19 @@ function getAreaWidgetIds(areaId) {
   return CustomizableUI.getWidgetIdsInArea(areaId);
 }
 
-function simulateItemDrag(aToDrag, aTarget, aEvent = {}) {
+function simulateItemDrag(aToDrag, aTarget, aEvent = {}, aOffset = 2) {
   let ev = aEvent;
   if (ev == "end" || ev == "start") {
     let win = aTarget.ownerGlobal;
     const dwu = win.windowUtils;
     let bounds = dwu.getBoundsWithoutFlushing(aTarget);
     if (ev == "end") {
-      ev = { clientX: bounds.right - 2, clientY: bounds.bottom - 2 };
+      ev = {
+        clientX: bounds.right - aOffset,
+        clientY: bounds.bottom - aOffset,
+      };
     } else {
-      ev = { clientX: bounds.left + 2, clientY: bounds.top + 2 };
+      ev = { clientX: bounds.left + aOffset, clientY: bounds.top + aOffset };
     }
   }
   ev._domDispatchOnly = true;
@@ -246,37 +243,24 @@ function endCustomizing(aWindow = window) {
   if (aWindow.document.documentElement.getAttribute("customizing") != "true") {
     return true;
   }
-  return new Promise(resolve => {
-    function onCustomizationEnds() {
-      aWindow.gNavToolbox.removeEventListener(
-        "aftercustomization",
-        onCustomizationEnds
-      );
-      resolve();
-    }
-    aWindow.gNavToolbox.addEventListener(
-      "aftercustomization",
-      onCustomizationEnds
-    );
-    aWindow.gCustomizeMode.exit();
-  });
+  let afterCustomizationPromise = BrowserTestUtils.waitForEvent(
+    aWindow.gNavToolbox,
+    "aftercustomization"
+  );
+  aWindow.gCustomizeMode.exit();
+  return afterCustomizationPromise;
 }
 
 function startCustomizing(aWindow = window) {
   if (aWindow.document.documentElement.getAttribute("customizing") == "true") {
     return null;
   }
-  return new Promise(resolve => {
-    function onCustomizing() {
-      aWindow.gNavToolbox.removeEventListener(
-        "customizationready",
-        onCustomizing
-      );
-      resolve();
-    }
-    aWindow.gNavToolbox.addEventListener("customizationready", onCustomizing);
-    aWindow.gCustomizeMode.enter();
-  });
+  let customizationReadyPromise = BrowserTestUtils.waitForEvent(
+    aWindow.gNavToolbox,
+    "customizationready"
+  );
+  aWindow.gCustomizeMode.enter();
+  return customizationReadyPromise;
 }
 
 function promiseObserverNotified(aTopic) {
@@ -530,20 +514,15 @@ function checkContextMenu(aContextMenu, aExpectedEntries, aWindow = window) {
 }
 
 function waitForOverflowButtonShown(win = window) {
+  info("Waiting for overflow button to show");
   let ov = win.document.getElementById("nav-bar-overflow-button");
-  let icon = win.document.getAnonymousElementByAttribute(
-    ov,
-    "class",
-    "toolbarbutton-icon"
-  );
-  return waitForElementShown(icon);
+  return waitForElementShown(ov.icon);
 }
 function waitForElementShown(element) {
-  let win = element.ownerGlobal;
-  let dwu = win.windowUtils;
   return BrowserTestUtils.waitForCondition(() => {
-    info("Waiting for overflow button to have non-0 size");
-    let bounds = dwu.getBoundsWithoutFlushing(element);
-    return bounds.width > 0 && bounds.height > 0;
+    info("Checking if element has non-0 size");
+    // We intentionally flush layout to ensure the element is actually shown.
+    let rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
   });
 }

@@ -7,6 +7,7 @@ include('../../../webrtc.mozbuild')
 
 LOCAL_INCLUDES += [
     '!/ipc/ipdl/_ipdlheaders',
+    '/dom/media/gmp', # for GMPLog.h
     '/ipc/chromium/src',
     '/media/libyuv/libyuv/include',
     '/media/mtransport',
@@ -23,12 +24,13 @@ LOCAL_INCLUDES += [
 UNIFIED_SOURCES += [
     'AudioConduit.cpp',
     'GmpVideoCodec.cpp',
-    'MediaDataDecoderCodec.cpp',
+    'MediaDataCodec.cpp',
     'RtpSourceObserver.cpp',
     'VideoConduit.cpp',
     'VideoStreamFactory.cpp',
     'WebrtcGmpVideoCodec.cpp',
     'WebrtcMediaDataDecoderCodec.cpp',
+    'WebrtcMediaDataEncoderCodec.cpp',
 ]
 
 if CONFIG['OS_TARGET'] == 'Android':

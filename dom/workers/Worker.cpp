@@ -12,6 +12,7 @@
 #include "mozilla/Unused.h"
 #include "mozilla/WorkerTimelineMarker.h"
 #include "nsContentUtils.h"
+#include "nsGlobalWindowOuter.h"
 #include "WorkerPrivate.h"
 
 #ifdef XP_WIN
@@ -28,15 +29,22 @@ already_AddRefed<Worker> Worker::Constructor(const GlobalObject& aGlobal,
                                              ErrorResult& aRv) {
   JSContext* cx = aGlobal.Context();
 
+  nsCOMPtr<nsIGlobalObject> globalObject =
+      do_QueryInterface(aGlobal.GetAsSupports());
+
+  if (globalObject->AsInnerWindow() &&
+      !globalObject->AsInnerWindow()->IsCurrentInnerWindow()) {
+    aRv.ThrowInvalidStateError(
+        "Cannot create worker for a going to be discarded document");
+    return nullptr;
+  }
+
   RefPtr<WorkerPrivate> workerPrivate = WorkerPrivate::Constructor(
       cx, aScriptURL, false /* aIsChromeWorker */, WorkerTypeDedicated,
       aOptions.mName, VoidCString(), nullptr /*aLoadInfo */, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
-
-  nsCOMPtr<nsIGlobalObject> globalObject =
-      do_QueryInterface(aGlobal.GetAsSupports());
 
   RefPtr<Worker> worker = new Worker(globalObject, workerPrivate.forget());
   return worker.forget();
@@ -101,7 +109,23 @@ void Worker::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
         MarkerTracingType::START);
   }
 
-  runnable->Write(aCx, aMessage, transferable, JS::CloneDataPolicy(), aRv);
+  JS::CloneDataPolicy clonePolicy;
+  // DedicatedWorkers are always part of the same agent cluster.
+  clonePolicy.allowIntraClusterClonableSharedObjects();
+
+  if (NS_IsMainThread()) {
+    nsGlobalWindowInner* win = nsContentUtils::CallerInnerWindow();
+    if (win && win->IsSharedMemoryAllowed()) {
+      clonePolicy.allowSharedMemoryObjects();
+    }
+  } else {
+    WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
+    if (worker && worker->IsSharedMemoryAllowed()) {
+      clonePolicy.allowSharedMemoryObjects();
+    }
+  }
+
+  runnable->Write(aCx, aMessage, transferable, clonePolicy, aRv);
 
   if (isTimelineRecording) {
     end = MakeUnique<WorkerTimelineMarker>(
@@ -147,6 +171,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(Worker, DOMEventTargetHelper)
   tmp->Terminate();
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_PTR
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(Worker, DOMEventTargetHelper)

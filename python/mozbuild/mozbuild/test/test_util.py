@@ -3,40 +3,36 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
-import itertools
 import hashlib
+import io
+import itertools
 import os
 import unittest
-import shutil
+import six
 import string
 import sys
-import tempfile
 import textwrap
 
 from mozfile.mozfile import NamedTemporaryFile
-from mozunit import (
-    main,
-    MockedOpen,
-)
+from mozunit import main
 
 from mozbuild.util import (
     expand_variables,
-    FileAvoidWrite,
     group_unified_files,
     hash_file,
-    indented_repr,
     memoize,
     memoized_property,
     pair,
     resolve_target_to_make,
+    write_indented_repr,
     MozbuildDeletionError,
     HierarchicalStringList,
     EnumString,
     EnumStringComparisonError,
-    ListWithAction,
     StrictOrderingOnAppendList,
+    StrictOrderingOnAppendListWithAction,
     StrictOrderingOnAppendListWithFlagsFactory,
     TypedList,
     TypedNamedTuple,
@@ -83,84 +79,6 @@ class TestHashing(unittest.TestCase):
         self.assertEqual(actual, expected)
 
 
-class TestFileAvoidWrite(unittest.TestCase):
-    def test_file_avoid_write(self):
-        with MockedOpen({'file': 'content'}):
-            # Overwriting an existing file replaces its content
-            faw = FileAvoidWrite('file')
-            faw.write('bazqux')
-            self.assertEqual(faw.close(), (True, True))
-            self.assertEqual(open('file', 'r').read(), 'bazqux')
-
-            # Creating a new file (obviously) stores its content
-            faw = FileAvoidWrite('file2')
-            faw.write('content')
-            self.assertEqual(faw.close(), (False, True))
-            self.assertEqual(open('file2').read(), 'content')
-
-        with MockedOpen({'file': 'content'}):
-            with FileAvoidWrite('file') as file:
-                file.write('foobar')
-
-            self.assertEqual(open('file', 'r').read(), 'foobar')
-
-        class MyMockedOpen(MockedOpen):
-            '''MockedOpen extension to raise an exception if something
-            attempts to write in an opened file.
-            '''
-            def __call__(self, name, mode):
-                if 'w' in mode:
-                    raise Exception('Unexpected open with write mode')
-                return MockedOpen.__call__(self, name, mode)
-
-        with MyMockedOpen({'file': 'content'}):
-            # Validate that MyMockedOpen works as intended
-            file = FileAvoidWrite('file')
-            file.write('foobar')
-            self.assertRaises(Exception, file.close)
-
-            # Check that no write actually happens when writing the
-            # same content as what already is in the file
-            faw = FileAvoidWrite('file')
-            faw.write('content')
-            self.assertEqual(faw.close(), (True, False))
-
-    def test_diff_not_default(self):
-        """Diffs are not produced by default."""
-
-        with MockedOpen({'file': 'old'}):
-            faw = FileAvoidWrite('file')
-            faw.write('dummy')
-            faw.close()
-            self.assertIsNone(faw.diff)
-
-    def test_diff_update(self):
-        """Diffs are produced on file update."""
-
-        with MockedOpen({'file': 'old'}):
-            faw = FileAvoidWrite('file', capture_diff=True)
-            faw.write('new')
-            faw.close()
-
-            diff = '\n'.join(faw.diff)
-            self.assertIn('-old', diff)
-            self.assertIn('+new', diff)
-
-    def test_diff_create(self):
-        """Diffs are produced when files are created."""
-
-        tmpdir = tempfile.mkdtemp()
-        try:
-            path = os.path.join(tmpdir, 'file')
-            faw = FileAvoidWrite(path, capture_diff=True)
-            faw.write('new')
-            faw.close()
-
-            diff = '\n'.join(faw.diff)
-            self.assertIn('+new', diff)
-        finally:
-            shutil.rmtree(tmpdir)
-
 class TestResolveTargetToMake(unittest.TestCase):
     def setUp(self):
         self.topobjdir = data_path
@@ -195,20 +113,25 @@ class TestResolveTargetToMake(unittest.TestCase):
     def test_regular_file(self):
         self.assertResolve('test-dir/with/file', ('test-dir/with', 'file'))
         self.assertResolve('test-dir/with/without/file', ('test-dir/with', 'without/file'))
-        self.assertResolve('test-dir/with/without/with/file', ('test-dir/with/without/with', 'file'))
+        self.assertResolve('test-dir/with/without/with/file',
+                           ('test-dir/with/without/with', 'file'))
 
         self.assertResolve('test-dir/without/file', ('test-dir', 'without/file'))
         self.assertResolve('test-dir/without/with/file', ('test-dir/without/with', 'file'))
-        self.assertResolve('test-dir/without/with/without/file', ('test-dir/without/with', 'without/file'))
+        self.assertResolve('test-dir/without/with/without/file',
+                           ('test-dir/without/with', 'without/file'))
 
     def test_Makefile(self):
         self.assertResolve('test-dir/with/Makefile', ('test-dir', 'with/Makefile'))
         self.assertResolve('test-dir/with/without/Makefile', ('test-dir/with', 'without/Makefile'))
-        self.assertResolve('test-dir/with/without/with/Makefile', ('test-dir/with', 'without/with/Makefile'))
+        self.assertResolve('test-dir/with/without/with/Makefile',
+                           ('test-dir/with', 'without/with/Makefile'))
 
         self.assertResolve('test-dir/without/Makefile', ('test-dir', 'without/Makefile'))
         self.assertResolve('test-dir/without/with/Makefile', ('test-dir', 'without/with/Makefile'))
-        self.assertResolve('test-dir/without/with/without/Makefile', ('test-dir/without/with', 'without/Makefile'))
+        self.assertResolve('test-dir/without/with/without/Makefile',
+                           ('test-dir/without/with', 'without/Makefile'))
+
 
 class TestHierarchicalStringList(unittest.TestCase):
     def setUp(self):
@@ -224,19 +147,19 @@ class TestHierarchicalStringList(unittest.TestCase):
     def test_exports_subdir(self):
         self.assertEqual(self.EXPORTS._children, {})
         self.EXPORTS.foo += ["foo.h"]
-        self.assertItemsEqual(self.EXPORTS._children, {"foo" : True})
+        six.assertCountEqual(self, self.EXPORTS._children, {"foo": True})
         self.assertEqual(self.EXPORTS.foo._strings, ["foo.h"])
         self.EXPORTS.bar += ["bar.h"]
-        self.assertItemsEqual(self.EXPORTS._children,
-                              {"foo" : True, "bar" : True})
+        six.assertCountEqual(self, self.EXPORTS._children,
+                             {"foo": True, "bar": True})
         self.assertEqual(self.EXPORTS.foo._strings, ["foo.h"])
         self.assertEqual(self.EXPORTS.bar._strings, ["bar.h"])
 
     def test_exports_multiple_subdir(self):
         self.EXPORTS.foo.bar = ["foobar.h"]
-        self.assertItemsEqual(self.EXPORTS._children, {"foo" : True})
-        self.assertItemsEqual(self.EXPORTS.foo._children, {"bar" : True})
-        self.assertItemsEqual(self.EXPORTS.foo.bar._children, {})
+        six.assertCountEqual(self, self.EXPORTS._children, {"foo": True})
+        six.assertCountEqual(self, self.EXPORTS.foo._children, {"bar": True})
+        six.assertCountEqual(self, self.EXPORTS.foo.bar._children, {})
         self.assertEqual(self.EXPORTS._strings, [])
         self.assertEqual(self.EXPORTS.foo._strings, [])
         self.assertEqual(self.EXPORTS.foo.bar._strings, ["foobar.h"])
@@ -244,50 +167,54 @@ class TestHierarchicalStringList(unittest.TestCase):
     def test_invalid_exports_append(self):
         with self.assertRaises(ValueError) as ve:
             self.EXPORTS += "foo.h"
-        self.assertEqual(str(ve.exception),
-                         "Expected a list of strings, not <type '%s'>" % str_type)
+        six.assertRegex(
+            self, str(ve.exception),
+            "Expected a list of strings, not <(?:type|class) '%s'>" % str_type)
 
     def test_invalid_exports_set(self):
         with self.assertRaises(ValueError) as ve:
             self.EXPORTS.foo = "foo.h"
 
-        self.assertEqual(str(ve.exception),
-                         "Expected a list of strings, not <type '%s'>" % str_type)
+        six.assertRegex(
+            self, str(ve.exception),
+            "Expected a list of strings, not <(?:type|class) '%s'>" % str_type)
 
     def test_invalid_exports_append_base(self):
         with self.assertRaises(ValueError) as ve:
             self.EXPORTS += "foo.h"
 
-        self.assertEqual(str(ve.exception),
-                         "Expected a list of strings, not <type '%s'>" % str_type)
+        six.assertRegex(
+            self, str(ve.exception),
+            "Expected a list of strings, not <(?:type|class) '%s'>" % str_type)
 
     def test_invalid_exports_bool(self):
         with self.assertRaises(ValueError) as ve:
             self.EXPORTS += [True]
 
-        self.assertEqual(str(ve.exception),
-                         "Expected a list of strings, not an element of "
-                         "<type 'bool'>")
+        six.assertRegex(
+            self, str(ve.exception),
+            "Expected a list of strings, not an element of "
+            "<(?:type|class) 'bool'>")
 
     def test_del_exports(self):
-        with self.assertRaises(MozbuildDeletionError) as mde:
+        with self.assertRaises(MozbuildDeletionError):
             self.EXPORTS.foo += ['bar.h']
             del self.EXPORTS.foo
 
     def test_unsorted(self):
-        with self.assertRaises(UnsortedError) as ee:
+        with self.assertRaises(UnsortedError):
             self.EXPORTS += ['foo.h', 'bar.h']
 
-        with self.assertRaises(UnsortedError) as ee:
+        with self.assertRaises(UnsortedError):
             self.EXPORTS.foo = ['foo.h', 'bar.h']
 
-        with self.assertRaises(UnsortedError) as ee:
+        with self.assertRaises(UnsortedError):
             self.EXPORTS.foo += ['foo.h', 'bar.h']
 
     def test_reassign(self):
         self.EXPORTS.foo = ['foo.h']
 
-        with self.assertRaises(KeyError) as ee:
+        with self.assertRaises(KeyError):
             self.EXPORTS.foo = ['bar.h']
 
     def test_walk(self):
@@ -418,7 +345,7 @@ class TestStrictOrderingOnAppendList(unittest.TestCase):
         l2 += l
 
 
-class TestListWithAction(unittest.TestCase):
+class TestStrictOrderingOnAppendListWithAction(unittest.TestCase):
     def setUp(self):
         self.action = lambda a: (a, id(a))
 
@@ -428,54 +355,54 @@ class TestListWithAction(unittest.TestCase):
             self.assertEqual(item, expected[idx])
 
     def test_init(self):
-        l = ListWithAction(action=self.action)
+        l = StrictOrderingOnAppendListWithAction(action=self.action)
         self.assertEqual(len(l), 0)
         original = ['a', 'b', 'c']
-        l = ListWithAction(['a', 'b', 'c'], action=self.action)
-        expected = map(self.action, original)
+        l = StrictOrderingOnAppendListWithAction(['a', 'b', 'c'], action=self.action)
+        expected = [self.action(i) for i in original]
         self.assertSameList(expected, l)
 
         with self.assertRaises(ValueError):
-            ListWithAction('abc', action=self.action)
+            StrictOrderingOnAppendListWithAction('abc', action=self.action)
 
         with self.assertRaises(ValueError):
-            ListWithAction()
+            StrictOrderingOnAppendListWithAction()
 
     def test_extend(self):
-        l = ListWithAction(action=self.action)
+        l = StrictOrderingOnAppendListWithAction(action=self.action)
         original = ['a', 'b']
         l.extend(original)
-        expected = map(self.action, original)
+        expected = [self.action(i) for i in original]
         self.assertSameList(expected, l)
 
         with self.assertRaises(ValueError):
             l.extend('ab')
 
     def test_slicing(self):
-        l = ListWithAction(action=self.action)
+        l = StrictOrderingOnAppendListWithAction(action=self.action)
         original = ['a', 'b']
         l[:] = original
-        expected = map(self.action, original)
+        expected = [self.action(i) for i in original]
         self.assertSameList(expected, l)
 
         with self.assertRaises(ValueError):
             l[:] = 'ab'
 
     def test_add(self):
-        l = ListWithAction(action=self.action)
+        l = StrictOrderingOnAppendListWithAction(action=self.action)
         original = ['a', 'b']
         l2 = l + original
-        expected = map(self.action, original)
+        expected = [self.action(i) for i in original]
         self.assertSameList(expected, l2)
 
         with self.assertRaises(ValueError):
             l + 'abc'
 
     def test_iadd(self):
-        l = ListWithAction(action=self.action)
+        l = StrictOrderingOnAppendListWithAction(action=self.action)
         original = ['a', 'b']
         l += original
-        expected = map(self.action, original)
+        expected = [self.action(i) for i in original]
         self.assertSameList(expected, l)
 
         with self.assertRaises(ValueError):
@@ -496,7 +423,7 @@ class TestStrictOrderingOnAppendListWithFlagsFactory(unittest.TestCase):
             l['a'] = 'foo'
 
         with self.assertRaises(Exception):
-            c = l['c']
+            l['c']
 
         self.assertEqual(l['a'].foo, False)
         l['a'].foo = True
@@ -524,7 +451,7 @@ class TestStrictOrderingOnAppendListWithFlagsFactory(unittest.TestCase):
 
     def test_strict_ordering_on_append_list_with_flags_factory_extend(self):
         FooList = StrictOrderingOnAppendListWithFlagsFactory({
-            'foo': bool, 'bar': unicode
+            'foo': bool, 'bar': six.text_type
         })
         foo = FooList(['a', 'b', 'c'])
         foo['a'].foo = True
@@ -532,7 +459,7 @@ class TestStrictOrderingOnAppendListWithFlagsFactory(unittest.TestCase):
 
         # Don't allow extending lists with different flag definitions.
         BarList = StrictOrderingOnAppendListWithFlagsFactory({
-            'foo': unicode, 'baz': bool
+            'foo': six.text_type, 'baz': bool
         })
         bar = BarList(['d', 'e', 'f'])
         bar['d'].foo = 'foo'
@@ -574,7 +501,7 @@ class TestStrictOrderingOnAppendListWithFlagsFactory(unittest.TestCase):
         foo += zot
         assertExtended(foo)
 
-        # Test __setslice__.
+        # Test __setitem__.
         foo[3:] = []
         self.assertEqual(len(foo), 3)
         foo[3:] = zot
@@ -737,7 +664,7 @@ class TestTypedList(unittest.TestCase):
         # Adding a TypedList to a TypedList shouldn't even trigger the code
         # that does coercion at all.
         l2 = cls()
-        list.__setslice__(l, 0, -1, [1, 2])
+        list.__setitem__(l, slice(0, -1), [1, 2])
         l2 += l
         self.assertEqual(len(objs), 2)
         self.assertEqual(type(l2[0]), int)
@@ -752,11 +679,11 @@ class TestTypedList(unittest.TestCase):
 
 class TypedTestStrictOrderingOnAppendList(unittest.TestCase):
     def test_init(self):
-        class Unicode(unicode):
-            def __init__(self, other):
-                if not isinstance(other, unicode):
+        class Unicode(six.text_type):
+            def __new__(cls, other):
+                if not isinstance(other, six.text_type):
                     raise ValueError()
-                super(Unicode, self).__init__(other)
+                return six.text_type.__new__(cls, other)
 
         cls = TypedList(Unicode, StrictOrderingOnAppendList)
         l = cls()
@@ -776,7 +703,7 @@ class TypedTestStrictOrderingOnAppendList(unittest.TestCase):
 
 class TestTypedNamedTuple(unittest.TestCase):
     def test_simple(self):
-        FooBar = TypedNamedTuple('FooBar', [('foo', unicode), ('bar', int)])
+        FooBar = TypedNamedTuple('FooBar', [('foo', six.text_type), ('bar', int)])
 
         t = FooBar(foo='foo', bar=2)
         self.assertEquals(type(t), FooBar)
@@ -866,6 +793,7 @@ class TestMisc(unittest.TestCase):
             'before abc between a b c after'
         )
 
+
 class TestEnumString(unittest.TestCase):
     def test_string(self):
         CompilerType = EnumString.subclass('gcc', 'clang', 'clang-cl')
@@ -891,7 +819,8 @@ class TestEnumString(unittest.TestCase):
 
 
 class TestIndentedRepr(unittest.TestCase):
-    def test_indented_repr(self):
+    @unittest.skipUnless(six.PY2, 'requires Python 2')
+    def test_write_indented_repr_py2(self):
         data = textwrap.dedent(r'''
         {
             'a': 1,
@@ -912,11 +841,35 @@ class TestIndentedRepr(unittest.TestCase):
             'pile_of_poo': '💩',
             'special_chars': '\\\'"\x08\n\t',
             'with_accents': 'éàñ',
-        }''').lstrip()
+        }
+        ''').lstrip()
 
         obj = eval(data)
+        buf = io.StringIO()
+        write_indented_repr(buf, obj)
 
-        self.assertEqual(indented_repr(obj), data)
+        self.assertEqual(buf.getvalue(), data)
+
+    @unittest.skipUnless(six.PY3, 'requires Python 3')
+    def test_write_indented_repr(self):
+        data = textwrap.dedent(r'''
+        {   b'c': 'xyz',
+            'a': 1,
+            'b': b'abc',
+            'd': False,
+            'e': {'a': 1, 'b': b'2', 'c': '3'},
+            'f': [1, b'2', '3'],
+            'pile_of_bytes': b'\xf0\x9f\x92\xa9',
+            'pile_of_poo': '💩',
+            'special_chars': '\\\'"\x08\n\t',
+            'with_accents': 'éàñ'}
+        ''').lstrip()
+
+        obj = eval(data)
+        buf = six.StringIO()
+        write_indented_repr(buf, obj)
+
+        self.assertEqual(buf.getvalue(), data)
 
 
 if __name__ == '__main__':

@@ -12,7 +12,8 @@ add_task(async function() {
 
 async function throttleUploadTest(actuallyThrottle) {
   const { tab, monitor } = await initNetMonitor(
-    HAR_EXAMPLE_URL + "html_har_post-data-test-page.html"
+    HAR_EXAMPLE_URL + "html_har_post-data-test-page.html",
+    { requestCount: 1 }
   );
 
   info("Starting test... (actuallyThrottle = " + actuallyThrottle + ")");
@@ -46,15 +47,13 @@ async function throttleUploadTest(actuallyThrottle) {
   await connector.setPreferences(request);
 
   // Execute one POST request on the page and wait till its done.
-  const onEventTimings = monitor.panelWin.api.once(
-    EVENTS.RECEIVED_EVENT_TIMINGS
-  );
   const wait = waitForNetworkEvents(monitor, 1);
-  await ContentTask.spawn(tab.linkedBrowser, { size }, async function(args) {
+  await SpecialPowers.spawn(tab.linkedBrowser, [{ size }], async function(
+    args
+  ) {
     content.wrappedJSObject.executeTest2(args.size);
   });
   await wait;
-  await onEventTimings;
 
   // Copy HAR into the clipboard (asynchronous).
   const jsonString = await HarMenuUtils.copyAllAsHar(

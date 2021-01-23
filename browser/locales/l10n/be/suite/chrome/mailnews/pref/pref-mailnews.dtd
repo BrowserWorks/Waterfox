@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title "Пошта і Навінакупы">
+<!ENTITY generalSettings.caption "Агульныя наладжванні">
+<!ENTITY confirmMove.label "Пацвярджаць перамяшчэнне папак у Смецце">
+<!ENTITY confirmMove.accesskey "с">
+<!ENTITY preserveThreading.label "Не парушаць нізкі падчас размеркавання лістоў">
+<!ENTITY preserveThreading.accesskey "н">
+<!ENTITY mailBiffOnNewWindow.label "Правяраць, ці існуе новая пошта, толькі пасля адкрыцця Пошты і Навінакупаў">
+<!ENTITY mailBiffOnNewWindow.accesskey "т">
+<!ENTITY defaultMailSettings.description "Зрабіць &brandShortName; змоўчным прыстасаваннем для:">
+<!ENTITY setDefaultMail.label "Пошты">
+<!ENTITY setDefaultMail.accesskey "П">
+<!ENTITY setDefaultNews.label "Навінаў">
+<!ENTITY setDefaultNews.accesskey "Н">
+<!ENTITY setDefaultFeed.label "Жывільнікаў">
+<!ENTITY setDefaultFeed.accesskey "Ж">
+<!ENTITY messengerStartPage.caption "Пачатковая старонка пошты">
+<!ENTITY enableStartPage.label "Паказваць пачатковую старонку ў абсягу ліста, калі Пошта запускаецца">
+<!ENTITY enableStartPage.accesskey "к">
+<!ENTITY location.label "Месцазнаходжанне:">
+<!ENTITY location.accesskey "М">
+<!ENTITY useDefault.label "Аднавіць змоўчную">
+<!ENTITY useDefault.accesskey "А">
+<!ENTITY rememberLastMsg.label "Памятаць апошні вылучаны ліст">
+<!ENTITY rememberLastMsg.accesskey "П">

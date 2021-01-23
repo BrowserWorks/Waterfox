@@ -1,9 +1,3 @@
-/**
- * These tests run in both the XUL and HTML version of about:addons. When adding
- * a new test it should be defined as a function that accepts a boolean isHtmlViews
- * and added to the testFns array.
- */
-
 const { AddonTestUtils } = ChromeUtils.import(
   "resource://testing-common/AddonTestUtils.jsm",
   {}
@@ -72,148 +66,59 @@ async function installExtension(manifest = {}) {
 }
 
 function getAddonCard(doc, id) {
-  if (doc.ownerGlobal != gManagerWindow) {
-    return doc.querySelector(`addon-card[addon-id="${id}"]`);
-  }
-  return doc.querySelector(`.addon[value="${id}"]`);
+  return doc.querySelector(`addon-card[addon-id="${id}"]`);
 }
 
 function openDetailView(doc, id) {
-  if (doc.ownerGlobal != gManagerWindow) {
-    let card = getAddonCard(doc, id);
-    card.querySelector('[action="expand"]').click();
-  } else {
-    getAddonCard(doc, id).click();
-  }
+  let card = getAddonCard(doc, id);
+  card.querySelector('[action="expand"]').click();
 }
 
 async function enableAndDisable(doc, row) {
-  if (doc.ownerGlobal != gManagerWindow) {
-    let toggleButton = row.querySelector('[action="toggle-disabled"]');
-    let disabled = BrowserTestUtils.waitForEvent(row, "update");
-    toggleButton.click();
-    await disabled;
-    let enabled = BrowserTestUtils.waitForEvent(row, "update");
-    toggleButton.click();
-    await enabled;
-  } else {
-    is(row.getAttribute("active"), "true", "The add-on is enabled");
-    doc.getAnonymousElementByAttribute(row, "anonid", "disable-btn").click();
-    await TestUtils.waitForCondition(
-      () => row.getAttribute("active") == "false",
-      "Wait for disable"
-    );
-    doc.getAnonymousElementByAttribute(row, "anonid", "enable-btn").click();
-    await TestUtils.waitForCondition(
-      () => row.getAttribute("active") == "true",
-      "Wait for enable"
-    );
-  }
+  let toggleButton = row.querySelector('[action="toggle-disabled"]');
+  let disabled = BrowserTestUtils.waitForEvent(row, "update");
+  toggleButton.click();
+  await disabled;
+  let enabled = BrowserTestUtils.waitForEvent(row, "update");
+  toggleButton.click();
+  await enabled;
 }
 
 async function removeAddonAndUndo(doc, row) {
-  let isHtml = doc.ownerGlobal != gManagerWindow;
-  let id = isHtml ? row.addon.id : row.mAddon.id;
+  let id = row.addon.id;
   let started = AddonTestUtils.promiseWebExtensionStartup(id);
-  if (isHtml) {
-    let removed = BrowserTestUtils.waitForEvent(row, "remove");
-    row.querySelector('[action="remove"]').click();
-    await removed;
+  let removed = BrowserTestUtils.waitForEvent(row, "remove");
+  row.querySelector('[action="remove"]').click();
+  await removed;
 
-    let undoBanner = doc.querySelector(
-      `message-bar[addon-id="${row.addon.id}"]`
-    );
-    undoBanner.querySelector('[action="undo"]').click();
-    await TestUtils.waitForCondition(() => getAddonCard(doc, row.addon.id));
-  } else {
-    is(row.getAttribute("status"), "installed", "The add-on is installed");
-    ok(!row.hasAttribute("pending"), "The add-on is not pending");
-    doc.getAnonymousElementByAttribute(row, "anonid", "remove-btn").click();
-    await TestUtils.waitForCondition(
-      () => row.getAttribute("pending") == "uninstall",
-      "Wait for uninstall"
-    );
-
-    doc.getAnonymousElementByAttribute(row, "anonid", "undo-btn").click();
-    await TestUtils.waitForCondition(
-      () => !row.hasAttribute("pending"),
-      "Wait for undo"
-    );
-  }
+  let undoBanner = doc.querySelector(`message-bar[addon-id="${row.addon.id}"]`);
+  undoBanner.querySelector('[action="undo"]').click();
+  await TestUtils.waitForCondition(() => getAddonCard(doc, row.addon.id));
   await started;
 }
 
 async function openPrefs(doc, row) {
-  if (doc.ownerGlobal != gManagerWindow) {
-    row.querySelector('[action="preferences"]').click();
-  } else {
-    let prefsButton;
-    await TestUtils.waitForCondition(() => {
-      prefsButton = doc.getAnonymousElementByAttribute(
-        row,
-        "anonid",
-        "preferences-btn"
-      );
-      return prefsButton;
-    });
-    prefsButton.click();
-  }
+  row.querySelector('[action="preferences"]').click();
 }
 
 function changeAutoUpdates(doc) {
-  if (doc.ownerGlobal != gManagerWindow) {
-    let row = doc.querySelector(".addon-detail-row-updates");
-    let checked = row.querySelector(":checked");
-    is(checked.value, "1", "Use default is selected");
-    row.querySelector('[value="0"]').click();
-    row.querySelector('[action="update-check"]').click();
-    row.querySelector('[value="2"]').click();
-    row.querySelector('[value="1"]').click();
-  } else {
-    let autoUpdate = doc.getElementById("detail-autoUpdate");
-    is(autoUpdate.value, "1", "Use default is selected");
-    // Turn off auto update.
-    autoUpdate.querySelector('[value="0"]').click();
-    // Check for updates.
-    let checkForUpdates = doc.getElementById("detail-findUpdates-btn");
-    is(
-      checkForUpdates.hidden,
-      false,
-      "The check for updates button is visible"
-    );
-    checkForUpdates.click();
-    // Turn on auto update.
-    autoUpdate.querySelector('[value="2"]').click();
-    // Set auto update to default again.
-    autoUpdate.querySelector('[value="1"]').click();
-  }
+  let row = doc.querySelector(".addon-detail-row-updates");
+  let checked = row.querySelector(":checked");
+  is(checked.value, "1", "Use default is selected");
+  row.querySelector('[value="0"]').click();
+  row.querySelector('[action="update-check"]').click();
+  row.querySelector('[value="2"]').click();
+  row.querySelector('[value="1"]').click();
 }
 
 function clickLinks(doc) {
-  if (doc.ownerGlobal != gManagerWindow) {
-    let links = ["author", "homepage", "rating"];
-    for (let linkType of links) {
-      doc.querySelector(`.addon-detail-row-${linkType} a`).click();
-    }
-  } else {
-    // Check links.
-    let creator = doc.getElementById("detail-creator");
-    let label = doc.getAnonymousElementByAttribute(creator, "anonid", "label");
-    let link = doc.getAnonymousElementByAttribute(
-      creator,
-      "anonid",
-      "creator-link"
-    );
-    // Check that clicking the label doesn't trigger a telemetry event.
-    label.click();
-    assertTelemetryMatches([]);
-    link.click();
-    doc.getElementById("detail-homepage").click();
-    doc.getElementById("detail-reviews").click();
+  let links = ["author", "homepage", "rating"];
+  for (let linkType of links) {
+    doc.querySelector(`.addon-detail-row-${linkType} a`).click();
   }
 }
 
-async function init(startPage, isHtmlViews) {
+async function init(startPage) {
   gManagerWindow = await open_manager(null);
   gCategoryUtilities = new CategoryUtilities(gManagerWindow);
 
@@ -226,26 +131,20 @@ async function init(startPage, isHtmlViews) {
 
   await gCategoryUtilities.openType(startPage);
 
-  if (isHtmlViews) {
-    return gManagerWindow.document.getElementById("html-view-browser")
-      .contentDocument;
-  }
-  return gManagerWindow.document;
+  return gManagerWindow.document.getElementById("html-view-browser")
+    .contentDocument;
 }
 
 /* Test functions start here. */
 
-async function setup(isHtmlViews) {
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", isHtmlViews]],
-  });
+add_task(async function setup() {
   // Clear out any telemetry data that existed before this file is run.
   Services.telemetry.clearEvents();
-}
+});
 
-async function testBasicViewTelemetry(isHtmlViews) {
+add_task(async function testBasicViewTelemetry() {
   let addons = await Promise.all([installTheme(), installExtension()]);
-  let doc = await init("discover", isHtmlViews);
+  let doc = await init("discover");
 
   await gCategoryUtilities.openType("theme");
   openDetailView(doc, "theme@mochi.test");
@@ -255,83 +154,89 @@ async function testBasicViewTelemetry(isHtmlViews) {
   openDetailView(doc, "extension@mochi.test");
   await wait_for_view_load(gManagerWindow);
 
-  assertTelemetryMatches(
+  assertAboutAddonsTelemetryEvents(
     [
-      ["view", "aboutAddons", "discover"],
-      ["view", "aboutAddons", "list", { type: "theme" }],
+      ["addonsManager", "view", "aboutAddons", "discover"],
+      ["addonsManager", "view", "aboutAddons", "list", { type: "theme" }],
       [
+        "addonsManager",
         "view",
         "aboutAddons",
         "detail",
         { type: "theme", addonId: "theme@mochi.test" },
       ],
-      ["view", "aboutAddons", "list", { type: "extension" }],
+      ["addonsManager", "view", "aboutAddons", "list", { type: "extension" }],
       [
+        "addonsManager",
         "view",
         "aboutAddons",
         "detail",
         { type: "extension", addonId: "extension@mochi.test" },
       ],
     ],
-    { filterMethods: ["view"] }
+    { methods: ["view"] }
   );
 
   await close_manager(gManagerWindow);
   await Promise.all(addons.map(addon => addon.unload()));
-}
+});
 
-async function testExtensionEvents(isHtmlViews) {
+add_task(async function testExtensionEvents() {
   let addon = await installExtension();
   let type = "extension";
-  let doc = await init("extension", isHtmlViews);
+  let doc = await init("extension");
 
   // Check/clear the current telemetry.
-  assertTelemetryMatches(
-    [["view", "aboutAddons", "list", { type: "extension" }]],
-    { filterMethods: ["view"] }
+  assertAboutAddonsTelemetryEvents(
+    [["addonsManager", "view", "aboutAddons", "list", { type: "extension" }]],
+    { methods: ["view"] }
   );
 
   let row = getAddonCard(doc, addonId);
 
   // Check disable/enable.
   await enableAndDisable(doc, row);
-  assertTelemetryMatches(
+  assertAboutAddonsTelemetryEvents(
     [
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         null,
         { action: "disable", addonId, type, view: "list" },
       ],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         null,
         { action: "enable", addonId, type, view: "list" },
       ],
     ],
-    { filterMethods: ["action"] }
+    { methods: ["action"] }
   );
 
   // Check remove/undo.
   await removeAddonAndUndo(doc, row);
-  let uninstallValue = isHtmlViews ? "accepted" : null;
-  assertTelemetryMatches(
+  let uninstallValue = "accepted";
+  assertAboutAddonsTelemetryEvents(
     [
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         uninstallValue,
         { action: "uninstall", addonId, type, view: "list" },
       ],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         null,
         { action: "undo", addonId, type, view: "list" },
       ],
     ],
-    { filterMethods: ["action"] }
+    { methods: ["action"] }
   );
 
   // Open the preferences page.
@@ -340,56 +245,61 @@ async function testExtensionEvents(isHtmlViews) {
   row = getAddonCard(doc, addonId);
   await openPrefs(doc, row);
   BrowserTestUtils.removeTab(await waitForNewTab);
-  assertTelemetryMatches(
+  assertAboutAddonsTelemetryEvents(
     [
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "external",
         { action: "preferences", type, addonId, view: "list" },
       ],
     ],
-    { filterMethods: ["action"] }
+    { methods: ["action"] }
   );
 
   // Go to the detail view.
   openDetailView(doc, addonId);
   await wait_for_view_load(gManagerWindow);
-  assertTelemetryMatches(
-    [["view", "aboutAddons", "detail", { type, addonId }]],
-    { filterMethods: ["view"] }
+  assertAboutAddonsTelemetryEvents(
+    [["addonsManager", "view", "aboutAddons", "detail", { type, addonId }]],
+    { methods: ["view"] }
   );
 
   // Check updates.
   changeAutoUpdates(doc);
-  assertTelemetryMatches(
+  assertAboutAddonsTelemetryEvents(
     [
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "",
         { action: "setAddonUpdate", type, addonId, view: "detail" },
       ],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         null,
         { action: "checkForUpdate", type, addonId, view: "detail" },
       ],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "enabled",
         { action: "setAddonUpdate", type, addonId, view: "detail" },
       ],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "default",
         { action: "setAddonUpdate", type, addonId, view: "detail" },
       ],
     ],
-    { filterMethods: ["action"] }
+    { methods: ["action"] }
   );
 
   // These links don't actually have a URL, so they don't open a tab. They're only
@@ -398,7 +308,7 @@ async function testExtensionEvents(isHtmlViews) {
 
   // The support button will open a new tab.
   waitForNewTab = BrowserTestUtils.waitForNewTab(gBrowser);
-  gManagerWindow.document.getElementById("helpButton").click();
+  doc.getElementById("help-button").click();
   BrowserTestUtils.removeTab(await waitForNewTab);
 
   // Check that the preferences button includes the view.
@@ -407,20 +317,21 @@ async function testExtensionEvents(isHtmlViews) {
   await openPrefs(doc, row);
   BrowserTestUtils.removeTab(await waitForNewTab);
 
-  assertTelemetryMatches(
+  assertAboutAddonsTelemetryEvents(
     [
-      ["link", "aboutAddons", "author", { view: "detail" }],
-      ["link", "aboutAddons", "homepage", { view: "detail" }],
-      ["link", "aboutAddons", "rating", { view: "detail" }],
-      ["link", "aboutAddons", "support", { view: "detail" }],
+      ["addonsManager", "link", "aboutAddons", "author", { view: "detail" }],
+      ["addonsManager", "link", "aboutAddons", "homepage", { view: "detail" }],
+      ["addonsManager", "link", "aboutAddons", "rating", { view: "detail" }],
+      ["addonsManager", "link", "aboutAddons", "support", { view: "detail" }],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "external",
         { action: "preferences", type, addonId, view: "detail" },
       ],
     ],
-    { filterMethods: ["action", "link"] }
+    { methods: ["action", "link"] }
   );
 
   // Update the preferences and check that inline changes.
@@ -433,144 +344,164 @@ async function testExtensionEvents(isHtmlViews) {
   await openPrefs(doc, row);
   await wait_for_view_load(gManagerWindow);
 
-  assertTelemetryMatches(
+  assertAboutAddonsTelemetryEvents(
     [
-      ["view", "aboutAddons", "list", { type }],
+      ["addonsManager", "view", "aboutAddons", "list", { type }],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "inline",
         { action: "preferences", type, addonId, view: "list" },
       ],
       [
+        "addonsManager",
         "view",
         "aboutAddons",
         "detail",
         { type: "extension", addonId: "extension@mochi.test" },
       ],
     ],
-    { filterMethods: ["action", "view"] }
+    { methods: ["action", "view"] }
   );
 
   await close_manager(gManagerWindow);
   await addon.unload();
   await upgraded.unload();
-}
+});
 
-async function testGeneralActions(isHtmlViews) {
-  await init("extension", isHtmlViews);
+add_task(async function testGeneralActions() {
+  let win = await loadInitialView("extension");
+  info("Loaded");
 
-  let doc = gManagerWindow.document;
-  let menu = doc.getElementById("utils-menu");
-  let checkForUpdates = doc.getElementById("utils-updateNow");
-  let recentUpdates = doc.getElementById("utils-viewUpdates");
-  let debugAddons = doc.getElementById("utils-debugAddons");
-  let updatePolicy = doc.getElementById("utils-autoUpdateDefault");
-  let resetUpdatePolicy = doc.getElementById(
-    "utils-resetAddonUpdatesToAutomatic"
-  );
-  let manageShortcuts = doc.getElementById("manage-shortcuts");
+  let doc = win.document;
+  let pageOptionsButton = doc.querySelector('[action="page-options"]');
+  let menu = doc.querySelector("#page-options panel-list");
+  let checkForUpdates = menu.querySelector('[action="check-for-updates"]');
+  let recentUpdates = menu.querySelector('[action="view-recent-updates"]');
+  let updatePolicy = menu.querySelector('[action="set-update-automatically"]');
+  let resetUpdatePolicy = menu.querySelector('[action="reset-update-states"]');
+  let debugAddons = menu.querySelector('[action="debug-addons"]');
+  let manageShortcuts = menu.querySelector('[action="manage-shortcuts"]');
 
   async function clickInGearMenu(item) {
-    let shown = BrowserTestUtils.waitForEvent(menu, "popupshown");
-    menu.openPopup();
+    info(`Opening menu to click ${item.getAttribute("action")}`);
+    let shown = BrowserTestUtils.waitForEvent(menu, "shown");
+    // This should perform a click on the button to ensure that works. Other
+    // tests might just open the menu directly, or click items when it's closed.
+    EventUtils.synthesizeMouseAtCenter(pageOptionsButton, {}, win);
     await shown;
+    info(`Clicking ${item.getAttribute("action")}`);
     item.click();
-    menu.hidePopup();
   }
 
   await clickInGearMenu(checkForUpdates);
+  let recentUpdatesLoaded = waitForViewLoad(win);
   await clickInGearMenu(recentUpdates);
-  await wait_for_view_load(gManagerWindow);
+  await recentUpdatesLoaded;
   await clickInGearMenu(updatePolicy);
   await clickInGearMenu(updatePolicy);
   await clickInGearMenu(resetUpdatePolicy);
 
   // Check shortcuts view.
+  let shortcutsLoaded = waitForViewLoad(win);
   await clickInGearMenu(manageShortcuts);
-  await wait_for_view_load(gManagerWindow);
+  await shortcutsLoaded;
   await clickInGearMenu(checkForUpdates);
 
   let waitForNewTab = BrowserTestUtils.waitForNewTab(gBrowser);
   await clickInGearMenu(debugAddons);
-  BrowserTestUtils.removeTab(await waitForNewTab);
+  info("Waiting for about:debugging tab");
+  let tab = await waitForNewTab;
+  BrowserTestUtils.removeTab(tab);
 
   waitForNewTab = BrowserTestUtils.waitForNewTab(gBrowser);
-  let searchBox = doc.getElementById("header-search");
+  let searchBox = doc.querySelector("search-addons").input.inputField;
   searchBox.value = "something";
-  searchBox.doCommand();
-  BrowserTestUtils.removeTab(await waitForNewTab);
+  searchBox.focus();
+  EventUtils.synthesizeKey("KEY_Enter", {}, win);
+  info("Waiting for AMO search tab");
+  tab = await waitForNewTab;
+  BrowserTestUtils.removeTab(tab);
 
-  assertTelemetryMatches(
+  assertAboutAddonsTelemetryEvents(
     [
-      ["view", "aboutAddons", "list", { type: "extension" }],
+      ["addonsManager", "view", "aboutAddons", "list", { type: "extension" }],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         null,
         { action: "checkForUpdates", view: "list" },
       ],
-      ["view", "aboutAddons", "updates", { type: "recent" }],
+      ["addonsManager", "view", "aboutAddons", "updates", { type: "recent" }],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "default,enabled",
         { action: "setUpdatePolicy", view: "updates" },
       ],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         "enabled",
         { action: "setUpdatePolicy", view: "updates" },
       ],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         null,
         { action: "resetUpdatePolicy", view: "updates" },
       ],
-      ["view", "aboutAddons", "shortcuts"],
+      ["addonsManager", "view", "aboutAddons", "shortcuts"],
       [
+        "addonsManager",
         "action",
         "aboutAddons",
         null,
         { action: "checkForUpdates", view: "shortcuts" },
       ],
-      ["link", "aboutAddons", "about:debugging", { view: "shortcuts" }],
       [
+        "addonsManager",
+        "link",
+        "aboutAddons",
+        "about:debugging",
+        { view: "shortcuts" },
+      ],
+      [
+        "addonsManager",
         "link",
         "aboutAddons",
         "search",
         { view: "shortcuts", type: "shortcuts" },
       ],
     ],
-    { filterMethods: TELEMETRY_METHODS }
+    { methods: TELEMETRY_METHODS }
   );
 
-  await close_manager(gManagerWindow);
+  await closeView(win);
 
-  assertTelemetryMatches([]);
-}
+  assertAboutAddonsTelemetryEvents([]);
+});
 
-async function testPreferencesLink(isHtmlViews) {
-  assertTelemetryMatches([]);
+add_task(async function testPreferencesLink() {
+  assertAboutAddonsTelemetryEvents([]);
 
-  await init("theme", isHtmlViews);
-
-  let doc = gManagerWindow.document;
+  let doc = await init("theme");
 
   // Open the about:preferences page from about:addons.
   let waitForNewTab = BrowserTestUtils.waitForNewTab(
     gBrowser,
-    "about:preferences"
+    "about:preferences",
+    true
   );
   doc.getElementById("preferencesButton").click();
   let tab = await waitForNewTab;
   let getAddonsButton = () =>
     tab.linkedBrowser.contentDocument.getElementById("addonsButton");
-
-  // Wait for the page to load.
-  await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
   // Open the about:addons page from about:preferences.
   getAddonsButton().click();
@@ -578,41 +509,23 @@ async function testPreferencesLink(isHtmlViews) {
   // Close the about:preferences tab.
   BrowserTestUtils.removeTab(tab);
 
-  assertTelemetryMatches(
+  TelemetryTestUtils.assertEvents(
     [
-      ["view", "aboutAddons", "list", { type: "theme" }],
-      ["link", "aboutAddons", "about:preferences", { view: "list" }],
-      ["link", "aboutPreferences", "about:addons"],
+      ["addonsManager", "view", "aboutAddons", "list", { type: "theme" }],
+      [
+        "addonsManager",
+        "link",
+        "aboutAddons",
+        "about:preferences",
+        { view: "list" },
+      ],
+      ["addonsManager", "link", "aboutPreferences", "about:addons"],
     ],
-    { filterMethods: ["link", "view"] }
+    {
+      category: "addonsManager",
+      method: /^(link|view)$/,
+    }
   );
 
   await close_manager(gManagerWindow);
-}
-
-const testFns = [
-  testBasicViewTelemetry,
-  testExtensionEvents,
-  testGeneralActions,
-  testPreferencesLink,
-];
-
-/**
- * Setup the tasks. This will add tasks for each of testFns to run with the
- * XUL and HTML version of about:addons.
- *
- * To add a test, add it to the testFns array.
- */
-function addTestTasks(isHtmlViews) {
-  add_task(() => setup(isHtmlViews));
-
-  for (let fn of testFns) {
-    let localTestFnName = fn.name + (isHtmlViews ? "HTML" : "XUL");
-    // Get an informative name for the function in stack traces.
-    let obj = { [localTestFnName]: () => fn(isHtmlViews) };
-    add_task(obj[localTestFnName]);
-  }
-}
-
-addTestTasks(false);
-addTestTasks(true);
+});

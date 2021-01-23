@@ -11,13 +11,18 @@
 #include "SharedSSLState.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/TextUtils.h"
 #include "mozilla/Unused.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsCRT.h"
 #include "nsILineInputStream.h"
+#include "nsIMarionette.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
 #include "nsIOutputStream.h"
+#ifdef ENABLE_REMOTE_AGENT
+#  include "nsIRemoteAgent.h"
+#endif
 #include "nsISafeOutputStream.h"
 #include "nsIX509Cert.h"
 #include "nsNSSCertHelper.h"
@@ -27,7 +32,6 @@
 #include "nsStreamUtils.h"
 #include "nsStringBuffer.h"
 #include "nsThreadUtils.h"
-#include "ssl.h"  // For SSL_ClearSessionCache
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -82,9 +86,9 @@ NS_IMPL_ISUPPORTS(nsCertOverrideService, nsICertOverrideService, nsIObserver,
                   nsISupportsWeakReference)
 
 nsCertOverrideService::nsCertOverrideService()
-    : mMutex("nsCertOverrideService.mutex") {}
+    : mDisableAllSecurityCheck(false), mMutex("nsCertOverrideService.mutex") {}
 
-nsCertOverrideService::~nsCertOverrideService() {}
+nsCertOverrideService::~nsCertOverrideService() = default;
 
 nsresult nsCertOverrideService::Init() {
   if (!NS_IsMainThread()) {
@@ -336,7 +340,9 @@ nsCertOverrideService::RememberValidityOverride(const nsACString& aHostName,
                                                 uint32_t aOverrideBits,
                                                 bool aTemporary) {
   NS_ENSURE_ARG_POINTER(aCert);
-  if (aHostName.IsEmpty()) return NS_ERROR_INVALID_ARG;
+  if (aHostName.IsEmpty() || !IsAscii(aHostName)) {
+    return NS_ERROR_INVALID_ARG;
+  }
   if (aPort < -1) return NS_ERROR_INVALID_ARG;
 
   UniqueCERTCertificate nsscert(aCert->GetCert());
@@ -389,7 +395,8 @@ NS_IMETHODIMP
 nsCertOverrideService::RememberTemporaryValidityOverrideUsingFingerprint(
     const nsACString& aHostName, int32_t aPort,
     const nsACString& aCertFingerprint, uint32_t aOverrideBits) {
-  if (aCertFingerprint.IsEmpty() || aHostName.IsEmpty() || (aPort < -1)) {
+  if (aCertFingerprint.IsEmpty() || aHostName.IsEmpty() ||
+      !IsAscii(aCertFingerprint) || !IsAscii(aHostName) || (aPort < -1)) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -409,7 +416,24 @@ nsCertOverrideService::HasMatchingOverride(const nsACString& aHostName,
                                            int32_t aPort, nsIX509Cert* aCert,
                                            uint32_t* aOverrideBits,
                                            bool* aIsTemporary, bool* _retval) {
-  if (aHostName.IsEmpty()) return NS_ERROR_INVALID_ARG;
+  bool disableAllSecurityCheck = false;
+  {
+    MutexAutoLock lock(mMutex);
+    disableAllSecurityCheck = mDisableAllSecurityCheck;
+  }
+  if (disableAllSecurityCheck) {
+    nsCertOverride::OverrideBits all = nsCertOverride::OverrideBits::Untrusted |
+                                       nsCertOverride::OverrideBits::Mismatch |
+                                       nsCertOverride::OverrideBits::Time;
+    *aOverrideBits = static_cast<uint32_t>(all);
+    *aIsTemporary = false;
+    *_retval = true;
+    return NS_OK;
+  }
+
+  if (aHostName.IsEmpty() || !IsAscii(aHostName)) {
+    return NS_ERROR_INVALID_ARG;
+  }
   if (aPort < -1) return NS_ERROR_INVALID_ARG;
 
   NS_ENSURE_ARG_POINTER(aCert);
@@ -481,6 +505,9 @@ nsresult nsCertOverrideService::AddEntryToList(
 NS_IMETHODIMP
 nsCertOverrideService::ClearValidityOverride(const nsACString& aHostName,
                                              int32_t aPort) {
+  if (aHostName.IsEmpty() || !IsAscii(aHostName)) {
+    return NS_ERROR_INVALID_ARG;
+  }
   if (!NS_IsMainThread()) {
     return NS_ERROR_NOT_SAME_THREAD;
   }
@@ -499,7 +526,29 @@ nsCertOverrideService::ClearValidityOverride(const nsACString& aHostName,
 
   nsCOMPtr<nsINSSComponent> nss(do_GetService(PSM_COMPONENT_CONTRACTID));
   if (nss) {
-    SSL_ClearSessionCache();
+    nss->ClearSSLExternalAndInternalSessionCache();
+  } else {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsCertOverrideService::ClearAllOverrides() {
+  if (!NS_IsMainThread()) {
+    return NS_ERROR_NOT_SAME_THREAD;
+  }
+
+  {
+    MutexAutoLock lock(mMutex);
+    mSettingsTable.Clear();
+    Write(lock);
+  }
+
+  nsCOMPtr<nsINSSComponent> nss(do_GetService(PSM_COMPONENT_CONTRACTID));
+  if (nss) {
+    nss->ClearSSLExternalAndInternalSessionCache();
   } else {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -559,6 +608,37 @@ nsCertOverrideService::IsCertUsedForOverrides(nsIX509Cert* aCert,
     }
   }
   *_retval = counter;
+  return NS_OK;
+}
+
+static bool IsDebugger() {
+  bool marionetteRunning = false;
+  bool remoteAgentListening = false;
+
+  nsCOMPtr<nsIMarionette> marionette = do_GetService(NS_MARIONETTE_CONTRACTID);
+  if (marionette) {
+    marionette->GetRunning(&marionetteRunning);
+  }
+
+#ifdef ENABLE_REMOTE_AGENT
+  nsCOMPtr<nsIRemoteAgent> agent = do_GetService(NS_REMOTEAGENT_CONTRACTID);
+  if (agent) {
+    agent->GetListening(&remoteAgentListening);
+  }
+#endif
+
+  return marionetteRunning || remoteAgentListening;
+}
+
+NS_IMETHODIMP
+nsCertOverrideService::
+    SetDisableAllSecurityChecksAndLetAttackersInterceptMyData(bool aDisable) {
+  if (!(PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR") || IsDebugger())) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  MutexAutoLock lock(mMutex);
+  mDisableAllSecurityCheck = aDisable;
   return NS_OK;
 }
 

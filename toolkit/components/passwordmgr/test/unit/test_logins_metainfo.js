@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -19,15 +17,15 @@ XPCOMUtils.defineLazyServiceGetter(
   "nsIUUIDGenerator"
 );
 
-var gLooksLikeUUIDRegex = /^\{\w{8}-\w{4}-\w{4}-\w{4}-\w{12}\}$/;
+const gLooksLikeUUIDRegex = /^\{\w{8}-\w{4}-\w{4}-\w{4}-\w{12}\}$/;
 
 /**
- * Retrieves the only login among the current data that matches the hostname of
+ * Retrieves the only login among the current data that matches the origin of
  * the given nsILoginInfo.  In case there is more than one login for the
- * hostname, the test fails.
+ * origin, the test fails.
  */
 function retrieveLoginMatching(aLoginInfo) {
-  let logins = Services.logins.findLogins(aLoginInfo.hostname, "", "");
+  let logins = Services.logins.findLogins(aLoginInfo.origin, "", "");
   Assert.equal(logins.length, 1);
   return logins[0].QueryInterface(Ci.nsILoginMetaInfo);
 }
@@ -53,17 +51,17 @@ function assertMetaInfoEqual(aActual, aExpected) {
 /**
  * nsILoginInfo instances with or without nsILoginMetaInfo properties.
  */
-var gLoginInfo1;
-var gLoginInfo2;
-var gLoginInfo3;
+let gLoginInfo1;
+let gLoginInfo2;
+let gLoginInfo3;
 
 /**
  * nsILoginInfo instances reloaded with all the nsILoginMetaInfo properties.
  * These are often used to provide the reference values to test against.
  */
-var gLoginMetaInfo1;
-var gLoginMetaInfo2;
-var gLoginMetaInfo3;
+let gLoginMetaInfo1;
+let gLoginMetaInfo2;
+let gLoginMetaInfo3;
 
 // Tests
 
@@ -77,7 +75,7 @@ add_task(function test_initialize() {
 
   gLoginInfo1 = TestData.formLogin();
   gLoginInfo2 = TestData.formLogin({
-    hostname: "http://other.example.com",
+    origin: "http://other.example.com",
     guid: gUUIDGenerator.generateUUID().toString(),
     timeCreated: baseTimeMs,
     timeLastUsed: baseTimeMs + 2,
@@ -133,7 +131,7 @@ add_task(function test_addLogin_metainfo() {
  */
 add_task(function test_addLogin_metainfo_duplicate() {
   let loginInfo = TestData.formLogin({
-    hostname: "http://duplicate.example.com",
+    origin: "http://duplicate.example.com",
     guid: gLoginMetaInfo2.guid,
   });
   Assert.throws(

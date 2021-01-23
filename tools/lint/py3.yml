@@ -4,40 +4,20 @@ py3:
     include: ['.']
     exclude:
         - browser/app
-        - browser/components
-        - browser/extensions
         - build
-        - client.py
-        - config
-        - dom/bindings
         - dom/canvas/test
-        - dom/media/test
         - gfx
         - ipc/ipdl
-        - js/src
-        - layout/reftests
-        - layout/style
-        - layout/tools/reftest
-        - media
-        - memory/replace
-        - modules/freetype2
-        - python/safety
+        - layout/style/ServoCSSPropList.mako.py
         - security/manager/ssl
-        - servo
         - testing/awsy
-        - testing/firefox-ui/harness/firefox_ui_harness/runners/update.py
+        - testing/condprofile/condprof/android.py
+        - testing/condprofile/condprof/desktop.py
         - testing/gtest
-        - testing/mochitest
         - testing/mozharness
-        - testing/raptor
-        - testing/tools/iceserver
         - testing/tps
         - testing/web-platform
         - toolkit
-        - tools/jprof
-        - tools/profiler
-        - tools/rb
-        - tools/update-packaging
         - xpcom/idl-parser
     extensions: ['py']
     support-files:

@@ -4,17 +4,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "PresentationSessionInfo.h"
+
+#include <utility>
+
+#include "PresentationLog.h"
+#include "PresentationService.h"
+#include "mozilla/Logging.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/HTMLIFrameElementBinding.h"
-#include "mozilla/dom/BrowserParent.h"
-#include "mozilla/Logging.h"
-#include "mozilla/Move.h"
-#include "mozilla/Preferences.h"
 #include "nsContentUtils.h"
-#include "nsGlobalWindow.h"
-#include "nsIDocShell.h"
 #include "nsFrameLoader.h"
 #include "nsFrameLoaderOwner.h"
+#include "nsGlobalWindow.h"
+#include "nsIDocShell.h"
 #include "nsIMutableArray.h"
 #include "nsINetAddr.h"
 #include "nsISocketTransport.h"
@@ -23,9 +28,6 @@
 #include "nsQueryObject.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
-#include "PresentationLog.h"
-#include "PresentationService.h"
-#include "PresentationSessionInfo.h"
 
 #ifdef MOZ_WIDGET_ANDROID
 #  include "nsIPresentationNetworkHelper.h"
@@ -120,7 +122,7 @@ class TCPPresentationChannelDescription final
       : mAddress(aAddress), mPort(aPort) {}
 
  private:
-  ~TCPPresentationChannelDescription() {}
+  ~TCPPresentationChannelDescription() = default;
 
   nsCString mAddress;
   uint16_t mPort;
@@ -319,13 +321,11 @@ nsresult PresentationSessionInfo::Close(nsresult aReason, uint32_t aState) {
   return NS_OK;
 }
 
-nsresult PresentationSessionInfo::OnTerminate(
+void PresentationSessionInfo::OnTerminate(
     nsIPresentationControlChannel* aControlChannel) {
   mIsOnTerminating = true;  // Mark for terminating transport channel
   SetStateWithReason(nsIPresentationSessionListener::STATE_TERMINATED, NS_OK);
   SetControlChannel(aControlChannel);
-
-  return NS_OK;
 }
 
 nsresult PresentationSessionInfo::ReplySuccess() {
@@ -989,24 +989,20 @@ nsresult PresentationControllingInfo::ContinueReconnect() {
 // nsIListNetworkAddressesListener
 NS_IMETHODIMP
 PresentationControllingInfo::OnListedNetworkAddresses(
-    const char** aAddressArray, uint32_t aAddressArraySize) {
-  if (!aAddressArraySize) {
+    const nsTArray<nsCString>& aAddressArray) {
+  if (aAddressArray.IsEmpty()) {
     return OnListNetworkAddressesFailed();
   }
 
   // TODO bug 1228504 Take all IP addresses in PresentationChannelDescription
-  // into account. And at the first stage Presentation API is only exposed on
-  // Firefox OS where the first IP appears enough for most scenarios.
-
-  nsAutoCString ip;
-  ip.Assign(aAddressArray[0]);
+  // into account.
 
   // On Firefox desktop, the IP address is retrieved from a callback function.
   // To make consistent code sequence, following function call is dispatched
   // into main thread instead of calling it directly.
   NS_DispatchToMainThread(NewRunnableMethod<nsCString>(
       "dom::PresentationControllingInfo::OnGetAddress", this,
-      &PresentationControllingInfo::OnGetAddress, ip));
+      &PresentationControllingInfo::OnGetAddress, aAddressArray[0]));
 
   return NS_OK;
 }
@@ -1032,7 +1028,7 @@ nsresult PresentationControllingInfo::NotifyReconnectResult(nsresult aStatus) {
 
   mIsReconnecting = false;
   nsCOMPtr<nsIPresentationServiceCallback> callback =
-      mReconnectCallback.forget();
+      std::move(mReconnectCallback);
   if (NS_FAILED(aStatus)) {
     return callback->NotifyError(aStatus);
   }

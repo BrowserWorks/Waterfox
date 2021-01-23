@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Download bezig…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Pauzeren">
+<!ENTITY cmd.resume.tooltip              "Hervatten">
+<!ENTITY cmd.retry.tooltip               "Opnieuw proberen">
+<!ENTITY cmd.cancel.tooltip              "Annuleren">
+<!ENTITY cmd.open.label                  "Openen">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Bijbehorende map openen">
+<!ENTITY cmd.show.accesskey              "m">
+<!ENTITY cmd.goToDownloadPage.label      "Naar downloadpagina gaan">
+<!ENTITY cmd.goToDownloadPage.accesskey  "d">
+<!ENTITY cmd.copyDownloadLink.label      "Downloadkoppeling kopiëren">
+<!ENTITY cmd.copyDownloadLink.accesskey  "k">
+<!ENTITY closeWhenDone.label             "Dit venster sluiten wanneer de download is voltooid">
+<!ENTITY closeWhenDone.accesskey         "s">

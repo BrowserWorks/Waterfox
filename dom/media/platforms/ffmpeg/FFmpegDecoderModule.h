@@ -12,7 +12,7 @@
 #include "FFmpegVideoDecoder.h"
 #include "PlatformDecoderModule.h"
 #include "VPXDecoder.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 
 namespace mozilla {
 
@@ -27,7 +27,7 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
   }
 
   explicit FFmpegDecoderModule(FFmpegLibWrapper* aLib) : mLib(aLib) {}
-  virtual ~FFmpegDecoderModule() {}
+  virtual ~FFmpegDecoderModule() = default;
 
   already_AddRefed<MediaDataDecoder> CreateVideoDecoder(
       const CreateDecoderParams& aParams) override {
@@ -40,7 +40,7 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
     }
     if (VPXDecoder::IsVPX(aParams.mConfig.mMimeType) &&
         aParams.mOptions.contains(CreateDecoderParams::Option::LowLatency) &&
-        !StaticPrefs::MediaFfmpegLowLatencyEnabled()) {
+        !StaticPrefs::media_ffmpeg_low_latency_enabled()) {
       // We refuse to create a decoder with low latency enabled if it's VP8 or
       // VP9 unless specifically allowed: this will fallback to libvpx later.
       // We do allow it for h264.
@@ -49,7 +49,9 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
     RefPtr<MediaDataDecoder> decoder = new FFmpegVideoDecoder<V>(
         mLib, aParams.mTaskQueue, aParams.VideoConfig(),
         aParams.mKnowsCompositor, aParams.mImageContainer,
-        aParams.mOptions.contains(CreateDecoderParams::Option::LowLatency));
+        aParams.mOptions.contains(CreateDecoderParams::Option::LowLatency),
+        aParams.mOptions.contains(
+            CreateDecoderParams::Option::HardwareDecoderNotAllowed));
     return decoder.forget();
   }
 

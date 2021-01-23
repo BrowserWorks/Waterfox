@@ -167,7 +167,7 @@
 	<key>CFBundleGetInfoString</key>
 	<string>%MAC_APP_NAME% %APP_VERSION%</string>
 	<key>CFBundleIconFile</key>
-	<string>waterfox.icns</string>
+	<string>firefox.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>%MOZ_MACBUNDLE_ID%</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -240,12 +240,14 @@
 	<string>10.10.0</string>
   <key>NSSupportsAutomaticGraphicsSwitching</key>
   <true/>
+  <key>NSRequiresAquaSystemAppearance</key>
+  <true/>
   <key>NSPrincipalClass</key>
   <string>GeckoNSApplication</string>
 	<key>SMPrivilegedExecutables</key>
 	<dict>
-		<key>org.mozilla.updater</key>
-		<string>identifier "org.mozilla.updater" and ((anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] and certificate leaf[field.1.2.840.113635.100.6.1.13] and certificate leaf[subject.OU] = "43AQ936H96"))</string>
+		<key>net.waterfox.updater</key>
+		<string>identifier "net.waterfox.updater" and ((anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] and certificate leaf[field.1.2.840.113635.100.6.1.13] and certificate leaf[subject.OU] = "43AQ936H96"))</string>
 	</dict>
   <key>MozillaDeveloperRepoPath</key>
   <string>%MOZ_DEVELOPER_REPO_PATH%</string>

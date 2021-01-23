@@ -118,6 +118,7 @@ class NetAddrElement : public LinkedListElement<NetAddrElement> {
  public:
   explicit NetAddrElement(const PRNetAddr* prNetAddr);
   NetAddrElement(const NetAddrElement& netAddr);
+  explicit NetAddrElement(const NetAddr& netAddr);
   ~NetAddrElement();
 
   NetAddr mAddress;
@@ -154,9 +155,20 @@ class AddrInfo {
   AutoCleanLinkedList<NetAddrElement> mAddresses;
   unsigned int IsTRR() { return mFromTRR; }
 
+  double GetTrrFetchDuration() { return mTrrFetchDuration; }
+  double GetTrrFetchDurationNetworkOnly() {
+    return mTrrFetchDurationNetworkOnly;
+  }
+  void SetTrrFetchDuration(double aTime) { mTrrFetchDuration = aTime; }
+  void SetTrrFetchDurationNetworkOnly(double aTime) {
+    mTrrFetchDurationNetworkOnly = aTime;
+  }
+
  private:
   ~AddrInfo();
   unsigned int mFromTRR;
+  double mTrrFetchDuration;
+  double mTrrFetchDurationNetworkOnly;
 };
 
 // Copies the contents of a PRNetAddr to a NetAddr.
@@ -173,9 +185,13 @@ bool IsLoopBackAddress(const NetAddr* addr);
 
 bool IsIPAddrAny(const NetAddr* addr);
 
+bool IsIPAddrV4(const NetAddr* addr);
+
 bool IsIPAddrV4Mapped(const NetAddr* addr);
 
 bool IsIPAddrLocal(const NetAddr* addr);
+
+bool IsIPAddrShared(const NetAddr* addr);
 
 nsresult GetPort(const NetAddr* aAddr, uint16_t* aResult);
 

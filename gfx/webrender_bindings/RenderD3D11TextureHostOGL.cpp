@@ -40,6 +40,60 @@ RenderDXGITextureHostOGL::~RenderDXGITextureHostOGL() {
   DeleteTextureHandle();
 }
 
+ID3D11Texture2D* RenderDXGITextureHostOGL::GetD3D11Texture2D() {
+  if (!mGL) {
+    // SharedGL is always used on Windows with ANGLE.
+    mGL = RenderThread::Get()->SharedGL();
+  }
+
+  if (!mTexture) {
+    if (!EnsureD3D11Texture2D()) {
+      return nullptr;
+    }
+  }
+  return mTexture;
+}
+
+bool RenderDXGITextureHostOGL::EnsureD3D11Texture2D() {
+  if (mTexture) {
+    return true;
+  }
+
+  const auto& gle = gl::GLContextEGL::Cast(mGL);
+  const auto& egl = gle->mEgl;
+
+  // Fetch the D3D11 device.
+  EGLDeviceEXT eglDevice = nullptr;
+  egl->fQueryDisplayAttribEXT(egl->Display(), LOCAL_EGL_DEVICE_EXT,
+                              (EGLAttrib*)&eglDevice);
+  MOZ_ASSERT(eglDevice);
+  ID3D11Device* device = nullptr;
+  egl->fQueryDeviceAttribEXT(eglDevice, LOCAL_EGL_D3D11_DEVICE_ANGLE,
+                             (EGLAttrib*)&device);
+  // There's a chance this might fail if we end up on d3d9 angle for some
+  // reason.
+  if (!device) {
+    gfxCriticalNote << "RenderDXGITextureHostOGL device is not available";
+    return false;
+  }
+
+  // Get the D3D11 texture from shared handle.
+  HRESULT hr = device->OpenSharedResource(
+      (HANDLE)mHandle, __uuidof(ID3D11Texture2D),
+      (void**)(ID3D11Texture2D**)getter_AddRefs(mTexture));
+  if (FAILED(hr)) {
+    NS_WARNING(
+        "RenderDXGITextureHostOGL::EnsureLockable(): Failed to open shared "
+        "texture");
+    gfxCriticalNote
+        << "RenderDXGITextureHostOGL Failed to open shared texture, hr="
+        << gfx::hexa(hr);
+    return false;
+  }
+  MOZ_ASSERT(mTexture.get());
+  return true;
+}
+
 bool RenderDXGITextureHostOGL::EnsureLockable(wr::ImageRendering aRendering) {
   if (mTextureHandle[0]) {
     // Update filter if filter was changed.
@@ -61,7 +115,8 @@ bool RenderDXGITextureHostOGL::EnsureLockable(wr::ImageRendering aRendering) {
     return true;
   }
 
-  auto* egl = gl::GLLibraryEGL::Get();
+  const auto& gle = gl::GLContextEGL::Cast(mGL);
+  const auto& egl = gle->mEgl;
 
   // We use EGLStream to get the converted gl handle from d3d texture. The
   // NV_stream_consumer_gltexture_yuv and ANGLE_stream_producer_d3d_texture
@@ -70,32 +125,15 @@ bool RenderDXGITextureHostOGL::EnsureLockable(wr::ImageRendering aRendering) {
           gl::GLLibraryEGL::NV_stream_consumer_gltexture_yuv) ||
       !egl->IsExtensionSupported(
           gl::GLLibraryEGL::ANGLE_stream_producer_d3d_texture)) {
-    return false;
-  }
-
-  // Fetch the D3D11 device.
-  EGLDeviceEXT eglDevice = nullptr;
-  egl->fQueryDisplayAttribEXT(egl->Display(), LOCAL_EGL_DEVICE_EXT,
-                              (EGLAttrib*)&eglDevice);
-  MOZ_ASSERT(eglDevice);
-  ID3D11Device* device = nullptr;
-  egl->fQueryDeviceAttribEXT(eglDevice, LOCAL_EGL_D3D11_DEVICE_ANGLE,
-                             (EGLAttrib*)&device);
-  // There's a chance this might fail if we end up on d3d9 angle for some
-  // reason.
-  if (!device) {
+    gfxCriticalNote
+        << "RenderDXGITextureHostOGL egl extensions are not suppored";
     return false;
   }
 
   // Get the D3D11 texture from shared handle.
-  if (FAILED(device->OpenSharedResource(
-          (HANDLE)mHandle, __uuidof(ID3D11Texture2D),
-          (void**)(ID3D11Texture2D**)getter_AddRefs(mTexture)))) {
-    NS_WARNING(
-        "RenderDXGITextureHostOGL::Lock(): Failed to open shared texture");
+  if (!EnsureD3D11Texture2D()) {
     return false;
   }
-
   mTexture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mKeyedMutex));
 
   // Create the EGLStream.
@@ -208,14 +246,20 @@ void RenderDXGITextureHostOGL::DeleteTextureHandle() {
     return;
   }
 
-  if (mGL && mGL->MakeCurrent()) {
+  MOZ_ASSERT(mGL.get());
+  if (!mGL) {
+    return;
+  }
+
+  if (mGL->MakeCurrent()) {
     mGL->fDeleteTextures(2, mTextureHandle);
   }
   for (int i = 0; i < 2; ++i) {
     mTextureHandle[i] = 0;
   }
 
-  auto* egl = gl::GLLibraryEGL::Get();
+  const auto& gle = gl::GLContextEGL::Cast(mGL);
+  const auto& egl = gle->mEgl;
   if (mSurface) {
     egl->fDestroySurface(egl->Display(), mSurface);
     mSurface = 0;
@@ -292,7 +336,8 @@ bool RenderDXGIYCbCrTextureHostOGL::EnsureLockable(
     return true;
   }
 
-  auto* egl = gl::GLLibraryEGL::Get();
+  const auto& gle = gl::GLContextEGL::Cast(mGL);
+  const auto& egl = gle->mEgl;
 
   // The eglCreatePbufferFromClientBuffer doesn't support R8 format, so we
   // use EGLStream to get the converted gl handle from d3d R8 texture.
@@ -301,6 +346,8 @@ bool RenderDXGIYCbCrTextureHostOGL::EnsureLockable(
           gl::GLLibraryEGL::NV_stream_consumer_gltexture_yuv) ||
       !egl->IsExtensionSupported(
           gl::GLLibraryEGL::ANGLE_stream_producer_d3d_texture)) {
+    gfxCriticalNote
+        << "RenderDXGIYCbCrTextureHostOGL egl extensions are not suppored";
     return false;
   }
 
@@ -315,17 +362,23 @@ bool RenderDXGIYCbCrTextureHostOGL::EnsureLockable(
   // There's a chance this might fail if we end up on d3d9 angle for some
   // reason.
   if (!device) {
+    gfxCriticalNote << "RenderDXGIYCbCrTextureHostOGL device is not available";
     return false;
   }
 
   for (int i = 0; i < 3; ++i) {
     // Get the R8 D3D11 texture from shared handle.
-    if (FAILED(device->OpenSharedResource(
-            (HANDLE)mHandles[i], __uuidof(ID3D11Texture2D),
-            (void**)(ID3D11Texture2D**)getter_AddRefs(mTextures[i])))) {
+    HRESULT hr = device->OpenSharedResource(
+        (HANDLE)mHandles[i], __uuidof(ID3D11Texture2D),
+        (void**)(ID3D11Texture2D**)getter_AddRefs(mTextures[i]));
+    if (FAILED(hr)) {
       NS_WARNING(
-          "RenderDXGIYCbCrTextureHostOGL::Lock(): Failed to open shared "
+          "RenderDXGIYCbCrTextureHostOGL::EnsureLockable(): Failed to open "
+          "shared "
           "texture");
+      gfxCriticalNote
+          << "RenderDXGIYCbCrTextureHostOGL Failed to open shared texture, hr="
+          << gfx::hexa(hr);
       return false;
     }
   }
@@ -435,15 +488,21 @@ void RenderDXGIYCbCrTextureHostOGL::DeleteTextureHandle() {
     return;
   }
 
-  if (mGL && mGL->MakeCurrent()) {
+  MOZ_ASSERT(mGL.get());
+  if (!mGL) {
+    return;
+  }
+
+  if (mGL->MakeCurrent()) {
     mGL->fDeleteTextures(3, mTextureHandles);
   }
+  const auto& gle = gl::GLContextEGL::Cast(mGL);
+  const auto& egl = gle->mEgl;
   for (int i = 0; i < 3; ++i) {
     mTextureHandles[i] = 0;
     mTextures[i] = nullptr;
     mKeyedMutexs[i] = nullptr;
 
-    auto* egl = gl::GLLibraryEGL::Get();
     if (mSurfaces[i]) {
       egl->fDestroySurface(egl->Display(), mSurfaces[i]);
       mSurfaces[i] = 0;

@@ -1,9 +1,9 @@
+// |reftest| async
 // Copyright (C) 2016 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
 esid: sec-promise.all
-es6id: 25.4.4.1
 description: >
   Error when advancing the provided iterable (rejecting promise)
 info: |

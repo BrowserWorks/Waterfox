@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "तालिका में बदलें">
+<!ENTITY instructions1.label   "चयन में हर अनुच्छेद के लिये कंपोजर नयी तालिका बनाती है.">
+<!ENTITY instructions2.label   "कॉलम में चयन अलग करने के लिये संप्रतीक चुनें:">
+<!ENTITY commaRadio.label      "अर्द्धविराम">
+<!ENTITY spaceRadio.label      "खाली जगह">
+<!ENTITY otherRadio.label      "अन्य संप्रतीक:">
+<!ENTITY deleteCharCheck.label "अलग करने वाले संप्रतीक को मिटायें">
+<!ENTITY collapseSpaces.label  "अतिरिक्त स्थान अनदेखा करें">
+<!ENTITY collapseSpaces.tooltip "एक विलगक में साथ के स्थान को बदलें">

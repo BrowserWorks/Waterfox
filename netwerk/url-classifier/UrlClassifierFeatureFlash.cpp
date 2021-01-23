@@ -6,6 +6,8 @@
 
 #include "UrlClassifierFeatureFlash.h"
 #include "mozilla/net/HttpBaseChannel.h"
+#include "mozilla/StaticPrefs_fission.h"
+#include "mozilla/StaticPrefs_plugins.h"
 #include "nsScriptSecurityManager.h"
 #include "nsQueryObject.h"
 
@@ -95,8 +97,13 @@ void UrlClassifierFeatureFlash::MaybeShutdown() {
 void UrlClassifierFeatureFlash::MaybeCreate(
     nsIChannel* aChannel,
     nsTArray<nsCOMPtr<nsIUrlClassifierFeature>>& aFeatures) {
+  const auto fnIsFlashBlockingEnabled = [] {
+    return StaticPrefs::plugins_flashBlock_enabled() &&
+           !StaticPrefs::fission_autostart();
+  };
+
   // All disabled.
-  if (!StaticPrefs::plugins_flashBlock_enabled()) {
+  if (!fnIsFlashBlockingEnabled()) {
     return;
   }
 
@@ -178,11 +185,15 @@ UrlClassifierFeatureFlash::ProcessChannel(nsIChannel* aChannel,
 NS_IMETHODIMP
 UrlClassifierFeatureFlash::GetURIByListType(
     nsIChannel* aChannel, nsIUrlClassifierFeature::listType aListType,
-    nsIURI** aURI) {
+    nsIUrlClassifierFeature::URIType* aURIType, nsIURI** aURI) {
   NS_ENSURE_ARG_POINTER(aChannel);
+  NS_ENSURE_ARG_POINTER(aURIType);
   NS_ENSURE_ARG_POINTER(aURI);
 
   // Here we return the channel's URI always.
+  *aURIType = aListType == nsIUrlClassifierFeature::blacklist
+                  ? nsIUrlClassifierFeature::URIType::blacklistURI
+                  : nsIUrlClassifierFeature::URIType::whitelistURI;
   return aChannel->GetURI(aURI);
 }
 

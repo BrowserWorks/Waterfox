@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "עריכה מתקדמת…">
+<!ENTITY AdvancedEditButton.accessKey "מ">
+<!ENTITY AdvancedEditButton.tooltip "הוסף או שנה תכונות HTML, תכונות סגנון ו־JavaScript">
+<!ENTITY chooseFileButton.label "בחר קובץ…">
+<!ENTITY chooseFileButton.accessKey "ק">
+<!ENTITY chooseFileLinkButton.label "בחר קובץ…">
+<!ENTITY chooseFileLinkButton.accessKey "ב">
+<!ENTITY makeUrlRelative.label "ה־URL הוא יחסי למיקום הדף">
+<!ENTITY makeUrlRelative.accessKey "י">
+<!ENTITY makeUrlRelative.tooltip "החלף בין URL יחסי ומוחלט. עליך תחילה לשמור את הדף כדי להחליף זאת.">
+
+<!ENTITY LinkURLEditField2.label "נא להקליד כתובת עמוד אינטרנט, קובץ מקומי או לבחור בעוגן שמי או כותרת מתפריט ההקשר של השדה:">
+<!ENTITY LinkURLEditField2.accessKey "א">

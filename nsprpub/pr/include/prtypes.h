@@ -64,22 +64,6 @@
 #define PR_CALLBACK_DECL
 #define PR_STATIC_CALLBACK(__x) static __x
 
-#elif defined(XP_BEOS)
-
-#define PR_EXPORT(__type) extern __declspec(dllexport) __type
-#define PR_EXPORT_DATA(__type) extern __declspec(dllexport) __type
-#define PR_IMPORT(__type) extern __declspec(dllexport) __type
-#define PR_IMPORT_DATA(__type) extern __declspec(dllexport) __type
-
-#define PR_EXTERN(__type) extern __declspec(dllexport) __type
-#define PR_IMPLEMENT(__type) __declspec(dllexport) __type
-#define PR_EXTERN_DATA(__type) extern __declspec(dllexport) __type
-#define PR_IMPLEMENT_DATA(__type) __declspec(dllexport) __type
-
-#define PR_CALLBACK
-#define PR_CALLBACK_DECL
-#define PR_STATIC_CALLBACK(__x) static __x
-
 #elif defined(XP_OS2) && defined(__declspec)
 
 #define PR_EXPORT(__type) extern __declspec(dllexport) __type
@@ -91,27 +75,6 @@
 #define PR_IMPLEMENT(__type) __declspec(dllexport) __type
 #define PR_EXTERN_DATA(__type) extern __declspec(dllexport) __type
 #define PR_IMPLEMENT_DATA(__type) __declspec(dllexport) __type
-
-#define PR_CALLBACK
-#define PR_CALLBACK_DECL
-#define PR_STATIC_CALLBACK(__x) static __x
-
-#elif defined(SYMBIAN)
-
-#define PR_EXPORT(__type) extern __declspec(dllexport) __type
-#define PR_EXPORT_DATA(__type) extern __declspec(dllexport) __type
-#ifdef __WINS__
-#define PR_IMPORT(__type) extern __declspec(dllexport) __type
-#define PR_IMPORT_DATA(__type) extern __declspec(dllexport) __type
-#else
-#define PR_IMPORT(__type) extern __declspec(dllimport) __type
-#define PR_IMPORT_DATA(__type) extern __declspec(dllimport) __type
-#endif
-
-#define PR_EXTERN(__type) extern __type
-#define PR_IMPLEMENT(__type) __type
-#define PR_EXTERN_DATA(__type) extern __type
-#define PR_IMPLEMENT_DATA(__type) __type
 
 #define PR_CALLBACK
 #define PR_CALLBACK_DECL
@@ -256,7 +219,7 @@ typedef unsigned char PRUint8;
 ** Mozilla C++ code expects the PRInt{N} and int{N}_t types to match (see bug
 ** 634793). If a platform defines int8_t as 'char', but NSPR defines it as
 ** 'signed char', it results in a type mismatch.
-** On such platforms we define PRInt8 as 'char' to avoid the mismatch. 
+** On such platforms we define PRInt8 as 'char' to avoid the mismatch.
 */
 #if (defined(HPUX) && defined(__cplusplus) /* reason 1*/ \
         && !defined(__GNUC__) && __cplusplus < 199707L) \
@@ -552,7 +515,7 @@ typedef unsigned long PRUword;
 ** Fundamental NSPR macros, used nearly everywhere.
 */
 
-#define PR_PUBLIC_API		PR_IMPLEMENT
+#define PR_PUBLIC_API       PR_IMPLEMENT
 
 /*
 ** Macro body brackets so that macros with compound statement definitions

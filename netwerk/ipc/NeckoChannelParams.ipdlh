@@ -21,12 +21,16 @@ using RequestHeaderTuples from "mozilla/net/PHttpChannelParams.h";
 using struct nsHttpAtom from "nsHttp.h";
 using class mozilla::net::nsHttpResponseHead from "nsHttpResponseHead.h";
 using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
+using refcounted class nsIPropertyBag2 from "mozilla/dom/PropertyBagUtils.h";
+using refcounted class nsDOMNavigationTiming from "nsDOMNavigationTiming.h";
+using nsILoadInfo::CrossOriginEmbedderPolicy from "nsILoadInfo.h";
+using moveonly mozilla::dom::SessionHistoryInfoAndId from "mozilla/dom/SessionHistoryEntry.h";
 
 namespace mozilla {
 namespace net {
 
 //-----------------------------------------------------------------------------
-// CookieSettings IPDL structs
+// CookieJarSettings IPDL structs
 //-----------------------------------------------------------------------------
 
 struct CookiePermissionData
@@ -35,12 +39,15 @@ struct CookiePermissionData
   uint32_t cookiePermission;
 };
 
-struct CookieSettingsArgs
+struct CookieJarSettingsArgs
 {
-  // Copy of the cookie behavior and permissions for the top-level document.
+  // Copy of the cookie jar settings for the top-level document.
   uint32_t cookieBehavior;
+  bool isFirstPartyIsolated;
+  bool isOnContentBlockingAllowList;
   CookiePermissionData[] cookiePermissions;
   bool isFixed;
+  nsString firstPartyDomain;
 };
 
 //-----------------------------------------------------------------------------
@@ -75,13 +82,16 @@ struct LoadInfoArgs
   PrincipalInfo?              topLevelStorageAreaPrincipalInfo;
   URIParams?                  resultPrincipalURI;
   uint32_t                    securityFlags;
+  uint32_t                    sandboxFlags;
   uint32_t                    contentPolicyType;
   uint32_t                    tainting;
+  bool                        blockAllMixedContent;
   bool                        upgradeInsecureRequests;
   bool                        browserUpgradeInsecureRequests;
   bool                        browserWouldUpgradeInsecureRequests;
   bool                        forceAllowDataURI;
   bool                        allowInsecureRedirectToDataURI;
+  bool                        bypassCORSChecks;
   bool                        skipContentPolicyCheckForWebRequest;
   bool                        forceInheritPrincipalDropped;
   uint64_t                    innerWindowID;
@@ -93,7 +103,8 @@ struct LoadInfoArgs
   uint64_t                    frameBrowsingContextID;
   bool                        initialSecurityCheckDone;
   bool                        isInThirdPartyContext;
-  bool                        isDocshellReload;
+  bool                        isThirdPartyContextToTopWindow;
+  bool                        isFormSubmission;
   bool                        sendCSPViolationEvents;
   OriginAttributes            originAttributes;
   RedirectHistoryEntryInfo[]  redirectChainIncludingInternalRedirects;
@@ -136,10 +147,19 @@ struct LoadInfoArgs
   bool                        serviceWorkerTaintingSynthesized;
   bool                        documentHasUserInteracted;
   bool                        documentHasLoaded;
+  bool allowListFutureDocumentsCreatedFromThisRedirectChain;
   nsString                    cspNonce;
+  bool                        skipContentSniffing;
+  uint32_t                    httpsOnlyStatus;
+  bool                        hasValidUserGestureActivation;
+  bool                        allowDeprecatedSystemRequests;
+  bool                        parserCreatedScript;
   bool                        isFromProcessingFrameAttributes;
-  CookieSettingsArgs cookieSettings;
+  CookieJarSettingsArgs       cookieJarSettings;
   uint32_t                    requestBlockingReason;
+  CSPInfo?                    cspToInheritInfo;
+  bool                        hasStoragePermission;
+  CrossOriginEmbedderPolicy   loadingEmbedderPolicy;
 };
 
 /**
@@ -156,6 +176,11 @@ struct ParentLoadInfoForwarderArgs
   // checks can pass.
   bool allowInsecureRedirectToDataURI;
 
+  // WebExtextensions WebRequest API allows extentions to redirect a channel
+  // Before the CORS-preflight was fetched, which can lead into unexpeced CORS blocks.
+  // We can set this to skip the Cors Checks for the old Channel.
+  bool bypassCORSChecks;
+
   // The ServiceWorker controller that may be set in the parent when
   // interception occurs.
   IPCServiceWorkerDescriptor? controller;
@@ -164,16 +189,43 @@ struct ParentLoadInfoForwarderArgs
   // tainting value.
   uint32_t tainting;
 
+  // This flag is used for any browsing context where we should not sniff
+  // the content type. E.g if an iframe has the XCTO nosniff header, then
+  // that flag is set to true so we skip content sniffing for that browsing
+  bool skipContentSniffing;
+
+  uint32_t httpsOnlyStatus;
+
+  // Returns true if at the time of the loadinfo construction the document
+  // that triggered this load has the bit hasValidTransientUserGestureActivation
+  // set or the load was triggered from External. (Mostly this bool is used
+  // in the context of Sec-Fetch-User.)
+  bool hasValidUserGestureActivation;
+
+  // The SystemPrincipal is disallowed to make requests to the public web
+  // and all requests will be cancelled. Setting this flag to true prevents
+  // the request from being cancelled.
+  bool allowDeprecatedSystemRequests;
+
+  // Only ever returns true if the loadinfo is of TYPE_SCRIPT and
+  // the script was created by the HTML parser.
+  bool parserCreatedScript;
+
   // We must also note that the tainting value was explicitly set
   // by the service worker.
   bool serviceWorkerTaintingSynthesized;
 
   bool documentHasUserInteracted;
   bool documentHasLoaded;
+  bool allowListFutureDocumentsCreatedFromThisRedirectChain;
 
-  CookieSettingsArgs? cookieSettings;
+  CookieJarSettingsArgs? cookieJarSettings;
 
   uint32_t requestBlockingReason;
+
+  bool hasStoragePermission;
+
+  bool isThirdPartyContextToTopWindow;
 
   // IMPORTANT: when you add new properites here you must also update
   // LoadInfoToParentLoadInfoForwarder and MergeParentLoadInfoForwarder
@@ -197,6 +249,8 @@ struct ChildLoadInfoForwarderArgs
   // The ServiceWorker controller may be cleared in the child during
   // a redirect.
   IPCServiceWorkerDescriptor? controller;
+
+  uint32_t requestBlockingReason;
 };
 
 //-----------------------------------------------------------------------------
@@ -217,9 +271,6 @@ struct HttpChannelOpenArgs
   URIParams?                  original;
   URIParams?                  doc;
   nsIReferrerInfo             referrerInfo;
-  URIParams?                  originalReferrer;
-  uint32_t                    originalReferrerPolicy;
-  uint32_t                    referrerPolicy;
   URIParams?                  apiRedirectTo;
   URIParams?                  topWindowURI;
   uint32_t                    loadFlags;
@@ -251,6 +302,7 @@ struct HttpChannelOpenArgs
   bool                        blockAuthPrompt;
   bool                        suspendAfterSynthesizeResponse;
   bool                        allowStaleCacheContent;
+  bool                        preferCacheLoadOverBypass;
   nsCString                   contentTypeHint;
   uint32_t                    corsMode;
   uint32_t                    redirectMode;
@@ -267,6 +319,7 @@ struct HttpChannelOpenArgs
   TimeStamp                   handleFetchEventEnd;
   bool                        forceMainDocumentChannel;
   TimeStamp                   navigationStartTimeStamp;
+  bool                        hasNonEmptySandboxingFlag;
 };
 
 struct HttpChannelConnectArgs
@@ -279,6 +332,57 @@ union HttpChannelCreationArgs
 {
   HttpChannelOpenArgs;      // For AsyncOpen: the common case.
   HttpChannelConnectArgs;   // Used for redirected-to channels
+};
+
+struct ProxyInfoCloneArgs
+{
+  nsCString type;
+  nsCString host;
+  int32_t port;
+  nsCString username;
+  nsCString password;
+  uint32_t flags;
+  uint32_t timeout;
+  uint32_t resolveFlags;
+  nsCString proxyAuthorizationHeader;
+  nsCString connectionIsolationKey;
+};
+
+struct HttpConnectionInfoCloneArgs
+{
+  nsCString host;
+  int32_t port;
+  nsCString npnToken;
+  nsCString username;
+  OriginAttributes originAttributes;
+  bool endToEndSSL;
+  nsCString routedHost;
+  int32_t routedPort;
+  bool anonymous;
+  bool aPrivate; // use prefix to avoid code generation error
+  bool insecureScheme;
+  bool noSpdy;
+  bool beConservative;
+  uint32_t tlsFlags;
+  bool isolated;
+  bool isTrrServiceChannel;
+  uint8_t trrMode;
+  bool isIPv4Disabled;
+  bool isIPv6Disabled;
+  nsCString topWindowOrigin;
+  bool isHttp3;
+  ProxyInfoCloneArgs[] proxyInfo;
+};
+
+struct ConsoleReportCollected {
+  uint32_t errorFlags;
+  nsCString category;
+  uint32_t propertiesFile;
+  nsCString sourceFileURI;
+  uint32_t lineNumber;
+  uint32_t columnNumber;
+  nsCString messageName;
+  nsString[] stringParams;
 };
 
 //-----------------------------------------------------------------------------
@@ -330,8 +434,108 @@ struct CookieStruct
   bool      isHttpOnly;
   bool      isSession;
   bool      isSecure;
-  int8_t    sameSite;
+  int32_t   sameSite;
+  int32_t   rawSameSite;
 };
 
-} // namespace ipc
+struct DocumentChannelCreationArgs {
+  DocShellLoadStateInit loadState;
+  TimeStamp asyncOpenTime;
+  uint64_t channelId;
+  uint32_t cacheKey;
+  bool pluginsAllowed;
+  nsDOMNavigationTiming? timing;
+  IPCClientInfo? initialClientInfo;
+  uint64_t outerWindowId;
+  bool hasValidTransientUserAction;
+  bool uriModified;
+  bool isXFOError;
+};
+
+struct RedirectToRealChannelArgs {
+  uint32_t registrarId;
+  nsIURI uri;
+  uint32_t newLoadFlags;
+  ReplacementChannelConfigInit? init;
+  LoadInfoArgs? loadInfo;
+  uint64_t channelId;
+  nsIURI originalURI;
+  uint32_t redirectMode;
+  uint32_t redirectFlags;
+  uint32_t? contentDisposition;
+  nsString? contentDispositionFilename;
+  uint64_t redirectIdentifier;
+  nsIPropertyBag2 properties;
+  uint32_t loadStateLoadFlags;
+  uint32_t loadStateLoadType;
+  nsDOMNavigationTiming? timing;
+  nsString srcdocData;
+  nsIURI baseUri;
+  SessionHistoryInfoAndId? sessionHistoryInfo;
+};
+
+struct TimingStructArgs {
+  TimeStamp domainLookupStart;
+  TimeStamp domainLookupEnd;
+  TimeStamp connectStart;
+  TimeStamp tcpConnectEnd;
+  TimeStamp secureConnectionStart;
+  TimeStamp connectEnd;
+  TimeStamp requestStart;
+  TimeStamp responseStart;
+  TimeStamp responseEnd;
+};
+
+struct ResourceTimingStructArgs {
+  TimeStamp domainLookupStart;
+  TimeStamp domainLookupEnd;
+  TimeStamp connectStart;
+  TimeStamp tcpConnectEnd;
+  TimeStamp secureConnectionStart;
+  TimeStamp connectEnd;
+  TimeStamp requestStart;
+  TimeStamp responseStart;
+  TimeStamp responseEnd;
+  TimeStamp fetchStart;
+  TimeStamp redirectStart;
+  TimeStamp redirectEnd;
+  uint64_t transferSize;
+  uint64_t encodedBodySize;
+  nsCString protocolVersion;
+
+  // Not actually part of resource timing, but not part of the transaction
+  // timings either. These need to be passed to HttpChannelChild along with
+  // the rest of the timings so the timing information in the child is complete.
+  TimeStamp cacheReadStart;
+  TimeStamp cacheReadEnd;
+};
+
+struct HttpActivity
+{
+  nsCString host;
+  int32_t port;
+  bool endToEndSSL;
+};
+
+union HttpActivityArgs
+{
+  uint64_t;
+  HttpActivity;
+};
+
+struct TransactionObserverResult
+{
+  bool versionOk;
+  bool authOk;
+  nsresult closeReason;
+};
+
+struct SpeculativeConnectionOverriderArgs {
+  uint32_t parallelSpeculativeConnectLimit;
+  bool ignoreIdle;
+  bool isFromPredictor;
+  bool allow1918;
+};
+
+} // namespace net
 } // namespace mozilla

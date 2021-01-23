@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -128,6 +127,10 @@
   margin-top: -1px;
 }
 
+.variables-view-scope > .title:-moz-locale-dir(rtl) {
+  direction: rtl;
+}
+
 /* Custom scope stylings */
 
 .variables-view-watch-expressions .title > .name  {
@@ -156,6 +159,10 @@
 
 .variable-or-property > .title > .theme-twisty {
   margin-inline-start: 5px;
+}
+
+.variables-view-container .variables-view-element-details .theme-twisty:not([open]):-moz-locale-dir(rtl) {
+  transform: rotate(-90deg);
 }
 
 .variable-or-property:not([untitled]) > .variables-view-element-details {
@@ -204,16 +211,12 @@
 }
 
 .variable-or-property-non-writable-icon {
-  background: url("chrome://devtools/skin/images/vview-lock.png") no-repeat;
+  background: url("chrome://devtools/skin/images/vview-lock.svg") no-repeat;
   background-size: cover;
   width: 16px;
   height: 16px;
-}
-
-@media (min-resolution: 1.1dppx) {
-  .variable-or-property-non-writable-icon {
-    background-image: url("chrome://devtools/skin/images/vview-lock@2x.png");
-  }
+  -moz-context-properties: fill;
+  fill: var(--theme-icon-dimmed-color);
 }
 
 .variable-or-property-frozen-label,
@@ -308,14 +311,14 @@
   width: 16px;
   height: 16px;
   background-size: cover;
+  background-repeat: no-repeat;
   cursor: pointer;
+  -moz-context-properties: fill;
+  fill: var(--theme-icon-dimmed-color);
 }
 
 .variables-view-open-inspector {
   background-size: 15px;
-  background-repeat: no-repeat;
-  -moz-context-properties: fill;
-  fill: var(--theme-icon-dimmed-color);
 }
 
 .variables-view-delete:hover,
@@ -558,45 +561,6 @@
   color: var(--theme-highlight-orange);
 }
 
-/* Bar graph widget */
-
-.bar-graph-widget-legend {
-  position: absolute;
-  top: 4px;
-  left: 8px;
-  color: #292e33;
-  font-size: 80%;
-  pointer-events: none;
-}
-
-.bar-graph-widget-legend-item {
-  float: left;
-  margin-inline-end: 8px;
-}
-
-.bar-graph-widget-legend-item > [view="color"],
-.bar-graph-widget-legend-item > [view="label"] {
-  vertical-align: middle;
-}
-
-.bar-graph-widget-legend-item > [view="color"] {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border: 1px solid #fff;
-  border-radius: 1px;
-  margin-inline-end: 4px;
-  pointer-events: all;
-  cursor: pointer;
-}
-
-.bar-graph-widget-legend-item > [view="label"] {
-  text-shadow: 1px  0px rgba(255,255,255,0.8),
-              -1px  0px rgba(255,255,255,0.8),
-               0px -1px rgba(255,255,255,0.8),
-               0px  1px rgba(255,255,255,0.8);
-}
-
 /* Table Widget */
 
 /* Table body */
@@ -606,12 +570,13 @@
 }
 
 .table-widget-body {
+  width: 100%;
+  height: 100%;
   overflow: auto;
 }
 
-.table-widget-body,
-.table-widget-empty-text {
-  background-color: var(--theme-body-background);
+.table-widget-body[empty="empty"] {
+  display: none;
 }
 
 /* Column Headers */
@@ -710,9 +675,7 @@
 
 .table-widget-empty-text {
   display: none;
-  text-align: center;
   font-size: large;
-  margin-top: -20px !important;
 }
 
 .table-widget-body:empty + .table-widget-empty-text:not([value=""]),

@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Configuració de la vostra adreça electrònica existent">
+<!ENTITY emailWizard.caption             "Utilitzeu la vostra adreça electrònica actual">
+<!ENTITY name.label                      "El vostre nom:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "El vostre nom complet">
+<!ENTITY name.text                       "El vostre nom, com voleu que es vegi">
+<!ENTITY name.error                      "Introduïu el vostre nom">
+<!ENTITY email.label                     "Adreça electrònica:">
+<!ENTITY email.accesskey                 "A">
+<!ENTITY email3.placeholder              "La vostra adreça electrònica">
+<!ENTITY email.text                      "La vostra adreça electrònica existent">
+<!ENTITY email.error                     "L'adreça electrònica no és vàlida">
+<!ENTITY password.label                  "Contrasenya:">
+<!ENTITY password.accesskey              "C">
+<!ENTITY password.placeholder            "Contrasenya">
+<!ENTITY password.text                   "Opcional, només es farà servir per validar el vostre usuari">
+<!ENTITY password.toggle                 "Mostra/amaga la contrasenya">
+<!ENTITY rememberPassword.label          "Recorda la contrasenya">
+<!ENTITY rememberPassword.accesskey      "R">
+<!ENTITY usernameEx.label                "Nom d'inici de sessió:">
+<!ENTITY usernameEx.accesskey            "N">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "DOMINI\nomusuari">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Inici de sessió al domini">
+
+<!ENTITY protocol.label                  "Protocol:">
+<!ENTITY imapLong.label                  "IMAP (carpetes remotes)">
+<!ENTITY pop3Long.label                  "POP3 (conserva el correu al vostre ordinador)">
+
+<!ENTITY manualConfigTable.summary       "Paràmetres del servidor">
+<!ENTITY incoming.label                  "Entrada:">
+<!ENTITY incomingColumn.label            "Entrada">
+<!ENTITY outgoing.label                  "Sortida:">
+<!ENTITY outgoingColumn.label            "Sortida">
+<!ENTITY username.label                  "Nom d'usuari:">
+<!ENTITY serverRow.label                 "Servidor:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Autenticació">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Detecta automàticament">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Cap">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Servidor d'Exchange:">
+
+<!ENTITY advancedSetup.label             "Configuració avançada">
+<!ENTITY advancedSetup.accesskey         "g">
+<!ENTITY cancel.label                    "Cancel·la">
+<!ENTITY cancel.accesskey                "n">
+<!ENTITY continue.label                  "Continua">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "Atura">
+<!ENTITY stop.accesskey                  "A">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Prova-la">
+<!ENTITY half-manual-test.accesskey      "P">
+<!ENTITY manual-config.label             "Configura manualment…">
+<!ENTITY manual-config.accesskey         "M">
+<!ENTITY open-provisioner.label          "Obtén una adreça electrònica nova…">
+<!ENTITY open-provisioner.accesskey      "O">
+
+
+<!ENTITY get-help.label                  "Obteniu ajuda">
+<!ENTITY get-help.accesskey              "b">
+
+
+<!ENTITY warning.label                   "Atenció!">
+<!ENTITY incomingSettings.label          "Paràmetres d'entrada:">
+<!ENTITY outgoingSettings.label          "Paràmetres de sortida:">
+<!ENTITY technicaldetails.label          "Detalls tècnics">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Comprenc els riscs.">
+<!ENTITY confirmWarning.accesskey        "r">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Fet">
+<!ENTITY doneAccount.accesskey           "F">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Canvia els paràmetres">
+<!ENTITY changeSettings.accesskey        "m">
+
+<!ENTITY contactYourProvider.description "El &brandShortName; us podrà donar accés al vostre correu amb les opcions que heu configurat. Tot i així, hauríeu de comentar a l'administrador o al proveïdor de correu que les connexions no estan bé així. Per a més informació consulteu les PMF del Thunderbird.">
+
+<!ENTITY insecureServer.tooltip.title    "Atenció! Aquest servidor no és segur.">
+<!ENTITY insecureServer.tooltip.details  "Per a més informació feu clic al cercle.">
+
+<!ENTITY insecureUnencrypted.description "El correu s'envia desencriptat, per tant la vostra contrasenya (i el vostre missatge) es poden llegir fàcilment. El &brandShortName; us deixarà que utilitzeu el vostre correu, però hauríeu de contactar amb el vostre proveïdor perquè configuri una connexió segura al servidor.">
+<!ENTITY insecureSelfSigned.description  "El servidor utilitza un certificat que no és de confiança, per tant no podem estar segurs que ningú estigui interceptant les comunicacions entre el &brandShortName; i el vostre servidor. El &brandShortName; us permetrà accedir al vostre correu, però hauríeu de comentar al vostre proveïdor que configuri el servidor amb un certificat que sigui de confiança.">
+<!ENTITY secureServer.description        "Felicitats! Aquest servidor és segur.">

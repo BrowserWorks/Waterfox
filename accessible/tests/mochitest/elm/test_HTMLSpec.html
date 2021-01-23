@@ -190,7 +190,10 @@
 
       obj = {
         role: ROLE_PARAGRAPH,
-        children: [ { role: ROLE_WHITESPACE } ],
+        children: [
+          { role: ROLE_WHITESPACE },
+          { role: ROLE_WHITESPACE }
+        ]
       };
       testElm("br_container", obj);
 
@@ -469,12 +472,14 @@
 
       obj = {
         role: ROLE_GROUPING,
+        name: "legend",
         relations: {
           RELATION_LABELLED_BY: "legend",
         },
         children: [
           {
             role: ROLE_LABEL,
+            name: "legend",
             relations: {
               RELATION_LABEL_FOR: "fieldset",
             },
@@ -526,6 +531,7 @@
       };
       testElm("footer_in_article", obj);
       testElm("footer_in_aside", obj);
+      testElm("footer_in_main", obj);
       testElm("footer_in_nav", obj);
       testElm("footer_in_section", obj);
       testElm("footer_in_blockquote", obj);
@@ -569,47 +575,21 @@
       // ////////////////////////////////////////////////////////////////////////
       // HTML:h1, HTML:h2, HTML:h3, HTML:h4, HTML:h5, HTML:h6
 
-      obj = {
-        role: ROLE_HEADING,
-        attributes: { "level": "1" },
-        interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
-      };
-      testElm("h1", obj);
+      function headingWithLevel(i) {
+        return {
+          role: ROLE_HEADING,
+          attributes: { "level": i.toString() },
+          interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
+        };
+      }
 
-      obj = {
-        role: ROLE_HEADING,
-        attributes: { "level": "2" },
-        interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
-      };
-      testElm("h2", obj);
-
-      obj = {
-        role: ROLE_HEADING,
-        attributes: { "level": "3" },
-        interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
-      };
-      testElm("h3", obj);
-
-      obj = {
-        role: ROLE_HEADING,
-        attributes: { "level": "4" },
-        interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
-      };
-      testElm("h4", obj);
-
-      obj = {
-        role: ROLE_HEADING,
-        attributes: { "level": "5" },
-        interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
-      };
-      testElm("h5", obj);
-
-      obj = {
-        role: ROLE_HEADING,
-        attributes: { "level": "6" },
-        interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
-      };
-      testElm("h6", obj);
+      for (let level = 1; level <= 6; ++level) {
+        testElm("h" + level, headingWithLevel(level));
+        for (const ancestor of ["section", "article", "aside", "nav"]) {
+          testElm("h" + level + "_in_" + ancestor, headingWithLevel(level));
+          testElm("h" + level + "_in_" + ancestor + "_in_hgroup", headingWithLevel(level));
+        }
+      }
 
       // ////////////////////////////////////////////////////////////////////////
       // HTML:header
@@ -628,6 +608,7 @@
       };
       testElm("header_in_article", obj);
       testElm("header_in_aside", obj);
+      testElm("header_in_main", obj);
       testElm("header_in_nav", obj);
       testElm("header_in_section", obj);
       testElm("header_in_blockquote", obj);
@@ -699,7 +680,7 @@
       // HTML:input@type="file"
 
       obj = {
-        TEXT_CONTAINER: [
+        GROUPING: [
           { role: ROLE_PUSHBUTTON },
           { role: ROLE_LABEL },
         ],
@@ -731,25 +712,9 @@
 
       obj = {
         role: ROLE_SPINBUTTON,
-        interfaces: [ nsIAccessibleValue ],
+        interfaces: [ nsIAccessibleValue, nsIAccessibleText, nsIAccessibleEditableText ],
         children: [
-          {
-            role: ROLE_ENTRY,
-            extraStates: EXT_STATE_EDITABLE | EXT_STATE_SINGLE_LINE,
-            actions: "activate",
-            interfaces: [ nsIAccessibleText, nsIAccessibleEditableText ],
-            children: [
-              { role: ROLE_TEXT_LEAF },
-            ],
-          },
-          {
-            role: ROLE_PUSHBUTTON,
-            actions: "press",
-          },
-          {
-            role: ROLE_PUSHBUTTON,
-            actions: "press",
-          },
+          { role: ROLE_TEXT_LEAF },
         ],
       };
       testElm("input_number", obj);
@@ -884,6 +849,8 @@
 
       obj = {
         role: ROLE_GROUPING,
+        name: "time label",
+        attributes: { "text-input-type": "time" },
         children: [
           { role: ROLE_SPINBUTTON },
           { role: ROLE_TEXT_LEAF },
@@ -900,6 +867,8 @@
 
       obj = {
         role: ROLE_DATE_EDITOR,
+        name: "date label",
+        attributes: { "text-input-type": "date" },
         children: [
           { role: ROLE_SPINBUTTON },
           { role: ROLE_TEXT_LEAF },
@@ -938,23 +907,6 @@
         ],
       };
       testElm("kbd_container", obj);
-
-      // ////////////////////////////////////////////////////////////////////////
-      // HTML:keygen
-
-      obj = {
-        role: ROLE_COMBOBOX,
-        states: STATE_COLLAPSED | STATE_HASPOPUP,
-        extraStates: EXT_STATE_EXPANDABLE,
-        actions: "open",
-        children: [
-          { COMBOBOX_LIST: [
-            { role: ROLE_COMBOBOX_OPTION }, // high grade
-            { role: ROLE_COMBOBOX_OPTION }, // medium grade
-          ] },
-        ],
-      };
-      testElm("keygen", obj);
 
       // ////////////////////////////////////////////////////////////////////////
       // HTML:label
@@ -1040,13 +992,15 @@
 
       obj = {
         role: ROLE_PARAGRAPH,
-        textAttrs: {
-          0: { },
-          6: { "background-color": "rgb(255, 255, 0)" },
-        },
         children: [
           { role: ROLE_TEXT_LEAF }, // plain text
-          { role: ROLE_TEXT_LEAF }, // HTML:mark text
+          { role: ROLE_MARK,  // HTML:mark text
+            attributes: { "xml-roles": "mark" },
+            interfaces: [ nsIAccessibleText, nsIAccessibleHyperText ],
+            textAttrs: {
+              0: { },
+            }
+          }
         ],
       };
       testElm("mark_container", obj);
@@ -1063,9 +1017,71 @@
       // HTML:menu
 
       obj = {
-        todo_role: ROLE_MENUPOPUP,
+        role: ROLE_LIST, // menu
+        children: [
+          { role: ROLE_LISTITEM,
+            children: [ // home
+              { role: ROLE_STATICTEXT },
+              { role: ROLE_TEXT_LEAF }
+            ]
+          },
+          {
+            role: ROLE_LISTITEM,
+            children: [
+              { role: ROLE_STATICTEXT },
+              { role: ROLE_TEXT_LEAF }, // about
+              {
+                role: ROLE_LIST, // menu
+                children: [
+                  { role: ROLE_LISTITEM,
+                    children: [
+                    { role: ROLE_STATICTEXT },
+                    { role: ROLE_TEXT_LEAF } // our story
+                    ]
+                  },
+                ]
+              },
+            ]
+          },
+        ]
       };
+
       testElm("menu", obj);
+      obj = {
+        role: ROLE_LIST,
+        children: [
+        {
+          role: ROLE_LISTITEM,
+          children: [
+          { role: ROLE_STATICTEXT },
+          {
+            role: ROLE_PUSHBUTTON,
+            children: [
+              { role: ROLE_TEXT_LEAF }
+            ]
+          },
+          {
+            role: ROLE_LIST,
+            children: [
+            {
+              role: ROLE_LISTITEM,
+              children: [
+                { role: ROLE_STATICTEXT },
+                { 
+                  role: ROLE_PUSHBUTTON,
+                  children: [
+                    { role: ROLE_TEXT_LEAF }
+                  ]
+                }
+              ]
+            },
+            ]
+          }
+          ]
+        }
+        ]
+      };
+      testElm("menu1", obj);
 
       // ////////////////////////////////////////////////////////////////////////
       // HTML:meter
@@ -1155,7 +1171,7 @@
       // HTML:output
 
       obj = {
-        role: ROLE_SECTION,
+        role: ROLE_STATUSBAR,
         attributes: { "live": "polite" },
         todo_relations: {
           RELATION_CONTROLLED_BY: "output_input",
@@ -1469,7 +1485,7 @@
     <p>This is a quotation taken from the Mozilla Developer Center.</p>
   </blockquote>
 
-  <!--  two BRs, one will be eaten -->
+  <!--  two BRs, both will be present -->
   <p id="br_container"><br><br></p>
 
   <button id="button">button</button>
@@ -1571,6 +1587,9 @@
   <aside>
     <footer id="footer_in_aside">Some copyright info</footer>
   </aside>
+  <main>
+    <footer id="footer_in_main">Some copyright info</footer>
+  </main>
   <nav>
     <footer id="footer_in_nav">Some copyright info</footer>
   </nav>
@@ -1613,15 +1632,74 @@
   <header id="header">A logo</header>
   <article>
     <header id="header_in_article">Not logo</header>
+    <h1 id="h1_in_article">heading1</h1>
+    <h2 id="h2_in_article">heading2</h2>
+    <h3 id="h3_in_article">heading3</h3>
+    <h4 id="h4_in_article">heading4</h4>
+    <h5 id="h5_in_article">heading5</h5>
+    <h6 id="h6_in_article">heading6</h6>
+    <hgroup>
+      <h1 id="h1_in_article_in_hgroup">heading1</h1>
+      <h2 id="h2_in_article_in_hgroup">heading2</h2>
+      <h3 id="h3_in_article_in_hgroup">heading3</h3>
+      <h4 id="h4_in_article_in_hgroup">heading4</h4>
+      <h5 id="h5_in_article_in_hgroup">heading5</h5>
+      <h6 id="h6_in_article_in_hgroup">heading6</h6>
+    </hgroup>
   </article>
   <aside>
     <header id="header_in_aside">Not logo</header>
+    <h1 id="h1_in_aside">heading1</h1>
+    <h2 id="h2_in_aside">heading2</h2>
+    <h3 id="h3_in_aside">heading3</h3>
+    <h4 id="h4_in_aside">heading4</h4>
+    <h5 id="h5_in_aside">heading5</h5>
+    <h6 id="h6_in_aside">heading6</h6>
+    <hgroup>
+      <h1 id="h1_in_aside_in_hgroup">heading1</h1>
+      <h2 id="h2_in_aside_in_hgroup">heading2</h2>
+      <h3 id="h3_in_aside_in_hgroup">heading3</h3>
+      <h4 id="h4_in_aside_in_hgroup">heading4</h4>
+      <h5 id="h5_in_aside_in_hgroup">heading5</h5>
+      <h6 id="h6_in_aside_in_hgroup">heading6</h6>
+    </hgroup>
   </aside>
+  <main>
+    <header id="header_in_main">Not logo</header>
+  </main>
   <nav>
     <header id="header_in_nav">Not logo</header>
+    <h1 id="h1_in_nav">heading1</h1>
+    <h2 id="h2_in_nav">heading2</h2>
+    <h3 id="h3_in_nav">heading3</h3>
+    <h4 id="h4_in_nav">heading4</h4>
+    <h5 id="h5_in_nav">heading5</h5>
+    <h6 id="h6_in_nav">heading6</h6>
+    <hgroup>
+      <h1 id="h1_in_nav_in_hgroup">heading1</h1>
+      <h2 id="h2_in_nav_in_hgroup">heading2</h2>
+      <h3 id="h3_in_nav_in_hgroup">heading3</h3>
+      <h4 id="h4_in_nav_in_hgroup">heading4</h4>
+      <h5 id="h5_in_nav_in_hgroup">heading5</h5>
+      <h6 id="h6_in_nav_in_hgroup">heading6</h6>
+    </hgroup>
   </nav>
   <section>
     <header id="header_in_section">Not logo</header>
+    <h1 id="h1_in_section">heading1</h1>
+    <h2 id="h2_in_section">heading2</h2>
+    <h3 id="h3_in_section">heading3</h3>
+    <h4 id="h4_in_section">heading4</h4>
+    <h5 id="h5_in_section">heading5</h5>
+    <h6 id="h6_in_section">heading6</h6>
+    <hgroup>
+      <h1 id="h1_in_section_in_hgroup">heading1</h1>
+      <h2 id="h2_in_section_in_hgroup">heading2</h2>
+      <h3 id="h3_in_section_in_hgroup">heading3</h3>
+      <h4 id="h4_in_section_in_hgroup">heading4</h4>
+      <h5 id="h5_in_section_in_hgroup">heading5</h5>
+      <h6 id="h6_in_section_in_hgroup">heading6</h6>
+    </hgroup>
   </section>
   <blockquote>
     <header id="header_in_blockquote">Not logo</header>
@@ -1680,12 +1758,15 @@
   <form>
     <input id="input_reset" type="reset">
   </form>
-  <input id="input_time" type="time" value="23:23">
-  <input id="input_date" type="date" value="2017-11-10">
+  <label>time label
+    <input id="input_time" type="time" value="23:23">
+  </label>
+  <label>date label
+    <input id="input_date" type="date" value="2017-11-10">
+  </label>
 
   <p id="ins_container">normal<ins>Inserted</ins></p>
   <p id="kbd_container">normal<kbd>cmd</kbd></p>
-  <keygen id="keygen" name="RSA public key" challenge="123456789" keytype="RSA">
 
   <label id="label">label<input id="label_input"></label>
   <label id="label_for" for="label_for_input">label</label>
@@ -1740,18 +1821,22 @@
     </mrow>
   </math>
 
-  <menu id="menu" type="toolbar">
-    <li>
-      <menu label="File">
-        <button type="button" onclick="new()">New...</button>
-        <button type="button" onclick="save()">Save...</button>
+  <menu id="menu">
+    <li>Home</li>
+    <li>About
+      <menu>
+        <li>Our Story</li>
       </menu>
     </li>
+  </menu>
+
+  <menu id="menu1">
     <li>
-      <menu label="Edit">
-        <button type="button" onclick="cut()">Cut...</button>
-        <button type="button" onclick="copy()">Copy...</button>
-        <button type="button" onclick="paste()">Paste...</button>
+      <button>File</button>
+      <menu>
+        <li>
+          <button type="button" onclick="new()">New...</button>
+        </li>
       </menu>
     </li>
   </menu>

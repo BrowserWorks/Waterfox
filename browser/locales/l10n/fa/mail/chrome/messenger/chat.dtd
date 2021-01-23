@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY chat.noConv.title             "گفت‌وگوها اینجا نمایش داده خواهند شد.">
+<!ENTITY chat.noAccount.title             "شما هنوز یک حساب گفت‌وگو راه‌اندلازری نکرده‌اید.">
+<!ENTITY chat.accountWizard.button       "شروع کنید">
+<!ENTITY chat.noConnectedAccount.title             "حسابهای گفت‌وگوی شما متصل نیستند.">
+<!ENTITY chat.noConnectedAccount.description       "شما می‌توانید از «پنجرهٔ وضعیت گفت‌و‌گو» به آن‌ها متصل شوید:">
+<!ENTITY chat.showAccountManager.button       "نمایش وضعیت گفت‌وگو">
+
+<!ENTITY chat.participants             "شرکت کنندگان:">
+<!ENTITY chat.previousConversations    "گفت‌وگوهای قبلی:">
+
+<!ENTITY aliasCmd.label                "تغییر نام">
+<!ENTITY aliasCmd.accesskey            "ت">
+
+
+<!ENTITY joinChatButton.label          "پیوستن به گفت‌وگو">
+<!ENTITY chatAccountsButton.label      "نمایش حسابها">
+
+<!ENTITY status.offline            "Offline">
+

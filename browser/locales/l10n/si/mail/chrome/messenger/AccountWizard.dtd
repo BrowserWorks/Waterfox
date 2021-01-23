@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "ගිණුම් විශාරද">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "ලිපි ලබා ගැනීම සඳහා පළමුව තැපැල් හෝ පුවත්සමූහ ගිණුමක් සකස් කර ගැනීම අවශ්‍ය වේ.">
+<!ENTITY accountTypeTitle.label "නව ගිණුමක් සකස් කිරීම">
+<!ENTITY accountTypeDesc2.label "මෙම  විශාරද ක්‍රියාවලිය නව තැපැල් ‌හෝ පුවත්සමූහ ගිණූමක් සකස් කිරීම සදහා අවශ්‍ය ‌තොරතූරු එකතූ කරයි. එම ‌තොරතූරු ඔබ සතූව ‌නොමැති නම් පද්ධති පරිපාලක ‌හෝ අන්තර්ජාල සේවා සපයන්නාගේ සහාය ලබා ගන්න.">
+<!ENTITY accountTypeDirections.label "ඔබ සකස් කරගැනීමට කැමති ගිණුම් වර්ගය ‌තෝරන්න:">
+<!ENTITY accountTypeMail.label "විද්‍යුත් තැපැල් ගිණූමක්">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "පුවත්සමූහ ගිණූමක්">
+<!ENTITY accountTypeNews.accesskey "w">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "හැඳුනුම">
+<!ENTITY identityDesc.label "සෑම ගිණූමකටම හැඳුනුමක් ඇත. එහි, අන්අය ඔබගේ ලිපි ලැබී‌මේදී ඔබව හඳුනාගැනීම සදහා අවශ්‍ය තොරතූරු ඇත.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "ඔබ ලිපි යැවීමේදී &quot;යවන්නා&quot;  තීරුව තූළ ඔබ‌ගේ නම සදහන් විය යුතූ ආකාරය මෙහි ඇතුළත් කරන්න.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+	1, do not translate two of "&quot;"
+	2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(උදාහරණයක් ‌ලෙස, &quot;රෝහන දසනායක&quot;)..">
+<!ENTITY fullnameLabel.label "ඔබගේ නම:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "විද්‍යුත් තැපැල් ලිපිනය:">
+<!ENTITY emailLabel.accesskey "E">
+<!-- LOCALIZATION NOTE (emailExample.label) : do not translate "user@example.net" in below line -->
+
+<!-- Entities for Server page -->
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "එවුම් සේවාදායක‌යේ">
+<!ENTITY incomingServerTypeDesc.label "ඔබ භාවිතා කරන එවුම් සේවාදායක‌යේ වර්ගය ‌තෝරන්න.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "ලිපි සේවාදායකය තුළ ඉතිරි කරන්න">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "විවරය(Port):">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "පෙරනිමි:">
+<!ENTITY defaultPortValue.label "">
+
+<!-- for when the user has an SMTP server pre-configured -->
+<!-- LOCALIZATION NOTE (currentSmtpBefore.label) : Do not translate "SMTP" and "&quot;" in
+     this variable. Also, translate currentSmtpBefore.label and currentSmtpAfter.label as a single sentence,
+	  inserting text after the "&quot;" entity in currentSmtpAfter.label, if required grammatically
+-->
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "එවුම් සේවාදායක‌යේ නම ඇතුළත් කරන්න (උදාහරණයක් ‌ලෙස, &quot;mail.example.lk&quot;).">
+<!ENTITY incomingServer.label "එවුම් සේවාදායකය:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "ඊමේල් සේවා සපයන්නා ඔබට ලබා දුන් එවුම් සේවාදායක‌ පරිශීලක නම ඇතුළත් කරන්න (උදාහරණයක් ‌ලෙස, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "පරිශීලක නම:">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "ඔබගේ පුවත් සේවාදායක‌යේ නම ඇතුළත් කරන්න (NNTP) (උදාහරණයක් ‌ලෙස, &quot;news.example.lk&quot;).">
+<!ENTITY newsServerLabel.label "පුවත්සමූහ සේවාදායකය:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "යැවුම් සේවාදායක තොරතුරු">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description " ඔබගේ යැවුම් සේවාදායක (SMTP) නම ඇතුළු කරන්න (උදාහරණයක් ලෙස, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label " යැවුම් සේවාදායකය:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "සොවාදායකයා ලබාදුන් ඔබගේ යැවුම් පරිශීලක නම ඇතුළු කරන්න (මෙය සාමාන්‍යයෙන් එවුම් පරිශීලක නමටම සමාන වනු ඇත).">
+<!ENTITY outgoingUsername.label " යැවුම් පරිශීලක නම:">
+<!ENTITY outgoingUsername.accesskey "U">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "ඔබ‌ට යැවුම් සේවාදායක ‌වෙනස් කිරීමට ‌මෙනු තිරු‌වේ ‌මෙවලම් හි ගිණුම් සකස් කීරීම් යට‌තේ සිදු කළ හැකිය.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "ඔබගේ දැනට පචතින යැවුම් සේවාදායකය (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, භාවිතා වනු ඇත.">
+
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "ඔබගේ දැනට පචතින යැවුම් (SMTP) පරිශීලක නම, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, භාවිතා වනු ඇත.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "ඔබගේ යැවුම් (SMTP) සේවාදායකය, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, ඔබගේ එවුම් සේවාදායක‌යටම සමාන වේ, ඔබගේ  එවුම් පරිශීලක නම මෙයට ඇතූලු වීම සඳහා භාවිතා කරයි.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "ගිණු‌මේ නම">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "මෙම ගිණූම සඳහා භාවිතා කිරිමට ඔබ කැමති නමක් ‌යොදන්න. (උදාහරණයක් ‌ලෙස, &quot;කාර්යාලීය ගිණුම&quot;, &quot;නිවසේ ගිණුම&quot; හෝ &quot;පුවත් ගිණුම&quot;).">
+<!ENTITY accnameLabel.label "ගිණු‌මේ නම:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "සුභ පැතූම්!">
+<!ENTITY completionText.label "පහත තොරතුරු නිවැරදි බව තහවුරු කරන්න.">
+<!ENTITY serverTypePrefix.label "එවුම් සේවාදායක‌යේ වර්ගය:">
+<!ENTITY serverNamePrefix.label "එවුම් සේවාදායක‌යේ නම:">
+<!ENTITY smtpServerNamePrefix.label "යැවුම් සේවාදායක‌යේ නම (SMTP):">
+<!ENTITY newsServerNamePrefix.label "පුවත් සේවාදායක‌යේ නම (NNTP):">
+<!ENTITY downloadOnLogin.label "දැන් ලිපි භාගත කරන්න">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "Untick this box to store mail for this account in its own directory. That will make this account appear as a top-level account. Otherwise, it will be part of the Local Folders Global Inbox account.">
+<!ENTITY deferStorage.label "පොදු ලදලිපි භාවිතා කරන්න (ලිපි සමීප ෆෝල්ඩර (Local Folders) තුළ ගබඩා කරන්න)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "නිමි ‌බොත්තම මත ක්ලික් කිරී‌මෙන් ‌මෙම ‌තොරතූරු සුරැකීමට හා ගිණුම් විශාරද ක්‍රියාවලියෙන් ඔබට ඉවත්විය හැකිය.">
+<!ENTITY clickFinish.labelMac "කළා බොත්තම මත ක්ලික් කිරී‌මෙන් ‌මෙම ‌තොරතූරු සුරැකීමට හා ගිණුම් විශාරද ක්‍රියාවලියෙන් ඉවත්විමට ඔබට හැකිය.">
+
+

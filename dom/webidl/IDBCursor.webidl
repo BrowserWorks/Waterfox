@@ -18,6 +18,7 @@ enum IDBCursorDirection {
 interface IDBCursor {
     readonly    attribute (IDBObjectStore or IDBIndex) source;
 
+    [BinaryName="getDirection"]
     readonly    attribute IDBCursorDirection           direction;
 
     [Throws]
@@ -25,6 +26,8 @@ interface IDBCursor {
 
     [Throws]
     readonly    attribute any                          primaryKey;
+
+    readonly    attribute IDBRequest                   request;
 
     [Throws]
     IDBRequest update (any value);

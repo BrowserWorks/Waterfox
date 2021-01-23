@@ -30,24 +30,11 @@ def add_dependencies(config, jobs):
             # XXX we have run-on-projects which specifies the on-push behavior;
             # we need another attribute that specifies release promotion,
             # possibly which action(s) each task belongs in.
-            if product == 'fennec':
-                # Don't ship single locale fennec anymore - Bug 1408083
-                attr = dep_task.attributes.get
-                if attr("locale") or attr("chunk_locales"):
-                    continue
-
-                if attr('build_platform', '').endswith('-nightly'):
-                    continue
 
             # We can only depend on tasks in the current or previous phases
             dep_phase = dep_task.attributes.get('shipping_phase')
             if dep_phase and PHASES.index(dep_phase) > PHASES.index(phase):
                 continue
-
-            if dep_task.attributes.get("release-type") and \
-               job.get("attributes", {}).get("release-type"):
-                if dep_task.attributes["release-type"] != job["attributes"]["release-type"]:
-                    continue
 
             if dep_task.attributes.get("build_platform") and \
                job.get("attributes", {}).get("build_platform"):

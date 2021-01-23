@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use api::{ApiMsg, DebugCommand, DebugFlags};
-use api::channel::MsgSender;
 use api::units::DeviceIntSize;
 use crate::print_tree::PrintTreePrinter;
 use crate::renderer;
@@ -27,7 +26,7 @@ enum DebugMsg {
 struct Server {
     ws: ws::Sender,
     debug_tx: Sender<DebugMsg>,
-    api_tx: MsgSender<ApiMsg>,
+    api_tx: Sender<ApiMsg>,
     debug_flags: DebugFlags,
 }
 
@@ -82,7 +81,7 @@ impl ws::Handler for Server {
                         "fetch_passes" => DebugCommand::FetchPasses,
                         "fetch_screenshot" => DebugCommand::FetchScreenshot,
                         "fetch_documents" => DebugCommand::FetchDocuments,
-                        "fetch_clip_scroll_tree" => DebugCommand::FetchClipScrollTree,
+                        "fetch_spatial_tree" => DebugCommand::FetchClipScrollTree,
                         "fetch_render_tasks" => DebugCommand::FetchRenderTasks,
                         msg => {
                             error!("unknown msg {}", msg);
@@ -111,7 +110,7 @@ pub struct DebugServerImpl {
 }
 
 impl DebugServerImpl {
-    pub fn new(api_tx: MsgSender<ApiMsg>) -> DebugServerImpl {
+    pub fn new(api_tx: Sender<ApiMsg>) -> DebugServerImpl {
         let (debug_tx, debug_rx) = channel();
 
         let socket = ws::Builder::new()
@@ -310,7 +309,7 @@ impl Screenshot {
                 &data,
                 size.width as u32,
                 size.height as u32,
-                image_loader::ColorType::RGBA(8),
+                image_loader::ColorType::Rgba8,
             ).unwrap();
         }
 
@@ -322,19 +321,19 @@ impl Screenshot {
     }
 }
 
-// A serializable list of debug information about clip-scroll trees
+// A serializable list of debug information about spatial trees
 // that can be sent to the client
 
 #[derive(Serialize)]
-pub struct ClipScrollTreeList {
+pub struct SpatialTreeList {
     kind: &'static str,
     root: TreeNode,
 }
 
-impl ClipScrollTreeList {
+impl SpatialTreeList {
     pub fn new() -> Self {
-        ClipScrollTreeList {
-            kind: "clip_scroll_tree",
+        SpatialTreeList {
+            kind: "spatial_tree",
             root: TreeNode::new("root"),
         }
     }

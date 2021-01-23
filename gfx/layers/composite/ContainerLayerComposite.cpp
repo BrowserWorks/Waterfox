@@ -5,14 +5,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ContainerLayerComposite.h"
-#include <algorithm>                         // for min
-#include "FrameMetrics.h"                    // for FrameMetrics
-#include "Units.h"                           // for LayerRect, LayerPixel, etc
-#include "CompositableHost.h"                // for CompositableHost
-#include "gfxEnv.h"                          // for gfxEnv
-#include "gfxPrefs.h"                        // for gfxPrefs
-#include "mozilla/Assertions.h"              // for MOZ_ASSERT, etc
-#include "mozilla/RefPtr.h"                  // for RefPtr
+#include <algorithm>             // for min
+#include "FrameMetrics.h"        // for FrameMetrics
+#include "Units.h"               // for LayerRect, LayerPixel, etc
+#include "CompositableHost.h"    // for CompositableHost
+#include "gfxEnv.h"              // for gfxEnv
+#include "mozilla/Assertions.h"  // for MOZ_ASSERT, etc
+#include "mozilla/RefPtr.h"      // for RefPtr
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/UniquePtr.h"               // for UniquePtr
 #include "mozilla/gfx/BaseRect.h"            // for BaseRect
 #include "mozilla/gfx/Matrix.h"              // for Matrix4x4
@@ -42,8 +43,8 @@
 #  include "ProfilerMarkerPayload.h"  // for LayerTranslationMarkerPayload
 #endif
 
-#define CULLING_LOG(...)
-// #define CULLING_LOG(...) printf_stderr("CULLING: " __VA_ARGS__)
+static mozilla::LazyLogModule sGfxCullLog("gfx.culling");
+#define CULLING_LOG(...) MOZ_LOG(sGfxCullLog, LogLevel::Debug, (__VA_ARGS__))
 
 #define DUMP(...)                 \
   do {                            \
@@ -101,9 +102,9 @@ static void PrintUniformityInfo(Layer* aLayer) {
   }
 
   Point translation = transform.As2D().GetTranslation();
-  profiler_add_marker("LayerTranslation", JS::ProfilingCategoryPair::GRAPHICS,
-                      MakeUnique<LayerTranslationMarkerPayload>(
-                          aLayer, translation, TimeStamp::Now()));
+  PROFILER_ADD_MARKER_WITH_PAYLOAD("LayerTranslation", GRAPHICS,
+                                   LayerTranslationMarkerPayload,
+                                   (aLayer, translation, TimeStamp::Now()));
 #endif
 }
 
@@ -308,14 +309,14 @@ void RenderMinimap(ContainerT* aContainer, const RefPtr<APZSampler>& aSampler,
   // Options
   const int verticalPadding = 10;
   const int horizontalPadding = 5;
-  gfx::Color backgroundColor(0.3f, 0.3f, 0.3f, 0.3f);
-  gfx::Color tileActiveColor(1, 1, 1, 0.4f);
-  gfx::Color tileBorderColor(0, 0, 0, 0.1f);
-  gfx::Color pageBorderColor(0, 0, 0);
-  gfx::Color criticalDisplayPortColor(1.f, 1.f, 0);
-  gfx::Color displayPortColor(0, 1.f, 0);
-  gfx::Color layoutPortColor(1.f, 0, 0);
-  gfx::Color visualPortColor(0, 0, 1.f, 0.3f);
+  gfx::DeviceColor backgroundColor(0.3f, 0.3f, 0.3f, 0.3f);
+  gfx::DeviceColor tileActiveColor(1, 1, 1, 0.4f);
+  gfx::DeviceColor tileBorderColor(0, 0, 0, 0.1f);
+  gfx::DeviceColor pageBorderColor(0, 0, 0);
+  gfx::DeviceColor criticalDisplayPortColor(1.f, 1.f, 0);
+  gfx::DeviceColor displayPortColor(0, 1.f, 0);
+  gfx::DeviceColor layoutPortColor(1.f, 0, 0);
+  gfx::DeviceColor visualPortColor(0, 0, 1.f, 0.3f);
 
   // Rects
   ParentLayerRect compositionBounds = fm.GetCompositionBounds();
@@ -432,7 +433,7 @@ void RenderLayers(ContainerT* aContainer, LayerManagerComposite* aManager,
       continue;
     }
 
-    if (gfxPrefs::LayersDrawFPS()) {
+    if (StaticPrefs::layers_acceleration_draw_fps()) {
       for (const auto& metadata : layer->GetAllScrollMetadata()) {
         if (metadata.IsApzForceDisabled()) {
           aManager->DisabledApzWarning();
@@ -473,11 +474,11 @@ void RenderLayers(ContainerT* aContainer, LayerManagerComposite* aManager,
       layerToRender->RenderLayer(clipRect, geometry);
     }
 
-    if (gfxPrefs::UniformityInfo()) {
+    if (StaticPrefs::layers_uniformity_info_AtStartup()) {
       PrintUniformityInfo(layer);
     }
 
-    if (gfxPrefs::DrawLayerInfo()) {
+    if (StaticPrefs::layers_draw_layer_info()) {
       DrawLayerInfo(preparedData.mClipRect, aManager, layer);
     }
 
@@ -509,7 +510,7 @@ void RenderLayers(ContainerT* aContainer, LayerManagerComposite* aManager,
         }
       }
 
-      if (gfxPrefs::APZMinimap()) {
+      if (StaticPrefs::apz_minimap_enabled()) {
         RenderMinimap(aContainer, sampler, aManager, aClipRect, layer);
       }
     }
@@ -650,7 +651,8 @@ void ContainerRender(ContainerT* aContainer, LayerManagerComposite* aManager,
   // APZCs attached to it has a nonempty async transform, then that transform is
   // not applied to any visible content. Display a warning box (conditioned on
   // the FPS display being enabled).
-  if (gfxPrefs::LayersDrawFPS() && aContainer->IsScrollableWithoutContent()) {
+  if (StaticPrefs::layers_acceleration_draw_fps() &&
+      aContainer->IsScrollableWithoutContent()) {
     RefPtr<APZSampler> sampler =
         aManager->GetCompositor()->GetCompositorBridgeParent()->GetAPZSampler();
     // Since aContainer doesn't have any children we can just iterate from the

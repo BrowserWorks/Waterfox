@@ -24,6 +24,7 @@ class gfxTextPerfMetrics;
 class nsDeviceContext;
 class nsAtom;
 struct nsBoundingMetrics;
+struct FontMatchingStats;
 
 namespace mozilla {
 namespace gfx {
@@ -61,6 +62,7 @@ class nsFontMetrics final {
     FontOrientation orientation = eHorizontal;
     gfxUserFontSet* userFontSet = nullptr;
     gfxTextPerfMetrics* textPerf = nullptr;
+    FontMatchingStats* fontStats = nullptr;
     gfxFontFeatureValueSet* featureValueLookup = nullptr;
   };
 
@@ -226,10 +228,12 @@ class nsFontMetrics final {
   void SetVertical(bool aVertical) { mVertical = aVertical; }
   bool GetVertical() const { return mVertical; }
 
-  void SetTextOrientation(uint8_t aTextOrientation) {
+  void SetTextOrientation(mozilla::StyleTextOrientation aTextOrientation) {
     mTextOrientation = aTextOrientation;
   }
-  uint8_t GetTextOrientation() const { return mTextOrientation; }
+  mozilla::StyleTextOrientation GetTextOrientation() const {
+    return mTextOrientation;
+  }
 
   gfxFontGroup* GetThebesFontGroup() const { return mFontGroup; }
   gfxUserFontSet* GetUserFontSet() const;
@@ -258,7 +262,7 @@ class nsFontMetrics final {
   // and text-orientation desired.
   bool mTextRunRTL;
   bool mVertical;
-  uint8_t mTextOrientation;
+  mozilla::StyleTextOrientation mTextOrientation;
 };
 
 #endif /* NSFONTMETRICS__H__ */

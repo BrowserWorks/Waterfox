@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,9 +24,9 @@ const { Rep } = REPS;
 
 const Grip = REPS.Grip;
 // DOM Panel
-const { GripProvider } = require("../grip-provider");
+const { GripProvider } = require("devtools/client/dom/content/grip-provider");
 
-const { DomDecorator } = require("../dom-decorator");
+const { DomDecorator } = require("devtools/client/dom/content/dom-decorator");
 
 /**
  * Renders DOM panel tree.
@@ -79,33 +77,34 @@ class DomTree extends Component {
     const toolbox = DomProvider.getToolbox();
     if (toolbox) {
       onDOMNodeMouseOver = async (grip, options = {}) => {
-        await toolbox.initInspector();
-        if (!toolbox.highlighter) {
-          return null;
-        }
-        const nodeFront = await toolbox.walker.gripToNodeFront(grip);
-        return toolbox.highlighter.highlight(nodeFront, options);
+        const inspectorFront = await toolbox.target.getFront("inspector");
+        const nodeFront = await inspectorFront.getNodeFrontFromNodeGrip(grip);
+        const { highlighterFront } = nodeFront;
+        return highlighterFront.highlight(nodeFront, options);
       };
-      onDOMNodeMouseOut = (forceHide = false) => {
-        return toolbox.highlighter
-          ? toolbox.highlighter.unhighlight(forceHide)
-          : null;
+      onDOMNodeMouseOut = async grip => {
+        const inspectorFront = await toolbox.target.getFront("inspector");
+        const nodeFront = await inspectorFront.getNodeFrontFromNodeGrip(grip);
+        nodeFront.highlighterFront.unhighlight();
       };
       onInspectIconClick = async grip => {
-        await toolbox.initInspector();
         const onSelectInspector = toolbox.selectTool(
           "inspector",
           "inspect_dom"
         );
-        const onGripNodeToFront = toolbox.walker.gripToNodeFront(grip);
-        const [front, inspector] = await Promise.all([
-          onGripNodeToFront,
+        const onNodeFront = toolbox.target
+          .getFront("inspector")
+          .then(inspectorFront =>
+            inspectorFront.getNodeFrontFromNodeGrip(grip)
+          );
+        const [nodeFront, inspectorPanel] = await Promise.all([
+          onNodeFront,
           onSelectInspector,
         ]);
 
-        const onInspectorUpdated = inspector.once("inspector-updated");
-        const onNodeFrontSet = toolbox.selection.setNodeFront(front, {
-          reason: "console",
+        const onInspectorUpdated = inspectorPanel.once("inspector-updated");
+        const onNodeFrontSet = toolbox.selection.setNodeFront(nodeFront, {
+          reason: "dom",
         });
 
         return Promise.all([onNodeFrontSet, onInspectorUpdated]);
@@ -116,15 +115,20 @@ class DomTree extends Component {
     // Reps to render all values. The code also specifies default rep
     // used for data types that don't have its own specific template.
     const renderValue = props => {
-      return Rep(
-        Object.assign({}, props, {
-          onDOMNodeMouseOver,
-          onDOMNodeMouseOut,
-          onInspectIconClick,
-          defaultRep: Grip,
-          cropLimit: 50,
-        })
-      );
+      const repProps = Object.assign({}, props, {
+        onDOMNodeMouseOver,
+        onDOMNodeMouseOut,
+        onInspectIconClick,
+        defaultRep: Grip,
+        cropLimit: 50,
+      });
+
+      // Object can be an objectFront, while Rep always expect grips.
+      if (props?.object?.getGrip) {
+        repProps.object = props.object.getGrip();
+      }
+
+      return Rep(repProps);
     };
 
     return TreeView({

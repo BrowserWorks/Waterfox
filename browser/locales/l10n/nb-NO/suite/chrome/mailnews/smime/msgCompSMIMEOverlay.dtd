@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityEncryptRequire.label "Krypter denne meldingen">
+<!ENTITY menu_securityEncryptRequire.accesskey "K">
+
+<!ENTITY menu_securitySign.label "Signer denne meldingen digitalt">
+<!ENTITY menu_securitySign.accesskey "s">
+
+<!ENTITY menu_securityStatus.label "Vis sikkerhetsinfo">
+<!ENTITY menu_securityStatus.accesskey "V">
+
+<!ENTITY securityButton.label "Sikkerhet">
+<!ENTITY securityButton.tooltip "Vis eller endre sikkerhetsinnstillinger">
+
+<!ENTITY menu_viewSecurityStatus.label "Sikkerhetsinfo for melding">
+<!ENTITY menu_viewSecurityStatus.accesskey "i">

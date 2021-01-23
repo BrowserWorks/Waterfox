@@ -27,7 +27,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(1, os.path.dirname(here))
 
 from mozharness.base.errors import BaseErrorList
-from mozharness.base.log import INFO
+from mozharness.base.log import INFO, WARNING
 from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.automation import TBPL_EXCEPTION, TBPL_RETRY
@@ -41,10 +41,10 @@ from mozharness.mozilla.testing.codecoverage import (
 )
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 
-SUITE_CATEGORIES = ['gtest', 'cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell',
-                    'mozmill']
+SUITE_CATEGORIES = ['gtest', 'cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell']
 SUITE_DEFAULT_E10S = ['mochitest', 'reftest']
 SUITE_NO_E10S = ['xpcshell']
+SUITE_REPEATABLE = ['mochitest', 'reftest']
 
 
 # DesktopUnittest {{{1
@@ -99,14 +99,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
                     "Suites are defined in the config file\n."
                     "Examples: 'jittest'"}
          ],
-        [['--mozmill-suite', ], {
-            "action": "extend",
-            "dest": "specified_mozmill_suites",
-            "type": "string",
-            "help": "Specify which mozmill suite to run. "
-                    "Suites are defined in the config file\n."
-                    "Examples: 'mozmill'"}
-         ],
         [['--run-all-suites', ], {
             "action": "store_true",
             "dest": "run_all_suites",
@@ -150,17 +142,11 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
             "help": "Permits a software GL implementation (such as LLVMPipe) to use "
                     "the GL compositor."}
          ],
-        [["--single-stylo-traversal"], {
-            "action": "store_true",
-            "dest": "single_stylo_traversal",
-            "default": False,
-            "help": "Forcibly enable single thread traversal in Stylo with STYLO_THREADS=1"}
-         ],
         [["--enable-webrender"], {
             "action": "store_true",
             "dest": "enable_webrender",
             "default": False,
-            "help": "Tries to enable the WebRender compositor."}
+            "help": "Enable the WebRender compositor in Gecko."}
          ],
         [["--gpu-required"], {
             "action": "store_true",
@@ -175,6 +161,14 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
             "default": [],
             "help": "Defines an extra user preference."}
          ],
+        [['--repeat', ], {
+            "action": "store",
+            "type": "int",
+            "dest": "repeat",
+            "default": 0,
+            "help": "Repeat the tests the given number of times. Supported "
+                    "by mochitest, reftest, crashtest, ignored otherwise."}
+         ],
     ] + copy.deepcopy(testing_config_options) + \
         copy.deepcopy(code_coverage_config_options)
 
@@ -187,6 +181,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
                 'clobber',
                 'download-and-extract',
                 'create-virtualenv',
+                'start-pulseaudio',
                 'install',
                 'stage-files',
                 'run-tests',
@@ -219,7 +214,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
             ('specified_cppunittest_suites', 'cppunit'),
             ('specified_gtest_suites', 'gtest'),
             ('specified_jittest_suites', 'jittest'),
-            ('specified_mozmill_suites', 'mozmill'),
         )
         for s, prefix in suites:
             if s in c:
@@ -275,7 +269,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
                                                    'blobber_upload_dir')
         dirs['abs_jittest_dir'] = os.path.join(dirs['abs_test_install_dir'],
                                                "jit-test", "jit-test")
-        dirs['abs_mozmill_dir'] = os.path.join(dirs['abs_test_install_dir'], "mozmill")
 
         if os.path.isabs(c['virtualenv_path']):
             dirs['abs_virtualenv_dir'] = c['virtualenv_path']
@@ -321,7 +314,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
     def _pre_create_virtualenv(self, action):
         dirs = self.query_abs_dirs()
 
-        self.register_virtualenv_module('psutil==5.4.3')
         self.register_virtualenv_module(name='mock')
         self.register_virtualenv_module(name='simplejson')
 
@@ -363,9 +355,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
 
     def _get_mozharness_test_paths(self, suite_category, suite):
         test_paths = json.loads(os.environ.get('MOZHARNESS_TEST_PATHS', '""'))
-
-        if '-chunked' in suite:
-            suite = suite[:suite.index('-chunked')]
 
         if '-coverage' in suite:
             suite = suite[:suite.index('-coverage')]
@@ -419,6 +408,11 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
                     base_cmd.append('--disable-e10s')
                 elif suite_category not in SUITE_DEFAULT_E10S and c['e10s']:
                     base_cmd.append('--e10s')
+            if c.get('repeat'):
+                if suite_category in SUITE_REPEATABLE:
+                    base_cmd.extend(["--repeat=%s" % c.get('repeat')])
+                else:
+                    self.log("--repeat not supported in {}".format(suite_category), level=WARNING)
 
             # Ignore chunking if we have user specified test paths
             if not (self.verify_enabled or self.per_test_coverage):
@@ -439,6 +433,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
             if c['headless']:
                 base_cmd.append('--headless')
 
+            if c['enable_webrender']:
+                base_cmd.append('--enable-webrender')
+
             if c['extra_prefs']:
                 base_cmd.extend(['--setpref={}'.format(p) for p in c['extra_prefs']])
 
@@ -450,7 +447,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
                 self.fatal("'%s' not defined in the config!")
 
             if suite in ('browser-chrome-coverage', 'xpcshell-coverage',
-                         'mochitest-devtools-chrome-coverage', 'plain-chunked-coverage'):
+                         'mochitest-devtools-chrome-coverage', 'plain-coverage'):
                 base_cmd.append('--jscov-dir-prefix=%s' %
                                 dirs['abs_blob_upload_dir'])
 
@@ -484,32 +481,31 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
                        " '--binary-path' flag")
 
     def _query_specified_suites(self, category):
-        # logic goes: if at least one '--{category}-suite' was given,
-        # then run only that(those) given suite(s). Elif no suites were
-        # specified and the --run-all-suites flag was given,
-        # run all {category} suites. Anything else, run no suites.
+        """Checks if the provided suite does indeed exist.
+
+        If at least one suite was given and if it does exist, return the suite
+        as legitimate and line it up for execution.
+
+        Otherwise, do not run any suites and return a fatal error.
+        """
         c = self.config
-        all_suites = c.get('all_%s_suites' % (category))
-        specified_suites = c.get('specified_%s_suites' % (category))  # list
-        suites = None
+        all_suites = c.get('all_{}_suites'.format(category), None)
+        specified_suites = c.get('specified_{}_suites'.format(category), None)
 
-        if specified_suites:
-            if 'all' in specified_suites:
-                # useful if you want a quick way of saying run all suites
-                # of a specific category.
-                suites = all_suites
-            else:
-                # suites gets a dict of everything from all_suites where a key
-                # is also in specified_suites
-                suites = dict((key, all_suites.get(key)) for key in
-                              specified_suites if key in all_suites.keys())
-        else:
-            if c.get('run_all_suites'):  # needed if you dont specify any suites
-                suites = all_suites
-            else:
-                suites = self.query_per_test_category_suites(category, all_suites)
+        # Bug 1603842 - disallow selection of more than 1 suite at at time
+        if specified_suites is None:
+            # Path taken by test-verify
+            return self.query_per_test_category_suites(category, all_suites)
+        if specified_suites and len(specified_suites) > 1:
+            self.fatal("""Selection of multiple suites is not permitted. \
+                       Please select at most 1 test suite.""")
+            return
 
-        return suites
+        # Normal path taken by most test suites as only one suite is specified
+        suite = specified_suites[0]
+        if suite not in all_suites:
+            self.fatal("""Selected suite does not exist!""")
+        return {suite: all_suites[suite]}
 
     def _query_try_flavor(self, category, suite):
         flavors = {
@@ -554,6 +550,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
     @PreScriptAction('download-and-extract')
     def _pre_download_and_extract(self, action):
         """Abort if --artifact try syntax is used with compiled-code tests"""
+        dir = self.query_abs_dirs()['abs_blob_upload_dir']
+        self.mkdir_p(dir)
+
         if not self.try_message_has_flag('artifact'):
             return
         self.info('Artifact build requested in try syntax.')
@@ -591,6 +590,30 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
                                  if self._query_specified_suites(cat) is not None]
         super(DesktopUnittest, self).download_and_extract(extract_dirs=extract_dirs,
                                                           suite_categories=target_categories)
+
+    def start_pulseaudio(self):
+        command = []
+        # Implies that underlying system is Linux.
+        if (os.environ.get('NEED_PULSEAUDIO') == 'true'):
+            command.extend([
+                'pulseaudio',
+                '--daemonize',
+                '--log-level=4',
+                '--log-time=1',
+                '-vvvvv',
+                '--exit-idle-time=-1'
+            ])
+
+            # Only run the initialization for Debian.
+            # Ubuntu appears to have an alternate method of starting pulseaudio.
+            if self._is_debian():
+                self._kill_named_proc('pulseaudio')
+                self.run_command(command)
+
+            # All Linux systems need module-null-sink to be loaded, otherwise
+            # media tests fail.
+            self.run_command('pactl load-module module-null-sink')
+            self.run_command('pactl list modules short')
 
     def stage_files(self):
         for category in SUITE_CATEGORIES:
@@ -657,15 +680,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
 
         self.copytree(os.path.join(abs_gtest_dir, 'gtest_bin'),
                       os.path.join(abs_app_dir))
-
-    def _stage_mozmill(self, suites):
-        self._stage_files()
-        dirs = self.query_abs_dirs()
-        modules = ['jsbridge', 'mozmill']
-        for module in modules:
-            self.install_module(module=os.path.join(dirs['abs_mozmill_dir'],
-                                                    'resources',
-                                                    module))
 
     def _kill_proc_tree(self, pid):
         # Kill a process tree (including grandchildren) with signal.SIGTERM
@@ -739,8 +753,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
         """
         try:
             import psutil
-            dir = self.query_abs_dirs()['abs_blob_upload_dir']
-            self.mkdir_p(dir)
             path = os.path.join(dir, "system-info.log")
             with open(path, "w") as f:
                 f.write("System info collected at %s\n\n" % datetime.now())
@@ -859,8 +871,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
 
                 if self.query_minidump_stackwalk():
                     env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
-                if self.query_nodejs():
-                    env['MOZ_NODE_PATH'] = self.nodejs_path
+                if self.config['nodejs_path']:
+                    env['MOZ_NODE_PATH'] = self.config['nodejs_path']
                 env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 env['RUST_BACKTRACE'] = 'full'
@@ -869,14 +881,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, MozbaseMixin,
 
                 if self.config['allow_software_gl_layers']:
                     env['MOZ_LAYERS_ALLOW_SOFTWARE_GL'] = '1'
-                if self.config['enable_webrender']:
-                    env['MOZ_WEBRENDER'] = '1'
-                    env['MOZ_ACCELERATED'] = '1'
 
-                if self.config['single_stylo_traversal']:
-                    env['STYLO_THREADS'] = '1'
-                else:
-                    env['STYLO_THREADS'] = '4'
+                env['STYLO_THREADS'] = '4'
 
                 env = self.query_env(partial_env=env, log_level=INFO)
                 cmd_timeout = self.get_timeout_for_category(suite_category)

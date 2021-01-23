@@ -12,13 +12,16 @@ namespace widget {
 
 CompositorWidgetChild::CompositorWidgetChild(
     RefPtr<CompositorVsyncDispatcher> aVsyncDispatcher,
-    RefPtr<CompositorWidgetVsyncObserver> aVsyncObserver)
+    RefPtr<CompositorWidgetVsyncObserver> aVsyncObserver,
+    const CompositorWidgetInitData&)
     : mVsyncDispatcher(aVsyncDispatcher), mVsyncObserver(aVsyncObserver) {
   MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(!gfxPlatform::IsHeadless());
 }
 
-CompositorWidgetChild::~CompositorWidgetChild() {}
+CompositorWidgetChild::~CompositorWidgetChild() = default;
+
+bool CompositorWidgetChild::Initialize() { return true; }
 
 mozilla::ipc::IPCResult CompositorWidgetChild::RecvObserveVsync() {
   mVsyncDispatcher->SetCompositorVsyncObserver(mVsyncObserver);
@@ -34,12 +37,6 @@ void CompositorWidgetChild::NotifyClientSizeChanged(
     const LayoutDeviceIntSize& aClientSize) {
   Unused << SendNotifyClientSizeChanged(aClientSize);
 }
-
-#ifdef MOZ_WAYLAND
-void CompositorWidgetChild::RequestsUpdatingEGLSurface() {
-  Unused << SendRequestsUpdatingEGLSurface();
-}
-#endif
 
 }  // namespace widget
 }  // namespace mozilla

@@ -9,6 +9,8 @@ import {
   getPaneCollapse,
   getQuickOpenEnabled,
   getSource,
+  getSourceContent,
+  startsWithThreadActor,
   getFileSearchQuery,
   getProjectDirectoryRoot,
 } from "../selectors";
@@ -16,19 +18,24 @@ import { selectSource } from "../actions/sources/select";
 import type { ThunkArgs, panelPositionType } from "./types";
 import { getEditor, getLocationsInViewport } from "../utils/editor";
 import { searchContents } from "./file-search";
+import { copyToTheClipboard } from "../utils/clipboard";
+import { isFulfilled } from "../utils/async-value";
 
-import type { SourceLocation, Context } from "../types";
+import type { SourceLocation, Context, Source, SourceId } from "../types";
 import type {
   ActiveSearchType,
   OrientationType,
   SelectedPrimaryPaneTabType,
 } from "../reducers/ui";
+import type { UIAction } from "./types/UIAction";
 
-export function setPrimaryPaneTab(tabName: SelectedPrimaryPaneTabType) {
+export function setPrimaryPaneTab(
+  tabName: SelectedPrimaryPaneTabType
+): UIAction {
   return { type: "SET_PRIMARY_PANE_TAB", tabName };
 }
 
-export function closeActiveSearch() {
+export function closeActiveSearch(): UIAction {
   return {
     type: "TOGGLE_ACTIVE_SEARCH",
     value: null,
@@ -73,7 +80,25 @@ export function toggleFrameworkGrouping(toggleValue: boolean) {
   };
 }
 
-export function showSource(cx: Context, sourceId: string) {
+export function toggleInlinePreview(toggleValue: boolean) {
+  return ({ dispatch, getState }: ThunkArgs) => {
+    dispatch({
+      type: "TOGGLE_INLINE_PREVIEW",
+      value: toggleValue,
+    });
+  };
+}
+
+export function toggleSourceMapsEnabled(toggleValue: boolean) {
+  return ({ dispatch, getState }: ThunkArgs) => {
+    dispatch({
+      type: "TOGGLE_SOURCE_MAPS_ENABLED",
+      value: toggleValue,
+    });
+  };
+}
+
+export function showSource(cx: Context, sourceId: SourceId) {
   return ({ dispatch, getState }: ThunkArgs) => {
     const source = getSource(getState(), sourceId);
     if (!source) {
@@ -121,7 +146,7 @@ export function togglePaneCollapse(
 export function highlightLineRange(location: {
   start: number,
   end: number,
-  sourceId: string,
+  sourceId: SourceId,
 }) {
   return {
     type: "HIGHLIGHT_LINES",
@@ -132,7 +157,7 @@ export function highlightLineRange(location: {
 export function flashLineRange(location: {
   start: number,
   end: number,
-  sourceId: string,
+  sourceId: SourceId,
 }) {
   return ({ dispatch }: ThunkArgs) => {
     dispatch(highlightLineRange(location));
@@ -144,7 +169,7 @@ export function flashLineRange(location: {
  * @memberof actions/sources
  * @static
  */
-export function clearHighlightLineRange() {
+export function clearHighlightLineRange(): UIAction {
   return {
     type: "CLEAR_HIGHLIGHT_LINES",
   };
@@ -153,7 +178,7 @@ export function clearHighlightLineRange() {
 export function openConditionalPanel(
   location: ?SourceLocation,
   log: boolean = false
-) {
+): ?UIAction {
   if (!location) {
     return;
   }
@@ -165,13 +190,13 @@ export function openConditionalPanel(
   };
 }
 
-export function closeConditionalPanel() {
+export function closeConditionalPanel(): UIAction {
   return {
     type: "CLOSE_CONDITIONAL_PANEL",
   };
 }
 
-export function clearProjectDirectoryRoot(cx: Context) {
+export function clearProjectDirectoryRoot(cx: Context): UIAction {
   return {
     type: "SET_PROJECT_DIRECTORY_ROOT",
     cx,
@@ -181,7 +206,16 @@ export function clearProjectDirectoryRoot(cx: Context) {
 
 export function setProjectDirectoryRoot(cx: Context, newRoot: string) {
   return ({ dispatch, getState }: ThunkArgs) => {
-    const curRoot = getProjectDirectoryRoot(getState());
+    const threadActor = startsWithThreadActor(getState(), newRoot);
+
+    let curRoot = getProjectDirectoryRoot(getState());
+
+    // Remove the thread actor ID from the root path
+    if (threadActor) {
+      newRoot = newRoot.slice(threadActor.length + 1);
+      curRoot = curRoot.slice(threadActor.length + 1);
+    }
+
     if (newRoot && curRoot) {
       const newRootArr = newRoot.replace(/\/+/g, "/").split("/");
       const curRootArr = curRoot
@@ -202,13 +236,26 @@ export function setProjectDirectoryRoot(cx: Context, newRoot: string) {
   };
 }
 
-export function updateViewport() {
+export function updateViewport(): UIAction {
   return {
     type: "SET_VIEWPORT",
     viewport: getLocationsInViewport(getEditor()),
   };
 }
 
-export function setOrientation(orientation: OrientationType) {
+export function updateCursorPosition(cursorPosition: SourceLocation): UIAction {
+  return { type: "SET_CURSOR_POSITION", cursorPosition };
+}
+
+export function setOrientation(orientation: OrientationType): UIAction {
   return { type: "SET_ORIENTATION", orientation };
+}
+
+export function copyToClipboard(source: Source) {
+  return ({ dispatch, getState }: ThunkArgs) => {
+    const content = getSourceContent(getState(), source.id);
+    if (content && isFulfilled(content) && content.value.type === "text") {
+      copyToTheClipboard(content.value.value);
+    }
+  };
 }

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!ENTITY replaceDialog.title "Trovar e reimplaciar">
+<!ENTITY findField.label "Trovar le texto:">
+<!ENTITY findField.accesskey "v">
+<!ENTITY replaceField.label "Replaciar con:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Sensibile a majuscule/minuscule">
+<!ENTITY caseSensitiveCheckbox.accesskey "S">
+<!ENTITY wrapCheckbox.label "Recomenciar al initio">
+<!ENTITY wrapCheckbox.accesskey "R">
+<!ENTITY backwardsCheckbox.label "Cercar in le retro">
+<!ENTITY backwardsCheckbox.accesskey "r">
+<!ENTITY findNextButton.label "Trovar le sequente">
+<!ENTITY findNextButton.accesskey "T">
+<!ENTITY replaceButton.label "Replaciar">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "Replaciar e trovar">
+<!ENTITY replaceAndFindButton.accesskey "r">
+<!ENTITY replaceAllButton.label "Replaciar toto">
+<!ENTITY replaceAllButton.accesskey "T">
+<!ENTITY closeButton.label "Clauder">
+<!ENTITY closeButton.accesskey "C">

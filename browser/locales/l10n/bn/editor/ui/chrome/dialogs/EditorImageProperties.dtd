@@ -1,0 +1,77 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "ছবির বৈশিষ্ট্য">
+
+<!ENTITY pixelsPopup.value "পিক্সেল">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "ছবির অবস্থান (L):">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "ছবির ফাইলের নাম বা অবস্থান লিখুন">
+<!ENTITY title.label "টুলটিপ (T):">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "html 'title' বৈশিষ্ট্য যেটি একটি টুলটিপ হিসেবে দেখানো হয়">
+<!ENTITY altText.label "বিকল্প টেক্সট (A):">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "ছবির জায়গায় দেখানোর জন্য পাঠ্য লিখুন">
+<!ENTITY noAltText.label "বিকল্প টেক্সট ব্যবহার করা হবে না (D)">
+<!ENTITY noAltText.accessKey "D">
+
+<!ENTITY previewBox.label "ছবির প্রাকদর্শন">
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "আসল আকার:">
+<!ENTITY actualSizeRadio.label "আসল আকার (A)">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "ছবির আসল সাইজে ফিরিয়ে নেয়া হবে">
+<!ENTITY customSizeRadio.label "স্বনির্বাচিত আকার (S)">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "পৃষ্ঠার প্রদর্শন অনুযায়ী ছবির আকার পরিবর্তন করা হবে">
+<!ENTITY heightEditField.label "উচ্চতা (g):">
+<!ENTITY heightEditField.accessKey "g">
+<!ENTITY widthEditField.label "প্রস্থ (W):">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY constrainCheckbox.label "বাধা (C)">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "ছবির দৃশ্যমান অনুপাত বজায় রাখা হবে">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "ছবি ম্যাপ">
+<!ENTITY removeImageMapButton.label "মুছে ফেলা (R)">
+<!ENTITY removeImageMapButton.accessKey "R">
+<!ENTITY editImageMapButton.label "সম্পাদনা...">
+<!ENTITY editImageMapButton.tooltip "এই ছবির জন্য একটি ক্লিকযোগ্য হটস্পট তৈরি করা হবে">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "পাঠ্য ছবির সাথে মেলানো">
+<!ENTITY bottomPopup.value "নিচে">
+<!ENTITY topPopup.value "উপরে">
+<!ENTITY centerPopup.value "মাঝ বরাবর">
+<!ENTITY wrapRightPopup.value "ডানে মোড়ানো">
+<!ENTITY wrapLeftPopup.value "বামে মোড়ানো">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "ফাঁকা জায়গা">
+<!ENTITY leftRightEditField.label "বাম এবং ডান (L):">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "উপর এবং নিচ (T):">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "পূর্ণ সীমানা (B):">
+<!ENTITY borderEditField.accessKey "B">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "সংযুক্ত ছবির চারদিকে সীমানা দেখানো (b)">
+<!ENTITY showImageLinkBorder.accessKey "b">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "ফরম">
+<!ENTITY imageLocationTab.label "অবস্থান">
+<!ENTITY imageDimensionsTab.label "মাত্রা">
+<!ENTITY imageAppearanceTab.label "রূপ">
+<!ENTITY imageLinkTab.label "লিংক">

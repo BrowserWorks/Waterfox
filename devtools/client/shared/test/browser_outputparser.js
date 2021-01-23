@@ -3,14 +3,13 @@
 
 "use strict";
 
-const OutputParser = require("devtools/client/shared/output-parser");
 const {
-  initCssProperties,
-  getCssProperties,
-} = require("devtools/shared/fronts/css-properties");
-const { CSS_PROPERTIES_DB } = require("devtools/shared/css/properties-db");
+  getClientCssProperties,
+} = require("devtools/client/fronts/css-properties");
 
 add_task(async function() {
+  await pushPref("layout.css.backdrop-filter.enabled", true);
+  await pushPref("layout.css.individual-transform.enabled", true);
   await addTab("about:blank");
   await performTest();
   gBrowser.removeCurrentTab();
@@ -21,30 +20,25 @@ async function performTest() {
     set: [["security.allow_unsafe_parent_loads", true]],
   });
 
-  const [host, , doc] = await createHost(
+  const OutputParser = require("devtools/client/shared/output-parser");
+
+  const { host, doc } = await createHost(
     "bottom",
     "data:text/html," + "<h1>browser_outputParser.js</h1><div></div>"
   );
 
-  // Mock the toolbox that initCssProperties expect so we get the fallback css properties.
-  const toolbox = {
-    target: {
-      client: {},
-      hasActor: () => false,
-      getFront: typeName => ({ getCSSDatabase: () => CSS_PROPERTIES_DB }),
-    },
-  };
-  await initCssProperties(toolbox);
-  const cssProperties = getCssProperties(toolbox);
+  const cssProperties = getClientCssProperties();
 
   const parser = new OutputParser(doc, cssProperties);
   testParseCssProperty(doc, parser);
   testParseCssVar(doc, parser);
   testParseURL(doc, parser);
   testParseFilter(doc, parser);
+  testParseBackdropFilter(doc, parser);
   testParseAngle(doc, parser);
   testParseShape(doc, parser);
   testParseVariable(doc, parser);
+  testParseColorVariable(doc, parser);
   testParseFontFamily(doc, parser);
 
   host.destroy();
@@ -81,7 +75,7 @@ function makeColorTest(name, value, segments) {
         COLOR_TEST_CLASS +
         '" style="background-color:' +
         segment.name +
-        '"></span><span>' +
+        '" tabindex="0" role="button"></span><span>' +
         segment.name +
         "</span></span>";
     }
@@ -367,6 +361,15 @@ function testParseFilter(doc, parser) {
   is(swatchCount, 1, "filter swatch was created");
 }
 
+function testParseBackdropFilter(doc, parser) {
+  const frag = parser.parseCssProperty("backdrop-filter", "something invalid", {
+    filterSwatchClass: "test-filterswatch",
+  });
+
+  const swatchCount = frag.querySelectorAll(".test-filterswatch").length;
+  is(swatchCount, 1, "filter swatch was created for backdrop-filter");
+}
+
 function testParseAngle(doc, parser) {
   let frag = parser.parseCssProperty("rotate", "90deg", {
     angleSwatchClass: "test-angleswatch",
@@ -512,32 +515,57 @@ function testParseVariable(doc, parser) {
       text: "var(--seen)",
       variables: { "--seen": "chartreuse" },
       expected:
-        '<span>var(<span data-variable="--seen = chartreuse">--seen</span>)' +
+        /* eslint-disable */
+        '<span data-color="chartreuse">' +
+          "<span>var(" +
+            '<span data-variable="--seen = chartreuse">--seen</span>)' +
+          "</span>" +
         "</span>",
+        /* eslint-enable */
     },
     {
       text: "var(--not-seen)",
       variables: {},
       expected:
-        '<span>var(<span class="unmatched-class" ' +
-        'data-variable="--not-seen is not set">--not-seen</span>)</span>',
+        /* eslint-disable */
+        "<span>var(" +
+          '<span class="unmatched-class" data-variable="--not-seen is not set">--not-seen</span>' +
+        ")</span>",
+        /* eslint-enable */
     },
     {
       text: "var(--seen, seagreen)",
       variables: { "--seen": "chartreuse" },
       expected:
-        '<span>var(<span data-variable="--seen = chartreuse">--seen</span>,' +
-        '<span class="unmatched-class"> <span data-color="seagreen"><span>seagreen' +
-        "</span></span></span>)</span>",
+        /* eslint-disable */
+        '<span data-color="chartreuse">' +
+          "<span>var(" +
+            '<span data-variable="--seen = chartreuse">--seen</span>,' +
+            '<span class="unmatched-class"> ' +
+              '<span data-color="seagreen">' +
+                "<span>seagreen</span>" +
+              "</span>" +
+            "</span>)" +
+          "</span>" +
+        "</span>",
+        /* eslint-enable */
     },
     {
       text: "var(--not-seen, var(--seen))",
       variables: { "--seen": "chartreuse" },
       expected:
-        '<span>var(<span class="unmatched-class" ' +
-        'data-variable="--not-seen is not set">--not-seen</span>,<span> <span>var' +
-        '(<span data-variable="--seen = chartreuse">--seen</span>)</span></span>)' +
+        /* eslint-disable */
+        "<span>var(" +
+          '<span class="unmatched-class" data-variable="--not-seen is not set">--not-seen</span>,' +
+          "<span> " +
+            '<span data-color="chartreuse">' +
+              "<span>var(" +
+                '<span data-variable="--seen = chartreuse">--seen</span>)' +
+              "</span>" +
+            "</span>" +
+          "</span>)" +
         "</span>",
+        /* eslint-enable */
     },
   ];
 
@@ -547,7 +575,7 @@ function testParseVariable(doc, parser) {
     };
 
     const frag = parser.parseCssProperty("color", test.text, {
-      isVariableInUse: getValue,
+      getVariableValue: getValue,
       unmatchedVariableClass: "unmatched-class",
     });
 
@@ -556,6 +584,56 @@ function testParseVariable(doc, parser) {
 
     is(target.innerHTML, test.expected, test.text);
     target.innerHTML = "";
+  }
+}
+
+function testParseColorVariable(doc, parser) {
+  const testCategories = [
+    {
+      desc: "Test for CSS variable defining color",
+      tests: [
+        makeColorTest("--test-var", "lime", [{ name: "lime" }]),
+        makeColorTest("--test-var", "#000", [{ name: "#000" }]),
+      ],
+    },
+    {
+      desc: "Test for CSS variable not defining color",
+      tests: [
+        makeColorTest("--foo", "something", ["something"]),
+        makeColorTest("--bar", "Arial Black", ["Arial Black"]),
+        makeColorTest("--baz", "10vmin", ["10vmin"]),
+      ],
+    },
+    {
+      desc: "Test for non CSS variable defining color",
+      tests: [
+        makeColorTest("non-css-variable", "lime", ["lime"]),
+        makeColorTest("-non-css-variable", "#000", ["#000"]),
+      ],
+    },
+  ];
+
+  for (const category of testCategories) {
+    info(category.desc);
+
+    for (const test of category.tests) {
+      info(test.desc);
+      const target = doc.querySelector("div");
+
+      const frag = parser.parseCssProperty(test.name, test.value, {
+        colorSwatchClass: COLOR_TEST_CLASS,
+      });
+
+      target.appendChild(frag);
+
+      is(
+        target.innerHTML,
+        test.expected,
+        `The parsed result for '${test.name}: ${test.value}' is correct`
+      );
+
+      target.innerHTML = "";
+    }
   }
 }
 

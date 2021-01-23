@@ -24,8 +24,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "jsutil.h"
-
 #include "jit/arm64/vixl/Assembler-vixl.h"
 #include "jit/Label.h"
 
@@ -399,7 +397,7 @@ void Assembler::hint(Instruction* at, SystemHint code) {
 
 
 void Assembler::svc(Instruction* at, int code) {
-  VIXL_ASSERT(is_uint16(code));
+  VIXL_ASSERT(IsUint16(code));
   Emit(at, SVC | ImmException(code));
 }
 
@@ -424,7 +422,7 @@ BufferOffset Assembler::Logical(const Register& rd, const Register& rn,
 
     VIXL_ASSERT(immediate != 0);
     VIXL_ASSERT(immediate != -1);
-    VIXL_ASSERT(rd.Is64Bits() || is_uint32(immediate));
+    VIXL_ASSERT(rd.Is64Bits() || IsUint32(immediate));
 
     // If the operation is NOT, invert the operation and immediate.
     if ((op & NOT) == NOT) {
@@ -463,7 +461,7 @@ BufferOffset Assembler::DataProcShiftedRegister(const Register& rd, const Regist
                                                 const Operand& operand, FlagsUpdate S, Instr op)
 {
   VIXL_ASSERT(operand.IsShiftedRegister());
-  VIXL_ASSERT(rn.Is64Bits() || (rn.Is32Bits() && is_uint5(operand.shift_amount())));
+  VIXL_ASSERT(rn.Is64Bits() || (rn.Is32Bits() && IsUint5(operand.shift_amount())));
   return Emit(SF(rd) | op | Flags(S) |
               ShiftDP(operand.shift()) | ImmDPShift(operand.shift_amount()) |
               Rm(operand.reg()) | Rn(rn) | Rd(rd));
@@ -581,7 +579,7 @@ struct PoolHeader {
 
 
 void MozBaseAssembler::WritePoolHeader(uint8_t* start, js::jit::Pool* p, bool isNatural) {
-  JS_STATIC_ASSERT(sizeof(PoolHeader) == 4);
+  static_assert(sizeof(PoolHeader) == 4);
 
   // Get the total size of the pool.
   const uintptr_t totalPoolSize = sizeof(PoolHeader) + p->getPoolSize();
@@ -606,120 +604,6 @@ void MozBaseAssembler::WritePoolGuard(BufferOffset branch, Instruction* inst, Bu
 
   int instOffset = byteOffset >> kInstructionSizeLog2;
   Assembler::b(inst, instOffset);
-}
-
-
-ptrdiff_t MozBaseAssembler::GetBranchOffset(const Instruction* ins) {
-  // Branch instructions use an instruction offset.
-  if (ins->BranchType() != UnknownBranchType)
-    return ins->ImmPCRawOffset() * kInstructionSize;
-
-  // ADR and ADRP encode relative offsets and therefore require patching as if they were branches.
-  // ADR uses a byte offset.
-  if (ins->IsADR())
-    return ins->ImmPCRawOffset();
-
-  // ADRP uses a page offset.
-  if (ins->IsADRP())
-    return ins->ImmPCRawOffset() * kPageSize;
-
-  MOZ_CRASH("Unsupported branch type");
-}
-
-
-void MozBaseAssembler::RetargetNearBranch(Instruction* i, int offset, Condition cond, bool final) {
-  if (i->IsCondBranchImm()) {
-    VIXL_ASSERT(i->IsCondB());
-    Assembler::b(i, offset, cond);
-    return;
-  }
-  MOZ_CRASH("Unsupported branch type");
-}
-
-
-void MozBaseAssembler::RetargetNearBranch(Instruction* i, int byteOffset, bool final) {
-  const int instOffset = byteOffset >> kInstructionSizeLog2;
-
-  // The only valid conditional instruction is B.
-  if (i->IsCondBranchImm()) {
-    VIXL_ASSERT(byteOffset % kInstructionSize == 0);
-    VIXL_ASSERT(i->IsCondB());
-    Condition cond = static_cast<Condition>(i->ConditionBranch());
-    Assembler::b(i, instOffset, cond);
-    return;
-  }
-
-  // Valid unconditional branches are B and BL.
-  if (i->IsUncondBranchImm()) {
-    VIXL_ASSERT(byteOffset % kInstructionSize == 0);
-    if (i->IsUncondB()) {
-      Assembler::b(i, instOffset);
-    } else {
-      VIXL_ASSERT(i->IsBL());
-      Assembler::bl(i, instOffset);
-    }
-
-    VIXL_ASSERT(i->ImmUncondBranch() == instOffset);
-    return;
-  }
-
-  // Valid compare branches are CBZ and CBNZ.
-  if (i->IsCompareBranch()) {
-    VIXL_ASSERT(byteOffset % kInstructionSize == 0);
-    Register rt = i->SixtyFourBits() ? Register::XRegFromCode(i->Rt())
-                                     : Register::WRegFromCode(i->Rt());
-
-    if (i->IsCBZ()) {
-      Assembler::cbz(i, rt, instOffset);
-    } else {
-      VIXL_ASSERT(i->IsCBNZ());
-      Assembler::cbnz(i, rt, instOffset);
-    }
-
-    VIXL_ASSERT(i->ImmCmpBranch() == instOffset);
-    return;
-  }
-
-  // Valid test branches are TBZ and TBNZ.
-  if (i->IsTestBranch()) {
-    VIXL_ASSERT(byteOffset % kInstructionSize == 0);
-    // Opposite of ImmTestBranchBit(): MSB in bit 5, 0:5 at bit 40.
-    unsigned bit_pos = (i->ImmTestBranchBit5() << 5) | (i->ImmTestBranchBit40());
-    VIXL_ASSERT(is_uint6(bit_pos));
-
-    // Register size doesn't matter for the encoding.
-    Register rt = Register::XRegFromCode(i->Rt());
-
-    if (i->IsTBZ()) {
-      Assembler::tbz(i, rt, bit_pos, instOffset);
-    } else {
-      VIXL_ASSERT(i->IsTBNZ());
-      Assembler::tbnz(i, rt, bit_pos, instOffset);
-    }
-
-    VIXL_ASSERT(i->ImmTestBranch() == instOffset);
-    return;
-  }
-
-  if (i->IsADR()) {
-    Register rd = Register::XRegFromCode(i->Rd());
-    Assembler::adr(i, rd, byteOffset);
-    return;
-  }
-
-  if (i->IsADRP()) {
-    const int pageOffset = byteOffset >> kPageSizeLog2;
-    Register rd = Register::XRegFromCode(i->Rd());
-    Assembler::adrp(i, rd, pageOffset);
-    return;
-  }
-
-  MOZ_CRASH("Unsupported branch type");
-}
-
-
-void MozBaseAssembler::RetargetFarBranch(Instruction* i, uint8_t** slot, uint8_t* dest, Condition cond) {
-  MOZ_CRASH("RetargetFarBranch()");
 }
 
 

@@ -15,9 +15,9 @@ const {
 const {
   getClosestGripNode,
   getClosestNonBucketNode,
+  getFront,
   getValue,
   nodeHasAccessors,
-  nodeHasAllEntriesInPreview,
   nodeHasProperties,
   nodeIsBucket,
   nodeIsDefaultProperties,
@@ -30,56 +30,72 @@ const {
 } = require("./node");
 
 import type {
-  CreateLongStringClient,
-  CreateObjectClient,
+  CreateLongStringFront,
+  CreateObjectFront,
   GripProperties,
   LoadedProperties,
   Node,
 } from "../types";
 
+type Client = {
+  createObjectFront?: CreateObjectFront,
+  createLongStringFront?: CreateLongStringFront,
+};
+
 function loadItemProperties(
   item: Node,
-  createObjectClient: CreateObjectClient,
-  createLongStringClient: CreateLongStringClient,
+  client: Client,
   loadedProperties: LoadedProperties
 ): Promise<GripProperties> {
   const gripItem = getClosestGripNode(item);
   const value = getValue(gripItem);
+  let front = getFront(gripItem);
+
+  if (!front && value && client && client.getFrontByID) {
+    front = client.getFrontByID(value.actor);
+  }
+
+  const getObjectFront = function() {
+    if (!front) {
+      front = client.createObjectFront(value);
+    }
+
+    return front;
+  };
 
   const [start, end] = item.meta
     ? [item.meta.startIndex, item.meta.endIndex]
     : [];
 
   const promises = [];
-  let objectClient;
-  const getObjectClient = () => objectClient || createObjectClient(value);
 
   if (shouldLoadItemIndexedProperties(item, loadedProperties)) {
-    promises.push(enumIndexedProperties(getObjectClient(), start, end));
+    promises.push(enumIndexedProperties(getObjectFront(), start, end));
   }
 
   if (shouldLoadItemNonIndexedProperties(item, loadedProperties)) {
-    promises.push(enumNonIndexedProperties(getObjectClient(), start, end));
+    promises.push(enumNonIndexedProperties(getObjectFront(), start, end));
   }
 
   if (shouldLoadItemEntries(item, loadedProperties)) {
-    promises.push(enumEntries(getObjectClient(), start, end));
+    promises.push(enumEntries(getObjectFront(), start, end));
   }
 
   if (shouldLoadItemPrototype(item, loadedProperties)) {
-    promises.push(getPrototype(getObjectClient()));
+    promises.push(getPrototype(getObjectFront()));
   }
 
   if (shouldLoadItemSymbols(item, loadedProperties)) {
-    promises.push(enumSymbols(getObjectClient(), start, end));
+    promises.push(enumSymbols(getObjectFront(), start, end));
   }
 
   if (shouldLoadItemFullText(item, loadedProperties)) {
-    promises.push(getFullText(createLongStringClient(value), item));
+    const longStringFront = front || client.createLongStringFront(value);
+    promises.push(getFullText(longStringFront, item));
   }
 
   if (shouldLoadItemProxySlots(item, loadedProperties)) {
-    promises.push(getProxySlots(getObjectClient()));
+    promises.push(getProxySlots(getObjectFront()));
   }
 
   return Promise.all(promises).then(mergeResponses);
@@ -162,7 +178,6 @@ function shouldLoadItemEntries(
   return (
     value &&
     nodeIsEntries(getClosestNonBucketNode(item)) &&
-    !nodeHasAllEntriesInPreview(gripItem) &&
     !loadedProperties.has(item.path) &&
     !nodeNeedsNumericalBuckets(item)
   );

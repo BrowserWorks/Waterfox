@@ -178,14 +178,6 @@ interface nsITelemetry : nsISupports
   [implicit_jscontext]
   readonly attribute jsval debugSlowSQL;
 
-  /*
-   * An object containing information about Webrtc related stats. For now it
-   * only contains local and remote ICE candidates avaiable when a Webrtc
-   * PeerConnection gets terminated.
-   */
-  [implicit_jscontext]
-  readonly attribute jsval webrtcStats;
-
   /**
    * A number representing the highest number of concurrent threads
    * reached during this session.
@@ -282,7 +274,10 @@ interface nsITelemetry : nsISupports
    *
    * @param id - unique identifier from TelemetryHistograms.h
    * The returned object has the following functions:
-   *   add(int) - Adds an int value to the appropriate bucket.
+   *   add(value) - Adds a sample of `value` to the histogram.
+                    `value` may be a categorical histogram's label as a string,
+                    a boolean histogram's value as a boolean,
+                    or a number that fits inside a uint32_t.
    *   snapshot([optional] {store}) - Returns a snapshot of the histogram with the same data fields
                                       as in getSnapshotForHistograms().
                                       Defaults to the "main" store.
@@ -298,8 +293,11 @@ interface nsITelemetry : nsISupports
    *
    * @param id - unique identifier from TelemetryHistograms.h
    * The returned object has the following functions:
-   *   add(string key, [optional] int) - Add an int value to the histogram for that key.
+   *   add(string key, [optional] value) - Adds a sample of `value` to the histogram for that key.
                                          If no histogram for that key exists yet, it is created.
+                                         `value` may be a categorical histogram's label as a string,
+                                         a boolean histogram's value as a boolean,
+                                         or a number that fits inside a uint32_t.
    *   snapshot([optional] {store}) - Returns the snapshots of all the registered keys in the form
                                       {key1: snapshot1, key2: snapshot2, ...} in the specified store.
    *                                  Defaults to the "main" store.
@@ -486,7 +484,7 @@ interface nsITelemetry : nsISupports
    *
    * @param aCategory The category name.
    * @param aMethod The method name.
-   * @param aMethod The object name.
+   * @param aObject The object name.
    * @param aValue An optional string value to record.
    * @param aExtra An optional object of the form (string -> string).
    *               It should only contain registered extra keys.
@@ -605,12 +603,6 @@ interface nsITelemetry : nsISupports
    * Resets all the stored events. This is intended to be only used in tests.
    */
   void clearEvents();
-
-  /**
-   * Reset the current product. This is intended to be only used in Android tests.
-   * It will fail on Desktop.
-   */
-  void resetCurrentProduct();
 
   /**
    * Get a list of all registered stores.

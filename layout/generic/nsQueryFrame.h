@@ -7,9 +7,10 @@
 #ifndef nsQueryFrame_h
 #define nsQueryFrame_h
 
+#include <type_traits>
+
 #include "nscore.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/TypeTraits.h"
 
 // NOTE: the long lines in this file are intentional to make compiler error
 // messages more readable.
@@ -24,23 +25,22 @@
 #define NS_QUERYFRAME_HEAD(class)               \
   void* class ::QueryFrame(FrameIID id) const { \
     switch (id) {
-#define NS_QUERYFRAME_ENTRY(class)                                            \
-  case class ::kFrameIID: {                                                   \
-    static_assert(                                                            \
-        mozilla::IsSame<class, class ::Has_NS_DECL_QUERYFRAME_TARGET>::value, \
-        #class " must declare itself as a queryframe target");                \
-    return const_cast<class*>(static_cast<const class*>(this));               \
+#define NS_QUERYFRAME_ENTRY(class)                                    \
+  case class ::kFrameIID: {                                           \
+    static_assert(                                                    \
+        std::is_same_v<class, class ::Has_NS_DECL_QUERYFRAME_TARGET>, \
+        #class " must declare itself as a queryframe target");        \
+    return const_cast<class*>(static_cast<const class*>(this));       \
   }
 
-#define NS_QUERYFRAME_ENTRY_CONDITIONAL(class, condition)                \
-  case class ::kFrameIID:                                                \
-    if (condition) {                                                     \
-      static_assert(                                                     \
-          mozilla::IsSame<class,                                         \
-                          class ::Has_NS_DECL_QUERYFRAME_TARGET>::value, \
-          #class " must declare itself as a queryframe target");         \
-      return const_cast<class*>(static_cast<const class*>(this));        \
-    }                                                                    \
+#define NS_QUERYFRAME_ENTRY_CONDITIONAL(class, condition)               \
+  case class ::kFrameIID:                                               \
+    if (condition) {                                                    \
+      static_assert(                                                    \
+          std::is_same_v<class, class ::Has_NS_DECL_QUERYFRAME_TARGET>, \
+          #class " must declare itself as a queryframe target");        \
+      return const_cast<class*>(static_cast<const class*>(this));       \
+    }                                                                   \
     break;
 
 #define NS_QUERYFRAME_TAIL_INHERITING(class) \
@@ -66,21 +66,16 @@ class nsQueryFrame {
   enum FrameIID {
 #define FRAME_ID(classname, ...) classname##_id,
 #define ABSTRACT_FRAME_ID(classname) classname##_id,
-#include "nsFrameIdList.h"
+#include "mozilla/FrameIdList.h"
 #undef FRAME_ID
 #undef ABSTRACT_FRAME_ID
-
-    // This marker allows mozilla::ArenaObjectID to "extend" this enum
-    // with additional sequential values for use in nsPresArena and
-    // PresShell::{Allocate,Free}ByObjectId
-    NON_FRAME_MARKER
   };
 
   // A strict subset of FrameIID above for frame classes that we instantiate.
   enum class ClassID : uint8_t {
 #define FRAME_ID(classname, ...) classname##_id,
 #define ABSTRACT_FRAME_ID(classname)
-#include "nsFrameIdList.h"
+#include "mozilla/FrameIdList.h"
 #undef FRAME_ID
 #undef ABSTRACT_FRAME_ID
   };
@@ -103,10 +98,9 @@ class do_QueryFrameHelper {
 
   template <class Dest>
   operator Dest*() {
-    static_assert(
-        mozilla::IsSame<typename mozilla::RemoveConst<Dest>::Type,
-                        typename Dest::Has_NS_DECL_QUERYFRAME_TARGET>::value,
-        "Dest must declare itself as a queryframe target");
+    static_assert(std::is_same_v<std::remove_const_t<Dest>,
+                                 typename Dest::Has_NS_DECL_QUERYFRAME_TARGET>,
+                  "Dest must declare itself as a queryframe target");
     if (!mRawPtr) {
       return nullptr;
     }
@@ -131,10 +125,8 @@ class do_QueryFrameHelper {
   // downcasting is safe.
   template <class Src, class Dst>
   struct FastQueryFrame<
-      Src, Dst,
-      typename mozilla::EnableIf<mozilla::IsBaseOf<nsIFrame, Src>::value>::Type,
-      typename mozilla::EnableIf<
-          mozilla::IsBaseOf<nsIFrame, Dst>::value>::Type> {
+      Src, Dst, std::enable_if_t<std::is_base_of<nsIFrame, Src>::value>,
+      std::enable_if_t<std::is_base_of<nsIFrame, Dst>::value>> {
     static Dst* QueryFrame(Src* aFrame) {
       return nsQueryFrame::FrameIID(aFrame->mClass) == Dst::kFrameIID
                  ? reinterpret_cast<Dst*>(aFrame)

@@ -8,12 +8,13 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { tab, monitor } = await initNetMonitor(SIMPLE_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
-  const { EVENTS } = windowRequire("devtools/client/netmonitor/src/constants");
   const { getSelectedRequest, getSortedRequests } = windowRequire(
     "devtools/client/netmonitor/src/selectors/index"
   );
@@ -25,7 +26,7 @@ add_task(async function() {
     "The pane toggle button should not be visible."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The details pane should be hidden when the frontend is opened."
   );
@@ -35,7 +36,7 @@ add_task(async function() {
     "There should be no selected item in the requests menu."
   );
 
-  const networkEvent = monitor.panelWin.api.once(EVENTS.NETWORK_EVENT);
+  const networkEvent = waitForNetworkEvents(monitor, 1);
   tab.linkedBrowser.reload();
   await networkEvent;
 
@@ -44,7 +45,7 @@ add_task(async function() {
     "The pane toggle button should not be visible after the first request."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The details pane should still be hidden after the first request."
   );
@@ -65,7 +66,7 @@ add_task(async function() {
       "not collapsed anymore."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     true,
     "The details pane should not be hidden after toggle button was pressed."
   );
@@ -83,7 +84,7 @@ add_task(async function() {
   EventUtils.sendMouseEvent({ type: "click" }, toggleButton);
 
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The details pane should now be hidden after the toggle button was pressed again."
   );

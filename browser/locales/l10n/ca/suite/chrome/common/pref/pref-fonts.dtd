@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-fonts.xul -->
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+
+
+<!ENTITY  pref.fonts.title                        "Tipus de lletra">
+
+<!ENTITY  language.label                          "Tipus de lletra per a:">
+<!ENTITY  language.accesskey                      "T">
+
+<!ENTITY  typefaces.label                         "Tipografia">
+<!ENTITY  sizes.label                             "Mida (píxels)">
+
+<!ENTITY  proportional.label                      "Proporcional:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Amplada fixa:">
+<!ENTITY  monospace.accesskey                     "m">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasia:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "Cursiva:">
+<!ENTITY  cursive.accesskey                       "C">
+
+<!ENTITY  font.langGroup.latin1                   "Occidental">
+<!ENTITY  font.langGroup.latin2                   "Centreeuropeu">
+<!ENTITY  font.langGroup.japanese                 "Japonès">
+<!ENTITY  font.langGroup.trad-chinese             "Xinès tradicional">
+<!ENTITY  font.langGroup.simpl-chinese            "Xinès simplificat">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Xinès tradicional (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Coreà">
+<!ENTITY  font.langGroup.cyrillic                 "Ciríl·lic">
+<!ENTITY  font.langGroup.baltic                   "Bàltic">
+<!ENTITY  font.langGroup.el                       "Grec">
+<!ENTITY  font.langGroup.turkish                  "Turc">
+<!ENTITY  font.langGroup.unicode1                 "Unicode">
+<!ENTITY  font.langGroup.user-def                 "Definit per l'usuari">
+<!ENTITY  font.langGroup.thai                     "Tailandès">
+<!ENTITY  font.langGroup.hebrew                   "Hebreu">
+<!ENTITY  font.langGroup.arabic                   "Àrab">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tàmil">
+<!ENTITY  font.langGroup.armenian                 "Armeni">
+<!ENTITY  font.langGroup.bengali                  "Bengalí">
+<!ENTITY  font.langGroup.canadian                 "Unified Canadian Syllabary">
+<!ENTITY  font.langGroup.ethiopic                 "Etiòpic">
+<!ENTITY  font.langGroup.georgian                 "Georgià">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Mida de lletra mínima:">
+<!ENTITY minSize.accesskey                        "n">
+<!ENTITY minSize.none                             "Cap">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  useDocumentFonts.label                  "Permet que els documents utilitzin altres tipus de lletra">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+<!-- leaving this stuff in for now -->
+
+
+<!ENTITY  header2                                 "Quan una pàgina web contingui els seus propis tipus de lletra">
+<!ENTITY  useDefaultFont.label                    "Utilitza els meus tipus de lletra per defecte, ignorant els que la pàgina ha triat">
+<!ENTITY  useDefaultFont.accesskey                "U">

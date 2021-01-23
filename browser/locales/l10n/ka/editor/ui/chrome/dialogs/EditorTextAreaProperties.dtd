@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ტექსტური არის პარამეტრები">
+
+<!ENTITY Settings.label "პარამეტრები">
+
+<!ENTITY TextAreaName.label "ველის სახელი:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "მწკრივები:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "სვეტები:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "მხოლოდ წასაკითხი">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "ამორთულია">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "დაფების საძიებელი:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "მალმხმობი:">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "საწყისი ტექსტი:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "გადატანის რეჟიმი:">
+<!ENTITY TextAreaWrap.accessKey "W">
+<!ENTITY WrapDefault.value "ნაგულისხმები">
+<!ENTITY WrapOff.value "ამორთული">
+<!ENTITY WrapHard.value "აპარატული">
+<!ENTITY WrapSoft.value "პროგრამული">
+<!ENTITY WrapPhysical.value "ფიზიკური">
+<!ENTITY WrapVirtual.value "ვირტუალური">

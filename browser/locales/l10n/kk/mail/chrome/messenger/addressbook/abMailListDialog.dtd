@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "Жаңа хабарлау тізімі">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "Қайда қосу: ">
+<!ENTITY addToAddressBook.accesskey     "а">
+<!ENTITY ListName.label                 "Тізімнің атауы: ">
+<!ENTITY ListName.accesskey             "з">
+<!ENTITY ListNickName.label             "Тізімнің ник аты: ">
+<!ENTITY ListNickName.accesskey         "н">
+<!ENTITY ListDescription.label          "Анықтамасы: ">
+<!ENTITY ListDescription.accesskey      "ы">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Хаттарды тарату тізіміне қосу үшін эл. пошта адрестерін теріңіз:">
+<!ENTITY AddressTitle.accesskey         "ш">
+<!ENTITY UpButton.label                 "Жоғары жылжыту">
+<!ENTITY DownButton.label               "Төмен жылжыту">
+

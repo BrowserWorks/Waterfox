@@ -17,7 +17,7 @@
 #include "LocalStorageCache.h"
 #include "StorageObserver.h"
 #include "mozilla/Mutex.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 
@@ -70,6 +70,7 @@ class LocalStorageCacheChild final : public PBackgroundLocalStorageCacheChild {
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
   mozilla::ipc::IPCResult RecvObserve(const PrincipalInfo& aPrincipalInfo,
+                                      const PrincipalInfo& aCachePrincipalInfo,
                                       const uint32_t& aPrivateBrowsingId,
                                       const nsString& aDocumentURI,
                                       const nsString& aKey,
@@ -159,7 +160,7 @@ class StorageDBChild final : public PBackgroundStorageChild {
   RefPtr<LocalStorageManager> mManager;
 
   // Origins having data hash, for optimization purposes only
-  nsAutoPtr<nsTHashtable<nsCStringHashKey>> mOriginsHavingData;
+  UniquePtr<nsTHashtable<nsCStringHashKey>> mOriginsHavingData;
 
   // List of caches waiting for preload.  This ensures the contract that
   // AsyncPreload call references the cache for time of the preload.
@@ -215,11 +216,13 @@ class LocalStorageCacheParent final
 
  public:
   // Created in AllocPBackgroundLocalStorageCacheParent.
-  LocalStorageCacheParent(const PrincipalInfo& aPrincipalInfo,
+  LocalStorageCacheParent(const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
                           const nsACString& aOriginKey,
                           uint32_t aPrivateBrowsingId);
 
   NS_INLINE_DECL_REFCOUNTING(mozilla::dom::LocalStorageCacheParent)
+
+  const PrincipalInfo& PrincipalInfo() const { return mPrincipalInfo; }
 
  private:
   // Reference counted.
@@ -273,7 +276,7 @@ class StorageDBParent final : public PBackgroundStorageParent {
           mOriginNoSuffix(aOriginNoSuffix),
           mLoaded(false),
           mLoadedCount(0) {}
-    virtual ~CacheParentBridge() {}
+    virtual ~CacheParentBridge() = default;
 
     // LocalStorageCacheBridge
     virtual const nsCString Origin() const override;
@@ -312,7 +315,7 @@ class StorageDBParent final : public PBackgroundStorageParent {
         : mOwningEventTarget(GetCurrentThreadSerialEventTarget()),
           mParent(aParentDB),
           mOriginScope(aOriginScope) {}
-    virtual ~UsageParentBridge() {}
+    virtual ~UsageParentBridge() = default;
 
     // StorageUsageBridge
     virtual const nsCString& OriginScope() override { return mOriginScope; }
@@ -340,8 +343,8 @@ class StorageDBParent final : public PBackgroundStorageParent {
   mozilla::ipc::IPCResult RecvPreload(const nsCString& aOriginSuffix,
                                       const nsCString& aOriginNoSuffix,
                                       const uint32_t& aAlreadyLoadedCount,
-                                      InfallibleTArray<nsString>* aKeys,
-                                      InfallibleTArray<nsString>* aValues,
+                                      nsTArray<nsString>* aKeys,
+                                      nsTArray<nsString>* aValues,
                                       nsresult* aRv) override;
   mozilla::ipc::IPCResult RecvAsyncGetUsage(
       const nsCString& aOriginNoSuffix) override;

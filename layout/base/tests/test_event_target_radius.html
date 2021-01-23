@@ -15,13 +15,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=780847
 <body id="body" onload="setTimeout(startTest, 0)" style="margin:0; width:100%; height:100%; overflow:hidden">
 <p id="display"></p>
 <div id="content">
-  <!-- XXX Though B2G isn't supported anymore, we probably want to keep this
-       test's B2G special-cases around, and just make them apply to Android.
-       (We may need to do so, for this test to be runnable on Android...?)
-       See bug 1355206 for more.
-  -->
-  <!-- the iframe holding this test is only 300px tall on B2G, so we need to
-       make the t target shorter than normal to test the bottom edge fluffing
+  <!-- We make the `t` target shorter than normal in case because we test the
+       bottom edge fluffing on this element, and the test page may be hosted
+       inside a short iframe in the test harness on some platforms.
   -->
   <div class="target" style="height:80px" id="t" onmousedown="x=1"></div>
 
@@ -61,6 +57,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=780847
   <div id="t10_top" class="target" style="top:-50px;" onmousedown="x=1" hidden></div>
   <div id="t10_bottom" class="target" style="top:auto;bottom:-50px;" onmousedown="x=1" hidden></div>
   <div id="t10_over" style="position:absolute; left:0; top:0; width:100%; height:100%; background:yellow;" hidden></div>
+
+  <div id="t11" class="target" style="cursor:pointer" hidden></div>
+  <div id="t11_with_child" class="target" style="cursor:pointer" hidden><div id="t11_child" style="width:100px; height:100px; background:green;"></div></div>
+  <div id="t11_covered" class="target" style="cursor:pointer" hidden><div id="t11_coverer" style="width:100px; height:100px; background:green; cursor:text"></div></div>
 </div>
 <pre id="test">
 <script type="application/javascript">
@@ -77,7 +77,14 @@ function startTest() {
 
 SimpleTest.waitForExplicitFinish();
 
+let oldResolution = 1.0;
+
 function endTest() {
+  if (navigator.appVersion.includes("Android")) {
+    // Restore any resolution that was changed at the end of the test.
+    let topUtils = SpecialPowers.getDOMWindowUtils(window.top);
+    topUtils.setResolutionAndScaleTo(oldResolution);
+  }
   SimpleTest.finish();
 }
 
@@ -103,15 +110,22 @@ function setShowing(id, show) {
 var mm;
 function runTest() {
   let resolution = 1;
-  if (SpecialPowers.Services.appinfo.name == "B2G") {
-    // This test runs on B2G as well, zoomed out. Therefore we need to account
+  if (navigator.appVersion.includes("Android")) {
+    // Choose a roundish number for the resolution so that the "midpoint" test below
+    // doesn't mis-target an element due to rounding error.
+    let desiredResolution = 0.75;
+    let topUtils = SpecialPowers.getDOMWindowUtils(window.top);
+    // Save the old resolution for restoration at the end of the test.
+    oldResolution = topUtils.getResolution();
+    topUtils.setResolutionAndScaleTo(desiredResolution);
+    // This test runs on Android, zoomed out. Therefore we need to account
     // for the resolution as well, because the fluff area is relative to screen
     // pixels rather than CSS pixels.
-    let out = {};
-    SpecialPowers.getDOMWindowUtils(window.top).getResolution(out);
-    resolution = 1.0 / out.value;
+    resolution = topUtils.getResolution();
+    // Make sure we were actually able to zoom out to the desired level.
+    ok(resolution == desiredResolution, "Resolution is " + resolution);
   }
-  mm = SpecialPowers.getDOMWindowUtils(window.top).physicalMillimeterInCSSPixels * resolution;
+  mm = SpecialPowers.getDOMWindowUtils(window.top).physicalMillimeterInCSSPixels / resolution;
   ok(4*mm >= 10, "WARNING: mm " + mm + " too small in this configuration. Test results will be bogus");
 
   // Test basic functionality: clicks sufficiently close to the element
@@ -284,6 +298,21 @@ function test3() {
   setShowing("t10_right", false);
   setShowing("t10_top", false);
   setShowing("t10_bottom", false);
+
+  setShowing("t11", true);
+  testMouseClick("t11", 100 + 11*mm, 10, "t11",
+                 "Elements with cursor:pointer are fluff targets");
+  setShowing("t11", false);
+
+  setShowing("t11_with_child", true);
+  testMouseClick("t11_with_child", 100 + 11*mm, 10, "t11_child",
+                 "Elements that inherit cursor:pointer are fluff targets");
+  setShowing("t11_with_child", false);
+
+  setShowing("t11_covered", true);
+  testMouseClick("t11_covered", 100 + 11*mm, 10, "body",
+                 "Elements that override an inherited cursor:pointer are not fluff targets");
+  setShowing("t11_covered", false);
 
   // Not yet tested:
   // -- visited link weight

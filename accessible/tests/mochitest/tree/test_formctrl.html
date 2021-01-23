@@ -62,17 +62,12 @@
       testAccessibleTree("range", accTree);
 
       // input@type="number"
-      accTree =
-        { SPINBUTTON: [
-          { ENTRY: [ ] },
-          { PUSHBUTTON: [ ] },
-          { PUSHBUTTON: [ ] },
-        ] };
+      accTree = { SPINBUTTON: [ ] };
       testAccessibleTree("number", accTree);
 
       // output
       accTree = {
-        role: ROLE_SECTION,
+        role: ROLE_STATUSBAR,
         children: [
           {
             role: ROLE_TEXT_LEAF,

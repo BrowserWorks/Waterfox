@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Önemli Bir Haber">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Firefox’a daha önce kaydettiğiniz bilgileri &brandShortName; ile eşitlemek için &syncBrand.fxAccount.label;nıza giriş yapın.">
+<!ENTITY continue-button "Devam et">
+
+<!ENTITY mainText "Bu &brandShortName; kurulumunun yeni bir profili var. Bu profildeki yer imleri, parolalar ve kullanıcı tercihleri bu bilgisayardaki diğer Waterfox kurulumlarıyla (Firefox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition ve Waterfox Nightly dahil) paylaşılmayacaktır.">

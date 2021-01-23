@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Konto a daty wotstronić">
+<!ENTITY removeButton.label           "Wotstronić">
+<!ENTITY removeButton.accesskey       "W">
+<!ENTITY removeAccount.label          "Kontowe daty wotstronić">
+<!ENTITY removeAccount.accesskey      "o">
+<!ENTITY removeAccount.desc           "Wotstroni jenož wědu &brandShortName; wo tutym konće. Njewobwliwuje konto same wo serwerje.">
+<!ENTITY removeData.label             "Powěsćowe daty wotstronić">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Rozmołwne daty wotstronić">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Wotstroni wšě powěsće, rjadowaki a filtry zwjazane z tutym kontom z wašeje lokalneje tačele. To njewobwliwuje někotre powěsće, kotrež maja na serwerje wostać. Njewuběrajće to, jeli chceće lokalne daty archiwować abo pozdźišo w &brandShortName; zaso wužiwać.">
+<!ENTITY removeDataServerAccount.desc "Wotstroni wšě powěsće, rjadowaki a filtry zwjazane z tutym kontom z wašeje lokalneje tačele. Waše powěsće a rjadowaki hišće na wašim serwerju wostanu.">
+<!ENTITY removeDataChatAccount.desc   "Wotstroni wšě protokole rozmołwow składowane za tute konto na lokalnej tačeli.">
+<!ENTITY showData.label               "Městno datow pokazać">
+<!ENTITY showData.accesskey           "M">
+<!ENTITY progressPending              "Wubrane daty so wotstronjeja…">
+<!ENTITY progressSuccess              "Daty su so wuspěšnje wotstronili.">
+<!ENTITY progressFailure              "Daty njedachu so wotstronić.">

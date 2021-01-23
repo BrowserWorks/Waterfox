@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Обриши">
+<!ENTITY editContactPanelDeleteContact.accesskey "б">
+
+<!ENTITY editContactName.label "Име:">
+<!ENTITY editContactName.accesskey "И">
+
+<!ENTITY editContactEmail.label "Е-пошта:">
+<!ENTITY editContactEmail.accesskey "Е">
+
+<!ENTITY editContactAddressBook.label "Именик:">
+<!ENTITY editContactAddressBook.accesskey "м">
+
+<!ENTITY editContactPanelDone.label "Готово">
+<!ENTITY editContactPanelDone.accesskey "Г">
+
+<!ENTITY contactMoveDisabledWarning.description "Не можете променити именик зато што је контакт у дописној листи.">

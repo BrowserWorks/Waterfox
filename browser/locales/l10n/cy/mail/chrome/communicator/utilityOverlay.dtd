@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Ffeil">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Newydd">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Golygu">
+<!ENTITY editMenu.accesskey        "G">
+<!ENTITY undoCmd.label            "Dadwneud">
+<!ENTITY undoCmd.accesskey          "u">
+<!ENTITY redoCmd.label            "Ailwneud">
+<!ENTITY redoCmd.accesskey          "A">
+<!ENTITY deleteCmd.label          "Dileu">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "Dewisiadau">
+<!ENTITY preferencesCmd2.accesskey "D">
+<!ENTITY preferencesCmdUnix.label       "Dewisiadau">
+<!ENTITY preferencesCmdUnix.accesskey     "D">
+
+<!ENTITY customizeCmd.label "Cyfaddasu">
+<!ENTITY customizeCmd.accesskey "f">
+
+<!ENTITY viewMenu.label          "Golwg">
+<!ENTITY viewMenu.accesskey        "l">
+<!ENTITY viewToolbarsMenu.label        "Barrau Offer">
+<!ENTITY viewToolbarsMenu.accesskey      "B">
+<!ENTITY showTaskbarCmd.label          "Bar Statws">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "Cau">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "u">
+
+<!ENTITY quitApplicationCmd.label  "Gadael">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "G">
+
+<!ENTITY quitApplicationCmdUnix.label  "Gadael">
+<!ENTITY quitApplicationCmdUnix.accesskey  "G">
+
+<!ENTITY quitApplicationCmdMac.label  "Gadael &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "G">

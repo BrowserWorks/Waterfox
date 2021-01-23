@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Gevorderde-eienskappe-redigeerder">
+<!ENTITY AttName.label                  "Attribuut: ">
+<!ENTITY AttValue.label                 "Waarde: ">
+<!ENTITY PropertyName.label             "Eienskap: ">
+<!ENTITY currentattributesfor.label     "Huidige attribute vir: ">
+<!ENTITY tree.attributeHeader.label     "Attribuut">
+<!ENTITY tree.propertyHeader.label      "Eienskap">
+<!ENTITY tree.valueHeader.label         "Waarde">
+<!ENTITY tabHTML.label                  "HTML-attribute">
+<!ENTITY tabCSS.label                   "Inlynstyl">
+<!ENTITY tabJSE.label                   "JavaScript-gebeure">
+
+<!ENTITY editAttribute.label    "Kliek op 'n item hierbo om sy waarde te wysig">
+<!ENTITY removeAttribute.label  "Verwyder">

@@ -1,12 +1,13 @@
 waitForExplicitFinish();
 requestLongerTimeout(2); // see bug 660123 -- this test is slow on Mac.
 
-// A hold on the current timer, so it doens't get GCed out from
+// A hold on the current timer, so it doesn't get GCed out from
 // under us
 var gTimer;
 
 // Browsing to a new URL - pushing us into the bfcache - should cause
 // animations to stop, and resume when we return
+/* global yield */
 function testBFCache() {
   function theTest() {
     var abort = false;

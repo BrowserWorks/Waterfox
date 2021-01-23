@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Сіты лістоў">
+<!ENTITY nameColumn.label "Назва сіта">
+<!ENTITY activeColumn.label "Дазволена">
+<!ENTITY newButton.label "Новае…">
+<!ENTITY newButton.accesskey "Н">
+<!ENTITY newButton.popupCopy.label "Капіяваць…">
+<!ENTITY newButton.popupCopy.accesskey "К">
+<!ENTITY editButton.label "Рэдагаваць…">
+<!ENTITY editButton.accesskey "Р">
+<!ENTITY deleteButton.label "Выдаліць">
+<!ENTITY deleteButton.accesskey "д">
+<!ENTITY reorderTopButton "Угору">
+<!ENTITY reorderTopButton.accessKey "г">
+<!ENTITY reorderTopButton.toolTip "Перамясціць сіта так, каб яно выконвалася першым">
+<!ENTITY reorderUpButton.label "Рухаць угору">
+<!ENTITY reorderUpButton.accesskey "г">
+<!ENTITY reorderDownButton.label "Рухаць уніз">
+<!ENTITY reorderDownButton.accesskey "н">
+<!ENTITY reorderBottomButton "Уніз">
+<!ENTITY reorderBottomButton.accessKey "н">
+<!ENTITY reorderBottomButton.toolTip "Перамясціць сіта так, каб яно выконвалася апошнім">
+<!ENTITY filterHeader.label "Дазволеныя сіты выконваюцца самастойна ў наступным парадку.">
+<!ENTITY filtersForPrefix.label "Сіты для:">
+<!ENTITY filtersForPrefix.accesskey "С">
+<!ENTITY viewLogButton.label "Метрыка сіта">
+<!ENTITY viewLogButton.accesskey "М">
+<!ENTITY runFilters.label "Выканаць зараз">
+<!ENTITY runFilters.accesskey "В">
+<!ENTITY stopFilters.label "Спыніць">
+<!ENTITY stopFilters.accesskey "С">
+<!ENTITY folderPickerPrefix.label "Выканаць вылучаныя сіты на:">
+<!ENTITY folderPickerPrefix.accesskey "і">
+<!ENTITY helpButton.label "Даведка">
+<!ENTITY helpButton.accesskey "Д">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Пошук сітаў па назве…">
+
+
+

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Mezuak prestatzea eta helbideratzea">
+<!ENTITY addressingGroupTitle.label "Helbideratzea">
+<!ENTITY addressingText.label      "Helbideak bilatzean:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Erabili nire LDAP zerbitzari orokorraren ezarpenak kontu honentzat">
+<!ENTITY useGlobal.accesskey       "u">
+<!ENTITY editDirectories.label     "Editatu direktorioak…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Erabili beste LDAP zerbitzari bat:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Bat ere ez">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Mezuak prestatzea">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Prestatu mezuak HTML formatuan">
+<!ENTITY useHtml.accesskey                    "s">
+<!ENTITY autoQuote.label                      "Zitatu automatikoki jatorrizko testua erantzutean">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Aipamena noiz,">
+<!ENTITY quoting.accesskey                    "A">
+<!ENTITY aboveQuote.label                     "hasi nire erantzuna aipamen-testuaren aurretik">
+<!ENTITY belowQuote.label                     "hasi nire erantzuna aipamen-testuaren ondoren">
+<!ENTITY selectAndQuote.label                 "hautatu zita">
+<!ENTITY place.label                          "eta jarri nire sinadura">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "zitaren ondoren (gomendatua)">
+<!ENTITY aboveText.label                      "nire erantzunaren ondoren (zitaren gainean)">
+<!ENTITY includeSigOnReply.label              "Txertatu sinadura erantzunetan">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Txertatu sinadura birbidalketetan">
+<!ENTITY includeSigOnForward.accesskey        "b">
+
+<!ENTITY globalComposingPrefs.label           "Mezuak prestatzeko hobespen orokorrak…">
+<!ENTITY globalComposingPrefs.accesskey       "o">
+
+<!ENTITY globalAddressingPrefs.label          "Helbideratzeko hobespen orokorrak…">
+<!ENTITY globalAddressingPrefs.accesskey      "H">

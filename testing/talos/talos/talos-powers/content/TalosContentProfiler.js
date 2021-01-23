@@ -12,6 +12,12 @@
  * as a frame script into a browser by the parent process.
  */
 
+if (typeof window !== "undefined") {
+  window.onerror = (message, source, lineno) => {
+    dump(`TEST-UNEXPECTED-FAIL | ${source}, line ${lineno}: ${message}\n`);
+  };
+}
+
 var TalosContentProfiler;
 
 (function() {
@@ -27,17 +33,6 @@ var TalosContentProfiler;
 
   // Profiler settings.
   var interval, entries, threadsArray, profileDir;
-
-  try {
-    // Outside of talos, this throws a security exception which no-op this file.
-    // (It's not required nor allowed for addons since Firefox 17)
-    // It's used inside talos from non-privileged pages (like during tscroll),
-    // and it works because talos disables all/most security measures.
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-  } catch (e) {}
-
-  /* eslint-disable mozilla/use-chromeutils-import */
-  Cu.import("resource://gre/modules/Services.jsm");
 
   /**
    * Emits a TalosContentProfiler prefixed event and then returns a Promise
@@ -283,14 +278,6 @@ var TalosContentProfiler;
       }
 
       return Promise.resolve();
-    },
-
-    /**
-     * Add a marker to the profile on the content process samples.
-     * This occurs synchronously.
-     */
-    contentMarker(marker) {
-      Services.profiler.AddMarker(marker);
     },
   };
 

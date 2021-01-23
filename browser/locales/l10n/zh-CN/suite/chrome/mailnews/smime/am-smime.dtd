@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "安全">
+<!ENTITY securityTab.label "安全">
+<!ENTITY securityHeading.label "要发送和接收已签名或者已加密的消息，您必须指定一个数字签名证书和一个加密证书。">
+<!ENTITY encryptionGroupTitle.label "加密">
+<!ENTITY encryptionChoiceLabel.label "发送消息时默认加密设置：">
+<!ENTITY neverEncrypt.label "从不（不要加密）">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "必需（所有接收者必须有证书，否则不发送消息）">
+<!ENTITY alwaysEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert.message "使用如下证书对发送给您的消息进行加密和解密：">
+<!ENTITY digitalSign.certificate.button "选择…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "清空">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "选择…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "清空">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "数字签名">
+<!ENTITY signMessage.label "对消息数字签名（默认）">
+<!ENTITY signMessage.accesskey "D">
+<!ENTITY signingCert.message "使用如下证书对您发送的消息进行数字签名：">
+
+<!ENTITY certificates.label "证书">
+<!ENTITY manageCerts2.label "管理证书…">
+<!ENTITY manageCerts2.accesskey "M">
+<!ENTITY manageDevices.label "管理安全设备…">
+<!ENTITY manageDevices.accesskey "g">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "选择证书">
+<!ENTITY certPicker.info  "证书：">
+<!ENTITY certPicker.detailsLabel "选中证书的详情：">

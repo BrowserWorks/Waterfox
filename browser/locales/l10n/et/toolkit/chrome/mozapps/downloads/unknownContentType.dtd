@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY intro2.label                "Avamiseks on valitud:">
+<!ENTITY from.label                  "asukoht:">
+<!ENTITY actionQuestion.label        "Mida peaks &brandShortName; selle failiga tegema?">
+
+<!ENTITY openWith.label              "Avama rakendusega">
+<!ENTITY openWith.accesskey          "A">
+<!ENTITY other.label                 "Muu...">
+
+<!ENTITY saveFile.label              "Salvestama">
+<!ENTITY saveFile.accesskey          "S">
+
+<!ENTITY rememberChoice.label        "Valitud toiming jäetakse antud tüüpi failide jaoks meelde">
+<!ENTITY rememberChoice.accesskey    "l">
+
+<!ENTITY whichIs.label               "tüüp:">
+
+<!ENTITY chooseHandlerMac.label      "Vali...">
+<!ENTITY chooseHandlerMac.accesskey  "V">
+<!ENTITY chooseHandler.label         "Otsi...">
+<!ENTITY chooseHandler.accesskey     "O">
+
+<!ENTITY unknownPromptText.label     "Kas soovid selle faili salvestada?">

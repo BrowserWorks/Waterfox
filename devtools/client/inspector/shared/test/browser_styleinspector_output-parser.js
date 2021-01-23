@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -10,11 +9,9 @@
 // tested with an xpcshell test as the output-parser requires the DOM to work.
 
 const OutputParser = require("devtools/client/shared/output-parser");
-const { CSS_PROPERTIES_DB } = require("devtools/shared/css/properties-db");
 const {
-  initCssProperties,
-  getCssProperties,
-} = require("devtools/shared/fronts/css-properties");
+  getClientCssProperties,
+} = require("devtools/client/fronts/css-properties");
 
 const COLOR_CLASS = "color-class";
 const URL_CLASS = "url-class";
@@ -137,15 +134,6 @@ const TEST_DATA = [
       is(countAll(fragment), 1);
       is(getUrl(fragment), "images/arrow.gif");
       is(fragment.textContent, 'url("images/arrow.gif")!important');
-    },
-  },
-  {
-    name: "-moz-binding",
-    value: "url(http://somesite.com/path/to/binding.xml#someid)",
-    test: fragment => {
-      is(countAll(fragment), 1);
-      is(countUrls(fragment), 1);
-      is(getUrl(fragment), "http://somesite.com/path/to/binding.xml#someid");
     },
   },
   {
@@ -315,17 +303,7 @@ const TEST_DATA = [
 ];
 
 add_task(async function() {
-  // Mock the toolbox that initCssProperties expect so we get the fallback css properties.
-  const toolbox = {
-    target: {
-      client: {},
-      hasActor: () => false,
-      getFront: typeName => ({ getCSSDatabase: () => CSS_PROPERTIES_DB }),
-    },
-  };
-  await initCssProperties(toolbox);
-  const cssProperties = getCssProperties(toolbox);
-
+  const cssProperties = getClientCssProperties();
   const parser = new OutputParser(document, cssProperties);
   for (let i = 0; i < TEST_DATA.length; i++) {
     const data = TEST_DATA[i];

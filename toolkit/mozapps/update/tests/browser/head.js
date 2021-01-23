@@ -74,6 +74,7 @@ add_task(async function setupTestCommon() {
   });
 
   setUpdateTimerPrefs();
+  reloadUpdateManagerData(true);
   removeUpdateFiles(true);
   UpdateListener.reset();
   AppMenuNotifications.removeNotification(/.*/);
@@ -509,7 +510,7 @@ function waitForAboutDialog() {
 
         async function aboutDialogOnLoad() {
           domwindow.removeEventListener("load", aboutDialogOnLoad, true);
-          let chromeURI = "chrome://browser/content/aboutDialog.xul";
+          let chromeURI = "chrome://browser/content/aboutDialog.xhtml";
           is(
             domwindow.document.location.href,
             chromeURI,
@@ -568,10 +569,12 @@ function runDoorhangerUpdateTest(params, steps) {
 
     const { notificationId, button, checkActiveUpdate, pageURLs } = step;
     return (async function() {
-      await BrowserTestUtils.waitForEvent(
-        PanelUI.notificationPanel,
-        "popupshown"
-      );
+      if (!params.popupShown) {
+        await BrowserTestUtils.waitForEvent(
+          PanelUI.notificationPanel,
+          "popupshown"
+        );
+      }
       const shownNotificationId = AppMenuNotifications.activeNotification.id;
       is(
         shownNotificationId,
@@ -621,7 +624,6 @@ function runDoorhangerUpdateTest(params, steps) {
     await SpecialPowers.pushPrefEnv({
       set: [
         [PREF_APP_UPDATE_DISABLEDFORTESTING, false],
-        [PREF_APP_UPDATE_IDLETIME, 0],
         [PREF_APP_UPDATE_URL_DETAILS, gDetailsURL],
         [PREF_APP_UPDATE_URL_MANUAL, URL_MANUAL_UPDATE],
       ],
@@ -866,9 +868,9 @@ function runAboutPrefsUpdateTest(params, steps) {
 
     const { panelId, checkActiveUpdate, continueFile, downloadInfo } = step;
     return (async function() {
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         tab.linkedBrowser,
-        { panelId },
+        [{ panelId }],
         async ({ panelId }) => {
           let updateDeck = content.document.getElementById("updateDeck");
           // Also continue if the selected panel ID is 'apply' since there are no
@@ -950,9 +952,9 @@ function runAboutPrefsUpdateTest(params, steps) {
         await continueFileHandler(continueFile);
       }
 
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         tab.linkedBrowser,
-        { panelId, gDetailsURL },
+        [{ panelId, gDetailsURL }],
         async ({ panelId, gDetailsURL }) => {
           let linkPanels = [
             "downloadFailed",
@@ -1057,7 +1059,7 @@ function runAboutPrefsUpdateTest(params, steps) {
     });
 
     // Scroll the UI into view so it is easier to troubleshoot tests.
-    await ContentTask.spawn(tab.linkedBrowser, null, async () => {
+    await SpecialPowers.spawn(tab.linkedBrowser, [], async () => {
       content.document.getElementById("updatesCategory").scrollIntoView();
     });
 
@@ -1122,304 +1124,4 @@ function runTelemetryUpdateTest(updateParams, event, stageFailure = false) {
     gAUS.checkForBackgroundUpdates();
     await waitForEvent(event);
   })();
-}
-
-/**
- * Gets an object with the expected update phase values that can be passed to
- * checkTelemetryUpdatePhases for update phase telemetry tests.
- *
- * @param  overrides
- *         Params which can override the default values.
- * @return An object that can be passed to checkTelemetryUpdatePhases for update
- *         phase telemetry tests.
- */
-/* This function is intentionally complex so tests don't have to be */
-/* eslint-disable-next-line complexity */
-function getTelemetryUpdatePhaseValues(overrides) {
-  let bitsEnabled = Services.prefs.getBoolPref(PREF_APP_UPDATE_BITS_ENABLED);
-
-  // Set values that could never be recorded due to values that would prevent
-  // them from occurring. This makes it so callers only have to specify a couple
-  // of values.
-  if (overrides.noPartialPatch) {
-    if (!overrides.noInternalPartial) {
-      overrides.noInternalPartial = true;
-    }
-    if (!overrides.noBitsPartial) {
-      overrides.noBitsPartial = true;
-    }
-  }
-
-  if (overrides.noCompletePatch) {
-    if (!overrides.noInternalComplete) {
-      overrides.noInternalComplete = true;
-    }
-    if (!overrides.noBitsComplete) {
-      overrides.noBitsComplete = true;
-    }
-  }
-
-  if (
-    overrides.noPartialPatch ||
-    overrides.partialBadSize ||
-    overrides.noInternalPartial ||
-    overrides.noBitsPartial
-  ) {
-    if (!overrides.noStagePartial) {
-      overrides.noStagePartial = true;
-    }
-    if (!overrides.noApplyPartial) {
-      overrides.noApplyPartial = true;
-    }
-  }
-
-  if (
-    overrides.noCompletePatch ||
-    overrides.completeBadSize ||
-    overrides.noInternalComplete ||
-    overrides.noBitsComplete
-  ) {
-    if (!overrides.noStageComplete) {
-      overrides.noStageComplete = true;
-    }
-    if (!overrides.noApplyComplete) {
-      overrides.noApplyComplete = true;
-    }
-  }
-
-  if (!Services.prefs.getBoolPref(PREF_APP_UPDATE_STAGING_ENABLED)) {
-    if (!overrides.noStagePartial) {
-      overrides.noStagePartial = true;
-    }
-    if (!overrides.noStageComplete) {
-      overrides.noStageComplete = true;
-    }
-  }
-
-  let marSize = parseInt(SIZE_SIMPLE_MAR);
-  let partialSize = overrides.partialBadSize
-    ? parseInt(SIZE_SIMPLE_MAR + "1")
-    : marSize;
-  let completeSize = overrides.completeBadSize
-    ? parseInt(SIZE_SIMPLE_MAR + "1")
-    : marSize;
-
-  let partialDownloadBytes = overrides.partialBadSize ? 1 : marSize;
-  let completeDownloadBytes = overrides.completeBadSize ? 1 : marSize;
-
-  let obj = {};
-  obj.basePrefix = overrides.forSession ? "update.session." : "update.startup.";
-  obj.from_app_version = Services.appinfo.version;
-
-  obj.mars = {};
-  obj.mars.mar_partial_size_bytes = overrides.noPartialPatch
-    ? null
-    : partialSize;
-  obj.mars.mar_complete_size_bytes = overrides.noCompletePatch
-    ? null
-    : completeSize;
-
-  obj.intervals = {};
-  obj.intervals.check = 1;
-  if (bitsEnabled) {
-    obj.intervals.download_bits_partial = overrides.noBitsPartial ? null : 1;
-    obj.intervals.download_bits_complete = overrides.noBitsComplete ? null : 1;
-    if (overrides.partialBadSize) {
-      obj.intervals.download_internal_partial = overrides.noInternalPartial
-        ? null
-        : 1;
-    } else {
-      obj.intervals.download_internal_partial = null;
-    }
-    if (overrides.completeBadSize) {
-      obj.intervals.download_internal_complete = overrides.noInternalComplete
-        ? null
-        : 1;
-    } else {
-      obj.intervals.download_internal_complete = null;
-    }
-  } else {
-    obj.intervals.download_bits_partial = null;
-    obj.intervals.download_bits_complete = null;
-    obj.intervals.download_internal_partial = overrides.noInternalPartial
-      ? null
-      : 1;
-    obj.intervals.download_internal_complete = overrides.noInternalComplete
-      ? null
-      : 1;
-  }
-  obj.intervals.stage_partial = overrides.noStagePartial ? null : 1;
-  obj.intervals.stage_complete = overrides.noStageComplete ? null : 1;
-  obj.intervals.apply_partial = overrides.noApplyPartial ? null : 1;
-  obj.intervals.apply_complete = overrides.noApplyComplete ? null : 1;
-
-  obj.downloads = {};
-  obj.downloads.bits_partial_ = {};
-  obj.downloads.bits_complete_ = {};
-  obj.downloads.internal_partial_ = {};
-  obj.downloads.internal_complete_ = {};
-  if (bitsEnabled) {
-    obj.downloads.bits_partial_.bytes = overrides.noBitsPartial
-      ? null
-      : partialDownloadBytes;
-    obj.downloads.bits_partial_.seconds = overrides.noBitsPartial ? null : 1;
-    obj.downloads.bits_complete_.bytes = overrides.noBitsComplete
-      ? null
-      : completeDownloadBytes;
-    obj.downloads.bits_complete_.seconds = overrides.noBitsComplete ? null : 1;
-    if (overrides.partialBadSize) {
-      obj.downloads.internal_partial_.seconds = overrides.noInternalPartial
-        ? null
-        : 1;
-      obj.downloads.internal_partial_.bytes = overrides.noInternalPartial
-        ? null
-        : partialDownloadBytes;
-    } else {
-      obj.downloads.internal_partial_.bytes = null;
-      obj.downloads.internal_partial_.seconds = null;
-    }
-    if (overrides.completeBadSize) {
-      obj.downloads.internal_complete_.seconds = overrides.noInternalComplete
-        ? null
-        : 1;
-      obj.downloads.internal_complete_.bytes = overrides.noInternalComplete
-        ? null
-        : completeDownloadBytes;
-    } else {
-      obj.downloads.internal_complete_.bytes = null;
-      obj.downloads.internal_complete_.seconds = null;
-    }
-  } else {
-    obj.downloads.bits_partial_.bytes = null;
-    obj.downloads.bits_partial_.seconds = null;
-    obj.downloads.bits_complete_.bytes = null;
-    obj.downloads.bits_complete_.seconds = null;
-    obj.downloads.internal_partial_.bytes = overrides.noInternalPartial
-      ? null
-      : partialDownloadBytes;
-    obj.downloads.internal_partial_.seconds = overrides.noInternalPartial
-      ? null
-      : 1;
-    obj.downloads.internal_complete_.bytes = overrides.noInternalComplete
-      ? null
-      : completeDownloadBytes;
-    obj.downloads.internal_complete_.seconds = overrides.noInternalComplete
-      ? null
-      : 1;
-  }
-
-  return obj;
-}
-
-/**
- * Checks the telemetry values for app update phases under either update.startup
- * or update.session based on the object passed to this function.
- *
- * @param  expected
- *         An object containing the expected results to compare against the
- *         actual results.
- */
-function checkTelemetryUpdatePhases(expected) {
-  let scalars = TelemetryTestUtils.getProcessScalars("parent");
-  let basePrefix = expected.basePrefix;
-  let namePrefix = basePrefix;
-  {
-    let name = namePrefix + "from_app_version";
-    if (expected.from_app_version) {
-      Assert.ok(!!scalars[name], "The " + name + " value should exist.");
-      Assert.equal(
-        scalars[name],
-        expected.from_app_version,
-        "The " + name + " value should equal the expected value."
-      );
-    } else {
-      Assert.ok(!scalars[name], "The " + name + " value should not exist.");
-    }
-  }
-
-  for (let [nameSuffix, value] of Object.entries(expected.mars)) {
-    let name = namePrefix + nameSuffix;
-    if (value) {
-      Assert.ok(!!scalars[name], "The " + name + " value should exist.");
-      Assert.equal(
-        scalars[name],
-        value,
-        "The " + name + " value should equal the expected value."
-      );
-    } else {
-      Assert.ok(!scalars[name], "The " + name + " value should not exist.");
-    }
-  }
-
-  namePrefix = basePrefix + "intervals.";
-  for (let [suffix, value] of Object.entries(expected.intervals)) {
-    let name = namePrefix + suffix;
-    if (value) {
-      Assert.ok(!!scalars[name], "The " + name + " value should exist.");
-      Assert.greaterOrEqual(
-        scalars[name],
-        value,
-        "The " +
-          name +
-          " value should be equal to or " +
-          "greater than " +
-          value +
-          "."
-      );
-    } else {
-      Assert.ok(!scalars[name], "The " + name + " value should not exist.");
-    }
-  }
-
-  namePrefix = basePrefix + "downloads.";
-  for (let [nameMid, values] of Object.entries(expected.downloads)) {
-    let name = namePrefix + nameMid + "bytes";
-    if (values.bytes) {
-      Assert.ok(!!scalars[name], "The " + name + " value should exist.");
-      Assert.greaterOrEqual(
-        scalars[name],
-        values.bytes,
-        "The " +
-          name +
-          " value should be equal to or " +
-          "greater than " +
-          values.bytes +
-          "."
-      );
-    } else {
-      Assert.ok(!scalars[name], "The " + name + " value should not exist.");
-    }
-
-    name = namePrefix + nameMid + "seconds";
-    if (values.seconds) {
-      Assert.ok(!!scalars[name], "The " + name + " value should exist.");
-      Assert.greaterOrEqual(
-        scalars[name],
-        values.seconds,
-        "The " +
-          name +
-          " value should be equal to or " +
-          "greater than " +
-          values.seconds +
-          "."
-      );
-    } else {
-      Assert.ok(!scalars[name], "The " + name + " value should not exist.");
-    }
-  }
-}
-
-/**
- * Checks whether telemetry for update.startup or update.session is set by
- * checking if there is a value for the from_app_version scalar.
- *
- * @param  isStartup
- *         When true update.startup.from_app_version will be checked and when
- *         false update.session.from_app_version will be checked.
- */
-function checkTelemetryUpdatePhaseEmpty(isStartup) {
-  let scalars = TelemetryTestUtils.getProcessScalars("parent");
-  let name =
-    "update." + (isStartup ? "startup" : "session") + ".from_app_version";
-  Assert.ok(!scalars[name], "The " + name + " value should not exist.");
 }

@@ -37,7 +37,7 @@
 /* Number of bytes to align AND pad picture memory buffers by, so that SIMD
  * implementations can over-read by a few bytes, and use aligned read/write
  * instructions. */
-#define DAV1D_PICTURE_ALIGNMENT 32
+#define DAV1D_PICTURE_ALIGNMENT 64
 
 typedef struct Dav1dPictureParameters {
     int w; ///< width (in pixels)
@@ -77,9 +77,16 @@ typedef struct Dav1dPicture {
      * this picture, as defined in section 5.8.4 and 6.7.4
      */
     Dav1dMasteringDisplay *mastering_display;
+    /**
+     * ITU-T T.35 metadata as defined in section 5.8.2 and 6.7.2
+     */
+    Dav1dITUTT35 *itut_t35;
+
+    uintptr_t reserved[4]; ///< reserved for future use
 
     struct Dav1dRef *frame_hdr_ref, *seq_hdr_ref; ///< Frame parameter allocation origins
-    struct Dav1dRef *content_light_ref, *mastering_display_ref; ///< Metadata allocation origins
+    struct Dav1dRef *content_light_ref, *mastering_display_ref, *itut_t35_ref; ///< Metadata allocation origins
+    uintptr_t reserved_ref[4]; ///< reserved for future use
     struct Dav1dRef *ref; ///< Frame data allocation origin
 
     void *allocator_data; ///< pointer managed by the allocator

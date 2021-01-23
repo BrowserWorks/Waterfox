@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Nastajenja">
+<!ENTITY security.caption "Wěstota a awtentificěrowanje">
+<!ENTITY serverName.label "Serwerowe mě:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "Wopisanje:">
+<!ENTITY serverDescription.accesskey "W">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Wužywarske mě:">
+<!ENTITY userName.accesskey "u">
+<!ENTITY connectionSecurity.label "Zwiskowa wěstota:">
+<!ENTITY connectionSecurity.accesskey "Z">
+<!ENTITY connectionSecurityType-0.label "Žedna">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, jolic k dispoziciji">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP-serwer">
+<!ENTITY serverPortDefault.label "Standard:">
+<!ENTITY authMethod.label "Awtentificěrowańska metoda:">
+<!ENTITY authMethod.accesskey "A">

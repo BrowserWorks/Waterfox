@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "စာကြည့်တိုက်">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "ဖွဲ့စည်းပါ">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "စာမှတ်များကို စုစည်းပါ">
+
+<!ENTITY file.close.label               "ပိတ်ပါ ">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "ရှုမြင်ချက်များ">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "သင်၏မြင်ကွင်းအားပြောင်းပါ">
+<!ENTITY view.columns.label             "ကော်လံများကို ပြသပါ">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "မျိုးတူစုပါ">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "မျိုးတူ စုမထားသော">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "က > အ အစဉ်လိုက် မျိုးတူစု ">
+<!ENTITY view.sortAscending.accesskey   "က">
+<!ENTITY view.sortDescending.label      "အ > က အစဉ်လိုက် မျိုးတူစု ">
+<!ENTITY view.sortDescending.accesskey  "အ">
+
+<!ENTITY importBookmarksFromHTML.label     "Import Bookmarks from HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Export Bookmarks to HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "အခြားဘယောက်ဆာတစ်ခုမှအချက်အလက်များကိုသွင်းယူမည်။">
+<!ENTITY importOtherBrowser.accesskey      "အ">
+
+<!ENTITY cmd.backup.label               "သိမ်းဆည်းပါ...">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "ပြန်​ပေးအပ်ပါ">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "ဖိုင် ရွေးပါ...">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "အမည်">
+<!ENTITY col.tags.label          "စာအမှတ်များ">
+<!ENTITY col.url.label           "တည်နေရာ">
+<!ENTITY col.mostrecentvisit.label "လတ်တလော အသုံးပြုခဲ့သော">
+<!ENTITY col.visitcount.label    "လည်ပတ်မူ အရေအတွက်">
+<!ENTITY col.dateadded.label     "ထည့်သွင်းထားပြီ">
+<!ENTITY col.lastmodified.label  "နောက်ဆုံး မွမ်းမံချိန်">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "တင်သွင်းပြီး အရန်သင့် သိမ်းဆည်းပါ">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "သင့်စာမှတ်များကို တင်သွင်းပြီး သိမ်းဆည်းပါ">
+
+<!ENTITY backButton.tooltip  "ပြန်ဆုတ်ပါ">
+
+<!ENTITY forwardButton.tooltip  "ဆက်သွားပါ">
+
+<!ENTITY detailsPane.selectAnItemText.description "အချက်တခုကို ရှုမြင်ဖို့နဲ့ ၄င်းရဲ့ ဂုဏ်အင်္ဂါရပ်များကို တည်းဖြတ်ဖို့ ရွေးချယ်ပါ">
+

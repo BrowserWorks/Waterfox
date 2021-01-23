@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Descargar y sincronizar mensaxes">
+<!ENTITY MsgSelect.label "Elementos pa usar ensin conexón">
+<!ENTITY MsgSyncDesc.label "Si yá esbillaste les carpetes de corréu o grupos de noticies pa usu ensin conexón, pues descargalos y/o sincronizalos agora. Sinón, usa'l botón &quot;Seleicionar&quot; pa escoyer les carpetes de corréu y noticies que quies usar ensin conexón.">
+<!ENTITY MsgSyncDirections.label "Descargar y/o sincronizar les siguientes:">
+<!ENTITY syncTypeMail.label "Mensaxes de corréu">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Mensaxes de noticies">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Unviar mensaxes pendientes">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "Trabayar ensin conexón al acabar la descarga y/o sincronización">
+<!ENTITY workOffline.accesskey "r">
+<!ENTITY selectButton.label "Seleicionar…">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "Seleicionar les carpetes de corréu y noticies pa usar ensin conexón.">
+<!ENTITY MsgSelectInd.label "Descargar">
+<!ENTITY MsgSelectItems.label "Carpetes y grupos de noticies">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Upravljajte identitetima ovog računa. Prvi identitet je zadani identitet za korištenje.">
+<!ENTITY identitiesListAdd.label  "Dodaj…">
+<!ENTITY identitiesListAdd.accesskey  "a">
+<!ENTITY identitiesListEdit.label "Uredi…">
+<!ENTITY identitiesListEdit.accesskey "e">
+<!ENTITY identitiesListDefault.label "Postavi zadano">
+<!ENTITY identitiesListDefault.accesskey "s">
+<!ENTITY identitiesListDelete.label "Obriši">
+<!ENTITY identitiesListDelete.accesskey "O">
+<!ENTITY identitiesListClose.label "Zatvori">
+<!ENTITY identitiesListClose.accesskey "Z">

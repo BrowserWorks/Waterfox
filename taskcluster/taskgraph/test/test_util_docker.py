@@ -22,7 +22,6 @@ MODE_STANDARD = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
 
 @mock.patch.dict('os.environ', {'TASKCLUSTER_ROOT_URL': liburls.test_root_url()})
 class TestDocker(unittest.TestCase):
-
     def test_generate_context_hash(self):
         tmpdir = tempfile.mkdtemp()
         try:

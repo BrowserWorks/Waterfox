@@ -59,6 +59,7 @@ if toolkit == 'windows':
 elif toolkit == 'cocoa':
     XPIDL_SOURCES += [
         'nsIMacDockSupport.idl',
+        'nsIMacFinderProgress.idl',
         'nsIMacSharingService.idl',
         'nsIMacWebAppUtils.idl',
         'nsIStandaloneNativeMenu.idl',
@@ -69,10 +70,13 @@ elif toolkit == 'cocoa':
         'nsITouchBarUpdater.idl',
     ]
 
-if toolkit in ('cocoa', 'gtk3'):
+if toolkit in ('cocoa', 'gtk'):
     EXPORTS += ['nsINativeMenuService.h']
 
-TEST_DIRS += ['tests']
+TEST_DIRS += [
+    'tests',
+    'tests/gtest'
+]
 
 DIRS += ['headless']
 
@@ -82,11 +86,8 @@ DIRS += ['headless']
 # multiple implementations of widget can be built on the same
 # source tree.
 #
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     DIRS += ['gtk']
-
-    if CONFIG['MOZ_X11']:
-        DIRS += ['gtkxtbin']
 
     XPIDL_SOURCES += [
         'nsIGtkTaskbarProgress.idl',
@@ -116,6 +117,7 @@ XPIDL_SOURCES += [
     'nsIPrintSettingsService.idl',
     'nsIScreen.idl',
     'nsIScreenManager.idl',
+    'nsISharePicker.idl',
     'nsISound.idl',
     'nsITransferable.idl',
 ]
@@ -171,6 +173,7 @@ EXPORTS.mozilla.widget += [
     'CompositorWidget.h',
     'IMEData.h',
     'InProcessCompositorWidget.h',
+    'MediaKeysEventSourceFactory.h',
     'nsAutoRollup.h',
     'PuppetBidiKeyboard.h',
     'Screen.h',
@@ -185,6 +188,7 @@ UNIFIED_SOURCES += [
     'GfxDriverInfo.cpp',
     'GfxInfoBase.cpp',
     'GfxInfoCollector.cpp',
+    'IMEData.cpp',
     'InProcessCompositorWidget.cpp',
     'InputData.cpp',
     'nsAutoRollup.cpp',
@@ -199,6 +203,7 @@ UNIFIED_SOURCES += [
     'nsHTMLFormatConverter.cpp',
     'nsIdleService.cpp',
     'nsIWidgetListener.cpp',
+    'nsNativeBasicTheme.cpp',
     'nsPrimitiveHelpers.cpp',
     'nsPrintSettingsImpl.cpp',
     'nsSoundProxy.cpp',
@@ -207,7 +212,6 @@ UNIFIED_SOURCES += [
     'PuppetBidiKeyboard.cpp',
     'PuppetWidget.cpp',
     'Screen.cpp',
-    'ScreenManager.cpp',
     'SharedWidgetUtils.cpp',
     'TextEventDispatcher.cpp',
     'VsyncDispatcher.cpp',
@@ -239,6 +243,7 @@ if CONFIG['MOZ_XUL'] and CONFIG['NS_PRINTING']:
 SOURCES += [
     'nsBaseDragService.cpp',
     'nsBaseWidget.cpp',
+    'ScreenManager.cpp',
 ]
 
 if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
@@ -269,17 +274,17 @@ if toolkit in ('cocoa', 'windows'):
         'nsBaseClipboard.cpp',
     ]
 
-if toolkit in {'gtk3', 'cocoa', 'windows',
+if toolkit in {'gtk', 'cocoa', 'windows',
                'android', 'uikit'}:
     UNIFIED_SOURCES += [
         'nsBaseFilePicker.cpp',
     ]
 
-if toolkit in ('gtk3', 'windows', 'cocoa', 'android'):
+if toolkit in ('gtk', 'windows', 'cocoa', 'android'):
     UNIFIED_SOURCES += [
         'nsNativeTheme.cpp',
     ]
-if toolkit == 'gtk3':
+if toolkit == 'gtk':
     XPIDL_SOURCES += [
         'nsIApplicationChooser.idl',
     ]
@@ -291,6 +296,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/ipc',
+    '/gfx/2d',
     '/layout/base',
     '/layout/forms',
     '/layout/generic',
@@ -308,7 +314,7 @@ if toolkit == 'windows':
         'windows/PCompositorWidget.ipdl',
         'windows/PlatformWidgetTypes.ipdlh',
     ]
-elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT'] and CONFIG['MOZ_X11']:
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk' and CONFIG['MOZ_X11']:
     IPDL_SOURCES = [
         'gtk/PCompositorWidget.ipdl',
         'gtk/PlatformWidgetTypes.ipdlh',
@@ -321,12 +327,8 @@ else:
         'PlatformWidgetTypes.ipdlh',
     ]
 
-widget_dir = toolkit
-if widget_dir == 'gtk3':
-    widget_dir = 'gtk'
-
 LOCAL_INCLUDES += [
-    '/widget/%s' % widget_dir,
+    '/widget/%s' % toolkit,
 ]
 FINAL_LIBRARY = 'xul'
 
@@ -334,3 +336,5 @@ if CONFIG['MOZ_ENABLE_D3D10_LAYER']:
     DEFINES['MOZ_ENABLE_D3D10_LAYER'] = True
 
 CXXFLAGS += CONFIG['TK_CFLAGS']
+if CONFIG['MOZ_WAYLAND']:
+    CXXFLAGS += CONFIG['MOZ_WAYLAND_CFLAGS']

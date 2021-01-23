@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 /* eslint no-unused-vars: [2, {"vars": "local", "args": "none"}] */
@@ -54,6 +53,13 @@ async function addJsonViewTab(
   info("Adding a new JSON tab with URL: '" + url + "'");
   const tabAdded = BrowserTestUtils.waitForNewTab(gBrowser, url);
   const tabLoaded = addTab(url);
+
+  // The `tabAdded` promise resolves when the JSON Viewer starts loading.
+  // This is usually what we want, however, it never resolves for unrecognized
+  // content types that trigger a download.
+  // On the other hand, `tabLoaded` always resolves, but not until the document
+  // is fully loaded, which is too late if `docReadyState !== "complete"`.
+  // Therefore, we race both promises.
   const tab = await Promise.race([tabAdded, tabLoaded]);
   const browser = tab.linkedBrowser;
 
@@ -63,7 +69,7 @@ async function addJsonViewTab(
 
   // Catch RequireJS errors (usually timeouts)
   const error = tabLoaded.then(() =>
-    ContentTask.spawn(browser, null, function() {
+    SpecialPowers.spawn(browser, [], function() {
       return new Promise((resolve, reject) => {
         const { requirejs } = content.wrappedJSObject;
         if (requirejs) {
@@ -104,9 +110,7 @@ async function addJsonViewTab(
       const { document } = content;
       while (docReadyStates.indexOf(document.readyState) < docReadyIndex) {
         info(
-          `DocReadyState is "${document.readyState}". Await "${
-            data.docReadyState
-          }"`
+          `DocReadyState is "${document.readyState}". Await "${data.docReadyState}"`
         );
         await new Promise(resolve => {
           document.addEventListener("readystatechange", resolve, {
@@ -118,9 +122,7 @@ async function addJsonViewTab(
       // Wait until the app readyState suffices.
       while (appReadyStates.indexOf(JSONView.readyState) < appReadyIndex) {
         info(
-          `AppReadyState is "${JSONView.readyState}". Await "${
-            data.appReadyState
-          }"`
+          `AppReadyState is "${JSONView.readyState}". Await "${data.appReadyState}"`
         );
         await new Promise(resolve => {
           content.addEventListener("AppReadyStateChange", resolve, {

@@ -25,7 +25,8 @@
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
-#include "mozilla/mozalloc.h"               // for operator delete
+#include "mozilla/layers/SyncObject.h"
+#include "mozilla/mozalloc.h"  // for operator delete
 #include "mozilla/gfx/CriticalSection.h"
 #include "mozilla/webrender/WebRenderTypes.h"
 #include "nsCOMPtr.h"         // for already_AddRefed
@@ -68,7 +69,6 @@ class TextureClientPool;
 #endif
 class TextureForwarder;
 class KeepAlive;
-class SyncObjectClient;
 
 /**
  * TextureClient is the abstraction that allows us to share data between the
@@ -245,9 +245,16 @@ class TextureData {
           canConcurrentlyReadLock(true) {}
   };
 
-  TextureData() { MOZ_COUNT_CTOR(TextureData); }
+  static TextureData* Create(TextureForwarder* aAllocator,
+                             gfx::SurfaceFormat aFormat, gfx::IntSize aSize,
+                             LayersBackend aLayersBackend,
+                             int32_t aMaxTextureSize, BackendSelector aSelector,
+                             TextureFlags aTextureFlags,
+                             TextureAllocationFlags aAllocFlags);
 
-  virtual ~TextureData() { MOZ_COUNT_DTOR(TextureData); }
+  static bool IsRemote(LayersBackend aLayersBackend, BackendSelector aSelector);
+
+  MOZ_COUNTED_DTOR_VIRTUAL(TextureData)
 
   virtual void FillInfo(TextureData::Info& aInfo) const = 0;
 
@@ -256,6 +263,10 @@ class TextureData {
   virtual void Unlock() = 0;
 
   virtual already_AddRefed<gfx::DrawTarget> BorrowDrawTarget() {
+    return nullptr;
+  }
+
+  virtual already_AddRefed<gfx::SourceSurface> BorrowSnapshot() {
     return nullptr;
   }
 
@@ -269,7 +280,7 @@ class TextureData {
   virtual void Forget(LayersIPCChannel* aAllocator) {}
 
   virtual bool Serialize(SurfaceDescriptor& aDescriptor) = 0;
-  virtual void GetSubDescriptor(GPUVideoSubDescriptor* aOutDesc) {}
+  virtual void GetSubDescriptor(RemoteDecoderVideoSubDescriptor* aOutDesc) {}
 
   virtual void OnForwardedToHost() {}
 
@@ -286,7 +297,7 @@ class TextureData {
 
   virtual bool ReadBack(TextureReadbackSink* aReadbackSink) { return false; }
 
-  virtual void SyncWithObject(SyncObjectClient* aSyncObject){};
+  virtual void SyncWithObject(RefPtr<SyncObjectClient> aSyncObject){};
 
   virtual TextureFlags GetTextureFlags() const {
     return TextureFlags::NO_FLAGS;
@@ -300,6 +311,9 @@ class TextureData {
   virtual BufferTextureData* AsBufferTextureData() { return nullptr; }
 
   virtual GPUVideoTextureData* AsGPUVideoTextureData() { return nullptr; }
+
+ protected:
+  MOZ_COUNTED_DEFAULT_CTOR(TextureData)
 };
 
 /**
@@ -351,7 +365,7 @@ class TextureClient : public AtomicRefCountedWithFinalize<TextureClient> {
       KnowsCompositor* aAllocator, gfx::IntSize aYSize, uint32_t aYStride,
       gfx::IntSize aCbCrSize, uint32_t aCbCrStride, StereoMode aStereoMode,
       gfx::ColorDepth aColorDepth, gfx::YUVColorSpace aYUVColorSpace,
-      TextureFlags aTextureFlags);
+      gfx::ColorRange aColorRange, TextureFlags aTextureFlags);
 
   // Creates and allocates a TextureClient (can be accessed through raw
   // pointers).
@@ -429,6 +443,8 @@ class TextureClient : public AtomicRefCountedWithFinalize<TextureClient> {
    *
    */
   gfx::DrawTarget* BorrowDrawTarget();
+
+  already_AddRefed<gfx::SourceSurface> BorrowSnapshot();
 
   /**
    * Similar to BorrowDrawTarget but provides direct access to the texture's
@@ -540,7 +556,7 @@ class TextureClient : public AtomicRefCountedWithFinalize<TextureClient> {
    * Should be called only once per TextureClient.
    * The TextureClient must not be locked when calling this method.
    */
-  bool InitIPDLActor(KnowsCompositor* aForwarder);
+  bool InitIPDLActor(KnowsCompositor* aKnowsCompositor);
 
   /**
    * Return a pointer to the IPDLActor.
@@ -577,7 +593,7 @@ class TextureClient : public AtomicRefCountedWithFinalize<TextureClient> {
     mReadbackSink = aReadbackSink;
   }
 
-  void SyncWithObject(SyncObjectClient* aSyncObject) {
+  void SyncWithObject(RefPtr<SyncObjectClient> aSyncObject) {
     mData->SyncWithObject(aSyncObject);
   }
 
@@ -594,9 +610,10 @@ class TextureClient : public AtomicRefCountedWithFinalize<TextureClient> {
   const TextureData* GetInternalData() const { return mData; }
 
   uint64_t GetSerial() const { return mSerial; }
-  void GPUVideoDesc(SurfaceDescriptorGPUVideo* aOutDesc);
+  void GetSurfaceDescriptorRemoteDecoder(
+      SurfaceDescriptorRemoteDecoder* aOutDesc);
 
-  void CancelWaitForRecycle();
+  void CancelWaitForNotifyNotUsed();
 
   /**
    * Set last transaction id of CompositableForwarder.

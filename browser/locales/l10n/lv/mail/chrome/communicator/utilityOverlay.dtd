@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "Fails">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Jauns">
+<!ENTITY newMenu.accesskey          "n">
+
+<!ENTITY editMenu.label          "Rediģēt">
+<!ENTITY editMenu.accesskey        "e">
+<!ENTITY undoCmd.label            "Atsaukt">
+<!ENTITY undoCmd.accesskey          "u">
+<!ENTITY redoCmd.label            "Atcelt atsaukšanu">
+<!ENTITY redoCmd.accesskey          "t">
+<!ENTITY deleteCmd.label          "Dzēst">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "Iestatījumi">
+<!ENTITY preferencesCmd2.accesskey "I">
+<!ENTITY preferencesCmdUnix.label       "Iestatījumi">
+<!ENTITY preferencesCmdUnix.accesskey     "u">
+
+<!ENTITY viewMenu.label          "Skats">
+<!ENTITY viewMenu.accesskey        "S">
+<!ENTITY viewToolbarsMenu.label        "Rīkjoslas">
+<!ENTITY viewToolbarsMenu.accesskey      "R">
+<!ENTITY showTaskbarCmd.label          "Statusa josla">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "Aizvērt">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "A">
+
+<!ENTITY quitApplicationCmd.label  "Iziet">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "z">
+
+<!ENTITY quitApplicationCmdUnix.label  "Iziet">
+<!ENTITY quitApplicationCmdUnix.accesskey  "I">
+
+<!ENTITY quitApplicationCmdMac.label  "Aizvērt &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "A">

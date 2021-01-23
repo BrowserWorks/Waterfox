@@ -2,17 +2,22 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
+const ReferrerInfo = Components.Constructor(
+  "@mozilla.org/referrer-info;1",
+  "nsIReferrerInfo",
+  "init"
+);
+
 var server = new HttpServer();
 server.registerPathHandler("/image.png", imageHandler);
 server.start(-1);
 
+/* import-globals-from image_load_helpers.js */
 load("image_load_helpers.js");
 
 var gHits = 0;
 
-var gIoService = Cc["@mozilla.org/network/io-service;1"].getService(
-  Ci.nsIIOService
-);
+var gIoService = Services.io;
 var gPublicLoader = Cc["@mozilla.org/image/loader;1"].createInstance(
   Ci.imgILoader
 );
@@ -42,7 +47,7 @@ var gImgPath = "http://localhost:" + server.identity.primaryPort + "/image.png";
 function setup_chan(path, isPrivate, callback) {
   var uri = NetUtil.newURI(gImgPath);
   var securityFlags = Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL;
-  var principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {
+  var principal = Services.scriptSecurityManager.createContentPrincipal(uri, {
     privateBrowsingId: isPrivate ? 1 : 0,
   });
   var chan = NetUtil.newChannel({
@@ -84,12 +89,16 @@ function loadImage(isPrivate, callback) {
     ? privateLoadContext
     : nonPrivateLoadContext;
   var loader = isPrivate ? gPrivateLoader : gPublicLoader;
+  var referrerInfo = new ReferrerInfo(
+    Ci.nsIReferrerInfo.NO_REFERRER_WHEN_DOWNGRADE,
+    true,
+    null
+  );
   requests.push(
     loader.loadImageXPCOM(
       uri,
       null,
-      null,
-      "default",
+      referrerInfo,
       null,
       loadGroup,
       outer,
@@ -118,9 +127,7 @@ function run_loadImage_tests() {
   }
 
   Services.obs.addObserver(observer, "cacheservice:empty-cache");
-  let cs = Cc["@mozilla.org/netwerk/cache-storage-service;1"].getService(
-    Ci.nsICacheStorageService
-  );
+  let cs = Services.cache2;
   cs.clear();
 }
 

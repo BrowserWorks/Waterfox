@@ -67,7 +67,7 @@ void DeviceMotionEvent::InitDeviceMotionEvent(
 
 already_AddRefed<DeviceMotionEvent> DeviceMotionEvent::Constructor(
     const GlobalObject& aGlobal, const nsAString& aType,
-    const DeviceMotionEventInit& aEventInitDict, ErrorResult& aRv) {
+    const DeviceMotionEventInit& aEventInitDict) {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<DeviceMotionEvent> e = new DeviceMotionEvent(t, nullptr, nullptr);
   e->InitEvent(aType, aEventInitDict.mBubbles, aEventInitDict.mCancelable);
@@ -107,7 +107,7 @@ DeviceAcceleration::DeviceAcceleration(DeviceMotionEvent* aOwner,
                                        const Nullable<double>& aZ)
     : mOwner(aOwner), mX(aX), mY(aY), mZ(aZ) {}
 
-DeviceAcceleration::~DeviceAcceleration() {}
+DeviceAcceleration::~DeviceAcceleration() = default;
 
 /******************************************************************************
  * DeviceRotationRate
@@ -124,7 +124,7 @@ DeviceRotationRate::DeviceRotationRate(DeviceMotionEvent* aOwner,
                                        const Nullable<double>& aGamma)
     : mOwner(aOwner), mAlpha(aAlpha), mBeta(aBeta), mGamma(aGamma) {}
 
-DeviceRotationRate::~DeviceRotationRate() {}
+DeviceRotationRate::~DeviceRotationRate() = default;
 
 }  // namespace dom
 }  // namespace mozilla

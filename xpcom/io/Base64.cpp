@@ -202,7 +202,7 @@ nsresult EncodeInputStream(nsIInputStream* aInputStream, T& aDest,
   state.c[2] = '\0';
   state.buffer = aOffset + aDest.BeginWriting();
 
-  while (1) {
+  while (true) {
     uint32_t read = 0;
 
     rv = aInputStream->ReadSegments(&EncodeInputStream_Encoder<T>,
@@ -266,7 +266,7 @@ static const uint8_t kBase64DecodeTable[] = {
 // clang-format on
 
 template <typename T>
-MOZ_MUST_USE bool Base64CharToValue(T aChar, uint8_t* aValue) {
+[[nodiscard]] bool Base64CharToValue(T aChar, uint8_t* aValue) {
   static const size_t mask = 0x7f;
   static_assert(
       (mask + 1) == sizeof(kBase64DecodeTable) / sizeof(kBase64DecodeTable[0]),

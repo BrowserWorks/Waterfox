@@ -14,12 +14,15 @@ CSRCS = \
 CPPSRCS = \
       bloomfilter_unittest.cc \
       ssl_0rtt_unittest.cc \
+      ssl_aead_unittest.cc \
       ssl_agent_unittest.cc \
       ssl_auth_unittest.cc \
       ssl_cert_ext_unittest.cc \
+      ssl_cipherorder_unittest.cc \
       ssl_ciphersuite_unittest.cc \
       ssl_custext_unittest.cc \
       ssl_damage_unittest.cc \
+      ssl_debug_env_unittest.cc \
       ssl_dhe_unittest.cc \
       ssl_drop_unittest.cc \
       ssl_ecdh_unittest.cc \
@@ -33,8 +36,8 @@ CPPSRCS = \
       ssl_hrr_unittest.cc \
       ssl_keyupdate_unittest.cc \
       ssl_loopback_unittest.cc \
+      ssl_masking_unittest.cc \
       ssl_misc_unittest.cc \
-      ssl_primitive_unittest.cc \
       ssl_record_unittest.cc \
       ssl_recordsep_unittest.cc \
       ssl_recordsize_unittest.cc \
@@ -53,6 +56,7 @@ CPPSRCS = \
       tls_hkdf_unittest.cc \
       tls_filter.cc \
       tls_protect.cc \
+      tls_subcerts_unittest.cc \
       tls_esni_unittest.cc \
       $(SSLKEYLOGFILE_FILES) \
       $(NULL)

@@ -1,0 +1,78 @@
+<!--
+# Translator(s):
+#
+# Yaron <sh.yaron@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "פרסום דף">
+<!ENTITY windowTitleSettings.label    "הגדרות פרסום">
+<!ENTITY publishTab.label             "פרסום">
+<!ENTITY settingsTab.label            "הגדרות">
+<!ENTITY publishButton.label          "פרסום">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "שם האתר:">
+<!ENTITY siteList.accesskey           "ש">
+<!ENTITY siteList.tooltip             "בחר את האתר שברצונך לפרסם אליו">
+<!ENTITY newSiteButton.label          "אתר חדש">
+<!ENTITY newSiteButton.accesskey      "ח">
+<!ENTITY docDirList.label             "תת־ספרייה באתר עבור דף זה:">
+<!ENTITY docDirList.accesskey         "ת">
+<!ENTITY docDirList.tooltip           "בחר או הכנס שם של תת תיקייה מרוחקת עבור דף זה">
+<!ENTITY publishImgCheckbox.label     "כלול תמונות וקבצים אחרים">
+<!ENTITY publishImgCheckbox.accesskey "כ">
+<!ENTITY publishImgCheckbox.tooltip   "פרסם תמונות וקבצים אחרים המאוזכרים על־ידי דף זה">
+<!ENTITY sameLocationRadio.label      "השתמש באותו מיקום כשל הדף">
+<!ENTITY sameLocationRadio.accesskey  "א">
+<!ENTITY sameLocationRadio.tooltip    "פרסם קבצים לאותו מיקום כשל הדף">
+<!ENTITY useSubdirRadio.label         "השתמש בתת־ספרייה זו של האתר:">
+<!ENTITY useSubdirRadio.accesskey     "ת">
+<!ENTITY useSubdirRadio.tooltip       "פרסם קבצים לתיקייה מרוחקת נבחרת">
+<!ENTITY otherDirList.tooltip         "בחר או הכנס שם של תיקייה מרוחקת שקבצים יפורסמו אליה">
+<!ENTITY pageTitle.label              "כותרת דף:">
+<!ENTITY pageTitle.accesskey          "כ">
+<!ENTITY pageTitle.tooltip            "הכנס כותרת לזיהוי הדף בחלון ובסימניות">
+<!ENTITY pageTitleExample.label       "לדוגמה: &quot;האתר שלי&quot;">
+<!ENTITY filename.label               "שם קובץ:">
+<!ENTITY filename.accesskey           "ק">
+<!ENTITY filename.tooltip             "הכנס שם עבור קובץ זה, כולל 'html.' עבור דף אינטרנט">
+<!ENTITY filenameExample.label        "לדוגמה: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "הגדר כברירת מחדל">
+<!ENTITY setDefaultButton.accesskey   "ב">
+<!ENTITY removeButton.label           "הסר אתר">
+<!ENTITY removeButton.accesskey       "ה">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "אתרי פרסום">
+<!ENTITY serverInfo.label             "מידע על השרת">
+<!ENTITY loginInfo.label              "מידע  על ההתחברות">
+<!ENTITY siteName.label               "שם האתר:">
+<!ENTITY siteName.accesskey           "ש">
+<!ENTITY siteName.tooltip             "כינוי שישמש כמזהה לאתר פירסום זה (לדוגמה: 'MySite')">
+<!ENTITY siteUrl.label                "כתובת פירסום (לדוגמה: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "כ">
+<!ENTITY siteUrl.tooltip              "כתובת ה־//:FTP או ה־//:HTTP המסופקת על־ידי ספק האינטרנט או שירות איחסון האתרים שלך">
+<!ENTITY browseUrl.label              "כתובת HTTP של עמוד הבית שלך (לדוגמה: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "ע">
+<!ENTITY browseUrl.tooltip            "כתובת ה־//:HTTP של ספריית הבית שלך (אל תכלול שם קובץ)">
+<!ENTITY username.label               "שם משתמש:">
+<!ENTITY username.accesskey           "מ">
+<!ENTITY username.tooltip             "שם המשתמש המשמש אותך להתחברות אל ספק הגישה שלך או שירות איחסון האתרים">
+<!ENTITY password.label               "ססמה:">
+<!ENTITY password.accesskey           "ס">
+<!ENTITY password.tooltip             "הססמה המקושרת אל שם המשתמש שלך">
+<!ENTITY savePassword.label           "שמור ססמה">
+<!ENTITY savePassword.accesskey       "ר">
+<!ENTITY savePassword.tooltip         "בחר זאת כדי לשמור את ססמתך באופן מאובטח על־ידי מנהל הססמאות">
+

@@ -23,10 +23,10 @@ var DumpPasswords = function TPS__Passwords__DumpPasswords() {
   Logger.logInfo("\ndumping password list\n", true);
   for (var i = 0; i < logins.length; i++) {
     Logger.logInfo(
-      "* host=" +
-        logins[i].hostname +
-        ", submitURL=" +
-        logins[i].formSubmitURL +
+      "* origin=" +
+        logins[i].origin +
+        ", formActionOrigin=" +
+        logins[i].formActionOrigin +
         ", realm=" +
         logins[i].httpRealm +
         ", password=" +

@@ -7,7 +7,6 @@ if [ -z "$NO_NDK" -a -z "$USE_ARTIFACT" ]; then
   . "$topsrcdir/build/mozconfig.stylo"
 fi
 
-MOZ_AUTOMATION_L10N_CHECK=0
 . "$topsrcdir/build/mozconfig.common"
 
 # For Android builds in TaskCluster, the system image is Debian, and
@@ -15,25 +14,24 @@ MOZ_AUTOMATION_L10N_CHECK=0
 # the host compiler. Make sure clang uses the c++ headers included with
 # clang, rather than the system headers which leads to incompatibility
 # later (when linking against the clang-provided libstdc++).
-HOST_CC="$topsrcdir/clang/bin/clang --gcc-toolchain=$topsrcdir/clang"
-HOST_CXX="$topsrcdir/clang/bin/clang++ --gcc-toolchain=$topsrcdir/clang"
+HOST_CC="$MOZ_FETCHES_DIR/clang/bin/clang --gcc-toolchain=$MOZ_FETCHES_DIR/clang"
+HOST_CXX="$MOZ_FETCHES_DIR/clang/bin/clang++ --gcc-toolchain=$MOZ_FETCHES_DIR/clang"
 
 # Build Fennec
 ac_add_options --enable-application=mobile/android
-ac_add_options --with-android-sdk="$topsrcdir/android-sdk-linux"
+ac_add_options --with-android-sdk="$MOZ_FETCHES_DIR/android-sdk-linux"
 
-if [ -n "$MOZ_BRANDING" ]; then
-    ac_add_options --with-branding=${MOZ_BRANDING}
-fi
-
-ac_add_options --with-gradle="$topsrcdir/android-gradle-dependencies/gradle-dist/bin/gradle"
-export GRADLE_MAVEN_REPOSITORIES="file://$topsrcdir/android-gradle-dependencies/google","file://$topsrcdir/android-gradle-dependencies/jcenter","file://$topsrcdir/android-gradle-dependencies/gradle-plugins"
+ac_add_options --with-gradle="$MOZ_FETCHES_DIR/android-gradle-dependencies/gradle-dist/bin/gradle"
+export GRADLE_MAVEN_REPOSITORIES="file://$MOZ_FETCHES_DIR/android-gradle-dependencies/google","file://$MOZ_FETCHES_DIR/android-gradle-dependencies/jcenter","file://$MOZ_FETCHES_DIR/android-gradle-dependencies/gradle-plugins"
 
 if [ -z "$NO_NDK" -a -z "$USE_ARTIFACT" ]; then
     # We use our own clang instead of the NDK's clang.
-    CC="$topsrcdir/clang/bin/clang"
-    CXX="$topsrcdir/clang/bin/clang++"
-    ac_add_options --with-android-ndk="$topsrcdir/android-ndk"
+    CC="$MOZ_FETCHES_DIR/clang/bin/clang"
+    CXX="$MOZ_FETCHES_DIR/clang/bin/clang++"
+    ac_add_options --with-android-ndk="$MOZ_FETCHES_DIR/android-ndk"
+    # Make sure that any host binaries we build use whatever libraries clang
+    # linked against, rather than what's on the system.
+    mk_add_options "export LD_LIBRARY_PATH=$MOZ_FETCHES_DIR/clang/lib"
     # Enable static analysis plugin
     export ENABLE_CLANG_PLUGIN=1
 fi
@@ -44,64 +42,16 @@ ac_add_options --with-google-safebrowsing-api-keyfile=/builds/sb-gapi.data
 ac_add_options --with-google-location-service-api-keyfile=/builds/gls-gapi.data
 ac_add_options --with-mozilla-api-keyfile=/builds/mozilla-fennec-geoloc-api.key
 
-# MOZ_INSTALL_TRACKING does not guarantee MOZ_UPDATE_CHANNEL will be set so we
-# provide a default state. Currently, the default state provides a default
-# keyfile because an assertion will be thrown if MOZ_INSTALL_TRACKING is
-# specified but a keyfile is not. This assertion can catch if we misconfigure a
-# release or beta build and it does not have a valid keyfile.
-#
-# However, by providing a default keyfile, if we misconfigure beta or release,
-# the default keyfile may be used instead and the assertion won't catch the
-# error.  Therefore, it would be ideal to have MOZ_INSTALL_TRACKING guarantee
-# MOZ_UPDATE_CHANNEL was set so we can remove the default case. This may occur
-# when release promotion is implemented on Android.
-#
-# In all cases, we don't upload Adjust pings in automation.
-if test "$MOZ_UPDATE_CHANNEL" = "release" ; then
-    ac_add_options --with-adjust-sdk-keyfile=/builds/adjust-sdk.token
-elif test "$MOZ_UPDATE_CHANNEL" = "beta" ; then
-    ac_add_options --with-adjust-sdk-keyfile=/builds/adjust-sdk-beta.token
-else
-    ac_add_options --with-adjust-sdk-keyfile="$topsrcdir/mobile/android/base/adjust-sdk-sandbox.token"
-fi
-
-# MOZ_ANDROID_MMA depends on --with-leanplum-sdk-keyfile, and there's no default
-# keyfile set, so if we misconfigure beta or release, the builds will fail (at
-# configure time).
-if test "$MOZ_UPDATE_CHANNEL" = "release" ; then
-    ac_add_options --with-leanplum-sdk-keyfile=/builds/leanplum-sdk-release.token
-elif test "$MOZ_UPDATE_CHANNEL" = "beta" ; then
-    ac_add_options --with-leanplum-sdk-keyfile=/builds/leanplum-sdk-beta.token
-elif test "$MOZ_UPDATE_CHANNEL" = "nightly" ; then
-    ac_add_options --with-leanplum-sdk-keyfile=/builds/leanplum-sdk-nightly.token
-else
-    ac_add_options --with-leanplum-sdk-keyfile="$topsrcdir/mobile/android/base/leanplum-sdk-sandbox.token"
-fi
-
-# MOZ_ANDROID_POCKET depends on --with-pocket-api-keyfile, and will
-# fail if MOZ_ANDROID_POCKET is specified but a keyfile is not. There's no default
-# keyfile set, so if we misconfigure beta or release or nightly, the builds will
-# fail (at configure time).
-# Otherwise, Pocket is not a critical component so it can be built with a dummy key.
-if test "$MOZ_UPDATE_CHANNEL" = "release" ; then
-    ac_add_options --with-pocket-api-keyfile=/builds/pocket-api-release.token
-elif test "$MOZ_UPDATE_CHANNEL" = "beta" ; then
-    ac_add_options --with-pocket-api-keyfile=/builds/pocket-api-beta.token
-elif test "$MOZ_UPDATE_CHANNEL" = "nightly" ; then
-    ac_add_options --with-pocket-api-keyfile=/builds/pocket-api-nightly.token
-else
-    ac_add_options --with-pocket-api-keyfile="$topsrcdir/mobile/android/base/pocket-api-sandbox.token"
-fi
-
-if [ -n "$MOZ_PGO_PROFILE_USE" ]; then
-    export LLVM_PROFDATA="$topsrcdir/clang/bin/llvm-profdata"
+if [ -n "$TASKCLUSTER_PGO_PROFILE_USE" ]; then
+    export MOZ_LTO=cross
+    export LLVM_PROFDATA="$MOZ_FETCHES_DIR/clang/bin/llvm-profdata"
 
     ac_add_options --enable-profile-use
 
     # This is disabled because jarlog re-ordering breaks apk publishing tasks,
     # see bug 1539933.
-    # ac_add_options --with-pgo-jarlog=/builds/worker/fetches/en-US.log
-    ac_add_options --with-pgo-profile-path=/builds/worker/fetches
+    # ac_add_options --with-pgo-jarlog=${MOZ_FETCHES_DIR}/en-US.log
+    ac_add_options --with-pgo-profile-path=${MOZ_FETCHES_DIR}/merged.profdata
 fi
 
 # Package js shell.

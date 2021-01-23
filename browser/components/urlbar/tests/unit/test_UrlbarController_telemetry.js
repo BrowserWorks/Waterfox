@@ -24,23 +24,7 @@ let sixthHistogram;
 /**
  * A delayed test provider, allowing the query to be delayed for an amount of time.
  */
-class DelayedProvider extends UrlbarProvider {
-  constructor() {
-    super();
-    this._name = "TestProvider" + Math.floor(Math.random() * 100000);
-  }
-  get name() {
-    return this._name;
-  }
-  get type() {
-    return UrlbarUtils.PROVIDER_TYPE.PROFILE;
-  }
-  isActive(context) {
-    return true;
-  }
-  isRestricting(context) {
-    return false;
-  }
+class DelayedProvider extends TestProvider {
   async startQuery(context, add) {
     Assert.ok(context, "context is passed-in");
     Assert.equal(typeof add, "function", "add is a callback");
@@ -48,9 +32,6 @@ class DelayedProvider extends UrlbarProvider {
     await new Promise(resolve => {
       this._resultsAdded = resolve;
     });
-  }
-  cancelQuery(context) {
-    // Nothing.
   }
   async addResults(matches, finish = true) {
     // startQuery may have not been invoked yet, so wait for it
@@ -83,13 +64,7 @@ function getHistogramReportsCount(results) {
 }
 
 add_task(function setup() {
-  controller = new UrlbarController({
-    browserWindow: {
-      location: {
-        href: AppConstants.BROWSER_CHROME_URL,
-      },
-    },
-  });
+  controller = UrlbarTestUtils.newMockController();
 
   firstHistogram = Services.telemetry.getHistogramById(TELEMETRY_1ST_RESULT);
   sixthHistogram = Services.telemetry.getHistogramById(
@@ -102,7 +77,10 @@ add_task(async function test_n_autocomplete_cancel() {
   sixthHistogram.clear();
 
   let providerCanceledDeferred = PromiseUtils.defer();
-  let provider = new TestProvider([], providerCanceledDeferred.resolve);
+  let provider = new TestProvider({
+    results: [],
+    onCancel: providerCanceledDeferred.resolve,
+  });
   UrlbarProvidersManager.registerProvider(provider);
   const context = createContext(TEST_URL, { providers: [provider.name] });
 

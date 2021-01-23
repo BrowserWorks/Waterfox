@@ -82,7 +82,6 @@ html[dir="rtl"] .img.arrow {
 
 .img.window {
   mask-image: url(resource://devtools/client/debugger/images/window.svg);
-  mask-size: 12px 12px;
 }
 
 .img.file {
@@ -154,21 +153,16 @@ html[dir="rtl"] .img.more-tabs {
   mask-image: url(resource://devtools/client/debugger/images/resume.svg);
 }
 
-.img.reverseStepOver {
-  mask-image: url(resource://devtools/client/debugger/images/stepOver.svg);
-  transform: scaleX(-1);
-}
-
-.img.rewind {
-  mask-image: url(resource://devtools/client/debugger/images/rewind.svg);
-}
-
 .img.search {
   mask-image: url(resource://devtools/client/debugger/images/search.svg);
 }
 
 .img.shortcuts {
   mask-image: url(resource://devtools/client/debugger/images/help.svg);
+}
+
+.img.spin {
+  animation: spin 0.5s linear infinite;
 }
 
 .img.stepIn {

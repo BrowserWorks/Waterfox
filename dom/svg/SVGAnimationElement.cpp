@@ -6,12 +6,14 @@
 
 #include "mozilla/dom/SVGAnimationElement.h"
 #include "mozilla/dom/SVGSVGElement.h"
+#include "mozilla/dom/BindContext.h"
 #include "mozilla/dom/ElementInlines.h"
 #include "mozilla/SMILAnimationController.h"
 #include "mozilla/SMILAnimationFunction.h"
 #include "mozilla/SMILTimeContainer.h"
 #include "nsContentUtils.h"
 #include "nsIContentInlines.h"
+#include "nsIReferrerInfo.h"
 #include "nsIURI.h"
 #include "prtime.h"
 
@@ -131,19 +133,16 @@ float SVGAnimationElement::GetSimpleDuration(ErrorResult& rv) {
 //----------------------------------------------------------------------
 // nsIContent methods
 
-nsresult SVGAnimationElement::BindToTree(Document* aDocument,
-                                         nsIContent* aParent,
-                                         nsIContent* aBindingParent) {
+nsresult SVGAnimationElement::BindToTree(BindContext& aContext,
+                                         nsINode& aParent) {
   MOZ_ASSERT(!mHrefTarget.get(),
              "Shouldn't have href-target yet (or it should've been cleared)");
-  nsresult rv =
-      SVGAnimationElementBase::BindToTree(aDocument, aParent, aBindingParent);
+  nsresult rv = SVGAnimationElementBase::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Add myself to the animation controller's master set of animation elements.
-  if (Document* doc = GetComposedDoc()) {
-    SMILAnimationController* controller = doc->GetAnimationController();
-    if (controller) {
+  if (Document* doc = aContext.GetComposedDoc()) {
+    if (SMILAnimationController* controller = doc->GetAnimationController()) {
       controller->RegisterAnimationElement(this);
     }
     const nsAttrValue* href =
@@ -165,7 +164,7 @@ nsresult SVGAnimationElement::BindToTree(Document* aDocument,
   return NS_OK;
 }
 
-void SVGAnimationElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void SVGAnimationElement::UnbindFromTree(bool aNullParent) {
   SMILAnimationController* controller = OwnerDoc()->GetAnimationController();
   if (controller) {
     controller->UnregisterAnimationElement(this);
@@ -176,7 +175,7 @@ void SVGAnimationElement::UnbindFromTree(bool aDeep, bool aNullParent) {
 
   AnimationNeedsResample();
 
-  SVGAnimationElementBase::UnbindFromTree(aDeep, aNullParent);
+  SVGAnimationElementBase::UnbindFromTree(aNullParent);
 }
 
 bool SVGAnimationElement::ParseAttribute(int32_t aNamespaceID,
@@ -358,13 +357,12 @@ bool SVGAnimationElement::IsEventAttributeNameInternal(nsAtom* aName) {
 
 void SVGAnimationElement::UpdateHrefTarget(const nsAString& aHrefStr) {
   nsCOMPtr<nsIURI> targetURI;
-  nsCOMPtr<nsIURI> baseURI = GetBaseURI();
   nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), aHrefStr,
-                                            OwnerDoc(), baseURI);
-  // Bug 1415044 to investigate which referrer we should use
-  mHrefTarget.ResetToURIFragmentID(this, targetURI,
-                                   OwnerDoc()->GetDocumentURI(),
-                                   OwnerDoc()->GetReferrerPolicy());
+                                            OwnerDoc(), GetBaseURI());
+  nsCOMPtr<nsIReferrerInfo> referrerInfo =
+      ReferrerInfo::CreateForSVGResources(OwnerDoc());
+
+  mHrefTarget.ResetToURIFragmentID(this, targetURI, referrerInfo);
   AnimationTargetChanged();
 }
 

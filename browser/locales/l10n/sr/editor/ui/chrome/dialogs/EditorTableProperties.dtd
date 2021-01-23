@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Својства табеле">
+<!ENTITY applyButton.label                "Примени">
+<!ENTITY applyButton.accesskey            "П">
+<!ENTITY closeButton.label                "Затвори">
+<!ENTITY tableTab.label                   "Табела">
+<!ENTITY cellTab.label                    "Ћелије">
+<!ENTITY tableRows.label                  "Редови:">
+<!ENTITY tableRows.accessKey              "Р">
+<!ENTITY tableColumns.label               "Колоне:">
+<!ENTITY tableColumns.accessKey           "К">
+<!ENTITY tableHeight.label                "Висина:">
+<!ENTITY tableHeight.accessKey            "н">
+<!ENTITY tableWidth.label                 "Ширина:">
+<!ENTITY tableWidth.accessKey             "и">
+<!ENTITY tableBorderSpacing.label         "Оквири и размаци">
+<!ENTITY tableBorderWidth.label           "Оквир:">
+<!ENTITY tableBorderWidth.accessKey       "О">
+<!ENTITY tableSpacing.label               "Размакнутост:">
+<!ENTITY tableSpacing.accessKey           "з">
+<!ENTITY tablePadding.label               "Испуњеност:">
+<!ENTITY tablePadding.accessKey           "п">
+<!ENTITY tablePxBetwCells.label           "пиксела између ћелија">
+<!ENTITY tablePxBetwBrdrCellContent.label "пиксела између оквира ћелије и садржаја">
+<!ENTITY tableAlignment.label             "Поравнање табеле:">
+<!ENTITY tableAlignment.accessKey         "т">
+<!ENTITY tableCaption.label               "Натпис:">
+<!ENTITY tableCaption.accessKey           "Н">
+<!ENTITY tableCaptionAbove.label          "Изнад табеле">
+<!ENTITY tableCaptionBelow.label          "Испод табеле">
+<!ENTITY tableCaptionLeft.label           "Лево од табеле">
+<!ENTITY tableCaptionRight.label          "Десно од табеле">
+<!ENTITY tableCaptionNone.label           "Ништа">
+<!ENTITY tableInheritColor.label           "(Нека се боја странице прозире)">
+
+<!ENTITY cellSelection.label              "Одабир">
+<!ENTITY cellSelectCell.label             "Ћелија">
+<!ENTITY cellSelectRow.label              "Ред">
+<!ENTITY cellSelectColumn.label           "Колона">
+<!ENTITY cellSelectNext.label             "Следеће">
+<!ENTITY cellSelectNext.accessKey         "С">
+<!ENTITY cellSelectPrevious.label         "Претходно">
+<!ENTITY cellSelectPrevious.accessKey     "П">
+<!ENTITY applyBeforeChange.label          "Тренутне измене ће бити примењене пре промене одабира.">
+<!ENTITY cellContentAlignment.label       "Поравнање садржаја">
+<!ENTITY cellHorizontal.label             "Водоравно:">
+<!ENTITY cellHorizontal.accessKey         "д">
+<!ENTITY cellVertical.label               "Усправно:">
+<!ENTITY cellVertical.accessKey           "У">
+<!ENTITY cellStyle.label                  "Стил ћелије:">
+<!ENTITY cellStyle.accessKey              "С">
+<!ENTITY cellNormal.label                 "Нормалан">
+<!ENTITY cellHeader.label                 "Заглавље">
+<!ENTITY cellTextWrap.label               "Преламање текста:">
+<!ENTITY cellTextWrap.accessKey           "т">
+<!ENTITY cellWrap.label                   "Преламај">
+<!ENTITY cellNoWrap.label                 "Не преламај">
+<!ENTITY cellAlignTop.label               "Врх">
+<!ENTITY cellAlignMiddle.label            "Средина">
+<!ENTITY cellAlignBottom.label            "Дно">
+<!ENTITY cellAlignJustify.label           "Поравнај">
+<!ENTITY cellInheritColor.label           "(Нека се боја табеле прозире)">
+<!ENTITY cellUseCheckboxHelp.label        "Користи кућице за утврђивање својстава која се примењују на све изабране ћелије">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Величина">
+<!ENTITY pixels.label                     "пиксела">
+<!ENTITY backgroundColor.label            "Позадинска боја:">
+<!ENTITY backgroundColor.accessKey        "б">
+<!ENTITY AlignLeft.label                  "Лево">
+<!ENTITY AlignCenter.label                "На средини">
+<!ENTITY AlignRight.label                 "Десно">

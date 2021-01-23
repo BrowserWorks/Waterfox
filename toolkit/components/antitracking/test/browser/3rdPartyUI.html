@@ -22,7 +22,7 @@ function is(a, b, msg) {
 onmessage = function(e) {
   let runnableStr = `(() => {return (${e.data.callback});})();`;
   let runnable = eval(runnableStr); // eslint-disable-line no-eval
-  runnable.call(this, /* Phase */ 3).then(_ => {
+  runnable.call(this, e.data.arg || /* Phase */ 3).then(_ => {
     parent.postMessage({ type: "finish" }, "*");
   });
 };

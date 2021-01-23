@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -71,7 +70,7 @@ function testSetTheme() {
 }
 
 function testGetColor() {
-  const BLUE_DARK = "#75BFFF";
+  const BLUE_DARK = "#75bfff";
   const BLUE_LIGHT = "#0074e8";
   const originalTheme = getTheme();
 

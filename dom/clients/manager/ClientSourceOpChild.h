@@ -6,6 +6,7 @@
 #ifndef _mozilla_dom_ClientSourceOpChild_h
 #define _mozilla_dom_ClientSourceOpChild_h
 
+#include "mozilla/dom/FlippedOnce.h"
 #include "mozilla/dom/PClientSourceOpChild.h"
 #include "ClientOpPromise.h"
 
@@ -36,8 +37,8 @@ class ClientSourceOpChild final : public PClientSourceOpChild {
   void ActorDestroy(ActorDestroyReason aReason) override;
 
   MozPromiseRequestHolder<ClientOpPromise> mPromiseRequestHolder;
-  bool mDeletionRequested = false;
-  bool mInitialized = false;
+  FlippedOnce<false> mDeletionRequested;
+  FlippedOnce<false> mInitialized;
 };
 
 }  // namespace dom

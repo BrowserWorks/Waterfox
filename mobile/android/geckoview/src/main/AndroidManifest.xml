@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.mozilla.geckoview">
 
@@ -49,18 +53,39 @@
                 android:process=":media">
         </service>
         <service
-                android:name="org.mozilla.gecko.process.GeckoServiceChildProcess$gmplugin"
+                android:name="org.mozilla.gecko.process.GeckoChildProcessServices$gmplugin"
                 android:enabled="true"
                 android:exported="false"
                 android:isolatedProcess="false"
                 android:process=":gmplugin">
         </service>
         <service
-                android:name="org.mozilla.gecko.process.GeckoServiceChildProcess$tab"
+                android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab0"
                 android:enabled="true"
                 android:exported="false"
                 android:isolatedProcess="false"
-                android:process=":tab">
+                android:process=":tab0">
+        </service>
+        <service
+                android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab1"
+                android:enabled="true"
+                android:exported="false"
+                android:isolatedProcess="false"
+                android:process=":tab1">
+        </service>
+        <service
+                android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab2"
+                android:enabled="true"
+                android:exported="false"
+                android:isolatedProcess="false"
+                android:process=":tab2">
+        </service>
+        <service
+                android:name="org.mozilla.gecko.process.GeckoChildProcessServices$socket"
+                android:enabled="true"
+                android:exported="false"
+                android:isolatedProcess="false"
+                android:process=":socket">
         </service>
         <service
                 android:name="org.mozilla.gecko.gfx.SurfaceAllocatorService"

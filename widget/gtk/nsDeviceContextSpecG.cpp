@@ -8,14 +8,16 @@
 #include "mozilla/gfx/PrintTargetPDF.h"
 #include "mozilla/gfx/PrintTargetPS.h"
 #include "mozilla/Logging.h"
+#include "mozilla/Services.h"
 
 #include "plstr.h"
 #include "prenv.h" /* for PR_GetEnv */
 
+#include "nsComponentManagerUtils.h"
+#include "nsIObserverService.h"
 #include "nsPrintfCString.h"
 #include "nsReadableUtils.h"
 #include "nsStringEnumerator.h"
-#include "nsIServiceManager.h"
 #include "nsThreadUtils.h"
 
 #include "nsPSPrinters.h"
@@ -72,7 +74,7 @@ class GlobalPrinters {
   void GetDefaultPrinterName(nsAString& aDefaultPrinterName);
 
  protected:
-  GlobalPrinters() {}
+  GlobalPrinters() = default;
 
   static GlobalPrinters mGlobalPrinters;
   static nsTArray<nsString>* mGlobalPrinterList;
@@ -130,6 +132,7 @@ already_AddRefed<PrintTarget> nsDeviceContextSpecGTK::MakePrintTarget() {
                              getter_AddRefs(mSpoolFile));
   if (NS_FAILED(rv)) {
     unlink(buf);
+    g_free(buf);
     return nullptr;
   }
 
@@ -146,18 +149,12 @@ already_AddRefed<PrintTarget> nsDeviceContextSpecGTK::MakePrintTarget() {
   int16_t format;
   mPrintSettings->GetOutputFormat(&format);
 
-  // Determine the real format with some GTK magic
+  // We assume PDF output if asked for native output.
   if (format == nsIPrintSettings::kOutputFormatNative) {
-    if (mIsPPreview) {
-      // There is nothing to detect on Print Preview, use PDF.
-      format = nsIPrintSettings::kOutputFormatPDF;
-    } else {
-      return nullptr;
-    }
+    format = nsIPrintSettings::kOutputFormatPDF;
   }
 
   IntSize size = IntSize::Truncate(width, height);
-
   if (format == nsIPrintSettings::kOutputFormatPDF) {
     return PrintTargetPDF::CreateOrNull(stream, size);
   }
@@ -187,8 +184,6 @@ NS_IMETHODIMP nsDeviceContextSpecGTK::Init(nsIWidget* aWidget,
 
   mPrintSettings = do_QueryInterface(aPS);
   if (!mPrintSettings) return NS_ERROR_NO_INTERFACE;
-
-  mIsPPreview = aIsPrintPreview;
 
   // This is only set by embedders
   bool toFile;
@@ -225,12 +220,8 @@ NS_IMETHODIMP nsDeviceContextSpecGTK::Init(nsIWidget* aWidget,
   return NS_OK;
 }
 
-static void
-#ifdef MOZ_WIDGET_GTK
-print_callback(GtkPrintJob* aJob, gpointer aData, const GError* aError) {
-#else
-print_callback(GtkPrintJob* aJob, gpointer aData, GError* aError) {
-#endif
+static void print_callback(GtkPrintJob* aJob, gpointer aData,
+                           const GError* aError) {
   g_object_unref(aJob);
   ((nsIFile*)aData)->Remove(false);
 }
@@ -371,7 +362,7 @@ NS_IMETHODIMP nsDeviceContextSpecGTK::EndDocument() {
 }
 
 //  Printer Enumerator
-nsPrinterEnumeratorGTK::nsPrinterEnumeratorGTK() {}
+nsPrinterEnumeratorGTK::nsPrinterEnumeratorGTK() = default;
 
 NS_IMPL_ISUPPORTS(nsPrinterEnumeratorGTK, nsIPrinterEnumerator)
 

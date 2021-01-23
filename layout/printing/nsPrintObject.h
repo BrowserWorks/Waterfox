@@ -33,12 +33,27 @@ class nsPrintObject {
   nsPrintObject();
   ~nsPrintObject();  // non-virtual
 
-  // Methods
-  nsresult Init(nsIDocShell* aDocShell, mozilla::dom::Document* aDoc,
-                bool aPrintPreview);
+  nsresult InitAsRootObject(nsIDocShell* aDocShell,
+                            mozilla::dom::Document* aDoc,
+                            bool aForPrintPreview);
+  nsresult InitAsNestedObject(nsIDocShell* aDocShell,
+                              mozilla::dom::Document* aDoc,
+                              nsPrintObject* aParent);
 
   bool IsPrintable() { return !mDontPrint; }
   void DestroyPresentation();
+
+  /**
+   * Recursively sets the PO items to be printed "As Is"
+   * from the given item down into the treei
+   */
+  void SetPrintAsIs(bool aAsIs);
+
+  /**
+   * Recursively sets all the PO items to be printed
+   * from the given item down into the tree
+   */
+  void EnablePrinting(bool aEnable);
 
   // Data Members
   nsCOMPtr<nsIDocShell> mDocShell;
@@ -58,7 +73,6 @@ class nsPrintObject {
   bool mDontPrint;
   bool mPrintAsIs;
   bool mInvisible;  // Indicates PO is set to not visible by CSS
-  bool mPrintPreview;
   bool mDidCreateDocShell;
   float mShrinkRatio;
   float mZoomRatio;

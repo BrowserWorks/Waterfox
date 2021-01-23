@@ -11,7 +11,8 @@ import time
 
 # Builds before this build ID use the v0 version scheme.  Builds after this
 # build ID use the v1 version scheme.
-V1_CUTOFF = 20150801000000 # YYYYmmddHHMMSS
+V1_CUTOFF = 20150801000000  # YYYYmmddHHMMSS
+
 
 def android_version_code_v0(buildid, cpu_arch=None, min_sdk=0, max_sdk=0):
     base = int(str(buildid)[:10])
@@ -30,9 +31,9 @@ def android_version_code_v0(buildid, cpu_arch=None, min_sdk=0, max_sdk=0):
         raise ValueError("Don't know how to compute android:versionCode "
                          "for CPU arch %s" % cpu_arch)
 
+
 def android_version_code_v1(buildid, cpu_arch=None, min_sdk=0, max_sdk=0):
     '''Generate a v1 android:versionCode.
-
     The important consideration is that version codes be monotonically
     increasing (per Android package name) for all published builds.  The input
     build IDs are based on timestamps and hence are always monotonically
@@ -52,6 +53,7 @@ def android_version_code_v1(buildid, cpu_arch=None, min_sdk=0, max_sdk=0):
     The bit labelled 'x' is 1 if the build is for an x86 or x86-64 architecture,
     and 0 otherwise, which means the build is for an ARM or ARM64 architecture.
     (Fennec no longer supports ARMv6, so ARM is equivalent to ARMv7.
+
      ARM64 is also known as AArch64; it is logically ARMv8.)
 
     For the same release, x86 and x86_64 builds have higher version codes and
@@ -134,6 +136,7 @@ def android_version_code_v1(buildid, cpu_arch=None, min_sdk=0, max_sdk=0):
 
     return version
 
+
 def android_version_code(buildid, *args, **kwargs):
     base = int(str(buildid))
     if base < V1_CUTOFF:
@@ -166,9 +169,9 @@ def main(argv):
 
     args = parser.parse_args(argv)
     code = android_version_code(args.buildid,
-        cpu_arch=args.cpu_arch,
-        min_sdk=args.min_sdk,
-        max_sdk=args.max_sdk)
+                                cpu_arch=args.cpu_arch,
+                                min_sdk=args.min_sdk,
+                                max_sdk=args.max_sdk)
     print(code)
     return 0
 

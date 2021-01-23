@@ -1,6 +1,7 @@
-/*
- * Test for LoginManagerContent._getPasswordFields using LoginFormFactory.
+/**
+ * Test for LoginManagerChild._getPasswordFields using LoginFormFactory.
  */
+
 /* globals todo_check_eq */
 "use strict";
 
@@ -8,10 +9,10 @@ const { LoginFormFactory } = ChromeUtils.import(
   "resource://gre/modules/LoginFormFactory.jsm"
 );
 const LMCBackstagePass = ChromeUtils.import(
-  "resource://gre/modules/LoginManagerContent.jsm",
+  "resource://gre/modules/LoginManagerChild.jsm",
   null
 );
-const { LoginManagerContent } = LMCBackstagePass;
+const { LoginManagerChild } = LMCBackstagePass;
 const TESTCASES = [
   {
     description: "Empty document",
@@ -33,11 +34,23 @@ const TESTCASES = [
     minPasswordLength: undefined,
   },
   {
-    description: "4 empty password fields outside of a <form>",
+    description: "5 empty password fields outside of a <form>",
     document: `<input id="pw1" type=password>
       <input id="pw2" type=password>
       <input id="pw3" type=password>
-      <input id="pw4" type=password>`,
+      <input id="pw4" type=password>
+      <input id="pw5" type=password>`,
+    returnedFieldIDsByFormLike: [["pw1", "pw2", "pw3", "pw4", "pw5"]],
+    minPasswordLength: undefined,
+  },
+  {
+    description: "6 empty password fields outside of a <form>",
+    document: `<input id="pw1" type=password>
+      <input id="pw2" type=password>
+      <input id="pw3" type=password>
+      <input id="pw4" type=password>
+      <input id="pw5" type=password>
+      <input id="pw6" type=password>`,
     returnedFieldIDsByFormLike: [[]],
     minPasswordLength: undefined,
   },
@@ -196,7 +209,7 @@ for (let tc of TESTCASES) {
       let formLikeIndex = -1;
       for (let formLikeFromInput of mapRootElementToFormLike.values()) {
         formLikeIndex++;
-        let pwFields = LoginManagerContent._getPasswordFields(
+        let pwFields = new LoginManagerChild()._getPasswordFields(
           formLikeFromInput,
           {
             fieldOverrideRecipe: testcase.fieldOverrideRecipe,
@@ -286,7 +299,7 @@ for (let tc of EMOJI_TESTCASES) {
       let input = document.querySelector("input[type='password']");
       Assert.ok(input, "Found the password field");
       let formLike = LoginFormFactory.createFromField(input);
-      let pwFields = LoginManagerContent._getPasswordFields(formLike, {
+      let pwFields = new LoginManagerChild()._getPasswordFields(formLike, {
         minPasswordLength: testcase.minPasswordLength,
       });
       info("Got password fields: " + pwFields.length);

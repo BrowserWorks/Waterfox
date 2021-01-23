@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "Ваша імя:">
+<!ENTITY name.accesskey                  "і">
+<!ENTITY name.text                       "Ваша імя для іншых людзей">
+<!ENTITY email.label                     "Адрас э-пошты:">
+<!ENTITY email.accesskey                 "А">
+<!ENTITY email.text                      "Ваш існуючы адрас эл.пошты">
+<!ENTITY password.label                  "Пароль:">
+<!ENTITY password.accesskey              "П">
+<!ENTITY password.placeholder            "Пароль">
+<!ENTITY password.text                   "Неабавязковы, патрэбны толькі для спраўджання імя карыстальніка">
+<!ENTITY rememberPassword.label          "Памятаць пароль">
+<!ENTITY rememberPassword.accesskey      "м">
+
+<!ENTITY imapLong.label                  "IMAP (адлеглыя папкі)">
+<!ENTITY pop3Long.label                  "POP3 (утрымліваць пошту на вашым кампутары)">
+
+<!ENTITY incoming.label                  "Уваходны:">
+<!ENTITY outgoing.label                  "Выходны:">
+<!ENTITY username.label                  "Імя карыстальніка:">
+<!ENTITY auth.label                      "Апазнаванне">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Самавызначэнне">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Няма">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "Удасканаленая наладка">
+<!ENTITY advancedSetup.accesskey         "У">
+<!ENTITY cancel.label                    "Скасаваць">
+<!ENTITY cancel.accesskey                "к">
+<!ENTITY continue.label                  "Працягнуць">
+<!ENTITY continue.accesskey              "П">
+<!ENTITY stop.label                      "Спыніць">
+<!ENTITY stop.accesskey                  "С">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Пераправерыць">
+<!ENTITY half-manual-test.accesskey      "е">
+<!ENTITY open-provisioner.label          "Атрымаць новы адрас эл.пошты…">
+<!ENTITY open-provisioner.accesskey      "а">
+
+
+<!ENTITY warning.label                   "Увага!">
+<!ENTITY incomingSettings.label          "Уваходныя наладжванні:">
+<!ENTITY outgoingSettings.label          "Выходныя наладжванні:">
+<!ENTITY technicaldetails.label          "Тэхнічныя падрабязнасці.">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Я разумею рызыку.">
+<!ENTITY confirmWarning.accesskey        "р">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Гатова">
+<!ENTITY doneAccount.accesskey           "Г">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Змяніць наладжванні">
+<!ENTITY changeSettings.accesskey        "З">
+
+<!ENTITY contactYourProvider.description "&brandShortName; можа дазволіць вам карыстацца вашай поштай з дамамогаю гэтых наладжванняў. Тым не менш, вы павінны паведаміць вашаму спраўніку ці дастаўшчыку э-пошты пра гэтыя няспраўныя злучэнні. Больш падрабязныя звесткі можна атрымаць у Thunderbird FAQ.">
+
+<!ENTITY insecureServer.tooltip.title    "Увага! Гэта небяспечны паслугач.">
+<!ENTITY insecureServer.tooltip.details  "Пстрыкніце круг, каб атрымаць падрабязныя звесткі.">
+
+<!ENTITY insecureUnencrypted.description "Вашы э-пошта і здаткі апазнавання будуць дасылацца незашыфраванымі, таму іншыя людзі могуць лёгка прачытаць вашы лісты і пароль. &brandShortName; дазволіць вам атрымліваць вашу пошту, але вам трэба папрасіць вашага дастаўшчыка э-пошты наладзіць паслугач ужываць бяспечнае злучэнне.">
+<!ENTITY insecureSelfSigned.description  "Паслугач ужывае пасведчанне, якому нельга давяраць, таму нельга быць упэўненым, што хтосьці не перарывае рух паміж &brandShortName; і вашым паслугачом. &brandShortName; &brandShortName; дазволіць вам карыстацца вашый поштай, але вы абавязкова павінны дамовіцца з вашым дастаўшчыком э-пошты пра наладжванне паслуга даверным пасведчаннем.">
+<!ENTITY secureServer.description        "Віншаванні! Гэта бяспечны паслугач.">

@@ -39,17 +39,14 @@ function isAutocompleteDisabled(aField) {
 function FormHistoryClient({ formField, inputName }) {
   if (formField && inputName != this.SEARCHBAR_ID) {
     let window = formField.ownerGlobal;
-    this.mm = window.docShell.messageManager;
-  } else {
-    if (inputName == this.SEARCHBAR_ID && formField) {
-      throw new Error(
-        "FormHistoryClient constructed with both a " +
-          "formField and an inputName. This is not " +
-          "supported, and only empty results will be " +
-          "returned."
-      );
-    }
-    this.mm = Services.cpmm;
+    this.windowGlobal = window.windowGlobalChild;
+  } else if (inputName == this.SEARCHBAR_ID && formField) {
+    throw new Error(
+      "FormHistoryClient constructed with both a " +
+        "formField and an inputName. This is not " +
+        "supported, and only empty results will be " +
+        "returned."
+    );
   }
 
   this.inputName = inputName;
@@ -59,15 +56,16 @@ function FormHistoryClient({ formField, inputName }) {
 FormHistoryClient.prototype = {
   SEARCHBAR_ID: "searchbar-history",
 
-  // It is assumed that nsFormAutoComplete only uses / cares about
-  // one FormHistoryClient at a time, and won't attempt to have
-  // multiple in-flight searches occurring with the same FormHistoryClient.
-  // We use an ID number per instantiated FormHistoryClient to make
-  // sure we only respond to messages that were meant for us.
-  id: 0,
-  callback: null,
+  cancelled: false,
   inputName: "",
-  mm: null,
+
+  getActor() {
+    if (this.windowGlobal) {
+      return this.windowGlobal.getActor("FormHistory");
+    }
+
+    return null;
+  },
 
   /**
    * Query FormHistory for some results.
@@ -83,14 +81,50 @@ FormHistoryClient.prototype = {
    *        argument (the found entries).
    */
   requestAutoCompleteResults(searchString, params, callback) {
-    this.mm.sendAsyncMessage("FormHistory:AutoCompleteSearchAsync", {
-      id: this.id,
-      searchString,
-      params,
-    });
+    this.cancelled = false;
 
-    this.mm.addMessageListener("FormHistory:AutoCompleteSearchResults", this);
-    this.callback = callback;
+    // Use the actor if possible, otherwise for the searchbar,
+    // use the more roundabout per-process message manager which has
+    // no sendQuery method.
+    let actor = this.getActor();
+    if (actor) {
+      actor
+        .sendQuery("FormHistory:AutoCompleteSearchAsync", {
+          searchString,
+          params,
+        })
+        .then(
+          results => {
+            this.handleAutoCompleteResults(results, callback);
+          },
+          () => this.cancel()
+        );
+    } else {
+      this.callback = callback;
+      Services.cpmm.addMessageListener(
+        "FormHistory:AutoCompleteSearchResults",
+        this
+      );
+      Services.cpmm.sendAsyncMessage("FormHistory:AutoCompleteSearchAsync", {
+        id: this.id,
+        searchString,
+        params,
+      });
+    }
+  },
+
+  handleAutoCompleteResults(results, callback) {
+    if (this.cancelled) {
+      return;
+    }
+
+    if (!callback) {
+      Cu.reportError("FormHistoryClient received response with no callback");
+      return;
+    }
+
+    callback(results);
+    this.cancel();
   },
 
   /**
@@ -99,7 +133,14 @@ FormHistoryClient.prototype = {
    * called from this FormHistoryClient.
    */
   cancel() {
-    this.clearListeners();
+    if (this.callback) {
+      Services.cpmm.removeMessageListener(
+        "FormHistory:AutoCompleteSearchResults",
+        this
+      );
+      this.callback = null;
+    }
+    this.cancelled = true;
   },
 
   /**
@@ -115,34 +156,19 @@ FormHistoryClient.prototype = {
    *        The guid for the item being removed.
    */
   remove(value, guid) {
-    this.mm.sendAsyncMessage("FormHistory:RemoveEntry", {
+    let actor = this.getActor() || Services.cpmm;
+    actor.sendAsyncMessage("FormHistory:RemoveEntry", {
       inputName: this.inputName,
       value,
       guid,
     });
   },
 
-  // Private methods
-
   receiveMessage(msg) {
     let { id, results } = msg.data;
-    if (id != this.id) {
-      return;
+    if (id == this.id) {
+      this.handleAutoCompleteResults(results, this.callback);
     }
-    if (!this.callback) {
-      Cu.reportError("FormHistoryClient received message with no callback");
-      return;
-    }
-    this.callback(results);
-    this.clearListeners();
-  },
-
-  clearListeners() {
-    this.mm.removeMessageListener(
-      "FormHistory:AutoCompleteSearchResults",
-      this
-    );
-    this.callback = null;
   },
 };
 
@@ -307,8 +333,7 @@ FormAutoComplete.prototype = {
         client,
         [],
         aInputName,
-        aUntrimmedSearchString,
-        null
+        aUntrimmedSearchString
       );
     if (!this._enabled) {
       if (aListener) {
@@ -446,8 +471,7 @@ FormAutoComplete.prototype = {
             client,
             [],
             aInputName,
-            aUntrimmedSearchString,
-            null
+            aUntrimmedSearchString
           )
         : emptyResult;
 
@@ -583,18 +607,11 @@ FormAutoComplete.prototype = {
 }; // end of FormAutoComplete implementation
 
 // nsIAutoCompleteResult implementation
-function FormAutoCompleteResult(
-  client,
-  entries,
-  fieldName,
-  searchString,
-  messageManager
-) {
+function FormAutoCompleteResult(client, entries, fieldName, searchString) {
   this.client = client;
   this.entries = entries;
   this.fieldName = fieldName;
   this.searchString = searchString;
-  this.messageManager = messageManager;
 }
 
 FormAutoCompleteResult.prototype = {
@@ -627,13 +644,13 @@ FormAutoCompleteResult.prototype = {
   searchString: "",
   errorDescription: "",
   get defaultIndex() {
-    if (this.entries.length == 0) {
+    if (!this.entries.length) {
       return -1;
     }
     return 0;
   },
   get searchResult() {
-    if (this.entries.length == 0) {
+    if (!this.entries.length) {
       return Ci.nsIAutoCompleteResult.RESULT_NOMATCH;
     }
     return Ci.nsIAutoCompleteResult.RESULT_SUCCESS;
@@ -670,14 +687,12 @@ FormAutoCompleteResult.prototype = {
     return this.getValueAt(index);
   },
 
-  removeValueAt(index, removeFromDB) {
+  removeValueAt(index) {
     this._checkIndexBounds(index);
 
     let [removedEntry] = this.entries.splice(index, 1);
 
-    if (removeFromDB) {
-      this.client.remove(removedEntry.text, removedEntry.guid);
-    }
+    this.client.remove(removedEntry.text, removedEntry.guid);
   },
 };
 

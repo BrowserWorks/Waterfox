@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "Ifayili">
+<!ENTITY fileMenu.accesskey        "f">
+<!ENTITY newMenu.label            "Okutsha">
+<!ENTITY newMenu.accesskey          "O">
+
+<!ENTITY editMenu.label          "Hlela">
+<!ENTITY editMenu.accesskey        "H">
+<!ENTITY undoCmd.label            "Qhaqha Okwenzileyo">
+<!ENTITY undoCmd.accesskey          "Q">
+<!ENTITY redoCmd.label            "Phinda wenze">
+<!ENTITY redoCmd.accesskey          "P">
+<!ENTITY deleteCmd.label          "Cima">
+<!ENTITY deleteCmd.accesskey        "C">
+<!ENTITY preferencesCmd2.label "Options">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Izikhethwa">
+<!ENTITY preferencesCmdUnix.accesskey     "t">
+
+<!ENTITY viewMenu.label          "Jonga">
+<!ENTITY viewMenu.accesskey        "J">
+<!ENTITY viewToolbarsMenu.label        "Izixwexwe Zezixhobo Zemiyalelo">
+<!ENTITY viewToolbarsMenu.accesskey      "I">
+<!ENTITY showTaskbarCmd.label          "Isixwexwe Somgca Sesimo">
+<!ENTITY showTaskbarCmd.accesskey        "I">
+
+<!ENTITY closeCmd.label      "Vala">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "V">
+
+<!ENTITY quitApplicationCmd.label  "Phuma">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "u">
+
+<!ENTITY quitApplicationCmdUnix.label  "Yeka">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Y">
+
+<!ENTITY quitApplicationCmdMac.label  "Quit &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">

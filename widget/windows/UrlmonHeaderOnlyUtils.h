@@ -34,26 +34,10 @@ namespace mozilla {
  * As we need to get a full uri including a fragment, this function does 2).
  */
 inline LauncherResult<_bstr_t> UrlmonValidateUri(const wchar_t* aUri) {
-  LauncherResult<PIDLIST_ABSOLUTE> rawAbsPidl = ShellParseDisplayName(aUri);
-  if (rawAbsPidl.isErr()) {
-    return LAUNCHER_ERROR_FROM_RESULT(rawAbsPidl);
+  LauncherResult<UniqueAbsolutePidl> pidlResult = ShellParseDisplayName(aUri);
+  if (pidlResult.isErr()) {
+    return LAUNCHER_ERROR_FROM_RESULT(pidlResult);
   }
-  UniqueAbsolutePidl pidl(rawAbsPidl.unwrap());
-
-#ifndef __MINGW32__
-  const auto createUri = CreateUri;
-#else
-  HMODULE urlmonDll = GetModuleHandleW(L"urlmon");
-  if (!urlmonDll) {
-    return LAUNCHER_ERROR_FROM_LAST();
-  }
-
-  const auto createUri = reinterpret_cast<decltype(CreateUri)*>(
-      GetProcAddress(urlmonDll, "CreateUri"));
-  if (!createUri) {
-    return LAUNCHER_ERROR_FROM_LAST();
-  }
-#endif
 
   // The value of |flags| is the same value as used in ieframe!_EnsureIUri in
   // Win7, which is called behind SHParseDisplayName.  In Win10, on the other
@@ -64,7 +48,7 @@ inline LauncherResult<_bstr_t> UrlmonValidateUri(const wchar_t* aUri) {
       Uri_CREATE_CRACK_UNKNOWN_SCHEMES | Uri_CREATE_PRE_PROCESS_HTML_URI |
       Uri_CREATE_IE_SETTINGS;
   RefPtr<IUri> uri;
-  HRESULT hr = createUri(aUri, flags, 0, getter_AddRefs(uri));
+  HRESULT hr = CreateUri(aUri, flags, 0, getter_AddRefs(uri));
   if (FAILED(hr)) {
     return LAUNCHER_ERROR_FROM_HRESULT(hr);
   }

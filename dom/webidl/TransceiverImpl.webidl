@@ -14,10 +14,14 @@
  */
 
 // Constructed by PeerConnectionImpl::CreateTransceiverImpl.
-[ChromeOnly]
+[ChromeOnly,
+ Exposed=Window]
 interface TransceiverImpl {
-  MediaStreamTrack getReceiveTrack();
   [Throws]
   void syncWithJS(RTCRtpTransceiver transceiver);
+  readonly attribute RTCRtpReceiver receiver;
+  // TODO(bug 1616937): We won't need this once we implement RTCRtpSender in c++
+  [ChromeOnly]
+  readonly attribute RTCDTMFSender? dtmf;
 };
 

@@ -16,9 +16,16 @@ const List = createFactory(
   require("devtools/client/shared/components/List").List
 );
 const ColorContrastCheck = createFactory(
-  require("./ColorContrastAccessibility").ColorContrastCheck
+  require("devtools/client/accessibility/components/ColorContrastAccessibility")
+    .ColorContrastCheck
 );
-const { L10N } = require("../utils/l10n");
+const TextLabelCheck = createFactory(
+  require("devtools/client/accessibility/components/TextLabelCheck")
+);
+const KeyboardCheck = createFactory(
+  require("devtools/client/accessibility/components/KeyboardCheck")
+);
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
 
 const {
   accessibility: { AUDIT_TYPE },
@@ -46,6 +53,14 @@ class Checks extends Component {
 
   [AUDIT_TYPE.CONTRAST](contrastRatio) {
     return ColorContrastCheck(contrastRatio);
+  }
+
+  [AUDIT_TYPE.KEYBOARD](keyboardCheck) {
+    return KeyboardCheck(keyboardCheck);
+  }
+
+  [AUDIT_TYPE.TEXT_LABEL](textLabelCheck) {
+    return TextLabelCheck(textLabelCheck);
   }
 
   render() {
@@ -83,10 +98,6 @@ class Checks extends Component {
 }
 
 const mapStateToProps = ({ details, ui }) => {
-  if (!ui.supports.audit) {
-    return {};
-  }
-
   const { audit } = details;
   if (!audit) {
     return {};

@@ -21,7 +21,7 @@
 static void
 native_key_expansion128(AESContext *cx, const unsigned char *key)
 {
-    __m128i *keySchedule = cx->keySchedule;
+    __m128i *keySchedule = cx->k.keySchedule;
     pre_align __m128i tmp_key post_align;
     pre_align __m128i tmp post_align;
     keySchedule[0] = _mm_loadu_si128((__m128i *)key);
@@ -61,7 +61,7 @@ native_key_expansion128(AESContext *cx, const unsigned char *key)
 static void
 native_key_expansion192(AESContext *cx, const unsigned char *key)
 {
-    __m128i *keySchedule = cx->keySchedule;
+    __m128i *keySchedule = cx->k.keySchedule;
     pre_align __m128i tmp1 post_align;
     pre_align __m128i tmp2 post_align;
     pre_align __m128i tmp3 post_align;
@@ -96,7 +96,7 @@ native_key_expansion192(AESContext *cx, const unsigned char *key)
 static void
 native_key_expansion256(AESContext *cx, const unsigned char *key)
 {
-    __m128i *keySchedule = cx->keySchedule;
+    __m128i *keySchedule = cx->k.keySchedule;
     pre_align __m128i tmp_key post_align;
     pre_align __m128i tmp1 post_align;
     pre_align __m128i tmp2 post_align;
@@ -146,12 +146,39 @@ rijndael_native_encryptBlock(AESContext *cx,
                              unsigned char *output,
                              const unsigned char *input)
 {
+    unsigned int i;
+    pre_align __m128i m post_align = _mm_loadu_si128((__m128i *)input);
+    m = _mm_xor_si128(m, cx->k.keySchedule[0]);
+    for (i = 1; i < cx->Nr; ++i) {
+        m = _mm_aesenc_si128(m, cx->k.keySchedule[i]);
+    }
+    m = _mm_aesenclast_si128(m, cx->k.keySchedule[cx->Nr]);
+    _mm_storeu_si128((__m128i *)output, m);
+}
+
+void
+rijndael_native_decryptBlock(AESContext *cx,
+                             unsigned char *output,
+                             const unsigned char *input)
+{
     int i;
     pre_align __m128i m post_align = _mm_loadu_si128((__m128i *)input);
-    m = _mm_xor_si128(m, cx->keySchedule[0]);
-    for (i = 1; i < cx->Nr; ++i) {
-        m = _mm_aesenc_si128(m, cx->keySchedule[i]);
+    m = _mm_xor_si128(m, cx->k.keySchedule[cx->Nr]);
+    for (i = cx->Nr - 1; i > 0; --i) {
+        m = _mm_aesdec_si128(m, cx->k.keySchedule[i]);
     }
-    m = _mm_aesenclast_si128(m, cx->keySchedule[cx->Nr]);
+    m = _mm_aesdeclast_si128(m, cx->k.keySchedule[0]);
     _mm_storeu_si128((__m128i *)output, m);
+}
+
+// out = a ^ b
+void
+native_xorBlock(unsigned char *out,
+                const unsigned char *a,
+                const unsigned char *b)
+{
+    pre_align __m128i post_align in1 = _mm_loadu_si128((__m128i *)(a));
+    pre_align __m128i post_align in2 = _mm_loadu_si128((__m128i *)(b));
+    in1 = _mm_xor_si128(in1, in2);
+    _mm_storeu_si128((__m128i *)(out), in1);
 }

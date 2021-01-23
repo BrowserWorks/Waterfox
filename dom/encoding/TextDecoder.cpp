@@ -21,7 +21,7 @@ void TextDecoder::Init(const nsAString& aLabel,
   // (https://encoding.spec.whatwg.org/#dom-textdecoder).
   const Encoding* encoding = Encoding::ForLabelNoReplacement(aLabel);
   if (!encoding) {
-    nsAutoString label(aLabel);
+    NS_ConvertUTF16toUTF8 label(aLabel);
     label.Trim(" \t\n\f\r");
     aRv.ThrowRangeError<MSG_ENCODING_NOT_SUPPORTED>(label);
     return;
@@ -50,7 +50,7 @@ void TextDecoder::Decode(Span<const uint8_t> aInput, const bool aStream,
 
   CheckedInt<size_t> needed = mDecoder->MaxUTF16BufferLength(aInput.Length());
   if (!needed.isValid() ||
-      needed.value() > MaxValue<nsAString::size_type>::value) {
+      needed.value() > std::numeric_limits<nsAString::size_type>::max()) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
   }
@@ -88,7 +88,11 @@ void TextDecoder::Decode(Span<const uint8_t> aInput, const bool aStream,
   // If the internal streaming flag of the decoder object is not set,
   // then reset the encoding algorithm state to the default values
   if (!aStream) {
-    mDecoder->Encoding()->NewDecoderWithBOMRemovalInto(*mDecoder);
+    if (mIgnoreBOM) {
+      mDecoder->Encoding()->NewDecoderWithoutBOMHandlingInto(*mDecoder);
+    } else {
+      mDecoder->Encoding()->NewDecoderWithBOMRemovalInto(*mDecoder);
+    }
   }
 }
 
@@ -103,12 +107,12 @@ void TextDecoder::Decode(const Optional<ArrayBufferViewOrArrayBuffer>& aBuffer,
   uint8_t* data;
   uint32_t length;
   if (buf.IsArrayBufferView()) {
-    buf.GetAsArrayBufferView().ComputeLengthAndData();
+    buf.GetAsArrayBufferView().ComputeState();
     data = buf.GetAsArrayBufferView().Data();
     length = buf.GetAsArrayBufferView().Length();
   } else {
     MOZ_ASSERT(buf.IsArrayBuffer());
-    buf.GetAsArrayBuffer().ComputeLengthAndData();
+    buf.GetAsArrayBuffer().ComputeState();
     data = buf.GetAsArrayBuffer().Data();
     length = buf.GetAsArrayBuffer().Length();
   }

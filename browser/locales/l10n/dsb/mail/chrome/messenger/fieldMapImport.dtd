@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Adresnik importěrowaś">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Daty importěrowaś za datowu sajźbu: ">
+<!ENTITY fieldMapImport.next.label "Pśiducy">
+<!ENTITY fieldMapImport.next.accesskey "P">
+<!ENTITY fieldMapImport.previous.label "Pjerwjejšny">
+<!ENTITY fieldMapImport.previous.accesskey "w">
+<!ENTITY fieldMapImport.text "Wužyjśo Górjej a Dołoj, aby póla adresnika nalěwo pšawym datam za importěrowanje napšawo pśirědował. Wótpórajśo wobznamjenje za zapiski, kótarež njocośo importěrowaś.">
+<!ENTITY fieldMapImport.up.label "Górjej">
+<!ENTITY fieldMapImport.up.accesskey "G">
+<!ENTITY fieldMapImport.down.label "Dołoj">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "Póla adresnika">
+<!ENTITY fieldMapImport.dataTitle "Daty za importěrowanje">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Prědna datowa sajźba wopśimujo pólowe mjenja">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "s">

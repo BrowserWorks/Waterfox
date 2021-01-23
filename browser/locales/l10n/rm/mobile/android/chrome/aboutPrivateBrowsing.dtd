@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Modus privat">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Protecziun cunter il fastizar">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Ti n'es betg en il modus privat">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; blochescha parts da la pagina che ta pudessan fastizar durant navigar en l'internet.">
+<!ENTITY privatebrowsingpage.description.privateDetails "La cronologia na vegn betg memorisada, ma datotecas telechargiadas e novs segnapaginas vegnan preservads sin tes apparat.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "En il modus privat na vegnan la cronologia da navigaziun ed ils cookies betg memorisads. Segnapaginas che ti agiunteschas e datotecas che ti telechargias vegnan dentant preservads sin tes apparat.">
+
+<!ENTITY privatebrowsingpage.link.private "Dovras ulteriuras infurmaziuns?">
+<!ENTITY privatebrowsingpage.link.normal "Avrir in nov tab privat">

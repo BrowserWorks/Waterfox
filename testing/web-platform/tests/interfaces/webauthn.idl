@@ -30,7 +30,10 @@ interface AuthenticatorResponse {
 [SecureContext, Exposed=Window]
 interface AuthenticatorAttestationResponse : AuthenticatorResponse {
     [SameObject] readonly attribute ArrayBuffer      attestationObject;
-    sequence<AuthenticatorTransport>                 getTransports();
+    sequence<DOMString>                              getTransports();
+    ArrayBuffer                                      getAuthenticatorData();
+    ArrayBuffer?                                     getPublicKey();
+    COSEAlgorithmIdentifier                          getPublicKeyAlgorithm();
 };
 
 [SecureContext, Exposed=Window]
@@ -55,13 +58,12 @@ dictionary PublicKeyCredentialCreationOptions {
     unsigned long                                timeout;
     sequence<PublicKeyCredentialDescriptor>      excludeCredentials = [];
     AuthenticatorSelectionCriteria               authenticatorSelection;
-    AttestationConveyancePreference              attestation = "none";
+    DOMString                                    attestation = "none";
     AuthenticationExtensionsClientInputs         extensions;
 };
 
 dictionary PublicKeyCredentialEntity {
     required DOMString    name;
-    USVString             icon;
 };
 
 dictionary PublicKeyCredentialRpEntity : PublicKeyCredentialEntity {
@@ -76,6 +78,7 @@ dictionary PublicKeyCredentialUserEntity : PublicKeyCredentialEntity {
 dictionary AuthenticatorSelectionCriteria {
     AuthenticatorAttachment      authenticatorAttachment;
     boolean                      requireResidentKey = false;
+    ResidentKeyRequirement       residentKey;
     UserVerificationRequirement  userVerification = "preferred";
 };
 
@@ -84,10 +87,17 @@ enum AuthenticatorAttachment {
     "cross-platform"
 };
 
+enum ResidentKeyRequirement {
+    "discouraged",
+    "preferred",
+    "required"
+};
+
 enum AttestationConveyancePreference {
     "none",
     "indirect",
-    "direct"
+    "direct",
+    "enterprise"
 };
 
 dictionary PublicKeyCredentialRequestOptions {
@@ -111,6 +121,7 @@ dictionary CollectedClientData {
     required DOMString           type;
     required DOMString           challenge;
     required DOMString           origin;
+    boolean                      crossOrigin;
     TokenBinding                 tokenBinding;
 };
 
@@ -128,7 +139,7 @@ enum PublicKeyCredentialType {
 dictionary PublicKeyCredentialDescriptor {
     required PublicKeyCredentialType      type;
     required BufferSource                 id;
-    sequence<AuthenticatorTransport>      transports;
+    sequence<DOMString>                   transports;
 };
 
 enum AuthenticatorTransport {
@@ -155,62 +166,7 @@ partial dictionary AuthenticationExtensionsClientOutputs {
 };
 
 partial dictionary AuthenticationExtensionsClientInputs {
-  USVString txAuthSimple;
-};
-
-partial dictionary AuthenticationExtensionsClientOutputs {
-  USVString txAuthSimple;
-};
-
-dictionary txAuthGenericArg {
-    required USVString contentType;    // MIME-Type of the content, e.g., "image/png"
-    required ArrayBuffer content;
-};
-
-partial dictionary AuthenticationExtensionsClientInputs {
-  txAuthGenericArg txAuthGeneric;
-};
-
-partial dictionary AuthenticationExtensionsClientOutputs {
-  ArrayBuffer txAuthGeneric;
-};
-
-typedef sequence<AAGUID> AuthenticatorSelectionList;
-
-partial dictionary AuthenticationExtensionsClientInputs {
-  AuthenticatorSelectionList authnSel;
-};
-
-typedef BufferSource      AAGUID;
-
-partial dictionary AuthenticationExtensionsClientOutputs {
-  boolean authnSel;
-};
-
-partial dictionary AuthenticationExtensionsClientInputs {
-  boolean exts;
-};
-
-typedef sequence<USVString> AuthenticationExtensionsSupported;
-
-partial dictionary AuthenticationExtensionsClientOutputs {
-  AuthenticationExtensionsSupported exts;
-};
-
-partial dictionary AuthenticationExtensionsClientInputs {
-  boolean uvi;
-};
-
-partial dictionary AuthenticationExtensionsClientOutputs {
-  ArrayBuffer uvi;
-};
-
-partial dictionary AuthenticationExtensionsClientInputs {
-  boolean loc;
-};
-
-partial dictionary AuthenticationExtensionsClientOutputs {
-  Coordinates loc;
+  USVString appidExclude;
 };
 
 partial dictionary AuthenticationExtensionsClientInputs {
@@ -224,7 +180,14 @@ partial dictionary AuthenticationExtensionsClientOutputs {
   UvmEntries uvm;
 };
 
-dictionary authenticatorBiometricPerfBounds{
-    float FAR;
-    float FRR;
-    };
+partial dictionary AuthenticationExtensionsClientInputs {
+    boolean credProps;
+};
+
+dictionary CredentialPropertiesOutput {
+    boolean rk;
+};
+
+partial dictionary AuthenticationExtensionsClientOutputs {
+    CredentialPropertiesOutput credProps;
+};

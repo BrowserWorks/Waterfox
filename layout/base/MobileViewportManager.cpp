@@ -6,7 +6,6 @@
 
 #include "MobileViewportManager.h"
 
-#include "gfxPrefs.h"
 #include "LayersLogging.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/dom/Document.h"
@@ -18,14 +17,13 @@
 #include "nsViewportInfo.h"
 #include "UnitTransforms.h"
 
-#define MVM_LOG(...)
-// #define MVM_LOG(...) printf_stderr("MVM: " __VA_ARGS__)
+static mozilla::LazyLogModule sApzMvmLog("apz.mobileviewport");
+#define MVM_LOG(...) MOZ_LOG(sApzMvmLog, LogLevel::Debug, (__VA_ARGS__))
 
 NS_IMPL_ISUPPORTS(MobileViewportManager, nsIDOMEventListener, nsIObserver)
 
 #define DOM_META_ADDED NS_LITERAL_STRING("DOMMetaAdded")
 #define DOM_META_CHANGED NS_LITERAL_STRING("DOMMetaChanged")
-#define FULL_ZOOM_CHANGE NS_LITERAL_STRING("FullZoomChange")
 #define LOAD NS_LITERAL_STRING("load")
 #define BEFORE_FIRST_PAINT NS_LITERAL_CSTRING("before-first-paint")
 
@@ -37,24 +35,22 @@ MobileViewportManager::MobileViewportManager(MVMContext* aContext)
     : mContext(aContext), mIsFirstPaint(false), mPainted(false) {
   MOZ_ASSERT(mContext);
 
-  MVM_LOG("%p: creating with context %p\n", this, mContext);
+  MVM_LOG("%p: creating with context %p\n", this, mContext.get());
 
   mContext->AddEventListener(DOM_META_ADDED, this, false);
   mContext->AddEventListener(DOM_META_CHANGED, this, false);
-  mContext->AddEventListener(FULL_ZOOM_CHANGE, this, false);
   mContext->AddEventListener(LOAD, this, true);
 
   mContext->AddObserver(this, BEFORE_FIRST_PAINT.Data(), false);
 }
 
-MobileViewportManager::~MobileViewportManager() {}
+MobileViewportManager::~MobileViewportManager() = default;
 
 void MobileViewportManager::Destroy() {
   MVM_LOG("%p: destroying\n", this);
 
   mContext->RemoveEventListener(DOM_META_ADDED, this, false);
   mContext->RemoveEventListener(DOM_META_CHANGED, this, false);
-  mContext->RemoveEventListener(FULL_ZOOM_CHANGE, this, false);
   mContext->RemoveEventListener(LOAD, this, true);
 
   mContext->RemoveObserver(this, BEFORE_FIRST_PAINT.Data());
@@ -93,7 +89,9 @@ mozilla::CSSToScreenScale MobileViewportManager::ComputeIntrinsicScale(
     const mozilla::ScreenIntSize& aDisplaySize,
     const mozilla::CSSSize& aViewportOrContentSize) const {
   CSSToScreenScale intrinsicScale =
-      MaxScaleRatio(ScreenSize(aDisplaySize), aViewportOrContentSize);
+      aViewportOrContentSize.IsEmpty()
+          ? CSSToScreenScale(1.0)
+          : MaxScaleRatio(ScreenSize(aDisplaySize), aViewportOrContentSize);
   MVM_LOG("%p: Intrinsic computed zoom is %f\n", this, intrinsicScale.scale);
   return ClampZoom(intrinsicScale, aViewportInfo);
 }
@@ -104,14 +102,17 @@ void MobileViewportManager::RequestReflow(bool aForceAdjustResolution) {
   RefreshViewportSize(aForceAdjustResolution);
 }
 
-void MobileViewportManager::ResolutionUpdated() {
+void MobileViewportManager::ResolutionUpdated(
+    mozilla::ResolutionChangeOrigin aOrigin) {
   MVM_LOG("%p: resolution updated\n", this);
 
   if (!mContext) {
     return;
   }
 
-  if (!mPainted) {
+  if ((!mPainted &&
+       aOrigin == mozilla::ResolutionChangeOrigin::MainThreadRestore) ||
+      aOrigin == mozilla::ResolutionChangeOrigin::Test) {
     // Save the value, so our default zoom calculation
     // can take it into account later on.
     SetRestoreResolution(mContext->GetResolution());
@@ -125,14 +126,10 @@ MobileViewportManager::HandleEvent(dom::Event* event) {
   event->GetType(type);
 
   if (type.Equals(DOM_META_ADDED)) {
-    MVM_LOG("%p: got a dom-meta-added event\n", this);
-    RefreshViewportSize(mPainted);
+    HandleDOMMetaAdded();
   } else if (type.Equals(DOM_META_CHANGED)) {
     MVM_LOG("%p: got a dom-meta-changed event\n", this);
     RefreshViewportSize(mPainted);
-  } else if (type.Equals(FULL_ZOOM_CHANGE)) {
-    MVM_LOG("%p: got a full-zoom-change event\n", this);
-    RefreshViewportSize(false);
   } else if (type.Equals(LOAD)) {
     MVM_LOG("%p: got a load event\n", this);
     if (!mPainted) {
@@ -141,6 +138,27 @@ MobileViewportManager::HandleEvent(dom::Event* event) {
     }
   }
   return NS_OK;
+}
+
+void MobileViewportManager::HandleDOMMetaAdded() {
+  MVM_LOG("%p: got a dom-meta-added event\n", this);
+  if (mPainted && mContext->IsDocumentLoading()) {
+    // It's possible that we get a DOMMetaAdded event after the page
+    // has already been painted, but before the document finishes loading.
+    // In such a case, we've already run SetInitialViewport() on
+    // "before-first-paint", and won't run it again on "load" (because
+    // mPainted=true). But that SetInitialViewport() call didn't know the
+    // "initial-scale" from this meta viewport tag. To ensure we respect
+    // the "initial-scale", call SetInitialViewport() again.
+    // Note: It's important that we only do this if mPainted=true. In the
+    // usual case, we get the DOMMetaAdded before the first paint, sometimes
+    // even before we have a frame tree, and calling SetInitialViewport()
+    // before we have a frame tree will skip some important steps (e.g.
+    // updating display port margins).
+    SetInitialViewport();
+  } else {
+    RefreshViewportSize(mPainted);
+  }
 }
 
 NS_IMETHODIMP
@@ -171,6 +189,11 @@ void MobileViewportManager::SetInitialViewport() {
 CSSToScreenScale MobileViewportManager::ClampZoom(
     const CSSToScreenScale& aZoom, const nsViewportInfo& aViewportInfo) const {
   CSSToScreenScale zoom = aZoom;
+  if (IsNaN(zoom.scale)) {
+    NS_ERROR("Don't pass NaN to ClampZoom; check caller for 0/0 division");
+    zoom = CSSToScreenScale(1.0);
+  }
+
   if (zoom < aViewportInfo.GetMinZoom()) {
     zoom = aViewportInfo.GetMinZoom();
     MVM_LOG("%p: Clamped to %f\n", this, zoom.scale);
@@ -179,6 +202,15 @@ CSSToScreenScale MobileViewportManager::ClampZoom(
     zoom = aViewportInfo.GetMaxZoom();
     MVM_LOG("%p: Clamped to %f\n", this, zoom.scale);
   }
+
+  // Non-positive zoom factors can produce NaN or negative viewport sizes,
+  // so we better be sure we've got a positive zoom factor. Just for good
+  // measure, we check our min/max as well as the final clamped value.
+  MOZ_ASSERT(aViewportInfo.GetMinZoom() > CSSToScreenScale(0.0f),
+             "zoom factor must be positive");
+  MOZ_ASSERT(aViewportInfo.GetMaxZoom() > CSSToScreenScale(0.0f),
+             "zoom factor must be positive");
+  MOZ_ASSERT(zoom > CSSToScreenScale(0.0f), "zoom factor must be positive");
   return zoom;
 }
 
@@ -220,6 +252,10 @@ void MobileViewportManager::UpdateResolution(
   CSSToLayoutDeviceScale cssToDev = mContext->CSSToDevPixelScale();
   LayoutDeviceToLayerScale res(mContext->GetResolution());
   CSSToScreenScale zoom = ResolutionToZoom(res, cssToDev);
+  // Non-positive zoom factors can produce NaN or negative viewport sizes,
+  // so we better be sure we've got a positive zoom factor.
+  MOZ_ASSERT(zoom > CSSToScreenScale(0.0f), "zoom factor must be positive");
+
   Maybe<CSSToScreenScale> newZoom;
 
   ScreenIntSize compositionSize = GetCompositionSize(aDisplaySize);
@@ -391,10 +427,17 @@ void MobileViewportManager::UpdateResolution(
   }
 
   // If the zoom has changed, update the pres shell resolution accordingly.
+  // We characterize this as MainThreadAdjustment, because we don't want our
+  // change here to be remembered as a restore resolution.
   if (newZoom) {
+    // Non-positive zoom factors can produce NaN or negative viewport sizes,
+    // so we better be sure we've got a positive zoom factor.
+    MOZ_ASSERT(*newZoom > CSSToScreenScale(0.0f),
+               "zoom factor must be positive");
     LayoutDeviceToLayerScale resolution = ZoomToResolution(*newZoom, cssToDev);
     MVM_LOG("%p: setting resolution %f\n", this, resolution.scale);
-    mContext->SetResolutionAndScaleTo(resolution.scale);
+    mContext->SetResolutionAndScaleTo(
+        resolution.scale, ResolutionChangeOrigin::MainThreadAdjustment);
 
     MVM_LOG("%p: New zoom is %f\n", this, newZoom->scale);
   }
@@ -412,6 +455,9 @@ ScreenIntSize MobileViewportManager::GetCompositionSize(
     return ScreenIntSize();
   }
 
+  // FIXME: Bug 1586986 - To update VisualViewport in response to the dynamic
+  // toolbar transition we probably need to include the dynamic toolbar
+  // _current_ height.
   ScreenIntSize compositionSize(aDisplaySize);
   ScreenMargin scrollbars =
       mContext->ScrollbarAreaToExcludeFromCompositionBounds()
@@ -440,6 +486,30 @@ void MobileViewportManager::UpdateVisualViewportSize(
   mContext->SetVisualViewportSize(compSize);
 }
 
+CSSToScreenScale MobileViewportManager::GetZoom() const {
+  CSSToLayoutDeviceScale cssToDev = mContext->CSSToDevPixelScale();
+  LayoutDeviceToLayerScale res(mContext->GetResolution());
+  return ResolutionToZoom(res, cssToDev);
+}
+
+void MobileViewportManager::UpdateVisualViewportSizeByDynamicToolbar(
+    ScreenIntCoord aToolbarHeight) {
+  if (!mContext) {
+    return;
+  }
+
+  ScreenIntSize displaySize = ViewAs<ScreenPixel>(
+      mDisplaySize, PixelCastJustification::LayoutDeviceIsScreenForBounds);
+  displaySize.height += aToolbarHeight;
+  CSSSize compSize = ScreenSize(GetCompositionSize(displaySize)) / GetZoom();
+
+  mVisualViewportSizeUpdatedByDynamicToolbar =
+      nsSize(nsPresContext::CSSPixelsToAppUnits(compSize.width),
+             nsPresContext::CSSPixelsToAppUnits(compSize.height));
+
+  mContext->PostVisualViewportResizeEventByDynamicToolbar();
+}
+
 void MobileViewportManager::UpdateDisplayPortMargins() {
   if (!mContext) {
     return;
@@ -458,13 +528,7 @@ void MobileViewportManager::RefreshVisualViewportSize() {
   ScreenIntSize displaySize = ViewAs<ScreenPixel>(
       mDisplaySize, PixelCastJustification::LayoutDeviceIsScreenForBounds);
 
-  CSSToLayoutDeviceScale cssToDev = mContext->CSSToDevPixelScale();
-  LayoutDeviceToLayerScale res(mContext->GetResolution());
-  CSSToScreenScale zoom = ViewTargetAs<ScreenPixel>(
-      cssToDev * res / ParentLayerToLayerScale(1),
-      PixelCastJustification::ScreenIsParentLayerForRoot);
-
-  UpdateVisualViewportSize(displaySize, zoom);
+  UpdateVisualViewportSize(displaySize, GetZoom());
 }
 
 void MobileViewportManager::RefreshViewportSize(bool aForceAdjustResolution) {
@@ -515,6 +579,10 @@ void MobileViewportManager::RefreshViewportSize(bool aForceAdjustResolution) {
   ScreenIntSize displaySize = ViewAs<ScreenPixel>(
       mDisplaySize, PixelCastJustification::LayoutDeviceIsScreenForBounds);
   nsViewportInfo viewportInfo = mContext->GetViewportInfo(displaySize);
+  MVM_LOG("%p: viewport info has zooms min=%f max=%f default=%f,valid=%d\n",
+          this, viewportInfo.GetMinZoom().scale,
+          viewportInfo.GetMaxZoom().scale, viewportInfo.GetDefaultZoom().scale,
+          viewportInfo.IsDefaultZoomValid());
 
   CSSSize viewport = viewportInfo.GetSize();
   MVM_LOG("%p: Computed CSS viewport %s\n", this, Stringify(viewport).c_str());
@@ -541,17 +609,13 @@ void MobileViewportManager::RefreshViewportSize(bool aForceAdjustResolution) {
     UpdateDisplayPortMargins();
   }
 
-  CSSSize oldSize = mMobileViewportSize;
-
   // Update internal state.
   mMobileViewportSize = viewport;
 
   RefPtr<MobileViewportManager> strongThis(this);
 
   // Kick off a reflow.
-  mContext->Reflow(viewport, oldSize,
-                   mIsFirstPaint ? MVMContext::ResizeEventFlag::Suppress
-                                 : MVMContext::ResizeEventFlag::IfNecessary);
+  mContext->Reflow(viewport);
 
   // We are going to fit the content to the display width if the initial-scale
   // is not specied and if the content is still wider than the display width.

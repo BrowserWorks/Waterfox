@@ -7,7 +7,7 @@
 #ifndef jit_JitFrames_h
 #define jit_JitFrames_h
 
-#include <stdint.h>
+#include <stdint.h>  // uintptr_t
 
 #include "jit/JSJitFrameIter.h"
 #include "vm/JSContext.h"
@@ -60,7 +60,7 @@ static inline JSScript* CalleeTokenToScript(CalleeToken token) {
 }
 static inline bool CalleeTokenIsModuleScript(CalleeToken token) {
   CalleeTokenTag tag = GetCalleeTokenTag(token);
-  return tag == CalleeToken_Script && CalleeTokenToScript(token)->module();
+  return tag == CalleeToken_Script && CalleeTokenToScript(token)->isModule();
 }
 
 static inline JSScript* ScriptFromCalleeToken(CalleeToken token) {
@@ -90,44 +90,36 @@ JSScript* MaybeForwardedScriptFromCalleeToken(CalleeToken token);
 // C++ code will always begin iterating from the topmost exit frame.
 
 class LSafepoint;
+class CodegenSafepointIndex;
 
 // Two-tuple that lets you look up the safepoint entry given the
 // displacement of a call instruction within the JIT code.
 class SafepointIndex {
   // The displacement is the distance from the first byte of the JIT'd code
   // to the return address (of the call that the safepoint was generated for).
-  uint32_t displacement_;
+  uint32_t displacement_ = 0;
 
-  union {
-    LSafepoint* safepoint_;
-
-    // Offset to the start of the encoded safepoint in the safepoint stream.
-    uint32_t safepointOffset_;
-  };
-
-#ifdef DEBUG
-  bool resolved;
-#endif
+  // Offset within the safepoint buffer.
+  uint32_t safepointOffset_ = 0;
 
  public:
-  SafepointIndex(uint32_t displacement, LSafepoint* safepoint)
-      : displacement_(displacement),
-        safepoint_(safepoint)
-#ifdef DEBUG
-        ,
-        resolved(false)
-#endif
-  {
-  }
+  inline explicit SafepointIndex(const CodegenSafepointIndex& csi);
 
-  void resolve();
-
-  LSafepoint* safepoint() {
-    MOZ_ASSERT(!resolved);
-    return safepoint_;
-  }
   uint32_t displacement() const { return displacement_; }
   uint32_t safepointOffset() const { return safepointOffset_; }
+};
+
+class CodegenSafepointIndex {
+  uint32_t displacement_ = 0;
+
+  LSafepoint* safepoint_ = nullptr;
+
+ public:
+  CodegenSafepointIndex(uint32_t displacement, LSafepoint* safepoint)
+      : displacement_(displacement), safepoint_(safepoint) {}
+
+  LSafepoint* safepoint() const { return safepoint_; }
+  uint32_t displacement() const { return displacement_; }
   void adjustDisplacement(uint32_t offset) {
     MOZ_ASSERT(offset >= displacement_);
     displacement_ = offset;
@@ -300,9 +292,9 @@ inline JSScript* GetTopJitJSScript(JSContext* cx) {
 }
 
 #ifdef JS_CODEGEN_MIPS32
-uint8_t* alignDoubleSpillWithOffset(uint8_t* pointer, int32_t offset);
+uint8_t* alignDoubleSpill(uint8_t* pointer);
 #else
-inline uint8_t* alignDoubleSpillWithOffset(uint8_t* pointer, int32_t offset) {
+inline uint8_t* alignDoubleSpill(uint8_t* pointer) {
   // This is NO-OP on non-MIPS platforms.
   return pointer;
 }
@@ -441,11 +433,24 @@ class ExitFooterFrame {
     return reinterpret_cast<const VMFunctionData*>(data_);
   }
 
+#ifdef JS_CODEGEN_MIPS32
+  uint8_t* alignedForABI() {
+    // See: MacroAssemblerMIPSCompat::alignStackPointer()
+    uint8_t* address = reinterpret_cast<uint8_t*>(this);
+    address -= sizeof(intptr_t);
+    return alignDoubleSpill(address);
+  }
+#else
+  uint8_t* alignedForABI() {
+    // This is NO-OP on non-MIPS platforms.
+    return reinterpret_cast<uint8_t*>(this);
+  }
+#endif
+
   // This should only be called for function()->outParam == Type_Handle
   template <typename T>
   T* outParam() {
-    uint8_t* address = reinterpret_cast<uint8_t*>(this);
-    address = alignDoubleSpillWithOffset(address, sizeof(intptr_t));
+    uint8_t* address = alignedForABI();
     return reinterpret_cast<T*>(address - sizeof(T));
   }
 };
@@ -668,7 +673,7 @@ class IonDOMMethodExitFrameLayout {
 
   inline Value* vp() {
     // The code in visitCallDOMNative depends on this static assert holding
-    JS_STATIC_ASSERT(
+    static_assert(
         offsetof(IonDOMMethodExitFrameLayout, loCalleeResult_) ==
         (offsetof(IonDOMMethodExitFrameLayout, argc_) + sizeof(uintptr_t)));
     return reinterpret_cast<Value*>(&loCalleeResult_);

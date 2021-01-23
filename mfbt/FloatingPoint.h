@@ -15,10 +15,11 @@
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryChecking.h"
 #include "mozilla/Types.h"
-#include "mozilla/TypeTraits.h"
 
+#include <algorithm>
 #include <limits>
 #include <stdint.h>
+#include <type_traits>
 
 namespace mozilla {
 
@@ -278,6 +279,18 @@ static MOZ_ALWAYS_INLINE T NegativeInfinity() {
 }
 
 /**
+ * Computes the bit pattern for an infinity with the specified sign bit.
+ */
+template <typename T, int SignBit>
+struct InfinityBits {
+  using Traits = FloatingPoint<T>;
+
+  static_assert(SignBit == 0 || SignBit == 1, "bad sign bit");
+  static constexpr typename Traits::Bits value =
+      (SignBit * Traits::kSignBit) | Traits::kExponentBits;
+};
+
+/**
  * Computes the bit pattern for a NaN with the specified sign bit and
  * significand bits.
  */
@@ -345,9 +358,9 @@ namespace detail {
 
 template <typename Float, typename SignedInteger>
 inline bool NumberEqualsSignedInteger(Float aValue, SignedInteger* aInteger) {
-  static_assert(IsSame<Float, float>::value || IsSame<Float, double>::value,
+  static_assert(std::is_same_v<Float, float> || std::is_same_v<Float, double>,
                 "Float must be an IEEE-754 floating point type");
-  static_assert(IsSigned<SignedInteger>::value,
+  static_assert(std::is_signed_v<SignedInteger>,
                 "this algorithm only works for signed types: a different one "
                 "will be required for unsigned types");
   static_assert(sizeof(SignedInteger) >= sizeof(int),
@@ -416,9 +429,9 @@ inline bool NumberEqualsSignedInteger(Float aValue, SignedInteger* aInteger) {
 
 template <typename Float, typename SignedInteger>
 inline bool NumberIsSignedInteger(Float aValue, SignedInteger* aInteger) {
-  static_assert(IsSame<Float, float>::value || IsSame<Float, double>::value,
+  static_assert(std::is_same_v<Float, float> || std::is_same_v<Float, double>,
                 "Float must be an IEEE-754 floating point type");
-  static_assert(IsSigned<SignedInteger>::value,
+  static_assert(std::is_signed_v<SignedInteger>,
                 "this algorithm only works for signed types: a different one "
                 "will be required for unsigned types");
   static_assert(sizeof(SignedInteger) >= sizeof(int),
@@ -493,6 +506,42 @@ static inline bool NumbersAreIdentical(T aValue1, T aValue2) {
   return BitwiseCast<Bits>(aValue1) == BitwiseCast<Bits>(aValue2);
 }
 
+/**
+ * Return true iff |aValue| and |aValue2| are equal (ignoring sign if both are
+ * zero) or both NaN.
+ */
+template <typename T>
+static inline bool EqualOrBothNaN(T aValue1, T aValue2) {
+  if (IsNaN(aValue1)) {
+    return IsNaN(aValue2);
+  }
+  return aValue1 == aValue2;
+}
+
+/**
+ * Return NaN if either |aValue1| or |aValue2| is NaN, or the minimum of
+ * |aValue1| and |aValue2| otherwise.
+ */
+template <typename T>
+static inline T NaNSafeMin(T aValue1, T aValue2) {
+  if (IsNaN(aValue1) || IsNaN(aValue2)) {
+    return UnspecifiedNaN<T>();
+  }
+  return std::min(aValue1, aValue2);
+}
+
+/**
+ * Return NaN if either |aValue1| or |aValue2| is NaN, or the maximum of
+ * |aValue1| and |aValue2| otherwise.
+ */
+template <typename T>
+static inline T NaNSafeMax(T aValue1, T aValue2) {
+  if (IsNaN(aValue1) || IsNaN(aValue2)) {
+    return UnspecifiedNaN<T>();
+  }
+  return std::max(aValue1, aValue2);
+}
+
 namespace detail {
 
 template <typename T>
@@ -527,7 +576,7 @@ struct FuzzyEqualsEpsilon<double> {
 template <typename T>
 static MOZ_ALWAYS_INLINE bool FuzzyEqualsAdditive(
     T aValue1, T aValue2, T aEpsilon = detail::FuzzyEqualsEpsilon<T>::value()) {
-  static_assert(IsFloatingPoint<T>::value, "floating point type required");
+  static_assert(std::is_floating_point_v<T>, "floating point type required");
   return Abs(aValue1 - aValue2) <= aEpsilon;
 }
 
@@ -546,7 +595,7 @@ static MOZ_ALWAYS_INLINE bool FuzzyEqualsAdditive(
 template <typename T>
 static MOZ_ALWAYS_INLINE bool FuzzyEqualsMultiplicative(
     T aValue1, T aValue2, T aEpsilon = detail::FuzzyEqualsEpsilon<T>::value()) {
-  static_assert(IsFloatingPoint<T>::value, "floating point type required");
+  static_assert(std::is_floating_point_v<T>, "floating point type required");
   // can't use std::min because of bug 965340
   T smaller = Abs(aValue1) < Abs(aValue2) ? Abs(aValue1) : Abs(aValue2);
   return Abs(aValue1 - aValue2) <= aEpsilon * smaller;

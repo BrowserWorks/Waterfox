@@ -7,6 +7,10 @@ Support for running jobs that are invoked via the `run-task` script.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
+
+from mozpack import path
+
 from taskgraph.transforms.task import taskref_or_string
 from taskgraph.transforms.job import run_job_using
 from taskgraph.util.schema import Schema
@@ -30,9 +34,15 @@ run_task_schema = Schema({
     # if true (the default), perform a checkout of gecko on the worker
     Required('checkout'): bool,
 
+    Optional(
+        "cwd",
+        description="Path to run command in. If a checkout is present, the path "
+        "to the checkout will be interpolated with the key `checkout`",
+    ): text_type,
+
     # The sparse checkout profile to use. Value is the filename relative to the
     # directory where sparse profiles are defined (build/sparse-profiles/).
-    Required('sparse-profile'): Any(basestring, None),
+    Required('sparse-profile'): Any(text_type, None),
 
     # if true, perform a checkout of a comm-central based branch inside the
     # gecko checkout
@@ -44,7 +54,7 @@ run_task_schema = Schema({
     Required('command'): Any([taskref_or_string], taskref_or_string),
 
     # Base work directory used to set up the task.
-    Required('workdir'): basestring,
+    Required('workdir'): text_type,
 
     # If not false, tooltool downloads will be enabled via relengAPIProxy
     # for either just public files, or all files. Only supported on
@@ -55,6 +65,8 @@ run_task_schema = Schema({
         'internal',
     ),
 
+    # Whether to run as root. (defaults to False)
+    Optional('run-as-root'): bool,
 })
 
 
@@ -78,14 +90,14 @@ worker_defaults = {
     'comm-checkout': False,
     'sparse-profile': None,
     'tooltool-downloads': False,
+    'run-as-root': False,
 }
 
 
 def script_url(config, script):
-    return '{}/raw-file/{}/taskcluster/scripts/{}'.format(
-                config.params['head_repository'],
-                config.params['head_rev'],
-                script)
+    return config.params.file_url(
+        'taskcluster/scripts/{}'.format(script),
+    )
 
 
 @run_job_using("docker-worker", "run-task", schema=run_task_schema, defaults=worker_defaults)
@@ -108,12 +120,28 @@ def docker_worker_run_task(config, job, taskdesc):
         })
 
     run_command = run['command']
-    # dict is for the case of `{'task-reference': basestring}`.
-    if isinstance(run_command, (basestring, dict)):
+    run_cwd = run.get('cwd')
+    if run_cwd and run['checkout']:
+        run_cwd = path.normpath(run_cwd.format(checkout=taskdesc['worker']['env']['GECKO_PATH']))
+    elif run_cwd and "{checkout}" in run_cwd:
+        raise Exception(
+            "Found `{{checkout}}` interpolation in `cwd` for task {name} "
+            "but the task doesn't have a checkout: {cwd}".format(
+                cwd=run_cwd, name=job.get("name", job.get("label"))
+            )
+        )
+
+    # dict is for the case of `{'task-reference': text_type}`.
+    if isinstance(run_command, (text_type, dict)):
         run_command = ['bash', '-cx', run_command]
     if run['comm-checkout']:
-        command.append('--comm-checkout={workdir}/checkouts/gecko/comm'.format(**run))
+        command.append('--comm-checkout={}/comm'.format(
+            taskdesc['worker']['env']['GECKO_PATH']))
     command.append('--fetch-hgfingerprint')
+    if run['run-as-root']:
+        command.extend(('--user', 'root', '--group', 'root'))
+    if run_cwd:
+        command.extend(('--task-cwd', run_cwd))
     command.append('--')
     command.extend(run_command)
     worker['command'] = command
@@ -125,6 +153,7 @@ def generic_worker_run_task(config, job, taskdesc):
     worker = taskdesc['worker'] = job['worker']
     is_win = worker['os'] == 'windows'
     is_mac = worker['os'] == 'macosx'
+    is_bitbar = worker['os'] == 'linux-bitbar'
 
     if run['tooltool-downloads']:
         internal = run['tooltool-downloads'] == 'internal'
@@ -133,9 +162,7 @@ def generic_worker_run_task(config, job, taskdesc):
     if is_win:
         command = ['C:/mozilla-build/python3/python3.exe', 'run-task']
     elif is_mac:
-        command = ['/tools/python37/bin/python3.7', 'run-task']
-        if job['worker-type'].endswith('1014'):
-            command = ['/usr/local/bin/python3', 'run-task']
+        command = ['/usr/local/bin/python3', 'run-task']
     else:
         command = ['./run-task']
 
@@ -162,12 +189,35 @@ def generic_worker_run_task(config, job, taskdesc):
         })
 
     run_command = run['command']
-    if isinstance(run_command, basestring):
+    run_cwd = run.get('cwd')
+    if run_cwd and run['checkout']:
+        run_cwd = path.normpath(run_cwd.format(checkout=taskdesc['worker']['env']['GECKO_PATH']))
+    elif run_cwd and "{checkout}" in run_cwd:
+        raise Exception(
+            "Found `{{checkout}}` interpolation in `cwd` for task {name} "
+            "but the task doesn't have a checkout: {cwd}".format(
+                cwd=run_cwd, name=job.get("name", job.get("label"))
+            )
+        )
+
+    if isinstance(run_command, text_type):
         if is_win:
             run_command = '"{}"'.format(run_command)
         run_command = ['bash', '-cx', run_command]
 
+    if run['comm-checkout']:
+        command.append('--comm-checkout={}/comm'.format(
+            taskdesc['worker']['env']['GECKO_PATH']))
+
+    if run['run-as-root']:
+        command.extend(('--user', 'root', '--group', 'root'))
+    if run_cwd:
+        command.extend(('--task-cwd', run_cwd))
     command.append('--')
+    if is_bitbar:
+        # Use the bitbar wrapper script which sets up the device and adb
+        # environment variables
+        command.append('/builds/taskcluster/script.py')
     command.extend(run_command)
 
     if is_win:

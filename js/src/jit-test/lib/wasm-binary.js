@@ -24,7 +24,7 @@ const startId          = 8;
 const elemId           = 9;
 const codeId           = 10;
 const dataId           = 11;
-const gcFeatureOptInId = 42;
+const dataCountId      = 12;
 
 // User-defined section names
 const nameName         = "name";
@@ -41,7 +41,7 @@ const F32Code          = 0x7d;
 const F64Code          = 0x7c;
 const AnyFuncCode      = 0x70;
 const AnyrefCode       = 0x6f;
-const RefCode          = 0x6e;
+const OptRefCode       = 0x6c;
 const FuncCode         = 0x60;
 const VoidCode         = 0x40;
 
@@ -103,7 +103,8 @@ const RefIsNullCode    = 0xd1;
 const RefFuncCode      = 0xd2;
 
 const FirstInvalidOpcode = 0xc5;
-const LastInvalidOpcode = 0xfb;
+const LastInvalidOpcode = 0xfa;
+const GcPrefix = 0xfb;
 const MiscPrefix = 0xfc;
 const SimdPrefix = 0xfd;
 const ThreadPrefix = 0xfe;
@@ -116,7 +117,7 @@ const definedOpcodes =
     [0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
      0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
      0x10, 0x11,
-     0x1a, 0x1b,
+     0x1a, 0x1b, 0x1c,
      0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26,
      0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
      0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
@@ -140,7 +141,7 @@ const definedOpcodes =
      0xc0, 0xc1, 0xc2, 0xc3, 0xc4,
      0xd0, 0xd1, 0xd2,
      0xf0,
-     0xfc, 0xfe, 0xff ];
+     0xfc, 0xfd, 0xfe, 0xff ];
 
 const undefinedOpcodes = (function () {
     let a = [];
@@ -166,10 +167,10 @@ const TableInitCode = 0x0c;     // Pending
 const ElemDropCode = 0x0d;      // Pending
 const TableCopyCode = 0x0e;     // Pending
 
-const StructNew = 0x50;         // UNOFFICIAL
-const StructGet = 0x51;         // UNOFFICIAL
-const StructSet = 0x52;         // UNOFFICIAL
-const StructNarrow = 0x53;      // UNOFFICIAL
+const StructNew = 0x00;         // UNOFFICIAL
+const StructGet = 0x03;         // UNOFFICIAL
+const StructSet = 0x06;         // UNOFFICIAL
+const StructNarrow = 0x07;      // UNOFFICIAL
 
 // DefinitionKind
 const FunctionCode     = 0x00;
@@ -241,10 +242,6 @@ function moduleWithSections(sectionArray) {
         bytes.push(...section.body);
     }
     return toU8(bytes);
-}
-
-function gcFeatureOptInSection(version) {
-    return { name: gcFeatureOptInId, body: [ version & 0x7F ] }
 }
 
 function sigSection(sigs) {
@@ -341,6 +338,12 @@ function dataSection(segmentArrays) {
     return { name: dataId, body };
 }
 
+function dataCountSection(count) {
+    var body = [];
+    body.push(...varU32(count));
+    return { name: dataCountId, body };
+}
+
 function elemSection(elemArrays) {
     var body = [];
     body.push(...varU32(elemArrays.length));
@@ -352,6 +355,50 @@ function elemSection(elemArrays) {
         body.push(...varU32(array.elems.length));
         for (let elem of array.elems)
             body.push(...varU32(elem));
+    }
+    return { name: elemId, body };
+}
+
+// For now, the encoding spec is here:
+// https://github.com/WebAssembly/bulk-memory-operations/issues/98#issuecomment-507330729
+
+const LegacyActiveExternVal = 0;
+const PassiveExternVal = 1;
+const ActiveExternVal = 2;
+const DeclaredExternVal = 3;
+const LegacyActiveElemExpr = 4;
+const PassiveElemExpr = 5;
+const ActiveElemExpr = 6;
+const DeclaredElemExpr = 7;
+
+function generalElemSection(elemObjs) {
+    let body = [];
+    body.push(...varU32(elemObjs.length));
+    for (let elemObj of elemObjs) {
+        body.push(elemObj.flag);
+        if ((elemObj.flag & 3) == 2)
+            body.push(...varU32(elemObj.table));
+        // TODO: This is not very flexible
+        if ((elemObj.flag & 1) == 0) {
+            body.push(...varU32(I32ConstCode));
+            body.push(...varS32(elemObj.offset));
+            body.push(...varU32(EndCode));
+        }
+        if (elemObj.flag & 4) {
+            if (elemObj.flag & 3)
+                body.push(elemObj.typeCode & 255);
+            // Each element is an array of bytes
+            body.push(...varU32(elemObj.elems.length));
+            for (let elemBytes of elemObj.elems)
+                body.push(...elemBytes);
+        } else {
+            if (elemObj.flag & 3)
+                body.push(elemObj.externKind & 255);
+            // Each element is a putative function index
+            body.push(...varU32(elemObj.elems.length));
+            for (let elem of elemObj.elems)
+                body.push(...varU32(elem));
+        }
     }
     return { name: elemId, body };
 }

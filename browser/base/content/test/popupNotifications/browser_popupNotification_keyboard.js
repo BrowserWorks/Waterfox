@@ -19,8 +19,14 @@ function test() {
 function focusNotificationAnchor(anchor) {
   let urlbarContainer = anchor.closest("#urlbar-container");
   urlbarContainer.querySelector("toolbartabstop").focus();
-  const identityBox = urlbarContainer.querySelector("#identity-box");
-  is(document.activeElement, identityBox, "Identity box is focused.");
+  const trackingProtectionIconContainer = urlbarContainer.querySelector(
+    "#tracking-protection-icon-container"
+  );
+  is(
+    document.activeElement,
+    trackingProtectionIconContainer,
+    "tracking protection icon container is focused."
+  );
   while (document.activeElement !== anchor) {
     EventUtils.synthesizeKey("ArrowRight");
   }
@@ -231,7 +237,7 @@ var tests = [
         "data:text/html,<input id='test-input'/>",
         async function(browser) {
           let notifyObj = new BasicNotification(id);
-          await ContentTask.spawn(browser, {}, function() {
+          await SpecialPowers.spawn(browser, [], function() {
             content.document.getElementById("test-input").focus();
           });
 
@@ -252,7 +258,7 @@ var tests = [
           }
 
           // Check that the input field is still focused inside the browser.
-          await ContentTask.spawn(browser, {}, function() {
+          await SpecialPowers.spawn(browser, [], function() {
             is(
               content.document.activeElement,
               content.document.getElementById("test-input")

@@ -8,6 +8,7 @@ with Files('**'):
     BUG_COMPONENT = ('Toolkit', 'Safe Browsing')
 
 XPIDL_SOURCES += [
+    'nsIChannelClassifierService.idl',
     'nsIURIClassifier.idl',
     'nsIUrlClassifierFeature.idl',
     'nsIUrlClassifierSkipListService.idl',
@@ -28,6 +29,7 @@ DEFINES['GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER'] = True
 
 UNIFIED_SOURCES += [
     'AsyncUrlChannelClassifier.cpp',
+    'ChannelClassifierService.cpp',
     'nsChannelClassifier.cpp',
     'UrlClassifierCommon.cpp',
     'UrlClassifierFeatureBase.cpp',
@@ -41,12 +43,15 @@ UNIFIED_SOURCES += [
     'UrlClassifierFeatureLoginReputation.cpp',
     'UrlClassifierFeaturePhishingProtection.cpp',
     'UrlClassifierFeatureResult.cpp',
+    'UrlClassifierFeatureSocialTrackingAnnotation.cpp',
+    'UrlClassifierFeatureSocialTrackingProtection.cpp',
     'UrlClassifierFeatureTrackingAnnotation.cpp',
     'UrlClassifierFeatureTrackingProtection.cpp',
 ]
 
 EXPORTS.mozilla.net += [
     'AsyncUrlChannelClassifier.h',
+    'ChannelClassifierService.h',
     'UrlClassifierCommon.h',
     'UrlClassifierFeatureFactory.h',
     'UrlClassifierFeatureResult.h',

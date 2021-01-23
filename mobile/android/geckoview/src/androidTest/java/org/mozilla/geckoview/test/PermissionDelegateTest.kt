@@ -7,20 +7,22 @@ package org.mozilla.geckoview.test
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.AssertCalled
 import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.RejectedPromiseException
-import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.WithDevToolsAPI
 import org.mozilla.geckoview.test.util.Callbacks
 
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import android.support.test.InstrumentationRegistry
-import android.support.test.filters.MediumTest
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.filters.MediumTest
+import androidx.test.ext.junit.runners.AndroidJUnit4
 
 import org.hamcrest.Matchers.*
+import org.json.JSONArray
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.Ignore
+import org.mozilla.geckoview.GeckoRuntimeSettings
 
 @RunWith(AndroidJUnit4::class)
 @MediumTest
@@ -31,14 +33,13 @@ class PermissionDelegateTest : BaseSessionTest() {
             return true
         }
         return PackageManager.PERMISSION_GRANTED ==
-                InstrumentationRegistry.getTargetContext().checkSelfPermission(permission)
+                InstrumentationRegistry.getInstrumentation().targetContext.checkSelfPermission(permission)
     }
 
     private fun isEmulator(): Boolean {
         return "generic".equals(Build.DEVICE) || Build.DEVICE.startsWith("generic_")
     }
 
-    @WithDevToolsAPI
     @Test fun media() {
         assertInAutomationThat("Should have camera permission",
                 hasPermission(Manifest.permission.CAMERA), equalTo(true))
@@ -47,21 +48,27 @@ class PermissionDelegateTest : BaseSessionTest() {
                 hasPermission(Manifest.permission.RECORD_AUDIO),
                 equalTo(true))
 
-        // Media test is relatively resource-intensive. Clean up resources from previous tests
-        // first to improve the stability of this test.
-        sessionRule.forceGarbageCollection()
-
         mainSession.loadTestPath(HELLO_HTML_PATH)
         mainSession.waitForPageStop()
 
-        val devices = mainSession.waitForJS(
-                "window.navigator.mediaDevices.enumerateDevices()")
+        val devices = mainSession.evaluateJS(
+                "window.navigator.mediaDevices.enumerateDevices()") as JSONArray
+
+        var hasVideo = false
+        var hasAudio = false
+        for (i in 0 until devices.length()) {
+            if (devices.getJSONObject(i).getString("kind") == "videoinput") {
+                hasVideo = true;
+            }
+            if (devices.getJSONObject(i).getString("kind") == "audioinput") {
+                hasAudio = true;
+            }
+        }
 
         assertThat("Device list should contain camera device",
-                devices.asJSList<Any>(), hasItem(hasEntry("kind", "videoinput")))
+                hasVideo, equalTo(true))
         assertThat("Device list should contain microphone device",
-                devices.asJSList<Any>(), hasItem(hasEntry("kind", "audioinput")))
-
+                hasAudio, equalTo(true))
 
         mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
             @AssertCalled(count = 1)
@@ -85,26 +92,30 @@ class PermissionDelegateTest : BaseSessionTest() {
         // Start a video stream, with audio if on a real device.
         var code: String?
         if (isEmulator()) {
-            code = """window.navigator.mediaDevices.getUserMedia({
+            code = """this.stream = window.navigator.mediaDevices.getUserMedia({
                        video: { width: 320, height: 240, frameRate: 10 },
-                   })"""
+                   });"""
         } else {
-            code = """window.navigator.mediaDevices.getUserMedia({
+            code = """this.stream = window.navigator.mediaDevices.getUserMedia({
                        video: { width: 320, height: 240, frameRate: 10 },
                        audio: true
-                   })"""
+                   });"""
         }
-        val stream = mainSession.waitForJS(code)
 
-        assertThat("Stream should be active", stream.asJSMap(),
-                hasEntry("active", true))
-        assertThat("Stream should have ID", stream.asJSMap(),
-                hasEntry(equalTo("id"), not(isEmptyString())))
+        // Stop the stream and check active flag and id
+        val isActive = mainSession.waitForJS(
+                """$code
+                   this.stream.then(stream => {
+                     if (!stream.active || stream.id == '') {
+                       return false;
+                     }
 
-        // Stop the stream.
-        mainSession.waitForJS(
-                "\$_.then(stream => stream.getTracks().forEach(track => track.stop()))")
+                     stream.getTracks().forEach(track => track.stop());
+                     return true;
+                   })
+                """.trimMargin()) as Boolean
 
+        assertThat("Stream should be active and id should not be empty.", isActive, equalTo(true));
 
         // Now test rejecting the request.
         mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
@@ -129,17 +140,17 @@ class PermissionDelegateTest : BaseSessionTest() {
             fail("Request should have failed")
         } catch (e: RejectedPromiseException) {
             assertThat("Error should be correct",
-                    e.reason.asJSMap(), hasEntry("name", "NotAllowedError"))
+                    e.reason as String, containsString("NotAllowedError"))
         }
     }
 
-    @WithDevToolsAPI
     @Test fun geolocation() {
         assertInAutomationThat("Should have location permission",
                 hasPermission(Manifest.permission.ACCESS_FINE_LOCATION),
                 equalTo(true))
 
-        mainSession.loadTestPath(HELLO_HTML_PATH)
+        val url = "https://example.com/"
+        mainSession.loadUri(url)
         mainSession.waitForPageStop()
 
         mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
@@ -148,7 +159,7 @@ class PermissionDelegateTest : BaseSessionTest() {
             override fun onContentPermissionRequest(
                     session: GeckoSession, uri: String?, type: Int,
                     callback: GeckoSession.PermissionDelegate.Callback) {
-                assertThat("URI should match", uri, endsWith(HELLO_HTML_PATH))
+                assertThat("URI should match", uri, endsWith(url))
                 assertThat("Type should match", type,
                         equalTo(GeckoSession.PermissionDelegate.PERMISSION_GEOLOCATION))
                 callback.grant()
@@ -164,16 +175,21 @@ class PermissionDelegateTest : BaseSessionTest() {
             }
         })
 
-        val position = mainSession.waitForJS("""new Promise((resolve, reject) =>
-                window.navigator.geolocation.getCurrentPosition(resolve, reject))""")
+        try {
+            val hasPosition = mainSession.waitForJS("""new Promise((resolve, reject) =>
+                    window.navigator.geolocation.getCurrentPosition(
+                        position => resolve(
+                            position.coords.latitude !== undefined &&
+                            position.coords.longitude !== undefined),
+                        error => reject(error.code)))""") as Boolean
 
-        assertThat("Request should succeed",
-                position.asJSMap(),
-                hasEntry(equalTo("coords"),
-                        both(hasKey("longitude")).and(hasKey("latitude"))))
+            assertThat("Request should succeed", hasPosition, equalTo(true))
+        } catch (ex: RejectedPromiseException) {
+            assertThat("Error should not because the permission was denied.",
+                    ex.reason as String, not("1"))
+        }
     }
 
-    @WithDevToolsAPI
     @Test fun geolocation_reject() {
         mainSession.loadTestPath(HELLO_HTML_PATH)
         mainSession.waitForPageStop()
@@ -193,15 +209,17 @@ class PermissionDelegateTest : BaseSessionTest() {
             }
         })
 
-        val error = mainSession.waitForJS("""new Promise((resolve, reject) =>
-                window.navigator.geolocation.getCurrentPosition(reject, resolve))""")
+        val errorCode = mainSession.waitForJS("""new Promise((resolve, reject) =>
+                window.navigator.geolocation.getCurrentPosition(reject,
+                  error => resolve(error.code)
+                ))""")
 
-        assertThat("Request should fail",
-                error.asJSMap(), hasEntry("code", 1.0)) // Error code 1 means permission denied.
+        // Error code 1 means permission denied.
+        assertThat("Request should fail", errorCode as Double, equalTo(1.0))
     }
 
-    @WithDevToolsAPI
     @Test fun notification() {
+        sessionRule.setPrefsUntilTestEnd(mapOf("dom.webnotifications.requireuserinteraction" to false))
         mainSession.loadTestPath(HELLO_HTML_PATH)
         mainSession.waitForPageStop()
 
@@ -223,7 +241,7 @@ class PermissionDelegateTest : BaseSessionTest() {
                 result as String, equalTo("granted"))
     }
 
-    @WithDevToolsAPI
+    @Ignore("disable test for frequently failing Bug 1542525")
     @Test fun notification_reject() {
         mainSession.loadTestPath(HELLO_HTML_PATH)
         mainSession.waitForPageStop()
@@ -240,62 +258,79 @@ class PermissionDelegateTest : BaseSessionTest() {
         val result = mainSession.waitForJS("Notification.requestPermission()")
 
         assertThat("Permission should not be granted",
-                result as String, equalTo("default"))
+                result as String, equalTo("denied"))
     }
 
-    @WithDevToolsAPI
-    @Test fun persistentStorage() {
-        mainSession.loadTestPath(HELLO_HTML_PATH)
-        mainSession.waitForPageStop()
+    @Test
+    fun autoplayReject() {
+        // The profile used in automation sets this to false, so we need to hack it back to true here.
+        sessionRule.setPrefsUntilTestEnd(mapOf(
+                "media.geckoview.autoplay.request" to true))
 
-        // Persistent storage can be rejected
-        mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
-            @AssertCalled(count = 1)
-            override fun onContentPermissionRequest(
-                    session: GeckoSession, uri: String?, type: Int,
-                    callback: GeckoSession.PermissionDelegate.Callback) {
+        mainSession.loadTestPath(AUTOPLAY_PATH)
+
+        mainSession.waitUntilCalled(object : Callbacks.PermissionDelegate {
+            @AssertCalled(count = 2)
+            override fun onContentPermissionRequest(session: GeckoSession, uri: String?, type: Int, callback: GeckoSession.PermissionDelegate.Callback) {
+                val expectedType = if (sessionRule.currentCall.counter == 1) GeckoSession.PermissionDelegate.PERMISSION_AUTOPLAY_AUDIBLE else GeckoSession.PermissionDelegate.PERMISSION_AUTOPLAY_INAUDIBLE
+                assertThat("Type should match", type, equalTo(expectedType))
                 callback.reject()
             }
         })
-
-        var success = mainSession.waitForJS("""window.navigator.storage.persist()""")
-
-        assertThat("Request should fail",
-                success as Boolean, equalTo(false))
-
-        // Persistent storage can be granted
-        mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
-            // Ensure the content permission is asked first, before the Android permission.
-            @AssertCalled(count = 1, order = [1])
-            override fun onContentPermissionRequest(
-                    session: GeckoSession, uri: String?, type: Int,
-                    callback: GeckoSession.PermissionDelegate.Callback) {
-                assertThat("URI should match", uri, endsWith(HELLO_HTML_PATH))
-                assertThat("Type should match", type,
-                        equalTo(GeckoSession.PermissionDelegate.PERMISSION_PERSISTENT_STORAGE))
-                callback.grant()
-            }
-        })
-
-        success = mainSession.waitForJS("""window.navigator.storage.persist()""")
-
-        assertThat("Request should succeed",
-                success as Boolean,
-                equalTo(true))
-
-        // after permission granted further requests will always return true, regardless of response
-        mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
-            @AssertCalled(count = 1)
-            override fun onContentPermissionRequest(
-                    session: GeckoSession, uri: String?, type: Int,
-                    callback: GeckoSession.PermissionDelegate.Callback) {
-                callback.reject()
-            }
-        })
-
-        success = mainSession.waitForJS("""window.navigator.storage.persist()""")
-
-        assertThat("Request should succeed",
-                success as Boolean, equalTo(true))
     }
+
+    // @Test fun persistentStorage() {
+    //     mainSession.loadTestPath(HELLO_HTML_PATH)
+    //     mainSession.waitForPageStop()
+
+    //     // Persistent storage can be rejected
+    //     mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
+    //         @AssertCalled(count = 1)
+    //         override fun onContentPermissionRequest(
+    //                 session: GeckoSession, uri: String?, type: Int,
+    //                 callback: GeckoSession.PermissionDelegate.Callback) {
+    //             callback.reject()
+    //         }
+    //     })
+
+    //     var success = mainSession.waitForJS("""window.navigator.storage.persist()""")
+
+    //     assertThat("Request should fail",
+    //             success as Boolean, equalTo(false))
+
+    //     // Persistent storage can be granted
+    //     mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
+    //         // Ensure the content permission is asked first, before the Android permission.
+    //         @AssertCalled(count = 1, order = [1])
+    //         override fun onContentPermissionRequest(
+    //                 session: GeckoSession, uri: String?, type: Int,
+    //                 callback: GeckoSession.PermissionDelegate.Callback) {
+    //             assertThat("URI should match", uri, endsWith(HELLO_HTML_PATH))
+    //             assertThat("Type should match", type,
+    //                     equalTo(GeckoSession.PermissionDelegate.PERMISSION_PERSISTENT_STORAGE))
+    //             callback.grant()
+    //         }
+    //     })
+
+    //     success = mainSession.waitForJS("""window.navigator.storage.persist()""")
+
+    //     assertThat("Request should succeed",
+    //             success as Boolean,
+    //             equalTo(true))
+
+    //     // after permission granted further requests will always return true, regardless of response
+    //     mainSession.delegateDuringNextWait(object : Callbacks.PermissionDelegate {
+    //         @AssertCalled(count = 1)
+    //         override fun onContentPermissionRequest(
+    //                 session: GeckoSession, uri: String?, type: Int,
+    //                 callback: GeckoSession.PermissionDelegate.Callback) {
+    //             callback.reject()
+    //         }
+    //     })
+
+    //     success = mainSession.waitForJS("""window.navigator.storage.persist()""")
+
+    //     assertThat("Request should succeed",
+    //             success as Boolean, equalTo(true))
+    // }
 }

@@ -1,4 +1,12 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "RendererScreenshotGrabber.h"
+
+#include "RendererOGL.h"
 
 using mozilla::layers::ProfilerScreenshots;
 
@@ -10,27 +18,33 @@ RendererScreenshotGrabber::RendererScreenshotGrabber() {
 }
 
 void RendererScreenshotGrabber::MaybeGrabScreenshot(
-    Renderer* aRenderer, const gfx::IntSize& aWindowSize) {
-  if (ProfilerScreenshots::IsEnabled()) {
+    RendererOGL* aRendererOGL, const gfx::IntSize& aWindowSize) {
+  bool isEnabled =
+      ProfilerScreenshots::IsEnabled() && aRendererOGL->EnsureAsyncScreenshot();
+
+  if (isEnabled) {
     if (!mProfilerScreenshots) {
       mProfilerScreenshots = new ProfilerScreenshots();
     }
 
-    GrabScreenshot(aRenderer, aWindowSize);
+    GrabScreenshot(aRendererOGL->GetRenderer(), aWindowSize);
   } else if (mProfilerScreenshots) {
-    Destroy(aRenderer);
+    Destroy(aRendererOGL->GetRenderer());
   }
 }
 
-void RendererScreenshotGrabber::MaybeProcessQueue(Renderer* aRenderer) {
-  if (ProfilerScreenshots::IsEnabled()) {
+void RendererScreenshotGrabber::MaybeProcessQueue(RendererOGL* aRendererOGL) {
+  bool isEnabled =
+      ProfilerScreenshots::IsEnabled() && aRendererOGL->EnsureAsyncScreenshot();
+
+  if (isEnabled) {
     if (!mProfilerScreenshots) {
       mProfilerScreenshots = new ProfilerScreenshots();
     }
 
-    ProcessQueue(aRenderer);
+    ProcessQueue(aRendererOGL->GetRenderer());
   } else if (mProfilerScreenshots) {
-    Destroy(aRenderer);
+    Destroy(aRendererOGL->GetRenderer());
   }
 }
 
@@ -64,9 +78,10 @@ void RendererScreenshotGrabber::ProcessQueue(Renderer* aRenderer) {
   for (const auto& item : mQueue) {
     mProfilerScreenshots->SubmitScreenshot(
         item.mWindowIdentifier, item.mWindowSize, item.mScreenshotSize,
-        item.mTimeStamp, [&item, aRenderer](DataSourceSurface* aTargetSurface) {
-          DataSourceSurface::ScopedMap map(aTargetSurface,
-                                           DataSourceSurface::WRITE);
+        item.mTimeStamp,
+        [&item, aRenderer](gfx::DataSourceSurface* aTargetSurface) {
+          gfx::DataSourceSurface::ScopedMap map(aTargetSurface,
+                                                gfx::DataSourceSurface::WRITE);
           int32_t destStride = map.GetStride();
 
           bool success = wr_renderer_map_and_recycle_screenshot(

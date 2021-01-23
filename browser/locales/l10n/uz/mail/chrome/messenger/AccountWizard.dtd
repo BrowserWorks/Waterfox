@@ -1,0 +1,131 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+
+<!ENTITY windowTitle.label "Hisob ustasi">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+
+<!ENTITY accountSetupInfo2.label "Xabarlar qabul qilish uchun avvalo hisobingizni sozlashingiz kerak.">
+<!ENTITY accountTypeTitle.label "Yangi hisobni sozlash">
+<!ENTITY accountTypeDesc2.label "Usta hisobni sozlash uchun kerakli bo‘lgan ma’lumotlarni to‘playdi. Agar siz kerakli ma’lumotlarni bilmasangiz, tizim administratori yoki internet xizmati provayderi bilan bog‘laning.">
+<!ENTITY accountTypeDirections.label "O‘zingiz xohlagandek hisob turini tanlang:">
+<!ENTITY accountTypeMail.label "E-pochta hisobi">
+<!ENTITY accountTypeMail.accesskey "E">
+<!ENTITY accountTypeNews.label "Yangiliklar hisobi">
+<!ENTITY accountTypeNews.accesskey "Y">
+
+<!-- Entities for Identity page -->
+
+
+<!ENTITY identityTitle.label "Tasdiqdan o‘tkazish">
+<!ENTITY identityDesc.label "Har bir hisobda boshqalar sizning xabarlaringizni olganga sizni tanishtiradigan ma’lumot – ya’ni shaxsiyatingiz haqida ma’lumotlar bor.">
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+
+<!ENTITY fullnameDesc.label "Chiquvchi xabarlar uchun &quot;Jo‘natuvchi&quot; maydonida ko‘rinadigan nomingizni kiriting.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(Masalan, &quot;Eshmat Toshmatov&quot;).">
+<!ENTITY fullnameLabel.label "Ismingiz:">
+<!ENTITY fullnameLabel.accesskey "s">
+
+<!ENTITY emailLabel.label "E-pochta manzili:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+
+<!ENTITY incomingTitle.label "Kiruvchi server ma’lumoti">
+<!ENTITY incomingServerTypeDesc.label "Siz foydalanadigan kiruvchi server turini tanlang.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Xabarlarni serverda qoldirish">
+<!ENTITY leaveMsgsOnSrvr.accesskey "q">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Asosiy:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Kiruvchi xabarlar serveri uchun nom kiriting (masalan, &quot;mail.example.net&quot;)">
+<!ENTITY incomingServer.label "Kiruvchi xabarlar serveri:">
+<!ENTITY incomingServer.accesskey "s">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "E-pochta ta’minotchisi tomonidan berilgan kiruvchi xabarlar uchun foydalanuvchi nomini kiriting (masalan, &quot;jsmith&quot;)">
+<!ENTITY incomingUsername.label "Foydalanuvchi nomi:">
+<!ENTITY incomingUsername.accesskey "F">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Yangiliklar serveri nomini (NNTP) kiriting (masalan, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Yangiliklar to‘plami serveri:">
+<!ENTITY newsServerLabel.accesskey "s">
+
+<!-- Entities for Outgoing Server page -->
+
+
+<!ENTITY outgoingTitle.label "Chiquvchi xabarlar serveri ma’lumoti">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Chiquvchi xabarlar serveri (SMTP) nomini kiriting  (masalan, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Chiquvchi xabarlar serveri:">
+<!ENTITY outgoingServer.accesskey "s">
+<!ENTITY outgoingUsername.description "E-pochta ta’minotchisi bergan chiquvchi xabarlar uchun foydalanuvchi nomini kiriting (bu odatda kiruvchi foydalanuvchi nomi bilan bir xil bo‘ladi)">
+<!ENTITY outgoingUsername.label "Chiquvchi xabarlar uchun foydalanuvchi nomi:">
+<!ENTITY outgoingUsername.accesskey "f">
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+
+<!ENTITY modifyOutgoing.suffix "Hisob sozlamalaridan chiquvchi xabarlar serverini o‘zgartirishingiz mumkin.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Sizning mavjud chiquvchi xabarlar uchun serveringiz (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, foydalaniladi.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Sizning mavjud chiquvchi xabarlar (SMTP) uchun foydalanuvchi nomingiz, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, foydalaniladi.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Chiquvchi xabarlar (SMTP) serveri, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, kirish server bilan bir xil, kiruvchi server uchun foydalanuvchi nomi unga kirish uchun foydalaniladi.">
+
+<!-- Entities for Account name page -->
+
+
+<!ENTITY accnameTitle.label "Hisob nomi">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Bu hisob bilan bog‘lanishi lozim bo‘lgan nomni kiriting (masalan, &quot;Uy uchun hisob&quot;, &quot;Ish uchun hisob&quot; yoki &quot;Yangiliklar hisobi&quot;).">
+<!ENTITY accnameLabel.label "Hisob nomi:">
+<!ENTITY accnameLabel.accesskey "n">
+
+<!-- Entities for Done (Congratulations) page -->
+
+
+<!ENTITY completionTitle.label "Tabriklaymiz!">
+<!ENTITY completionText.label "Quyida keltirilgan ma’lumotning to‘g‘ri ekanligiga ishonch hosil qiling.">
+<!ENTITY serverTypePrefix.label "Kiruvchi xabarlar serveri turi:">
+<!ENTITY serverNamePrefix.label "Kiruvchi xabarlar serveri nomi:">
+<!ENTITY smtpServerNamePrefix.label "Chiquvchi xabarlar serveri nomi (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Yangiliklar serveri nomi (NNTP):">
+<!ENTITY downloadOnLogin.label "Xabarlarni hozir yuklab olish">
+<!ENTITY downloadOnLogin.accesskey "y">
+<!ENTITY deferStorageDesc.label "Bu hisob uchun xatni o‘zining direktoriyasiga saqlash uchun bu belgilash katakchasidan belgilashni olib tashlang.Buning natijasida bu hisob yuqori darajadagi hisob sifatida ko‘rinadi. Bunday qilmasangiz, u mahalliy jildlardagi kiruvchi xabarlar hisobining qismi bo‘lib qoladi.">
+<!ENTITY deferStorage.label "Global kiruvchi xabarlardan usulidan foydalanish (xatlarni kompyuterga saqlash)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Bu sozlamalarni saqlash  va Hisob ustasiga chiqish uchun &quot;Tugatish&quot; tugmasini bosing.">
+<!ENTITY clickFinish.labelMac "Sozlamalarni saqlash va Hisob ustasiga chiqish uchun &quot;Tayyor&quot; tugmasini bosing.">

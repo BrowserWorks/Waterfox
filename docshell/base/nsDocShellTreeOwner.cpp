@@ -10,16 +10,13 @@
 
 // Helper Classes
 #include "nsContentUtils.h"
-#include "nsStyleCoord.h"
 #include "nsSize.h"
 #include "mozilla/ReflowInput.h"
-#include "nsIServiceManager.h"
 #include "nsComponentManagerUtils.h"
 #include "nsString.h"
 #include "nsAtom.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
-#include "nsISimpleEnumerator.h"
 #include "mozilla/LookAndFeel.h"
 
 // Interfaces needed to be included
@@ -31,9 +28,7 @@
 #include "mozilla/dom/MouseEvent.h"
 #include "mozilla/dom/SVGTitleElement.h"
 #include "nsIFormControl.h"
-#include "nsIImageLoadingContent.h"
 #include "nsIWebNavigation.h"
-#include "nsIStringBundle.h"
 #include "nsPIDOMWindow.h"
 #include "nsPIWindowRoot.h"
 #include "nsIWindowWatcher.h"
@@ -44,7 +39,6 @@
 #include "nsRect.h"
 #include "nsIWebBrowserChromeFocus.h"
 #include "nsIContent.h"
-#include "imgIContainer.h"
 #include "nsViewManager.h"
 #include "nsView.h"
 #include "nsIConstraintValidation.h"
@@ -361,7 +355,7 @@ nsDocShellTreeOwner::SizeShellTo(nsIDocShellTreeItem* aShellItem, int32_t aCX,
     if (browserChild) {
       // The XUL window to resize is in the parent process, but there we
       // won't be able to get aShellItem to do the hack in
-      // nsXULWindow::SizeShellTo, so let's send the width and height of
+      // AppWindow::SizeShellTo, so let's send the width and height of
       // aShellItem too.
       nsCOMPtr<nsIBaseWindow> shellAsWin(do_QueryInterface(aShellItem));
       NS_ENSURE_TRUE(shellAsWin, NS_ERROR_FAILURE);
@@ -589,7 +583,7 @@ nsDocShellTreeOwner::SetParentNativeWindow(nativeWindow aParentNativeWindow) {
 
 NS_IMETHODIMP
 nsDocShellTreeOwner::GetNativeHandle(nsAString& aNativeHandle) {
-  // the nativeHandle should be accessed from nsIXULWindow
+  // the nativeHandle should be accessed from nsIAppWindow
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -684,6 +678,11 @@ NS_IMETHODIMP
 nsDocShellTreeOwner::OnLocationChange(nsIWebProgress* aWebProgress,
                                       nsIRequest* aRequest, nsIURI* aURI,
                                       uint32_t aFlags) {
+  if (mChromeTooltipListener && aWebProgress &&
+      !(aFlags & nsIWebProgressListener::LOCATION_CHANGE_SAME_DOCUMENT) &&
+      mChromeTooltipListener->WebProgressShowedTooltip(aWebProgress)) {
+    mChromeTooltipListener->HideTooltip();
+  }
   return NS_OK;
 }
 
@@ -1187,6 +1186,7 @@ ChromeTooltipListener::HideTooltip() {
     mTooltipTimer = nullptr;
     // release tooltip target
     mPossibleTooltipNode = nullptr;
+    mLastDocshell = nullptr;
   }
 
   // if we're showing the tip, tell the chrome to hide it
@@ -1204,6 +1204,30 @@ ChromeTooltipListener::HideTooltip() {
   return rv;
 }
 
+bool ChromeTooltipListener::WebProgressShowedTooltip(
+    nsIWebProgress* aWebProgress) {
+  nsCOMPtr<nsIDocShell> docshell = do_QueryInterface(aWebProgress);
+  nsCOMPtr<nsIDocShell> lastUsed = do_QueryReferent(mLastDocshell);
+  while (lastUsed) {
+    if (lastUsed == docshell) {
+      return true;
+    }
+    // We can't use the docshell hierarchy here, because when the parent
+    // docshell is navigated, the child docshell is disconnected (ie its
+    // references to the parent are nulled out) despite it still being
+    // alive here. So we use the document hierarchy instead:
+    Document* document = lastUsed->GetDocument();
+    if (document) {
+      document = document->GetInProcessParentDocument();
+    }
+    if (!document) {
+      break;
+    }
+    lastUsed = document->GetDocShell();
+  }
+  return false;
+}
+
 // A timer callback, fired when the mouse has hovered inside of a frame for the
 // appropriate amount of time. Getting to this point means that we should show
 // the tooltip, but only after we determine there is an appropriate TITLE
@@ -1217,10 +1241,18 @@ void ChromeTooltipListener::sTooltipCallback(nsITimer* aTimer,
                                              void* aChromeTooltipListener) {
   auto self = static_cast<ChromeTooltipListener*>(aChromeTooltipListener);
   if (self && self->mPossibleTooltipNode) {
+    // release tooltip target once done, no matter what we do here.
+    auto cleanup = MakeScopeExit([&] { self->mPossibleTooltipNode = nullptr; });
     if (!self->mPossibleTooltipNode->IsInComposedDoc()) {
-      // release tooltip target if there is one, NO MATTER WHAT
-      self->mPossibleTooltipNode = nullptr;
       return;
+    }
+    // Check that the document or its ancestors haven't been replaced.
+    Document* doc = self->mPossibleTooltipNode->OwnerDoc();
+    while (doc) {
+      if (!doc->IsCurrentActiveDocument()) {
+        return;
+      }
+      doc = doc->GetInProcessParentDocument();
     }
 
     // The actual coordinates we want to put the tooltip at are relative to the
@@ -1245,9 +1277,7 @@ void ChromeTooltipListener::sTooltipCallback(nsITimer* aTimer,
       }
     }
 
-    if (!widget) {
-      // release tooltip target if there is one, NO MATTER WHAT
-      self->mPossibleTooltipNode = nullptr;
+    if (!widget || !docShell || !docShell->GetIsActive()) {
       return;
     }
 
@@ -1276,10 +1306,9 @@ void ChromeTooltipListener::sTooltipCallback(nsITimer* aTimer,
                           self->mMouseScreenY - screenDot.y / scaleFactor,
                           tooltipText, directionText);
         self->mLastShownTooltipText = std::move(tooltipText);
+        self->mLastDocshell = do_GetWeakReference(
+            self->mPossibleTooltipNode->OwnerDoc()->GetDocShell());
       }
     }
-
-    // release tooltip target if there is one, NO MATTER WHAT
-    self->mPossibleTooltipNode = nullptr;
   }
 }

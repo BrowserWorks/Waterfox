@@ -5,15 +5,15 @@ skip-if(!asyncPan) == bg-fixed-cover-3.html bg-fixed-cover-3-ref.html
 skip-if(!asyncPan) == bg-fixed-child.html bg-fixed-child-ref.html
 skip-if(!asyncPan) == bg-fixed-child-clip-1.html bg-fixed-child-clip-ref.html
 skip-if(!asyncPan) == bg-fixed-child-clip-2.html bg-fixed-child-clip-ref.html
-fuzzy(0-1,0-246) fuzzy-if(skiaContent,0-2,0-170) fuzzy-if(browserIsRemote&&d2d,0-59,0-187) fuzzy-if(webrender,41-41,166-166) skip-if(!asyncPan) == bg-fixed-child-mask.html bg-fixed-child-mask-ref.html
+fuzzy(0-1,0-246) fuzzy-if(skiaContent,0-2,0-170) fuzzy-if(browserIsRemote&&d2d,0-59,0-187) fuzzy-if(webrender,41-41,166-176) skip-if(!asyncPan) == bg-fixed-child-mask.html bg-fixed-child-mask-ref.html
 skip-if(!asyncPan) == bg-fixed-in-opacity.html bg-fixed-in-opacity-ref.html
 # Passing the test below without WebRender would require implementing CSS filters in the Gecko compositor.
-fails-if(!webrender) skip-if(!asyncPan) fuzzy-if(webrender&&gtkWidget,0-1,0-87) fuzzy-if(webrender&&!gtkWidget,0-1,0-8) == bg-fixed-in-css-filter.html bg-fixed-in-css-filter-ref.html # bug 1454794 for webrender fuzziness
+fails-if(!webrender) skip-if(!asyncPan) fuzzy-if(webrender&&gtkWidget,0-1,0-87) fuzzy-if(webrender&&!gtkWidget,0-1,0-3951) == bg-fixed-in-css-filter.html bg-fixed-in-css-filter-ref.html # bug 1454794 for webrender fuzziness
 skip-if(!asyncPan) == bg-fixed-child-no-culling-1.html bg-fixed-child-no-culling-1-ref.html
 skip-if(!asyncPan) == bg-fixed-child-no-culling-2.html bg-fixed-child-no-culling-2-ref.html
 skip-if(!asyncPan) == bg-fixed-child-no-culling-3.html bg-fixed-child-no-culling-3-ref.html
-fuzzy-if(Android,0-2,0-4000) fuzzy-if(browserIsRemote&&cocoaWidget,0-2,0-179524) fuzzy-if(browserIsRemote&&winWidget,0-1,0-74590) fuzzy-if(gtkWidget&&layersGPUAccelerated,0-1,0-3528) fuzzy-if((/^Windows\x20NT\x2010\.0/.test(http.oscpu))&&(/^aarch64-msvc/.test(xulRuntime.XPCOMABI)),0-1,0-75900) skip-if(!asyncPan) == bg-fixed-transformed-image.html bg-fixed-transformed-image-ref.html
-test-pref(layout.css.contain.enabled,true) skip-if(!asyncPan) == contain-paint-scrollable-frame-1.html contain-paint-scrollable-frame-1-ref.html
+fuzzy-if(Android,0-2,0-4000) fuzzy-if(browserIsRemote&&cocoaWidget,0-2,0-179524) fuzzy-if(browserIsRemote&&winWidget,0-1,0-74590) fuzzy-if(gtkWidget&&layersGPUAccelerated,0-1,0-3528) fuzzy-if((/^Windows\x20NT\x2010\.0/.test(http.oscpu))&&(/^aarch64-msvc/.test(xulRuntime.XPCOMABI)),0-1,0-75900) skip-if(!asyncPan) fuzzy-if(geckoview,0-1,0-74590) == bg-fixed-transformed-image.html bg-fixed-transformed-image-ref.html
+skip-if(!asyncPan) == contain-paint-scrollable-frame-1.html contain-paint-scrollable-frame-1-ref.html
 skip-if(!asyncPan) == element-1.html element-1-ref.html
 pref(layers.force-active,true) skip-if(!asyncPan) == iframe-1.html iframe-1-ref.html
 skip-if(!asyncPan) == nested-1.html nested-1-ref.html
@@ -24,7 +24,7 @@ fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu),0-1,0-3120) skip-if(!asyncPa
 skip-if(!asyncPan) == position-fixed-cover-1.html position-fixed-cover-1-ref.html
 skip-if(!asyncPan) == position-fixed-cover-2.html position-fixed-cover-2-ref.html
 skip-if(!asyncPan) == position-fixed-cover-3.html position-fixed-cover-3-ref.html
-fuzzy-if(Android,0-5,0-4) skip-if(!asyncPan) == position-fixed-transformed-1.html position-fixed-transformed-1-ref.html
+fuzzy-if(Android,0-8,0-4) fuzzy-if(webrender&&gtkWidget,32-32,32-32) fuzzy-if(webrender&&cocoaWidget,22-22,44-44) skip-if(!asyncPan) == position-fixed-transformed-1.html position-fixed-transformed-1-ref.html # Bug 1604338
 skip-if(!asyncPan) == split-layers-1.html split-layers-1-ref.html
 skip-if(!asyncPan) == split-layers-multi-scrolling-1.html split-layers-multi-scrolling-1-ref.html
 fuzzy-if(skiaContent,0-2,0-240000) fuzzy-if(browserIsRemote&&!skiaContent&&(cocoaWidget||winWidget),0-1,0-240000) skip-if(!asyncPan) == split-opacity-layers-1.html split-opacity-layers-1-ref.html
@@ -37,8 +37,8 @@ skip-if(!asyncPan) == sticky-pos-scrollable-6.html sticky-pos-scrollable-6-ref.h
 skip-if(!asyncPan) == sticky-pos-scrollable-7.html sticky-pos-scrollable-7-ref.html
 skip-if(!asyncPan) == fixed-pos-scrollable-1.html fixed-pos-scrollable-1-ref.html
 skip-if(!asyncPan) == culling-1.html culling-1-ref.html
-skip-if(!asyncPan) == position-fixed-iframe-1.html position-fixed-iframe-1-ref.html
-skip-if(!asyncPan) == position-fixed-iframe-2.html position-fixed-iframe-2-ref.html
+fails-if(browserIsFission) skip-if(!asyncPan) == position-fixed-iframe-1.html position-fixed-iframe-1-ref.html
+fails-if(browserIsFission) skip-if(!asyncPan) == position-fixed-iframe-2.html position-fixed-iframe-2-ref.html
 fuzzy-if(skiaContent,0-1,0-11300) skip-if(!asyncPan) == position-fixed-in-scroll-container.html position-fixed-in-scroll-container-ref.html
 fuzzy-if(Android,0-1,0-800) skip-if(!asyncPan) == position-fixed-inside-clip-path.html position-fixed-inside-clip-path-ref.html
 skip-if(!asyncPan) == position-fixed-inside-sticky-1.html position-fixed-inside-sticky-1-ref.html
@@ -47,45 +47,46 @@ skip-if(!asyncPan) == position-fixed-inside-sticky-3.html position-fixed-inside-
 skip-if(!asyncPan) == sticky-inside-fixed-1.html sticky-inside-fixed-1-ref.html
 skip-if(!asyncPan) fails-if(!webrender) == sticky-inside-transform-1.html sticky-inside-transform-1-ref.html
 fuzzy(0-1,0-60000) skip-if(!asyncPan) == group-opacity-surface-size-1.html group-opacity-surface-size-1-ref.html
-fuzzy-if(Android,0-1,0-197) skip-if(!asyncPan) == position-sticky-transformed.html position-sticky-transformed-ref.html
+fuzzy-if(Android,0-1,0-197) fuzzy-if(webrender,0-9,0-99) skip-if(!asyncPan) == position-sticky-transformed.html position-sticky-transformed-ref.html
 skip-if(!asyncPan) == offscreen-prerendered-active-opacity.html offscreen-prerendered-active-opacity-ref.html
-fuzzy-if(Android,0-6,0-4) fuzzy-if(skiaContent&&!Android,0-1,0-34) skip-if(!asyncPan) == offscreen-clipped-blendmode-1.html offscreen-clipped-blendmode-ref.html
-fuzzy-if(Android,0-6,0-4) skip-if(!asyncPan) == offscreen-clipped-blendmode-2.html offscreen-clipped-blendmode-ref.html
+fuzzy-if(Android,0-6,0-4) fuzzy-if(skiaContent&&!Android,0-1,0-34) fuzzy-if(webrender&&gtkWidget,34-34,32-32) fuzzy-if(webrender&&cocoaWidget,7-7,37-37) skip-if(!asyncPan) == offscreen-clipped-blendmode-1.html offscreen-clipped-blendmode-ref.html # Bug 1604338
+fuzzy-if(Android,0-6,0-4) fuzzy-if(webrender&&gtkWidget,34-34,32-32) fuzzy-if(webrender&&cocoaWidget,7-7,37-37) skip-if(!asyncPan) == offscreen-clipped-blendmode-2.html offscreen-clipped-blendmode-ref.html # Bug 1604338
 fuzzy-if(Android,0-6,0-4) skip == offscreen-clipped-blendmode-3.html offscreen-clipped-blendmode-ref.html # bug 1251588 - wrong AGR on mix-blend-mode item
-fuzzy-if(Android,0-6,0-4) skip-if(!asyncPan) == offscreen-clipped-blendmode-4.html offscreen-clipped-blendmode-ref.html
-fuzzy-if(Android,0-7,0-4) skip-if(!asyncPan) == perspective-scrolling-1.html perspective-scrolling-1-ref.html
+fuzzy-if(Android,0-6,0-4) fuzzy-if(webrender&&gtkWidget,34-34,32-32) fuzzy-if(webrender&&cocoaWidget,7-7,37-37) skip-if(!asyncPan) == offscreen-clipped-blendmode-4.html offscreen-clipped-blendmode-ref.html # Bug 1604338
+fuzzy-if(Android,0-7,0-1600) fuzzy-if(webrender&&gtkWidget,1-1,10-20) fuzzy-if(webrender&&cocoaWidget,1-1,19-19) skip-if(!asyncPan) == perspective-scrolling-1.html perspective-scrolling-1-ref.html # Bug 1604338
 fuzzy-if(Android,0-7,0-4) skip-if(!asyncPan) == perspective-scrolling-2.html perspective-scrolling-2-ref.html
-fuzzy-if(Android,0-7,0-4) skip-if(!asyncPan) == perspective-scrolling-3.html perspective-scrolling-3-ref.html
-fuzzy-if(Android,0-7,0-4) skip-if(!asyncPan) == perspective-scrolling-4.html perspective-scrolling-4-ref.html
+fuzzy-if(Android,0-19,0-4) fuzzy-if(webrender&&gtkWidget,13-13,32-32) fuzzy-if(webrender&&cocoaWidget,13-13,39-39) skip-if(!asyncPan) == perspective-scrolling-3.html perspective-scrolling-3-ref.html # Bug 1604338
+fuzzy-if(Android,0-7,0-4) fuzzy-if(webrender&&gtkWidget,29-29,32-32) fuzzy-if(webrender&&cocoaWidget,20-20,40-40) skip-if(!asyncPan) == perspective-scrolling-4.html perspective-scrolling-4-ref.html # Bug 1604338
 skip-if(!asyncPan) == perspective-scrolling-5.html perspective-scrolling-5-ref.html
 pref(apz.disable_for_scroll_linked_effects,true) skip-if(!asyncPan) == disable-apz-for-sle-pages.html disable-apz-for-sle-pages-ref.html
-fuzzy-if(browserIsRemote&&d2d,0-1,0-22) skip-if(!asyncPan) == background-blend-mode-1.html background-blend-mode-1-ref.html
+fuzzy-if(browserIsRemote&&d2d,0-1,0-22) skip-if(!asyncPan) fuzzy-if(geckoview,2-2,242-242) skip-if(geckoview&&debug) == background-blend-mode-1.html background-blend-mode-1-ref.html # bug 1558286 for GV
 skip-if(Android||!asyncPan) != opaque-fractional-displayport-1.html about:blank
 skip-if(Android||!asyncPan) != opaque-fractional-displayport-2.html about:blank
-fuzzy-if(Android,0-6,0-4) skip-if(!asyncPan) == fixed-pos-scrolled-clip-1.html fixed-pos-scrolled-clip-1-ref.html
-fuzzy-if(Android,0-6,0-8) skip-if(!asyncPan) == fixed-pos-scrolled-clip-2.html fixed-pos-scrolled-clip-2-ref.html
-fuzzy-if(Android,0-6,0-8) skip-if(!asyncPan) == fixed-pos-scrolled-clip-3.html fixed-pos-scrolled-clip-3-ref.html
-fuzzy-if(Android,0-6,0-8) skip-if(!asyncPan) == fixed-pos-scrolled-clip-4.html fixed-pos-scrolled-clip-4-ref.html
+fuzzy-if(Android,0-19,0-4) fuzzy-if(webrender&&gtkWidget,19-19,32-32) fuzzy-if(webrender&&cocoaWidget,22-22,44-44) skip-if(!asyncPan) == fixed-pos-scrolled-clip-1.html fixed-pos-scrolled-clip-1-ref.html # Bug 1604338
+fuzzy-if(Android,0-44,0-10) fuzzy-if(webrender&&gtkWidget,26-26,64-64) fuzzy-if(webrender&&cocoaWidget,13-13,76-76) skip-if(!asyncPan) == fixed-pos-scrolled-clip-2.html fixed-pos-scrolled-clip-2-ref.html # Bug 1604338
+fuzzy-if(Android,0-6,0-8) fuzzy-if(webrender&&gtkWidget,28-28,60-60) fuzzy-if(webrender&&cocoaWidget,19-19,72-72) skip-if(!asyncPan) == fixed-pos-scrolled-clip-3.html fixed-pos-scrolled-clip-3-ref.html # Bug 1604338
+fuzzy-if(Android,0-6,0-8) fuzzy-if(webrender&&gtkWidget,28-28,60-60) fuzzy-if(webrender&&cocoaWidget,19-19,72-72) skip-if(!asyncPan) == fixed-pos-scrolled-clip-4.html fixed-pos-scrolled-clip-4-ref.html # Bug 1604338
 skip-if(!asyncPan) == fixed-pos-scrolled-clip-5.html fixed-pos-scrolled-clip-5-ref.html
 skip-if(!asyncPan) == position-sticky-bug1434250.html position-sticky-bug1434250-ref.html
-fuzzy-if(Android,0-6,0-4) skip-if(!asyncPan) == position-sticky-scrolled-clip-1.html position-sticky-scrolled-clip-1-ref.html
+fuzzy-if(Android,0-8,0-4) fuzzy-if(webrender&&gtkWidget,25-25,32-32) fuzzy-if(webrender&&cocoaWidget,16-16,40-40) skip-if(!asyncPan) == position-sticky-scrolled-clip-1.html position-sticky-scrolled-clip-1-ref.html # Bug 1604338
 fuzzy-if(Android,0-6,0-4) skip == position-sticky-scrolled-clip-2.html position-sticky-scrolled-clip-2-ref.html # bug ?????? - incorrectly applying clip to sticky contents
-fuzzy-if(Android,0-2,0-4) skip-if(!asyncPan) == curtain-effect-1.html curtain-effect-1-ref.html
-fuzzy-if(Android,0-1,0-4) skip-if(!asyncPan) == transformed-1.html transformed-1-ref.html
-fuzzy-if(Android,2-2,4-4) skip-if(!asyncPan) == position-sticky-transformed-in-scrollframe-1.html position-sticky-transformed-in-scrollframe-1-ref.html
-fuzzy-if(Android,3-3,4-4) skip-if(!asyncPan) == position-sticky-transformed-in-scrollframe-2.html position-sticky-transformed-in-scrollframe-2-ref.html
-fuzzy-if(Android,3-3,4-4) skip-if(!asyncPan) == position-sticky-in-transformed-scrollframe-1.html position-sticky-in-transformed-scrollframe-ref.html
-fuzzy-if(Android,3-3,4-4) skip-if(!asyncPan) == position-sticky-in-transformed-scrollframe-2.html position-sticky-in-transformed-scrollframe-ref.html
+fuzzy-if(Android,0-8,0-27) fuzzy-if(webrender&&cocoaWidget,11-11,39-39) skip-if(!asyncPan) == curtain-effect-1.html curtain-effect-1-ref.html
+fuzzy-if(Android,0-6,0-4) fuzzy-if(webrender&&gtkWidget,15-15,32-32) fuzzy-if(webrender&&cocoaWidget,9-9,37-37) skip-if(!asyncPan) == transformed-1.html transformed-1-ref.html # Bug 1604338
+fuzzy-if(Android&&!webrender,2-2,4-4) fuzzy-if(Android&&webrender,7-7,4-4) fuzzy-if(webrender&&gtkWidget,5-5,28-28) fuzzy-if(webrender&&cocoaWidget,6-6,37-37) skip-if(!asyncPan) == position-sticky-transformed-in-scrollframe-1.html position-sticky-transformed-in-scrollframe-1-ref.html # Bug 1604338
+fuzzy-if(Android&&!webrender,3-3,4-4) fuzzy-if(Android&&webrender,10-10,4-4) fuzzy-if(webrender&&gtkWidget,20-20,32-32) fuzzy-if(webrender&&cocoaWidget,16-16,40-40) skip-if(!asyncPan) == position-sticky-transformed-in-scrollframe-2.html position-sticky-transformed-in-scrollframe-2-ref.html # Bug 1604338
+fuzzy-if(Android&&!webrender,3-3,4-4) fuzzy-if(Android&&webrender,13-13,4-4) fuzzy-if(webrender&&gtkWidget,27-27,32-32) fuzzy-if(webrender&&cocoaWidget,16-16,40-40) skip-if(!asyncPan) == position-sticky-in-transformed-scrollframe-1.html position-sticky-in-transformed-scrollframe-ref.html # Bug 1604338
+fuzzy-if(Android&&!webrender,3-3,4-4) fuzzy-if(Android&&webrender,13-13,4-4) fuzzy-if(webrender&&gtkWidget,27-27,32-32) fuzzy-if(webrender&&cocoaWidget,16-16,40-40) skip-if(!asyncPan) == position-sticky-in-transformed-scrollframe-2.html position-sticky-in-transformed-scrollframe-ref.html # Bug 1604338
 
 # for the following tests, we want to disable the low-precision buffer
 # as it will expand the displayport beyond what the test specifies in
 # its reftest-displayport attributes, and interfere with where we expect
 # checkerboarding to occur
-default-preferences pref(layers.low-precision-buffer,false)
+defaults pref(layers.low-precision-buffer,false)
 skip-if(!asyncPan) == checkerboard-1.html checkerboard-1-ref.html
 skip-if(!asyncPan) == checkerboard-2.html checkerboard-2-ref.html
 skip-if(!asyncPan) == checkerboard-3.html checkerboard-3-ref.html
-default-preferences
+skip-if(!asyncPan) == position-sticky-in-checkerboard-land-1.html position-sticky-in-checkerboard-land-1-ref.html
+defaults
 
 skip-if(!Android) pref(apz.allow_zooming,true) == position-fixed-async-zoom-1.html position-fixed-async-zoom-1-ref.html
 skip-if(!Android) pref(apz.allow_zooming,true) == position-fixed-async-zoom-2.html position-fixed-async-zoom-2-ref.html
@@ -94,6 +95,90 @@ skip-if(!Android) pref(apz.allow_zooming,true) == position-fixed-async-zoom-4.ht
 skip-if(!Android) pref(apz.allow_zooming,true) == position-sticky-async-zoom-1.html position-sticky-async-zoom-1-ref.html
 skip-if(!Android) pref(apz.allow_zooming,true) == position-sticky-async-zoom-2.html position-sticky-async-zoom-2-ref.html
 
+fuzzy-if(!webrender,111-112,600-600) pref(apz.allow_zooming,true) == async-scroll-and-zoom.html async-scroll-and-zoom-ref.html
+
 # for this test, apz.allow_zooming is needed to ensure we take the containerless scrolling codepath that creates
 # an async zoom container (since we are testing a regression in that codepath)
 skip-if(!Android) pref(apz.allow_zooming,true) test-pref(apz.fixed-margin-override.enabled,true) test-pref(apz.fixed-margin-override.bottom,50) == dynamic-toolbar-fixed-bottom-1.html dynamic-toolbar-fixed-bottom-1-ref.html
+skip-if(!Android) pref(apz.allow_zooming,true) test-pref(apz.fixed-margin-override.enabled,true) test-pref(apz.fixed-margin-override.bottom,50) == dynamic-toolbar-sticky-bottom-1.html dynamic-toolbar-sticky-bottom-1-ref.html
+skip-if(!Android) pref(apz.allow_zooming,true) test-pref(apz.fixed-margin-override.enabled,true) test-pref(apz.fixed-margin-override.top,50) == dynamic-toolbar-fixed-top-1.html dynamic-toolbar-fixed-top-1-ref.html
+skip-if(!Android) pref(apz.allow_zooming,true) test-pref(apz.fixed-margin-override.enabled,true) test-pref(apz.fixed-margin-override.top,50) == dynamic-toolbar-sticky-top-1.html dynamic-toolbar-sticky-top-1-ref.html # bug 1627326 for geckoview&&!webrender
+
+# The next block of tests are based on a single test page which has three
+# sticky items (one sticky to the top, one sticky to the bottom, and one sticky
+# to both top and bottom). It is tested at 6 different scroll offsets, such that
+# a different subset of items is "stuck" at each scroll offset. And each scroll
+# offset has three variants (a, b, and c) where "a" sets the scroll position
+# using main-thread scroll, "b" sets the scroll position using async scroll,
+# and "c" sets the main-thread scroll to the bottom of the page and async-scrolls
+# back up to the desired scroll offset. Therefore the reference page for three
+# variants is always the same.
+defaults fuzzy(0-1,0-120000)
+== dynamic-toolbar-sticky-1a.html dynamic-toolbar-sticky-1-ref.html
+== dynamic-toolbar-sticky-1b.html dynamic-toolbar-sticky-1-ref.html
+== dynamic-toolbar-sticky-1c.html dynamic-toolbar-sticky-1-ref.html
+== dynamic-toolbar-sticky-2a.html dynamic-toolbar-sticky-2-ref.html
+== dynamic-toolbar-sticky-2b.html dynamic-toolbar-sticky-2-ref.html
+== dynamic-toolbar-sticky-2c.html dynamic-toolbar-sticky-2-ref.html
+== dynamic-toolbar-sticky-3a.html dynamic-toolbar-sticky-3-ref.html
+== dynamic-toolbar-sticky-3b.html dynamic-toolbar-sticky-3-ref.html
+== dynamic-toolbar-sticky-3c.html dynamic-toolbar-sticky-3-ref.html
+== dynamic-toolbar-sticky-4a.html dynamic-toolbar-sticky-4-ref.html
+== dynamic-toolbar-sticky-4b.html dynamic-toolbar-sticky-4-ref.html
+== dynamic-toolbar-sticky-4c.html dynamic-toolbar-sticky-4-ref.html
+== dynamic-toolbar-sticky-5a.html dynamic-toolbar-sticky-5-ref.html
+== dynamic-toolbar-sticky-5b.html dynamic-toolbar-sticky-5-ref.html
+== dynamic-toolbar-sticky-5c.html dynamic-toolbar-sticky-5-ref.html
+== dynamic-toolbar-sticky-6a.html dynamic-toolbar-sticky-6-ref.html
+== dynamic-toolbar-sticky-6b.html dynamic-toolbar-sticky-6-ref.html
+== dynamic-toolbar-sticky-6c.html dynamic-toolbar-sticky-6-ref.html
+defaults
+
+# Same as above block of tests, except with a simulated dynamic toolbar
+# at the top. Only the -5 and -6 scroll offsets are impacted, so the
+# reference pages for first 4 scroll offsets are the same as the baseline
+# case.
+defaults skip-if(!geckoview) pref(apz.allow_zooming,true) test-pref(apz.fixed-margin-override.enabled,true) test-pref(apz.fixed-margin-override.top,50) fuzzy(0-1,0-120000)
+                     == dynamic-toolbar-sticky-1a.html dynamic-toolbar-sticky-1-ref.html
+                     == dynamic-toolbar-sticky-1b.html dynamic-toolbar-sticky-1-ref.html
+                     == dynamic-toolbar-sticky-1c.html dynamic-toolbar-sticky-1-ref.html
+                     == dynamic-toolbar-sticky-2a.html dynamic-toolbar-sticky-2-ref.html
+                     == dynamic-toolbar-sticky-2b.html dynamic-toolbar-sticky-2-ref.html
+                     == dynamic-toolbar-sticky-2c.html dynamic-toolbar-sticky-2-ref.html
+                     == dynamic-toolbar-sticky-3a.html dynamic-toolbar-sticky-3-ref.html
+                     == dynamic-toolbar-sticky-3b.html dynamic-toolbar-sticky-3-ref.html
+                     == dynamic-toolbar-sticky-3c.html dynamic-toolbar-sticky-3-ref.html
+                     == dynamic-toolbar-sticky-4a.html dynamic-toolbar-sticky-4-ref.html
+                     == dynamic-toolbar-sticky-4b.html dynamic-toolbar-sticky-4-ref.html
+                     == dynamic-toolbar-sticky-4c.html dynamic-toolbar-sticky-4-ref.html
+                     == dynamic-toolbar-sticky-5a.html dynamic-toolbar-sticky-5-ref-t.html
+                     == dynamic-toolbar-sticky-5b.html dynamic-toolbar-sticky-5-ref-t.html
+                     == dynamic-toolbar-sticky-5c.html dynamic-toolbar-sticky-5-ref-t.html
+                     == dynamic-toolbar-sticky-6a.html dynamic-toolbar-sticky-6-ref-t.html
+fails-if(!webrender) == dynamic-toolbar-sticky-6b.html dynamic-toolbar-sticky-6-ref-t.html  # bug 1630274 for non-WR
+                     == dynamic-toolbar-sticky-6c.html dynamic-toolbar-sticky-6-ref-t.html
+defaults
+
+# Same as above block of tests, except with the dynamic toolbar margin
+# at the bottom of the page. This time the -1 and -2 scroll offsets are
+# impacted.
+defaults skip-if(!geckoview) pref(apz.allow_zooming,true) test-pref(apz.fixed-margin-override.enabled,true) test-pref(apz.fixed-margin-override.bottom,50) fuzzy(0-1,0-120000)
+                     == dynamic-toolbar-sticky-1a.html dynamic-toolbar-sticky-1-ref-b.html
+                     == dynamic-toolbar-sticky-1b.html dynamic-toolbar-sticky-1-ref-b.html
+fails-if(!webrender) == dynamic-toolbar-sticky-1c.html dynamic-toolbar-sticky-1-ref-b.html # bug 1630274 for non-WR
+                     == dynamic-toolbar-sticky-2a.html dynamic-toolbar-sticky-2-ref-b.html
+                     == dynamic-toolbar-sticky-2b.html dynamic-toolbar-sticky-2-ref-b.html
+                     == dynamic-toolbar-sticky-2c.html dynamic-toolbar-sticky-2-ref-b.html
+                     == dynamic-toolbar-sticky-3a.html dynamic-toolbar-sticky-3-ref.html
+                     == dynamic-toolbar-sticky-3b.html dynamic-toolbar-sticky-3-ref.html
+                     == dynamic-toolbar-sticky-3c.html dynamic-toolbar-sticky-3-ref.html
+                     == dynamic-toolbar-sticky-4a.html dynamic-toolbar-sticky-4-ref.html
+                     == dynamic-toolbar-sticky-4b.html dynamic-toolbar-sticky-4-ref.html
+                     == dynamic-toolbar-sticky-4c.html dynamic-toolbar-sticky-4-ref.html
+                     == dynamic-toolbar-sticky-5a.html dynamic-toolbar-sticky-5-ref.html
+                     == dynamic-toolbar-sticky-5b.html dynamic-toolbar-sticky-5-ref.html
+                     == dynamic-toolbar-sticky-5c.html dynamic-toolbar-sticky-5-ref.html
+                     == dynamic-toolbar-sticky-6a.html dynamic-toolbar-sticky-6-ref.html
+                     == dynamic-toolbar-sticky-6b.html dynamic-toolbar-sticky-6-ref.html
+                     == dynamic-toolbar-sticky-6c.html dynamic-toolbar-sticky-6-ref.html
+defaults

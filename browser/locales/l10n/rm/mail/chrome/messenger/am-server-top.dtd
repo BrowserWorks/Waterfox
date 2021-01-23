@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Memoria da messadis">
+<!ENTITY securitySettings.label "Parameters da segirezza">
+<!ENTITY serverSettings.label "Parameters dal server">
+<!ENTITY serverType.label "Tip da server:">
+<!ENTITY serverName.label "Num dal server:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "Num d'utilisader:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Predefinì:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Controllar sin novs messadis mintga ">
+<!ENTITY biffStart.accesskey "m">
+<!ENTITY biffEnd.label "minutas">
+<!ENTITY useIdleNotifications.label "Permetter notificaziuns immediatas dal server per annunziar novs messadis">
+<!ENTITY useIdleNotifications.accesskey "P">
+<!ENTITY connectionSecurity.label "Segirezza da connexiun:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "Nagina">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, sche disponibel">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Metoda d'autentificaziun:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Laschar ils messadis sin il server">
+<!ENTITY leaveOnServer.accesskey "l">
+<!ENTITY headersOnly.label "Telechargiar be ils chaus-pagina">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "Stizzar ils messadis sin il sever suenter">
+<!ENTITY deleteByAgeFromServer.accesskey "i">
+<!ENTITY daysEnd.label "dis">
+<!ENTITY deleteOnServer2.label "Stizzar ils messadis sin il server, sch'els vegnan stizzads en la posta entrada">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Telechargiar automaticamain novs messadis">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Cun stizzar in messadi:">
+<!ENTITY modelMoveToTrash.label "Spustar el en quest ordinatur:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Mo marcar el sco stizzà">
+<!ENTITY modelMarkDeleted.accesskey "z">
+<!ENTITY modelDeleteImmediately.label "Stizzar immediatamain el">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Nettegiar (&quot;Expunge&quot;) la posta entrada cun serrar">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "Svidar il chanaster da palpiri cun serrar">
+<!ENTITY emptyTrashOnExit.accesskey "c">
+<!ENTITY loginAtStartup.label "Controllar sin novs messadis cun aviar">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Dumandar avant che telechargiar dapli che">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "messadis">
+<!ENTITY alwaysAuthenticate.label "Adina pretender in'autentificaziun cun connectar a quest server">
+<!ENTITY alwaysAuthenticate.accesskey "f">
+<!ENTITY newsrcFilePath1.label "Datoteca News.rc:">
+<!ENTITY newsrcPicker1.label "Tscherner ina datoteca News.rc">
+<!ENTITY abbreviate.label "Mussar las gruppas da discussiun en la glista dad ordinaturs cun:">
+<!ENTITY abbreviateOn.label "Nums entirs (Per exempel: 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Nums abreviads (Per exempel: 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Extendì…">
+<!ENTITY advancedButton.accesskey "x">
+<!ENTITY serverDefaultCharset2.label "Codaziun da text predefinida:">
+<!ENTITY localPath1.label "Ordinatur local:">
+<!ENTITY localFolderPicker.label "Tscherner in ordinatur local">
+<!ENTITY browseFolder.label "Tschertgar en…">
+<!ENTITY browseFolder.accesskey "T">
+<!ENTITY browseNewsrc.label "Tschertgar en…">
+<!ENTITY browseNewsrc.accesskey "T">
+
+<!ENTITY accountTitle.label "Parameters dal conto">
+<!ENTITY accountSettingsDesc.label "Il suandant conto è in conto spezial. Naginas identitads èn associadas cun el.">
+<!ENTITY storeType.label "Metoda per memorisar messadis:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "Ina datoteca per ordinatur (mbox)">
+<!ENTITY maildirStore.label "Ina datoteca per messadi (maildir)">

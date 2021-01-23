@@ -47,6 +47,10 @@ enum CanonicalAxisIndex {
   AXIS_INDEX_COUNT
 };
 
+float NormalizeTouch(long aValue, long aMin, long aMax) {
+  return (2.f * (aValue - aMin) / static_cast<float>(aMax - aMin)) - 1.f;
+}
+
 bool AxisNegativeAsButton(float input) {
   const float value = (input < -0.5f) ? 1.f : 0.f;
   return value > 0.1f;
@@ -106,6 +110,13 @@ class DefaultRemapper final : public GamepadRemapper {
 
   virtual void RemapAxisMoveEvent(uint32_t aIndex, uint32_t aAxis,
                                   double aValue) const override {
+    if (GetAxisCount() <= aAxis) {
+      NS_WARNING(
+          nsPrintfCString("Axis idx '%d' doesn't support in DefaultRemapper().",
+                          aAxis)
+              .get());
+      return;
+    }
     RefPtr<GamepadPlatformService> service =
         GamepadPlatformService::GetParentService();
     if (!service) {
@@ -116,6 +127,13 @@ class DefaultRemapper final : public GamepadRemapper {
 
   virtual void RemapButtonEvent(uint32_t aIndex, uint32_t aButton,
                                 bool aPressed) const override {
+    if (GetButtonCount() <= aButton) {
+      NS_WARNING(
+          nsPrintfCString(
+              "Button idx '%d' doesn't support in DefaultRemapper().", aButton)
+              .get());
+      return;
+    }
     RefPtr<GamepadPlatformService> service =
         GamepadPlatformService::GetParentService();
     if (!service) {
@@ -186,7 +204,7 @@ class ADT1Remapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString("Button idx '%d' doesn't support in ADT1Remapper().",
                           aButton)
@@ -259,7 +277,7 @@ class TwoAxesEightKeysRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in TwoAxesEightKeysRemapper().",
@@ -335,7 +353,7 @@ class StadiaControllerRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (STADIA_BUTTON_COUNT <= aIndex) {
+    if (STADIA_BUTTON_COUNT <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in StadiaControllerRemapper().",
@@ -355,12 +373,188 @@ class StadiaControllerRemapper final : public GamepadRemapper {
   };
 };
 
+class Playstation3Remapper final : public GamepadRemapper {
+ public:
+  Playstation3Remapper() = default;
+
+  uint32_t GetAxisCount() const override { return AXIS_INDEX_COUNT; }
+
+  uint32_t GetButtonCount() const override { return BUTTON_INDEX_COUNT; }
+
+  void RemapAxisMoveEvent(uint32_t aIndex, uint32_t aAxis,
+                          double aValue) const override {
+    RefPtr<GamepadPlatformService> service =
+        GamepadPlatformService::GetParentService();
+    if (!service) {
+      return;
+    }
+
+    switch (aAxis) {
+      case 0:
+        service->NewAxisMoveEvent(aIndex, AXIS_INDEX_LEFT_STICK_X, aValue);
+        break;
+      case 1:
+        service->NewAxisMoveEvent(aIndex, AXIS_INDEX_LEFT_STICK_Y, aValue);
+        break;
+      case 2:
+        service->NewAxisMoveEvent(aIndex, AXIS_INDEX_RIGHT_STICK_X, aValue);
+        break;
+      case 5:
+        service->NewAxisMoveEvent(aIndex, AXIS_INDEX_RIGHT_STICK_Y, aValue);
+        break;
+      default:
+        NS_WARNING(
+            nsPrintfCString(
+                "Axis idx '%d' doesn't support in Dualshock4Remapper().", aAxis)
+                .get());
+        break;
+    }
+  }
+
+  void RemapButtonEvent(uint32_t aIndex, uint32_t aButton,
+                        bool aPressed) const override {
+    RefPtr<GamepadPlatformService> service =
+        GamepadPlatformService::GetParentService();
+    if (!service) {
+      return;
+    }
+
+    const std::vector<uint32_t> buttonMapping = {BUTTON_INDEX_BACK_SELECT,
+                                                 BUTTON_INDEX_LEFT_THUMBSTICK,
+                                                 BUTTON_INDEX_RIGHT_THUMBSTICK,
+                                                 BUTTON_INDEX_START,
+                                                 BUTTON_INDEX_DPAD_UP,
+                                                 BUTTON_INDEX_DPAD_RIGHT,
+                                                 BUTTON_INDEX_DPAD_DOWN,
+                                                 BUTTON_INDEX_DPAD_LEFT,
+                                                 BUTTON_INDEX_LEFT_TRIGGER,
+                                                 BUTTON_INDEX_RIGHT_TRIGGER,
+                                                 BUTTON_INDEX_LEFT_SHOULDER,
+                                                 BUTTON_INDEX_RIGHT_SHOULDER,
+                                                 BUTTON_INDEX_QUATERNARY,
+                                                 BUTTON_INDEX_SECONDARY,
+                                                 BUTTON_INDEX_PRIMARY,
+                                                 BUTTON_INDEX_TERTIARY,
+                                                 BUTTON_INDEX_META};
+
+    if (buttonMapping.size() <= aButton) {
+      NS_WARNING(
+          nsPrintfCString(
+              "Button idx '%d' doesn't support in Playstation3Remapper().",
+              aButton)
+              .get());
+      return;
+    }
+    service->NewButtonEvent(aIndex, buttonMapping[aButton], aPressed);
+  }
+};
+
 class Dualshock4Remapper final : public GamepadRemapper {
  public:
+  Dualshock4Remapper() {
+    mLastTouches.SetLength(TOUCH_EVENT_COUNT);
+    mLastTouchId.SetLength(TOUCH_EVENT_COUNT);
+  }
+
   virtual uint32_t GetAxisCount() const override { return AXIS_INDEX_COUNT; }
 
   virtual uint32_t GetButtonCount() const override {
     return DUALSHOCK_BUTTON_COUNT;
+  }
+
+  virtual uint32_t GetLightIndicatorCount() const override {
+    return LIGHT_INDICATOR_COUNT;
+  }
+
+  virtual void GetLightIndicators(
+      nsTArray<GamepadLightIndicatorType>& aTypes) const override {
+    const uint32_t len = GetLightIndicatorCount();
+    aTypes.SetLength(len);
+    for (uint32_t i = 0; i < len; ++i) {
+      aTypes[i] = GamepadLightIndicatorType::Rgb;
+    }
+  }
+
+  virtual uint32_t GetTouchEventCount() const override {
+    return TOUCH_EVENT_COUNT;
+  }
+
+  virtual void GetLightColorReport(
+      uint8_t aRed, uint8_t aGreen, uint8_t aBlue,
+      std::vector<uint8_t>& aReport) const override {
+    const size_t report_length = 32;
+    aReport.resize(report_length);
+    aReport.assign(report_length, 0);
+
+    aReport[0] = 0x05;  // report ID USB only
+    aReport[1] = 0x02;  // LED only
+    aReport[6] = aRed;
+    aReport[7] = aGreen;
+    aReport[8] = aBlue;
+  }
+
+  virtual uint32_t GetMaxInputReportLength() const override {
+    return MAX_INPUT_LEN;
+  }
+
+  virtual void ProcessTouchData(uint32_t aIndex, void* aInput) override {
+    nsTArray<GamepadTouchState> touches(TOUCH_EVENT_COUNT);
+    touches.SetLength(TOUCH_EVENT_COUNT);
+    uint8_t* rawData = (uint8_t*)aInput;
+
+    const uint32_t kTouchDimensionX = 1920;
+    const uint32_t kTouchDimensionY = 942;
+    bool touch0Pressed = (((rawData[35] & 0xff) >> 7) == 0);
+    bool touch1Pressed = (((rawData[39] & 0xff) >> 7) == 0);
+
+    if ((touch0Pressed && (rawData[35] & 0xff) < mLastTouchId[0]) ||
+        (touch1Pressed && (rawData[39] & 0xff) < mLastTouchId[1])) {
+      mTouchIdBase += 128;
+    }
+
+    if (touch0Pressed) {
+      touches[0].touchId = mTouchIdBase + (rawData[35] & 0x7f);
+      touches[0].surfaceId = 0;
+      touches[0].position[0] = NormalizeTouch(
+          ((rawData[37] & 0xf) << 8) | rawData[36], 0, (kTouchDimensionX - 1));
+      touches[0].position[1] =
+          NormalizeTouch(rawData[38] << 4 | ((rawData[37] & 0xf0) >> 4), 0,
+                         (kTouchDimensionY - 1));
+      touches[0].surfaceDimensions[0] = kTouchDimensionX;
+      touches[0].surfaceDimensions[1] = kTouchDimensionY;
+      touches[0].isSurfaceDimensionsValid = true;
+      mLastTouchId[0] = rawData[35] & 0x7f;
+    }
+    if (touch1Pressed) {
+      touches[1].touchId = mTouchIdBase + (rawData[39] & 0x7f);
+      touches[1].surfaceId = 0;
+      touches[1].position[0] =
+          NormalizeTouch((((rawData[41] & 0xf) << 8) | rawData[40]) + 1, 0,
+                         (kTouchDimensionX - 1));
+      touches[1].position[1] =
+          NormalizeTouch(rawData[42] << 4 | ((rawData[41] & 0xf0) >> 4), 0,
+                         (kTouchDimensionY - 1));
+      touches[1].surfaceDimensions[0] = kTouchDimensionX;
+      touches[1].surfaceDimensions[1] = kTouchDimensionY;
+      touches[1].isSurfaceDimensionsValid = true;
+      mLastTouchId[1] = rawData[39] & 0x7f;
+    }
+
+    RefPtr<GamepadPlatformService> service =
+        GamepadPlatformService::GetParentService();
+    if (!service) {
+      return;
+    }
+
+    // Avoid to send duplicate untouched events to the gamepad service.
+    if ((mLastTouches[0] != touch0Pressed) || touch0Pressed) {
+      service->NewMultiTouchEvent(aIndex, 0, touches[0]);
+    }
+    if ((mLastTouches[1] != touch1Pressed) || touch1Pressed) {
+      service->NewMultiTouchEvent(aIndex, 1, touches[1]);
+    }
+    mLastTouches[0] = touch0Pressed;
+    mLastTouches[1] = touch1Pressed;
   }
 
   virtual void RemapAxisMoveEvent(uint32_t aIndex, uint32_t aAxis,
@@ -427,7 +621,7 @@ class Dualshock4Remapper final : public GamepadRemapper {
                                                  BUTTON_INDEX_META,
                                                  DUALSHOCK_BUTTON_TOUCHPAD};
 
-    if (buttonMapping.size() <= aIndex) {
+    if (buttonMapping.size() <= aButton) {
       NS_WARNING(nsPrintfCString(
                      "Button idx '%d' doesn't support in Dualshock4Remapper().",
                      aButton)
@@ -443,6 +637,14 @@ class Dualshock4Remapper final : public GamepadRemapper {
     DUALSHOCK_BUTTON_TOUCHPAD = BUTTON_INDEX_COUNT,
     DUALSHOCK_BUTTON_COUNT
   };
+
+  static const uint32_t LIGHT_INDICATOR_COUNT = 1;
+  static const uint32_t TOUCH_EVENT_COUNT = 2;
+  static const uint32_t MAX_INPUT_LEN = 68;
+
+  nsTArray<unsigned long> mLastTouchId;
+  nsTArray<bool> mLastTouches;
+  unsigned long mTouchIdBase = 0;
 };
 
 class LogitechDInputRemapper final : public GamepadRemapper {
@@ -497,7 +699,7 @@ class LogitechDInputRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in LogitechDInputRemapper().",
@@ -530,6 +732,13 @@ class SwitchJoyConRemapper final : public GamepadRemapper {
 
   virtual void RemapAxisMoveEvent(uint32_t aIndex, uint32_t aAxis,
                                   double aValue) const override {
+    if (GetAxisCount() <= aAxis) {
+      NS_WARNING(
+          nsPrintfCString(
+              "Axis idx '%d' doesn't support in SwitchJoyConRemapper().", aAxis)
+              .get());
+      return;
+    }
     RefPtr<GamepadPlatformService> service =
         GamepadPlatformService::GetParentService();
     if (!service) {
@@ -563,6 +772,13 @@ class SwitchProRemapper final : public GamepadRemapper {
 
   virtual void RemapAxisMoveEvent(uint32_t aIndex, uint32_t aAxis,
                                   double aValue) const override {
+    if (GetAxisCount() <= aAxis) {
+      NS_WARNING(
+          nsPrintfCString(
+              "Axis idx '%d' doesn't support in SwitchProRemapper().", aAxis)
+              .get());
+      return;
+    }
     RefPtr<GamepadPlatformService> service =
         GamepadPlatformService::GetParentService();
     if (!service) {
@@ -647,7 +863,7 @@ class NvShieldRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in NvShieldRemapper().", aButton)
@@ -740,7 +956,7 @@ class NvShield2017Remapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in NvShield2017Remapper().",
@@ -824,7 +1040,7 @@ class IBuffaloRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in IBuffaloRemapper().", aButton)
@@ -995,7 +1211,7 @@ class BoomN64PsxRemapper final : public GamepadRemapper {
         BUTTON_INDEX_DPAD_UP,          BUTTON_INDEX_DPAD_RIGHT,
         BUTTON_INDEX_DPAD_DOWN,        BUTTON_INDEX_DPAD_LEFT};
 
-    if (buttonMapping.size() <= aIndex) {
+    if (buttonMapping.size() <= aButton) {
       NS_WARNING(nsPrintfCString(
                      "Button idx '%d' doesn't support in BoomN64PsxRemapper().",
                      aButton)
@@ -1072,7 +1288,7 @@ class AnalogGamepadRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in AnalogGamepadRemapper().",
@@ -1168,7 +1384,7 @@ class RazerServalRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in RazerServalRemapper().",
@@ -1250,7 +1466,7 @@ class MogaProRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in MogaProRemapper().", aButton)
@@ -1331,7 +1547,7 @@ class OnLiveWirelessRemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString(
               "Button idx '%d' doesn't support in OnLiveWirelessRemapper().",
@@ -1412,7 +1628,7 @@ class OUYARemapper final : public GamepadRemapper {
       return;
     }
 
-    if (GetButtonCount() <= aIndex) {
+    if (GetButtonCount() <= aButton) {
       NS_WARNING(
           nsPrintfCString("Button idx '%d' doesn't support in OUYARemapper().",
                           aButton)
@@ -1436,8 +1652,9 @@ class OUYARemapper final : public GamepadRemapper {
   }
 };
 
-already_AddRefed<GamepadRemapper> GetGamepadRemapper(
-    const uint16_t aVendorId, const uint16_t aProductId) {
+already_AddRefed<GamepadRemapper> GetGamepadRemapper(const uint16_t aVendorId,
+                                                     const uint16_t aProductId,
+                                                     bool& aUsingDefault) {
   const std::vector<GamepadRemappingData> remappingRules = {
       {GamepadId::kAsusTekProduct4500, new ADT1Remapper()},
       {GamepadId::kDragonRiseProduct0011, new TwoAxesEightKeysRemapper()},
@@ -1457,6 +1674,7 @@ already_AddRefed<GamepadRemapper> GetGamepadRemapper(
       {GamepadId::kPrototypeVendorProduct0667, new BoomN64PsxRemapper()},
       {GamepadId::kPrototypeVendorProduct9401, new AnalogGamepadRemapper()},
       {GamepadId::kRazer1532Product0900, new RazerServalRemapper()},
+      {GamepadId::kSonyProduct0268, new Playstation3Remapper()},
       {GamepadId::kSonyProduct05c4, new Dualshock4Remapper()},
       {GamepadId::kSonyProduct09cc, new Dualshock4Remapper()},
       {GamepadId::kSonyProduct0ba0, new Dualshock4Remapper()},
@@ -1468,11 +1686,13 @@ already_AddRefed<GamepadRemapper> GetGamepadRemapper(
 
   for (uint32_t i = 0; i < remappingRules.size(); ++i) {
     if (id == remappingRules[i].id) {
+      aUsingDefault = false;
       return do_AddRef(remappingRules[i].remapping.get());
     }
   }
 
   static RefPtr<GamepadRemapper> defaultRemapper = new DefaultRemapper();
+  aUsingDefault = true;
   return do_AddRef(defaultRemapper.get());
 }
 

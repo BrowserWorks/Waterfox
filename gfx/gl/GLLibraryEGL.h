@@ -11,8 +11,8 @@
 
 #include "GLLibraryLoader.h"
 #include "mozilla/StaticMutex.h"
+#include "mozilla/StaticPtr.h"
 #include "mozilla/ThreadLocal.h"
-#include "nsIFile.h"
 #include "GeckoProfiler.h"
 
 #include <bitset>
@@ -25,6 +25,9 @@
 #endif
 
 class nsIGfxInfo;
+
+template <typename T>
+class nsCOMPtr;
 
 namespace angle {
 class Platform;
@@ -46,7 +49,7 @@ void AfterEGLCall(const char* funcName);
 
 class GLLibraryEGL final {
  protected:
-  ~GLLibraryEGL() {}
+  ~GLLibraryEGL() = default;
 
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GLLibraryEGL)
@@ -86,6 +89,9 @@ class GLLibraryEGL final {
     KHR_surfaceless_context,
     KHR_create_context_no_error,
     MOZ_create_context_provoking_vertex_dont_care,
+    EXT_swap_buffers_with_damage,
+    KHR_swap_buffers_with_damage,
+    EXT_buffer_age,
     Extensions_Max
   };
 
@@ -350,6 +356,11 @@ class GLLibraryEGL final {
 
           EGLBoolean fReleaseDeviceANGLE(EGLDeviceEXT device)
               WRAP(fReleaseDeviceANGLE(device))
+
+      // EGL_EXT_swap_buffers_with_damage / EGL_KHR_swap_buffers_with_damage
+      EGLBoolean fSwapBuffersWithDamage(EGLDisplay dpy, EGLSurface surface,
+                                        const EGLint* rects, EGLint n_rects)
+          WRAP(fSwapBuffersWithDamage(dpy, surface, rects, n_rects))
 #undef WRAP
 #undef VOID_WRAP
 #undef PROFILE_CALL
@@ -359,7 +370,7 @@ class GLLibraryEGL final {
 
       ////
 
-      EGLDisplay Display() {
+      EGLDisplay Display() const {
     MOZ_ASSERT(mInitialized);
     return mEGLDisplay;
   }
@@ -521,7 +532,11 @@ class GLLibraryEGL final {
                                                  void* native_device,
                                                  const EGLAttrib* attrib_list);
     EGLBoolean(GLAPIENTRY* fReleaseDeviceANGLE)(EGLDeviceEXT device);
-
+    // EGL_EXT_swap_buffers_with_damage / EGL_KHR_swap_buffers_with_damage
+    EGLBoolean(GLAPIENTRY* fSwapBuffersWithDamage)(EGLDisplay dpy,
+                                                   EGLSurface surface,
+                                                   const EGLint* rects,
+                                                   EGLint n_rects);
   } mSymbols = {};
 
  private:
@@ -542,7 +557,7 @@ class GLLibraryEGL final {
   static StaticRefPtr<GLLibraryEGL> sEGLLibrary;
 };
 
-#define EGL_DISPLAY() GLLibraryEGL::Get()->Display()
+bool DoesEGLContextSupportSharingWithEGLImage(GLContext* gl);
 
 } /* namespace gl */
 } /* namespace mozilla */

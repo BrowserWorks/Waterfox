@@ -19,7 +19,7 @@ WebProtocolHandlerRegistrar.prototype = {
   },
 
   _getFormattedString(key, params) {
-    return this.stringBundle.formatStringFromName(key, params, params.length);
+    return this.stringBundle.formatStringFromName(key, params);
   },
 
   _getString(key) {

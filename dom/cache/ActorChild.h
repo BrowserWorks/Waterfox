@@ -7,32 +7,32 @@
 #ifndef mozilla_dom_cache_ActioChild_h
 #define mozilla_dom_cache_ActioChild_h
 
-#include "mozilla/RefPtr.h"
+#include "mozilla/dom/SafeRefPtr.h"
 
 namespace mozilla {
 namespace dom {
 namespace cache {
 
-class CacheWorkerHolder;
+class CacheWorkerRef;
 
 class ActorChild {
  public:
   virtual void StartDestroy() = 0;
 
-  void SetWorkerHolder(CacheWorkerHolder* aWorkerHolder);
+  void SetWorkerRef(SafeRefPtr<CacheWorkerRef> aWorkerRef);
 
-  void RemoveWorkerHolder();
+  void RemoveWorkerRef();
 
-  CacheWorkerHolder* GetWorkerHolder() const;
+  const SafeRefPtr<CacheWorkerRef>& GetWorkerRefPtr() const;
 
-  bool WorkerHolderNotified() const;
+  bool WorkerRefNotified() const;
 
  protected:
   ActorChild();
   ~ActorChild();
 
  private:
-  RefPtr<CacheWorkerHolder> mWorkerHolder;
+  SafeRefPtr<CacheWorkerRef> mWorkerRef;
 };
 
 }  // namespace cache

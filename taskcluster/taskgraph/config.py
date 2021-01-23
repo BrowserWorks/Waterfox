@@ -6,10 +6,12 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import logging
+import sys
 import attr
 from six import text_type
 from mozpack import path
 
+from .util.python_path import find_object
 from .util.schema import validate_schema, Schema, optionally_keyed_by
 from voluptuous import Required, Optional, Any
 from .util.yaml import load_yaml
@@ -19,45 +21,63 @@ logger = logging.getLogger(__name__)
 graph_config_schema = Schema({
     # The trust-domain for this graph.
     # (See https://firefox-source-docs.mozilla.org/taskcluster/taskcluster/taskgraph.html#taskgraph-trust-domain)  # noqa
-    Required('trust-domain'): basestring,
+    Required('trust-domain'): text_type,
     # This specifes the prefix for repo parameters that refer to the project being built.
     # This selects between `head_rev` and `comm_head_rev` and related paramters.
     # (See http://firefox-source-docs.mozilla.org/taskcluster/taskcluster/parameters.html#push-information  # noqa
     # and http://firefox-source-docs.mozilla.org/taskcluster/taskcluster/parameters.html#comm-push-information)  # noqa
-    Required('project-repo-param-prefix'): basestring,
+    Required('project-repo-param-prefix'): text_type,
     # This specifies the top level directory of the application being built.
     # ie. "browser/" for Firefox, "comm/mail/" for Thunderbird.
-    Required('product-dir'): basestring,
+    Required('product-dir'): text_type,
     Required('treeherder'): {
         # Mapping of treeherder group symbols to descriptive names
-        Required('group-names'): {basestring: basestring}
+        Required('group-names'): {text_type: text_type}
     },
     Required('index'): {
-        Required('products'): [basestring]
+        Required('products'): [text_type]
     },
     Required('try'): {
         # We have a few platforms for which we want to do some "extra" builds, or at
         # least build-ish things.  Sort of.  Anyway, these other things are implemented
         # as different "platforms".  These do *not* automatically ride along with "-p
         # all"
-        Required('ridealong-builds'): {basestring: [basestring]},
+        Required('ridealong-builds'): {text_type: [text_type]},
     },
     Required('release-promotion'): {
-        Required('products'): [basestring],
-        Required('flavors'): {basestring: {
-            Required('product'): basestring,
-            Required('target-tasks-method'): basestring,
+        Required('products'): [text_type],
+        Required('flavors'): {text_type: {
+            Required('product'): text_type,
+            Required('target-tasks-method'): text_type,
             Optional('is-rc'): bool,
-            Optional('rebuild-kinds'): [basestring],
+            Optional('rebuild-kinds'): [text_type],
             Optional('version-bump'): bool,
             Optional('partial-updates'): bool,
         }},
     },
+    Required('merge-automation'): {
+        Required('behaviors'): {text_type: {
+            Optional('from-branch'): text_type,
+            Required('to-branch'): text_type,
+            Optional('from-repo'): text_type,
+            Required('to-repo'): text_type,
+            Required('version-files'): [
+                {
+                    Required('filename'): text_type,
+                    Optional('new-suffix'): text_type,
+                    Optional('version-bump'): Any('major', 'minor'),
+                }
+            ],
+            Required('replacements'): [[text_type]],
+            Required('merge-old-head'): bool,
+            Optional('base-tag'): text_type,
+            Optional('end-tag'): text_type,
+            Optional('fetch-version-from'): text_type,
+        }},
+    },
     Required('scriptworker'): {
         # Prefix to add to scopes controlling scriptworkers
-        Required('scope-prefix'): basestring,
-        # Mapping of scriptworker types to scopes they accept
-        Required('worker-types'): {basestring: [basestring]},
+        Required('scope-prefix'): text_type,
     },
     Required('task-priority'): optionally_keyed_by('project', Any(
         'highest',
@@ -71,13 +91,11 @@ graph_config_schema = Schema({
     Required('partner-urls'): {
         Required('release-partner-repack'):
             optionally_keyed_by('release-product', 'release-level', 'release-type',
-                                Any(basestring, None)),
+                                Any(text_type, None)),
         Required('release-eme-free-repack'):
             optionally_keyed_by('release-product', 'release-level', 'release-type',
-                                Any(basestring, None)),
+                                Any(text_type, None)),
     },
-    Required('version-directory'): optionally_keyed_by('release-product', 'android-release-type',
-                                                       basestring),
     Required('workers'): {
         Required('aliases'): {
             text_type: {
@@ -90,10 +108,18 @@ graph_config_schema = Schema({
     },
     Required('mac-notarization'): {
         Required('mac-behavior'):
-            optionally_keyed_by('platform', 'release-type',
-                                Any('mac_notarize', 'mac_pkg', 'mac_sign', 'mac_sign_and_pkg')),
+            optionally_keyed_by('project', 'shippable',
+                                Any('mac_notarize', 'mac_geckodriver', 'mac_sign',
+                                    'mac_sign_and_pkg')),
         Required('mac-entitlements'):
             optionally_keyed_by('platform', 'release-level', text_type),
+    },
+    Required("taskgraph"): {
+        Optional(
+            "register",
+            description="Python function to call to register extensions.",
+        ): text_type,
+        Optional('decision-parameters'): text_type,
     },
 })
 
@@ -103,11 +129,29 @@ class GraphConfig(object):
     _config = attr.ib()
     root_dir = attr.ib()
 
+    _PATH_MODIFIED = False
+
     def __getitem__(self, name):
         return self._config[name]
 
-    def get(self, *args, **kwargs):
-        return self._config.get(*args, **kwargs)
+    def register(self):
+        """
+        Add the project's taskgraph directory to the python path, and register
+        any extensions present.
+        """
+        modify_path = os.path.dirname(self.root_dir)
+        if GraphConfig._PATH_MODIFIED:
+            if GraphConfig._PATH_MODIFIED == modify_path:
+                # Already modified path with the same root_dir.
+                # We currently need to do this to enable actions to call
+                # taskgraph_decision, e.g. relpro.
+                return
+            raise Exception("Can't register multiple directories on python path.")
+        GraphConfig._PATH_MODIFIED = modify_path
+        sys.path.insert(0, modify_path)
+        register_path = self['taskgraph'].get('register')
+        if register_path:
+            find_object(register_path)(self)
 
     @property
     def taskcluster_yml(self):

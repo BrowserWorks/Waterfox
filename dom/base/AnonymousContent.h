@@ -66,10 +66,13 @@ class AnonymousContent final {
                                 ErrorResult& aError);
 
   void GetComputedStylePropertyValue(const nsAString& aElementId,
-                                     const nsAString& aPropertyName,
+                                     const nsACString& aPropertyName,
                                      DOMString& aResult, ErrorResult& aRv);
 
   void GetTargetIdForEvent(Event& aEvent, DOMString& aResult);
+
+  void SetStyle(const nsACString& aProperty, const nsACString& aValue,
+                ErrorResult& aRv);
 
  private:
   ~AnonymousContent();

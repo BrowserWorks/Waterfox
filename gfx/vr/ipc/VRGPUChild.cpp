@@ -6,6 +6,9 @@
 
 #include "VRGPUChild.h"
 
+#include "mozilla/layers/CompositorThread.h"
+#include "VRManager.h"
+
 namespace mozilla {
 namespace gfx {
 
@@ -53,7 +56,7 @@ void VRGPUChild::Shutdown() {
 
 void VRGPUChild::ActorDestroy(ActorDestroyReason aWhy) {
   VRManager* vm = VRManager::Get();
-  CompositorThreadHolder::Loop()->PostTask(
+  mozilla::layers::CompositorThread()->Dispatch(
       NewRunnableMethod("VRGPUChild::ActorDestroy", vm, &VRManager::Shutdown));
 
   mClosed = true;

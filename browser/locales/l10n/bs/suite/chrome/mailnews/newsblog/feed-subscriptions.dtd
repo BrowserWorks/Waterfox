@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Pretplate na kanale">
+<!ENTITY learnMore.label             "Saznajte više o kanalima">
+
+<!ENTITY feedTitle.label             "Naslov:">
+
+<!ENTITY feedLocation.label          "URL kanala:">
+<!ENTITY feedLocation.placeholder    "Unesite ispravnu adresu kanala za dodati">
+<!ENTITY feedLocation2.placeholder   "Unesite ispravan url kanala">
+<!ENTITY locationValidate.label      "Potvrdi">
+<!ENTITY validateText.label          "Provjeri ispravnost i dobavi ispravan url.">
+
+<!ENTITY feedFolder.label            "Spremi članke u:">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Preuzmi nove članke svakih ">
+<!ENTITY biffMinutes.label           "minuta">
+<!ENTITY biffDays.label              "dana">
+<!ENTITY recommendedUnits.label      "Izdavač preporučuje:">
+
+<!ENTITY quickMode.label             "Prikaži kratki pregled članka umjesto učitavanja web stranice">
+
+<!ENTITY autotagEnable.label         "Automatski stvori oznake iz naziva &lt;kategorija&gt; kanala">
+<!ENTITY autotagUsePrefix.label      "Prefiks za oznake:">
+<!ENTITY autoTagPrefix.placeholder   "Unesite prefiks oznake">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Dodaj">
+<!ENTITY button.verifyFeed.label     "Provjeri">
+<!ENTITY button.updateFeed.label     "Ažuriraj">
+<!ENTITY button.removeFeed.label     "Ukloni">
+<!ENTITY button.importOPML.label     "Uvezi">
+<!ENTITY button.exportOPML.label     "Izvezi">
+<!ENTITY button.exportOPML.tooltip   "Izvezi kanale sa strukturom direktorija; ctrl klik ili ctrl enter za izvoz kanala kao liste">
+
+<!ENTITY button.close.label          "Zatvori">

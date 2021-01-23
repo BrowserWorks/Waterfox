@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Propietate aurreratu editorea">
+<!ENTITY AttName.label                  "Atributua: ">
+<!ENTITY AttValue.label                 "Balioa: ">
+<!ENTITY PropertyName.label             "Propietatea: ">
+<!ENTITY currentattributesfor.label     "Uneko atributuak: ">
+<!ENTITY tree.attributeHeader.label     "Atributua">
+<!ENTITY tree.propertyHeader.label      "Propietatea">
+<!ENTITY tree.valueHeader.label         "Balioa">
+<!ENTITY tabHTML.label                  "HTML atributuak">
+<!ENTITY tabCSS.label                   "Lerro estiloa">
+<!ENTITY tabJSE.label                   "JavaScript gertaerak">
+
+<!ENTITY editAttribute.label    "Egin klik beheko osagai batean bere balioa editatzeko">
+<!ENTITY removeAttribute.label  "Ezabatu">

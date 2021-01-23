@@ -22,19 +22,26 @@ class RDDParent final : public PRDDParent {
   static RDDParent* GetSingleton();
 
   bool Init(base::ProcessId aParentPid, const char* aParentBuildID,
-            MessageLoop* aIOLoop, IPC::Channel* aChannel);
+            MessageLoop* aIOLoop, UniquePtr<IPC::Channel> aChannel);
 
-  mozilla::ipc::IPCResult RecvInit(const Maybe<ipc::FileDescriptor>& aBrokerFd,
-                                   bool aStartMacSandbox);
+  mozilla::ipc::IPCResult RecvInit(nsTArray<GfxVarUpdate>&& vars,
+                                   const Maybe<ipc::FileDescriptor>& aBrokerFd,
+                                   const bool& aCanRecordReleaseTelemetry);
   mozilla::ipc::IPCResult RecvInitProfiler(
       Endpoint<PProfilerChild>&& aEndpoint);
 
   mozilla::ipc::IPCResult RecvNewContentRemoteDecoderManager(
       Endpoint<PRemoteDecoderManagerParent>&& aEndpoint);
+  mozilla::ipc::IPCResult RecvInitVideoBridge(
+      Endpoint<PVideoBridgeChild>&& aEndpoint);
   mozilla::ipc::IPCResult RecvRequestMemoryReport(
       const uint32_t& generation, const bool& anonymize,
       const bool& minimizeMemoryUsage,
       const Maybe<ipc::FileDescriptor>& DMDFile);
+  mozilla::ipc::IPCResult RecvGetUntrustedModulesData(
+      GetUntrustedModulesDataResolver&& aResolver);
+  mozilla::ipc::IPCResult RecvPreferenceUpdate(const Pref& pref);
+  mozilla::ipc::IPCResult RecvUpdateVar(const GfxVarUpdate& pref);
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
 

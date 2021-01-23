@@ -15,7 +15,7 @@ function test() {
 
           is(
             domwindow.document.location.href,
-            "chrome://mozapps/content/downloads/unknownContentType.xul",
+            "chrome://mozapps/content/downloads/unknownContentType.xhtml",
             "Download page appeared"
           );
 
@@ -33,7 +33,7 @@ function test() {
     Services.wm.addListener(listener);
 
     info("Creating BlobURL and clicking on a HTMLAnchorElement...");
-    ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+    SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
       let blob = new content.Blob(["test"], { type: "text/plain" });
       let url = content.URL.createObjectURL(blob);
 
@@ -47,11 +47,11 @@ function test() {
     });
   }
 
-  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(onLoad);
+  const target = "http://example.com/browser/dom/url/tests/empty.html";
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser, false, target).then(
+    onLoad
+  );
 
   info("Loading download page...");
-  BrowserTestUtils.loadURI(
-    gBrowser,
-    "http://example.com/browser/dom/url/tests/empty.html"
-  );
+  BrowserTestUtils.loadURI(gBrowser, target);
 }

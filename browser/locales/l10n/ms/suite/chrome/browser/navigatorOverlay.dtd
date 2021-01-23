@@ -1,0 +1,146 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Tab Pelayar">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Buka Lokasi Web…">
+<!ENTITY openCmd.accesskey "L">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Buka Fail…">
+<!ENTITY openFileCmd.accesskey "B">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Tutup Tab Lain">
+<!ENTITY closeOtherTabs.accesskey "T">
+
+<!ENTITY uploadFile.label "Muat naik Fail…">
+<!ENTITY uploadFile.accesskey "F">
+
+<!ENTITY printSetupCmd.label "Penetapan Halaman…">
+<!ENTITY printSetupCmd.accesskey "e">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Cari dalam Halaman Ini…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Papar/Sorok">
+<!ENTITY toolbarsCmd.accesskey "p">
+<!ENTITY tabbarCmd.label "Bar Tab">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "Bar Status">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Bar Komponen">
+<!ENTITY componentbarCmd.accesskey "K">
+
+<!ENTITY fullScreenCmd.label "Skrin Penuh">
+<!ENTITY fullScreenCmd.accesskey "P">
+
+<!ENTITY useStyleSheetMenu.label "Guna Gaya">
+<!ENTITY useStyleSheetMenu.accesskey "G">
+<!ENTITY useStyleSheetNone.label "Tiada">
+<!ENTITY useStyleSheetNone.accesskey "T">
+<!ENTITY useStyleSheetPersistentOnly.label "Gaya Piawai">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "P">
+<!ENTITY bidiSwitchPageDirectionItem.label "Tukar Hala Halaman">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "k">
+<!ENTITY pageSourceCmd.label "Sumber Halaman">
+<!ENTITY pageSourceCmd.accesskey "b">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Info Halaman">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Teruskan">
+<!ENTITY goMenu.accesskey "T">
+<!ENTITY goHomeCmd.label "Laman">
+<!ENTITY goHomeCmd.accesskey "L">
+<!ENTITY historyCmd.label "Sejarah">
+<!ENTITY historyCmd.accesskey "j">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Tab Terkini Ditutup">
+<!ENTITY recentTabs.accesskey "D">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Tetingkap Terkini Ditutup">
+<!ENTITY recentWindows.accesskey "T">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Pulih Sesi Dahulu">
+<!ENTITY historyRestoreLastSession.accesskey "S">
+<!ENTITY syncTabsMenu.label "Tab Dari Komputer Lain">
+<!ENTITY syncTabsMenu.accesskey "L">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Tandabuku">
+<!ENTITY bookmarksMenu.accesskey "T">
+<!ENTITY addCurPageCmd.label "Tandabuku Halaman Ini">
+<!ENTITY addCurPageCmd.accesskey "H">
+<!ENTITY addCurPageAsCmd.label "Fail Tandabuku…">
+<!ENTITY addCurPageAsCmd.accesskey "F">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Tandabuku Kumpulan Tab Ini…">
+<!ENTITY addCurTabsAsCmd.accesskey "K">
+<!ENTITY manBookmarksCmd.label "Urus Tandabuku…">
+<!ENTITY manBookmarksCmd.accesskey "U">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Cari dalam Web">
+<!ENTITY searchInternetCmd.accesskey "b">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Terjemah Halaman">
+<!ENTITY translateMenu.accesskey "T">
+
+<!ENTITY cookieMessageTitle.label "Izin Kuki Ditukar">
+<!ENTITY cookieDisplayCookiesCmd.label "Urus Kuki Disimpan">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "U">
+<!ENTITY cookieAllowCookiesCmd.label "Izin Kuki daripada Laman Web Ini">
+<!ENTITY cookieAllowCookiesCmd.accesskey "I">
+<!ENTITY cookieAllowCookiesMsg.label "Kuki daripada laman web ini sentiasa diizinkan.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Izin Kuki Sesi daripada Laman Web Ini">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "S">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Laman web ini boleh menetapkan kuki untuk sesi semasa sahaja.">
+<!ENTITY cookieCookiesDefaultCmd.label "Gunakan Izin Kuki Piawai">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "G">
+<!ENTITY cookieCookiesDefaultMsg.label "Kuki daripada laman web ini diterima atau ditolak berdasarkan tetapan piawai.">
+<!ENTITY cookieBlockCookiesCmd.label "Sekat Kuki daripada Laman Web Ini">
+<!ENTITY cookieBlockCookiesCmd.accesskey "S">
+<!ENTITY cookieBlockCookiesMsg.label "Kuki daripada laman web ini sentiasa ditolak.">
+
+<!ENTITY cookieImageMessageTitle.label "Izin Imej Ditukar">
+<!ENTITY cookieDisplayImagesCmd.label "Urus Izin Imej">
+<!ENTITY cookieDisplayImagesCmd.accesskey "U">
+<!ENTITY cookieAllowImagesCmd.label "Izin Imej daripada Laman Web Ini">
+<!ENTITY cookieAllowImagesCmd.accesskey "I">
+<!ENTITY cookieAllowImagesMsg.label "Imej daripada laman web ini sentiasa dimuat turun.">
+<!ENTITY cookieImagesDefaultCmd.label "Gunakan Izin Imej Piawai">
+<!ENTITY cookieImagesDefaultCmd.accesskey "G">
+<!ENTITY cookieImagesDefaultMsg.label "Imej daripada laman web ini dimuat turun berdasarkan tetapan piawai.">
+<!ENTITY cookieBlockImagesCmd.label "Sekat Imej daripada Laman Web Ini">
+<!ENTITY cookieBlockImagesCmd.accesskey "S">
+<!ENTITY cookieBlockImagesMsg.label "Imej daripada laman web ini tidak akan dimuat turun.">
+
+<!ENTITY popupsMessageChangeTitle.label "Izin Popup Ditukar">
+<!ENTITY popupAllowCmd.label "Izin Popup daripada Laman Web Ini">
+<!ENTITY popupAllowCmd.accesskey "I">
+<!ENTITY popupAllowMsg.label "Popup daripada laman web ini sentiasa dipaparkan.">
+<!ENTITY popupDefaultCmd.label "Gunakan Izin Popup Piawai">
+<!ENTITY popupDefaultCmd.accesskey "G">
+<!ENTITY popupDefaultMsg.label "Popup daripada laman web ini dipaparkan berdasarkan tetapan piawai.">
+<!ENTITY popupBlockCmd.label "Sekat Popup daripada Laman Web Ini">
+<!ENTITY popupBlockCmd.accesskey "S">
+<!ENTITY popupBlockMsg.label "Popup daripada laman web ini tidak akan dipaparkan.">
+<!ENTITY popupsManage.label "Urus Popup">
+<!ENTITY popupsManage.accesskey "U">
+
+<!ENTITY cookieCookieManager.label "Pengurus Kuki">
+<!ENTITY cookieCookieManager.accesskey "K">
+<!ENTITY cookieImageManager.label "Pengurus Imej">
+<!ENTITY cookieImageManager.accesskey "I">
+<!ENTITY popupsManager.label "Pengurus Popup">
+<!ENTITY popupsManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Buang Data Peribadi…">
+<!ENTITY clearPrivateDataCmd.accesskey "i">

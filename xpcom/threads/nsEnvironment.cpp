@@ -35,7 +35,7 @@ nsresult nsEnvironment::Create(nsISupports* aOuter, REFNSIID aIID,
   return rv;
 }
 
-nsEnvironment::~nsEnvironment() {}
+nsEnvironment::~nsEnvironment() = default;
 
 NS_IMETHODIMP
 nsEnvironment::Exists(const nsAString& aName, bool* aOutValue) {
@@ -144,9 +144,9 @@ nsEnvironment::Set(const nsAString& aName, const nsAString& aValue) {
   }
 
   PR_SetEnv(newData.get());
-  if (entry->mData) {
-    free(entry->mData);
+  if (entry->GetData()) {
+    free(entry->GetData());
   }
-  entry->mData = newData.release();
+  entry->SetData(newData.release());
   return NS_OK;
 }

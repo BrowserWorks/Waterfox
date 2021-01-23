@@ -8,13 +8,13 @@
 #define dom_src_geolocation_IPC_serialiser
 
 #include "ipc/IPCMessageUtils.h"
-#include "nsGeoPosition.h"
+#include "mozilla/dom/GeolocationPosition.h"
 #include "nsIDOMGeoPosition.h"
 
 namespace IPC {
 
 template <>
-struct ParamTraits<nsIDOMGeoPositionCoords> {
+struct ParamTraits<nsIDOMGeoPositionCoords*> {
   // Function to serialize a geoposition
   static void Write(Message* aMsg, nsIDOMGeoPositionCoords* aParam) {
     bool isNull = !aParam;
@@ -89,7 +89,7 @@ struct ParamTraits<nsIDOMGeoPositionCoords> {
 };
 
 template <>
-struct ParamTraits<nsIDOMGeoPosition> {
+struct ParamTraits<nsIDOMGeoPosition*> {
   // Function to serialize a geoposition
   static void Write(Message* aMsg, nsIDOMGeoPosition* aParam) {
     bool isNull = !aParam;

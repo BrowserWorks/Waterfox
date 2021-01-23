@@ -26,7 +26,7 @@ typedef MozPromise<ServiceWorkerRegistrationDescriptor, CopyableErrorResult,
                    false>
     ServiceWorkerRegistrationPromise;
 
-typedef MozPromise<nsTArray<ServiceWorkerRegistrationDescriptor>,
+typedef MozPromise<CopyableTArray<ServiceWorkerRegistrationDescriptor>,
                    CopyableErrorResult, false>
     ServiceWorkerRegistrationListPromise;
 
@@ -39,16 +39,16 @@ typedef std::function<void(
 
 typedef std::function<void(bool)> ServiceWorkerBoolCallback;
 
-typedef std::function<void(ErrorResult&)> ServiceWorkerFailureCallback;
+typedef std::function<void(ErrorResult&&)> ServiceWorkerFailureCallback;
 
 bool ServiceWorkerParentInterceptEnabled();
 
 bool ServiceWorkerRegistrationDataIsValid(
     const ServiceWorkerRegistrationData& aData);
 
-nsresult ServiceWorkerScopeAndScriptAreValid(const ClientInfo& aClientInfo,
-                                             nsIURI* aScopeURI,
-                                             nsIURI* aScriptURI);
+void ServiceWorkerScopeAndScriptAreValid(const ClientInfo& aClientInfo,
+                                         nsIURI* aScopeURI, nsIURI* aScriptURI,
+                                         ErrorResult& aRv);
 
 }  // namespace dom
 }  // namespace mozilla

@@ -77,9 +77,11 @@ assert.acyclic = function(obj, msg = "", error = JavaScriptError) {
  *     If <var>driver</var> does not have a session ID.
  */
 assert.session = function(driver, msg = "") {
-  assert.that(sessionID => sessionID, msg, InvalidSessionIDError)(
-    driver.sessionID
-  );
+  assert.that(
+    sessionID => sessionID,
+    msg,
+    InvalidSessionIDError
+  )(driver.sessionID);
   return driver.sessionID;
 };
 
@@ -145,9 +147,11 @@ assert.fennec = function(msg = "") {
  */
 assert.content = function(context, msg = "") {
   msg = msg || "Only supported in content context";
-  assert.that(c => c.toString() == "content", msg, UnsupportedOperationError)(
-    context
-  );
+  assert.that(
+    c => c.toString() == "content",
+    msg,
+    UnsupportedOperationError
+  )(context);
 };
 
 /**
@@ -180,9 +184,11 @@ assert.open = function(context, msg = "") {
   }
 
   msg = msg || "Browsing context has been discarded";
-  return assert.that(ctx => ctx && !ctx.closed, msg, NoSuchWindowError)(
-    context
-  );
+  return assert.that(
+    ctx => ctx && !ctx.closed,
+    msg,
+    NoSuchWindowError
+  )(context);
 };
 
 /**
@@ -240,6 +246,26 @@ assert.defined = function(obj, msg = "") {
 assert.number = function(obj, msg = "") {
   msg = msg || pprint`Expected ${obj} to be finite number`;
   return assert.that(Number.isFinite, msg)(obj);
+};
+
+/**
+ * Asserts that <var>obj</var> is a positive number.
+ *
+ * @param {?} obj
+ *     Value to test.
+ * @param {string=} msg
+ *     Custom error message.
+ *
+ * @return {number}
+ *     <var>obj</var> is returned unaltered.
+ *
+ * @throws {InvalidArgumentError}
+ *     If <var>obj</var> is not a positive integer.
+ */
+assert.positiveNumber = function(obj, msg = "") {
+  assert.number(obj, msg);
+  msg = msg || pprint`Expected ${obj} to be >= 0`;
+  return assert.that(n => n >= 0, msg)(obj);
 };
 
 /**

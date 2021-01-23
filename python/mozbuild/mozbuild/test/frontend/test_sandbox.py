@@ -2,10 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
-import os
-import shutil
 import unittest
 
 from mozunit import main
@@ -30,7 +28,6 @@ from mozbuild.frontend.context import (
 )
 
 from mozbuild.test.common import MockConfig
-from types import StringTypes
 
 import mozpack.path as mozpath
 
@@ -99,7 +96,7 @@ class TestSandbox(unittest.TestCase):
 
         sandbox.exec_source('DIRS = ["foo"]')
         with self.assertRaises(SandboxExecutionError) as se:
-          sandbox.exec_source('DIRS = ["bar"]')
+            sandbox.exec_source('DIRS = ["bar"]')
 
         self.assertEqual(sandbox['DIRS'], ['foo'])
         e = se.exception
@@ -114,7 +111,7 @@ class TestSandbox(unittest.TestCase):
         sandbox = self.sandbox()
 
         with self.assertRaises(SandboxExecutionError) as se:
-            sandbox.exec_source('True = 1')
+            sandbox.exec_source('sorted = 1')
 
         e = se.exception
         self.assertIsInstance(e.exc_value, KeyError)
@@ -129,6 +126,7 @@ class TestedSandbox(MozbuildSandbox):
     It automatically normalizes paths given to exec_file and exec_source. This
     helps simplify the test code.
     '''
+
     def normalize_path(self, path):
         return mozpath.normpath(
             mozpath.join(self._context.config.topsrcdir, path))
@@ -141,7 +139,7 @@ class TestedSandbox(MozbuildSandbox):
 
     def exec_source(self, source, path=''):
         super(TestedSandbox, self).exec_source(source,
-            self.normalize_path(path) if path else '')
+                                               self.normalize_path(path) if path else '')
 
 
 class TestMozbuildSandbox(unittest.TestCase):
@@ -188,9 +186,9 @@ class TestMozbuildSandbox(unittest.TestCase):
         self.assertEqual(sandbox['TOPOBJDIR'], config.topobjdir)
         self.assertEqual(sandbox['RELATIVEDIR'], 'foo/bar')
         self.assertEqual(sandbox['SRCDIR'],
-            mozpath.join(config.topsrcdir, 'foo/bar'))
+                         mozpath.join(config.topsrcdir, 'foo/bar'))
         self.assertEqual(sandbox['OBJDIR'],
-            mozpath.join(config.topobjdir, 'foo/bar'))
+                         mozpath.join(config.topobjdir, 'foo/bar'))
 
     def test_config_access(self):
         sandbox = self.sandbox()
@@ -238,7 +236,7 @@ class TestMozbuildSandbox(unittest.TestCase):
 
         sandbox.exec_source('DIST_SUBDIR = "foo"')
         with self.assertRaises(SandboxExecutionError) as se:
-          sandbox.exec_source('DIST_SUBDIR = "bar"')
+            sandbox.exec_source('DIST_SUBDIR = "bar"')
 
         self.assertEqual(sandbox['DIST_SUBDIR'], 'foo')
         e = se.exception
@@ -259,7 +257,7 @@ class TestMozbuildSandbox(unittest.TestCase):
             sandbox.source_path('bar'),
         ])
         self.assertEqual(sandbox._context.main_path,
-            sandbox.normalize_path('moz.build'))
+                         sandbox.normalize_path('moz.build'))
         self.assertEqual(len(sandbox._context.all_paths), 2)
 
     def test_include_outside_topsrcdir(self):
@@ -269,7 +267,7 @@ class TestMozbuildSandbox(unittest.TestCase):
             sandbox.exec_file('relative.build')
 
         self.assertEqual(se.exception.illegal_path,
-            sandbox.normalize_path('../moz.build'))
+                         sandbox.normalize_path('../moz.build'))
 
     def test_include_error_stack(self):
         # Ensure the path stack is reported properly in exceptions.
@@ -324,8 +322,8 @@ class TestMozbuildSandbox(unittest.TestCase):
         with self.assertRaises(SandboxCalledError) as sce:
             sandbox.exec_source('error("This is an error.")')
 
-        e = sce.exception
-        self.assertEqual(e.message, 'This is an error.')
+        e = sce.exception.message
+        self.assertIn('This is an error.', str(e))
 
     def test_substitute_config_files(self):
         sandbox = self.sandbox()
@@ -335,17 +333,6 @@ class TestMozbuildSandbox(unittest.TestCase):
         self.assertEqual(sandbox['CONFIGURE_SUBST_FILES'], ['bar', 'foo'])
         for item in sandbox['CONFIGURE_SUBST_FILES']:
             self.assertIsInstance(item, SourcePath)
-
-    def test_invalid_utf8_substs(self):
-        """Ensure invalid UTF-8 in substs is converted with an error."""
-
-        # This is really mbcs. It's a bunch of invalid UTF-8.
-        config = MockConfig(extra_substs={'BAD_UTF8': b'\x83\x81\x83\x82\x3A'})
-
-        sandbox = MozbuildSandbox(Context(VARIABLES, config))
-
-        self.assertEqual(sandbox['CONFIG']['BAD_UTF8'],
-            u'\ufffd\ufffd\ufffd\ufffd:')
 
     def test_invalid_exports_set_base(self):
         sandbox = self.sandbox()
@@ -471,8 +458,8 @@ def foo():
         self.assertIsInstance(e.exc_value, NameError)
 
         e = se.exception.exc_value
-        self.assertEqual(e.message,
-            'Template function names must be CamelCase.')
+        self.assertIn('Template function names must be CamelCase.',
+                      str(e))
 
         # Template names must not already be registered.
         sandbox2 = self.sandbox(metadata={'templates': sandbox.templates})
@@ -488,12 +475,12 @@ def Template():
         self.assertIsInstance(e.exc_value, KeyError)
 
         e = se.exception.exc_value
-        self.assertEqual(e.message,
-            'A template named "Template" was already declared in %s.' %
-            sandbox.normalize_path('templates.mozbuild'))
+        self.assertIn('A template named "Template" was already declared in %s.' %
+                      sandbox.normalize_path('templates.mozbuild'), str(e))
 
     def test_function_args(self):
-        class Foo(int): pass
+        class Foo(int):
+            pass
 
         def foo(a, b):
             return type(a), type(b)

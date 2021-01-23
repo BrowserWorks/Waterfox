@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -12,6 +10,13 @@ loader.lazyRequireGetter(
   this,
   "escapeCSSComment",
   "devtools/shared/css/parsing-utils",
+  true
+);
+
+loader.lazyRequireGetter(
+  this,
+  "getCSSVariables",
+  "devtools/client/inspector/rules/utils/utils",
   true
 );
 
@@ -55,8 +60,11 @@ class TextProperty {
     this.cssProperties = this.elementStyle.ruleView.cssProperties;
     this.panelDoc = this.elementStyle.ruleView.inspector.panelDoc;
     this.userProperties = this.elementStyle.store.userProperties;
+    // Names of CSS variables used in the value of this declaration.
+    this.usedVariables = new Set();
 
     this.updateComputed();
+    this.updateUsedVariables();
   }
 
   get computedProperties() {
@@ -135,6 +143,18 @@ class TextProperty {
   }
 
   /**
+   * Extract all CSS variable names used in this declaration's value into a Set for
+   * easy querying. Call this method any time the declaration's value changes.
+   */
+  updateUsedVariables() {
+    this.usedVariables.clear();
+
+    for (const variable of getCSSVariables(this.value)) {
+      this.usedVariables.add(variable);
+    }
+  }
+
+  /**
    * Set all the values from another TextProperty instance into
    * this TextProperty instance.
    *
@@ -151,6 +171,7 @@ class TextProperty {
     }
 
     if (changed) {
+      this.updateUsedVariables();
       this.updateEditor();
     }
   }
@@ -159,10 +180,10 @@ class TextProperty {
     if (value !== this.value || force) {
       this.userProperties.setProperty(this.rule.domRule, this.name, value);
     }
-
-    return this.rule
-      .setPropertyValue(this, value, priority)
-      .then(() => this.updateEditor());
+    return this.rule.setPropertyValue(this, value, priority).then(() => {
+      this.updateUsedVariables();
+      this.updateEditor();
+    });
   }
 
   /**
@@ -175,6 +196,7 @@ class TextProperty {
   updateValue(value) {
     if (value !== this.value) {
       this.value = value;
+      this.updateUsedVariables();
       this.updateEditor();
     }
   }
@@ -272,6 +294,18 @@ class TextProperty {
     }
 
     return this.rule.domRule.declarations[selfIndex].isNameValid;
+  }
+
+  /**
+   * Returns true if the property value is a CSS variables and contains the given variable
+   * name, and false otherwise.
+   *
+   * @param {String}
+   *        CSS variable name (e.g. "--color")
+   * @return {Boolean}
+   */
+  hasCSSVariable(name) {
+    return this.usedVariables.has(name);
   }
 }
 

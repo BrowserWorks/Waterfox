@@ -13,7 +13,7 @@ import shutil
 import subprocess
 import sys
 
-import xtalos
+from talos.xtalos import xtalos
 
 EVENTNAME_INDEX = 0
 PROCESS_INDEX = 2
@@ -258,7 +258,14 @@ def trackThreadNetIO(row, io, stage):
         gConnectionIDs[connID] = tid
     origThread = gConnectionIDs[connID]
     if origThread in gThreads:
-        netEvt = re.match("[\w-]+\/([\w-]+)", event).group(1)
+        match = re.match("[\w-]+\/([\w-]+)?", event)
+        if not match:
+            raise xtalos.XTalosError(
+                "Could not find a regular expression match for event: {}"
+                .format(event)
+            )
+        netEvt = match.group(1)
+
         if netEvt in net_events:
             opType = net_events[netEvt]
             th, stg = gThreads[origThread], stages[stage]

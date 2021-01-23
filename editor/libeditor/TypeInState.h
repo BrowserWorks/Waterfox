@@ -3,13 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef TypeInState_h
-#define TypeInState_h
+#ifndef mozilla_TypeInState_h
+#define mozilla_TypeInState_h
 
 #include "mozilla/EditorDOMPoint.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsGkAtoms.h"
 #include "nsISupportsImpl.h"
 #include "nsString.h"
 #include "nsTArray.h"
@@ -24,8 +25,6 @@ class nsAtom;
 class nsINode;
 
 namespace mozilla {
-
-class HTMLEditRules;
 namespace dom {
 class Selection;
 }  // namespace dom
@@ -35,9 +34,48 @@ struct PropItem {
   nsAtom* attr;
   nsString value;
 
-  PropItem();
-  PropItem(nsAtom* aTag, nsAtom* aAttr, const nsAString& aValue);
-  ~PropItem();
+  PropItem() : tag(nullptr), attr(nullptr) { MOZ_COUNT_CTOR(PropItem); }
+  PropItem(nsAtom* aTag, nsAtom* aAttr, const nsAString& aValue)
+      : tag(aTag),
+        attr(aAttr != nsGkAtoms::_empty ? aAttr : nullptr),
+        value(aValue) {
+    MOZ_COUNT_CTOR(PropItem);
+  }
+  MOZ_COUNTED_DTOR(PropItem)
+};
+
+class StyleCache final {
+ public:
+  StyleCache() = delete;
+  StyleCache(nsStaticAtom* aTag, nsStaticAtom* aAttribute,
+             const nsAString& aValue)
+      : mTag(aTag), mAttribute(aAttribute), mValue(aValue) {
+    MOZ_ASSERT(mTag);
+  }
+
+  nsStaticAtom* Tag() const { return mTag; }
+  nsStaticAtom* GetAttribute() const { return mAttribute; }
+  const nsString& Value() const { return mValue; }
+
+ private:
+  nsStaticAtom* mTag;
+  nsStaticAtom* mAttribute;
+  nsString mValue;
+};
+
+class MOZ_STACK_CLASS AutoStyleCacheArray final
+    : public AutoTArray<StyleCache, 19> {
+ public:
+  index_type IndexOf(const nsStaticAtom* aTag,
+                     const nsStaticAtom* aAttribute) const {
+    for (index_type index = 0; index < Length(); ++index) {
+      const StyleCache& styleCache = ElementAt(index);
+      if (styleCache.Tag() == aTag && styleCache.GetAttribute() == aAttribute) {
+        return index;
+      }
+    }
+    return NoIndex;
+  }
 };
 
 class TypeInState final {
@@ -50,7 +88,7 @@ class TypeInState final {
 
   nsresult UpdateSelState(dom::Selection* aSelection);
 
-  void OnSelectionChange(dom::Selection& aSelection);
+  void OnSelectionChange(dom::Selection& aSelection, int16_t aReason);
 
   void SetProp(nsAtom* aProp, nsAtom* aAttr, const nsAString& aValue);
 
@@ -96,10 +134,8 @@ class TypeInState final {
   nsTArray<PropItem*> mClearedArray;
   EditorDOMPoint mLastSelectionPoint;
   int32_t mRelativeFontSize;
-
-  friend class HTMLEditRules;
 };
 
 }  // namespace mozilla
 
-#endif  // #ifndef TypeInState_h
+#endif  // #ifndef mozilla_TypeInState_h

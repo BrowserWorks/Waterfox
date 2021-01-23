@@ -16,7 +16,6 @@ DIRS += [
 DevToolsModules(
     'Accordion.css',
     'Accordion.js',
-    'AutoCompletePopup.js',
     'Frame.js',
     'HSplitBox.js',
     'List.css',
@@ -26,6 +25,7 @@ DevToolsModules(
     'NotificationBox.css',
     'NotificationBox.js',
     'SearchBox.js',
+    'SearchBoxAutocompletePopup.js',
     'Sidebar.js',
     'SidebarToggle.css',
     'SidebarToggle.js',
@@ -36,5 +36,5 @@ DevToolsModules(
     'VisibilityHandler.js',
 )
 
-MOCHITEST_CHROME_MANIFESTS += ['test/mochitest/chrome.ini']
+MOCHITEST_CHROME_MANIFESTS += ['test/chrome/chrome.ini']
 BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']

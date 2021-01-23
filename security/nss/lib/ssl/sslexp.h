@@ -159,11 +159,16 @@ typedef SECStatus(PR_CALLBACK *SSLExtensionHandler)(
                           handler, handlerArg))
 
 /*
- * Setup the anti-replay buffer for supporting 0-RTT in TLS 1.3 on servers.
+ * Create an anti-replay context for supporting 0-RTT in TLS 1.3 on servers.
  *
- * To use 0-RTT on a server, you must call this function.  Failing to call this
- * function will result in all 0-RTT being rejected.  Connections will complete,
- * but early data will be rejected.
+ * To use 0-RTT on a server, you must create an anti-replay context using
+ * SSL_CreateAntiReplayContext and set that on the socket with
+ * SSL_SetAntiReplayContext.  Failing to set a context on the server will result
+ * in all 0-RTT being rejected.  Connections will complete, but early data will
+ * be rejected.
+ *
+ * Anti-replay contexts are reference counted and are released with
+ * SSL_ReleaseAntiReplayContext.
  *
  * NSS uses a Bloom filter to track the ClientHello messages that it receives
  * (specifically, it uses the PSK binder).  This function initializes a pair of
@@ -181,11 +186,11 @@ typedef SECStatus(PR_CALLBACK *SSLExtensionHandler)(
  * The first tuning parameter to consider is |window|, which determines the
  * window over which ClientHello messages will be tracked.  This also causes
  * early data to be rejected if a ClientHello contains a ticket age parameter
- * that is outside of this window (see Section 4.2.10.4 of
- * draft-ietf-tls-tls13-20 for details).  Set |window| to account for any
- * potential sources of clock error.  |window| is the entire width of the
- * window, which is symmetrical.  Therefore to allow 5 seconds of clock error in
- * both directions, set the value to 10 seconds (i.e., 10 * PR_USEC_PER_SEC).
+ * that is outside of this window (see Section 8.3 of RFC 8446 for details).
+ * Set |window| to account for any potential sources of clock error.  |window|
+ * is the entire width of the window, which is symmetrical.  Therefore to allow
+ * 5 seconds of clock error in both directions, set the value to 10 seconds
+ * (i.e., 10 * PR_USEC_PER_SEC).
  *
  * After calling this function, early data will be rejected until |window|
  * elapses.  This prevents replay across crashes and restarts.  Only call this
@@ -219,10 +224,23 @@ typedef SECStatus(PR_CALLBACK *SSLExtensionHandler)(
  * Early data can be replayed at least once with every server instance that will
  * accept tickets that are encrypted with the same key.
  */
-#define SSL_SetupAntiReplay(window, k, bits)                                    \
-    SSL_EXPERIMENTAL_API("SSL_SetupAntiReplay",                                 \
-                         (PRTime _window, unsigned int _k, unsigned int _bits), \
-                         (window, k, bits))
+typedef struct SSLAntiReplayContextStr SSLAntiReplayContext;
+#define SSL_CreateAntiReplayContext(now, window, k, bits, ctx) \
+    SSL_EXPERIMENTAL_API("SSL_CreateAntiReplayContext",        \
+                         (PRTime _now, PRTime _window,         \
+                          unsigned int _k, unsigned int _bits, \
+                          SSLAntiReplayContext **_ctx),        \
+                         (now, window, k, bits, ctx))
+
+#define SSL_SetAntiReplayContext(fd, ctx)                                 \
+    SSL_EXPERIMENTAL_API("SSL_SetAntiReplayContext",                      \
+                         (PRFileDesc * _fd, SSLAntiReplayContext * _ctx), \
+                         (fd, ctx))
+
+#define SSL_ReleaseAntiReplayContext(ctx)                \
+    SSL_EXPERIMENTAL_API("SSL_ReleaseAntiReplayContext", \
+                         (SSLAntiReplayContext * _ctx),  \
+                         (ctx))
 
 /*
  * This function allows a server application to generate a session ticket that
@@ -307,6 +325,10 @@ typedef SECStatus(PR_CALLBACK *SSLExtensionHandler)(
  *   reject a second ClientHello (i.e., when firstHello is PR_FALSE); NSS will
  *   abort the handshake if this value is returned from a second call.
  *
+ * - Returning ssl_hello_retry_reject_0rtt causes NSS to proceed normally, but
+ *   to reject 0-RTT.  Use this if there is something in the token that
+ *   indicates that 0-RTT might be unsafe.
+ *
  * An application that chooses to perform a stateless retry can discard the
  * server socket.  All necessary state to continue the TLS handshake will be
  * included in the cookie extension.  This makes it possible to use a new socket
@@ -326,7 +348,8 @@ typedef SECStatus(PR_CALLBACK *SSLExtensionHandler)(
 typedef enum {
     ssl_hello_retry_fail,
     ssl_hello_retry_accept,
-    ssl_hello_retry_request
+    ssl_hello_retry_request,
+    ssl_hello_retry_reject_0rtt
 } SSLHelloRetryRequestAction;
 
 typedef SSLHelloRetryRequestAction(PR_CALLBACK *SSLHelloRetryRequestCallback)(
@@ -513,7 +536,7 @@ typedef SECStatus(PR_CALLBACK *SSLResumptionTokenCallback)(
  * group -- the named group this key corresponds to
  * pubKey -- the public key for the key pair
  * pad -- the length to pad to
- * notBefore/notAfter -- validity range
+ * notBefore/notAfter -- validity range in seconds since epoch
  * out/outlen/maxlen -- where to output the data
  */
 #define SSL_EncodeESNIKeys(cipherSuites, cipherSuiteCount,          \
@@ -639,7 +662,11 @@ typedef SECStatus(PR_CALLBACK *SSLRecordWriteCallback)(
  * used in TLS.  The lower bits of the IV are XORed with the 64-bit counter to
  * produce the nonce.  Otherwise, this is an AEAD interface similar to that
  * described in RFC 5116.
- */
+ *
+ * Note: SSL_MakeAead internally calls SSL_MakeVariantAead with a variant of
+ * "stream", behaving as noted above. If "datagram" variant is passed instead,
+ * the Label prefix used in HKDF-Expand is "dtls13" instead of "tls13 ". See
+ * 7.1 of RFC 8446 and draft-ietf-tls-dtls13-34. */
 typedef struct SSLAeadContextStr SSLAeadContext;
 
 #define SSL_MakeAead(version, cipherSuite, secret,                  \
@@ -651,6 +678,18 @@ typedef struct SSLAeadContextStr SSLAeadContext;
                           unsigned int _labelPrefixLen,             \
                           SSLAeadContext **_ctx),                   \
                          (version, cipherSuite, secret,             \
+                          labelPrefix, labelPrefixLen, ctx))
+
+#define SSL_MakeVariantAead(version, cipherSuite, variant, secret,  \
+                            labelPrefix, labelPrefixLen, ctx)       \
+    SSL_EXPERIMENTAL_API("SSL_MakeVariantAead",                     \
+                         (PRUint16 _version, PRUint16 _cipherSuite, \
+                          SSLProtocolVariant _variant,              \
+                          PK11SymKey * _secret,                     \
+                          const char *_labelPrefix,                 \
+                          unsigned int _labelPrefixLen,             \
+                          SSLAeadContext **_ctx),                   \
+                         (version, cipherSuite, variant, secret,    \
                           labelPrefix, labelPrefixLen, ctx))
 
 #define SSL_AeadEncrypt(ctx, counter, aad, aadLen, in, inLen,            \
@@ -693,8 +732,13 @@ typedef struct SSLAeadContextStr SSLAeadContext;
                           PK11SymKey * *_keyp),                     \
                          (version, cipherSuite, salt, ikm, keyp))
 
-/* SSL_HkdfExpandLabel produces a key with a mechanism that is suitable for
- * input to SSL_HkdfExpandLabel or SSL_MakeAead. */
+/* SSL_HkdfExpandLabel and SSL_HkdfVariantExpandLabel produce a key with a
+ * mechanism that is suitable for input to SSL_HkdfExpandLabel or SSL_MakeAead.
+ *
+ * Note: SSL_HkdfVariantExpandLabel internally calls SSL_HkdfExpandLabel with
+ * a default "stream" variant. If "datagram" variant is passed instead, the
+ * Label prefix used in HKDF-Expand is "dtls13" instead of "tls13 ". See 7.1 of
+ * RFC 8446 and draft-ietf-tls-dtls13-34. */
 #define SSL_HkdfExpandLabel(version, cipherSuite, prk,                     \
                             hsHash, hsHashLen, label, labelLen, keyp)      \
     SSL_EXPERIMENTAL_API("SSL_HkdfExpandLabel",                            \
@@ -706,9 +750,28 @@ typedef struct SSLAeadContextStr SSLAeadContext;
                          (version, cipherSuite, prk,                       \
                           hsHash, hsHashLen, label, labelLen, keyp))
 
-/* SSL_HkdfExpandLabelWithMech uses the KDF from the selected TLS version and
- * cipher suite, as with the other calls, but the provided mechanism and key
- * size. This allows the key to be used more widely. */
+#define SSL_HkdfVariantExpandLabel(version, cipherSuite, prk,                   \
+                                   hsHash, hsHashLen, label, labelLen, variant, \
+                                   keyp)                                        \
+    SSL_EXPERIMENTAL_API("SSL_HkdfVariantExpandLabel",                          \
+                         (PRUint16 _version, PRUint16 _cipherSuite,             \
+                          PK11SymKey * _prk,                                    \
+                          const PRUint8 *_hsHash, unsigned int _hsHashLen,      \
+                          const char *_label, unsigned int _labelLen,           \
+                          SSLProtocolVariant _variant,                          \
+                          PK11SymKey **_keyp),                                  \
+                         (version, cipherSuite, prk,                            \
+                          hsHash, hsHashLen, label, labelLen, variant,          \
+                          keyp))
+
+/* SSL_HkdfExpandLabelWithMech and SSL_HkdfVariantExpandLabelWithMech use the KDF
+ * from the selected TLS version and cipher suite, as with the other calls, but
+ * the provided mechanism and key size. This allows the key to be used more widely.
+ *
+ * Note: SSL_HkdfExpandLabelWithMech internally calls SSL_HkdfVariantExpandLabelWithMech
+ * with a default "stream" variant. If "datagram" variant is passed instead, the
+ * Label prefix used in HKDF-Expand is "dtls13" instead of "tls13 ". See 7.1 of
+ * RFC 8446 and draft-ietf-tls-dtls13-34. */
 #define SSL_HkdfExpandLabelWithMech(version, cipherSuite, prk,             \
                                     hsHash, hsHashLen, label, labelLen,    \
                                     mech, keySize, keyp)                   \
@@ -723,8 +786,171 @@ typedef struct SSLAeadContextStr SSLAeadContext;
                           hsHash, hsHashLen, label, labelLen,              \
                           mech, keySize, keyp))
 
+#define SSL_HkdfVariantExpandLabelWithMech(version, cipherSuite, prk,          \
+                                           hsHash, hsHashLen, label, labelLen, \
+                                           mech, keySize, variant, keyp)       \
+    SSL_EXPERIMENTAL_API("SSL_HkdfVariantExpandLabelWithMech",                 \
+                         (PRUint16 _version, PRUint16 _cipherSuite,            \
+                          PK11SymKey * _prk,                                   \
+                          const PRUint8 *_hsHash, unsigned int _hsHashLen,     \
+                          const char *_label, unsigned int _labelLen,          \
+                          CK_MECHANISM_TYPE _mech, unsigned int _keySize,      \
+                          SSLProtocolVariant _variant,                         \
+                          PK11SymKey **_keyp),                                 \
+                         (version, cipherSuite, prk,                           \
+                          hsHash, hsHashLen, label, labelLen,                  \
+                          mech, keySize, variant, keyp))
+
+/* SSL_SetTimeFunc overrides the default time function (PR_Now()) and provides
+ * an alternative source of time for the socket. This is used in testing, and in
+ * applications that need better control over how the clock is accessed. Set the
+ * function to NULL to use PR_Now().*/
+typedef PRTime(PR_CALLBACK *SSLTimeFunc)(void *arg);
+
+#define SSL_SetTimeFunc(fd, f, arg)                                      \
+    SSL_EXPERIMENTAL_API("SSL_SetTimeFunc",                              \
+                         (PRFileDesc * _fd, SSLTimeFunc _f, void *_arg), \
+                         (fd, f, arg))
+
+/* Create a delegated credential (DC) for the draft-ietf-tls-subcerts extension
+ * using the given certificate |cert| and its signing key |certPriv| and write
+ * the serialized DC to |out|. The
+ * parameters are:
+ *  - the DC public key |dcPub|;
+ *  - the DC signature scheme |dcCertVerifyAlg|, used to verify the handshake.
+ *  - the DC time-to-live |dcValidFor|, the number of seconds from now for which
+ *    the DC should be valid; and
+ *  - the current time |now|.
+ *
+ *  The signing algorithm used to verify the DC signature is deduced from
+ *  |cert|.
+ *
+ *  It's the caller's responsibility to ensure the input parameters are all
+ *  valid. This procedure is meant primarily for testing; for this purpose it is
+ *  useful to do no validation.
+ */
+#define SSL_DelegateCredential(cert, certPriv, dcPub, dcCertVerifyAlg,        \
+                               dcValidFor, now, out)                          \
+    SSL_EXPERIMENTAL_API("SSL_DelegateCredential",                            \
+                         (const CERTCertificate *_cert,                       \
+                          const SECKEYPrivateKey *_certPriv,                  \
+                          const SECKEYPublicKey *_dcPub,                      \
+                          SSLSignatureScheme _dcCertVerifyAlg,                \
+                          PRUint32 _dcValidFor,                               \
+                          PRTime _now,                                        \
+                          SECItem *_out),                                     \
+                         (cert, certPriv, dcPub, dcCertVerifyAlg, dcValidFor, \
+                          now, out))
+
+/* New functions created to permit get/set the CipherSuites Order for the
+ * handshake (Client Hello).
+ *
+ * The *Get function puts the current set of active (enabled and policy set as
+ * PR_TRUE) cipher suites in the cipherOrder outparam. Cipher suites that
+ * aren't active aren't included. The paramenters are:
+ *   - PRFileDesc *fd = FileDescriptor to get information.
+ *   - PRUint16 *cipherOrder = The memory allocated for cipherOrder needs to be
+ *     SSL_GetNumImplementedCiphers() * sizeof(PRUint16) or more.
+ *   - PRUint16 numCiphers = The number of active ciphersuites listed in
+ *     *cipherOrder is written here.
+ *
+ * The *Set function permits reorder the CipherSuites list for the Handshake
+ * (Client Hello). The default ordering defined in ssl3con.c is enough in
+ * almost all cases. But, if the client needs some hardening or performance
+ * adjusts related to CipherSuites, this can be done with this function.
+ * The caller has to be aware about the risk of call this function while a
+ * handshake are being processed in this fd/socket. For example, if you disable
+ * a cipher after the handshake and this cipher was choosen for that
+ * connection, something bad will happen.
+ * The parameters are:
+ *   - PRFileDesc *fd = FileDescriptor to change.
+ *   - const PRUint16 *cipherOrder = Must receive all ciphers to be ordered, in
+ *     the desired order. They will be set in the begin of the list. Only
+ *     suites listed by SSL_ImplementedCiphers() can be included.
+ *   - PRUint16 numCiphers = Must receive the number of items in *cipherOrder.
+ * */
+#define SSL_CipherSuiteOrderGet(fd, cipherOrder, numCiphers)         \
+    SSL_EXPERIMENTAL_API("SSL_CipherSuiteOrderGet",                  \
+                         (PRFileDesc * _fd, PRUint16 * _cipherOrder, \
+                          unsigned int *_numCiphers),                \
+                         (fd, cipherOrder, numCiphers))
+
+#define SSL_CipherSuiteOrderSet(fd, cipherOrder, numCiphers)              \
+    SSL_EXPERIMENTAL_API("SSL_CipherSuiteOrderSet",                       \
+                         (PRFileDesc * _fd, const PRUint16 *_cipherOrder, \
+                          PRUint16 _numCiphers),                          \
+                         (fd, cipherOrder, numCiphers))
+
+/*
+ * The following functions expose a masking primitive that uses ciphersuite and
+ * version information to set paramaters for the masking key and mask generation
+ * logic. This is only supported for TLS 1.3.
+ *
+ * The key and IV are generated using the TLS KDF with a custom label.  That is
+ * HKDF-Expand-Label(secret, label, "", L), where |label| is an input to
+ * SSL_CreateMaskingContext.
+ *
+ * The mask generation logic in SSL_CreateMask is determined by the underlying
+ * symmetric cipher:
+ *  - For AES-ECB, mask = AES-ECB(mask_key, sample). |len| must be <= 16 as
+ *    the output is limited to a single block.
+ *  - For CHACHA20, mask = ChaCha20(mask_key, sample[0..3], sample[4..15], {0}.len)
+ *    That is, the low 4 bytes of |sample| used as the counter, the remaining 12 bytes
+ *    the nonce. We encrypt |len| bytes of zeros, returning the raw key stream.
+ *
+ *  The caller must pre-allocate at least |len| bytes for output. If the underlying
+ *  cipher cannot produce the requested amount of data, SECFailure is returned.
+ */
+
+typedef struct SSLMaskingContextStr {
+    CK_MECHANISM_TYPE mech;
+    PRUint16 version;
+    PRUint16 cipherSuite;
+    PK11SymKey *secret;
+} SSLMaskingContext;
+
+#define SSL_CreateMaskingContext(version, cipherSuite, secret,      \
+                                 label, labelLen, ctx)              \
+    SSL_EXPERIMENTAL_API("SSL_CreateMaskingContext",                \
+                         (PRUint16 _version, PRUint16 _cipherSuite, \
+                          PK11SymKey * _secret,                     \
+                          const char *_label,                       \
+                          unsigned int _labelLen,                   \
+                          SSLMaskingContext **_ctx),                \
+                         (version, cipherSuite, secret, label, labelLen, ctx))
+
+#define SSL_CreateVariantMaskingContext(version, cipherSuite, variant, \
+                                        secret, label, labelLen, ctx)  \
+    SSL_EXPERIMENTAL_API("SSL_CreateVariantMaskingContext",            \
+                         (PRUint16 _version, PRUint16 _cipherSuite,    \
+                          SSLProtocolVariant _variant,                 \
+                          PK11SymKey * _secret,                        \
+                          const char *_label,                          \
+                          unsigned int _labelLen,                      \
+                          SSLMaskingContext **_ctx),                   \
+                         (version, cipherSuite, variant, secret,       \
+                          label, labelLen, ctx))
+
+#define SSL_DestroyMaskingContext(ctx)                \
+    SSL_EXPERIMENTAL_API("SSL_DestroyMaskingContext", \
+                         (SSLMaskingContext * _ctx),  \
+                         (ctx))
+
+#define SSL_CreateMask(ctx, sample, sampleLen, mask, maskLen)               \
+    SSL_EXPERIMENTAL_API("SSL_CreateMask",                                  \
+                         (SSLMaskingContext * _ctx, const PRUint8 *_sample, \
+                          unsigned int _sampleLen, PRUint8 *_mask,          \
+                          unsigned int _maskLen),                           \
+                         (ctx, sample, sampleLen, mask, maskLen))
+
+#define SSL_SetDtls13VersionWorkaround(fd, enabled)        \
+    SSL_EXPERIMENTAL_API("SSL_SetDtls13VersionWorkaround", \
+                         (PRFileDesc * _fd, PRBool _enabled), (fd, enabled))
+
 /* Deprecated experimental APIs */
 #define SSL_UseAltServerHelloType(fd, enable) SSL_DEPRECATED_EXPERIMENTAL_API
+#define SSL_SetupAntiReplay(a, b, c) SSL_DEPRECATED_EXPERIMENTAL_API
+#define SSL_InitAntiReplay(a, b, c) SSL_DEPRECATED_EXPERIMENTAL_API
 
 SEC_END_PROTOS
 

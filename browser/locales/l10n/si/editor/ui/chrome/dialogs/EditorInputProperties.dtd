@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "පෝරම ක්ෂේත්‍ර ලක්ෂණ">
+<!ENTITY windowTitleImage.label "පෝරම රූප ලක්ෂණ">
+
+<!ENTITY InputType.label "ක්ෂේත්‍ර ආකාරය">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "පාඨ">
+<!ENTITY password.value "රහස්පදය">
+<!ENTITY checkbox.value "සළකුණු කොටුව">
+<!ENTITY radio.value "වරණ බොත්තම">
+<!ENTITY submit.value "Submit Button">
+<!ENTITY reset.value "Reset Button">
+<!ENTITY file.value "ගොනුනු">
+<!ENTITY hidden.value "සැඟවුණු">
+<!ENTITY image.value "රූප">
+<!ENTITY button.value "බොත්තම">
+
+<!ENTITY InputSettings.label "ක්ෂේත්‍ර සැකසුම්">
+<!ENTITY InputName.label "ක්ෂේත්‍ර නම:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "සමූහ නම:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "ක්ෂේත්‍ර අගය:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "ආරම්භක අගය:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "ආරම්භයේදී සලකුණු ලූ">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "ආරම්භයේදී තේරූ">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Read Only">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "අබලැති">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "ටැබ් දර්ශකය:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "ක්ෂේත්‍ර විශාලත්වය:">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "උපරිම දිග:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "ප්‍රවේශ යතුර (Access Key):">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "පිළිගන්නා ආකාර:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "රූපයේ ලක්ෂණ…">
+<!ENTITY ImageProperties.accesskey "E">

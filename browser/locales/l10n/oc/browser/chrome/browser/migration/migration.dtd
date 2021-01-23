@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistent d'importacion">
+
+<!ENTITY importFrom.label               "Importar las opcions, los marcapaginas, l'istoric, los senhals e las autras donadas de :">
+<!ENTITY importFromUnix.label           "Importar las preferéncias, los marcapaginas, l'istoric, los senhals e las autras donadas de :">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge ancian">
+<!ENTITY importFromEdgeLegacy.accesskey "a">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Importar pas res">
+<!ENTITY importFromNothing.accesskey    "p">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Impossible de trobar un logicial que contenga de marcapaginas, un istoric o de senhals.">
+
+<!ENTITY importSource.title             "Importar los paramètres e las donadas">
+<!ENTITY importItems.title              "Elements d'importar">
+<!ENTITY importItems.label              "Seleccionatz los elements d'importar :">
+
+<!ENTITY migrating.title                "Importacion…">
+<!ENTITY migrating.label                "Los elements seguents son a s'importar…">
+
+<!ENTITY selectProfile.title            "Causissètz un perfil">
+<!ENTITY selectProfile.label            "Los perfils seguents son disponibles per èsser importats :">
+
+<!ENTITY done.title                     "Importacion acabada">
+<!ENTITY done.label                     "Los elements seguents son estats importats amb succès :">
+
+<!ENTITY closeSourceBrowser.label       "Abans de contunhar, asseguratz-vos que lo navegador seleccionat siá tampat">

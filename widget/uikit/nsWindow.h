@@ -27,15 +27,15 @@ class nsWindow final : public nsBaseWidget {
   // nsIWidget
   //
 
-  virtual MOZ_MUST_USE nsresult Create(nsIWidget* aParent, nsNativeWidget aNativeParent,
-                                       const LayoutDeviceIntRect& aRect,
-                                       nsWidgetInitData* aInitData = nullptr) override;
+  [[nodiscard]] virtual nsresult
+      Create(nsIWidget* aParent, nsNativeWidget aNativeParent, const LayoutDeviceIntRect& aRect,
+             nsWidgetInitData* aInitData = nullptr) override;
   virtual void Destroy() override;
   virtual void Show(bool aState) override;
   virtual void Enable(bool aState) override {}
   virtual bool IsEnabled() const override { return true; }
   virtual bool IsVisible() const override { return mVisible; }
-  virtual nsresult SetFocus(bool aState = false) override;
+  virtual void SetFocus(Raise, mozilla::dom::CallerType aCallerType) override;
   virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
 
   virtual void SetBackgroundColor(const nscolor& aColor) override;

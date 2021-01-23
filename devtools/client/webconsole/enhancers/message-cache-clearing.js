@@ -8,7 +8,7 @@ const { MESSAGES_CLEAR } = require("devtools/client/webconsole/constants");
 
 /**
  * This enhancer is responsible for clearing the messages caches using the
- * webconsoleClient when the user clear the messages (either by direct UI action, or via
+ * webconsoleFront when the user clear the messages (either by direct UI action, or via
  * `console.clear()`).
  */
 function enableMessagesCacheClearing(webConsoleUI) {
@@ -16,10 +16,9 @@ function enableMessagesCacheClearing(webConsoleUI) {
     function messagesCacheClearingEnhancer(state, action) {
       state = reducer(state, action);
 
-      const webConsoleClient = webConsoleUI && webConsoleUI.webConsoleClient;
-      if (webConsoleClient && action.type === MESSAGES_CLEAR) {
-        webConsoleClient.clearNetworkRequests();
-        webConsoleClient.clearMessagesCache();
+      if (webConsoleUI && action.type === MESSAGES_CLEAR) {
+        webConsoleUI.clearNetworkRequests();
+        webConsoleUI.clearMessagesCache();
       }
       return state;
     }

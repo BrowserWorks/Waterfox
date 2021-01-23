@@ -18,6 +18,7 @@ const test = new SearchConfigTest({
     {
       included: [{}],
       domain: "duckduckgo.com",
+      telemetryId: "ddg",
       codes: {
         searchbar: "t=ffsb",
         keyword: "t=ffab",
@@ -34,5 +35,6 @@ add_task(async function setup() {
 });
 
 add_task(async function test_searchConfig_duckduckgo() {
-  await test.run();
+  await test.run(false);
+  await test.run(true);
 });

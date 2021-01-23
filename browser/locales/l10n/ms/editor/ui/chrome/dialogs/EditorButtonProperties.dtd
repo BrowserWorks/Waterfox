@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Sifat Butang">
+
+<!ENTITY Settings.label "Tetapan">
+
+<!ENTITY ButtonType.label "Jenis">
+<!ENTITY ButtonType.accesskey "J">
+<!ENTITY submit.value "Hantar">
+<!ENTITY reset.value "Set semula">
+<!ENTITY button.value "Butang">
+
+<!ENTITY ButtonName.label "Nama:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Nilai:">
+<!ENTITY ButtonValue.accesskey "N">
+<!ENTITY tabIndex.label "Indeks Tab:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Dinyahdayakan">
+<!ENTITY ButtonDisabled.accesskey "N">
+<!ENTITY AccessKey.label "Kekunci Akses:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "Buang Butang">
+<!ENTITY RemoveButton.accesskey "B">

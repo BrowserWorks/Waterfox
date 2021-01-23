@@ -71,7 +71,6 @@ function test() {
   uuid = uuid.slice(1, -1); // Strip { and } off the UUID.
 
   const url = `moz-extension://${uuid}/`;
-  /* globals MatchPatternSet, WebExtensionPolicy */
   let policy = new WebExtensionPolicy({
     id: FAKE_ADDON_ID,
     mozExtensionHostname: uuid,
@@ -82,14 +81,14 @@ function test() {
   policy.active = true;
 
   let baseURI = Services.io.newURI(url);
-  let principal = Services.scriptSecurityManager.createCodebasePrincipal(
+  let principal = Services.scriptSecurityManager.createContentPrincipal(
     baseURI,
     {}
   );
 
   let chromeWebNav = Services.appShell.createWindowlessBrowser(true);
   let docShell = chromeWebNav.docShell;
-  docShell.createAboutBlankContentViewer(principal);
+  docShell.createAboutBlankContentViewer(principal, principal);
 
   info("fake webextension docShell created");
 

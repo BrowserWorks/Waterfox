@@ -15,7 +15,6 @@ load 420513-1.html
 load 453935-1.html
 load 467693-1.html
 load 468552-1.html
-load 471366-1.html
 load 475185-1.html
 load 475291-1.html
 load 503286-1.html
@@ -53,3 +52,4 @@ load 854604.html
 pref(dom.use_xbl_scopes_for_remote_xul,true) load 898939.html
 pref(security.fileuri.strict_origin_policy,false) load 938297.html
 load 977538.html
+load 1577573.html

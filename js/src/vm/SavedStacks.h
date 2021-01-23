@@ -17,6 +17,10 @@
 #include "vm/SavedFrame.h"
 #include "vm/Stack.h"
 
+namespace JS {
+enum class SavedFrameSelfHosted;
+}
+
 namespace js {
 
 // # Saved Stacks
@@ -168,7 +172,7 @@ class SavedStacks {
                                    HandleString asyncCause,
                                    MutableHandleSavedFrame adoptedStack,
                                    const mozilla::Maybe<size_t>& maxFrameCount);
-  void sweep();
+  void traceWeak(JSTracer* trc);
   void trace(JSTracer* trc);
   uint32_t count();
   void clear();
@@ -227,6 +231,7 @@ class SavedStacks {
                                     Handle<SavedFrame::Lookup> lookup);
   SavedFrame* createFrameFromLookup(JSContext* cx,
                                     Handle<SavedFrame::Lookup> lookup);
+  void setSamplingProbability(double probability);
 
   // Cache for memoizing PCToLineNumber lookups.
 
@@ -238,7 +243,9 @@ class SavedStacks {
 
     void trace(JSTracer* trc) { /* PCKey is weak. */
     }
-    bool needsSweep() { return IsAboutToBeFinalized(&script); }
+    bool traceWeak(JSTracer* trc) {
+      return TraceWeakEdge(trc, &script, "traceWeak");
+    }
   };
 
  public:
@@ -252,13 +259,11 @@ class SavedStacks {
       TraceNullableEdge(trc, &source, "SavedStacks::LocationValue::source");
     }
 
-    bool needsSweep() {
-      // LocationValue is always held strongly, but in a weak map.
-      // Assert that it has been marked already, but allow it to be
-      // ejected from the map when the key dies.
+    bool traceWeak(JSTracer* trc) {
       MOZ_ASSERT(source);
-      MOZ_ASSERT(!IsAboutToBeFinalized(&source));
-      return true;
+      // TODO: Bug 1501334: IsAboutToBeFinalized doesn't work for atoms.
+      // Otherwise we should assert TraceWeakEdge always returns true;
+      return TraceWeakEdge(trc, &source, "traceWeak");
     }
 
     HeapPtr<JSAtom*> source;
@@ -329,6 +334,11 @@ JS::UniqueChars BuildUTF8StackString(JSContext* cx, JSPrincipals* principals,
                                      HandleObject stack);
 
 uint32_t FixupColumnForDisplay(uint32_t column);
+
+js::SavedFrame* UnwrapSavedFrame(JSContext* cx, JSPrincipals* principals,
+                                 HandleObject obj,
+                                 JS::SavedFrameSelfHosted selfHosted,
+                                 bool& skippedAsync);
 
 } /* namespace js */
 

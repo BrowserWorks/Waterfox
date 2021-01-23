@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "أنشئ تقويمًا جديدًا" >
+<!ENTITY wizard.label             "أنشئ تقويمًا جديدًا" >
+<!ENTITY wizard.description       "حدّد مكان التقويم" >
+
+<!ENTITY initialpage.description    "يمكنك حفظ التقويم في الحاسوب أو الخادوم وذلك لتصل إليه من بعيد أو لتشاركه مع أصدقائك أو زملائك في العمل." >
+<!ENTITY initialpage.computer.label  "في الحاسوب">
+<!ENTITY initialpage.network.label  "في الشبكة">
+
+<!ENTITY locationpage.description         "اكتب المعلومات المطلوبة للوصول إلى التقويم البعيد" >
+<!ENTITY locationpage.login.description   "اختياري: أدخل اسم المستخدم وكلمة السر" >
+<!ENTITY locationpage.username.label      "اسم المستخدم:" >
+<!ENTITY locationpage.password.label      "كلمة السّر:" >
+
+<!ENTITY custompage.shortdescription  "خصص التقويم" >
+<!ENTITY custompage.longdescription   "يمكنك تسمية التقويم وتلوين أحداثه من هنا." >
+
+<!ENTITY finishpage.shortdescription  "أُنشئ التقويم" >
+<!ENTITY finishpage.longdescription   "لقد أُنشئ التقويم." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "أخرى">
+
+<!ENTITY buttons.create.label "أنشِئ تقويما">
+
+
+<!ENTITY buttons.back.label "إلى الخلف">
+
+<!ENTITY buttons.subscribe.label "اشترِك">
+
+<!ENTITY calendartype.label "نوع التقويم:">
+<!ENTITY location.label "المكان:">
+
+

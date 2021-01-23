@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Nastavení nevyžádané pošty">
+<!ENTITY junkSettings.caption "Globální nastavení nevyžádané pošty">
+<!ENTITY junkMail.intro "Další nastavení nevyžádané pošty lze provést v dialogu Nastavení účtu.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Pokud ručně označím zprávy jako nevyžádané:">
+<!ENTITY manualMark.accesskey           "r">
+<!ENTITY manualMarkModeMove.label       "Přesunout je do složky „Nevyžádaná“">
+<!ENTITY manualMarkModeMove.accesskey   "s">
+<!ENTITY manualMarkModeDelete.label     "Smazat">
+<!ENTITY manualMarkModeDelete.accesskey "m">
+
+<!ENTITY markAsRead.intro               "Označovat zprávy jako přečtené:">
+<!ENTITY autoMarkAsRead.label           "Pokud je &brandShortName; označí jako nevyžádané">
+<!ENTITY autoMarkAsRead.accesskey       "k">
+<!ENTITY manualMarkAsRead.label         "Pokud je označím manuálně jako nevyžádané">
+<!ENTITY manualMarkAsRead.accesskey     "o">
+
+<!ENTITY enableJunkLogging.label        "Povolit protokol nevyžádané pošty">
+<!ENTITY enableJunkLogging.accesskey    "P">
+<!ENTITY openJunkLog.label              "Zobrazit protokol">
+<!ENTITY openJunkLog.accesskey          "Z">
+<!ENTITY resetTrainingData.label        "Smazat naučená pravidla">
+<!ENTITY resetTrainingData.accesskey    "n">
+
+<!ENTITY pref.suspectMail.caption       "Podezřelá pošta">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Podvodná pošta">
+<!ENTITY enablePhishingDetector.label     "Upozornit, pokud čtená zpráva je podezřelá na podvodnou poštu">
+<!ENTITY enablePhishingDetector.accesskey "U">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Antivir">
+<!ENTITY antiVirus.label                  "Povolit antivirovým klientům prohlížet jednotlivé příchozí zprávy">
+<!ENTITY antiVirus.accesskey              "a">

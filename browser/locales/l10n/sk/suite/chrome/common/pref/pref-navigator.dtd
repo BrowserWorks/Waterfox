@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Prehliadač">
+
+<!ENTITY navRadio.label                 "Zobraziť">
+<!ENTITY navRadio.accesskey             "Z">
+<!ENTITY navStartPageMenu.label         "pri spustení prehliadača">
+<!ENTITY newWinPageMenu.label           "v novom okne">
+<!ENTITY newTabPageMenu.label           "na novej karte">
+
+<!ENTITY blankPageRadio.label           "Prázdnu stránku">
+<!ENTITY blankPageRadio.accesskey       "s">
+<!ENTITY homePageRadio.label            "Domovskú stránku">
+<!ENTITY homePageRadio.accesskey        "D">
+<!ENTITY lastPageRadio.label            "Naposledy navštívenú stránku">
+<!ENTITY lastPageRadio.accesskey        "N">
+<!ENTITY restoreSessionRadio.label      "Obnoviť predchádzajúcu reláciu">
+<!ENTITY restoreSessionRadio.accesskey  "O">
+
+<!ENTITY restoreSessionIntro.label      "Pri obnovení relácií a okien">
+<!ENTITY restoreImmediately.label       "Okamžite obnoviť všetky karty">
+<!ENTITY restoreImmediately.accesskey   "k">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Naraz obnoviť tento počet kariet:">
+<!ENTITY restoreTabs.accesskey          "b">
+<!ENTITY restoreTabsAtATime.label       "">
+<!ENTITY restoreDeferred.label          "Obnovovať karty po jednej (prepnutím sa na kartu)">
+<!ENTITY restoreDeferred.accesskey      "t">
+
+<!ENTITY homePageIntro.label            "Kliknutím na tlačidlo Domov prejdete na túto skupinu stránok:">
+<!ENTITY useCurrent.label               "Použiť aktuálnu stránku">
+<!ENTITY useCurrent.accesskey           "a">
+<!ENTITY useCurrentGroup.label          "Použiť aktuálnu skupinu">
+<!ENTITY useCurrentGroup.accesskey      "u">
+<!ENTITY browseFile.label               "Vybrať súbor…">
+<!ENTITY browseFile.accesskey           "V">
+<!ENTITY useDefault.label               "Obnoviť predvolené">
+<!ENTITY useDefault.accesskey           "r">
+
+<!ENTITY defaultBrowserGroup.label      "Predvolený prehliadač">
+<!ENTITY defaultBrowserButton.label     "Nastaviť predvolený prehliadač">
+<!ENTITY defaultBrowserButton.accesskey "e">
+<!ENTITY alreadyDefaultText             "&brandShortName; už je nastavený ako predvolený prehliadač.">
+<!ENTITY defaultPendingText             "&brandShortName; bude po kliknutí na tlačidlo OK nastavený ako predvolený prehliadač.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; bol nastavený ako predvolený prehliadač.">
+<!ENTITY makeDefaultText                "Nastaviť &brandShortName; ako predvolený prehliadač.">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Propietateak">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Helbide-liburuko propietateak">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Kontaktu propietateak">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Posta-zerrenda propietateak">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Erakutsi helbide-liburuko laster-menua">
+<!ENTITY addressbookPicker.label            "Helbide-liburua:">
+<!ENTITY addressbookPicker.accesskey        "H">
+<!ENTITY searchContacts.label               "Bilatu kontaktuak:">
+<!ENTITY searchContacts.accesskey           "B">
+<!ENTITY SearchNameOrEmail.label            "Izena edo helbide elektronikoa">
+
+<!ENTITY addtoToFieldMenu.label             "Gehitu Nori eremura">
+<!ENTITY addtoToFieldMenu.accesskey         "G">
+<!ENTITY addtoCcFieldMenu.label             "Gehitu Cc eremura">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Gehitu Bcc eremura">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Ezabatu">
+<!ENTITY deleteAddrBookCard.accesskey       "E">
+<!ENTITY propertiesContext.label            "Propietateak">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Propietateak">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Editatu kontaktua">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "Editatu zerrenda">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "Kontaktu berria">
+<!ENTITY newContactAbContext.accesskey      "K">
+<!ENTITY newListAbContext.label             "Zerrenda berria">
+<!ENTITY newListAbContext.accesskey         "Z">
+
+<!ENTITY toButton.label                     "Gehitu Nori eremura:">
+<!ENTITY toButton.accesskey                 "N">
+<!ENTITY ccButton.label                     "Gehitu Cc eremura:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Gehitu Bcc eremura:">
+<!ENTITY bccButton.accesskey                "B">

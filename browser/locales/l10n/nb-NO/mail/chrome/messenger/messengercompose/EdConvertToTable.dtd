@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Konverter til tabell">
+<!ENTITY instructions1.label   "Nettsideutvikler lager en ny tabellrad for hvert avsnitt i det valgte området.">
+<!ENTITY instructions2.label   "Velg tegnet som er brukt for å separere kolonnene i det valgte området:">
+<!ENTITY commaRadio.label      "Komma">
+<!ENTITY spaceRadio.label      "Mellomrom">
+<!ENTITY otherRadio.label      "Annet tegn:">
+<!ENTITY deleteCharCheck.label "Slett skilletegn">
+<!ENTITY collapseSpaces.label  "Ignorer ekstra mellomrom">
+<!ENTITY collapseSpaces.tooltip "Konverter gjentatte mellomrom til ett skilletegn">

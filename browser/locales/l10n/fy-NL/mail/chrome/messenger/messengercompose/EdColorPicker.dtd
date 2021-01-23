@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kleur">
+<!ENTITY lastPickedColor.label "Lêst keazen kleur">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY chooseColor1.label "Kies in kleur:">
+<!ENTITY chooseColor2.label "Fier in HTML-kleurkoade yn">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(byg.: &quot;#0000ff&quot; of &quot;blue&quot;):">
+<!ENTITY default.label "Standert">
+<!ENTITY default.accessKey "S">
+<!ENTITY palette.label "Palet:">
+<!ENTITY standardPalette.label "Standert">
+<!ENTITY webPalette.label "Alle webkleuren">
+<!ENTITY background.label "Eftergrûn foar:">
+<!ENTITY background.accessKey "E">
+<!ENTITY table.label "Tabel">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Sel(len)">
+<!ENTITY cell.accessKey "S">

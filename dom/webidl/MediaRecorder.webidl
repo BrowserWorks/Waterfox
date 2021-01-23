@@ -12,43 +12,34 @@
 
 enum RecordingState { "inactive", "recording", "paused" };
 
-[Constructor(MediaStream stream, optional MediaRecorderOptions options),
- Constructor(AudioNode node, optional unsigned long output = 0,
-             optional MediaRecorderOptions options)]
+[Exposed=Window]
 interface MediaRecorder : EventTarget {
-
+  [Throws]
+  constructor(MediaStream stream, optional MediaRecorderOptions options = {});
+  [Throws]
+  constructor(AudioNode node, optional unsigned long output = 0,
+              optional MediaRecorderOptions options = {});
   readonly attribute MediaStream stream;
-
   readonly attribute DOMString mimeType;
-
   readonly attribute RecordingState state;
-
   attribute EventHandler onstart;
-
   attribute EventHandler onstop;
-
   attribute EventHandler ondataavailable;
-
   attribute EventHandler onpause;
-
   attribute EventHandler onresume;
-
   attribute EventHandler onerror;
+  readonly attribute unsigned long videoBitsPerSecond;
+  readonly attribute unsigned long audioBitsPerSecond;
 
-  attribute EventHandler onwarning;
 
   [Throws]
-  void start(optional long timeSlice);
-
+  void start(optional unsigned long timeslice);
   [Throws]
   void stop();
-
   [Throws]
   void pause();
-
   [Throws]
   void resume();
-
   [Throws]
   void requestData();
 
@@ -56,7 +47,7 @@ interface MediaRecorder : EventTarget {
 };
 
 dictionary MediaRecorderOptions {
-  DOMString mimeType = ""; // Default encoding mimeType.
+  DOMString mimeType = "";
   unsigned long audioBitsPerSecond;
   unsigned long videoBitsPerSecond;
   unsigned long bitsPerSecond;

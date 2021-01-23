@@ -36,6 +36,11 @@ ChromeUtils.defineModuleGetter(
   "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "SiteSpecificBrowserService",
+  "resource:///modules/SiteSpecificBrowserService.jsm"
+);
 
 const ACTION_ID_BOOKMARK = "bookmark";
 const ACTION_ID_PIN_TAB = "pinTab";
@@ -348,26 +353,6 @@ var PageActions = {
     }
   },
 
-  logTelemetry(type, action, node = null) {
-    if (type == "used") {
-      type =
-        node && node.closest("#urlbar-container")
-          ? "urlbar_used"
-          : "panel_used";
-    }
-    let histogramID = "FX_PAGE_ACTION_" + type.toUpperCase();
-    try {
-      let histogram = Services.telemetry.getHistogramById(histogramID);
-      if (action._isMozillaAction) {
-        histogram.add(action.labelForHistogram);
-      } else {
-        histogram.add("other");
-      }
-    } catch (ex) {
-      Cu.reportError(ex);
-    }
-  },
-
   // For tests.  See Bug 1413692.
   _reset() {
     PageActions._purgeUnregisteredPersistedActions();
@@ -480,6 +465,9 @@ var PageActions = {
  *        some reason.  You can also pass an object that maps pixel sizes to
  *        URLs, like { 16: url16, 32: url32 }.  The best size for the user's
  *        screen will be used.
+ * @param isBadged (bool, optional)
+ *        If true, the toolbarbutton for this action will get a
+ *        "badged" attribute.
  * @param onBeforePlacedInWindow (function, optional)
  *        Called before the action is placed in the window:
  *        onBeforePlacedInWindow(window)
@@ -562,6 +550,7 @@ function Action(options) {
     disabled: false,
     extensionID: false,
     iconURL: false,
+    isBadged: false,
     labelForHistogram: false,
     onBeforePlacedInWindow: false,
     onCommand: false,
@@ -847,6 +836,10 @@ Action.prototype = {
     return this._wantsIframe || false;
   },
 
+  get isBadged() {
+    return this._isBadged || false;
+  },
+
   get labelForHistogram() {
     // The histogram label value has a length limit of 20 and restricted to a
     // pattern. See MAX_LABEL_LENGTH and CPP_IDENTIFIER_PATTERN in
@@ -1114,16 +1107,16 @@ Action.prototype = {
   },
 };
 
-this.PageActions.Action = Action;
+PageActions.Action = Action;
 
-this.PageActions.ACTION_ID_BUILT_IN_SEPARATOR = ACTION_ID_BUILT_IN_SEPARATOR;
-this.PageActions.ACTION_ID_TRANSIENT_SEPARATOR = ACTION_ID_TRANSIENT_SEPARATOR;
+PageActions.ACTION_ID_BUILT_IN_SEPARATOR = ACTION_ID_BUILT_IN_SEPARATOR;
+PageActions.ACTION_ID_TRANSIENT_SEPARATOR = ACTION_ID_TRANSIENT_SEPARATOR;
 
 // These are only necessary so that Pocket and the test can use them.
-this.PageActions.ACTION_ID_BOOKMARK = ACTION_ID_BOOKMARK;
-this.PageActions.ACTION_ID_PIN_TAB = ACTION_ID_PIN_TAB;
-this.PageActions.ACTION_ID_BOOKMARK_SEPARATOR = ACTION_ID_BOOKMARK_SEPARATOR;
-this.PageActions.PREF_PERSISTED_ACTIONS = PREF_PERSISTED_ACTIONS;
+PageActions.ACTION_ID_BOOKMARK = ACTION_ID_BOOKMARK;
+PageActions.ACTION_ID_PIN_TAB = ACTION_ID_PIN_TAB;
+PageActions.ACTION_ID_BOOKMARK_SEPARATOR = ACTION_ID_BOOKMARK_SEPARATOR;
+PageActions.PREF_PERSISTED_ACTIONS = PREF_PERSISTED_ACTIONS;
 
 // Sorted in the order in which they should appear in the page action panel.
 // Does not include the page actions of extensions bundled with the browser.
@@ -1137,8 +1130,7 @@ var gBuiltInActions = [
     id: ACTION_ID_BOOKMARK,
     urlbarIDOverride: "star-button-box",
     _urlbarNodeInMarkup: true,
-    // The title is set in browser-pageActions.js by calling
-    // BookmarkingUI.updateBookmarkPageMenuItem().
+    // The title is set by BookmarkingUI.updateBookmarkPageMenuItem().
     title: "",
     pinnedToUrlbar: true,
     onShowingInPanel(buttonNode) {
@@ -1224,6 +1216,7 @@ var gBuiltInActions = [
     id: "addSearchEngine",
     // The title is set in browser-pageActions.js.
     title: "",
+    isBadged: true,
     _transient: true,
     onShowingInPanel(buttonNode) {
       browserPageActions(buttonNode).addSearchEngine.onShowingInPanel();
@@ -1267,6 +1260,20 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
       browserPageActions(panelViewNode).sendToDevice.onShowingSubview(
         panelViewNode
       );
+    },
+  });
+}
+
+if (SiteSpecificBrowserService.isEnabled) {
+  gBuiltInActions.push({
+    id: "launchSSB",
+    // Hardcoded for now. Localization tracked in bug 1602528.
+    title: "Use This Site in App Mode",
+    onLocationChange(browserWindow) {
+      browserPageActions(browserWindow).launchSSB.updateState();
+    },
+    onCommand(event, buttonNode) {
+      browserPageActions(buttonNode).launchSSB.onCommand(event, buttonNode);
     },
   });
 }

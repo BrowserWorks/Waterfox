@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Perzhioù">
+<!ENTITY propertiesMenu.accesskey           "P">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Perzhioù ar c'harned chomlec'h">
+<!ENTITY abPropertiesMenu.accesskey         "P">
+<!ENTITY contactPropertiesMenu.label        "Perzhioù an darempred">
+<!ENTITY contactPropertiesMenu.accesskey    "d">
+<!ENTITY mailingListPropertiesMenu.label    "Perzhioù ar roll skignañ">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Diskouez lañser kemperzhel ar c'harned chomlec'hioù">
+<!ENTITY addressbookPicker.label            "Karned chomlec'hioù:">
+<!ENTITY addressbookPicker.accesskey        "K">
+<!ENTITY searchContacts.label               "Klask darempredoù:">
+<!ENTITY searchContacts.accesskey           "o">
+<!ENTITY SearchNameOrEmail.label            "Enderc'hel a ra an anv pe ar postel :">
+
+<!ENTITY addtoToFieldMenu.label             "Ouzhpennañ d'ar vaezienn Da">
+<!ENTITY addtoToFieldMenu.accesskey         "a">
+<!ENTITY addtoCcFieldMenu.label             "Ouzhpennañ d'ar vaezienn Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Ouzhpennañ d'ar vaezienn Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Dilemel">
+<!ENTITY deleteAddrBookCard.accesskey       "D">
+<!ENTITY propertiesContext.label            "Perzhioù">
+<!ENTITY propertiesContext.accesskey        "P">
+<!ENTITY abPropertiesContext.label          "Perzhioù">
+<!ENTITY abPropertiesContext.accesskey      "P">
+<!ENTITY editContactContext.label           "Embann an darempred">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "Embann ar roll">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "Darempred nevez">
+<!ENTITY newContactAbContext.accesskey      "D">
+<!ENTITY newListAbContext.label             "Roll nevez">
+<!ENTITY newListAbContext.accesskey         "R">
+
+<!ENTITY toButton.label                     "Ouzhpennañ Da:">
+<!ENTITY toButton.accesskey                 "D">
+<!ENTITY ccButton.label                     "Ouzhpennañ Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Ouzhpennañ Bcc:">
+<!ENTITY bccButton.accesskey                "B">

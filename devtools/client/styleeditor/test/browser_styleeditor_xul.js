@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -8,7 +7,7 @@
 
 waitForExplicitFinish();
 
-const TEST_URL = TEST_BASE + "doc_xulpage.xul";
+const TEST_URL = TEST_BASE + "doc_xulpage.xhtml";
 
 add_task(async function() {
   const tab = await addTab(TEST_URL);

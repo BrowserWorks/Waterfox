@@ -22,7 +22,6 @@ extern crate malloc_size_of;
 #[macro_use]
 extern crate malloc_size_of_derive;
 extern crate selectors;
-#[cfg(feature = "servo")]
 #[macro_use]
 extern crate serde;
 extern crate servo_arc;
@@ -36,7 +35,7 @@ extern crate to_shmem_derive;
 #[cfg(feature = "servo")]
 extern crate webrender_api;
 #[cfg(feature = "servo")]
-pub use webrender_api::DevicePixel;
+pub use webrender_api::units::DevicePixel;
 
 use cssparser::{CowRcStr, Token};
 use selectors::parser::SelectorParseErrorKind;
@@ -87,6 +86,7 @@ pub enum CSSPixel {}
 //     / desktop_zoom => CSSPixel
 
 pub mod arc_slice;
+pub mod dom;
 pub mod specified_value_info;
 #[macro_use]
 pub mod values;
@@ -137,6 +137,8 @@ pub enum StyleParseErrorKind<'i> {
     UnexpectedNamespaceRule,
     /// @import must be before any rule but @charset
     UnexpectedImportRule,
+    /// @import rules are disallowed in the parser.
+    DisallowedImportRule,
     /// Unexpected @charset rule encountered.
     UnexpectedCharsetRule,
     /// Unsupported @ rule
@@ -149,11 +151,8 @@ pub enum StyleParseErrorKind<'i> {
     ValueError(ValueParseErrorKind<'i>),
     /// An error was encountered while parsing a selector
     SelectorError(SelectorParseErrorKind<'i>),
-
     /// The property declaration was for an unknown property.
     UnknownProperty(CowRcStr<'i>),
-    /// An unknown vendor-specific identifier was encountered.
-    UnknownVendorProperty,
     /// The property declaration was for a disabled experimental property.
     ExperimentalProperty,
     /// The property declaration contained an invalid color value.

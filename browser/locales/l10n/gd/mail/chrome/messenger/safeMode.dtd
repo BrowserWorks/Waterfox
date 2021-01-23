@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Modh tèarainte &brandShortName;">
+<!ENTITY window.width                     "45em">
+
+<!ENTITY safeModeDescription.label        "Tha &brandShortName; ag ruith sa mhodh tèarainte a-nis is bidh na roghainnean, coltasan is leudachain ghnàthaichte agad à comas rè seal.">
+<!ENTITY safeModeDescription2.label       "'S urrainn dhut na h-atharrachaidhean seo gu lèir, no cuid dhiubh, a chur an sàs gu buan:">
+
+<!ENTITY disableAddons.label              "Dèan gach tuillead neo chomasach">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Aisig gach bàr-inneal is uidheam-smachd">
+<!ENTITY resetToolbars.accesskey          "r">
+
+<!ENTITY changeAndRestartButton.label     "Cuir na h-atharrachaidhean an gnìomh is ath-thòisich">
+<!ENTITY changeAndRestartButton.accesskey "m">
+
+<!ENTITY continueButton.label             "Lean air adhart sa mhodh tèarainte">
+<!ENTITY continueButton.accesskey         "L">

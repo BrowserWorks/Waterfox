@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "साइट URL:">
+<!ENTITY docSubdir.label       "पृष्ठ उपनिर्देशिका:">
+<!ENTITY otherSubdir.label     "चित्र उपनिर्देशिका:">
+
+<!ENTITY status.label          "प्रकाशित कर रहा है...">
+<!ENTITY fileList.label        "प्रकाशन स्थिति">
+<!ENTITY statusHeader.label    "प्रस्थिति">
+<!ENTITY filenameHeader.label  "फाइलनाम">
+<!ENTITY succeeded.label       "सफल">
+<!ENTITY failed.label          "विफल">
+<!ENTITY troubleshooting.label "विघ्ननिवारण">
+<!ENTITY troubleshooting.accessKey "T">
+
+<!ENTITY keepOpen              "प्रकाशन पूरे होने पर इस विंडो को खुला रखें.">
+<!ENTITY closeButton.label     "बंद करें">

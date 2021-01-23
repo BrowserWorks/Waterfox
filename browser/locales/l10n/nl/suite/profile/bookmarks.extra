@@ -1,0 +1,17 @@
+#filter emptyLines
+
+# LOCALIZATION NOTE: You can add additional bookmark entries here for inclusion
+# in your language's default profiles.
+# Please do not add many entries here, only things that many users in your
+# country will actually need.
+# For most localizations, it's enough to localize the descriptions and domain
+# names of the Google bookmarks below.
+
+    <DT><H3>Zoeken op het web</H3>
+    <DL><p>
+        <DT><A HREF="https://www.google.com/">Google</A>
+        <DT><A HREF="https://groups.google.com/">Google Discussiegroepen</A>
+        <DT><A HREF="https://news.google.com/">Google Nieuws</A>
+    </DL><p>
+
+#unfilter emptyLines

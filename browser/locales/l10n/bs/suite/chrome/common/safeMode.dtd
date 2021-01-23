@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; sigurni režim">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; je pokrenut u sigurnom režimu, koji privremeno onemogućava vaše prilagođene postavke, teme i proširenja.">
+<!ENTITY safeModeDescription2.label   "Neke od ovih promjena ili sve možete učiniti trajnim:">
+
+<!ENTITY disableAddons.label          "Onemogući sve dodatke">
+
+<!ENTITY resetToolbars.label          "Resetuj alatne trake i veličine prozora">
+
+<!ENTITY deleteBookmarks.label        "Izbriši sve zabilješke osim onih za sigurnosnu kopiju">
+
+<!ENTITY resetUserPrefs.label         "Resetuj sve korisničke postavke za &brandShortName; na izvorno">
+
+<!ENTITY restoreSearch.label          "Vrati izvorne pretraživače">
+
+<!ENTITY changeAndRestartButton.label "Napravi promjene i restartuj">
+<!ENTITY continueButton.label         "Nastavi u sigurnom režimu">

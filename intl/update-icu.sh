@@ -52,8 +52,8 @@ find ${icu_dir}/source/samples -name '*Makefile.in' -prune -or -type f -print | 
 for patch in \
  bug-915735 \
  suppress-warnings.diff \
- bug-1172609-timezone-recreateDefault.diff \
  bug-1198952-workaround-make-3.82-bug.diff \
+ bug-1433303-minimize-subtags.diff \
 ; do
   echo "Applying local patch $patch"
   patch -d ${icu_dir}/../../ -p1 --no-backup-if-mismatch < ${icu_dir}/../icu-patches/$patch
@@ -70,3 +70,6 @@ hg addremove "${icu_dir}/source" "${icu_dir}/GIT-INFO" ${topsrcdir}/config/exter
 
 # Check local tzdata version.
 `dirname $0`/update-tzdata.sh -c
+
+# CLDR updates may lead to new language tag mappings, so we need to call make_intl_data.py, too.
+echo "INFO: Please run 'js/src/builtin/intl/make_intl_data.py langtags' to update additional language tag files for SpiderMonkey."

@@ -41,13 +41,12 @@ add_task(async function test_svg_icon() {
   let [engine] = await addTestEngines([
     {
       name: "SVGIcon",
-      details: [
-        url,
-        "",
-        "SVG icon",
-        "GET",
-        "http://icon.svg/search?q={searchTerms}",
-      ],
+      details: {
+        iconURL: url,
+        description: "SVG icon",
+        method: "GET",
+        template: "http://icon.svg/search?q={searchTerms}",
+      },
     },
   ]);
 

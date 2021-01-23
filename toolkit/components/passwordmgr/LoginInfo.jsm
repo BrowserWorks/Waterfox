@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
@@ -25,30 +26,62 @@ nsLoginInfo.prototype = {
   // nsILoginInfo interfaces...
   //
 
-  hostname: null,
-  formSubmitURL: null,
+  origin: null,
+  formActionOrigin: null,
   httpRealm: null,
   username: null,
   password: null,
   usernameField: null,
   passwordField: null,
 
+  get displayOrigin() {
+    let displayOrigin = this.origin;
+    try {
+      let uri = Services.io.newURI(this.origin);
+      // Fallback to handle file: URIs
+      displayOrigin = uri.displayHostPort || this.origin;
+    } catch (ex) {
+      // Fallback to this.origin set above in case a URI can't be contructed e.g.
+      // chrome://FirefoxAccounts
+    }
+
+    if (this.httpRealm === null) {
+      return displayOrigin;
+    }
+
+    return `${displayOrigin} (${this.httpRealm})`;
+  },
+
+  /**
+   * @deprecated Use `origin` instead.
+   */
+  get hostname() {
+    return this.origin;
+  },
+
+  /**
+   * @deprecated Use `formActionOrigin` instead.
+   */
+  get formSubmitURL() {
+    return this.formActionOrigin;
+  },
+
   init(
-    aHostname,
-    aFormSubmitURL,
+    aOrigin,
+    aFormActionOrigin,
     aHttpRealm,
     aUsername,
     aPassword,
-    aUsernameField,
-    aPasswordField
+    aUsernameField = "",
+    aPasswordField = ""
   ) {
-    this.hostname = aHostname;
-    this.formSubmitURL = aFormSubmitURL;
+    this.origin = aOrigin;
+    this.formActionOrigin = aFormActionOrigin;
     this.httpRealm = aHttpRealm;
     this.username = aUsername;
     this.password = aPassword;
-    this.usernameField = aUsernameField;
-    this.passwordField = aPasswordField;
+    this.usernameField = aUsernameField || "";
+    this.passwordField = aPasswordField || "";
   },
 
   matches(aLogin, ignorePassword) {
@@ -59,8 +92,8 @@ nsLoginInfo.prototype = {
 
   equals(aLogin) {
     if (
-      this.hostname != aLogin.hostname ||
-      this.formSubmitURL != aLogin.formSubmitURL ||
+      this.origin != aLogin.origin ||
+      this.formActionOrigin != aLogin.formActionOrigin ||
       this.httpRealm != aLogin.httpRealm ||
       this.username != aLogin.username ||
       this.password != aLogin.password ||
@@ -78,8 +111,8 @@ nsLoginInfo.prototype = {
       Ci.nsILoginInfo
     );
     clone.init(
-      this.hostname,
-      this.formSubmitURL,
+      this.origin,
+      this.formActionOrigin,
       this.httpRealm,
       this.username,
       this.password,
@@ -109,4 +142,4 @@ nsLoginInfo.prototype = {
   timesUsed: null,
 }; // end of nsLoginInfo implementation
 
-var EXPORTED_SYMBOLS = ["nsLoginInfo"];
+const EXPORTED_SYMBOLS = ["nsLoginInfo"];

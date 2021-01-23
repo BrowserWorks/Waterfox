@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Saqlangan fayllar">
+<!ENTITY aboutDownloads.empty                      "Saqlangan fayllar yo‘q">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Jild tarkibini ochish">
+<!ENTITY cmd.show.accesskey                        "J">
+<!ENTITY cmd.showMac.label                         "Topkichda ko‘rsatish">
+<!ENTITY cmd.showMac.accesskey                     "T">
+<!ENTITY cmd.open.label                            "Ochish">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Tarixdan olib tashlash">
+<!ENTITY cmd.removeFromHistory.accesskey           "o">
+<!ENTITY cmd.clearList.label                       "Ro‘yxatni tozalash">
+<!ENTITY cmd.clearList.accesskey                   "t">
+<!ENTITY cmd.clearList.tooltip                     "Saqlangan fayllar ro‘yxatidan barchasini olib tashlash (faqat yuklab olinayotganlaridan boshqa)">
+<!ENTITY cmd.searchDownloads.label                 "Izlash…">
+<!ENTITY cmd.searchDownloads.key                   "F">

@@ -22,6 +22,7 @@
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "js/Array.h"  // JS::GetArrayLength, JS::IsArrayObject, JS::NewArrayObject
 #include "js/CharacterEncoding.h"
 #include "js/MemoryFunctions.h"
 
@@ -29,7 +30,6 @@
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/PrimitiveConversions.h"
 #include "mozilla/dom/Promise.h"
-#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 
 using namespace xpc;
 using namespace mozilla;
@@ -45,27 +45,11 @@ using namespace JS;
 
 #define ILLEGAL_CHAR_RANGE(c) (0 != ((c)&0x80))
 
-/***********************************************************/
-
-static JSObject* UnwrapNativeCPOW(nsISupports* wrapper) {
-  nsCOMPtr<nsIXPConnectWrappedJS> underware = do_QueryInterface(wrapper);
-  if (underware) {
-    // The analysis falsely believes that ~nsCOMPtr can GC because it could
-    // drop the refcount to zero, but that can't happen here.
-    JS::AutoSuppressGCAnalysis nogc;
-    JSObject* mainObj = underware->GetJSObject();
-    if (mainObj && mozilla::jsipc::IsWrappedCPOW(mainObj)) {
-      return mainObj;
-    }
-  }
-  return nullptr;
-}
-
 /***************************************************************************/
 
 // static
 bool XPCConvert::GetISupportsFromJSObject(JSObject* obj, nsISupports** iface) {
-  const JSClass* jsclass = js::GetObjectJSClass(obj);
+  const JSClass* jsclass = js::GetObjectClass(obj);
   MOZ_ASSERT(jsclass, "obj has no class");
   if (jsclass && (jsclass->flags & JSCLASS_HAS_PRIVATE) &&
       (jsclass->flags & JSCLASS_PRIVATE_IS_NSISUPPORTS)) {
@@ -192,7 +176,7 @@ bool XPCConvert::NativeData2JS(JSContext* cx, MutableHandleValue d,
     case nsXPTType::T_CHAR_STR: {
       const char* p = *static_cast<const char* const*>(s);
       arrlen = p ? strlen(p) : 0;
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     }
     case nsXPTType::T_PSTRING_SIZE_IS: {
       const char* p = *static_cast<const char* const*>(s);
@@ -223,7 +207,7 @@ bool XPCConvert::NativeData2JS(JSContext* cx, MutableHandleValue d,
     case nsXPTType::T_WCHAR_STR: {
       const char16_t* p = *static_cast<const char16_t* const*>(s);
       arrlen = p ? nsCharTraits<char16_t>::length(p) : 0;
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     }
     case nsXPTType::T_PWSTRING_SIZE_IS: {
       const char16_t* p = *static_cast<const char16_t* const*>(s);
@@ -264,7 +248,7 @@ bool XPCConvert::NativeData2JS(JSContext* cx, MutableHandleValue d,
       // almost always ASCII, so the inexact allocations below
       // should be fine.
 
-      if (IsUTF8Latin1(*utf8String)) {
+      if (IsUtf8Latin1(*utf8String)) {
         using UniqueLatin1Chars =
             js::UniquePtr<JS::Latin1Char[], JS::FreePolicy>;
 
@@ -274,7 +258,7 @@ bool XPCConvert::NativeData2JS(JSContext* cx, MutableHandleValue d,
           return false;
         }
 
-        size_t written = LossyConvertUTF8toLatin1(
+        size_t written = LossyConvertUtf8toLatin1(
             *utf8String, MakeSpan(reinterpret_cast<char*>(buffer.get()), len));
         buffer[written] = 0;
 
@@ -313,7 +297,7 @@ bool XPCConvert::NativeData2JS(JSContext* cx, MutableHandleValue d,
       // code units in the source. That's why it's OK to claim the
       // output buffer has len + 1 space but then still expect to
       // have space for the zero terminator.
-      size_t written = ConvertUTF8toUTF16(
+      size_t written = ConvertUtf8toUtf16(
           *utf8String, MakeSpan(buffer.get(), allocLen.value()));
       MOZ_RELEASE_ASSERT(written <= len);
       buffer[written] = 0;
@@ -439,7 +423,7 @@ static void CheckCharsInCharRange(const CharT* chars, size_t len) {
 
 template <typename T>
 bool ConvertToPrimitive(JSContext* cx, HandleValue v, T* retval) {
-  return ValueToPrimitive<T, eDefault>(cx, v, retval);
+  return ValueToPrimitive<T, eDefault>(cx, v, "Value", retval);
 }
 
 // static
@@ -559,30 +543,7 @@ bool XPCConvert::JSData2Native(JSContext* cx, void* d, HandleValue s,
         return true;
       }
 
-      if (XPCStringConvert::IsDOMString(str)) {
-        // The characters represent an existing nsStringBuffer that
-        // was shared by XPCStringConvert::ReadableToJSVal.
-        const char16_t* chars = JS_GetTwoByteExternalStringChars(str);
-        if (chars[length] == '\0') {
-          // Safe to share the buffer.
-          nsStringBuffer::FromData((void*)chars)->ToString(length, *ws);
-        } else {
-          // We have to copy to ensure null-termination.
-          ws->Assign(chars, length);
-        }
-      } else if (XPCStringConvert::IsLiteral(str)) {
-        // The characters represent a literal char16_t string constant
-        // compiled into libxul, such as the string "undefined" above.
-        const char16_t* chars = JS_GetTwoByteExternalStringChars(str);
-        ws->AssignLiteral(chars, length);
-      } else {
-        // We don't bother checking for a dynamic-atom external string,
-        // because we'd just need to copy out of it anyway.
-        if (!AssignJSString(cx, *ws, str)) {
-          return false;
-        }
-      }
-      return true;
+      return AssignJSString(cx, *ws, str);
     }
 
     case nsXPTType::T_CHAR_STR:
@@ -709,16 +670,22 @@ bool XPCConvert::JSData2Native(JSContext* cx, void* d, HandleValue s,
         return true;
       }
 
-      JSFlatString* flat = JS_FlattenString(cx, str);
-      if (!flat) {
+      JSLinearString* linear = JS_EnsureLinearString(cx, str);
+      if (!linear) {
         return false;
       }
 
-      size_t utf8Length = JS::GetDeflatedUTF8StringLength(flat);
-      rs->SetLength(utf8Length);
+      size_t utf8Length = JS::GetDeflatedUTF8StringLength(linear);
+      if (!rs->SetLength(utf8Length, fallible)) {
+        if (pErr) {
+          *pErr = NS_ERROR_OUT_OF_MEMORY;
+        }
+        return false;
+      }
 
-      JS::DeflateStringToUTF8Buffer(
-          flat, mozilla::RangedPtr<char>(rs->BeginWriting(), utf8Length));
+      mozilla::DebugOnly<size_t> written = JS::DeflateStringToUTF8Buffer(
+          linear, mozilla::MakeSpan(rs->BeginWriting(), utf8Length));
+      MOZ_ASSERT(written == utf8Length);
 
       return true;
     }
@@ -746,7 +713,12 @@ bool XPCConvert::JSData2Native(JSContext* cx, void* d, HandleValue s,
         return true;
       }
 
-      rs->SetLength(uint32_t(length));
+      if (!rs->SetLength(uint32_t(length), fallible)) {
+        if (pErr) {
+          *pErr = NS_ERROR_OUT_OF_MEMORY;
+        }
+        return false;
+      }
       if (rs->Length() != uint32_t(length)) {
         return false;
       }
@@ -965,19 +937,6 @@ bool XPCConvert::NativeInterface2JSObject(JSContext* cx, MutableHandleValue d,
       d.setObjectOrNull(flat);
       return true;
     }
-  }
-
-  // Don't double wrap CPOWs. This is a temporary measure for compatibility
-  // with objects that don't provide necessary QIs (such as objects under
-  // the new DOM bindings). We expect the other side of the CPOW to have
-  // the appropriate wrappers in place.
-  RootedObject cpow(cx, UnwrapNativeCPOW(aHelper.Object()));
-  if (cpow) {
-    if (!JS_WrapObject(cx, &cpow)) {
-      return false;
-    }
-    d.setObject(*cpow);
-    return true;
   }
 
   // Go ahead and create an XPCWrappedNative for this object.
@@ -1213,7 +1172,7 @@ static nsresult JSErrorToXPCException(JSContext* cx, const char* toStringResult,
   RefPtr<nsScriptError> data;
   if (report) {
     nsAutoString bestMessage;
-    if (report && report->message()) {
+    if (report->message()) {
       CopyUTF8toUTF16(mozilla::MakeStringSpan(report->message().c_str()),
                       bestMessage);
     } else if (toStringResult) {
@@ -1223,13 +1182,15 @@ static nsresult JSErrorToXPCException(JSContext* cx, const char* toStringResult,
     }
 
     const char16_t* linebuf = report->linebuf();
+    uint32_t flags = report->isWarning() ? nsIScriptError::warningFlag
+                                         : nsIScriptError::errorFlag;
 
     data = new nsScriptError();
-    data->InitWithWindowID(
+    data->nsIScriptError::InitWithWindowID(
         bestMessage, NS_ConvertASCIItoUTF16(report->filename),
         linebuf ? nsDependentString(linebuf, report->linebufLength())
                 : EmptyString(),
-        report->lineno, report->tokenOffset(), report->flags,
+        report->lineno, report->tokenOffset(), flags,
         NS_LITERAL_CSTRING("XPConnect JavaScript"),
         nsJSUtils::GetCurrentlyRunningCodeInnerWindowID(cx));
   }
@@ -1402,7 +1363,7 @@ bool XPCConvert::NativeArray2JS(JSContext* cx, MutableHandleValue d,
                                 nsresult* pErr) {
   MOZ_ASSERT(buf || count == 0, "Must have buf or 0 elements");
 
-  RootedObject array(cx, JS_NewArrayObject(cx, count));
+  RootedObject array(cx, JS::NewArrayObject(cx, count));
   if (!array) {
     return false;
   }
@@ -1533,8 +1494,8 @@ bool XPCConvert::JSArray2Native(JSContext* cx, JS::HandleValue aJSVal,
   // If jsarray is not a TypedArrayObject, check for an Array object.
   uint32_t length = 0;
   bool isArray = false;
-  if (!JS_IsArrayObject(cx, jsarray, &isArray) || !isArray ||
-      !JS_GetArrayLength(cx, jsarray, &length)) {
+  if (!JS::IsArrayObject(cx, jsarray, &isArray) || !isArray ||
+      !JS::GetArrayLength(cx, jsarray, &length)) {
     if (pErr) {
       *pErr = NS_ERROR_XPC_CANT_CONVERT_OBJECT_TO_ARRAY;
     }

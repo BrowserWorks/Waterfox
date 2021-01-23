@@ -61,7 +61,6 @@ var suppressed_toggles = [
   "-moz-scrollbar-start-backward",
   "-moz-scrollbar-start-forward",
   "-moz-scrollbar-thumb-proportional",
-  "-moz-touch-enabled",
   "-moz-windows-compositor",
   "-moz-windows-default-theme",
   "-moz-windows-glass",
@@ -74,7 +73,11 @@ var suppressed_toggles = [
   "-moz-gtk-csd-reversed-placement",
 ];
 
-var toggles_enabled_in_content = ["-moz-touch-enabled"];
+var toggles_enabled_in_content = [];
+if (SpecialPowers.getBoolPref("layout.css.moz-touch-enabled.enabled")) {
+  suppressed_toggles.push("-moz-touch-enabled");
+  toggles_enabled_in_content.push("-moz-touch-enabled");
+}
 
 // Possible values for '-moz-os-version'
 var windows_versions = ["windows-win7", "windows-win8", "windows-win10"];
@@ -160,7 +163,7 @@ var generateHtmlLines = function(resisting) {
   expected_values.forEach(function([key, offVal, onVal]) {
     let val = resisting ? onVal : offVal;
     if (val) {
-      let div = document.createElement("div");
+      let div = document.createElementNS(HTML_NS, "div");
       div.setAttribute("class", "spoof");
       div.setAttribute("id", key);
       div.textContent = key;
@@ -168,14 +171,14 @@ var generateHtmlLines = function(resisting) {
     }
   });
   suppressed_toggles.forEach(function(key) {
-    let div = document.createElement("div");
+    let div = document.createElementNS(HTML_NS, "div");
     div.setAttribute("class", "suppress");
     div.setAttribute("id", key);
     div.textContent = key;
     fragment.appendChild(div);
   });
   if (OS === "WINNT") {
-    let div = document.createElement("div");
+    let div = document.createElementNS(HTML_NS, "div");
     div.setAttribute("class", "windows");
     div.setAttribute("id", "-moz-os-version");
     div.textContent = "-moz-os-version";
@@ -283,7 +286,7 @@ var testCSS = function(resisting) {
 // When fingerprinting resistance is enabled, the `getComputedStyle`
 // should always return `undefined` for `MozOSXFontSmoothing`.
 var testOSXFontSmoothing = function(resisting) {
-  let div = document.createElement("div");
+  let div = document.createElementNS(HTML_NS, "div");
   div.style.MozOsxFontSmoothing = "unset";
   document.documentElement.appendChild(div);
   let readBack = window.getComputedStyle(div).MozOsxFontSmoothing;

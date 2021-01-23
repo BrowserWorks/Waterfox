@@ -20,7 +20,7 @@ async function pause(tab, options) {
       "DOMAudioPlaybackStopped",
       "DOMAudioPlaybackStopped event should get fired after pause"
     );
-    await ContentTask.spawn(browser, {}, async function() {
+    await SpecialPowers.spawn(browser, [], async function() {
       let audio = content.document.querySelector("audio");
       audio.pause();
     });
@@ -169,11 +169,7 @@ async function test_muting_using_menu(tab, expectMuted) {
 }
 
 async function test_playing_icon_on_tab(tab, browser, isPinned) {
-  let icon = document.getAnonymousElementByAttribute(
-    tab,
-    "anonid",
-    isPinned ? "overlay-icon" : "soundplaying-icon"
-  );
+  let icon = isPinned ? tab.overlayIcon : tab.soundPlayingIcon;
   let isActiveTab = tab === gBrowser.selectedTab;
 
   await play(tab);
@@ -248,13 +244,9 @@ async function test_playing_icon_on_hidden_tab(tab) {
     await BrowserTestUtils.openNewForegroundTab(gBrowser, PAGE, true, true),
     await BrowserTestUtils.openNewForegroundTab(gBrowser, PAGE, true, true),
   ];
-  let tabContainer = tab.parentNode;
+  let tabContainer = tab.container;
   let alltabsButton = document.getElementById("alltabs-button");
-  let alltabsBadge = document.getAnonymousElementByAttribute(
-    alltabsButton,
-    "class",
-    "toolbarbutton-badge"
-  );
+  let alltabsBadge = alltabsButton.badgeLabel;
 
   function assertIconShowing() {
     is(
@@ -366,12 +358,7 @@ async function test_swapped_browser_while_playing(oldTab, newBrowser) {
     "Expected the correct soundplaying attribute on the new tab"
   );
 
-  let icon = document.getAnonymousElementByAttribute(
-    newTab,
-    "anonid",
-    "soundplaying-icon"
-  );
-  await test_tooltip(icon, "Unmute tab", true);
+  await test_tooltip(newTab.soundPlayingIcon, "Unmute tab", true);
 }
 
 async function test_swapped_browser_while_not_playing(oldTab, newBrowser) {
@@ -444,24 +431,14 @@ async function test_swapped_browser_while_not_playing(oldTab, newBrowser) {
     "Expected the correct soundplaying attribute on the new tab"
   );
 
-  let icon = document.getAnonymousElementByAttribute(
-    newTab,
-    "anonid",
-    "soundplaying-icon"
-  );
-  await test_tooltip(icon, "Unmute tab", true);
+  await test_tooltip(newTab.soundPlayingIcon, "Unmute tab", true);
 }
 
 async function test_browser_swapping(tab, browser) {
   // First, test swapping with a playing but muted tab.
   await play(tab);
 
-  let icon = document.getAnonymousElementByAttribute(
-    tab,
-    "anonid",
-    "soundplaying-icon"
-  );
-  await test_mute_tab(tab, icon, true);
+  await test_mute_tab(tab, tab.soundPlayingIcon, true);
 
   await BrowserTestUtils.withNewTab(
     {
@@ -507,11 +484,7 @@ async function test_click_on_pinned_tab_after_mute() {
     await play(tab);
 
     //   Mute the tab.
-    let icon = document.getAnonymousElementByAttribute(
-      tab,
-      "anonid",
-      "overlay-icon"
-    );
+    let icon = tab.overlayIcon;
     await test_mute_tab(tab, icon, true);
 
     // Pause playback and wait for it to finish.
@@ -521,12 +494,7 @@ async function test_click_on_pinned_tab_after_mute() {
     await test_mute_tab(tab, icon, false);
 
     // Now click on the tab.
-    let image = document.getAnonymousElementByAttribute(
-      tab,
-      "anonid",
-      "tab-icon-image"
-    );
-    EventUtils.synthesizeMouseAtCenter(image, { button: 0 });
+    EventUtils.synthesizeMouseAtCenter(tab.iconImage, { button: 0 });
 
     is(tab, gBrowser.selectedTab, "Tab switch should be successful");
 
@@ -681,12 +649,6 @@ async function test_delayed_tabattr_removal() {
     taskFn
   );
 }
-
-add_task(async function() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.tabs.showAudioPlayingIcon", true]],
-  });
-});
 
 requestLongerTimeout(2);
 add_task(async function test_page() {

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Flytja inn nafnaskrá">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Innflutt gögn fyrir færslu: ">
+<!ENTITY fieldMapImport.next.label "Næsti">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Fyrri">
+<!ENTITY fieldMapImport.previous.accesskey "F">
+<!ENTITY fieldMapImport.text "Notaðu Færa upp og Færa niður til að láta nafnaskrásvæðin vinstra megin passa við innfluttu gögnin hægra megin. Afhakaðu þau atriði sem þú vilt ekki flytja inn.">
+<!ENTITY fieldMapImport.up.label "Færa upp">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Færa niður">
+<!ENTITY fieldMapImport.down.accesskey "n">
+<!ENTITY fieldMapImport.fieldListTitle "Svæði nafnaskrár">
+<!ENTITY fieldMapImport.dataTitle "Gögn sem á að flytja inn">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Fyrsta lína inniheldur nöfn svæða">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

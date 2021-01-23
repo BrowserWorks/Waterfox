@@ -22,11 +22,13 @@ function createTestTree(node) {
     let parent = template.parentNode;
     parent.removeChild(template);
     let shadowRoot;
-    if (template.getAttribute('data-mode') === 'v0') {
-      // For legacy Shadow DOM
-      shadowRoot = parent.createShadowRoot();
+    if (template.getAttribute('data-slot-assignment') === 'manual') {
+       shadowRoot =
+          parent.attachShadow({mode: template.getAttribute('data-mode'),
+                               slotAssignment: 'manual'});
     } else {
-      shadowRoot = parent.attachShadow({mode: template.getAttribute('data-mode')});
+      shadowRoot = parent.attachShadow(
+          {mode: template.getAttribute('data-mode')});
     }
     let id = template.id;
     if (id) {

@@ -3,12 +3,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+include GraphicsMessages;
 include MemoryReportTypes;
+include PrefsTypes;
 
 include protocol PProfiler;
 include protocol PRemoteDecoderManager;
+include protocol PVideoBridge;
 
 using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
+using moveonly mozilla::UntrustedModulesData from "mozilla/UntrustedModulesData.h";
+using moveonly mozilla::ModulePaths from "mozilla/UntrustedModulesData.h";
+using moveonly mozilla::ModulesMapResult from "mozilla/UntrustedModulesData.h";
 
 namespace mozilla {
 
@@ -20,7 +26,8 @@ protocol PRDD
 {
 parent:
 
-  async Init(FileDescriptor? sandboxBroker, bool startMacSandbox);
+  async Init(GfxVarUpdate[] vars, FileDescriptor? sandboxBroker,
+             bool canRecordReleaseTelemetry);
 
   async InitProfiler(Endpoint<PProfilerChild> endpoint);
 
@@ -32,15 +39,23 @@ parent:
                             bool minimizeMemoryUsage,
                             FileDescriptor? DMDFile);
 
-child:
-  // args TBD, sent when init complete. Occurs once, after Init().
-  async InitComplete();
+  async PreferenceUpdate(Pref pref);
 
-  async InitCrashReporter(Shmem shmem, NativeThreadId threadId);
+  async UpdateVar(GfxVarUpdate var);
+
+  async InitVideoBridge(Endpoint<PVideoBridgeChild> endpoint);
+
+  async GetUntrustedModulesData() returns (UntrustedModulesData? data);
+
+child:
+
+  async InitCrashReporter(NativeThreadId threadId);
 
   async AddMemoryReport(MemoryReport aReport);
   async FinishMemoryReport(uint32_t aGeneration);
 
+  async GetModulesTrust(ModulePaths aModPaths, bool aRunAtNormalPriority)
+      returns (ModulesMapResult? modMapResult);
 };
 
 } // namespace mozilla

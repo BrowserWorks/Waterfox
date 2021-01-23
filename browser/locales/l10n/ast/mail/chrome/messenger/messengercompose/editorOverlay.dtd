@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Apegar ensin formatu">
+<!ENTITY pasteNoFormatting.accesskey "s">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Apegar como cita">
+<!ENTITY pasteAsQuotationCmd.accesskey "i">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Inxertar">
+<!ENTITY insertMenu.accesskey "I">
+<!ENTITY insertLinkCmd2.label "Enllaz…">
+<!ENTITY insertLinkCmd2.accesskey "E">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Enllaz internu con nome…">
+<!ENTITY insertAnchorCmd.accesskey "A">
+<!ENTITY insertImageCmd.label "Imaxe…">
+<!ENTITY insertImageCmd.accesskey "I">
+<!ENTITY insertHLineCmd.label "Llinia horizontal">
+<!ENTITY insertHLineCmd.accesskey "o">
+<!ENTITY insertTableCmd.label "Tabla…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Espresión matemática…">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "Caráuteres y símbolos…">
+<!ENTITY insertCharsCmd.accesskey "C">
+<!ENTITY insertBreakAllCmd.label "Saltu baxo les imáxenes">
+<!ENTITY insertBreakAllCmd.accesskey "u">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Crear enllaz…">
+<!ENTITY createLinkCmd.accesskey "n">
+<!ENTITY editLinkCmd.label "Editar enllaz en ventana de Composer nueva">
+<!ENTITY editLinkCmd.accesskey "i">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Esbilla un tipu de lletra">
+<!ENTITY fontfaceMenu.label "Fonte de lletra">
+<!ENTITY fontfaceMenu.accesskey "F">
+<!ENTITY fontVarWidth.label "Anchor variable">
+<!ENTITY fontVarWidth.accesskey "V">
+<!ENTITY fontFixedWidth.label "Anchor fixu">
+<!ENTITY fontFixedWidth.accesskey "f">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvética, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Esbilla un tamañu de lletra">
+<!ENTITY decreaseFontSize.label "Menor">
+<!ENTITY decreaseFontSize.accesskey "r">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Más grande">
+<!ENTITY increaseFontSize.accesskey "g">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Tamañu">
+<!ENTITY fontSizeMenu.accesskey "T">
+<!ENTITY size-tinyCmd.label "Nanu">
+<!ENTITY size-tinyCmd.accesskey "N">
+<!ENTITY size-smallCmd.label "Pequeñu">
+<!ENTITY size-smallCmd.accesskey "P">
+<!ENTITY size-mediumCmd.label "Mediu">
+<!ENTITY size-mediumCmd.accesskey "d">
+<!ENTITY size-largeCmd.label "Grande">
+<!ENTITY size-largeCmd.accesskey "G">
+<!ENTITY size-extraLargeCmd.label "Pergrande">
+<!ENTITY size-extraLargeCmd.accesskey "P">
+<!ENTITY size-hugeCmd.label "Escomanáu">
+<!ENTITY size-hugeCmd.accesskey "E">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Estilu de testu">
+<!ENTITY fontStyleMenu.accesskey "S">
+<!ENTITY styleBoldCmd.label "Negrina">
+<!ENTITY styleBoldCmd.accesskey "N">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Cursiva">
+<!ENTITY styleItalicCmd.accesskey "I">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Solliñar">
+<!ENTITY styleUnderlineCmd.accesskey "o">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Tacháu">
+<!ENTITY styleStrikeThruCmd.accesskey "h">
+<!ENTITY styleSuperscriptCmd.label "Superíndiz">
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "Subíndiz">
+<!ENTITY styleSubscriptCmd.accesskey "S">
+<!ENTITY styleNonbreakingCmd.label "Ensin romper">
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+<!ENTITY styleEm.label "Énfasis">
+<!ENTITY styleEm.accesskey "f">
+<!ENTITY styleStrong.label "Más énfasis">
+<!ENTITY styleStrong.accesskey "f">
+<!ENTITY styleCite.label "Cita">
+<!ENTITY styleCite.accesskey "C">
+<!ENTITY styleAbbr.label "Abreviatura">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "Acrónimu">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "Códigu">
+<!ENTITY styleCode.accesskey "d">
+<!ENTITY styleSamp.label "Aspeutu d'exemplu">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "Variable">
+<!ENTITY styleVar.accesskey "V">
+
+<!ENTITY formatFontColor.label "Color del testu…">
+<!ENTITY formatFontColor.accesskey "C">
+<!ENTITY tableOrCellColor.label "Color de fondu de la tabla o caxella…">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Desaniciar enllaces internos con nome">
+<!ENTITY formatRemoveNamedAnchors.accesskey "m">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Párrafu">
+<!ENTITY paragraphMenu.accesskey "P">
+<!ENTITY paragraphParagraphCmd.label "Párrafu">
+<!ENTITY paragraphParagraphCmd.accesskey "P">
+<!ENTITY heading1Cmd.label "Títulu 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Títulu 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Títulu 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Títulu 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Títulu 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Títulu 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Direición">
+<!ENTITY paragraphAddressCmd.accesskey "D">
+<!ENTITY paragraphPreformatCmd.label "Preformatu">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Llista">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "Denguna">
+<!ENTITY noneCmd.accesskey "D">
+<!ENTITY listBulletCmd.label "Non numberada">
+<!ENTITY listBulletCmd.accesskey "o">
+<!ENTITY listNumberedCmd.label "Numberada">
+<!ENTITY listNumberedCmd.accesskey "m">
+<!ENTITY listTermCmd.label "Términu">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "Definición">
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "Llistar propiedaes…">
+<!ENTITY listPropsCmd.accesskey "L">
+
+<!ENTITY ParagraphSelect.tooltip "Escueyi un formatu de párrafu">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Cuerpu del testu">
+<!ENTITY bodyTextCmd.accesskey "T">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Alliniar">
+<!ENTITY alignMenu.accesskey "A">
+<!ENTITY alignLeft.label "Izquierda">
+<!ENTITY alignLeft.accesskey "I">
+<!ENTITY alignLeft.tooltip "Alliniar a la izquierda">
+<!ENTITY alignCenter.label "Centrar">
+<!ENTITY alignCenter.accesskey "C">
+<!ENTITY alignCenter.tooltip "Alliniar al centru">
+<!ENTITY alignRight.label "Derecha">
+<!ENTITY alignRight.accesskey "R">
+<!ENTITY alignRight.tooltip "Alliniar a la derecha">
+<!ENTITY alignJustify.label "Xustificar">
+<!ENTITY alignJustify.accesskey "X">
+<!ENTITY alignJustify.tooltip "Xustificar">
+
+<!ENTITY increaseIndent.label "Incrementar sangráu">
+<!ENTITY increaseIndent.accesskey "I">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Amenorgar sangráu">
+<!ENTITY decreaseIndent.accesskey "m">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Color y fondu de la páxina…">
+<!ENTITY colorsAndBackground.accesskey "f">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Tabla">
+<!ENTITY tableMenu.accesskey "b">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Seleicionar">
+<!ENTITY tableSelectMenu.accesskey "S">
+
+<!ENTITY tableSelectMenu2.label "Seleicionar tabla">
+<!ENTITY tableSelectMenu2.accesskey "S">
+<!ENTITY tableInsertMenu2.label "Inxertar tabla">
+<!ENTITY tableInsertMenu2.accesskey "I">
+<!ENTITY tableDeleteMenu2.label "Desaniciar tabla">
+<!ENTITY tableDeleteMenu2.accesskey "l">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Inxertar">
+<!ENTITY tableInsertMenu.accesskey "I">
+<!ENTITY tableTable.label "Tabla">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "Filera">
+<!ENTITY tableRows.label "Filera(es)">
+<!ENTITY tableRow.accesskey "F">
+<!ENTITY tableRowAbove.label "Filera superior">
+<!ENTITY tableRowAbove.accesskey "F">
+<!ENTITY tableRowBelow.label "Filera inferior">
+<!ENTITY tableRowBelow.accesskey "i">
+<!ENTITY tableColumn.label "Columna">
+<!ENTITY tableColumns.label "Columna(es)">
+<!ENTITY tableColumn.accesskey "o">
+<!ENTITY tableColumnBefore.label "Columna anterior">
+<!ENTITY tableColumnBefore.accesskey "o">
+<!ENTITY tableColumnAfter.label "Columna siguiente">
+<!ENTITY tableColumnAfter.accesskey "A">
+<!ENTITY tableCell.label "Caxella">
+<!ENTITY tableCells.label "Caxella(es)">
+<!ENTITY tableCell.accesskey "C">
+<!ENTITY tableCellContents.label "Conteníu de la caxella">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "Toles caxelles">
+<!ENTITY tableAllCells.accesskey "a">
+<!ENTITY tableCellBefore.label "Caxella anterior">
+<!ENTITY tableCellBefore.accesskey "C">
+<!ENTITY tableCellAfter.label "Caxella siguiente">
+<!ENTITY tableCellAfter.accesskey "u">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Desaniciar">
+<!ENTITY tableDeleteMenu.accesskey "c">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "U">
+<!ENTITY tableJoinCells.accesskey "U">
+<!ENTITY tableSplitCell.label "Dividir caxella">
+<!ENTITY tableSplitCell.accesskey "C">
+<!ENTITY convertToTable.label "Crear tabla a partir de la seleición">
+<!ENTITY convertToTable.accesskey "r">
+<!ENTITY tableProperties.label "Propiedaes de la tabla…">
+<!ENTITY tableProperties.accesskey "o">
+
+<!ENTITY imageToolbarCmd.label "Imaxe">
+<!ENTITY imageToolbarCmd.tooltip "Inxerta una nueva imaxe o edita les propiedaes de la imaxe esbillada">
+<!ENTITY hruleToolbarCmd.label "Llinia horiz.">
+<!ENTITY hruleToolbarCmd.tooltip "Inxerta una nueva llinia horizontal o modifica les propiedaes de la llinia horizontal seleicionada">
+<!ENTITY tableToolbarCmd.label "Tabla">
+<!ENTITY tableToolbarCmd.tooltip "Inxerta una nueva tabla o modifica les propiedaes de la tabla seleicionada">
+<!ENTITY linkToolbarCmd.label "Enllaz">
+<!ENTITY linkToolbarCmd.tooltip "Inxerta un nuevu enllaz o edita les propiedaes del enllaz esbilláu">
+<!ENTITY anchorToolbarCmd.label "Enllaz internu">
+<!ENTITY anchorToolbarCmd.tooltip "Inxerta un nuevu enllaz con nome o modifica les propiedaes del enllaz con nome esbilláu">
+<!ENTITY TextColorButton.tooltip "Escueyi un color pal testu">
+<!ENTITY BackgroundColorButton.tooltip "Escueyi un color pal fondu">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Afitar tamañu de fonte">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Amenorgar el tamañu de la lletra">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Aumentar el tamañu de la lletra">
+<!ENTITY boldToolbarCmd.tooltip "Negrina">
+<!ENTITY italicToolbarCmd.tooltip "Cursiva">
+<!ENTITY underlineToolbarCmd.tooltip "Solliñar">
+<!ENTITY bulletListToolbarCmd.tooltip "Aplicar o desaniciar llista non numberada">
+<!ENTITY numberListToolbarCmd.tooltip "Aplicar o desaniciar llista numberada">
+<!ENTITY outdentToolbarCmd.tooltip "Amenorgar sangráu (mover a la izquierda)">
+<!ENTITY indentToolbarCmd.tooltip "Sangrar testu (mover a la derecha)">
+<!ENTITY AlignPopupButton.tooltip "Escoyer alliniación del testu">
+<!ENTITY InsertPopupButton.tooltip "Inxertar un enllaz, enllaz con nome, imaxe, llinia horizontal o tabla">
+<!ENTITY alignLeftButton.tooltip "Alliniar testu a lo llargo del marxe izquierdu">
+<!ENTITY alignCenterButton.tooltip "Alliniar testu centráu">
+<!ENTITY alignRightButton.tooltip "Alliniar testu a lo llargo del marxe derechu">
+<!ENTITY alignJustifyButton.tooltip "Alliniar testu a los márxenes izquierdu y derechu">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Inxertar">
+<!ENTITY insertTOC.accesskey      "i">
+<!ENTITY updateTOC.label          "Anovar">
+<!ENTITY updateTOC.accesskey      "v">
+<!ENTITY removeTOC.label          "Desaniciar">
+<!ENTITY removeTOC.accesskey      "r">
+<!ENTITY tocMenu.label            "Tabla de conteníos…">
+<!ENTITY tocMenu.accesskey        "b">

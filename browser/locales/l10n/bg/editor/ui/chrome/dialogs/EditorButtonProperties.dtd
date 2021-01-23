@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства на бутона">
+
+<!ENTITY Settings.label "Настройки">
+
+<!ENTITY ButtonType.label "Тип">
+<!ENTITY ButtonType.accesskey "Т">
+<!ENTITY submit.value "Изпращане">
+<!ENTITY reset.value "Анулиране">
+<!ENTITY button.value "Бутон">
+
+<!ENTITY ButtonName.label "Име:">
+<!ENTITY ButtonName.accesskey "И">
+<!ENTITY ButtonValue.label "Стойност:">
+<!ENTITY ButtonValue.accesskey "С">
+<!ENTITY tabIndex.label "Отместване при табулиране:">
+<!ENTITY tabIndex.accesskey "И">
+<!ENTITY ButtonDisabled.label "Неактивен">
+<!ENTITY ButtonDisabled.accesskey "Н">
+<!ENTITY AccessKey.label "Клавиш за достъп:">
+<!ENTITY AccessKey.accesskey "К">
+
+<!ENTITY RemoveButton.label "Премахване на бутон">
+<!ENTITY RemoveButton.accesskey "П">

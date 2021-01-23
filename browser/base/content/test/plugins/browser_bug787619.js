@@ -8,7 +8,6 @@ var gWrapperClickCount = 0;
 add_task(async function() {
   registerCleanupFunction(function() {
     clearAllPluginPermissions();
-    Services.prefs.clearUserPref("plugins.click_to_play");
     setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Test Plug-in");
     setTestPluginEnabledState(
       Ci.nsIPluginTag.STATE_ENABLED,
@@ -21,8 +20,6 @@ add_task(async function() {
 });
 
 add_task(async function() {
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
-
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   gTestBrowser = gBrowser.selectedBrowser;
 
@@ -48,7 +45,7 @@ add_task(async function() {
 
   // click the overlay to prompt
   let promise = promisePopupNotification("click-to-play-plugins");
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("plugin");
     let bounds = plugin.getBoundingClientRect();
     let left = (bounds.left + bounds.right) / 2;

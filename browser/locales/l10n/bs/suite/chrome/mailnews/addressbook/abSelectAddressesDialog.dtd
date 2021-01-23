@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Izaberi adrese">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Za->"> 
+ 
+<!ENTITY ccButton.label                      "Cc->"> 
+ 
+<!ENTITY bccButton.label                     "Bcc->">  
+  
+<!ENTITY newButton.label                     "Nova…"> 
+ 
+<!ENTITY editButton.label                    "Uredi…"> 
+<!ENTITY removeButton.label                  "Ukloni"> 
+ 
+<!ENTITY lookIn.label                        "Pogledaj u:"> 
+ 
+<!ENTITY for.label                           "za:"> 
+ 
+<!ENTITY for.placeholder                     "Ime ili email">
+<!ENTITY addressMessageTo.label              "Adresiraj poruku za:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Napravi novu karticu adresara"> 
+<!ENTITY addressPickerEditButton.tooltip     "Uredi odabranu karticu"> 
+

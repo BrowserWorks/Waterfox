@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Подешавања нове странице">
+
+<!ENTITY  authorName.label          "Аутор:">
+<!ENTITY  authorName.accesskey      "у">
+<!ENTITY  pageColorHeader           "Изглед подразумеване странице">
+
+<!ENTITY defaultColors.label        "Подразумеване боје читача (не подешавај боје унутар странице)">
+<!ENTITY defaultColors.accesskey    "д">
+<!ENTITY customColors.label         "Користи друге боје:">
+<!ENTITY customColors.accesskey     "с">
+
+<!ENTITY normalText.label           "Обичан текст">
+<!ENTITY normalText.accesskey       "н">
+<!ENTITY linkText.label             "Текст везе">
+<!ENTITY linkText.accesskey         "в">
+<!ENTITY activeLinkText.label       "Текст активне везе">
+<!ENTITY activeLinkText.accesskey   "а">
+<!ENTITY visitedLinkText.label      "Текст посећене везе">
+<!ENTITY visitedLinkText.accesskey  "Т">
+<!ENTITY background.label           "Позадина:">
+<!ENTITY background.accesskey       "П">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Позадинска слика:">
+<!ENTITY backgroundImage.accesskey  "л">
+<!ENTITY chooseFile.label           "Изаберите датотеку…">
+<!ENTITY chooseFile.accesskey       "о">
+

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "הורדות">
+<!ENTITY aboutDownloads.header                     "ההורדות שלך">
+<!ENTITY aboutDownloads.empty                      "אין הורדות">
+
+<!ENTITY aboutDownloads.open                       "פתיחה">
+<!ENTITY aboutDownloads.remove                     "מחיקה">
+<!ENTITY aboutDownloads.removeAll                  "מחיקת הכל">
+<!ENTITY aboutDownloads.pause                      "השהיה">
+<!ENTITY aboutDownloads.resume                     "המשך">
+<!ENTITY aboutDownloads.cancel                     "ביטול">
+<!ENTITY aboutDownloads.retry                      "לנסות שוב">

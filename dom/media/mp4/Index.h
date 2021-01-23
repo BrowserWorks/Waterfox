@@ -5,16 +5,14 @@
 #ifndef INDEX_H_
 #define INDEX_H_
 
+#include "ByteStream.h"
 #include "MediaData.h"
 #include "MediaResource.h"
-#include "TimeUnits.h"
 #include "MoofParser.h"
+#include "mozilla/Result.h"
 #include "MP4Interval.h"
-#include "ByteStream.h"
 #include "nsISupportsImpl.h"
-
-template <class T>
-class nsAutoPtr;
+#include "TimeUnits.h"
 
 namespace mozilla {
 class IndiceWrapper;
@@ -40,6 +38,14 @@ class SampleIterator {
   // called without a valid current moof.
   SampleDescriptionEntry* GetSampleDescriptionEntry();
   CencSampleEncryptionInfoEntry* GetSampleEncryptionEntry();
+
+  // Determines the encryption scheme in use for the current sample. If the
+  // the scheme cannot be unambiguously determined, will return an error with
+  // the reason.
+  //
+  // Returns: Ok(CryptoScheme) if a crypto scheme, including None, can be
+  // determined, or Err(nsCString) if there is an issue determining the scheme.
+  Result<CryptoScheme, const nsCString> GetEncryptionScheme();
 
   void Next();
   RefPtr<Index> mIndex;
@@ -104,7 +110,7 @@ class Index {
   mozilla::media::TimeIntervals ConvertByteRangesToTimeRanges(
       const mozilla::MediaByteRangeSet& aByteRanges);
   uint64_t GetEvictionOffset(Microseconds aTime);
-  bool IsFragmented() { return mMoofParser; }
+  bool IsFragmented() { return !!mMoofParser; }
 
   friend class SampleIterator;
 
@@ -116,7 +122,7 @@ class Index {
   ByteStream* mSource;
   FallibleTArray<Sample> mIndex;
   FallibleTArray<MP4DataOffset> mDataOffset;
-  nsAutoPtr<MoofParser> mMoofParser;
+  UniquePtr<MoofParser> mMoofParser;
   nsTArray<SampleIterator*> mIterators;
 
   // ConvertByteRangesToTimeRanges cache

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Ukhuseleko Lomyalezo">
+<!ENTITY subject.plaintextWarning "Nceda qaphela: Imigca yentloko yemiyalezo yemeyile ayizange iguqulelwe ngokuntsonkothileyo.">
+<!ENTITY status.heading "Iziqulatho zomyalezo wakho ziya kuthunyelwa ngendlela elandelayo:">
+<!ENTITY status.signed "Zisayinwa ngokwamanani:">
+<!ENTITY status.encrypted "Ziguqulelwa ngokuntsonkothileyo:">
+<!ENTITY status.certificates "Izatifikethi:">
+<!ENTITY view.label "Jonga">
+<!ENTITY view.accesskey "J">
+<!ENTITY tree.recipient "Umamkeli">
+<!ENTITY tree.status "Isimo">
+<!ENTITY tree.issuedDate "Ikhutshwe">
+<!ENTITY tree.expiresDate "Iphelelwa lixesha">

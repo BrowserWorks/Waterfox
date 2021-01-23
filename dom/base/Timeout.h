@@ -8,16 +8,18 @@
 #define mozilla_dom_timeout_h
 
 #include "mozilla/dom/PopupBlocker.h"
+#include "mozilla/dom/TimeoutHandler.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
+#include "nsGlobalWindowInner.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsITimeoutHandler.h"
+#include "GeckoProfiler.h"
+#include "nsDataHashtable.h"
 
 class nsIEventTarget;
 class nsIPrincipal;
 class nsIEventTarget;
-class nsGlobalWindowInner;
 
 namespace mozilla {
 namespace dom {
@@ -27,7 +29,7 @@ namespace dom {
  * timeout.  Holds a strong reference to an nsITimeoutHandler, which
  * abstracts the language specific cruft.
  */
-class Timeout final : public LinkedListElement<RefPtr<Timeout>> {
+class Timeout final : protected LinkedListElement<RefPtr<Timeout>> {
  public:
   Timeout();
 
@@ -37,6 +39,45 @@ class Timeout final : public LinkedListElement<RefPtr<Timeout>> {
   enum class Reason : uint8_t {
     eTimeoutOrInterval,
     eIdleCallbackTimeout,
+  };
+
+  struct TimeoutIdAndReason {
+    uint32_t mId;
+    Reason mReason;
+  };
+
+  class TimeoutHashKey : public PLDHashEntryHdr {
+   public:
+    typedef const TimeoutIdAndReason& KeyType;
+    typedef const TimeoutIdAndReason* KeyTypePointer;
+
+    explicit TimeoutHashKey(KeyTypePointer aKey) : mValue(*aKey) {}
+    TimeoutHashKey(TimeoutHashKey&& aOther)
+        : PLDHashEntryHdr(std::move(aOther)),
+          mValue(std::move(aOther.mValue)) {}
+    ~TimeoutHashKey() = default;
+
+    KeyType GetKey() const { return mValue; }
+    bool KeyEquals(KeyTypePointer aKey) const {
+      return aKey->mId == mValue.mId && aKey->mReason == mValue.mReason;
+    }
+
+    static KeyTypePointer KeyToPointer(KeyType aKey) { return &aKey; }
+    static PLDHashNumber HashKey(KeyTypePointer aKey) {
+      return aKey->mId | (static_cast<uint8_t>(aKey->mReason) << 31);
+    }
+    enum { ALLOW_MEMMOVE = true };
+
+   private:
+    const TimeoutIdAndReason mValue;
+  };
+
+  class TimeoutSet : public nsDataHashtable<TimeoutHashKey, Timeout*> {
+   public:
+    NS_INLINE_DECL_REFCOUNTING(TimeoutSet);
+
+   private:
+    ~TimeoutSet() = default;
   };
 
   void SetWhenOrTimeRemaining(const TimeStamp& aBaseTime,
@@ -49,6 +90,39 @@ class Timeout final : public LinkedListElement<RefPtr<Timeout>> {
 
   // Can only be called when frozen.
   const TimeDuration& TimeRemaining() const;
+
+  void SetTimeoutContainer(TimeoutSet* aTimeouts) {
+    MOZ_ASSERT(mTimeoutId != 0);
+    TimeoutIdAndReason key = {mTimeoutId, mReason};
+    if (mTimeouts) {
+      mTimeouts->Remove(key);
+    }
+    mTimeouts = aTimeouts;
+    if (mTimeouts) {
+      mTimeouts->Put(key, this);
+    }
+  }
+
+  // Override some LinkedListElement methods so that remove()
+  // calls can call SetTimeoutContainer.
+  Timeout* getNext() { return LinkedListElement<RefPtr<Timeout>>::getNext(); }
+
+  void setNext(Timeout* aNext) {
+    return LinkedListElement<RefPtr<Timeout>>::setNext(aNext);
+  }
+
+  Timeout* getPrevious() {
+    return LinkedListElement<RefPtr<Timeout>>::getPrevious();
+  }
+
+  void remove() {
+    SetTimeoutContainer(nullptr);
+    LinkedListElement<RefPtr<Timeout>>::remove();
+  }
+
+#ifdef MOZ_GECKO_PROFILER
+  UniqueProfilerBacktrace TakeProfilerBacktrace() { return std::move(mCause); }
+#endif
 
  private:
   // mWhen and mTimeRemaining can't be in a union, sadly, because they
@@ -65,7 +139,7 @@ class Timeout final : public LinkedListElement<RefPtr<Timeout>> {
   // (or is cancelled, etc)
   TimeStamp mSubmitTime;
 
-  ~Timeout() = default;
+  ~Timeout() { SetTimeoutContainer(nullptr); }
 
  public:
   // Public member variables in this section.  Please don't add to this list
@@ -77,10 +151,16 @@ class Timeout final : public LinkedListElement<RefPtr<Timeout>> {
   RefPtr<nsGlobalWindowInner> mWindow;
 
   // The language-specific information about the callback.
-  nsCOMPtr<nsITimeoutHandler> mScriptHandler;
+  RefPtr<TimeoutHandler> mScriptHandler;
+
+  RefPtr<TimeoutSet> mTimeouts;
 
   // Interval
   TimeDuration mInterval;
+
+#ifdef MOZ_GECKO_PROFILER
+  UniqueProfilerBacktrace mCause;
+#endif
 
   // Returned as value of setTimeout()
   uint32_t mTimeoutId;
@@ -113,6 +193,10 @@ class Timeout final : public LinkedListElement<RefPtr<Timeout>> {
 
   // True if this is a repeating/interval timer
   bool mIsInterval;
+
+ protected:
+  friend class LinkedList<RefPtr<Timeout>>;
+  friend class LinkedListElement<RefPtr<Timeout>>;
 };
 
 }  // namespace dom

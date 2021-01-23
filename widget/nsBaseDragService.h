@@ -8,7 +8,6 @@
 
 #include "nsIDragService.h"
 #include "nsIDragSession.h"
-#include "nsITransferable.h"
 #include "nsCOMPtr.h"
 #include "nsRect.h"
 #include "nsPoint.h"
@@ -16,6 +15,7 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
+#include "mozilla/dom/RemoteDragStartData.h"
 #include "nsTArray.h"
 #include "nsRegion.h"
 #include "Units.h"
@@ -148,6 +148,7 @@ class nsBaseDragService : public nsIDragService, public nsIDragSession {
   bool mCanDrop;
   bool mOnlyChromeDrop;
   bool mDoingDrag;
+  bool mSessionIsSynthesizedForTests;
 
   // true if in EndDragSession
   bool mEndingSession;
@@ -161,8 +162,13 @@ class nsBaseDragService : public nsIDragService, public nsIDragSession {
   uint32_t mDragAction;
   uint32_t mDragActionFromChildProcess;
 
+  // mEffectAllowedForTests stores allowed effects at invoking the drag
+  // for tests.
+  uint32_t mEffectAllowedForTests;
+
   nsCOMPtr<nsINode> mSourceNode;
   nsCOMPtr<nsIPrincipal> mTriggeringPrincipal;
+  nsCOMPtr<nsIContentSecurityPolicy> mCsp;
 
   // the document at the drag source. will be null if it came from outside the
   // app.
@@ -181,6 +187,9 @@ class nsBaseDragService : public nsIDragService, public nsIDragSession {
 
   // set if a selection is being dragged
   RefPtr<mozilla::dom::Selection> mSelection;
+
+  // remote drag data
+  RefPtr<mozilla::dom::RemoteDragStartData> mDragStartData;
 
   // set if the image in mImage is a popup. If this case, the popup will be
   // opened and moved instead of using a drag image.

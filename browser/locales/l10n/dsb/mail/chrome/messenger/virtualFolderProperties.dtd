@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nowy składowany pytański zarědnik">
+<!ENTITY name.label                 "Mě:">
+<!ENTITY name.accesskey             "M">
+<!ENTITY description.label          "Pódzarědnik napóraś wót:">
+<!ENTITY description.accesskey      "P">
+
+<!ENTITY searchTermCaption.label "Pytańske kriterije za toś ten zarědnik za skłaźone pytanje konfigurěrowaś: ">
+
+<!ENTITY folderSelectionCaption.label "Zarědniki za pytanje wubraś: ">
+<!ENTITY chooseFoldersButton.label "Wubraś…">
+<!ENTITY chooseFoldersButton.accesskey "b">
+
+<!ENTITY searchOnline.label "Online pytaś (dajo aktualne wuslědki za zarědniki IMAP a diskusijnych kupkow, pówušyjo pak cas za wócynjenje zarědnika)">
+<!ENTITY searchOnline.accesskey "O">
+<!ENTITY newFolderButton.label       "Napóraś">
+<!ENTITY newFolderButton.accesskey   "N">
+<!ENTITY editFolderButton.label      "Aktualizěrowaś">
+<!ENTITY editFolderButton.accesskey  "A">

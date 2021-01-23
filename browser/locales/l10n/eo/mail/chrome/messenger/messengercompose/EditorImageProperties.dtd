@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Atributoj de bildo">
+
+<!ENTITY pixelsPopup.value "rastrumeroj">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Adreso de bildo:">
+<!ENTITY locationEditField.accessKey "d">
+<!ENTITY locationEditField.tooltip "Entajpu nomon aŭ dosierindikon de bildo">
+<!ENTITY locationEditField.shortenedDataURI "Mallongigita ligilo de tipo “data” (kiam kopiita, la plena ligilo aperos en la tondujo)">
+<!ENTITY title.label "Etikedo:">
+<!ENTITY title.accessKey "E">
+<!ENTITY title.tooltip "La HTML‑atributo “title”, montriĝos kiel etikedo de bildo">
+<!ENTITY altText.label "Alternativa teksto:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Entajpu tekston, kiu estos montrata anstataŭ bildo">
+<!ENTITY noAltText.label "Ne montri alternativan tekston">
+<!ENTITY noAltText.accessKey "N">
+
+<!ENTITY previewBox.label "Antaŭvido de bildo">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Originalaj dimensioj:">
+<!ENTITY actualSizeRadio.label "Originalaj dimensioj">
+<!ENTITY actualSizeRadio.accessKey "O">
+<!ENTITY actualSizeRadio.tooltip "Restarigi originalajn dimensiojn de bildo">
+<!ENTITY customSizeRadio.label "Propraj dimensioj">
+<!ENTITY customSizeRadio.accessKey "P">
+<!ENTITY customSizeRadio.tooltip "Ŝanĝi dimensiojn de bildo montrata sur la paĝo">
+<!ENTITY heightEditField.label "Alto:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Larĝo:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Konservi proporciojn">
+<!ENTITY constrainCheckbox.accessKey "K">
+<!ENTITY constrainCheckbox.tooltip "Skali la bildon proporcie">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Mapo de bildo">
+<!ENTITY removeImageMapButton.label "Forigi">
+<!ENTITY removeImageMapButton.accessKey "F">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Ĝisrandigi tekston al bildo">
+<!ENTITY bottomPopup.value "Sube">
+<!ENTITY topPopup.value "Supre">
+<!ENTITY centerPopup.value "Centre">
+<!ENTITY wrapRightPopup.value "Faldi al dekstro">
+<!ENTITY wrapLeftPopup.value "Faldi al maldekstro">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Marĝenoj">
+<!ENTITY leftRightEditField.label "Dekstra kaj maldekstra:">
+<!ENTITY leftRightEditField.accessKey "D">
+<!ENTITY topBottomEditField.label "Supra kaj malsupra:">
+<!ENTITY topBottomEditField.accessKey "S">
+<!ENTITY borderEditField.label "Larĝo de bordero:">
+<!ENTITY borderEditField.accessKey "b">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Montri borderon ĉirkaŭ bildo kaj ligilo">
+<!ENTITY showImageLinkBorder.accessKey "B">
+<!ENTITY LinkAdvancedEditButton.label "Spertula redakto de ligilo…">
+<!ENTITY LinkAdvancedEditButton.accessKey "S">
+<!ENTITY LinkAdvancedEditButton.tooltip "Aldoni aŭ modifi atributojn HTML, de stiloj kaj de ĝavoskripto">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formularo">
+<!ENTITY imageLocationTab.label "Adreso">
+<!ENTITY imageDimensionsTab.label "Dimensioj">
+<!ENTITY imageAppearanceTab.label "Aspekto">
+<!ENTITY imageLinkTab.label "Ligilo">

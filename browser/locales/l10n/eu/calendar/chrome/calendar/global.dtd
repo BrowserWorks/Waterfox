@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Gauerdia" >
+<!ENTITY time.noon "Eguerdia" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Ig." >
+<!ENTITY day.1.Ddd.accesskey "I">
+<!ENTITY day.2.Ddd "Al." >
+<!ENTITY day.2.Ddd.accesskey "A">
+<!ENTITY day.3.Ddd "Ar." >
+<!ENTITY day.3.Ddd.accesskey "R">
+<!ENTITY day.4.Ddd "Az." >
+<!ENTITY day.4.Ddd.accesskey "Z">
+<!ENTITY day.5.Ddd "Og." >
+<!ENTITY day.5.Ddd.accesskey "O">
+<!ENTITY day.6.Ddd "Or." >
+<!ENTITY day.6.Ddd.accesskey "T">
+<!ENTITY day.7.Ddd "Lr." >
+<!ENTITY day.7.Ddd.accesskey "L">
+
+<!ENTITY day.1.name "Igandea" >
+<!ENTITY day.2.name "Astelehena" >
+<!ENTITY day.3.name "Asteartea" >
+<!ENTITY day.4.name "Asteazkena" >
+<!ENTITY day.5.name "Osteguna" >
+<!ENTITY day.6.name "Ostirala" >
+<!ENTITY day.7.name "Larunbata" >
+
+<!ENTITY month.1.name "urtarrila" >
+<!ENTITY month.2.name "otsaila" >
+<!ENTITY month.3.name "martxoa" >
+<!ENTITY month.4.name "apirila" >
+<!ENTITY month.5.name "maiatza" >
+<!ENTITY month.6.name "ekaina" >
+<!ENTITY month.7.name "uztaila" >
+<!ENTITY month.8.name "abuztua" >
+<!ENTITY month.9.name "iraila" >
+<!ENTITY month.10.name "urria" >
+<!ENTITY month.11.name "azaroa" >
+<!ENTITY month.12.name "abendua" >
+
+<!ENTITY onemonthbackward.tooltip "Hilabete bat atzera" >
+<!ENTITY onemonthforward.tooltip "Hilabete bat aurrera" >
+<!ENTITY oneyearbackward.tooltip "Urtebete atzera" >
+<!ENTITY oneyearforward.tooltip "Urtebete aurrera" >
+<!ENTITY showToday.tooltip "Joan gaurkora">
+<!ENTITY onedayforward.tooltip "Egun bat aurrera">
+<!ENTITY onedaybackward.tooltip "Egun bat atzera">
+<!ENTITY showselectedday.tooltip "Ikusi hautatutako eguneko gertaerak">

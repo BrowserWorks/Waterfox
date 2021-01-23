@@ -140,7 +140,7 @@ add_task(async function remove_bookmark() {
   await frecencyChangedPromise;
 });
 
-add_task(async function remove_multiple_bookmarks() {
+add_task(async function remove_multiple_bookmarks_simple() {
   // When removing a bookmark we need to check the frecency. First we confirm
   // that there is a normal update when it is inserted.
   let frecencyChangedPromise = promiseFrecencyChanged(
@@ -180,6 +180,109 @@ add_task(async function remove_multiple_bookmarks() {
   await PlacesUtils.bookmarks.remove([bm1, bm2]);
 
   await manyFrencenciesPromise;
+});
+
+add_task(async function remove_multiple_bookmarks_complex() {
+  let bms = [];
+  for (let i = 0; i < 10; i++) {
+    bms.push(
+      await PlacesUtils.bookmarks.insert({
+        parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+        url: `http://example.com/${i}`,
+        title: `bookmark ${i}`,
+      })
+    );
+  }
+
+  // Remove bookmarks 2 and 3.
+  let bmsToRemove = bms.slice(2, 4);
+  let notifiedIndexes = [];
+  let notificationPromise = PlacesTestUtils.waitForNotification(
+    "bookmark-removed",
+    events => {
+      for (let event of events) {
+        notifiedIndexes.push({ guid: event.guid, index: event.index });
+      }
+      return notifiedIndexes.length == bmsToRemove.length;
+    },
+    "places"
+  );
+  await PlacesUtils.bookmarks.remove(bmsToRemove);
+  await notificationPromise;
+
+  let indexModifier = 0;
+  for (let i = 0; i < bmsToRemove.length; i++) {
+    Assert.equal(
+      notifiedIndexes[i].guid,
+      bmsToRemove[i].guid,
+      `Should have been notified of the correct guid for item ${i}`
+    );
+    Assert.equal(
+      notifiedIndexes[i].index,
+      bmsToRemove[i].index - indexModifier,
+      `Should have been notified of the correct index for the item ${i}`
+    );
+    indexModifier++;
+  }
+
+  let expectedIndex = 0;
+  for (let bm of [bms[0], bms[1], ...bms.slice(4)]) {
+    const fetched = await PlacesUtils.bookmarks.fetch(bm.guid);
+    Assert.equal(
+      fetched.index,
+      expectedIndex,
+      "Should have the correct index after consecutive item removal"
+    );
+    bm.index = fetched.index;
+    expectedIndex++;
+  }
+
+  // Remove some more including non-consecutive.
+  bmsToRemove = [bms[1], bms[5], bms[6], bms[8]];
+  notifiedIndexes = [];
+  notificationPromise = PlacesTestUtils.waitForNotification(
+    "bookmark-removed",
+    events => {
+      for (let event of events) {
+        notifiedIndexes.push({ guid: event.guid, index: event.index });
+      }
+      return notifiedIndexes.length == bmsToRemove.length;
+    },
+    "places"
+  );
+  await PlacesUtils.bookmarks.remove(bmsToRemove);
+  await notificationPromise;
+
+  indexModifier = 0;
+  for (let i = 0; i < bmsToRemove.length; i++) {
+    Assert.equal(
+      notifiedIndexes[i].guid,
+      bmsToRemove[i].guid,
+      `Should have been notified of the correct guid for item ${i}`
+    );
+    Assert.equal(
+      notifiedIndexes[i].index,
+      bmsToRemove[i].index - indexModifier,
+      `Should have been notified of the correct index for the item ${i}`
+    );
+    indexModifier++;
+  }
+
+  expectedIndex = 0;
+  const expectedRemaining = [bms[0], bms[4], bms[7], bms[9]];
+  for (let bm of expectedRemaining) {
+    const fetched = await PlacesUtils.bookmarks.fetch(bm.guid);
+    Assert.equal(
+      fetched.index,
+      expectedIndex,
+      "Should have the correct index after non-consecutive item removal"
+    );
+    expectedIndex++;
+  }
+
+  // Tidy up
+  await PlacesUtils.bookmarks.remove(expectedRemaining);
+  await PlacesTestUtils.promiseAsyncUpdates();
 });
 
 add_task(async function remove_bookmark_orphans() {
@@ -247,8 +350,16 @@ add_task(async function test_contents_removed() {
     title: "",
   });
 
-  let skipDescendantsObserver = expectNotifications(true);
-  let receiveAllObserver = expectNotifications(false);
+  let skipDescendantsObserver = expectPlacesObserverNotifications(
+    ["bookmark-removed"],
+    false,
+    true
+  );
+  let receiveAllObserver = expectPlacesObserverNotifications(
+    ["bookmark-removed"],
+    false,
+    false
+  );
   let frecencyChangedPromise = promiseFrecencyChanged("http://example.com/", 0);
   await PlacesUtils.bookmarks.remove(folder1);
   Assert.strictEqual(await PlacesUtils.bookmarks.fetch(folder1.guid), null);
@@ -258,10 +369,8 @@ add_task(async function test_contents_removed() {
 
   let expectedNotifications = [
     {
-      name: "onItemRemoved",
-      arguments: {
-        guid: folder1.guid,
-      },
+      type: "bookmark-removed",
+      guid: folder1.guid,
     },
   ];
 
@@ -270,12 +379,9 @@ add_task(async function test_contents_removed() {
 
   // Note: Items of folders get notified first.
   expectedNotifications.unshift({
-    name: "onItemRemoved",
-    arguments: {
-      guid: bm1.guid,
-    },
+    type: "bookmark-removed",
+    guid: bm1.guid,
   });
-
   // If we don't skip descendents, we'll be notified of the folder and the
   // bookmark.
   receiveAllObserver.check(expectedNotifications);
@@ -347,5 +453,68 @@ add_task(async function test_nested_content_fails_when_not_allowed() {
       preventRemovalOfNonEmptyFolders: true,
     }),
     /Cannot remove a non-empty folder./
+  );
+});
+
+add_task(async function test_remove_bookmark_with_invalid_url() {
+  let folder = await PlacesUtils.bookmarks.insert({
+    type: PlacesUtils.bookmarks.TYPE_FOLDER,
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+    title: "folder",
+  });
+  let guid = "invalid_____";
+  let folderedGuid = "invalid____2";
+  let url = "invalid-uri";
+  await PlacesUtils.withConnectionWrapper("test_bookmarks_remove", async db => {
+    await db.execute(
+      `
+      INSERT INTO moz_places(url, url_hash, title, rev_host, guid)
+      VALUES (:url, hash(:url), 'Invalid URI', '.', GENERATE_GUID())
+    `,
+      { url }
+    );
+    await db.execute(
+      `INSERT INTO moz_bookmarks (type, fk, parent, position, guid)
+        VALUES (:type,
+                (SELECT id FROM moz_places WHERE url = :url),
+                (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid),
+                (SELECT MAX(position) + 1 FROM moz_bookmarks WHERE parent = (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid)),
+                :guid)
+      `,
+      {
+        type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+        url,
+        parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+        guid,
+      }
+    );
+    await db.execute(
+      `INSERT INTO moz_bookmarks (type, fk, parent, position, guid)
+        VALUES (:type,
+                (SELECT id FROM moz_places WHERE url = :url),
+                (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid),
+                (SELECT MAX(position) + 1 FROM moz_bookmarks WHERE parent = (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid)),
+                :guid)
+      `,
+      {
+        type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+        url,
+        parentGuid: folder.guid,
+        guid: folderedGuid,
+      }
+    );
+  });
+  await PlacesUtils.bookmarks.remove(guid);
+  Assert.strictEqual(
+    await PlacesUtils.bookmarks.fetch(guid),
+    null,
+    "Should not throw and not find the bookmark"
+  );
+
+  await PlacesUtils.bookmarks.remove(folder);
+  Assert.strictEqual(
+    await PlacesUtils.bookmarks.fetch(folderedGuid),
+    null,
+    "Should not throw and not find the bookmark"
   );
 });

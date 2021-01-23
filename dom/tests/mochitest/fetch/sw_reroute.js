@@ -17,6 +17,7 @@ function testScript(script) {
         ["dom.serviceWorkers.enabled", true],
         ["dom.serviceWorkers.testing.enabled", true],
         ["dom.serviceWorkers.exemptFromPerDomainMax", true],
+        ["dom.serviceWorkers.idle_timeout", 60000],
       ],
     },
     function() {
@@ -24,7 +25,7 @@ function testScript(script) {
         ? "empty.js"
         : "reroute.js";
       navigator.serviceWorker
-        .register(scriptURL, { scope: scope })
+        .register(scriptURL, { scope })
         .then(swr => waitForState(swr.installing, "activated", swr))
         .then(setupSW);
     }

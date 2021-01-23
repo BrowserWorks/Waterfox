@@ -13,7 +13,9 @@ const BROTLI_REQUESTS = 1;
 add_task(async function() {
   const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
-  const { tab, monitor } = await initNetMonitor(BROTLI_URL);
+  const { tab, monitor } = await initNetMonitor(BROTLI_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -28,14 +30,16 @@ add_task(async function() {
   await performRequests(monitor, tab, BROTLI_REQUESTS);
 
   const requestItem = document.querySelector(".request-list-item");
+  // Status code title is generated on hover
   const requestsListStatus = requestItem.querySelector(".status-code");
   EventUtils.sendMouseEvent({ type: "mouseover" }, requestsListStatus);
   await waitUntil(() => requestsListStatus.title);
+  await waitForDOMIfNeeded(requestItem, ".requests-list-timings-total");
 
   verifyRequestItemTarget(
     document,
     getDisplayedRequests(store.getState()),
-    getSortedRequests(store.getState()).get(0),
+    getSortedRequests(store.getState())[0],
     "GET",
     HTTPS_CONTENT_TYPE_SJS + "?fmt=br",
     {
@@ -49,9 +53,9 @@ add_task(async function() {
     }
   );
 
-  wait = waitForDOM(document, ".CodeMirror-code");
+  const wait = waitForDOM(document, ".CodeMirror-code");
   const onResponseContent = monitor.panelWin.api.once(
-    EVENTS.RECEIVED_RESPONSE_CONTENT
+    TEST_EVENTS.RECEIVED_RESPONSE_CONTENT
   );
   store.dispatch(Actions.toggleNetworkDetails());
   EventUtils.sendMouseEvent(

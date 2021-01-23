@@ -11,13 +11,23 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/Services.jsm"
 );
 
+const IS_DIALOG_WINDOW = window.arguments && window.arguments.length;
+
+let openWebLink = IS_DIALOG_WINDOW
+  ? window.arguments[0].wrappedJSObject.openWebLink
+  : url => {
+      window.windowRoot.ownerGlobal.openWebLinkIn(url, "tab", {
+        relatedToCurrent: true,
+      });
+    };
+
 const showOnAnyType = () => false;
 const hideOnAnyType = () => true;
 const hideOnThemeType = addonType => addonType === "theme";
 
 // The reasons string used as a key in this Map is expected to stay in sync
 // with the reasons string used in the "abuseReports.ftl" locale file and
-// the suggestions templates included in abuse-reports-xulframe.html.
+// the suggestions templates included in abuse-report-frame.html.
 const ABUSE_REASONS = (window.ABUSE_REPORT_REASONS = {
   damage: {
     isExampleHidden: showOnAnyType,
@@ -42,6 +52,7 @@ const ABUSE_REASONS = (window.ABUSE_REPORT_REASONS = {
     hasSuggestions: true,
     isExampleHidden: hideOnThemeType,
     isReasonHidden: showOnAnyType,
+    requiresSupportURL: true,
   },
   policy: {
     hasSuggestions: true,
@@ -58,27 +69,51 @@ const ABUSE_REASONS = (window.ABUSE_REPORT_REASONS = {
   },
 });
 
+// Maps the reason id to the last version of the related fluent id.
+// NOTE: when changing the localized string, increase the `-vN` suffix
+// in the abuseReports.ftl fluent file and update this mapping table.
+const REASON_L10N_STRING_MAPPING = {
+  "abuse-report-damage-reason": "abuse-report-damage-reason-v2",
+  "abuse-report-spam-reason": "abuse-report-spam-reason-v2",
+  "abuse-report-settings-reason": "abuse-report-settings-reason-v2",
+  "abuse-report-deceptive-reason": "abuse-report-deceptive-reason-v2",
+  "abuse-report-broken-reason-extension":
+    "abuse-report-broken-reason-extension-v2",
+  "abuse-report-broken-reason-theme": "abuse-report-broken-reason-theme-v2",
+  "abuse-report-policy-reason": "abuse-report-policy-reason-v2",
+  "abuse-report-unwanted-reason": "abuse-report-unwanted-reason-v2",
+};
+
 function getReasonL10nId(reason, addonType) {
-  let l10nId = `abuse-report-${reason}-reason`;
+  let reasonId = `abuse-report-${reason}-reason`;
   // Special case reasons that have a addonType-specific
   // l10n id.
   if (ABUSE_REASONS[reason].hasAddonTypeL10nId) {
-    l10nId += `-${addonType}`;
+    reasonId += `-${addonType}`;
   }
-  return l10nId;
+  // Map the reason to the corresponding versionized fluent string, using the
+  // mapping table above, if available.
+  return REASON_L10N_STRING_MAPPING[reasonId] || reasonId;
 }
 
-function getSuggestionsTemplate(reason, addonType) {
+function getSuggestionsTemplate({ addonType, reason, supportURL }) {
   const reasonInfo = ABUSE_REASONS[reason];
-  if (!reasonInfo.hasSuggestions) {
+
+  if (
+    !addonType ||
+    !reasonInfo.hasSuggestions ||
+    (reasonInfo.requiresSupportURL && !supportURL)
+  ) {
     return null;
   }
+
   let templateId = `tmpl-suggestions-${reason}`;
   // Special case reasons that have a addonType-specific
   // suggestion template.
   if (reasonInfo.hasAddonTypeSuggestionTemplate) {
     templateId += `-${addonType}`;
   }
+
   return document.getElementById(templateId);
 }
 
@@ -308,13 +343,14 @@ class AbuseReasonSuggestions extends HTMLElement {
   update() {
     const { addonType, extensionSupportURL, reason } = this;
 
-    if (!addonType) {
-      return;
-    }
-
     this.textContent = "";
 
-    let template = getSuggestionsTemplate(reason, addonType);
+    let template = getSuggestionsTemplate({
+      addonType,
+      reason,
+      supportURL: extensionSupportURL,
+    });
+
     if (template) {
       let content = document.importNode(template.content, true);
 
@@ -401,6 +437,7 @@ class AbuseReport extends HTMLElement {
       _btnCancel: "button.abuse-report-cancel",
       _btnGoBack: "button.abuse-report-goback",
       _btnSubmit: "button.abuse-report-submit",
+      _addonAuthorContainer: ".abuse-report-header .addon-author-box",
       _addonIconElement: ".abuse-report-header img.addon-icon",
       _addonNameElement: ".abuse-report-header .addon-name",
       _linkAddonAuthor: ".abuse-report-header .addon-author-box a.author",
@@ -439,7 +476,11 @@ class AbuseReport extends HTMLElement {
           }
           this.cancel();
         }
-        this.handleKeyboardNavigation(evt);
+        if (!IS_DIALOG_WINDOW) {
+          // Workaround keyboard navigation issues when
+          // the panel is running in its own dialog window.
+          this.handleKeyboardNavigation(evt);
+        }
         break;
       case "click":
         if (evt.target === this._iconClose || evt.target === this._btnCancel) {
@@ -464,9 +505,7 @@ class AbuseReport extends HTMLElement {
           const url = evt.target.getAttribute("href");
           // Ignore if url is empty.
           if (url) {
-            window.windowRoot.ownerGlobal.openWebLinkIn(url, "tab", {
-              relatedToCurrent: true,
-            });
+            openWebLink(url);
           }
         }
         break;
@@ -517,7 +556,23 @@ class AbuseReport extends HTMLElement {
 
   render() {
     this.textContent = "";
-    this.appendChild(document.importNode(this.template.content, true));
+    const formTemplate = document.importNode(this.template.content, true);
+    if (IS_DIALOG_WINDOW) {
+      this.appendChild(formTemplate);
+    } else {
+      // Append the report form inside a modal overlay when the report panel
+      // is a sub-frame of the about:addons tab.
+      const modalTemplate = document.importNode(
+        this.modalTemplate.content,
+        true
+      );
+
+      this.appendChild(modalTemplate);
+      this.querySelector(".modal-panel-container").appendChild(formTemplate);
+
+      // Add the card styles to the form.
+      this.querySelector("form").classList.add("card");
+    }
   }
 
   async update() {
@@ -527,6 +582,7 @@ class AbuseReport extends HTMLElement {
 
     const {
       addonId,
+      _addonAuthorContainer,
       _addonIconElement,
       _addonNameElement,
       _linkAddonAuthor,
@@ -546,13 +602,18 @@ class AbuseReport extends HTMLElement {
 
     _addonNameElement.textContent = this.addonName;
 
-    _linkAddonAuthor.href = this.authorURL || this.homepageURL;
-    _linkAddonAuthor.textContent = this.authorName;
-    document.l10n.setAttributes(
-      _linkAddonAuthor.parentNode,
-      "abuse-report-addon-authored-by",
-      { "author-name": this.authorName }
-    );
+    if (this.authorName) {
+      _linkAddonAuthor.href = this.authorURL || this.homepageURL;
+      _linkAddonAuthor.textContent = this.authorName;
+      document.l10n.setAttributes(
+        _linkAddonAuthor.parentNode,
+        "abuse-report-addon-authored-by",
+        { "author-name": this.authorName }
+      );
+      _addonAuthorContainer.hidden = false;
+    } else {
+      _addonAuthorContainer.hidden = true;
+    }
 
     _addonIconElement.setAttribute("src", this.iconURL);
 
@@ -565,6 +626,7 @@ class AbuseReport extends HTMLElement {
     _submitPanel.update();
 
     this.focus();
+
     dispatchCustomEvent(this, "abuse-report:updated", {
       addonId,
       panel: "reasons",
@@ -612,10 +674,10 @@ class AbuseReport extends HTMLElement {
     if (!this.isConnected || !this.addon) {
       return;
     }
+    this._report.setMessage(this.message);
+    this._report.setReason(this.reason);
     dispatchCustomEvent(this, "abuse-report:submit", {
       addonId: this.addonId,
-      reason: this.reason,
-      message: this.message,
       report: this._report,
     });
   }
@@ -705,6 +767,10 @@ class AbuseReport extends HTMLElement {
     return this._form.elements.reason.value;
   }
 
+  get modalTemplate() {
+    return document.getElementById("tmpl-modal");
+  }
+
   get template() {
     return document.getElementById("tmpl-abuse-report");
   }
@@ -721,10 +787,79 @@ customElements.define("abuse-report-reasons-panel", AbuseReasonsPanel);
 customElements.define("abuse-report-submit-panel", AbuseSubmitPanel);
 customElements.define("addon-abuse-report", AbuseReport);
 
-window.addEventListener(
-  "load",
-  () => {
-    document.body.prepend(document.createElement("addon-abuse-report"));
-  },
-  { once: true }
-);
+// The panel has been opened in a new dialog window.
+if (IS_DIALOG_WINDOW) {
+  // CSS customizations when panel is in its own window
+  // (vs. being an about:addons subframe).
+  document.documentElement.className = "dialog-window";
+
+  const {
+    report,
+    deferredReport,
+    deferredReportPanel,
+  } = window.arguments[0].wrappedJSObject;
+
+  window.addEventListener(
+    "unload",
+    () => {
+      // If the window has been closed resolve the deferredReport
+      // promise and reject the deferredReportPanel one, in case
+      // they haven't been resolved yet.
+      deferredReport.resolve({ userCancelled: true });
+      deferredReportPanel.reject(new Error("report dialog closed"));
+    },
+    { once: true }
+  );
+
+  document.l10n.setAttributes(
+    document.querySelector("head > title"),
+    "abuse-report-dialog-title",
+    {
+      "addon-name": report.addon.name,
+    }
+  );
+
+  const el = document.querySelector("addon-abuse-report");
+  el.addEventListener("abuse-report:submit", () => {
+    deferredReport.resolve({
+      userCancelled: false,
+      report,
+    });
+  });
+  el.addEventListener(
+    "abuse-report:cancel",
+    () => {
+      // Resolve the report panel deferred (in case the report
+      // has been cancelled automatically before it has been fully
+      // rendered, e.g. in case of non-supported addon types).
+      deferredReportPanel.resolve(el);
+      // Resolve the deferred report as cancelled.
+      deferredReport.resolve({ userCancelled: true });
+    },
+    { once: true }
+  );
+
+  // Adjust window size (if needed) once the fluent strings have been
+  // added to the document and the document has been flushed.
+  el.addEventListener(
+    "abuse-report:updated",
+    async () => {
+      const form = document.querySelector("form");
+      await document.l10n.translateFragment(form);
+      const { clientWidth, clientHeight } = await window.promiseDocumentFlushed(
+        () => form
+      );
+      // Resolve promiseReportPanel once the panel completed the initial render
+      // (used in tests).
+      deferredReportPanel.resolve(el);
+      if (
+        window.innerWidth !== clientWidth ||
+        window.innerheight !== clientHeight
+      ) {
+        window.resizeTo(clientWidth, clientHeight);
+      }
+    },
+    { once: true }
+  );
+  el.setAbuseReport(report);
+}

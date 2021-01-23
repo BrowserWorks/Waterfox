@@ -6,9 +6,10 @@
 
 #include "APZCTreeManagerTester.h"
 #include "APZTestCommon.h"
-#include "gfxPrefs.h"
+
 #include "InputUtils.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_layout.h"
+#include "mozilla/StaticPrefs_mousewheel.h"
 
 class APZCSnappingTester : public APZCTreeManagerTester {};
 
@@ -27,13 +28,9 @@ TEST_F(APZCSnappingTester, Bug1265510) {
   SetScrollHandoff(layers[1], root);
 
   ScrollSnapInfo snap;
-  snap.mScrollSnapTypeY = StyleScrollSnapStrictness::Mandatory;
-  if (StaticPrefs::layout_css_scroll_snap_v1_enabled()) {
-    snap.mSnapPositionY.AppendElement(0 * AppUnitsPerCSSPixel());
-    snap.mSnapPositionY.AppendElement(100 * AppUnitsPerCSSPixel());
-  } else {
-    snap.mScrollSnapIntervalY = Some(100 * AppUnitsPerCSSPixel());
-  }
+  snap.mScrollSnapStrictnessY = StyleScrollSnapStrictness::Mandatory;
+  snap.mSnapPositionY.AppendElement(0 * AppUnitsPerCSSPixel());
+  snap.mSnapPositionY.AppendElement(100 * AppUnitsPerCSSPixel());
 
   ScrollMetadata metadata = root->GetScrollMetadata(0);
   metadata.SetSnapInfo(ScrollSnapInfo(snap));
@@ -41,7 +38,7 @@ TEST_F(APZCSnappingTester, Bug1265510) {
 
   UniquePtr<ScopedLayerTreeRegistration> registration =
       MakeUnique<ScopedLayerTreeRegistration>(manager, LayersId{0}, root, mcc);
-  manager->UpdateHitTestingTree(LayersId{0}, root, false, LayersId{0}, 0);
+  UpdateHitTestingTree();
 
   TestAsyncPanZoomController* outer = ApzcOf(layers[0]);
   TestAsyncPanZoomController* inner = ApzcOf(layers[1]);
@@ -65,7 +62,7 @@ TEST_F(APZCSnappingTester, Bug1265510) {
   // inner frame; we verify that it does by checking the inner scroll position.
   TimeStamp newTransactionTime =
       now + TimeDuration::FromMilliseconds(
-                gfxPrefs::MouseWheelTransactionTimeoutMs() + 100);
+                StaticPrefs::mousewheel_transaction_timeout() + 100);
   SmoothWheel(manager, ScreenIntPoint(50, 80), ScreenPoint(0, 6),
               newTransactionTime);
   inner->AdvanceAnimationsUntilEnd();
@@ -102,14 +99,10 @@ TEST_F(APZCSnappingTester, Snap_After_Pinch) {
 
   // Set up some basic scroll snapping
   ScrollSnapInfo snap;
-  snap.mScrollSnapTypeY = StyleScrollSnapStrictness::Mandatory;
+  snap.mScrollSnapStrictnessY = StyleScrollSnapStrictness::Mandatory;
 
-  if (StaticPrefs::layout_css_scroll_snap_v1_enabled()) {
-    snap.mSnapPositionY.AppendElement(0 * AppUnitsPerCSSPixel());
-    snap.mSnapPositionY.AppendElement(100 * AppUnitsPerCSSPixel());
-  } else {
-    snap.mScrollSnapIntervalY = Some(100 * AppUnitsPerCSSPixel());
-  }
+  snap.mSnapPositionY.AppendElement(0 * AppUnitsPerCSSPixel());
+  snap.mSnapPositionY.AppendElement(100 * AppUnitsPerCSSPixel());
 
   // Save the scroll snap info on the root APZC.
   // Also mark the root APZC as "root content", since APZC only allows
@@ -121,7 +114,7 @@ TEST_F(APZCSnappingTester, Snap_After_Pinch) {
 
   UniquePtr<ScopedLayerTreeRegistration> registration =
       MakeUnique<ScopedLayerTreeRegistration>(manager, LayersId{0}, root, mcc);
-  manager->UpdateHitTestingTree(LayersId{0}, root, false, LayersId{0}, 0);
+  UpdateHitTestingTree();
 
   RefPtr<TestAsyncPanZoomController> apzc = ApzcOf(root);
 

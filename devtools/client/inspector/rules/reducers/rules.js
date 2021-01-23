@@ -8,18 +8,21 @@ const Services = require("Services");
 
 const {
   UPDATE_ADD_RULE_ENABLED,
+  UPDATE_COLOR_SCHEME_SIMULATION_HIDDEN,
   UPDATE_HIGHLIGHTED_SELECTOR,
   UPDATE_PRINT_SIMULATION_HIDDEN,
   UPDATE_RULES,
   UPDATE_SOURCE_LINK_ENABLED,
   UPDATE_SOURCE_LINK,
-} = require("../actions/index");
+} = require("devtools/client/inspector/rules/actions/index");
 
 const INITIAL_RULES = {
   // The selector of the node that is highlighted by the selector highlighter.
   highlightedSelector: "",
   // Whether or not the add new rule button should be enabled.
   isAddRuleEnabled: false,
+  // Whether or not the color scheme simulation button is hidden.
+  isColorSchemeSimulationHidden: false,
   // Whether or not the print simulation button is hidden.
   isPrintSimulationHidden: false,
   // Whether or not the source links are enabled. This is determined by
@@ -113,6 +116,13 @@ const reducers = {
     return {
       ...rules,
       isAddRuleEnabled: enabled,
+    };
+  },
+
+  [UPDATE_COLOR_SCHEME_SIMULATION_HIDDEN](rules, { hidden }) {
+    return {
+      ...rules,
+      isColorSchemeSimulationHidden: hidden,
     };
   },
 

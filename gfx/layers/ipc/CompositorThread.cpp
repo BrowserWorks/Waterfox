@@ -4,34 +4,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "CompositorThread.h"
-#include "MainThreadUtils.h"
-#include "nsThreadUtils.h"
+
 #include "CompositorBridgeParent.h"
+#include "MainThreadUtils.h"
+#include "VRManagerParent.h"
+#include "mozilla/BackgroundHangMonitor.h"
+#include "mozilla/layers/CanvasTranslator.h"
 #include "mozilla/layers/CompositorManagerParent.h"
 #include "mozilla/layers/ImageBridgeParent.h"
 #include "mozilla/media/MediaSystemResourceService.h"
+#include "nsThread.h"
+#include "nsThreadUtils.h"
 
 namespace mozilla {
-
-namespace gfx {
-// See VRManagerChild.cpp
-void ReleaseVRManagerParentSingleton();
-}  // namespace gfx
-
 namespace layers {
 
 static StaticRefPtr<CompositorThreadHolder> sCompositorThreadHolder;
-static bool sFinishedCompositorShutDown = false;
+static Atomic<bool> sFinishedCompositorShutDown(false);
+static mozilla::BackgroundHangMonitor* sBackgroundHangMonitor;
 
-base::Thread* CompositorThread() {
+nsISerialEventTarget* CompositorThread() {
   return sCompositorThreadHolder
              ? sCompositorThreadHolder->GetCompositorThread()
              : nullptr;
-}
-
-/* static */
-MessageLoop* CompositorThreadHolder::Loop() {
-  return CompositorThread() ? CompositorThread()->message_loop() : nullptr;
 }
 
 CompositorThreadHolder* CompositorThreadHolder::GetSingleton() {
@@ -39,63 +34,51 @@ CompositorThreadHolder* CompositorThreadHolder::GetSingleton() {
 }
 
 CompositorThreadHolder::CompositorThreadHolder()
-    : mCompositorThread(CreateCompositorThread()) {
+    : mCompositorThread(CreateCompositorThread()),
+      mCompositorAbstractThread(AbstractThread::CreateXPCOMThreadWrapper(
+          mCompositorThread, false /* aRequireTailDispatch */)) {
   MOZ_ASSERT(NS_IsMainThread());
 }
 
 CompositorThreadHolder::~CompositorThreadHolder() {
-  MOZ_ASSERT(NS_IsMainThread());
-  if (mCompositorThread) {
-    DestroyCompositorThread(mCompositorThread);
-  }
-}
-
-/* static */
-void CompositorThreadHolder::DestroyCompositorThread(
-    base::Thread* aCompositorThread) {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  MOZ_ASSERT(!sCompositorThreadHolder,
-             "We shouldn't be destroying the compositor thread yet.");
-
-  delete aCompositorThread;
   sFinishedCompositorShutDown = true;
 }
 
-/* static */ base::Thread* CompositorThreadHolder::CreateCompositorThread() {
+/* static */ already_AddRefed<nsIThread>
+CompositorThreadHolder::CreateCompositorThread() {
   MOZ_ASSERT(NS_IsMainThread());
 
   MOZ_ASSERT(!sCompositorThreadHolder,
              "The compositor thread has already been started!");
 
-  base::Thread* compositorThread = new base::Thread("Compositor");
+  nsCOMPtr<nsIThread> compositorThread;
+  nsresult rv = NS_NewNamedThread(
+      "Compositor", getter_AddRefs(compositorThread),
+      NS_NewRunnableFunction(
+          "CompositorThreadHolder::CompositorThreadHolderSetup", []() {
+            sBackgroundHangMonitor = new mozilla::BackgroundHangMonitor(
+                "Compositor",
+                /* Timeout values are powers-of-two to enable us get better
+                   data. 128ms is chosen for transient hangs because 8Hz should
+                   be the minimally acceptable goal for Compositor
+                   responsiveness (normal goal is 60Hz). */
+                128,
+                /* 2048ms is chosen for permanent hangs because it's longer than
+                 * most Compositor hangs seen in the wild, but is short enough
+                 * to not miss getting native hang stacks. */
+                2048);
+            nsCOMPtr<nsIThread> thread = NS_GetCurrentThread();
+            static_cast<nsThread*>(thread.get())->SetUseHangMonitor(true);
+          }));
 
-  base::Thread::Options options;
-  /* Timeout values are powers-of-two to enable us get better data.
-     128ms is chosen for transient hangs because 8Hz should be the minimally
-     acceptable goal for Compositor responsiveness (normal goal is 60Hz). */
-  options.transient_hang_timeout = 128;  // milliseconds
-  /* 2048ms is chosen for permanent hangs because it's longer than most
-   * Compositor hangs seen in the wild, but is short enough to not miss getting
-   * native hang stacks. */
-  options.permanent_hang_timeout = 2048;  // milliseconds
-#if defined(_WIN32)
-  /* With d3d9 the compositor thread creates native ui, see DeviceManagerD3D9.
-   * As such the thread is a gui thread, and must process a windows message
-   * queue or
-   * risk deadlocks. Chromium message loop TYPE_UI does exactly what we need. */
-  options.message_loop_type = MessageLoop::TYPE_UI;
-#endif
-
-  if (!compositorThread->StartWithOptions(options)) {
-    delete compositorThread;
+  if (NS_FAILED(rv)) {
     return nullptr;
   }
 
   CompositorBridgeParent::Setup();
   ImageBridgeParent::Setup();
 
-  return compositorThread;
+  return compositorThread.forget();
 }
 
 void CompositorThreadHolder::Start() {
@@ -124,23 +107,48 @@ void CompositorThreadHolder::Shutdown() {
   }
 
   ImageBridgeParent::Shutdown();
-  gfx::ReleaseVRManagerParentSingleton();
+  gfx::VRManagerParent::Shutdown();
   MediaSystemResourceService::Shutdown();
   CompositorManagerParent::Shutdown();
+  CanvasTranslator::Shutdown();
+
+  // Ensure there are no pending tasks that would cause an access to the
+  // thread's HangMonitor. APZ and Canvas can keep a reference to the compositor
+  // thread and may continue to dispatch tasks on it as the system shuts down.
+  CompositorThread()->Dispatch(NS_NewRunnableFunction(
+      "CompositorThreadHolder::Shutdown",
+      [compositorThreadHolder =
+           RefPtr<CompositorThreadHolder>(sCompositorThreadHolder),
+       backgroundHangMonitor = UniquePtr<mozilla::BackgroundHangMonitor>(
+           sBackgroundHangMonitor)]() {
+        nsCOMPtr<nsIThread> thread = NS_GetCurrentThread();
+        static_cast<nsThread*>(thread.get())->SetUseHangMonitor(false);
+      }));
 
   sCompositorThreadHolder = nullptr;
+  sBackgroundHangMonitor = nullptr;
 
-  // No locking is needed around sFinishedCompositorShutDown because it is only
-  // ever accessed on the main thread.
-  SpinEventLoopUntil([&]() { return sFinishedCompositorShutDown; });
+  SpinEventLoopUntil([&]() {
+    bool finished = sFinishedCompositorShutDown;
+    return finished;
+  });
 
+// At this point, the CompositorThreadHolder instance will have been destroyed,
+// but the compositor thread itself may still be running due to APZ/Canvas code
+// holding a reference to the underlying nsIThread/nsISerialEventTarget. Any
+// tasks scheduled to run on the compositor thread earlier in this function will
+// have been run to completion.
   CompositorBridgeParent::FinishShutdown();
 }
 
 /* static */
 bool CompositorThreadHolder::IsInCompositorThread() {
-  return CompositorThread() &&
-         CompositorThread()->thread_id() == PlatformThread::CurrentId();
+  if (!CompositorThread()) {
+    return false;
+  }
+  bool in = false;
+  MOZ_ALWAYS_SUCCEEDS(CompositorThread()->IsOnCurrentThread(&in));
+  return in;
 }
 
 }  // namespace layers

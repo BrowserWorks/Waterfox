@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Կոճակի հատկությունները">
+
+<!ENTITY Settings.label "Կարգավորումներ">
+
+<!ENTITY ButtonType.label "Տեսակ">
+<!ENTITY ButtonType.accesskey "Տ">
+<!ENTITY submit.value "Ուղարկել">
+<!ENTITY reset.value "Վերակայել">
+<!ENTITY button.value "Կոճակ">
+
+<!ENTITY ButtonName.label "Անունը.">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Նշանակությունը.">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Էջի ցուցիչը.">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Անջատված է">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Մուտքի բանալին.">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "Հեռացնել կոճակը">
+<!ENTITY RemoveButton.accesskey "Հ">

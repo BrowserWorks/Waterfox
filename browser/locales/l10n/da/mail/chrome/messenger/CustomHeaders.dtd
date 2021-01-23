@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Tilpas meddelelseshoved">
+<!ENTITY addButton.label "Tilføj">
+<!ENTITY addButton.accesskey "T">
+<!ENTITY removeButton.label "Fjern">
+<!ENTITY removeButton.accesskey "R">
+<!ENTITY newMsgHeader.label "Nyt meddelelseshoved:">
+<!ENTITY newMsgHeader.accesskey "N">

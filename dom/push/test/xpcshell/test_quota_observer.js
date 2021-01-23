@@ -20,13 +20,13 @@ function run_test() {
 let putRecord = async function(perm, record) {
   let uri = Services.io.newURI(record.scope);
 
-  Services.perms.add(
+  PermissionTestUtils.add(
     uri,
     "desktop-notification",
     Ci.nsIPermissionManager[perm]
   );
   registerCleanupFunction(() => {
-    Services.perms.remove(uri, "desktop-notification");
+    PermissionTestUtils.remove(uri, "desktop-notification");
   });
 
   await db.put(record);
@@ -191,7 +191,7 @@ add_task(async function test_expiration_history_observer() {
     (subject, data) => {
       if (data == "https://example.net/sales") {
         ok(
-          subject.isCodebasePrincipal,
+          subject.isContentPrincipal,
           "Should pass subscription principal as the subject"
         );
         return true;

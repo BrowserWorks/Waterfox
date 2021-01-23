@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tapToPlayPlugin                                     "પ્લગઇનને સક્રિય કરવા માટે અહીં ટેપ કરો.">
+<!ENTITY clickToActivatePlugin                               "પ્લગઇન સક્રિય કરો.">
+<!ENTITY checkForUpdates                                     "સુધારા માટે ચકાસો…">
+<!ENTITY blockedPlugin.label                                 "આ પલ્ગઇનની તમારી સુરક્ષા માટે અવરોધિત કરવામાં આવ્યો છે.">
+<!ENTITY hidePluginBtn.label                                 "પ્લગઇન છુપાવો">
+<!ENTITY managePlugins                                       "પ્લગઇનને સંચાલિત કરો…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "પૃષ્ઠ ફરીથી લોડ કરો">
+<!ENTITY reloadPlugin.post                                   " ફરી પ્રયાસ કરવા.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "ક્રેશ અહેવાલ મોકલો">
+<!ENTITY report.submitting                                   "અહેવાલ મોકલી રહ્યું છે…">
+<!ENTITY report.submitted                                    "ભંગાણ અહેવાલ મોકલ્યો.">
+<!ENTITY report.disabled                                     "ભંગાણ અહેવાલ અક્ષમ કર્યું.">
+<!ENTITY report.failed                                       "રજૂઆત નિષ્ફળ ગઈ.">
+<!ENTITY report.unavailable                                  "કોઈ અહેવાલ ઉપલબ્ધ નથી.">
+<!ENTITY report.comment                                      "ટિપ્પણી ઉમેરો (ટિપ્પણીઓ જાહેરમાં દૃશ્યમાન છે)">
+<!ENTITY report.pageURL                                      "પૃષ્ઠના URL માં સમાવેશ કરો">
+
+<!ENTITY plugin.file                                         "ફાઇલ">
+<!ENTITY plugin.mimeTypes                                    "MIME પ્રકારો">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash સુરક્ષિત મોડને સક્ષમ કરો">
+<!ENTITY plugin.enableBlocklists.label                       "ખતરનાક અને કર્કશ Flash સામગ્રીને અવરોધિત કરો">

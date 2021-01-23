@@ -29,13 +29,16 @@
 #  define MOZ_GL_DEBUG 1
 #endif
 
-#include "../../mfbt/RefPtr.h"
-#include "../../mfbt/UniquePtr.h"
-#include "../../mfbt/ThreadLocal.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/ThreadLocal.h"
 
+#include "nsTArray.h"
 #include "GLDefs.h"
 #include "GLLibraryLoader.h"
 #include "nsISupportsImpl.h"
+#include "nsRegionFwd.h"
+#include "nsString.h"
 #include "plstr.h"
 #include "GLContextTypes.h"
 #include "SurfaceTypes.h"
@@ -83,7 +86,6 @@ enum class GLFeature {
   depth_texture,
   draw_buffers,
   draw_instanced,
-  draw_range_elements,
   element_index_uint,
   ES2_compatibility,
   ES3_compatibility,
@@ -104,6 +106,7 @@ enum class GLFeature {
   internalformat_query,
   invalidate_framebuffer,
   map_buffer_range,
+  multiview,
   occlusion_query,
   occlusion_query_boolean,
   occlusion_query2,
@@ -353,6 +356,7 @@ class GLContext : public GenericAtomicRefCounted,
     ANGLE_framebuffer_blit,
     ANGLE_framebuffer_multisample,
     ANGLE_instanced_arrays,
+    ANGLE_multiview,
     ANGLE_texture_compression_dxt3,
     ANGLE_texture_compression_dxt5,
     ANGLE_timer_query,
@@ -410,7 +414,6 @@ class GLContext : public GenericAtomicRefCounted,
     EXT_draw_buffers,
     EXT_draw_buffers2,
     EXT_draw_instanced,
-    EXT_draw_range_elements,
     EXT_float_blend,
     EXT_frag_depth,
     EXT_framebuffer_blit,
@@ -479,6 +482,7 @@ class GLContext : public GenericAtomicRefCounted,
     OES_texture_half_float_linear,
     OES_texture_npot,
     OES_vertex_array_object,
+    OVR_multiview2,
     Extensions_Max,
     Extensions_End
   };
@@ -603,14 +607,15 @@ class GLContext : public GenericAtomicRefCounted,
     return err == LOCAL_GL_NO_ERROR;
   }
 
+  void DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                     GLsizei length, const GLchar* message);
+
  private:
   static void GLAPIENTRY StaticDebugCallback(GLenum source, GLenum type,
                                              GLuint id, GLenum severity,
                                              GLsizei length,
                                              const GLchar* message,
                                              const GLvoid* userParam);
-  void DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                     GLsizei length, const GLchar* message);
 
   // -----------------------------------------------------------------------------
   // MOZ_GL_DEBUG implementation
@@ -722,11 +727,11 @@ class GLContext : public GenericAtomicRefCounted,
 
   // Do whatever tear-down is necessary after drawing to our offscreen FBO,
   // if it's bound.
-  void AfterGLDrawCall();
+  void AfterGLDrawCall() { mHeavyGLCallsSinceLastFlush = true; }
 
   // Do whatever setup is necessary to read from our offscreen FBO, if it's
   // bound.
-  void BeforeGLReadCall();
+  void BeforeGLReadCall() {}
 
   // Do whatever tear-down is necessary after reading from our offscreen FBO,
   // if it's bound.
@@ -2455,26 +2460,6 @@ class GLContext : public GenericAtomicRefCounted,
   }
 
   // -----------------------------------------------------------------------------
-  // Feature draw_range_elements
- public:
-  void fDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
-                          GLenum type, const GLvoid* indices) {
-    BeforeGLDrawCall();
-    raw_fDrawRangeElements(mode, start, end, count, type, indices);
-    AfterGLDrawCall();
-  }
-
- private:
-  void raw_fDrawRangeElements(GLenum mode, GLuint start, GLuint end,
-                              GLsizei count, GLenum type,
-                              const GLvoid* indices) {
-    BEFORE_GL_CALL;
-    ASSERT_SYMBOL_PRESENT(fDrawRangeElements);
-    mSymbols.fDrawRangeElements(mode, start, end, count, type, indices);
-    AFTER_GL_CALL;
-  }
-
-  // -----------------------------------------------------------------------------
   // Package XXX_framebuffer_blit
  public:
   // Draw/Read
@@ -3300,6 +3285,20 @@ class GLContext : public GenericAtomicRefCounted,
     AFTER_GL_CALL;
   }
 
+  // -----------------------------------------------------------------------------
+  // multiview
+
+  void fFramebufferTextureMultiview(GLenum target, GLenum attachment,
+                                    GLuint texture, GLint level,
+                                    GLint baseViewIndex,
+                                    GLsizei numViews) const {
+    BEFORE_GL_CALL;
+    ASSERT_SYMBOL_PRESENT(fFramebufferTextureMultiview);
+    mSymbols.fFramebufferTextureMultiview(target, attachment, texture, level,
+                                          baseViewIndex, numViews);
+    AFTER_GL_CALL;
+  }
+
 #undef BEFORE_GL_CALL
 #undef AFTER_GL_CALL
 #undef ASSERT_SYMBOL_PRESENT
@@ -3355,6 +3354,16 @@ class GLContext : public GenericAtomicRefCounted,
    * contents of the new back buffer are undefined.
    */
   virtual bool SwapBuffers() { return false; }
+
+  /**
+   * Stores a damage region (in origin bottom left coordinates), which
+   * makes the next SwapBuffers call do eglSwapBuffersWithDamage if supported.
+   *
+   * Note that even if only part of the context is damaged, the entire buffer
+   * needs to be filled with up-to-date contents. This region is only a hint
+   * telling the system compositor which parts of the buffer were updated.
+   */
+  virtual void SetDamage(const nsIntRegion& aDamageRegion) {}
 
   /**
    * Defines a two-dimensional texture image for context target surface
@@ -3439,9 +3448,13 @@ class GLContext : public GenericAtomicRefCounted,
   virtual GLenum GetPreferredARGB32Format() const { return LOCAL_GL_RGBA; }
 
   virtual GLenum GetPreferredEGLImageTextureTarget() const {
+#ifdef MOZ_WAYLAND
+    return LOCAL_GL_TEXTURE_2D;
+#else
     return IsExtensionSupported(OES_EGL_image_external)
                ? LOCAL_GL_TEXTURE_EXTERNAL
                : LOCAL_GL_TEXTURE_2D;
+#endif
   }
 
   virtual bool RenewSurface(widget::CompositorWidget* aWidget) { return false; }
@@ -3555,8 +3568,6 @@ class GLContext : public GenericAtomicRefCounted,
   GLScreenBuffer* Screen() const { return mScreen.get(); }
 
   bool WorkAroundDriverBugs() const { return mWorkAroundDriverBugs; }
-
-  bool IsDrawingToDefaultFramebuffer();
 
   bool IsOffscreenSizeAllowed(const gfx::IntSize& aSize) const;
 

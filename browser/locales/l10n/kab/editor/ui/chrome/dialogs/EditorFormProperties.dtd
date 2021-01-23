@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Timeẓliyin n tferkit">
+
+<!ENTITY Settings.label "Iɣewwaṛen">
+
+<!ENTITY FormName.label "Isem n tferkit:">
+<!ENTITY FormName.accesskey "m">
+<!ENTITY FormAction.label "URL n tigawt:">
+<!ENTITY FormAction.accesskey "w">
+<!ENTITY FormMethod.label "Tarrayt:">
+<!ENTITY FormMethod.accesskey "T">
+<!ENTITY FormEncType.label "Asettengel:">
+<!ENTITY FormEncType.accesskey "s">
+<!ENTITY FormTarget.label "Akatar asaḍas">
+<!ENTITY FormTarget.accesskey "k">
+
+<!ENTITY RemoveForm.label "Kkes tiferkit">
+<!ENTITY RemoveForm.accesskey "k">

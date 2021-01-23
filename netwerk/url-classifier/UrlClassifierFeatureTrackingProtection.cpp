@@ -6,9 +6,10 @@
 
 #include "UrlClassifierFeatureTrackingProtection.h"
 
-#include "mozilla/AntiTrackingCommon.h"
 #include "mozilla/net/UrlClassifierCommon.h"
+#include "ChannelClassifierService.h"
 #include "nsContentUtils.h"
+#include "nsIHttpChannelInternal.h"
 #include "nsILoadContext.h"
 #include "nsNetUtil.h"
 
@@ -142,8 +143,7 @@ UrlClassifierFeatureTrackingProtection::ProcessChannel(
   NS_ENSURE_ARG_POINTER(aChannel);
   NS_ENSURE_ARG_POINTER(aShouldContinue);
 
-  bool isAllowListed = UrlClassifierCommon::IsAllowListed(
-      aChannel, AntiTrackingCommon::eTrackingProtection);
+  bool isAllowListed = UrlClassifierCommon::IsAllowListed(aChannel);
 
   // This is a blocking feature.
   *aShouldContinue = isAllowListed;
@@ -155,11 +155,14 @@ UrlClassifierFeatureTrackingProtection::ProcessChannel(
   nsAutoCString list;
   UrlClassifierCommon::TablesToString(aList, list);
 
+  if (ChannelClassifierService::OnBeforeBlockChannel(aChannel, mName, list) ==
+      ChannelBlockDecision::Unblocked) {
+    *aShouldContinue = true;
+    return NS_OK;
+  }
+
   UrlClassifierCommon::SetBlockedContent(aChannel, NS_ERROR_TRACKING_URI, list,
                                          EmptyCString(), EmptyCString());
-
-  NS_SetRequestBlockingReason(
-      aChannel, nsILoadInfo::BLOCKING_REASON_CLASSIFY_TRACKING_URI);
 
   UC_LOG(
       ("UrlClassifierFeatureTrackingProtection::ProcessChannel, cancelling "
@@ -178,15 +181,19 @@ UrlClassifierFeatureTrackingProtection::ProcessChannel(
 NS_IMETHODIMP
 UrlClassifierFeatureTrackingProtection::GetURIByListType(
     nsIChannel* aChannel, nsIUrlClassifierFeature::listType aListType,
-    nsIURI** aURI) {
+    nsIUrlClassifierFeature::URIType* aURIType, nsIURI** aURI) {
   NS_ENSURE_ARG_POINTER(aChannel);
+  NS_ENSURE_ARG_POINTER(aURIType);
   NS_ENSURE_ARG_POINTER(aURI);
 
   if (aListType == nsIUrlClassifierFeature::blacklist) {
+    *aURIType = nsIUrlClassifierFeature::blacklistURI;
     return aChannel->GetURI(aURI);
   }
 
   MOZ_ASSERT(aListType == nsIUrlClassifierFeature::whitelist);
+
+  *aURIType = nsIUrlClassifierFeature::pairwiseWhitelistURI;
   return UrlClassifierCommon::CreatePairwiseWhiteListURI(aChannel, aURI);
 }
 

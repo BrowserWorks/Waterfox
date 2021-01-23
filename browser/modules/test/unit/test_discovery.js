@@ -64,7 +64,7 @@ add_task(async function test_discovery() {
 
   // Test the addition of a new container.
   let changed = TestUtils.topicObserved("cookie-changed", (subject, data) => {
-    let cookie = subject.QueryInterface(Ci.nsICookie2);
+    let cookie = subject.QueryInterface(Ci.nsICookie);
     equal(cookie.name, TAAR_COOKIE_NAME, "taar cookie exists");
     equal(cookie.host, uri.host, "cookie exists for host");
     equal(
@@ -121,7 +121,7 @@ add_task(async function test_discovery() {
     if (data !== "added") {
       return false;
     }
-    let cookie = subject.QueryInterface(Ci.nsICookie2);
+    let cookie = subject.QueryInterface(Ci.nsICookie);
     equal(cookie.name, TAAR_COOKIE_NAME, "taar cookie exists");
     equal(cookie.host, uri.host, "cookie exists for host");
     return true;

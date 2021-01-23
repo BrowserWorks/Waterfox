@@ -24,8 +24,6 @@
 using namespace mozilla;
 using namespace mozilla::layout;
 
-namespace css = mozilla::css;
-
 #undef DEBUG_TABLE_STRATEGY
 
 BasicTableLayoutStrategy::BasicTableLayoutStrategy(nsTableFrame* aTableFrame)
@@ -35,7 +33,7 @@ BasicTableLayoutStrategy::BasicTableLayoutStrategy(nsTableFrame* aTableFrame)
 }
 
 /* virtual */
-BasicTableLayoutStrategy::~BasicTableLayoutStrategy() {}
+BasicTableLayoutStrategy::~BasicTableLayoutStrategy() = default;
 
 /* virtual */
 nscoord BasicTableLayoutStrategy::GetMinISize(gfxContext* aRenderingContext) {
@@ -98,8 +96,7 @@ static CellISizeInfo GetISizeInfo(gfxContext* aRenderingContext,
     // outer edges near the end of this function.
 
     // XXX Should we ignore percentage padding?
-    nsIFrame::IntrinsicISizeOffsetData offsets =
-        aFrame->IntrinsicISizeOffsets();
+    nsIFrame::IntrinsicSizeOffsetData offsets = aFrame->IntrinsicISizeOffsets();
 
     // In quirks mode, table cell isize should be content-box,
     // but bsize should be border box.
@@ -109,11 +106,11 @@ static CellISizeInfo GetISizeInfo(gfxContext* aRenderingContext,
     // For this reason, we also do not use box-sizing for just one of
     // them, as this may be confusing.
     if (isQuirks || stylePos->mBoxSizing == StyleBoxSizing::Content) {
-      boxSizingToBorderEdge = offsets.hPadding + offsets.hBorder;
+      boxSizingToBorderEdge = offsets.padding + offsets.border;
     } else {
       // StyleBoxSizing::Border and standards-mode
-      minCoord += offsets.hPadding + offsets.hBorder;
-      prefCoord += offsets.hPadding + offsets.hBorder;
+      minCoord += offsets.padding + offsets.border;
+      prefCoord += offsets.padding + offsets.border;
     }
   } else {
     minCoord = 0;

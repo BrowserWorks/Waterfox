@@ -12,9 +12,11 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
+#include "mozilla/layers/ImageDataSerializer.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
 #include "mozilla/layers/WebRenderCanvasRenderer.h"
 #include "mozilla/layers/RenderRootStateManager.h"
+#include "mozilla/webgpu/CanvasContext.h"
 #include "nsDisplayList.h"
 #include "nsLayoutUtils.h"
 #include "nsStyleUtil.h"
@@ -63,9 +65,7 @@ class nsDisplayCanvas final : public nsPaintedDisplayItem {
       : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayCanvas);
   }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayCanvas() { MOZ_COUNT_DTOR(nsDisplayCanvas); }
-#endif
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayCanvas)
 
   NS_DISPLAY_DECL_NAME("nsDisplayCanvas", TYPE_CANVAS)
 
@@ -116,7 +116,7 @@ class nsDisplayCanvas final : public nsPaintedDisplayItem {
       nsDisplayListBuilder* aDisplayListBuilder) override {
     HTMLCanvasElement* element =
         static_cast<HTMLCanvasElement*>(mFrame->GetContent());
-    element->HandlePrintCallback(mFrame->PresContext()->Type());
+    element->HandlePrintCallback(mFrame->PresContext());
 
     switch (element->GetCurrentContextType()) {
       case CanvasContextType::Canvas2D:
@@ -126,18 +126,16 @@ class nsDisplayCanvas final : public nsPaintedDisplayItem {
         RefPtr<WebRenderCanvasData> canvasData =
             aManager->CommandBuilder()
                 .CreateOrRecycleWebRenderUserData<WebRenderCanvasData>(
-                    this, aBuilder.GetRenderRoot(), &isRecycled);
+                    this, &isRecycled);
         nsHTMLCanvasFrame* canvasFrame =
             static_cast<nsHTMLCanvasFrame*>(mFrame);
         if (!canvasFrame->UpdateWebRenderCanvasData(aDisplayListBuilder,
                                                     canvasData)) {
           return true;
         }
-        WebRenderCanvasRendererAsync* data =
-            static_cast<WebRenderCanvasRendererAsync*>(
-                canvasData->GetCanvasRenderer());
+        WebRenderCanvasRendererAsync* data = canvasData->GetCanvasRenderer();
         MOZ_ASSERT(data);
-        data->UpdateCompositableClient(aBuilder.GetRenderRoot());
+        data->UpdateCompositableClient();
 
         // Push IFrame for async image pipeline.
         // XXX Remove this once partial display list update is supported.
@@ -163,7 +161,7 @@ class nsDisplayCanvas final : public nsPaintedDisplayItem {
         // parent side, where it will be done when we build the display list for
         // the iframe. That happens in WebRenderCompositableHolder.
 
-        wr::LayoutRect r = wr::ToRoundedLayoutRect(bounds);
+        wr::LayoutRect r = wr::ToLayoutRect(bounds);
         aBuilder.PushIFrame(r, !BackfaceIsHidden(), data->GetPipelineId().ref(),
                             /*ignoreMissingPipelines*/ false);
 
@@ -181,16 +179,112 @@ class nsDisplayCanvas final : public nsPaintedDisplayItem {
         aManager->WrBridge()->AddWebRenderParentCommand(
             OpUpdateAsyncImagePipeline(data->GetPipelineId().value(), scBounds,
                                        scTransform, scaleToSize, filter,
-                                       mixBlendMode),
-            aBuilder.GetRenderRoot());
+                                       mixBlendMode));
+        break;
+      }
+      case CanvasContextType::WebGPU: {
+        nsHTMLCanvasFrame* canvasFrame =
+            static_cast<nsHTMLCanvasFrame*>(mFrame);
+        HTMLCanvasElement* canvasElement =
+            static_cast<HTMLCanvasElement*>(canvasFrame->GetContent());
+        webgpu::CanvasContext* canvasContext =
+            canvasElement->GetWebGPUContext();
+
+        if (!canvasContext) {
+          return true;
+        }
+
+        bool isRecycled;
+        RefPtr<WebRenderLocalCanvasData> canvasData =
+            aManager->CommandBuilder()
+                .CreateOrRecycleWebRenderUserData<WebRenderLocalCanvasData>(
+                    this, &isRecycled);
+        if (!canvasContext->UpdateWebRenderLocalCanvasData(canvasData)) {
+          return true;
+        }
+
+        nsIntSize canvasSizeInPx = canvasFrame->GetCanvasSize();
+        IntrinsicSize intrinsicSize =
+            IntrinsicSizeFromCanvasSize(canvasSizeInPx);
+        AspectRatio intrinsicRatio =
+            IntrinsicRatioFromCanvasSize(canvasSizeInPx);
+        nsRect area =
+            mFrame->GetContentRectRelativeToSelf() + ToReferenceFrame();
+        nsRect dest = nsLayoutUtils::ComputeObjectDestRect(
+            area, intrinsicSize, intrinsicRatio, mFrame->StylePosition());
+        LayoutDeviceRect bounds = LayoutDeviceRect::FromAppUnits(
+            dest, mFrame->PresContext()->AppUnitsPerDevPixel());
+
+        const RGBDescriptor rgbDesc(canvasSizeInPx, canvasData->mFormat, false);
+        const auto targetStride = ImageDataSerializer::GetRGBStride(rgbDesc);
+        const bool preferCompositorSurface = true;
+        const wr::ImageDescriptor imageDesc(
+            canvasSizeInPx, targetStride, canvasData->mFormat,
+            wr::OpacityType::Opaque, preferCompositorSurface);
+
+        wr::ImageKey imageKey;
+        auto imageKeyMaybe = canvasContext->GetImageKey();
+        // Check that the key exists, and its namespace matches the active
+        // bridge. It will mismatch if there was a GPU reset.
+        if (imageKeyMaybe &&
+            aManager->WrBridge()->GetNamespace() == imageKeyMaybe->mNamespace) {
+          imageKey = imageKeyMaybe.value();
+        } else {
+          imageKey = canvasContext->CreateImageKey(aManager);
+          aResources.AddPrivateExternalImage(canvasContext->mExternalImageId,
+                                             imageKey, imageDesc);
+        }
+
+        mozilla::wr::ImageRendering rendering = wr::ToImageRendering(
+            nsLayoutUtils::GetSamplingFilterForFrame(mFrame));
+        aBuilder.PushImage(wr::ToLayoutRect(bounds), wr::ToLayoutRect(bounds),
+                           !BackfaceIsHidden(), rendering, imageKey);
+
+        canvasData->mDescriptor = imageDesc;
+        canvasData->mImageKey = imageKey;
+        canvasData->RequestFrameReadback();
         break;
       }
       case CanvasContextType::ImageBitmap: {
-        // TODO: Support ImageBitmap
+        nsHTMLCanvasFrame* canvasFrame =
+            static_cast<nsHTMLCanvasFrame*>(mFrame);
+        nsIntSize canvasSizeInPx = canvasFrame->GetCanvasSize();
+        if (canvasSizeInPx.width <= 0 || canvasSizeInPx.height <= 0) {
+          return true;
+        }
+        bool isRecycled;
+        RefPtr<WebRenderCanvasData> canvasData =
+            aManager->CommandBuilder()
+                .CreateOrRecycleWebRenderUserData<WebRenderCanvasData>(
+                    this, &isRecycled);
+        if (!canvasFrame->UpdateWebRenderCanvasData(aDisplayListBuilder,
+                                                    canvasData)) {
+          canvasData->ClearImageContainer();
+          return true;
+        }
+
+        IntrinsicSize intrinsicSize =
+            IntrinsicSizeFromCanvasSize(canvasSizeInPx);
+        AspectRatio intrinsicRatio =
+            IntrinsicRatioFromCanvasSize(canvasSizeInPx);
+
+        nsRect area =
+            mFrame->GetContentRectRelativeToSelf() + ToReferenceFrame();
+        nsRect dest = nsLayoutUtils::ComputeObjectDestRect(
+            area, intrinsicSize, intrinsicRatio, mFrame->StylePosition());
+
+        LayoutDeviceRect bounds = LayoutDeviceRect::FromAppUnits(
+            dest, mFrame->PresContext()->AppUnitsPerDevPixel());
+
+        aManager->CommandBuilder().PushImage(
+            this, canvasData->GetImageContainer(), aBuilder, aResources, aSc,
+            bounds, bounds);
         break;
       }
       case CanvasContextType::NoContext:
-        return false;
+        break;
+      default:
+        MOZ_ASSERT_UNREACHABLE("unknown canvas context type");
     }
     return true;
   }
@@ -241,7 +335,7 @@ void nsHTMLCanvasFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
   ActiveLayerTracker::NotifyContentChange(this);
 }
 
-nsHTMLCanvasFrame::~nsHTMLCanvasFrame() {}
+nsHTMLCanvasFrame::~nsHTMLCanvasFrame() = default;
 
 nsIntSize nsHTMLCanvasFrame::GetCanvasSize() {
   nsIntSize size(0, 0);
@@ -373,9 +467,9 @@ void nsHTMLCanvasFrame::Reflow(nsPresContext* aPresContext,
   ReflowInput childReflowInput(aPresContext, aReflowInput, childFrame,
                                availSize);
   ReflowChild(childFrame, aPresContext, childDesiredSize, childReflowInput, 0,
-              0, 0, childStatus, nullptr);
+              0, ReflowChildFlags::Default, childStatus, nullptr);
   FinishReflowChild(childFrame, aPresContext, childDesiredSize,
-                    &childReflowInput, 0, 0, 0);
+                    &childReflowInput, 0, 0, ReflowChildFlags::Default);
 
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
                  ("exit nsHTMLCanvasFrame::Reflow: size=%d,%d",
@@ -406,13 +500,13 @@ already_AddRefed<Layer> nsHTMLCanvasFrame::BuildLayer(
   nsIntSize canvasSizeInPx = GetCanvasSize();
 
   nsPresContext* presContext = PresContext();
-  element->HandlePrintCallback(presContext->Type());
+  element->HandlePrintCallback(presContext);
 
   if (canvasSizeInPx.width <= 0 || canvasSizeInPx.height <= 0 || area.IsEmpty())
     return nullptr;
 
-  CanvasLayer* oldLayer = static_cast<CanvasLayer*>(
-      aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, aItem));
+  Layer* oldLayer =
+      aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, aItem);
   RefPtr<Layer> layer = element->GetCanvasLayer(aBuilder, oldLayer, aManager);
   if (!layer) return nullptr;
 

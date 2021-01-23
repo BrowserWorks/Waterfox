@@ -11,15 +11,15 @@
 #  include "mozilla/Maybe.h"
 #  include "mozilla/Mutex.h"
 #  include "mozilla/StateMirroring.h"
-#  include "mozilla/StaticPrefs.h"
+#  include "mozilla/StaticPrefs_media.h"
 #  include "mozilla/TaskQueue.h"
+#  include "mozilla/dom/MediaDebugInfoBinding.h"
 
 #  include "FrameStatistics.h"
 #  include "MediaEventSource.h"
 #  include "MediaDataDemuxer.h"
 #  include "MediaMetadataManager.h"
 #  include "MediaPromiseDefs.h"
-#  include "nsAutoPtr.h"
 #  include "PDMFactory.h"
 #  include "SeekTarget.h"
 
@@ -178,9 +178,9 @@ class MediaFormatReader final
 
   RefPtr<SetCDMPromise> SetCDMProxy(CDMProxy* aProxy);
 
-  // Returns a string describing the state of the decoder data.
+  // Returns a MediaDebugInfo structure
   // Used for debugging purposes.
-  void GetMozDebugReaderData(nsACString& aString);
+  void GetDebugInfo(dom::MediaFormatReaderDebugInfo& aInfo);
 
   // Switch the video decoder to NullDecoderModule. It might takes effective
   // since a few samples later depends on how much demuxed samples are already
@@ -230,6 +230,10 @@ class MediaFormatReader final
   MediaEventSource<void>& OnWaitingForKey() { return mOnWaitingForKey; }
 
   MediaEventSource<MediaResult>& OnDecodeWarning() { return mOnDecodeWarning; }
+
+  MediaEventSource<VideoInfo>& OnStoreDecoderBenchmark() {
+    return mOnStoreDecoderBenchmark;
+  }
 
  private:
   ~MediaFormatReader();
@@ -305,6 +309,11 @@ class MediaFormatReader final
 
   size_t SizeOfQueue(TrackType aTrack);
 
+  // Fire a new OnStoreDecoderBenchmark event that will create new
+  // storage of the decoder benchmark.
+  // This is called only on TaskQueue.
+  void NotifyDecoderBenchmarkStore();
+
   RefPtr<PDMFactory> mPlatform;
   RefPtr<PDMFactory> mEncryptedPlatform;
 
@@ -320,7 +329,7 @@ class MediaFormatReader final
   class SharedShutdownPromiseHolder : public MozPromiseHolder<ShutdownPromise> {
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(SharedShutdownPromiseHolder)
    private:
-    ~SharedShutdownPromiseHolder() {}
+    ~SharedShutdownPromiseHolder() = default;
   };
 
   struct DecoderData {
@@ -444,7 +453,7 @@ class MediaFormatReader final
         // Allow decode errors to be non-fatal, but give up
         // if we have too many, or if warnings should be treated as errors.
         return mNumOfConsecutiveError > mMaxConsecutiveError ||
-               StaticPrefs::MediaPlaybackWarningsAsErrors();
+               StaticPrefs::media_playback_warnings_as_errors();
       } else if (mError.ref() == NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER) {
         // If the caller asked for a new decoder we shouldn't treat
         // it as fatal.
@@ -773,6 +782,8 @@ class MediaFormatReader final
   MediaEventProducer<void> mOnWaitingForKey;
 
   MediaEventProducer<MediaResult> mOnDecodeWarning;
+
+  MediaEventProducer<VideoInfo> mOnStoreDecoderBenchmark;
 
   RefPtr<FrameStatistics> mFrameStats;
 

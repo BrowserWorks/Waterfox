@@ -8,7 +8,7 @@ const protocol = require("devtools/shared/protocol");
 
 const { Cc, Ci, Cu, Cr } = require("chrome");
 
-const { DebuggerServer } = require("devtools/server/main");
+const { DevToolsServer } = require("devtools/server/devtools-server");
 const Services = require("Services");
 const ChromeUtils = require("ChromeUtils");
 
@@ -78,9 +78,7 @@ function logAccessDeniedWarning(window, callerInfo, extensionPolicy) {
     Ci.nsIScriptError
   );
 
-  const msg = `The extension "${name}" is not allowed to access ${
-    reportedURI.spec
-  }`;
+  const msg = `The extension "${name}" is not allowed to access ${reportedURI.spec}`;
 
   const innerWindowId = window.windowUtils.currentInnerWindowID;
 
@@ -140,6 +138,10 @@ CustomizedReload.prototype = {
       .getInterface(Ci.nsIWebNavigation);
   },
 
+  get browsingContext() {
+    return this.docShell.browsingContext;
+  },
+
   start() {
     if (!this.waitForReloadCompleted) {
       this.waitForReloadCompleted = new Promise((resolve, reject) => {
@@ -147,7 +149,7 @@ CustomizedReload.prototype = {
         this.rejectReloadCompleted = reject;
 
         if (this.userAgent) {
-          this.docShell.customUserAgent = this.userAgent;
+          this.browsingContext.customUserAgent = this.userAgent;
         }
 
         let reloadFlags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
@@ -188,7 +190,7 @@ CustomizedReload.prototype = {
     }
 
     const document = subject;
-    const window = document && document.defaultView;
+    const window = document?.defaultView;
 
     // Filter out non interesting documents.
     if (!document || !document.location || !window) {
@@ -265,8 +267,11 @@ CustomizedReload.prototype = {
     }
 
     // Reset the customized user agent.
-    if (this.userAgent && this.docShell.customUserAgent == this.userAgent) {
-      this.docShell.customUserAgent = null;
+    if (
+      this.userAgent &&
+      this.browsingContext.customUserAgent == this.userAgent
+    ) {
+      this.browsingContext.customUserAgent = null;
     }
 
     if (error) {
@@ -301,7 +306,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
       }
 
       if (this._dbg) {
-        this._dbg.enabled = false;
+        this._dbg.disable();
         delete this._dbg;
       }
     },
@@ -329,7 +334,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
       let selectedDOMNode;
 
       if (options.toolboxSelectedNodeActorID) {
-        const actor = DebuggerServer.searchAllConnectionsForActor(
+        const actor = DevToolsServer.searchAllConnectionsForActor(
           options.toolboxSelectedNodeActorID
         );
         if (actor && actor instanceof NodeActor) {
@@ -356,12 +361,11 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
         enumerable: true,
         configurable: true,
         value: dbgWindow.makeDebuggeeValue(object => {
-          const dbgObj = dbgWindow.makeDebuggeeValue(object);
-
-          const consoleActor = DebuggerServer.searchAllConnectionsForActor(
+          const consoleActor = DevToolsServer.searchAllConnectionsForActor(
             options.toolboxConsoleActorID
           );
           if (consoleActor) {
+            const dbgObj = consoleActor.makeDebuggeeValue(object);
             consoleActor.inspectObject(
               dbgObj,
               "webextension-devtools-inspectedWindow-eval"
@@ -500,6 +504,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
      *   it is called over the remote debugging protocol the target window is always
      *   `targetActor.window`.
      */
+    // eslint-disable-next-line complexity
     eval(callerInfo, expression, options, customTargetWindow) {
       const window = customTargetWindow || this.window;
       options = options || {};
@@ -624,14 +629,12 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
             throwErr &&
             typeof throwErr === "object" &&
             throwErr.unsafeDereference();
-          const message =
-            unsafeDereference && unsafeDereference.toString
-              ? unsafeDereference.toString()
-              : String(throwErr);
-          const stack =
-            unsafeDereference && unsafeDereference.stack
-              ? unsafeDereference.stack
-              : null;
+          const message = unsafeDereference?.toString
+            ? unsafeDereference.toString()
+            : String(throwErr);
+          const stack = unsafeDereference?.stack
+            ? unsafeDereference.stack
+            : null;
 
           return {
             exceptionInfo: {
@@ -664,7 +667,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
               });
             }
 
-            const consoleActor = DebuggerServer.searchAllConnectionsForActor(
+            const consoleActor = DevToolsServer.searchAllConnectionsForActor(
               options.toolboxConsoleActorID
             );
 

@@ -3,7 +3,7 @@
     "namespace": "manifest",
     "types": [
       {
-        "$extend": "Permission",
+        "$extend": "OptionalPermission",
         "choices": [{
           "type": "string",
           "enum": [
@@ -15,7 +15,7 @@
   },
   {
     "namespace": "proxy",
-    "description": "Use the browser.proxy API to register proxy scripts in Firefox. Proxy scripts in Firefox are proxy auto-config files with extra contextual information and support for additional return types.",
+    "description": "Provides access to global proxy settings for Firefox and proxy event listeners to handle dynamic proxy implementations.",
     "permissions": ["proxy"],
     "types": [
       {
@@ -86,6 +86,12 @@
             "type": "boolean",
             "optional": true,
             "description": "Proxy DNS when using SOCKS v5."
+          },
+          "respectBeConservative": {
+            "type": "boolean",
+            "optional": true,
+            "default" : true,
+            "description": " If true (the default value), do not use newer TLS protocol features that might have interoperability problems on the Internet. This is intended only for use with critical infrastructure like the updates, and is only available to privileged addons."
           }
         }
       }
@@ -96,44 +102,6 @@
         "description": "Configures proxy settings. This setting's value is an object of type ProxyConfig."
       }
     },
-    "functions": [
-      {
-        "name": "register",
-        "type": "function",
-        "deprecated": "proxy.register has been deprecated and will be removed in Firefox 71.",
-        "description": "Registers the proxy script for the extension.",
-        "async": true,
-        "parameters": [
-          {
-            "name": "url",
-            "type": "string",
-            "format": "strictRelativeUrl"
-          }
-        ]
-      },
-      {
-        "name": "unregister",
-        "type": "function",
-        "deprecated": "proxy.unregister has been deprecated and will be removed in Firefox 71.",
-        "description": "Unregisters the proxy script for the extension.",
-        "async": true,
-        "parameters": []
-      },
-      {
-        "name": "registerProxyScript",
-        "type": "function",
-        "deprecated": "proxy.registerProxyScript has been deprecated and will be removed in Firefox 71.",
-        "description": "Registers the proxy script for the extension. This is an alias for proxy.register.",
-        "async": true,
-        "parameters": [
-          {
-            "name": "url",
-            "type": "string",
-            "format": "strictRelativeUrl"
-          }
-        ]
-      }
-    ],
     "events": [
       {
         "name": "onRequest",
@@ -156,9 +124,10 @@
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "webRequest.ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
-              "ip": {"type": "string", "optional": true, "description": "The server IP address that the request was actually sent to. Note that it may be a literal IPv6 address."},
               "fromCache": {"type": "boolean", "description": "Indicates if this response was fetched from disk cache."},
-              "requestHeaders": {"$ref": "webRequest.HttpHeaders", "optional": true, "description": "The HTTP request headers that are going to be sent out with this request."}
+              "requestHeaders": {"$ref": "webRequest.HttpHeaders", "optional": true, "description": "The HTTP request headers that are going to be sent out with this request."},
+              "urlClassification": {"$ref": "webRequest.UrlClassification", "description": "Url classification if the request has been classified."},
+              "thirdParty": {"type": "boolean", "description": "Indicates if this request and its content window hierarchy is third party."}
             }
           }
         ],
@@ -184,18 +153,6 @@
         "name": "onError",
         "type": "function",
         "description": "Notifies about errors caused by the invalid use of the proxy API.",
-        "parameters": [
-          {
-            "name": "error",
-            "type": "object"
-          }
-        ]
-      },
-      {
-        "name": "onProxyError",
-        "type": "function",
-        "deprecated": "proxy.onProxyError has been deprecated and will be removed in Firefox 71. Use proxy.onError instead.",
-        "description": "Please use $(ref:proxy.onError).",
         "parameters": [
           {
             "name": "error",

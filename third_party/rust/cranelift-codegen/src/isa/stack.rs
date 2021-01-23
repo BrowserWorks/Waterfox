@@ -36,8 +36,9 @@ impl StackRef {
     /// Get a reference to `ss` using the stack pointer as a base.
     pub fn sp(ss: StackSlot, frame: &StackSlots) -> Self {
         let size = frame
-            .frame_size
-            .expect("Stack layout must be computed before referencing stack slots");
+            .layout_info
+            .expect("Stack layout must be computed before referencing stack slots")
+            .frame_size;
         let slot = &frame[ss];
         let offset = if slot.kind == StackSlotKind::OutgoingArg {
             // Outgoing argument slots have offsets relative to our stack pointer.
@@ -82,7 +83,7 @@ pub enum StackBase {
 /// This behaves like a set of `StackBase` variants.
 ///
 /// The internal representation as a `u8` is public because stack base masks are used in constant
-/// tables generated from the Python encoding definitions.
+/// tables generated from the meta-language encoding definitions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StackBaseMask(pub u8);
 

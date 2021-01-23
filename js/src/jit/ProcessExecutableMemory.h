@@ -9,7 +9,7 @@
 
 #include "mozilla/Attributes.h"
 
-#include "jsutil.h"
+#include "util/Poison.h"
 
 namespace js {
 namespace jit {
@@ -70,8 +70,11 @@ enum class ProtectionSetting {
   Executable,
 };
 
+enum class MustFlushICache { No, Yes };
+
 extern MOZ_MUST_USE bool ReprotectRegion(void* start, size_t size,
-                                         ProtectionSetting protection);
+                                         ProtectionSetting protection,
+                                         MustFlushICache flushICache);
 
 // Functions called at process start-up/shutdown to initialize/release the
 // executable memory region.

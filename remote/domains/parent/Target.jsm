@@ -6,23 +6,31 @@
 
 var EXPORTED_SYMBOLS = ["Target"];
 
+const { ContextualIdentityService } = ChromeUtils.import(
+  "resource://gre/modules/ContextualIdentityService.jsm"
+);
 const { Domain } = ChromeUtils.import(
   "chrome://remote/content/domains/Domain.jsm"
 );
 const { TabManager } = ChromeUtils.import(
-  "chrome://remote/content/WindowManager.jsm"
+  "chrome://remote/content/TabManager.jsm"
 );
 const { TabSession } = ChromeUtils.import(
   "chrome://remote/content/sessions/TabSession.jsm"
 );
+const { WindowManager } = ChromeUtils.import(
+  "chrome://remote/content/WindowManager.jsm"
+);
 
 let sessionIds = 1;
+let browserContextIds = 1;
 
 class Target extends Domain {
   constructor(session) {
     super(session);
 
     this.onTargetCreated = this.onTargetCreated.bind(this);
+    this.onTargetDestroyed = this.onTargetDestroyed.bind(this);
   }
 
   getBrowserContexts() {
@@ -31,32 +39,53 @@ class Target extends Domain {
     };
   }
 
+  createBrowserContext() {
+    const identity = ContextualIdentityService.create(
+      "remote-agent-" + browserContextIds++
+    );
+    return { browserContextId: identity.userContextId };
+  }
+
+  disposeBrowserContext({ browserContextId }) {
+    ContextualIdentityService.remove(browserContextId);
+    ContextualIdentityService.closeContainerTabs(browserContextId);
+  }
+
   setDiscoverTargets({ discover }) {
     const { targets } = this.session.target;
     if (discover) {
-      targets.on("connect", this.onTargetCreated);
+      targets.on("target-created", this.onTargetCreated);
+      targets.on("target-destroyed", this.onTargetDestroyed);
     } else {
-      targets.off("connect", this.onTargetCreated);
+      targets.off("target-created", this.onTargetCreated);
+      targets.off("target-destroyed", this.onTargetDestroyed);
     }
     for (const target of targets) {
-      this.onTargetCreated("connect", target);
+      this.onTargetCreated("target-created", target);
     }
   }
 
   onTargetCreated(eventName, target) {
     this.emit("Target.targetCreated", {
       targetInfo: {
-        browserContextId: target.id,
+        browserContextId: target.browserContextId,
         targetId: target.id,
-        type: "page",
+        type: target.type,
+        url: target.url,
       },
     });
   }
 
-  async createTarget() {
+  onTargetDestroyed(eventName, target) {
+    this.emit("Target.targetDestroyed", {
+      targetId: target.id,
+    });
+  }
+
+  async createTarget({ browserContextId }) {
     const { targets } = this.session.target;
-    const onTarget = targets.once("connect");
-    const tab = TabManager.addTab();
+    const onTarget = targets.once("target-created");
+    const tab = TabManager.addTab({ userContextId: browserContextId });
     const target = await onTarget;
     if (tab.linkedBrowser != target.browser) {
       throw new Error(
@@ -66,40 +95,60 @@ class Target extends Domain {
     return { targetId: target.id };
   }
 
+  closeTarget({ targetId }) {
+    const { targets } = this.session.target;
+    const target = targets.getById(targetId);
+
+    if (!target) {
+      throw new Error(`Unable to find target with id '${targetId}'`);
+    }
+
+    TabManager.removeTab(target.tab);
+  }
+
+  async activateTarget({ targetId }) {
+    const { targets, window } = this.session.target;
+    const target = targets.getById(targetId);
+
+    if (!target) {
+      throw new Error(`Unable to find target with id '${targetId}'`);
+    }
+
+    // Focus the window, and select the corresponding tab
+    await WindowManager.focus(window);
+    TabManager.selectTab(target.tab);
+  }
+
   attachToTarget({ targetId }) {
     const { targets } = this.session.target;
     const target = targets.getById(targetId);
+
     if (!target) {
-      return new Error(`Unable to find target with id '${targetId}'`);
+      throw new Error(`Unable to find target with id '${targetId}'`);
     }
 
-    const session = new TabSession(
+    const tabSession = new TabSession(
       this.session.connection,
       target,
-      sessionIds++,
-      this.session
+      sessionIds++
     );
+    this.session.connection.registerSession(tabSession);
     this.emit("Target.attachedToTarget", {
       targetInfo: {
         type: "page",
       },
-      sessionId: session.id,
+      sessionId: tabSession.id,
     });
 
     return {
-      sessionId: session.id,
+      sessionId: tabSession.id,
     };
   }
 
   setAutoAttach() {}
 
   sendMessageToTarget({ sessionId, message }) {
-    const { sessions } = this.session.connection;
-    const session = sessions.get(sessionId);
-    if (!session) {
-      throw new Error(`Session '${sessionId}' doesn't exists.`);
-    }
-    message = JSON.parse(message);
-    session.onMessage(message);
+    const { connection } = this.session;
+    connection.sendMessageToTarget(sessionId, message);
   }
 }

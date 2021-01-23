@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
 
 import httplib2
 import os
@@ -52,11 +53,11 @@ class TPSFirefoxRunner(object):
             os.remove(pathToBuild)
 
         # download the build
-        print 'downloading build'
+        print('downloading build')
         self.download_url(self.url, pathToBuild)
 
         # install the build
-        print 'installing %s' % pathToBuild
+        print('installing {}'.format(pathToBuild))
         mozfile.remove(self.installdir, True)
         binary = mozinstall.install(src=pathToBuild, dest=self.installdir)
 

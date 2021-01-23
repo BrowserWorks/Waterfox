@@ -68,7 +68,7 @@ describe("wasm source maps", () => {
     expect(pos3).toHaveLength(1);
     expect(pos3[0].line).toEqual(14);
     expect(pos3[0].column).toEqual(0);
-    expect(pos3[0].lastColumn).toEqual(Infinity);
+    expect(pos3[0].lastColumn).toEqual(0);
   });
 
   test("content presents", async () => {
@@ -91,7 +91,7 @@ describe("wasm source maps", () => {
   test("read and transpose wasm map", async () => {
     const source = {
       id: "min.js",
-      url: "wasm:http://example.com/whatever/:min.js",
+      sourceMapBaseURL: "wasm:http://example.com/whatever/:min.js",
       sourceMapURL: "http://example.com/whatever/min.js.map",
       isWasm: true,
     };
@@ -110,7 +110,12 @@ describe("wasm source maps", () => {
     const { getOriginalURLs, getOriginalLocation } = require("../source-map");
 
     const urls = await getOriginalURLs(source);
-    expect(urls).toEqual(["http://example.com/whatever/one.js"]);
+    expect(urls).toEqual([
+      {
+        id: "min.js/originalSource-2133f6ef6d6c464acad221082f398cf0",
+        url: "http://example.com/whatever/one.js",
+      },
+    ]);
 
     const { line, column } = await getOriginalLocation({
       sourceId: source.id,

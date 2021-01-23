@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.fonts.title "Шрыфты">
+<!ENTITY language.label "Шрыфты для:">
+<!ENTITY language.accesskey "Ш">
+<!ENTITY typefaces.label "Шрыфт">
+<!ENTITY sizes.label "Памер (пікселяў)">
+<!ENTITY proportional.label "Суадносны:">
+<!ENTITY proportional.accesskey "С">
+<!ENTITY serif.label "З засечкамі:">
+<!ENTITY serif.accesskey "З">
+<!ENTITY sans-serif.label "Без засечак:">
+<!ENTITY sans-serif.accesskey "б">
+<!ENTITY monospace.label "Роўнашырокі:">
+<!ENTITY monospace.accesskey "Р">
+<!ENTITY fantasy.label "Дзівосны:">
+<!ENTITY fantasy.accesskey "Д">
+<!ENTITY cursive.label "Рукапісны:">
+<!ENTITY cursive.accesskey "Р">
+<!ENTITY font.langGroup.latin1 "Заходняя">
+<!ENTITY font.langGroup.latin2 "Цэнтральна-Еўрапейская">
+<!ENTITY font.langGroup.japanese "Японская">
+<!ENTITY font.langGroup.trad-chinese "Традыцыйная Кітайская(Тайвань)">
+<!ENTITY font.langGroup.simpl-chinese "Спрошчаная Кітайская">
+<!ENTITY font.langGroup.trad-chinese-hk "Традыцыйная Кітайская(Гон Конг)">
+<!ENTITY font.langGroup.korean "Карэйская">
+<!ENTITY font.langGroup.cyrillic "Кірыліца">
+<!ENTITY font.langGroup.baltic "Балтыйская">
+<!ENTITY font.langGroup.el "Грэцкая">
+<!ENTITY font.langGroup.turkish "Турэцкая">
+<!ENTITY font.langGroup.unicode1 "Адзіны Код">
+<!ENTITY font.langGroup.user-def "Вызначаны карыстальнікам">
+<!ENTITY font.langGroup.thai "Тайская">
+<!ENTITY font.langGroup.hebrew "Габрэйская">
+<!ENTITY font.langGroup.arabic "Арабская">
+<!ENTITY font.langGroup.devanagari "Дэванагары">
+<!ENTITY font.langGroup.tamil "Тамільская">
+<!ENTITY font.langGroup.armenian "Армянская">
+<!ENTITY font.langGroup.bengali "Бенгальская">
+<!ENTITY font.langGroup.canadian "Канадская аб'яднаная складовая азбука">
+<!ENTITY font.langGroup.ethiopic "Эфіопская">
+<!ENTITY font.langGroup.georgian "Грузінская">
+<!ENTITY font.langGroup.gujarati "Гуджараці">
+<!ENTITY font.langGroup.gurmukhi "Гурмукхі">
+<!ENTITY font.langGroup.khmer "Кхмерская">
+<!ENTITY font.langGroup.malayalam "Малайяламская">
+<!ENTITY minSize.label "Найменшы памер шрыфту:">
+<!ENTITY minSize.accesskey "м">
+<!ENTITY minSize.none "Няма">
+<!ENTITY useDefaultFontSerif.label "Serif">
+<!ENTITY useDefaultFontSansSerif.label "Sans Serif">
+<!ENTITY useDocumentFonts.label "Дазволіць дакументам карыстацца іншымі шрыфтамі">
+<!ENTITY useDocumentFonts.accesskey "д">
+<!ENTITY header2 "Калі старонка сеціва прызначае свае асабістыя шрыфты">
+<!ENTITY useDefaultFont.label "Карыстацца вызначанымі мною шрыфтамі замест прапанованых старонкай">
+<!ENTITY useDefaultFont.accesskey "к">

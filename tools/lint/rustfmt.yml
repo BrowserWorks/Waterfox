@@ -1,0 +1,24 @@
+---
+rust:
+    description: Reformat rust
+    min_rustfmt_version: 1.4.12
+    include:
+        - '.'
+    exclude:
+        - dom/webauthn/libudev-sys/
+        - gfx/wr/direct-composition/
+        - gfx/wr/peek-poke/
+        - gfx/wr/webrender_build/
+        - gfx/wgpu/
+        - gfx/wr/wr_malloc_size_of/
+        - media/audioipc/audioipc/src/
+        - media/audioipc/server/src/
+        - media/mp4parse-rust/
+        - servo/
+    extensions:
+        - rs
+    support-files:
+        - 'tools/lint/rust/**'
+    type: external
+    payload: rust:lint
+    code_review_warnings: true

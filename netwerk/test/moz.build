@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-TEST_DIRS += ['httpserver', 'gtest', 'unit']
+TEST_DIRS += ['httpserver', 'gtest', 'unit', 'http3server']
 
 BROWSER_CHROME_MANIFESTS += ['browser/browser.ini']
 MOCHITEST_MANIFESTS += ['mochitests/mochitest.ini']
@@ -14,19 +14,7 @@ XPCSHELL_TESTS_MANIFESTS += [
     'unit_ipc/xpcshell.ini',
 ]
 
-FINAL_LIBRARY = 'xul-gtest'
-UNIFIED_SOURCES += [
-    'TestBind.cpp',
-    'TestCookie.cpp',
-    'TestUDPSocket.cpp',
-]
-
-if CONFIG['OS_TARGET'] == 'WINNT':
-    UNIFIED_SOURCES += [
-        'TestNamedPipeService.cpp',
+if CONFIG['FUZZING_INTERFACES']:
+    TEST_DIRS += [
+        'fuzz'
     ]
-
-include('/ipc/chromium/chromium-config.mozbuild')
-
-if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
-    CXXFLAGS += ['-Wno-shadow']

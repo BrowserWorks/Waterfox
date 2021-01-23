@@ -16,10 +16,6 @@
 }
 
 .tree.noselect {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
   user-select: none;
 }
 
@@ -75,7 +71,7 @@
   transform: rotate(-90deg);
 }
 
-html[dir="rtl"] .tree-node button:not(.expanded) {
+html[dir="rtl"] .tree-node button.arrow:not(.expanded) {
   transform: rotate(90deg);
 }
 
@@ -93,7 +89,6 @@ html[dir="rtl"] .tree-node button:not(.expanded) {
 .tree-node.focused button.arrow {
   background-color: currentColor;
 }
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -147,6 +142,10 @@ html[dir="rtl"] .tree-node button:not(.expanded) {
   color: var(--string-color);
 }
 
+.objectBox-empty-string {
+  font-style: italic;
+}
+
 .objectBox-string a,
 .objectBox-string a:visited {
   color: currentColor;
@@ -164,7 +163,8 @@ html[dir="rtl"] .tree-node button:not(.expanded) {
   color: var(--object-color);
 }
 
-.objectBox-stackTrace {
+.objectBox-stackTrace.reps-custom-format,
+.objectBox-stackTrace.reps-custom-format > .objectBox-string {
   color: var(--error-color);
 }
 
@@ -388,7 +388,7 @@ button.jump-definition {
 /* Invoke getter button */
 
 button.invoke-getter {
-  mask: url("resource://devtools/client/shared/components/reps/images/input.svg")
+  mask: url(resource://devtools/client/shared/components/reps/images/input.svg)
     no-repeat;
   display: inline-block;
   background-color: var(--theme-icon-color);
@@ -405,6 +405,11 @@ button.invoke-getter {
 /* "more…" ellipsis */
 .more-ellipsis {
   color: var(--comment-node-color);
+}
+
+/* function parameters */
+.objectBox-function .param {
+  color: var(--theme-highlight-red);
 }
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -462,4 +467,60 @@ button.invoke-getter {
 .tree-node.focused button.open-inspector,
 .tree-node.focused button.invoke-getter {
   background-color: currentColor;
+}
+
+button.remove-set-watchpoint {
+  mask: url("resource://devtools/client/debugger/images/webconsole-logpoint.svg")
+    no-repeat;
+  display: inline-block;
+  vertical-align: top;
+  height: 13px;
+  width: 15px;
+  margin: 0 4px 0px 20px;
+  padding: 0;
+  border: none;
+  background-color: var(--breakpoint-fill);
+  cursor: pointer;
+}
+
+button.remove-get-watchpoint {
+  mask: url("resource://devtools/client/debugger/images/webconsole-logpoint.svg")
+    no-repeat;
+  display: inline-block;
+  vertical-align: top;
+  height: 13px;
+  width: 15px;
+  margin: 0 4px 0px 20px;
+  padding: 0;
+  border: none;
+  background-color: var(--purple-60);
+  cursor: pointer;
+}
+
+button.remove-getorset-watchpoint {
+  mask: url("resource://devtools/client/debugger/images/webconsole-logpoint.svg")
+    no-repeat;
+  display: inline-block;
+  vertical-align: top;
+  height: 13px;
+  width: 15px;
+  margin: 0 4px 0px 20px;
+  padding: 0;
+  border: none;
+  background-color: var(--yellow-60);
+  cursor: pointer;
+}
+
+.theme-dark button.remove-set-watchpoint:hover,
+.theme-light button.remove-set-watchpoint:hover {
+  background-color: var(--breakpoint-fill);
+}
+.theme-dark button.remove-get-watchpoint:hover,
+.theme-light button.remove-get-watchpoint:hover {
+  background-color: var(--purple-60);
+}
+
+.theme-dark button.remove-getorset-watchpoint:hover,
+.theme-light button.remove-getorset-watchpoint:hover {
+  background-color: var(--yellow-60);
 }

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -43,6 +41,13 @@ Menu.prototype.append = function(menuItem) {
 };
 
 /**
+ * Remove all items from the Menu
+ */
+Menu.prototype.clear = function() {
+  this.menuitems = [];
+};
+
+/**
  * Add an item to a specified position in the menu
  *
  * @param {int} pos
@@ -53,17 +58,21 @@ Menu.prototype.insert = function(pos, menuItem) {
 };
 
 /**
- * Show the Menu with anchor element's coordinate.
- * For example, In the case of zoom in/out the devtool panel, we should multiply
- * element's position to zoom value.
- * If you know the screen coodinate of display position, you should use Menu.pop().
+ * Show the Menu next to the provided target. Anchor point is bottom-left.
  *
- * @param {int} x
- * @param {int} y
+ * @param {Element} target
+ *        The element to use as anchor.
  * @param {Document} doc
+ *        The document that should own the popup.
  */
-Menu.prototype.popupWithZoom = function(x, y, doc) {
+Menu.prototype.popupAtTarget = function(target, doc) {
   const zoom = getCurrentZoom(doc);
+
+  const rect = target.getBoundingClientRect();
+  const defaultView = target.ownerDocument.defaultView;
+  const x = rect.left + defaultView.mozInnerScreenX;
+  const y = rect.bottom + defaultView.mozInnerScreenY;
+
   this.popup(x * zoom, y * zoom, doc);
 };
 
@@ -210,6 +219,9 @@ function applyItemAttributesToNode(item, node) {
   }
   if (item.checked) {
     node.setAttribute("checked", "true");
+  }
+  if (item.image) {
+    node.setAttribute("image", item.image);
   }
   if (item.id) {
     node.id = item.id;

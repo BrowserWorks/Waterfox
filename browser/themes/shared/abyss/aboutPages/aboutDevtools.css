@@ -1,0 +1,36 @@
+/* Additional styling for Abyss theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT DEVTOOLS :::::: */
+
+@-moz-document  url("about:devtools") {
+	
+  .title {
+    color: var(--wfx-dt-primary-color) !important;
+  }
+  
+  .left-pane {
+    display: none;
+  }
+  
+  #email {
+    padding: 8px 8px 8px 14px !important;
+    border-radius: var(--wfx-large-radius) !important;
+    border-color: transparent !important;
+    background-color: var(--wfx-purple-navy-80) !important;
+  }
+  
+  .feature-icon {
+    filter: invert(0.2) brightness(1.25);
+  }
+  
+  #privacy {
+    background-color: transparent !important;
+  }
+  
+  footer {
+    display: none !important;
+  }
+
+}

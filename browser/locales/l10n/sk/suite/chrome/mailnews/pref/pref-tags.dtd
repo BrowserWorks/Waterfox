@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Popisy">
+<!ENTITY pref.tags.caption          "Prispôsobenie popisov">
+<!ENTITY pref.tags.description      "Farebné popisy je možné použiť na triedenie vašich správ podľa kategórie a priorít. Pomocou týchto nastavení upravíte vzhľad a dôležitosť jednotlivých popisov. Čím vyššie je popis umiestnený, tým vyššiu má prioritu.">
+<!ENTITY tagColumn.label            "Popis">
+<!ENTITY colorColumn.label          "Farba">
+<!ENTITY defaultTagName.label       "Značka bez názvu">
+<!ENTITY addTagButton.label         "Pridať">
+<!ENTITY addTagButton.accesskey     "d">
+<!ENTITY deleteTagButton.label      "Odstrániť">
+<!ENTITY deleteTagButton.accesskey  "O">
+<!ENTITY raiseTagButton.label       "Zvýšiť dôležitosť">
+<!ENTITY raiseTagButton.accesskey   "Z">
+<!ENTITY lowerTagButton.label       "Znížiť dôležitosť">
+<!ENTITY lowerTagButton.accesskey   "n">
+<!ENTITY restoreButton.label        "Obnoviť predvolené">
+<!ENTITY restoreButton.accesskey    "b">

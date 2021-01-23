@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Ceeci">
+
+<!ENTITY newPref.namePlaceholder       "Maa">
+
+<!ENTITY newPref.valueBoolean          "Cimi wala taari">
+<!ENTITY newPref.valueString           "Tenjiri">
+<!ENTITY newPref.valueInteger          "Hinna timmante">
+
+<!ENTITY newPref.stringPlaceholder     "Tenjiri dam">
+<!ENTITY newPref.numberPlaceholder     "Hinna dam">
+
+<!ENTITY newPref.toggleButton          "Kanjari">
+<!ENTITY newPref.cancelButton          "Naŋ">
+
+<!ENTITY contextMenu.copyPrefName      "Maa berandi">
+<!ENTITY contextMenu.copyPrefValue     "Hinna berandi">

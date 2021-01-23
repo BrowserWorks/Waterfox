@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Notifications">
+<!ENTITY notifications.caption            "Notifications">
+<!ENTITY newMessagesArrive.label          "When new messages arrive:">
+<!ENTITY playSound.label                  "Play a sound">
+<!ENTITY playSound.accesskey              "P">
+<!ENTITY showAnimatedAlert.label          "Show an alert">
+<!ENTITY showAnimatedAlert.accesskey      "S">
+<!ENTITY showTrayIcon.label               "Show a tray icon">
+<!ENTITY showTrayIcon.accesskey           "t">
+<!ENTITY bounceSystemDockIcon.label       "Animate the Dock icon">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+<!ENTITY preview.label                    "Preview">
+<!ENTITY preview.accesskey                "v">
+<!ENTITY systemsound.label                "System New Mail Sound">
+<!ENTITY systemsound.accesskey            "M">
+<!ENTITY customsound.label                "Custom sound file">
+<!ENTITY customsound.accesskey            "C">
+<!ENTITY browse.label                     "Browse…">
+<!ENTITY browse.accesskey                 "B">
+<!ENTITY browse.title                     "Choose file">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label "Skrá">
+<!ENTITY fileMenu.accesskey "S">
+<!ENTITY newMenu.label "Nýr">
+<!ENTITY newMenu.accesskey "N">
+
+<!ENTITY editMenu.label "Breyta">
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY undoCmd.label "Afturkalla">
+<!ENTITY undoCmd.accesskey "u">
+<!ENTITY redoCmd.label "Endurtaka">
+<!ENTITY redoCmd.accesskey "r">
+<!ENTITY deleteCmd.label "Eyða">
+<!ENTITY deleteCmd.accesskey "E">
+<!ENTITY preferencesCmd2.label "Valkostir">
+<!ENTITY preferencesCmd2.accesskey "o">
+<!ENTITY preferencesCmdUnix.label "Valkostir">
+<!ENTITY preferencesCmdUnix.accesskey "V">
+
+<!ENTITY viewMenu.label "Skoða">
+<!ENTITY viewMenu.accesskey "k">
+<!ENTITY viewToolbarsMenu.label "Verkfæraslár">
+<!ENTITY viewToolbarsMenu.accesskey "V">
+<!ENTITY showTaskbarCmd.label "Stöðuslá">
+<!ENTITY showTaskbarCmd.accesskey "ö">
+
+<!ENTITY closeCmd.label "Loka">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "L">
+
+<!ENTITY quitApplicationCmd.label "Hætta">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "H">
+
+<!ENTITY quitApplicationCmdUnix.label "Hætta">
+<!ENTITY quitApplicationCmdUnix.accesskey "H">
+
+<!ENTITY quitApplicationCmdMac.label "Hætta í &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey "H">

@@ -30,23 +30,29 @@ class AudioChannelAgent : public nsIAudioChannelAgent {
 
   AudioChannelAgent();
 
-  void WindowVolumeChanged();
-  void WindowSuspendChanged(nsSuspendedTypes aSuspend);
-  void WindowAudioCaptureChanged(uint64_t aInnerWindowID, bool aCapture);
-
-  nsPIDOMWindowOuter* Window() const { return mWindow; }
+  // nsIAudioChannelAgentCallback MUST call this function after calling
+  // NotifyStartedPlaying() to require the initial update for
+  // volume/suspend/audio-capturing which might set before starting the agent.
+  // Ex. starting the agent in a tab which has been muted before, so the agent
+  // should apply mute state to its callback.
+  void PullInitialUpdate();
 
   uint64_t WindowID() const;
-  uint64_t InnerWindowID() const;
 
+  bool IsWindowAudioCapturingEnabled() const;
   bool IsPlayingStarted() const;
-  bool ShouldBlockMedia() const;
 
  private:
   virtual ~AudioChannelAgent();
 
-  AudioPlaybackConfig GetMediaConfig();
-  bool IsDisposableSuspend(nsSuspendedTypes aSuspend) const;
+  friend class AudioChannelService;
+  void WindowVolumeChanged(float aVolume, bool aMuted);
+  void WindowSuspendChanged(nsSuspendedTypes aSuspend);
+  void WindowAudioCaptureChanged(uint64_t aInnerWindowID, bool aCapture);
+
+  nsPIDOMWindowOuter* Window() const { return mWindow; }
+  uint64_t InnerWindowID() const;
+  AudioPlaybackConfig GetMediaConfig() const;
 
   // Returns mCallback if that's non-null, or otherwise tries to get an
   // nsIAudioChannelAgentCallback out of mWeakCallback.

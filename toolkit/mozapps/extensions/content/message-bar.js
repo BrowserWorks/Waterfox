@@ -81,16 +81,23 @@ class MessageBarElement extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
     const content = this.constructor.template.content.cloneNode(true);
     shadowRoot.append(content);
-    this._closeIcon.addEventListener("click", () => this.remove(), {
-      once: true,
-    });
+    this.closeButton.addEventListener(
+      "click",
+      () => {
+        this.dispatchEvent(new CustomEvent("message-bar:user-dismissed"));
+        this.remove();
+      },
+      {
+        once: true,
+      }
+    );
   }
 
   disconnectedCallback() {
     this.dispatchEvent(new CustomEvent("message-bar:close"));
   }
 
-  get _closeIcon() {
+  get closeButton() {
     return this.shadowRoot.querySelector("button.close");
   }
 
@@ -120,6 +127,10 @@ class MessageBarElement extends HTMLElement {
     barcontent.setAttribute("class", "content");
     barcontent.append(document.createElement("slot"));
     container.append(barcontent);
+
+    const spacer = document.createElement("span");
+    spacer.classList.add("spacer");
+    container.append(spacer);
 
     const closeIcon = document.createElement("button");
     closeIcon.setAttribute("class", "close");

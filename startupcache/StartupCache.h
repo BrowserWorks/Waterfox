@@ -6,19 +6,25 @@
 #ifndef StartupCache_h_
 #define StartupCache_h_
 
+#include <utility>
+
 #include "nsClassHashtable.h"
 #include "nsComponentManagerUtils.h"
 #include "nsTArray.h"
+#include "nsTStringHasher.h"  // mozilla::DefaultHasher<nsCString>
 #include "nsZipArchive.h"
 #include "nsITimer.h"
 #include "nsIMemoryReporter.h"
 #include "nsIObserverService.h"
 #include "nsIObserver.h"
 #include "nsIObjectOutputStream.h"
-#include "nsIOutputStream.h"
 #include "nsIFile.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/AutoMemMap.h"
+#include "mozilla/Compression.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Mutex.h"
+#include "mozilla/Result.h"
 #include "mozilla/UniquePtr.h"
 
 /**
@@ -75,27 +81,52 @@ namespace mozilla {
 
 namespace scache {
 
-struct CacheEntry {
-  UniquePtr<char[]> data;
-  uint32_t size;
+struct StartupCacheEntry {
+  UniquePtr<char[]> mData;
+  uint32_t mOffset;
+  uint32_t mCompressedSize;
+  uint32_t mUncompressedSize;
+  int32_t mHeaderOffsetInFile;
+  int32_t mRequestedOrder;
+  bool mRequested;
 
-  CacheEntry() : size(0) {}
+  MOZ_IMPLICIT StartupCacheEntry(uint32_t aOffset, uint32_t aCompressedSize,
+                                 uint32_t aUncompressedSize)
+      : mData(nullptr),
+        mOffset(aOffset),
+        mCompressedSize(aCompressedSize),
+        mUncompressedSize(aUncompressedSize),
+        mHeaderOffsetInFile(0),
+        mRequestedOrder(0),
+        mRequested(false) {}
 
-  // Takes possession of buf
-  CacheEntry(UniquePtr<char[]> buf, uint32_t len)
-      : data(std::move(buf)), size(len) {}
+  StartupCacheEntry(UniquePtr<char[]> aData, size_t aLength,
+                    int32_t aRequestedOrder)
+      : mData(std::move(aData)),
+        mOffset(0),
+        mCompressedSize(0),
+        mUncompressedSize(aLength),
+        mHeaderOffsetInFile(0),
+        mRequestedOrder(0),
+        mRequested(true) {}
 
-  ~CacheEntry() {}
+  struct Comparator {
+    using Value = std::pair<const nsCString*, StartupCacheEntry*>;
 
-  size_t SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) {
-    return mallocSizeOf(this) + mallocSizeOf(data.get());
-  }
+    bool Equals(const Value& a, const Value& b) const {
+      return a.second->mRequestedOrder == b.second->mRequestedOrder;
+    }
+
+    bool LessThan(const Value& a, const Value& b) const {
+      return a.second->mRequestedOrder < b.second->mRequestedOrder;
+    }
+  };
 };
 
 // We don't want to refcount StartupCache, and ObserverService wants to
 // refcount its listeners, so we'll let it refcount this instead.
 class StartupCacheListener final : public nsIObserver {
-  ~StartupCacheListener() {}
+  ~StartupCacheListener() = default;
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIOBSERVER
 };
@@ -109,9 +140,11 @@ class StartupCache : public nsIMemoryReporter {
 
   // StartupCache methods. See above comments for a more detailed description.
 
-  // Returns a buffer that was previously stored, caller takes ownership.
-  nsresult GetBuffer(const char* id, UniquePtr<char[]>* outbuf,
-                     uint32_t* length);
+  // true if the archive has an entry for the buffer or not.
+  bool HasEntry(const char* id);
+
+  // Returns a buffer that was previously stored, caller does not take ownership
+  nsresult GetBuffer(const char* id, const char** outbuf, uint32_t* length);
 
   // Stores a buffer. Caller yields ownership.
   nsresult PutBuffer(const char* id, UniquePtr<char[]>&& inbuf,
@@ -119,6 +152,14 @@ class StartupCache : public nsIMemoryReporter {
 
   // Removes the cache file.
   void InvalidateCache(bool memoryOnly = false);
+
+  // For use during shutdown - this will write the startupcache's data
+  // to disk if the timer hasn't already gone off.
+  void MaybeInitShutdownWrite();
+
+  // For use during shutdown - ensure we complete the shutdown write
+  // before shutdown, even in the FastShutdown case.
+  void EnsureShutdownWriteComplete();
 
   // Signal that data should not be loaded from the cache file
   static void IgnoreDiskCache();
@@ -128,6 +169,7 @@ class StartupCache : public nsIMemoryReporter {
   nsresult GetDebugObjectOutputStream(nsIObjectOutputStream* aStream,
                                       nsIObjectOutputStream** outStream);
 
+  static StartupCache* GetSingletonNoInit();
   static StartupCache* GetSingleton();
   static void DeleteSingleton();
 
@@ -135,9 +177,8 @@ class StartupCache : public nsIMemoryReporter {
   // excludes the mapping.
   size_t HeapSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 
-  size_t SizeOfMapping();
-
-  // FOR TESTING ONLY
+  bool ShouldCompactCache();
+  nsresult ResetStartupWriteTimerCheckingReadCount();
   nsresult ResetStartupWriteTimer();
   bool StartupWriteComplete();
 
@@ -145,30 +186,55 @@ class StartupCache : public nsIMemoryReporter {
   StartupCache();
   virtual ~StartupCache();
 
-  nsresult LoadArchive();
+  friend class StartupCacheInfo;
+
+  Result<Ok, nsresult> LoadArchive();
   nsresult Init();
-  void WriteToDisk();
-  void WaitOnWriteThread();
+
+  // Returns a file pointer for the cache file with the given name in the
+  // current profile.
+  Result<nsCOMPtr<nsIFile>, nsresult> GetCacheFile(const nsAString& suffix);
+
+  // Opens the cache file for reading.
+  Result<Ok, nsresult> OpenCache();
+
+  // Writes the cache to disk
+  Result<Ok, nsresult> WriteToDisk();
+
+  void WaitOnPrefetchThread();
+  void StartPrefetchMemoryThread();
 
   static nsresult InitSingleton();
   static void WriteTimeout(nsITimer* aTimer, void* aClosure);
-  static void ThreadedWrite(void* aClosure);
+  void MaybeWriteOffMainThread();
+  static void ThreadedPrefetch(void* aClosure);
 
-  nsClassHashtable<nsCStringHashKey, CacheEntry> mTable;
-  nsTArray<nsCString> mPendingWrites;
-  RefPtr<nsZipArchive> mArchive;
+  HashMap<nsCString, StartupCacheEntry> mTable;
+  // owns references to the contents of tables which have been invalidated.
+  // In theory grows forever if the cache is continually filled and then
+  // invalidated, but this should not happen in practice.
+  nsTArray<decltype(mTable)> mOldTables;
   nsCOMPtr<nsIFile> mFile;
+  loader::AutoMemMap mCacheData;
+  Mutex mTableLock;
 
   nsCOMPtr<nsIObserverService> mObserverService;
   RefPtr<StartupCacheListener> mListener;
   nsCOMPtr<nsITimer> mTimer;
 
+  Atomic<bool> mDirty;
+  Atomic<bool> mWrittenOnce;
   bool mStartupWriteInitiated;
+  bool mCurTableReferenced;
+  uint32_t mRequestedCount;
+  size_t mCacheEntriesBaseOffset;
 
   static StaticRefPtr<StartupCache> gStartupCache;
   static bool gShutdownInitiated;
   static bool gIgnoreDiskCache;
-  PRThread* mWriteThread;
+  static bool gFoundDiskCacheOnInit;
+  PRThread* mPrefetchThread;
+  UniquePtr<Compression::LZ4FrameDecompressionContext> mDecompressionContext;
 #ifdef DEBUG
   nsTHashtable<nsISupportsHashKey> mWriteObjectMap;
 #endif
@@ -179,7 +245,7 @@ class StartupCache : public nsIMemoryReporter {
 // is a singleton.
 #ifdef DEBUG
 class StartupCacheDebugOutputStream final : public nsIObjectOutputStream {
-  ~StartupCacheDebugOutputStream() {}
+  ~StartupCacheDebugOutputStream() = default;
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBJECTOUTPUTSTREAM

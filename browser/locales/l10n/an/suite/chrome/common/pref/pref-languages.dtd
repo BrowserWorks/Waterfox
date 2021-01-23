@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+
+<!ENTITY languages.customize.prefLangDescript           "As pachinas web son a veces disponibles en mas d'un idioma. Trige os idiomas en el qual prefiere veyer as pachinas web, en orden de preferencia.">
+<!ENTITY languages.customize.title                      "Idiomas">
+<!ENTITY langtitle.label                                "Idiomas ta pachinas web">
+<!ENTITY languages.customize.prefAddLangDescript        "Trige os idiomas que quiera adhibir.">
+<!ENTITY languages.customize.addButton.label            "Adhibir…">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+<!ENTITY languages.customize.deleteButton.label         "Eliminar">
+<!ENTITY languages.customize.deleteButton.accesskey     "r">
+<!ENTITY languages.customize.add.title.label            "Adhibir idiomas">
+<!ENTITY languages.customize.available.label            "Idiomas:">
+<!ENTITY languages.customize.active.label               "Idiomas en orden de preferencia:">
+<!ENTITY languages.customize.active.accesskey           "I">
+<!ENTITY languages.customize.others.label               "Atros:">
+<!ENTITY languages.customize.others.accesskey           "A">
+<!ENTITY languages.customize.Fallback.grouplabel        "Character Encoding for Legacy Content">
+<!ENTITY languages.customize.Fallback.label             "Fallback Character Encoding:">
+<!ENTITY languages.customize.Fallback.accesskey         "C">
+<!ENTITY languages.customize.Fallback.desc              "Used for legacy content that fails to declare its encoding.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "eix.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Alto">
+<!ENTITY languages.customize.moveUp.accesskey           "A">
+<!ENTITY languages.customize.moveDown.label             "Abaixo">
+<!ENTITY languages.customize.moveDown.accesskey         "b">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "地址查找">
+<!ENTITY emailCollectiontitle.label            "电子邮件地址">
+<!ENTITY emailCollectionPicker.label           "将邮件地址加入:">
+<!ENTITY emailCollectionPicker.accesskey       "m">
+<!ENTITY emailCollectiontext.label             "往外发送的邮件其地址将会被自动加入本地地址簿.">
+<!-- Autocompletion -->
+
+<!ENTITY addressingTitle.label                 "地址自动完成">
+<!ENTITY highlightNonMatches.label             "标记不能自动填补的地址">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "本地通讯录">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "对消息进行地址查找时，在下列位置搜索：">
+<!ENTITY directories.label                     "目录服务器：">
+<!ENTITY directories.accesskey                 "D">
+<!ENTITY directoriesNone.label                 "无">
+<!ENTITY editDirectories.label                 "编辑目录…">
+<!ENTITY editDirectories.accesskey             "E">

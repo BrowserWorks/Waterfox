@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Server odchádzajúcej pošty (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Pri správe svojich identít môžete použiť server z tohto zoznamu jeho zvolením ako Server odchádzajúcej pošty (SMTP), alebo môžete použiť tu nastavený predvolený server zvolením položky &quot;Použiť predvolený server&quot;.">
+
+<!ENTITY smtpListAdd.label  "Pridať…">
+<!ENTITY smtpListAdd.accesskey  "r">
+<!ENTITY smtpListEdit.label "Upraviť…">
+<!ENTITY smtpListEdit.accesskey "U">
+<!ENTITY smtpListDelete.label "Odstrániť">
+<!ENTITY smtpListDelete.accesskey "d">
+<!ENTITY smtpListSetDefault.label "Nastaviť ako predvolený">
+<!ENTITY smtpListSetDefault.accesskey "a">
+
+<!ENTITY serverDetails.label "Podrobnosti o zvolenom serveri:">
+<!ENTITY serverDescription.label "Popis: ">
+<!ENTITY serverName.label "Názov servera: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Používateľské meno: ">
+<!ENTITY connectionSecurity.label "Zabezpečenie pripojenia: ">
+<!ENTITY authMethod.label   "Metóda overenia: ">

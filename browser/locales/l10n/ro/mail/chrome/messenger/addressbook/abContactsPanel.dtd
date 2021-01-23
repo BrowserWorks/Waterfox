@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Proprietăți">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Proprietățile agendei de contacte">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Proprietățile contactului">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Proprietățile listei de adrese de e-mail">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Afișează meniul contextual pentru agenda de contacte">
+<!ENTITY addressbookPicker.label            "Agendă de contacte:">
+<!ENTITY addressbookPicker.accesskey        "A">
+<!ENTITY searchContacts.label               "Caută în contacte:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Nume sau e-mail">
+
+<!ENTITY addtoToFieldMenu.label             "Adaugă la câmpul Către">
+<!ENTITY addtoToFieldMenu.accesskey         "A">
+<!ENTITY addtoCcFieldMenu.label             "Adaugă la câmpul Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Adaugă la câmpul Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Șterge">
+<!ENTITY deleteAddrBookCard.accesskey       "t">
+<!ENTITY propertiesContext.label            "Proprietăți">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Proprietăți">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Editează contactul">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "Editează lista">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "Contact nou">
+<!ENTITY newContactAbContext.accesskey      "C">
+<!ENTITY newListAbContext.label             "Listă nouă">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Adaugă la Către:">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Adaugă la Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Adaugă la Bcc:">
+<!ENTITY bccButton.accesskey                "B">

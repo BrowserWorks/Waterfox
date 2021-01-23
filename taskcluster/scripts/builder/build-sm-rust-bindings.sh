@@ -4,14 +4,12 @@ set -xe
 
 source $(dirname $0)/sm-tooltool-config.sh
 
-# Ensure that we have a .config/cargo that points us to our vendored crates
-# rather than to crates.io.
-cd "$SRCDIR/.cargo"
-sed -e "s|@top_srcdir@|$SRCDIR|" -e 's|@[^@]*@||g' < config.in > config
-
 cd "$SRCDIR/js/rust"
 
-export LD_LIBRARY_PATH="$TOOLTOOL_CHECKOUT/gcc/lib64"
+cp $SRCDIR/.cargo/config.in $SRCDIR/.cargo/config
+
+export RUSTFMT="$MOZ_FETCHES_DIR/rustc/bin/rustfmt"
+export LD_LIBRARY_PATH="$MOZ_FETCHES_DIR/gcc/lib64"
 # Enable backtraces if we panic.
 export RUST_BACKTRACE=1
 

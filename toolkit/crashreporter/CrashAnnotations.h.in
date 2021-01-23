@@ -5,6 +5,7 @@
 #ifndef CrashAnnotations_h
 #define CrashAnnotations_h
 
+#include <cstddef>
 #include <cstdint>
 
 namespace CrashReporter {
@@ -22,11 +23,6 @@ ${strings}
 // Whitelist of crash annotations that can be included in a crash ping
 const Annotation kCrashPingWhitelist[] = {
 ${whitelist}
-};
-
-// Blacklist of crash annotations that shouldn't be read from a content process
-const Annotation kContentProcessBlacklist[] = {
-${blacklist}
 };
 
 /**
@@ -61,15 +57,13 @@ bool AnnotationFromString(Annotation& aResult, const char* aValue);
 bool IsAnnotationWhitelistedForPing(Annotation aAnnotation);
 
 /**
- * Checks if the given crash annotation needs to be filtered out when reading
- * a content process crash annotations. Blacklisted annotations will be
- * replaced with ones provided by the parent process.
- *
- * @param aAnnotation the crash annotation to be checked
- * @return true if the annotation needs to be filtered out when reading
- *         annotations provided by a content process, false otherwise
+ * Abstract annotation writer, this is needed only for code that writes out
+ * annotations in the exception handler.
  */
-bool IsAnnotationBlacklistedForContent(Annotation aAnnotation);
+class AnnotationWriter {
+ public:
+  virtual void Write(Annotation aAnnotation, const char* aValue, size_t aLen = 0) = 0;
+};
 
 } // namespace CrashReporter
 

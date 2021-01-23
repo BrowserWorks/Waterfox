@@ -10,18 +10,23 @@
 #include "mozilla/PresShell.h"
 #include "mozilla/RestyleManager.h"
 #include "mozilla/ServoStyleSet.h"
+#include "mozilla/Telemetry.h"
 #include "nscore.h"
 #include "nsCOMPtr.h"
 #include "nsCRT.h"
+#include "nsFrameSelection.h"
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsIContent.h"
 #include "nsIContentViewer.h"
 #include "nsIDocumentViewerPrint.h"
+#include "nsIScreen.h"
+#include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/BeforeUnloadEvent.h"
 #include "mozilla/dom/PopupBlocker.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/DocumentInlines.h"
+#include "mozilla/dom/DocGroup.h"
 #include "nsPresContext.h"
 #include "nsIFrame.h"
 #include "nsIWritablePropertyBag2.h"
@@ -32,7 +37,6 @@
 #include "nsISelectionListener.h"
 #include "mozilla/dom/Selection.h"
 #include "nsContentUtils.h"
-#include "nsLayoutStylesheetCache.h"
 #ifdef ACCESSIBILITY
 #  include "mozilla/a11y/DocAccessible.h"
 #endif
@@ -41,13 +45,15 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/WeakPtr.h"
+#include "mozilla/StaticPrefs_dom.h"
+#include "mozilla/StaticPrefs_javascript.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
 
 #include "nsViewManager.h"
 #include "nsView.h"
 
-#include "nsIPageSequenceFrame.h"
+#include "nsPageSequenceFrame.h"
 #include "nsNetUtil.h"
 #include "nsIContentViewerEdit.h"
 #include "mozilla/css/Loader.h"
@@ -56,6 +62,7 @@
 #include "nsDocShell.h"
 #include "nsIBaseWindow.h"
 #include "nsILayoutHistoryState.h"
+#include "nsIScreen.h"
 #include "nsCharsetSource.h"
 #include "mozilla/ReflowInput.h"
 #include "nsIImageLoadingContent.h"
@@ -76,8 +83,9 @@
 #include "nsIScrollableFrame.h"
 #include "nsStyleSheetService.h"
 #include "nsILoadContext.h"
-
-#include "nsIPrompt.h"
+#include "mozilla/ThrottledEventQueue.h"
+#include "nsIPromptCollection.h"
+#include "nsIPromptService.h"
 #include "imgIContainer.h"  // image animation mode constants
 
 #include "nsSandboxFlags.h"
@@ -114,18 +122,15 @@
 
 // paint forcing
 #include <stdio.h>
-
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/dom/ScriptLoader.h"
+#include "mozilla/dom/WindowGlobalChild.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
-
-#define BEFOREUNLOAD_DISABLED_PREFNAME "dom.disable_beforeunload"
-#define BEFOREUNLOAD_REQUIRES_INTERACTION_PREFNAME \
-  "dom.require_user_interaction_for_beforeunload"
 
 //-----------------------------------------------------
 // LOGGING
@@ -158,41 +163,32 @@ class nsDocViewerSelectionListener final : public nsISelectionListener {
   // nsISelectionListerner interface
   NS_DECL_NSISELECTIONLISTENER
 
-  nsDocViewerSelectionListener()
-      : mDocViewer(nullptr), mSelectionWasCollapsed(true) {}
-
-  nsresult Init(nsDocumentViewer* aDocViewer);
+  explicit nsDocViewerSelectionListener(nsDocumentViewer* aDocViewer)
+      : mDocViewer(aDocViewer), mSelectionWasCollapsed(true) {}
 
   void Disconnect() { mDocViewer = nullptr; }
 
  protected:
-  virtual ~nsDocViewerSelectionListener() {}
+  virtual ~nsDocViewerSelectionListener() = default;
 
   nsDocumentViewer* mDocViewer;
   bool mSelectionWasCollapsed;
 };
 
-/** editor Implementation of the FocusListener interface
- */
+/** editor Implementation of the FocusListener interface */
 class nsDocViewerFocusListener final : public nsIDOMEventListener {
  public:
-  /** default constructor
-   */
-  nsDocViewerFocusListener();
+  explicit nsDocViewerFocusListener(nsDocumentViewer* aDocViewer)
+      : mDocViewer(aDocViewer) {}
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOMEVENTLISTENER
 
-  nsresult Init(nsDocumentViewer* aDocViewer);
-
   void Disconnect() { mDocViewer = nullptr; }
 
  protected:
-  /** default destructor
-   */
-  virtual ~nsDocViewerFocusListener();
+  virtual ~nsDocViewerFocusListener() = default;
 
- private:
   nsDocumentViewer* mDocViewer;
 };
 
@@ -311,11 +307,30 @@ class nsDocumentViewer final : public nsIContentViewer,
   NS_DECL_NSIWEBBROWSERPRINT
 #endif
 
-  typedef void (*CallChildFunc)(nsIContentViewer* aViewer, void* aClosure);
-  void CallChildren(CallChildFunc aFunc, void* aClosure);
+  using CallChildFunc = FunctionRef<void(nsDocumentViewer*)>;
+  void CallChildren(CallChildFunc aFunc);
+
+  using PresContextFunc = FunctionRef<void(nsPresContext*)>;
+  /**
+   * Calls a `CallChildFunc` on all children, a `PresContextFunc`
+   * on all external documents' pres contexts  of our document, and then
+   * finally on _this_ pres context, in that order.
+   *
+   * The children function is expected to call this function reentrantly, and
+   * thus the `PresContextFunc` won't be called for the children's pres context
+   * directly here.
+   *
+   * FIXME(emilio): Better name for this appreciated.
+   */
+  void PropagateToPresContextsHelper(CallChildFunc, PresContextFunc);
 
   // nsIDocumentViewerPrint Printing Methods
   NS_DECL_NSIDOCUMENTVIEWERPRINT
+
+  void EmulateMediumInternal(nsAtom*);
+
+  using ColorSchemeOverride = Maybe<StylePrefersColorScheme>;
+  void EmulatePrefersColorSchemeInternal(const ColorSchemeOverride&);
 
  protected:
   virtual ~nsDocumentViewer();
@@ -343,6 +358,7 @@ class nsDocumentViewer final : public nsIContentViewer,
    * called if the window's current document is already mDocument.
    */
   nsresult InitInternal(nsIWidget* aParentWidget, nsISupports* aState,
+                        mozilla::dom::WindowGlobalChild* aActor,
                         const nsIntRect& aBounds, bool aDoCreation,
                         bool aNeedMakeCX = true,
                         bool aForceSetNewDocument = true);
@@ -365,10 +381,15 @@ class nsDocumentViewer final : public nsIContentViewer,
 
   nsresult SyncParentSubDocMap();
 
+  void RemoveFocusListener();
+  void ReinitializeFocusListener();
+
   mozilla::dom::Selection* GetDocumentSelection();
 
   void DestroyPresShell();
   void DestroyPresContext();
+
+  void InvalidatePotentialSubDocDisplayItem();
 
 #ifdef NS_PRINTING
   // Called when the DocViewer is notified that the state
@@ -376,8 +397,6 @@ class nsDocumentViewer final : public nsIContentViewer,
   void SetIsPrintingInDocShellTree(nsIDocShellTreeItem* aParentNode,
                                    bool aIsPrintingOrPP, bool aStartAtTop);
 #endif  // NS_PRINTING
-
-  void ReturnToGalleyPresentation();
 
   // Whether we should attach to the top level widget. This is true if we
   // are sharing/recycling a single base widget and not creating multiple
@@ -422,10 +441,6 @@ class nsDocumentViewer final : public nsIContentViewer,
 
   nsIntRect mBounds;
 
-  // mTextZoom/mPageZoom record the textzoom/pagezoom of the first (galley)
-  // presshell only.
-  float mTextZoom;  // Text zoom, defaults to 1.0
-  float mPageZoom;
   float mOverrideDPPX;  // DPPX overrided, defaults to 0.0
 
   int16_t mNumURLStarts;
@@ -445,8 +460,6 @@ class nsDocumentViewer final : public nsIContentViewer,
   unsigned mClosingWhilePrinting : 1;
 
 #  if NS_PRINT_PREVIEW
-  unsigned mPrintPreviewZoomed : 1;
-
   // These data members support delayed printing when the document is loading
   unsigned mPrintIsPending : 1;
   unsigned mPrintDocIsFullyLoaded : 1;
@@ -454,8 +467,6 @@ class nsDocumentViewer final : public nsIContentViewer,
   nsCOMPtr<nsIWebProgressListener> mCachedPrintWebProgressListner;
 
   RefPtr<nsPrintJob> mPrintJob;
-  float mOriginalPrintPreviewScale;
-  float mPrintPreviewZoom;
   UniquePtr<AutoPrintEventDispatcher> mAutoBeforeAndAfterPrint;
 #  endif  // NS_PRINT_PREVIEW
 
@@ -490,23 +501,26 @@ class AutoPrintEventDispatcher {
   }
 
  private:
+  static CallState CollectDocuments(Document& aDoc,
+                                    nsTArray<nsCOMPtr<Document>>& aDocs) {
+    aDocs.AppendElement(&aDoc);
+    auto recurse = [&aDocs](Document& aSubDoc) {
+      return CollectDocuments(aSubDoc, aDocs);
+    };
+    aDoc.EnumerateSubDocuments(recurse);
+    return CallState::Continue;
+  }
+
   void DispatchEventToWindowTree(const nsAString& aEvent) {
     nsTArray<nsCOMPtr<Document>> targets;
     if (mTop) {
-      CollectDocuments(*mTop, &targets);
+      CollectDocuments(*mTop, targets);
     }
     for (nsCOMPtr<Document>& doc : targets) {
       nsContentUtils::DispatchTrustedEvent(doc, doc->GetWindow(), aEvent,
                                            CanBubble::eNo, Cancelable::eNo,
                                            nullptr);
     }
-  }
-
-  static bool CollectDocuments(Document& aDocument, void* aData) {
-    static_cast<nsTArray<nsCOMPtr<Document>>*>(aData)->AppendElement(
-        &aDocument);
-    aDocument.EnumerateSubDocuments(CollectDocuments, aData);
-    return true;
   }
 
   nsCOMPtr<Document> mTop;
@@ -536,6 +550,9 @@ already_AddRefed<nsIContentViewer> NS_NewContentViewer() {
 }
 
 void nsDocumentViewer::PrepareToStartLoad() {
+  MOZ_DIAGNOSTIC_ASSERT(!GetIsPrintPreview(),
+                        "Print preview tab should never navigate");
+
   mStopped = false;
   mLoaded = false;
   mAttachedToParent = false;
@@ -550,9 +567,6 @@ void nsDocumentViewer::PrepareToStartLoad() {
   if (mPrintJob) {
     mPrintJob->Destroy();
     mPrintJob = nullptr;
-#  ifdef NS_PRINT_PREVIEW
-    SetIsPrintPreview(false);
-#  endif
   }
 
 #endif  // NS_PRINTING
@@ -561,8 +575,6 @@ void nsDocumentViewer::PrepareToStartLoad() {
 nsDocumentViewer::nsDocumentViewer()
     : mParentWidget(nullptr),
       mAttachedToParent(false),
-      mTextZoom(1.0),
-      mPageZoom(1.0),
       mOverrideDPPX(0.0),
       mNumURLStarts(0),
       mDestroyBlockedCount(0),
@@ -575,11 +587,8 @@ nsDocumentViewer::nsDocumentViewer()
 #ifdef NS_PRINTING
       mClosingWhilePrinting(false),
 #  if NS_PRINT_PREVIEW
-      mPrintPreviewZoomed(false),
       mPrintIsPending(false),
       mPrintDocIsFullyLoaded(false),
-      mOriginalPrintPreviewScale(0.0),
-      mPrintPreviewZoom(1.0),
 #  endif  // NS_PRINT_PREVIEW
 #endif    // NS_PRINTING
       mHintCharsetSource(kCharsetUninitialized),
@@ -610,10 +619,12 @@ nsDocumentViewer::~nsDocumentViewer() {
     mDocument->Destroy();
   }
 
+#ifdef NS_PRINTING
   if (mPrintJob) {
     mPrintJob->Destroy();
     mPrintJob = nullptr;
   }
+#endif
 
   MOZ_RELEASE_ASSERT(mDestroyBlockedCount == 0);
   NS_ASSERTION(!mPresShell && !mPresContext,
@@ -630,9 +641,7 @@ nsDocumentViewer::~nsDocumentViewer() {
     mSelectionListener->Disconnect();
   }
 
-  if (mFocusListener) {
-    mFocusListener->Disconnect();
-  }
+  RemoveFocusListener();
 
   // XXX(?) Revoke pending invalidate events
 }
@@ -654,6 +663,30 @@ void nsDocumentViewer::LoadStart(Document* aDocument) {
   }
 }
 
+void nsDocumentViewer::RemoveFocusListener() {
+  if (RefPtr<nsDocViewerFocusListener> oldListener =
+          std::move(mFocusListener)) {
+    oldListener->Disconnect();
+    if (mDocument) {
+      mDocument->RemoveEventListener(NS_LITERAL_STRING("focus"), oldListener,
+                                     false);
+      mDocument->RemoveEventListener(NS_LITERAL_STRING("blur"), oldListener,
+                                     false);
+    }
+  }
+}
+
+void nsDocumentViewer::ReinitializeFocusListener() {
+  RemoveFocusListener();
+  mFocusListener = new nsDocViewerFocusListener(this);
+  if (mDocument) {
+    mDocument->AddEventListener(NS_LITERAL_STRING("focus"), mFocusListener,
+                                false, false);
+    mDocument->AddEventListener(NS_LITERAL_STRING("blur"), mFocusListener,
+                                false, false);
+  }
+}
+
 nsresult nsDocumentViewer::SyncParentSubDocMap() {
   nsCOMPtr<nsIDocShell> docShell(mContainer);
   if (!docShell) {
@@ -671,7 +704,7 @@ nsresult nsDocumentViewer::SyncParentSubDocMap() {
   }
 
   nsCOMPtr<nsIDocShellTreeItem> parent;
-  docShell->GetParent(getter_AddRefs(parent));
+  docShell->GetInProcessParent(getter_AddRefs(parent));
 
   nsCOMPtr<nsPIDOMWindowOuter> parent_win =
       parent ? parent->GetWindow() : nullptr;
@@ -712,8 +745,9 @@ nsDocumentViewer::GetContainer(nsIDocShell** aResult) {
 }
 
 NS_IMETHODIMP
-nsDocumentViewer::Init(nsIWidget* aParentWidget, const nsIntRect& aBounds) {
-  return InitInternal(aParentWidget, nullptr, aBounds, true);
+nsDocumentViewer::Init(nsIWidget* aParentWidget, const nsIntRect& aBounds,
+                       WindowGlobalChild* aActor) {
+  return InitInternal(aParentWidget, nullptr, aActor, aBounds, true);
 }
 
 nsresult nsDocumentViewer::InitPresentationStuff(bool aDoInitialReflow) {
@@ -745,30 +779,42 @@ nsresult nsDocumentViewer::InitPresentationStuff(bool aDoInitialReflow) {
     //
     // Note that we are flushing before we add mPresShell as an observer
     // to avoid bogus notifications.
-
     mDocument->FlushPendingNotifications(FlushType::ContentAndNotify);
   }
 
   mPresShell->BeginObservingDocument();
 
   // Initialize our view manager
-  int32_t p2a = mPresContext->AppUnitsPerDevPixel();
-  MOZ_ASSERT(
-      p2a ==
-      mPresContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom());
 
   {
+    int32_t p2a = mPresContext->AppUnitsPerDevPixel();
+    MOZ_ASSERT(
+        p2a ==
+        mPresContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom());
+
     nscoord width = p2a * mBounds.width;
     nscoord height = p2a * mBounds.height;
 
     mViewManager->SetWindowDimensions(width, height);
     mPresContext->SetVisibleArea(nsRect(0, 0, width, height));
-    mPresContext->SetTextZoom(mTextZoom);
-    mPresContext->SetFullZoom(mPageZoom);
+    // We rely on the default zoom not being initialized until here.
+    mPresContext->RecomputeBrowsingContextDependentData();
     mPresContext->SetOverrideDPPX(mOverrideDPPX);
   }
 
-  p2a = mPresContext->AppUnitsPerDevPixel();  // zoom may have changed it
+  if (mWindow && mDocument->IsTopLevelContentDocument()) {
+    // Set initial safe area insets
+    ScreenIntMargin windowSafeAreaInsets;
+    LayoutDeviceIntRect windowRect = mWindow->GetScreenBounds();
+    nsCOMPtr<nsIScreen> screen = mWindow->GetWidgetScreen();
+    if (screen) {
+      windowSafeAreaInsets = nsContentUtils::GetWindowSafeAreaInsets(
+          screen, mWindow->GetSafeAreaInsets(), windowRect);
+    }
+
+    mPresContext->SetSafeAreaInsets(windowSafeAreaInsets);
+  }
+
   if (aDoInitialReflow) {
     RefPtr<PresShell> presShell = mPresShell;
     // Initial reflow
@@ -778,13 +824,7 @@ nsresult nsDocumentViewer::InitPresentationStuff(bool aDoInitialReflow) {
   // now register ourselves as a selection listener, so that we get
   // called when the selection changes in the window
   if (!mSelectionListener) {
-    nsDocViewerSelectionListener* selectionListener =
-        new nsDocViewerSelectionListener();
-
-    selectionListener->Init(this);
-
-    // mSelectionListener is a owning reference
-    mSelectionListener = selectionListener;
+    mSelectionListener = new nsDocViewerSelectionListener(this);
   }
 
   RefPtr<mozilla::dom::Selection> selection = GetDocumentSelection();
@@ -794,36 +834,7 @@ nsresult nsDocumentViewer::InitPresentationStuff(bool aDoInitialReflow) {
 
   selection->AddSelectionListener(mSelectionListener);
 
-  // Save old listener so we can unregister it
-  RefPtr<nsDocViewerFocusListener> oldFocusListener = mFocusListener;
-  if (oldFocusListener) {
-    oldFocusListener->Disconnect();
-  }
-
-  // focus listener
-  //
-  // now register ourselves as a focus listener, so that we get called
-  // when the focus changes in the window
-  nsDocViewerFocusListener* focusListener = new nsDocViewerFocusListener();
-
-  focusListener->Init(this);
-
-  // mFocusListener is a strong reference
-  mFocusListener = focusListener;
-
-  if (mDocument) {
-    mDocument->AddEventListener(NS_LITERAL_STRING("focus"), mFocusListener,
-                                false, false);
-    mDocument->AddEventListener(NS_LITERAL_STRING("blur"), mFocusListener,
-                                false, false);
-
-    if (oldFocusListener) {
-      mDocument->RemoveEventListener(NS_LITERAL_STRING("focus"),
-                                     oldFocusListener, false);
-      mDocument->RemoveEventListener(NS_LITERAL_STRING("blur"),
-                                     oldFocusListener, false);
-    }
-  }
+  ReinitializeFocusListener();
 
   if (aDoInitialReflow && mDocument) {
     nsCOMPtr<Document> document = mDocument;
@@ -844,18 +855,10 @@ static nsPresContext* CreatePresContext(Document* aDocument,
 // This method can be used to initial the "presentation"
 // The aDoCreation indicates whether it should create
 // all the new objects or just initialize the existing ones
-nsresult nsDocumentViewer::InitInternal(nsIWidget* aParentWidget,
-                                        nsISupports* aState,
-                                        const nsIntRect& aBounds,
-                                        bool aDoCreation,
-                                        bool aNeedMakeCX /*= true*/,
-                                        bool aForceSetNewDocument /* = true*/) {
-  if (mIsPageMode) {
-    // XXXbz should the InitInternal in SetPageModeForTesting just pass false
-    // here itself?
-    aForceSetNewDocument = false;
-  }
-
+nsresult nsDocumentViewer::InitInternal(
+    nsIWidget* aParentWidget, nsISupports* aState, WindowGlobalChild* aActor,
+    const nsIntRect& aBounds, bool aDoCreation, bool aNeedMakeCX /*= true*/,
+    bool aForceSetNewDocument /* = true*/) {
   // We don't want any scripts to run here. That can cause flushing,
   // which can cause reentry into initialization of this document viewer,
   // which would be disastrous.
@@ -955,7 +958,7 @@ nsresult nsDocumentViewer::InitInternal(nsIWidget* aParentWidget,
     if (window) {
       nsCOMPtr<Document> curDoc = window->GetExtantDoc();
       if (aForceSetNewDocument || curDoc != mDocument) {
-        rv = window->SetNewDocument(mDocument, aState, false);
+        rv = window->SetNewDocument(mDocument, aState, false, aActor);
         if (NS_FAILED(rv)) {
           Destroy();
           return rv;
@@ -1048,15 +1051,14 @@ nsDocumentViewer::LoadComplete(nsresult aStatus) {
     restoring =
         (mDocument->GetReadyStateEnum() == Document::READYSTATE_COMPLETE);
     if (!restoring) {
-      NS_ASSERTION(mDocument->IsXULDocument() ||  // readyState for XUL is bogus
-                       mDocument->GetReadyStateEnum() ==
-                           Document::READYSTATE_INTERACTIVE ||
-                       // test_stricttransportsecurity.html has old-style
-                       // docshell-generated about:blank docs reach this code!
-                       (mDocument->GetReadyStateEnum() ==
-                            Document::READYSTATE_UNINITIALIZED &&
-                        NS_IsAboutBlank(mDocument->GetDocumentURI())),
-                   "Bad readystate");
+      NS_ASSERTION(
+          mDocument->GetReadyStateEnum() == Document::READYSTATE_INTERACTIVE ||
+              // test_stricttransportsecurity.html has old-style
+              // docshell-generated about:blank docs reach this code!
+              (mDocument->GetReadyStateEnum() ==
+                   Document::READYSTATE_UNINITIALIZED &&
+               NS_IsAboutBlank(mDocument->GetDocumentURI())),
+          "Bad readystate");
 #ifdef DEBUG
       bool docShellThinksWeAreRestoring;
       docShell->GetRestoringDocument(&docShellThinksWeAreRestoring);
@@ -1078,7 +1080,7 @@ nsDocumentViewer::LoadComplete(nsresult aStatus) {
       if (os) {
         nsIPrincipal* principal = d->NodePrincipal();
         os->NotifyObservers(ToSupports(d),
-                            nsContentUtils::IsSystemPrincipal(principal)
+                            principal->IsSystemPrincipal()
                                 ? "chrome-document-loaded"
                                 : "content-document-loaded",
                             nullptr);
@@ -1092,14 +1094,69 @@ nsDocumentViewer::LoadComplete(nsresult aStatus) {
             docShell, MakeUnique<DocLoadingTimelineMarker>("document::Load"));
       }
 
+      nsPIDOMWindowInner* innerWindow = window->GetCurrentInnerWindow();
+      RefPtr<DocGroup> docGroup = d->GetDocGroup();
+      // It is possible that the parent document's load event fires earlier than
+      // childs' load event, and in this case we need to fire some artificial
+      // load events to make the parent thinks the load events for child has
+      // been done
+      if (innerWindow && DocGroup::TryToLoadIframesInBackground()) {
+        nsTArray<nsCOMPtr<nsIDocShell>> docShells;
+        nsCOMPtr<nsIDocShell> container(mContainer);
+        if (container) {
+          int32_t count;
+          container->GetInProcessChildCount(&count);
+          // We first find all background loading iframes that need to
+          // fire artificial load events, and instead of firing them as
+          // soon as we find them, we store them in an array, to prevent
+          // us from skipping some events.
+          for (int32_t i = 0; i < count; ++i) {
+            nsCOMPtr<nsIDocShellTreeItem> child;
+            container->GetInProcessChildAt(i, getter_AddRefs(child));
+            nsCOMPtr<nsIDocShell> childIDocShell = do_QueryInterface(child);
+            RefPtr<nsDocShell> docShell = nsDocShell::Cast(childIDocShell);
+            if (docShell && docShell->TreatAsBackgroundLoad() &&
+                docShell->GetDocument()->GetReadyStateEnum() <
+                    Document::READYSTATE_COMPLETE) {
+              docShells.AppendElement(childIDocShell);
+            }
+          }
+
+          // Re-iterate the stored docShells to fire artificial load events
+          for (size_t i = 0; i < docShells.Length(); ++i) {
+            RefPtr<nsDocShell> docShell = nsDocShell::Cast(docShells[i]);
+            if (docShell && docShell->TreatAsBackgroundLoad() &&
+                docShell->GetDocument()->GetReadyStateEnum() <
+                    Document::READYSTATE_COMPLETE) {
+              nsEventStatus status = nsEventStatus_eIgnore;
+              WidgetEvent event(true, eLoad);
+              event.mFlags.mBubbles = false;
+              event.mFlags.mCancelable = false;
+
+              nsCOMPtr<nsPIDOMWindowOuter> win = docShell->GetWindow();
+              nsCOMPtr<Element> element = win->GetFrameElementInternal();
+
+              docShell->SetFakeOnLoadDispatched();
+              EventDispatcher::Dispatch(element, nullptr, &event, nullptr,
+                                        &status);
+            }
+          }
+        }
+      }
+
       d->SetLoadEventFiring(true);
       EventDispatcher::Dispatch(window, mPresContext, &event, nullptr, &status);
       d->SetLoadEventFiring(false);
+
+      RefPtr<nsDocShell> dShell = nsDocShell::Cast(docShell);
+      if (docGroup && dShell->TreatAsBackgroundLoad()) {
+        docGroup->TryFlushIframePostMessages(dShell->GetOuterWindowID());
+      }
+
       if (timing) {
         timing->NotifyLoadEventEnd();
       }
 
-      nsPIDOMWindowInner* innerWindow = window->GetCurrentInnerWindow();
       if (innerWindow) {
         innerWindow->QueuePerformanceNavigationTiming();
       }
@@ -1147,7 +1204,6 @@ nsDocumentViewer::LoadComplete(nsresult aStatus) {
       }
     }
   }
-
   // Release the JS bytecode cache from its wait on the load event, and
   // potentially dispatch the encoding of the bytecode.
   if (mDocument && mDocument->ScriptLoader()) {
@@ -1194,18 +1250,6 @@ nsresult nsDocumentViewer::PermitUnloadInternal(uint32_t* aPermitUnloadFlags,
     return NS_OK;
   }
 
-  static bool sIsBeforeUnloadDisabled;
-  static bool sBeforeUnloadRequiresInteraction;
-  static bool sBeforeUnloadPrefsCached = false;
-
-  if (!sBeforeUnloadPrefsCached) {
-    sBeforeUnloadPrefsCached = true;
-    Preferences::AddBoolVarCache(&sIsBeforeUnloadDisabled,
-                                 BEFOREUNLOAD_DISABLED_PREFNAME);
-    Preferences::AddBoolVarCache(&sBeforeUnloadRequiresInteraction,
-                                 BEFOREUNLOAD_REQUIRES_INTERACTION_PREFNAME);
-  }
-
   // First, get the script global object from the document...
   nsPIDOMWindowOuter* window = mDocument->GetWindow();
 
@@ -1243,7 +1287,7 @@ nsresult nsDocumentViewer::PermitUnloadInternal(uint32_t* aPermitUnloadFlags,
   {
     // Never permit popups from the beforeunload handler, no matter
     // how we get here.
-    nsAutoPopupStatePusher popupStatePusher(PopupBlocker::openAbused, true);
+    AutoPopupStatePusher popupStatePusher(PopupBlocker::openAbused, true);
 
     // Never permit dialogs from the beforeunload handler
     nsGlobalWindowOuter* globalWindow = nsGlobalWindowOuter::Cast(window);
@@ -1262,7 +1306,7 @@ nsresult nsDocumentViewer::PermitUnloadInternal(uint32_t* aPermitUnloadFlags,
   nsAutoString text;
   event->GetReturnValue(text);
 
-  if (sIsBeforeUnloadDisabled) {
+  if (StaticPrefs::dom_disable_beforeunload()) {
     *aPermitUnloadFlags = eDontPromptAndUnload;
   }
 
@@ -1270,7 +1314,8 @@ nsresult nsDocumentViewer::PermitUnloadInternal(uint32_t* aPermitUnloadFlags,
   // the event being dispatched.
   if (*aPermitUnloadFlags != eDontPromptAndUnload && dialogsAreEnabled &&
       mDocument && !(mDocument->GetSandboxFlags() & SANDBOXED_MODALS) &&
-      (!sBeforeUnloadRequiresInteraction || mDocument->UserHasInteracted()) &&
+      (!StaticPrefs::dom_require_user_interaction_for_beforeunload() ||
+       mDocument->UserHasInteracted()) &&
       (event->WidgetEventPtr()->DefaultPrevented() || !text.IsEmpty())) {
     // If the consumer wants prompt requests to just stop unloading, we don't
     // need to prompt and can return immediately.
@@ -1281,59 +1326,16 @@ nsresult nsDocumentViewer::PermitUnloadInternal(uint32_t* aPermitUnloadFlags,
 
     // Ask the user if it's ok to unload the current page
 
-    nsCOMPtr<nsIPrompt> prompt = do_GetInterface(docShell);
+    nsCOMPtr<nsIPromptCollection> prompt =
+        do_GetService("@mozilla.org/embedcomp/prompt-collection;1");
 
     if (prompt) {
-      nsCOMPtr<nsIWritablePropertyBag2> promptBag = do_QueryInterface(prompt);
-      if (promptBag) {
-        bool isTabModalPromptAllowed;
-        GetIsTabModalPromptAllowed(&isTabModalPromptAllowed);
-        promptBag->SetPropertyAsBool(NS_LITERAL_STRING("allowTabModal"),
-                                     isTabModalPromptAllowed);
-      }
-
-      nsAutoString title, message, stayLabel, leaveLabel;
-      rv = nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
-                                              "OnBeforeUnloadTitle", title);
-      nsresult tmp = nsContentUtils::GetLocalizedString(
-          nsContentUtils::eDOM_PROPERTIES, "OnBeforeUnloadMessage", message);
-      if (NS_FAILED(tmp)) {
-        rv = tmp;
-      }
-      tmp = nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
-                                               "OnBeforeUnloadLeaveButton",
-                                               leaveLabel);
-      if (NS_FAILED(tmp)) {
-        rv = tmp;
-      }
-      tmp = nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
-                                               "OnBeforeUnloadStayButton",
-                                               stayLabel);
-      if (NS_FAILED(tmp)) {
-        rv = tmp;
-      }
-
-      if (NS_FAILED(rv)) {
-        NS_ERROR("Failed to get strings from dom.properties!");
-        return NS_OK;
-      }
-
-      // Although the exact value is ignored, we must not pass invalid
-      // bool values through XPConnect.
-      bool dummy = false;
-      int32_t buttonPressed = 0;
-      uint32_t buttonFlags =
-          (nsIPrompt::BUTTON_POS_0_DEFAULT |
-           (nsIPrompt::BUTTON_TITLE_IS_STRING * nsIPrompt::BUTTON_POS_0) |
-           (nsIPrompt::BUTTON_TITLE_IS_STRING * nsIPrompt::BUTTON_POS_1));
-
       nsAutoSyncOperation sync(mDocument);
       mInPermitUnloadPrompt = true;
       mozilla::Telemetry::Accumulate(
           mozilla::Telemetry::ONBEFOREUNLOAD_PROMPT_COUNT, 1);
-      rv = prompt->ConfirmEx(title.get(), message.get(), buttonFlags,
-                             leaveLabel.get(), stayLabel.get(), nullptr,
-                             nullptr, &dummy, &buttonPressed);
+      rv = prompt->BeforeUnloadCheck(docShell->GetBrowsingContext(),
+                                     aPermitUnload);
       mInPermitUnloadPrompt = false;
 
       // If the prompt aborted, we tell our consumer that it is not allowed
@@ -1351,8 +1353,6 @@ nsresult nsDocumentViewer::PermitUnloadInternal(uint32_t* aPermitUnloadFlags,
         return NS_OK;
       }
 
-      // Button 0 == leave, button 1 == stay
-      *aPermitUnload = (buttonPressed == 0);
       mozilla::Telemetry::Accumulate(
           mozilla::Telemetry::ONBEFOREUNLOAD_PROMPT_ACTION,
           (*aPermitUnload ? 1 : 0));
@@ -1366,11 +1366,11 @@ nsresult nsDocumentViewer::PermitUnloadInternal(uint32_t* aPermitUnloadFlags,
 
   if (docShell) {
     int32_t childCount;
-    docShell->GetChildCount(&childCount);
+    docShell->GetInProcessChildCount(&childCount);
 
     for (int32_t i = 0; i < childCount && *aPermitUnload; ++i) {
       nsCOMPtr<nsIDocShellTreeItem> item;
-      docShell->GetChildAt(i, getter_AddRefs(item));
+      docShell->GetInProcessChildAt(i, getter_AddRefs(item));
 
       nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(item));
 
@@ -1413,7 +1413,8 @@ nsDocumentViewer::PageHide(bool aIsUnload) {
   if (aIsUnload) {
     // Poke the GC. The window might be collectable garbage now.
     nsJSContext::PokeGC(JS::GCReason::PAGE_HIDE,
-                        mDocument->GetWrapperPreserveColor(), NS_GC_DELAY * 2);
+                        mDocument->GetWrapperPreserveColor(),
+                        StaticPrefs::javascript_options_gc_delay() * 2);
   }
 
   mDocument->OnPageHide(!aIsUnload, nullptr);
@@ -1451,7 +1452,7 @@ nsDocumentViewer::PageHide(bool aIsUnload) {
 
     // Never permit popups from the unload handler, no matter how we get
     // here.
-    nsAutoPopupStatePusher popupStatePusher(PopupBlocker::openAbused, true);
+    AutoPopupStatePusher popupStatePusher(PopupBlocker::openAbused, true);
 
     Document::PageUnloadingEventTimeStamp timestamp(mDocument);
 
@@ -1483,10 +1484,10 @@ static void AttachContainerRecurse(nsIDocShell* aShell) {
 
   // Now recurse through the children
   int32_t childCount;
-  aShell->GetChildCount(&childCount);
+  aShell->GetInProcessChildCount(&childCount);
   for (int32_t i = 0; i < childCount; ++i) {
     nsCOMPtr<nsIDocShellTreeItem> childItem;
-    aShell->GetChildAt(i, getter_AddRefs(childItem));
+    aShell->GetInProcessChildAt(i, getter_AddRefs(childItem));
     nsCOMPtr<nsIDocShell> shell = do_QueryInterface(childItem);
     AttachContainerRecurse(shell);
   }
@@ -1500,7 +1501,7 @@ nsDocumentViewer::Open(nsISupports* aState, nsISHEntry* aSHEntry) {
     mDocument->SetContainer(mContainer);
   }
 
-  nsresult rv = InitInternal(mParentWidget, aState, mBounds, false);
+  nsresult rv = InitInternal(mParentWidget, aState, nullptr, mBounds, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
   mHidden = false;
@@ -1523,14 +1524,7 @@ nsDocumentViewer::Open(nsISupports* aState, nsISHEntry* aSHEntry) {
 
   SyncParentSubDocMap();
 
-  if (mFocusListener && mDocument) {
-    // The focus listener may have been disconnected.
-    mFocusListener->Init(this);
-    mDocument->AddEventListener(NS_LITERAL_STRING("focus"), mFocusListener,
-                                false, false);
-    mDocument->AddEventListener(NS_LITERAL_STRING("blur"), mFocusListener,
-                                false, false);
-  }
+  ReinitializeFocusListener();
 
   // XXX re-enable image animations once that works correctly
 
@@ -1610,21 +1604,13 @@ nsDocumentViewer::Close(nsISHEntry* aSHEntry) {
     if (!mSHEntry && mDocument) mDocument->RemovedFromDocShell();
   }
 
-  if (mFocusListener) {
-    mFocusListener->Disconnect();
-    if (mDocument) {
-      mDocument->RemoveEventListener(NS_LITERAL_STRING("focus"), mFocusListener,
-                                     false);
-      mDocument->RemoveEventListener(NS_LITERAL_STRING("blur"), mFocusListener,
-                                     false);
-    }
-  }
-
+  RemoveFocusListener();
   return NS_OK;
 }
 
 static void DetachContainerRecurse(nsIDocShell* aShell) {
   // Unhook this docshell's presentation
+  aShell->SynchronizeLayoutHistoryState();
   nsCOMPtr<nsIContentViewer> viewer;
   aShell->GetContentViewer(getter_AddRefs(viewer));
   if (viewer) {
@@ -1639,10 +1625,10 @@ static void DetachContainerRecurse(nsIDocShell* aShell) {
 
   // Now recurse through the children
   int32_t childCount;
-  aShell->GetChildCount(&childCount);
+  aShell->GetInProcessChildCount(&childCount);
   for (int32_t i = 0; i < childCount; ++i) {
     nsCOMPtr<nsIDocShellTreeItem> childItem;
-    aShell->GetChildAt(i, getter_AddRefs(childItem));
+    aShell->GetInProcessChildAt(i, getter_AddRefs(childItem));
     nsCOMPtr<nsIDocShell> shell = do_QueryInterface(childItem);
     DetachContainerRecurse(shell);
   }
@@ -1690,7 +1676,7 @@ nsDocumentViewer::Destroy() {
     // DisallowBFCaching() after CanSavePresentation() already ran.  Ensure that
     // the SHEntry has no viewer and its state is synced up.  We want to do this
     // via a stack reference, in case those calls mess with our members.
-    nsCOMPtr<nsISHEntry> shEntry = mSHEntry.forget();
+    nsCOMPtr<nsISHEntry> shEntry = std::move(mSHEntry);
     shEntry->SetContentViewer(nullptr);
     shEntry->SyncPresentationState();
   }
@@ -1744,7 +1730,8 @@ nsDocumentViewer::Destroy() {
 
     // Grab a reference to mSHEntry before calling into things like
     // SyncPresentationState that might mess with our members.
-    nsCOMPtr<nsISHEntry> shEntry = mSHEntry.forget();  // we'll need this below
+    nsCOMPtr<nsISHEntry> shEntry =
+        std::move(mSHEntry);  // we'll need this below
 
     shEntry->SetContentViewer(this);
 
@@ -1752,6 +1739,7 @@ nsDocumentViewer::Destroy() {
     // and shEntry has no window state at this point we'll be ok; we just won't
     // cache ourselves.
     shEntry->SyncPresentationState();
+    shEntry->SynchronizeLayoutHistoryState();
 
     // Shut down accessibility for the document before we start to tear it down.
 #ifdef ACCESSIBILITY
@@ -1916,10 +1904,10 @@ nsDocumentViewer::SetDocumentInternal(Document* aDocument,
       nsCOMPtr<nsIDocShell> node(mContainer);
       if (node) {
         int32_t count;
-        node->GetChildCount(&count);
+        node->GetInProcessChildCount(&count);
         for (int32_t i = 0; i < count; ++i) {
           nsCOMPtr<nsIDocShellTreeItem> child;
-          node->GetChildAt(0, getter_AddRefs(child));
+          node->GetInProcessChildAt(0, getter_AddRefs(child));
           node->RemoveChild(child);
         }
       }
@@ -1959,7 +1947,8 @@ nsDocumentViewer::SetDocumentInternal(Document* aDocument,
     DestroyPresContext();
 
     mWindow = nullptr;
-    rv = InitInternal(mParentWidget, nullptr, mBounds, true, true, false);
+    rv = InitInternal(mParentWidget, nullptr, nullptr, mBounds, true, true,
+                      false);
   }
 
   return rv;
@@ -2019,7 +2008,7 @@ nsDocumentViewer::SetBoundsWithFlags(const nsIntRect& aBounds,
                                      uint32_t aFlags) {
   NS_ENSURE_TRUE(mDocument, NS_ERROR_NOT_AVAILABLE);
 
-  bool boundsChanged = mBounds.IsEqualEdges(aBounds);
+  bool boundsChanged = !mBounds.IsEqualEdges(aBounds);
   mBounds = aBounds;
 
   if (mWindow && !mAttachedToParent) {
@@ -2112,7 +2101,7 @@ nsDocumentViewer::Show(void) {
       // We need to find the root DocShell since only that object has an
       // SHistory and we need the SHistory to evict content viewers
       nsCOMPtr<nsIDocShellTreeItem> root;
-      treeItem->GetSameTypeRootTreeItem(getter_AddRefs(root));
+      treeItem->GetInProcessSameTypeRootTreeItem(getter_AddRefs(root));
       nsCOMPtr<nsIWebNavigation> webNav = do_QueryInterface(root);
       RefPtr<ChildSHistory> history = webNav->GetSessionHistory();
       if (history) {
@@ -2296,7 +2285,8 @@ NS_IMETHODIMP
 nsDocumentViewer::ClearHistoryEntry() {
   if (mDocument) {
     nsJSContext::PokeGC(JS::GCReason::PAGE_HIDE,
-                        mDocument->GetWrapperPreserveColor(), NS_GC_DELAY * 2);
+                        mDocument->GetWrapperPreserveColor(),
+                        StaticPrefs::javascript_options_gc_delay() * 2);
   }
 
   mSHEntry = nullptr;
@@ -2406,10 +2396,8 @@ nsView* nsDocumentViewer::FindContainerView() {
     return nullptr;
   }
 
-  // subdocFrame might not be a subdocument frame; the frame
-  // constructor can treat a <frame> as an inline in some XBL
-  // cases. Treat that as display:none, the document is not
-  // displayed.
+  // Check subdocFrame just to be safe. If this somehow fails we treat that as
+  // display:none, the document is not displayed.
   if (!subdocFrame->IsSubDocumentFrame()) {
     NS_WARNING_ASSERTION(subdocFrame->Type() == LayoutFrameType::None,
                          "Subdocument container has non-subdocument frame");
@@ -2574,7 +2562,7 @@ NS_IMETHODIMP nsDocumentViewer::GetContents(const char* mimeType,
   // Now we have the selection.  Make sure it's nonzero:
   RefPtr<Selection> sel;
   if (selectionOnly) {
-    nsCopySupport::GetSelectionForCopy(mDocument, getter_AddRefs(sel));
+    sel = nsCopySupport::GetSelectionForCopy(mDocument);
     NS_ENSURE_TRUE(sel, NS_ERROR_FAILURE);
 
     if (sel->IsCollapsed()) {
@@ -2608,236 +2596,53 @@ NS_IMETHODIMP nsDocumentViewer::SetCommandNode(nsINode* aNode) {
   root->SetPopupNode(aNode);
   return NS_OK;
 }
-void nsDocumentViewer::CallChildren(CallChildFunc aFunc, void* aClosure) {
+
+void nsDocumentViewer::PropagateToPresContextsHelper(CallChildFunc aChildFunc,
+                                                     PresContextFunc aPcFunc) {
+  CallChildren(aChildFunc);
+
+  if (mDocument) {
+    auto resourceDoc = [aPcFunc](Document& aResourceDoc) {
+      if (nsPresContext* pc = aResourceDoc.GetPresContext()) {
+        aPcFunc(pc);
+      }
+      return CallState::Continue;
+    };
+    mDocument->EnumerateExternalResources(resourceDoc);
+  }
+
+  if (mPresContext) {
+    aPcFunc(mPresContext);
+  }
+}
+
+void nsDocumentViewer::CallChildren(CallChildFunc aFunc) {
   nsCOMPtr<nsIDocShell> docShell(mContainer);
-  if (docShell) {
-    int32_t i;
-    int32_t n;
-    docShell->GetChildCount(&n);
-    for (i = 0; i < n; i++) {
-      nsCOMPtr<nsIDocShellTreeItem> child;
-      docShell->GetChildAt(i, getter_AddRefs(child));
-      nsCOMPtr<nsIDocShell> childAsShell(do_QueryInterface(child));
-      NS_ASSERTION(childAsShell, "null child in docshell");
-      if (childAsShell) {
-        nsCOMPtr<nsIContentViewer> childCV;
-        childAsShell->GetContentViewer(getter_AddRefs(childCV));
-        if (childCV) {
-          (*aFunc)(childCV, aClosure);
-        }
+  if (!docShell) {
+    return;
+  }
+  int32_t n = 0;
+  docShell->GetInProcessChildCount(&n);
+  for (int32_t i = 0; i < n; i++) {
+    nsCOMPtr<nsIDocShellTreeItem> child;
+    docShell->GetInProcessChildAt(i, getter_AddRefs(child));
+    nsCOMPtr<nsIDocShell> childAsShell(do_QueryInterface(child));
+    NS_ASSERTION(childAsShell, "null child in docshell");
+    if (childAsShell) {
+      nsCOMPtr<nsIContentViewer> childCV;
+      childAsShell->GetContentViewer(getter_AddRefs(childCV));
+      if (childCV) {
+        aFunc(static_cast<nsDocumentViewer*>(childCV.get()));
       }
     }
   }
 }
 
-static void ChangeChildPaintingEnabled(nsIContentViewer* aChild,
-                                       void* aClosure) {
-  bool* enablePainting = (bool*)aClosure;
-  if (*enablePainting) {
-    aChild->ResumePainting();
-  } else {
-    aChild->PausePainting();
-  }
-}
-
-struct ZoomInfo {
-  float mZoom;
-};
-
-static void SetChildTextZoom(nsIContentViewer* aChild, void* aClosure) {
-  struct ZoomInfo* ZoomInfo = (struct ZoomInfo*)aClosure;
-  aChild->SetTextZoom(ZoomInfo->mZoom);
-}
-
-static void SetChildFullZoom(nsIContentViewer* aChild, void* aClosure) {
-  struct ZoomInfo* ZoomInfo = (struct ZoomInfo*)aClosure;
-  aChild->SetFullZoom(ZoomInfo->mZoom);
-}
-
-static void SetChildOverrideDPPX(nsIContentViewer* aChild, void* aClosure) {
-  struct ZoomInfo* ZoomInfo = (struct ZoomInfo*)aClosure;
-  aChild->SetOverrideDPPX(ZoomInfo->mZoom);
-}
-
-static bool SetExtResourceTextZoom(Document& aDocument, void* aClosure) {
-  // Would it be better to enumerate external resource viewers instead?
-  nsPresContext* ctxt = aDocument.GetPresContext();
-  if (ctxt) {
-    struct ZoomInfo* ZoomInfo = static_cast<struct ZoomInfo*>(aClosure);
-    ctxt->SetTextZoom(ZoomInfo->mZoom);
-  }
-
-  return true;
-}
-
-static bool SetExtResourceFullZoom(Document& aDocument, void* aClosure) {
-  // Would it be better to enumerate external resource viewers instead?
-  nsPresContext* ctxt = aDocument.GetPresContext();
-  if (ctxt) {
-    struct ZoomInfo* ZoomInfo = static_cast<struct ZoomInfo*>(aClosure);
-    ctxt->SetFullZoom(ZoomInfo->mZoom);
-  }
-
-  return true;
-}
-
-static bool SetExtResourceOverrideDPPX(Document& aDocument, void* aClosure) {
-  nsPresContext* ctxt = aDocument.GetPresContext();
-  if (ctxt) {
-    struct ZoomInfo* ZoomInfo = static_cast<struct ZoomInfo*>(aClosure);
-    ctxt->SetOverrideDPPX(ZoomInfo->mZoom);
-  }
-
-  return true;
-}
-
 NS_IMETHODIMP
-nsDocumentViewer::SetTextZoom(float aTextZoom) {
-  // If we don't have a document, then we need to bail.
-  if (!mDocument) {
-    return NS_ERROR_FAILURE;
-  }
-
-  if (GetIsPrintPreview()) {
-    return NS_OK;
-  }
-
-  bool textZoomChange = (mTextZoom != aTextZoom);
-  mTextZoom = aTextZoom;
-
-  // Set the text zoom on all children of mContainer (even if our zoom didn't
-  // change, our children's zoom may be different, though it would be unusual).
-  // Do this first, in case kids are auto-sizing and post reflow commands on
-  // our presshell (which should be subsumed into our own style change reflow).
-  struct ZoomInfo ZoomInfo = {aTextZoom};
-  CallChildren(SetChildTextZoom, &ZoomInfo);
-
-  // Now change our own zoom
-  nsPresContext* pc = GetPresContext();
-  if (pc && aTextZoom != mPresContext->TextZoom()) {
-    pc->SetTextZoom(aTextZoom);
-  }
-
-  // And do the external resources
-  mDocument->EnumerateExternalResources(SetExtResourceTextZoom, &ZoomInfo);
-
-  // Dispatch TextZoomChange event only if text zoom value has changed.
-  if (textZoomChange) {
-    nsContentUtils::DispatchChromeEvent(mDocument, ToSupports(mDocument),
-                                        NS_LITERAL_STRING("TextZoomChange"),
-                                        CanBubble::eYes, Cancelable::eYes);
-  }
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDocumentViewer::GetTextZoom(float* aTextZoom) {
-  NS_ENSURE_ARG_POINTER(aTextZoom);
-  nsPresContext* pc = GetPresContext();
-  *aTextZoom = pc ? pc->TextZoom() : 1.0f;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDocumentViewer::GetEffectiveTextZoom(float* aEffectiveTextZoom) {
-  NS_ENSURE_ARG_POINTER(aEffectiveTextZoom);
-  nsPresContext* pc = GetPresContext();
-  *aEffectiveTextZoom = pc ? pc->EffectiveTextZoom() : 1.0f;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDocumentViewer::SetFullZoom(float aFullZoom) {
-#ifdef NS_PRINT_PREVIEW
-  if (GetIsPrintPreview()) {
-    nsPresContext* pc = GetPresContext();
-    NS_ENSURE_TRUE(pc, NS_OK);
-    PresShell* presShell = pc->GetPresShell();
-    NS_ENSURE_TRUE(presShell, NS_OK);
-
-    if (!mPrintPreviewZoomed) {
-      mOriginalPrintPreviewScale = pc->GetPrintPreviewScale();
-      mPrintPreviewZoomed = true;
-    }
-
-    mPrintPreviewZoom = aFullZoom;
-    pc->SetPrintPreviewScale(aFullZoom * mOriginalPrintPreviewScale);
-    nsIPageSequenceFrame* pf = presShell->GetPageSequenceFrame();
-    if (pf) {
-      nsIFrame* f = do_QueryFrame(pf);
-      presShell->FrameNeedsReflow(f, IntrinsicDirty::Resize, NS_FRAME_IS_DIRTY);
-    }
-
-    nsIFrame* rootFrame = presShell->GetRootFrame();
-    if (rootFrame) {
-      rootFrame->InvalidateFrame();
-    }
-    return NS_OK;
-  }
-#endif
-
-  // If we don't have a document, then we need to bail.
-  if (!mDocument) {
-    return NS_ERROR_FAILURE;
-  }
-
-  bool fullZoomChange = (mPageZoom != aFullZoom);
-  mPageZoom = aFullZoom;
-
-  struct ZoomInfo ZoomInfo = {aFullZoom};
-  CallChildren(SetChildFullZoom, &ZoomInfo);
-
-  nsPresContext* pc = GetPresContext();
-  if (pc) {
-    pc->SetFullZoom(aFullZoom);
-  }
-
-  // And do the external resources
-  mDocument->EnumerateExternalResources(SetExtResourceFullZoom, &ZoomInfo);
-
-  // Dispatch FullZoomChange event only if fullzoom value really was been
-  // changed
-  if (fullZoomChange) {
-    nsContentUtils::DispatchChromeEvent(mDocument, ToSupports(mDocument),
-                                        NS_LITERAL_STRING("FullZoomChange"),
-                                        CanBubble::eYes, Cancelable::eYes);
-  }
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDocumentViewer::GetFullZoom(float* aFullZoom) {
-  NS_ENSURE_ARG_POINTER(aFullZoom);
-#ifdef NS_PRINT_PREVIEW
-  if (GetIsPrintPreview()) {
-    *aFullZoom = mPrintPreviewZoom;
-    return NS_OK;
-  }
-#endif
-  // Check the prescontext first because it might have a temporary
-  // setting for print-preview
-  nsPresContext* pc = GetPresContext();
-  *aFullZoom = pc ? pc->GetFullZoom() : mPageZoom;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDocumentViewer::GetDeviceFullZoom(float* aDeviceFullZoom) {
+nsDocumentViewer::GetDeviceFullZoomForTest(float* aDeviceFullZoom) {
   NS_ENSURE_ARG_POINTER(aDeviceFullZoom);
-#ifdef NS_PRINT_PREVIEW
-  if (GetIsPrintPreview()) {
-    // Print Preview overrides all zoom; if specified, we use the print preview
-    // zoom, no matter what.
-    *aDeviceFullZoom = mPrintPreviewZoom;
-    return NS_OK;
-  }
-#endif
-  // If not in print preview, ask the prescontext for the device zoom, if a
-  // prescontext is available.
   nsPresContext* pc = GetPresContext();
-  *aDeviceFullZoom = pc ? pc->GetDeviceFullZoom() : mPageZoom;
+  *aDeviceFullZoom = pc ? pc->GetDeviceFullZoom() : 1.0;
   return NS_OK;
 }
 
@@ -2850,17 +2655,13 @@ nsDocumentViewer::SetOverrideDPPX(float aDPPX) {
 
   mOverrideDPPX = aDPPX;
 
-  struct ZoomInfo ZoomInfo = {aDPPX};
-  CallChildren(SetChildOverrideDPPX, &ZoomInfo);
-
-  nsPresContext* pc = GetPresContext();
-  if (pc) {
-    pc->SetOverrideDPPX(aDPPX);
-  }
-
-  // And do the external resources
-  mDocument->EnumerateExternalResources(SetExtResourceOverrideDPPX, &ZoomInfo);
-
+  auto childFn = [aDPPX](nsDocumentViewer* aChild) {
+    aChild->SetOverrideDPPX(aDPPX);
+  };
+  auto presContextFn = [aDPPX](nsPresContext* aPc) {
+    aPc->SetOverrideDPPX(aDPPX);
+  };
+  PropagateToPresContextsHelper(childFn, presContextFn);
   return NS_OK;
 }
 
@@ -2873,18 +2674,17 @@ nsDocumentViewer::GetOverrideDPPX(float* aDPPX) {
   return NS_OK;
 }
 
-static void SetChildAuthorStyleDisabled(nsIContentViewer* aChild,
-                                        void* aClosure) {
-  bool styleDisabled = *static_cast<bool*>(aClosure);
-  aChild->SetAuthorStyleDisabled(styleDisabled);
-}
-
 NS_IMETHODIMP
 nsDocumentViewer::SetAuthorStyleDisabled(bool aStyleDisabled) {
   if (mPresShell) {
     mPresShell->SetAuthorStyleDisabled(aStyleDisabled);
   }
-  CallChildren(SetChildAuthorStyleDisabled, &aStyleDisabled);
+
+  auto children = [aStyleDisabled](nsDocumentViewer* aChild) {
+    aChild->SetAuthorStyleDisabled(aStyleDisabled);
+  };
+
+  CallChildren(children);
   return NS_OK;
 }
 
@@ -2898,63 +2698,61 @@ nsDocumentViewer::GetAuthorStyleDisabled(bool* aStyleDisabled) {
   return NS_OK;
 }
 
-static bool ExtResourceEmulateMedium(Document& aDocument, void* aClosure) {
-  nsPresContext* ctxt = aDocument.GetPresContext();
-  if (ctxt) {
-    const nsAString* mediaType = static_cast<nsAString*>(aClosure);
-    ctxt->EmulateMedium(*mediaType);
-  }
-
-  return true;
-}
-
-static void ChildEmulateMedium(nsIContentViewer* aChild, void* aClosure) {
-  const nsAString* mediaType = static_cast<nsAString*>(aClosure);
-  aChild->EmulateMedium(*mediaType);
+void nsDocumentViewer::EmulateMediumInternal(nsAtom* aMedia) {
+  auto childFn = [&](nsDocumentViewer* aChild) {
+    aChild->EmulateMediumInternal(aMedia);
+  };
+  auto presContextFn = [&](nsPresContext* aPc) { aPc->EmulateMedium(aMedia); };
+  PropagateToPresContextsHelper(childFn, presContextFn);
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::EmulateMedium(const nsAString& aMediaType) {
-  if (mPresContext) {
-    mPresContext->EmulateMedium(aMediaType);
-  }
-  CallChildren(ChildEmulateMedium, const_cast<nsAString*>(&aMediaType));
+  nsAutoString mediaType;
+  nsContentUtils::ASCIIToLower(aMediaType, mediaType);
+  RefPtr<nsAtom> media = NS_Atomize(mediaType);
 
-  if (mDocument) {
-    mDocument->EnumerateExternalResources(ExtResourceEmulateMedium,
-                                          const_cast<nsAString*>(&aMediaType));
-  }
-
+  EmulateMediumInternal(media);
   return NS_OK;
-}
-
-static bool ExtResourceStopEmulatingMedium(Document& aDocument,
-                                           void* aClosure) {
-  nsPresContext* ctxt = aDocument.GetPresContext();
-  if (ctxt) {
-    ctxt->StopEmulatingMedium();
-  }
-
-  return true;
-}
-
-static void ChildStopEmulatingMedium(nsIContentViewer* aChild, void* aClosure) {
-  aChild->StopEmulatingMedium();
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::StopEmulatingMedium() {
-  if (mPresContext) {
-    mPresContext->StopEmulatingMedium();
-  }
-  CallChildren(ChildStopEmulatingMedium, nullptr);
-
-  if (mDocument) {
-    mDocument->EnumerateExternalResources(ExtResourceStopEmulatingMedium,
-                                          nullptr);
-  }
-
+  EmulateMediumInternal(nullptr);
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocumentViewer::EmulatePrefersColorScheme(PrefersColorScheme aScheme) {
+  auto ToStyle = [](PrefersColorScheme aScheme) -> ColorSchemeOverride {
+    switch (aScheme) {
+      case PREFERS_COLOR_SCHEME_LIGHT:
+        return Some(StylePrefersColorScheme::Light);
+      case PREFERS_COLOR_SCHEME_DARK:
+        return Some(StylePrefersColorScheme::Dark);
+      case PREFERS_COLOR_SCHEME_NO_PREFERENCE:
+        return Some(StylePrefersColorScheme::NoPreference);
+      case PREFERS_COLOR_SCHEME_NONE:
+        return Nothing();
+      default:
+        MOZ_ASSERT_UNREACHABLE("Unknown prefers color scheme value?");
+        return Nothing();
+    };
+  };
+
+  EmulatePrefersColorSchemeInternal(ToStyle(aScheme));
+  return NS_OK;
+}
+
+void nsDocumentViewer::EmulatePrefersColorSchemeInternal(
+    const ColorSchemeOverride& aOverride) {
+  auto childFn = [&aOverride](nsDocumentViewer* aChild) {
+    aChild->EmulatePrefersColorSchemeInternal(aOverride);
+  };
+  auto presContextFn = [&aOverride](nsPresContext* aPc) {
+    aPc->SetOverridePrefersColorScheme(aOverride);
+  };
+  PropagateToPresContextsHelper(childFn, presContextFn);
 }
 
 NS_IMETHODIMP nsDocumentViewer::GetForceCharacterSet(
@@ -2971,12 +2769,6 @@ NS_IMETHODIMP nsDocumentViewer::GetForceCharacterSet(
 /* [noscript,notxpcom] Encoding getForceCharset (); */
 NS_IMETHODIMP_(const Encoding*)
 nsDocumentViewer::GetForceCharset() { return mForceCharacterSet; }
-
-static void SetChildForceCharacterSet(nsIContentViewer* aChild,
-                                      void* aClosure) {
-  auto encoding = static_cast<const Encoding*>(aClosure);
-  aChild->SetForceCharset(encoding);
-}
 
 NS_IMETHODIMP
 nsDocumentViewer::SetForceCharacterSet(const nsACString& aForceCharacterSet) {
@@ -2996,8 +2788,11 @@ nsDocumentViewer::SetForceCharacterSet(const nsACString& aForceCharacterSet) {
 NS_IMETHODIMP_(void)
 nsDocumentViewer::SetForceCharset(const Encoding* aEncoding) {
   mForceCharacterSet = aEncoding;
+  auto childFn = [aEncoding](nsDocumentViewer* aChild) {
+    aChild->SetForceCharset(aEncoding);
+  };
   // now set the force char set on all children of mContainer
-  CallChildren(SetChildForceCharacterSet, (void*)aEncoding);
+  CallChildren(childFn);
 }
 
 NS_IMETHODIMP nsDocumentViewer::GetHintCharacterSet(
@@ -3026,28 +2821,19 @@ nsDocumentViewer::GetHintCharset() {
 NS_IMETHODIMP nsDocumentViewer::GetHintCharacterSetSource(
     int32_t* aHintCharacterSetSource) {
   NS_ENSURE_ARG_POINTER(aHintCharacterSetSource);
-
   *aHintCharacterSetSource = mHintCharsetSource;
   return NS_OK;
-}
-
-static void SetChildHintCharacterSetSource(nsIContentViewer* aChild,
-                                           void* aClosure) {
-  aChild->SetHintCharacterSetSource(NS_PTR_TO_INT32(aClosure));
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::SetHintCharacterSetSource(int32_t aHintCharacterSetSource) {
   mHintCharsetSource = aHintCharacterSetSource;
-  // now set the hint char set source on all children of mContainer
-  CallChildren(SetChildHintCharacterSetSource,
-               NS_INT32_TO_PTR(aHintCharacterSetSource));
+  auto childFn = [aHintCharacterSetSource](nsDocumentViewer* aChild) {
+    aChild->SetHintCharacterSetSource(aHintCharacterSetSource);
+  };
+  // now set the force char set on all children of mContainer
+  CallChildren(childFn);
   return NS_OK;
-}
-
-static void SetChildHintCharacterSet(nsIContentViewer* aChild, void* aClosure) {
-  auto encoding = static_cast<const Encoding*>(aClosure);
-  aChild->SetHintCharset(encoding);
 }
 
 NS_IMETHODIMP
@@ -3068,27 +2854,26 @@ nsDocumentViewer::SetHintCharacterSet(const nsACString& aHintCharacterSet) {
 NS_IMETHODIMP_(void)
 nsDocumentViewer::SetHintCharset(const Encoding* aEncoding) {
   mHintCharset = aEncoding;
-  // now set the hint char set on all children of mContainer
-  CallChildren(SetChildHintCharacterSet, (void*)aEncoding);
-}
-
-static void AppendChildSubtree(nsIContentViewer* aChild, void* aClosure) {
-  nsTArray<nsCOMPtr<nsIContentViewer>>& array =
-      *static_cast<nsTArray<nsCOMPtr<nsIContentViewer>>*>(aClosure);
-  aChild->AppendSubtree(array);
+  auto childFn = [aEncoding](nsDocumentViewer* aChild) {
+    aChild->SetHintCharset(aEncoding);
+  };
+  // now set the force char set on all children of mContainer
+  CallChildren(childFn);
 }
 
 NS_IMETHODIMP nsDocumentViewer::AppendSubtree(
     nsTArray<nsCOMPtr<nsIContentViewer>>& aArray) {
   aArray.AppendElement(this);
-  CallChildren(AppendChildSubtree, &aArray);
+  auto childFn = [&aArray](nsDocumentViewer* aChild) {
+    aChild->AppendSubtree(aArray);
+  };
+  CallChildren(childFn);
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::PausePainting() {
-  bool enablePaint = false;
-  CallChildren(ChangeChildPaintingEnabled, &enablePaint);
+  CallChildren([](nsDocumentViewer* aChild) { aChild->PausePainting(); });
 
   if (PresShell* presShell = GetPresShell()) {
     presShell->PausePainting();
@@ -3099,8 +2884,7 @@ nsDocumentViewer::PausePainting() {
 
 NS_IMETHODIMP
 nsDocumentViewer::ResumePainting() {
-  bool enablePaint = true;
-  CallChildren(ChangeChildPaintingEnabled, &enablePaint);
+  CallChildren([](nsDocumentViewer* aChild) { aChild->ResumePainting(); });
 
   if (PresShell* presShell = GetPresShell()) {
     presShell->ResumePainting();
@@ -3125,17 +2909,25 @@ nsresult nsDocumentViewer::GetContentSizeInternal(int32_t* aWidth,
   nsIFrame* root = presShell->GetRootFrame();
   NS_ENSURE_TRUE(root, NS_ERROR_FAILURE);
 
-  nscoord prefWidth;
+  WritingMode wm = root->GetWritingMode();
+
+  nscoord prefISize;
   {
     RefPtr<gfxContext> rcx(presShell->CreateReferenceRenderingContext());
-    prefWidth = root->GetPrefISize(rcx);
-  }
-  if (prefWidth > aMaxWidth) {
-    prefWidth = aMaxWidth;
+    nscoord maxISize = wm.IsVertical() ? aMaxHeight : aMaxWidth;
+    prefISize = std::min(root->GetPrefISize(rcx), maxISize);
   }
 
-  nsresult rv = presShell->ResizeReflow(prefWidth, aMaxHeight, 0, 0,
-                                        ResizeReflowOptions::BSizeLimit);
+  // We should never intentionally get here with this sentinel value, but it's
+  // possible that a document with huge sizes might inadvertently have a
+  // prefISize that exactly matches NS_UNCONSTRAINEDSIZE.
+  // Just bail if that happens.
+  NS_ENSURE_TRUE(prefISize != NS_UNCONSTRAINEDSIZE, NS_ERROR_FAILURE);
+
+  nscoord height = wm.IsVertical() ? prefISize : aMaxHeight;
+  nscoord width = wm.IsVertical() ? aMaxWidth : prefISize;
+  nsresult rv =
+      presShell->ResizeReflow(width, height, ResizeReflowOptions::BSizeLimit);
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<nsPresContext> presContext = GetPresContext();
@@ -3147,24 +2939,24 @@ nsresult nsDocumentViewer::GetContentSizeInternal(int32_t* aWidth,
                      shellArea.height != NS_UNCONSTRAINEDSIZE,
                  NS_ERROR_FAILURE);
 
-  *aWidth = presContext->AppUnitsToDevPixels(shellArea.width);
-  *aHeight = presContext->AppUnitsToDevPixels(shellArea.height);
+  // Ceil instead of rounding here, so we can actually guarantee showing all the
+  // content.
+  *aWidth = std::ceil(presContext->AppUnitsToFloatDevPixels(shellArea.width));
+  *aHeight = std::ceil(presContext->AppUnitsToFloatDevPixels(shellArea.height));
 
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::GetContentSize(int32_t* aWidth, int32_t* aHeight) {
-  // Skip doing this on docshell-less documents for now
-  nsCOMPtr<nsIDocShellTreeItem> docShellAsItem(mContainer);
-  NS_ENSURE_TRUE(docShellAsItem, NS_ERROR_NOT_AVAILABLE);
+  NS_ENSURE_TRUE(mContainer, NS_ERROR_NOT_AVAILABLE);
 
-  nsCOMPtr<nsIDocShellTreeItem> docShellParent;
-  docShellAsItem->GetSameTypeParent(getter_AddRefs(docShellParent));
+  RefPtr<BrowsingContext> bc = mContainer->GetBrowsingContext();
+  NS_ENSURE_TRUE(bc, NS_ERROR_NOT_AVAILABLE);
 
   // It's only valid to access this from a top frame.  Doesn't work from
   // sub-frames.
-  NS_ENSURE_TRUE(!docShellParent, NS_ERROR_FAILURE);
+  NS_ENSURE_TRUE(bc->IsTop(), NS_ERROR_FAILURE);
 
   return GetContentSizeInternal(aWidth, aHeight, NS_UNCONSTRAINEDSIZE,
                                 NS_UNCONSTRAINEDSIZE);
@@ -3190,11 +2982,6 @@ nsDocumentViewer::GetContentSizeConstrained(int32_t aMaxWidth,
 }
 
 NS_IMPL_ISUPPORTS(nsDocViewerSelectionListener, nsISelectionListener)
-
-nsresult nsDocViewerSelectionListener::Init(nsDocumentViewer* aDocViewer) {
-  mDocViewer = aDocViewer;
-  return NS_OK;
-}
 
 /*
  * GetPopupNode, GetPopupLinkNode and GetPopupImageNode are helpers
@@ -3366,44 +3153,36 @@ NS_IMETHODIMP nsDocViewerSelectionListener::NotifySelectionChanged(
 // nsDocViewerFocusListener
 NS_IMPL_ISUPPORTS(nsDocViewerFocusListener, nsIDOMEventListener)
 
-nsDocViewerFocusListener::nsDocViewerFocusListener() : mDocViewer(nullptr) {}
-
-nsDocViewerFocusListener::~nsDocViewerFocusListener() {}
-
 nsresult nsDocViewerFocusListener::HandleEvent(Event* aEvent) {
   NS_ENSURE_STATE(mDocViewer);
 
   RefPtr<PresShell> presShell = mDocViewer->GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
-  int16_t selectionStatus;
-  presShell->GetDisplaySelection(&selectionStatus);
-
+  RefPtr<nsFrameSelection> selection =
+      presShell->GetLastFocusedFrameSelection();
+  NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
+  auto selectionStatus = selection->GetDisplaySelection();
   nsAutoString eventType;
   aEvent->GetType(eventType);
   if (eventType.EqualsLiteral("focus")) {
     // If selection was disabled, re-enable it.
     if (selectionStatus == nsISelectionController::SELECTION_DISABLED ||
         selectionStatus == nsISelectionController::SELECTION_HIDDEN) {
-      presShell->SetDisplaySelection(nsISelectionController::SELECTION_ON);
-      presShell->RepaintSelection(nsISelectionController::SELECTION_NORMAL);
+      selection->SetDisplaySelection(nsISelectionController::SELECTION_ON);
+      selection->RepaintSelection(SelectionType::eNormal);
     }
   } else {
     MOZ_ASSERT(eventType.EqualsLiteral("blur"), "Unexpected event type");
     // If selection was on, disable it.
     if (selectionStatus == nsISelectionController::SELECTION_ON ||
         selectionStatus == nsISelectionController::SELECTION_ATTENTION) {
-      presShell->SetDisplaySelection(
+      selection->SetDisplaySelection(
           nsISelectionController::SELECTION_DISABLED);
-      presShell->RepaintSelection(nsISelectionController::SELECTION_NORMAL);
+      selection->RepaintSelection(SelectionType::eNormal);
     }
   }
 
-  return NS_OK;
-}
-
-nsresult nsDocViewerFocusListener::Init(nsDocumentViewer* aDocViewer) {
-  mDocViewer = aDocViewer;
   return NS_OK;
 }
 
@@ -3416,11 +3195,6 @@ nsresult nsDocViewerFocusListener::Init(nsDocumentViewer* aDocViewer) {
 NS_IMETHODIMP
 nsDocumentViewer::Print(nsIPrintSettings* aPrintSettings,
                         nsIWebProgressListener* aWebProgressListener) {
-  // Printing XUL documents is not supported.
-  if (mDocument && mDocument->IsXULDocument()) {
-    return NS_ERROR_FAILURE;
-  }
-
   if (!mContainer) {
     PR_PL(("Container was destroyed yet we are still trying to use it!"));
     return NS_ERROR_FAILURE;
@@ -3489,8 +3263,7 @@ nsDocumentViewer::Print(nsIPrintSettings* aPrintSettings,
 
     rv = printJob->Initialize(this, mContainer, mDocument,
                               float(AppUnitsPerCSSInch()) /
-                                  float(mDeviceContext->AppUnitsPerDevPixel()) /
-                                  mPageZoom);
+                                  float(mDeviceContext->AppUnitsPerDevPixel()));
     if (NS_FAILED(rv)) {
       printJob->Destroy();
       return rv;
@@ -3502,12 +3275,7 @@ nsDocumentViewer::Print(nsIPrintSettings* aPrintSettings,
     // callbacks have been called:
     mAutoBeforeAndAfterPrint = std::move(autoBeforeAndAfterPrint);
   }
-  dom::Element* root = mDocument->GetRootElement();
-  if (root &&
-      root->HasAttr(kNameSpaceID_None, nsGkAtoms::mozdisallowselectionprint)) {
-    printJob->SetDisallowSelectionPrint(true);
-  }
-  rv = printJob->Print(aPrintSettings, aWebProgressListener);
+  rv = printJob->Print(mDocument, aPrintSettings, aWebProgressListener);
   if (NS_FAILED(rv)) {
     OnDonePrinting();
   }
@@ -3518,7 +3286,7 @@ NS_IMETHODIMP
 nsDocumentViewer::PrintPreview(nsIPrintSettings* aPrintSettings,
                                mozIDOMWindowProxy* aChildDOMWin,
                                nsIWebProgressListener* aWebProgressListener) {
-#  if defined(NS_PRINTING) && defined(NS_PRINT_PREVIEW)
+#  ifdef NS_PRINT_PREVIEW
   MOZ_ASSERT(IsInitializedForPrintPreview(),
              "For print preview nsIWebBrowserPrint must be from "
              "docshell.initOrReusePrintPreviewViewer!");
@@ -3527,12 +3295,6 @@ nsDocumentViewer::PrintPreview(nsIPrintSettings* aPrintSettings,
   nsresult rv = NS_OK;
 
   if (GetIsPrinting()) {
-    nsPrintJob::CloseProgressDialog(aWebProgressListener);
-    return NS_ERROR_FAILURE;
-  }
-
-  // Printing XUL documents is not supported.
-  if (mDocument && mDocument->IsXULDocument()) {
     nsPrintJob::CloseProgressDialog(aWebProgressListener);
     return NS_ERROR_FAILURE;
   }
@@ -3574,40 +3336,33 @@ nsDocumentViewer::PrintPreview(nsIPrintSettings* aPrintSettings,
 
     rv = printJob->Initialize(this, mContainer, doc,
                               float(AppUnitsPerCSSInch()) /
-                                  float(mDeviceContext->AppUnitsPerDevPixel()) /
-                                  mPageZoom);
+                                  float(mDeviceContext->AppUnitsPerDevPixel()));
     if (NS_FAILED(rv)) {
       printJob->Destroy();
       return rv;
     }
     mPrintJob = printJob;
+
+    Telemetry::ScalarAdd(Telemetry::ScalarID::PRINTING_PREVIEW_OPENED, 1);
   }
   if (autoBeforeAndAfterPrint && printJob->HasPrintCallbackCanvas()) {
     // Postpone the 'afterprint' event until after the mozPrintCallback
     // callbacks have been called:
     mAutoBeforeAndAfterPrint = std::move(autoBeforeAndAfterPrint);
   }
-  dom::Element* root = doc->GetRootElement();
-  if (root &&
-      root->HasAttr(kNameSpaceID_None, nsGkAtoms::mozdisallowselectionprint)) {
-    PR_PL(("PrintPreview: found mozdisallowselectionprint"));
-    printJob->SetDisallowSelectionPrint(true);
-  }
-  rv = printJob->PrintPreview(aPrintSettings, aChildDOMWin,
-                              aWebProgressListener);
-  mPrintPreviewZoomed = false;
+  rv = printJob->PrintPreview(doc, aPrintSettings, aWebProgressListener);
   if (NS_FAILED(rv)) {
     OnDonePrinting();
   }
   return rv;
 #  else
   return NS_ERROR_FAILURE;
-#  endif
+#  endif  // NS_PRINT_PREVIEW
 }
 
 //----------------------------------------------------------------------
 NS_IMETHODIMP
-nsDocumentViewer::PrintPreviewNavigate(int16_t aType, int32_t aPageNum) {
+nsDocumentViewer::PrintPreviewScrollToPage(int16_t aType, int32_t aPageNum) {
   if (!GetIsPrintPreview() || mPrintJob->GetIsCreatingPrintPreview())
     return NS_ERROR_FAILURE;
 
@@ -3623,7 +3378,6 @@ nsDocumentViewer::PrintPreviewNavigate(int16_t aType, int32_t aPageNum) {
     return NS_OK;
   }
 
-  // Finds the SimplePageSequencer frame
   // in PP mPrtPreview->mPrintObject->mSeqFrame is null
   nsIFrame* seqFrame = nullptr;
   int32_t pageCount = 0;
@@ -3730,99 +3484,96 @@ nsDocumentViewer::GetCurrentPrintSettings(
 NS_IMETHODIMP
 nsDocumentViewer::Cancel() {
   NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
-  return mPrintJob->Cancelled();
+  return mPrintJob->Cancel();
 }
+
+#  ifdef NS_PRINT_PREVIEW
+// Reset ESM focus for all descendent doc shells.
+static void ResetFocusState(nsIDocShell* aDocShell) {
+  nsIFocusManager* fm = nsFocusManager::GetFocusManager();
+  if (!fm) {
+    return;
+  }
+
+  nsTArray<RefPtr<nsIDocShell>> docShells;
+  aDocShell->GetAllDocShellsInSubtree(nsIDocShellTreeItem::typeContent,
+                                      nsIDocShell::ENUMERATE_FORWARDS,
+                                      docShells);
+
+  for (const auto& currentContainer : docShells) {
+    nsCOMPtr<nsPIDOMWindowOuter> win = do_GetInterface(currentContainer);
+    if (win) {
+      fm->ClearFocus(win);
+    }
+  }
+}
+#  endif  // NS_PRINT_PREVIEW
 
 NS_IMETHODIMP
 nsDocumentViewer::ExitPrintPreview() {
-  if (GetIsPrinting()) return NS_ERROR_FAILURE;
   NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
 
-  if (GetIsPrintPreview()) {
-    ReturnToGalleyPresentation();
+  if (GetIsPrinting()) {
+    // Block exiting the print preview window if we're in the middle of an
+    // actual print.
+    return NS_ERROR_FAILURE;
   }
+
+  if (!GetIsPrintPreview()) {
+    NS_ERROR("Wow, we should never get here!");
+    return NS_OK;
+  }
+
+  if (!mPrintJob->HasEverPrinted()) {
+    Telemetry::ScalarAdd(Telemetry::ScalarID::PRINTING_PREVIEW_CANCELLED, 1);
+  }
+
+#  ifdef NS_PRINT_PREVIEW
+  mPrintJob->TurnScriptingOn(true);
+  mPrintJob->Destroy();
+  mPrintJob = nullptr;
+
+  // Nowadays we use a static clone document for printing, and print preview is
+  // in a separate tab that gets closed after print preview finishes.  Probably
+  // nothing below this line is necessary anymore.
+
+  SetIsPrintPreview(false);
+
+  nsCOMPtr<nsIDocShell> docShell(mContainer);
+  ResetFocusState(docShell);
+
+  SetOverrideDPPX(mOverrideDPPX);
+  Show();
+#  endif  // NS_PRINT_PREVIEW
+
   return NS_OK;
-}
-
-//----------------------------------------------------------------------------------
-// Enumerate all the documents for their titles
-NS_IMETHODIMP
-nsDocumentViewer::EnumerateDocumentNames(uint32_t* aCount,
-                                         char16_t*** aResult) {
-#  ifdef NS_PRINTING
-  NS_ENSURE_ARG(aCount);
-  NS_ENSURE_ARG_POINTER(aResult);
-  NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
-
-  return mPrintJob->EnumerateDocumentNames(aCount, aResult);
-#  else
-  return NS_ERROR_FAILURE;
-#  endif
-}
-
-NS_IMETHODIMP
-nsDocumentViewer::GetIsFramesetFrameSelected(bool* aIsFramesetFrameSelected) {
-#  ifdef NS_PRINTING
-  *aIsFramesetFrameSelected = false;
-  NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
-
-  *aIsFramesetFrameSelected = mPrintJob->IsFramesetFrameSelected();
-  return NS_OK;
-#  else
-  return NS_ERROR_FAILURE;
-#  endif
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::GetPrintPreviewNumPages(int32_t* aPrintPreviewNumPages) {
-#  ifdef NS_PRINTING
   NS_ENSURE_ARG_POINTER(aPrintPreviewNumPages);
   NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
 
   *aPrintPreviewNumPages = mPrintJob->GetPrintPreviewNumPages();
   return *aPrintPreviewNumPages > 0 ? NS_OK : NS_ERROR_FAILURE;
-#  else
-  return NS_ERROR_FAILURE;
-#  endif
-}
-
-NS_IMETHODIMP
-nsDocumentViewer::GetIsFramesetDocument(bool* aIsFramesetDocument) {
-#  ifdef NS_PRINTING
-  *aIsFramesetDocument = false;
-  NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
-
-  *aIsFramesetDocument = mPrintJob->IsFramesetDocument();
-  return NS_OK;
-#  else
-  return NS_ERROR_FAILURE;
-#  endif
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::GetIsIFrameSelected(bool* aIsIFrameSelected) {
-#  ifdef NS_PRINTING
   *aIsIFrameSelected = false;
   NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
 
   *aIsIFrameSelected = mPrintJob->IsIFrameSelected();
   return NS_OK;
-#  else
-  return NS_ERROR_FAILURE;
-#  endif
 }
 
 NS_IMETHODIMP
 nsDocumentViewer::GetIsRangeSelection(bool* aIsRangeSelection) {
-#  ifdef NS_PRINTING
   *aIsRangeSelection = false;
   NS_ENSURE_TRUE(mPrintJob, NS_ERROR_FAILURE);
 
   *aIsRangeSelection = mPrintJob->IsRangeSelection();
   return NS_OK;
-#  else
-  return NS_ERROR_FAILURE;
-#  endif
 }
 
 //----------------------------------------------------------------------------------
@@ -3841,7 +3592,7 @@ void nsDocumentViewer::SetIsPrintingInDocShellTree(
     if (aIsPrintingOrPP) {
       while (parentItem) {
         nsCOMPtr<nsIDocShellTreeItem> parent;
-        parentItem->GetSameTypeParent(getter_AddRefs(parent));
+        parentItem->GetInProcessSameTypeParent(getter_AddRefs(parent));
         if (!parent) {
           break;
         }
@@ -3865,10 +3616,10 @@ void nsDocumentViewer::SetIsPrintingInDocShellTree(
 
   // Traverse children to see if any of them are printing.
   int32_t n;
-  aParentNode->GetChildCount(&n);
+  aParentNode->GetInProcessChildCount(&n);
   for (int32_t i = 0; i < n; i++) {
     nsCOMPtr<nsIDocShellTreeItem> child;
-    aParentNode->GetChildAt(i, getter_AddRefs(child));
+    aParentNode->GetInProcessChildAt(i, getter_AddRefs(child));
     NS_ASSERTION(child, "child isn't nsIDocShell");
     if (child) {
       SetIsPrintingInDocShellTree(child, aIsPrintingOrPP, false);
@@ -3878,22 +3629,31 @@ void nsDocumentViewer::SetIsPrintingInDocShellTree(
 #endif  // NS_PRINTING
 
 bool nsDocumentViewer::ShouldAttachToTopLevel() {
-  if (!mParentWidget) return false;
+  if (!mParentWidget) {
+    return false;
+  }
 
-  nsCOMPtr<nsIDocShellTreeItem> containerItem(mContainer);
-  if (!containerItem) return false;
+  if (!mContainer) {
+    return false;
+  }
 
   // We always attach when using puppet widgets
-  if (nsIWidget::UsePuppetWidgets()) return true;
+  if (nsIWidget::UsePuppetWidgets()) {
+    return true;
+  }
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK) || \
     defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_UIKIT)
+  if (!mPresContext) {
+    return false;
+  }
+
   // On windows, in the parent process we also attach, but just to
   // chrome items
   nsWindowType winType = mParentWidget->WindowType();
   if ((winType == eWindowType_toplevel || winType == eWindowType_dialog ||
        winType == eWindowType_invisible) &&
-      containerItem->ItemType() == nsIDocShellTreeItem::typeChrome) {
+      mPresContext->IsChrome()) {
     return true;
   }
 #endif
@@ -3965,6 +3725,7 @@ void nsDocumentViewer::SetIsPrintPreview(bool aIsPrintPreview) {
   nsAutoScriptBlocker scriptBlocker;
 
   if (!aIsPrintPreview) {
+    InvalidatePotentialSubDocDisplayItem();
     if (mPresShell) {
       DestroyPresShell();
     }
@@ -3986,55 +3747,6 @@ void nsDocumentViewer::IncrementDestroyBlockedCount() {
 
 void nsDocumentViewer::DecrementDestroyBlockedCount() {
   --mDestroyBlockedCount;
-}
-
-//------------------------------------------------------------
-
-#if defined(NS_PRINTING) && defined(NS_PRINT_PREVIEW)
-//------------------------------------------------------------
-// Reset ESM focus for all descendent doc shells.
-static void ResetFocusState(nsIDocShell* aDocShell) {
-  nsIFocusManager* fm = nsFocusManager::GetFocusManager();
-  if (!fm) return;
-
-  nsCOMPtr<nsISimpleEnumerator> docShellEnumerator;
-  aDocShell->GetDocShellEnumerator(nsIDocShellTreeItem::typeContent,
-                                   nsIDocShell::ENUMERATE_FORWARDS,
-                                   getter_AddRefs(docShellEnumerator));
-
-  nsCOMPtr<nsISupports> currentContainer;
-  bool hasMoreDocShells;
-  while (NS_SUCCEEDED(docShellEnumerator->HasMoreElements(&hasMoreDocShells)) &&
-         hasMoreDocShells) {
-    docShellEnumerator->GetNext(getter_AddRefs(currentContainer));
-    nsCOMPtr<nsPIDOMWindowOuter> win = do_GetInterface(currentContainer);
-    if (win) fm->ClearFocus(win);
-  }
-}
-#endif  // NS_PRINTING && NS_PRINT_PREVIEW
-
-void nsDocumentViewer::ReturnToGalleyPresentation() {
-#if defined(NS_PRINTING) && defined(NS_PRINT_PREVIEW)
-  if (!GetIsPrintPreview()) {
-    NS_ERROR("Wow, we should never get here!");
-    return;
-  }
-
-  SetIsPrintPreview(false);
-
-  mPrintJob->TurnScriptingOn(true);
-  mPrintJob->Destroy();
-  mPrintJob = nullptr;
-
-  nsCOMPtr<nsIDocShell> docShell(mContainer);
-  ResetFocusState(docShell);
-
-  SetTextZoom(mTextZoom);
-  SetFullZoom(mPageZoom);
-  SetOverrideDPPX(mOverrideDPPX);
-  Show();
-
-#endif  // NS_PRINTING && NS_PRINT_PREVIEW
 }
 
 //------------------------------------------------------------
@@ -4115,7 +3827,8 @@ NS_IMETHODIMP nsDocumentViewer::SetPageModeForTesting(
     nsresult rv = mPresContext->Init(mDeviceContext);
     NS_ENSURE_SUCCESS(rv, rv);
   }
-  NS_ENSURE_SUCCESS(InitInternal(mParentWidget, nullptr, mBounds, true, false),
+  NS_ENSURE_SUCCESS(InitInternal(mParentWidget, nullptr, nullptr, mBounds, true,
+                                 false, false),
                     NS_ERROR_FAILURE);
 
   Show();
@@ -4165,7 +3878,24 @@ void nsDocumentViewer::DestroyPresShell() {
   mPresShell = nullptr;
 }
 
+void nsDocumentViewer::InvalidatePotentialSubDocDisplayItem() {
+  if (mViewManager) {
+    if (nsView* rootView = mViewManager->GetRootView()) {
+      if (nsView* rootViewParent = rootView->GetParent()) {
+        if (nsView* subdocview = rootViewParent->GetParent()) {
+          if (nsIFrame* f = subdocview->GetFrame()) {
+            if (nsSubDocumentFrame* s = do_QueryFrame(f)) {
+              s->MarkNeedsDisplayItemRebuild();
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 void nsDocumentViewer::DestroyPresContext() {
+  InvalidatePotentialSubDocDisplayItem();
   mPresContext = nullptr;
 }
 

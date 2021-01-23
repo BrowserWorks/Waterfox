@@ -40,14 +40,6 @@ inline XPCCallContext* XPCCallContext::GetPrevCallContext() const {
   return mPrevCallContext;
 }
 
-inline nsISupports* XPCCallContext::GetIdentityObject() const {
-  CHECK_STATE(HAVE_OBJECT);
-  if (mWrapper) {
-    return mWrapper->GetIdentityObject();
-  }
-  return nullptr;
-}
-
 inline XPCWrappedNative* XPCCallContext::GetWrapper() const {
   if (mState == INIT_FAILED) {
     return nullptr;
@@ -55,11 +47,6 @@ inline XPCWrappedNative* XPCCallContext::GetWrapper() const {
 
   CHECK_STATE(HAVE_OBJECT);
   return mWrapper;
-}
-
-inline XPCWrappedNativeProto* XPCCallContext::GetProto() const {
-  CHECK_STATE(HAVE_OBJECT);
-  return mWrapper ? mWrapper->GetProto() : nullptr;
 }
 
 inline bool XPCCallContext::CanGetTearOff() const {
@@ -75,8 +62,6 @@ inline nsIXPCScriptable* XPCCallContext::GetScriptable() const {
   CHECK_STATE(HAVE_OBJECT);
   return mScriptable;
 }
-
-inline bool XPCCallContext::CanGetSet() const { return mState >= HAVE_NAME; }
 
 inline XPCNativeSet* XPCCallContext::GetSet() const {
   CHECK_STATE(HAVE_NAME);
@@ -97,11 +82,6 @@ inline bool XPCCallContext::HasInterfaceAndMember() const {
   return mState >= HAVE_NAME && mInterface && mMember;
 }
 
-inline jsid XPCCallContext::GetName() const {
-  CHECK_STATE(HAVE_NAME);
-  return mName;
-}
-
 inline bool XPCCallContext::GetStaticMemberIsLocal() const {
   CHECK_STATE(HAVE_NAME);
   return mStaticMemberIsLocal;
@@ -115,11 +95,6 @@ inline unsigned XPCCallContext::GetArgc() const {
 inline JS::Value* XPCCallContext::GetArgv() const {
   CHECK_STATE(READY_TO_CALL);
   return mArgv;
-}
-
-inline JS::Value* XPCCallContext::GetRetVal() const {
-  CHECK_STATE(READY_TO_CALL);
-  return mRetVal;
 }
 
 inline void XPCCallContext::SetRetVal(const JS::Value& val) {
@@ -155,11 +130,6 @@ inline uint16_t XPCCallContext::GetMethodIndex() const {
   return mMethodIndex;
 }
 
-inline void XPCCallContext::SetMethodIndex(uint16_t index) {
-  CHECK_STATE(HAVE_OBJECT);
-  mMethodIndex = index;
-}
-
 /***************************************************************************/
 inline XPCNativeInterface* XPCNativeMember::GetInterface() const {
   XPCNativeMember* arrayStart =
@@ -186,10 +156,6 @@ inline XPCNativeMember* XPCNativeInterface::FindMember(jsid name) const {
     }
   }
   return nullptr;
-}
-
-inline bool XPCNativeInterface::HasAncestor(const nsIID* iid) const {
-  return mInfo->HasAncestor(*iid);
 }
 
 /* static */
@@ -277,23 +243,9 @@ inline bool XPCNativeSet::FindMember(JS::HandleId name,
                (!protoSet->FindMember(name, &protoMember, (uint16_t*)nullptr) ||
                 protoMember != Member));
 
-  *pInterface = Interface.forget();
+  *pInterface = std::move(Interface);
 
   return true;
-}
-
-inline XPCNativeInterface* XPCNativeSet::FindInterfaceWithIID(
-    const nsIID& iid) const {
-  XPCNativeInterface* const* pp = mInterfaces;
-
-  for (int i = (int)mInterfaceCount; i > 0; i--, pp++) {
-    XPCNativeInterface* iface = *pp;
-
-    if (iface->GetIID()->Equals(iid)) {
-      return iface;
-    }
-  }
-  return nullptr;
 }
 
 inline bool XPCNativeSet::HasInterface(XPCNativeInterface* aInterface) const {
@@ -304,28 +256,6 @@ inline bool XPCNativeSet::HasInterface(XPCNativeInterface* aInterface) const {
       return true;
     }
   }
-  return false;
-}
-
-inline bool XPCNativeSet::HasInterfaceWithAncestor(
-    XPCNativeInterface* aInterface) const {
-  return HasInterfaceWithAncestor(aInterface->GetIID());
-}
-
-inline bool XPCNativeSet::HasInterfaceWithAncestor(const nsIID* iid) const {
-  // We can safely skip the first interface which is *always* nsISupports.
-  XPCNativeInterface* const* pp = mInterfaces + 1;
-  for (int i = (int)mInterfaceCount; i > 1; i--, pp++) {
-    if ((*pp)->HasAncestor(iid)) {
-      return true;
-    }
-  }
-
-  // This is rare, so check last.
-  if (iid == &NS_GET_IID(nsISupports)) {
-    return true;
-  }
-
   return false;
 }
 
@@ -376,10 +306,6 @@ inline XPCWrappedNativeTearOff::~XPCWrappedNativeTearOff() {
 
 /***************************************************************************/
 
-inline bool XPCWrappedNative::HasInterfaceNoQI(const nsIID& iid) {
-  return nullptr != GetSet()->FindInterfaceWithIID(iid);
-}
-
 inline void XPCWrappedNative::SweepTearOffs() {
   for (XPCWrappedNativeTearOff* to = &mFirstTearOff; to;
        to = to->GetNextTearOff()) {
@@ -392,13 +318,7 @@ inline void XPCWrappedNative::SweepTearOffs() {
     // If this tearoff does not have a live dedicated JSObject,
     // then let's recycle it.
     if (!to->GetJSObjectPreserveColor()) {
-      RefPtr<nsISupports> native = to->TakeNative();
-      if (native && mozilla::recordreplay::IsRecordingOrReplaying()) {
-        // Finalization must be deferred while recording/replaying to
-        // match the RecordReplayRegisterDeferredFinalizeThing call
-        // when the tearoff was initialized.
-        mozilla::DeferredFinalize(native.forget().take());
-      }
+      to->SetNative(nullptr);
       to->SetInterface(nullptr);
     }
   }

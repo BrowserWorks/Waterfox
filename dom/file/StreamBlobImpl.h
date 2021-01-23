@@ -20,25 +20,25 @@ class StreamBlobImpl final : public BaseBlobImpl, public nsIMemoryReporter {
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIMEMORYREPORTER
 
+  // Blob constructor.
   static already_AddRefed<StreamBlobImpl> Create(
       already_AddRefed<nsIInputStream> aInputStream,
       const nsAString& aContentType, uint64_t aLength,
       const nsAString& aBlobImplType);
 
+  // File constructor.
   static already_AddRefed<StreamBlobImpl> Create(
       already_AddRefed<nsIInputStream> aInputStream, const nsAString& aName,
       const nsAString& aContentType, int64_t aLastModifiedDate,
       uint64_t aLength, const nsAString& aBlobImplType);
 
-  virtual void CreateInputStream(nsIInputStream** aStream,
-                                 ErrorResult& aRv) override;
+  void CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv) override;
 
-  virtual already_AddRefed<BlobImpl> CreateSlice(uint64_t aStart,
-                                                 uint64_t aLength,
-                                                 const nsAString& aContentType,
-                                                 ErrorResult& aRv) override;
+  already_AddRefed<BlobImpl> CreateSlice(uint64_t aStart, uint64_t aLength,
+                                         const nsAString& aContentType,
+                                         ErrorResult& aRv) override;
 
-  virtual bool IsMemoryFile() const override { return true; }
+  bool IsMemoryFile() const override { return true; }
 
   int64_t GetFileId() override { return mFileId; }
 
@@ -64,10 +64,12 @@ class StreamBlobImpl final : public BaseBlobImpl, public nsIMemoryReporter {
   void GetBlobImplType(nsAString& aBlobImplType) const override;
 
  private:
+  // Blob constructor.
   StreamBlobImpl(already_AddRefed<nsIInputStream> aInputStream,
                  const nsAString& aContentType, uint64_t aLength,
                  const nsAString& aBlobImplType);
 
+  // File constructor.
   StreamBlobImpl(already_AddRefed<nsIInputStream> aInputStream,
                  const nsAString& aName, const nsAString& aContentType,
                  int64_t aLastModifiedDate, uint64_t aLength,
@@ -78,6 +80,8 @@ class StreamBlobImpl final : public BaseBlobImpl, public nsIMemoryReporter {
   void MaybeRegisterMemoryReporter();
 
   nsCOMPtr<nsIInputStream> mInputStream;
+
+  nsString mBlobImplType;
 
   nsString mFullPath;
   bool mIsDirectory;

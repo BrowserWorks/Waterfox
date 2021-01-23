@@ -5,11 +5,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/layers/ContentClient.h"
-#include "BasicLayers.h"            // for BasicLayerManager
-#include "gfxContext.h"             // for gfxContext, etc
-#include "gfxPlatform.h"            // for gfxPlatform
-#include "gfxEnv.h"                 // for gfxEnv
-#include "gfxPrefs.h"               // for gfxPrefs
+#include "BasicLayers.h"  // for BasicLayerManager
+#include "gfxContext.h"   // for gfxContext, etc
+#include "gfxPlatform.h"  // for gfxPlatform
+#include "gfxEnv.h"       // for gfxEnv
+
 #include "gfxPoint.h"               // for IntSize, gfxPoint
 #include "gfxUtils.h"               // for gfxUtils
 #include "ipc/ShadowLayers.h"       // for ShadowLayerForwarder
@@ -38,8 +38,6 @@
 
 #include <utility>
 #include <vector>
-
-using namespace std;
 
 namespace mozilla {
 
@@ -86,15 +84,22 @@ already_AddRefed<ContentClient> ContentClient::CreateContentClient(
     useDoubleBuffering = gfxWindowsPlatform::GetPlatform()->IsDirect2DBackend();
   } else
 #endif
-#ifdef MOZ_WIDGET_GTK
-      // We can't use double buffering when using image content with
-      // Xrender support on Linux, as ContentHostDoubleBuffered is not
-      // suited for direct uploads to the server.
-      if (!gfxPlatformGtk::GetPlatform()->UseImageOffscreenSurfaces() ||
-          !gfxVars::UseXRender())
+#ifdef MOZ_WAYLAND
+      if (gfxPlatformGtk::GetPlatform()->UseWaylandDMABufTextures()) {
+    useDoubleBuffering = true;
+  } else
 #endif
   {
-    useDoubleBuffering = backend == LayersBackend::LAYERS_BASIC;
+#ifdef MOZ_WIDGET_GTK
+    // We can't use double buffering when using image content with
+    // Xrender support on Linux, as ContentHostDoubleBuffered is not
+    // suited for direct uploads to the server.
+    if (!gfxPlatformGtk::GetPlatform()->UseImageOffscreenSurfaces() ||
+        !gfxVars::UseXRender())
+#endif
+    {
+      useDoubleBuffering = backend == LayersBackend::LAYERS_BASIC;
+    }
   }
 
   if (useDoubleBuffering || gfxEnv::ForceDoubleBuffering()) {
@@ -506,8 +511,7 @@ RefPtr<RotatedBuffer> ContentClientBasic::CreateBuffer(gfxContentType aType,
     RefPtr<gfxASurface> surf = new gfxWindowsSurface(
         size, aType == gfxContentType::COLOR ? gfxImageFormat::X8R8G8B8_UINT32
                                              : gfxImageFormat::A8R8G8B8_UINT32);
-    drawTarget =
-        gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(surf, size);
+    drawTarget = gfxPlatform::CreateDrawTargetForSurface(surf, size);
   }
 #endif
 
@@ -530,7 +534,7 @@ class RemoteBufferReadbackProcessor : public TextureReadbackSink {
   RemoteBufferReadbackProcessor(
       nsTArray<ReadbackProcessor::Update>* aReadbackUpdates,
       const IntRect& aBufferRect, const nsIntPoint& aBufferRotation)
-      : mReadbackUpdates(*aReadbackUpdates),
+      : mReadbackUpdates(aReadbackUpdates->Clone()),
         mBufferRect(aBufferRect),
         mBufferRotation(aBufferRotation) {
     for (uint32_t i = 0; i < mReadbackUpdates.Length(); ++i) {
@@ -575,7 +579,7 @@ class RemoteBufferReadbackProcessor : public TextureReadbackSink {
  private:
   nsTArray<ReadbackProcessor::Update> mReadbackUpdates;
   // This array is used to keep the layers alive until the callback.
-  vector<RefPtr<Layer>> mLayerRefs;
+  std::vector<RefPtr<Layer>> mLayerRefs;
 
   IntRect mBufferRect;
   nsIntPoint mBufferRotation;
@@ -716,7 +720,7 @@ void ContentClientRemoteBuffer::Updated(const nsIntRegion& aRegionToDraw,
     IntSize size = remoteBuffer->GetClient()->GetSize();
     t->mPictureRect = nsIntRect(0, 0, size.width, size.height);
 
-    GetForwarder()->UseTextures(this, textures, Nothing());
+    GetForwarder()->UseTextures(this, textures);
   }
 
   // This forces a synchronous transaction, so we can swap buffers now

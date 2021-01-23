@@ -24,7 +24,6 @@
 #include "nsHTMLParts.h"
 #include "nsIContentSerializer.h"
 #include "nsIContentViewer.h"
-#include "nsILayoutDebugger.h"
 #include "nsPlainTextSerializer.h"
 #include "nsXMLContentSerializer.h"
 #include "nsXHTMLContentSerializer.h"
@@ -37,7 +36,6 @@
 #include "mozilla/dom/quota/QuotaManagerService.h"
 
 #include "nsIEventListenerService.h"
-#include "nsIMessageManager.h"
 
 // view stuff
 #include "nsContentCreatorFunctions.h"
@@ -45,9 +43,11 @@
 #include "mozilla/dom/LocalStorageCommon.h"
 #include "mozilla/dom/LocalStorageManager.h"
 #include "mozilla/dom/LocalStorageManager2.h"
+#include "mozilla/dom/SessionStorageManager.h"
 
 #ifdef MOZ_WEBSPEECH
 #  include "mozilla/dom/nsSynthVoiceRegistry.h"
+#  include "mozilla/dom/OnlineSpeechRecognitionService.h"
 #endif
 
 #include "mozilla/dom/PushNotifier.h"
@@ -163,10 +163,6 @@ nsresult NS_NewChildProcessMessageManager(nsISupports** aResult);
 #define MAKE_GENERIC_CTOR2(iface_, func_) \
   NS_IMPL_COMPONENT_FACTORY(iface_) { return func_(); }
 
-#ifdef DEBUG
-MAKE_GENERIC_CTOR(nsILayoutDebugger, NS_NewLayoutDebugger)
-#endif
-
 MAKE_GENERIC_CTOR(nsIFrameTraversal, NS_CreateFrameTraversal)
 
 MAKE_GENERIC_CTOR2(nsIContentViewer, NS_NewContentViewer)
@@ -243,9 +239,14 @@ nsresult LocalStorageManagerConstructor(nsISupports* aOuter, REFNSIID aIID,
   return manager->QueryInterface(aIID, aResult);
 }
 
+nsresult SessionStorageManagerConstructor(nsISupports* aOuter, REFNSIID aIID,
+                                          void** aResult) {
+  RefPtr<SessionStorageManager> manager = new SessionStorageManager(nullptr);
+  return manager->QueryInterface(aIID, aResult);
+}
+
 static const mozilla::Module::CategoryEntry kLayoutCategories[] = {
     // clang-format off
-  { "clear-origin-attributes-data", "QuotaManagerService", "service," QUOTAMANAGER_SERVICE_CONTRACTID },
     {nullptr}
     // clang-format on
 };

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Atributoj  de horizontala linio">
+
+<!ENTITY dimensionsBox.label "Dimensioj">
+<!ENTITY heightEditField.label "Alto:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Larĝo:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY pixelsPopup.value "rastrumeroj">
+<!ENTITY alignmentBox.label "Ĝisrandigo">
+<!ENTITY leftRadio.label "maldekstren">
+<!ENTITY leftRadio.accessKey "m">
+<!ENTITY centerRadio.label "centren">
+<!ENTITY centerRadio.accessKey "c">
+<!ENTITY rightRadio.label "dekstren">
+<!ENTITY rightRadio.accessKey "d">
+
+<!ENTITY threeDShading.label "3D‑ombroj">
+<!ENTITY threeDShading.accessKey "3">
+<!ENTITY saveSettings.label "Uzi kiel implicitan">
+<!ENTITY saveSettings.accessKey "i">
+<!ENTITY saveSettings.tooltip "Konservi tiujn ĉi agordojn dum enmeti novajn horizontalajn liniojn">

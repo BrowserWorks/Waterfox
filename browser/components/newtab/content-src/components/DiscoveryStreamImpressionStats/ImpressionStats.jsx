@@ -1,4 +1,8 @@
-import {actionCreators as ac, actionTypes as at} from "common/Actions.jsm";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { actionCreators as ac, actionTypes as at } from "common/Actions.jsm";
 import React from "react";
 
 const VISIBLE = "visible";
@@ -19,8 +23,9 @@ export const INTERSECTION_RATIO = 0.5;
  * only when the component is visible on the page.
  *
  * Note:
- *   * This wrapper could be used either at the individual card level,
- *     or by the card container components
+ *   * This wrapper used to be used either at the individual card level,
+ *     or by the card container components.
+ *     It is now only used for individual card level.
  *   * Each impression will be sent only once as soon as the desired
  *     visibility is detected
  *   * Batching is not yet implemented, hence it might send multiple
@@ -30,7 +35,10 @@ export class ImpressionStats extends React.PureComponent {
   // This checks if the given cards are the same as those in the last impression ping.
   // If so, it should not send the same impression ping again.
   _needsImpressionStats(cards) {
-    if (!this.impressionCardGuids || (this.impressionCardGuids.length !== cards.length)) {
+    if (
+      !this.impressionCardGuids ||
+      this.impressionCardGuids.length !== cards.length
+    ) {
       return true;
     }
 
@@ -44,18 +52,29 @@ export class ImpressionStats extends React.PureComponent {
   }
 
   _dispatchImpressionStats() {
-    const {props} = this;
+    const { props } = this;
     const cards = props.rows;
 
-    if (this.props.campaignId) {
-      this.props.dispatch(ac.OnlyToMain({type: at.DISCOVERY_STREAM_SPOC_IMPRESSION, data: {campaignId: this.props.campaignId}}));
+    if (this.props.flightId) {
+      this.props.dispatch(
+        ac.OnlyToMain({
+          type: at.DISCOVERY_STREAM_SPOC_IMPRESSION,
+          data: { flightId: this.props.flightId },
+        })
+      );
     }
 
     if (this._needsImpressionStats(cards)) {
-      props.dispatch(ac.DiscoveryStreamImpressionStats({
-        source: props.source.toUpperCase(),
-        tiles: cards.map(link => ({id: link.id, pos: link.pos})),
-      }));
+      props.dispatch(
+        ac.DiscoveryStreamImpressionStats({
+          source: props.source.toUpperCase(),
+          tiles: cards.map(link => ({
+            id: link.id,
+            pos: link.pos,
+            ...(link.shim ? { shim: link.shim } : {}),
+          })),
+        })
+      );
       this.impressionCardGuids = cards.map(link => link.id);
     }
   }
@@ -63,7 +82,10 @@ export class ImpressionStats extends React.PureComponent {
   // This checks if the given cards are the same as those in the last loaded content ping.
   // If so, it should not send the same loaded content ping again.
   _needsLoadedContent(cards) {
-    if (!this.loadedContentGuids || (this.loadedContentGuids.length !== cards.length)) {
+    if (
+      !this.loadedContentGuids ||
+      this.loadedContentGuids.length !== cards.length
+    ) {
       return true;
     }
 
@@ -77,20 +99,22 @@ export class ImpressionStats extends React.PureComponent {
   }
 
   _dispatchLoadedContent() {
-    const {props} = this;
+    const { props } = this;
     const cards = props.rows;
 
     if (this._needsLoadedContent(cards)) {
-      props.dispatch(ac.DiscoveryStreamLoadedContent({
-        source: props.source.toUpperCase(),
-        tiles: cards.map(link => ({id: link.id, pos: link.pos})),
-      }));
+      props.dispatch(
+        ac.DiscoveryStreamLoadedContent({
+          source: props.source.toUpperCase(),
+          tiles: cards.map(link => ({ id: link.id, pos: link.pos })),
+        })
+      );
       this.loadedContentGuids = cards.map(link => link.id);
     }
   }
 
   setImpressionObserverOrAddListener() {
-    const {props} = this;
+    const { props } = this;
 
     if (!props.dispatch) {
       return;
@@ -104,7 +128,10 @@ export class ImpressionStats extends React.PureComponent {
       // We should only ever send the latest impression stats ping, so remove any
       // older listeners.
       if (this._onVisibilityChange) {
-        props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+        props.document.removeEventListener(
+          VISIBILITY_CHANGE_EVENT,
+          this._onVisibilityChange
+        );
       }
 
       this._onVisibilityChange = () => {
@@ -112,10 +139,16 @@ export class ImpressionStats extends React.PureComponent {
           // Send the loaded content ping once the page is visible.
           this._dispatchLoadedContent();
           this.setImpressionObserver();
-          props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+          props.document.removeEventListener(
+            VISIBILITY_CHANGE_EVENT,
+            this._onVisibilityChange
+          );
         }
       };
-      props.document.addEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+      props.document.addEventListener(
+        VISIBILITY_CHANGE_EVENT,
+        this._onVisibilityChange
+      );
     }
   }
 
@@ -128,21 +161,30 @@ export class ImpressionStats extends React.PureComponent {
    * https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
    */
   setImpressionObserver() {
-    const {props} = this;
+    const { props } = this;
 
     if (!props.rows.length) {
       return;
     }
 
     this._handleIntersect = entries => {
-      if (entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= INTERSECTION_RATIO)) {
+      if (
+        entries.some(
+          entry =>
+            entry.isIntersecting &&
+            entry.intersectionRatio >= INTERSECTION_RATIO
+        )
+      ) {
         this._dispatchImpressionStats();
         this.impressionObserver.unobserve(this.refs.impression);
       }
     };
 
-    const options = {threshold: INTERSECTION_RATIO};
-    this.impressionObserver = new props.IntersectionObserver(this._handleIntersect, options);
+    const options = { threshold: INTERSECTION_RATIO };
+    this.impressionObserver = new props.IntersectionObserver(
+      this._handleIntersect,
+      options
+    );
     this.impressionObserver.observe(this.refs.impression);
   }
 
@@ -152,25 +194,24 @@ export class ImpressionStats extends React.PureComponent {
     }
   }
 
-  componentDidUpdate(prevProps) {
-    if (this.props.rows.length && this.props.rows !== prevProps.rows) {
-      this.setImpressionObserverOrAddListener();
-    }
-  }
-
   componentWillUnmount() {
     if (this._handleIntersect && this.impressionObserver) {
       this.impressionObserver.unobserve(this.refs.impression);
     }
     if (this._onVisibilityChange) {
-      this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+      this.props.document.removeEventListener(
+        VISIBILITY_CHANGE_EVENT,
+        this._onVisibilityChange
+      );
     }
   }
 
   render() {
-    return (<div ref={"impression"} className="impression-observer">
-      {this.props.children}
-    </div>);
+    return (
+      <div ref={"impression"} className="impression-observer">
+        {this.props.children}
+      </div>
+    );
   }
 }
 

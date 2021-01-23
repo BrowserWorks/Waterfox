@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "বোতামের বৈশিষ্ট্য">
+
+<!ENTITY Settings.label "সেটিং">
+
+<!ENTITY ButtonType.label "ধরণ (T)">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "জমা">
+<!ENTITY reset.value "পুনঃনির্ধারণ">
+<!ENTITY button.value "বোতাম">
+
+<!ENTITY ButtonName.label "নাম (N):">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "মান (V):">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "ট্যাব সূচী (I):">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "নিষ্ক্রিয় (D)">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "প্রবেশ কী (K):">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "বোতাম সরিয়ে ফেলুন (R)">
+<!ENTITY RemoveButton.accesskey "R">

@@ -38,7 +38,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 // Usage: (check for the return value is omitted for simplicity)
 //
 //   `print(arg);`
-//     CallOrNewEmitter cone(this, JSOP_CALL,
+//     CallOrNewEmitter cone(this, JSOp::Call,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     cone.emitNameCallee(print);
@@ -48,7 +48,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //     cone.emitEnd(1, Some(offset_of_callee));
 //
 //   `callee.prop(arg1, arg2);`
-//     CallOrNewEmitter cone(this, JSOP_CALL,
+//     CallOrNewEmitter cone(this, JSOp::Call,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     PropOpEmitter& poe = cone.prepareForPropCallee(false);
@@ -60,7 +60,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //     cone.emitEnd(2, Some(offset_of_callee));
 //
 //   `callee[key](arg);`
-//     CallOrNewEmitter cone(this, JSOP_CALL,
+//     CallOrNewEmitter cone(this, JSOp::Call,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     ElemOpEmitter& eoe = cone.prepareForElemCallee(false);
@@ -71,7 +71,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //     cone.emitEnd(1, Some(offset_of_callee));
 //
 //   `(function() { ... })(arg);`
-//     CallOrNewEmitter cone(this, JSOP_CALL,
+//     CallOrNewEmitter cone(this, JSOp::Call,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     cone.prepareForFunctionCallee();
@@ -82,7 +82,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //     cone.emitEnd(1, Some(offset_of_callee));
 //
 //   `super(arg);`
-//     CallOrNewEmitter cone(this, JSOP_CALL,
+//     CallOrNewEmitter cone(this, JSOp::Call,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     cone.emitSuperCallee();
@@ -92,7 +92,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //     cone.emitEnd(1, Some(offset_of_callee));
 //
 //   `(some_other_expression)(arg);`
-//     CallOrNewEmitter cone(this, JSOP_CALL,
+//     CallOrNewEmitter cone(this, JSOp::Call,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     cone.prepareForOtherCallee();
@@ -103,7 +103,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //     cone.emitEnd(1, Some(offset_of_callee));
 //
 //   `print(...arg);`
-//     CallOrNewEmitter cone(this, JSOP_SPREADCALL,
+//     CallOrNewEmitter cone(this, JSOp::SpreadCall,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     cone.emitNameCallee(print);
@@ -117,7 +117,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //
 //   `print(...rest);`
 //   where `rest` is rest parameter
-//     CallOrNewEmitter cone(this, JSOP_SPREADCALL,
+//     CallOrNewEmitter cone(this, JSOp::SpreadCall,
 //                           CallOrNewEmitter::ArgumentsKind::SingleSpreadRest,
 //                           ValueUsage::WantValue);
 //     cone.emitNameCallee(print);
@@ -130,7 +130,7 @@ class MOZ_RAII AutoEmittingRunOnceLambda {
 //     cone.emitEnd(1, Some(offset_of_callee));
 //
 //   `new f(arg);`
-//     CallOrNewEmitter cone(this, JSOP_NEW,
+//     CallOrNewEmitter cone(this, JSOp::New,
 //                           CallOrNewEmitter::ArgumentsKind::Other,
 //                           ValueUsage::WantValue);
 //     cone.emitNameCallee(f);
@@ -262,26 +262,26 @@ class MOZ_STACK_CLASS CallOrNewEmitter {
 
  private:
   MOZ_MUST_USE bool isCall() const {
-    return op_ == JSOP_CALL || op_ == JSOP_CALL_IGNORES_RV ||
-           op_ == JSOP_SPREADCALL || isEval() || isFunApply() || isFunCall();
+    return op_ == JSOp::Call || op_ == JSOp::CallIgnoresRv ||
+           op_ == JSOp::SpreadCall || isEval() || isFunApply() || isFunCall();
   }
 
   MOZ_MUST_USE bool isNew() const {
-    return op_ == JSOP_NEW || op_ == JSOP_SPREADNEW;
+    return op_ == JSOp::New || op_ == JSOp::SpreadNew;
   }
 
   MOZ_MUST_USE bool isSuperCall() const {
-    return op_ == JSOP_SUPERCALL || op_ == JSOP_SPREADSUPERCALL;
+    return op_ == JSOp::SuperCall || op_ == JSOp::SpreadSuperCall;
   }
 
   MOZ_MUST_USE bool isEval() const {
-    return op_ == JSOP_EVAL || op_ == JSOP_STRICTEVAL ||
-           op_ == JSOP_SPREADEVAL || op_ == JSOP_STRICTSPREADEVAL;
+    return op_ == JSOp::Eval || op_ == JSOp::StrictEval ||
+           op_ == JSOp::SpreadEval || op_ == JSOp::StrictSpreadEval;
   }
 
-  MOZ_MUST_USE bool isFunApply() const { return op_ == JSOP_FUNAPPLY; }
+  MOZ_MUST_USE bool isFunApply() const { return op_ == JSOp::FunApply; }
 
-  MOZ_MUST_USE bool isFunCall() const { return op_ == JSOP_FUNCALL; }
+  MOZ_MUST_USE bool isFunCall() const { return op_ == JSOp::FunCall; }
 
   MOZ_MUST_USE bool isSpread() const { return JOF_OPTYPE(op_) == JOF_BYTE; }
 
@@ -290,7 +290,7 @@ class MOZ_STACK_CLASS CallOrNewEmitter {
   }
 
  public:
-  MOZ_MUST_USE bool emitNameCallee(JSAtom* name);
+  MOZ_MUST_USE bool emitNameCallee(Handle<JSAtom*> name);
   MOZ_MUST_USE PropOpEmitter& prepareForPropCallee(bool isSuperProp);
   MOZ_MUST_USE ElemOpEmitter& prepareForElemCallee(bool isSuperElem);
   MOZ_MUST_USE bool prepareForFunctionCallee();

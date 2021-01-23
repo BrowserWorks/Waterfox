@@ -15,6 +15,7 @@
 #include "nsCOMPtr.h"
 #include "nsIURI.h"
 #include "nsIProcess.h"
+#include "mozilla/dom/BrowsingContext.h"
 
 /**
  * UTF8 moz-icon URI string for the default handler application's icon, if
@@ -57,14 +58,15 @@ class nsMIMEInfoBase : public nsIMIMEInfo {
       nsIMutableArray** aPossibleAppHandlers) override;
   NS_IMETHOD GetDefaultDescription(nsAString& aDefaultDescription) override;
   NS_IMETHOD LaunchWithFile(nsIFile* aFile) override;
-  NS_IMETHOD LaunchWithURI(nsIURI* aURI,
-                           nsIInterfaceRequestor* aWindowContext) override;
+  NS_IMETHOD LaunchWithURI(
+      nsIURI* aURI, mozilla::dom::BrowsingContext* aBrowsingContext) override;
   NS_IMETHOD GetPreferredAction(nsHandlerInfoAction* aPreferredAction) override;
   NS_IMETHOD SetPreferredAction(nsHandlerInfoAction aPreferredAction) override;
   NS_IMETHOD GetAlwaysAskBeforeHandling(
       bool* aAlwaysAskBeforeHandling) override;
   NS_IMETHOD SetAlwaysAskBeforeHandling(bool aAlwaysAskBeforeHandling) override;
   NS_IMETHOD GetPossibleLocalHandlers(nsIArray** _retval) override;
+  NS_IMETHOD IsPdf(bool* isPdf);
 
   enum HandlerClass { eMIMEInfo, eProtocolInfo };
 
@@ -128,6 +130,8 @@ class nsMIMEInfoBase : public nsIMIMEInfo {
    */
   static nsresult LaunchWithIProcess(nsIFile* aApp, const nsCString& aArg);
   static nsresult LaunchWithIProcess(nsIFile* aApp, const nsString& aArg);
+  static nsresult LaunchWithIProcess(nsIFile* aApp, const int aArgc,
+                                     const char16_t** aArgv);
 
   /**
    * Given a file: nsIURI, return the associated nsIFile
@@ -136,6 +140,11 @@ class nsMIMEInfoBase : public nsIMIMEInfo {
    * @param  aFile     the associated nsIFile (out param)
    */
   static nsresult GetLocalFileFromURI(nsIURI* aURI, nsIFile** aFile);
+
+  /**
+   * Internal helper to avoid adding duplicates.
+   */
+  void AddUniqueExtension(const nsACString& aExtension);
 
   // member variables
   nsTArray<nsCString>
@@ -173,6 +182,7 @@ class nsMIMEInfoImpl : public nsMIMEInfoBase {
   // nsIMIMEInfo methods
   NS_IMETHOD GetHasDefaultHandler(bool* _retval) override;
   NS_IMETHOD GetDefaultDescription(nsAString& aDefaultDescription) override;
+  NS_IMETHOD IsCurrentAppOSDefault(bool* _retval) override;
 
   // additional methods
   /**

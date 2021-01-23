@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Përpunues Vetish të Mëtejshme">
+<!ENTITY AttName.label                  "Atribut: ">
+<!ENTITY AttValue.label                 "Vlerë: ">
+<!ENTITY PropertyName.label             "Veti: ">
+<!ENTITY currentattributesfor.label     "Atribute të tanishme për: ">
+<!ENTITY tree.attributeHeader.label     "Atribut">
+<!ENTITY tree.propertyHeader.label      "Veti">
+<!ENTITY tree.valueHeader.label         "Vlerë">
+<!ENTITY tabHTML.label                  "Atribute HTML">
+<!ENTITY tabCSS.label                   "Stil Brendazi">
+<!ENTITY tabJSE.label                   "Akte JavaScript">
+
+<!ENTITY editAttribute.label    "Klikoni mbi një nga objektet e sipërme për të përpunuar vlerat e tij">
+<!ENTITY removeAttribute.label  "Hiq">

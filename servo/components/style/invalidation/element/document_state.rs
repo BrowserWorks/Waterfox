@@ -6,6 +6,7 @@
 
 use crate::dom::TElement;
 use crate::element_state::DocumentState;
+use crate::invalidation::element::invalidation_map::Dependency;
 use crate::invalidation::element::invalidator::{DescendantInvalidationLists, InvalidationVector};
 use crate::invalidation::element::invalidator::{Invalidation, InvalidationProcessor};
 use crate::invalidation::element::state_and_attributes;
@@ -31,9 +32,6 @@ impl Default for InvalidationMatchingData {
 /// An invalidation processor for style changes due to state and attribute
 /// changes.
 pub struct DocumentStateInvalidationProcessor<'a, E: TElement, I> {
-    // TODO(emilio): We might want to just run everything for every possible
-    // binding along with the document data, or just apply the XBL stuff to the
-    // bound subtrees.
     rules: I,
     matching_context: MatchingContext<'a, E::Impl>,
     document_states_changed: DocumentState,
@@ -68,6 +66,11 @@ where
     E: TElement,
     I: Iterator<Item = &'a CascadeData>,
 {
+    fn check_outer_dependency(&mut self, _: &Dependency, _: E) -> bool {
+        debug_assert!(false, "how, we should only have parent-less dependencies here!");
+        true
+    }
+
     fn collect_invalidations(
         &mut self,
         _element: E,
@@ -82,7 +85,17 @@ where
                     continue;
                 }
 
-                self_invalidations.push(Invalidation::new(&dependency.selector, 0));
+                // We pass `None` as a scope, as document state selectors aren't
+                // affected by the current scope.
+                //
+                // FIXME(emilio): We should really pass the relevant host for
+                // self.rules, so that we invalidate correctly if the selector
+                // happens to have something like :host(:-moz-window-inactive)
+                // for example.
+                self_invalidations.push(Invalidation::new(
+                    &dependency.dependency,
+                    /* scope = */ None,
+                ));
             }
         }
 

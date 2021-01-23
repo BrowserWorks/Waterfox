@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopier og mapper">
+<!ENTITY sendingPrefix.label "Når meldinger sendes: ">
+<!ENTITY fccMailFolder.label "Lagre en kopi i:">
+<!ENTITY fccMailFolder.accesskey "g">
+<!ENTITY fccReplyFollowsParent.label "Legg svar i samme mappe som meldinger som blir besvart">
+<!ENTITY fccReplyFollowsParent.accesskey "v">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Send CC til disse e-postadressene:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Atskill flere adresser med kommaer">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Send BCC til disse e-postadressene:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Atskill flere adresser med kommaer">
+<!ENTITY saveMessageDlg.label "Vis bekreftelsesdialog når meldinger lagres">
+<!ENTITY saveMessageDlg.accesskey "V">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "«Sendt»-mappen på:">
+<!ENTITY sentFolderOn.accesskey "d">
+<!ENTITY sentInOtherFolder.label "Annen mappe:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Meldingsarkiv">
+<!ENTITY keepArchives.label "Behold meldinger i arkivet i:">
+<!ENTITY keepArchives.accesskey "B">
+<!ENTITY archiveHierarchyButton.label "Arkivinnstillinger …">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "«Arkiv»-mappen på:">
+<!ENTITY archivesFolderOn.accesskey "r">
+<!ENTITY archiveInOtherFolder.label "Annen:">
+<!ENTITY archiveInOtherFolder.accesskey "n">
+<!ENTITY specialFolders.label "Utkast og maler">
+<!ENTITY keepDrafts2.label "Lagre kladd i:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "«Utkast»-mappen på:">
+<!ENTITY draftsFolderOn.accesskey "U">
+<!ENTITY draftInOtherFolder.label "Annen mappe:">
+<!ENTITY draftInOtherFolder.accesskey "n">
+<!ENTITY keepTemplates.label "Lagre meldingsmaler i:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "«Maler»-mappen på:">
+<!ENTITY templatesFolderOn.accesskey "M">
+<!ENTITY templateInOtherFolder.label "Annen mappe:">
+<!ENTITY templateInOtherFolder.accesskey "e">

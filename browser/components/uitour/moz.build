@@ -5,11 +5,14 @@
 EXTRA_JS_MODULES += [
     'UITour.jsm',
     'UITourChild.jsm',
+    'UITourParent.jsm'
 ]
 
 BROWSER_CHROME_MANIFESTS += [
     'test/browser.ini',
 ]
+
+SPHINX_TREES['docs'] = 'docs'
 
 with Files('**'):
     BUG_COMPONENT = ('Firefox', 'Tours')

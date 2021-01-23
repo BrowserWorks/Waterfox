@@ -89,7 +89,7 @@ class MediaDataDemuxer : public DecoderDoctorLifeLogger<MediaDataDemuxer> {
   virtual bool ShouldComputeStartTime() const { return true; }
 
  protected:
-  virtual ~MediaDataDemuxer() {}
+  virtual ~MediaDataDemuxer() = default;
 };
 
 class MediaTrackDemuxer : public DecoderDoctorLifeLogger<MediaTrackDemuxer> {
@@ -99,10 +99,24 @@ class MediaTrackDemuxer : public DecoderDoctorLifeLogger<MediaTrackDemuxer> {
   class SamplesHolder {
    public:
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(SamplesHolder)
-    nsTArray<RefPtr<MediaRawData>> mSamples;
+
+    void AppendSample(RefPtr<MediaRawData>& aSample) {
+      MOZ_DIAGNOSTIC_ASSERT(aSample->HasValidTime());
+      mSamples.AppendElement(aSample);
+    }
+
+    const nsTArray<RefPtr<MediaRawData>>& GetSamples() const {
+      return mSamples;
+    }
+
+    // This method is only used to do the move semantic for mSamples, do not
+    // append any element to the samples we returns. We should always append new
+    // sample to mSamples via `AppendSample()`.
+    nsTArray<RefPtr<MediaRawData>>& GetMovableSamples() { return mSamples; }
 
    private:
-    ~SamplesHolder() {}
+    ~SamplesHolder() = default;
+    nsTArray<RefPtr<MediaRawData>> mSamples;
   };
 
   class SkipFailureHolder {
@@ -191,7 +205,7 @@ class MediaTrackDemuxer : public DecoderDoctorLifeLogger<MediaTrackDemuxer> {
   virtual void BreakCycles() {}
 
  protected:
-  virtual ~MediaTrackDemuxer() {}
+  virtual ~MediaTrackDemuxer() = default;
 };
 
 }  // namespace mozilla

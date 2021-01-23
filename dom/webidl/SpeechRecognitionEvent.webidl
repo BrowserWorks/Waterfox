@@ -7,9 +7,12 @@ interface nsISupports;
 
 [Pref="media.webspeech.recognition.enable",
  Func="SpeechRecognition::IsAuthorized",
- Constructor(DOMString type, optional SpeechRecognitionEventInit eventInitDict)]
+ Exposed=Window]
 interface SpeechRecognitionEvent : Event
 {
+  constructor(DOMString type,
+              optional SpeechRecognitionEventInit eventInitDict = {});
+
   readonly attribute unsigned long resultIndex;
   readonly attribute SpeechRecognitionResultList? results;
   readonly attribute any interpretation;

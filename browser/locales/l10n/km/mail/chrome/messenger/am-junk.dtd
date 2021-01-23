@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Խլամի կարգավորումներ">
+<!ENTITY trainingDescription.label "ប្រសិន​បើ​បាន​បើក ជា​ដំបូង​អ្នក​ត្រូវតែ​ប្រាប់ &brandShortName; ឲ្យ​កំណត់​អត្តសញ្ញាណ​សារ​ឥតបានការ​ដោយ​ប្រើ​ប៊ូតុង​របារ​ឧបករណ៍​សារ​ឥតបានការ​ដើម្បី​សម្គាល់​សារ​ថា​បានការ ឬ​ឥតបានការ។ អ្នក​ត្រូវ​កំណត់​អត្តសញ្ញាណ​ទាំង​សារ​បានការ និង​ឥតបានការ។ បន្ទាប់មក &brandShortName; នឹង​អាច​សម្គាល់​សារ​ឥតបានការ​ដោយ​ស្វ័យប្រវត្តិ។">
+<!ENTITY level.label "Միացնել խլամի ղեկավարումը այս փոստարկղում">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Տեղափ. խլամները՝">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "&quot;Junk&quot; թղթապանակում՝">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "Այլ.">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Միանգամից ջնջել խլամ նամակը, որը հին է՝">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "օր">
+
+<!ENTITY whitelistHeader.label "កុំ​សម្គាល់​សារ​ថា​ឥតបានការ​ដោយ​ស្វ័យប្រវត្តិ បើ​អ្នក​ផ្ញើ​នៅ​ក្នុង៖ ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "បើ​បាន​បើក &brandShortName; នឹង​ចាត់​ទុក​ដោយ​ស្វ័យប្រវត្តិ​នូវ​សារ​ដែល​បាន​សម្គាល់​ដោយ​កម្មវិធី​ចាត់​ថ្នាក់​ខាងក្រៅ​ថា​ជា​សារ​ឥតបានការ។">
+<!ENTITY ispHeaders.label "Վստահել խլամ նամակի վերնագրին՝">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Ընտրություն">
+<!ENTITY junkActions.label "ទិសដៅ និង​ការ​រក្សាទុក">
+
+<!ENTITY globalJunkPrefs.label "ចំណូលចិត្ត​សារ​ឥតបានការ​សាកល...">
+<!ENTITY globalJunkPrefs.accesskey "G">

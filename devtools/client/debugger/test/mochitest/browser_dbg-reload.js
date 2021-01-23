@@ -8,16 +8,6 @@
  * 2. re-sync breakpoints
  */
 
-async function waitForBreakpoint(dbg, location) {
-  return waitForState(
-    dbg,
-    state => {
-      return dbg.selectors.getBreakpoint(location);
-    },
-    "Waiting for breakpoint"
-  );
-}
-
 add_task(async function() {
   const dbg = await initDebugger("reload/doc-reload.html");
 
@@ -25,6 +15,7 @@ add_task(async function() {
   await selectSource(dbg, "sjs_code_reload");
   await addBreakpoint(dbg, "sjs_code_reload", 2);
 
+  await waitForRequestsToSettle(dbg);
   await reload(dbg, "sjs_code_reload.sjs");
   await waitForSelectedSource(dbg, "sjs_code_reload.sjs");
 
@@ -38,4 +29,15 @@ add_task(async function() {
 
   is(breakpointList.length, 1);
   is(breakpoint.location.line, 6);
+  await waitForRequestsToSettle(dbg);
 });
+
+async function waitForBreakpoint(dbg, location) {
+  return waitForState(
+    dbg,
+    state => {
+      return dbg.selectors.getBreakpoint(location);
+    },
+    "Waiting for breakpoint"
+  );
+}

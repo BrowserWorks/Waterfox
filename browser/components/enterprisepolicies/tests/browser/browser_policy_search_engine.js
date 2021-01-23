@@ -13,6 +13,9 @@ registerCleanupFunction(() => {
     "browser.policies.runonce.setDefaultSearchEngine"
   );
   Services.prefs.clearUserPref(
+    "browser.policies.runonce.setDefaultPrivateSearchEngine"
+  );
+  Services.prefs.clearUserPref(
     "browser.policies.runOncePerModification.addSearchEngines"
   );
 });
@@ -111,6 +114,49 @@ add_task(async function test_install_and_set_default() {
   EnterprisePolicyTesting.resetRunOnceState();
 });
 
+add_task(async function test_install_and_set_default_private() {
+  // Make sure we are starting in an expected state to avoid false positive
+  // test results.
+  isnot(
+    (await Services.search.getDefaultPrivate()).name,
+    "MozSearch",
+    "Default search engine should not be MozSearch when test starts"
+  );
+  is(
+    Services.search.getEngineByName("Foo"),
+    null,
+    'Engine "Foo" should not be present when test starts'
+  );
+
+  await setupPolicyEngineWithJson({
+    policies: {
+      SearchEngines: {
+        Add: [
+          {
+            Name: "MozSearch",
+            URLTemplate: "http://example.com/?q={searchTerms}",
+          },
+        ],
+        DefaultPrivate: "MozSearch",
+      },
+    },
+  });
+  // Get in line, because the Search policy callbacks are async.
+  await TestUtils.waitForTick();
+
+  // If this passes, it means that the new search engine was properly installed
+  // *and* was properly set as the default.
+  is(
+    (await Services.search.getDefaultPrivate()).name,
+    "MozSearch",
+    "Specified search engine should be the default private engine"
+  );
+
+  // Clean up
+  await Services.search.removeEngine(await Services.search.getDefaultPrivate());
+  EnterprisePolicyTesting.resetRunOnceState();
+});
+
 // Same as the last test, but with "PreventInstalls" set to true to make sure
 // it does not prevent search engines from being installed properly
 add_task(async function test_install_and_set_default_prevent_installs() {
@@ -180,7 +226,7 @@ add_task(async function test_prevent_install_ui() {
     gBrowser,
     "about:preferences#search"
   );
-  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     let linkContainer = content.document.getElementById("addEnginesBox");
     if (!linkContainer.hidden) {
       await new Promise(resolve => {
@@ -228,30 +274,47 @@ add_task(async function test_AddSearchProvider() {
     Services.ww = origWindowWatcher;
   });
 
-  let engineURL = getRootDirectory(gTestPath) + "opensearchEngine.xml";
-  // AddSearchProvider will refuse to take URLs with a "chrome:" scheme
-  engineURL = engineURL.replace(
-    "chrome://mochitests/content",
-    "http://example.com"
-  );
-  await ContentTask.spawn(
-    gBrowser.selectedBrowser,
-    { engineURL },
-    async function(args) {
-      content.window.external.AddSearchProvider(args.engineURL);
+  // Perform two passes, the first for a top-level window and the second
+  // from within a child iframe.
+  for (let t = 0; t < 2; t++) {
+    let tab, browsingContext;
+    if (t == 1) {
+      tab = await BrowserTestUtils.openNewForegroundTab(
+        gBrowser,
+        "data:text/html,<html><body><iframe src='https://example.org:443/document-builder.sjs?html=<html><body>Hello</body><html>'></iframe></body><html>"
+      );
+      browsingContext = tab.linkedBrowser.browsingContext.children[0];
+    } else {
+      browsingContext = gBrowser.selectedBrowser;
     }
-  );
 
-  is(
-    Services.search.getEngineByName("Foo"),
-    null,
-    "Engine should not have been added successfully."
-  );
-  is(
-    mockPrompter.promptCount,
-    1,
-    "Should have alerted the user of an error when installing new search engine"
-  );
+    let engineURL = getRootDirectory(gTestPath) + "opensearchEngine.xml";
+    // AddSearchProvider will refuse to take URLs with a "chrome:" scheme
+    engineURL = engineURL.replace(
+      "chrome://mochitests/content",
+      "http://example.com"
+    );
+    await SpecialPowers.spawn(browsingContext, [{ engineURL }], async function(
+      args
+    ) {
+      content.window.external.AddSearchProvider(args.engineURL);
+    });
+
+    is(
+      Services.search.getEngineByName("Foo"),
+      null,
+      "Engine should not have been added successfully."
+    );
+    is(
+      mockPrompter.promptCount,
+      t + 1,
+      "Should have alerted the user of an error when installing new search engine"
+    );
+
+    if (tab) {
+      BrowserTestUtils.removeTab(tab);
+    }
+  }
 });
 
 add_task(async function test_install_and_remove() {

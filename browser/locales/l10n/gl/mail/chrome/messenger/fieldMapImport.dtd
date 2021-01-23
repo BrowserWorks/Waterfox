@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importar Axenda">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Datos importados para rexistrar: ">
+<!ENTITY fieldMapImport.next.label "Seguinte">
+<!ENTITY fieldMapImport.next.accesskey "n">
+<!ENTITY fieldMapImport.previous.label "Anterior">
+<!ENTITY fieldMapImport.previous.accesskey "A">
+<!ENTITY fieldMapImport.text "Empregue Arriba ou Abaixo para facer coincidir os campos da axenda á esquerda cos correspondetes datos a importar á direita. Desmarque os elementos que non queira importar.">
+<!ENTITY fieldMapImport.up.label "Subir">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Baixar">
+<!ENTITY fieldMapImport.down.accesskey "B">
+<!ENTITY fieldMapImport.fieldListTitle "Campos da axenda">
+<!ENTITY fieldMapImport.dataTitle "Grabar daos a importar">
+<!ENTITY fieldMapImport.skipFirstRecord.label "O primeiro rexistro contén os títulos">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global __URI__ */
 /* exported Loader, resolveURI, Module, Require, unload */
 
 "use strict";
@@ -32,8 +31,6 @@ ChromeUtils.defineModuleGetter(
   "NetUtil",
   "resource://gre/modules/NetUtil.jsm"
 );
-
-const { defineLazyGetter } = XPCOMUtils;
 
 // Define some shortcuts.
 const bind = Function.call.bind(Function.bind);
@@ -125,77 +122,38 @@ function Sandbox(options) {
   return sandbox;
 }
 
+// This allows defining some modules in AMD format while retaining CommonJS
+// compatibility with this loader by allowing the factory function to have
+// access to general CommonJS functions, e.g.
+//
+//   define(function(require, exports, module) {
+//     ... code ...
+//   });
+function define(factory) {
+  factory(this.require, this.exports, this.module);
+}
+
 // Populates `exports` of the given CommonJS `module` object, in the context
 // of the given `loader` by evaluating code associated with it.
 function load(loader, module) {
-  const { sandboxes, globals } = loader;
   const require = Require(loader, module);
 
   // We expose set of properties defined by `CommonJS` specification via
   // prototype of the sandbox. Also globals are deeper in the prototype
   // chain so that each module has access to them as well.
-  const descriptors = {
-    require: {
-      configurable: true,
-      enumerable: true,
-      writable: true,
-      value: require,
-    },
-    module: {
-      configurable: true,
-      enumerable: true,
-      writable: true,
-      value: module,
-    },
-    exports: {
-      configurable: true,
-      enumerable: true,
-      writable: true,
-      value: module.exports,
-    },
+  const properties = {
+    require,
+    module,
+    exports: module.exports,
   };
-
-  let sandbox;
-  if (loader.useSharedGlobalSandbox) {
-    // Create a new object in this sandbox, that will be used as
-    // the scope object for this particular module
-    sandbox = new loader.sharedGlobalSandbox.Object();
-    descriptors.lazyRequire = {
-      configurable: true,
-      value: lazyRequire.bind(sandbox),
-    };
-    descriptors.lazyRequireModule = {
-      configurable: true,
-      value: lazyRequireModule.bind(sandbox),
-    };
-
-    if ("console" in globals) {
-      descriptors.console = {
-        configurable: true,
-        get() {
-          return globals.console;
-        },
-      };
-    }
-    const define = Object.getOwnPropertyDescriptor(globals, "define");
-    if (define && define.value) {
-      descriptors.define = define;
-    }
-    if ("DOMParser" in globals) {
-      descriptors.DOMParser = Object.getOwnPropertyDescriptor(
-        globals,
-        "DOMParser"
-      );
-    }
-    Object.defineProperties(sandbox, descriptors);
-  } else {
-    sandbox = Sandbox({
-      name: module.uri,
-      prototype: Object.create(globals, descriptors),
-      invisibleToDebugger: loader.invisibleToDebugger,
-    });
+  if (loader.supportAMDModules) {
+    properties.define = define;
   }
-  sandboxes[module.uri] = sandbox;
+
+  // Create a new object in this sandbox, that will be used as
+  // the scope object for this particular module
+  const sandbox = new loader.sharedGlobalSandbox.Object();
+  Object.assign(sandbox, properties);
 
   const originalExports = module.exports;
   try {
@@ -321,58 +279,6 @@ function resolveURI(id, mapping) {
   return normalizeExt(mapping(id));
 }
 
-/**
- * Defines lazy getters on the given object, which lazily require the
- * given module the first time they are accessed, and then resolve that
- * module's exported properties.
- *
- * @param {object} obj
- *        The target object on which to define the lazy getters.
- * @param {string} moduleId
- *        The ID of the module to require, as passed to require().
- * @param {Array<string | object>} args
- *        Any number of properties to import from the module. A string
- *        will cause the property to be defined which resolves to the
- *        same property in the module's exports. An object will define a
- *        lazy getter for every value in the object which corresponds to
- *        the given key in the module's exports, as in an ordinary
- *        destructuring assignment.
- */
-function lazyRequire(obj, moduleId, ...args) {
-  let module;
-  const getModule = () => {
-    if (!module) {
-      module = this.require(moduleId);
-    }
-    return module;
-  };
-
-  for (let props of args) {
-    if (typeof props !== "object") {
-      props = { [props]: props };
-    }
-
-    for (const [fromName, toName] of Object.entries(props)) {
-      defineLazyGetter(obj, toName, () => getModule()[fromName]);
-    }
-  }
-}
-
-/**
- * Defines a lazy getter on the given object which causes a module to be
- * lazily imported the first time it is accessed.
- *
- * @param {object} obj
- *        The target object on which to define the lazy getter.
- * @param {string} moduleId
- *        The ID of the module to require, as passed to require().
- * @param {string} [prop = moduleId]
- *        The name of the lazy getter property to define.
- */
-function lazyRequireModule(obj, moduleId, prop = moduleId) {
-  defineLazyGetter(obj, prop, () => this.require(moduleId));
-}
-
 // Creates version of `require` that will be exposed to the given `module`
 // in the context of the given `loader`. Each module gets own limited copy
 // of `require` that is allowed to load only a modules that are associated
@@ -406,7 +312,7 @@ function Require(loader, requirer) {
       module = modules[uri];
     } else if (isJSMURI(uri)) {
       module = modules[uri] = Module(requirement, uri);
-      module.exports = ChromeUtils.import(uri, {});
+      module.exports = ChromeUtils.import(uri);
     } else if (isJSONURI(uri)) {
       let data;
 
@@ -441,8 +347,6 @@ function Require(loader, requirer) {
       } catch (e) {
         // Clear out modules cache so we can throw on a second invalid require
         delete modules[uri];
-        // Also clear out the Sandbox that was created
-        delete loader.sandboxes[uri];
         throw e;
       }
     }
@@ -551,8 +455,6 @@ function unload(loader, reason) {
 // - `paths`: Mandatory dictionary of require path mapped to absolute URIs.
 //   Object keys are path prefix used in require(), values are URIs where each
 //   prefix should be mapped to.
-// - `sharedGlobal`: Boolean, if True, loads all module in a single, shared
-//   global in order to create only one global and compartment.
 // - `globals`: Optional map of globals, that all module scopes will inherit
 //   from. Map is also exposed under `globals` property of the returned loader
 //   so it can be extended further later. Defaults to `{}`.
@@ -565,7 +467,7 @@ function unload(loader, reason) {
 //   from loader. This function receive the module path as first argument,
 //   and native require method as second argument.
 function Loader(options) {
-  let { paths, sharedGlobal, globals } = options;
+  let { paths, globals } = options;
   if (!globals) {
     globals = {};
   }
@@ -580,7 +482,7 @@ function Loader(options) {
   const mapping = compileMapping(paths);
 
   // Define pseudo modules.
-  let modules = {
+  const builtinModuleExports = {
     "@loader/unload": destructor,
     "@loader/options": options,
     chrome: {
@@ -595,8 +497,7 @@ function Loader(options) {
     },
   };
 
-  const builtinModuleExports = modules;
-  modules = {};
+  const modules = {};
   for (const id of Object.keys(builtinModuleExports)) {
     // We resolve `uri` from `id` since modules are cached by `uri`.
     const uri = resolveURI(id, mapping);
@@ -648,10 +549,11 @@ function Loader(options) {
     mappingCache: { enumerable: false, value: new Map() },
     // Map of module objects indexed by module URIs.
     modules: { enumerable: false, value: modules },
-    useSharedGlobalSandbox: { enumerable: false, value: !!sharedGlobal },
     sharedGlobalSandbox: { enumerable: false, value: sharedGlobalSandbox },
-    // Map of module sandboxes indexed by module URIs.
-    sandboxes: { enumerable: false, value: {} },
+    supportAMDModules: {
+      enumerable: false,
+      value: options.supportAMDModules || false,
+    },
     // Whether the modules loaded should be ignored by the debugger
     invisibleToDebugger: {
       enumerable: false,

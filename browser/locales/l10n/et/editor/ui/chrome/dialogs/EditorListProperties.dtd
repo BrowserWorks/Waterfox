@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label               "Nimekirja omadused">
+
+<!ENTITY ListType.label                  "Nimekirja tüüp">
+<!ENTITY bulletStyle.label               "Täpi stiil:">
+<!ENTITY startingNumber.label            "Nummerduse algus:">
+<!ENTITY startingNumber.accessKey        "N">
+<!ENTITY none.value                      "puudub">
+<!ENTITY bulletList.value                "nummerdamata nimekiri">
+<!ENTITY numberList.value                "nummerdatud nimekiri">
+<!ENTITY definitionList.value            "definitsioonide nimekiri">
+<!ENTITY changeEntireListRadio.label     "muudetakse kogu nimekiri">
+<!ENTITY changeEntireListRadio.accessKey "u">
+<!ENTITY changeSelectedRadio.label       "muudetakse valitud elemendid">
+<!ENTITY changeSelectedRadio.accessKey   "m">

@@ -60,6 +60,8 @@ class WebExtensionPolicy final : public nsISupports,
     MOZ_ALWAYS_SUCCEEDS(mBaseURI->GetSpec(aBaseURL));
   }
 
+  bool IsPrivileged() { return mIsPrivileged; }
+
   void GetURL(const nsAString& aPath, nsAString& aURL, ErrorResult& aRv) const;
 
   Result<nsString, nsresult> GetURL(const nsAString& aPath) const;
@@ -73,9 +75,11 @@ class WebExtensionPolicy final : public nsISupports,
   void InjectContentScripts(ErrorResult& aRv);
 
   bool CanAccessURI(const URLInfo& aURI, bool aExplicit = false,
-                    bool aCheckRestricted = true) const {
+                    bool aCheckRestricted = true,
+                    bool aAllowFilePermission = false) const {
     return (!aCheckRestricted || !IsRestrictedURI(aURI)) && mHostPermissions &&
-           mHostPermissions->Matches(aURI, aExplicit);
+           mHostPermissions->Matches(aURI, aExplicit) &&
+           (aURI.Scheme() != nsGkAtoms::file || aAllowFilePermission);
   }
 
   bool IsPathWebAccessible(const nsAString& aPath) const {
@@ -100,12 +104,11 @@ class WebExtensionPolicy final : public nsISupports,
   const nsString& Name() const { return mName; }
   void GetName(nsAString& aName) const { aName = mName; }
 
-  const nsString& ContentSecurityPolicy() const {
-    return mContentSecurityPolicy;
-  }
-  void GetContentSecurityPolicy(nsAString& aCSP) const {
-    aCSP = mContentSecurityPolicy;
-  }
+  const nsString& ExtensionPageCSP() const { return mExtensionPageCSP; }
+  void GetExtensionPageCSP(nsAString& aCSP) const { aCSP = mExtensionPageCSP; }
+
+  const nsString& ContentScriptCSP() const { return mContentScriptCSP; }
+  void GetContentScriptCSP(nsAString& aCSP) const { aCSP = mContentScriptCSP; }
 
   already_AddRefed<MatchPatternSet> AllowedOrigins() {
     return do_AddRef(mHostPermissions);
@@ -181,13 +184,15 @@ class WebExtensionPolicy final : public nsISupports,
   nsCOMPtr<nsIURI> mBaseURI;
 
   nsString mName;
-  nsString mContentSecurityPolicy;
+  nsString mExtensionPageCSP;
+  nsString mContentScriptCSP;
 
   bool mActive = false;
   bool mAllowPrivateBrowsingByDefault = true;
 
   RefPtr<WebExtensionLocalizeCallback> mLocalizeCallback;
 
+  bool mIsPrivileged;
   RefPtr<AtomSet> mPermissions;
   RefPtr<MatchPatternSet> mHostPermissions;
   MatchGlobSet mWebAccessiblePaths;

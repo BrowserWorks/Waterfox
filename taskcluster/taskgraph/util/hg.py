@@ -4,13 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 import requests
+import six
 import subprocess
 from redo import retry
 
-PUSHLOG_TMPL = '{}/json-pushes?version=2&changeset={}&tipsonly=1&full=1'
+PUSHLOG_TMPL = '{}/json-pushes?version=2&changeset={}&tipsonly=1'
 
 
 def find_hg_revision_push_info(repository, revision):
@@ -18,33 +19,41 @@ def find_hg_revision_push_info(repository, revision):
     pushlog_id of the revision."""
     pushlog_url = PUSHLOG_TMPL.format(repository, revision)
 
+    def extract_pushes(response_json):
+        pushes = response_json['pushes']
+        if len(pushes) != 1:
+            raise RuntimeError(
+                "Found {} pushlog_ids, expected 1, for {} revision {}: {}".format(
+                    len(pushes), repository, revision, pushes
+                )
+            )
+        return pushes
+
     def query_pushlog(url):
         r = requests.get(pushlog_url, timeout=60)
         r.raise_for_status()
-        return r
-    r = retry(
+        return extract_pushes(r.json())
+
+    pushes = retry(
         query_pushlog, args=(pushlog_url,),
         attempts=5, sleeptime=10,
     )
-    pushes = r.json()['pushes']
-    if len(pushes) != 1:
-        raise RuntimeError(
-            "Unable to find a single pushlog_id for {} revision {}: {}".format(
-                repository, revision, pushes
-            )
-        )
     pushid = pushes.keys()[0]
-    return {'pushdate': pushes[pushid]['date'], 'pushid': pushid}
+    return {
+        'pushdate': pushes[pushid]['date'],
+        'pushid': pushid,
+        'user': pushes[pushid]['user'],
+    }
 
 
 def get_hg_revision_branch(root, revision):
     """Given the parameters for a revision, find the hg_branch (aka
     relbranch) of the revision."""
-    return subprocess.check_output([
+    return six.ensure_text(subprocess.check_output([
         'hg', 'identify',
         '-T', '{branch}',
         '--rev', revision,
-    ], cwd=root)
+    ], cwd=root, universal_newlines=True))
 
 
 # For these functions, we assume that run-task has correctly checked out the

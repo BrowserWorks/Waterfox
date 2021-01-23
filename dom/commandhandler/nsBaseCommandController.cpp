@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsString.h"
-#include "nsIComponentManager.h"
 #include "nsIWeakReferenceUtils.h"
 #include "nsBaseCommandController.h"
 #include "nsControllerCommandTable.h"
@@ -25,7 +24,7 @@ nsBaseCommandController::nsBaseCommandController(
     nsControllerCommandTable* aControllerCommandTable)
     : mCommandContextRawPtr(nullptr), mCommandTable(aControllerCommandTable) {}
 
-nsBaseCommandController::~nsBaseCommandController() {}
+nsBaseCommandController::~nsBaseCommandController() = default;
 
 NS_IMETHODIMP
 nsBaseCommandController::SetCommandContext(nsISupports* aCommandContext) {
@@ -151,10 +150,9 @@ nsBaseCommandController::OnEvent(const char* aEventName) {
 }
 
 NS_IMETHODIMP
-nsBaseCommandController::GetSupportedCommands(uint32_t* aCount,
-                                              char*** aCommands) {
+nsBaseCommandController::GetSupportedCommands(nsTArray<nsCString>& aCommands) {
   NS_ENSURE_STATE(mCommandTable);
-  return mCommandTable->GetSupportedCommands(aCount, aCommands);
+  return mCommandTable->GetSupportedCommands(aCommands);
 }
 
 typedef already_AddRefed<nsControllerCommandTable> (*CommandTableCreatorFn)();

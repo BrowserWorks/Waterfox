@@ -134,7 +134,6 @@ struct nr_ice_ctx_ {
 
   nr_resolver *resolver;                      /* The resolver to use */
   nr_interface_prioritizer *interface_prioritizer;  /* Priority decision logic */
-  nr_socket_wrapper_factory *turn_tcp_socket_wrapper; /* The TURN TCP socket wrapper to use */
   nr_socket_factory *socket_factory;
 
   nr_ice_foundation_head foundations;
@@ -160,6 +159,8 @@ struct nr_ice_ctx_ {
 
   char force_net_interface[MAXIFNAME];
   nr_ice_stats stats;
+
+  nr_transport_addr *target_for_default_local_address_lookup;
 };
 
 int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp);
@@ -175,6 +176,7 @@ void nr_ice_ctx_add_flags(nr_ice_ctx *ctx, UINT4 flags);
 void nr_ice_ctx_remove_flags(nr_ice_ctx *ctx, UINT4 flags);
 int nr_ice_ctx_destroy(nr_ice_ctx **ctxp);
 int nr_ice_set_local_addresses(nr_ice_ctx *ctx, nr_local_addr* stun_addrs, int stun_addr_ct);
+int nr_ice_set_target_for_default_local_address_lookup(nr_ice_ctx *ctx, const char *target_ip, UINT2 target_port);
 int nr_ice_gather(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg);
 int nr_ice_add_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand);
 void nr_ice_gather_finished_cb(NR_SOCKET s, int h, void *cb_arg);
@@ -190,7 +192,6 @@ int nr_ice_ctx_set_turn_servers(nr_ice_ctx *ctx,nr_ice_turn_server *servers, int
 int nr_ice_ctx_copy_turn_servers(nr_ice_ctx *ctx, nr_ice_turn_server *servers, int ct);
 int nr_ice_ctx_set_resolver(nr_ice_ctx *ctx, nr_resolver *resolver);
 int nr_ice_ctx_set_interface_prioritizer(nr_ice_ctx *ctx, nr_interface_prioritizer *prioritizer);
-int nr_ice_ctx_set_turn_tcp_socket_wrapper(nr_ice_ctx *ctx, nr_socket_wrapper_factory *wrapper);
 void nr_ice_ctx_set_socket_factory(nr_ice_ctx *ctx, nr_socket_factory *factory);
 int nr_ice_ctx_set_trickle_cb(nr_ice_ctx *ctx, nr_ice_trickle_candidate_cb cb, void *cb_arg);
 int nr_ice_ctx_hide_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand);

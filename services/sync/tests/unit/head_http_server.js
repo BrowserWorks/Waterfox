@@ -37,7 +37,12 @@ const SYNC_API_VERSION = "1.1";
 // The server returns timestamps with 1/100 sec granularity. Note that this is
 // subject to change: see Bug 650435.
 function new_timestamp() {
-  return Math.round(Date.now() / 10) / 100;
+  return round_timestamp(Date.now());
+}
+
+// Rounds a millisecond timestamp `t` to seconds, with centisecond precision.
+function round_timestamp(t) {
+  return Math.round(t / 10) / 100;
 }
 
 function return_timestamp(request, response, timestamp) {
@@ -47,7 +52,7 @@ function return_timestamp(request, response, timestamp) {
   let body = "" + timestamp;
   response.setHeader("X-Weave-Timestamp", body);
   response.setStatusLine(request.httpVersion, 200, "OK");
-  response.bodyOutputStream.write(body, body.length);
+  writeBytesToOutputStream(response.bodyOutputStream, body);
   return timestamp;
 }
 
@@ -80,7 +85,7 @@ function httpd_basic_auth_handler(body, metadata, response) {
     response.setStatusLine(metadata.httpVersion, 401, "Unauthorized");
     response.setHeader("WWW-Authenticate", 'Basic realm="secret"', false);
   }
-  response.bodyOutputStream.write(body, body.length);
+  writeBytesToOutputStream(response.bodyOutputStream, body);
 }
 
 /*
@@ -163,7 +168,7 @@ ServerWBO.prototype = {
       }
       response.setHeader("X-Weave-Timestamp", "" + new_timestamp(), false);
       response.setStatusLine(request.httpVersion, statusCode, status);
-      response.bodyOutputStream.write(body, body.length);
+      writeBytesToOutputStream(response.bodyOutputStream, body);
     };
   },
 
@@ -518,7 +523,7 @@ ServerCollection.prototype = {
         if (!options.ids) {
           response.setStatusLine(request.httpVersion, "400", "Bad Request");
           body = "Bad Request";
-          response.bodyOutputStream.write(body, body.length);
+          writeBytesToOutputStream(response.bodyOutputStream, body);
           return;
         }
         options.ids = options.ids.split(",");
@@ -582,7 +587,7 @@ ServerCollection.prototype = {
       response.setHeader("X-Last-Modified", "" + self.timestamp, false);
 
       response.setStatusLine(request.httpVersion, statusCode, status);
-      response.bodyOutputStream.write(body, body.length);
+      writeBytesToOutputStream(response.bodyOutputStream, body);
     };
   },
 };
@@ -654,7 +659,7 @@ function track_collections_helper() {
     response.setHeader("Content-Type", "application/json");
     response.setHeader("X-Weave-Timestamp", "" + new_timestamp(), false);
     response.setStatusLine(request.httpVersion, 200, "OK");
-    response.bodyOutputStream.write(body, body.length);
+    writeBytesToOutputStream(response.bodyOutputStream, body);
   }
 
   return {
@@ -951,7 +956,7 @@ SyncServer.prototype = {
       resp.setHeader(header, value);
     }
     resp.setHeader("X-Weave-Timestamp", "" + this.timestamp(), false);
-    resp.bodyOutputStream.write(body, body.length);
+    writeBytesToOutputStream(resp.bodyOutputStream, body);
   },
 
   /**
@@ -1180,9 +1185,7 @@ SyncServer.prototype = {
               let wbo = coll.wbo(wboID);
               if (xius < wbo.modified) {
                 this._log.info(
-                  `x-if-unmodified-since mismatch - request wants ${xius} but wbo has ${
-                    wbo.modified
-                  }`
+                  `x-if-unmodified-since mismatch - request wants ${xius} but wbo has ${wbo.modified}`
                 );
                 respond(412, "precondition failed", "precondition failed");
                 return undefined;

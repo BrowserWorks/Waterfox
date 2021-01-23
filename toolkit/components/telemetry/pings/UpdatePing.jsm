@@ -18,6 +18,7 @@ ChromeUtils.defineModuleGetter(
 const LOGGER_NAME = "Toolkit.Telemetry";
 const PING_TYPE = "update";
 const UPDATE_DOWNLOADED_TOPIC = "update-downloaded";
+const UPDATE_STAGED_TOPIC = "update-staged";
 
 var EXPORTED_SYMBOLS = ["UpdatePing"];
 
@@ -46,6 +47,7 @@ var UpdatePing = {
     }
 
     Services.obs.addObserver(this, UPDATE_DOWNLOADED_TOPIC);
+    Services.obs.addObserver(this, UPDATE_STAGED_TOPIC);
   },
 
   /**
@@ -101,9 +103,12 @@ var UpdatePing = {
       usePingSender: false,
     };
 
-    TelemetryController.submitExternalPing(PING_TYPE, payload, options).catch(
-      e =>
-        this._log.error("handleUpdateSuccess - failed to submit update ping", e)
+    TelemetryController.submitExternalPing(
+      PING_TYPE,
+      payload,
+      options
+    ).catch(e =>
+      this._log.error("handleUpdateSuccess - failed to submit update ping", e)
     );
   },
 
@@ -151,9 +156,12 @@ var UpdatePing = {
       usePingSender: true,
     };
 
-    TelemetryController.submitExternalPing(PING_TYPE, payload, options).catch(
-      e =>
-        this._log.error("_handleUpdateReady - failed to submit update ping", e)
+    TelemetryController.submitExternalPing(
+      PING_TYPE,
+      payload,
+      options
+    ).catch(e =>
+      this._log.error("_handleUpdateReady - failed to submit update ping", e)
     );
   },
 
@@ -162,7 +170,7 @@ var UpdatePing = {
    */
   observe(aSubject, aTopic, aData) {
     this._log.trace("observe - aTopic: " + aTopic);
-    if (aTopic == UPDATE_DOWNLOADED_TOPIC) {
+    if (aTopic == UPDATE_DOWNLOADED_TOPIC || aTopic == UPDATE_STAGED_TOPIC) {
       this._handleUpdateReady(aData);
     }
   },
@@ -172,5 +180,6 @@ var UpdatePing = {
       return;
     }
     Services.obs.removeObserver(this, UPDATE_DOWNLOADED_TOPIC);
+    Services.obs.removeObserver(this, UPDATE_STAGED_TOPIC);
   },
 };

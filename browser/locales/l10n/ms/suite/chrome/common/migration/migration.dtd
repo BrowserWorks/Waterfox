@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Bestari Import">
+
+<!ENTITY importAllFrom.label             "Import Semua Item dari:">
+<!ENTITY importBookmarksFrom.label       "Import Tandabuku dari:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Fail">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "Jangan import apa-apa">
+<!ENTITY importFromNothing.accesskey     "J">
+
+<!ENTITY importSource.title              "Import Tetapan dan Data">
+<!ENTITY importItems.title               "Item untuk Diimport">
+<!ENTITY importItems.label               "Pilih item yang mahu diimport:">
+
+<!ENTITY selectProfile.title             "Pilih Profil">
+<!ENTITY selectProfile.label             "Profil berikut tersedia untuk diimport dari:">
+
+<!ENTITY migrating.title                 "Mengimport…">
+<!ENTITY migrating.label                 "Item berikut sedang diimport…">
+
+<!ENTITY done.title                      "Selesai Mengimport">
+<!ENTITY done.label                      "Item berikut telah berjaya diimport:">

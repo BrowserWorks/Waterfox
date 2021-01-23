@@ -51,6 +51,9 @@ void ShareableCanvasRenderer::Initialize(const CanvasInitializeData& aData) {
     mFlags |= TextureFlags::NON_PREMULTIPLIED;
   }
 
+  if (!aData.mHasAlpha) {
+    mFlags |= TextureFlags::IS_OPAQUE;
+  }
   UniquePtr<gl::SurfaceFactory> factory =
       gl::GLScreenBuffer::CreateFactory(mGLContext, caps, forwarder, mFlags);
   if (factory) {
@@ -76,6 +79,8 @@ void ShareableCanvasRenderer::Destroy() {
 }
 
 bool ShareableCanvasRenderer::UpdateTarget(DrawTarget* aDestTarget) {
+  MOZ_ASSERT(!mOOPRenderer);
+
   MOZ_ASSERT(aDestTarget);
   if (!aDestTarget) {
     return false;
@@ -174,11 +179,15 @@ CanvasClient::CanvasClientType ShareableCanvasRenderer::GetCanvasClientType() {
   if (mGLContext) {
     return CanvasClient::CanvasClientTypeShSurf;
   }
+
+  if (mOOPRenderer) {
+    return CanvasClient::CanvasClientTypeOOP;
+  }
+
   return CanvasClient::CanvasClientSurface;
 }
 
-void ShareableCanvasRenderer::UpdateCompositableClient(
-    wr::RenderRoot aRenderRoot) {
+void ShareableCanvasRenderer::UpdateCompositableClient() {
   if (!CreateCompositable()) {
     return;
   }
@@ -198,16 +207,14 @@ void ShareableCanvasRenderer::UpdateCompositableClient(
       gfxCriticalNote << "BufferProvider::SetForwarder failed";
       return;
     }
-    mCanvasClient->UpdateFromTexture(mBufferProvider->GetTextureClient(),
-                                     aRenderRoot);
+    mCanvasClient->UpdateFromTexture(mBufferProvider->GetTextureClient());
   } else {
-    mCanvasClient->Update(gfx::IntSize(mSize.width, mSize.height), this,
-                          aRenderRoot);
+    mCanvasClient->Update(gfx::IntSize(mSize.width, mSize.height), this);
   }
 
   FireDidTransactionCallback();
 
-  mCanvasClient->Updated(aRenderRoot);
+  mCanvasClient->Updated();
 }
 
 }  // namespace layers

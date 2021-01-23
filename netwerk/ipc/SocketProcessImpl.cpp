@@ -5,12 +5,22 @@
 
 #include "SocketProcessImpl.h"
 
+#include "ProcessUtils.h"
 #include "base/command_line.h"
 #include "base/shared_memory.h"
 #include "base/string_util.h"
-#include "mozilla/ipc/IOThreadChild.h"
 #include "mozilla/BackgroundHangMonitor.h"
 #include "mozilla/Preferences.h"
+#include "ProcessUtils.h"
+#include "mozilla/ipc/IOThreadChild.h"
+
+#if defined(OS_WIN) && defined(MOZ_SANDBOX)
+#  include "mozilla/sandboxTarget.h"
+#endif
+
+#ifdef OS_POSIX
+#  include <unistd.h>  // For sleep().
+#endif
 
 using mozilla::ipc::IOThreadChild;
 
@@ -22,7 +32,7 @@ LazyLogModule gSocketProcessLog("socketprocess");
 SocketProcessImpl::SocketProcessImpl(ProcessId aParentPid)
     : ProcessChild(aParentPid) {}
 
-SocketProcessImpl::~SocketProcessImpl() {}
+SocketProcessImpl::~SocketProcessImpl() = default;
 
 bool SocketProcessImpl::Init(int aArgc, char* aArgv[]) {
 #ifdef OS_POSIX
@@ -31,6 +41,12 @@ bool SocketProcessImpl::Init(int aArgc, char* aArgv[]) {
                   base::GetCurrentProcId());
     sleep(30);
   }
+#endif
+#if defined(MOZ_SANDBOX) && defined(OS_WIN)
+  LoadLibraryW(L"nss3.dll");
+  LoadLibraryW(L"softokn3.dll");
+  LoadLibraryW(L"freebl3.dll");
+  mozilla::SandboxTarget::Instance()->StartSandbox();
 #endif
   char* parentBuildID = nullptr;
   char* prefsHandle = nullptr;
@@ -75,7 +91,7 @@ bool SocketProcessImpl::Init(int aArgc, char* aArgv[]) {
     }
   }
 
-  SharedPreferenceDeserializer deserializer;
+  ipc::SharedPreferenceDeserializer deserializer;
   if (!deserializer.DeserializeFromSharedMemory(prefsHandle, prefMapHandle,
                                                 prefsLen, prefMapSize)) {
     return false;
@@ -83,7 +99,7 @@ bool SocketProcessImpl::Init(int aArgc, char* aArgv[]) {
 
   return mSocketProcessChild.Init(ParentPid(), parentBuildID,
                                   IOThreadChild::message_loop(),
-                                  IOThreadChild::channel());
+                                  IOThreadChild::TakeChannel());
 }
 
 void SocketProcessImpl::CleanUp() { mSocketProcessChild.CleanUp(); }

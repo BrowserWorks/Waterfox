@@ -28,11 +28,13 @@ class MediaEnginePrefs {
         mAecOn(false),
         mUseAecMobile(false),
         mAgcOn(false),
+        mHPFOn(false),
+        mExperimentalInputProcessing(false),
         mNoiseOn(false),
         mAec(0),
         mAgc(0),
+        mRoutingMode(0),
         mNoise(0),
-        mFullDuplex(false),
         mExtendedFilter(false),
         mDelayAgnostic(false),
         mFakeDeviceChangeEventOn(false),
@@ -45,11 +47,13 @@ class MediaEnginePrefs {
   bool mAecOn;
   bool mUseAecMobile;
   bool mAgcOn;
+  bool mHPFOn;
+  bool mExperimentalInputProcessing;
   bool mNoiseOn;
   int32_t mAec;
   int32_t mAgc;
+  int32_t mRoutingMode;
   int32_t mNoise;
-  bool mFullDuplex;
   bool mExtendedFilter;
   bool mDelayAgnostic;
   bool mFakeDeviceChangeEventOn;

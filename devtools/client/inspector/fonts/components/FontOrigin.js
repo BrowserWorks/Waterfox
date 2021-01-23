@@ -14,8 +14,8 @@ loader.lazyRequireGetter(
   "devtools/shared/platform/clipboard"
 );
 
-const { getStr } = require("../utils/l10n");
-const Types = require("../types");
+const { getStr } = require("devtools/client/inspector/fonts/utils/l10n");
+const Types = require("devtools/client/inspector/fonts/types");
 
 class FontOrigin extends PureComponent {
   static get propTypes() {
@@ -27,6 +27,13 @@ class FontOrigin extends PureComponent {
   constructor(props) {
     super(props);
     this.onCopyURL = this.onCopyURL.bind(this);
+  }
+
+  clipTitle(title, maxLength = 512) {
+    if (title.length > maxLength) {
+      return title.substring(0, maxLength - 2) + "…";
+    }
+    return title;
   }
 
   onCopyURL() {
@@ -52,7 +59,7 @@ class FontOrigin extends PureComponent {
       dom.span(
         {
           className: "url",
-          title: url,
+          title: this.clipTitle(url),
         },
         url
       ),

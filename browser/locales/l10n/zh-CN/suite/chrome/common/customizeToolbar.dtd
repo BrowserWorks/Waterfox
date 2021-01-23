@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "定制工具栏">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "拖放至工具栏以添加，或从工具栏拖出以移除。">
+<!ENTITY show.label               "显示：">
+<!ENTITY iconsAndText.label       "图标和文字">
+<!ENTITY icons.label              "图标">
+<!ENTITY text.label               "文字">
+<!ENTITY useSmallIcons.label      "使用小图标">
+<!ENTITY restoreDefaultSet.label  "恢复默认设置">
+<!ENTITY addNewToolbar.label      "添加新工具栏">
+<!ENTITY saveChanges.label        "完成">
+<!ENTITY undoChanges.label        "撤销更改">

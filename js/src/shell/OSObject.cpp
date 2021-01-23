@@ -8,6 +8,7 @@
 
 #include "shell/OSObject.h"
 
+#include "mozilla/ScopeExit.h"
 #include "mozilla/TextUtils.h"
 
 #include <errno.h>
@@ -16,7 +17,10 @@
 #  include <direct.h>
 #  include <process.h>
 #  include <string.h>
+#  include <windows.h>
 #else
+#  include <dirent.h>
+#  include <sys/types.h>
 #  include <sys/wait.h>
 #  include <unistd.h>
 #endif
@@ -25,13 +29,13 @@
 // For JSFunctionSpecWithHelp
 #include "jsfriendapi.h"
 
-#include "builtin/String.h"
 #include "gc/FreeOp.h"
 #include "js/CharacterEncoding.h"
 #include "js/Conversions.h"
 #include "js/PropertySpec.h"
 #include "js/Wrapper.h"
 #include "shell/jsshell.h"
+#include "shell/StringUtils.h"
 #include "util/StringBuffer.h"
 #include "util/Text.h"
 #include "util/Windows.h"
@@ -54,18 +58,8 @@ using js::shell::RCFile;
 namespace js {
 namespace shell {
 
-#ifdef XP_WIN
-const char PathSeparator = '\\';
-#else
-const char PathSeparator = '/';
-#endif
-
-static bool IsAbsolutePath(const UniqueChars& filename) {
-  const char* pathname = filename.get();
-
-  if (pathname[0] == PathSeparator) {
-    return true;
-  }
+bool IsAbsolutePath(JSLinearString* filename) {
+  size_t length = filename->length();
 
 #ifdef XP_WIN
   // On Windows there are various forms of absolute paths (see
@@ -76,16 +70,16 @@ static bool IsAbsolutePath(const UniqueChars& filename) {
   //   "\\..."
   //   "C:\..."
   //
-  // The first two cases are handled by the test above so we only need a test
-  // for the last one here.
+  // The first two cases are handled by the common test below so we only need a
+  // specific test for the last one here.
 
-  if ((strlen(pathname) > 3 && mozilla::IsAsciiAlpha(pathname[0]) &&
-       pathname[1] == ':' && pathname[2] == '\\')) {
+  if (length > 3 && mozilla::IsAsciiAlpha(CharAt(filename, 0)) &&
+      CharAt(filename, 1) == u':' && CharAt(filename, 2) == u'\\') {
     return true;
   }
 #endif
 
-  return false;
+  return length > 0 && CharAt(filename, 0) == PathSeparator;
 }
 
 /*
@@ -106,13 +100,18 @@ JSString* ResolvePath(JSContext* cx, HandleString filenameStr,
 #endif
   }
 
-  UniqueChars filename = JS_EncodeStringToLatin1(cx, filenameStr);
-  if (!filename) {
+  RootedLinearString str(cx, JS_EnsureLinearString(cx, filenameStr));
+  if (!str) {
     return nullptr;
   }
 
-  if (IsAbsolutePath(filename)) {
-    return filenameStr;
+  if (IsAbsolutePath(str)) {
+    return str;
+  }
+
+  UniqueChars filename = JS_EncodeStringToLatin1(cx, str);
+  if (!filename) {
+    return nullptr;
   }
 
   JS::AutoFilename scriptFilename;
@@ -138,8 +137,8 @@ JSString* ResolvePath(JSContext* cx, HandleString filenameStr,
     // The docs say it can return EINVAL, but the compiler says it's void
     _splitpath(scriptFilename.get(), nullptr, buffer, nullptr, nullptr);
 #else
-    strncpy(buffer, scriptFilename.get(), PATH_MAX + 1);
-    if (buffer[PATH_MAX] != '\0') {
+    strncpy(buffer, scriptFilename.get(), PATH_MAX);
+    if (buffer[PATH_MAX - 1] != '\0') {
       return nullptr;
     }
 
@@ -198,6 +197,11 @@ JSObject* FileAsTypedArray(JSContext* cx, JS::HandleString pathnameStr) {
       }
       JS_ReportErrorUTF8(cx, "can't seek start of %s", pathname.get());
     } else {
+      if (len > ArrayBufferObject::MaxBufferByteLength) {
+        JS_ReportErrorUTF8(cx, "file %s is too large for a Uint8Array",
+                           pathname.get());
+        return nullptr;
+      }
       obj = JS_NewUint8Array(cx, len);
       if (!obj) {
         return nullptr;
@@ -289,7 +293,7 @@ static bool ReadFile(JSContext* cx, unsigned argc, Value* vp,
       return false;
     }
     bool match;
-    if (!JS_StringEqualsAscii(cx, opt, "binary", &match)) {
+    if (!JS_StringEqualsLiteral(cx, opt, "binary", &match)) {
       return false;
     }
     if (match) {
@@ -316,6 +320,99 @@ static bool osfile_readFile(JSContext* cx, unsigned argc, Value* vp) {
 static bool osfile_readRelativeToScript(JSContext* cx, unsigned argc,
                                         Value* vp) {
   return ReadFile(cx, argc, vp, true);
+}
+
+static bool osfile_listDir(JSContext* cx, unsigned argc, Value* vp) {
+  CallArgs args = CallArgsFromVp(argc, vp);
+
+  if (args.length() != 1) {
+    JS_ReportErrorASCII(cx, "os.file.listDir requires 1 argument");
+    return false;
+  }
+
+  if (!args[0].isString()) {
+    JS_ReportErrorNumberASCII(cx, js::shell::my_GetErrorMessage, nullptr,
+                              JSSMSG_INVALID_ARGS, "os.file.listDir");
+    return false;
+  }
+
+  RootedString givenPath(cx, args[0].toString());
+  RootedString str(cx, ResolvePath(cx, givenPath, ScriptRelative));
+  if (!str) {
+    return false;
+  }
+
+  UniqueChars pathname = JS_EncodeStringToLatin1(cx, str);
+  if (!pathname) {
+    JS_ReportErrorASCII(cx, "os.file.listDir cannot convert path to Latin1");
+    return false;
+  }
+
+  RootedValueVector elems(cx);
+  auto append = [&](const char* name) -> bool {
+    if (!(str = JS_NewStringCopyZ(cx, name))) {
+      return false;
+    }
+    if (!elems.append(StringValue(str))) {
+      js::ReportOutOfMemory(cx);
+      return false;
+    }
+    return true;
+  };
+
+#if defined(XP_UNIX)
+  {
+    DIR* dir = opendir(pathname.get());
+    if (!dir) {
+      JS_ReportErrorASCII(cx, "os.file.listDir is unable to open: %s",
+                          pathname.get());
+      return false;
+    }
+    auto close = mozilla::MakeScopeExit([&] {
+      if (closedir(dir) != 0) {
+        MOZ_CRASH("Could not close dir");
+      }
+    });
+
+    while (struct dirent* entry = readdir(dir)) {
+      if (!append(entry->d_name)) {
+        return false;
+      }
+    }
+  }
+#elif defined(XP_WIN)
+  {
+    const size_t pathlen = strlen(pathname.get());
+    Vector<char> pattern(cx);
+    if (!pattern.append(pathname.get(), pathlen) ||
+        !pattern.append(PathSeparator) || !pattern.append("*", 2)) {
+      js::ReportOutOfMemory(cx);
+      return false;
+    }
+
+    WIN32_FIND_DATA FindFileData;
+    HANDLE hFind = FindFirstFile(pattern.begin(), &FindFileData);
+    auto close = mozilla::MakeScopeExit([&] {
+      if (!FindClose(hFind)) {
+        MOZ_CRASH("Could not close Find");
+      }
+    });
+    for (bool found = (hFind != INVALID_HANDLE_VALUE); found;
+         found = FindNextFile(hFind, &FindFileData)) {
+      if (!append(FindFileData.cFileName)) {
+        return false;
+      }
+    }
+  }
+#endif
+
+  JSObject* array = JS::NewArrayObject(cx, elems);
+  if (!array) {
+    return false;
+  }
+
+  args.rval().setObject(*array);
+  return true;
 }
 
 static bool osfile_writeTypedArrayToFile(JSContext* cx, unsigned argc,
@@ -417,7 +514,7 @@ class FileObject : public NativeObject {
   enum : uint32_t { FILE_SLOT = 0, NUM_SLOTS };
 
  public:
-  static const js::Class class_;
+  static const JSClass class_;
 
   static FileObject* create(JSContext* cx, RCFile* file) {
     FileObject* obj = js::NewBuiltinClassInstance<FileObject>(cx);
@@ -425,17 +522,17 @@ class FileObject : public NativeObject {
       return nullptr;
     }
 
-    obj->setRCFile(file);
+    InitReservedSlot(obj, FILE_SLOT, file, MemoryUse::FileObjectFile);
     file->acquire();
     return obj;
   }
 
-  static void finalize(FreeOp* fop, JSObject* obj) {
+  static void finalize(JSFreeOp* fop, JSObject* obj) {
     FileObject* fileObj = &obj->as<FileObject>();
     RCFile* file = fileObj->rcFile();
+    fop->removeCellMemory(obj, sizeof(*file), MemoryUse::FileObjectFile);
     if (file->release()) {
-      fileObj->setRCFile(nullptr);
-      fop->delete_(file);
+      fop->deleteUntracked(file);
     }
   }
 
@@ -455,28 +552,23 @@ class FileObject : public NativeObject {
     return reinterpret_cast<RCFile*>(
         js::GetReservedSlot(this, FILE_SLOT).toPrivate());
   }
-
- private:
-  void setRCFile(RCFile* file) {
-    js::SetReservedSlot(this, FILE_SLOT, PrivateValue(file));
-  }
 };
 
-static const js::ClassOps FileObjectClassOps = {
-    nullptr,              /* addProperty */
-    nullptr,              /* delProperty */
-    nullptr,              /* enumerate */
-    nullptr,              /* newEnumerate */
-    nullptr,              /* resolve */
-    nullptr,              /* mayResolve */
-    FileObject::finalize, /* finalize */
-    nullptr,              /* call */
-    nullptr,              /* hasInstance */
-    nullptr,              /* construct */
-    nullptr               /* trace */
+static const JSClassOps FileObjectClassOps = {
+    nullptr,               // addProperty
+    nullptr,               // delProperty
+    nullptr,               // enumerate
+    nullptr,               // newEnumerate
+    nullptr,               // resolve
+    nullptr,               // mayResolve
+    FileObject::finalize,  // finalize
+    nullptr,               // call
+    nullptr,               // hasInstance
+    nullptr,               // construct
+    nullptr,               // trace
 };
 
-const js::Class FileObject::class_ = {
+const JSClass FileObject::class_ = {
     "File",
     JSCLASS_HAS_RESERVED_SLOTS(FileObject::NUM_SLOTS) |
         JSCLASS_FOREGROUND_FINALIZE,
@@ -613,6 +705,12 @@ static const JSFunctionSpecWithHelp osfile_functions[] = {
 "  as the second argument, in which case it returns a Uint8Array. Filename is\n"
 "  relative to the current working directory."),
 
+    JS_FN_HELP("listDir", osfile_listDir, 1, 0,
+"listDir(filename)",
+"  Read entire contents of a directory. The \"filename\" parameter is relate to the\n"
+"  current working directory.Returns a list of filenames within the given directory.\n"
+"  Note that \".\" and \"..\" are also listed."),
+
     JS_FN_HELP("readRelativeToScript", osfile_readRelativeToScript, 1, 0,
 "readRelativeToScript(filename, [\"binary\"])",
 "  Read filename into returned string. Filename is relative to the directory\n"
@@ -655,12 +753,12 @@ static bool ospath_isAbsolute(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  UniqueChars path = JS_EncodeStringToLatin1(cx, args[0].toString());
-  if (!path) {
+  RootedLinearString str(cx, JS_EnsureLinearString(cx, args[0].toString()));
+  if (!str) {
     return false;
   }
 
-  args.rval().setBoolean(IsAbsolutePath(path));
+  args.rval().setBoolean(IsAbsolutePath(str));
   return true;
 }
 
@@ -684,14 +782,19 @@ static bool ospath_join(JSContext* cx, unsigned argc, Value* vp) {
       return false;
     }
 
-    UniqueChars path = JS_EncodeStringToLatin1(cx, args[i].toString());
-    if (!path) {
+    RootedLinearString str(cx, JS_EnsureLinearString(cx, args[i].toString()));
+    if (!str) {
       return false;
     }
 
-    if (IsAbsolutePath(path)) {
+    if (IsAbsolutePath(str)) {
       MOZ_ALWAYS_TRUE(buffer.resize(0));
     } else if (i != 0) {
+      UniqueChars path = JS_EncodeStringToLatin1(cx, str);
+      if (!path) {
+        return false;
+      }
+
       if (!buffer.append(PathSeparator)) {
         return false;
       }

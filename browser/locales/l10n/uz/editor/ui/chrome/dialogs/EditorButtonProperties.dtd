@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Tugma xossalari">
+
+<!ENTITY Settings.label "Sozlamalar">
+
+<!ENTITY ButtonType.label "Turi">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Jo‘natish">
+<!ENTITY reset.value "Tiklash">
+<!ENTITY button.value "Tugma">
+
+<!ENTITY ButtonName.label "Nomi:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Qiymati:">
+<!ENTITY ButtonValue.accesskey "Q">
+<!ENTITY tabIndex.label "Ichki oyna indeksi:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "O‘chirib qo‘yilgan">
+<!ENTITY ButtonDisabled.accesskey "O">
+<!ENTITY AccessKey.label "Kirish tugmasi:">
+<!ENTITY AccessKey.accesskey "t">
+
+<!ENTITY RemoveButton.label "Tugmani olib tashlash">
+<!ENTITY RemoveButton.accesskey "o">

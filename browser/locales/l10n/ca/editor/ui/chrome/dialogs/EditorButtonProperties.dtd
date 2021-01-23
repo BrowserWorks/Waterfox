@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propietats del botó">
+
+<!ENTITY Settings.label "Paràmetres">
+
+<!ENTITY ButtonType.label "Tipus">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Tramet">
+<!ENTITY reset.value "Reinicia">
+<!ENTITY button.value "Botó">
+
+<!ENTITY ButtonName.label "Nom:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Valor:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Índex de pestanyes:">
+<!ENTITY tabIndex.accesskey "p">
+<!ENTITY ButtonDisabled.label "Inhabilitat">
+<!ENTITY ButtonDisabled.accesskey "I">
+<!ENTITY AccessKey.label "Clau d'accés:">
+<!ENTITY AccessKey.accesskey "C">
+
+<!ENTITY RemoveButton.label "Suprimeix el botó">
+<!ENTITY RemoveButton.accesskey "S">

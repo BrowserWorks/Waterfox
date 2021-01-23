@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Mensagem">
+<!ENTITY newMessageCmd.accesskey         "M">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Contato…">
+<!ENTITY newContactCmd.accesskey         "C">
+
+<!ENTITY sendPage.label                  "Enviar página">
+<!ENTITY sendPage.accesskey              "E">
+
+<!ENTITY contextSendThisPage.label       "Enviar esta página…">
+<!ENTITY contextSendThisPage.accesskey   "E">
+<!ENTITY contextSendThisLink.label       "Enviar este endereço…">
+<!ENTITY contextSendThisLink.accesskey   "v">
+<!ENTITY contextSendImage.label          "Enviar imagem">
+<!ENTITY contextSendImage.accesskey      "v">
+<!ENTITY contextSendVideo.label          "Enviar video…">
+<!ENTITY contextSendVideo.accesskey      "o">
+<!ENTITY contextSendAudio.label          "Enviar áudio…">
+<!ENTITY contextSendAudio.accesskey      "a">
+<!ENTITY contextSendFrame.label          "Enviar quadro">
+<!ENTITY contextSendFrame.accesskey      "E">
+
+<!ENTITY sendLinkCmd.label               "Enviar endereço"> 
+<!ENTITY sendLinkCmd.accesskey           "v">
+

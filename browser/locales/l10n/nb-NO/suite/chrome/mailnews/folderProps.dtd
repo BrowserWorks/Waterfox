@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Egenskaper">
+
+<!ENTITY generalInfo.label                       "Generell informasjon">
+<!ENTITY folderCharsetFallback2.label            "Reserve-tegnkoding:">
+<!ENTITY folderCharsetFallback2.accesskey        "e">
+<!ENTITY folderCharsetEnforce2.label             "Bruk kodingen på alle meldingen i mappen (innstillinger som gjelder individuelle meldingers tekstkoding og autodetektering vil ignoreres)">
+<!ENTITY folderCharsetEnforce2.accesskey         "a">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Bygg opp oppsummeringsfil på nytt">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparer mappe">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "o">
+<!ENTITY folderRebuildSummaryFile.explanation    "Noen ganger kan oppsummeringsfilen for mapper (.msf) bli skadet, og meldinger kan se ut til å være skadede eller mangle, eller at slettede meldinger vises; å reparere mappen kan fikse disse problemene.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Inkluder meldinger i denne mappen i globale søkeresultater">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "I">
+
+<!ENTITY retention.label "Automatisk sletting">
+<!ENTITY retentionUseAccount.label "Bruk innstillinger for kontoen">
+<!ENTITY retentionUseAccount.accesskey "B">
+<!ENTITY daysOld.label "dager gammel">
+<!ENTITY message.label "meldingene">
+<!ENTITY retentionCleanup.label "Behold:">
+<!ENTITY retentionCleanupImap.label "Behold meldinger, både lokale kopier og originalene på serveren:">
+<!ENTITY retentionCleanupPop.label "Behold meldinger, også originalene på serveren:">
+<!ENTITY retentionDeleteMsg.label "Slett meldinger eldre enn">
+<!ENTITY retentionDeleteMsg.accesskey "e">
+<!ENTITY retentionKeepAll.label "Alle meldinger">
+<!ENTITY retentionKeepAll.accesskey "I">
+<!ENTITY retentionKeepRecent.label "De nyeste">
+<!ENTITY retentionKeepRecent.accesskey "S">
+<!ENTITY retentionApplyToFlagged.label "Alltid behold meldinger merket med flagg">
+<!ENTITY retentionApplyToFlagged.accesskey "d">
+
+<!ENTITY folderSynchronizationTab.label          "Synkronisering">
+<!ENTITY folderCheckForNewMessages2.label        "Ved henting av nye meldinger for denne kontoen, alltid sjekk denne mappen">
+<!ENTITY folderCheckForNewMessages2.accesskey    "d">
+
+<!ENTITY offlineFolder.check.label               "Velg denne mappen for frakoblet bruk">
+<!ENTITY offlineFolder.check.accesskey           "V">
+<!ENTITY offlineFolder.button.label              "Last ned nå">
+<!ENTITY offlineFolder.button.accesskey          "L">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Velg denne nyhetsgruppen for frakoblet bruk">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "V">
+<!ENTITY offlineNewsgroup.button.label           "Last ned nå">
+<!ENTITY offlineNewsgroup.button.accesskey       "L">
+
+<!ENTITY folderProps.name.label                  "Navn:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Adresse:">
+<!ENTITY folderProps.location.accesskey          "A">
+
+<!ENTITY folderSharingTab.label                  "Deling">
+<!ENTITY privileges.button.label                 "Tillatelser …">
+<!ENTITY privileges.button.accesskey             "T">
+<!ENTITY permissionsDesc.label                   "Du har følgende tillatelser:">
+<!ENTITY folderType.label                        "Mappetype:">
+
+<!ENTITY folderQuotaTab.label                    "Kvote">
+<!ENTITY folderQuotaRoot.label                   "Kvoterot:">
+<!ENTITY folderQuotaUsage.label                  "Bruk:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Antall meldinger:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "ukjent">
+<!ENTITY sizeOnDisk.label                        "Størrelse på disk:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "ukjent">

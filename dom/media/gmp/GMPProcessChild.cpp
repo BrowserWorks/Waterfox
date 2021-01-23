@@ -18,7 +18,7 @@ namespace gmp {
 GMPProcessChild::GMPProcessChild(ProcessId aParentPid)
     : ProcessChild(aParentPid) {}
 
-GMPProcessChild::~GMPProcessChild() {}
+GMPProcessChild::~GMPProcessChild() = default;
 
 bool GMPProcessChild::Init(int aArgc, char* aArgv[]) {
   nsAutoString pluginFilename;
@@ -42,7 +42,8 @@ bool GMPProcessChild::Init(int aArgc, char* aArgv[]) {
   BackgroundHangMonitor::Startup();
 
   return mPlugin.Init(pluginFilename, ParentPid(),
-                      IOThreadChild::message_loop(), IOThreadChild::channel());
+                      IOThreadChild::message_loop(),
+                      IOThreadChild::TakeChannel());
 }
 
 void GMPProcessChild::CleanUp() { BackgroundHangMonitor::Shutdown(); }

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Enlakaat ur riñvenn jedoniezhel">
+
+<!ENTITY sourceEditField.label "Enankit ur voneg tarzh LaTeX :">
+
+<!ENTITY options.label "Dibarzhioù">
+<!ENTITY optionInline.label "Mod enlinenn">
+<!ENTITY optionInline.accesskey "M">
+<!ENTITY optionDisplay.label "Mod skrammañ">
+<!ENTITY optionDisplay.accesskey "s">
+<!ENTITY optionLTR.label "Eus an tu kleiz d'an tu dehou">
+<!ENTITY optionLTR.accesskey "k">
+<!ENTITY optionRTL.label "Eus an tu dehou d'an tu kleiz">
+<!ENTITY optionRTL.accesskey "d">
+
+<!ENTITY insertButton.label "Enlakaat">
+<!ENTITY insertButton.accesskey "E">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "საიტის ნავიგაციის პანელი">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "საიტის ნავიგაციის პანელი">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "აჩვენე ყოველთვის">
+<!ENTITY linkToolbarAlways.accesskey "S">
+<!ENTITY linkToolbarAsNeeded.label "საჭიროებისამებრ">
+<!ENTITY linkToolbarAsNeeded.accesskey "O">
+<!ENTITY linkToolbarNever.label "დამალე ყოველთვის">
+<!ENTITY linkToolbarNever.accesskey "H">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "ზედა">
+<!ENTITY upButton.label "ზევით">
+<!ENTITY firstButton.label "პირველი">
+<!ENTITY prevButton.label "წინა">
+<!ENTITY nextButton.label "შემდეგი">
+<!ENTITY lastButton.label "ბოლო">
+
+<!ENTITY documentButton.label "დოკუმენტი">
+
+<!ENTITY tocButton.label "სარჩევი">
+<!ENTITY chapterButton.label "თავები">
+<!ENTITY sectionButton.label "სექციები">
+<!ENTITY subSectionButton.label "ქვესექციები">
+<!ENTITY appendixButton.label "დანართები">
+<!ENTITY glossaryButton.label "სიტყვის კონა">
+<!ENTITY indexButton.label "ინდექსი">
+
+<!ENTITY moreButton.label "დამატებით">
+
+<!ENTITY helpButton.label "დახმარება">
+<!ENTITY searchButton.label "ძიება">
+
+<!ENTITY authorButton.label "ავტორ(ებ)ი">
+<!ENTITY copyrightButton.label "საავტორო უფლება">
+
+<!ENTITY bookmarkButton.label "სანიშნები">
+
+<!ENTITY alternateButton.label "სხვა ვერსიები">
+
+<!ENTITY feedButton.label "გამოწერა">

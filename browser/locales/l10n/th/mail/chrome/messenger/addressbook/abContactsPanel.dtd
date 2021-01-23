@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "คุณสมบัติ">
+<!ENTITY propertiesMenu.accesskey           "ค">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "คุณสมบัติสมุดรายชื่อ">
+<!ENTITY abPropertiesMenu.accesskey         "ค">
+<!ENTITY contactPropertiesMenu.label        "คุณสมบัติผู้ติดต่อ">
+<!ENTITY contactPropertiesMenu.accesskey    "ค">
+<!ENTITY mailingListPropertiesMenu.label    "คุณสมบัติรายชื่อผู้รับจดหมาย">
+<!ENTITY mailingListPropertiesMenu.accesskey "ค">
+
+<!ENTITY abContextMenuButton.tooltip        "แสดงเมนูบริบทสมุดรายชื่อ">
+<!ENTITY addressbookPicker.label            "สมุดรายชื่อ:">
+<!ENTITY addressbookPicker.accesskey        "ม">
+<!ENTITY searchContacts.label               "ค้นหาผู้ติดต่อ:">
+<!ENTITY searchContacts.accesskey           "ต">
+<!ENTITY SearchNameOrEmail.label            "ชื่อหรืออีเมล">
+
+<!ENTITY addtoToFieldMenu.label             "เพิ่มไปยังช่อง ถึง">
+<!ENTITY addtoToFieldMenu.accesskey         "พ">
+<!ENTITY addtoCcFieldMenu.label             "เพิ่มไปยังช่อง สำเนาถึง">
+<!ENTITY addtoCcFieldMenu.accesskey         "ส">
+<!ENTITY addtoBccFieldMenu.label            "เพิ่มไปยังช่อง สำเนาลับถึง">
+<!ENTITY addtoBccFieldMenu.accesskey        "ถ">
+<!ENTITY deleteAddrBookCard.label           "ลบ">
+<!ENTITY deleteAddrBookCard.accesskey       "ล">
+<!ENTITY propertiesContext.label            "คุณสมบัติ">
+<!ENTITY propertiesContext.accesskey        "ค">
+<!ENTITY abPropertiesContext.label          "คุณสมบัติ">
+<!ENTITY abPropertiesContext.accesskey      "ค">
+<!ENTITY editContactContext.label           "แก้ไขผู้ติดต่อ">
+<!ENTITY editContactContext.accesskey       "ก">
+<!ENTITY editMailingListContext.label       "แก้ไขรายชื่อ">
+<!ENTITY editMailingListContext.accesskey   "ก">
+
+<!ENTITY newContactAbContext.label          "ผู้ติดต่อใหม่">
+<!ENTITY newContactAbContext.accesskey      "ผ">
+<!ENTITY newListAbContext.label             "รายชื่อใหม่">
+<!ENTITY newListAbContext.accesskey         "ร">
+
+<!ENTITY toButton.label                     "เพิ่มไปยัง ถึง:">
+<!ENTITY toButton.accesskey                 "พ">
+<!ENTITY ccButton.label                     "เพิ่มไปยัง สำเนาถึง:">
+<!ENTITY ccButton.accesskey                 "ส">
+<!ENTITY bccButton.label                    "เพิ่มไปยัง สำเนาลับถึง:">
+<!ENTITY bccButton.accesskey                "ถ">

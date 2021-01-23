@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY MsgSynchronize.label "Hämta och synkronisera meddelanden">
+<!ENTITY MsgSelect.label "Att hämta för användning när du arbetar i nedkopplat läge">
+<!ENTITY MsgSyncDesc.label "Om du redan valt e-postmappar och diskussionsgrupper för användning när du arbetar i nedkopplat läge, så kan du hämta/synkronisera nu. Annars använder du knappen &quot;Välj&quot; för att välja e-postmappar och diskussionsgrupper.">
+<!ENTITY MsgSyncDirections.label "Hämta/Synkronisera följande:">
+<!ENTITY syncTypeMail.label "E-postmeddelanden">
+<!ENTITY syncTypeMail.accesskey "E">
+<!ENTITY syncTypeNews.label "Diskussionsgruppsinlägg">
+<!ENTITY syncTypeNews.accesskey "g">
+<!ENTITY sendMessage.label "Skicka meddelanden som inte har skickats">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "Arbeta i nedkopplat läge när hämta/synkronisera är klart">
+<!ENTITY workOffline.accesskey "A">
+<!ENTITY selectButton.label "Välj…">
+<!ENTITY selectButton.accesskey "V">
+<!ENTITY MsgSelectDesc.label "Välj e-postmappar och diskussionsgrupper för att arbeta i nedkopplat läge.">
+<!ENTITY MsgSelectInd.label "Hämta">
+<!ENTITY MsgSelectItems.label "Mappar och diskussionsgrupper">

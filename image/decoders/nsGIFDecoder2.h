@@ -11,6 +11,7 @@
 #include "GIF2.h"
 #include "StreamingLexer.h"
 #include "SurfacePipe.h"
+#include "mozilla/gfx/Swizzle.h"
 
 namespace mozilla {
 namespace image {
@@ -57,6 +58,9 @@ class nsGIFDecoder2 : public Decoder {
 
   /// Called when we finish decoding the entire image.
   void FlushImageData();
+
+  /// Convert color map to BGRA, applying any necessary CMS transforms.
+  void ConvertColormap(uint32_t* aColormap, uint32_t aColors);
 
   /// Transforms a palette index into a pixel.
   template <typename PixelSize>
@@ -152,6 +156,7 @@ class nsGIFDecoder2 : public Decoder {
 
   gif_struct mGIFStruct;
 
+  SwizzleRowFn mSwizzleFn;  /// Method to unpack color tables from RGB.
   SurfacePipe mPipe;  /// The SurfacePipe used to write to the output surface.
 };
 

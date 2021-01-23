@@ -7,7 +7,6 @@
 #define GFX_FT2FONTS_H
 
 #include "mozilla/MemoryReporting.h"
-#include "cairo.h"
 #include "gfxTypes.h"
 #include "gfxFont.h"
 #include "gfxFT2FontBase.h"
@@ -20,14 +19,17 @@ class FT2FontEntry;
 class gfxFT2Font : public gfxFT2FontBase {
  public:  // new functions
   gfxFT2Font(const RefPtr<mozilla::gfx::UnscaledFontFreeType>& aUnscaledFont,
-             cairo_scaled_font_t* aCairoFont, FT_Face aFTFace,
-             FT2FontEntry* aFontEntry, const gfxFontStyle* aFontStyle);
+             RefPtr<mozilla::gfx::SharedFTFace>&& aFTFace,
+             FT2FontEntry* aFontEntry, const gfxFontStyle* aFontStyle,
+             int aLoadFlags);
   virtual ~gfxFT2Font();
 
   FT2FontEntry* GetFontEntry();
 
   already_AddRefed<mozilla::gfx::ScaledFont> GetScaledFont(
       DrawTarget* aTarget) override;
+
+  bool ShouldHintMetrics() const override;
 
   void AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                               FontCacheSizes* aSizes) const override;
@@ -51,12 +53,12 @@ class gfxFT2Font : public gfxFT2FontBase {
 
     if (!entry) return nullptr;
 
-    if (entry->mData.glyphIndex == 0xffffffffU) {
+    if (entry->GetData().glyphIndex == 0xffffffffU) {
       // this is a new entry, fill it
-      FillGlyphDataForChar(aFace, ch, &entry->mData);
+      FillGlyphDataForChar(aFace, ch, entry->GetModifiableData());
     }
 
-    return &entry->mData;
+    return &entry->GetData();
   }
 
   bool ShapeText(DrawTarget* aDrawTarget, const char16_t* aText,
@@ -73,7 +75,6 @@ class gfxFT2Font : public gfxFT2FontBase {
       CharGlyphMapEntryType;
   typedef nsTHashtable<CharGlyphMapEntryType> CharGlyphMap;
   CharGlyphMap mCharGlyphCache;
-  FT_Face mFTFace;
 };
 
 #endif /* GFX_FT2FONTS_H */

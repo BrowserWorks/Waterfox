@@ -14,7 +14,6 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/Mutex.h"
-#include "nsIComponentManager.h"
 #include "nsCOMPtr.h"
 #include "nsClassHashtable.h"
 #include "nsString.h"
@@ -25,7 +24,6 @@
 #include "nsTHashtable.h"
 #include "nsIZipReader.h"
 #include "nsZipArchive.h"
-#include "nsIObserverService.h"
 #include "nsWeakReference.h"
 #include "nsIObserver.h"
 #include "mozilla/Attributes.h"
@@ -83,7 +81,9 @@ class nsJAR final : public nsIZipReader {
   mozilla::Mutex mLock;  // protect mCache and mZip
   int64_t mMtime;
   bool mOpened;
-  bool mIsOmnijar;
+
+  // true if mZip was adopted from elsewhere and should not be closed by us.
+  bool mSkipArchiveClosing;
 
   nsresult LoadEntry(const nsACString& aFilename, nsCString& aBuf);
   int32_t ReadLine(const char** src);

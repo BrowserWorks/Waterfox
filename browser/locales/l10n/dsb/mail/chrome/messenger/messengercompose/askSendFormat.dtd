@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Pšašanje za e-mailu HTML">
+
+<!ENTITY recipient.label "Někotare z dostawarjow njamógu pó lisćinje e-mail HTML pśiwześ.">
+
+<!ENTITY question.label "Cośo powěsć do lutnego teksta konwertěrowaś abo ju njeźiwajucy na to w HTML pósłaś?">
+
+<!ENTITY plainTextAndHtml.label "W lutnem teksće a HTML pósłaś">
+<!ENTITY plainTextAndHtml.accesskey "l">
+<!ENTITY plainTextOnly.label "Jano w lutnem teksće pósłaś">
+<!ENTITY plainTextOnly.accesskey "J">
+<!ENTITY htmlOnly.label "Jano w HTML pósłaś">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Pósłaś">
+<!ENTITY send.accesskey "P">

@@ -9,6 +9,7 @@ import time
 import unittest
 
 import mozunit
+from six import integer_types
 
 try:
     import psutil
@@ -60,7 +61,7 @@ class TestResourceMonitor(unittest.TestCase):
         monitor.stop()
 
         self.assertEqual(len(monitor.phases), 2)
-        self.assertEqual(['phase2', 'phase1'], monitor.phases.keys())
+        self.assertEqual(['phase2', 'phase1'], list(monitor.phases.keys()))
 
         all = list(monitor.range_usage())
         data1 = list(monitor.phase_usage('phase1'))
@@ -87,7 +88,7 @@ class TestResourceMonitor(unittest.TestCase):
 
         t0 = time.time()
         monitor.record_event('t0')
-        time.sleep(0.5)
+        time.sleep(2)
 
         monitor.record_event('t1')
         time.sleep(0.5)
@@ -150,7 +151,7 @@ class TestResourceMonitor(unittest.TestCase):
         monitor.stop()
 
         v = monitor.min_memory_available()
-        self.assertIsInstance(v, (long, int))
+        self.assertIsInstance(v, integer_types)
 
         v = monitor.max_memory_percent()
         self.assertIsInstance(v, float)

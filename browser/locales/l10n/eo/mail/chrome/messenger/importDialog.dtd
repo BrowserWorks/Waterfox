@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Enportilo">
+<!ENTITY importAll.label          "Enporti ĉiujn datumojn">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "retleteroj">
+<!ENTITY importMail.accesskey     "r">
+<!ENTITY importFeeds.label        "abonfluoj">
+<!ENTITY importFeeds.accesskey    "b">
+<!ENTITY importAddressbook.label  "adresaroj">
+<!ENTITY importAddressbook.accesskey "a">
+<!ENTITY importSettings.label     "agordoj">
+<!ENTITY importSettings.accesskey "j">
+<!ENTITY importFilters.label      "filtriloj">
+<!ENTITY importFilters.accesskey  "f">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Enportilo por &brandShortName;">
+<!ENTITY importShortDesc.label    "Enporti retpoŝton, agordojn kaj filtrilojn el aliaj programoj">
+
+<!ENTITY importDescription1.label "Per tiu ĉi asistanto eblas enporti retleterojn, adresojn kaj abonfluoj, preferojn kaj filtrilojn el aliaj retpoŝtaj programoj el aliaj popularaj retpoŝtaj programoj al &brandShortName;.">
+<!ENTITY importDescription2.label "Post sukcesa enporto, ĉiuj datumoj estos senpere alireblaj el la &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Bonvolu elekti tipojn de dosierojn por enporti:">
+<!ENTITY selectDescriptionB.label "Bonvolu elekti la ekzistantan konton aŭ krei novan:">
+<!ENTITY selectDescription.accesskey "B">
+<!ENTITY acctName.label           "Nomo:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Ne trovis programon aŭ dosierojn el kiuj eblas enporti datumojn.">
+
+<!ENTITY back.label               "&lt; Antaŭa">
+<!ENTITY forward.label            "Sekva &gt;">
+<!ENTITY finish.label             "Fini">
+<!ENTITY cancel.label             "Nuligi">
+
+<!ENTITY select.label             "Enporti nur la elektitajn datumojn:">
+
+<!ENTITY title.label              "Titolo">
+<!ENTITY processing.label         "Enportado…">

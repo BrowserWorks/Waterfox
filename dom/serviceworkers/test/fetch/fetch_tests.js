@@ -43,7 +43,7 @@ function redirectURL(hops) {
     hops[0].server +
     corsServerPath +
     "?hop=1&hops=" +
-    encodeURIComponent(hops.toSource())
+    encodeURIComponent(JSON.stringify(hops))
   );
 }
 
@@ -172,7 +172,10 @@ fetchXHR(
     finish();
   },
   null,
-  [["X-Test1", "header1"], ["X-Test2", "header2"]]
+  [
+    ["X-Test1", "header1"],
+    ["X-Test2", "header2"],
+  ]
 );
 
 fetchXHR("http://user:pass@mochi.test:8888/user-pass", function(xhr) {

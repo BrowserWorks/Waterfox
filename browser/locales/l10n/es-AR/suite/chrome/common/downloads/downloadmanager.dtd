@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Administrador de descargas">
+
+<!ENTITY menuBar.tooltip                 "Barra de menú">
+<!ENTITY searchBar.tooltip               "Barra de búsquedas">
+
+<!ENTITY search.placeholder              "Buscar descargas">
+<!ENTITY search.label                    "Buscar descargas">
+<!ENTITY search.accesskey                "s">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Limpiar lista">
+<!ENTITY cmd.clearList.tooltip           "Elimina descargas completas, canceladas o falladas de la lista">
+<!ENTITY cmd.clearList.accesskey         "L">
+
+<!ENTITY col.name.label                  "Nombre">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Nombre de archivo">
+<!ENTITY col.status.label                "Estado">
+<!ENTITY col.status.accesskey            "s">
+<!ENTITY col.status.tooltip              "Estado">
+<!ENTITY col.actionPlay.label            "Pausa/Continuar/Reintentar">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "Pausa/Continuar/Reintentar">
+<!ENTITY col.actionStop.label            "Cancelar/Eliminar">
+<!ENTITY col.actionStop.accesskey        "C">
+<!ENTITY col.actionStop.tooltip          "Cancelar/Eliminar">
+<!ENTITY col.progress.label              "Progreso">
+<!ENTITY col.progress.accesskey          "P">
+<!ENTITY col.progress.tooltip            "Progreso">
+<!ENTITY col.timeremaining.label         "Tiempo restante">
+<!ENTITY col.timeremaining.accesskey     "T">
+<!ENTITY col.timeremaining.tooltip       "Tiempo restante">
+<!ENTITY col.transferred.label           "Transferido">
+<!ENTITY col.transferred.accesskey       "T">
+<!ENTITY col.transferred.tooltip         "Transferido">
+<!ENTITY col.transferrate.label          "Velocidad">
+<!ENTITY col.transferrate.accesskey      "d">
+<!ENTITY col.transferrate.tooltip        "Velocidad">
+<!ENTITY col.timeelapsed.label           "Tiempo transcurrido">
+<!ENTITY col.timeelapsed.accesskey       "e">
+<!ENTITY col.timeelapsed.tooltip         "Tiempo transcurrido">
+<!ENTITY col.starttime.label             "Hora de inicio">
+<!ENTITY col.starttime.accesskey         "a">
+<!ENTITY col.starttime.tooltip           "Hora de inicio">
+<!ENTITY col.endtime.label               "Hora de finalización">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "Hora de finalización">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Progreso (&#37;)">
+<!ENTITY col.source.label                "Fuente">
+<!ENTITY col.source.accesskey            "F">
+<!ENTITY col.source.tooltip              "Fuente">
+
+<!ENTITY view.columns.label              "Mostrar columnas">
+<!ENTITY view.columns.accesskey          "c">
+<!ENTITY view.sortBy.label               "Ordenar por">
+<!ENTITY view.sortBy.accesskey           "O">
+
+<!ENTITY view.unsorted.label             "Sin ordenar">
+<!ENTITY view.unsorted.accesskey         "S">
+<!ENTITY view.sortAscending.label        "Ordenado A > Z">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Ordenado Z > A">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "Pausa">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "Continuar">
+<!ENTITY cmd.resume.accesskey            "r">
+<!ENTITY cmd.retry.label                 "Reintentar">
+<!ENTITY cmd.retry.accesskey             "R">
+<!ENTITY cmd.cancel.label                "Cancelar">
+<!ENTITY cmd.cancel.accesskey            "C">
+<!ENTITY cmd.remove.label                "Eliminar de la lista">
+<!ENTITY cmd.remove.accesskey            "E">
+<!ENTITY cmd.open.label                  "Abrir">
+<!ENTITY cmd.open.accesskey              "A">
+<!ENTITY cmd.show.label                  "Abrir carpeta contenedora">
+<!ENTITY cmd.show.accesskey              "A">
+<!ENTITY cmd.goToDownloadPage.label      "Ir a página de descargas">
+<!ENTITY cmd.goToDownloadPage.accesskey  "g">
+<!ENTITY cmd.copyDownloadLink.label      "Copiar dirección del enlace">
+<!ENTITY cmd.copyDownloadLink.accesskey  "l">
+<!ENTITY cmd.properties.label            "Propiedades…">
+<!ENTITY cmd.properties.accesskey        "s">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Permitir descarga">
+<!ENTITY cmd.unblock2.accesskey           "P">
+

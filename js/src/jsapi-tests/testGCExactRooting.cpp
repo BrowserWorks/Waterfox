@@ -5,6 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/Maybe.h"
+
 #include "ds/TraceableFifo.h"
 #include "gc/Policy.h"
 #include "js/GCHashTable.h"
@@ -14,6 +16,9 @@
 #include "jsapi-tests/tests.h"
 
 using namespace js;
+
+using mozilla::Maybe;
+using mozilla::Some;
 
 BEGIN_TEST(testGCExactRooting) {
   JS::RootedObject rootCx(cx, JS_NewPlainObject(cx));
@@ -87,7 +92,7 @@ BEGIN_TEST(testGCRootedStaticStructInternalStackStorageAugmented) {
     obj = heap.obj();
     CHECK(JS_GetProperty(cx, obj, "foo", &val));
     actual = val.toString();
-    CHECK(JS_StringEqualsAscii(cx, actual, "Hello", &same));
+    CHECK(JS_StringEqualsLiteral(cx, actual, "Hello", &same));
     CHECK(same);
     obj = nullptr;
     actual = nullptr;
@@ -98,7 +103,7 @@ BEGIN_TEST(testGCRootedStaticStructInternalStackStorageAugmented) {
     obj = heap.obj();
     CHECK(JS_GetProperty(cx, obj, "foo", &val));
     actual = val.toString();
-    CHECK(JS_StringEqualsAscii(cx, actual, "Hello", &same));
+    CHECK(JS_StringEqualsLiteral(cx, actual, "Hello", &same));
     CHECK(same);
     obj = nullptr;
     actual = nullptr;
@@ -268,12 +273,10 @@ BEGIN_TEST(testGCRootedVector) {
 
   for (size_t i = 0; i < 10; ++i) {
     // Check the shape to ensure it did not get collected.
-    char buffer[2];
-    buffer[0] = 'a' + i;
-    buffer[1] = '\0';
+    char letter = 'a' + i;
     bool match;
-    CHECK(JS_StringEqualsAscii(cx, JSID_TO_STRING(shapes[i]->propid()), buffer,
-                               &match));
+    CHECK(JS_StringEqualsAscii(cx, JSID_TO_STRING(shapes[i]->propid()), &letter,
+                               1, &match));
     CHECK(match);
   }
 
@@ -341,12 +344,10 @@ BEGIN_TEST(testTraceableFifo) {
 
   for (size_t i = 0; i < 10; ++i) {
     // Check the shape to ensure it did not get collected.
-    char buffer[2];
-    buffer[0] = 'a' + i;
-    buffer[1] = '\0';
+    char letter = 'a' + i;
     bool match;
     CHECK(JS_StringEqualsAscii(cx, JSID_TO_STRING(shapes.front()->propid()),
-                               buffer, &match));
+                               &letter, 1, &match));
     CHECK(match);
     shapes.popFront();
   }
@@ -388,12 +389,10 @@ static bool FillVector(JSContext* cx, MutableHandle<ShapeVec> shapes) {
 static bool CheckVector(JSContext* cx, Handle<ShapeVec> shapes) {
   for (size_t i = 0; i < 10; ++i) {
     // Check the shape to ensure it did not get collected.
-    char buffer[2];
-    buffer[0] = 'a' + i;
-    buffer[1] = '\0';
+    char letter = 'a' + i;
     bool match;
-    if (!JS_StringEqualsAscii(cx, JSID_TO_STRING(shapes[i]->propid()), buffer,
-                              &match)) {
+    if (!JS_StringEqualsAscii(cx, JSID_TO_STRING(shapes[i]->propid()), &letter,
+                              1, &match)) {
       return false;
     }
     if (!match) {
@@ -441,3 +440,48 @@ BEGIN_TEST(testGCVectorEmplaceBack) {
   return true;
 }
 END_TEST(testGCVectorEmplaceBack)
+
+BEGIN_TEST(testRootedMaybeValue) {
+  JS::Rooted<Maybe<Value>> maybeNothing(cx);
+  CHECK(maybeNothing.isNothing());
+  CHECK(!maybeNothing.isSome());
+
+  JS::Rooted<Maybe<Value>> maybe(cx, Some(UndefinedValue()));
+  CHECK(CheckConstOperations<Rooted<Maybe<Value>>&>(maybe));
+  CHECK(CheckConstOperations<Handle<Maybe<Value>>>(maybe));
+  CHECK(CheckConstOperations<MutableHandle<Maybe<Value>>>(&maybe));
+
+  maybe = Some(JS::TrueValue());
+  CHECK(CheckMutableOperations<Rooted<Maybe<Value>>&>(maybe));
+
+  maybe = Some(JS::TrueValue());
+  CHECK(CheckMutableOperations<MutableHandle<Maybe<Value>>>(&maybe));
+
+  CHECK(JS::NothingHandleValue.isNothing());
+
+  return true;
+}
+
+template <typename T>
+bool CheckConstOperations(T someUndefinedValue) {
+  CHECK(someUndefinedValue.isSome());
+  CHECK(someUndefinedValue.value().isUndefined());
+  CHECK(someUndefinedValue->isUndefined());
+  CHECK((*someUndefinedValue).isUndefined());
+  return true;
+}
+
+template <typename T>
+bool CheckMutableOperations(T maybe) {
+  CHECK(maybe->isTrue());
+
+  *maybe = JS::FalseValue();
+  CHECK(maybe->isFalse());
+
+  maybe.reset();
+  CHECK(maybe.isNothing());
+
+  return true;
+}
+
+END_TEST(testRootedMaybeValue)

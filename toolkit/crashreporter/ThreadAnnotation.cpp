@@ -8,7 +8,6 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/StaticMutex.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/UniquePtr.h"
 
 #include "prthread.h"
@@ -62,7 +61,8 @@ StaticMutex MacCrashReporterLock::sInnerMutex;
 bool MacCrashReporterLock::sIsLocked;
 
 // Use MacCrashReporterLock for locking
-typedef mozilla::BaseAutoLock<MacCrashReporterLock&> CrashReporterAutoLock;
+typedef mozilla::detail::BaseAutoLock<MacCrashReporterLock&>
+    CrashReporterAutoLock;
 typedef MacCrashReporterLock CrashReporterLockType;
 #else  /* !XP_MACOSX */
 // Use StaticMutex for locking
@@ -115,9 +115,9 @@ class ThreadAnnotationSpan {
 // the crash annotation file.
 class ThreadAnnotationData {
  public:
-  ThreadAnnotationData() {}
+  ThreadAnnotationData() = default;
 
-  ~ThreadAnnotationData() {}
+  ~ThreadAnnotationData() = default;
 
   // Adds <pre> tid:"thread name",</pre> annotation to the current annotations.
   // Returns an instance of ThreadAnnotationSpan for cleanup on thread

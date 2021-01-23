@@ -15,38 +15,50 @@ version = "0.1.0"
 
 [build-dependencies]
 void = { features = ["std", "default"], version = "1.0.2" }
-syn = { features = ["clone-impls", "default", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro", "quote", "visit"],  version = "0.15" }
-log = { features = ["release_max_level_info", "release_max_level_warn", "std"],  version = "0.4.6" }
-serde = { features = ["default", "rc", "serde_derive", "std"], version = "1.0.66" }
+syn = { features = ["clone-impls", "default", "derive", "extra-traits", "fold", "full", "parsing", "printing", "proc-macro", "quote", "visit"],  version = "1.0" }
+serde = { features = ["default", "derive", "rc", "serde_derive", "std"], version = "1.0.66" }
 serde_derive = { features = ["default", "deserialize_in_place"], version = "1.0.66" }
-quote = { features = ["default", "proc-macro"], version = "0.5.2" }
-proc-macro2 = { features = ["default", "proc-macro"], version = "0.3.5" }
+quote = { features = ["default", "proc-macro"], version = "1.0" }
+libc = { features = ["default", "std", "use_std"], version = "0.2" }
+bindgen = { default-features = false, features = ["runtime"], version = "0.53" }
 
 [target."cfg(windows)".dependencies.winapi]
 version = "0.3.6"
 features = [
+    "avrt",
     "basetsd",
+    "bits",
+    "bits2_5",
+    "bitsmsg",
+    "combaseapi",
     "consoleapi",
     "dwrite",
     "dwrite_1",
     "dwrite_3",
     "errhandlingapi",
     "fileapi",
+    "guiddef",
     "handleapi",
     "hidclass",
     "hidpi",
     "hidusage",
+    "impl-default",
+    "ioapiset",
     "libloaderapi",
     "memoryapi",
     "minwinbase",
     "minwindef",
+    "namedpipeapi",
     "ntdef",
     "ntsecapi",
     "ntstatus",
+    "objbase",
     "processenv",
     "profileapi",
+    "rpcndr",
     "setupapi",
     "std",
+    "synchapi",
     "sysinfoapi",
     "timezoneapi",
     "unknwnbase",
@@ -54,5 +66,11 @@ features = [
     "wincon",
     "winerror",
     "winnls",
-    "winnt"
+    "winnt",
+    "winsock2",
+    "ws2def",
+    "ws2ipdef",
+    "ws2tcpip",
+    "wtypes",
+    "wtypesbase"
 ]

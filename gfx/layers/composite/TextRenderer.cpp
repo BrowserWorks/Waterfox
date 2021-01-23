@@ -17,7 +17,6 @@ namespace mozilla {
 namespace layers {
 
 using namespace gfx;
-using namespace std;
 
 const Float sBackgroundOpacity = 0.8f;
 const SurfaceFormat sTextureFormat = SurfaceFormat::B8G8R8A8;
@@ -42,16 +41,19 @@ static void PNGAPI row_callback(png_structp png_ptr, png_bytep new_row,
     // interact with the content behind the text.
     Float alphaValue = Float(0xFF - new_row[x]) / 255.0f;
     Float baseValue = sBackgroundOpacity * (1.0f - alphaValue);
-    Color pixelColor(baseValue, baseValue, baseValue, baseValue + alphaValue);
+    // FIXME(aosmond): PNGs may have color profiles. Should we be checking for
+    // that and performing color management?
+    sRGBColor pixelColor(baseValue, baseValue, baseValue,
+                         baseValue + alphaValue);
     dst[x] = pixelColor.ToABGR();
   }
 }
 
-TextRenderer::~TextRenderer() {}
+TextRenderer::~TextRenderer() = default;
 
 TextRenderer::FontCache::~FontCache() { mGlyphBitmaps->Unmap(); }
 
-void TextRenderer::RenderText(Compositor* aCompositor, const string& aText,
+void TextRenderer::RenderText(Compositor* aCompositor, const std::string& aText,
                               const IntPoint& aOrigin,
                               const Matrix4x4& aTransform, uint32_t aTextSize,
                               uint32_t aTargetPixelWidth, FontType aFontType) {
@@ -63,7 +65,7 @@ void TextRenderer::RenderText(Compositor* aCompositor, const string& aText,
   aTargetPixelWidth /= scaleFactor;
 
   RefPtr<TextureSource> src =
-      RenderText(aCompositor, aText, aTextSize, aTargetPixelWidth, aFontType);
+      RenderText(aCompositor, aText, aTargetPixelWidth, aFontType);
   if (!src) {
     return;
   }
@@ -80,13 +82,11 @@ void TextRenderer::RenderText(Compositor* aCompositor, const string& aText,
   aCompositor->DrawQuad(Rect(drawRect), clip, chain, 1.0f, transform);
 }
 
-RefPtr<TextureSource> TextRenderer::RenderText(TextureSourceProvider* aProvider,
-                                               const string& aText,
-                                               uint32_t aTextSize,
-                                               uint32_t aTargetPixelWidth,
-                                               FontType aFontType) {
+IntSize TextRenderer::ComputeSurfaceSize(const std::string& aText,
+                                         uint32_t aTargetPixelWidth,
+                                         FontType aFontType) {
   if (!EnsureInitialized(aFontType)) {
-    return nullptr;
+    return IntSize();
   }
 
   FontCache* cache = mFonts[aFontType].get();
@@ -111,67 +111,81 @@ RefPtr<TextureSource> TextRenderer::RenderText(TextureSourceProvider* aProvider,
     maxWidth = std::max(lineWidth, maxWidth);
   }
 
-  // Create a surface to draw our glyphs to.
-  RefPtr<DataSourceSurface> textSurf = Factory::CreateDataSourceSurface(
-      IntSize(maxWidth, numLines * info->mCellHeight), sTextureFormat);
-  if (NS_WARN_IF(!textSurf)) {
+  return IntSize(maxWidth, numLines * info->mCellHeight);
+}
+
+RefPtr<TextureSource> TextRenderer::RenderText(TextureSourceProvider* aProvider,
+                                               const std::string& aText,
+                                               uint32_t aTargetPixelWidth,
+                                               FontType aFontType) {
+  if (!EnsureInitialized(aFontType)) {
     return nullptr;
   }
 
-  DataSourceSurface::MappedSurface map;
-  if (NS_WARN_IF(
-          !textSurf->Map(DataSourceSurface::MapType::READ_WRITE, &map))) {
-    return nullptr;
-  }
+  IntSize size = ComputeSurfaceSize(aText, aTargetPixelWidth, aFontType);
 
-  // Initialize the surface to transparent white.
-  memset(map.mData, uint8_t(sBackgroundOpacity * 255.0f),
-         numLines * info->mCellHeight * map.mStride);
+  // Create a DrawTarget to draw our glyphs to.
+  RefPtr<DrawTarget> dt =
+      Factory::CreateDrawTarget(BackendType::SKIA, size, sTextureFormat);
 
-  uint32_t currentXPos = 0;
-  uint32_t currentYPos = 0;
-
-  const unsigned int kGlyphsPerLine = info->mTextureWidth / info->mCellWidth;
-
-  // Copy our glyphs onto the surface.
-  for (uint32_t i = 0; i < aText.length(); i++) {
-    if (aText[i] == '\n' ||
-        (aText[i] == ' ' && currentXPos > aTargetPixelWidth)) {
-      currentYPos += info->mCellHeight;
-      currentXPos = 0;
-      continue;
-    }
-
-    uint32_t index = aText[i] - info->mFirstChar;
-    uint32_t glyphXOffset = (index % kGlyphsPerLine) * info->mCellWidth *
-                            BytesPerPixel(sTextureFormat);
-    uint32_t truncatedLine = index / kGlyphsPerLine;
-    uint32_t glyphYOffset =
-        truncatedLine * info->mCellHeight * cache->mMap.mStride;
-
-    uint32_t glyphWidth = info->GetGlyphWidth(aText[i]);
-
-    for (uint32_t y = 0; y < info->mCellHeight; y++) {
-      memcpy(map.mData + (y + currentYPos) * map.mStride +
-                 currentXPos * BytesPerPixel(sTextureFormat),
-             cache->mMap.mData + glyphYOffset + y * cache->mMap.mStride +
-                 glyphXOffset,
-             glyphWidth * BytesPerPixel(sTextureFormat));
-    }
-
-    currentXPos += glyphWidth;
-  }
-
-  textSurf->Unmap();
-
+  RenderTextToDrawTarget(dt, aText, aTargetPixelWidth, aFontType);
+  RefPtr<SourceSurface> surf = dt->Snapshot();
+  RefPtr<DataSourceSurface> dataSurf = surf->GetDataSurface();
   RefPtr<DataTextureSource> src = aProvider->CreateDataTextureSource();
 
-  if (!src->Update(textSurf)) {
+  if (!src->Update(dataSurf)) {
     // Upload failed.
     return nullptr;
   }
 
   return src;
+}
+
+void TextRenderer::RenderTextToDrawTarget(DrawTarget* aDrawTarget,
+                                          const std::string& aText,
+                                          uint32_t aTargetPixelWidth,
+                                          FontType aFontType) {
+  if (!EnsureInitialized(aFontType)) {
+    return;
+  }
+
+  // Initialize the DrawTarget to transparent white.
+  // FIXME(aosmond): Should the background be color managed if we color manage
+  // the glyphs or is this part of a mask?
+  IntSize size = aDrawTarget->GetSize();
+  aDrawTarget->FillRect(
+      Rect(0, 0, size.width, size.height),
+      ColorPattern(DeviceColor(1.0, 1.0, 1.0, sBackgroundOpacity)),
+      DrawOptions(1.0, CompositionOp::OP_SOURCE));
+
+  IntPoint currentPos;
+
+  FontCache* cache = mFonts[aFontType].get();
+  const FontBitmapInfo* info = cache->mInfo;
+
+  const unsigned int kGlyphsPerLine = info->mTextureWidth / info->mCellWidth;
+
+  // Copy our glyphs onto the DrawTarget.
+  for (uint32_t i = 0; i < aText.length(); i++) {
+    if (aText[i] == '\n' ||
+        (aText[i] == ' ' && currentPos.x > int32_t(aTargetPixelWidth))) {
+      currentPos.y += info->mCellHeight;
+      currentPos.x = 0;
+      continue;
+    }
+
+    uint32_t index = aText[i] - info->mFirstChar;
+    uint32_t cellIndexY = index / kGlyphsPerLine;
+    uint32_t cellIndexX = index - (cellIndexY * kGlyphsPerLine);
+    uint32_t glyphWidth = info->GetGlyphWidth(aText[i]);
+    IntRect srcRect(cellIndexX * info->mCellWidth,
+                    cellIndexY * info->mCellHeight, glyphWidth,
+                    info->mCellHeight);
+
+    aDrawTarget->CopySurface(cache->mGlyphBitmaps, srcRect, currentPos);
+
+    currentPos.x += glyphWidth;
+  }
 }
 
 /* static */ const FontBitmapInfo* TextRenderer::GetFontInfo(FontType aType) {

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Caracteristicas da la glista">
+
+<!ENTITY ListType.label "Tip d'enumeraziun">
+<!ENTITY bulletStyle.label "Simbol d'enumeraziun:">
+<!ENTITY startingNumber.label "Cumenzar cun:">
+<!ENTITY startingNumber.accessKey "C">
+<!ENTITY none.value "Nagina">
+<!ENTITY bulletList.value "Glista betg numerada">
+<!ENTITY numberList.value "Glista numerada">
+<!ENTITY definitionList.value "Glista da definiziuns">
+<!ENTITY changeEntireListRadio.label "Midar l'entira enumeraziun">
+<!ENTITY changeEntireListRadio.accessKey "M">
+<!ENTITY changeSelectedRadio.label "Mo midar elements tschernids">
+<!ENTITY changeSelectedRadio.accessKey "I">

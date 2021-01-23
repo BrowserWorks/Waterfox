@@ -18,6 +18,9 @@ class nsTraceRefcnt {
   static void ResetStatistics();
 
   static void WalkTheStack(FILE* aStream);
+#ifdef ANDROID
+  static void WalkTheStack(void (*aWriter)(uint32_t, void*, void*, void*));
+#endif
 
   /**
    * Tell nsTraceRefcnt whether refcounting, allocation, and destruction
@@ -25,6 +28,10 @@ class nsTraceRefcnt {
    * activity that occurs because of static constructors or destructors.
    */
   static void SetActivityIsLegal(bool aLegal);
+
+#ifdef MOZ_ENABLE_FORKSERVER
+  static void ResetLogFiles(const char* aProcType = nullptr);
+#endif
 };
 
 #endif  // nsTraceRefcnt_h

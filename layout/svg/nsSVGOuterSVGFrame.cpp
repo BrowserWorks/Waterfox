@@ -35,7 +35,7 @@ void nsSVGOuterSVGFrame::RegisterForeignObject(
 
   if (!mForeignObjectHash) {
     mForeignObjectHash =
-        new nsTHashtable<nsPtrHashKey<nsSVGForeignObjectFrame> >();
+        MakeUnique<nsTHashtable<nsPtrHashKey<nsSVGForeignObjectFrame>>>();
   }
 
   NS_ASSERTION(!mForeignObjectHash->GetEntry(aFrame),
@@ -80,13 +80,11 @@ nsSVGOuterSVGFrame::nsSVGOuterSVGFrame(ComputedStyle* aStyle,
 // helper
 static inline bool DependsOnIntrinsicSize(const nsIFrame* aEmbeddingFrame) {
   const nsStylePosition* pos = aEmbeddingFrame->StylePosition();
-  const auto& width = pos->mWidth;
-  const auto& height = pos->mHeight;
 
   // XXX it would be nice to know if the size of aEmbeddingFrame's containing
   // block depends on aEmbeddingFrame, then we'd know if we can return false
   // for eStyleUnit_Percent too.
-  return !width.ConvertsToLength() || !height.ConvertsToLength();
+  return !pos->mWidth.ConvertsToLength() || !pos->mHeight.ConvertsToLength();
 }
 
 // The CSS Containment spec says that size-contained replaced elements must be
@@ -105,7 +103,7 @@ void nsSVGOuterSVGFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
   NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::svg),
                "Content is not an SVG 'svg' element!");
 
-  AddStateBits(NS_FRAME_FONT_INFLATION_CONTAINER |
+  AddStateBits(NS_FRAME_REFLOW_ROOT | NS_FRAME_FONT_INFLATION_CONTAINER |
                NS_FRAME_FONT_INFLATION_FLOW_ROOT);
 
   // Check for conditional processing attributes here rather than in
@@ -132,14 +130,22 @@ void nsSVGOuterSVGFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
 
       nsIFrame* embeddingFrame;
       if (IsRootOfReplacedElementSubDoc(&embeddingFrame) && embeddingFrame) {
-        if (MOZ_UNLIKELY(!embeddingFrame->HasAllStateBits(NS_FRAME_IS_DIRTY)) &&
-            DependsOnIntrinsicSize(embeddingFrame)) {
-          // Looks like this document is loading after the embedding element
-          // has had its first reflow, and that its size depends on our
-          // intrinsic size.  We need it to resize itself to use our (now
-          // available) intrinsic size:
-          embeddingFrame->PresShell()->FrameNeedsReflow(
-              embeddingFrame, IntrinsicDirty::StyleChange, NS_FRAME_IS_DIRTY);
+        if (MOZ_UNLIKELY(!embeddingFrame->HasAllStateBits(NS_FRAME_IS_DIRTY))) {
+          bool dependsOnIntrinsicSize = DependsOnIntrinsicSize(embeddingFrame);
+          if (dependsOnIntrinsicSize ||
+              embeddingFrame->StylePosition()->mObjectFit !=
+                  StyleObjectFit::Fill) {
+            // Looks like this document is loading after the embedding element
+            // has had its first reflow, and it cares about our intrinsic size
+            // (either for determining its own size, or for sizing/positioning
+            // its view to honor "object-fit").  We need it to reflow itself to
+            // use our (now-available) intrinsic size:
+            auto dirtyHint = dependsOnIntrinsicSize
+                                 ? IntrinsicDirty::StyleChange
+                                 : IntrinsicDirty::Resize;
+            embeddingFrame->PresShell()->FrameNeedsReflow(
+                embeddingFrame, dirtyHint, NS_FRAME_IS_DIRTY);
+          }
         }
       }
     }
@@ -307,8 +313,8 @@ LogicalSize nsSVGOuterSVGFrame::ComputeSize(
     // We're the root of the outermost browsing context, so we need to scale
     // cbSize by the full-zoom so that SVGs with percentage width/height zoom:
 
-    NS_ASSERTION(aCBSize.ISize(aWritingMode) != NS_AUTOHEIGHT &&
-                     aCBSize.BSize(aWritingMode) != NS_AUTOHEIGHT,
+    NS_ASSERTION(aCBSize.ISize(aWritingMode) != NS_UNCONSTRAINEDSIZE &&
+                     aCBSize.BSize(aWritingMode) != NS_UNCONSTRAINEDSIZE,
                  "root should not have auto-width/height containing block");
 
     if (!IsContainingWindowElementOfType(nullptr, nsGkAtoms::iframe)) {
@@ -336,7 +342,7 @@ LogicalSize nsSVGOuterSVGFrame::ComputeSize(
 
     const SVGAnimatedLength& height =
         content->mLengthAttributes[SVGSVGElement::ATTR_HEIGHT];
-    NS_ASSERTION(aCBSize.BSize(aWritingMode) != NS_AUTOHEIGHT,
+    NS_ASSERTION(aCBSize.BSize(aWritingMode) != NS_UNCONSTRAINEDSIZE,
                  "root should not have auto-height containing block");
     if (height.IsPercentage()) {
       MOZ_ASSERT(!intrinsicSize.height,
@@ -423,9 +429,9 @@ void nsSVGOuterSVGFrame::Reflow(nsPresContext* aPresContext,
     //
     if (svgElem->HasViewBoxOrSyntheticViewBox()) {
       nsIFrame* anonChild = PrincipalChildList().FirstChild();
-      anonChild->AddStateBits(NS_FRAME_IS_DIRTY);
+      anonChild->MarkSubtreeDirty();
       for (nsIFrame* child : anonChild->PrincipalChildList()) {
-        child->AddStateBits(NS_FRAME_IS_DIRTY);
+        child->MarkSubtreeDirty();
       }
     }
     changeBits |= COORD_CONTEXT_CHANGED;
@@ -450,7 +456,6 @@ void nsSVGOuterSVGFrame::Reflow(nsPresContext* aPresContext,
   } else {
     // Update the mRects and visual overflow rects of all our descendants,
     // including our anonymous wrapper kid:
-    anonKid->AddStateBits(mState & NS_FRAME_IS_DIRTY);
     anonKid->ReflowSVG();
     MOZ_ASSERT(!anonKid->GetNextSibling(),
                "We should have one anonymous child frame wrapping our real "
@@ -544,9 +549,7 @@ class nsDisplayOuterSVG final : public nsPaintedDisplayItem {
       : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayOuterSVG);
   }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayOuterSVG() { MOZ_COUNT_DTOR(nsDisplayOuterSVG); }
-#endif
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayOuterSVG)
 
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
                        HitTestState* aState,
@@ -692,24 +695,31 @@ nsresult nsSVGOuterSVGFrame::AttributeChanged(int32_t aNameSpaceID,
         static_cast<SVGSVGElement*>(GetContent())
             ->ChildrenOnlyTransformChanged();
       }
-
-    } else if (aAttribute == nsGkAtoms::width ||
-               aAttribute == nsGkAtoms::height) {
+    }
+    if (aAttribute == nsGkAtoms::width || aAttribute == nsGkAtoms::height ||
+        aAttribute == nsGkAtoms::viewBox) {
       // Don't call ChildrenOnlyTransformChanged() here, since we call it
-      // under Reflow if the width/height actually changed.
+      // under Reflow if the width/height/viewBox actually changed.
 
       nsIFrame* embeddingFrame;
       if (IsRootOfReplacedElementSubDoc(&embeddingFrame) && embeddingFrame) {
-        if (DependsOnIntrinsicSize(embeddingFrame)) {
+        bool dependsOnIntrinsicSize = DependsOnIntrinsicSize(embeddingFrame);
+        if (dependsOnIntrinsicSize ||
+            embeddingFrame->StylePosition()->mObjectFit !=
+                StyleObjectFit::Fill) {
           // Tell embeddingFrame's presShell it needs to be reflowed (which
-          // takes care of reflowing us too).
+          // takes care of reflowing us too). And if it depends on our
+          // intrinsic size, then we need to invalidate its intrinsic sizes
+          // (via the IntrinsicDirty::StyleChange hint.)
+          auto dirtyHint = dependsOnIntrinsicSize ? IntrinsicDirty::StyleChange
+                                                  : IntrinsicDirty::Resize;
           embeddingFrame->PresShell()->FrameNeedsReflow(
-              embeddingFrame, IntrinsicDirty::StyleChange, NS_FRAME_IS_DIRTY);
-        }
-        // else our width and height is overridden - don't reflow anything
+              embeddingFrame, dirtyHint, NS_FRAME_IS_DIRTY);
+        }  // else our width/height/viewBox are irrelevant to the outer doc.
       } else {
         // We are not embedded by reference, so our 'width' and 'height'
-        // attributes are not overridden - we need to reflow.
+        // attributes are not overridden (and viewBox may influence our
+        // intrinsic aspect ratio).  We need to reflow.
         PresShell()->FrameNeedsReflow(this, IntrinsicDirty::StyleChange,
                                       NS_FRAME_IS_DIRTY);
       }
@@ -752,12 +762,20 @@ void nsSVGOuterSVGFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
   DisplayBorderBackgroundOutline(aBuilder, aLists);
 
+  nsRect visibleRect = aBuilder->GetVisibleRect();
+  nsRect dirtyRect = aBuilder->GetDirtyRect();
+
   // Per-spec, we always clip root-<svg> even when 'overflow' has its initial
   // value of 'visible'. See also the "visual overflow" comments in Reflow.
   DisplayListClipState::AutoSaveRestore autoSR(aBuilder);
   if (mIsRootContent || StyleDisplay()->IsScrollableOverflow()) {
     autoSR.ClipContainingBlockDescendantsToContentBox(aBuilder, this);
+    visibleRect = visibleRect.Intersect(GetContentRectRelativeToSelf());
+    dirtyRect = dirtyRect.Intersect(GetContentRectRelativeToSelf());
   }
+
+  nsDisplayListBuilder::AutoBuildingDisplayList building(
+      aBuilder, this, visibleRect, dirtyRect);
 
   if ((aBuilder->IsForEventDelivery() &&
        NS_SVGDisplayListHitTestingEnabled()) ||
@@ -871,7 +889,7 @@ gfxMatrix nsSVGOuterSVGFrame::GetCanvasTM() {
 
     gfxMatrix tm = content->PrependLocalTransformsTo(
         gfxMatrix::Scaling(devPxPerCSSPx, devPxPerCSSPx));
-    mCanvasTM = new gfxMatrix(tm);
+    mCanvasTM = MakeUnique<gfxMatrix>(tm);
   }
   return *mCanvasTM;
 }

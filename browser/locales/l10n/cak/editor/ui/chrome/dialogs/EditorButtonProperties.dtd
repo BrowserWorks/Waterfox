@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kipitz'b'al taq Ichinil">
+
+<!ENTITY Settings.label "Taq nuk’ulem">
+
+<!ENTITY ButtonType.label "Ruwäch">
+<!ENTITY ButtonType.accesskey "R">
+<!ENTITY submit.value "Titaq">
+<!ENTITY reset.value "Titzolïx">
+<!ENTITY button.value "Pitz'b'äl">
+
+<!ENTITY ButtonName.label "B'i'aj:">
+<!ENTITY ButtonName.accesskey "B">
+<!ENTITY ButtonValue.label "Retal:">
+<!ENTITY ButtonValue.accesskey "R">
+<!ENTITY tabIndex.label "Rucholajem Ruwi':">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Chupun">
+<!ENTITY ButtonDisabled.accesskey "C">
+<!ENTITY AccessKey.label "Rupitz'b'al Okem:">
+<!ENTITY AccessKey.accesskey "R">
+
+<!ENTITY RemoveButton.label "Tiyuj Pitz'b'äl">
+<!ENTITY RemoveButton.accesskey "y">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Junk Settings">
+
+<!ENTITY level.label "Enable adaptive junk mail controls for this account">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Move new junk messages to:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "&quot;Junk&quot; folder on:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "Other:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Automatically delete junk mail older than">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "days">
+
+
+
+<!ENTITY ispHeaders.label "Trust junk mail headers set by: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "انتخاب">
+
+
+

@@ -13,8 +13,10 @@
  * and create derivative works of this document.
  */
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLIFrameElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
   [CEReactions, SetterNeedsSubjectPrincipal=NonSystem, SetterThrows, Pure]
            attribute DOMString src;
   [CEReactions, SetterThrows, Pure]
@@ -23,7 +25,7 @@ interface HTMLIFrameElement : HTMLElement {
            attribute DOMString name;
   [PutForwards=value] readonly attribute DOMTokenList sandbox;
            // attribute boolean seamless;
-  [CEReactions, SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure, BinaryName="allowFullscreenForBindings"]
            attribute boolean allowFullscreen;
   [CEReactions, SetterThrows, Pure]
            attribute boolean allowPaymentRequest;
@@ -61,19 +63,12 @@ partial interface HTMLIFrameElement {
   Document? getSVGDocument();
 };
 
-partial interface HTMLIFrameElement {
-  // nsIDOMMozBrowserFrame
-  [ChromeOnly,SetterThrows]
-           attribute boolean mozbrowser;
-};
+HTMLIFrameElement includes MozFrameLoaderOwner;
 
-HTMLIFrameElement implements MozFrameLoaderOwner;
-HTMLIFrameElement implements BrowserElement;
-
-// https://wicg.github.io/feature-policy/#policy
+// https://w3c.github.io/webappsec-feature-policy/#idl-index
 partial interface HTMLIFrameElement {
   [SameObject, Pref="dom.security.featurePolicy.webidl.enabled"]
-  readonly attribute Policy policy;
+  readonly attribute FeaturePolicy featurePolicy;
 
   [CEReactions, SetterThrows, Pure, Pref="dom.security.featurePolicy.enabled"]
            attribute DOMString allow;

@@ -10,7 +10,6 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/RangedPtr.h"
 #include "mozilla/Result.h"
-#include "nsIMemoryReporter.h"
 
 #include <prio.h>
 
@@ -36,7 +35,7 @@ class AutoMemMap {
 
   Result<Ok, nsresult> init(const FileDescriptor& file,
                             PRFileMapProtect prot = PR_PROT_READONLY,
-                            size_t expectedSize = 0);
+                            size_t maybeSize = 0);
 
   // Initializes the mapped memory with a shared memory handle. On
   // Unix-like systems, this is identical to the above init() method. On
@@ -73,8 +72,8 @@ class AutoMemMap {
   void setPersistent() { persistent_ = true; }
 
  private:
-  Result<Ok, nsresult> initInternal(PRFileMapProtect prot = PR_PROT_READONLY,
-                                    size_t expectedSize = 0);
+  Result<Ok, nsresult> initInternal(PRFileMapProtect prot,
+                                    size_t maybeSize = 0);
 
   AutoFDClose fd;
   PRFileMap* fileMap = nullptr;

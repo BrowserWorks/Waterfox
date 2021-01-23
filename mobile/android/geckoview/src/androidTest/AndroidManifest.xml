@@ -2,12 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.mozilla.geckoview.test">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
             android:allowBackup="true"
@@ -16,6 +17,7 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
         <activity android:name=".TestRunnerActivity" android:exported="true"/>
+        <activity android:name=".GeckoViewTestActivity" android:exported="true"/>
         <activity-alias android:name=".App" android:targetActivity=".TestRunnerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -32,17 +34,12 @@
                 android:process=":crash">
         </service>
 
-        <!-- These are needed for CrashTest -->
+        <!-- This is needed for ParentCrashTest -->
         <service
                 android:name=".crash.RemoteGeckoService"
                 android:enabled="true"
                 android:exported="false"
                 android:process=":gecko">
-        </service>
-        <service
-                android:name=".crash.CrashTestHandler"
-                android:enabled="true"
-                android:exported="false">
         </service>
     </application>
 

@@ -14,6 +14,15 @@ const { AppConstants } = ChromeUtils.import(
 
 XPCOMUtils.defineLazyServiceGetters(this, {
   gCertDB: ["@mozilla.org/security/x509certdb;1", "nsIX509CertDB"],
+  gExternalProtocolService: [
+    "@mozilla.org/uriloader/external-protocol-service;1",
+    "nsIExternalProtocolService",
+  ],
+  gHandlerService: [
+    "@mozilla.org/uriloader/handler-service;1",
+    "nsIHandlerService",
+  ],
+  gMIMEService: ["@mozilla.org/mime;1", "nsIMIMEService"],
   gXulStore: ["@mozilla.org/xul/xulstore;1", "nsIXULStore"],
 });
 
@@ -90,9 +99,8 @@ var Policies = {
   },
 
   AppUpdateURL: {
-    onBeforeAddons(manager, param) {
-      setDefaultPref("app.update.url", param.href);
-    },
+    // No implementation needed here. UpdateService.jsm will check for this
+    // policy directly when determining the update URL.
   },
 
   Authentication: {
@@ -124,14 +132,14 @@ var Policies = {
         );
       }
       if ("AllowNonFQDN" in param) {
-        if (param.AllowNonFQDN.NTLM) {
+        if ("NTLM" in param.AllowNonFQDN) {
           setDefaultPref(
             "network.automatic-ntlm-auth.allow-non-fqdn",
             param.AllowNonFQDN.NTLM,
             locked
           );
         }
-        if (param.AllowNonFQDN.SPNEGO) {
+        if ("SPNEGO" in param.AllowNonFQDN) {
           setDefaultPref(
             "network.negotiate-auth.allow-non-fqdn",
             param.AllowNonFQDN.SPNEGO,
@@ -270,15 +278,22 @@ var Policies = {
                 return;
               }
               let certFile = reader.result;
+              let certFileArray = [];
+              for (let i = 0; i < certFile.length; i++) {
+                certFileArray.push(certFile.charCodeAt(i));
+              }
               let cert;
               try {
-                cert = gCertDB.constructX509(certFile);
+                cert = gCertDB.constructX509(certFileArray);
               } catch (e) {
+                log.debug(
+                  `constructX509 failed with error '${e}' - trying constructX509FromBase64.`
+                );
                 try {
                   // It might be PEM instead of DER.
                   cert = gCertDB.constructX509FromBase64(pemToBase64(certFile));
                 } catch (ex) {
-                  log.error(`Unable to add certificate - ${certfile.path}`);
+                  log.error(`Unable to add certificate - ${certfile.path}`, ex);
                 }
               }
               if (cert) {
@@ -310,6 +325,25 @@ var Policies = {
   Cookies: {
     onBeforeUIStartup(manager, param) {
       addAllowDenyPermissions("cookie", param.Allow, param.Block);
+
+      if (param.AllowSession) {
+        for (let origin of param.AllowSession) {
+          try {
+            Services.perms.addFromPrincipal(
+              Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+                origin
+              ),
+              "cookie",
+              Ci.nsICookiePermission.ACCESS_SESSION,
+              Ci.nsIPermissionManager.EXPIRE_POLICY
+            );
+          } catch (ex) {
+            log.error(
+              `Unable to add cookie session permission - ${origin.href}`
+            );
+          }
+        }
+      }
 
       if (param.Block) {
         const hosts = param.Block.map(url => url.hostname)
@@ -455,7 +489,25 @@ var Policies = {
           !param.TLS_RSA_WITH_3DES_EDE_CBC_SHA
         );
       }
+      if ("TLS_RSA_WITH_AES_128_GCM_SHA256" in param) {
+        setAndLockPref(
+          "security.ssl3.rsa_aes_128_gcm_sha256",
+          !param.TLS_RSA_WITH_AES_128_GCM_SHA256
+        );
+      }
+      if ("TLS_RSA_WITH_AES_256_GCM_SHA384" in param) {
+        setAndLockPref(
+          "security.ssl3.rsa_aes_256_gcm_sha384",
+          !param.TLS_RSA_WITH_AES_256_GCM_SHA384
+        );
+      }
     },
+  },
+
+  DisableDefaultBrowserAgent: {
+    // The implementation of this policy is in the default browser agent itself
+    // (/toolkit/mozapps/defaultagent); we need an entry for it here so that it
+    // shows up in about:policies as a real policy and not as an error.
   },
 
   DisableDeveloperTools: {
@@ -468,6 +520,7 @@ var Policies = {
         blockAboutPage(manager, "about:devtools");
         blockAboutPage(manager, "about:debugging");
         blockAboutPage(manager, "about:devtools-toolbox");
+        blockAboutPage(manager, "about:profiling");
       }
     },
   },
@@ -484,6 +537,8 @@ var Policies = {
     onBeforeAddons(manager, param) {
       if (param) {
         setAndLockPref("identity.fxaccounts.enabled", false);
+        setAndLockPref("trailhead.firstrun.branches", "nofirstrun-empty");
+        setAndLockPref("browser.aboutwelcome.enabled", false);
       }
     },
   },
@@ -630,6 +685,7 @@ var Policies = {
       if (param) {
         setAndLockPref("datareporting.healthreport.uploadEnabled", false);
         setAndLockPref("datareporting.policy.dataSubmissionEnabled", false);
+        setAndLockPref("toolkit.telemetry.archive.enabled", false);
         blockAboutPage(manager, "about:telemetry");
       }
     },
@@ -878,6 +934,17 @@ var Policies = {
           // Block about:debugging
           blockAboutPage(manager, "about:debugging");
         }
+        if ("restricted_domains" in extensionSettings["*"]) {
+          let restrictedDomains = Services.prefs
+            .getCharPref("extensions.webextensions.restrictedDomains")
+            .split(",");
+          setAndLockPref(
+            "extensions.webextensions.restrictedDomains",
+            restrictedDomains
+              .concat(extensionSettings["*"].restricted_domains)
+              .join(",")
+          );
+        }
       }
       let addons = await AddonManager.getAllAddons();
       let allowedExtensions = [];
@@ -896,12 +963,11 @@ var Policies = {
             if (!extensionSettings[extensionID].install_url) {
               throw new Error(`Missing install_url for ${extensionID}`);
             }
-            if (!addons.find(addon => addon.id == extensionID)) {
-              installAddonFromURL(
-                extensionSettings[extensionID].install_url,
-                extensionID
-              );
-            }
+            installAddonFromURL(
+              extensionSettings[extensionID].install_url,
+              extensionID,
+              addons.find(addon => addon.id == extensionID)
+            );
             manager.disallowFeature(`uninstall-extension:${extensionID}`);
             if (
               extensionSettings[extensionID].installation_mode ==
@@ -1009,13 +1075,10 @@ var Policies = {
 
       const FLASH_NEVER_ACTIVATE = 0;
       const FLASH_ASK_TO_ACTIVATE = 1;
-      const FLASH_ALWAYS_ACTIVATE = 2;
 
       let flashPrefVal;
-      if (param.Default === undefined) {
+      if (param.Default === undefined || param.Default) {
         flashPrefVal = FLASH_ASK_TO_ACTIVATE;
-      } else if (param.Default) {
-        flashPrefVal = FLASH_ALWAYS_ACTIVATE;
       } else {
         flashPrefVal = FLASH_NEVER_ACTIVATE;
       }
@@ -1023,6 +1086,41 @@ var Policies = {
         setAndLockPref("plugin.state.flash", flashPrefVal);
       } else if (param.Default !== undefined) {
         setDefaultPref("plugin.state.flash", flashPrefVal);
+      }
+    },
+  },
+
+  Handlers: {
+    onBeforeAddons(manager, param) {
+      if ("mimeTypes" in param) {
+        for (let mimeType in param.mimeTypes) {
+          let mimeInfo = param.mimeTypes[mimeType];
+          let realMIMEInfo = gMIMEService.getFromTypeAndExtension(mimeType, "");
+          processMIMEInfo(mimeInfo, realMIMEInfo);
+        }
+      }
+      if ("extensions" in param) {
+        for (let extension in param.extensions) {
+          let mimeInfo = param.extensions[extension];
+          try {
+            let realMIMEInfo = gMIMEService.getFromTypeAndExtension(
+              "",
+              extension
+            );
+            processMIMEInfo(mimeInfo, realMIMEInfo);
+          } catch (e) {
+            log.error(`Invalid file extension (${extension})`);
+          }
+        }
+      }
+      if ("schemes" in param) {
+        for (let scheme in param.schemes) {
+          let handlerInfo = param.schemes[scheme];
+          let realHandlerInfo = gExternalProtocolService.getProtocolHandlerInfo(
+            scheme
+          );
+          processMIMEInfo(handlerInfo, realHandlerInfo);
+        }
       }
     },
   },
@@ -1037,12 +1135,17 @@ var Policies = {
 
   Homepage: {
     onBeforeUIStartup(manager, param) {
+      if ("StartPage" in param && param.StartPage == "none") {
+        // For blank startpage, we use about:blank rather
+        // than messing with browser.startup.page
+        param.URL = new URL("about:blank");
+      }
       // |homepages| will be a string containing a pipe-separated ('|') list of
       // URLs because that is what the "Home page" section of about:preferences
       // (and therefore what the pref |browser.startup.homepage|) accepts.
-      if (param.URL) {
+      if ("URL" in param) {
         let homepages = param.URL.href;
-        if (param.Additional && param.Additional.length > 0) {
+        if (param.Additional && param.Additional.length) {
           homepages += "|" + param.Additional.map(url => url.href).join("|");
         }
         setDefaultPref("browser.startup.homepage", homepages, param.Locked);
@@ -1067,17 +1170,20 @@ var Policies = {
       if (param.StartPage) {
         let prefValue;
         switch (param.StartPage) {
-          case "none":
-            prefValue = 0;
-            break;
           case "homepage":
+          case "homepage-locked":
+          case "none":
             prefValue = 1;
             break;
           case "previous-session":
             prefValue = 3;
             break;
         }
-        setDefaultPref("browser.startup.page", prefValue, param.Locked);
+        setDefaultPref(
+          "browser.startup.page",
+          prefValue,
+          param.StartPage == "homepage-locked"
+        );
       }
     },
   },
@@ -1109,6 +1215,21 @@ var Policies = {
     // Handled in nsToolkitProfileService.cpp (Windows only)
   },
 
+  LegacySameSiteCookieBehaviorEnabled: {
+    onBeforeAddons(manager, param) {
+      setDefaultPref("network.cookie.sameSite.laxByDefault", !param);
+    },
+  },
+
+  LegacySameSiteCookieBehaviorEnabledForDomainList: {
+    onBeforeAddons(manager, param) {
+      setDefaultPref(
+        "network.cookie.sameSite.laxByDefault.disabledHosts",
+        param.join(",")
+      );
+    },
+  },
+
   LocalFileLinks: {
     onBeforeAddons(manager, param) {
       // If there are existing capabilities, lock them with the policy pref.
@@ -1127,6 +1248,8 @@ var Policies = {
       );
     },
   },
+
+  ManagedBookmarks: {},
 
   NetworkPrediction: {
     onBeforeAddons(manager, param) {
@@ -1157,14 +1280,23 @@ var Policies = {
 
   OfferToSaveLoginsDefault: {
     onBeforeUIStartup(manager, param) {
-      setDefaultPref("signon.rememberSignons", param);
+      let policies = Services.policies.getActivePolicies();
+      if ("OfferToSaveLogins" in policies) {
+        log.error(
+          `OfferToSaveLoginsDefault ignored because OfferToSaveLogins is present.`
+        );
+      } else {
+        setDefaultPref("signon.rememberSignons", param);
+      }
     },
   },
 
   OverrideFirstRunPage: {
     onProfileAfterChange(manager, param) {
-      let url = param ? param.href : "";
+      let url = param ? param : "";
       setAndLockPref("startup.homepage_welcome_url", url);
+      setAndLockPref("trailhead.firstrun.branches", "nofirstrun-empty");
+      setAndLockPref("browser.aboutwelcome.enabled", false);
     },
   },
 
@@ -1182,12 +1314,21 @@ var Policies = {
   PasswordManagerEnabled: {
     onBeforeUIStartup(manager, param) {
       if (!param) {
-        // Passing no pages simply initializes the blocker
-        blockAboutPage(manager);
-        gBlockedChromePages.push("passwordManager.xul");
+        blockAboutPage(manager, "about:logins", true);
         setAndLockPref("pref.privacy.disable_button.view_passwords", true);
       }
       setAndLockPref("signon.rememberSignons", param);
+    },
+  },
+
+  PDFjs: {
+    onBeforeAddons(manager, param) {
+      if ("Enabled" in param) {
+        setAndLockPref("pdfjs.disabled", !param.Enabled);
+      }
+      if ("EnablePermissions" in param) {
+        setAndLockPref("pdfjs.enablePermissions", !param.Enabled);
+      }
     },
   },
 
@@ -1255,6 +1396,31 @@ var Policies = {
         );
         setDefaultPermission("desktop-notification", param.Notifications);
       }
+
+      if ("VirtualReality" in param) {
+        addAllowDenyPermissions(
+          "xr",
+          param.VirtualReality.Allow,
+          param.VirtualReality.Block
+        );
+        setDefaultPermission("xr", param.VirtualReality);
+      }
+    },
+  },
+
+  PictureInPicture: {
+    onBeforeAddons(manager, param) {
+      if ("Enabled" in param) {
+        setDefaultPref(
+          "media.videocontrols.picture-in-picture.video-toggle.enabled",
+          param.Enabled
+        );
+      }
+      if (param.Locked) {
+        Services.prefs.lockPref(
+          "media.videocontrols.picture-in-picture.video-toggle.enabled"
+        );
+      }
     },
   },
 
@@ -1276,8 +1442,128 @@ var Policies = {
 
   Preferences: {
     onBeforeAddons(manager, param) {
+      const allowedPrefixes = [
+        "accessibility.",
+        "browser.",
+        "datareporting.policy.",
+        "dom.",
+        "extensions.",
+        "general.autoScroll",
+        "general.smoothScroll",
+        "geo.",
+        "intl.",
+        "layout.",
+        "media.",
+        "network.",
+        "pdfjs.",
+        "places.",
+        "print.",
+        "signon.",
+        "spellchecker.",
+        "ui.",
+        "widget.",
+      ];
+      const allowedSecurityPrefs = [
+        "security.default_personal_cert",
+        "security.insecure_connection_text.enabled",
+        "security.insecure_connection_text.pbmode.enabled",
+        "security.insecure_field_warning.contextual.enabled",
+        "security.mixed_content.block_active_content",
+        "security.osclientcerts.autoload",
+        "security.ssl.errorReporting.enabled",
+        "security.tls.hello_downgrade_check",
+        "security.warn_submit_secure_to_insecure",
+      ];
+      const blockedPrefs = [];
+
       for (let preference in param) {
-        setAndLockPref(preference, param[preference]);
+        if (blockedPrefs.includes(preference)) {
+          log.error(
+            `Unable to set preference ${preference}. Preference not allowed for security reasons.`
+          );
+          continue;
+        }
+        if (preference.startsWith("security.")) {
+          if (!allowedSecurityPrefs.includes(preference)) {
+            log.error(
+              `Unable to set preference ${preference}. Preference not allowed for security reasons.`
+            );
+            continue;
+          }
+        } else if (
+          !allowedPrefixes.some(prefix => preference.startsWith(prefix))
+        ) {
+          log.error(
+            `Unable to set preference ${preference}. Preference not allowed for stability reasons.`
+          );
+          continue;
+        }
+        if (typeof param[preference] != "object") {
+          // Legacy policy preferences
+          setAndLockPref(preference, param[preference]);
+        } else {
+          if (param[preference].Status == "clear") {
+            Services.prefs.clearUserPref(preference);
+            continue;
+          }
+
+          if (param[preference].Status == "user") {
+            var prefBranch = Services.prefs;
+          } else {
+            prefBranch = Services.prefs.getDefaultBranch("");
+          }
+
+          try {
+            switch (typeof param[preference].Value) {
+              case "boolean":
+                prefBranch.setBoolPref(preference, param[preference].Value);
+                break;
+
+              case "number":
+                if (!Number.isInteger(param[preference].Value)) {
+                  throw new Error(`Non-integer value for ${preference}`);
+                }
+
+                // This is ugly, but necessary. On Windows GPO and macOS
+                // configs, booleans are converted to 0/1. In the previous
+                // Preferences implementation, the schema took care of
+                // automatically converting these values to booleans.
+                // Since we allow arbitrary prefs now, we have to do
+                // something different. See bug 1666836.
+                if (
+                  prefBranch.getPrefType(preference) == prefBranch.PREF_INT ||
+                  ![0, 1].includes(param[preference].Value)
+                ) {
+                  prefBranch.setIntPref(preference, param[preference].Value);
+                } else {
+                  prefBranch.setBoolPref(preference, !!param[preference].Value);
+                }
+                break;
+
+              case "string":
+                prefBranch.setStringPref(preference, param[preference].Value);
+                break;
+            }
+          } catch (e) {
+            log.error(
+              `Unable to set preference ${preference}. Probable type mismatch.`
+            );
+          }
+
+          if (param[preference].Status == "locked") {
+            Services.prefs.lockPref(preference);
+          }
+        }
+      }
+    },
+  },
+
+  PrimaryPassword: {
+    onAllWindowsRestored(manager, param) {
+      if (param) {
+        manager.disallowFeature("removeMasterPassword");
+      } else {
+        manager.disallowFeature("createMasterPassword");
       }
     },
   },
@@ -1301,13 +1587,21 @@ var Policies = {
 
   RequestedLocales: {
     onBeforeAddons(manager, param) {
+      let requestedLocales;
       if (Array.isArray(param)) {
-        Services.locale.requestedLocales = param;
+        requestedLocales = param;
       } else if (param) {
-        Services.locale.requestedLocales = param.split(",");
+        requestedLocales = param.split(",");
       } else {
-        Services.locale.requestedLocales = [];
+        requestedLocales = [];
       }
+      runOncePerModification(
+        "requestedLocales",
+        JSON.stringify(requestedLocales),
+        () => {
+          Services.locale.requestedLocales = requestedLocales;
+        }
+      );
     },
   },
 
@@ -1532,6 +1826,40 @@ var Policies = {
             }
           );
         }
+        if (param.DefaultPrivate) {
+          await runOncePerModification(
+            "setDefaultPrivateSearchEngine",
+            param.DefaultPrivate,
+            async () => {
+              let defaultPrivateEngine;
+              try {
+                defaultPrivateEngine = Services.search.getEngineByName(
+                  param.DefaultPrivate
+                );
+                if (!defaultPrivateEngine) {
+                  throw new Error("No engine by that name could be found");
+                }
+              } catch (ex) {
+                log.error(
+                  `Search engine lookup failed when attempting to set ` +
+                    `the default private engine. Requested engine was ` +
+                    `"${param.DefaultPrivate}".`,
+                  ex
+                );
+              }
+              if (defaultPrivateEngine) {
+                try {
+                  await Services.search.setDefaultPrivate(defaultPrivateEngine);
+                } catch (ex) {
+                  log.error(
+                    "Unable to set the default private search engine",
+                    ex
+                  );
+                }
+              }
+            }
+          );
+        }
       });
     },
   },
@@ -1625,6 +1953,13 @@ var Policies = {
       if ("Locked" in param) {
         locked = param.Locked;
       }
+      if ("WhatsNew" in param) {
+        setDefaultPref(
+          "browser.messaging-system.whatsNewPanel.enabled",
+          param.WhatsNew,
+          locked
+        );
+      }
       if ("ExtensionRecommendations" in param) {
         setDefaultPref(
           "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
@@ -1639,15 +1974,19 @@ var Policies = {
           locked
         );
       }
+      if ("UrlbarInterventions" in param && !param.UrlbarInterventions) {
+        manager.disallowFeature("urlbarinterventions");
+      }
+      if ("SkipOnboarding") {
+        setAndLockPref("trailhead.firstrun.branches", "nofirstrun-empty");
+        setAndLockPref("browser.aboutwelcome.enabled", false);
+      }
     },
   },
 
   WebsiteFilter: {
     onBeforeUIStartup(manager, param) {
-      this.filter = new WebsiteFilter(
-        param.Block || [],
-        param.Exceptions || []
-      );
+      WebsiteFilter.init(param.Block || [], param.Exceptions || []);
     },
   },
 };
@@ -1707,7 +2046,20 @@ function setDefaultPref(prefName, prefValue, locked = false) {
         throw new Error(`Non-integer value for ${prefName}`);
       }
 
-      defaults.setIntPref(prefName, prefValue);
+      // This is ugly, but necessary. On Windows GPO and macOS
+      // configs, booleans are converted to 0/1. In the previous
+      // Preferences implementation, the schema took care of
+      // automatically converting these values to booleans.
+      // Since we allow arbitrary prefs now, we have to do
+      // something different. See bug 1666836.
+      if (
+        defaults.getPrefType(prefName) == defaults.PREF_INT ||
+        ![0, 1].includes(prefValue)
+      ) {
+        defaults.setIntPref(prefName, prefValue);
+      } else {
+        defaults.setBoolPref(prefName, !!prefValue);
+      }
       break;
 
     case "string":
@@ -1745,7 +2097,7 @@ function setDefaultPermission(policyName, policyParam) {
 /**
  * addAllowDenyPermissions
  *
- * Helper function to call the permissions manager (Services.perms.add)
+ * Helper function to call the permissions manager (Services.perms.addFromPrincipal)
  * for two arrays of URLs.
  *
  * @param {string} permissionName
@@ -1761,8 +2113,8 @@ function addAllowDenyPermissions(permissionName, allowList, blockList) {
 
   for (let origin of allowList) {
     try {
-      Services.perms.add(
-        Services.io.newURI(origin.href),
+      Services.perms.addFromPrincipal(
+        Services.scriptSecurityManager.createContentPrincipalFromOrigin(origin),
         permissionName,
         Ci.nsIPermissionManager.ALLOW_ACTION,
         Ci.nsIPermissionManager.EXPIRE_POLICY
@@ -1774,8 +2126,8 @@ function addAllowDenyPermissions(permissionName, allowList, blockList) {
   }
 
   for (let origin of blockList) {
-    Services.perms.add(
-      Services.io.newURI(origin.href),
+    Services.perms.addFromPrincipal(
+      Services.scriptSecurityManager.createContentPrincipalFromOrigin(origin),
       permissionName,
       Ci.nsIPermissionManager.DENY_ACTION,
       Ci.nsIPermissionManager.EXPIRE_POLICY
@@ -1866,7 +2218,16 @@ function replacePathVariables(path) {
  * Helper function that installs an addon from a URL
  * and verifies that the addon ID matches.
  */
-function installAddonFromURL(url, extensionID) {
+function installAddonFromURL(url, extensionID, addon) {
+  if (
+    addon &&
+    addon.sourceURI &&
+    addon.sourceURI.spec == url &&
+    !addon.sourceURI.schemeIs("file")
+  ) {
+    // It's the same addon, don't reinstall.
+    return;
+  }
   AddonManager.getInstallForURL(url, {
     telemetryInfo: { source: "enterprise-policy" },
   }).then(install => {
@@ -1880,15 +2241,21 @@ function installAddonFromURL(url, extensionID) {
       onDownloadEnded: install => {
         if (extensionID && install.addon.id != extensionID) {
           log.error(
-            `Add-on downloaded from ${url} had unexpected id (got ${
-              install.addon.id
-            } expected ${extensionID})`
+            `Add-on downloaded from ${url} had unexpected id (got ${install.addon.id} expected ${extensionID})`
           );
           install.removeListener(listener);
           install.cancel();
         }
         if (install.addon && install.addon.appDisabled) {
           log.error(`Incompatible add-on - ${url}`);
+          install.removeListener(listener);
+          install.cancel();
+        }
+        if (
+          addon &&
+          Services.vc.compare(addon.version, install.addon.version) == 0
+        ) {
+          log.debug("Installation cancelled because versions are the same");
           install.removeListener(listener);
           install.cancel();
         }
@@ -1910,7 +2277,11 @@ function installAddonFromURL(url, extensionID) {
           )} - {url}`
         );
       },
-      onInstallEnded: () => {
+      /* eslint-disable-next-line no-shadow */
+      onInstallEnded: (install, addon) => {
+        if (addon.type == "theme") {
+          addon.enable();
+        }
         install.removeListener(listener);
         log.debug(`Installation succeeded - ${url}`);
       },
@@ -1925,9 +2296,6 @@ let gBlockedChromePages = [];
 function blockAboutPage(manager, feature, neededOnContentProcess = false) {
   if (!gBlockedChromePages.length) {
     addChromeURLBlocker();
-  }
-  if (!feature) {
-    return;
   }
   manager.disallowFeature(feature, neededOnContentProcess);
   let splitURL = Services.io
@@ -1947,7 +2315,7 @@ function blockAboutPage(manager, feature, neededOnContentProcess = false) {
   gBlockedChromePages.push(fileName);
   if (feature == "about:config") {
     // Hide old page until it is removed
-    gBlockedChromePages.push("config.xul");
+    gBlockedChromePages.push("config.xhtml");
   }
 }
 
@@ -1999,7 +2367,75 @@ function addChromeURLBlocker() {
 
 function pemToBase64(pem) {
   return pem
-    .replace(/-----BEGIN CERTIFICATE-----/, "")
-    .replace(/-----END CERTIFICATE-----/, "")
+    .replace(/(.*)-----BEGIN CERTIFICATE-----/, "")
+    .replace(/-----END CERTIFICATE-----(.*)/, "")
     .replace(/[\r\n]/g, "");
+}
+
+function processMIMEInfo(mimeInfo, realMIMEInfo) {
+  if ("handlers" in mimeInfo) {
+    let firstHandler = true;
+    for (let handler of mimeInfo.handlers) {
+      // handler can be null which means they don't
+      // want a preferred handler.
+      if (handler) {
+        let handlerApp;
+        if ("path" in handler) {
+          try {
+            let file = new FileUtils.File(handler.path);
+            handlerApp = Cc[
+              "@mozilla.org/uriloader/local-handler-app;1"
+            ].createInstance(Ci.nsILocalHandlerApp);
+            handlerApp.executable = file;
+          } catch (ex) {
+            log.error(`Unable to create handler executable (${handler.path})`);
+            continue;
+          }
+        } else if ("uriTemplate" in handler) {
+          let templateURL = new URL(handler.uriTemplate);
+          if (templateURL.protocol != "https:") {
+            log.error(`Web handler must be https (${handler.uriTemplate})`);
+            continue;
+          }
+          if (
+            !templateURL.pathname.includes("%s") &&
+            !templateURL.search.includes("%s")
+          ) {
+            log.error(`Web handler must contain %s (${handler.uriTemplate})`);
+            continue;
+          }
+          handlerApp = Cc[
+            "@mozilla.org/uriloader/web-handler-app;1"
+          ].createInstance(Ci.nsIWebHandlerApp);
+          handlerApp.uriTemplate = handler.uriTemplate;
+        } else {
+          log.error("Invalid handler");
+          continue;
+        }
+        if ("name" in handler) {
+          handlerApp.name = handler.name;
+        }
+        realMIMEInfo.possibleApplicationHandlers.appendElement(handlerApp);
+        if (firstHandler) {
+          realMIMEInfo.preferredApplicationHandler = handlerApp;
+        }
+      }
+      firstHandler = false;
+    }
+  }
+  if ("action" in mimeInfo) {
+    let action = realMIMEInfo[mimeInfo.action];
+    if (
+      action == realMIMEInfo.useHelperApp &&
+      !realMIMEInfo.possibleApplicationHandlers.length
+    ) {
+      log.error("useHelperApp requires a handler");
+      return;
+    }
+    realMIMEInfo.preferredAction = action;
+  }
+  if ("ask" in mimeInfo) {
+    realMIMEInfo.alwaysAskBeforeHandling = mimeInfo.ask;
+  }
+  gHandlerService.store(realMIMEInfo);
 }

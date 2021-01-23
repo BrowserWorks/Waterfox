@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Vsebina">
+<!ENTITY buildToc.label      "Izgradi kazalo vsebine iz:">
+<!ENTITY tag.label           "Oznaka:">
+<!ENTITY class.label         "Razred:">
+<!ENTITY header1.label       "1. raven">
+<!ENTITY header2.label       "2. raven">
+<!ENTITY header3.label       "3. raven">
+<!ENTITY header4.label       "4. raven">
+<!ENTITY header5.label       "5. raven">
+<!ENTITY header6.label       "6. raven">
+<!ENTITY makeReadOnly.label  "Nastavi kazalo vsebine na samo za branje">
+<!ENTITY orderedList.label   "Oštevilči vse vnose v kazalu vsebine">

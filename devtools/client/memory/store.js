@@ -4,31 +4,12 @@
 
 "use strict";
 
-const { combineReducers } = require("../shared/vendor/redux");
-const createStore = require("../shared/redux/create-store");
-const reducers = require("./reducers");
-const flags = require("devtools/shared/flags");
+const createStore = require("devtools/client/shared/redux/create-store");
+const reducers = require("devtools/client/memory/reducers");
 
-module.exports = function() {
-  const shouldLog = false;
-  let history;
-
-  // If testing, store the action history in an array
-  // we'll later attach to the store
-  if (flags.testing) {
-    history = [];
-    // Uncomment this for TONS of logging in tests.
-    // shouldLog = true;
-  }
-
-  const store = createStore({
-    log: shouldLog,
-    history,
-  })(combineReducers(reducers), {});
-
-  if (history) {
-    store.history = history;
-  }
-
-  return store;
-};
+module.exports = () =>
+  createStore(reducers, {
+    enableTaskMiddleware: true,
+    // Uncomment this for logging in tests.
+    // shouldLog: true,
+  });

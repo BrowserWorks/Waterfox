@@ -1,0 +1,88 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is Mozilla Communicator client code, released
+   - March 31, 1998.
+   -
+   - The Initial Developer of the Original Code is
+   - Netscape Communications Corporation.
+   - Portions created by the Initial Developer are Copyright (C) 1998-1999
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either of the GNU General Public License Version 2 or later (the "GPL"),
+   - or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the GPL or the LGPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "पृष्ठ प्रकाशित गर्नुहोस्">
+<!ENTITY windowTitleSettings.label "प्रकाशन सेटिङ">
+
+<!ENTITY publishTab.label "प्रकाशन">
+<!ENTITY settingsTab.label "सेटिङ">
+
+<!ENTITY publishButton.label "प्रकाशन">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label "साइट नाम:">
+<!ENTITY siteList.tooltip "तपाईँले प्रकाशन गर्न चाहेको साइट रोज्नुहोस्">
+<!ENTITY newSiteButton.label "नयाँ साइट">
+<!ENTITY siteDirList.label "तपाईँको प्रकाशन साइटमा डाइरेक्टरी नाम चयन गर्नुहोस् वा टाइप गर्नुहोस्:">
+<!ENTITY siteDirList.tooltip "यसमा प्रकाशन गर्नका लागि टाढाको उप-डाइरेक्टरीको नाम रोज्नुहोस् वा प्रविष्ट गर्नुहोस्">
+<!ENTITY docDirList.label "यस पृष्ठका लागि साइट उप-डाइरेक्टरी:">
+<!ENTITY publishImgCheckbox.label "छवि र अन्य फाइल सम्मिलित गर्नुहोस्">
+<!ENTITY publishImgCheckbox.tooltip "यस पृष्ठद्वारा सन्दर्भ गरिएका छवि र अन्य फाइल प्रकाशन गर्नुहोस्">
+<!ENTITY sameLocationRadio.label "पृष्ठमा जस्तै स्थान समान स्थान प्रयोग गर्नुहोस्">
+<!ENTITY sameLocationRadio.tooltip "पृष्ठमा जस्तै समान स्थानमा फाइल प्रकाशित गर्नुहोस्">
+<!ENTITY useSubdirRadio.label "यस साइट उप-डाइरेक्टरी प्रयोग गर्नुहोस्:">
+<!ENTITY useSubdir.tooltip "फाइल प्रकाशित हुने स्थानमा टाढाको उप-डाइरेक्टरीको नाम रोज्नुहोस् वा प्रविष्ट गर्नुहोस्">
+<!ENTITY chooseDirButton.label "रोज्नुहोस्...">
+<!ENTITY pageTitle.label "पृष्ठ शीर्षक:">
+<!ENTITY pageTitle.tooltip "सञ्झ्यालमा र पुस्तकचिनोमा पृष्ठलाई पहिचान गर्न शीर्षक प्रविष्ट गर्नुहोस्">
+<!ENTITY pageTitleExample.label "जस्तै: &quot;मेरो वेब पृष्ठ&quot;">
+<!ENTITY filename.label "फाइल नाम:">
+<!ENTITY filename.tooltip "वेब पृष्ठका लागि '.html' सम्मिलित गरेर यस फाइलका लागि नाम प्रविष्ट गर्नुहोस्">
+<!ENTITY filenameExample.label "जस्तै,: &quot;mypage.html&quot;">
+<!ENTITY relatedDocs.label "प्रकाशन गरिने अन्य फाइल">
+<!ENTITY setDefaultButton.label "पूर्वनिर्धारितका रूपमा सेट गर्नुहोस्">
+<!ENTITY setDefSiteAndDir.label "पूर्वनिर्धारित साइट र डाइरेक्टरीका रूपमा सेट गर्नुहोस्">
+<!ENTITY removeButton.label "साइट हटाउनुहोस्">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label "प्रकाशन साइट">
+<!ENTITY serverInfo.label "सर्भर सूचना">
+<!ENTITY loginInfo.label "लगइन सूचना">
+<!ENTITY siteName.label "साइट नाम:">
+<!ENTITY siteName.tooltip "यस प्रकाशन साइट पहिचान गर्ने एउटा उपनाम (जस्तै: 'MySite')">
+<!ENTITY siteUrl.label "ठेगाना प्रकाशन (जस्तै: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.tooltip "तपाईँको ISP वा वेब होस् सेवाद्बारा उपलब्ध गरेको FTP:// वा HTTP:// ठेगाना">
+<!ENTITY browseUrl.label "तपाईँको गृह पृष्ठको HTTP ठेगाना (जस्तै: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.tooltip "तपाईँको गृह डाइरेक्टरीको HTTP:// ठेगाना (फाइलनाम सम्मिलित नगर्नुहोस्)">
+<!ENTITY username.label "प्रयोगकर्ता नाम:">
+<!ENTITY username.tooltip "तपाईँको ISP वा वेब होस्टिङ सेवामा लग गर्नका लागि प्रयोग गर्ने प्रयोगकर्ता नाम">
+<!ENTITY password.label "पासवर्ड:">
+<!ENTITY password.tooltip "तपाईँको प्रयोगकर्ता नामसँग सम्बन्धित पासवर्ड">
+<!ENTITY savePassword.label "पासवर्ड बचत गर्नुहोस्">
+<!ENTITY savePassword.tooltip "पासवर्ड प्रबन्धक प्रयोग गरेर तपाईँको पासवर्ड सूरक्षित गर्न यसलाई बचत गर्नुहोस्">

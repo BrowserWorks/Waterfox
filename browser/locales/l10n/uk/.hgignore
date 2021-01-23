@@ -1,0 +1,12 @@
+# use glob syntax.
+syntax: glob
+*~*
+*.pyc
+*.swp
+*.presilme
+.project
+Makefile
+NOTES
+# switch to regexp syntax.
+syntax: regexp
+

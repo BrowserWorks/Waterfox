@@ -51,6 +51,7 @@ describe("test String with URL", () => {
     const link = element.find("a");
     expect(link.prop("href")).toBe(null);
     expect(link.prop("title")).toBe(url);
+    expect(link.prop("rel")).toBe("noopener noreferrer");
   });
 
   it("renders a href when no openLink but isInContentPage is true", () => {
@@ -60,6 +61,7 @@ describe("test String with URL", () => {
     const link = element.find("a");
     expect(link.prop("href")).toBe(url);
     expect(link.prop("title")).toBe(url);
+    expect(link.prop("rel")).toBe("noopener noreferrer");
   });
 
   it("renders a simple quoted URL", () => {
@@ -103,6 +105,18 @@ describe("test String with URL", () => {
 
   it("renders a simple https URL", () => {
     const url = "https://example.com";
+    const openLink = jest.fn();
+    const element = renderRep(url, { openLink, useQuotes: false });
+    expect(element.text()).toEqual(url);
+    const link = element.find("a");
+    expect(link.prop("href")).toBe(url);
+    expect(link.prop("title")).toBe(url);
+
+    testLinkClick(link, openLink, url);
+  });
+
+  it("renders a simple http URL with one slash", () => {
+    const url = "https:/example.com";
     const openLink = jest.fn();
     const element = renderRep(url, { openLink, useQuotes: false });
     expect(element.text()).toEqual(url);

@@ -19,23 +19,23 @@
   <h2 id="hidden" style="visibility: hidden" class="linkClass">Hidden</h2>
   <button id="buttonFlick" style="position:absolute;left:0px;top:255px;" type="button" allowevents=true>buttonFlick</button>
   <script type="text/javascript">
-    var button3Timer = null;
-    var button4Timer = null;
+    let button3Timer = null;
+    let button4Timer = null;
     //appends passed in text to the innerHTML of the event's target
     function appendText(text) {
       return function(evt) {
-         var element;
+         let element;
          if (evt.type.includes("touch")) {
            if (evt.type == "touchstart") {
              element = evt.target;
            }
            else {
              //since the target of touchstart is the target of all subsequent events, then
-             //changedTouches holds the current coordinates of this touch event, so we 
+             //changedTouches holds the current coordinates of this touch event, so we
              //use these coordinates to find the element under the touch event
-             var touches = evt.changedTouches;
-             var x = touches[0].clientX;
-             var y = touches[0].clientY;
+             let touches = evt.changedTouches;
+             let x = touches[0].clientX;
+             let y = touches[0].clientY;
              element = document.elementFromPoint(x,y);
            }
          }
@@ -43,6 +43,7 @@
          else {
           element = evt.target;
          }
+         // eslint-disable-next-line no-unsanitized/property
          element.innerHTML += text;
       };
     };
@@ -55,7 +56,7 @@
       element.addEventListener("click", appendText("-click"));
     };
     function attachListeners(id) {
-      var element = document.getElementById(id);
+      let element = document.getElementById(id);
       element.addEventListener("touchstart", appendText("-touchstart"));
       element.addEventListener("touchmove", appendText("-touchmove"));
       element.addEventListener("touchend", appendText("-touchend"));
@@ -64,8 +65,9 @@
     };
     //for tracking time on an element
     function addTimers(id, timer) {
-      var element = document.getElementById(id);
+      let element = document.getElementById(id);
       element.addEventListener("touchstart", function(evt) { timer = (new Date()).getTime();});
+      // eslint-disable-next-line no-unsanitized/property
       element.addEventListener("touchend", function(evt) { timer = (new Date()).getTime() - timer; evt.target.innerHTML += "-" + timer;});
     }
     attachListeners("button1");
@@ -75,13 +77,13 @@
     attachListeners("buttonScroll");
     addTimers("button3");
     addTimers("button4");
-    var buttonFlick = document.getElementById("buttonFlick");
+    const buttonFlick = document.getElementById("buttonFlick");
     attachMouseListeners(buttonFlick);
     function createDelayed() {
-      var newButton = document.createElement("button");
+      let newButton = document.createElement("button");
       newButton.id = "delayed";
       newButton.setAttribute("style", "position:absolute;left:220px;top:455px;");
-      var content = document.createTextNode("delayed");
+      let content = document.createTextNode("delayed");
       newButton.appendChild(content);
       document.body.appendChild(newButton);
       newButton.addEventListener("mousemove", appendText("-mousemove"));

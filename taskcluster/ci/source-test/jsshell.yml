@@ -3,8 +3,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ---
 job-defaults:
-    platform: linux64/opt
-    require-build: true
+    platform: linux64-shippable/opt
+    require-build:
+        linux64.*: build-linux64-shippable/opt
     worker-type:
         by-platform:
             linux64.*: t-linux-talos
@@ -15,10 +16,10 @@ job-defaults:
                     by-shell:
                         sm:
                             SHELL: /bin/bash
-                            JSSHELL: /home/cltbld/fetches/js
+                            JSSHELL: js
                         v8:
                             SHELL: /bin/bash
-                            JSSHELL: /home/cltbld/fetches/d8/release/d8
+                            JSSHELL: d8/release/d8
                 max-run-time: 1800
     treeherder:
         kind: test
@@ -26,16 +27,25 @@ job-defaults:
     run:
         using: mach
         workdir: /home/cltbld
-        mach: jsshell-bench --perfherder={shell} --binary=$JSSHELL {test}
+        mach: jsshell-bench --perfherder={shell} --binary=$MOZ_FETCHES_DIR/$JSSHELL {test}
     run-on-projects:
         by-shell:
-            sm: ['mozilla-central', 'try', 'integration']
-            default: ['mozilla-central', 'try']
+            sm:
+                by-test-platform:
+                    (linux|windows|macos)(?!.*shippable).*: []
+                    default: ['mozilla-central', 'try', 'integration']
+            default:
+                by-test-platform:
+                    (linux|windows|macos)(?!.*shippable).*: []
+                    default: ['mozilla-central', 'try']
     fetches:
         build:
             - target.jsshell.zip
         toolchain:
             - linux64-custom-v8
+    optimization:
+        push-interval-10:
+            - linux
 
 bench-ares6:
     description: Ares6 JavaScript shell benchmark suite

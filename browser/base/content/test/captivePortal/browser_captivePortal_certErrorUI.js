@@ -56,8 +56,7 @@ add_task(async function checkCaptivePortalCertErrorUI() {
     CANONICAL_URL
   );
 
-  await ContentTask.spawn(browser, null, async () => {
-    const EventUtils = ContentTaskUtils.getEventUtils(content);
+  await SpecialPowers.spawn(browser, [], async () => {
     let doc = content.document;
     let loginButton = doc.getElementById("openPortalLoginPageButton");
     await ContentTaskUtils.waitForCondition(
@@ -86,8 +85,7 @@ add_task(async function checkCaptivePortalCertErrorUI() {
   // Passing an empty function to BrowserTestUtils.switchTab lets us wait for an arbitrary
   // tab switch.
   portalTabPromise = BrowserTestUtils.switchTab(gBrowser, () => {});
-  await ContentTask.spawn(browser, null, async () => {
-    const EventUtils = ContentTaskUtils.getEventUtils(content);
+  await SpecialPowers.spawn(browser, [], async () => {
     info("Clicking the Open Login Page button.");
     let loginButton = content.document.getElementById(
       "openPortalLoginPageButton"
@@ -109,7 +107,7 @@ add_task(async function checkCaptivePortalCertErrorUI() {
     "Waiting for error tab to be reloaded after the captive portal was freed."
   );
   await errorTabReloaded;
-  await ContentTask.spawn(browser, null, () => {
+  await SpecialPowers.spawn(browser, [], () => {
     let doc = content.document;
     ok(
       !doc.body.classList.contains("captiveportal"),
@@ -127,8 +125,7 @@ add_task(async function testCaptivePortalAdvancedPanel() {
   let tab = await setupCaptivePortalTab();
   let browser = tab.linkedBrowser;
 
-  await ContentTask.spawn(browser, BAD_CERT_PAGE, async expectedURL => {
-    const EventUtils = ContentTaskUtils.getEventUtils(content);
+  await SpecialPowers.spawn(browser, [BAD_CERT_PAGE], async expectedURL => {
     let doc = content.document;
     let advancedButton = doc.getElementById("advancedButton");
     await ContentTaskUtils.waitForCondition(

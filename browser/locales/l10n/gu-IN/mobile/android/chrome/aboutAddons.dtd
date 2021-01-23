@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "ઍડ-ઑન">
+<!ENTITY aboutAddons.header2                    "તમારા ઍડ-ઓન">
+
+<!ENTITY addonAction.enable                     "સક્રિય કરો">
+<!ENTITY addonAction.disable                    "નિષ્ક્રિય કરો">
+<!ENTITY addonAction.uninstall                  "અનઇન્સ્ટોલ કરો">
+<!ENTITY addonAction.undo                       "છેલ્લું રદ કરો">
+<!ENTITY addonAction.update                     "સુધારો">
+
+<!ENTITY addonUnsigned.message                  "આ એડ-ઓન &brandShortName;દ્વારા ચકાસી શકાયા નથી.">
+<!ENTITY addonUnsigned.learnMore                "વધુ શીખો">

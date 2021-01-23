@@ -13,30 +13,29 @@ namespace dom {
 
 // nsISupports implementation
 
-NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(XMLStylesheetProcessingInstruction,
-                                             ProcessingInstruction,
-                                             nsIStyleSheetLinkingElement)
+NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED_0(
+    XMLStylesheetProcessingInstruction, ProcessingInstruction)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(XMLStylesheetProcessingInstruction)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(
     XMLStylesheetProcessingInstruction, ProcessingInstruction)
-  tmp->nsStyleLinkElement::Traverse(cb);
+  tmp->LinkStyle::Traverse(cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(
     XMLStylesheetProcessingInstruction, ProcessingInstruction)
-  tmp->nsStyleLinkElement::Unlink();
+  tmp->LinkStyle::Unlink();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-XMLStylesheetProcessingInstruction::~XMLStylesheetProcessingInstruction() {}
+XMLStylesheetProcessingInstruction::~XMLStylesheetProcessingInstruction() =
+    default;
 
 // nsIContent
 
-nsresult XMLStylesheetProcessingInstruction::BindToTree(
-    Document* aDocument, nsIContent* aParent, nsIContent* aBindingParent) {
-  nsresult rv =
-      ProcessingInstruction::BindToTree(aDocument, aParent, aBindingParent);
+nsresult XMLStylesheetProcessingInstruction::BindToTree(BindContext& aContext,
+                                                        nsINode& aParent) {
+  nsresult rv = ProcessingInstruction::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   void (XMLStylesheetProcessingInstruction::*update)() =
@@ -47,11 +46,10 @@ nsresult XMLStylesheetProcessingInstruction::BindToTree(
   return rv;
 }
 
-void XMLStylesheetProcessingInstruction::UnbindFromTree(bool aDeep,
-                                                        bool aNullParent) {
+void XMLStylesheetProcessingInstruction::UnbindFromTree(bool aNullParent) {
   nsCOMPtr<Document> oldDoc = GetUncomposedDoc();
 
-  ProcessingInstruction::UnbindFromTree(aDeep, aNullParent);
+  ProcessingInstruction::UnbindFromTree(aNullParent);
   Unused << UpdateStyleSheetInternal(oldDoc, nullptr);
 }
 
@@ -65,7 +63,7 @@ void XMLStylesheetProcessingInstruction::SetNodeValueInternal(
   }
 }
 
-// nsStyleLinkElement
+// LinkStyle
 
 void XMLStylesheetProcessingInstruction::GetCharset(nsAString& aCharset) {
   if (!GetAttrValue(nsGkAtoms::charset, aCharset)) {
@@ -73,12 +71,11 @@ void XMLStylesheetProcessingInstruction::GetCharset(nsAString& aCharset) {
   }
 }
 
-/* virtual */
 void XMLStylesheetProcessingInstruction::OverrideBaseURI(nsIURI* aNewBaseURI) {
   mOverriddenBaseURI = aNewBaseURI;
 }
 
-Maybe<nsStyleLinkElement::SheetInfo>
+Maybe<LinkStyle::SheetInfo>
 XMLStylesheetProcessingInstruction::GetStyleSheetInfo() {
   // xml-stylesheet PI is special only in prolog
   if (!nsContentUtils::InProlog(this)) {
@@ -126,15 +123,18 @@ XMLStylesheetProcessingInstruction::GetStyleSheetInfo() {
   auto encoding = doc->GetDocumentCharacterSet();
   nsCOMPtr<nsIURI> uri;
   NS_NewURI(getter_AddRefs(uri), href, encoding, baseURL);
+
   return Some(SheetInfo{
       *doc,
       this,
       uri.forget(),
       nullptr,
-      net::RP_Unset,
+      MakeAndAddRef<ReferrerInfo>(*doc),
       CORS_NONE,
       title,
       media,
+      /* integrity = */ EmptyString(),
+      /* nonce = */ EmptyString(),
       alternate ? HasAlternateRel::Yes : HasAlternateRel::No,
       IsInline::No,
       IsExplicitlyEnabled::No,
@@ -147,7 +147,9 @@ XMLStylesheetProcessingInstruction::CloneDataNode(
   nsAutoString data;
   GetData(data);
   RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
-  return do_AddRef(new XMLStylesheetProcessingInstruction(ni.forget(), data));
+  auto* nim = ni->NodeInfoManager();
+  return do_AddRef(new (nim)
+                       XMLStylesheetProcessingInstruction(ni.forget(), data));
 }
 
 }  // namespace dom

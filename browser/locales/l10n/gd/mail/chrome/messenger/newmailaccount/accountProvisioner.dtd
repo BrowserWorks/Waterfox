@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Fàilte gu &brandShortName;">
+<!ENTITY header2.label "A bheil thu ag iarraidh seòladh puist-dhealain ùr?">
+<!ENTITY other.languages "Chan fhaic thu an-seo ach na solaraichean san sgìre agad.  Briog an-seo gus a h-uile solaraiche fhaicinn.">
+<!ENTITY error.line1 "Duilich, cha b' urrainn dhuinn moladh a lorg airson puist-dhealain dhut.">
+<!ENTITY error.line2 "’S urrainn dhut far-ainmean no briathran eile a chur a-steach gus roghainn eile de phost-d fhaicinn.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "B' urrainn dhut sùil a thoirt ">
+<!ENTITY error.suggest.middle "air an fheadhainn eile a bheir seachad cunntasan puist-dhealain an-asgaidh">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Halò ">
+<!ENTITY success.title.after ", tha roghadh is taghadh agad am measg nan seòlaidhean a leanas:">
+<!ENTITY success.tip "('S urrainn dhut far-ainmean no briathran eile a chur a-steach gus roghainn eile de phost-d fhaicinn)">
+<!ENTITY partnership.description "On a tha &brandShortName; ann an com-pàirteachas le grunn sholaraichean, 's urrainn dhuinn post-d ùr a thabhann dhut. Cha leig thu leas ach d' ainm is do shloinneadh no faclan eile a chur a-steach sna raointean gu h-àrd a bu mhath leat an toiseach.">
+<!ENTITY existing.header "A bheil seòladh agad mu thràth a bu toigh leat cleachdadh?">
+<!ENTITY tinyheader.title "Bheil seòladh agad?">
+<!ENTITY tinyheader.existing "Gearr leum thairis air seo 's cleachd an seòladh a tha agam mu thràth">
+<!ENTITY content.close "Saoilidh mi gun suidhich mi an cunntas agam uaireigin eile.">
+<!ENTITY successful.title "Meal do naidheachd!">
+<!ENTITY successful.successMessage "Shuidhich thu an cunntas agad.">
+<!ENTITY successful.write "Sgrìobh post-d">
+<!ENTITY successful.write.desc "Innis dha do theaghlach 's dha do chàirdean gu bheil seòladh ùr agad.<br/> Sin as adhbhar gun d'fhuair thu e, nach ann?">
+<!ENTITY successful.customize "Gnàithaich &brandShortName; dhut le tuilleadain shnasail">
+<!ENTITY successful.customize.desc "Tha na mìltean de thuilleadain ann leis an urrainn dhut &brandShortName; a ghnàthachadh, airson 's gun dèan e dìreach na bha a dhìth ort.">
+<!ENTITY successful.attach "Cuir earr-sgrìobhadh pearsanta ris a' phost-d agam">
+<!ENTITY successful.attach.desc "'S urrainn dhut iomradh no fiosrachadh air choireigin a chur aig bonn gach teachdaireachd a chuireas tu.">
+<!ENTITY successful.close "Dùin an uinneag seo.">
+<!ENTITY input.namePlaceholder "D' ainm no far-ainm">
+<!ENTITY input.search "Lorg">
+<!ENTITY search_engine.title "Gnàthaich an t-einnsean-luirg dhut">
+<!ENTITY search_engine.message "Faodaidh gun doir solaraiche a' phuist-dhealain agad comasan dhut lorg a dhèanamh air an lìon.">
+<!ENTITY search_engine.button "Crìochnaich">

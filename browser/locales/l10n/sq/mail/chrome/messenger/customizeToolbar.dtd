@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Përshtatni Panelin">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Elementët mund t’i shtoni ose t’i hiqni duke i tërhequr për t’i vënë ose hequr nga panele.">
+<!ENTITY show.label               "Shfaq:">
+<!ENTITY iconsAndText.label       "Ikona dhe Tekst">
+<!ENTITY icons.label              "Ikona">
+<!ENTITY text.label               "Tekst">
+<!ENTITY iconsBesideText.label    "Ikona në krah të Tekstit">
+<!ENTITY useSmallIcons.label      "Përdor Ikona të Vogla">
+<!ENTITY restoreDefaultSet.label  "Rikthe Grupin Parazgjedhje">
+<!ENTITY showTitlebar2.label      "Shtyllë Titujsh">
+<!ENTITY extraDragSpace2.label    "Tërhiqni Hapësirë">
+<!ENTITY saveChanges.label        "U bë">
+<!ENTITY undoChanges.label        "Zhbëji Ndryshimet">

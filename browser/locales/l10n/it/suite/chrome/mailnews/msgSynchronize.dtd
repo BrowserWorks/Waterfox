@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY MsgSynchronize.label "Download e sincronizzazione messaggi">
+<!ENTITY MsgSelect.label "Elementi per uso non in linea">
+<!ENTITY MsgSyncDesc.label "Se sono già state scelte le cartelle da utilizzare una volta non in linea, è possibile scaricare il loro contenuto e/o sincronizzarle ora. Altrimenti è possibile usare il pulsante &quot;Seleziona&quot; per scegliere cartelle di posta e gruppi di discussione per l'uso non in linea.">
+<!ENTITY MsgSyncDirections.label "Scarica e/o sincronizza i seguenti:">
+<!ENTITY syncTypeMail.label "Messaggi di posta">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Messaggi dei gruppi di discussione">
+<!ENTITY syncTypeNews.accesskey "d">
+<!ENTITY sendMessage.label "Spedisci messaggi da inviare">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "Lavora non in linea una volta scaricati i messaggi">
+<!ENTITY workOffline.accesskey "c">
+<!ENTITY selectButton.label "Seleziona…">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Selezionare le cartelle di posta e dei gruppi di discussione per l'uso non in linea.">
+<!ENTITY MsgSelectInd.label "Da scaricare">
+<!ENTITY MsgSelectItems.label "Cartelle e gruppi di discussione">

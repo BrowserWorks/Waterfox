@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "ห้องสมุด">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "จัดระเบียบ">
+<!ENTITY organize.accesskey    "จ">
+<!ENTITY organize.tooltip      "จัดระเบียบที่คั่นหน้าของคุณ">
+
+<!ENTITY file.close.label               "ปิด">
+<!ENTITY file.close.accesskey           "ป">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "มุมมอง">
+<!ENTITY views.accesskey                "ม">
+<!ENTITY views.tooltip                  "เปลี่ยนมุมมองของคุณ">
+<!ENTITY view.columns.label             "แสดงคอลัมน์">
+<!ENTITY view.columns.accesskey         "ส">
+<!ENTITY view.sort.label                "เรียง">
+<!ENTITY view.sort.accesskey            "ร">
+<!ENTITY view.unsorted.label            "ไม่เรียง">
+<!ENTITY view.unsorted.accesskey        "ม">
+<!ENTITY view.sortAscending.label       "เรียงลำดับ A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "เรียงลำดับ Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "นำเข้าที่คั่นหน้าจาก HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "น">
+<!ENTITY exportBookmarksToHTML.label       "ส่งออกที่คั่นหน้าเป็น HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "ส">
+<!ENTITY importOtherBrowser.label          "นำเข้าข้อมูลจากเบราว์เซอร์อื่น…">
+<!ENTITY importOtherBrowser.accesskey      "อ">
+
+<!ENTITY cmd.backup.label               "สำรองข้อมูล…">
+<!ENTITY cmd.backup.accesskey           "ง">
+<!ENTITY cmd.restore2.label             "เรียกคืน">
+<!ENTITY cmd.restore2.accesskey         "ร">
+<!ENTITY cmd.restoreFromFile.label      "เลือกไฟล์…">
+<!ENTITY cmd.restoreFromFile.accesskey  "ล">
+
+<!ENTITY col.name.label          "ชื่อ">
+<!ENTITY col.tags.label          "ป้ายกำกับ">
+<!ENTITY col.url.label           "ตำแหน่งที่ตั้ง">
+<!ENTITY col.mostrecentvisit.label "วันที่เยี่ยมชมล่าสุด">
+<!ENTITY col.visitcount.label    "จำนวนการเข้าชม">
+<!ENTITY col.dateadded.label     "วันที่เพิ่ม">
+<!ENTITY col.lastmodified.label  "วันที่เปลี่ยนแปลงล่าสุด">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "นำเข้าและสำรองข้อมูล">
+<!ENTITY maintenance.accesskey  "น">
+<!ENTITY maintenance.tooltip    "นำเข้าและสำรองที่คั่นหน้าของคุณ">
+
+<!ENTITY backButton.tooltip  "ย้อนกลับ">
+
+<!ENTITY forwardButton.tooltip  "เดินหน้า">
+
+<!ENTITY detailsPane.selectAnItemText.description "เลือกรายการเพื่อดูและแก้ไขคุณสมบัติ">
+

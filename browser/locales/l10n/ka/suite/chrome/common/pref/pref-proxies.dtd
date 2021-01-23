@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "პროქსი სერვერები">
+<!ENTITY  pref.proxies.desc             "პროქსი ქსელური სერვისია თქვენი ინტერნეტ კავშირის გასაფილტრად და ასაჩქარებლად.">
+<!ENTITY  proxyTitle.label              "პროქსის პარამეტრები ინტერნეტისთვის">
+<!ENTITY  directTypeRadio.label         "პირდაპირი კავშირი ინტერნეტთან">
+<!ENTITY  directTypeRadio.accesskey     "D">
+<!ENTITY  systemTypeRadio.label         "პროქსის სიტემური პარამეტრების გამოყენება">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  manualTypeRadio.label         "პროქსის თქვენეული პარამეტრები">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  wpadTypeRadio.label           "პროქსი კონფიგურაციის თვითამოცნობა">
+<!ENTITY  wpadTypeRadio.accesskey       "A">
+<!ENTITY  autoTypeRadio.label           "პროქსის თვითკონფიგურაციის მისამართი:">
+<!ENTITY  autoTypeRadio.accesskey       "c">
+<!ENTITY  reload.label                  "განახლება">
+<!ENTITY  reload.accesskey              "R">
+<!ENTITY  http.label                    "პროქსი:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "პორტი:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "დეტალები…">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "პროქსი არაა:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "მაგალითი: .mozilla.org, .giasher.com, 192.168.1.0/24">

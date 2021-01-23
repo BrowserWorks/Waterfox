@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Elŝutoj">
+<!ENTITY aboutDownloads.header                     "Viaj elŝutoj">
+<!ENTITY aboutDownloads.empty                      "Neniu elŝuto">
+
+<!ENTITY aboutDownloads.open                       "Malfermi">
+<!ENTITY aboutDownloads.remove                     "Forigi">
+<!ENTITY aboutDownloads.removeAll                  "Forigi ĉiujn">
+<!ENTITY aboutDownloads.pause                      "Paŭzigi">
+<!ENTITY aboutDownloads.resume                     "Daŭrigi">
+<!ENTITY aboutDownloads.cancel                     "Nuligi">
+<!ENTITY aboutDownloads.retry                      "Klopodi denove">

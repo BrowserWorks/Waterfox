@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kajkosće sadźby polow">
+
+<!ENTITY Legend.label "Legenda">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Legendu wobdźěłać:">
+<!ENTITY EditLegendText.accesskey "b">
+<!ENTITY LegendAlign.label "Legendu wusměrić:">
+<!ENTITY LegendAlign.accesskey "u">
+<!ENTITY AlignDefault.label "Standardny">
+<!ENTITY AlignLeft.label "Nalěwo">
+<!ENTITY AlignCenter.label "Centrowano">
+<!ENTITY AlignRight.label "Naprawo">
+
+<!ENTITY RemoveFieldSet.label "Sadźbu polow wotstronić">
+<!ENTITY RemoveFieldSet.accesskey "w">

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Igama: ">
+<!ENTITY directoryName.accesskey           "I">
+<!ENTITY directoryHostname.label           "Igama lomamkeli: ">
+<!ENTITY directoryHostname.accesskey       "m">
+<!ENTITY directoryBaseDN.label             "Isiseko se-DN: ">
+<!ENTITY directoryBaseDN.accesskey         "I">
+<!ENTITY findButton.label                  "Fumana">
+<!ENTITY findButton.accesskey              "F">
+<!ENTITY directorySecure.label             "Sebenzisa umdibaniso wokhuseleko (SSL)">
+<!ENTITY directorySecure.accesskey         "S">
+<!ENTITY directoryLogin.label              "Bophelela i-DN: ">
+<!ENTITY directoryLogin.accesskey          "o">
+<!ENTITY General.tab                       "Jikelele">
+<!ENTITY Offline.tab                       "Imo engeyo yakusebenza">
+<!ENTITY Advanced.tab                      "Kwinqanaba eseliphambili">
+<!ENTITY portNumber.label                  "Inombolo yesiqhagamshelisi: ">
+<!ENTITY portNumber.accesskey              "I">
+<!ENTITY searchFilter.label                "Zingela hluza: ">
+<!ENTITY searchFilter.accesskey            "h">
+<!ENTITY scope.label                       "Ubukhulu bomda: ">
+<!ENTITY scope.accesskey                   "m">
+<!ENTITY scopeOneLevel.label               "Elinye Inqanaba">
+<!ENTITY scopeOneLevel.accesskey           "I">
+<!ENTITY scopeSubtree.label                "Umthi olihlumela">
+<!ENTITY scopeSubtree.accesskey            "U">
+<!ENTITY return.label                      "Musa ukubuyela ngaphezu koku">
+<!ENTITY return.accesskey                  "u">
+<!ENTITY results.label                     "iziphumo">
+<!ENTITY offlineText.label                 "Unako ukuthoba umthwalo waloo kopi yalo vimba weefayili ukuze ube khona ukuba ungasetyenziswa xa usasebenza kwimo engeyo yakusebenza.">
+<!ENTITY saslMechanism.label               "Login method: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "Simple">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

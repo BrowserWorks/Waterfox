@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY pref.composer.title "Composer">
+<!ENTITY recentFiles.title "Valmynd seinustu síðna">
+<!ENTITY documentsInMenu.label "Hámarksfjöldi síðna birtur:">
+<!ENTITY documentsInMenu.accesskey "n">
+<!ENTITY savingFiles.title "Þegar síður eru vistaðar eða gefnar út">
+<!ENTITY preserveExisting.label "Viðhalda upprunalegu sniði frumkóða">
+<!ENTITY preserveExisting.accesskey "p">
+<!ENTITY preserveExisting.tooltip "Viðhalda línuendingum og upprunalegu sniði síðunnar">
+<!ENTITY saveAssociatedFiles.label "Vista myndir og aðrar tengdar skrár þegar síður eru vistaðar">
+<!ENTITY saveAssociatedFiles.accesskey "s">
+<!ENTITY showPublishDialog.label "Alltaf sýna útgáfu glugga þegar síða er gefin út">
+<!ENTITY showPublishDialog.accesskey "A">
+<!ENTITY composerEditing.label "Ritunarskipun">
+<!ENTITY maintainStructure.label "Viðhalda töflusniði þegar bætt er við eða eytt út hólfum">
+<!ENTITY maintainStructure.tooltip "Viðheldur töflu sem hornréttri með því að bæta sjálfkrafa við hólfum eftir að bætt er við eytt út hólfum">
+<!ENTITY maintainStructure.accesskey "m">
+<!ENTITY useCSS.label "Nota CSS sniðmát í staðinn fyrir HTML einindi og eigindi">
+<!ENTITY useCSS.accesskey "N">
+<!ENTITY crInPCreatesNewP.label "Vendilykill í málsgrein býr alltaf til nýja málsgrein">
+<!ENTITY crInPCreatesNewP.accesskey "r">

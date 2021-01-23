@@ -4,7 +4,6 @@
 
 :root {
   --accessibility-font-size: 12px;
-  --accessibility-toolbar-height: 24px;
   --accessibility-toolbar-height-tall: 35px;
   --accessibility-toolbar-focus: var(--blue-50);
   --accessibility-toolbar-focus-alpha30: rgba(10, 132, 255, 0.3);
@@ -12,7 +11,12 @@
   --accessibility-horizontal-padding: 5px;
   --accessibility-horizontal-indent: 20px;
   --accessibility-properties-item-width: calc(100% - var(--accessibility-horizontal-indent));
-  --accessibility-tree-height: calc(100vh - var(--accessibility-toolbar-height) * 2 - 1px);
+  /* The main content can use the full height minus the height of the toolbar
+     (including 1px border bottom) */
+  --accessibility-main-height: calc(100vh - var(--theme-toolbar-height) - 1px);
+  /* The tree can use the main content height minus the height of the tree
+     header, which has the same height as the toolbar and a 1px border bottom */
+  --accessibility-tree-height: calc(var(--accessibility-main-height) - var(--theme-toolbar-height) - 1px);
   --accessibility-arrow-horizontal-padding: 4px;
   --accessibility-tree-row-height: 21px;
   --accessibility-unfocused-tree-focused-node-background: var(--grey-20);
@@ -20,14 +24,7 @@
   --accessibility-link-color: var(--blue-60);
   --accessibility-link-color-active: var(--blue-70);
   --accessibility-body-background-a90: rgba(255, 255, 255, 0.9);
-  --badge-active-background-color: var(--blue-50);
-  --badge-active-border-color: #FFFFFFB3;
-  --badge-interactive-background-color: var(--grey-20);
-  --accessible-label-background-color: white;
-  --accessible-label-border-color: #CACAD1;
-  --accessible-label-color: var(--grey-60);
-  /* Similarly to webconsole, add more padding before the toolbar group. */
-  --separator-inline-margin: 5px;
+  --accessibility-code-background: var(--grey-20);
 }
 
 :root.theme-dark {
@@ -36,12 +33,7 @@
   --accessibility-link-color: var(--theme-highlight-blue);
   --accessibility-link-color-active: var(--blue-40);
   --accessibility-body-background-a90: rgba(42, 42, 46, 0.9);
-  --badge-active-background-color: var(--blue-60);
-  --badge-active-border-color: #FFF6;
-  --badge-interactive-background-color: var(--grey-70);
-  --accessible-label-background-color: var(--grey-80);
-  --accessible-label-border-color: var(--grey-50);
-  --accessible-label-color: var(--grey-40);
+  --accessibility-code-background: var(--grey-70);
 }
 
 /* General */
@@ -57,6 +49,13 @@ body {
   animation: flash-out 0.5s ease-out;
 }
 
+:root {
+  --theme-popup-border-radius: 0px;
+}
+:root[platform="mac"] {
+  --theme-popup-border-radius: 3.5px;
+}
+
 @keyframes flash-out {
   from {
     background: var(--theme-contrast-background);
@@ -65,6 +64,10 @@ body {
 
 .accessible .tree .node .theme-twisty {
   width: var(--accessibility-horizontal-indent);
+}
+
+.accessible .tree .node .theme-twisty:not(.open):dir(rtl) {
+  transform: rotate(-90deg);
 }
 
 .accessible .tree .node.focused .theme-twisty,
@@ -85,6 +88,7 @@ body {
 .devtools-button,
 .toggle-button {
   cursor: pointer;
+  border: 1px solid transparent;
 }
 
 .mainFrame .devtools-button.devtools-throbber::before,
@@ -98,7 +102,7 @@ body {
 }
 
 .split-box.horz {
-  height: calc(100vh - var(--accessibility-toolbar-height));
+  height: var(--accessibility-main-height);
 }
 
 .mainFrame .devtools-button,
@@ -117,7 +121,6 @@ body {
 .devtools-button:focus,
 .devtools-button > .btn-content:focus,
 .devtools-button::-moz-focus-inner {
-  border: 1px solid transparent;
   outline: none;
 }
 
@@ -136,46 +139,101 @@ body {
   font-size: var(--accessibility-font-size);
 }
 
-.devtools-toolbar .help {
-  cursor: pointer;
-  width: 18px;
-  margin-inline-start: auto;
-  margin-inline-end: 3px;
-  background: transparent;
+/* Similarly to webconsole, add more padding before the toolbar group. */
+.devtools-toolbar .devtools-separator {
+  margin-inline: 5px;
 }
 
-.devtools-toolbar .help .btn-content {
-  display: block;
-  padding: 0;
-  -moz-context-properties: fill;
-  fill: var(--theme-body-color);
-  width: 16px;
-  height: 16px;
-  background-image: url(chrome://devtools/skin/images/help.svg);
-  background-repeat: no-repeat;
-  background-size: contain;
-}
-
-.devtools-toolbar .help:focus {
-  outline: 2px solid var(--accessibility-toolbar-focus);
-  box-shadow: 0 0 0 3px var(--accessibility-toolbar-focus-alpha30);
-  border-radius: 2px;
-  outline-offset: -1px;
-  -moz-outline-radius: 2px;
-}
-
-.devtools-toolbar .help:focus > .btn-content {
-  outline: none;
-  box-shadow: none;
-}
-
-.devtools-toolbar .accessibility-tree-filters {
+.devtools-toolbar .accessibility-tree-filters,
+.devtools-toolbar .accessibility-simulation {
+  margin-inline-start: 4px;
   display: flex;
   flex-wrap: nowrap;
   flex-direction: row;
   align-items: center;
   white-space: nowrap;
-  margin-inline-end: 5px;
+}
+
+.devtools-toolbar .toolbar-menu-button {
+  border-color: transparent;
+  padding: 0 3px;
+}
+
+.devtools-toolbar .toolbar-menu-button.filters {
+  max-width: 100px;
+}
+
+.devtools-toolbar .toolbar-menu-button.simulation {
+  max-width: 200px;
+}
+
+.devtools-toolbar .toolbar-menu-button.filters,
+.devtools-toolbar .toolbar-menu-button.simulation {
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+  margin-inline-start: 3px;
+}
+
+.devtools-toolbar .toolbar-menu-button::after,
+.devtools-toolbar .toolbar-menu-button.simulation::before {
+  content: "";
+  display: inline-block;
+  -moz-context-properties: fill;
+  fill: currentColor;
+  margin-inline-start: 3px;
+}
+
+.devtools-toolbar .toolbar-menu-button.filters::after,
+.devtools-toolbar .toolbar-menu-button.simulation::after {
+  background: url("chrome://devtools/skin/images/select-arrow.svg") no-repeat;
+  width: 8px;
+  height: 8px;
+}
+
+.devtools-toolbar .toolbar-menu-button.prefs {
+  background-color: transparent;
+  height: 18px;
+  padding: 0;
+  margin-inline-start: auto;
+  margin-inline-end: 3px;
+}
+
+.devtools-toolbar .toolbar-menu-button.prefs:active:hover {
+  background-color: var(--theme-selection-background-hover);
+}
+
+.devtools-toolbar .toolbar-menu-button.prefs::after {
+  display: none;
+}
+
+.devtools-toolbar .toolbar-menu-button.prefs::before {
+  background: url("chrome://devtools/skin/images/settings.svg") no-repeat;
+  width: 14px;
+  height: 14px;
+  background-size: contain;
+  margin: 0px 1px;
+  vertical-align: text-bottom;
+}
+
+.devtools-toolbar .badge.toggle-button[disabled],
+.tooltip-container .menuitem > .command[disabled] {
+  opacity: 0.5;
+}
+
+:root .theme-body .tooltip-container.tooltip-visible[type="doorhanger"] > .tooltip-panel,
+:root .theme-body .tooltip-container.tooltip-visible[type="doorhanger"] > .tooltip-arrow::before {
+  border: 1px solid var(--theme-popup-border-color);
+  border-radius: var(--theme-popup-border-radius);
+  box-shadow: 0 0 4px hsla(210,4%,10%,.2);
+}
+
+.tooltip-container .menuitem > .command[role="link"] {
+  -moz-appearance: none;
+  border: none;
+  color: var(--theme-arrowpanel-color);
+  background-color: transparent;
+  text-align: start;
+  width: 100%;
 }
 
 /* @remove after release 68 (See Bug 1551574) */
@@ -230,7 +288,7 @@ body {
 }
 
 .description img {
-  margin-right: 12px;
+  margin-inline-end: 12px;
   flex-basis: 42px;
   flex-shrink: 0;
   -moz-context-properties: fill;
@@ -243,22 +301,26 @@ body {
   margin: auto;
 }
 
-.description .link {
+.description .link,
+.accessibility-check-annotation .link  {
   color: var(--accessibility-link-color);
   cursor: pointer;
   outline: 0;
 }
 
-.description .link:hover:not(:focus) {
+.description .link:hover:not(:focus),
+.accessibility-check-annotation .link:hover:not(:focus) {
   text-decoration: underline;
 }
 
-.description .link:focus:not(:active) {
+.description .link:focus:not(:active),
+.accessibility-check-annotation .link:focus:not(:active) {
   box-shadow: 0 0 0 2px var(--accessibility-toolbar-focus), 0 0 0 4px var(--accessibility-toolbar-focus-alpha30);
   border-radius: 2px;
 }
 
-.description .link:active {
+.description .link:active,
+.accessibility-check-annotation .link:active {
   color: var(--accessibility-link-color-active);
   text-decoration: underline;
 }
@@ -344,11 +406,11 @@ body {
 }
 
 .treeTable > tbody td {
-  -moz-user-select: none;
+  user-select: none;
 }
 
 .treeTable > tbody td > span {
-  -moz-user-select: text;
+  user-select: text;
 }
 
 .mainFrame .treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover {
@@ -368,7 +430,7 @@ body {
   background: var(--theme-toolbar-background);
   font: message-box;
   font-size: var(--accessibility-font-size);
-  height: var(--accessibility-toolbar-height);
+  height: var(--theme-toolbar-height);
   color: var(--theme-toolbar-color);
 }
 
@@ -376,32 +438,45 @@ body {
   display: inline-block;
   font: message-box;
   font-size: var(--theme-body-font-size);
-  line-height: calc(14 / 11);
   border-radius: 3px;
   padding: 0px 3px;
   margin-inline-start: 5px;
-  color: var(--accessible-label-color);
-  background-color: var(--accessible-label-background-color);
-  border: 1px solid var(--accessible-label-border-color);
+  color: var(--badge-color);
+  background-color: var(--badge-background-color);
+  border: 1px solid var(--badge-border-color);
+  user-select: none;
 }
 
 .badge.audit-badge::before {
   content: "";
   display: inline-block;
-  vertical-align: -1px;
-  width: 10px;
-  height: 10px;
-  margin-inline-end: 1px;
-  background: url("chrome://devtools/skin/images/alert-tiny.svg") no-repeat;
+  vertical-align: 0px;
+  width: 9px;
+  height: 9px;
+  margin-inline-end: 2px;
   -moz-context-properties: fill;
   fill: currentColor;
   opacity: 0.9;
 }
 
+.badge.audit-badge[data-score="BEST_PRACTICES"]::before {
+  background-image: url(chrome://devtools/skin/images/info-tiny.svg);
+  vertical-align: -1px;
+}
+
+.badge.audit-badge[data-score="WARNING"]::before {
+  background-image: url(chrome://devtools/skin/images/alert-tiny.svg);
+}
+
+.badge.audit-badge[data-score="FAIL"]::before {
+  background-image: url(chrome://devtools/skin/images/error-tiny.svg);
+  vertical-align: -1px;
+}
+
 /* improve alignment in high res (where we can use half pixels) */
 @media (min-resolution: 1.5x) {
-  .badge.audit-badge::before {
-    vertical-align: -1.5px;
+  .badge.audit-badge[data-score="WARNING"]::before {
+    vertical-align: -0.5px;
   }
 }
 
@@ -411,7 +486,8 @@ body {
   border-color: transparent;
 }
 
-.devtools-toolbar .badge.toggle-button:focus {
+.devtools-toolbar .badge.toggle-button:focus,
+.devtools-toolbar .toolbar-menu-button:focus {
   outline: 2px solid var(--accessibility-toolbar-focus);
   outline-offset: -2px;
   box-shadow: 0 0 0 2px var(--accessibility-toolbar-focus-alpha30);
@@ -425,7 +501,7 @@ body {
 }
 
 .treeTable:not(:focus):not(:focus-within) .treeRow.selected .badges .badge {
-  color: var(--accessible-label-color);
+  color: var(--badge-color);
 }
 
 .badge.toggle-button.checked {
@@ -444,33 +520,17 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
+  overflow-y: auto;
   white-space: nowrap;
   font: message-box;
   font-size: var(--accessibility-font-size);
+  background-color: var(--theme-sidebar-background);
 }
 
 .split-box:not(.horz) .right-sidebar {
   position: fixed;
   width: inherit;
-  height: calc(100vh - (var(--accessibility-toolbar-height)));
-}
-
-.right-sidebar ._header {
-  background-color: var(--theme-toolbar-background);
-  border-bottom: 1px solid var(--theme-splitter-color);
-  height: var(--accessibility-toolbar-height);
-  line-height: var(--accessibility-toolbar-height);
-  padding-inline-start: 14px;
-  padding-inline-end: var(--accessibility-arrow-horizontal-padding);
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.right-sidebar ._content {
-  font-size: var(--accessibility-font-size);
-  flex: 2 0;
-  overflow: auto;
+  height: var(--accessibility-main-height)
 }
 
 /* Tree customization */
@@ -480,6 +540,8 @@ body {
   white-space: nowrap;
   overflow: auto;
   display: block;
+  /* Force the properties list to always be displayed in LTR (bug 1575002) */
+  direction: ltr;
 }
 
 .split-box.horz .accessible .tree {
@@ -578,12 +640,13 @@ body {
 }
 
 .accessible .tree .objectBox-accessible .accessible-role {
-  background-color: var(--accessible-label-background-color);
-  color: var(--accessible-label-color);
-  border: 1px solid var(--accessible-label-border-color);
+  background-color: var(--badge-background-color);
+  color: var(--badge-color);
+  border: 1px solid var(--badge-border-color);
   border-radius: 3px;
   padding: 0px 2px;
   margin-inline-start: 5px;
+  user-select: none;
 }
 
 .accessible .tree:focus .node.focused .objectBox-accessible .accessible-role,
@@ -622,7 +685,7 @@ body {
 }
 
 .accessible .tree .objectBox-accessible .open-accessibility-inspector,
-.accessible .tree .objectBox-node .open-inspector{
+.accessible .tree .objectBox-node .open-inspector {
   width: 17px;
   cursor: pointer;
   flex-shrink: 0;
@@ -655,13 +718,44 @@ body {
 .checks-empty {
   font-style: italic;
   padding: 0.5em 20px;
-  -moz-user-select: none;
+  user-select: none;
   font-size: 12px;
   white-space: initial;
 }
 
-/* Color Contrast */
-.accessibility-color-contrast-check,
+/* Checks */
+.checks .list li:last-of-type {
+  padding-block-end: 4px;
+}
+
+.accessibility-check code {
+  background-color: var(--accessibility-code-background);
+  border-radius: 2px;
+  box-decoration-break: clone;
+  padding: 0 4px;
+}
+
+.accessibility-check .icon {
+  display: inline;
+  -moz-context-properties: fill;
+  vertical-align: top;
+  margin-block-start: 2px;
+  margin-inline-end: 4px;
+}
+
+.accessibility-check .icon[data-score="FAIL"] {
+  fill: var(--theme-icon-error-color);
+}
+
+.accessibility-check .icon[data-score="WARNING"] {
+  fill: var(--theme-icon-warning-color);
+}
+
+.accessibility-check .icon[data-score="BEST_PRACTICES"] {
+  fill: currentColor;
+}
+
+.accessibility-check,
 .accessibility-color-contrast {
   position: relative;
   display: flex;
@@ -669,59 +763,29 @@ body {
   height: inherit;
 }
 
-.accessibility-color-contrast-check {
+.accessibility-check {
   flex-direction: column;
   padding: 4px var(--accessibility-horizontal-indent);
   line-height: 20px;
 }
 
-.accessibility-color-contrast {
-  align-items: baseline;
-}
-
-.accessibility-color-contrast-header {
+.accessibility-check-header {
   margin: 0;
   font-weight: bold;
   font-size: var(--accessibility-font-size);
-  line-height: var(--accessibility-toolbar-height);
+  line-height: var(--theme-toolbar-height);
 }
 
-.accessibility-color-contrast-annotation {
+.accessibility-check-annotation {
+  display: inline;
   margin: 0;
   white-space: normal;
-  color: var(--accessible-label-color);
+  color: var(--badge-color);
 }
 
-.accessibility-color-contrast-annotation .link {
-  color: var(--accessibility-link-color);
-  cursor: pointer;
-  outline: 0;
+.accessibility-check-annotation .link {
   white-space: nowrap;
   font-style: normal;
-}
-
-.accessibility-color-contrast-annotation .link:hover:not(:focus) {
-  text-decoration: underline;
-}
-
-.accessibility-color-contrast-annotation .link:focus:not(:active) {
-  box-shadow: 0 0 0 2px var(--accessibility-toolbar-focus), 0 0 0 4px var(--accessibility-toolbar-focus-alpha30);
-  border-radius: 2px;
-}
-
-.accessibility-color-contrast-annotation .link:active {
-  color: var(--accessibility-link-color-active);
-  text-decoration: underline;
-}
-
-.accessibility-color-contrast-large-text {
-  background-color: var(--accessible-label-background-color);
-  color: var(--accessible-label-color);
-  outline: 1px solid var(--accessible-label-border-color);
-  -moz-outline-radius: 3px;
-  padding: 0px 2px;
-  margin-inline-start: 6px;
-  line-height: initial;
 }
 
 .accessibility-color-contrast .accessibility-contrast-value:not(:empty) {
@@ -746,28 +810,6 @@ body {
   margin-inline-start: 4px;
 }
 
-.accessibility-color-contrast .accessibility-contrast-value:not(:empty):after {
-  margin-inline-start: 4px;
-}
-
-.accessibility-color-contrast .accessibility-contrast-value:not(:empty).AA:after,
-.accessibility-color-contrast .accessibility-contrast-value:not(:empty).AAA:after {
-  color: var(--theme-highlight-green);
-}
-
-.accessibility-color-contrast .accessibility-contrast-value:not(:empty).fail:after {
-  color: #E57180;
-  content: "⚠️";
-}
-
-.accessibility-color-contrast .accessibility-contrast-value:not(:empty).AA:after {
-  content: "AA\2713";
-}
-
-.accessibility-color-contrast .accessibility-contrast-value:not(:empty).AAA:after {
-  content: "AAA\2713";
-}
-
 .accessibility-color-contrast .accessibility-color-contrast-label:after {
   content: ":";
 }
@@ -777,7 +819,34 @@ body {
   margin-inline-end: 3px;
 }
 
-.accessibility-color-contrast .accessibility-color-contrast-separator:before {
-  content: "-";
-  margin-inline-start: 4px;
+.devtools-toolbar .toolbar-menu-button.simulation::before {
+  width: 12px;
+  height: 12px;
+  margin-inline-end: 3px;
+  margin-inline-start: 0px;
+  background: url("chrome://devtools/skin/images/eye.svg") no-repeat;
+  -moz-context-properties: fill, stroke;
+  fill: var(--theme-icon-color);
+  stroke: var(--theme-icon-color);
+  vertical-align: -2px;
+}
+
+.devtools-toolbar .toolbar-menu-button.active,
+.devtools-toolbar .toolbar-menu-button.active.devtools-button:not(:empty):not(.checked):not(:disabled):focus {
+  color: var(--theme-toolbar-selected-color);
+}
+
+.devtools-toolbar .toolbar-menu-button.simulation.active::before {
+  fill: var(--theme-toolbar-selected-color);
+  stroke: var(--theme-toolbar-selected-color);
+}
+
+#simulation-menu-button-menu .link {
+  background-color: transparent;
+  border: none;
+}
+
+#simulation-menu-button-menu .link:focus,
+#simulation-menu-button-menu .link:hover {
+  background-color: var(--theme-arrowpanel-dimmed);
 }

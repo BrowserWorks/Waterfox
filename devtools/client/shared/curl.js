@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -52,10 +50,14 @@ const Curl = {
    *        - httpVersion:string, http protocol version rfc2616 formatted. Eg. "HTTP/1.1"
    *        - postDataText:string, optional - the request payload.
    *
+   * @param string platform
+   *        Optional parameter to override platform,
+   *        Fallbacks to current platform if not defined.
+   *
    * @return string
    *         A cURL command.
    */
-  generateCommand: function(data) {
+  generateCommand: function(data, platform) {
     const utils = CurlUtils;
 
     let command = ["curl"];
@@ -72,16 +74,23 @@ const Curl = {
     };
 
     const ignoredHeaders = new Set();
+    const currentPlatform = platform || Services.appinfo.OS;
 
     // The cURL command is expected to run on the same platform that Firefox runs
     // (it may be different from the inspected page platform).
     const escapeString =
-      Services.appinfo.OS == "WINNT"
+      currentPlatform == "WINNT"
         ? utils.escapeStringWin
         : utils.escapeStringPosix;
 
     // Add URL.
     addParam(data.url);
+
+    // Disable globbing if the URL contains brackets.
+    // cURL also globs braces but they are already percent-encoded.
+    if (data.url.includes("[") || data.url.includes("]")) {
+      addParam("--globoff");
+    }
 
     let postDataText = null;
     const multipartRequest = utils.isMultipartRequest(data);

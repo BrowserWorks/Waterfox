@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Penampilan">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "Apabila &brandShortName; dimulakan, buka">
+<!ENTITY navCheck.label                         "Pelayar">
+<!ENTITY navCheck.accesskey                     "P">
+<!ENTITY showToolsLegend.label                  "Papar bar alatan sebagai">
+<!ENTITY picsNtextRadio.label                   "Gambar dan teks">
+<!ENTITY picsNtextRadio.accesskey               "G">
+<!ENTITY picsOnlyRadio.label                    "Gambar sahaja">
+<!ENTITY picsOnlyRadio.accesskey                "j">
+<!ENTITY textonlyRadio.label                    "Teks sahaja">
+<!ENTITY textonlyRadio.accesskey                "k">
+<!ENTITY showHideTooltips.label                 "Papar Panduan alatan">
+<!ENTITY showHideTooltips.accesskey             "P">
+
+<!ENTITY pref.locales.title                     "Bahasa Antara muka Pengguna">
+<!ENTITY selectLocale.label                     "Pilih bahasa untuk teks yang muncul dalam kotak dialog, menu, bar alatan dan label butang:">
+<!--LOCALIZATION NOTE (restartOnLangChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLangChange.label              "Pilihan bahasa akan dilaksanakan apabila anda memulakan semula &brandShortName;.">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "Format Tarikh dan Masa">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "Keutamaan bahasa dan format akan dilaksanakan apabila anda memulakan semula &brandShortName;.">

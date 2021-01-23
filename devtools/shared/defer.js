@@ -4,24 +4,22 @@
 
 "use strict";
 
-// We have to keep using Promise.jsm here, because DOM Promises
-// start freezing during panel iframes destruction.
-// More info in bug 1454373 comment 15.
-const Promise = require("promise");
-
 /**
- * Returns a deferred object, with a resolve and reject property.
- * https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred
+ * Create a Promise and return it in an object with its resolve and reject functions.
+ * This is useful when you need to settle a promise in a different location than where
+ * it is created.
+ *
+ * @returns {Object} An object with the following properties:
+ *   - {Promise} promise: The created DOM promise
+ *   - {Function} resolve: The resolve parameter of `promise`
+ *   - {Function} reject: The reject parameter of `promise`
+ *
  */
 module.exports = function defer() {
   let resolve, reject;
-  const promise = new Promise(function() {
-    resolve = arguments[0];
-    reject = arguments[1];
+  const promise = new Promise(function(res, rej) {
+    resolve = res;
+    reject = rej;
   });
-  return {
-    resolve: resolve,
-    reject: reject,
-    promise: promise,
-  };
+  return { resolve, reject, promise };
 };

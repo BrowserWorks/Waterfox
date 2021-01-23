@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Könyvtár">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Rendszerezés">
+<!ENTITY organize.accesskey    "R">
+<!ENTITY organize.tooltip      "Könyvjelzők rendszerezése">
+
+<!ENTITY file.close.label               "Bezárás">
+<!ENTITY file.close.accesskey           "B">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Nézetek">
+<!ENTITY views.accesskey                "N">
+<!ENTITY views.tooltip                  "A nézet megváltoztatása">
+<!ENTITY view.columns.label             "Oszlopok megjelenítése">
+<!ENTITY view.columns.accesskey         "O">
+<!ENTITY view.sort.label                "Rendezés">
+<!ENTITY view.sort.accesskey            "R">
+<!ENTITY view.unsorted.label            "Rendezetlen">
+<!ENTITY view.unsorted.accesskey        "R">
+<!ENTITY view.sortAscending.label       "A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Könyvjelzők importálása HTML-ből…">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Könyvjelzők exportálása HTML-be…">
+<!ENTITY exportBookmarksToHTML.accesskey   "e">
+<!ENTITY importOtherBrowser.label          "Adatok importálása másik böngészőből…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "Mentés…">
+<!ENTITY cmd.backup.accesskey           "M">
+<!ENTITY cmd.restore2.label             "Visszaállítás">
+<!ENTITY cmd.restore2.accesskey         "V">
+<!ENTITY cmd.restoreFromFile.label      "Tallózás…">
+<!ENTITY cmd.restoreFromFile.accesskey  "T">
+
+<!ENTITY col.name.label          "Név">
+<!ENTITY col.tags.label          "Címkék">
+<!ENTITY col.url.label           "Hely">
+<!ENTITY col.mostrecentvisit.label "Legutóbbi látogatás">
+<!ENTITY col.visitcount.label    "Látogatások száma">
+<!ENTITY col.dateadded.label     "Hozzáadva">
+<!ENTITY col.lastmodified.label  "Utoljára módosítva">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importálás és mentés">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Könyvjelzők importálása és biztonsági mentése">
+
+<!ENTITY backButton.tooltip  "Ugrás vissza">
+
+<!ENTITY forwardButton.tooltip  "Ugrás előre">
+
+<!ENTITY detailsPane.selectAnItemText.description "Jelöljön ki egy elemet megtekintésre, és szerkessze tulajdonságait">
+

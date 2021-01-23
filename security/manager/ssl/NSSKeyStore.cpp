@@ -8,7 +8,9 @@
 
 #include "mozilla/Base64.h"
 #include "mozilla/SyncRunnable.h"
+#include "nsNSSComponent.h"
 #include "nsPK11TokenDB.h"
+#include "nsXULAppAPI.h"
 
 /* Implementing OSKeyStore when there is no platform specific one.
  * This key store instead puts the keys into the NSS DB.
@@ -29,7 +31,7 @@ NSSKeyStore::NSSKeyStore() {
   Unused << EnsureNSSInitializedChromeOrContent();
   Unused << InitToken();
 }
-NSSKeyStore::~NSSKeyStore() {}
+NSSKeyStore::~NSSKeyStore() = default;
 
 nsresult NSSKeyStore::InitToken() {
   if (!mSlot) {
@@ -73,7 +75,7 @@ nsresult NSSKeyStore::Lock() {
 
 nsresult NSSKeyStoreMainThreadUnlock(PK11SlotInfo* aSlot) {
   nsCOMPtr<nsIPK11Token> token = new nsPK11Token(aSlot);
-  return token->Login(false /* force */);
+  return NS_FAILED(token->Login(false /* force */)) ? NS_ERROR_FAILURE : NS_OK;
 }
 
 nsresult NSSKeyStore::Unlock() {
@@ -87,13 +89,15 @@ nsresult NSSKeyStore::Unlock() {
     }
 
     // Forward to the main thread synchronously.
+    nsresult result = NS_ERROR_FAILURE;
     SyncRunnable::DispatchToThread(
         mainThread, new SyncRunnable(NS_NewRunnableFunction(
-                        "NSSKeyStoreMainThreadUnlock", [slot = mSlot.get()]() {
-                          NSSKeyStoreMainThreadUnlock(slot);
+                        "NSSKeyStoreMainThreadUnlock",
+                        [slot = mSlot.get(), result = &result]() {
+                          *result = NSSKeyStoreMainThreadUnlock(slot);
                         })));
 
-    return NS_OK;
+    return result;
   }
 
   return NSSKeyStoreMainThreadUnlock(mSlot.get());

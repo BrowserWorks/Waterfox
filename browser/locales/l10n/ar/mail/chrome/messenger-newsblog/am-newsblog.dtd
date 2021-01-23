@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "فعّل التحديثات لكل التلقيمات">
+<!ENTITY biffAll.accesskey             "ف">
+
+<!ENTITY newFeedSettings.label         "الإعدادات المبدئية للتلقيمات الجديدة">
+
+<!ENTITY manageSubscriptions.label     "أدر الاشتراكات…">
+<!ENTITY manageSubscriptions.accesskey "د">
+
+<!ENTITY feedWindowTitle.label         "مرشد حسابات التلقيمات">
+<!ENTITY feeds.accountName             "تلقيمات المدونات و الأخبار">

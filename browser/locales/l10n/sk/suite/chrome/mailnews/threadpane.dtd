@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Thread Pane -->
+<!ENTITY threadColumn.label "Vlákno">
+<!ENTITY fromColumn.label "Od">
+<!ENTITY recipientColumn.label "Adresát">
+<!ENTITY subjectColumn.label "Predmet">
+<!ENTITY dateColumn.label "Dátum">
+<!ENTITY priorityColumn.label "Priorita">
+<!ENTITY tagsColumn.label "Popis">
+<!ENTITY accountColumn.label "Účet">
+<!ENTITY statusColumn.label "Stav">
+<!ENTITY sizeColumn.label "Veľkosť">
+<!ENTITY junkStatusColumn.label "Spam">
+<!ENTITY unreadColumn.label "Neprečítané">
+<!ENTITY totalColumn.label "Celkovo">
+<!ENTITY readColumn.label "Prečítané">
+<!ENTITY receivedColumn.label "Prijaté">
+<!ENTITY flagColumn.label "Vlajka">
+<!ENTITY locationColumn.label "Umiestnenie">
+<!ENTITY idColumn.label "Poradie prijatia">
+<!ENTITY attachmentColumn.label "Prílohy">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "Zvoľte stĺpce">
+<!ENTITY threadColumn2.tooltip "Usporiadať správy do vlákien">
+<!ENTITY fromColumn2.tooltip "Usporiadať podľa stĺpca Od">
+<!ENTITY recipientColumn2.tooltip "Usporiadať podľa adresáta">
+<!ENTITY subjectColumn2.tooltip "Usporiadať podľa predmetu">
+<!ENTITY dateColumn2.tooltip "Usporiadať podľa dátumu">
+<!ENTITY priorityColumn2.tooltip "Usporiadať podľa priority">
+<!ENTITY tagsColumn2.tooltip "Usporiadať podľa popisu">
+<!ENTITY accountColumn2.tooltip "Usporiadať podľa účtov">
+<!ENTITY statusColumn2.tooltip "Usporiadať podľa stavu">
+<!ENTITY sizeColumn2.tooltip "Usporiadať podľa veľkosti">
+<!ENTITY junkStatusColumn2.tooltip "Zoskupiť nevyžiadanú poštu (Spam)">
+<!ENTITY unreadColumn2.tooltip "Počet nečítaných správ vo vlákne">
+<!ENTITY totalColumn2.tooltip "Celkový počet správ vo vlákne">
+<!ENTITY readColumn2.tooltip "Zoskupiť čítané / nečítané správy">
+<!ENTITY receivedColumn2.tooltip "Usporiadať podľa dátumu prijatia">
+<!ENTITY flagColumn2.tooltip "Zoskupiť správy označené vlajkou">
+<!ENTITY locationColumn2.tooltip "Usporiadať podľa umiestnenia">
+<!ENTITY idColumn2.tooltip "Usporiadať podľa poradia, v akom boli správy prijaté">
+<!ENTITY attachmentColumn2.tooltip "Zoskupiť správy s prílohou">

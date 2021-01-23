@@ -19,7 +19,6 @@ namespace jit {
 enum IonRegisterAllocator {
   RegisterAllocator_Backtracking,
   RegisterAllocator_Testbed,
-  RegisterAllocator_Stupid
 };
 
 static inline mozilla::Maybe<IonRegisterAllocator> LookupRegisterAllocator(
@@ -29,9 +28,6 @@ static inline mozilla::Maybe<IonRegisterAllocator> LookupRegisterAllocator(
   }
   if (!strcmp(name, "testbed")) {
     return mozilla::Some(RegisterAllocator_Testbed);
-  }
-  if (!strcmp(name, "stupid")) {
-    return mozilla::Some(RegisterAllocator_Stupid);
   }
   return mozilla::Nothing();
 }
@@ -50,18 +46,23 @@ struct DefaultJitOptions {
   bool disableGvn;
   bool disableInlining;
   bool disableLicm;
-  bool disableOptimizationTracking;
   bool disablePgo;
   bool disableInstructionReordering;
   bool disableRangeAnalysis;
   bool disableRecoverIns;
   bool disableScalarReplacement;
   bool disableCacheIR;
-  bool disableCacheIRCalls;
-  bool disableSincos;
   bool disableSink;
   bool disableOptimizationLevels;
   bool baselineInterpreter;
+  bool baselineJit;
+  bool ion;
+#ifdef NIGHTLY_BUILD
+  bool typeInference;
+#endif
+  bool warpBuilder;
+  bool jitForTrustedPrincipals;
+  bool nativeRegExp;
   bool forceInlineCaches;
   bool fullDebugChecks;
   bool limitScriptSize;
@@ -71,6 +72,12 @@ struct DefaultJitOptions {
 #ifdef JS_TRACE_LOGGING
   bool enableTraceLogger;
 #endif
+#ifdef ENABLE_NEW_REGEXP
+  bool traceRegExpParser;
+  bool traceRegExpAssembler;
+  bool traceRegExpInterpreter;
+  bool traceRegExpPeephole;
+#endif
   bool enableWasmJitExit;
   bool enableWasmJitEntry;
   bool enableWasmIonFastCalls;
@@ -79,9 +86,12 @@ struct DefaultJitOptions {
   bool enableWasmFuncCallSpew;
 #endif
   uint32_t baselineInterpreterWarmUpThreshold;
-  uint32_t baselineWarmUpThreshold;
+  uint32_t baselineJitWarmUpThreshold;
   uint32_t normalIonWarmUpThreshold;
   uint32_t fullIonWarmUpThreshold;
+#ifdef ENABLE_NEW_REGEXP
+  uint32_t regexpWarmUpThreshold;
+#endif
   uint32_t exceptionBailoutThreshold;
   uint32_t frequentBailoutThreshold;
   uint32_t maxStackArgs;
@@ -97,8 +107,9 @@ struct DefaultJitOptions {
   uint32_t ionMaxScriptSizeMainThread;
   uint32_t ionMaxLocalsAndArgs;
   uint32_t ionMaxLocalsAndArgsMainThread;
-  uint32_t wasmBatchIonThreshold;
   uint32_t wasmBatchBaselineThreshold;
+  uint32_t wasmBatchIonThreshold;
+  uint32_t wasmBatchCraneliftThreshold;
   mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;
 
   // Spectre mitigation flags. Each mitigation has its own flag in order to
@@ -111,8 +122,12 @@ struct DefaultJitOptions {
   bool spectreValueMasking;
   bool spectreJitToCxxCalls;
 
+  bool supportsFloatingPoint;
+  bool supportsUnalignedAccesses;
+
   DefaultJitOptions();
   bool isSmallFunction(JSScript* script) const;
+  void setEagerBaselineCompilation();
   void setEagerIonCompilation();
   void setNormalIonWarmUpThreshold(uint32_t warmUpThreshold);
   void setFullIonWarmUpThreshold(uint32_t warmUpThreshold);
@@ -125,7 +140,25 @@ struct DefaultJitOptions {
 
 extern DefaultJitOptions JitOptions;
 
+inline bool IsBaselineInterpreterEnabled() {
+#ifdef JS_CODEGEN_NONE
+  return false;
+#else
+  return JitOptions.baselineInterpreter && JitOptions.supportsFloatingPoint;
+#endif
+}
+
 }  // namespace jit
+
+inline bool IsTypeInferenceEnabled() {
+#ifdef NIGHTLY_BUILD
+  return jit::JitOptions.typeInference;
+#else
+  // Always enable TI on non-Nightly for now to avoid performance overhead.
+  return true;
+#endif
+}
+
 }  // namespace js
 
 #endif /* jit_JitOptions_h */

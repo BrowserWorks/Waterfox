@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Bjez formatowanja zasadźić">
+<!ENTITY pasteNoFormatting.accesskey "f">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Jako citat zasadźić">
+<!ENTITY pasteAsQuotationCmd.accesskey "J">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Zasadźić">
+<!ENTITY insertMenu.accesskey "Z">
+<!ENTITY insertLinkCmd2.label "Wotkaz…">
+<!ENTITY insertLinkCmd2.accesskey "k">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Pomjenowana kótwička…">
+<!ENTITY insertAnchorCmd.accesskey "m">
+<!ENTITY insertImageCmd.label "Wobraz…">
+<!ENTITY insertImageCmd.accesskey "b">
+<!ENTITY insertHLineCmd.label "Horicontalna linija">
+<!ENTITY insertHLineCmd.accesskey "o">
+<!ENTITY insertTableCmd.label "Tabelu…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Math…">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "Znamješka a symbole…">
+<!ENTITY insertCharsCmd.accesskey "Z">
+<!ENTITY insertBreakAllCmd.label "Pod wobrazom łamać">
+<!ENTITY insertBreakAllCmd.accesskey "P">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Wotkaz wutworić…">
+<!ENTITY createLinkCmd.accesskey "u">
+<!ENTITY editLinkCmd.label "Wotkaz w nowym editorowym woknje wobdźěłać">
+<!ENTITY editLinkCmd.accesskey "e">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Pismo wubrać">
+<!ENTITY fontfaceMenu.label "Pismo">
+<!ENTITY fontfaceMenu.accesskey "P">
+<!ENTITY fontVarWidth.label "Wariabelna šěrokosć">
+<!ENTITY fontVarWidth.accesskey "W">
+<!ENTITY fontFixedWidth.label "Kruta šěrokosć">
+<!ENTITY fontFixedWidth.accesskey "K">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Pismowu wulkosć wubrać">
+<!ENTITY decreaseFontSize.label "Pomjeńšić">
+<!ENTITY decreaseFontSize.accesskey "m">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Powjetšić">
+<!ENTITY increaseFontSize.accesskey "w">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Wulkosć">
+<!ENTITY fontSizeMenu.accesskey "W">
+<!ENTITY size-tinyCmd.label "Mólički">
+<!ENTITY size-tinyCmd.accesskey "l">
+<!ENTITY size-smallCmd.label "Mały">
+<!ENTITY size-smallCmd.accesskey "M">
+<!ENTITY size-mediumCmd.label "Srjedźny">
+<!ENTITY size-mediumCmd.accesskey "S">
+<!ENTITY size-largeCmd.label "Wulki">
+<!ENTITY size-largeCmd.accesskey "W">
+<!ENTITY size-extraLargeCmd.label "Jara wulki">
+<!ENTITY size-extraLargeCmd.accesskey "J">
+<!ENTITY size-hugeCmd.label "Hoberski">
+<!ENTITY size-hugeCmd.accesskey "H">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Tekstowy stil">
+<!ENTITY fontStyleMenu.accesskey "s">
+<!ENTITY styleBoldCmd.label "Tučny">
+<!ENTITY styleBoldCmd.accesskey "T">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Kursiwny">
+<!ENTITY styleItalicCmd.accesskey "K">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Podšmórnjeny">
+<!ENTITY styleUnderlineCmd.accesskey "d">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Přešmórnjeny">
+<!ENTITY styleStrikeThruCmd.accesskey "e">
+<!ENTITY styleSuperscriptCmd.label "Wysoko stajeny">
+<!ENTITY styleSuperscriptCmd.accesskey "W">
+<!ENTITY styleSubscriptCmd.label "Hłuboko stajeny">
+<!ENTITY styleSubscriptCmd.accesskey "H">
+<!ENTITY styleNonbreakingCmd.label "Njełamany">
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+<!ENTITY styleEm.label "Wuzběhnjenje">
+<!ENTITY styleEm.accesskey "z">
+<!ENTITY styleStrong.label "Sylne wuzběhnjenje">
+<!ENTITY styleStrong.accesskey "l">
+<!ENTITY styleCite.label "Citat">
+<!ENTITY styleCite.accesskey "C">
+<!ENTITY styleAbbr.label "Skrótšenka">
+<!ENTITY styleAbbr.accesskey "k">
+<!ENTITY styleAcronym.label "Akronym">
+<!ENTITY styleAcronym.accesskey "A">
+<!ENTITY styleCode.label "Kod">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "Přikładowe wudaće">
+<!ENTITY styleSamp.accesskey "u">
+<!ENTITY styleVar.label "Wariabla">
+<!ENTITY styleVar.accesskey "r">
+
+<!ENTITY formatFontColor.label "Tekstowa barba…">
+<!ENTITY formatFontColor.accesskey "T">
+<!ENTITY tableOrCellColor.label "Pozadkowa barba tabele abo cele…">
+<!ENTITY tableOrCellColor.accesskey "P">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Pomjenowane kótwički wotstronić">
+<!ENTITY formatRemoveNamedAnchors.accesskey "m">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Wotstawk">
+<!ENTITY paragraphMenu.accesskey "W">
+<!ENTITY paragraphParagraphCmd.label "Wotstawk">
+<!ENTITY paragraphParagraphCmd.accesskey "W">
+<!ENTITY heading1Cmd.label "Nadpismo 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Nadpismo 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Nadpismo 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Nadpismo 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Nadpismo 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Nadpismo 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Adresa">
+<!ENTITY paragraphAddressCmd.accesskey "A">
+<!ENTITY paragraphPreformatCmd.label "Předformatowany">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Lisćina">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "Žana">
+<!ENTITY noneCmd.accesskey "n">
+<!ENTITY listBulletCmd.label "Naličenje">
+<!ENTITY listBulletCmd.accesskey "l">
+<!ENTITY listNumberedCmd.label "Čisłowana">
+<!ENTITY listNumberedCmd.accesskey "s">
+<!ENTITY listTermCmd.label "Definiciski wuraz">
+<!ENTITY listTermCmd.accesskey "u">
+<!ENTITY listDefinitionCmd.label "Definicija">
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "Kajkosće lisćiny…">
+<!ENTITY listPropsCmd.accesskey "K">
+
+<!ENTITY ParagraphSelect.tooltip "Wotstawkowy format wubrać">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Dokumentowy tekst">
+<!ENTITY bodyTextCmd.accesskey "D">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Wusměrić">
+<!ENTITY alignMenu.accesskey "s">
+<!ENTITY alignLeft.label "Nalěwo">
+<!ENTITY alignLeft.accesskey "l">
+<!ENTITY alignLeft.tooltip "Nalěwo wusměrić">
+<!ENTITY alignCenter.label "Centrowano">
+<!ENTITY alignCenter.accesskey "C">
+<!ENTITY alignCenter.tooltip "Centrowano wusměrić">
+<!ENTITY alignRight.label "Naprawo">
+<!ENTITY alignRight.accesskey "r">
+<!ENTITY alignRight.tooltip "Naprawo wusměrić">
+<!ENTITY alignJustify.label "Blokowa sadźba">
+<!ENTITY alignJustify.accesskey "b">
+<!ENTITY alignJustify.tooltip "Blokowa sadźba">
+
+<!ENTITY increaseIndent.label "Zasunjenje powjetšić">
+<!ENTITY increaseIndent.accesskey "w">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Zasunjenje pomjeńšić">
+<!ENTITY decreaseIndent.accesskey "m">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Barby a pozadk strony…">
+<!ENTITY colorsAndBackground.accesskey "B">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Tabela">
+<!ENTITY tableMenu.accesskey "T">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Wubrać">
+<!ENTITY tableSelectMenu.accesskey "b">
+
+<!ENTITY tableSelectMenu2.label "Tabelu wubrać">
+<!ENTITY tableSelectMenu2.accesskey "b">
+<!ENTITY tableInsertMenu2.label "Tabelu zasadźić">
+<!ENTITY tableInsertMenu2.accesskey "s">
+<!ENTITY tableDeleteMenu2.label "Tabelu zhašeć">
+<!ENTITY tableDeleteMenu2.accesskey "h">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Zasadźić">
+<!ENTITY tableInsertMenu.accesskey "Z">
+<!ENTITY tableTable.label "Tabelu">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "Rjadku">
+<!ENTITY tableRows.label "Rjadki">
+<!ENTITY tableRow.accesskey "R">
+<!ENTITY tableRowAbove.label "Rjadku nad">
+<!ENTITY tableRowAbove.accesskey "n">
+<!ENTITY tableRowBelow.label "Rjadku pod">
+<!ENTITY tableRowBelow.accesskey "p">
+<!ENTITY tableColumn.label "Špalta">
+<!ENTITY tableColumns.label "Špalty">
+<!ENTITY tableColumn.accesskey "l">
+<!ENTITY tableColumnBefore.label "Špaltu před">
+<!ENTITY tableColumnBefore.accesskey "e">
+<!ENTITY tableColumnAfter.label "Špaltu za">
+<!ENTITY tableColumnAfter.accesskey "z">
+<!ENTITY tableCell.label "Celu">
+<!ENTITY tableCells.label "Cele">
+<!ENTITY tableCell.accesskey "C">
+<!ENTITY tableCellContents.label "Wobsah cele">
+<!ENTITY tableCellContents.accesskey "h">
+<!ENTITY tableAllCells.label "Wšě cele">
+<!ENTITY tableAllCells.accesskey "c">
+<!ENTITY tableCellBefore.label "Celu před">
+<!ENTITY tableCellBefore.accesskey "C">
+<!ENTITY tableCellAfter.label "Celu za">
+<!ENTITY tableCellAfter.accesskey "z">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Zhašeć">
+<!ENTITY tableDeleteMenu.accesskey "Z">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "c">
+<!ENTITY tableJoinCells.accesskey "c">
+<!ENTITY tableSplitCell.label "Celu dźělić">
+<!ENTITY tableSplitCell.accesskey "C">
+<!ENTITY convertToTable.label "Tabelu z wuběra wutworić">
+<!ENTITY convertToTable.accesskey "w">
+<!ENTITY tableProperties.label "Kajkosće tabele…">
+<!ENTITY tableProperties.accesskey "K">
+
+<!ENTITY imageToolbarCmd.label "Wobraz">
+<!ENTITY imageToolbarCmd.tooltip "Nowy wobraz zasadźić abo kajkosće wubraneho wobraza wobdźěłać">
+<!ENTITY hruleToolbarCmd.label "Horicontalna linija">
+<!ENTITY hruleToolbarCmd.tooltip "Horicontalnu liniju zasadźić abo kajkosće wubraneje horicontalneje linije wobdźěłać">
+<!ENTITY tableToolbarCmd.label "Tabela">
+<!ENTITY tableToolbarCmd.tooltip "Nowu tabelu zasadźić abo kajkosće wubraneje tabele wobdźěłać">
+<!ENTITY linkToolbarCmd.label "Wotkaz">
+<!ENTITY linkToolbarCmd.tooltip "Nowy wotkaz zasadźić abo kajkosće wubraneho wotkaza wobdźěłać">
+<!ENTITY anchorToolbarCmd.label "Kótwička">
+<!ENTITY anchorToolbarCmd.tooltip "Nowu pomjenowanu kótwičku zasadźić abo kajkosće wubraneje kótwički wobdźěłać">
+<!ENTITY TextColorButton.tooltip "Barbu za tekst wubrać">
+<!ENTITY BackgroundColorButton.tooltip "Barbu za pozadk wubrać">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Wulkosć pisma nastajić">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Mjeńša pismowa wulkosć">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Wjetša pismowa wulkosć">
+<!ENTITY boldToolbarCmd.tooltip "Tučny">
+<!ENTITY italicToolbarCmd.tooltip "Kursiwny">
+<!ENTITY underlineToolbarCmd.tooltip "Podšmórnjeny">
+<!ENTITY bulletListToolbarCmd.tooltip "Naličensku lisćinu nałožić abo wotstronić">
+<!ENTITY numberListToolbarCmd.tooltip "Čisłowanu lisćinu nałožić abo wotstronić">
+<!ENTITY outdentToolbarCmd.tooltip "Tekst wusunyć (dolěwa přesunyć)">
+<!ENTITY indentToolbarCmd.tooltip "Tekst zasunyć (doprawa přesunyć)">
+<!ENTITY AlignPopupButton.tooltip "Tekstowe wusměrjenje wubrać">
+<!ENTITY InsertPopupButton.tooltip "Wotkaz, kótwičku, wobraz, horicontalnu liniju abo tabelu zasadźić">
+<!ENTITY alignLeftButton.tooltip "Tekst po lěwej kromje wusměrić">
+<!ENTITY alignCenterButton.tooltip "Tekst centrowano wusměrić">
+<!ENTITY alignRightButton.tooltip "Tekst po prawej kromje wusměrić">
+<!ENTITY alignJustifyButton.tooltip "Tekst po lěwej kromje a prawej kromje wusměrić">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Zasadźić">
+<!ENTITY insertTOC.accesskey      "Z">
+<!ENTITY updateTOC.label          "Aktualizować">
+<!ENTITY updateTOC.accesskey      "a">
+<!ENTITY removeTOC.label          "Wotstronić">
+<!ENTITY removeTOC.accesskey      "s">
+<!ENTITY tocMenu.label            "Zapis wobsaha…">
+<!ENTITY tocMenu.accesskey        "b">

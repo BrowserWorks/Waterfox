@@ -22,23 +22,23 @@ const SEARCH_ENGINE_DETAILS = [
   },
   {
     alias: "b",
-    baseURL: "https://www.bing.com/search?q=foo&pc=MOZI",
+    baseURL: "https://www.bing.com/search?{code}pc=MOZI&q=foo",
     codes: {
-      context: "&form=MOZCON",
-      keyword: "&form=MOZLBR",
-      newTab: "&form=MOZTSB",
-      submission: "&form=MOZSBR",
+      context: "form=MOZCON&",
+      keyword: "form=MOZLBR&",
+      newTab: "form=MOZTSB&",
+      submission: "form=MOZSBR&",
     },
     name: "Bing",
   },
   {
     alias: "d",
-    baseURL: "https://duckduckgo.com/?q=foo",
+    baseURL: "https://duckduckgo.com/?{code}q=foo",
     codes: {
-      context: "&t=ffcm",
-      keyword: "&t=ffab",
-      newTab: "&t=ffnt",
-      submission: "&t=ffsb",
+      context: "t=ffcm&",
+      keyword: "t=ffab&",
+      newTab: "t=ffnt&",
+      submission: "t=ffsb&",
     },
     name: "DuckDuckGo",
   },
@@ -70,7 +70,7 @@ const SEARCH_ENGINE_DETAILS = [
 ];
 
 function promiseContentSearchReady(browser) {
-  return ContentTask.spawn(browser, {}, async function(args) {
+  return SpecialPowers.spawn(browser, [], async function(args) {
     await ContentTaskUtils.waitForCondition(
       () =>
         content.wrappedJSObject.gContentSearchController &&
@@ -111,7 +111,7 @@ async function testSearchEngine(engineDetails) {
   let url = engine.getSubmission("foo").uri.spec;
   Assert.equal(
     url,
-    base + engineDetails.codes.submission,
+    base.replace("{code}", engineDetails.codes.submission),
     "Check search URL for 'foo'"
   );
   let sb = BrowserSearch.searchBar;
@@ -119,12 +119,13 @@ async function testSearchEngine(engineDetails) {
   let engineTests = [
     {
       name: "context menu search",
-      searchURL: base + engineDetails.codes.context,
+      searchURL: base.replace("{code}", engineDetails.codes.context),
       run() {
         // Simulate a contextmenu search
         // FIXME: This is a bit "low-level"...
         BrowserSearch._loadSearch(
           "foo",
+          false,
           false,
           "contextmenu",
           Services.scriptSecurityManager.getSystemPrincipal()
@@ -133,7 +134,7 @@ async function testSearchEngine(engineDetails) {
     },
     {
       name: "keyword search",
-      searchURL: base + engineDetails.codes.keyword,
+      searchURL: base.replace("{code}", engineDetails.codes.keyword),
       run() {
         gURLBar.value = "? foo";
         gURLBar.focus();
@@ -142,7 +143,7 @@ async function testSearchEngine(engineDetails) {
     },
     {
       name: "keyword search with alias",
-      searchURL: base + engineDetails.codes.keyword,
+      searchURL: base.replace("{code}", engineDetails.codes.keyword),
       run() {
         gURLBar.value = `${engineDetails.alias} foo`;
         gURLBar.focus();
@@ -151,7 +152,7 @@ async function testSearchEngine(engineDetails) {
     },
     {
       name: "search bar search",
-      searchURL: base + engineDetails.codes.submission,
+      searchURL: base.replace("{code}", engineDetails.codes.submission),
       run() {
         sb.focus();
         sb.value = "foo";
@@ -160,16 +161,16 @@ async function testSearchEngine(engineDetails) {
     },
     {
       name: "new tab search",
-      searchURL: base + engineDetails.codes.newTab,
+      searchURL: base.replace("{code}", engineDetails.codes.newTab),
       async preTest(tab) {
         let browser = tab.linkedBrowser;
-        await BrowserTestUtils.loadURI(browser, "about:newtab");
-        await BrowserTestUtils.browserLoaded(browser);
+        BrowserTestUtils.loadURI(browser, "about:newtab");
+        await BrowserTestUtils.browserLoaded(browser, false, "about:newtab");
 
         await promiseContentSearchReady(browser);
       },
       async run(tab) {
-        await ContentTask.spawn(tab.linkedBrowser, {}, async function(args) {
+        await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
           let input = content.document.querySelector("input[id*=search-]");
           input.focus();
           input.value = "foo";
@@ -188,13 +189,14 @@ async function testSearchEngine(engineDetails) {
       await test.preTest(tab);
     }
 
-    let stateChangePromise = promiseStateChangeURI();
+    let promises = [
+      BrowserTestUtils.waitForDocLoadAndStopIt(test.searchURL, tab),
+      BrowserTestUtils.browserStopped(tab.linkedBrowser, null, true),
+    ];
 
     await test.run(tab);
 
-    let receivedURI = await stateChangePromise;
-
-    Assert.equal(receivedURI, test.searchURL);
+    await Promise.all(promises);
   }
 
   engine.alias = undefined;

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Käivitatud on &brandProductName;i vanem versioon">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Uuem &brandProductName;i versioon on muutnud sinu profiili ja see pole enam vanema versiooniga ühilduv. Kasuta seda profiili vaid uuema versiooniga või loo selle &brandShortName; paigalduse jaoks uus profiil. Uue profiili loomisel pead kontod, kalendrid ja lisad uuesti seadistama.">
+
+<!ENTITY window.moreinfo "Rohkem infot…">
+<!ENTITY window.create "Loo uus profiil">
+<!ENTITY window.quit-win "Välju">
+<!ENTITY window.quit-nonwin "Välju">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title "Adresler">
+<!ENTITY emailCollectiontitle.label "Toplanmış adresler">
+<!ENTITY emailCollectionPicker.label "Add email addresses to my:">
+<!ENTITY emailCollectionPicker.accesskey "m">
+<!ENTITY emailCollectiontext.label "Email addresses from outgoing messages can be automatically added to a local address book.">
+<!-- Autocompletion -->
+
+<!ENTITY addressingTitle.label "Otomatik adres tamamlama">
+<!ENTITY highlightNonMatches.label "Highlight addresses that do not autocomplete">
+<!ENTITY highlightNonMatches.accesskey "a">
+<!ENTITY addressingEnable.label "Yerel adres defteri">
+<!ENTITY addressingEnable.accesskey "a">
+<!ENTITY autocompleteText.label "Adreslendirme yaparken eşleşme için buraya bak:">
+<!ENTITY directories.label "Dizin sunucusu:">
+<!ENTITY directories.accesskey "D">
+<!ENTITY directoriesNone.label "Hiçbiri">
+<!ENTITY editDirectories.label "Dizinleri düzenle…">
+<!ENTITY editDirectories.accesskey "e">

@@ -11,8 +11,11 @@
  */
 
 [Pref="dom.imagecapture.enabled",
-Constructor(DOMString type, optional ImageCaptureErrorEventInit imageCaptureErrorInitDict)]
+ Exposed=Window]
 interface ImageCaptureErrorEvent : Event {
+  constructor(DOMString type,
+              optional ImageCaptureErrorEventInit imageCaptureErrorInitDict = {});
+
   readonly attribute ImageCaptureError? imageCaptureError;
 };
 
@@ -20,7 +23,8 @@ dictionary ImageCaptureErrorEventInit : EventInit {
   ImageCaptureError? imageCaptureError = null;
 };
 
-[NoInterfaceObject]
+[NoInterfaceObject,
+ Exposed=Window]
 interface ImageCaptureError {
   const unsigned short FRAME_GRAB_ERROR = 1;
   const unsigned short SETTINGS_ERROR = 2;

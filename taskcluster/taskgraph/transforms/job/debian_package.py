@@ -9,6 +9,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import re
+from six import text_type
 
 from taskgraph.util.schema import Schema
 from voluptuous import Any, Optional, Required
@@ -25,35 +26,40 @@ DSC_PACKAGE_RE = re.compile('.*(?=_)')
 SOURCE_PACKAGE_RE = re.compile('.*(?=[-_]\d)')
 
 source_definition = {
-    Required('url'): basestring,
-    Required('sha256'): basestring,
+    Required('url'): text_type,
+    Required('sha256'): text_type,
 }
 
 run_schema = Schema({
     Required('using'): 'debian-package',
     # Debian distribution
-    Required('dist'): basestring,
+    Required('dist'): text_type,
 
     # Date of the snapshot (from snapshot.debian.org) to use, in the format
     # YYYYMMDDTHHMMSSZ. The same date is used for the base docker-image name
     # (only the YYYYMMDD part).
-    Required('snapshot'): basestring,
+    Required('snapshot'): text_type,
 
     # URL/SHA256 of a source file to build, which can either be a source
     # control (.dsc), or a tarball.
     Required(Any('dsc', 'tarball')): source_definition,
 
+    # Package name. Normally derived from the source control or tarball file
+    # name. Use in case the name doesn't match DSC_PACKAGE_RE or
+    # SOURCE_PACKAGE_RE.
+    Optional('name'): text_type,
+
     # Patch to apply to the extracted source.
-    Optional('patch'): basestring,
+    Optional('patch'): text_type,
 
     # Command to run before dpkg-buildpackage.
-    Optional('pre-build-command'): basestring,
+    Optional('pre-build-command'): text_type,
 
     # Architecture to build the package for.
-    Optional('arch'): basestring,
+    Optional('arch'): text_type,
 
     # List of package tasks to get build dependencies from.
-    Optional('packages'): [basestring],
+    Optional('packages'): [text_type],
 
     # What resolver to use to install build dependencies. The default
     # (apt-get) is good in most cases, but in subtle cases involving
@@ -62,7 +68,7 @@ run_schema = Schema({
     Optional('resolver'): Any('apt-get', 'aptitude'),
 
     # Base work directory used to set up the task.
-    Required('workdir'): basestring,
+    Required('workdir'): text_type,
 })
 
 
@@ -87,8 +93,6 @@ def docker_worker_debian_package(config, job, taskdesc):
         image += '-' + arch
     image += '-packages'
     worker['docker-image'] = {'in-tree': image}
-    # Retry on apt-get errors.
-    worker['retry-exit-status'] = [100]
 
     add_artifacts(config, job, taskdesc, path='/tmp/artifacts')
 
@@ -110,7 +114,9 @@ def docker_worker_debian_package(config, job, taskdesc):
     src_url = src['url']
     src_file = os.path.basename(src_url)
     src_sha256 = src['sha256']
-    package = package_re.match(src_file).group(0)
+    package = run.get('name')
+    if not package:
+        package = package_re.match(src_file).group(0)
     unpack = unpack.format(src_file=src_file, package=package)
 
     resolver = run.get('resolver', 'apt-get')
@@ -127,10 +133,8 @@ def docker_worker_debian_package(config, job, taskdesc):
     if 'patch' in run:
         # We don't use robustcheckout or run-task to get a checkout. So for
         # this one file we'd need from a checkout, download it.
-        env['PATCH_URL'] = '{head_repo}/raw-file/{head_rev}/build/debian-packages/{patch}'.format(
-            head_repo=config.params['head_repository'],
-            head_rev=config.params['head_rev'],
-            patch=run['patch'],
+        env["PATCH_URL"] = config.params.file_url(
+            "build/debian-packages/{patch}".format(patch=run["patch"]),
         )
         adjust += 'curl -sL $PATCH_URL | patch -p1 && '
     if 'pre-build-command' in run:

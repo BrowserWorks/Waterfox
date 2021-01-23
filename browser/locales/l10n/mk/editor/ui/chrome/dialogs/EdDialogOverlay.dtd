@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Напредно уредување…">
+<!ENTITY AdvancedEditButton.accessKey "е">
+<!ENTITY AdvancedEditButton.tooltip "Додавајте или променувајте HTML атрибути, атрибути за стил и JavaScript">
+<!ENTITY chooseButton.label "Избери датотека…">
+<!ENTITY chooseFile.accessKey "д">
+<!ENTITY chooseFileLink.accessKey "о">
+<!ENTITY makeUrlRelative.label "УРЛ-то е релативно кон локацијата на страницата">
+<!ENTITY makeUrlRelative.accessKey "Р">
+<!ENTITY makeUrlRelative.tooltip "Промена помеѓу релативното и апсолутното URL. За да го смените ова, прво мора да ја снимите страницата.">
+<!-- Shared by Link and Image dialogs -->
+
+<!ENTITY LinkURLEditField.label "Внесете локација на мрежна страница, локална датотека, или изберете именувано сидро или наслов од списокот:">
+<!ENTITY LinkURLEditField.accessKey "л">

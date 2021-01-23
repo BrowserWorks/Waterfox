@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Stavekontroll">
+<!ENTITY generalSpelling.label                "Generelt">
+<!ENTITY dontCheckSpelling.label              "Aldri">
+<!ENTITY multilineCheckSpelling.label         "I boksar med fleire linjer">
+<!ENTITY alwaysCheckSpelling.label            "Alle boksar">
+<!ENTITY spellForMailAndNews.label            "E-post og nyheitsgrupper">
+<!ENTITY checkSpellingBeforeSend.label        "Kontroller staving før sending">
+<!ENTITY checkSpellingBeforeSend.accesskey    "K">
+<!ENTITY spellCheckInline.label               "Kontroller staving medan du skriv">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "Språk:">
+<!ENTITY languagePopup.accessKey              "S">
+<!ENTITY moreDictionaries.label               "Last ned fleire ordbøker &#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Ingen ordbøker er tilgjengelege.">

@@ -1170,7 +1170,7 @@ _cairo_truetype_reverse_cmap (cairo_scaled_font_t *scaled_font,
     cairo_status_t status;
     const cairo_scaled_font_backend_t *backend;
     tt_segment_map_t *map;
-    char buf[4];
+    tt_segment_map_t buf;
     unsigned int num_segments, i;
     unsigned long size;
     uint16_t *start_code;
@@ -1190,7 +1190,7 @@ _cairo_truetype_reverse_cmap (cairo_scaled_font_t *scaled_font,
 	return status;
 
     /* All table formats have the same first two words */
-    map = (tt_segment_map_t *) buf;
+    map = &buf;
     if (be16_to_cpu (map->format) != 4)
 	return CAIRO_INT_STATUS_UNSUPPORTED;
 
@@ -1273,7 +1273,7 @@ _cairo_truetype_index_to_ucs4 (cairo_scaled_font_t *scaled_font,
     cairo_status_t status = CAIRO_INT_STATUS_UNSUPPORTED;
     const cairo_scaled_font_backend_t *backend;
     tt_cmap_t *cmap;
-    char buf[4];
+    tt_cmap_t buf;
     int num_tables, i;
     unsigned long size;
 
@@ -1289,7 +1289,7 @@ _cairo_truetype_index_to_ucs4 (cairo_scaled_font_t *scaled_font,
     if (unlikely (status))
 	return status;
 
-    cmap = (tt_cmap_t *) buf;
+    cmap = &buf;
     num_tables = be16_to_cpu (cmap->num_tables);
     size = 4 + num_tables*sizeof(tt_cmap_index_t);
     cmap = _cairo_malloc_ab_plus_c (num_tables, sizeof (tt_cmap_index_t), 4);

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Zapis wopśimjeśa">
+<!ENTITY buildToc.label      "Zapis wopśimjeśa wutwóriś z:">
+<!ENTITY tag.label           "Element:">
+<!ENTITY class.label         "Klasa:">
+<!ENTITY header1.label       "Rownina 1">
+<!ENTITY header2.label       "Rownina 2">
+<!ENTITY header3.label       "Rownina 3">
+<!ENTITY header4.label       "Rownina 4">
+<!ENTITY header5.label       "Rownina 5">
+<!ENTITY header6.label       "Rownina 6">
+<!ENTITY makeReadOnly.label  "Zapis wopśimjeśa jano za cytanje">
+<!ENTITY orderedList.label   "Licba wšych zapiskow w zapisu wopśimjeśa">

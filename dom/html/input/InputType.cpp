@@ -4,26 +4,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "InputType.h"
+#include "mozilla/dom/InputType.h"
 
 #include "nsIFormControl.h"
-#include "ButtonInputTypes.h"
-#include "CheckableInputTypes.h"
-#include "ColorInputType.h"
-#include "DateTimeInputTypes.h"
-#include "FileInputType.h"
-#include "HiddenInputType.h"
-#include "NumericInputTypes.h"
-#include "SingleLineTextInputTypes.h"
+#include "mozilla/dom/ButtonInputTypes.h"
+#include "mozilla/dom/CheckableInputTypes.h"
+#include "mozilla/dom/ColorInputType.h"
+#include "mozilla/dom/DateTimeInputTypes.h"
+#include "mozilla/dom/FileInputType.h"
+#include "mozilla/dom/HiddenInputType.h"
+#include "mozilla/dom/HTMLInputElement.h"
+#include "mozilla/dom/NumericInputTypes.h"
+#include "mozilla/dom/SingleLineTextInputTypes.h"
 
 #include "nsContentUtils.h"
 
-const mozilla::Decimal InputType::kStepAny = mozilla::Decimal(0);
+using namespace mozilla;
+using namespace mozilla::dom;
 
-/* static */ mozilla::UniquePtr<InputType, DoNotDelete> InputType::Create(
-    mozilla::dom::HTMLInputElement* aInputElement, uint8_t aType,
-    void* aMemory) {
-  mozilla::UniquePtr<InputType, DoNotDelete> inputType;
+const Decimal InputType::kStepAny = Decimal(0);
+
+/* static */ UniquePtr<InputType, InputType::DoNotDelete> InputType::Create(
+    HTMLInputElement* aInputElement, uint8_t aType, void* aMemory) {
+  UniquePtr<InputType, InputType::DoNotDelete> inputType;
   switch (aType) {
     // Single line text
     case NS_FORM_INPUT_TEXT:
@@ -113,13 +116,11 @@ void InputType::GetNonFileValueInternal(nsAString& aValue) const {
 }
 
 nsresult InputType::SetValueInternal(const nsAString& aValue, uint32_t aFlags) {
-  RefPtr<mozilla::dom::HTMLInputElement> inputElement(mInputElement);
+  RefPtr<HTMLInputElement> inputElement(mInputElement);
   return inputElement->SetValueInternal(aValue, aFlags);
 }
 
-mozilla::Decimal InputType::GetStepBase() const {
-  return mInputElement->GetStepBase();
-}
+Decimal InputType::GetStepBase() const { return mInputElement->GetStepBase(); }
 
 nsIFrame* InputType::GetPrimaryFrame() const {
   return mInputElement->GetPrimaryFrame();
@@ -138,7 +139,7 @@ bool InputType::IsValueMissing() const { return false; }
 
 bool InputType::HasTypeMismatch() const { return false; }
 
-bool InputType::HasPatternMismatch() const { return false; }
+Maybe<bool> InputType::HasPatternMismatch() const { return Some(false); }
 
 bool InputType::IsRangeOverflow() const { return false; }
 
@@ -157,36 +158,33 @@ nsresult InputType::GetValidationMessage(
     case nsIConstraintValidation::VALIDITY_STATE_TOO_LONG: {
       nsAutoString message;
       int32_t maxLength = mInputElement->MaxLength();
-      int32_t textLength =
-          mInputElement->InputTextLength(mozilla::dom::CallerType::System);
+      int32_t textLength = mInputElement->InputTextLength(CallerType::System);
       nsAutoString strMaxLength;
       nsAutoString strTextLength;
 
       strMaxLength.AppendInt(maxLength);
       strTextLength.AppendInt(textLength);
 
-      const char16_t* params[] = {strMaxLength.get(), strTextLength.get()};
-      rv = nsContentUtils::FormatLocalizedString(
-          nsContentUtils::eDOM_PROPERTIES, "FormValidationTextTooLong", params,
-          message);
+      rv = nsContentUtils::FormatMaybeLocalizedString(
+          message, nsContentUtils::eDOM_PROPERTIES, "FormValidationTextTooLong",
+          mInputElement->OwnerDoc(), strMaxLength, strTextLength);
       aValidationMessage = message;
       break;
     }
     case nsIConstraintValidation::VALIDITY_STATE_TOO_SHORT: {
       nsAutoString message;
       int32_t minLength = mInputElement->MinLength();
-      int32_t textLength =
-          mInputElement->InputTextLength(mozilla::dom::CallerType::System);
+      int32_t textLength = mInputElement->InputTextLength(CallerType::System);
       nsAutoString strMinLength;
       nsAutoString strTextLength;
 
       strMinLength.AppendInt(minLength);
       strTextLength.AppendInt(textLength);
 
-      const char16_t* params[] = {strMinLength.get(), strTextLength.get()};
-      rv = nsContentUtils::FormatLocalizedString(
-          nsContentUtils::eDOM_PROPERTIES, "FormValidationTextTooShort", params,
-          message);
+      rv = nsContentUtils::FormatMaybeLocalizedString(
+          message, nsContentUtils::eDOM_PROPERTIES,
+          "FormValidationTextTooShort", mInputElement->OwnerDoc(), strMinLength,
+          strTextLength);
 
       aValidationMessage = message;
       break;
@@ -216,19 +214,19 @@ nsresult InputType::GetValidationMessage(
       nsAutoString title;
       mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::title, title);
       if (title.IsEmpty()) {
-        rv = nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
-                                                "FormValidationPatternMismatch",
-                                                message);
+        rv = nsContentUtils::GetMaybeLocalizedString(
+            nsContentUtils::eDOM_PROPERTIES, "FormValidationPatternMismatch",
+            mInputElement->OwnerDoc(), message);
       } else {
         if (title.Length() >
             nsIConstraintValidation::sContentSpecifiedMaxLengthMessage) {
           title.Truncate(
               nsIConstraintValidation::sContentSpecifiedMaxLengthMessage);
         }
-        const char16_t* params[] = {title.get()};
-        rv = nsContentUtils::FormatLocalizedString(
-            nsContentUtils::eDOM_PROPERTIES,
-            "FormValidationPatternMismatchWithTitle", params, message);
+        rv = nsContentUtils::FormatMaybeLocalizedString(
+            message, nsContentUtils::eDOM_PROPERTIES,
+            "FormValidationPatternMismatchWithTitle", mInputElement->OwnerDoc(),
+            title);
       }
       aValidationMessage = message;
       break;
@@ -256,20 +254,18 @@ nsresult InputType::GetValidationMessage(
     case nsIConstraintValidation::VALIDITY_STATE_STEP_MISMATCH: {
       nsAutoString message;
 
-      mozilla::Decimal value = mInputElement->GetValueAsDecimal();
+      Decimal value = mInputElement->GetValueAsDecimal();
       MOZ_ASSERT(!value.isNaN());
 
-      mozilla::Decimal step = mInputElement->GetStep();
-      MOZ_ASSERT(step != kStepAny && step > mozilla::Decimal(0));
+      Decimal step = mInputElement->GetStep();
+      MOZ_ASSERT(step != kStepAny && step > Decimal(0));
 
-      mozilla::Decimal stepBase = mInputElement->GetStepBase();
+      Decimal stepBase = mInputElement->GetStepBase();
 
-      mozilla::Decimal valueLow =
-          value - NS_floorModulo(value - stepBase, step);
-      mozilla::Decimal valueHigh =
-          value + step - NS_floorModulo(value - stepBase, step);
+      Decimal valueLow = value - NS_floorModulo(value - stepBase, step);
+      Decimal valueHigh = value + step - NS_floorModulo(value - stepBase, step);
 
-      mozilla::Decimal maximum = mInputElement->GetMaximum();
+      Decimal maximum = mInputElement->GetMaximum();
 
       if (maximum.isNaN() || valueHigh <= maximum) {
         nsAutoString valueLowStr, valueHighStr;
@@ -277,24 +273,24 @@ nsresult InputType::GetValidationMessage(
         ConvertNumberToString(valueHigh, valueHighStr);
 
         if (valueLowStr.Equals(valueHighStr)) {
-          const char16_t* params[] = {valueLowStr.get()};
-          rv = nsContentUtils::FormatLocalizedString(
-              nsContentUtils::eDOM_PROPERTIES,
-              "FormValidationStepMismatchOneValue", params, message);
+          rv = nsContentUtils::FormatMaybeLocalizedString(
+              message, nsContentUtils::eDOM_PROPERTIES,
+              "FormValidationStepMismatchOneValue", mInputElement->OwnerDoc(),
+              valueLowStr);
         } else {
-          const char16_t* params[] = {valueLowStr.get(), valueHighStr.get()};
-          rv = nsContentUtils::FormatLocalizedString(
-              nsContentUtils::eDOM_PROPERTIES, "FormValidationStepMismatch",
-              params, message);
+          rv = nsContentUtils::FormatMaybeLocalizedString(
+              message, nsContentUtils::eDOM_PROPERTIES,
+              "FormValidationStepMismatch", mInputElement->OwnerDoc(),
+              valueLowStr, valueHighStr);
         }
       } else {
         nsAutoString valueLowStr;
         ConvertNumberToString(valueLow, valueLowStr);
 
-        const char16_t* params[] = {valueLowStr.get()};
-        rv = nsContentUtils::FormatLocalizedString(
-            nsContentUtils::eDOM_PROPERTIES,
-            "FormValidationStepMismatchOneValue", params, message);
+        rv = nsContentUtils::FormatMaybeLocalizedString(
+            message, nsContentUtils::eDOM_PROPERTIES,
+            "FormValidationStepMismatchOneValue", mInputElement->OwnerDoc(),
+            valueLowStr);
       }
 
       aValidationMessage = message;
@@ -318,8 +314,9 @@ nsresult InputType::GetValidationMessage(
 }
 
 nsresult InputType::GetValueMissingMessage(nsAString& aMessage) {
-  return nsContentUtils::GetLocalizedString(
-      nsContentUtils::eDOM_PROPERTIES, "FormValidationValueMissing", aMessage);
+  return nsContentUtils::GetMaybeLocalizedString(
+      nsContentUtils::eDOM_PROPERTIES, "FormValidationValueMissing",
+      mInputElement->OwnerDoc(), aMessage);
 }
 
 nsresult InputType::GetTypeMismatchMessage(nsAString& aMessage) {
@@ -341,13 +338,13 @@ nsresult InputType::GetBadInputMessage(nsAString& aMessage) {
 nsresult InputType::MinMaxStepAttrChanged() { return NS_OK; }
 
 bool InputType::ConvertStringToNumber(nsAString& aValue,
-                                      mozilla::Decimal& aResultValue) const {
+                                      Decimal& aResultValue) const {
   NS_WARNING("InputType::ConvertStringToNumber called");
 
   return false;
 }
 
-bool InputType::ConvertNumberToString(mozilla::Decimal aValue,
+bool InputType::ConvertNumberToString(Decimal aValue,
                                       nsAString& aResultString) const {
   NS_WARNING("InputType::ConvertNumberToString called");
 
@@ -365,7 +362,7 @@ bool InputType::ParseDate(const nsAString& aValue, uint32_t* aYear,
 
 bool InputType::ParseTime(const nsAString& aValue, uint32_t* aResult) const {
   // see comment in InputType::ParseDate().
-  return mozilla::dom::HTMLInputElement::ParseTime(aValue, aResult);
+  return HTMLInputElement::ParseTime(aValue, aResult);
 }
 
 bool InputType::ParseMonth(const nsAString& aValue, uint32_t* aYear,

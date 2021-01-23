@@ -55,11 +55,10 @@ typedef struct pr_PidRecord {
 } pr_PidRecord;
 
 /*
- * Irix sprocs and LinuxThreads are actually a kind of processes
+ * LinuxThreads are actually a kind of processes
  * that can share the virtual address space and file descriptors.
  */
-#if (defined(IRIX) && !defined(_PR_PTHREADS)) \
-        || ((defined(LINUX) || defined(__GNU__) || defined(__GLIBC__)) \
+#if ((defined(LINUX) || defined(__GNU__) || defined(__GLIBC__)) \
         && defined(_PR_PTHREADS))
 #define _PR_SHARE_CLONES
 #endif
@@ -74,8 +73,8 @@ typedef struct pr_PidRecord {
  */
 
 #if defined(_PR_GLOBAL_THREADS_ONLY) \
-	|| (defined(_PR_PTHREADS) \
-	&& !defined(LINUX) && !defined(__GNU__) && !defined(__GLIBC__))
+    || (defined(_PR_PTHREADS) \
+    && !defined(LINUX) && !defined(__GNU__) && !defined(__GLIBC__))
 #define _PR_NATIVE_THREADS
 #endif
 
@@ -192,7 +191,7 @@ ForkAndExec(
 
 #ifdef AIX
     process->md.pid = (*pr_wp.forkptr)();
-#elif defined(NTO) || defined(SYMBIAN)
+#elif defined(NTO)
     /*
      * fork() & exec() does not work in a multithreaded process.
      * Use spawn() instead.
@@ -204,38 +203,39 @@ ForkAndExec(
             if (attr->stdinFd && attr->stdinFd->secret->md.osfd != 0) {
                 fd_map[0] = dup(attr->stdinFd->secret->md.osfd);
                 flags = fcntl(fd_map[0], F_GETFL, 0);
-                if (flags & O_NONBLOCK)
+                if (flags & O_NONBLOCK) {
                     fcntl(fd_map[0], F_SETFL, flags & ~O_NONBLOCK);
+                }
             }
             if (attr->stdoutFd && attr->stdoutFd->secret->md.osfd != 1) {
                 fd_map[1] = dup(attr->stdoutFd->secret->md.osfd);
                 flags = fcntl(fd_map[1], F_GETFL, 0);
-                if (flags & O_NONBLOCK)
+                if (flags & O_NONBLOCK) {
                     fcntl(fd_map[1], F_SETFL, flags & ~O_NONBLOCK);
+                }
             }
             if (attr->stderrFd && attr->stderrFd->secret->md.osfd != 2) {
                 fd_map[2] = dup(attr->stderrFd->secret->md.osfd);
                 flags = fcntl(fd_map[2], F_GETFL, 0);
-                if (flags & O_NONBLOCK)
+                if (flags & O_NONBLOCK) {
                     fcntl(fd_map[2], F_SETFL, flags & ~O_NONBLOCK);
+                }
             }
 
             PR_ASSERT(attr->currentDirectory == NULL);  /* not implemented */
         }
 
-#ifdef SYMBIAN
-        /* In Symbian OS, we use posix_spawn instead of fork() and exec() */
-        posix_spawn(&(process->md.pid), path, NULL, NULL, argv, childEnvp);
-#else
         process->md.pid = spawn(path, 3, fd_map, NULL, argv, childEnvp);
-#endif
 
-        if (fd_map[0] != 0)
+        if (fd_map[0] != 0) {
             close(fd_map[0]);
-        if (fd_map[1] != 1)
+        }
+        if (fd_map[1] != 1) {
             close(fd_map[1]);
-        if (fd_map[2] != 2)
+        }
+        if (fd_map[2] != 2) {
             close(fd_map[2]);
+        }
     }
 #else
     process->md.pid = fork();
@@ -249,20 +249,20 @@ ForkAndExec(
         return NULL;
     }
     if (0 == process->md.pid) {  /* the child process */
-      /*
-       * If the child process needs to exit, it must call _exit().
-       * Do not call exit(), because exit() will flush and close
-       * the standard I/O file descriptors, and hence corrupt
-       * the parent process's standard I/O data structures.
-       */
+        /*
+         * If the child process needs to exit, it must call _exit().
+         * Do not call exit(), because exit() will flush and close
+         * the standard I/O file descriptors, and hence corrupt
+         * the parent process's standard I/O data structures.
+         */
 
-#if !defined(NTO) && !defined(SYMBIAN)
+#if !defined(NTO)
         if (attr) {
             /* the osfd's to redirect stdin, stdout, and stderr to */
             int in_osfd = -1, out_osfd = -1, err_osfd = -1;
 
             if (attr->stdinFd
-                    && attr->stdinFd->secret->md.osfd != 0) {
+                && attr->stdinFd->secret->md.osfd != 0) {
                 in_osfd = attr->stdinFd->secret->md.osfd;
                 if (dup2(in_osfd, 0) != 0) {
                     _exit(1);  /* failed */
@@ -273,7 +273,7 @@ ForkAndExec(
                 }
             }
             if (attr->stdoutFd
-                    && attr->stdoutFd->secret->md.osfd != 1) {
+                && attr->stdoutFd->secret->md.osfd != 1) {
                 out_osfd = attr->stdoutFd->secret->md.osfd;
                 if (dup2(out_osfd, 1) != 1) {
                     _exit(1);  /* failed */
@@ -284,7 +284,7 @@ ForkAndExec(
                 }
             }
             if (attr->stderrFd
-                    && attr->stderrFd->secret->md.osfd != 2) {
+                && attr->stderrFd->secret->md.osfd != 2) {
                 err_osfd = attr->stderrFd->secret->md.osfd;
                 if (dup2(err_osfd, 2) != 2) {
                     _exit(1);  /* failed */
@@ -301,7 +301,7 @@ ForkAndExec(
                 close(out_osfd);
             }
             if (err_osfd != -1 && err_osfd != in_osfd
-                    && err_osfd != out_osfd) {
+                && err_osfd != out_osfd) {
                 close(err_osfd);
             }
             if (attr->currentDirectory) {
@@ -363,13 +363,13 @@ _MD_CreateUnixProcess(
     int rv;
 
     if (PR_CallOnce(&pr_wp.once, _MD_InitProcesses) == PR_FAILURE) {
-	return NULL;
+        return NULL;
     }
 
     op = PR_NEW(struct pr_CreateProcOp);
     if (NULL == op) {
-	PR_SetError(PR_OUT_OF_MEMORY_ERROR, 0);
-	return NULL;
+        PR_SetError(PR_OUT_OF_MEMORY_ERROR, 0);
+        return NULL;
     }
     op->path = path;
     op->argv = argv;
@@ -378,19 +378,19 @@ _MD_CreateUnixProcess(
     op->done = PR_FALSE;
     op->doneCV = PR_NewCondVar(pr_wp.ml);
     if (NULL == op->doneCV) {
-	PR_DELETE(op);
-	return NULL;
+        PR_DELETE(op);
+        return NULL;
     }
     PR_Lock(pr_wp.ml);
 
     /* add to the tail of op queue */
     op->next = NULL;
     if (pr_wp.opTail) {
-	pr_wp.opTail->next = op;
-	pr_wp.opTail = op;
+        pr_wp.opTail->next = op;
+        pr_wp.opTail = op;
     } else {
-	PR_ASSERT(NULL == pr_wp.opHead);
-	pr_wp.opHead = pr_wp.opTail = op;
+        PR_ASSERT(NULL == pr_wp.opHead);
+        pr_wp.opHead = pr_wp.opTail = op;
     }
 
     /* wake up the daemon thread */
@@ -399,13 +399,13 @@ _MD_CreateUnixProcess(
     } while (-1 == rv && EINTR == errno);
 
     while (op->done == PR_FALSE) {
-	PR_WaitCondVar(op->doneCV, PR_INTERVAL_NO_TIMEOUT);
+        PR_WaitCondVar(op->doneCV, PR_INTERVAL_NO_TIMEOUT);
     }
     PR_Unlock(pr_wp.ml);
     PR_DestroyCondVar(op->doneCV);
     proc = op->process;
     if (!proc) {
-	PR_SetError(op->prerror, op->oserror);
+        PR_SetError(op->prerror, op->oserror);
     }
     PR_DELETE(op);
     return proc;
@@ -421,7 +421,7 @@ _MD_CreateUnixProcess(
     const PRProcessAttr *attr)
 {
     if (PR_CallOnce(&pr_wp.once, _MD_InitProcesses) == PR_FAILURE) {
-	return NULL;
+        return NULL;
     }
     return ForkAndExec(path, argv, envp, attr);
 }  /* _MD_CreateUnixProcess */
@@ -445,10 +445,10 @@ FindPidTable(pid_t pid)
 
     pRec =  pr_wp.pidTable[keyHash];
     while (pRec) {
-	if (pRec->pid == pid) {
-	    break;
-	}
-	pRec = pRec->next;
+        if (pRec->pid == pid) {
+            break;
+        }
+        pRec = pRec->next;
     }
     return pRec;
 }
@@ -468,21 +468,21 @@ DeletePidTable(pr_PidRecord *pRec)
     int keyHash = (int) (pRec->pid & PID_HASH_MASK);
 
     if (pr_wp.pidTable[keyHash] == pRec) {
-	pr_wp.pidTable[keyHash] = pRec->next;
+        pr_wp.pidTable[keyHash] = pRec->next;
     } else {
-	pr_PidRecord *pred, *cur;  /* predecessor and current */
+        pr_PidRecord *pred, *cur;  /* predecessor and current */
 
-	pred = pr_wp.pidTable[keyHash];
-	cur = pred->next;
-	while (cur) {
-	    if (cur == pRec) {
-		pred->next = cur->next;
-		break;
+        pred = pr_wp.pidTable[keyHash];
+        cur = pred->next;
+        while (cur) {
+            if (cur == pRec) {
+                pred->next = cur->next;
+                break;
             }
-	    pred = cur;
-	    cur = cur->next;
+            pred = cur;
+            cur = cur->next;
         }
-	PR_ASSERT(cur != NULL);
+        PR_ASSERT(cur != NULL);
     }
 }
 
@@ -498,10 +498,10 @@ ExtractExitStatus(int rawExitStatus)
     PR_ASSERT(!WIFCONTINUED(rawExitStatus));
 #endif
     if (WIFEXITED(rawExitStatus)) {
-	return WEXITSTATUS(rawExitStatus);
+        return WEXITSTATUS(rawExitStatus);
     }
-	PR_ASSERT(WIFSIGNALED(rawExitStatus));
-	return _PR_SIGNALED_EXITSTATUS;
+    PR_ASSERT(WIFSIGNALED(rawExitStatus));
+    return _PR_SIGNALED_EXITSTATUS;
 }
 
 static void
@@ -553,16 +553,16 @@ static void WaitPidDaemonThread(void *unused)
         }
         PR_Unlock(pr_wp.ml);
 
-	while (1) {
-	    do {
-	        pid = waitpid((pid_t) -1, &status, 0);
-	    } while ((pid_t) -1 == pid && EINTR == errno);
+        while (1) {
+            do {
+                pid = waitpid((pid_t) -1, &status, 0);
+            } while ((pid_t) -1 == pid && EINTR == errno);
 
             /*
              * waitpid() cannot return 0 because we did not invoke it
              * with the WNOHANG option.
-             */ 
-	    PR_ASSERT(0 != pid);
+             */
+            PR_ASSERT(0 != pid);
 
             /*
              * The only possible error code is ECHILD.  But if we do
@@ -570,18 +570,18 @@ static void WaitPidDaemonThread(void *unused)
              * when there is a child process to wait for.
              */
             PR_ASSERT((pid_t) -1 != pid);
-	    if ((pid_t) -1 == pid) {
+            if ((pid_t) -1 == pid) {
                 break;
             }
 
-	    PR_Lock(pr_wp.ml);
+            PR_Lock(pr_wp.ml);
             ProcessReapedChildInternal(pid, status);
             pr_wp.numProcs--;
             while (0 == pr_wp.numProcs) {
                 PR_WaitCondVar(pr_wp.cv, PR_INTERVAL_NO_TIMEOUT);
             }
-	    PR_Unlock(pr_wp.ml);
-	}
+            PR_Unlock(pr_wp.ml);
+        }
     }
 }
 
@@ -616,48 +616,50 @@ static void WaitPidDaemonThread(void *unused)
         if (pr_waitpid_daemon_exit) {
             return;
         }
-	PR_Lock(pr_wp.ml);
+        PR_Lock(pr_wp.ml);
 #endif
-	    
+
         do {
             rv = read(pr_wp.pipefd[0], buf, sizeof(buf));
         } while (sizeof(buf) == rv || (-1 == rv && EINTR == errno));
 
 #ifdef _PR_SHARE_CLONES
-	while ((op = pr_wp.opHead) != NULL) {
-	    PR_Unlock(pr_wp.ml);
-	    op->process = ForkAndExec(op->path, op->argv,
-		    op->envp, op->attr);
-	    if (NULL == op->process) {
-		op->prerror = PR_GetError();
-		op->oserror = PR_GetOSError();
-	    }
-	    PR_Lock(pr_wp.ml);
-	    pr_wp.opHead = op->next;
-	    if (NULL == pr_wp.opHead) {
-		pr_wp.opTail = NULL;
-	    }
-	    op->done = PR_TRUE;
-	    PR_NotifyCondVar(op->doneCV);
-	}
-	PR_Unlock(pr_wp.ml);
+        while ((op = pr_wp.opHead) != NULL) {
+            PR_Unlock(pr_wp.ml);
+            op->process = ForkAndExec(op->path, op->argv,
+                                      op->envp, op->attr);
+            if (NULL == op->process) {
+                op->prerror = PR_GetError();
+                op->oserror = PR_GetOSError();
+            }
+            PR_Lock(pr_wp.ml);
+            pr_wp.opHead = op->next;
+            if (NULL == pr_wp.opHead) {
+                pr_wp.opTail = NULL;
+            }
+            op->done = PR_TRUE;
+            PR_NotifyCondVar(op->doneCV);
+        }
+        PR_Unlock(pr_wp.ml);
 #endif
 
-	while (1) {
-	    do {
-	        pid = waitpid((pid_t) -1, &status, WNOHANG);
-	    } while ((pid_t) -1 == pid && EINTR == errno);
-	    if (0 == pid) break;
-	    if ((pid_t) -1 == pid) {
-		/* must be because we have no child processes */
-		PR_ASSERT(ECHILD == errno);
-		break;
+        while (1) {
+            do {
+                pid = waitpid((pid_t) -1, &status, WNOHANG);
+            } while ((pid_t) -1 == pid && EINTR == errno);
+            if (0 == pid) {
+                break;
+            }
+            if ((pid_t) -1 == pid) {
+                /* must be because we have no child processes */
+                PR_ASSERT(ECHILD == errno);
+                break;
             }
 
-	    PR_Lock(pr_wp.ml);
+            PR_Lock(pr_wp.ml);
             ProcessReapedChildInternal(pid, status);
-	    PR_Unlock(pr_wp.ml);
-	}
+            PR_Unlock(pr_wp.ml);
+        }
     }
 }
 
@@ -740,13 +742,13 @@ static PRStatus _MD_InitProcesses(void)
 #endif  /* !_PR_NATIVE_THREADS */
 
     pr_wp.thread = PR_CreateThread(PR_SYSTEM_THREAD,
-	    WaitPidDaemonThread, NULL, PR_PRIORITY_NORMAL,
+                                   WaitPidDaemonThread, NULL, PR_PRIORITY_NORMAL,
 #ifdef _PR_SHARE_CLONES
-            PR_GLOBAL_THREAD,
+                                   PR_GLOBAL_THREAD,
 #else
-	    PR_LOCAL_THREAD,
+                                   PR_LOCAL_THREAD,
 #endif
-	    PR_JOINABLE_THREAD, 0);
+                                   PR_JOINABLE_THREAD, 0);
     PR_ASSERT(NULL != pr_wp.thread);
 
     pr_wp.pidTable = (pr_PidRecord**)PR_CALLOC(NBUCKETS * sizeof(pr_PidRecord *));
@@ -762,26 +764,26 @@ PRStatus _MD_DetachUnixProcess(PRProcess *process)
     PR_Lock(pr_wp.ml);
     pRec = FindPidTable(process->md.pid);
     if (NULL == pRec) {
-	pRec = PR_NEW(pr_PidRecord);
-	if (NULL == pRec) {
-	    PR_SetError(PR_OUT_OF_MEMORY_ERROR, 0);
-	    retVal = PR_FAILURE;
-	    goto done;
-	}
-	pRec->pid = process->md.pid;
-	pRec->state = _PR_PID_DETACHED;
-	pRec->reapedCV = NULL;
-	InsertPidTable(pRec);
+        pRec = PR_NEW(pr_PidRecord);
+        if (NULL == pRec) {
+            PR_SetError(PR_OUT_OF_MEMORY_ERROR, 0);
+            retVal = PR_FAILURE;
+            goto done;
+        }
+        pRec->pid = process->md.pid;
+        pRec->state = _PR_PID_DETACHED;
+        pRec->reapedCV = NULL;
+        InsertPidTable(pRec);
     } else {
-	PR_ASSERT(_PR_PID_REAPED == pRec->state);
-	if (_PR_PID_REAPED != pRec->state) {
-	    PR_SetError(PR_INVALID_ARGUMENT_ERROR, 0);
-	    retVal = PR_FAILURE;
-	} else {
-	    DeletePidTable(pRec);
-	    PR_ASSERT(NULL == pRec->reapedCV);
-	    PR_DELETE(pRec);
-	}
+        PR_ASSERT(_PR_PID_REAPED == pRec->state);
+        if (_PR_PID_REAPED != pRec->state) {
+            PR_SetError(PR_INVALID_ARGUMENT_ERROR, 0);
+            retVal = PR_FAILURE;
+        } else {
+            DeletePidTable(pRec);
+            PR_ASSERT(NULL == pRec->reapedCV);
+            PR_DELETE(pRec);
+        }
     }
     PR_DELETE(process);
 
@@ -801,47 +803,47 @@ PRStatus _MD_WaitUnixProcess(
     PR_Lock(pr_wp.ml);
     pRec = FindPidTable(process->md.pid);
     if (NULL == pRec) {
-	pRec = PR_NEW(pr_PidRecord);
-	if (NULL == pRec) {
-	    PR_SetError(PR_OUT_OF_MEMORY_ERROR, 0);
-	    retVal = PR_FAILURE;
-	    goto done;
-	}
-	pRec->pid = process->md.pid;
-	pRec->state = _PR_PID_WAITING;
-	pRec->reapedCV = PR_NewCondVar(pr_wp.ml);
-	if (NULL == pRec->reapedCV) {
-	    PR_DELETE(pRec);
-	    retVal = PR_FAILURE;
-	    goto done;
-	}
-	InsertPidTable(pRec);
-	while (!interrupted && _PR_PID_REAPED != pRec->state) {
-	    if (PR_WaitCondVar(pRec->reapedCV,
-		    PR_INTERVAL_NO_TIMEOUT) == PR_FAILURE
-		    && PR_GetError() == PR_PENDING_INTERRUPT_ERROR) {
-		interrupted = PR_TRUE;
+        pRec = PR_NEW(pr_PidRecord);
+        if (NULL == pRec) {
+            PR_SetError(PR_OUT_OF_MEMORY_ERROR, 0);
+            retVal = PR_FAILURE;
+            goto done;
+        }
+        pRec->pid = process->md.pid;
+        pRec->state = _PR_PID_WAITING;
+        pRec->reapedCV = PR_NewCondVar(pr_wp.ml);
+        if (NULL == pRec->reapedCV) {
+            PR_DELETE(pRec);
+            retVal = PR_FAILURE;
+            goto done;
+        }
+        InsertPidTable(pRec);
+        while (!interrupted && _PR_PID_REAPED != pRec->state) {
+            if (PR_WaitCondVar(pRec->reapedCV,
+                               PR_INTERVAL_NO_TIMEOUT) == PR_FAILURE
+                && PR_GetError() == PR_PENDING_INTERRUPT_ERROR) {
+                interrupted = PR_TRUE;
             }
-	}
-	if (_PR_PID_REAPED == pRec->state) {
+        }
+        if (_PR_PID_REAPED == pRec->state) {
             if (exitCode) {
                 *exitCode = pRec->exitStatus;
             }
-	} else {
-	    PR_ASSERT(interrupted);
-	    retVal = PR_FAILURE;
-	}
-	DeletePidTable(pRec);
-	PR_DestroyCondVar(pRec->reapedCV);
-	PR_DELETE(pRec);
+        } else {
+            PR_ASSERT(interrupted);
+            retVal = PR_FAILURE;
+        }
+        DeletePidTable(pRec);
+        PR_DestroyCondVar(pRec->reapedCV);
+        PR_DELETE(pRec);
     } else {
-	PR_ASSERT(_PR_PID_REAPED == pRec->state);
-	PR_ASSERT(NULL == pRec->reapedCV);
-	DeletePidTable(pRec);
+        PR_ASSERT(_PR_PID_REAPED == pRec->state);
+        PR_ASSERT(NULL == pRec->reapedCV);
+        DeletePidTable(pRec);
         if (exitCode) {
             *exitCode = pRec->exitStatus;
         }
-	PR_DELETE(pRec);
+        PR_DELETE(pRec);
     }
     PR_DELETE(process);
 
@@ -855,27 +857,21 @@ PRStatus _MD_KillUnixProcess(PRProcess *process)
     PRErrorCode prerror;
     PRInt32 oserror;
 
-#ifdef SYMBIAN
-    /* In Symbian OS, we can not kill other process with Open C */
-    PR_SetError(PR_OPERATION_NOT_SUPPORTED_ERROR, oserror);
-    return PR_FAILURE;
-#else
     if (kill(process->md.pid, SIGKILL) == 0) {
-	return PR_SUCCESS;
+        return PR_SUCCESS;
     }
     oserror = errno;
     switch (oserror) {
         case EPERM:
-	    prerror = PR_NO_ACCESS_RIGHTS_ERROR;
-	    break;
+            prerror = PR_NO_ACCESS_RIGHTS_ERROR;
+            break;
         case ESRCH:
-	    prerror = PR_INVALID_ARGUMENT_ERROR;
-	    break;
+            prerror = PR_INVALID_ARGUMENT_ERROR;
+            break;
         default:
-	    prerror = PR_UNKNOWN_ERROR;
-	    break;
+            prerror = PR_UNKNOWN_ERROR;
+            break;
     }
     PR_SetError(prerror, oserror);
     return PR_FAILURE;
-#endif
 }  /* _MD_KillUnixProcess */

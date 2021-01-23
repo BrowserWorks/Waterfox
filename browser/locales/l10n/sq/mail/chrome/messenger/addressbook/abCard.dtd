@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Emër">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Emër:">
+<!ENTITY NameField1.accesskey           "E">
+<!ENTITY NameField2.label               "Mbiemër:">
+<!ENTITY NameField2.accesskey           "M">
+<!ENTITY PhoneticField1.label           "Fonetike:">
+<!ENTITY PhoneticField2.label           "Fonetike:">
+<!ENTITY DisplayName.label              "Shfaqje:">
+<!ENTITY DisplayName.accesskey          "S">
+<!ENTITY preferDisplayName.label        "Parapëlqe përherë emër paraqitje në vend të titullit të mesazhit">
+<!ENTITY preferDisplayName.accesskey    "a">
+<!ENTITY NickName.label                 "Nofkë:">
+<!ENTITY NickName.accesskey             "N">
+
+<!ENTITY PrimaryEmail.label             "Email:">
+<!ENTITY PrimaryEmail.accesskey         "i">
+<!ENTITY SecondEmail.label              "Email Shtesë:">
+<!ENTITY SecondEmail.accesskey          "h">
+<!ENTITY PreferMailFormat.label         "Parapëlqen të marrë mesazhe të formatuar si:">
+<!ENTITY PreferMailFormat.accesskey     "z">
+<!ENTITY PlainText.label                "Tekst të Thjeshtë">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Nuk dihet">
+<!ENTITY chatName.label                 "Emër Fjalosjeje:">
+
+<!ENTITY WorkPhone.label                "Pune:">
+<!ENTITY WorkPhone.accesskey            "u">
+<!ENTITY HomePhone.label                "Shtëpie:">
+<!ENTITY HomePhone.accesskey            "ë">
+<!ENTITY FaxNumber.label                "Faks:">
+<!ENTITY FaxNumber.accesskey            "F">
+<!ENTITY PagerNumber.label              "Faques:">
+<!ENTITY PagerNumber.accesskey          "q">
+<!ENTITY CellularNumber.label           "Celular:">
+<!ENTITY CellularNumber.accesskey       "C">
+
+<!ENTITY Home.tab                       "Private">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adresë:">
+<!ENTITY HomeAddress.accesskey          "A">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Qytet:">
+<!ENTITY HomeCity.accesskey             "Q">
+<!ENTITY HomeState.label                "Shtet/Provincë:">
+<!ENTITY HomeState.accesskey            "S">
+<!ENTITY HomeZipCode.label              "ZIP/Kod Postar:">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "Vend:">
+<!ENTITY HomeCountry.accesskey          "n">
+<!ENTITY HomeWebPage.label              "Faqe Web:">
+<!ENTITY HomeWebPage.accesskey          "a">
+<!ENTITY Birthday.label                 "Datëlindje:">
+<!ENTITY Birthday.accesskey             "D">
+<!ENTITY Month.placeholder              "Muaj">
+<!ENTITY Day.placeholder                "Ditë">
+<!ENTITY Year.placeholder               "Vit">
+<!ENTITY Age.label                      "Moshë:">
+<!ENTITY Age.placeholder                "Moshë">
+
+<!ENTITY Work.tab                       "Pune">
+<!ENTITY Work.accesskey                 "P">
+<!ENTITY JobTitle.label                 "Titull:">
+<!ENTITY JobTitle.accesskey             "T">
+<!ENTITY Department.label               "Degë:">
+<!ENTITY Department.accesskey           "D">
+<!ENTITY Company.label                  "Ent:">
+<!ENTITY Company.accesskey              "n">
+<!ENTITY WorkAddress.label              "Adresë:">
+<!ENTITY WorkAddress.accesskey          "A">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Qytet:">
+<!ENTITY WorkCity.accesskey             "Q">
+<!ENTITY WorkState.label                "Shtet/Provincë:">
+<!ENTITY WorkState.accesskey            "S">
+<!ENTITY WorkZipCode.label              "ZIP/Kod Postar:">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "Vend:">
+<!ENTITY WorkCountry.accesskey          "V">
+<!ENTITY WorkWebPage.label              "Faqe Web:">
+<!ENTITY WorkWebPage.accesskey          "F">
+
+<!ENTITY Other.tab                      "Tjetër">
+<!ENTITY Other.accesskey                "T">
+<!ENTITY Custom1.label                  "Vetjake 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Vetjake 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Vetjake 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Vetjake 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Shënime:">
+<!ENTITY Notes.accesskey                "S">
+
+<!ENTITY Chat.tab                       "Fjalosje">
+<!ENTITY Chat.accesskey                 "F">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "ID Jabber:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "Nofkë IRC-je:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "f">
+<!ENTITY GenericPhoto.label             "Foto e Thjeshtë">
+<!ENTITY GenericPhoto.accesskey         "o">
+<!ENTITY DefaultPhoto.label             "Parazgjedhje">
+<!ENTITY PhotoFile.label                "Në këtë Kompjuter">
+<!ENTITY PhotoFile.accesskey            "K">
+<!ENTITY BrowsePhoto.label              "Shfletoni">
+<!ENTITY BrowsePhoto.accesskey          "S">
+<!ENTITY PhotoURL.label                 "Në Web">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "Hidheni ose shtypeni dorazi adresën web të një fotoje">
+<!ENTITY UpdatePhoto.label              "Përditësojeni">
+<!ENTITY UpdatePhoto.accesskey          "P">
+<!ENTITY PhotoDropTarget.label          "Hidhni këtu foto të re">

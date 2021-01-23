@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Nyahpasang Penyedia">
+<!ENTITY providerUninstall.accept.label                    "Batal langganan yang Dipilih">
+<!ENTITY providerUninstall.accept.accesskey                "N">
+<!ENTITY providerUninstall.cancel.label                    "Simpan Add-on">
+<!ENTITY providerUninstall.cancel.accesskey                "S">
+<!ENTITY providerUninstall.preName.label                   "Anda telah meminta untuk nyahpasang atau nyahdayakan:">
+<!ENTITY providerUninstall.postName.label                  "Ini akan menyebabkan kalendar di bawah dinyahdayakan.">
+<!ENTITY providerUninstall.reinstallNote.label             "Melainkan anda bercadang untuk memasang semula, anda boleh memilih untuk berhenti melanggan daripada penyedia kalendar ini.">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP ქსელში მუშაობა">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "პირდაპირი კავშირის პარამეტრები">
+<!ENTITY prefProxy.label                     "პროქსი კავშირის პარამეტრები">
+<!ENTITY prefEnableHTTP10.label              "HTTP 1.0–ის გამოყენება">
+<!ENTITY prefEnableHTTP10.accesskey          "გ">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "HTTP 1.1–ის გამოყენება">
+<!ENTITY prefEnableHTTP11.accesskey          "მ">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "HTTP კავშირების წარმადობისა და თავსებადობის გაზრდა ამ პარამეტრებითაა შესაძელებელი.  მაგალითად, ზოგიერთი პროქსი სერვერი საჭიროებს HTTP/1.0-ს (იხ. დოკუმენტაცია).">
+<!ENTITY prefUseragent.label                 "მომხმარებლის პროგრამა ტექსტი">
+<!ENTITY prefFirefoxCompat.label             "Firefox თავსებადობის შესახებ ცნობება">
+<!ENTITY prefFirefoxCompat.accesskey         "ც">
+<!ENTITY prefLightningShow.label             "Lightning დაყენების შესახებ ცნობება">
+<!ENTITY prefLightningShow.accesskey         "ნ">
+<!ENTITY prefCompatWarning                   "გაფრთხილება: ამ პარამეტრების გამორთვის შედეგად, შესაძლოა საიტებმა ან მომსახურებებმა გამართულად ვერ იმუშაოს.">
+<!ENTITY prefFirefoxStrict.label             "ჩანდეს როგორც Waterfox">
+<!ENTITY prefFirefoxStrict.accesskey         "ჩ">
+<!ENTITY prefFirefoxNone.label               "ჩანდეს როგორც SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "ჩანდეს როგორც SeaMonkey და Waterfox-თან თავსებადი">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "გაფრთხილება: ამ პარამეტრების შეცვლის შედეგად, შესაძლოა საიტებმა ან მომსახურებებმა გამართულად ვერ იმუშაოს.">

@@ -22,7 +22,8 @@ class FilterPrimitiveDescription;
 }  // namespace gfx
 }  // namespace mozilla
 
-DECLARE_USE_COPY_CONSTRUCTORS(mozilla::gfx::FilterPrimitiveDescription)
+MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR(
+    mozilla::gfx::FilterPrimitiveDescription)
 
 extern const float gsRGBToLinearRGBMap[256];
 
@@ -55,6 +56,7 @@ const unsigned short SVG_FECOMPONENTTRANSFER_TYPE_TABLE = 2;
 const unsigned short SVG_FECOMPONENTTRANSFER_TYPE_DISCRETE = 3;
 const unsigned short SVG_FECOMPONENTTRANSFER_TYPE_LINEAR = 4;
 const unsigned short SVG_FECOMPONENTTRANSFER_TYPE_GAMMA = 5;
+const unsigned short SVG_FECOMPONENTTRANSFER_SAME_AS_R = 6;
 
 // Blend Mode Values
 const unsigned short SVG_FEBLEND_MODE_UNKNOWN = 0;
@@ -133,7 +135,7 @@ struct MorphologyAttributes {
 };
 
 struct FloodAttributes {
-  Color mColor;
+  sRGBColor mColor;
 
   bool operator==(const FloodAttributes& aOther) const {
     return mColor == aOther.mColor;
@@ -212,8 +214,8 @@ struct GaussianBlurAttributes {
 
 struct DropShadowAttributes {
   Size mStdDeviation;
-  IntPoint mOffset;
-  Color mColor;
+  Point mOffset;
+  sRGBColor mColor;
 
   bool operator==(const DropShadowAttributes& aOther) const {
     return mStdDeviation == aOther.mStdDeviation && mOffset == aOther.mOffset &&
@@ -227,27 +229,20 @@ struct ToAlphaAttributes {
 
 // Complex PrimitiveAttributes:
 
-class ImplicitlyCopyableFloatArray : public nsTArray<float> {
+class ImplicitlyCopyableFloatArray : public CopyableTArray<float> {
  public:
-  ImplicitlyCopyableFloatArray() : nsTArray<float>() {}
+  ImplicitlyCopyableFloatArray() = default;
 
-  ImplicitlyCopyableFloatArray(ImplicitlyCopyableFloatArray&& aOther)
-      : nsTArray<float>(std::move(aOther)) {}
+  ImplicitlyCopyableFloatArray(ImplicitlyCopyableFloatArray&& aOther) = default;
 
   ImplicitlyCopyableFloatArray& operator=(
-      ImplicitlyCopyableFloatArray&& aOther) {
-    nsTArray<float>::operator=(std::move(aOther));
-    return *this;
-  }
+      ImplicitlyCopyableFloatArray&& aOther) = default;
 
   ImplicitlyCopyableFloatArray(const ImplicitlyCopyableFloatArray& aOther) =
       default;
 
   ImplicitlyCopyableFloatArray& operator=(
-      const ImplicitlyCopyableFloatArray& aOther) {
-    nsTArray<float>::operator=(aOther);
-    return *this;
-  }
+      const ImplicitlyCopyableFloatArray& aOther) = default;
 };
 
 struct ColorMatrixAttributes {
@@ -259,8 +254,8 @@ struct ColorMatrixAttributes {
   }
 };
 
-// If the types for G and B are SVG_FECOMPONENTTRANSFER_TYPE_UNKNOWN,
-// assume the R values are RGB - this lets us avoid copies.
+// If the types for G and B are SVG_FECOMPONENTTRANSFER_SAME_AS_R,
+// use the R channel values - this lets us avoid copies.
 const uint32_t kChannelROrRGB = 0;
 const uint32_t kChannelG = 1;
 const uint32_t kChannelB = 2;
@@ -347,7 +342,7 @@ struct DiffuseLightingAttributes {
   ImplicitlyCopyableFloatArray mLightValues;
   float mSurfaceScale;
   Size mKernelUnitLength;
-  Color mColor;
+  sRGBColor mColor;
   float mLightingConstant;
   float mSpecularExponent;
 
@@ -418,11 +413,17 @@ class FilterPrimitiveDescription final {
 
   FilterPrimitiveDescription();
   explicit FilterPrimitiveDescription(PrimitiveAttributes&& aAttributes);
-  FilterPrimitiveDescription(FilterPrimitiveDescription&& aOther);
-  FilterPrimitiveDescription& operator=(FilterPrimitiveDescription&& aOther);
-  FilterPrimitiveDescription(const FilterPrimitiveDescription& aOther);
-  FilterPrimitiveDescription& operator=(
-      const FilterPrimitiveDescription& aOther);
+  FilterPrimitiveDescription(FilterPrimitiveDescription&& aOther) = default;
+  FilterPrimitiveDescription& operator=(FilterPrimitiveDescription&& aOther) =
+      default;
+  FilterPrimitiveDescription(const FilterPrimitiveDescription& aOther)
+      : mAttributes(aOther.mAttributes),
+        mInputPrimitives(aOther.mInputPrimitives.Clone()),
+        mFilterPrimitiveSubregion(aOther.mFilterPrimitiveSubregion),
+        mFilterSpaceBounds(aOther.mFilterSpaceBounds),
+        mInputColorSpaces(aOther.mInputColorSpaces.Clone()),
+        mOutputColorSpace(aOther.mOutputColorSpace),
+        mIsTainted(aOther.mIsTainted) {}
 
   const PrimitiveAttributes& Attributes() const { return mAttributes; }
   PrimitiveAttributes& Attributes() { return mAttributes; }
@@ -491,7 +492,7 @@ class FilterPrimitiveDescription final {
  * functionality.
  */
 struct FilterDescription final {
-  FilterDescription() {}
+  FilterDescription() = default;
   explicit FilterDescription(
       nsTArray<FilterPrimitiveDescription>&& aPrimitives) {
     mPrimitives.SwapElements(aPrimitives);
@@ -502,7 +503,7 @@ struct FilterDescription final {
     return !(*this == aOther);
   }
 
-  nsTArray<FilterPrimitiveDescription> mPrimitives;
+  CopyableTArray<FilterPrimitiveDescription> mPrimitives;
 };
 
 already_AddRefed<FilterNode> FilterNodeGraphFromDescription(

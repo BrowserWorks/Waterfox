@@ -1,9 +1,9 @@
+// |reftest| async
 // Copyright (C) 2015 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
 esid: sec-promise.all
-es6id: 25.4.4.1
 description: >
   Error when accessing an iterator result's `value` property (rejecting
   promise)

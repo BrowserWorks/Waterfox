@@ -18,9 +18,9 @@
 #endif
 
 #if defined(XP_WIN)
-#  include "mozilla/Move.h"
 #  include "mozilla/UniquePtr.h"
 #  include "mozilla/Vector.h"
+#  include "mozilla/WinHeaderOnlyUtils.h"
 
 #  include <wchar.h>
 #  include <windows.h>
@@ -375,9 +375,9 @@ inline wchar_t* ArgToString(wchar_t* d, const wchar_t* s) {
  * @param aArgvExtra Optional array of arguments to be appended to the resulting
  *                   command line after those provided by |argv|.
  */
-inline UniquePtr<wchar_t[]> MakeCommandLine(int argc, wchar_t** argv,
-                                            int aArgcExtra = 0,
-                                            wchar_t** aArgvExtra = nullptr) {
+inline UniquePtr<wchar_t[]> MakeCommandLine(
+    int argc, const wchar_t* const* argv, int aArgcExtra = 0,
+    const wchar_t* const* aArgvExtra = nullptr) {
   int i;
   int len = 0;
 
@@ -423,39 +423,6 @@ inline UniquePtr<wchar_t[]> MakeCommandLine(int argc, wchar_t** argv,
   *c = '\0';
 
   return s;
-}
-
-inline UniquePtr<wchar_t[]> GetFullBinaryPath() {
-  DWORD bufLen = MAX_PATH;
-  mozilla::UniquePtr<wchar_t[]> buf;
-  DWORD retLen;
-
-  while (true) {
-    buf = mozilla::MakeUnique<wchar_t[]>(bufLen);
-    retLen = ::GetModuleFileNameW(nullptr, buf.get(), bufLen);
-    if (!retLen) {
-      return nullptr;
-    }
-
-    if (retLen == bufLen && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-      bufLen *= 2;
-      continue;
-    }
-
-    break;
-  }
-
-  // Upon success, retLen *excludes* the null character
-  ++retLen;
-
-  // Since we're likely to have a bunch of unused space in buf, let's reallocate
-  // a string to the actual size of the file name.
-  auto result = mozilla::MakeUnique<wchar_t[]>(retLen);
-  if (wcscpy_s(result.get(), retLen, buf.get())) {
-    return nullptr;
-  }
-
-  return result;
 }
 
 inline bool SetArgv0ToFullBinaryPath(wchar_t* aArgv[]) {

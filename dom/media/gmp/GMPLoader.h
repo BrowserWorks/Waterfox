@@ -21,20 +21,14 @@ namespace gmp {
 
 class SandboxStarter {
  public:
-  virtual ~SandboxStarter() {}
+  virtual ~SandboxStarter() = default;
   virtual bool Start(const char* aLibPath) = 0;
-#if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
-  // On OS X we need to set Mac-specific sandbox info just before we start the
-  // sandbox, which we don't yet know when the GMPLoader and SandboxStarter
-  // objects are created.
-  virtual void SetSandboxInfo(MacSandboxInfo* aSandboxInfo) = 0;
-#endif
 };
 
 // Interface that adapts a plugin to the GMP API.
 class GMPAdapter {
  public:
-  virtual ~GMPAdapter() {}
+  virtual ~GMPAdapter() = default;
   // Sets the adapted to plugin library module.
   // Note: the GMPAdapter is responsible for calling PR_UnloadLibrary on aLib
   // when it's finished with it.
@@ -68,13 +62,6 @@ class GMPLoader {
   // Calls the GMPShutdown function exported by the GMP lib, and unloads the
   // plugin library.
   void Shutdown();
-
-#if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
-  // On OS X we need to set Mac-specific sandbox info just before we start the
-  // sandbox, which we don't yet know when the GMPLoader and SandboxStarter
-  // objects are created.
-  void SetSandboxInfo(MacSandboxInfo* aSandboxInfo);
-#endif
 
   bool CanSandbox() const;
 

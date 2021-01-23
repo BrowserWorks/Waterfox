@@ -8,14 +8,15 @@
 
 #include "SMILCSSProperty.h"
 
-#include "mozilla/dom/Element.h"
-#include "mozilla/Move.h"
-#include "mozilla/ServoBindings.h"
+#include <utility>
+
 #include "mozilla/SMILCSSValueType.h"
 #include "mozilla/SMILValue.h"
+#include "mozilla/ServoBindings.h"
 #include "mozilla/StyleAnimationValue.h"
-#include "nsDOMCSSAttrDeclaration.h"
+#include "mozilla/dom/Element.h"
 #include "nsCSSProps.h"
+#include "nsDOMCSSAttrDeclaration.h"
 
 namespace mozilla {
 
@@ -55,7 +56,7 @@ SMILValue SMILCSSProperty::GetBaseValue() const {
     // In any case, just return a dummy value (initialized with the right
     // type, so as not to indicate failure).
     SMILValue tmpVal(&SMILCSSValueType::sSingleton);
-    Swap(baseValue, tmpVal);
+    std::swap(baseValue, tmpVal);
     return baseValue;
   }
 
@@ -100,8 +101,8 @@ nsresult SMILCSSProperty::SetAnimValue(const SMILValue& aValue) {
 
 void SMILCSSProperty::ClearAnimValue() {
   // Put empty string in override style for our property
-  mElement->SMILOverrideStyle()->SetPropertyValue(mPropID, EmptyString(),
-                                                  nullptr);
+  mElement->SMILOverrideStyle()->SetPropertyValue(mPropID, EmptyCString(),
+                                                  nullptr, IgnoreErrors());
 }
 
 // Based on http://www.w3.org/TR/SVG/propidx.html
@@ -112,7 +113,6 @@ bool SMILCSSProperty::IsPropertyAnimatable(nsCSSPropertyID aPropID) {
   //   alignment-baseline
   //   baseline-shift
   //   color-profile
-  //   color-rendering
   //   glyph-orientation-horizontal
   //   glyph-orientation-vertical
   //   kerning

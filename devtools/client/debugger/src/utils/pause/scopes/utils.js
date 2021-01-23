@@ -11,7 +11,7 @@ export function getFramePopVariables(why: Why, path: string): NamedValue[] {
   const vars: Array<NamedValue> = [];
 
   if (why && why.frameFinished) {
-    const frameFinished = why.frameFinished;
+    const { frameFinished } = why;
 
     // Always display a `throw` property if present, even if it is falsy.
     if (Object.prototype.hasOwnProperty.call(frameFinished, "throw")) {
@@ -50,4 +50,11 @@ export function getThisVariable(this_: any, path: string): ?NamedValue {
     path: `${path}/<this>`,
     contents: { value: this_ },
   };
+}
+
+// Get a string path for an scope item which can be used in different pauses for
+// a thread.
+export function getScopeItemPath(item: Object): string {
+  // Calling toString() on item.path allows symbols to be handled.
+  return item.path.toString();
 }

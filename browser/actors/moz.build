@@ -7,6 +7,9 @@
 with Files("**"):
     BUG_COMPONENT = ("Firefox", "General")
 
+with Files("ContentSearch*.jsm"):
+    BUG_COMPONENT = ("Firefox", "Search")
+
 with Files("LightweightThemeChild.jsm"):
     BUG_COMPONENT = ("WebExtensions", "Themes")
 
@@ -20,28 +23,54 @@ with Files("PluginChild.jsm"):
     BUG_COMPONENT = ("Core", "Plug-ins")
 
 with Files("WebRTCChild.jsm"):
-    BUG_COMPONENT = ("Firefox", "Device Permissions")
+    BUG_COMPONENT = ("Firefox", "Site Permissions")
 
 FINAL_TARGET_FILES.actors += [
+    'AboutNewInstallChild.jsm',
+    'AboutNewInstallParent.jsm',
+    'AboutNewTabChild.jsm',
+    'AboutPluginsChild.jsm',
+    'AboutPluginsParent.jsm',
+    'AboutPrivateBrowsingChild.jsm',
+    'AboutPrivateBrowsingParent.jsm',
+    'AboutProtectionsChild.jsm',
+    'AboutProtectionsParent.jsm',
     'AboutReaderChild.jsm',
+    'AboutTabCrashedChild.jsm',
+    'AboutTabCrashedParent.jsm',
     'BlockedSiteChild.jsm',
+    'BlockedSiteParent.jsm',
     'BrowserTabChild.jsm',
+    'BrowserTabParent.jsm',
     'ClickHandlerChild.jsm',
+    'ClickHandlerParent.jsm',
+    'ContentMetaChild.jsm',
+    'ContentMetaParent.jsm',
     'ContentSearchChild.jsm',
+    'ContentSearchParent.jsm',
     'ContextMenuChild.jsm',
+    'ContextMenuParent.jsm',
     'DOMFullscreenChild.jsm',
+    'DOMFullscreenParent.jsm',
     'FormValidationChild.jsm',
+    'FormValidationParent.jsm',
     'LightweightThemeChild.jsm',
     'LinkHandlerChild.jsm',
+    'LinkHandlerParent.jsm',
     'NetErrorChild.jsm',
-    'OfflineAppsChild.jsm',
+    'NetErrorParent.jsm',
     'PageInfoChild.jsm',
     'PageStyleChild.jsm',
+    'PageStyleParent.jsm',
     'PluginChild.jsm',
+    'PluginParent.jsm',
+    'PromptParent.jsm',
     'RFPHelperChild.jsm',
+    'RFPHelperParent.jsm',
     'SearchTelemetryChild.jsm',
-    'SubframeCrashChild.jsm',
-    'SubframeCrashParent.jsm',
+    'SearchTelemetryParent.jsm',
+    'SwitchDocumentDirectionChild.jsm',
     'URIFixupChild.jsm',
     'WebRTCChild.jsm',
+    'WebRTCParent.jsm',
 ]

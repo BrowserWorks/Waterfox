@@ -17,7 +17,7 @@ with Files('nsBidi*'):
     BUG_COMPONENT = ('Core', 'Layout: Text and Fonts')
 
 with Files('AccessibleCaret*'):
-    BUG_COMPONENT = ('Core', 'Selection')
+    BUG_COMPONENT = ('Core', 'DOM: Selection')
 
 XPIDL_SOURCES += [
     'nsILayoutHistoryState.idl',
@@ -50,7 +50,6 @@ EXPORTS += [
     'nsFrameTraversal.h',
     'nsGenConList.h',
     'nsIFrameTraversal.h',
-    'nsILayoutDebugger.h',
     'nsIPercentBSizeObserver.h',
     'nsIReflowCallback.h',
     'nsLayoutUtils.h',
@@ -75,16 +74,25 @@ EXPORTS.mozilla += [
     'ArenaObjectID.h',
     'GeckoMVMContext.h',
     'GeometryUtils.h',
+    'MediaEmulationData.h',
+    'MotionPathUtils.h',
     'MVMContext.h',
     'OverflowChangedTracker.h',
+    'PositionedEventTargeting.h',
     'PresShell.h',
     'PresShellForwards.h',
     'PresShellInlines.h',
+    'RelativeTo.h',
     'RestyleManager.h',
     'ScrollStyles.h',
     'ScrollTypes.h',
     'ShapeUtils.h',
     'StaticPresData.h',
+    'ViewportUtils.h',
+]
+
+EXPORTS.mozilla.layout += [
+    'LayoutTelemetryTools.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -94,7 +102,9 @@ UNIFIED_SOURCES += [
     'GeckoMVMContext.cpp',
     'GeometryUtils.cpp',
     'LayoutLogging.cpp',
+    'LayoutTelemetryTools.cpp',
     'MobileViewportManager.cpp',
+    'MotionPathUtils.cpp',
     'nsBidi.cpp',
     'nsBidiPresUtils.cpp',
     'nsCaret.cpp',
@@ -121,6 +131,7 @@ UNIFIED_SOURCES += [
     'StackArena.cpp',
     'StaticPresData.cpp',
     'TouchManager.cpp',
+    'ViewportUtils.cpp',
     'ZoomConstraintsClient.cpp',
 ]
 
@@ -149,7 +160,6 @@ LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/html',
     '/dom/svg',
-    '/dom/xbl',
     '/dom/xul',
     '/view',
 ]

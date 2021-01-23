@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Выдаленне уліковага запісу і дадзеных">
+<!ENTITY removeButton.label           "Выдаліць">
+<!ENTITY removeButton.accesskey       "В">
+<!ENTITY removeAccount.label          "Выдаліць звесткі ўліковага запісу">
+<!ENTITY removeAccount.accesskey      "у">
+<!ENTITY removeAccount.desc           "Выдаляе гэты ўліковы запіс толькі з памяці &brandShortName;. Не закранае сам уліковы запіс на серверы.">
+<!ENTITY removeData.label             "Выдаліць дадзеныя паведамленняў">
+<!ENTITY removeData.accesskey         "д">
+<!ENTITY removeDataChat.label         "Выдаліць дадзеныя размовы">
+<!ENTITY removeDataChat.accesskey     "д">
+<!ENTITY removeDataLocalAccount.desc  "Выдаляе ўсе паведамленні, папкі і фільтры, звязаныя з гэтым уліковым запісам, з вашага лакальнага дыска. Гэта не закране некаторыя паведамленні, якія могуць усё яшчэ захоўвацца на серверы. Не выбірайце гэта, калі вы плануеце архіваваць лакальныя дадзеныя ці ізноў выкарыстоўваць іх у &brandShortName; пазней.">
+<!ENTITY removeDataServerAccount.desc "Выдаляе ўсе паведамленні, папкі і фільтры, звязаныя з гэтым уліковым запісам, з вашага лакальнага дыска. Вашы паведамленні і папкі ўсё яшчэ захоўваюцца на серверы.">
+<!ENTITY removeDataChatAccount.desc   "Выдаляе ўсе логі размоў, захаваныя для гэтага ўліковага запісу на вашым лакальным дыску.">
+<!ENTITY showData.label               "Паказаць размяшчэнне дадзеных">
+<!ENTITY showData.accesskey           "П">
+<!ENTITY progressPending              "Выдаленне абраных дадзеных…">
+<!ENTITY progressSuccess              "Паспяхова выдалена.">
+<!ENTITY progressFailure              "Памылка выдалення.">

@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Էջի գույները և Խորապատկերը">
+<!ENTITY pageColors.label "Էջի գույները">
+<!ENTITY defaultColorsRadio.label "Reader's default colors (Don't set colors in page)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "Օգտագործել գույնային կարգավորումները միայն դիտարկիչում">
+<!ENTITY customColorsRadio.label "Use custom colors:">
+<!ENTITY customColorsRadio.accessKey "c">
+<!ENTITY customColorsRadio.tooltip "Գույնային այս կարգավորումները դիտարկիչի կարգավորումներում">
+
+<!ENTITY normalText.label "Normal text">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Link text">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Active link text">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Visited link text">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "Background:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Background Image:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "Օգտագործել նկարի ֆայլը խորապատկերի համար այս էջում">

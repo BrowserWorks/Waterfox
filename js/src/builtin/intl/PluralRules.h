@@ -14,44 +14,75 @@
 #include "js/RootingAPI.h"
 #include "vm/NativeObject.h"
 
-namespace js {
+struct UFormattedNumber;
+struct UNumberFormatter;
+struct UPluralRules;
 
-class FreeOp;
+namespace js {
 
 class PluralRulesObject : public NativeObject {
  public:
-  static const Class class_;
+  static const JSClass class_;
+  static const JSClass& protoClass_;
 
   static constexpr uint32_t INTERNALS_SLOT = 0;
   static constexpr uint32_t UPLURAL_RULES_SLOT = 1;
-  static constexpr uint32_t UNUMBER_FORMAT_SLOT = 2;
-  static constexpr uint32_t SLOT_COUNT = 3;
+  static constexpr uint32_t UNUMBER_FORMATTER_SLOT = 2;
+  static constexpr uint32_t UFORMATTED_NUMBER_SLOT = 3;
+  static constexpr uint32_t SLOT_COUNT = 4;
 
   static_assert(INTERNALS_SLOT == INTL_INTERNALS_OBJECT_SLOT,
                 "INTERNALS_SLOT must match self-hosting define for internals "
                 "object slot");
 
+  // Estimated memory use for UNumberFormatter and UFormattedNumber.
+  static constexpr size_t UNumberFormatterEstimatedMemoryUse = 750;
+
+  // Estimated memory use for UPluralRules.
+  static constexpr size_t UPluralRulesEstimatedMemoryUse = 2976;
+
+  UPluralRules* getPluralRules() const {
+    const auto& slot = getFixedSlot(UPLURAL_RULES_SLOT);
+    if (slot.isUndefined()) {
+      return nullptr;
+    }
+    return static_cast<UPluralRules*>(slot.toPrivate());
+  }
+
+  void setPluralRules(UPluralRules* pluralRules) {
+    setFixedSlot(UPLURAL_RULES_SLOT, PrivateValue(pluralRules));
+  }
+
+  UNumberFormatter* getNumberFormatter() const {
+    const auto& slot = getFixedSlot(UNUMBER_FORMATTER_SLOT);
+    if (slot.isUndefined()) {
+      return nullptr;
+    }
+    return static_cast<UNumberFormatter*>(slot.toPrivate());
+  }
+
+  void setNumberFormatter(UNumberFormatter* formatter) {
+    setFixedSlot(UNUMBER_FORMATTER_SLOT, PrivateValue(formatter));
+  }
+
+  UFormattedNumber* getFormattedNumber() const {
+    const auto& slot = getFixedSlot(UFORMATTED_NUMBER_SLOT);
+    if (slot.isUndefined()) {
+      return nullptr;
+    }
+    return static_cast<UFormattedNumber*>(slot.toPrivate());
+  }
+
+  void setFormattedNumber(UFormattedNumber* formatted) {
+    setFixedSlot(UFORMATTED_NUMBER_SLOT, PrivateValue(formatted));
+  }
+
  private:
-  static const ClassOps classOps_;
+  static const JSClassOps classOps_;
+  static const ClassSpec classSpec_;
 
-  static void finalize(FreeOp* fop, JSObject* obj);
+  static void finalize(JSFreeOp* fop, JSObject* obj);
 };
-
-extern JSObject* CreatePluralRulesPrototype(JSContext* cx,
-                                            JS::Handle<JSObject*> Intl,
-                                            JS::Handle<GlobalObject*> global);
-
-/**
- * Returns an object indicating the supported locales for plural rules
- * by having a true-valued property for each such locale with the
- * canonicalized language tag as the property name. The object has no
- * prototype.
- *
- * Usage: availableLocales = intl_PluralRules_availableLocales()
- */
-extern MOZ_MUST_USE bool intl_PluralRules_availableLocales(JSContext* cx,
-                                                           unsigned argc,
-                                                           JS::Value* vp);
 
 /**
  * Returns a plural rule for the number x according to the effective

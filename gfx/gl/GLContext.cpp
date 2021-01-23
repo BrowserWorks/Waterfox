@@ -34,9 +34,11 @@
 #include "SharedSurfaceGL.h"
 #include "GfxTexturesReporter.h"
 #include "gfx2DGlue.h"
-#include "gfxPrefs.h"
+#include "mozilla/StaticPrefs_gfx.h"
+#include "mozilla/StaticPrefs_gl.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/gfx/Logging.h"
+#include "mozilla/layers/TextureForwarder.h"  // for LayersIPCChannel
 
 #include "OGLShaderProgram.h"  // for ShaderProgramType
 
@@ -79,6 +81,7 @@ static const char* const sExtensionNames[] = {
     "GL_ANGLE_framebuffer_blit",
     "GL_ANGLE_framebuffer_multisample",
     "GL_ANGLE_instanced_arrays",
+    "GL_ANGLE_multiview",
     "GL_ANGLE_texture_compression_dxt3",
     "GL_ANGLE_texture_compression_dxt5",
     "GL_ANGLE_timer_query",
@@ -136,7 +139,6 @@ static const char* const sExtensionNames[] = {
     "GL_EXT_draw_buffers",
     "GL_EXT_draw_buffers2",
     "GL_EXT_draw_instanced",
-    "GL_EXT_draw_range_elements",
     "GL_EXT_float_blend",
     "GL_EXT_frag_depth",
     "GL_EXT_framebuffer_blit",
@@ -204,12 +206,15 @@ static const char* const sExtensionNames[] = {
     "GL_OES_texture_half_float",
     "GL_OES_texture_half_float_linear",
     "GL_OES_texture_npot",
-    "GL_OES_vertex_array_object"};
+    "GL_OES_vertex_array_object",
+    "GL_OVR_multiview2"};
 
 static bool ShouldUseTLSIsCurrent(bool useTLSIsCurrent) {
-  if (gfxPrefs::UseTLSIsCurrent() == 0) return useTLSIsCurrent;
+  if (StaticPrefs::gl_use_tls_is_current() == 0) {
+    return useTLSIsCurrent;
+  }
 
-  return gfxPrefs::UseTLSIsCurrent() > 0;
+  return StaticPrefs::gl_use_tls_is_current() > 0;
 }
 
 static bool ParseVersion(const std::string& versionStr,
@@ -274,7 +279,8 @@ GLContext::GLContext(CreateContextFlags flags, const SurfaceCaps& caps,
       mDebugFlags(ChooseDebugFlags(flags)),
       mSharedContext(sharedContext),
       mCaps(caps),
-      mWorkAroundDriverBugs(gfxPrefs::WorkAroundDriverBugs()) {
+      mWorkAroundDriverBugs(
+          StaticPrefs::gfx_work_around_driver_bugs_AtStartup()) {
   mOwningThreadId = PlatformThread::CurrentId();
   MOZ_ALWAYS_TRUE(sCurrentContext.init());
   sCurrentContext.set(0);
@@ -541,7 +547,7 @@ bool GLContext::InitImpl() {
   MOZ_ASSERT(majorVer < 10);
   MOZ_ASSERT(minorVer < 10);
   mVersion = majorVer * 100 + minorVer * 10;
-  if (mVersion < 140) return false;
+  if (mVersion < 200) return false;
 
   ////
 
@@ -704,17 +710,6 @@ bool GLContext::InitImpl() {
       // breaks WebGL.
       MarkUnsupported(GLFeature::framebuffer_multisample);
     }
-
-#ifdef XP_MACOSX
-    // The Mac Nvidia driver, for versions up to and including 10.8,
-    // don't seem to properly support this.  See 814839
-    // this has been fixed in Mac OS X 10.9. See 907946
-    // and it also works in 10.8.3 and higher.  See 1094338.
-    if (Vendor() == gl::GLVendor::NVIDIA &&
-        !nsCocoaFeatures::IsAtLeastVersion(10, 8, 3)) {
-      MarkUnsupported(GLFeature::depth_texture);
-    }
-#endif
 
     const auto versionStr = (const char*)fGetString(LOCAL_GL_VERSION);
     if (strstr(versionStr, "Mesa")) {
@@ -1247,18 +1242,6 @@ void GLContext::LoadMoreSymbols(const SymbolLoader& loader) {
         fnLoadFeatureByCore(coreSymbols, extSymbols, GLFeature::draw_buffers);
     }
 
-    if (IsSupported(GLFeature::draw_range_elements)) {
-        const SymLoadStruct coreSymbols[] = {
-            { (PRFuncPtr*) &mSymbols.fDrawRangeElements, {{ "glDrawRangeElements" }} },
-            END_SYMBOLS
-        };
-        const SymLoadStruct extSymbols[] = {
-            { (PRFuncPtr*) &mSymbols.fDrawRangeElements, {{ "glDrawRangeElementsEXT" }} },
-            END_SYMBOLS
-        };
-        fnLoadFeatureByCore(coreSymbols, extSymbols, GLFeature::draw_range_elements);
-    }
-
     if (IsSupported(GLFeature::get_integer_indexed)) {
         const SymLoadStruct coreSymbols[] = {
             { (PRFuncPtr*) &mSymbols.fGetIntegeri_v, {{ "glGetIntegeri_v" }} },
@@ -1395,6 +1378,17 @@ void GLContext::LoadMoreSymbols(const SymbolLoader& loader) {
             END_SYMBOLS
         };
         fnLoadForFeature(symbols, GLFeature::invalidate_framebuffer);
+    }
+
+    if (IsSupported(GLFeature::multiview)) {
+        const SymLoadStruct symbols[] = {
+            { (PRFuncPtr*) &mSymbols.fFramebufferTextureMultiview, {{
+              "glFramebufferTextureMultiviewOVR",
+              "glFramebufferTextureMultiviewLayeredANGLE"
+            }} },
+            END_SYMBOLS
+        };
+        fnLoadForFeature(symbols, GLFeature::multiview);
     }
 
     if (IsSupported(GLFeature::prim_restart)) {
@@ -1759,16 +1753,6 @@ GLFormats GLContext::ChooseGLFormats(const SurfaceCaps& caps) const {
     }
   }
 
-  uint32_t msaaLevel = gfxPrefs::MSAALevel();
-  GLsizei samples = msaaLevel * msaaLevel;
-  samples = std::min(samples, mMaxSamples);
-
-  // Bug 778765.
-  if (WorkAroundDriverBugs() && samples == 1) {
-    samples = 0;
-  }
-  formats.samples = samples;
-
   // Be clear that these are 0 if unavailable.
   formats.depthStencil = 0;
   if (IsSupported(GLFeature::packed_depth_stencil)) {
@@ -2093,7 +2077,7 @@ static void ReportArrayContents(
 
   printf_stderr("%s:\n", title);
 
-  nsTArray<GLContext::NamedResource> copy(aArray);
+  nsTArray<GLContext::NamedResource> copy(aArray.Clone());
   copy.Sort();
 
   GLContext* lastContext = nullptr;
@@ -2125,12 +2109,7 @@ void GLContext::ReportOutstandingNames() {
 
 #endif /* DEBUG */
 
-void GLContext::GuaranteeResolve() {
-  if (mScreen) {
-    mScreen->AssureBlitted();
-  }
-  fFinish();
-}
+void GLContext::GuaranteeResolve() { fFinish(); }
 
 const gfx::IntSize& GLContext::OffscreenSize() const {
   MOZ_ASSERT(IsOffscreen());
@@ -2339,21 +2318,6 @@ bool GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest) {
   }
 
   return true;
-}
-
-// Do whatever tear-down is necessary after drawing to our offscreen FBO,
-// if it's bound.
-void GLContext::AfterGLDrawCall() {
-  if (mScreen) {
-    mScreen->AfterDrawCall();
-  }
-  mHeavyGLCallsSinceLastFlush = true;
-}
-
-// Do whatever setup is necessary to read from our offscreen FBO, if it's
-// bound.
-void GLContext::BeforeGLReadCall() {
-  if (mScreen) mScreen->BeforeReadCall();
 }
 
 void GLContext::fBindFramebuffer(GLenum target, GLuint framebuffer) {
@@ -2624,10 +2588,6 @@ bool GLContext::InitOffscreen(const gfx::IntSize& size,
   MOZ_ASSERT(!mCaps.any);
 
   return true;
-}
-
-bool GLContext::IsDrawingToDefaultFramebuffer() {
-  return Screen()->IsDrawFramebufferDefault();
 }
 
 GLuint CreateTexture(GLContext* aGL, GLenum aInternalFormat, GLenum aFormat,
@@ -2911,6 +2871,15 @@ void GLContext::OnImplicitMakeCurrentFailure(const char* const funcName) {
   gfxCriticalError() << "Ignoring call to " << funcName << " with failed"
                      << " mImplicitMakeCurrent.";
 }
+
+// -
+
+// These are defined out of line so that we don't need to include
+// ISurfaceAllocator.h in SurfaceTypes.h.
+SurfaceCaps::SurfaceCaps() = default;
+SurfaceCaps::SurfaceCaps(const SurfaceCaps& other) = default;
+SurfaceCaps& SurfaceCaps::operator=(const SurfaceCaps& other) = default;
+SurfaceCaps::~SurfaceCaps() = default;
 
 } /* namespace gl */
 } /* namespace mozilla */

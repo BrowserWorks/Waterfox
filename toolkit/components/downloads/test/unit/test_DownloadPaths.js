@@ -5,8 +5,8 @@
  * Tests for the "DownloadPaths.jsm" JavaScript module.
  */
 
-function testSanitize(leafName, expectedLeafName) {
-  Assert.equal(DownloadPaths.sanitize(leafName), expectedLeafName);
+function testSanitize(leafName, expectedLeafName, options = {}) {
+  Assert.equal(DownloadPaths.sanitize(leafName, options), expectedLeafName);
 }
 
 function testSplitBaseNameAndExtension(aLeafName, [aBase, aExt]) {
@@ -37,26 +37,26 @@ add_task(async function test_sanitize() {
     testSanitize(kSpecialChars, "A B C");
     testSanitize(" :: Website :: ", "Website");
     testSanitize("* Website!", "Website!");
-    testSanitize("Website | Page!", "Website   Page!");
-    testSanitize("Directory Listing: /a/b/", "Directory Listing  _a_b_");
+    testSanitize("Website | Page!", "Website Page!");
+    testSanitize("Directory Listing: /a/b/", "Directory Listing _a_b_");
   } else if (AppConstants.platform == "win") {
     testSanitize(kSpecialChars, "A ''(());,+=[]B][=+,;))(('' C");
     testSanitize(" :: Website :: ", "Website");
     testSanitize("* Website!", "Website!");
-    testSanitize("Website | Page!", "Website   Page!");
-    testSanitize("Directory Listing: /a/b/", "Directory Listing  _a_b_");
+    testSanitize("Website | Page!", "Website Page!");
+    testSanitize("Directory Listing: /a/b/", "Directory Listing _a_b_");
   } else if (AppConstants.platform == "macosx") {
     testSanitize(kSpecialChars, 'A *?|""<<>>;,+=[]B][=+,;>><<""|?* C');
     testSanitize(" :: Website :: ", "Website");
     testSanitize("* Website!", "* Website!");
     testSanitize("Website | Page!", "Website | Page!");
-    testSanitize("Directory Listing: /a/b/", "Directory Listing  _a_b_");
+    testSanitize("Directory Listing: /a/b/", "Directory Listing _a_b_");
   } else {
-    testSanitize(kSpecialChars, kSpecialChars);
-    testSanitize(" :: Website :: ", ":: Website ::");
+    testSanitize(kSpecialChars, kSpecialChars.replace(/[:]/g, " "));
+    testSanitize(" :: Website :: ", "Website");
     testSanitize("* Website!", "* Website!");
     testSanitize("Website | Page!", "Website | Page!");
-    testSanitize("Directory Listing: /a/b/", "Directory Listing: _a_b_");
+    testSanitize("Directory Listing: /a/b/", "Directory Listing _a_b_");
   }
 
   // Conversion of consecutive runs of slashes and backslashes to underscores.
@@ -79,6 +79,12 @@ add_task(async function test_sanitize() {
   // Stripping of BIDI formatting characters.
   testSanitize("\u200e \u202b\u202c\u202d\u202etest\x7f\u200f", "test");
   testSanitize("AB\x7f\u202a\x7f\u202a\x7fCD", "AB CD");
+
+  // Stripping of colons:
+  testSanitize("foo:bar", "foo bar");
+
+  // not compressing whitespaces.
+  testSanitize("foo : bar", "foo   bar", { compressWhitespaces: false });
 });
 
 add_task(async function test_splitBaseNameAndExtension() {

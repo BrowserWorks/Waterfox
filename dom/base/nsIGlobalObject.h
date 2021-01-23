@@ -34,6 +34,11 @@ class nsPIDOMWindowInner;
 namespace mozilla {
 class DOMEventTargetHelper;
 namespace dom {
+class VoidFunction;
+class DebuggerNotificationManager;
+class Report;
+class ReportBody;
+class ReportingObserver;
 class ServiceWorker;
 class ServiceWorkerRegistration;
 class ServiceWorkerRegistrationDescriptor;
@@ -54,8 +59,7 @@ class nsIGlobalObject : public nsISupports,
  protected:
   bool mIsInnerWindow;
 
-  nsIGlobalObject()
-      : mIsDying(false), mIsScriptForbidden(false), mIsInnerWindow(false) {}
+  nsIGlobalObject();
 
  public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_IGLOBALOBJECT_IID)
@@ -120,10 +124,10 @@ class nsIGlobalObject : public nsISupports,
 
   void UnregisterHostObjectURI(const nsACString& aURI);
 
-  // Any CC class inheriting nsIGlobalObject should call these 2 methods if it
-  // exposes the URL API.
-  void UnlinkHostObjectURIs();
-  void TraverseHostObjectURIs(nsCycleCollectionTraversalCallback& aCb);
+  // Any CC class inheriting nsIGlobalObject should call these 2 methods to
+  // cleanup objects stored in nsIGlobalObject such as blobURLs and Reports.
+  void UnlinkObjectsInGlobal();
+  void TraverseObjectsInGlobal(nsCycleCollectionTraversalCallback& aCb);
 
   // DETH objects must register themselves on the global when they
   // bind to it in order to get the DisconnectFromOwner() method
@@ -140,7 +144,23 @@ class nsIGlobalObject : public nsISupports,
 
   virtual bool IsInSyncOperation() { return false; }
 
+  virtual mozilla::dom::DebuggerNotificationManager*
+  GetOrCreateDebuggerNotificationManager() {
+    return nullptr;
+  }
+
+  virtual mozilla::dom::DebuggerNotificationManager*
+  GetExistingDebuggerNotificationManager() {
+    return nullptr;
+  }
+
   virtual mozilla::Maybe<mozilla::dom::ClientInfo> GetClientInfo() const;
+
+  virtual mozilla::Maybe<nsID> GetAgentClusterId() const;
+
+  virtual bool CrossOriginIsolated() const { return false; }
+
+  virtual bool IsSharedMemoryAllowed() const { return false; }
 
   virtual mozilla::Maybe<mozilla::dom::ServiceWorkerDescriptor> GetController()
       const;
@@ -167,6 +187,19 @@ class nsIGlobalObject : public nsISupports,
   // nullptr otherwise.
   nsPIDOMWindowInner* AsInnerWindow();
 
+  void QueueMicrotask(mozilla::dom::VoidFunction& aCallback);
+
+  void RegisterReportingObserver(mozilla::dom::ReportingObserver* aObserver,
+                                 bool aBuffered);
+
+  void UnregisterReportingObserver(mozilla::dom::ReportingObserver* aObserver);
+
+  void BroadcastReport(mozilla::dom::Report* aReport);
+
+  MOZ_CAN_RUN_SCRIPT void NotifyReportingObservers();
+
+  void RemoveReportRecords();
+
  protected:
   virtual ~nsIGlobalObject();
 
@@ -178,6 +211,11 @@ class nsIGlobalObject : public nsISupports,
   void DisconnectEventTargetObjects();
 
   size_t ShallowSizeOfExcludingThis(mozilla::MallocSizeOf aSizeOf) const;
+
+ private:
+  // List of Report objects for ReportingObservers.
+  nsTArray<RefPtr<mozilla::dom::ReportingObserver>> mReportingObservers;
+  nsTArray<RefPtr<mozilla::dom::Report>> mReportRecords;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIGlobalObject, NS_IGLOBALOBJECT_IID)

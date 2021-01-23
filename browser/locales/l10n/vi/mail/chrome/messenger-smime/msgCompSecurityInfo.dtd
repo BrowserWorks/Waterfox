@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Bảo mật thư">
+<!ENTITY subject.plaintextWarning "Vui lòng lưu ý: Dòng tiêu đề thư sẽ không bao giờ được mã hóa.">
+<!ENTITY status.heading "Nội dung thư của bạn sẽ được gửi như sau:">
+<!ENTITY status.signed "Chữ kí điện tử:">
+<!ENTITY status.encrypted "Mã hóa:">
+<!ENTITY status.certificates "Chứng chỉ:">
+<!ENTITY view.label "Hiển thị">
+<!ENTITY view.accesskey "H">
+<!ENTITY tree.recipient "Người nhận">
+<!ENTITY tree.status "Trạng thái">
+<!ENTITY tree.issuedDate "Phát hành">
+<!ENTITY tree.expiresDate "Hết hạn">

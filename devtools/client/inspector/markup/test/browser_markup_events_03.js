@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 /* import-globals-from helper_events_test_runner.js */
@@ -12,13 +11,13 @@ const TEST_URL = URL_ROOT + "doc_markup_events_03.html";
 
 loadHelperScript("helper_events_test_runner.js");
 
-const TEST_DATA = [ // eslint-disable-line
+const TEST_DATA = [
   {
     selector: "#es6-method",
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":66",
+        filename: TEST_URL + ":69:17",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "es6Method(foo, bar) {\n" + '  alert("obj.es6Method");\n' + "}",
@@ -30,7 +29,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":85",
+        filename: TEST_URL + ":88:25",
         attributes: ["Bubbling", "DOM2"],
         handler: "function* generator() {\n" + '  alert("generator");\n' + "}",
       },
@@ -41,7 +40,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":43",
+        filename: TEST_URL + ":46:58",
         attributes: ["Bubbling", "DOM2"],
         handler: "function*() {\n" + '  alert("anonGenerator");\n' + "}",
       },
@@ -52,7 +51,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":20",
+        filename: TEST_URL + ":22:18",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "function foo() {\n" + '  alert("namedFunctionExpression");\n' + "}",
@@ -64,7 +63,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":24",
+        filename: TEST_URL + ":26:45",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "function() {\n" + '  alert("anonFunctionExpression");\n' + "}",
@@ -76,7 +75,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":29",
+        filename: TEST_URL + ":31:27",
         attributes: ["Bubbling", "DOM2"],
         handler: "function bar() {\n" + '  alert("returnedFunction");\n' + "}",
       },

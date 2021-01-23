@@ -8,6 +8,7 @@
 
 #include "mozilla/dom/MessageEvent.h"
 #include "mozilla/dom/MessageEventBinding.h"
+#include "mozilla/AbstractThread.h"
 #include "mozilla/PerformanceUtils.h"
 #include "nsProxyRelease.h"
 #include "nsQueryObject.h"
@@ -84,18 +85,9 @@ class CompileDebuggerScriptRunnable final : public WorkerDebuggerRunnable {
       return false;
     }
 
-    if (NS_WARN_IF(!aWorkerPrivate->EnsureClientSource())) {
-      return false;
-    }
-
     if (NS_WARN_IF(!aWorkerPrivate->EnsureCSPEventListener())) {
       return false;
     }
-
-    // Initialize performance state which might be used on the main thread, as
-    // in CompileScriptRunnable. This runnable might execute first.
-    aWorkerPrivate->EnsurePerformanceStorage();
-    aWorkerPrivate->EnsurePerformanceCounter();
 
     JS::Rooted<JSObject*> global(aCx, globalScope->GetWrapper());
 
@@ -137,7 +129,7 @@ class WorkerDebugger::PostDebuggerMessageRunnable final : public Runnable {
         mMessage(aMessage) {}
 
  private:
-  ~PostDebuggerMessageRunnable() {}
+  ~PostDebuggerMessageRunnable() = default;
 
   NS_IMETHOD
   Run() override {
@@ -164,7 +156,7 @@ class WorkerDebugger::ReportDebuggerErrorRunnable final : public Runnable {
         mMessage(aMessage) {}
 
  private:
-  ~ReportDebuggerErrorRunnable() {}
+  ~ReportDebuggerErrorRunnable() = default;
 
   NS_IMETHOD
   Run() override {
@@ -184,8 +176,8 @@ WorkerDebugger::~WorkerDebugger() {
 
   if (!NS_IsMainThread()) {
     for (size_t index = 0; index < mListeners.Length(); ++index) {
-      NS_ReleaseOnMainThreadSystemGroup("WorkerDebugger::mListeners",
-                                        mListeners[index].forget());
+      NS_ReleaseOnMainThread("WorkerDebugger::mListeners",
+                             mListeners[index].forget());
     }
   }
 }
@@ -277,12 +269,17 @@ WorkerDebugger::GetWindow(mozIDOMWindow** aResult) {
     return NS_ERROR_UNEXPECTED;
   }
 
-  if (mWorkerPrivate->GetParent() || !mWorkerPrivate->IsDedicatedWorker()) {
+  WorkerPrivate* worker = mWorkerPrivate;
+  while (worker->GetParent()) {
+    worker = worker->GetParent();
+  }
+
+  if (!worker->IsDedicatedWorker()) {
     *aResult = nullptr;
     return NS_OK;
   }
 
-  nsCOMPtr<nsPIDOMWindowInner> window = mWorkerPrivate->GetWindow();
+  nsCOMPtr<nsPIDOMWindowInner> window = worker->GetWindow();
   window.forget(aResult);
   return NS_OK;
 }
@@ -398,7 +395,7 @@ void WorkerDebugger::Close() {
   MOZ_ASSERT(mWorkerPrivate);
   mWorkerPrivate = nullptr;
 
-  nsTArray<nsCOMPtr<nsIWorkerDebuggerListener>> listeners(mListeners);
+  nsTArray<nsCOMPtr<nsIWorkerDebuggerListener>> listeners(mListeners.Clone());
   for (size_t index = 0; index < listeners.Length(); ++index) {
     listeners[index]->OnClose();
   }
@@ -419,7 +416,7 @@ void WorkerDebugger::PostMessageToDebuggerOnMainThread(
     const nsAString& aMessage) {
   AssertIsOnMainThread();
 
-  nsTArray<nsCOMPtr<nsIWorkerDebuggerListener>> listeners(mListeners);
+  nsTArray<nsCOMPtr<nsIWorkerDebuggerListener>> listeners(mListeners.Clone());
   for (size_t index = 0; index < listeners.Length(); ++index) {
     listeners[index]->OnMessage(aMessage);
   }
@@ -442,7 +439,7 @@ void WorkerDebugger::ReportErrorToDebuggerOnMainThread(
     const nsAString& aFilename, uint32_t aLineno, const nsAString& aMessage) {
   AssertIsOnMainThread();
 
-  nsTArray<nsCOMPtr<nsIWorkerDebuggerListener>> listeners(mListeners);
+  nsTArray<nsCOMPtr<nsIWorkerDebuggerListener>> listeners(mListeners.Clone());
   for (size_t index = 0; index < listeners.Length(); ++index) {
     listeners[index]->OnError(aFilename, aLineno, aMessage);
   }
@@ -482,7 +479,7 @@ RefPtr<PerformanceInfoPromise> WorkerDebugger::ReportPerformanceInfo() {
   if (win) {
     nsPIDOMWindowOuter* outer = win->GetOuterWindow();
     if (outer) {
-      top = outer->GetTop();
+      top = outer->GetInProcessTop();
       if (top) {
         windowID = top->WindowID();
         isTopLevel = outer->IsTopLevelWindow();
@@ -529,14 +526,13 @@ RefPtr<PerformanceInfoPromise> WorkerDebugger::ReportPerformanceInfo() {
   // We need to keep a ref on workerPrivate, passed to the promise,
   // to make sure it's still aloive when collecting the info.
   RefPtr<WorkerPrivate> workerRef = mWorkerPrivate;
-  RefPtr<AbstractThread> mainThread =
-      SystemGroup::AbstractMainThreadFor(TaskCategory::Performance);
+  RefPtr<AbstractThread> mainThread = AbstractThread::MainThread();
 
   return CollectMemoryInfo(top, mainThread)
       ->Then(
           mainThread, __func__,
           [workerRef, url, pid, perfId, windowID, duration, isTopLevel,
-           items](const PerformanceMemoryInfo& aMemoryInfo) {
+           items = std::move(items)](const PerformanceMemoryInfo& aMemoryInfo) {
             return PerformanceInfoPromise::CreateAndResolve(
                 PerformanceInfo(url, pid, windowID, duration, perfId, true,
                                 isTopLevel, aMemoryInfo, items),

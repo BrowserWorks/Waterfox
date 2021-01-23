@@ -9,7 +9,6 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
-#include "mozilla/dom/DOMPrefs.h"
 #include "nsCOMPtr.h"
 #include "nsDOMNavigationTiming.h"
 
@@ -109,6 +108,10 @@ class Performance : public DOMEventTargetHelper {
   void InsertResourceEntry(PerformanceEntry* aEntry);
 
   virtual void QueueNavigationTimingEntry() = 0;
+
+  virtual bool CrossOriginIsolated() const = 0;
+
+  void QueueNotificationObserversTask();
 
  protected:
   explicit Performance(bool aSystemPrincipal);

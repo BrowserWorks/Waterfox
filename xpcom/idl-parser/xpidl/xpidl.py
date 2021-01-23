@@ -7,11 +7,21 @@
 
 """A parser for cross-platform IDL (XPIDL) files."""
 
+# Note that this file is used by the searchfox indexer in ways that are
+# not tested in Firefox's CI. Please try to keep this file py2-compatible
+# if the burden for that is low. If you are making changes you know to be
+# incompatible with py2, please give a searchfox maintainer a heads-up so
+# that any necessary changes can be made on the searchfox side.
+
+from __future__ import absolute_import
+from __future__ import print_function
+
 import sys
 import os.path
 import re
 from ply import lex
 from ply import yacc
+import six
 from collections import namedtuple
 
 """A type conforms to the following pattern:
@@ -47,7 +57,7 @@ def attlistToIDL(attlist):
         return ''
 
     attlist = list(attlist)
-    attlist.sort(cmp=lambda a, b: cmp(a[0], b[0]))
+    attlist.sort(key=lambda a: a[0])
 
     return '[%s] ' % ','.join(["%s%s" % (name, value is not None and '(%s)' % value or '')
                                for name, value, aloc in attlist])
@@ -130,8 +140,9 @@ class Builtin(object):
             raise IDLError("Use string class types for string Array elements", self.location)
 
         if const:
-            print >>sys.stderr, IDLError(
-                "[const] doesn't make sense on builtin types.", self.location, warning=True)
+            print(IDLError(
+                "[const] doesn't make sense on builtin types.",
+                self.location, warning=True), file=sys.stderr)
             const = 'const '
         elif calltype == 'in' and self.isPointer():
             const = 'const '
@@ -158,19 +169,19 @@ class Builtin(object):
 builtinNames = [
     Builtin('boolean', 'bool', 'bool'),
     Builtin('void', 'void', 'libc::c_void'),
-    Builtin('octet', 'uint8_t', 'libc::uint8_t', False, True),
-    Builtin('short', 'int16_t', 'libc::int16_t', True, True),
-    Builtin('long', 'int32_t', 'libc::int32_t', True, True),
-    Builtin('long long', 'int64_t', 'libc::int64_t', True, False),
-    Builtin('unsigned short', 'uint16_t', 'libc::uint16_t', False, True),
-    Builtin('unsigned long', 'uint32_t', 'libc::uint32_t', False, True),
-    Builtin('unsigned long long', 'uint64_t', 'libc::uint64_t', False, False),
+    Builtin('octet', 'uint8_t', 'u8', False, True),
+    Builtin('short', 'int16_t', 'i16', True, True),
+    Builtin('long', 'int32_t', 'i32', True, True),
+    Builtin('long long', 'int64_t', 'i64', True, False),
+    Builtin('unsigned short', 'uint16_t', 'u16', False, True),
+    Builtin('unsigned long', 'uint32_t', 'u32', False, True),
+    Builtin('unsigned long long', 'uint64_t', 'u64', False, False),
     Builtin('float', 'float', 'libc::c_float', True, False),
     Builtin('double', 'double', 'libc::c_double', True, False),
     Builtin('char', 'char', 'libc::c_char', True, False),
     Builtin('string', 'char *', '*const libc::c_char', False, False),
-    Builtin('wchar', 'char16_t', 'libc::int16_t', False, False),
-    Builtin('wstring', 'char16_t *', '*const libc::int16_t', False, False),
+    Builtin('wchar', 'char16_t', 'i16', False, False),
+    Builtin('wstring', 'char16_t *', '*const i16', False, False),
 ]
 
 builtinMap = {}
@@ -202,7 +213,7 @@ class Location(object):
 
     def pointerline(self):
         def i():
-            for i in xrange(0, self._colno):
+            for i in range(0, self._colno):
                 yield " "
             yield "^"
 
@@ -231,7 +242,7 @@ class NameMap(object):
         return self._d[key]
 
     def __iter__(self):
-        return self._d.itervalues()
+        return six.itervalues(self._d)
 
     def __contains__(self, key):
         return key in builtinMap or key in self._d
@@ -307,7 +318,8 @@ class Include(object):
             if not os.path.exists(file):
                 continue
 
-            self.IDL = parent.parser.parse(open(file).read(), filename=file)
+            self.IDL = parent.parser.parse(open(file, encoding='utf-8').read(),
+                                           filename=file)
             self.IDL.resolve(parent.incdirs, parent.parser, parent.webidlconfig)
             for type in self.IDL.getNames():
                 parent.setName(type)
@@ -437,10 +449,10 @@ class Forward(object):
         # Hack alert: if an identifier is already present, move the doccomments
         # forward.
         if parent.hasName(self.name):
-            for i in xrange(0, len(parent.productions)):
+            for i in range(0, len(parent.productions)):
                 if parent.productions[i] is self:
                     break
-            for i in xrange(i + 1, len(parent.productions)):
+            for i in range(i + 1, len(parent.productions)):
                 if hasattr(parent.productions[i], 'doccomments'):
                     parent.productions[i].doccomments[0:0] = self.doccomments
                     break
@@ -631,12 +643,13 @@ class WebIDL(object):
 
         parent.setName(self)
 
-    def nativeType(self, calltype):
+    def nativeType(self, calltype, const=False):
         if calltype == 'element':
-            return 'RefPtr<%s>' % self.native
-        return "%s *%s" % (self.native, '*' if 'out' in calltype else '')
+            return 'RefPtr<%s%s>' % ('const ' if const else '', self.native)
+        return "%s%s *%s" % ('const ' if const else '', self.native,
+                             '*' if 'out' in calltype else '')
 
-    def rustType(self, calltype):
+    def rustType(self, calltype, const=False):
         # Just expose the type as a void* - we can't do any better.
         return "%s*const libc::c_void" % ('*mut ' if 'out' in calltype else '')
 
@@ -679,7 +692,7 @@ class Interface(object):
         if self.attributes.function:
             has_method = False
             for member in self.members:
-                if member.kind is 'method':
+                if member.kind == 'method':
                     if has_method:
                         raise IDLError(
                             "interface '%s' has multiple methods, but marked 'function'" %
@@ -704,6 +717,9 @@ class Interface(object):
                 raise IDLError("interface '%s' is not builtinclass but derives from "
                                "builtinclass '%s'" %
                                (self.name, self.base), self.location)
+        elif self.name != 'nsISupports':
+            raise IDLError("Interface '%s' must inherit from nsISupports" %
+                           self.name, self.location)
 
         for member in self.members:
             member.resolve(self)
@@ -943,7 +959,7 @@ class CEnum(object):
         return "%s::%s " % (self.iface.name, self.basename)
 
     def rustType(self, calltype):
-        raise RustNoncompat('cenums unimplemented')
+        return "%s u%d" % ('*mut' if 'out' in calltype else '', self.width)
 
     def __str__(self):
         body = ', '.join('%s = %s' % v for v in self.variants)
@@ -980,9 +996,12 @@ class Attribute(object):
     must_use = False
     binaryname = None
     infallible = False
-    # explicit_can_run_script is true if the attribute is explicitly annotated
-    # as being able to cause script to run.
-    explicit_can_run_script = False
+    # explicit_setter_can_run_script is true if the attribute is explicitly
+    # annotated as having a setter that can cause script to run.
+    explicit_setter_can_run_script = False
+    # explicit_getter_can_run_script is true if the attribute is explicitly
+    # annotated as having a getter that can cause script to run.
+    explicit_getter_can_run_script = False
 
     def __init__(self, type, name, attlist, readonly, location, doccomments):
         self.type = type
@@ -1019,7 +1038,23 @@ class Attribute(object):
             elif name == 'infallible':
                 self.infallible = True
             elif name == 'can_run_script':
-                self.explicit_can_run_script = True
+                if (self.explicit_setter_can_run_script or
+                    self.explicit_getter_can_run_script):
+                    raise IDLError("Redundant getter_can_run_script or "
+                                   "setter_can_run_script annotation on "
+                                   "attribute", aloc)
+                self.explicit_setter_can_run_script = True
+                self.explicit_getter_can_run_script = True
+            elif name == 'setter_can_run_script':
+                if self.explicit_setter_can_run_script:
+                    raise IDLError("Redundant setter_can_run_script annotation "
+                                   "on attribute", aloc)
+                self.explicit_setter_can_run_script = True
+            elif name == 'getter_can_run_script':
+                if self.explicit_getter_can_run_script:
+                    raise IDLError("Redundant getter_can_run_script annotation "
+                                   "on attribute", aloc)
+                self.explicit_getter_can_run_script = True
             else:
                 raise IDLError("Unexpected attribute '%s'" % name, aloc)
 
@@ -1243,7 +1278,7 @@ class Param(object):
             return self.realtype.nativeType(self.paramtype, **kwargs)
         except IDLError as e:
             raise IDLError(e.message, self.location)
-        except TypeError as e:
+        except TypeError:
             raise IDLError("Unexpected parameter attribute", self.location)
 
     def rustType(self):
@@ -1257,7 +1292,7 @@ class Param(object):
             return self.realtype.rustType(self.paramtype, **kwargs)
         except IDLError as e:
             raise IDLError(e.message, self.location)
-        except TypeError as e:
+        except TypeError:
             raise IDLError("Unexpected parameter attribute", self.location)
 
     def toIDL(self):
@@ -1796,17 +1831,10 @@ class IDLParser(object):
             location = Location(self.lexer, t.lineno, t.lexpos)
             raise IDLError("invalid syntax", location)
 
-    def __init__(self, outputdir=''):
+    def __init__(self):
         self._doccomments = []
-        self.lexer = lex.lex(object=self,
-                             outputdir=outputdir,
-                             lextab='xpidllex',
-                             optimize=1)
-        self.parser = yacc.yacc(module=self,
-                                outputdir=outputdir,
-                                debug=0,
-                                tabmodule='xpidlyacc',
-                                optimize=1)
+        self.lexer = lex.lex(object=self, debug=False)
+        self.parser = yacc.yacc(module=self, write_tables=False, debug=False)
 
     def clearComments(self):
         self._doccomments = []
@@ -1836,4 +1864,4 @@ if __name__ == '__main__':
     p = IDLParser()
     for f in sys.argv[1:]:
         print("Parsing %s" % f)
-        p.parse(open(f).read(), filename=f)
+        p.parse(open(f, encoding='utf-8').read(), filename=f)

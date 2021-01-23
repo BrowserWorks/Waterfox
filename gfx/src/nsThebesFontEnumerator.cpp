@@ -4,9 +4,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsThebesFontEnumerator.h"
-#include <stdint.h>               // for uint32_t
-#include "gfxPlatform.h"          // for gfxPlatform
-#include "mozilla/Assertions.h"   // for MOZ_ASSERT_HELPER2
+#include <stdint.h>              // for uint32_t
+#include "gfxPlatform.h"         // for gfxPlatform
+#include "mozilla/Assertions.h"  // for MOZ_ASSERT_HELPER2
+#include "mozilla/UniquePtr.h"
 #include "mozilla/dom/Promise.h"  // for mozilla::dom::Promise
 #include "nsCOMPtr.h"             // for nsCOMPtr
 #include "nsDebug.h"              // for NS_ENSURE_ARG_POINTER
@@ -18,25 +19,23 @@
 #include "nsTArray.h"  // for nsTArray, nsTArray_Impl, etc
 #include "nscore.h"    // for char16_t, NS_IMETHODIMP
 
+using mozilla::MakeUnique;
+using mozilla::Runnable;
+using mozilla::UniquePtr;
+
 NS_IMPL_ISUPPORTS(nsThebesFontEnumerator, nsIFontEnumerator)
 
-nsThebesFontEnumerator::nsThebesFontEnumerator() {}
+nsThebesFontEnumerator::nsThebesFontEnumerator() = default;
 
 NS_IMETHODIMP
-nsThebesFontEnumerator::EnumerateAllFonts(uint32_t* aCount,
-                                          char16_t*** aResult) {
-  return EnumerateFonts(nullptr, nullptr, aCount, aResult);
+nsThebesFontEnumerator::EnumerateAllFonts(nsTArray<nsString>& aResult) {
+  return EnumerateFonts(nullptr, nullptr, aResult);
 }
 
 NS_IMETHODIMP
 nsThebesFontEnumerator::EnumerateFonts(const char* aLangGroup,
-                                       const char* aGeneric, uint32_t* aCount,
-                                       char16_t*** aResult) {
-  NS_ENSURE_ARG_POINTER(aCount);
-  NS_ENSURE_ARG_POINTER(aResult);
-
-  nsTArray<nsString> fontList;
-
+                                       const char* aGeneric,
+                                       nsTArray<nsString>& aResult) {
   nsAutoCString generic;
   if (aGeneric)
     generic.Assign(aGeneric);
@@ -51,26 +50,8 @@ nsThebesFontEnumerator::EnumerateFonts(const char* aLangGroup,
     langGroupAtom = NS_Atomize(lowered);
   }
 
-  nsresult rv =
-      gfxPlatform::GetPlatform()->GetFontList(langGroupAtom, generic, fontList);
-
-  if (NS_FAILED(rv)) {
-    *aCount = 0;
-    *aResult = nullptr;
-    /* XXX in this case, do we want to return the CSS generics? */
-    return NS_OK;
-  }
-
-  char16_t** fs = static_cast<char16_t**>(
-      moz_xmalloc(fontList.Length() * sizeof(char16_t*)));
-  for (uint32_t i = 0; i < fontList.Length(); i++) {
-    fs[i] = ToNewUnicode(fontList[i]);
-  }
-
-  *aResult = fs;
-  *aCount = fontList.Length();
-
-  return NS_OK;
+  return gfxPlatform::GetPlatform()->GetFontList(langGroupAtom, generic,
+                                                 aResult);
 }
 
 struct EnumerateFontsPromise final {
@@ -91,7 +72,7 @@ class EnumerateFontsResult final : public Runnable {
       : Runnable("EnumerateFontsResult"),
         mRv(aRv),
         mEnumerateFontsPromise(std::move(aEnumerateFontsPromise)),
-        mFontList(aFontList),
+        mFontList(std::move(aFontList)),
         mWorkerThread(do_GetCurrentThread()) {
     MOZ_ASSERT(!NS_IsMainThread());
   }
@@ -167,8 +148,9 @@ nsThebesFontEnumerator::EnumerateFontsAsync(const char* aLangGroup,
   nsCOMPtr<nsIGlobalObject> global = xpc::CurrentNativeGlobal(aCx);
   NS_ENSURE_TRUE(global, NS_ERROR_UNEXPECTED);
 
-  ErrorResult errv;
-  RefPtr<mozilla::dom::Promise> promise = dom::Promise::Create(global, errv);
+  mozilla::ErrorResult errv;
+  RefPtr<mozilla::dom::Promise> promise =
+      mozilla::dom::Promise::Create(global, errv);
   if (errv.Failed()) {
     return errv.StealNSResult();
   }

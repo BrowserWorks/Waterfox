@@ -188,9 +188,7 @@ typedef enum {
     SDP_TRANSPORT_RTPAVPF,
     SDP_TRANSPORT_UDPTLSRTPSAVP,
     SDP_TRANSPORT_UDPTLSRTPSAVPF,
-    SDP_TRANSPORT_TCPTLSRTPSAVP,
     SDP_TRANSPORT_TCPDTLSRTPSAVP,
-    SDP_TRANSPORT_TCPTLSRTPSAVPF,
     SDP_TRANSPORT_TCPDTLSRTPSAVPF,
     SDP_TRANSPORT_UDPDTLSSCTP,
     SDP_TRANSPORT_TCPDTLSSCTP,
@@ -421,6 +419,8 @@ typedef enum {
     SDP_CBR,
     SDP_MAX_FR,
     SDP_MAX_PLAYBACK_RATE,
+    SDP_APT,
+    SDP_RTX_TIME,
     SDP_MAX_FMTP_PARAM,
     SDP_FMTP_PARAM_UNKNOWN
 } sdp_fmtp_codec_param_e;
@@ -474,6 +474,16 @@ typedef enum {
     SDP_MAX_GROUP_ATTR_VAL,
     SDP_GROUP_ATTR_UNSUPPORTED
 } sdp_group_attr_e;
+
+typedef enum {
+    SDP_SSRC_GROUP_ATTR_DUP,
+    SDP_SSRC_GROUP_ATTR_FEC,
+    SDP_SSRC_GROUP_ATTR_FECFR,
+    SDP_SSRC_GROUP_ATTR_FID,
+    SDP_SSRC_GROUP_ATTR_SIM,
+    SDP_MAX_SSRC_GROUP_ATTR_VAL,
+    SDP_SSRC_GROUP_ATTR_UNSUPPORTED
+} sdp_ssrc_group_attr_e;
 
 typedef enum {
     SDP_SRC_FILTER_INCL,
@@ -580,6 +590,8 @@ typedef enum sdp_srtp_crypto_suite_t_ {
 #define SDP_MAX_TTL_VALUE  255
 #define SDP_MIN_MCAST_ADDR_HI_BIT_VAL 224
 #define SDP_MAX_MCAST_ADDR_HI_BIT_VAL 239
+
+#define SDP_MAX_SSRC_GROUP_SSRCS 32 /* max number of ssrcs allowed in a ssrc-group */
 
 /* SDP Enum Types */
 
@@ -738,6 +750,11 @@ typedef struct sdp_fmtp {
     uint16_t                       annex_p_val_warp; /* 3 = half; 4=sixteenth */
 
     uint8_t                        flag;
+
+    /* RTX parameters */
+    uint8_t apt;
+    tinybool has_rtx_time;
+    uint32_t rtx_time;
 
   /* END - All Video related FMTP parameters */
 
@@ -959,6 +976,12 @@ typedef struct sdp_ssrc {
     char     attribute[SDP_MAX_STRING_LEN + 1];
 } sdp_ssrc_t;
 
+typedef struct sdp_ssrc_group {
+    sdp_ssrc_group_attr_e semantic;
+    uint16_t num_ssrcs;
+    uint32_t ssrcs[SDP_MAX_SSRC_GROUP_SSRCS];
+} sdp_ssrc_group_t;
+
 /*
  * sdp_srtp_crypto_context_t
  *  This type is used to hold cryptographic context information.
@@ -1055,6 +1078,7 @@ typedef struct sdp_attr {
         sdp_connection_type_e connection;
         sdp_extmap_t          extmap;
         sdp_ssrc_t            ssrc;
+        sdp_ssrc_group_t      ssrc_group;
     } attr;
     struct sdp_attr          *next_p;
 } sdp_attr_t;
@@ -1770,6 +1794,10 @@ tinybool
 sdp_attr_get_rtcp_fb_remb_enabled(sdp_t *sdp_p, uint16_t level,
                                   uint16_t payload_type);
 
+tinybool
+sdp_attr_get_rtcp_fb_transport_cc_enabled(sdp_t *sdp_p, uint16_t level,
+                                          uint16_t payload_type);
+
 sdp_rtcp_fb_ccm_type_e
 sdp_attr_get_rtcp_fb_ccm(sdp_t *sdp_p, uint16_t level, uint16_t payload_type, uint16_t inst);
 
@@ -1788,6 +1816,9 @@ sdp_attr_set_rtcp_fb_trr_int(sdp_t *sdp_p, uint16_t level, uint16_t payload_type
 sdp_result_e
 sdp_attr_set_rtcp_fb_remb(sdp_t *sdp_p, uint16_t level, uint16_t payload_type,
                           uint16_t inst);
+sdp_result_e
+sdp_attr_set_rtcp_fb_transport_cc(sdp_t *sdp_p, uint16_t level, uint16_t payload_type,
+                                  uint16_t inst);
 
 sdp_result_e
 sdp_attr_set_rtcp_fb_ccm(sdp_t *sdp_p, uint16_t level, uint16_t payload_type, uint16_t inst,

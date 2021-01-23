@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Konfirmoj pri legi">
+<!ENTITY useGlobalPrefs.label         "Uzi miajn ĝeneralajn agordojn de leg‑konfirmoj por tiu ĉi konto">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "Ĝeneralaj agordoj…">
+<!ENTITY globalReceipts.accesskey     "a">
+<!ENTITY useCustomPrefs.label         "Propraj agordoj de leg‑konfirmoj por tiu ĉi konto">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "Kiam sendi mesaĝojn, ĉiam peti pri leg‑konfirmo">
+<!ENTITY requestReceipt.accesskey     "s">
+<!ENTITY receiptArrive.label          "Ricevitajn leg‑konfirmojn:">
+<!ENTITY leaveIt.label                "restigi en “ricevujo”">
+<!ENTITY leaveIt.accesskey            "r">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "movi al “senditujo”">
+<!ENTITY moveToSent.accesskey         "m">
+<!ENTITY requestMDN.label             "Post ricevi leg‑konfirmon:">
+<!ENTITY returnSome.label             "sendi leg‑konfirmon nur kiam:">
+<!ENTITY returnSome.accesskey         "n">
+<!ENTITY never.label                  "neniam sendi leg‑konfirmon">
+<!ENTITY never.accesskey              "n">
+<!ENTITY notInToCc.label              "en la kampoj “al” aŭ “kopio” ne estas mia adreso:">
+<!ENTITY notInToCc.accesskey          "k">
+<!ENTITY outsideDomain.label          "la sendinto estas ekster mia nomregno:">
+<!ENTITY outsideDomain.accesskey      "e">
+<!ENTITY otherCases.label             "en ĉiuj aliaj okazoj:">
+<!ENTITY otherCases.accesskey         "l">
+<!ENTITY askMe.label                  "demandi">
+<!ENTITY alwaysSend.label             "ĉiam sendi">
+<!ENTITY neverSend.label              "neniam sendi">

@@ -11,28 +11,37 @@ const {
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
+const { COLOR_SCHEMES } = require("devtools/client/inspector/rules/constants");
 
-const SearchBox = createFactory(require("./SearchBox"));
+const SearchBox = createFactory(
+  require("devtools/client/inspector/rules/components/SearchBox")
+);
 
 loader.lazyGetter(this, "ClassListPanel", function() {
-  return createFactory(require("./ClassListPanel"));
+  return createFactory(
+    require("devtools/client/inspector/rules/components/ClassListPanel")
+  );
 });
 loader.lazyGetter(this, "PseudoClassPanel", function() {
-  return createFactory(require("./PseudoClassPanel"));
+  return createFactory(
+    require("devtools/client/inspector/rules/components/PseudoClassPanel")
+  );
 });
 
-const { getStr } = require("../utils/l10n");
+const { getStr } = require("devtools/client/inspector/rules/utils/l10n");
 
 class Toolbar extends PureComponent {
   static get propTypes() {
     return {
       isAddRuleEnabled: PropTypes.bool.isRequired,
       isClassPanelExpanded: PropTypes.bool.isRequired,
+      isColorSchemeSimulationHidden: PropTypes.bool.isRequired,
       isPrintSimulationHidden: PropTypes.bool.isRequired,
       onAddClass: PropTypes.func.isRequired,
       onAddRule: PropTypes.func.isRequired,
       onSetClassState: PropTypes.func.isRequired,
       onToggleClassPanelExpanded: PropTypes.func.isRequired,
+      onToggleColorSchemeSimulation: PropTypes.func.isRequired,
       onTogglePrintSimulation: PropTypes.func.isRequired,
       onTogglePseudoClass: PropTypes.func.isRequired,
     };
@@ -42,6 +51,8 @@ class Toolbar extends PureComponent {
     super(props);
 
     this.state = {
+      // Which of the color schemes is simulated, if any.
+      currentColorScheme: 0,
       // Whether or not the print simulation button is enabled.
       isPrintSimulationEnabled: false,
       // Whether or not the pseudo class panel is expanded.
@@ -50,6 +61,9 @@ class Toolbar extends PureComponent {
 
     this.onAddRuleClick = this.onAddRuleClick.bind(this);
     this.onClassPanelToggle = this.onClassPanelToggle.bind(this);
+    this.onColorSchemeSimulationClick = this.onColorSchemeSimulationClick.bind(
+      this
+    );
     this.onPrintSimulationToggle = this.onPrintSimulationToggle.bind(this);
     this.onPseudoClassPanelToggle = this.onPseudoClassPanelToggle.bind(this);
   }
@@ -71,6 +85,16 @@ class Toolbar extends PureComponent {
           : prevState.isPseudoClassPanelExpanded,
       };
     });
+  }
+
+  onColorSchemeSimulationClick(event) {
+    event.stopPropagation();
+
+    this.props.onToggleColorSchemeSimulation();
+    this.setState(prevState => ({
+      currentColorScheme:
+        (prevState.currentColorScheme + 1) % COLOR_SCHEMES.length,
+    }));
   }
 
   onPrintSimulationToggle(event) {
@@ -97,6 +121,7 @@ class Toolbar extends PureComponent {
     const {
       isAddRuleEnabled,
       isClassPanelExpanded,
+      isColorSchemeSimulationHidden,
       isPrintSimulationHidden,
     } = this.props;
     const { isPrintSimulationEnabled, isPseudoClassPanelExpanded } = this.state;
@@ -136,6 +161,15 @@ class Toolbar extends PureComponent {
             onClick: this.onAddRuleClick,
             title: getStr("rule.addRule.tooltip"),
           }),
+          isColorSchemeSimulationHidden
+            ? dom.button({
+                id: "color-scheme-simulation-toggle",
+                className: "devtools-button",
+                onClick: this.onColorSchemeSimulationClick,
+                state: COLOR_SCHEMES[this.state.currentColorScheme],
+                title: getStr("rule.colorSchemeSimulation.tooltip"),
+              })
+            : null,
           !isPrintSimulationHidden
             ? dom.button({
                 id: "print-simulation-toggle",
@@ -167,6 +201,7 @@ const mapStateToProps = state => {
   return {
     isAddRuleEnabled: state.rules.isAddRuleEnabled,
     isClassPanelExpanded: state.classList.isClassPanelExpanded,
+    isColorSchemeSimulationHidden: state.rules.isColorSchemeSimulationHidden,
     isPrintSimulationHidden: state.rules.isPrintSimulationHidden,
   };
 };

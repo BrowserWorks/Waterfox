@@ -4,11 +4,9 @@ $ds-width: 936px;
   $columns: 12;
   --gridColumnGap: 48px;
   --gridRowGap: 24px;
-  display: grid;
   grid-template-columns: repeat($columns, 1fr);
   grid-column-gap: var(--gridColumnGap);
   grid-row-gap: var(--gridRowGap);
-  width: $ds-width;
   margin: 0 auto;
 
   @while $columns > 0 {
@@ -23,11 +21,21 @@ $ds-width: 936px;
   .ds-column-grid {
     display: grid;
     grid-row-gap: var(--gridRowGap);
+
+    // We want to completely hide components with no content,
+    // otherwise, it creates grid-row-gap gaps around nothing.
+    > div:empty {
+      display: none;
+    }
   }
 }
 
 .ds-header {
   margin: 8px 0;
+
+  .ds-context {
+    font-weight: 400;
+  }
 }
 
 .ds-header,
@@ -48,12 +56,9 @@ $ds-width: 936px;
 
 .collapsible-section.ds-layout {
   margin: auto;
-  width: $ds-width + 2 * $section-horizontal-padding;
 
   .section-top-bar {
-    margin-bottom: 0;
-
-    .learn-more-link a span {
+    .learn-more-link a {
       color: var(--newtab-link-primary-color);
       font-weight: normal;
 

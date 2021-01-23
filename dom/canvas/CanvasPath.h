@@ -16,7 +16,7 @@ namespace mozilla {
 namespace dom {
 
 enum class CanvasWindingRule : uint8_t;
-class SVGMatrix;
+struct DOMMatrix2DInit;
 
 class CanvasPath final : public nsWrapperCache {
  public:
@@ -28,14 +28,11 @@ class CanvasPath final : public nsWrapperCache {
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
 
+  static already_AddRefed<CanvasPath> Constructor(const GlobalObject& aGlobal);
   static already_AddRefed<CanvasPath> Constructor(const GlobalObject& aGlobal,
-                                                  ErrorResult& rv);
+                                                  CanvasPath& aCanvasPath);
   static already_AddRefed<CanvasPath> Constructor(const GlobalObject& aGlobal,
-                                                  CanvasPath& aCanvasPath,
-                                                  ErrorResult& rv);
-  static already_AddRefed<CanvasPath> Constructor(const GlobalObject& aGlobal,
-                                                  const nsAString& aPathString,
-                                                  ErrorResult& rv);
+                                                  const nsAString& aPathString);
 
   void ClosePath();
   void MoveTo(double x, double y);
@@ -65,11 +62,11 @@ class CanvasPath final : public nsWrapperCache {
   CanvasPath(nsISupports* aParent,
              already_AddRefed<gfx::PathBuilder> aPathBuilder);
 
-  void AddPath(CanvasPath& aCanvasPath,
-               const Optional<NonNull<SVGMatrix>>& aMatrix);
+  void AddPath(CanvasPath& aCanvasPath, const DOMMatrix2DInit& aInit,
+               ErrorResult& aError);
 
  private:
-  virtual ~CanvasPath() {}
+  virtual ~CanvasPath() = default;
 
   nsCOMPtr<nsISupports> mParent;
   static gfx::Float ToFloat(double aValue) { return gfx::Float(aValue); }

@@ -1,3 +1,268 @@
+1.3.3 (2020-01-09)
+==================
+This is a small maintenance release that upgrades the dependency on
+`thread_local` from `0.3` to `1.0`. The minimum supported Rust version remains
+at Rust 1.28.
+
+
+1.3.2 (2020-01-09)
+==================
+This is a small maintenance release with some house cleaning and bug fixes.
+
+New features:
+
+* [FEATURE #631](https://github.com/rust-lang/regex/issues/631):
+  Add a `Match::range` method an a `From<Match> for Range` impl.
+
+Bug fixes:
+
+* [BUG #521](https://github.com/rust-lang/regex/issues/521):
+  Corrects `/-/.splitn("a", 2)` to return `["a"]` instead of `["a", ""]`.
+* [BUG #594](https://github.com/rust-lang/regex/pull/594):
+  Improve error reporting when writing `\p\`.
+* [BUG #627](https://github.com/rust-lang/regex/issues/627):
+  Corrects `/-/.split("a-")` to return `["a", ""]` instead of `["a"]`.
+* [BUG #633](https://github.com/rust-lang/regex/pull/633):
+  Squash deprecation warnings for the `std::error::Error::description` method.
+
+
+1.3.1 (2019-09-04)
+==================
+This is a maintenance release with no changes in order to try to work-around
+a [docs.rs/Cargo issue](https://github.com/rust-lang/docs.rs/issues/400).
+
+
+1.3.0 (2019-09-03)
+==================
+This release adds a plethora of new crate features that permit users of regex
+to shrink its size considerably, in exchange for giving up either functionality
+(such as Unicode support) or runtime performance. When all such features are
+disabled, the dependency tree for `regex` shrinks to exactly 1 crate
+(`regex-syntax`). More information about the new crate features can be
+[found in the docs](https://docs.rs/regex/*/#crate-features).
+
+Note that while this is a new minor version release, the minimum supported
+Rust version for this crate remains at `1.28.0`.
+
+New features:
+
+* [FEATURE #474](https://github.com/rust-lang/regex/issues/474):
+  The `use_std` feature has been deprecated in favor of the `std` feature.
+  The `use_std` feature will be removed in regex 2. Until then, `use_std` will
+  remain as an alias for the `std` feature.
+* [FEATURE #583](https://github.com/rust-lang/regex/issues/583):
+  Add a substantial number of crate features shrinking `regex`.
+
+
+1.2.1 (2019-08-03)
+==================
+This release does a bit of house cleaning. Namely:
+
+* This repository is now using rustfmt.
+* License headers have been removed from all files, in following suit with the
+  Rust project.
+* Teddy has been removed from the `regex` crate, and is now part of the
+  `aho-corasick` crate.
+  [See `aho-corasick`'s new `packed` sub-module for details](https://docs.rs/aho-corasick/0.7.6/aho_corasick/packed/index.html).
+* The `utf8-ranges` crate has been deprecated, with its functionality moving
+  into the
+  [`utf8` sub-module of `regex-syntax`](https://docs.rs/regex-syntax/0.6.11/regex_syntax/utf8/index.html).
+* The `ucd-util` dependency has been dropped, in favor of implementing what
+  little we need inside of `regex-syntax` itself.
+
+In general, this is part of an ongoing (long term) effort to make optimizations
+in the regex engine easier to reason about. The current code is too convoluted
+and thus it is very easy to introduce new bugs. This simplification effort is
+the primary motivation behind re-working the `aho-corasick` crate to not only
+bundle algorithms like Teddy, but to also provide regex-like match semantics
+automatically.
+
+Moving forward, the plan is to join up with the `bstr` and `regex-automata`
+crates, with the former providing more sophisticated substring search
+algorithms (thereby deleting existing code in `regex`) and the latter providing
+ahead-of-time compiled DFAs for cases where they are inexpensive to compute.
+
+
+1.2.0 (2019-07-20)
+==================
+This release updates regex's minimum supported Rust version to 1.28, which was
+release almost 1 year ago. This release also updates regex's Unicode data
+tables to 12.1.0.
+
+
+1.1.9 (2019-07-06)
+==================
+This release contains a bug fix that caused regex's tests to fail, due to a
+dependency on an unreleased behavior in regex-syntax.
+
+* [BUG #593](https://github.com/rust-lang/regex/issues/593):
+  Move an integration-style test on error messages into regex-syntax.
+
+
+1.1.8 (2019-07-04)
+==================
+This release contains a few small internal refactorings. One of which fixes
+an instance of undefined behavior in a part of the SIMD code.
+
+Bug fixes:
+
+* [BUG #545](https://github.com/rust-lang/regex/issues/545):
+  Improves error messages when a repetition operator is used without a number.
+* [BUG #588](https://github.com/rust-lang/regex/issues/588):
+  Removes use of a repr(Rust) union used for type punning in the Teddy matcher.
+* [BUG #591](https://github.com/rust-lang/regex/issues/591):
+  Update docs for running benchmarks and improve failure modes.
+
+
+1.1.7 (2019-06-09)
+==================
+This release fixes up a few warnings as a result of recent deprecations.
+
+
+1.1.6 (2019-04-16)
+==================
+This release fixes a regression introduced by a bug fix (for
+[BUG #557](https://github.com/rust-lang/regex/issues/557)) which could cause
+the regex engine to enter an infinite loop. This bug was originally
+[reported against ripgrep](https://github.com/BurntSushi/ripgrep/issues/1247).
+
+
+1.1.5 (2019-04-01)
+==================
+This release fixes a bug in regex's dependency specification where it requires
+a newer version of regex-syntax, but this wasn't communicated correctly in the
+Cargo.toml. This would have been caught by a minimal version check, but this
+check was disabled because the `rand` crate itself advertises incorrect
+dependency specifications.
+
+Bug fixes:
+
+* [BUG #570](https://github.com/rust-lang/regex/pull/570):
+  Fix regex-syntax minimal version.
+
+
+1.1.4 (2019-03-31)
+==================
+This release fixes a backwards compatibility regression where Regex was no
+longer UnwindSafe. This was caused by the upgrade to aho-corasick 0.7, whose
+AhoCorasick type was itself not UnwindSafe. This has been fixed in aho-corasick
+0.7.4, which we now require.
+
+Bug fixes:
+
+* [BUG #568](https://github.com/rust-lang/regex/pull/568):
+  Fix an API regression where Regex was no longer UnwindSafe.
+
+
+1.1.3 (2019-03-30)
+==================
+This releases fixes a few bugs and adds a performance improvement when a regex
+is a simple alternation of literals.
+
+Performance improvements:
+
+* [OPT #566](https://github.com/rust-lang/regex/pull/566):
+  Upgrades `aho-corasick` to 0.7 and uses it for `foo|bar|...|quux` regexes.
+
+Bug fixes:
+
+* [BUG #527](https://github.com/rust-lang/regex/issues/527):
+  Fix a bug where the parser would panic on patterns like `((?x))`.
+* [BUG #555](https://github.com/rust-lang/regex/issues/555):
+  Fix a bug where the parser would panic on patterns like `(?m){1,1}`.
+* [BUG #557](https://github.com/rust-lang/regex/issues/557):
+  Fix a bug where captures could lead to an incorrect match.
+
+
+1.1.2 (2019-02-27)
+==================
+This release fixes a bug found in the fix introduced in 1.1.1.
+
+Bug fixes:
+
+* [BUG edf45e6f](https://github.com/rust-lang/regex/commit/edf45e6f):
+  Fix bug introduced in reverse suffix literal matcher in the 1.1.1 release.
+
+
+1.1.1 (2019-02-27)
+==================
+This is a small release with one fix for a bug caused by literal optimizations.
+
+Bug fixes:
+
+* [BUG 661bf53d](https://github.com/rust-lang/regex/commit/661bf53d):
+  Fixes a bug in the reverse suffix literal optimization. This was originally
+  reported
+  [against ripgrep](https://github.com/BurntSushi/ripgrep/issues/1203).
+
+
+1.1.0 (2018-11-30)
+==================
+This is a small release with a couple small enhancements. This release also
+increases the minimal supported Rust version (MSRV) to 1.24.1 (from 1.20.0). In
+accordance with this crate's MSRV policy, this release bumps the minor version
+number.
+
+Performance improvements:
+
+* [OPT #511](https://github.com/rust-lang/regex/pull/511),
+  [OPT #540](https://github.com/rust-lang/regex/pull/540):
+  Improve lazy DFA construction for large regex sets.
+
+New features:
+
+* [FEATURE #538](https://github.com/rust-lang/regex/pull/538):
+  Add Emoji and "break" Unicode properties. See [UNICODE.md](UNICODE.md).
+
+Bug fixes:
+
+* [BUG #530](https://github.com/rust-lang/regex/pull/530):
+  Add Unicode license (for data tables).
+* Various typo/doc fixups.
+
+
+1.0.6 (2018-11-06)
+==================
+This is a small release.
+
+Performance improvements:
+
+* [OPT #513](https://github.com/rust-lang/regex/pull/513):
+  Improve performance of compiling large Unicode classes by 8-10%.
+
+Bug fixes:
+
+* [BUG #533](https://github.com/rust-lang/regex/issues/533):
+  Fix definition of `[[:blank:]]` class that regressed in `regex-syntax 0.5`.
+
+
+1.0.5 (2018-09-06)
+==================
+This is a small release with an API enhancement.
+
+New features:
+
+* [FEATURE #509](https://github.com/rust-lang/regex/pull/509):
+  Generalize impls of the `Replacer` trait.
+
+
+1.0.4 (2018-08-25)
+==================
+This is a small release that bumps the quickcheck dependency.
+
+
+1.0.3 (2018-08-24)
+==================
+This is a small bug fix release.
+
+Bug fixes:
+
+* [BUG #504](https://github.com/rust-lang/regex/pull/504):
+  Fix for Cargo's "minimal version" support.
+* [BUG 1e39165f](https://github.com/rust-lang/regex/commit/1e39165f):
+  Fix doc examples for byte regexes.
+
+
 1.0.2 (2018-07-18)
 ==================
 This release exposes some new lower level APIs on `Regex` that permit

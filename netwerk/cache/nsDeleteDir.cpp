@@ -9,8 +9,6 @@
 #include "nsString.h"
 #include "mozilla/Telemetry.h"
 #include "nsITimer.h"
-#include "nsISimpleEnumerator.h"
-#include "nsAutoPtr.h"
 #include "nsThreadUtils.h"
 #include "nsISupportsPriority.h"
 #include "nsCacheUtils.h"
@@ -55,7 +53,7 @@ nsresult nsDeleteDir::Shutdown(bool finishDeleting) {
   if (!gInstance) return NS_ERROR_NOT_INITIALIZED;
 
   nsCOMArray<nsIFile> dirsToRemove;
-  nsCOMPtr<nsIThread> thread;
+  nsCOMPtr<nsISerialEventTarget> eventTarget;
   {
     MutexAutoLock lock(gInstance->mLock);
     NS_ASSERTION(!gInstance->mShutdownPending,
@@ -79,12 +77,12 @@ nsresult nsDeleteDir::Shutdown(bool finishDeleting) {
       delete arg;
     }
 
-    thread.swap(gInstance->mThread);
-    if (thread) {
+    eventTarget.swap(gInstance->mBackgroundET);
+    if (eventTarget) {
       // dispatch event and wait for it to run and notify us, so we know thread
       // has completed all work and can be shutdown
       nsCOMPtr<nsIRunnable> event = new nsBlockOnBackgroundThreadEvent();
-      nsresult rv = thread->Dispatch(event, NS_DISPATCH_NORMAL);
+      nsresult rv = eventTarget->Dispatch(event, NS_DISPATCH_EVENT_MAY_BLOCK);
       if (NS_FAILED(rv)) {
         NS_WARNING("Failed dispatching block-event");
         return NS_ERROR_UNEXPECTED;
@@ -94,7 +92,6 @@ nsresult nsDeleteDir::Shutdown(bool finishDeleting) {
       while (!gInstance->mNotified) {
         gInstance->mCondVar.Wait();
       }
-      nsShutdownThread::BlockingShutdown(thread);
     }
   }
 
@@ -107,30 +104,26 @@ nsresult nsDeleteDir::Shutdown(bool finishDeleting) {
 }
 
 nsresult nsDeleteDir::InitThread() {
-  if (mThread) return NS_OK;
+  if (mBackgroundET) return NS_OK;
 
-  nsresult rv = NS_NewNamedThread("Cache Deleter", getter_AddRefs(mThread));
+  nsresult rv = NS_CreateBackgroundTaskQueue("Cache Deleter",
+                                             getter_AddRefs(mBackgroundET));
   if (NS_FAILED(rv)) {
-    NS_WARNING("Can't create background thread");
+    NS_WARNING("Can't create background task queue");
     return rv;
   }
 
-  nsCOMPtr<nsISupportsPriority> p = do_QueryInterface(mThread);
-  if (p) {
-    p->SetPriority(nsISupportsPriority::PRIORITY_LOWEST);
-  }
   return NS_OK;
 }
 
 void nsDeleteDir::DestroyThread() {
-  if (!mThread) return;
+  if (!mBackgroundET) return;
 
   if (mTimers.Count())
     // more work to do, so don't delete thread.
     return;
 
-  nsShutdownThread::Shutdown(mThread);
-  mThread = nullptr;
+  mBackgroundET = nullptr;
 }
 
 void nsDeleteDir::TimerCallback(nsITimer* aTimer, void* arg) {
@@ -147,8 +140,8 @@ void nsDeleteDir::TimerCallback(nsITimer* aTimer, void* arg) {
     gInstance->mTimers.RemoveObjectAt(idx);
   }
 
-  nsAutoPtr<nsCOMArray<nsIFile> > dirList;
-  dirList = static_cast<nsCOMArray<nsIFile>*>(arg);
+  UniquePtr<nsCOMArray<nsIFile>> dirList;
+  dirList.reset(static_cast<nsCOMArray<nsIFile>*>(arg));
 
   bool shuttingDown = false;
 
@@ -227,13 +220,13 @@ nsresult nsDeleteDir::DeleteDir(nsIFile* dirIn, bool moveToTrash,
     trash.swap(dir);
   }
 
-  nsAutoPtr<nsCOMArray<nsIFile> > arg(new nsCOMArray<nsIFile>);
+  UniquePtr<nsCOMArray<nsIFile>> arg(new nsCOMArray<nsIFile>);
   arg->AppendObject(trash);
 
-  rv = gInstance->PostTimer(arg, delay);
+  rv = gInstance->PostTimer(arg.get(), delay);
   if (NS_FAILED(rv)) return rv;
 
-  arg.forget();
+  Unused << arg.release();
   return NS_OK;
 }
 
@@ -291,7 +284,7 @@ nsresult nsDeleteDir::RemoveOldTrashes(nsIFile* cacheDir) {
   rv = parent->GetDirectoryEntries(getter_AddRefs(iter));
   if (NS_FAILED(rv)) return rv;
 
-  nsAutoPtr<nsCOMArray<nsIFile> > dirList;
+  UniquePtr<nsCOMArray<nsIFile>> dirList;
 
   nsCOMPtr<nsIFile> file;
   while (NS_SUCCEEDED(iter->GetNextFile(getter_AddRefs(file))) && file) {
@@ -301,16 +294,16 @@ nsresult nsDeleteDir::RemoveOldTrashes(nsIFile* cacheDir) {
 
     // match all names that begin with the trash name (i.e. "Cache.Trash")
     if (Substring(leafName, 0, trashName.Length()).Equals(trashName)) {
-      if (!dirList) dirList = new nsCOMArray<nsIFile>;
+      if (!dirList) dirList = MakeUnique<nsCOMArray<nsIFile>>();
       dirList->AppendObject(file);
     }
   }
 
   if (dirList) {
-    rv = gInstance->PostTimer(dirList, 90000);
+    rv = gInstance->PostTimer(dirList.get(), 90000);
     if (NS_FAILED(rv)) return rv;
 
-    dirList.forget();
+    Unused << dirList.release();
   }
 
   return NS_OK;
@@ -327,7 +320,7 @@ nsresult nsDeleteDir::PostTimer(void* arg, uint32_t delay) {
   nsCOMPtr<nsITimer> timer;
   rv = NS_NewTimerWithFuncCallback(getter_AddRefs(timer), TimerCallback, arg,
                                    delay, nsITimer::TYPE_ONE_SHOT,
-                                   "nsDeleteDir::PostTimer", mThread);
+                                   "nsDeleteDir::PostTimer", mBackgroundET);
   if (NS_FAILED(rv)) return rv;
 
   mTimers.AppendObject(timer);

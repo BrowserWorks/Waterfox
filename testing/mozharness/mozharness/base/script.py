@@ -9,13 +9,15 @@ script.py, along with config.py and log.py, represents the core of
 mozharness.
 """
 
+from __future__ import print_function
+
 import codecs
-from contextlib import contextmanager
 import datetime
 import errno
 import fnmatch
 import functools
 import gzip
+import hashlib
 import inspect
 import itertools
 import os
@@ -29,12 +31,37 @@ import sys
 import tarfile
 import time
 import traceback
-import urllib2
 import zipfile
-import httplib
-import urlparse
-import hashlib
 import zlib
+from contextlib import contextmanager
+from io import BytesIO
+
+from six import binary_type
+
+from mozprocess import ProcessHandler
+
+import mozinfo
+from mozharness.base.config import BaseConfig
+from mozharness.base.log import (DEBUG, ERROR, FATAL, INFO, WARNING,
+                                 ConsoleLogger, LogMixin, MultiFileLogger,
+                                 OutputParser, SimpleFileLogger)
+
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
+try:
+    import simplejson as json
+except ImportError:
+    import json
+try:
+    from urllib2 import quote, urlopen, Request
+except ImportError:
+    from urllib.request import quote, urlopen, Request
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 if os.name == 'nt':
     import locale
     try:
@@ -45,18 +72,9 @@ if os.name == 'nt':
         PYWIN32 = False
 
 try:
-    import simplejson as json
-    assert json
+    from urllib2 import HTTPError, URLError
 except ImportError:
-    import json
-
-from io import BytesIO
-
-import mozinfo
-from mozprocess import ProcessHandler
-from mozharness.base.config import BaseConfig
-from mozharness.base.log import MultiFileLogger, SimpleFileLogger, ConsoleLogger, \
-    LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL, WARNING
+    from urllib.error import HTTPError, URLError
 
 
 class ContentLengthMismatch(Exception):
@@ -117,7 +135,20 @@ class PlatformMixin(object):
         if sys.platform.startswith("linux"):
             return True
 
-    def _is_redhat(self):
+    def _is_debian(self):
+        """ check if the current operating system is explicitly Debian.
+        This intentionally doesn't count Debian derivatives like Ubuntu.
+
+        Returns:
+            bool: True if the current platform is debian, False otherwise
+        """
+        if not self._is_linux():
+            return False
+        self.info(mozinfo.linux_distro)
+        re_debian_distro = re.compile('debian')
+        return re_debian_distro.match(mozinfo.linux_distro) is not None
+
+    def _is_redhat_based(self):
         """ check if the current operating system is a Redhat derived Linux distribution.
 
         Returns:
@@ -355,27 +386,27 @@ class ScriptMixin(PlatformMixin):
             return parsed.netloc
 
     def _urlopen(self, url, **kwargs):
-        """ open the url `url` using `urllib2`.
+        """ open the url `url` using `urllib2`.`
         This method can be overwritten to extend its complexity
 
         Args:
-            url (str | urllib2.Request): url to open
-            kwargs: Arbitrary keyword arguments passed to the `urllib2.urlopen` function.
+            url (str | urllib.request.Request): url to open
+            kwargs: Arbitrary keyword arguments passed to the `urllib.request.urlopen` function.
 
         Returns:
             file-like: file-like object with additional methods as defined in
-                       `urllib2.urlopen`_.
+                       `urllib.request.urlopen`_.
             None: None may be returned if no handler handles the request.
 
         Raises:
             urllib2.URLError: on errors
 
-        .. _urllib2.urlopen:
+        .. urillib.request.urlopen:
         https://docs.python.org/2/library/urllib2.html#urllib2.urlopen
         """
         # http://bugs.python.org/issue13359 - urllib2 does not automatically quote the URL
-        url_quoted = urllib2.quote(url, safe='%/:=&?~#+!$,;\'@()*[]|')
-        return urllib2.urlopen(url_quoted, **kwargs)
+        url_quoted = quote(url, safe='%/:=&?~#+!$,;\'@()*[]|')
+        return urlopen(url_quoted, **kwargs)
 
     def fetch_url_into_memory(self, url):
         ''' Downloads a file from a url into memory instead of disk.
@@ -407,7 +438,7 @@ class ScriptMixin(PlatformMixin):
                 url = 'file://%s' % os.path.abspath(url)
                 parsed_url = urlparse.urlparse(url)
 
-        request = urllib2.Request(url)
+        request = Request(url)
         # When calling fetch_url_into_memory() you should retry when we raise
         # one of these exceptions:
         # * Bug 1300663 - HTTPError: HTTP Error 404: Not Found
@@ -421,7 +452,7 @@ class ScriptMixin(PlatformMixin):
         # * Bug 1301807 - BadStatusLine: ''
         #
         # Bug 1309912 - Adding timeout in hopes to solve blocking on response.read() (bug 1300413)
-        response = urllib2.urlopen(request, timeout=30)
+        response = urlopen(request, timeout=30)
 
         if parsed_url.scheme in ('http', 'https'):
             content_length = int(response.headers.get('Content-Length'))
@@ -500,7 +531,7 @@ class ScriptMixin(PlatformMixin):
                 block = f.read(1024 ** 2)
                 if not block:
                     if f_length is not None and got_length != f_length:
-                        raise urllib2.URLError(
+                        raise URLError(
                             "Download incomplete; content-length was %d, "
                             "but only received %d" % (f_length, got_length))
                     break
@@ -521,10 +552,10 @@ class ScriptMixin(PlatformMixin):
                         f_in.close()
                 os.remove(file_name + '.gz')
             return file_name
-        except urllib2.HTTPError, e:
+        except HTTPError as e:
             self.warning("Server returned status %s %s for %s" % (str(e.code), str(e), url))
             raise
-        except urllib2.URLError, e:
+        except URLError as e:
             self.warning("URL Error: %s" % url)
 
             # Failures due to missing local files won't benefit from retry.
@@ -533,10 +564,10 @@ class ScriptMixin(PlatformMixin):
                 raise e.args[0]
 
             raise
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.warning("Timed out accessing %s: %s" % (url, str(e)))
             raise
-        except socket.error, e:
+        except socket.error as e:
             self.warning("Socket error when accessing %s: %s" % (url, str(e)))
             raise
 
@@ -562,7 +593,7 @@ class ScriptMixin(PlatformMixin):
         """
         retry_args = dict(
             failure_status=None,
-            retry_exceptions=(urllib2.HTTPError, urllib2.URLError,
+            retry_exceptions=(HTTPError, URLError,
                               httplib.BadStatusLine,
                               socket.timeout, socket.error),
             error_message="Can't download from %s to %s!" % (url, file_name),
@@ -713,8 +744,8 @@ class ScriptMixin(PlatformMixin):
         # 1) Let's fetch the file
         retry_args = dict(
             retry_exceptions=(
-                urllib2.HTTPError,
-                urllib2.URLError,
+                HTTPError,
+                URLError,
                 httplib.BadStatusLine,
                 socket.timeout,
                 socket.error,
@@ -815,11 +846,11 @@ class ScriptMixin(PlatformMixin):
         try:
             shutil.move(src, dest)
         # http://docs.python.org/tutorial/errors.html
-        except IOError, e:
+        except IOError as e:
             self.log("IO error: %s" % str(e),
                      level=error_level, exit_code=exit_code)
             return -1
-        except shutil.Error, e:
+        except shutil.Error as e:
             # ERROR level ends up reporting the failure to treeherder &
             # pollutes the failure summary list.
             self.log("shutil error: %s" % str(e),
@@ -870,7 +901,7 @@ class ScriptMixin(PlatformMixin):
                 outfile.writelines(infile)
                 outfile.close()
                 infile.close()
-            except IOError, e:
+            except IOError as e:
                 self.log("Can't compress %s to %s: %s!" % (src, dest, str(e)),
                          level=error_level)
                 return -1
@@ -878,7 +909,7 @@ class ScriptMixin(PlatformMixin):
             self.log("Copying %s to %s" % (src, dest), level=log_level)
             try:
                 shutil.copyfile(src, dest)
-            except (IOError, shutil.Error), e:
+            except (IOError, shutil.Error) as e:
                 self.log("Can't copy %s to %s: %s!" % (src, dest, str(e)),
                          level=error_level)
                 return -1
@@ -886,7 +917,7 @@ class ScriptMixin(PlatformMixin):
         if copystat:
             try:
                 shutil.copystat(src, dest)
-            except (IOError, shutil.Error), e:
+            except (IOError, shutil.Error) as e:
                 self.log("Can't copy attributes of %s to %s: %s!" % (src, dest, str(e)),
                          level=error_level)
                 return -1
@@ -1019,7 +1050,7 @@ class ScriptMixin(PlatformMixin):
         self.info("Reading from file %s" % file_path)
         try:
             fh = open(file_path, open_mode)
-        except IOError, err:
+        except IOError as err:
             self.log("unable to open %s: %s" % (file_path, err.strerror),
                      level=error_level)
             yield None, err
@@ -1162,7 +1193,7 @@ class ScriptMixin(PlatformMixin):
                 status = action(*args, **kwargs)
                 if good_statuses and status not in good_statuses:
                     retry = True
-            except retry_exceptions, e:
+            except retry_exceptions as e:
                 retry = True
                 error_message = "%s\nCaught exception: %s" % (error_message, str(e))
                 self.log('retry: attempt #%d caught %s exception: %s' %
@@ -1466,7 +1497,7 @@ class ScriptMixin(PlatformMixin):
                      level=level)
             p.kill()
             return -1
-        except OSError, e:
+        except OSError as e:
             level = error_level
             if halt_on_failure:
                 level = FATAL
@@ -1626,7 +1657,8 @@ class ScriptMixin(PlatformMixin):
                     for line in output_lines:
                         if not line or line.isspace():
                             continue
-                        line = line.decode("utf-8")
+                        if isinstance(line, binary_type):
+                            line = line.decode("utf-8")
                         self.log(' %s' % line, level=log_level)
                     output = '\n'.join(output_lines)
         if os.path.exists(tmp_stderr_filename) and os.path.getsize(tmp_stderr_filename):
@@ -1638,7 +1670,8 @@ class ScriptMixin(PlatformMixin):
             for line in errors.rstrip().splitlines():
                 if not line or line.isspace():
                     continue
-                line = line.decode("utf-8")
+                if isinstance(line, binary_type):
+                    line = line.decode("utf-8")
                 self.log(' %s' % line, level=return_level)
         elif p.returncode not in success_codes and not ignore_errors:
             return_level = ERROR
@@ -2213,7 +2246,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
                 except ValueError:
                     """log is closed; print as a default. Ran into this
                     when calling from __del__()"""
-                    print "### Log is closed! (%s)" % item['message']
+                    print("### Log is closed! (%s)" % item['message'])
 
     def add_summary(self, message, level=INFO):
         self.summary_list.append({'message': message, 'level': level})

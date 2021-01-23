@@ -2,7 +2,6 @@
 
 #include "Helpers.h"
 #include "nsCOMPtr.h"
-#include "nsIPipe.h"
 #include "nsStreamUtils.h"
 #include "nsString.h"
 #include "nsStringStream.h"
@@ -45,7 +44,7 @@ class NonSeekableStream final : public nsIInputStream {
   }
 
  private:
-  ~NonSeekableStream() {}
+  ~NonSeekableStream() = default;
 };
 
 NS_IMPL_ISUPPORTS(NonSeekableStream, nsIInputStream)

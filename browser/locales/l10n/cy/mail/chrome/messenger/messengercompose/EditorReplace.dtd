@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Canfod a Newid">
+<!ENTITY findField.label "Canfod testun:">
+<!ENTITY findField.accesskey "C">
+<!ENTITY replaceField.label "Newid gyda:">
+<!ENTITY replaceField.accesskey "N">
+<!ENTITY caseSensitiveCheckbox.label "Cydweddu maint">
+<!ENTITY caseSensitiveCheckbox.accesskey "C">
+<!ENTITY wrapCheckbox.label "Amlapio">
+<!ENTITY wrapCheckbox.accesskey "A">
+<!ENTITY backwardsCheckbox.label "Chwilio nôl">
+<!ENTITY backwardsCheckbox.accesskey "h">
+<!ENTITY findNextButton.label "Canfod nesaf">
+<!ENTITY findNextButton.accesskey "n">
+<!ENTITY replaceButton.label "Newid">
+<!ENTITY replaceButton.accesskey "N">
+<!ENTITY replaceAndFindButton.label "Newid a Chanfod">
+<!ENTITY replaceAndFindButton.accesskey "N">
+<!ENTITY replaceAllButton.label "Newid Popeth">
+<!ENTITY replaceAllButton.accesskey "N">
+<!ENTITY closeButton.label "Cau">
+<!ENTITY closeButton.accesskey "C">

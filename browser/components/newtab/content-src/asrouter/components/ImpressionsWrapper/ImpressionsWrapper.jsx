@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 import React from "react";
 
 export const VISIBLE = "visible";
@@ -12,28 +16,40 @@ export class ImpressionsWrapper extends React.PureComponent {
   // only send the event if the page becomes visible again.
   sendImpressionOrAddListener() {
     if (this.props.document.visibilityState === VISIBLE) {
-      this.props.sendImpression({id: this.props.id});
+      this.props.sendImpression({ id: this.props.id });
     } else {
       // We should only ever send the latest impression stats ping, so remove any
       // older listeners.
       if (this._onVisibilityChange) {
-        this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+        this.props.document.removeEventListener(
+          VISIBILITY_CHANGE_EVENT,
+          this._onVisibilityChange
+        );
       }
 
       // When the page becomes visible, send the impression stats ping if the section isn't collapsed.
       this._onVisibilityChange = () => {
         if (this.props.document.visibilityState === VISIBLE) {
-          this.props.sendImpression({id: this.props.id});
-          this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+          this.props.sendImpression({ id: this.props.id });
+          this.props.document.removeEventListener(
+            VISIBILITY_CHANGE_EVENT,
+            this._onVisibilityChange
+          );
         }
       };
-      this.props.document.addEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+      this.props.document.addEventListener(
+        VISIBILITY_CHANGE_EVENT,
+        this._onVisibilityChange
+      );
     }
   }
 
   componentWillUnmount() {
     if (this._onVisibilityChange) {
-      this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+      this.props.document.removeEventListener(
+        VISIBILITY_CHANGE_EVENT,
+        this._onVisibilityChange
+      );
     }
   }
 

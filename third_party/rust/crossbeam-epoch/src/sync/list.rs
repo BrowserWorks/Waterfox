@@ -6,7 +6,7 @@
 use core::marker::PhantomData;
 use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 
-use {Atomic, Shared, Guard, unprotected};
+use {unprotected, Atomic, Guard, Shared};
 
 /// An entry in a linked list.
 ///
@@ -42,9 +42,8 @@ pub struct Entry {
 ///         &*elem_ptr
 ///     }
 ///
-///     unsafe fn finalize(entry: &Entry) {
-///         let elem = Self::element_of(entry);
-///         drop(Box::from_raw(elem as *const A as *mut A));
+///     unsafe fn finalize(entry: &Entry, guard: &Guard) {
+///         guard.defer_destroy(Shared::from(Self::element_of(entry) as *const _));
 ///     }
 /// }
 /// ```
@@ -78,17 +77,18 @@ pub trait IsElement<T> {
     /// ```
     ///
     /// # Safety
-    /// The caller has to guarantee that the `Entry` it
-    /// is called with was retrieved from an instance of the element type (`T`).
+    ///
+    /// The caller has to guarantee that the `Entry` is called with was retrieved from an instance
+    /// of the element type (`T`).
     unsafe fn element_of(&Entry) -> &T;
 
-    /// Deallocates the whole element given its `Entry`. This is called when the list
-    /// is ready to actually free the element.
+    /// The function that is called when an entry is unlinked from list.
     ///
     /// # Safety
-    /// The caller has to guarantee that the `Entry` it
-    /// is called with was retrieved from an instance of the element type (`T`).
-    unsafe fn finalize(&Entry);
+    ///
+    /// The caller has to guarantee that the `Entry` is called with was retrieved from an instance
+    /// of the element type (`T`).
+    unsafe fn finalize(&Entry, &Guard);
 }
 
 /// A lock-free, intrusive linked list of type `T`.
@@ -131,7 +131,9 @@ pub enum IterError {
 impl Default for Entry {
     /// Returns the empty entry.
     fn default() -> Self {
-        Self { next: Atomic::null() }
+        Self {
+            next: Atomic::null(),
+        }
     }
 }
 
@@ -164,7 +166,7 @@ impl<T, C: IsElement<T>> List<T, C> {
     /// You should guarantee that:
     ///
     /// - `container` is not null
-    /// - `container` is immovable, e.g. inside a `Box`
+    /// - `container` is immovable, e.g. inside an `Owned`
     /// - the same `Entry` is not inserted more than once
     /// - the inserted object will be removed before the list is dropped
     pub unsafe fn insert<'g>(&'g self, container: Shared<'g, T>, guard: &'g Guard) {
@@ -223,7 +225,7 @@ impl<T, C: IsElement<T>> Drop for List<T, C> {
                 // Verify that all elements have been removed from the list.
                 assert_eq!(succ.tag(), 1);
 
-                C::finalize(curr.deref());
+                C::finalize(curr.deref(), guard);
                 curr = succ;
             }
         }
@@ -245,19 +247,16 @@ impl<'g, T: 'g, C: IsElement<T>> Iterator for Iter<'g, T, C> {
                 // node leaves the list in an invalid state.
                 debug_assert!(self.curr.tag() == 0);
 
-                match self.pred.compare_and_set(
-                    self.curr,
-                    succ,
-                    Acquire,
-                    self.guard,
-                ) {
+                match self
+                    .pred
+                    .compare_and_set(self.curr, succ, Acquire, self.guard)
+                {
                     Ok(_) => {
                         // We succeeded in unlinking this element from the list, so we have to
                         // schedule deallocation. Deferred drop is okay, because `list.delete()`
                         // can only be called if `T: 'static`.
                         unsafe {
-                            let p = self.curr;
-                            self.guard.defer(move || C::finalize(p.deref()));
+                            C::finalize(self.curr.deref(), self.guard);
                         }
 
                         // Move over the removed by only advancing `curr`, not `pred`.
@@ -289,10 +288,10 @@ impl<'g, T: 'g, C: IsElement<T>> Iterator for Iter<'g, T, C> {
 
 #[cfg(test)]
 mod tests {
-    use {Collector, Owned};
-    use crossbeam_utils::scoped;
-    use std::sync::Barrier;
     use super::*;
+    use crossbeam_utils::thread;
+    use std::sync::Barrier;
+    use {Collector, Owned};
 
     impl IsElement<Entry> for Entry {
         fn entry_of(entry: &Entry) -> &Entry {
@@ -303,8 +302,8 @@ mod tests {
             entry
         }
 
-        unsafe fn finalize(entry: &Entry) {
-            drop(Box::from_raw(entry as *const Entry as *mut Entry));
+        unsafe fn finalize(entry: &Entry, guard: &Guard) {
+            guard.defer_destroy(Shared::from(Self::element_of(entry) as *const _));
         }
     }
 
@@ -396,29 +395,32 @@ mod tests {
         let l: List<Entry> = List::new();
         let b = Barrier::new(THREADS);
 
-        scoped::scope(|s| for _ in 0..THREADS {
-            s.spawn(|| {
-                b.wait();
+        thread::scope(|s| {
+            for _ in 0..THREADS {
+                s.spawn(|_| {
+                    b.wait();
 
-                let handle = collector.register();
-                let guard: Guard = handle.pin();
-                let mut v = Vec::with_capacity(ITERS);
+                    let handle = collector.register();
+                    let guard: Guard = handle.pin();
+                    let mut v = Vec::with_capacity(ITERS);
 
-                for _ in 0..ITERS {
-                    let e = Owned::new(Entry::default()).into_shared(&guard);
-                    v.push(e);
-                    unsafe {
-                        l.insert(e, &guard);
+                    for _ in 0..ITERS {
+                        let e = Owned::new(Entry::default()).into_shared(&guard);
+                        v.push(e);
+                        unsafe {
+                            l.insert(e, &guard);
+                        }
                     }
-                }
 
-                for e in v {
-                    unsafe {
-                        e.as_ref().unwrap().delete(&guard);
+                    for e in v {
+                        unsafe {
+                            e.as_ref().unwrap().delete(&guard);
+                        }
                     }
-                }
-            });
-        });
+                });
+            }
+        })
+        .unwrap();
 
         let handle = collector.register();
         let guard = handle.pin();
@@ -435,34 +437,37 @@ mod tests {
         let l: List<Entry> = List::new();
         let b = Barrier::new(THREADS);
 
-        scoped::scope(|s| for _ in 0..THREADS {
-            s.spawn(|| {
-                b.wait();
+        thread::scope(|s| {
+            for _ in 0..THREADS {
+                s.spawn(|_| {
+                    b.wait();
 
-                let handle = collector.register();
-                let guard: Guard = handle.pin();
-                let mut v = Vec::with_capacity(ITERS);
+                    let handle = collector.register();
+                    let guard: Guard = handle.pin();
+                    let mut v = Vec::with_capacity(ITERS);
 
-                for _ in 0..ITERS {
-                    let e = Owned::new(Entry::default()).into_shared(&guard);
-                    v.push(e);
-                    unsafe {
-                        l.insert(e, &guard);
+                    for _ in 0..ITERS {
+                        let e = Owned::new(Entry::default()).into_shared(&guard);
+                        v.push(e);
+                        unsafe {
+                            l.insert(e, &guard);
+                        }
                     }
-                }
 
-                let mut iter = l.iter(&guard);
-                for _ in 0..ITERS {
-                    assert!(iter.next().is_some());
-                }
-
-                for e in v {
-                    unsafe {
-                        e.as_ref().unwrap().delete(&guard);
+                    let mut iter = l.iter(&guard);
+                    for _ in 0..ITERS {
+                        assert!(iter.next().is_some());
                     }
-                }
-            });
-        });
+
+                    for e in v {
+                        unsafe {
+                            e.as_ref().unwrap().delete(&guard);
+                        }
+                    }
+                });
+            }
+        })
+        .unwrap();
 
         let handle = collector.register();
         let guard = handle.pin();

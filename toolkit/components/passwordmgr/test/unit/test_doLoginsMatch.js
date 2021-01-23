@@ -2,21 +2,21 @@
  * Test LoginHelper.doLoginsMatch
  */
 
-add_task(function test_formSubmitURL_ignoreSchemes() {
+add_task(function test_formActionOrigin_ignoreSchemes() {
   let httpActionLogin = TestData.formLogin();
   let httpsActionLogin = TestData.formLogin({
-    formSubmitURL: "https://www.example.com",
+    formActionOrigin: "https://www.example.com",
   });
   let jsActionLogin = TestData.formLogin({
-    formSubmitURL: "javascript:",
+    formActionOrigin: "javascript:",
   });
   let emptyActionLogin = TestData.formLogin({
-    formSubmitURL: "",
+    formActionOrigin: "",
   });
 
   Assert.notEqual(
-    httpActionLogin.formSubmitURL,
-    httpsActionLogin.formSubmitURL,
+    httpActionLogin.formActionOrigin,
+    httpsActionLogin.formActionOrigin,
     "Ensure actions differ"
   );
 

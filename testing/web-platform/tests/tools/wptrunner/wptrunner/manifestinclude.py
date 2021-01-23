@@ -6,11 +6,12 @@ be included or excluded.
 """
 import glob
 import os
-import urlparse
+from six import iteritems
+from six.moves.urllib.parse import urlparse, urlsplit
 
-from wptmanifest.node import DataNode
-from wptmanifest.backends import conditional
-from wptmanifest.backends.conditional import ManifestItem
+from .wptmanifest.node import DataNode
+from .wptmanifest.backends import conditional
+from .wptmanifest.backends.conditional import ManifestItem
 
 
 class IncludeManifest(ManifestItem):
@@ -68,7 +69,7 @@ class IncludeManifest(ManifestItem):
 
     def _get_components(self, url):
         rv = []
-        url_parts = urlparse.urlsplit(url)
+        url_parts = urlsplit(url)
         variant = ""
         if url_parts.query:
             variant += "?" + url_parts.query
@@ -94,7 +95,7 @@ class IncludeManifest(ManifestItem):
         if paths:
             urls = []
             for path in paths:
-                for manifest, data in test_manifests.iteritems():
+                for manifest, data in iteritems(test_manifests):
                     found = False
                     rel_path = os.path.relpath(path, data["tests_path"])
                     iterator = manifest.iterpath if os.path.isfile(path) else manifest.iterdir
@@ -103,7 +104,7 @@ class IncludeManifest(ManifestItem):
                             continue
                         url = test.url
                         if query or fragment:
-                            parsed = urlparse.urlparse(url)
+                            parsed = urlparse(url)
                             if ((query and query != parsed.query) or
                                 (fragment and fragment != parsed.fragment)):
                                 continue
@@ -150,5 +151,5 @@ class IncludeManifest(ManifestItem):
 
 
 def get_manifest(manifest_path):
-    with open(manifest_path) as f:
+    with open(manifest_path, "rb") as f:
         return conditional.compile(f, data_cls_getter=lambda x, y: IncludeManifest)

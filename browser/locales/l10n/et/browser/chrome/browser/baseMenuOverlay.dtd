@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName;i teave">
+<!ENTITY aboutProduct2.accesskey  "e">
+
+<!ENTITY preferencesCmdMac.label        "Eelistused...">
+
+<!ENTITY servicesMenuMac.label          "Teenused">
+
+<!ENTITY hideThisAppCmdMac2.label       "Varja &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Varja teised">
+
+<!ENTITY showAllAppsCmdMac.label        "Näita kõiki">
+
+<!ENTITY touchBarCmdMac.label           "Kohanda puuteriba…">

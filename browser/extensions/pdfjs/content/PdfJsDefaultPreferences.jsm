@@ -1,4 +1,4 @@
-/* Copyright 2019 Mozilla Foundation
+/* Copyright 2020 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,12 @@ var PdfJsDefaultPreferences = Object.freeze({
  "cursorToolOnLoad": 0,
  "defaultZoomValue": "",
  "disablePageLabels": false,
+ "enablePermissions": false,
  "enablePrintAutoRotate": false,
  "enableWebGL": false,
- "eventBusDispatchToDOM": false,
  "externalLinkTarget": 0,
  "historyUpdateUrl": false,
+ "ignoreDestinationZoom": false,
  "pdfBugEnabled": false,
  "renderer": "canvas",
  "renderInteractiveForms": false,

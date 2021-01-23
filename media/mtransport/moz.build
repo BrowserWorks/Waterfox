@@ -9,6 +9,14 @@ with Files("**"):
 
 include("/ipc/chromium/chromium-config.mozbuild")
 
+LOCAL_INCLUDES += [
+    '/media/webrtc/trunk/webrtc',
+]
+
+if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES["WEBRTC_WIN"] = True    
+
+
 DIRS += [
     '/media/mtransport/third_party',
     '/media/mtransport/build',
@@ -22,3 +30,4 @@ if CONFIG['FUZZING_INTERFACES']:
     TEST_DIRS += [
         'fuzztest'
     ]
+

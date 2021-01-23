@@ -37,7 +37,8 @@ impl ::selectors::parser::PseudoElement for PseudoElement {
             PseudoElement::Before |
                 PseudoElement::After |
                 PseudoElement::Marker |
-                PseudoElement::Placeholder
+                PseudoElement::Placeholder |
+                PseudoElement::FileChooserButton
         )
     }
 
@@ -92,6 +93,12 @@ impl PseudoElement {
         EAGER_PSEUDOS[i].clone()
     }
 
+    /// Whether the current pseudo element is animatable.
+    #[inline]
+    pub fn is_animatable(&self) -> bool {
+        matches!(*self, Self::Before | Self::After | Self::Marker)
+    }
+
     /// Whether the current pseudo element is ::before or ::after.
     #[inline]
     pub fn is_before_or_after(&self) -> bool {
@@ -116,6 +123,12 @@ impl PseudoElement {
         *self == PseudoElement::Marker
     }
 
+    /// Whether this pseudo-element is the ::selection pseudo.
+    #[inline]
+    pub fn is_selection(&self) -> bool {
+        *self == PseudoElement::Selection
+    }
+
     /// Whether this pseudo-element is ::first-letter.
     #[inline]
     pub fn is_first_letter(&self) -> bool {
@@ -128,10 +141,10 @@ impl PseudoElement {
         *self == PseudoElement::FirstLine
     }
 
-    /// Whether this pseudo-element is ::-moz-fieldset-content.
+    /// Whether this pseudo-element is the ::-moz-color-swatch pseudo.
     #[inline]
-    pub fn is_fieldset_content(&self) -> bool {
-        *self == PseudoElement::FieldsetContent
+    pub fn is_color_swatch(&self) -> bool {
+        *self == PseudoElement::MozColorSwatch
     }
 
     /// Whether this pseudo-element is lazily-cascaded.
@@ -147,7 +160,13 @@ impl PseudoElement {
 
     /// Whether this pseudo-element is enabled for all content.
     pub fn enabled_in_content(&self) -> bool {
-        (self.flags() & structs::CSS_PSEUDO_ELEMENT_ENABLED_IN_UA_SHEETS_AND_CHROME) == 0
+        match *self {
+            PseudoElement::MozFocusOuter => static_prefs::pref!("layout.css.moz-focus-outer.enabled"),
+            PseudoElement::FileChooserButton => static_prefs::pref!("layout.css.file-chooser-button.enabled"),
+            _ => {
+                (self.flags() & structs::CSS_PSEUDO_ELEMENT_ENABLED_IN_UA_SHEETS_AND_CHROME) == 0
+            }
+        }
     }
 
     /// Whether this pseudo is enabled explicitly in UA sheets.
@@ -176,12 +195,16 @@ impl PseudoElement {
     /// Property flag that properties must have to apply to this pseudo-element.
     #[inline]
     pub fn property_restriction(&self) -> Option<PropertyFlags> {
-        match *self {
-            PseudoElement::FirstLetter => Some(PropertyFlags::APPLIES_TO_FIRST_LETTER),
-            PseudoElement::FirstLine => Some(PropertyFlags::APPLIES_TO_FIRST_LINE),
-            PseudoElement::Placeholder => Some(PropertyFlags::APPLIES_TO_PLACEHOLDER),
-            _ => None,
-        }
+        Some(match *self {
+            PseudoElement::FirstLetter => PropertyFlags::APPLIES_TO_FIRST_LETTER,
+            PseudoElement::FirstLine => PropertyFlags::APPLIES_TO_FIRST_LINE,
+            PseudoElement::Placeholder => PropertyFlags::APPLIES_TO_PLACEHOLDER,
+            PseudoElement::Cue => PropertyFlags::APPLIES_TO_CUE,
+            PseudoElement::Marker if static_prefs::pref!("layout.css.marker.restricted") => {
+                PropertyFlags::APPLIES_TO_MARKER
+            },
+            _ => return None,
+        })
     }
 
     /// Whether this pseudo-element should actually exist if it has

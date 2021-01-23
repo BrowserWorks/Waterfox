@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Написання та адресація">
+<!ENTITY addressingGroupTitle.label "Адресація">
+<!ENTITY addressingText.label      "При пошуку адреси:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Використовувати глобальні налаштування сервера LDAP для цього облікового запису">
+<!ENTITY useGlobal.accesskey       "В">
+<!ENTITY editDirectories.label     "Правити каталоги…">
+<!ENTITY editDirectories.accesskey "П">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Використовувати інший сервер LDAP:">
+<!ENTITY directories.accesskey     "і">
+<!ENTITY directoriesNone.label     "Жодного">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Написання">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Створювати повідомлення у форматі HTML">
+<!ENTITY useHtml.accesskey                    "С">
+<!ENTITY autoQuote.label                      "Автоматично цитувати початкове повідомлення у відповідях">
+<!ENTITY autoQuote.accesskey                  "ц">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "При цитаті,">
+<!ENTITY quoting.accesskey                    "т">
+<!ENTITY aboveQuote.label                     "починати відповідь над цитатою">
+<!ENTITY belowQuote.label                     "починати відповідь під цитатою">
+<!ENTITY selectAndQuote.label                 "виділити цитату">
+<!ENTITY place.label                          "і поставити мій підпис">
+<!ENTITY place.accesskey                      "і">
+<!ENTITY belowText.label                      "під цитатою (рекомендовано)">
+<!ENTITY aboveText.label                      "під відповіддю (над цитатою)">
+<!ENTITY includeSigOnReply.label              "Включати підпис у відповідях">
+<!ENTITY includeSigOnReply.accesskey          "в">
+<!ENTITY includeSigOnForward.label            "Включати підпис у пересланих">
+<!ENTITY includeSigOnForward.accesskey        "п">
+
+<!ENTITY globalComposingPrefs.label           "Глобальні налаштування написання…">
+<!ENTITY globalComposingPrefs.accesskey       "Г">
+
+<!ENTITY globalAddressingPrefs.label          "Глобальні налаштування адресації…">
+<!ENTITY globalAddressingPrefs.accesskey      "А">

@@ -5,7 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ServiceWorkerScriptCache.h"
-#include "mozilla/SystemGroup.h"
+
+#include "js/Array.h"  // JS::GetArrayLength
 #include "mozilla/Unused.h"
 #include "mozilla/dom/CacheBinding.h"
 #include "mozilla/dom/cache/CacheStorage.h"
@@ -16,15 +17,15 @@
 #include "mozilla/dom/WorkerCommon.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
-#include "mozilla/net/CookieSettings.h"
+#include "mozilla/net/CookieJarSettings.h"
 #include "nsICacheInfoChannel.h"
-#include "nsIHttpChannelInternal.h"
 #include "nsIStreamLoader.h"
 #include "nsIThreadRetargetableRequest.h"
+#include "nsIUUIDGenerator.h"
+#include "nsIXPConnect.h"
 
 #include "nsIInputStreamPump.h"
 #include "nsIPrincipal.h"
-#include "nsIScriptError.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsContentUtils.h"
 #include "nsNetUtil.h"
@@ -70,7 +71,7 @@ already_AddRefed<CacheStorage> CreateCacheStorage(JSContext* aCx,
   // explicitly fails for private browsing so there should never be
   // a service worker running in private browsing mode.  Therefore if
   // we are purging scripts or running a comparison algorithm we cannot
-  // be in private browing.
+  // be in private browsing.
   //
   // Also, bypass the CacheStorage trusted origin checks.  The ServiceWorker
   // has validated the origin prior to this point.  All the information
@@ -390,7 +391,7 @@ class CompareManager final : public PromiseNativeHandler {
     }
 
     uint32_t len = 0;
-    if (!JS_GetArrayLength(aCx, obj, &len)) {
+    if (!JS::GetArrayLength(aCx, obj, &len)) {
       return;
     }
 
@@ -559,7 +560,7 @@ class CompareManager final : public PromiseNativeHandler {
         new Response(aCache->GetGlobalObject(), ir, nullptr);
 
     RequestOrUSVString request;
-    request.SetAsUSVString().Rebind(aCN->URL().Data(), aCN->URL().Length());
+    request.SetAsUSVString().ShareOrDependUpon(aCN->URL());
 
     // For now we have to wait until the Put Promise is fulfilled before we can
     // continue since Cache does not yet support starting a read that is being
@@ -621,7 +622,7 @@ nsresult CompareNetwork::Initialize(nsIPrincipal* aPrincipal,
   MOZ_ASSERT(NS_IsMainThread());
 
   nsCOMPtr<nsIURI> uri;
-  nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, nullptr, nullptr);
+  nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -658,15 +659,15 @@ nsresult CompareNetwork::Initialize(nsIPrincipal* aPrincipal,
       mIsMainScript ? nsIContentPolicy::TYPE_INTERNAL_SERVICE_WORKER
                     : nsIContentPolicy::TYPE_INTERNAL_WORKER_IMPORT_SCRIPTS;
 
-  // Create a new cookieSettings.
-  nsCOMPtr<nsICookieSettings> cookieSettings =
-      mozilla::net::CookieSettings::Create();
+  // Create a new cookieJarSettings.
+  nsCOMPtr<nsICookieJarSettings> cookieJarSettings =
+      mozilla::net::CookieJarSettings::Create();
 
   // Note that because there is no "serviceworker" RequestContext type, we can
   // use the TYPE_INTERNAL_SCRIPT content policy types when loading a service
   // worker.
   rv = NS_NewChannel(getter_AddRefs(mChannel), uri, aPrincipal, secFlags,
-                     contentPolicyType, cookieSettings,
+                     contentPolicyType, cookieJarSettings,
                      nullptr /* aPerformanceStorage */, loadGroup,
                      nullptr /* aCallbacks */, mLoadFlags);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -982,7 +983,7 @@ nsresult CompareCache::Initialize(Cache* const aCache, const nsAString& aURL) {
   jsapi.Init();
 
   RequestOrUSVString request;
-  request.SetAsUSVString().Rebind(aURL.Data(), aURL.Length());
+  request.SetAsUSVString().ShareOrDependUpon(aURL);
   ErrorResult error;
   CacheQueryOptions params;
   RefPtr<Promise> promise = aCache->Match(jsapi.cx(), request, params, error);
@@ -1112,7 +1113,7 @@ void CompareCache::ManageValueResult(JSContext* aCx,
                              0,     /* default segsize */
                              0,     /* default segcount */
                              false, /* default closeWhenDone */
-                             SystemGroup::EventTargetFor(TaskCategory::Other));
+                             GetMainThreadSerialEventTarget());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     Finish(rv, false);
     return;

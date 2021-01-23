@@ -1,4 +1,8 @@
-#!/bin/env python
+#!/usr/bin/env python3
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 '''
 This script downloads and repacks official rust language builds
 with the necessary tool and target support for the Firefox
@@ -13,9 +17,13 @@ import hashlib
 import os
 import shutil
 import subprocess
+from contextlib import contextmanager
+import tarfile
 
 import requests
 import pytoml as toml
+
+import zstandard
 
 
 def log(msg):
@@ -66,7 +74,7 @@ def setup_gpg():
     signature checks can succeed or fail cleanly.'''
     keyid = '0x85AB96E6FA1BE5FE'
     log('Importing signing key %s...' % keyid)
-    key = '''
+    key = b'''
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQINBFJEwMkBEADlPACa2K7reD4x5zd8afKx75QYKmxqZwywRbgeICeD4bKiQoJZ
@@ -155,7 +163,7 @@ Mve696B5tlHyc1KxjHR6w9GRsh4=
 '''
     check_call_with_input(['gpg', '--import'], key)
     check_call_with_input(['gpg', '--command-fd', '0', '--edit-key', keyid],
-                          'trust\n5\ny\n')
+                          b'trust\n5\ny\n')
 
 
 def verify_sha(filename, sha):
@@ -244,10 +252,28 @@ def fetch_optional(manifest, pkg, host):
         return None
 
 
-def tar_for_host(host):
-    tar_options = 'cJf'
-    tar_ext = '.tar.xz'
-    return tar_options, tar_ext
+@contextmanager
+def chdir(path):
+    d = os.getcwd()
+    log('cd "%s"' % path)
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        log('cd "%s"' % d)
+        os.chdir(d)
+
+
+def build_tar_package(name, base, directory):
+    name = os.path.realpath(name)
+    log('tarring {} from {}/{}'.format(name, base, directory))
+    assert name.endswith(".tar.zst")
+
+    cctx = zstandard.ZstdCompressor()
+    with open(name, "wb") as f, cctx.stream_writer(f) as z:
+        with tarfile.open(mode="w|", fileobj=z) as tf:
+            with chdir(base):
+                tf.add(directory)
 
 
 def fetch_manifest(channel='stable'):
@@ -304,10 +330,8 @@ def repack(host, targets, channel='stable', cargo_channel=None):
         pass
 
     log('Creating archive...')
-    tar_options, tar_ext = tar_for_host(host)
-    tar_file = install_dir + tar_ext
-    subprocess.check_call(
-        ['tar', tar_options, tar_file, install_dir])
+    tar_file = install_dir + ".tar.zst"
+    build_tar_package(tar_file, ".", install_dir)
     shutil.rmtree(install_dir)
     log('%s is ready.' % tar_file)
 
@@ -362,9 +386,8 @@ def repack_cargo(host, channel='nightly'):
     install(os.path.basename(cargo['url']), install_dir)
     tar_basename = 'cargo-%s-repack' % host
     log('Tarring %s...' % tar_basename)
-    tar_options, tar_ext = tar_for_host(host)
-    subprocess.check_call(
-        ['tar', tar_options, tar_basename + tar_ext, install_dir])
+    tar_file = tar_basename + ".tar.zst"
+    build_tar_package(tar_file, ".", install_dir)
     shutil.rmtree(install_dir)
 
 
@@ -428,7 +451,7 @@ def args():
     if not args.host:
         args.host = 'linux64'
     args.host = expand_platform(args.host)
-    args.targets = map(expand_platform, args.targets)
+    args.targets = [expand_platform(t) for t in args.targets]
 
     return args
 

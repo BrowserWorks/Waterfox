@@ -16,7 +16,6 @@
 #include "nsQueryObject.h"
 #include "nsTreeColumns.h"
 
-#include "nsIMutableArray.h"
 #include "nsPersistentProperties.h"
 #include "nsITreeSelection.h"
 #include "nsComponentManagerUtils.h"
@@ -305,7 +304,7 @@ XULTreeGridCellAccessible* XULTreeGridRowAccessible::GetCellAccessible(
   RefPtr<XULTreeGridCellAccessible> cell = new XULTreeGridCellAccessibleWrap(
       mContent, mDoc, const_cast<XULTreeGridRowAccessible*>(this), mTree,
       mTreeView, mRow, aColumn);
-  mAccessibleCache.Put(key, cell);
+  mAccessibleCache.Put(key, RefPtr{cell});
   Document()->BindToDocument(cell, nullptr);
   return cell;
 }

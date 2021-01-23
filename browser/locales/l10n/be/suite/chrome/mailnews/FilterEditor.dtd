@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Правілы сіта">
+<!ENTITY filterEditorDialog.dimensions "width: 115ch;">
+<!ENTITY filterName.label "Назва сіта:">
+<!ENTITY filterName.accesskey "і">
+<!ENTITY recentFolders.label "Нядаўні">
+<!ENTITY junk.label "Лухта">
+<!ENTITY notJunk.label "Не лухта">
+<!ENTITY lowestPriorityCmd.label "Найніжэйшы">
+<!ENTITY lowPriorityCmd.label "Нізкі">
+<!ENTITY normalPriorityCmd.label "Звычайны">
+<!ENTITY highPriorityCmd.label "Высокі">
+<!ENTITY highestPriorityCmd.label "Найвышэйшы">
+<!ENTITY contextDesc.label "Ужываць сіта пры:">
+<!ENTITY contextIncomingMail.label "Атрыманне новай пошты:">
+<!ENTITY contextIncomingMail.accesskey "А">
+<!ENTITY contextManual.label "Ручным выкананні">
+<!ENTITY contextManual.accesskey "Р">
+<!ENTITY contextBeforeCls.label "Сітаваць перад вызначэннем лухты">
+<!ENTITY contextAfterCls.label "Сітаваць пасля вызначэннем лухты">
+<!ENTITY filterActionDesc.label "Выканаць гэтыя дзеянні:">
+<!ENTITY filterActionDesc.accesskey "В">
+<!ENTITY filterActionOrderWarning.label "Заўвага: дзеянні сіта будуць выконвацца ў адрозным парадку.">
+<!ENTITY filterActionOrder.label "Пабачыць парадак выканання">
+<!ENTITY moveMessage.label "Рухаць ліст у">
+<!ENTITY copyMessage.label "Капіяваць ліст у">
+<!ENTITY forwardTo.label "Накіраваць ліст да">
+<!ENTITY replyWithTemplate.label "Адказаць паводле ўзору">
+<!ENTITY markMessageRead.label "Пазначыць прачытаным">
+<!ENTITY markMessageUnread.label "Пазначыць непрачытаным">
+<!ENTITY markMessageStarred.label "Пазначыць сцяжком">
+<!ENTITY setPriority.label "Прызначыць прыярытэт">
+<!ENTITY addTag.label "Дадаць метку да ліста">
+<!ENTITY setJunkScore.label "Усталяваць статус лухты">
+<!ENTITY deleteMessage.label "Выдаліць ліст">
+<!ENTITY deleteFromPOP.label "Выдаліць з паслугача POP">
+<!ENTITY fetchFromPOP.label "Атрымаць з паслугача POP">
+<!ENTITY ignoreThread.label "Ігнараваць нізку">
+<!ENTITY ignoreSubthread.label "Ігнараваць паднізку">
+<!ENTITY watchThread.label "Сачыць за нізкай">
+<!ENTITY stopExecution.label "Спыніць выкананне сіта">
+<!ENTITY addAction.tooltip "Дадаць новае дзеянне">
+<!ENTITY removeAction.tooltip "Выдаліць гэтае дзеянне">
+<!ENTITY filterActionTypeFlexValue "2">
+<!ENTITY filterActionTargetFlexValue "4">

@@ -4,8 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "Document.h"
 #include "nsCOMArray.h"
 #include "nsContentList.h"
+#include "nsPIDOMWindow.h"
 
 namespace mozilla {
 class ErrorResult;
@@ -18,7 +20,7 @@ class ChromeNodeList final : public nsSimpleContentList {
   explicit ChromeNodeList(nsINode* aOwner) : nsSimpleContentList(aOwner) {}
 
   static already_AddRefed<ChromeNodeList> Constructor(
-      const GlobalObject& aGlobal, ErrorResult& aRv);
+      const GlobalObject& aGlobal);
 
   virtual JSObject* WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) override;

@@ -22,12 +22,11 @@ parse_deps = true
 include = ["log", "euclid", "webrender", "webrender_api"]
 
 [fn]
-prefix = "WR_INLINE"
-postfix = "WR_FUNC"
 args = "Vertical"
 rename_args = "GeckoCase"
 
 [struct]
+associated_constants_in_body = true
 derive_eq = true
 
 [enum]
@@ -41,3 +40,6 @@ bitflags = true
 "target_os = windows" = "XP_WIN"
 "target_os = macos" = "XP_MACOSX"
 "target_os = android" = "ANDROID"
+
+[export.rename]
+"ThinVec" = "nsTArray"

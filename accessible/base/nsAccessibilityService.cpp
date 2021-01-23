@@ -26,7 +26,6 @@
 #include "nsAttrName.h"
 #include "nsDOMTokenList.h"
 #include "nsEventShell.h"
-#include "nsIURI.h"
 #include "nsTextFormatter.h"
 #include "OuterDocAccessible.h"
 #include "Role.h"
@@ -38,7 +37,6 @@
 #include "TextLeafAccessibleWrap.h"
 #include "TreeWalker.h"
 #include "xpcAccessibleApplication.h"
-#include "xpcAccessibleDocument.h"
 
 #ifdef MOZ_ACCESSIBILITY_ATK
 #  include "AtkSocketAccessible.h"
@@ -65,8 +63,6 @@
 #include "nsTreeBodyFrame.h"
 #include "nsTreeColumns.h"
 #include "nsTreeUtils.h"
-#include "nsXBLPrototypeBinding.h"
-#include "nsXBLBinding.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/dom/DOMStringList.h"
 #include "mozilla/dom/EventTarget.h"
@@ -289,16 +285,23 @@ nsAccessibilityService::ListenersChanged(nsIArray* aEventChanges) {
     change->GetCountOfEventListenerChangesAffectingAccessibility(&changeCount);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    for (uint32_t i = 0; i < changeCount; i++) {
+    if (changeCount) {
       Document* ownerDoc = node->OwnerDoc();
       DocAccessible* document = GetExistingDocAccessible(ownerDoc);
 
-      // Create an accessible for a inaccessible element having click event
-      // handler.
-      if (document && !document->HasAccessible(node) &&
-          nsCoreUtils::HasClickListener(node)) {
-        document->ContentInserted(node, node->GetNextSibling());
-        break;
+      if (document) {
+        Accessible* acc = document->GetAccessible(node);
+        if (!acc && nsCoreUtils::HasClickListener(node)) {
+          // Create an accessible for a inaccessible element having click event
+          // handler.
+          document->ContentInserted(node, node->GetNextSibling());
+        } else if (acc && acc->IsHTMLLink() && !acc->AsHTMLLink()->IsLinked()) {
+          // Notify of a LINKED state change if an HTML link gets a click
+          // listener but does not have an href attribute.
+          RefPtr<AccEvent> linkedChangeEvent =
+              new AccStateChangeEvent(acc, states::LINKED);
+          document->FireDelayedEvent(linkedChangeEvent);
+        }
       }
     }
   }
@@ -338,6 +341,25 @@ void nsAccessibilityService::FireAccessibleEvent(uint32_t aEvent,
   nsEventShell::FireEvent(aEvent, aTarget);
 }
 
+void nsAccessibilityService::NotifyOfImageSizeAvailable(
+    mozilla::PresShell* aPresShell, nsIContent* aContent) {
+  // If the size of an image is initially unknown, it will have the invisible
+  // state (and a 0 width and height), causing it to be ignored by some screen
+  // readers. Fire a state change event to update any client caches.
+  DocAccessible* document = GetDocAccessible(aPresShell);
+  if (document) {
+    Accessible* accessible = document->GetAccessible(aContent);
+    // The accessible may not be an ImageAccessible if this was previously a
+    // broken image with an alt attribute. In that case, do nothing; the
+    // accessible will be recreated if this becomes a valid image.
+    if (accessible && accessible->IsImage()) {
+      RefPtr<AccEvent> event =
+          new AccStateChangeEvent(accessible, states::INVISIBLE, false);
+      document->FireDelayedEvent(event);
+    }
+  }
+}
+
 Accessible* nsAccessibilityService::GetRootDocumentAccessible(
     PresShell* aPresShell, bool aCanCreate) {
   PresShell* presShell = aPresShell;
@@ -346,7 +368,7 @@ Accessible* nsAccessibilityService::GetRootDocumentAccessible(
     nsCOMPtr<nsIDocShellTreeItem> treeItem(documentNode->GetDocShell());
     if (treeItem) {
       nsCOMPtr<nsIDocShellTreeItem> rootTreeItem;
-      treeItem->GetRootTreeItem(getter_AddRefs(rootTreeItem));
+      treeItem->GetInProcessRootTreeItem(getter_AddRefs(rootTreeItem));
       if (treeItem != rootTreeItem) {
         nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(rootTreeItem));
         presShell = docShell->GetPresShell();
@@ -814,8 +836,11 @@ already_AddRefed<DOMStringList> nsAccessibilityService::GetStringStates(
   if (aStates & states::SENSITIVE) {
     stringStates->Add(NS_LITERAL_STRING("sensitive"));
   }
-  if (aStates & states::EXPANDABLE) {
-    stringStates->Add(NS_LITERAL_STRING("expandable"));
+  if (aStates & states::PINNED) {
+    stringStates->Add(NS_LITERAL_STRING("pinned"));
+  }
+  if (aStates & states::CURRENT) {
+    stringStates->Add(NS_LITERAL_STRING("current"));
   }
 
   return stringStates.forget();
@@ -919,7 +944,7 @@ Accessible* nsAccessibilityService::CreateAccessible(nsINode* aNode,
   if (!frame || !frame->StyleVisibility()->IsVisible()) {
     // display:contents element doesn't have a frame, but retains the semantics.
     // All its children are unaffected.
-    if (content->IsElement() && content->AsElement()->IsDisplayContents()) {
+    if (nsCoreUtils::IsDisplayContents(content)) {
       const HTMLMarkupMapInfo* markupMap =
           mHTMLMarkupMap.Get(content->NodeInfo()->NameAtom());
       if (markupMap && markupMap->new_func) {
@@ -1024,7 +1049,10 @@ Accessible* nsAccessibilityService::CreateAccessible(nsINode* aNode,
 
     if (!isARIATablePart || frame->AccessibleType() == eHTMLTableCellType ||
         frame->AccessibleType() == eHTMLTableRowType ||
-        frame->AccessibleType() == eHTMLTableType) {
+        frame->AccessibleType() == eHTMLTableType ||
+        // We should always use OuterDocAccessible for OuterDocs, even for
+        // ARIA table roles.
+        frame->AccessibleType() == eOuterDocType) {
       // Prefer to use markup to decide if and what kind of accessible to
       // create,
       const HTMLMarkupMapInfo* markupMap =
@@ -1076,7 +1104,7 @@ Accessible* nsAccessibilityService::CreateAccessible(nsINode* aNode,
     }
   }
 
-  // Accessible XBL types and deck stuff are used in XUL only currently.
+  // XUL accessibles.
   if (!newAcc && content->IsXULElement()) {
     // No accessible for not selected deck panel and its children.
     if (!aContext->IsXULTabpanels()) {
@@ -1117,6 +1145,8 @@ Accessible* nsAccessibilityService::CreateAccessible(nsINode* aNode,
         // polyline and image. A 'use' and 'text' graphic elements require
         // special support.
         newAcc = new EnumRoleAccessible<roles::GRAPHIC>(content, document);
+      } else if (content->IsSVGElement(nsGkAtoms::text)) {
+        newAcc = new HyperTextAccessibleWrap(content->AsElement(), document);
       } else if (content->IsSVGElement(nsGkAtoms::svg)) {
         newAcc = new EnumRoleAccessible<roles::DIAGRAM>(content, document);
       }
@@ -1396,12 +1426,13 @@ nsAccessibilityService::CreateAccessibleByFrameType(nsIFrame* aFrame,
 
       if (table) {
         nsIContent* parentContent =
-            aContent->GetParentOrHostNode()->AsContent();
+            aContent->GetParentOrShadowHostNode()->AsContent();
         nsIFrame* parentFrame = nullptr;
         if (parentContent) {
           parentFrame = parentContent->GetPrimaryFrame();
           if (!parentFrame || !parentFrame->IsTableWrapperFrame()) {
-            parentContent = parentContent->GetParentOrHostNode()->AsContent();
+            parentContent =
+                parentContent->GetParentOrShadowHostNode()->AsContent();
             if (parentContent) {
               parentFrame = parentContent->GetPrimaryFrame();
             }
@@ -1511,10 +1542,13 @@ void nsAccessibilityService::RemoveNativeRootAccessible(
 bool nsAccessibilityService::HasAccessible(nsINode* aDOMNode) {
   if (!aDOMNode) return false;
 
-  DocAccessible* document = GetDocAccessible(aDOMNode->OwnerDoc());
+  Document* document = aDOMNode->OwnerDoc();
   if (!document) return false;
 
-  return document->HasAccessible(aDOMNode);
+  DocAccessible* docAcc = GetExistingDocAccessible(aDOMNode->OwnerDoc());
+  if (!docAcc) return false;
+
+  return docAcc->HasAccessible(aDOMNode);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

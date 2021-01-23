@@ -9,9 +9,11 @@
 #include "Rule.h"
 
 #include "mozilla/css/GroupRule.h"
+#include "mozilla/dom/CSSImportRule.h"
 #include "mozilla/dom/DocumentOrShadowRoot.h"
 #include "nsCCUncollectableMarker.h"
 #include "mozilla/dom/Document.h"
+#include "mozilla/HoldDropJSObjects.h"
 #include "nsWrapperCacheInlines.h"
 
 using namespace mozilla;
@@ -42,12 +44,28 @@ bool Rule::IsKnownLive() const {
     return false;
   }
 
-  if (!sheet->IsKeptAliveByDocument()) {
-    return false;
-  }
+  Document* doc = sheet->GetKeptAliveByDocument();
+  return doc &&
+         nsCCUncollectableMarker::InGeneration(doc->GetMarkedCCGeneration());
+}
 
-  return nsCCUncollectableMarker::InGeneration(
-      GetComposedDoc()->GetMarkedCCGeneration());
+void Rule::UnlinkDeclarationWrapper(nsWrapperCache& aDecl) {
+  // We have to be a bit careful here.  We have two separate nsWrapperCache
+  // instances, aDecl and this, that both correspond to the same CC participant:
+  // this.  If we just used ReleaseWrapper() on one of them, that would
+  // unpreserve that one wrapper, then trace us with a tracer that clears JS
+  // things, and we would clear the wrapper on the cache that has not
+  // unpreserved the wrapper yet.  That would violate the invariant that the
+  // cache keeps caching the wrapper until the wrapper dies.
+  //
+  // So we reimplement a modified version of nsWrapperCache::ReleaseWrapper here
+  // that unpreserves both wrappers before doing any clearing.
+  bool needDrop = PreservingWrapper() || aDecl.PreservingWrapper();
+  SetPreservingWrapper(false);
+  aDecl.SetPreservingWrapper(false);
+  if (needDrop) {
+    DropJSObjects(this);
+  }
 }
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(Rule)
@@ -81,6 +99,14 @@ bool Rule::IsReadOnly() const {
              "a parent rule should be read only iff the owning sheet is "
              "read only");
   return mSheet && mSheet->IsReadOnly();
+}
+
+bool Rule::IsIncompleteImportRule() const {
+  if (Type() != CSSRule_Binding::IMPORT_RULE) {
+    return false;
+  }
+  auto* sheet = static_cast<const dom::CSSImportRule*>(this)->GetStyleSheet();
+  return !sheet || !sheet->IsComplete();
 }
 
 }  // namespace css

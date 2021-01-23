@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Initen d u&amp;gilal n usebter">
+<!ENTITY pageColors.label "Initen n usebter">
+<!ENTITY defaultColorsRadio.label "Initen imezwar n umeɣri (Ur sbaduy ara initen ɣef usebter)">
+<!ENTITY defaultColorsRadio.accessKey "U">
+<!ENTITY defaultColorsRadio.tooltip "Seqdec kan iɣewwaṛen n yiniten seg umeskan (ameɣri) n iminig">
+<!ENTITY customColorsRadio.label "Seqdac initen-inek:">
+<!ENTITY customColorsRadio.accessKey "q">
+<!ENTITY customColorsRadio.tooltip "Iɣewwaṛen-agi n yiniten ad semselsin iɣewwaṛen n iminig n umeskan">
+
+<!ENTITY normalText.label "Aḍris amagnu">
+<!ENTITY normalText.accessKey "m">
+<!ENTITY linkText.label "Aḍris n useɣwen">
+<!ENTITY linkText.accessKey "s">
+<!ENTITY activeLinkText.label "Aḍris n useɣwen urmid">
+<!ENTITY activeLinkText.accessKey "m">
+<!ENTITY visitedLinkText.label "Aḍris n useɣwen ittwarzan">
+<!ENTITY visitedLinkText.accessKey "z">
+<!ENTITY background.label "Agilal:">
+<!ENTITY background.accessKey "g">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Tugna n ugilal:">
+<!ENTITY backgroundImage.accessKey "g">
+<!ENTITY backgroundImage.tooltip "Seqdec afaylu tugna d agilal i wesebter-inek">
+<!ENTITY backgroundImage.shortenedDataURI "URI n isefka wezzilen (anɣal ad isemselsi URI ummid ɣef afus)">

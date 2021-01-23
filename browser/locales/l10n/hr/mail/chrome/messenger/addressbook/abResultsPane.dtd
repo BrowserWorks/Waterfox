@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adresar">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Ime">
+<!ENTITY GeneratedName.accesskey               "I">
+<!ENTITY PrimaryEmail.label                    "E-pošta">
+<!ENTITY PrimaryEmail.accesskey                "p">
+<!ENTITY Company.label                         "Organizacija">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Fonetsko ime">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Nadimak">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Dodatna e-pošta">
+<!ENTITY SecondEmail.accesskey                 "t">
+<!ENTITY Department.label                      "Odjel">
+<!ENTITY Department.accesskey                  "j">
+<!ENTITY JobTitle.label                        "Titula">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobitel">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pager">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Kuća">
+<!ENTITY HomePhone.accesskey                   "K">
+<!ENTITY WorkPhone.label                       "Posao">
+<!ENTITY WorkPhone.accesskey                   "P">
+<!ENTITY ChatName.label                        "Chat nadimak">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Uzlazno">
+<!ENTITY sortAscending.accesskey               "a">
+<!ENTITY sortDescending.label                  "Silazno">
+<!ENTITY sortDescending.accesskey              "S">

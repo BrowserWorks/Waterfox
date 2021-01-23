@@ -46,19 +46,6 @@ var addTab = function(url, win) {
   });
 };
 
-/**
- * Navigate the currently selected tab to a new URL and wait for it to load.
- * @param {String} url The url to be loaded in the current tab.
- * @return a promise that resolves when the page has fully loaded.
- */
-var navigateTo = function(url) {
-  info(`Navigating to ${url}`);
-  const browser = gBrowser.selectedBrowser;
-
-  BrowserTestUtils.loadURI(browser, url);
-  return BrowserTestUtils.browserLoaded(browser);
-};
-
 var navigateToAndWaitForStyleSheets = async function(url, ui) {
   const onReset = ui.once("stylesheets-reset");
   await navigateTo(url);
@@ -70,7 +57,7 @@ var reloadPageAndWaitForStyleSheets = async function(ui) {
 
   const onReset = ui.once("stylesheets-reset");
   const browser = gBrowser.selectedBrowser;
-  await ContentTask.spawn(browser, null, "() => content.location.reload()");
+  await SpecialPowers.spawn(browser, [], () => content.location.reload());
   await onReset;
 };
 
@@ -116,7 +103,7 @@ var openStyleEditorForURL = async function(url, win) {
  *        name of the property.
  */
 var getComputedStyleProperty = async function(args) {
-  return ContentTask.spawn(gBrowser.selectedBrowser, args, function({
+  return SpecialPowers.spawn(gBrowser.selectedBrowser, [args], function({
     selector,
     pseudo,
     name,
@@ -151,5 +138,33 @@ function waitForManyEvents(ui, delay) {
       }, delay);
     };
     ui.on("media-list-changed", onEvent);
+  });
+}
+
+/**
+ * Creates a new style sheet in the Style Editor
+
+ * @param {StyleEditorUI} ui
+ *        Current StyleEditorUI on which to simulate pressing the + button.
+ * @param {Window} panelWindow
+ *        The panelWindow property of the current Style Editor panel.
+ */
+function createNewStyleSheet(ui, panelWindow) {
+  info("Creating a new stylesheet now");
+
+  return new Promise(resolve => {
+    ui.once("editor-added", editor => {
+      editor.getSourceEditor().then(resolve);
+    });
+
+    waitForFocus(function() {
+      // create a new style sheet
+      const newButton = panelWindow.document.querySelector(
+        ".style-editor-newButton"
+      );
+      ok(newButton, "'new' button exists");
+
+      EventUtils.synthesizeMouseAtCenter(newButton, {}, panelWindow);
+    }, panelWindow);
   });
 }

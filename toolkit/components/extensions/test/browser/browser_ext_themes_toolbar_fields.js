@@ -17,8 +17,6 @@ add_task(async function setup() {
 });
 
 add_task(async function test_support_toolbar_field_properties() {
-  let searchbar = BrowserSearch.searchBar;
-
   const TOOLBAR_FIELD_BACKGROUND = "#ff00ff";
   const TOOLBAR_FIELD_COLOR = "#00ff00";
   const TOOLBAR_FIELD_BORDER = "#aaaaff";
@@ -51,10 +49,9 @@ add_task(async function test_support_toolbar_field_properties() {
     root.setAttribute("remotecontrol", "true");
   });
 
-  let toolbox = document.querySelector("#navigator-toolbox");
   let fields = [
-    toolbox.querySelector("#urlbar"),
-    searchbar.querySelector(".searchbar-textbox"),
+    document.querySelector("#urlbar-background"),
+    BrowserSearch.searchBar,
   ].filter(field => {
     let bounds = field.getBoundingClientRect();
     return bounds.width > 0 && bounds.height > 0;
@@ -63,9 +60,7 @@ add_task(async function test_support_toolbar_field_properties() {
   Assert.equal(fields.length, 2, "Should be testing two elements");
 
   info(
-    `Checking toolbar background colors and colors for ${
-      fields.length
-    } toolbar fields.`
+    `Checking toolbar background colors and colors for ${fields.length} toolbar fields.`
   );
   for (let field of fields) {
     info(`Testing ${field.id || field.className}`);
@@ -92,8 +87,7 @@ add_task(async function test_support_toolbar_field_brighttext() {
   registerCleanupFunction(() => {
     root.setAttribute("remotecontrol", "true");
   });
-  let toolbox = document.querySelector("#navigator-toolbox");
-  let urlbar = toolbox.querySelector("#urlbar");
+  let urlbar = gURLBar.textbox;
 
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {

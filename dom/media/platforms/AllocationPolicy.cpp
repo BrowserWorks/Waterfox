@@ -6,10 +6,11 @@
 
 #include "AllocationPolicy.h"
 
+#include "ImageContainer.h"
 #include "MediaInfo.h"
 #include "PDMFactory.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/SchedulerGroup.h"
 #ifdef MOZ_WIDGET_ANDROID
 #  include "mozilla/jni/Utils.h"
 #endif
@@ -45,7 +46,7 @@ auto AllocPolicyImpl::Alloc() -> RefPtr<Promise> {
   RefPtr<PromisePrivate> p = new PromisePrivate(__func__);
   mPromises.push(p);
   ResolvePromise(mon);
-  return p.forget();
+  return p;
 }
 
 void AllocPolicyImpl::Dealloc() {
@@ -59,7 +60,7 @@ void AllocPolicyImpl::ResolvePromise(ReentrantMonitorAutoEnter& aProofOfLock) {
 
   if (mDecoderLimit > 0 && !mPromises.empty()) {
     --mDecoderLimit;
-    RefPtr<PromisePrivate> p = mPromises.front().forget();
+    RefPtr<PromisePrivate> p = std::move(mPromises.front());
     mPromises.pop();
     p->Resolve(new AutoDeallocToken(this), __func__);
   }
@@ -68,7 +69,7 @@ void AllocPolicyImpl::ResolvePromise(ReentrantMonitorAutoEnter& aProofOfLock) {
 void AllocPolicyImpl::RejectAll() {
   ReentrantMonitorAutoEnter mon(mMonitor);
   while (!mPromises.empty()) {
-    RefPtr<PromisePrivate> p = mPromises.front().forget();
+    RefPtr<PromisePrivate> p = std::move(mPromises.front());
     mPromises.pop();
     p->Reject(true, __func__);
   }
@@ -92,7 +93,7 @@ NotNull<AllocPolicy*> GlobalAllocPolicy::Instance(TrackType aTrack) {
   StaticMutexAutoLock lock(sMutex);
   if (aTrack == TrackType::kAudioTrack) {
     static RefPtr<AllocPolicyImpl> sAudioPolicy = []() {
-      SystemGroup::Dispatch(
+      SchedulerGroup::Dispatch(
           TaskCategory::Other,
           NS_NewRunnableFunction(
               "GlobalAllocPolicy::GlobalAllocPolicy:Audio", []() {
@@ -103,7 +104,7 @@ NotNull<AllocPolicy*> GlobalAllocPolicy::Instance(TrackType aTrack) {
     return WrapNotNull(sAudioPolicy.get());
   }
   static RefPtr<AllocPolicyImpl> sVideoPolicy = []() {
-    SystemGroup::Dispatch(
+    SchedulerGroup::Dispatch(
         TaskCategory::Other,
         NS_NewRunnableFunction(
             "GlobalAllocPolicy::GlobalAllocPolicy:Audio", []() {
@@ -136,7 +137,7 @@ auto SingleAllocPolicy::Alloc() -> RefPtr<Promise> {
   return AllocPolicyImpl::Alloc()->Then(
       mOwnerThread, __func__,
       [self](RefPtr<Token> aToken) {
-        RefPtr<Token> localToken = aToken.forget();
+        RefPtr<Token> localToken = std::move(aToken);
         RefPtr<Promise> p = self->mPendingPromise.Ensure(__func__);
         GlobalAllocPolicy::Instance(self->mTrack)
             ->Alloc()
@@ -185,8 +186,8 @@ AllocationWrapper::~AllocationWrapper() {
 }
 
 RefPtr<ShutdownPromise> AllocationWrapper::Shutdown() {
-  RefPtr<MediaDataDecoder> decoder = mDecoder.forget();
-  RefPtr<Token> token = mToken.forget();
+  RefPtr<MediaDataDecoder> decoder = std::move(mDecoder);
+  RefPtr<Token> token = std::move(mToken);
   return decoder->Shutdown()->Then(
       AbstractThread::GetCurrent(), __func__,
       [token]() { return ShutdownPromise::CreateAndResolve(true, __func__); });

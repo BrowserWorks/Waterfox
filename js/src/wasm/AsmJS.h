@@ -32,7 +32,7 @@ class JS_PUBLIC_API JSFunction;
 
 namespace JS {
 
-union JS_PUBLIC_API Value;
+class JS_PUBLIC_API Value;
 
 template <typename T>
 class Handle;

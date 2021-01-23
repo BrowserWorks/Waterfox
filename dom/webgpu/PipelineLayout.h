@@ -3,27 +3,33 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_PipelineLayout_H_
-#define WEBGPU_PipelineLayout_H_
+#ifndef GPU_PipelineLayout_H_
+#define GPU_PipelineLayout_H_
 
 #include "nsWrapperCache.h"
 #include "ObjectModel.h"
+#include "mozilla/webgpu/WebGPUTypes.h"
 
 namespace mozilla {
 namespace webgpu {
 
 class Device;
 
-class PipelineLayout final : public ChildOf<Device> {
+class PipelineLayout final : public ObjectBase, public ChildOf<Device> {
  public:
-  WEBGPU_DECL_GOOP(PipelineLayout)
+  GPU_DECL_CYCLE_COLLECTION(PipelineLayout)
+  GPU_DECL_JS_WRAP(PipelineLayout)
+
+  PipelineLayout(Device* const aParent, RawId aId);
+
+  const RawId mId;
 
  private:
-  PipelineLayout() = delete;
   virtual ~PipelineLayout();
+  void Cleanup();
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_PipelineLayout_H_
+#endif  // GPU_PipelineLayout_H_

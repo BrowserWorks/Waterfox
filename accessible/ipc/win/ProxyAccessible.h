@@ -10,8 +10,6 @@
 #include "Accessible.h"
 #include "mozilla/a11y/ProxyAccessibleBase.h"
 #include "mozilla/a11y/Role.h"
-#include "nsIAccessibleText.h"
-#include "nsIAccessibleTypes.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsRect.h"
@@ -30,7 +28,7 @@ class ProxyAccessible : public ProxyAccessibleBase<ProxyAccessible> {
     MOZ_COUNT_CTOR(ProxyAccessible);
   }
 
-  ~ProxyAccessible() { MOZ_COUNT_DTOR(ProxyAccessible); }
+  MOZ_COUNTED_DTOR(ProxyAccessible)
 
 #include "mozilla/a11y/ProxyAccessibleShared.h"
 

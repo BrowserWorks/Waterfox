@@ -1,5 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
+"use strict";
 
 const USER_CONTEXTS = ["default", "personal", "work"];
 
@@ -44,9 +45,9 @@ add_task(async function test() {
     // open our tab in the given user context
     let { tab, browser } = await openTabInUserContext(TEST_URL, userContextId);
 
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       browser,
-      { names: COOKIE_NAMES, value: USER_CONTEXTS[userContextId] },
+      [{ names: COOKIE_NAMES, value: USER_CONTEXTS[userContextId] }],
       function(opts) {
         for (let name of opts.names) {
           content.document.cookie = name + "=" + opts.value;
@@ -91,10 +92,10 @@ async function checkCookies(expectedValues, time) {
 
 function getCookiesFromManager(userContextId) {
   let cookies = {};
-  let enumerator = cm.getCookiesWithOriginAttributes(
+  let allCookies = cm.getCookiesWithOriginAttributes(
     JSON.stringify({ userContextId })
   );
-  for (let cookie of enumerator) {
+  for (let cookie of allCookies) {
     cookies[cookie.name] = cookie.value;
   }
   return cookies;
@@ -104,7 +105,7 @@ async function getCookiesFromJS(userContextId) {
   let { tab, browser } = await openTabInUserContext(TEST_URL, userContextId);
 
   // get the cookies
-  let cookieString = await ContentTask.spawn(browser, null, function() {
+  let cookieString = await SpecialPowers.spawn(browser, [], function() {
     return content.document.cookie;
   });
 

@@ -29,9 +29,7 @@ class HTMLLabelElement final : public nsGenericHTMLElement {
   NS_INLINE_DECL_REFCOUNTING_INHERITED(HTMLLabelElement, nsGenericHTMLElement)
 
   // Element
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override {
-    return true;
-  }
+  virtual bool IsInteractiveHTMLContent() const override { return true; }
 
   HTMLFormElement* GetForm() const;
   void GetHtmlFor(nsString& aHtmlFor) {
@@ -44,6 +42,7 @@ class HTMLLabelElement final : public nsGenericHTMLElement {
 
   using nsGenericHTMLElement::Focus;
   virtual void Focus(const FocusOptions& aOptions,
+                     const mozilla::dom::CallerType aCallerType,
                      ErrorResult& aError) override;
 
   // nsIContent

@@ -9,11 +9,9 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/IntersectionObserverBinding.h"
-#include "nsStyleCoord.h"
+#include "mozilla/ServoStyleConsts.h"
+#include "mozilla/Variant.h"
 #include "nsTArray.h"
-
-using mozilla::dom::DOMRect;
-using mozilla::dom::Element;
 
 namespace mozilla {
 namespace dom {
@@ -22,7 +20,7 @@ class DOMIntersectionObserver;
 
 class DOMIntersectionObserverEntry final : public nsISupports,
                                            public nsWrapperCache {
-  ~DOMIntersectionObserverEntry() {}
+  ~DOMIntersectionObserverEntry() = default;
 
  public:
   DOMIntersectionObserverEntry(nsISupports* aOwner, DOMHighResTimeStamp aTime,
@@ -33,9 +31,9 @@ class DOMIntersectionObserverEntry final : public nsISupports,
                                double aIntersectionRatio)
       : mOwner(aOwner),
         mTime(aTime),
-        mRootBounds(aRootBounds),
-        mBoundingClientRect(aBoundingClientRect),
-        mIntersectionRect(aIntersectionRect),
+        mRootBounds(std::move(aRootBounds)),
+        mBoundingClientRect(std::move(aBoundingClientRect)),
+        mIntersectionRect(std::move(aIntersectionRect)),
         mIsIntersecting(aIsIntersecting),
         mTarget(aTarget),
         mIntersectionRatio(aIntersectionRatio) {}
@@ -44,13 +42,12 @@ class DOMIntersectionObserverEntry final : public nsISupports,
 
   nsISupports* GetParentObject() const { return mOwner; }
 
-  virtual JSObject* WrapObject(JSContext* aCx,
-                               JS::Handle<JSObject*> aGivenProto) override {
-    return mozilla::dom::IntersectionObserverEntry_Binding::Wrap(aCx, this,
-                                                                 aGivenProto);
+  JSObject* WrapObject(JSContext* aCx,
+                       JS::Handle<JSObject*> aGivenProto) override {
+    return IntersectionObserverEntry_Binding::Wrap(aCx, this, aGivenProto);
   }
 
-  DOMHighResTimeStamp Time() { return mTime; }
+  DOMHighResTimeStamp Time() const { return mTime; }
 
   DOMRect* GetRootBounds() { return mRootBounds; }
 
@@ -58,9 +55,9 @@ class DOMIntersectionObserverEntry final : public nsISupports,
 
   DOMRect* IntersectionRect() { return mIntersectionRect; }
 
-  bool IsIntersecting() { return mIsIntersecting; }
+  bool IsIntersecting() const { return mIsIntersecting; }
 
-  double IntersectionRatio() { return mIntersectionRatio; }
+  double IntersectionRatio() const { return mIntersectionRatio; }
 
   Element* Target() { return mTarget; }
 
@@ -86,37 +83,37 @@ class DOMIntersectionObserver final : public nsISupports,
                                       public nsWrapperCache {
   virtual ~DOMIntersectionObserver() { Disconnect(); }
 
+  typedef void (*NativeCallback)(
+      const Sequence<OwningNonNull<DOMIntersectionObserverEntry>>& aEntries);
+  DOMIntersectionObserver(Document&, NativeCallback);
+
  public:
   DOMIntersectionObserver(already_AddRefed<nsPIDOMWindowInner>&& aOwner,
-                          mozilla::dom::IntersectionCallback& aCb)
+                          dom::IntersectionCallback& aCb)
       : mOwner(aOwner),
         mDocument(mOwner->GetExtantDoc()),
-        mCallback(&aCb),
+        mCallback(RefPtr<dom::IntersectionCallback>(&aCb)),
         mConnected(false) {}
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(DOMIntersectionObserver)
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_DOM_INTERSECTION_OBSERVER_IID)
 
   static already_AddRefed<DOMIntersectionObserver> Constructor(
-      const mozilla::dom::GlobalObject& aGlobal,
-      mozilla::dom::IntersectionCallback& aCb, mozilla::ErrorResult& aRv);
+      const GlobalObject&, dom::IntersectionCallback&, ErrorResult&);
   static already_AddRefed<DOMIntersectionObserver> Constructor(
-      const mozilla::dom::GlobalObject& aGlobal,
-      mozilla::dom::IntersectionCallback& aCb,
-      const mozilla::dom::IntersectionObserverInit& aOptions,
-      mozilla::ErrorResult& aRv);
+      const GlobalObject&, dom::IntersectionCallback&,
+      const IntersectionObserverInit&, ErrorResult&);
 
-  virtual JSObject* WrapObject(JSContext* aCx,
-                               JS::Handle<JSObject*> aGivenProto) override {
-    return mozilla::dom::IntersectionObserver_Binding::Wrap(aCx, this,
-                                                            aGivenProto);
+  JSObject* WrapObject(JSContext* aCx,
+                       JS::Handle<JSObject*> aGivenProto) override {
+    return IntersectionObserver_Binding::Wrap(aCx, this, aGivenProto);
   }
 
   nsISupports* GetParentObject() const { return mOwner; }
 
-  Element* GetRoot() const { return mRoot; }
+  nsINode* GetRoot() const { return mRoot; }
 
-  void GetRootMargin(mozilla::dom::DOMString& aRetVal);
+  void GetRootMargin(DOMString& aRetVal);
   void GetThresholds(nsTArray<double>& aRetVal);
   void Observe(Element& aTarget);
   void Unobserve(Element& aTarget);
@@ -126,14 +123,13 @@ class DOMIntersectionObserver final : public nsISupports,
 
   void TakeRecords(nsTArray<RefPtr<DOMIntersectionObserverEntry>>& aRetVal);
 
-  mozilla::dom::IntersectionCallback* IntersectionCallback() {
-    return mCallback;
-  }
-
   bool SetRootMargin(const nsAString& aString);
 
   void Update(Document* aDocument, DOMHighResTimeStamp time);
   MOZ_CAN_RUN_SCRIPT void Notify();
+
+  static already_AddRefed<DOMIntersectionObserver> CreateLazyLoadObserver(
+      Document&);
 
  protected:
   void Connect();
@@ -142,12 +138,13 @@ class DOMIntersectionObserver final : public nsISupports,
                                       const Maybe<nsRect>& aRootRect,
                                       const nsRect& aTargetRect,
                                       const Maybe<nsRect>& aIntersectionRect,
+                                      bool aIsIntersecting,
                                       double aIntersectionRatio);
 
   nsCOMPtr<nsPIDOMWindowInner> mOwner;
   RefPtr<Document> mDocument;
-  RefPtr<mozilla::dom::IntersectionCallback> mCallback;
-  RefPtr<Element> mRoot;
+  Variant<RefPtr<dom::IntersectionCallback>, NativeCallback> mCallback;
+  RefPtr<nsINode> mRoot;
   StyleRect<LengthPercentage> mRootMargin;
   nsTArray<double> mThresholds;
 

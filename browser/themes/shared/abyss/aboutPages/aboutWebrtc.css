@@ -1,0 +1,26 @@
+/* Additional styling for Abyss theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT WEBRTC :::::: */
+
+@-moz-document url("about:webrtc") {
+  
+  #content > div {
+    border: 1px solid var(--wfx-border-color) !important;
+    background: none repeat scroll 0% 0% var(--wfx-table-data-bg-color) !important;
+  }
+  
+  .peer-connection > h3 {
+    background-color: transparent !important;
+  }
+  
+  .peer-connection table tr:nth-child(even) {
+    background-color: var(--wfx-btn-bg-color) !important;
+  }
+  
+  a {
+	color: var(--wfx-dt-primary-color) !important;
+  }
+
+}

@@ -15,23 +15,34 @@ dictionary TextEncoderEncodeIntoResult {
   unsigned long long written;
 };
 
-[Constructor, Exposed=(Window,Worker)]
+[Exposed=(Window,Worker)]
 interface TextEncoder {
-  [Constant]
-  readonly attribute DOMString encoding;
-  /*
-   * This is spec-wise USVString but marking it as
-   * DOMString to avoid duplicate work. Since the
-   * UTF-16 to UTF-8 converter performs processing
-   * that's equivalent to first converting a
-   * DOMString to a USVString, let's avoid having
-   * the binding code doing it, too.
-   */
-  [NewObject]
-  Uint8Array encode(optional DOMString input = "");
+  constructor();
 
   /*
-   * The same comment about USVString as above applies here.
+   * This is DOMString in the spec, but the value is always ASCII
+   * and short. By declaring this as ByteString, we get the same
+   * end result (storage as inline Latin1 string in SpiderMonkey)
+   * with fewer conversions.
    */
-  TextEncoderEncodeIntoResult encodeInto(DOMString source, Uint8Array destination);
+  [Constant]
+  readonly attribute ByteString encoding;
+
+  /*
+   * This is spec-wise USVString but marking it as UTF8String as an
+   * optimization. (The SpiderMonkey-provided conversion to UTF-8 takes care of
+   * replacing lone surrogates with the REPLACEMENT CHARACTER, so the
+   * observable behavior of USVString is matched.)
+   */
+  [NewObject]
+  Uint8Array encode(optional UTF8String input = "");
+
+  /*
+   * The same comment about UTF8String as above applies here with JSString.
+   *
+   * We use JSString because we don't want to encode the full string, just as
+   * much as the capacity of the Uint8Array.
+   */
+  [CanOOM]
+  TextEncoderEncodeIntoResult encodeInto(JSString source, Uint8Array destination);
 };

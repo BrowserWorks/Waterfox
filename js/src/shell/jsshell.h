@@ -16,6 +16,7 @@
 
 #include "builtin/MapObject.h"
 #include "js/GCVector.h"
+#include "shell/ModuleLoader.h"
 #include "threading/ConditionVariable.h"
 #include "threading/LockGuard.h"
 #include "threading/Mutex.h"
@@ -31,6 +32,15 @@
 
 namespace js {
 namespace shell {
+
+// Define use of application-specific slots on the shell's global object.
+enum GlobalAppSlot {
+  GlobalAppSlotModuleRegistry,
+  GlobalAppSlotModuleResolveHook,  // HostResolveImportedModule
+  GlobalAppSlotCount
+};
+static_assert(GlobalAppSlotCount <= JSCLASS_GLOBAL_APPLICATION_SLOTS,
+              "Too many applications slots defined for shell global");
 
 enum JSShellErrNum {
 #define MSG_DEF(name, count, exception, format) name,
@@ -91,6 +101,61 @@ struct RCFile {
   bool isOpen() const { return fp; }
   bool release();
 };
+
+// Shell command-line arguments and count.
+extern int sArgc;
+extern char** sArgv;
+
+// Shell state set once at startup.
+extern bool enableCodeCoverage;
+extern bool enableDisassemblyDumps;
+extern bool offthreadCompilation;
+extern bool enableAsmJS;
+extern bool enableWasm;
+extern bool enableSharedMemory;
+extern bool enableWasmBaseline;
+extern bool enableWasmIon;
+extern bool enableWasmCranelift;
+extern bool enableWasmReftypes;
+#ifdef ENABLE_WASM_GC
+extern bool enableWasmGc;
+#endif
+#ifdef ENABLE_WASM_MULTI_VALUE
+extern bool enableWasmMultiValue;
+#endif
+#ifdef ENABLE_WASM_SIMD
+extern bool enableWasmSimd;
+#endif
+extern bool enableWasmVerbose;
+extern bool enableTestWasmAwaitTier2;
+extern bool enableSourcePragmas;
+extern bool enableAsyncStacks;
+extern bool enableStreams;
+extern bool enableReadableByteStreams;
+extern bool enableBYOBStreamReaders;
+extern bool enableWritableStreams;
+extern bool enableReadableStreamPipeTo;
+extern bool enableWeakRefs;
+extern bool enableToSource;
+extern bool enablePropertyErrorMessageFix;
+extern bool enableIteratorHelpers;
+#ifdef JS_GC_ZEAL
+extern uint32_t gZealBits;
+extern uint32_t gZealFrequency;
+#endif
+extern bool printTiming;
+extern RCFile* gErrFile;
+extern RCFile* gOutFile;
+extern bool reportWarnings;
+extern bool compileOnly;
+extern bool fuzzingSafe;
+extern bool disableOOMFunctions;
+extern bool defaultToSameCompartment;
+
+#ifdef DEBUG
+extern bool dumpEntrainedVariables;
+extern bool OOM_printAllocationCount;
+#endif
 
 // Alias the global dstName to namespaceObj.srcName. For example, if dstName is
 // "snarf", namespaceObj represents "os.file", and srcName is "readFile", then
@@ -175,16 +240,26 @@ struct ShellContext {
 
   UniquePtr<ProfilingStack> geckoProfilingStack;
 
-  JS::UniqueChars moduleLoadPath;
+  UniquePtr<ModuleLoader> moduleLoader;
 
   UniquePtr<MarkBitObservers> markObservers;
 
   // Off-thread parse state.
   js::Monitor offThreadMonitor;
   Vector<OffThreadJob*, 0, SystemAllocPolicy> offThreadJobs;
+
+  // Queued finalization registry cleanup jobs.
+  using ObjectVector = GCVector<JSObject*, 0, SystemAllocPolicy>;
+  JS::PersistentRooted<ObjectVector> finalizationRegistriesToCleanUp;
 };
 
 extern ShellContext* GetShellContext(JSContext* cx);
+
+extern MOZ_MUST_USE bool PrintStackTrace(JSContext* cx,
+                                         JS::Handle<JSObject*> stackObj);
+
+extern JSObject* CreateScriptPrivate(JSContext* cx,
+                                     HandleString path = nullptr);
 
 } /* namespace shell */
 } /* namespace js */

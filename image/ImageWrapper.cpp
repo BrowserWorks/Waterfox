@@ -124,8 +124,19 @@ Maybe<AspectRatio> ImageWrapper::GetIntrinsicRatio() {
   return mInnerImage->GetIntrinsicRatio();
 }
 
+nsresult ImageWrapper::GetHotspotX(int32_t* aX) {
+  return Image::GetHotspotX(aX);
+}
+
+nsresult ImageWrapper::GetHotspotY(int32_t* aY) {
+  return Image::GetHotspotY(aY);
+}
+
 NS_IMETHODIMP_(Orientation)
 ImageWrapper::GetOrientation() { return mInnerImage->GetOrientation(); }
+
+NS_IMETHODIMP_(bool)
+ImageWrapper::HandledOrientation() { return mInnerImage->HandledOrientation(); }
 
 NS_IMETHODIMP
 ImageWrapper::GetType(uint16_t* aType) { return mInnerImage->GetType(aType); }
@@ -202,8 +213,8 @@ bool ImageWrapper::StartDecodingWithResult(uint32_t aFlags,
   return mInnerImage->StartDecodingWithResult(aFlags, aWhichFrame);
 }
 
-bool ImageWrapper::RequestDecodeWithResult(uint32_t aFlags,
-                                           uint32_t aWhichFrame) {
+imgIContainer::DecodeResult ImageWrapper::RequestDecodeWithResult(
+    uint32_t aFlags, uint32_t aWhichFrame) {
   return mInnerImage->RequestDecodeWithResult(aFlags, aWhichFrame);
 }
 

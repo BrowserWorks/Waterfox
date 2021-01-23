@@ -27,7 +27,7 @@ class nsLayoutHistoryState final : public nsILayoutHistoryState,
   NS_DECL_NSILAYOUTHISTORYSTATE
 
  private:
-  ~nsLayoutHistoryState() {}
+  ~nsLayoutHistoryState() = default;
   bool mScrollPositionOnly;
 
   nsDataHashtable<nsCStringHashKey, UniquePtr<PresState>> mStates;
@@ -133,6 +133,23 @@ void nsLayoutHistoryState::ResetScrollState() {
       state->scrollState() = nsPoint(0, 0);
     }
   }
+}
+
+void nsLayoutHistoryState::GetContents(bool* aScrollPositionOnly,
+                                       nsTArray<nsCString>& aKeys,
+                                       nsTArray<mozilla::PresState>& aStates) {
+  *aScrollPositionOnly = mScrollPositionOnly;
+  aKeys.SetCapacity(mStates.Count());
+  aStates.SetCapacity(mStates.Count());
+  for (auto iter = mStates.Iter(); !iter.Done(); iter.Next()) {
+    aKeys.AppendElement(iter.Key());
+    aStates.AppendElement(*(iter.Data().get()));
+  }
+}
+
+void nsLayoutHistoryState::Reset() {
+  mScrollPositionOnly = false;
+  mStates.Clear();
 }
 
 namespace mozilla {

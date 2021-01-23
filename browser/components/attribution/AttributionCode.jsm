@@ -21,12 +21,19 @@ ChromeUtils.defineModuleGetter(
 );
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
 
-const ATTR_CODE_MAX_LENGTH = 200;
-const ATTR_CODE_KEYS_REGEX = /^source|medium|campaign|content$/;
+const ATTR_CODE_MAX_LENGTH = 1010;
 const ATTR_CODE_VALUE_REGEX = /[a-zA-Z0-9_%\\-\\.\\(\\)]*/;
 const ATTR_CODE_FIELD_SEPARATOR = "%26"; // URL-encoded &
 const ATTR_CODE_KEY_VALUE_SEPARATOR = "%3D"; // URL-encoded =
-const ATTR_CODE_KEYS = ["source", "medium", "campaign", "content"];
+const ATTR_CODE_KEYS = [
+  "source",
+  "medium",
+  "campaign",
+  "content",
+  "experiment",
+  "variation",
+  "ua",
+];
 
 let gCachedAttrData = null;
 
@@ -42,33 +49,49 @@ function getAttributionFile() {
   return file;
 }
 
-/**
- * Returns an object containing a key-value pair for each piece of attribution
- * data included in the passed-in attribution code string.
- * If the string isn't a valid attribution code, returns an empty object.
- */
-function parseAttributionCode(code) {
-  if (code.length > ATTR_CODE_MAX_LENGTH) {
-    return {};
-  }
-
-  let isValid = true;
-  let parsed = {};
-  for (let param of code.split(ATTR_CODE_FIELD_SEPARATOR)) {
-    let [key, value] = param.split(ATTR_CODE_KEY_VALUE_SEPARATOR, 2);
-    if (key && ATTR_CODE_KEYS_REGEX.test(key)) {
-      if (value && ATTR_CODE_VALUE_REGEX.test(value)) {
-        parsed[key] = value;
-      }
-    } else {
-      isValid = false;
-      break;
-    }
-  }
-  return isValid ? parsed : {};
-}
-
 var AttributionCode = {
+  /**
+   * Returns an array of allowed attribution code keys.
+   */
+  get allowedCodeKeys() {
+    return [...ATTR_CODE_KEYS];
+  },
+
+  /**
+   * Returns an object containing a key-value pair for each piece of attribution
+   * data included in the passed-in attribution code string.
+   * If the string isn't a valid attribution code, returns an empty object.
+   */
+  parseAttributionCode(code) {
+    if (code.length > ATTR_CODE_MAX_LENGTH) {
+      return {};
+    }
+
+    let isValid = true;
+    let parsed = {};
+    for (let param of code.split(ATTR_CODE_FIELD_SEPARATOR)) {
+      let [key, value] = param.split(ATTR_CODE_KEY_VALUE_SEPARATOR, 2);
+      if (key && ATTR_CODE_KEYS.includes(key)) {
+        if (value && ATTR_CODE_VALUE_REGEX.test(value)) {
+          parsed[key] = value;
+        }
+      } else {
+        isValid = false;
+        break;
+      }
+    }
+
+    if (isValid) {
+      return parsed;
+    }
+
+    Services.telemetry
+      .getHistogramById("BROWSER_ATTRIBUTION_ERRORS")
+      .add("decode_error");
+
+    return {};
+  },
+
   /**
    * Reads the attribution code, either from disk or a cached version.
    * Returns a promise that fulfills with an object containing the parsed
@@ -79,51 +102,62 @@ var AttributionCode = {
    * On OSX the attributions are set directly on download and retain "utm_".  We
    * strip "utm_" while retrieving the params.
    */
-  getAttrDataAsync() {
-    return (async function() {
-      if (gCachedAttrData != null) {
-        return gCachedAttrData;
-      }
+  async getAttrDataAsync() {
+    if (gCachedAttrData != null) {
+      return gCachedAttrData;
+    }
 
-      gCachedAttrData = {};
-      if (AppConstants.platform == "win") {
+    gCachedAttrData = {};
+    if (AppConstants.platform == "win") {
+      let bytes;
+      try {
+        bytes = await OS.File.read(getAttributionFile().path);
+      } catch (ex) {
+        if (ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
+          return gCachedAttrData;
+        }
+        Services.telemetry
+          .getHistogramById("BROWSER_ATTRIBUTION_ERRORS")
+          .add("read_error");
+      }
+      if (bytes) {
         try {
-          let bytes = await OS.File.read(getAttributionFile().path);
           let decoder = new TextDecoder();
           let code = decoder.decode(bytes);
-          gCachedAttrData = parseAttributionCode(code);
+          gCachedAttrData = this.parseAttributionCode(code);
         } catch (ex) {
-          // The attribution file may already have been deleted,
-          // or it may have never been installed at all;
-          // failure to open or read it isn't an error.
+          // TextDecoder can throw an error
+          Services.telemetry
+            .getHistogramById("BROWSER_ATTRIBUTION_ERRORS")
+            .add("decode_error");
         }
-      } else if (AppConstants.platform == "macosx") {
-        try {
-          let appPath = Services.dirsvc.get("GreD", Ci.nsIFile).parent.parent
-            .path;
-          let attributionSvc = Cc["@mozilla.org/mac-attribution;1"].getService(
-            Ci.nsIMacAttributionService
-          );
-          let referrer = attributionSvc.getReferrerUrl(appPath);
-          let params = new URL(referrer).searchParams;
-          for (let key of ATTR_CODE_KEYS) {
-            // We support the key prefixed with utm_ or not, but intentionally
-            // choose non-utm params over utm params.
-            for (let paramKey of [`utm_${key}`, key]) {
-              if (params.has(paramKey)) {
-                let value = params.get(paramKey);
-                if (value && ATTR_CODE_VALUE_REGEX.test(value)) {
-                  gCachedAttrData[key] = value;
-                }
+      }
+    } else if (AppConstants.platform == "macosx") {
+      try {
+        let appPath = Services.dirsvc.get("GreD", Ci.nsIFile).parent.parent
+          .path;
+        let attributionSvc = Cc["@mozilla.org/mac-attribution;1"].getService(
+          Ci.nsIMacAttributionService
+        );
+        let referrer = attributionSvc.getReferrerUrl(appPath);
+        let params = new URL(referrer).searchParams;
+        for (let key of ATTR_CODE_KEYS) {
+          // We support the key prefixed with utm_ or not, but intentionally
+          // choose non-utm params over utm params.
+          for (let paramKey of [`utm_${key}`, `funnel_${key}`, key]) {
+            if (params.has(paramKey)) {
+              let value = params.get(paramKey);
+              if (value && ATTR_CODE_VALUE_REGEX.test(value)) {
+                gCachedAttrData[key] = value;
               }
             }
           }
-        } catch (ex) {
-          // No attributions
         }
+      } catch (ex) {
+        // No attributions
       }
-      return gCachedAttrData;
-    })();
+    }
+    return gCachedAttrData;
   },
 
   /**
@@ -141,16 +175,14 @@ var AttributionCode = {
    * Returns a promise that resolves when the file is deleted,
    * or if the file couldn't be deleted (the promise is never rejected).
    */
-  deleteFileAsync() {
-    return (async function() {
-      try {
-        await OS.File.remove(getAttributionFile().path);
-      } catch (ex) {
-        // The attribution file may already have been deleted,
-        // or it may have never been installed at all;
-        // failure to delete it isn't an error.
-      }
-    })();
+  async deleteFileAsync() {
+    try {
+      await OS.File.remove(getAttributionFile().path);
+    } catch (ex) {
+      // The attribution file may already have been deleted,
+      // or it may have never been installed at all;
+      // failure to delete it isn't an error.
+    }
   },
 
   /**

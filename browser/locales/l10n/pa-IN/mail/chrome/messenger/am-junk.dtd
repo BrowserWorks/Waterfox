@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Junk Settings">
+<!ENTITY trainingDescription.label "If enabled, you must first train &brandShortName; to identify junk mail by using the Junk toolbar button to mark messages as junk or not. You need to identify both junk and non junk messages. After that &brandShortName; will be able to mark junk automatically.">
+<!ENTITY level.label "Enable adaptive junk mail controls for this account">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Move new junk messages to:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "&quot;Junk&quot; folder on:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "Other:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Automatically delete junk mail older than">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "days">
+
+<!ENTITY whitelistHeader.label "Do not automatically mark mail as junk if the sender is in: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "If enabled, &brandShortName; will automatically consider messages marked by this external classifier as junk.">
+<!ENTITY ispHeaders.label "Trust junk mail headers set by: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Selection">
+<!ENTITY junkActions.label "Destination and Retention">
+
+<!ENTITY globalJunkPrefs.label "Global Junk Preferences…">
+<!ENTITY globalJunkPrefs.accesskey "G">

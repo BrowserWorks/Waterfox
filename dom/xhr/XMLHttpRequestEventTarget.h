@@ -17,14 +17,20 @@ class XMLHttpRequestEventTarget : public DOMEventTargetHelper {
   explicit XMLHttpRequestEventTarget(DOMEventTargetHelper* aOwner)
       : DOMEventTargetHelper(aOwner) {}
 
-  XMLHttpRequestEventTarget() {}
+  explicit XMLHttpRequestEventTarget(nsIGlobalObject* aGlobalObject)
+      : DOMEventTargetHelper(aGlobalObject) {}
 
-  virtual ~XMLHttpRequestEventTarget() {}
+  virtual ~XMLHttpRequestEventTarget() = default;
 
  public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(XMLHttpRequestEventTarget,
                                            DOMEventTargetHelper)
+
+  mozilla::Maybe<EventCallbackDebuggerNotificationType>
+  GetDebuggerNotificationType() const override {
+    return mozilla::Some(EventCallbackDebuggerNotificationType::Xhr);
+  }
 
   IMPL_EVENT_HANDLER(loadstart)
   IMPL_EVENT_HANDLER(progress)

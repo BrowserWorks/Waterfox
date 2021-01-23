@@ -16,24 +16,14 @@ function getSecurityInfo(securityInfoAsString) {
 function getCertChain(securityInfoAsString) {
   let certChain = "";
   let securityInfo = getSecurityInfo(securityInfoAsString);
-  for (let cert of securityInfo.failedCertChain.getEnumerator()) {
+  for (let cert of securityInfo.failedCertChain) {
     certChain += getPEMString(cert);
   }
   return certChain;
 }
 
-function getDERString(cert) {
-  var length = {};
-  var derArray = cert.getRawDER(length);
-  var derString = "";
-  for (var i = 0; i < derArray.length; i++) {
-    derString += String.fromCharCode(derArray[i]);
-  }
-  return derString;
-}
-
 function getPEMString(cert) {
-  var derb64 = btoa(getDERString(cert));
+  var derb64 = cert.getBase64DERString();
   // Wrap the Base64 string into lines of 64 characters,
   // with CRLF line breaks (as specified in RFC 1421).
   var wrapped = derb64.replace(/(\S{64}(?!$))/g, "$1\r\n");
@@ -44,30 +34,30 @@ function getPEMString(cert) {
   );
 }
 
-function injectErrorPageFrame(tab, src) {
-  return ContentTask.spawn(
+async function injectErrorPageFrame(tab, src, sandboxed) {
+  let loadedPromise = BrowserTestUtils.browserLoaded(
     tab.linkedBrowser,
-    { frameSrc: src },
-    async function({ frameSrc }) {
-      let loaded = ContentTaskUtils.waitForEvent(
-        content.wrappedJSObject,
-        "DOMFrameContentLoaded"
-      );
-      let iframe = content.document.createElement("iframe");
-      iframe.src = frameSrc;
-      content.document.body.appendChild(iframe);
-      await loaded;
-      // We will have race conditions when accessing the frame content after setting a src,
-      // so we can't wait for AboutNetErrorLoad. Let's wait for the certerror class to
-      // appear instead (which should happen at the same time as AboutNetErrorLoad).
-      await ContentTaskUtils.waitForCondition(() =>
-        iframe.contentDocument.body.classList.contains("certerror")
-      );
-    }
+    true,
+    null,
+    true
   );
+
+  await SpecialPowers.spawn(tab.linkedBrowser, [src, sandboxed], async function(
+    frameSrc,
+    frameSandboxed
+  ) {
+    let iframe = content.document.createElement("iframe");
+    iframe.src = frameSrc;
+    if (frameSandboxed) {
+      iframe.setAttribute("sandbox", "allow-scripts");
+    }
+    content.document.body.appendChild(iframe);
+  });
+
+  await loadedPromise;
 }
 
-async function openErrorPage(src, useFrame) {
+async function openErrorPage(src, useFrame, sandboxed) {
   let dummyPage =
     getRootDirectory(gTestPath).replace(
       "chrome://mochitests/content",
@@ -78,7 +68,7 @@ async function openErrorPage(src, useFrame) {
   if (useFrame) {
     info("Loading cert error page in an iframe");
     tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, dummyPage);
-    await injectErrorPageFrame(tab, src);
+    await injectErrorPageFrame(tab, src, sandboxed);
   } else {
     let certErrorLoaded;
     tab = await BrowserTestUtils.openNewForegroundTab(
@@ -168,25 +158,56 @@ function promiseTabLoadEvent(tab, url) {
 }
 
 /**
- * Wait for the search engine to change.
+ * Wait for the search engine to change. searchEngineChangeFn is a function
+ * that will be called to change the search engine.
  */
-function promiseContentSearchChange(browser, newEngineName) {
-  return ContentTask.spawn(browser, { newEngineName }, async function(args) {
-    return new Promise(resolve => {
-      content.addEventListener("ContentSearchService", function listener(
-        aEvent
-      ) {
-        if (
-          aEvent.detail.type == "CurrentState" &&
-          content.wrappedJSObject.gContentSearchController.defaultEngine.name ==
-            args.newEngineName
-        ) {
-          content.removeEventListener("ContentSearchService", listener);
-          resolve();
+async function promiseContentSearchChange(browser, searchEngineChangeFn) {
+  // Add an event listener manually then perform the action, rather than using
+  // BrowserTestUtils.addContentEventListener as that doesn't add the listener
+  // early enough.
+  await SpecialPowers.spawn(browser, [], async () => {
+    // Store the results in a temporary place.
+    content._searchDetails = {
+      defaultEnginesList: [],
+      listener: event => {
+        if (event.detail.type == "CurrentState") {
+          content._searchDetails.defaultEnginesList.push(
+            content.wrappedJSObject.gContentSearchController.defaultEngine.name
+          );
         }
-      });
-    });
+      },
+    };
+
+    // Listen using the system group to ensure that it fires after
+    // the default behaviour.
+    content.addEventListener(
+      "ContentSearchService",
+      content._searchDetails.listener,
+      { mozSystemGroup: true }
+    );
   });
+
+  let expectedEngineName = await searchEngineChangeFn();
+
+  await SpecialPowers.spawn(
+    browser,
+    [expectedEngineName],
+    async expectedEngineNameChild => {
+      await ContentTaskUtils.waitForCondition(
+        () =>
+          content._searchDetails.defaultEnginesList &&
+          content._searchDetails.defaultEnginesList[
+            content._searchDetails.defaultEnginesList.length - 1
+          ] == expectedEngineNameChild
+      );
+      content.removeEventListener(
+        "ContentSearchService",
+        content._searchDetails.listener,
+        { mozSystemGroup: true }
+      );
+      delete content._searchDetails;
+    }
+  );
 }
 
 /**

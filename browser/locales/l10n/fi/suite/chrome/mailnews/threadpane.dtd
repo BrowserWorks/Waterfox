@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Viestiketju">
+<!ENTITY fromColumn.label "Lähettäjä">
+<!ENTITY recipientColumn.label "Vastaanottaja">
+<!ENTITY attachmentColumn.label "Liitteet">
+<!ENTITY subjectColumn.label "Aihe">
+<!ENTITY dateColumn.label "Päiväys">
+<!ENTITY priorityColumn.label "Tärkeysaste">
+<!ENTITY tagsColumn.label "Tunnukset">
+<!ENTITY accountColumn.label "Tili">
+<!ENTITY statusColumn.label "Tila">
+<!ENTITY sizeColumn.label "Koko">
+<!ENTITY junkStatusColumn.label "Roskapostitila">
+<!ENTITY unreadColumn.label "Lukematta viestiketjussa">
+<!ENTITY totalColumn.label "Yhteensä viestiketjussa">
+<!ENTITY readColumn.label "Luettu">
+<!ENTITY receivedColumn.label "Vastaanotettu">
+<!ENTITY flagColumn.label "Lippu">
+<!ENTITY locationColumn.label "Osoite">
+<!ENTITY idColumn.label "Saapumisjärjestys">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Valitse näytettävät sarakkeet">
+<!ENTITY threadColumn2.tooltip "Näytä viestiketjut"> 
+<!ENTITY fromColumn2.tooltip "Lajittele lähettäjän mukaan">
+<!ENTITY recipientColumn2.tooltip "Lajittele vastaanottajan mukaan">
+<!ENTITY attachmentColumn2.tooltip "Lajittele liitteiden mukaan">
+<!ENTITY subjectColumn2.tooltip "Lajittele aiheen mukaan">
+<!ENTITY dateColumn2.tooltip "Lajittele päiväyksen mukaan">
+<!ENTITY priorityColumn2.tooltip "Lajittele tärkeysasteen mukaan">
+<!ENTITY tagsColumn2.tooltip "Lajittele tunnusten mukaan">
+<!ENTITY accountColumn2.tooltip "Lajittele tilin mukaan">
+<!ENTITY statusColumn2.tooltip "Lajittele tilan mukaan">
+<!ENTITY sizeColumn2.tooltip "Lajittele koon mukaan">
+<!ENTITY junkStatusColumn2.tooltip "Lajittele roskapostitilan mukaan">
+<!ENTITY unreadColumn2.tooltip "Lukemattomia viestejä viestiketjussa">
+<!ENTITY totalColumn2.tooltip "Viestejä viestiketjussa yhteensä">
+<!ENTITY readColumn2.tooltip "Lajittele sen mukaan, onko viesti luettu">
+<!ENTITY receivedColumn2.tooltip "Lajittele vastaanottopäiväyksen mukaan">
+<!ENTITY flagColumn2.tooltip "Lajittele lipun mukaan">
+<!ENTITY locationColumn2.tooltip "Lajittele sijainnin mukaan">
+<!ENTITY idColumn2.tooltip "Lajittele saapumisjärjestyksen mukaan">

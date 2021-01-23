@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGAnimationElement : SVGElement {
 
   readonly attribute SVGElement? targetElement;
@@ -31,5 +32,5 @@ interface SVGAnimationElement : SVGElement {
   void endElementAt(float offset);
 };
 
-SVGAnimationElement implements SVGTests;
+SVGAnimationElement includes SVGTests;
 

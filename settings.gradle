@@ -15,12 +15,13 @@ if (System.properties['os.name'].toLowerCase().contains('windows')) {
 }
 def proc = commandLine.execute(null, new File(topsrcdir))
 def standardOutput = new ByteArrayOutputStream()
-proc.consumeProcessOutput(standardOutput, standardOutput)
+def standardError = new ByteArrayOutputStream()
+proc.consumeProcessOutput(standardOutput, standardError)
 proc.waitFor()
 
 // Only show the output if something went wrong.
 if (proc.exitValue() != 0) {
-    throw new GradleException("Process '${commandLine}' finished with non-zero exit value ${proc.exitValue()}:\n\n${standardOutput.toString()}")
+    throw new GradleException("Process '${commandLine}' finished with non-zero exit value ${proc.exitValue()}:\n\nstdout:\n${standardOutput.toString()}\n\nstderr:\n${standardError.toString()}")
 }
 
 import groovy.json.JsonSlurper
@@ -39,19 +40,15 @@ if (json.substs.MOZ_BUILD_APP != 'mobile/android') {
 // but it's hard to automatically arrange better.
 System.setProperty('android.home', json.substs.ANDROID_SDK_ROOT)
 
-include ':annotations'
-include ':app'
+include ':annotations', ':messaging_example', ':port_messaging_example'
 include ':geckoview'
 include ':geckoview_example'
 include ':omnijar'
-include ':thirdparty'
 
 project(':annotations').projectDir = new File("${json.topsrcdir}/mobile/android/annotations")
-project(':app').projectDir = new File("${json.topsrcdir}/mobile/android/app")
 project(':geckoview').projectDir = new File("${json.topsrcdir}/mobile/android/geckoview")
 project(':geckoview_example').projectDir = new File("${json.topsrcdir}/mobile/android/geckoview_example")
 project(':omnijar').projectDir = new File("${json.topsrcdir}/mobile/android/app/omnijar")
-project(':thirdparty').projectDir = new File("${json.topsrcdir}/mobile/android/thirdparty")
 
 // The Gradle instance is shared between settings.gradle and all the
 // other build.gradle files (see
@@ -70,3 +67,5 @@ gradle.ext.mozconfig = json
 // based on the changed environment variables.
 def orig = slurper.parse(new File(json.topobjdir, '.mozconfig.json'))
 gradle.ext.mozconfig.orig_mozconfig = orig.mozconfig
+project(':messaging_example').projectDir = new File('mobile/android/examples/messaging_example/app')
+project(':port_messaging_example').projectDir = new File('mobile/android/examples/port_messaging_example/app')

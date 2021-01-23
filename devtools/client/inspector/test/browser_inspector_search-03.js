@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -102,6 +101,7 @@ var TEST_DATA = [
       { label: "#p1" },
       { label: "#p2" },
       { label: "#p3" },
+      { label: "#root" },
       { label: "#s1" },
       { label: "#s2" },
     ],
@@ -119,6 +119,7 @@ var TEST_DATA = [
       { label: "#p1" },
       { label: "#p2" },
       { label: "#p3" },
+      { label: "#root" },
       { label: "#s1" },
       { label: "#s2" },
     ],

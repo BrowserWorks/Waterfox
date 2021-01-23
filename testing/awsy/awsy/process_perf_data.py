@@ -3,11 +3,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
+
 import os
 import sys
 import json
 import math
 import glob
+
+AWSY_PATH = os.path.dirname(os.path.realpath(__file__))
+if AWSY_PATH not in sys.path:
+    sys.path.append(AWSY_PATH)
+
 import parse_about_memory
 
 # A description of each checkpoint and the root path to it.
@@ -68,7 +75,7 @@ def update_checkpoint_paths(checkpoint_files, checkpoints):
             if indices:
                 checkpoints[indices[0]]['path'] = paths[idx]
             else:
-                print "found files but couldn't find %s" % name
+                print("found files but couldn't find {}").format(name)
 
 
 def create_suite(name, node, data_path, checkpoints=CHECKPOINTS,
@@ -88,7 +95,7 @@ def create_suite(name, node, data_path, checkpoints=CHECKPOINTS,
         'name': name,
         'subtests': [],
         'lowerIsBetter': True,
-        'units': 'bytes'
+        'unit': 'bytes'
     }
 
     if alertThreshold:
@@ -146,7 +153,7 @@ def create_suite(name, node, data_path, checkpoints=CHECKPOINTS,
             'name': checkpoint['name'],
             'value': value,
             'lowerIsBetter': True,
-            'units': 'bytes'
+            'unit': 'bytes'
         }
         suite['subtests'].append(subtest)
         total += math.log(subtest['value'])
@@ -164,7 +171,7 @@ def create_perf_data(data_path, perf_suites=PERF_SUITES, checkpoints=CHECKPOINTS
     Builds up a performance data blob suitable for submitting to perfherder.
     """
     if ("GCOV_PREFIX" in os.environ) or ("JS_CODE_COVERAGE_OUTPUT_DIR" in os.environ):
-        print "Code coverage is being collected, performance data will not be gathered."
+        print("Code coverage is being collected, performance data will not be gathered.")
         return {}
 
     perf_blob = {
@@ -183,12 +190,12 @@ def create_perf_data(data_path, perf_suites=PERF_SUITES, checkpoints=CHECKPOINTS
 if __name__ == '__main__':
     args = sys.argv[1:]
     if not args:
-        print "Usage: process_perf_data.py data_path"
+        print("Usage: process_perf_data.py data_path")
         sys.exit(1)
 
     # Determine which revisions we need to process.
     data_path = args[0]
     perf_blob = create_perf_data(data_path)
-    print "PERFHERDER_DATA: %s" % json.dumps(perf_blob)
+    print("PERFHERDER_DATA: {}").format(json.dumps(perf_blob))
 
     sys.exit(0)

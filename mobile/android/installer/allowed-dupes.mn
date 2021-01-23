@@ -5,48 +5,24 @@
 # PLEASE DO NOT ADD MORE EXCEPTIONS TO THIS LIST
 #
 
-chrome/toolkit/skin/classic/global/autocomplete.css
-chrome/toolkit/skin/classic/global/button.css
-chrome/toolkit/skin/classic/global/checkbox.css
-chrome/toolkit/skin/classic/global/dialog.css
-chrome/toolkit/skin/classic/global/dropmarker.css
-chrome/toolkit/skin/classic/global/global.css
-chrome/toolkit/skin/classic/global/listbox.css
-chrome/toolkit/skin/classic/global/menu.css
-chrome/toolkit/skin/classic/global/menulist.css
-chrome/toolkit/skin/classic/global/numberinput.css
-chrome/toolkit/skin/classic/global/popup.css
-chrome/toolkit/skin/classic/global/preferences.css
-chrome/toolkit/skin/classic/global/radio.css
-chrome/toolkit/skin/classic/global/richlistbox.css
-chrome/toolkit/skin/classic/global/scrollbars.css
-chrome/toolkit/skin/classic/global/scrollbox.css
-chrome/toolkit/skin/classic/global/splitter.css
-chrome/toolkit/skin/classic/global/tabbox.css
-chrome/toolkit/skin/classic/global/textbox.css
-chrome/toolkit/skin/classic/global/toolbar.css
-chrome/toolkit/skin/classic/global/toolbarbutton.css
-chrome/toolkit/skin/classic/global/tooltip.css
-chrome/toolkit/skin/classic/global/tree.css
-chrome/toolkit/skin/classic/global/wizard.css
-modules/commonjs/sdk/ui/button/view/events.js
-modules/commonjs/sdk/ui/state/events.js
-modules/devtools/Console.jsm
-modules/devtools/Loader.jsm
-modules/devtools/Simulator.jsm
-modules/devtools/shared/Console.jsm
-modules/devtools/shared/Loader.jsm
-modules/devtools/shared/apps/Simulator.jsm
+# Row and column icons are duplicated
 res/table-remove-column-active.gif
-res/table-remove-column-hover.gif
-res/table-remove-column.gif
 res/table-remove-row-active.gif
+res/table-remove-column-hover.gif
 res/table-remove-row-hover.gif
+res/table-remove-column.gif
 res/table-remove-row.gif
+
 res/multilocale.txt
-modules/commonjs/index.js
 update.locale
-chrome/chrome/searchplugins/bolcom-fy-NL.xml
-chrome/chrome/searchplugins/bolcom-nl.xml
-chrome/chrome/searchplugins/ddg.xml
-chrome/chrome/searchplugins/duckduckgo.xml
+
+#ifdef MOZ_ANDROID_FAT_AAR_ARCHITECTURES
+defaults/pref/arm64-v8a/geckoview-prefs.js
+defaults/pref/armeabi-v7a/geckoview-prefs.js
+defaults/pref/x86/geckoview-prefs.js
+defaults/pref/x86_64/geckoview-prefs.js
+arm64-v8a/greprefs.js
+armeabi-v7a/greprefs.js
+x86/greprefs.js
+x86_64/greprefs.js
+#endif # MOZ_ANDROID_FAT_AAR_ARCHITECTURES

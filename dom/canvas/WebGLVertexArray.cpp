@@ -14,49 +14,57 @@
 
 namespace mozilla {
 
-JSObject* WebGLVertexArray::WrapObject(JSContext* cx,
-                                       JS::Handle<JSObject*> givenProto) {
-  return dom::WebGLVertexArrayObject_Binding::Wrap(cx, this, givenProto);
-}
-
-WebGLVertexArray::WebGLVertexArray(WebGLContext* const webgl, const GLuint name)
-    : WebGLRefCountedObject(webgl), mGLName(name) {
-  mAttribs.SetLength(mContext->mGLMaxVertexAttribs);
-  mContext->mVertexArrays.insertBack(this);
-}
-
-WebGLVertexArray::~WebGLVertexArray() { MOZ_ASSERT(IsDeleted()); }
-
-void WebGLVertexArray::AddBufferBindCounts(int8_t addVal) const {
-  const GLenum target = 0;  // Anything non-TF is fine.
-  WebGLBuffer::AddBindCount(target, mElementArrayBuffer.get(), addVal);
-  for (const auto& attrib : mAttribs) {
-    WebGLBuffer::AddBindCount(target, attrib.mBuf.get(), addVal);
-  }
-}
-
 WebGLVertexArray* WebGLVertexArray::Create(WebGLContext* webgl) {
-  WebGLVertexArray* array;
   if (webgl->gl->IsSupported(gl::GLFeature::vertex_array_object)) {
-    array = new WebGLVertexArrayGL(webgl);
-  } else {
-    array = new WebGLVertexArrayFake(webgl);
+    return new WebGLVertexArrayGL(webgl);
   }
-  return array;
+  return new WebGLVertexArrayFake(webgl);
 }
 
-void WebGLVertexArray::Delete() {
-  DeleteImpl();
-
-  LinkedListElement<WebGLVertexArray>::removeFrom(mContext->mVertexArrays);
-  mElementArrayBuffer = nullptr;
-  mAttribs.Clear();
+WebGLVertexArray::WebGLVertexArray(WebGLContext* const webgl)
+    : WebGLContextBoundObject(webgl) {
+  const webgl::VertAttribPointerDesc defaultDesc;
+  const webgl::VertAttribPointerCalculated defaultCalc;
+  for (const auto i : IntegerRange(mContext->MaxVertexAttribs())) {
+    AttribPointer(i, nullptr, defaultDesc, defaultCalc);
+  }
 }
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(WebGLVertexArray, mAttribs,
-                                      mElementArrayBuffer)
+WebGLVertexArray::~WebGLVertexArray() = default;
 
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebGLVertexArray, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebGLVertexArray, Release)
+Maybe<double> WebGLVertexArray::GetVertexAttrib(const uint32_t index,
+                                                const GLenum pname) const {
+  const auto& binding = mBindings[index];
+  const auto& desc = mDescs[index];
+
+  switch (pname) {
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_STRIDE:
+      return Some(desc.byteStrideOrZero);
+
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_SIZE:
+      return Some(desc.channels);
+
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_TYPE:
+      return Some(desc.type);
+
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_INTEGER:
+      return Some(desc.intFunc);
+
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_DIVISOR:
+      return Some(binding.layout.divisor);
+
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_ENABLED:
+      return Some(binding.layout.isArray);
+
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_NORMALIZED:
+      return Some(desc.normalized);
+
+    case LOCAL_GL_VERTEX_ATTRIB_ARRAY_POINTER:
+      return Some(binding.layout.byteOffset);
+
+    default:
+      return {};
+  }
+}
 
 }  // namespace mozilla

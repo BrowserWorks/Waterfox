@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import urlparse
 from collections import defaultdict
 
@@ -13,6 +14,7 @@ from wptrunner.wptmanifest.backends import base
 
 here = os.path.dirname(__file__)
 logger = logging.getLogger(__name__)
+yaml = None
 
 
 class Compiler(base.Compiler):
@@ -165,6 +167,8 @@ def compile(stream, data_cls_getter=None, **kwargs):
 def create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", help="Directory to store output files")
+    parser.add_argument("--meta-dir", help="Directory containing wpt-metadata "
+                        "checkout to update.")
     return parser
 
 
@@ -195,7 +199,10 @@ def run(src_root, obj_root, logger_=None, **kwargs):
         with open(out_path, "w") as f:
             json.dump(rv, f)
     else:
-        print json.dumps(rv, indent=2)
+        print(json.dumps(rv, indent=2))
+
+    if kwargs["meta_dir"]:
+        update_wpt_meta(logger_obj, kwargs["meta_dir"], rv)
 
 
 def get_dir_paths(test_root, test_path):
@@ -259,6 +266,7 @@ def add_metadata(target, key, metadata):
             target[prop] = get_condition_value_list(metadata, prop)
 
     if metadata.has_key("expected"):
+        intermittent = []
         values = metadata.get("expected")
         by_status = defaultdict(list)
         for item in values:
@@ -267,11 +275,19 @@ def add_metadata(target, key, metadata):
             else:
                 condition = None
                 status = item
-            by_status[status].append(condition)
+            if isinstance(status, list):
+                intermittent.append((condition, status))
+                expected_status = status[0]
+            else:
+                expected_status = status
+            by_status[expected_status].append(condition)
         for status in statuses:
             if status in by_status:
                 target["expected_%s" % status] = [serialize(item) if item else None
                                                   for item in by_status[status]]
+        if intermittent:
+            target["intermittent"] = [[serialize(cond) if cond else None, intermittent_statuses]
+                                      for cond, intermittent_statuses in intermittent]
 
 
 def get_condition_value_list(metadata, key):
@@ -290,10 +306,150 @@ def is_interesting(metadata):
         return True
 
     if metadata.has_key("expected"):
-        for item in metadata.get("expected"):
-            if isinstance(item, tuple):
-                if item[1] in statuses:
-                    return True
-            elif item in statuses:
+        for expected_value in metadata.get("expected"):
+            # Include both expected and known intermittent values
+            if isinstance(expected_value, tuple):
+                expected_value = expected_value[1]
+            if isinstance(expected_value, list):
                 return True
+            if expected_value in statuses:
+                return True
+            return True
     return False
+
+
+def update_wpt_meta(logger, meta_root, data):
+    global yaml
+    import yaml
+
+    if not os.path.exists(meta_root) or not os.path.isdir(meta_root):
+        raise ValueError("%s is not a directory" % (meta_root,))
+
+    with WptMetaCollection(meta_root) as wpt_meta:
+        for dir_path, dir_data in sorted(data.iteritems()):
+            for test, test_data in dir_data.get("_tests", {}).iteritems():
+                add_test_data(logger, wpt_meta, dir_path, test, None, test_data)
+                for subtest, subtest_data in test_data.get("_subtests", {}).iteritems():
+                    add_test_data(logger, wpt_meta, dir_path, test, subtest, subtest_data)
+
+def add_test_data(logger, wpt_meta, dir_path, test, subtest, test_data):
+    triage_keys = ["bug"]
+
+    for key in triage_keys:
+        if key in test_data:
+            value = test_data[key]
+            for cond_value in value:
+                if cond_value[0] is not None:
+                    logger.info("Skipping conditional metadata")
+                    continue
+                cond_value = cond_value[1]
+                if not isinstance(cond_value, list):
+                    cond_value = [cond_value]
+                for bug_value in cond_value:
+                    bug_link = get_bug_link(bug_value)
+                    if bug_link is None:
+                        logger.info("Could not extract bug: %s" % value)
+                        continue
+                    meta = wpt_meta.get(dir_path)
+                    meta.set(test,
+                             subtest,
+                             product="firefox",
+                             bug_url=bug_link)
+
+
+bugzilla_re = re.compile("https://bugzilla\.mozilla\.org/show_bug\.cgi\?id=\d+")
+bug_re = re.compile("(?:[Bb][Uu][Gg])?\s*(\d+)")
+
+
+def get_bug_link(value):
+    value = value.strip()
+    m = bugzilla_re.match(value)
+    if m:
+        return m.group(0)
+    m = bug_re.match(value)
+    if m:
+        return "https://bugzilla.mozilla.org/show_bug.cgi?id=%s" % m.group(1)
+
+
+class WptMetaCollection(object):
+    def __init__(self, root):
+        self.root = root
+        self.loaded = {}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        for item in self.loaded.itervalues():
+            item.write(self.root)
+        self.loaded = {}
+
+    def get(self, dir_path):
+        if dir_path not in self.loaded:
+            meta = WptMeta.get_or_create(self.root, dir_path)
+            self.loaded[dir_path] = meta
+        return self.loaded[dir_path]
+
+
+class WptMeta(object):
+    def __init__(self, dir_path, data):
+        assert "links" in data and isinstance(data["links"], list)
+        self.dir_path = dir_path
+        self.data = data
+
+    @staticmethod
+    def meta_path(meta_root, dir_path):
+        return os.path.join(meta_root, dir_path, "META.yml")
+
+    def path(self, meta_root):
+        return self.meta_path(meta_root, self.dir_path)
+
+    @classmethod
+    def get_or_create(cls, meta_root, dir_path):
+        if os.path.exists(cls.meta_path(meta_root, dir_path)):
+            return cls.load(meta_root, dir_path)
+        return cls(dir_path, {"links": []})
+
+    @classmethod
+    def load(cls, meta_root, dir_path):
+        with open(cls.meta_path(meta_root, dir_path), "r") as f:
+            data = yaml.safe_load(f)
+        return cls(dir_path, data)
+
+    def set(self, test, subtest, product, bug_url):
+        target_link = None
+        for link in self.data["links"]:
+            link_product = link.get("product")
+            if link_product:
+                link_product = link_product.split("-", 1)[0]
+            if link_product is None or link_product == product:
+                if link["url"] == bug_url:
+                    target_link = link
+                    break
+
+        if target_link is None:
+            target_link = {"product": product.encode("utf8"),
+                           "url": bug_url.encode("utf8"),
+                           "results": []}
+            self.data["links"].append(target_link)
+
+        if not "results" in target_link:
+            target_link["results"] = []
+
+        has_result = any((result["test"] == test and result.get("subtest") == subtest)
+                          for result in target_link["results"])
+        if not has_result:
+            data = {"test": test.encode("utf8")}
+            if subtest:
+                data["subtest"] = subtest.encode("utf8")
+            target_link["results"].append(data)
+
+    def write(self, meta_root):
+        path = self.path(meta_root)
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        with open(path, "wb") as f:
+            yaml.safe_dump(self.data, f,
+                           default_flow_style=False,
+                           allow_unicode=True)

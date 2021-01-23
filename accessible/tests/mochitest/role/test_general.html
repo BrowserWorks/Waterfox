@@ -50,10 +50,8 @@
       testRole("head5", ROLE_HEADING);
       testRole("head6", ROLE_HEADING);
 
-      // Test that an html:input @type="file" is exposed as ROLE_TEXT_CONTAINER.
-      // After fix for bug 471356, it was temporarily exposed as a paragraph,
-      // breaking JAWS compatibility.
-      testRole("data", ROLE_TEXT_CONTAINER);
+      // Test that an html:input @type="file" is exposed as ROLE_GROUPING.
+      testRole("data", ROLE_GROUPING);
 
       // Test that input type="checkbox" and type="radio" are
       // exposed as such regardless of appearance style.
@@ -79,6 +77,10 @@
       // Test role of listbox inside combobox
       testRole("listbox1", ROLE_COMBOBOX_LIST);
       testRole("listbox2", ROLE_COMBOBOX_LIST);
+
+      // Test role of menu and li items in menu
+      testRole("menu", ROLE_LIST);
+      testRole("menuItem", ROLE_LISTITEM);
 
       SimpleTest.finish();
     }
@@ -191,5 +193,9 @@
   </div>
   <div id="combobox2" role="combobox" aria-owns="listbox2"></div>
   <div id="listbox2" role="listbox"></div>
+
+  <menu id="menu">
+    <li id="menuItem">menu item!</li>
+  </menu>
 </body>
 </html>

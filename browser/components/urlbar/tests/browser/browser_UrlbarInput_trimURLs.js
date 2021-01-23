@@ -6,15 +6,21 @@ add_task(async function() {
   registerCleanupFunction(async function() {
     BrowserTestUtils.removeTab(tab);
     Services.prefs.clearUserPref(PREF_TRIMURLS);
-    URLBarSetURI();
+    gURLBar.setURI();
   });
+
+  // Avoid search service sync init warnings due to URIFixup, when running the
+  // test alone.
+  await Services.search.init();
 
   Services.prefs.setBoolPref(PREF_TRIMURLS, true);
 
   testVal("http://mozilla.org/", "mozilla.org");
   testVal("https://mozilla.org/", "https://mozilla.org");
   testVal("http://mözilla.org/", "mözilla.org");
-  testVal("http://mozilla.imaginatory/", "mozilla.imaginatory");
+  // This isn't a valid public suffix, thus we should untrim it or it would
+  // end up doing a search.
+  testVal("http://mozilla.imaginatory/");
   testVal("http://www.mozilla.org/", "www.mozilla.org");
   testVal("http://sub.mozilla.org/", "sub.mozilla.org");
   testVal("http://sub1.sub2.sub3.mozilla.org/", "sub1.sub2.sub3.mozilla.org");
@@ -61,10 +67,16 @@ add_task(async function() {
   testVal("http:// invalid url");
 
   testVal("http://someotherhostwithnodots");
-  testVal("http://localhost/ foo bar baz");
+  if (Services.prefs.getBoolPref("browser.fixup.defaultToSearch", true)) {
+    // This host is whitelisted, it can be trimmed.
+    testVal("http://localhost/ foo bar baz", "localhost/ foo bar baz");
+  } else {
+    testVal("http://localhost/ foo bar baz");
+  }
+  // This is not trimmed because it's not in the domain whitelist.
   testVal(
     "http://localhost.localdomain/ foo bar baz",
-    "localhost.localdomain/ foo bar baz"
+    "http://localhost.localdomain/ foo bar baz"
   );
 
   Services.prefs.setBoolPref(PREF_TRIMURLS, false);
@@ -83,7 +95,7 @@ add_task(async function() {
 
   await testCopy("example.com", "http://example.com/");
 
-  SetPageProxyState("invalid");
+  gURLBar.setPageProxyState("invalid");
   gURLBar.valueIsTyped = true;
   await testCopy("example.com", "example.com");
 });
@@ -91,22 +103,27 @@ add_task(async function() {
 function testVal(originalValue, targetValue) {
   gURLBar.value = originalValue;
   gURLBar.valueIsTyped = false;
-  is(gURLBar.textValue, targetValue || originalValue, "url bar value set");
+  let trimmedValue = UrlbarPrefs.get("trimURLs")
+    ? BrowserUtils.trimURL(originalValue)
+    : originalValue;
+  Assert.equal(gURLBar.value, trimmedValue, "url bar value set");
+  // Now focus the urlbar and check the inputField value is properly set.
+  gURLBar.focus();
+  Assert.equal(
+    gURLBar.value,
+    targetValue || originalValue,
+    "Check urlbar value on focus"
+  );
+  // On blur we should trim again.
+  gURLBar.blur();
+  Assert.equal(gURLBar.value, trimmedValue, "Check urlbar value on blur");
 }
 
 function testCopy(originalValue, targetValue) {
-  return new Promise((resolve, reject) => {
-    waitForClipboard(
-      targetValue,
-      function() {
-        is(gURLBar.textValue, originalValue, "url bar copy value set");
-
-        gURLBar.focus();
-        gURLBar.select();
-        goDoCommand("cmd_copy");
-      },
-      resolve,
-      reject
-    );
+  return SimpleTest.promiseClipboardChange(targetValue, () => {
+    Assert.equal(gURLBar.value, originalValue, "url bar copy value set");
+    gURLBar.focus();
+    gURLBar.select();
+    goDoCommand("cmd_copy");
   });
 }

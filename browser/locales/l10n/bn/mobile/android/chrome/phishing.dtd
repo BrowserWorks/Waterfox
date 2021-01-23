@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "আমাকে এখান থেকে বের কর!">
+<!ENTITY safeb.palm.decline.label "এই সতর্কবাণী উপেক্ষা করো">
+<!ENTITY safeb.palm.reportPage.label "এই পাতাটি কেন ব্লক করা হয়েছিল?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "উপদেশ দেন <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "আক্রমণ পাতা প্রতিবেদন করা হয়েছে!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> এ ওয়েবসাইটটি আক্রমণকারী হিসেবে রিপোর্ট করা হয়েছে এবং আপনার নিরাপত্তা পছন্দ অনুযায়ী ব্লক করা হয়েছে।">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>আক্রমণকারী পাতা তথ্য চুরি করতে প্রোগ্রাম ইন্সটল করার চেষ্টা করে, অন্য কম্পিউটারকে আক্রমন করতে আপনার কম্পিটার ব্যবহার করে, বা আপনার সিস্টেম ধ্বংস করে।</p><p>কিছু আক্রমণকারী পাতা ইচ্ছাকৃত ভাবে ক্ষতিকর সফটওয়্যার বিতরণ করে, কিন্তু অনেকে না বুঝেই এগুলোকে কাজ করতে অনুমোদন দেয়।</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "বিভ্রান্তিকর সাইট!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "এই ওয়েবসাইটটিকে<span id='phishing_sitename'/> প্রতারক সাইট হিসেবে রিপোর্ট করা হয়েছে এবং আপনার নিরাপত্তা পছন্দ অনুযায়ী ব্লক করা হয়েছে।">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>প্রতারণামূলক সাইটগুলো এমনভাবে তৈরি করা হয় যে আপনাকে বিভ্রান্ত করে কোন বিপদজনক কিছু করার প্রচরণা দেয়, যেমন সফটওয়্যার ইন্সটল করা, বা আপনার ব্যক্তিগত তথ্য প্রকাশ করতে বাধ্য করা, যেমন পাসওয়ার্ড, ফোন নাম্বার বা ক্রেডিট কার্ড।</p><p>এইসব পাতায় তথ্য দেওয়ার ফলাফল পরিচয় চুরি বা অন্য কোন প্রতারণা হতে পারে।</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "সন্দেহভাজন অবাঞ্ছিত সফটওয়্যার সাইট!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "এই ওয়েবসাইটটি <span id='unwanted_sitename'/> অনাকাঙ্খিত সফটওয়ার বহন করে বলে, রিপোর্ট করা হয়েছে এবং আপনার নিরাপত্তা পছন্দ অনুযায়ী ব্লক করা হয়েছে।">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "অবাঞ্ছনীয় সফটওয়্যার পাতা এমন কিছু সফটওয়্যার ইন্সটল করতে চাইছে যা আপনার কম্পিউটারের সমূহ ক্ষতির সম্ভাবনার কারণ হতে পারে।">
+
+<!ENTITY safeb.blocked.harmfulPage.title "সাইটি সম্ভবত ম্যালওয়ারে পূর্ণ">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; পাতাটি ব্লক করেছে কারণ এটি কোন ক্ষতিকর অ্যাপ্লিকেশন ইনস্টল করার চেষ্টা করছে যা আপনার তথ্য (উদাহরণস্বরূপ ফটো, পাসওয়ার্ড, বার্তা এবং ক্রেডিট কার্ড) চুরি বা মুছে ফেলতে পারে।">

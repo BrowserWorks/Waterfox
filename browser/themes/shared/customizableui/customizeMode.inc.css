@@ -42,7 +42,8 @@
 }
 
 #customization-panel-container {
-  padding: 0 20px 25px;
+  --customization-panel-padding: 20px;
+  padding: 0 var(--customization-panel-padding) 25px;
 }
 
 #customization-footer {
@@ -74,6 +75,11 @@
   color: rgb(71, 71, 71) !important;
 }
 
+.customizationmode-checkbox[disabled]:-moz-lwtheme {
+  color: inherit;
+  opacity: 0.4;
+}
+
 #customization-reset-button,
 #customization-undo-reset-button,
 #customization-done-button {
@@ -90,8 +96,6 @@
 .customizationmode-button > .box-inherit {
   border-width: 0;
   padding: 3px 0;
-  padding-inline-start: 0;
-  padding-inline-end: 0;
 }
 
 /* We use a smaller padding to ensure images don't have padding.
@@ -219,14 +223,11 @@ toolbarpaletteitem[mousedown] > toolbaritem.toolbaritem-combined-buttons {
 
 /* Override the toolkit styling for items being dragged over. */
 toolbarpaletteitem[place="toolbar"] {
-  border-left-width: 0;
-  border-right-width: 0;
-  margin-right: 0;
-  margin-left: 0;
+  border-inline-width: 0;
+  margin-inline: 0;
 }
 #widget-overflow-fixed-list > toolbarpaletteitem[place="menu-panel"] {
-  border-top: 0px solid transparent;
-  border-bottom: 0px solid transparent;
+  border-block: 0 solid transparent;
 }
 
 #customization-palette:not([hidden]) {
@@ -276,8 +277,11 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   outline: 1px solid;
   outline-offset: -2px;
   opacity: .6;
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-block: 5px;
+}
+
+toolbarpaletteitem > #search-container > #searchbar > .searchbar-textbox {
+  visibility: hidden; /* Hide searchbar placeholder text in customize mode */
 }
 
 #wrapper-edit-controls > #edit-controls > toolbarbutton > .toolbarbutton-icon {
@@ -311,20 +315,19 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   margin-bottom: 10px;
 }
 
-#customization-uidensity-menu > .panel-arrowcontainer > .panel-arrowcontent,
-#customization-lwtheme-menu > .panel-arrowcontainer > .panel-arrowcontent {
-  -moz-box-orient: vertical;
+#customization-uidensity-menu,
+#customization-lwtheme-menu {
   font: menu;
 }
 
-#customization-lwtheme-menu > .panel-arrowcontainer > .panel-arrowcontent {
+#customization-lwtheme-menu {
   /* Make the panel padding uniform across all platforms due to the
      styling of the section headers and footer. */
-  padding: 10px;
+  --arrowpanel-padding: 10px;
 }
 
-#customization-uidensity-menu > .panel-arrowcontainer > .panel-arrowcontent {
-  padding: 5px 10px;
+#customization-uidensity-menu {
+  --arrowpanel-padding: 5px 10px;
 }
 
 .customization-uidensity-menuitem > .menu-iconic-left > .menu-iconic-icon,
@@ -339,10 +342,8 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   -moz-appearance: none;
   border: 1px solid transparent;
   margin: 0 -5px 5px;
-  padding-top: 0;
-  padding-inline-end: 5px;
-  padding-bottom: 0;
-  padding-inline-start: 0;
+  padding-block: 0;
+  padding-inline: 0 5px;
 }
 
 .customization-uidensity-menuitem {
@@ -381,10 +382,6 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   text-align: start;
 }
 
-.customization-uidensity-menuitem > .menu-iconic-text {
-  font: menu;
-}
-
 #customization-lwtheme-menu-header,
 #customization-lwtheme-menu-recommended {
   padding: 10px;
@@ -397,8 +394,7 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
 #customization-lwtheme-menu-header,
 #customization-lwtheme-menu-recommended,
 #customization-lwtheme-menu-footer {
-  margin-right: -10px;
-  margin-left: -10px;
+  margin-inline: -10px;
 }
 
 #customization-lwtheme-menu-header {
@@ -421,8 +417,7 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   color: inherit;
   border-style: none;
   padding: 10px;
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline: 0;
 }
 
 .customization-lwtheme-menu-footeritem:hover {
@@ -443,7 +438,6 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   transform: scaleX(-1);
 }
 
-
 #customization-panelWrapper > .panel-arrowcontent {
   color: var(--arrowpanel-color);
   background: var(--arrowpanel-background);
@@ -456,12 +450,14 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   border-radius: var(--arrowpanel-border-radius);
 %else
   border: 1px solid var(--arrowpanel-border-color);
+  margin: 0;
   box-shadow: 0 0 4px hsla(0,0%,0%,.2);
 %endif
   max-width: 29em;
 }
 
 #customization-panelWrapper > .panel-arrowbox {
+  display: block;
   position: relative;
   height: 10px;
   margin-bottom: -1px;
@@ -487,22 +483,11 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   -moz-context-properties: fill, stroke;
   fill: var(--arrowpanel-background);
   stroke: var(--arrowpanel-border-color);
-  /* The arrow needs to point to the overflow button. The numbers involved
-   * are:
-   * overflow button width: (16px + 2 * 2px padding
-   * + 2 * toolbarbutton-inner-padding)
-   * hamburger button width: (16px + 2 * 5px padding
-   * + 2 * toolbarbutton-inner-padding)
-   * hamburger button border + margin: 1px + 2px
-   * The total desired offset from the right edge of the window is thus:
-   * 10px + 1 * toolbarbutton-inner-padding (center of overflow button) +
-   * 29px + 2 * toolbarbutton-inner-padding
-   * The #customization-panel-container has a 20px margin, so that leaves:
-   * 19px + 3 * toolbarbutton-inner-padding
-   * Finally, we need to center the arrow, which is 20px wide, so subtract
-   * 10px.
+  /* JS code sets --panel-arrow-offset to the distance between the middle of the
+   * overflow button and the end of the window. We subtract the padding of our
+   * container (#customization-panel-container) and half our own width:
    */
-  margin-inline-end: calc(9px + 3 * var(--toolbarbutton-inner-padding));
+  margin-inline-end: calc(var(--panel-arrow-offset) - var(--customization-panel-padding) - 10px);
   vertical-align: top;
 }
 
@@ -530,7 +515,7 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
  */
 #customization-panelHolder > #widget-overflow-fixed-list:not(:empty) {
   padding-bottom: 50px; /* Make sure there's always space to drop stuff. */
-  border-top: 1px solid rgba(0,0,0,0.1);
+  border-top: 1px solid var(--panel-separator-color);
 }
 
 #customization-panelHolder > #widget-overflow-fixed-list::before {
@@ -560,8 +545,8 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
   opacity: 0;
 }
 
-#downloads-button-autohide-panel > .panel-arrowcontainer > .panel-arrowcontent {
-  padding: 5px 12px;
+#downloads-button-autohide-panel {
+  --arrowpanel-padding: 5px 12px;
 }
 
 #downloads-button-autohide-checkbox {
@@ -610,8 +595,7 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
 #customization-pong-arena {
   width: 300px;
   height: 300px;
-  border-left: 1px solid currentColor;
-  border-right: 1px solid currentColor;
+  border-inline: 1px solid currentColor;
   margin: 16px auto 0;
   box-sizing: content-box;
 }
@@ -640,6 +624,7 @@ toolbarpaletteitem[place=toolbar] > toolbarspring {
 #wp-player2,
 #wp-ball,
 #wp-score {
+  display: block;
   position: fixed;
 }
 

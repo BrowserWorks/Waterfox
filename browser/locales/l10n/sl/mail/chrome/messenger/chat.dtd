@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Povezani stiki">
+<!ENTITY offlineContactsHeader.label   "Nepovezani stiki">
+<!ENTITY conversationsHeader.label     "Pogovori">
+<!ENTITY searchResultConversation.label "Rezultat iskanja">
+<!ENTITY chat.noConv.title             "Pogovori bodo prikazani tukaj.">
+<!ENTITY chat.noConv.description       "Uporabite seznam stikov na levi strani, da začnete pogovor.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; trenutno za ta stik nima shranjenih nobenih predhodnih pogovorov.">
+<!ENTITY chat.noAccount.title             "Računa za klepete še niste odprli.">
+<!ENTITY chat.noAccount.description       "Pustite, da vas &brandShortName; vodi skozi postopek priprave vašega računa za klepete.">
+<!ENTITY chat.accountWizard.button       "Začni">
+<!ENTITY chat.noConnectedAccount.title             "Vaši računi za klepet niso povezani.">
+<!ENTITY chat.noConnectedAccount.description       "Lahko se povežete v pogovornem oknu 'Stanje pogovorov':">
+<!ENTITY chat.showAccountManager.button       "Pokaži stanje klepetov">
+
+<!ENTITY chat.participants             "Udeleženci:">
+<!ENTITY chat.previousConversations    "Prejšnji klepeti:">
+<!ENTITY chat.ongoingConversation      "Klepet v teku">
+
+<!ENTITY openConversationCmd.label     "Začni klepet">
+<!ENTITY openConversationCmd.accesskey "k">
+<!ENTITY closeConversationCmd.label    "Končaj klepet">
+<!ENTITY closeConversationCmd.accesskey "K">
+<!ENTITY aliasCmd.label                "Preimenuj">
+<!ENTITY aliasCmd.accesskey            "r">
+<!ENTITY deleteCmd.label               "Odstrani stik">
+<!ENTITY deleteCmd.accesskey           "t">
+
+<!ENTITY openConversationButton.tooltip  "Začni pogovor">
+<!ENTITY closeConversationButton.tooltip "Zapri pogovor">
+
+<!ENTITY addBuddyButton.label          "Dodaj stik">
+<!ENTITY joinChatButton.label          "Pridruži se klepetu">
+<!ENTITY chatAccountsButton.label      "Prikaži račune">
+
+<!ENTITY status.available          "Dosegljiv">
+<!ENTITY status.unavailable        "Nedosegljiv">
+<!ENTITY status.offline            "Nepovezan">
+
+<!ENTITY openLinkCmd.label            "Odpri povezavo …">
+<!ENTITY openLinkCmd.accesskey        "O">

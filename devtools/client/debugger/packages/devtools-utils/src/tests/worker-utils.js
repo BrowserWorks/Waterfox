@@ -114,37 +114,11 @@ describe("worker utils", () => {
       id: 53,
       results: [
         {
-          error: "Error: failed",
+          error: true,
+          message: "failed",
+          metadata: undefined,
         },
       ],
     });
-  });
-
-  it("test a task completing when the worker has shutdown", async () => {
-    const dispatcher = new WorkerDispatcher();
-    const postMessageMock = jest.fn();
-    const addEventListenerMock = jest.fn();
-    const terminateMock = jest.fn();
-
-    global.Worker = jest.fn(() => {
-      return {
-        postMessage: postMessageMock,
-        addEventListener: addEventListenerMock,
-        terminate: terminateMock,
-      };
-    });
-
-    dispatcher.start();
-    const task = dispatcher.task("foo");
-
-    try {
-      await task("bar");
-    } catch (e) {
-      expect(e).toEqual("Oops, The worker has shutdown!");
-    }
-
-    const listener = addEventListenerMock.mock.calls[0][1];
-    dispatcher.stop();
-    listener({ data: { id: 1 } });
   });
 });

@@ -7,13 +7,13 @@
 #include "gtest/gtest.h"
 
 #include "mozilla/RefPtr.h"
+#include "mozilla/SchedulerGroup.h"
 
 #include "ChromiumCDMCallback.h"
 #include "GMPTestMonitor.h"
 #include "GMPServiceParent.h"
 #include "MediaResult.h"
 #include "nsIFile.h"
-#include "nsISimpleEnumerator.h"
 #include "nsNSSComponent.h"  //For EnsureNSSInitializedChromeOrContent
 #include "nsThreadUtils.h"
 
@@ -121,7 +121,7 @@ class GMPShutdownObserver : public nsIRunnable, public nsIObserver {
   }
 
  private:
-  virtual ~GMPShutdownObserver() {}
+  virtual ~GMPShutdownObserver() = default;
   nsCOMPtr<nsIRunnable> mShutdownTask;
   nsCOMPtr<nsIRunnable> mContinuation;
   const nsString mNodeId;
@@ -183,7 +183,7 @@ class ClearCDMStorageTask : public nsIRunnable, public nsIObserver {
   }
 
  private:
-  virtual ~ClearCDMStorageTask() {}
+  virtual ~ClearCDMStorageTask() = default;
   nsCOMPtr<nsIRunnable> mContinuation;
   nsCOMPtr<nsIThread> mTarget;
   const PRTime mSince;
@@ -195,11 +195,10 @@ static void ClearCDMStorage(already_AddRefed<nsIRunnable> aContinuation,
                             nsIThread* aTarget, PRTime aSince = -1) {
   RefPtr<ClearCDMStorageTask> task(
       new ClearCDMStorageTask(std::move(aContinuation), aTarget, aSince));
-  SystemGroup::Dispatch(TaskCategory::Other, task.forget());
+  SchedulerGroup::Dispatch(TaskCategory::Other, task.forget());
 }
 
 static void SimulatePBModeExit() {
-  // SystemGroup::EventTargetFor() doesn't support NS_DISPATCH_SYNC.
   NS_DispatchToMainThread(new NotifyObserversTask("last-pb-context-exited"),
                           NS_DISPATCH_SYNC);
 }
@@ -401,7 +400,8 @@ class CDMStorageTest {
     auto thread = GetAbstractGMPThread();
     promise->Then(
         thread, __func__,
-        [self, aUpdates, thread](RefPtr<gmp::ChromiumCDMParent> cdm) {
+        [self, updates = std::move(aUpdates),
+         thread](RefPtr<gmp::ChromiumCDMParent> cdm) mutable {
           self->mCDM = cdm;
           EXPECT_TRUE(!!self->mCDM);
           self->mCallback.reset(new CallbackProxy(self));
@@ -411,8 +411,8 @@ class CDMStorageTest {
                      GetMainThreadEventTarget())
               ->Then(
                   thread, __func__,
-                  [self, aUpdates] {
-                    for (auto& update : aUpdates) {
+                  [self, updates = std::move(updates)] {
+                    for (const auto& update : updates) {
                       self->Update(update);
                     }
                   },
@@ -509,7 +509,7 @@ class CDMStorageTest {
     EnumerateCDMStorageDir(NS_LITERAL_CSTRING("id"),
                            NodeIdCollector(siteInfo.get()));
     // Invoke "Forget this site" on the main thread.
-    SystemGroup::Dispatch(
+    SchedulerGroup::Dispatch(
         TaskCategory::Other,
         NewRunnableMethod<UniquePtr<NodeInfo>&&>(
             "CDMStorageTest::TestForgetThisSite_Forget", this,
@@ -539,7 +539,7 @@ class CDMStorageTest {
    public:
     explicit NodeIdVerifier(const NodeInfo* aInfo)
         : mNodeInfo(aInfo),
-          mExpectedRemainingNodeIds(aInfo->expectedRemainingNodeIds) {}
+          mExpectedRemainingNodeIds(aInfo->expectedRemainingNodeIds.Clone()) {}
     void operator()(nsIFile* aFile) {
       nsCString salt;
       nsresult rv = ReadSalt(aFile, salt);
@@ -560,7 +560,7 @@ class CDMStorageTest {
   class StorageVerifier {
    public:
     explicit StorageVerifier(const NodeInfo* aInfo)
-        : mExpectedRemainingNodeIds(aInfo->expectedRemainingNodeIds) {}
+        : mExpectedRemainingNodeIds(aInfo->expectedRemainingNodeIds.Clone()) {}
     void operator()(nsIFile* aFile) {
       nsCString salt;
       nsresult rv = aFile->GetNativeLeafName(salt);
@@ -921,7 +921,7 @@ class CDMStorageTest {
         NewRunnableMethod("CDMStorageTest::Shutdown", this,
                           &CDMStorageTest::Shutdown),
         std::move(aContinuation), mNodeId));
-    SystemGroup::Dispatch(TaskCategory::Other, task.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, task.forget());
   }
 
   void Shutdown() {
@@ -939,7 +939,7 @@ class CDMStorageTest {
     Shutdown();
     nsCOMPtr<nsIRunnable> task = NewRunnableMethod(
         "CDMStorageTest::Dummy", this, &CDMStorageTest::Dummy);
-    SystemGroup::Dispatch(TaskCategory::Other, task.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, task.forget());
   }
 
   void SessionMessage(const nsACString& aSessionId, uint32_t aMessageType,
@@ -967,7 +967,7 @@ class CDMStorageTest {
   }
 
  private:
-  ~CDMStorageTest() {}
+  ~CDMStorageTest() = default;
 
   struct ExpectedMessage {
     ExpectedMessage(const nsCString& aMessage,
@@ -1001,7 +1001,7 @@ class CDMStorageTest {
 
     void ResolvePromise(uint32_t aPromiseId) override {}
 
-    void RejectPromise(uint32_t aPromiseId, nsresult aError,
+    void RejectPromise(uint32_t aPromiseId, ErrorResult&& aError,
                        const nsCString& aErrorMessage) override {}
 
     void SessionMessage(const nsACString& aSessionId, uint32_t aMessageType,

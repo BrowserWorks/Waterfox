@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Bară de redactare">
+<!ENTITY previewToolbarCmd.label "Răsfoiește">
+<!ENTITY previewToolbarCmd.tooltip "Încarcă pagina în browser">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Exportă ca text…">
+<!ENTITY exportToTextCmd.accesskey "x">
+<!ENTITY previewCmd.label "Vizualizează pagina">
+<!ENTITY previewCmd.accesskey "w">
+<!ENTITY sendPageCmd.label "Trimite pagina…">
+<!ENTITY sendPageCmd.accesskey "d">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Bară de redactare">
+<!ENTITY compositionToolbarCmd.accesskey "B">
+<!ENTITY formattingToolbarCmd.label "Bară de formatare">
+<!ENTITY formattingToolbarCmd.accesskey "B">
+<!ENTITY editmodeToolbarCmd.label "Bară de editare">
+<!ENTITY editmodeToolbarCmd.accesskey "B">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formatare">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Grilă de poziționare">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "Titlul și proprietățile paginii…">
+<!ENTITY pageProperties.accesskey "g">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Validează HTML">
+<!ENTITY validateCmd.accesskey "V">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Mod de editare normal">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Afișează bordurile tabelelor și ancorele denumite">
+<!ENTITY AllTagsModeTab.label "Etichete HTML">
+<!ENTITY AllTagsMode.label "Etichete HTML">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Afișează pictograme pentru toate etichetele HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Sursă">
+<!ENTITY HTMLSourceMode.label "Sursă HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Editează sursa HTML">
+<!ENTITY PreviewModeTab.label "Previzualizează">
+<!ENTITY PreviewMode.label "Previzualizează">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "Afișează ca WYSIWYG (ca în browser)">

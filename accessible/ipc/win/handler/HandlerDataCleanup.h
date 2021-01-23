@@ -8,7 +8,6 @@
 #define mozilla_a11y_HandlerDataCleanup_h
 
 #include <oleauto.h>
-#include "HandlerData.h"
 
 namespace mozilla {
 namespace a11y {
@@ -38,7 +37,22 @@ inline void ReleaseStaticIA2DataInterfaces(StaticIA2Data& aData) {
   }
 }
 
-inline void CleanupDynamicIA2Data(DynamicIA2Data& aData, bool aZero = true) {
+/**
+ * Pass true for aMarshaledByCom  if this struct was directly marshaled as an
+ * out parameter of a COM method, currently only IGeckoBackChannel::Refresh.
+ */
+inline void CleanupDynamicIA2Data(DynamicIA2Data& aData,
+                                  bool aMarshaledByCom = false) {
+  // If freeing generic memory returned to the client, you *must* use freeMem,
+  // not CoTaskMemFree!
+  auto freeMem = [aMarshaledByCom](void* aMem) {
+    if (aMarshaledByCom) {
+      ::CoTaskMemFree(aMem);
+    } else {
+      ::midl_user_free(aMem);
+    }
+  };
+
   ::VariantClear(&aData.mRole);
   if (aData.mKeyboardShortcut) {
     ::SysFreeString(aData.mKeyboardShortcut);
@@ -67,8 +81,11 @@ inline void CleanupDynamicIA2Data(DynamicIA2Data& aData, bool aZero = true) {
   if (aData.mIA2Locale.variant) {
     ::SysFreeString(aData.mIA2Locale.variant);
   }
-  if (aZero) {
-    ZeroMemory(&aData, sizeof(DynamicIA2Data));
+  if (aData.mRowHeaderCellIds) {
+    freeMem(aData.mRowHeaderCellIds);
+  }
+  if (aData.mColumnHeaderCellIds) {
+    freeMem(aData.mColumnHeaderCellIds);
   }
 }
 

@@ -4,7 +4,10 @@
 
 "use strict";
 
-const { FILTER_FLAGS, SUPPORTED_HTTP_CODES } = require("../constants");
+const {
+  FILTER_FLAGS,
+  SUPPORTED_HTTP_CODES,
+} = require("devtools/client/netmonitor/src/constants");
 
 /**
  * Generates a value for the given filter
@@ -39,7 +42,7 @@ function getAutocompleteValuesForFlag(flag, request) {
       values.push(request.cause.type);
       break;
     case "mime-type":
-      values.push(request.mimeType.replace(/;.+/, ""));
+      values.push((request.mimeType || "").replace(/;.+/, ""));
       break;
     case "set-cookie-name":
       values = responseCookies.map(c => c.name);

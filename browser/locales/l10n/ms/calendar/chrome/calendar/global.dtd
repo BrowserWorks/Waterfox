@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Tengah Malam" >
+<!ENTITY time.noon "Tengahari" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Aha" >
+<!ENTITY day.1.Ddd.accesskey "A">
+<!ENTITY day.2.Ddd "Isn" >
+<!ENTITY day.2.Ddd.accesskey "I">
+<!ENTITY day.3.Ddd "Sel" >
+<!ENTITY day.3.Ddd.accesskey "S">
+<!ENTITY day.4.Ddd "Rab" >
+<!ENTITY day.4.Ddd.accesskey "R">
+<!ENTITY day.5.Ddd "Kha" >
+<!ENTITY day.5.Ddd.accesskey "K">
+<!ENTITY day.6.Ddd "Jum" >
+<!ENTITY day.6.Ddd.accesskey "J">
+<!ENTITY day.7.Ddd "Sab" >
+<!ENTITY day.7.Ddd.accesskey "S">
+
+<!ENTITY day.1.name "Ahad" >
+<!ENTITY day.2.name "Isnin" >
+<!ENTITY day.3.name "Selasa" >
+<!ENTITY day.4.name "Rabu" >
+<!ENTITY day.5.name "Khamis" >
+<!ENTITY day.6.name "Jumaat" >
+<!ENTITY day.7.name "Sabtu" >
+
+<!ENTITY month.1.name "Januari" >
+<!ENTITY month.2.name "Februari" >
+<!ENTITY month.3.name "Mac" >
+<!ENTITY month.4.name "April" >
+<!ENTITY month.5.name "Mei" >
+<!ENTITY month.6.name "Jun" >
+<!ENTITY month.7.name "Julai" >
+<!ENTITY month.8.name "Ogos" >
+<!ENTITY month.9.name "September" >
+<!ENTITY month.10.name "Oktober" >
+<!ENTITY month.11.name "November" >
+<!ENTITY month.12.name "Disember" >
+
+<!ENTITY onemonthbackward.tooltip "Satu Bulan Lepas" >
+<!ENTITY onemonthforward.tooltip "Satu Bulan Akan Datang" >
+<!ENTITY showToday.tooltip "Pergi ke Hari ini">
+<!ENTITY onedayforward.tooltip "Satu Hari Akan Datang">
+<!ENTITY onedaybackward.tooltip "Satu Hari Lepas">
+<!ENTITY showselectedday.tooltip "Papar acara untuk hari yang dipilih">

@@ -1,14 +1,16 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* globals $, $$, PerformanceController, OverviewView */
+/* globals $, PerformanceController, OverviewView */
 "use strict";
 
 const { extend } = require("devtools/shared/extend");
 
-const EVENTS = require("../events");
-const { L10N } = require("../modules/global");
-const { DetailsSubview } = require("./details-abstract-subview");
+const EVENTS = require("devtools/client/performance/events");
+const { L10N } = require("devtools/client/performance/modules/global");
+const {
+  DetailsSubview,
+} = require("devtools/client/performance/views/details-abstract-subview");
 
 const {
   FlameGraph,

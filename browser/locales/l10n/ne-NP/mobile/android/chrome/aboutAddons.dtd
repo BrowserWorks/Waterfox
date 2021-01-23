@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "एड-अनहरू">
+<!ENTITY aboutAddons.header2                    "तपाईँका एडअनहरू">
+
+<!ENTITY addonAction.enable                     "सक्षम पार्नुहोस्">
+<!ENTITY addonAction.disable                    "अक्षम पार्नुहोस्">
+<!ENTITY addonAction.uninstall                  "हटाउनुहोस्">
+<!ENTITY addonAction.undo                       "पूर्वस्थिति">
+<!ENTITY addonAction.update                     "अद्यावधिक गर्नुहोस्">
+
+<!ENTITY addonUnsigned.message                  "यो एड-अन &brandShortName; द्वारा प्रमाणित गर्न सकिएन।">
+<!ENTITY addonUnsigned.learnMore                "अझ जान्नुहोस्">

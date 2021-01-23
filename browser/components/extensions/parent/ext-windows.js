@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 ChromeUtils.defineModuleGetter(
@@ -163,9 +167,7 @@ this.windows = class extends ExtensionAPI {
           if (needResize) {
             if (createData.state !== null && createData.state != "normal") {
               return Promise.reject({
-                message: `"state": "${
-                  createData.state
-                }" may not be combined with "left", "top", "width", or "height"`,
+                message: `"state": "${createData.state}" may not be combined with "left", "top", "width", or "height"`,
               });
             }
             createData.state = "normal";
@@ -282,14 +284,15 @@ this.windows = class extends ExtensionAPI {
           }
 
           args.appendElement(context.principal); // originPrincipal - not important.
+          args.appendElement(context.principal); // originStoragePrincipal - not important.
           args.appendElement(principal); // triggeringPrincipal
           args.appendElement(
             Cc["@mozilla.org/supports-PRBool;1"].createInstance(
               Ci.nsISupportsPRBool
             )
           ); // allowInheritPrincipal
-          // Bug 965637, query the CSP from the doc instead of the Principal
-          args.appendElement(principal.csp); // csp
+          // There is no CSP associated with this extension, hence we explicitly pass null as the CSP argument.
+          args.appendElement(null); // csp
 
           let features = ["chrome"];
 
@@ -384,9 +387,7 @@ this.windows = class extends ExtensionAPI {
               updateInfo.height !== null
             ) {
               return Promise.reject({
-                message: `"state": "${
-                  updateInfo.state
-                }" may not be combined with "left", "top", "width", or "height"`,
+                message: `"state": "${updateInfo.state}" may not be combined with "left", "top", "width", or "height"`,
               });
             }
           }
@@ -398,7 +399,7 @@ this.windows = class extends ExtensionAPI {
             });
           }
           if (updateInfo.focused) {
-            Services.focus.activeWindow = win.window;
+            win.window.focus();
           }
 
           if (updateInfo.state !== null) {

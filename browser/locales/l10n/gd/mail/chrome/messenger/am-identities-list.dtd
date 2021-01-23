@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Stiùirich dearbh-aithnean a' chunntais seo. 'S e a' chiad dhiubh a thèid a chleachdadh a ghnàth.">
+<!ENTITY identitiesListAdd.label  "Cuir ris…">
+<!ENTITY identitiesListAdd.accesskey  "C">
+<!ENTITY identitiesListEdit.label "Deasaich…">
+<!ENTITY identitiesListEdit.accesskey "e">
+<!ENTITY identitiesListDefault.label "Suidhich a' bhun-roghainn">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "Sguab às">
+<!ENTITY identitiesListDelete.accesskey "S">
+<!ENTITY identitiesListClose.label "Dùin">
+<!ENTITY identitiesListClose.accesskey "D">

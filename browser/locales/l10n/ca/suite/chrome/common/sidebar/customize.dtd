@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from ./customize.xul -->
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+
+
+<!ENTITY sidebar.customize.title.label          "Personalitza la &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Pestanyes de la &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "t">
+<!ENTITY sidebar.customize.customize.label      "Personalitza la pestanya…">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Suprimeix">
+<!ENTITY sidebar.customize.remove.accesskey     "r">
+<!ENTITY sidebar.customize.additional.label     "Pestanyes disponibles:">
+<!ENTITY sidebar.customize.additional.accesskey "d">
+<!ENTITY sidebar.customize.add.label            "Afegeix">
+<!ENTITY sidebar.customize.add.accesskey        "A">
+<!ENTITY sidebar.customize.preview.label        "Previsualitza…">
+<!ENTITY sidebar.customize.preview.accesskey    "v">
+<!ENTITY sidebar.customize.up.label             "Amunt">
+<!ENTITY sidebar.customize.up.accesskey         "m">
+<!ENTITY sidebar.customize.down.label           "Avall">
+<!ENTITY sidebar.customize.down.accesskey       "l">
+<!ENTITY sidebar.more.label                     "Cerca més pestanyes…">
+<!ENTITY sidebar.more.accesskey                 "C">

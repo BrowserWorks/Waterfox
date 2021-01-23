@@ -12,8 +12,8 @@ add_task(async function test_unsigned() {
   });
 
   let testURI = makeURI("https://example.com/");
-  Services.perms.add(testURI, "install", Services.perms.ALLOW_ACTION);
-  registerCleanupFunction(() => Services.perms.remove(testURI, "install"));
+  PermissionTestUtils.add(testURI, "install", Services.perms.ALLOW_ACTION);
+  registerCleanupFunction(() => PermissionTestUtils.remove(testURI, "install"));
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
 
@@ -23,9 +23,9 @@ add_task(async function test_unsigned() {
   );
   await BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
 
-  ContentTask.spawn(
+  SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    `${BASE}/browser_webext_unsigned.xpi`,
+    [`${BASE}/browser_webext_unsigned.xpi`],
     async function(url) {
       content.wrappedJSObject.installTrigger(url);
     }

@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Laudatti <Laudatti@gmail.com>
+# Nicu <kneekoo@yahoo.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+# silviubogan <silviubogan@yahoo.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- mac -->
+<!-- LOCALIZATION NOTE: FILE Do not translate all the entities ending with
+  Cmd.key. -->
+
+<!-- LOCALIZATION NOTE (.modifiers): The following entites are for the
+  application menu. Never change the modifiers unless you are 100% sure that
+  they are different on your locale (should be very rare). -->
+<!ENTITY preferencesCmd.label           "Preferințe...">
+<!ENTITY preferencesCmd.key             ",">
+<!ENTITY preferencesCmd.modifiers       "accel">
+<!ENTITY servicesMenu.label             "Servicii">
+<!ENTITY hideThisAppCmd.label           "Ascunde &brandShortName;">
+<!ENTITY hideThisAppCmd.key             "s">
+<!ENTITY hideThisAppCmd.modifiers       "accel">
+<!ENTITY hideOtherAppsCmd.label         "Ascunde-le pe celelalte">
+<!ENTITY hideOtherAppsCmd.key           "s">
+<!ENTITY hideOtherAppsCmd.modifiers     "accel,alt">
+<!ENTITY showAllAppsCmd.label           "Arată-le pe toate">
+<!ENTITY quitApplicationCmd.label       "Părăsește &brandShortName;"> 
+<!ENTITY quitApplicationCmd.key         "Q">
+<!ENTITY quitApplicationCmd.modifiers   "accel">
+<!-- End of Application menu -->
+
+<!ENTITY closeCmd.label                 "Închide">  
+<!ENTITY closeCmd.key                   "W">  
+
+<!ENTITY printSetupCmd.label            "Aranjare în pagină…">
+<!ENTITY printSetupCmd.accesskey        "A">
+
+<!ENTITY redoCmd.key                    "Z">  
+
+<!ENTITY historyCmd.key                 "H">  
+
+<!ENTITY findTypeTextCmd.key            "">
+<!ENTITY findTypeLinksCmd.key           "">
+
+<!ENTITY accel.emacs_conflict           "accel">
+
+<!ENTITY minimizeWindowCmd.label        "Minimizează">
+<!ENTITY minimizeWindowCmd.key          "p">
+<!ENTITY zoomWindowCmd.label            "Panoramează">
+
+<!-- Help menu -->
+<!ENTITY openHelpCmd.label              "&brandShortName; Ajutor">
+<!ENTITY openHelpCmd.accesskey          "A">
+<!ENTITY openHelpCmd.key                "?">
+<!ENTITY openHelpCmd.modifiers          "accel">
+
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY ctrlKey.label                   "Ctrl+P">
+<!ENTITY altKey.label                    "Opțiune">
+<!ENTITY shiftKey.label                  "Shift">

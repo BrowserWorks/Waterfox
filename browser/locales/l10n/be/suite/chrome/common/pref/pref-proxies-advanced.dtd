@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.proxies.advanced.title "Пашыраныя наладжванні пасярэднікаў">
+<!ENTITY protocols.caption "Пасярэднікі для пратаколаў:">
+<!ENTITY protocols.description "Звычайна адзін пасярэднік можа апрацоўваць усе пратаколы, пералічаныя тут.">
+<!ENTITY http.label "Пасярэднік HTTP:">
+<!ENTITY http.accesskey "я">
+<!ENTITY ssl.label "Пасярэднік SSL:">
+<!ENTITY ssl.accesskey "L">
+<!ENTITY ftp.label "Пасярэднік FTP:">
+<!ENTITY ftp.accesskey "f">
+<!ENTITY reuseProxy.label "Ужыць гэтыя наладжванні для ўсіх пратаколаў">
+<!ENTITY reuseProxy.accesskey "ж">
+<!ENTITY port.label "Порт:">
+<!ENTITY HTTPPort.accesskey "П">
+<!ENTITY SSLPort.accesskey "о">
+<!ENTITY FTPPort.accesskey "р">
+<!ENTITY socks.caption "Агульны пасярэднік">
+<!ENTITY socks.description "Пасярэднік SOCKS – агульны пасярэднік, які часам ужываецца ў карпаратыўным або падобным асяроддзі.">
+<!ENTITY socks.label "Трымальнік SOCKS:">
+<!ENTITY socks.accesskey "S">
+<!ENTITY socks4.label "SOCKS в4">
+<!ENTITY socks4.accesskey "4">
+<!ENTITY socks5.label "SOCKS в5">
+<!ENTITY socks5.accesskey "5">
+<!ENTITY socksRemoteDNS.label "Ужываць для развязвання назваў трымальнікаў (раіцца для SOCKS в5)">
+<!ENTITY socksRemoteDNS.accesskey "ж">
+<!ENTITY SOCKSport.accesskey "т">

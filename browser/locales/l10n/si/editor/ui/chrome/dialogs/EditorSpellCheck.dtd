@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "අක්ෂර වින්‍යාස පරීක්ෂාව">
+
+<!ENTITY misspelledWord.label "අක්ෂර වැරදි වචනය:">
+<!ENTITY wordEditField.label "Replace with:">
+<!ENTITY wordEditField.accessKey "w">
+<!ENTITY checkwordButton.label "වචන පරීක්ෂාව">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "යෝජනා:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "නොසලකා හරින්න">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "සියල්ල නොසලකා හරින්න">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Replace">
+<!ENTITY replaceButton.accessKey "R">
+<!ENTITY replaceAllButton.label "Replace All">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "නවතන්න">
+<!ENTITY stopButton.accessKey "t">
+<!ENTITY userDictionary.label "පෞද්ගලික ශබ්දකෝෂය:">
+<!ENTITY moreDictionaries.label "තවත් ශබ්දකෝෂ බාගත කරන්න...">
+<!ENTITY addToUserDictionaryButton.label "වචනය එක් කරන්න">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "සැකසුම්...">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton.label "පිටුව නැවත පරීක්ෂා කරන්න">
+<!ENTITY recheckButton.accessKey "P">
+<!ENTITY closeButton.label "වහන්න">
+<!ENTITY closeButton.accessKey "C">
+<!ENTITY sendButton.label "යවන්න">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "භාෂාව:">
+<!ENTITY languagePopup.accessKey "L">

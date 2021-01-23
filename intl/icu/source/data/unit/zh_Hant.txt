@@ -2,7 +2,7 @@
 // License & terms of use: http://www.unicode.org/copyright.html#License
 zh_Hant{
     %%Parent{"root"}
-    Version{"2.1.49.82"}
+    Version{"37"}
     durationUnits{
         hm{"h:mm"}
         hms{"h:mm:ss"}
@@ -14,7 +14,7 @@ zh_Hant{
                 dnam{"G 力"}
                 other{"{0} G 力"}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"每平方秒公尺"}
                 other{"每平方秒 {0} 公尺"}
             }
@@ -108,10 +108,6 @@ zh_Hant{
                 dnam{"莫耳"}
                 other{"{0} 莫耳"}
             }
-            part-per-million{
-                dnam{"百萬分率"}
-                other{"{0} 百萬分率"}
-            }
             percent{
                 dnam{"百分比"}
                 other{"{0}%"}
@@ -120,13 +116,13 @@ zh_Hant{
                 dnam{"千分比"}
                 other{"{0}‰"}
             }
-            permyriad{
-                dnam{"‱"}
-                other{"{0}‱"}
+            permillion{
+                dnam{"百萬分率"}
+                other{"{0} 百萬分率"}
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"每 100 公里公升"}
                 other{"每 100 公里 {0} 公升"}
             }
@@ -205,6 +201,10 @@ zh_Hant{
                 dnam{"天"}
                 other{"{0} 天"}
                 per{"每天 {0}"}
+            }
+            decade{
+                dnam{"10 年"}
+                other{"{0}0 年"}
             }
             hour{
                 dnam{"小時"}
@@ -300,6 +300,10 @@ zh_Hant{
                 dnam{"千瓦小時"}
                 other{"{0} 千瓦小時"}
             }
+            therm-us{
+                dnam{"美制撒姆"}
+                other{"{0} 美制撒姆"}
+            }
         }
         force{
             newton{
@@ -327,6 +331,16 @@ zh_Hant{
             megahertz{
                 dnam{"兆赫"}
                 other{"{0} 兆赫"}
+            }
+        }
+        graphics{
+            megapixel{
+                dnam{"百萬像素"}
+                other{"{0} 百萬像素"}
+            }
+            pixel{
+                dnam{"像素"}
+                other{"{0} 像素"}
             }
         }
         length{
@@ -523,17 +537,21 @@ zh_Hant{
                 dnam{"氣壓"}
                 other{"{0} 大氣壓"}
             }
+            bar{
+                dnam{"巴"}
+                other{"{0} 巴"}
+            }
             hectopascal{
                 dnam{"百帕"}
                 other{"{0} 百帕"}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{"英寸汞柱"}
                 other{"{0} 英寸汞柱"}
             }
             kilopascal{
-                dnam{"帕斯卡"}
-                other{"{0} 帕斯卡"}
+                dnam{"千帕"}
+                other{"{0} 千帕"}
             }
             megapascal{
                 dnam{"兆帕"}
@@ -543,11 +561,15 @@ zh_Hant{
                 dnam{"毫巴"}
                 other{"{0} 毫巴"}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{"毫米汞柱"}
                 other{"{0} 毫米汞柱"}
             }
-            pound-per-square-inch{
+            pascal{
+                dnam{"帕斯卡"}
+                other{"{0} 帕斯卡"}
+            }
+            pound-force-per-square-inch{
                 dnam{"每平方英寸磅力"}
                 other{"每平方英寸 {0} 磅力"}
             }
@@ -593,7 +615,7 @@ zh_Hant{
                 dnam{"牛頓米"}
                 other{"{0} 牛頓米"}
             }
-            pound-foot{
+            pound-force-foot{
                 dnam{"磅英尺"}
                 other{"{0} 磅英尺"}
             }
@@ -720,7 +742,7 @@ zh_Hant{
                 dnam{"G 力"}
                 other{"{0}G"}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"公尺/平方秒"}
                 other{"{0}m/s²"}
             }
@@ -801,17 +823,17 @@ zh_Hant{
                 dnam{"毫莫耳/公升"}
                 other{"{0}mmol/L"}
             }
-            part-per-million{
-                dnam{"百萬分率"}
-                other{"{0}ppm"}
-            }
             percent{
                 dnam{"百分比"}
                 other{"{0}%"}
             }
+            permillion{
+                dnam{"百萬分率"}
+                other{"{0}ppm"}
+            }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"升/100公里"}
                 other{"{0}升/100公里"}
             }
@@ -837,33 +859,43 @@ zh_Hant{
         }
         digital{
             bit{
+                dnam{"bit"}
                 other{"{0}bit"}
             }
             byte{
+                dnam{"byte"}
                 other{"{0}byte"}
             }
             gigabit{
+                dnam{"Gb"}
                 other{"{0}Gb"}
             }
             gigabyte{
+                dnam{"GB"}
                 other{"{0}GB"}
             }
             kilobit{
+                dnam{"kb"}
                 other{"{0}kb"}
             }
             kilobyte{
+                dnam{"kB"}
                 other{"{0}kB"}
             }
             megabit{
+                dnam{"Mb"}
                 other{"{0}Mb"}
             }
             megabyte{
+                dnam{"MB"}
                 other{"{0}MB"}
             }
             terabit{
+                dnam{"Tb"}
                 other{"{0}Tb"}
             }
             terabyte{
+                dnam{"TB"}
                 other{"{0}TB"}
             }
         }
@@ -1152,7 +1184,7 @@ zh_Hant{
                 dnam{"百帕"}
                 other{"{0}百帕"}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{"英寸汞柱"}
                 other{"{0}英吋汞柱"}
             }
@@ -1160,11 +1192,11 @@ zh_Hant{
                 dnam{"毫巴"}
                 other{"{0}毫巴"}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{"毫米汞柱"}
                 other{"{0}mmHg"}
             }
-            pound-per-square-inch{
+            pound-force-per-square-inch{
                 dnam{"磅力/平方英寸"}
                 other{"{0}psi"}
             }
@@ -1194,8 +1226,14 @@ zh_Hant{
             }
             fahrenheit{
                 dnam{"華氏"}
+                other{"{0}°F"}
+            }
+            generic{
+                dnam{"°"}
+                other{"{0}°"}
             }
             kelvin{
+                dnam{"K"}
                 other{"{0}°K"}
             }
         }
@@ -1225,7 +1263,6 @@ zh_Hant{
                 other{"{0}in³"}
             }
             cubic-kilometer{
-                dnam{"立方公里"}
                 other{"{0}km³"}
             }
             cubic-meter{
@@ -1311,7 +1348,7 @@ zh_Hant{
                 dnam{"G 力"}
                 other{"{0} G 力"}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"公尺/平方秒"}
                 other{"{0} 公尺/平方秒"}
             }
@@ -1405,10 +1442,6 @@ zh_Hant{
                 dnam{"mol"}
                 other{"{0} mol"}
             }
-            part-per-million{
-                dnam{"百萬分率"}
-                other{"{0} 百萬分率"}
-            }
             percent{
                 dnam{"百分比"}
                 other{"{0}%"}
@@ -1417,13 +1450,17 @@ zh_Hant{
                 dnam{"千分比"}
                 other{"{0}‰"}
             }
+            permillion{
+                dnam{"百萬分率"}
+                other{"{0} 百萬分率"}
+            }
             permyriad{
                 dnam{"‱"}
                 other{"{0}‱"}
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"升/100 公里"}
                 other{"{0} 升/100 公里"}
             }
@@ -1502,6 +1539,10 @@ zh_Hant{
                 dnam{"天"}
                 other{"{0} 天"}
                 per{"{0}/天"}
+            }
+            decade{
+                dnam{"10 年"}
+                other{"{0}0 年"}
             }
             hour{
                 dnam{"小時"}
@@ -1597,6 +1638,10 @@ zh_Hant{
                 dnam{"千瓦小時"}
                 other{"{0} 千瓦小時"}
             }
+            therm-us{
+                dnam{"美制撒姆"}
+                other{"{0} 美制撒姆"}
+            }
         }
         force{
             newton{
@@ -1641,6 +1686,7 @@ zh_Hant{
                 other{"{0} 公寸"}
             }
             fathom{
+                dnam{"fm"}
                 other{"{0} 英尋"}
             }
             foot{
@@ -1706,10 +1752,6 @@ zh_Hant{
             point{
                 dnam{"點"}
                 other{"{0} 點"}
-            }
-            solar-radius{
-                dnam{"R☉"}
-                other{"{0} R☉"}
             }
             yard{
                 dnam{"碼"}
@@ -1780,6 +1822,7 @@ zh_Hant{
                 other{"{0} M☉"}
             }
             stone{
+                dnam{"st"}
                 other{"{0} 英石"}
             }
             ton{
@@ -1818,11 +1861,15 @@ zh_Hant{
                 dnam{"atm"}
                 other{"{0} atm"}
             }
+            bar{
+                dnam{"巴"}
+                other{"{0} 巴"}
+            }
             hectopascal{
                 dnam{"百帕"}
                 other{"{0} 百帕"}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{"英寸汞柱"}
                 other{"{0} 英寸汞柱"}
             }
@@ -1838,11 +1885,15 @@ zh_Hant{
                 dnam{"毫巴"}
                 other{"{0} 毫巴"}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{"毫米汞柱"}
                 other{"{0} 毫米汞柱"}
             }
-            pound-per-square-inch{
+            pascal{
+                dnam{"Pa"}
+                other{"{0} Pa"}
+            }
+            pound-force-per-square-inch{
                 dnam{"磅力/平方英寸"}
                 other{"{0} 磅力/平方英寸"}
             }
@@ -1888,7 +1939,7 @@ zh_Hant{
                 dnam{"N⋅m"}
                 other{"{0} N⋅m"}
             }
-            pound-foot{
+            pound-force-foot{
                 dnam{"lbf⋅ft"}
                 other{"{0} lbf⋅ft"}
             }
@@ -1903,6 +1954,7 @@ zh_Hant{
                 other{"{0} 桶"}
             }
             bushel{
+                dnam{"bu"}
                 other{"{0} 蒲式耳"}
             }
             centiliter{

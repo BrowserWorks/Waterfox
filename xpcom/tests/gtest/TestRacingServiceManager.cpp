@@ -7,9 +7,7 @@
 #include "mozilla/Module.h"
 #include "nsXULAppAPI.h"
 #include "nsIThread.h"
-#include "nsIComponentRegistrar.h"
 
-#include "nsAutoPtr.h"
 #include "nsThreadUtils.h"
 #include "nsXPCOMCIDInternal.h"
 #include "pratom.h"
@@ -74,7 +72,7 @@ class AutoCreateAndDestroyReentrantMonitor {
 };
 
 class Factory final : public nsIFactory {
-  ~Factory() {}
+  ~Factory() = default;
 
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -92,7 +90,7 @@ class Factory final : public nsIFactory {
 NS_IMPL_ISUPPORTS(Factory, nsIFactory)
 
 class Component1 final : public nsISupports {
-  ~Component1() {}
+  ~Component1() = default;
 
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -112,7 +110,7 @@ NS_INTERFACE_MAP_BEGIN(Component1)
 NS_INTERFACE_MAP_END
 
 class Component2 final : public nsISupports {
-  ~Component2() {}
+  ~Component2() = default;
 
  public:
   NS_DECL_THREADSAFE_ISUPPORTS

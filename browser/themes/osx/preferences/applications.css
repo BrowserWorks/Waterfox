@@ -10,8 +10,12 @@
  */
 .actionsMenu {
   margin-inline-start: -2px;
-  margin-top: 0;
-  margin-bottom: -1px;
+  margin-block: 0 -1px;
+}
+
+.typeIcon,
+.actionIcon {
+  margin-inline: 3px 2px;
 }
 
 #handlersView > richlistitem label {
@@ -24,14 +28,15 @@
 }
 
 .typeIcon,
-.actionIcon {
-  margin-inline-start: 3px;
+.actionIcon,
+.actionsMenu::part(icon) {
+  height: 16px;
+  width: 16px;
 }
 
-.typeIcon,
-.actionIcon,
-.actionsMenu .menulist-icon {
-  margin-inline-end: 2px;
+.actionsMenu::part(icon) {
+  margin-top: 2px;
+  margin-inline: 2px 8px;
 }
 
 .actionsMenu > menupopup > menuitem > .menu-iconic-left {
@@ -39,6 +44,11 @@
    * want icon-less labels to line up with the other labels.
    */
   min-width: 0;
+}
+
+richlistitem[appHandlerIcon="handleInternally"],
+menuitem[appHandlerIcon="handleInternally"] {
+  list-style-image: url("chrome://branding/content/icon32.png");
 }
 
 richlistitem[appHandlerIcon="ask"],

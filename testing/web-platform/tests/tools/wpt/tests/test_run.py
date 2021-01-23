@@ -55,11 +55,13 @@ def test_check_environ_fail(platform):
             with pytest.raises(run.WptrunError) as excinfo:
                 run.check_environ("foo")
 
-    assert "wpt make-hosts-file" in excinfo.value.message
+    assert "wpt make-hosts-file" in str(excinfo.value)
 
 
 @pytest.mark.parametrize("product", product_list)
 def test_setup_wptrunner(venv, logger, product):
+    if product == "firefox_android":
+        pytest.skip("Android emulator doesn't work on docker")
     parser = run.create_parser()
     kwargs = vars(parser.parse_args(["--channel=nightly", product]))
     kwargs["prompt"] = False

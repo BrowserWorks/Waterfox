@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Llogari - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Gjendje mesazhesh të atypëratyshëm">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Llogari e Re">
+<!ENTITY accountManager.newAccount.accesskey "R">
+<!ENTITY accountManager.close.label          "Mbylleni">
+<!ENTITY accountManager.close.accesskey      "M">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Ende pa ndonjë llogari të formësuar">
+<!ENTITY accountManager.noAccount.description "Klikoni mbi butonin &accountManager.newAccount.label; që ta lini &brandShortName;-in t&apos;ju heqë udhën në procesin e formësimit të një të tille.">
+<!ENTITY account.autoSignOn.label     "Regjistrim gjatë nisjes">
+<!ENTITY account.autoSignOn.accesskey "H">
+<!ENTITY account.connect.label        "Lidhu">
+<!ENTITY account.connect.accesskey    "L">
+<!ENTITY account.disconnect.label     "Shkëputu">
+<!ENTITY account.disconnect.accesskey "u">
+<!ENTITY account.delete.label         "Fshije">
+<!ENTITY account.delete.accesskey     "F">
+<!ENTITY account.edit.label           "Veti">
+<!ENTITY account.edit.accesskey       "V">
+<!ENTITY account.moveup.label         "Shpjere sipër">
+<!ENTITY account.movedown.label       "Ule">
+<!ENTITY account.cancelReconnection.label         "Anuloje rilidhjen">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "Kopjo Regjistër Diagnostikimi">
+<!ENTITY account.copyDebugLog.accesskey "K">
+<!ENTITY account.showDebugLog.label     "Shfaq Regjistër Diagnostikimi">
+<!ENTITY account.showDebugLog.accesskey "q">
+<!ENTITY account.connecting           "Po lidhet…">
+<!ENTITY account.disconnecting        "Po shkëputet…">
+<!ENTITY account.disconnected         "Jo i Lidhur">

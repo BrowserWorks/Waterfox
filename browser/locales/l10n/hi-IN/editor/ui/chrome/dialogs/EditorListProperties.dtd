@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "गुण सूचीबद्ध करें">
+
+<!ENTITY ListType.label "सूची प्रकार">
+<!ENTITY bulletStyle.label "बुलेट शैली:">
+<!ENTITY startingNumber.label "इसपर शुरू करें:">
+<!ENTITY startingNumber.accessKey "S">
+<!ENTITY none.value "कोई नहीं">
+<!ENTITY bulletList.value "बुलेट (अक्रमांकित) सूची">
+<!ENTITY numberList.value "संख्या सूची">
+<!ENTITY definitionList.value "परिभाषा सूची">
+<!ENTITY changeListMsg.label "जब सूची प्रकार बदल रहा हो:">
+<!ENTITY changeEntireListRadio.label "पूरी सूची बदलें">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "सिर्फ चयनित मद बदलें">
+<!ENTITY changeSelectedRadio.accessKey "I">

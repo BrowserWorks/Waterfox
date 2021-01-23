@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+
+<!ENTITY pref.ldap.window.title    "LDAP-katalogtenarar">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP-katalogtenar:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Vel LDAP-katalogtenar:">
+<!ENTITY directoriesText.accesskey "V">
+<!ENTITY addDirectory.label        "Legg til">
+<!ENTITY addDirectory.accesskey    "L">
+<!ENTITY editDirectory.label       "Rediger">
+<!ENTITY editDirectory.accesskey   "R">
+<!ENTITY deleteDirectory.label     "Slett">
+<!ENTITY deleteDirectory.accesskey "S">

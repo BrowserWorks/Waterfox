@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Perzhioù ar furmskrid">
+
+<!ENTITY Settings.label "Arventennoù">
+
+<!ENTITY FormName.label "Anv ar furmskrid:">
+<!ENTITY FormName.accesskey "A">
+<!ENTITY FormAction.label "URL an ober :">
+<!ENTITY FormAction.accesskey "U">
+<!ENTITY FormMethod.label "Hentenn :">
+<!ENTITY FormMethod.accesskey "H">
+<!ENTITY FormEncType.label "Bonegañ :">
+<!ENTITY FormEncType.accesskey "B">
+<!ENTITY FormTarget.label "Framm pal :">
+<!ENTITY FormTarget.accesskey "F">
+
+<!ENTITY RemoveForm.label "Dilemel ar furmskrid">
+<!ENTITY RemoveForm.accesskey "r">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Selecciona els canvis d'edició">
+<!ENTITY conflictWarning.label "Aquesta pàgina ha estat modificada per un altre programa, però al redactor també hi ha canvis no desats.">
+<!ENTITY conflictResolve.label "Decidiu quina versió voleu conservar:">
+<!ENTITY keepCurrentPageButton.label "Conserva els canvis actuals de la pàgina">
+<!ENTITY useOtherPageButton.label "Reemplaça la pàgina actual amb els altres canvis">

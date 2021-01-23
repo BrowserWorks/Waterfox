@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Leabhar nan seòladh">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "Ainm">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Post-d">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Buidheann">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Tar-sgrìobhadh an ainm">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Far-ainm">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Post-d eile">
+<!ENTITY SecondEmail.accesskey                 "I">
+<!ENTITY Department.label                      "Roinn">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Tiotal">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Fòn-làimhe">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pèidsear">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Facs">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Fòn na dachaigh">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "Fòn na h-obrach">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ChatName.label                        "Ainm cabadaich">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "A’ dìreadh">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "A’ teàrnadh">
+<!ENTITY sortDescending.accesskey              "D">

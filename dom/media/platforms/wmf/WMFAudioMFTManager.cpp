@@ -186,7 +186,8 @@ bool WMFAudioMFTManager::Init() {
 HRESULT
 WMFAudioMFTManager::Input(MediaRawData* aSample) {
   return mDecoder->Input(aSample->Data(), uint32_t(aSample->Size()),
-                         aSample->mTime.ToMicroseconds());
+                         aSample->mTime.ToMicroseconds(),
+                         aSample->mDuration.ToMicroseconds());
 }
 
 HRESULT
@@ -245,13 +246,6 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset, RefPtr<MediaData>& aOutData) {
 
   if (!sample) {
     LOG("Audio MFTDecoder returned success but null output.");
-    nsCOMPtr<nsIRunnable> task =
-        NS_NewRunnableFunction("WMFAudioMFTManager::Output", []() -> void {
-          LOG("Reporting telemetry AUDIO_MFT_OUTPUT_NULL_SAMPLES");
-          Telemetry::Accumulate(
-              Telemetry::HistogramID::AUDIO_MFT_OUTPUT_NULL_SAMPLES, 1);
-        });
-    SystemGroup::Dispatch(TaskCategory::Other, task.forget());
     return E_FAIL;
   }
 

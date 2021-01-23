@@ -7,20 +7,28 @@
  * https://w3c.github.io/reporting/#interface-reporting-observer
  */
 
-[Func="mozilla::dom::DOMPrefs::dom_reporting_enabled"]
+[Pref="dom.reporting.enabled",
+ Exposed=(Window,Worker)]
 interface ReportBody {
+  [Default] object toJSON
+();
 };
 
-[Func="mozilla::dom::DOMPrefs::dom_reporting_enabled"]
+[Pref="dom.reporting.enabled",
+ Exposed=(Window,Worker)]
 interface Report {
+  [Default] object toJSON
+();
   readonly attribute DOMString type;
   readonly attribute DOMString url;
   readonly attribute ReportBody? body;
 };
 
-[Constructor(ReportingObserverCallback callback, optional ReportingObserverOptions options),
- Func="mozilla::dom::DOMPrefs::dom_reporting_enabled"]
+[Pref="dom.reporting.enabled",
+ Exposed=(Window,Worker)]
 interface ReportingObserver {
+  [Throws]
+  constructor(ReportingObserverCallback callback, optional ReportingObserverOptions options = {});
   void observe();
   void disconnect();
   ReportList takeRecords();
@@ -35,20 +43,26 @@ dictionary ReportingObserverOptions {
 
 typedef sequence<Report> ReportList;
 
-[Func="mozilla::dom::DOMPrefs::dom_reporting_enabled"]
+[Pref="dom.reporting.enabled",
+ Exposed=Window]
 interface DeprecationReportBody : ReportBody {
   readonly attribute DOMString id;
-  readonly attribute Date? anticipatedRemoval;
+  // The spec currently has Date, but that's not a type that exists in Web IDL.
+  // In any case, we always return null, so we just need _some_ nullable type
+  // here.
+  readonly attribute DOMTimeStamp? anticipatedRemoval;
   readonly attribute DOMString message;
   readonly attribute DOMString? sourceFile;
   readonly attribute unsigned long? lineNumber;
   readonly attribute unsigned long? columnNumber;
 };
 
-[Constructor(), Deprecated="DeprecatedTestingInterface",
- Func="mozilla::dom::DOMPrefs::dom_reporting_testing_enabled",
+[Deprecated="DeprecatedTestingInterface",
+ Pref="dom.reporting.testing.enabled",
  Exposed=(Window,DedicatedWorker)]
 interface TestingDeprecatedInterface {
+  constructor();
+
   [Deprecated="DeprecatedTestingMethod"]
   void deprecatedMethod();
 
@@ -57,6 +71,7 @@ interface TestingDeprecatedInterface {
 };
 
 // Used internally to process the JSON
+[GenerateInit]
 dictionary ReportingHeaderValue {
   sequence<ReportingItem> items;
 };
@@ -73,6 +88,7 @@ dictionary ReportingItem {
 };
 
 // Used internally to process the JSON
+[GenerateInit]
 dictionary ReportingEndpoint {
   // This is a string.
   any url;

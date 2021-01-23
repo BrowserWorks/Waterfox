@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=1067255
+-->
+
+<head>
+  <title>Test for enabled state of cut/copy/delete commands</title>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script src="/tests/SimpleTest/EventUtils.js"></script>
+</head>
+
+<body onload="doTest();">
+  <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1067255">Mozilla Bug 1067255</a>
+
+  <pre id="test">
+    <script type="application/javascript">
+      /** Test for Bug 1067255 **/
+      SimpleTest.waitForExplicitFinish();
+
+      function doTest() {
+        var text = $("text-field");
+        var password = $("password-field");
+
+        var editor1 = SpecialPowers.wrap(text).editor;
+        var editor2 = SpecialPowers.wrap(password).editor;
+
+        text.focus();
+        text.select();
+
+        ok(editor1.canCopy(),
+           "nsIEditor.canCopy() should return true in <input type=text>");
+        ok(editor1.canCut(),
+           "nsIEditor.canCut() should return true in <input type=text>");
+        ok(SpecialPowers.isCommandEnabled(window, "cmd_copy"),
+           "cmd_copy command should be enabled in <input type=text>");
+        ok(SpecialPowers.isCommandEnabled(window, "cmd_cut"),
+           "cmd_cut command should be enabled in <input type=text>");
+        ok(SpecialPowers.isCommandEnabled(window, "cmd_delete"),
+           "cmd_delete command should be enabled in <input type=text>");
+
+        password.focus();
+        password.select();
+
+        // Copy and cut commands don't do anything on password fields by default,
+        // but webpages can hook up event handlers to the event, and thus, we have to
+        // always keep the cut and copy event enabled in HTML/XHTML documents.
+        ok(editor2.canCopy(),
+           "nsIEditor.canCopy() should return true in <input type=password>");
+        ok(editor2.canCut(),
+           "nsIEditor.canCut() should return true in <input type=password>");
+        ok(SpecialPowers.isCommandEnabled(window, "cmd_copy"),
+           "cmd_copy command should be enabled in <input type=password>");
+        ok(SpecialPowers.isCommandEnabled(window, "cmd_cut"),
+           "cmd_cut command should be enabled in <input type=password>");
+        ok(SpecialPowers.isCommandEnabled(window, "cmd_delete"),
+           "cmd_delete command should be enabled in <input type=password>");
+
+        SimpleTest.finish();
+      }
+   </script>
+  </pre>
+
+  <input type="text" value="Gonzo says hi" id="text-field" />
+  <input type="password" value="Jan also" id="password-field" />
+</body>
+</html>

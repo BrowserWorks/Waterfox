@@ -34,7 +34,7 @@ addAccessibleTask(
 
     /* ================= Write iframe document ================================ */
     let reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, id, contentId => {
+    await invokeContentTask(browser, [id], contentId => {
       let docNode = content.document.getElementById("iframe").contentDocument;
       let newHTMLNode = docNode.createElement("html");
       let newBodyNode = docNode.createElement("body");
@@ -59,7 +59,7 @@ addAccessibleTask(
 
     /* ================= Replace iframe HTML element ========================== */
     reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, id, contentId => {
+    await invokeContentTask(browser, [id], contentId => {
       let docNode = content.document.getElementById("iframe").contentDocument;
       // We can't use open/write/close outside of iframe document because of
       // security error.
@@ -85,19 +85,19 @@ addAccessibleTask(
 
     /* ================= Replace iframe body ================================== */
     reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, id, contentId => {
+    await invokeContentTask(browser, [id], contentId => {
       let docNode = content.document.getElementById("iframe").contentDocument;
       let newBodyNode = docNode.createElement("body");
       let newTextNode = docNode.createTextNode("New Hello");
       newBodyNode.id = contentId;
       newBodyNode.appendChild(newTextNode);
-      newBodyNode.setAttribute("role", "button");
+      newBodyNode.setAttribute("role", "application");
       docNode.documentElement.replaceChild(newBodyNode, docNode.body);
     });
     await reorderEventPromise;
 
     tree = {
-      role: ROLE_PUSHBUTTON,
+      role: ROLE_APPLICATION,
       children: [
         {
           role: ROLE_TEXT_LEAF,
@@ -109,7 +109,7 @@ addAccessibleTask(
 
     /* ================= Open iframe document ================================= */
     reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, id, contentId => {
+    await invokeContentTask(browser, [id], contentId => {
       // Open document.
       let docNode = content.document.getElementById("iframe").contentDocument;
       let script = docNode.createElement("script");
@@ -133,7 +133,7 @@ addAccessibleTask(
 
     /* ================= Close iframe document ================================ */
     reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, {}, () => {
+    await invokeContentTask(browser, [], () => {
       // Write and close document.
       let docNode = content.document.getElementById("iframe").contentDocument;
       docNode.write("Works?");
@@ -154,7 +154,7 @@ addAccessibleTask(
 
     /* ================= Remove HTML from iframe document ===================== */
     reorderEventPromise = waitForEvent(EVENT_REORDER, iframe);
-    await ContentTask.spawn(browser, {}, () => {
+    await invokeContentTask(browser, [], () => {
       // Remove HTML element.
       let docNode = content.document.getElementById("iframe").contentDocument;
       docNode.firstChild.remove();
@@ -173,7 +173,7 @@ addAccessibleTask(
 
     /* ================= Insert HTML to iframe document ======================= */
     reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, id, contentId => {
+    await invokeContentTask(browser, [id], contentId => {
       // Insert HTML element.
       let docNode = content.document.getElementById("iframe").contentDocument;
       let html = docNode.createElement("html");
@@ -199,7 +199,7 @@ addAccessibleTask(
 
     /* ================= Remove body from iframe document ===================== */
     reorderEventPromise = waitForEvent(EVENT_REORDER, iframe);
-    await ContentTask.spawn(browser, {}, () => {
+    await invokeContentTask(browser, [], () => {
       // Remove body element.
       let docNode = content.document.getElementById("iframe").contentDocument;
       docNode.documentElement.removeChild(docNode.body);
@@ -218,7 +218,7 @@ addAccessibleTask(
 
     /* ================ Insert element under document element while body missed */
     reorderEventPromise = waitForEvent(EVENT_REORDER, iframe);
-    await ContentTask.spawn(browser, {}, () => {
+    await invokeContentTask(browser, [], () => {
       let docNode = content.document.getElementById("iframe").contentDocument;
       let inputNode = (content.window.inputNode = docNode.createElement(
         "input"
@@ -237,7 +237,7 @@ addAccessibleTask(
     testAccessibleTree(iframe, tree);
 
     reorderEventPromise = waitForEvent(EVENT_REORDER, iframe);
-    await ContentTask.spawn(browser, {}, () => {
+    await invokeContentTask(browser, [], () => {
       let docEl = content.document.getElementById("iframe").contentDocument
         .documentElement;
       // Remove aftermath of this test before next test starts.
@@ -253,7 +253,7 @@ addAccessibleTask(
 
     /* ================= Insert body to iframe document ======================= */
     reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, id, contentId => {
+    await invokeContentTask(browser, [id], contentId => {
       // Write and close document.
       let docNode = content.document.getElementById("iframe").contentDocument;
       // Insert body element.
@@ -294,19 +294,19 @@ addAccessibleTask(
 
     /* ================= Replace iframe body on ARIA role body ================ */
     reorderEventPromise = waitForEvent(EVENT_REORDER, id);
-    await ContentTask.spawn(browser, id, contentId => {
+    await invokeContentTask(browser, [id], contentId => {
       let docNode = content.document.getElementById("iframe").contentDocument;
       let newBodyNode = docNode.createElement("body");
       let newTextNode = docNode.createTextNode("New Hello");
       newBodyNode.appendChild(newTextNode);
-      newBodyNode.setAttribute("role", "button");
+      newBodyNode.setAttribute("role", "application");
       newBodyNode.id = contentId;
       docNode.documentElement.replaceChild(newBodyNode, docNode.body);
     });
     await reorderEventPromise;
 
     tree = {
-      role: ROLE_PUSHBUTTON,
+      role: ROLE_APPLICATION,
       children: [
         {
           role: ROLE_TEXT_LEAF,
@@ -315,5 +315,6 @@ addAccessibleTask(
       ],
     };
     testAccessibleTree(iframe, tree);
-  }
+  },
+  { iframe: true, remoteIframe: true }
 );

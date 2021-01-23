@@ -19,6 +19,7 @@
 #include "nsError.h"
 #include "nsMathUtils.h"
 
+class mozAutoDocUpdate;
 class nsIFrame;
 
 namespace mozilla {
@@ -33,6 +34,7 @@ class SVGViewportElement;
 
 class UserSpaceMetrics {
  public:
+  static bool ResolveAbsoluteUnit(uint8_t aUnitType, float& aRes);
   virtual ~UserSpaceMetrics() = default;
 
   virtual float GetEmLength() const = 0;
@@ -86,9 +88,6 @@ class SVGAnimatedLength {
   typedef mozilla::dom::SVGElement SVGElement;
   typedef mozilla::dom::SVGViewportElement SVGViewportElement;
   typedef mozilla::dom::UserSpaceMetrics UserSpaceMetrics;
-  typedef mozilla::SMILAttr SMILAttr;
-  typedef mozilla::SMILValue SMILValue;
-  typedef mozilla::SVGContentUtils SVGContentUtils;
 
  public:
   void Init(uint8_t aCtxType = mozilla::SVGContentUtils::XY,
@@ -184,7 +183,8 @@ class SVGAnimatedLength {
   // perform unit conversion and are therefore infallible.
   nsresult SetBaseValue(float aValue, SVGElement* aSVGElement, bool aDoSetAttr);
   void SetBaseValueInSpecifiedUnits(float aValue, SVGElement* aSVGElement,
-                                    bool aDoSetAttr);
+                                    bool aDoSetAttr,
+                                    const mozAutoDocUpdate& aProofOfUpdate);
   nsresult SetAnimValue(float aValue, SVGElement* aSVGElement);
   void SetAnimValueInSpecifiedUnits(float aValue, SVGElement* aSVGElement);
   nsresult NewValueSpecifiedUnits(uint16_t aUnitType,

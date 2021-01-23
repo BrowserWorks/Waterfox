@@ -250,22 +250,12 @@ const Preferences = (window.Preferences = (function() {
     },
 
     _fireEvent(aEventName, aTarget) {
-      // Panel loaded, synthesize a load event.
       try {
-        const event = document.createEvent("Events");
-        event.initEvent(aEventName, true, true);
-        let cancel = !aTarget.dispatchEvent(event);
-        if (aTarget.hasAttribute("on" + aEventName)) {
-          const fn = new Function(
-            "event",
-            aTarget.getAttribute("on" + aEventName)
-          );
-          const rv = fn.call(aTarget, event);
-          if (!rv) {
-            cancel = true;
-          }
-        }
-        return !cancel;
+        const event = new CustomEvent(aEventName, {
+          bubbles: true,
+          cancelable: true,
+        });
+        return aTarget.dispatchEvent(event);
       } catch (e) {
         Cu.reportError(e);
       }
@@ -273,7 +263,8 @@ const Preferences = (window.Preferences = (function() {
     },
 
     onDialogAccept(event) {
-      if (!this._fireEvent("beforeaccept", document.documentElement)) {
+      let dialog = document.querySelector("dialog");
+      if (!this._fireEvent("beforeaccept", dialog)) {
         event.preventDefault();
         return false;
       }
@@ -305,6 +296,41 @@ const Preferences = (window.Preferences = (function() {
           return undefined;
       }
     },
+
+    _syncFromPrefListeners: new WeakMap(),
+    _syncToPrefListeners: new WeakMap(),
+
+    addSyncFromPrefListener(aElement, callback) {
+      this._syncFromPrefListeners.set(aElement, callback);
+      // Make sure elements are updated correctly with the listener attached.
+      let elementPref = aElement.getAttribute("preference");
+      if (elementPref) {
+        let pref = this.get(elementPref);
+        if (pref) {
+          pref.updateElements();
+        }
+      }
+    },
+
+    addSyncToPrefListener(aElement, callback) {
+      this._syncToPrefListeners.set(aElement, callback);
+      // Make sure elements are updated correctly with the listener attached.
+      let elementPref = aElement.getAttribute("preference");
+      if (elementPref) {
+        let pref = this.get(elementPref);
+        if (pref) {
+          pref.updateElements();
+        }
+      }
+    },
+
+    removeSyncFromPrefListener(aElement) {
+      this._syncFromPrefListeners.delete(aElement);
+    },
+
+    removeSyncToPrefListener(aElement) {
+      this._syncToPrefListeners.delete(aElement);
+    },
   };
 
   Services.prefs.addObserver("", Preferences);
@@ -319,7 +345,7 @@ const Preferences = (window.Preferences = (function() {
   window.addEventListener("unload", Preferences, { once: true });
 
   class Preference extends EventEmitter {
-    constructor({ id, name, type, inverted, disabled }) {
+    constructor({ id, type, inverted }) {
       super();
       this.on("change", this.onChange.bind(this));
 
@@ -329,16 +355,8 @@ const Preferences = (window.Preferences = (function() {
       this.batching = false;
 
       this.id = id;
-      this._name = name || this.id;
       this.type = type;
       this.inverted = !!inverted;
-      this._disabled = !!disabled;
-
-      // if the element has been inserted without the name attribute set,
-      // we have nothing to do here
-      if (!this.name) {
-        throw new Error(`preference with id '${id}' doesn't have name`);
-      }
 
       // In non-instant apply mode, we must try and use the last saved state
       // from any previous opens of a child dialog instead of the value from
@@ -351,7 +369,7 @@ const Preferences = (window.Preferences = (function() {
         window.opener.document.nodePrincipal.isSystemPrincipal
       ) {
         // Try to find the preference in the parent window.
-        const preference = window.opener.Preferences.get(this.name);
+        const preference = window.opener.Preferences.get(this.id);
 
         // Don't use the value setter here, we don't want updateElements to be
         // prematurely fired.
@@ -367,9 +385,7 @@ const Preferences = (window.Preferences = (function() {
     }
 
     _reportUnknownType() {
-      const msg = `Preference with id=${this.id} and name=${
-        this.name
-      } has unknown type ${this.type}.`;
+      const msg = `Preference with id=${this.id} has unknown type ${this.type}.`;
       Services.console.logStringMessage(msg);
     }
 
@@ -383,19 +399,9 @@ const Preferences = (window.Preferences = (function() {
       }
 
       let rv = undefined;
-      if (aElement.hasAttribute("onsyncfrompreference")) {
-        // Value changed, synthesize an event
-        try {
-          const event = document.createEvent("Events");
-          event.initEvent("syncfrompreference", true, true);
-          const f = new Function(
-            "event",
-            aElement.getAttribute("onsyncfrompreference")
-          );
-          rv = f.call(aElement, event);
-        } catch (e) {
-          Cu.reportError(e);
-        }
+
+      if (Preferences._syncFromPrefListeners.has(aElement)) {
+        rv = Preferences._syncFromPrefListeners.get(aElement)(aElement);
       }
       let val = rv;
       if (val === undefined) {
@@ -433,29 +439,15 @@ const Preferences = (window.Preferences = (function() {
       }
       if (aElement.localName == "checkbox") {
         setValue(aElement, "checked", val);
-      } else if (aElement.localName == "textbox") {
-        // XXXmano Bug 303998: Avoid a caret placement issue if either the
-        // preference observer or its setter calls updateElements as a result
-        // of the input event handler.
-        if (aElement.value !== val) {
-          setValue(aElement, "value", val);
-        }
       } else {
         setValue(aElement, "value", val);
       }
     }
 
     getElementValue(aElement) {
-      if (aElement.hasAttribute("onsynctopreference")) {
-        // Value changed, synthesize an event
+      if (Preferences._syncToPrefListeners.has(aElement)) {
         try {
-          const event = document.createEvent("Events");
-          event.initEvent("synctopreference", true, true);
-          const f = new Function(
-            "event",
-            aElement.getAttribute("onsynctopreference")
-          );
-          const rv = f.call(aElement, event);
+          const rv = Preferences._syncToPrefListeners.get(aElement)(aElement);
           if (rv !== undefined) {
             return rv;
           }
@@ -498,7 +490,6 @@ const Preferences = (window.Preferences = (function() {
         case "input":
         case "radiogroup":
         case "textarea":
-        case "textbox":
         case "menulist":
           return true;
       }
@@ -522,20 +513,6 @@ const Preferences = (window.Preferences = (function() {
       this.updateElements();
     }
 
-    get name() {
-      return this._name;
-    }
-
-    set name(val) {
-      if (val == this.name) {
-        return val;
-      }
-
-      this._name = val;
-
-      return val;
-    }
-
     get value() {
       return this._value;
     }
@@ -552,19 +529,15 @@ const Preferences = (window.Preferences = (function() {
     }
 
     get locked() {
-      return Services.prefs.prefIsLocked(this.name);
+      return Services.prefs.prefIsLocked(this.id);
     }
 
-    get disabled() {
-      return this._disabled;
-    }
-
-    set disabled(val) {
-      this._disabled = !!val;
-
+    updateControlDisabledState(val) {
       if (!this.id) {
-        return val;
+        return;
       }
+
+      val = val || this.locked;
 
       const elements = getElementsByAttribute("preference", this.id);
       for (const element of elements) {
@@ -575,13 +548,11 @@ const Preferences = (window.Preferences = (function() {
           label.disabled = val;
         }
       }
-
-      return val;
     }
 
     get hasUserValue() {
       return (
-        Services.prefs.prefHasUserValue(this.name) && this.value !== undefined
+        Services.prefs.prefHasUserValue(this.id) && this.value !== undefined
       );
     }
 
@@ -601,28 +572,28 @@ const Preferences = (window.Preferences = (function() {
         // Force a resync of value with preferences.
         switch (this.type) {
           case "int":
-            return this._branch.getIntPref(this.name);
+            return this._branch.getIntPref(this.id);
           case "bool": {
-            const val = this._branch.getBoolPref(this.name);
+            const val = this._branch.getBoolPref(this.id);
             return this.inverted ? !val : val;
           }
           case "wstring":
             return this._branch.getComplexValue(
-              this.name,
+              this.id,
               Ci.nsIPrefLocalizedString
             ).data;
           case "string":
           case "unichar":
-            return this._branch.getStringPref(this.name);
+            return this._branch.getStringPref(this.id);
           case "fontname": {
-            const family = this._branch.getStringPref(this.name);
+            const family = this._branch.getStringPref(this.id);
             const fontEnumerator = Cc[
               "@mozilla.org/gfx/fontenumerator;1"
             ].createInstance(Ci.nsIFontEnumerator);
             return fontEnumerator.getStandardFamilyName(family);
           }
           case "file": {
-            const f = this._branch.getComplexValue(this.name, Ci.nsIFile);
+            const f = this._branch.getComplexValue(this.id, Ci.nsIFile);
             return f;
           }
           default:
@@ -640,17 +611,17 @@ const Preferences = (window.Preferences = (function() {
 
       // The special value undefined means 'reset preference to default'.
       if (val === undefined) {
-        Services.prefs.clearUserPref(this.name);
+        Services.prefs.clearUserPref(this.id);
         return val;
       }
 
       // Force a resync of preferences with value.
       switch (this.type) {
         case "int":
-          Services.prefs.setIntPref(this.name, val);
+          Services.prefs.setIntPref(this.id, val);
           break;
         case "bool":
-          Services.prefs.setBoolPref(this.name, this.inverted ? !val : val);
+          Services.prefs.setBoolPref(this.id, this.inverted ? !val : val);
           break;
         case "wstring": {
           const pls = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(
@@ -658,7 +629,7 @@ const Preferences = (window.Preferences = (function() {
           );
           pls.data = val;
           Services.prefs.setComplexValue(
-            this.name,
+            this.id,
             Ci.nsIPrefLocalizedString,
             pls
           );
@@ -667,7 +638,7 @@ const Preferences = (window.Preferences = (function() {
         case "string":
         case "unichar":
         case "fontname":
-          Services.prefs.setStringPref(this.name, val);
+          Services.prefs.setStringPref(this.id, val);
           break;
         case "file": {
           let lf;
@@ -680,7 +651,7 @@ const Preferences = (window.Preferences = (function() {
           } else {
             lf = val.QueryInterface(Ci.nsIFile);
           }
-          Services.prefs.setComplexValue(this.name, Ci.nsIFile, lf);
+          Services.prefs.setComplexValue(this.id, Ci.nsIFile, lf);
           break;
         }
         default:

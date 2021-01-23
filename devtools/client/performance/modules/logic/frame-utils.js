@@ -42,6 +42,7 @@ const gFrameData = new WeakMap();
  * Parses the raw location of this function call to retrieve the actual
  * function name, source url, host name, line and column.
  */
+// eslint-disable-next-line complexity
 function parseLocation(location, fallbackLine, fallbackColumn) {
   // Parse the `location` for the function name, source url, line, column etc.
 
@@ -204,11 +205,6 @@ function parseLocation(location, fallbackLine, fallbackColumn) {
  * @param {InflatedFrame} frame
  */
 function computeIsContentAndCategory(frame) {
-  // Only C++ stack frames have associated category information.
-  if (frame.category !== null && frame.category !== undefined) {
-    return;
-  }
-
   const location = frame.location;
 
   // There are 3 variants of location strings in the profiler (with optional
@@ -242,6 +238,10 @@ function computeIsContentAndCategory(frame) {
   // them all as content.
   if (isContentScheme(location, schemeStartIndex) || isWASM(location)) {
     frame.isContent = true;
+    return;
+  }
+
+  if (frame.category !== null && frame.category !== undefined) {
     return;
   }
 
@@ -382,8 +382,7 @@ function isNumeric(c) {
 
 function shouldDemangle(name) {
   return (
-    name &&
-    name.charCodeAt &&
+    name?.charCodeAt &&
     name.charCodeAt(0) === CHAR_CODE_UNDERSCORE &&
     name.charCodeAt(1) === CHAR_CODE_UNDERSCORE &&
     name.charCodeAt(2) === CHAR_CODE_CAP_Z
@@ -451,7 +450,7 @@ function getFrameInfo(node, options) {
   // if it does not.
   const totalSamples = options.root.samples;
   const totalDuration = options.root.duration;
-  if (options && options.root && !data.COSTS_CALCULATED) {
+  if (options?.root && !data.COSTS_CALCULATED) {
     data.selfDuration =
       (node.youngestFrameSamples / totalSamples) * totalDuration;
     data.selfPercentage = (node.youngestFrameSamples / totalSamples) * 100;
@@ -460,7 +459,7 @@ function getFrameInfo(node, options) {
     data.COSTS_CALCULATED = true;
   }
 
-  if (options && options.allocations && !data.ALLOCATION_DATA_CALCULATED) {
+  if (options?.allocations && !data.ALLOCATION_DATA_CALCULATED) {
     const totalBytes = options.root.byteSize;
     data.selfCount = node.youngestFrameSamples;
     data.totalCount = node.samples;

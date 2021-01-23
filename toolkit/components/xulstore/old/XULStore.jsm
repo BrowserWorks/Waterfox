@@ -142,7 +142,7 @@ XULStore.prototype = {
     const value = node.getAttribute(attr);
 
     if (node.localName == "window") {
-      this.log("Persisting attributes to windows is handled by nsXULWindow.");
+      this.log("Persisting attributes to windows is handled by AppWindow.");
       return;
     }
 
@@ -254,10 +254,10 @@ XULStore.prototype = {
       if (attrs && attr in attrs) {
         delete attrs[attr];
 
-        if (Object.getOwnPropertyNames(attrs).length == 0) {
+        if (!Object.getOwnPropertyNames(attrs).length) {
           delete ids[id];
 
-          if (Object.getOwnPropertyNames(ids).length == 0) {
+          if (!Object.getOwnPropertyNames(ids).length) {
             delete this._data[docURI];
           }
         }
@@ -332,7 +332,7 @@ nsStringEnumerator.prototype = {
   },
   getNext() {
     if (!this.hasMore()) {
-      throw Cr.NS_ERROR_NOT_AVAILABLE;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_AVAILABLE);
     }
     return this._items[this._nextIndex++];
   },

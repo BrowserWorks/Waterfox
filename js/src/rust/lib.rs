@@ -12,4 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 extern crate jsrust_shared;
+extern crate wasmparser;
+extern crate wat;
+
+mod wasm;

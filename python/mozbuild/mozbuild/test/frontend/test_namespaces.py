@@ -2,8 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+import six
 import unittest
 
 from mozunit import main
@@ -29,7 +30,7 @@ class Fuga(object):
 
 class Piyo(ContextDerivedValue):
     def __init__(self, context, value):
-        if not isinstance(value, unicode):
+        if not isinstance(value, six.text_type):
             raise ValueError
         self.context = context
         self.value = value
@@ -40,25 +41,38 @@ class Piyo(ContextDerivedValue):
     def __str__(self):
         return self.value
 
-    def __cmp__(self, other):
-        return cmp(self.value, str(other))
+    def __eq__(self, other):
+        return self.value == six.text_type(other)
+
+    def __lt__(self, other):
+        return self.value < six.text_type(other)
+
+    def __le__(self, other):
+        return self.value <= six.text_type(other)
+
+    def __gt__(self, other):
+        return self.value > six.text_type(other)
+
+    def __ge__(self, other):
+        return self.value >= six.text_type(other)
 
     def __hash__(self):
         return hash(self.value)
 
 
 VARIABLES = {
-    'HOGE': (unicode, unicode, None),
-    'FUGA': (Fuga, unicode, None),
-    'PIYO': (Piyo, unicode, None),
+    'HOGE': (six.text_type, six.text_type, None),
+    'FUGA': (Fuga, six.text_type, None),
+    'PIYO': (Piyo, six.text_type, None),
     'HOGERA': (ContextDerivedTypedList(Piyo, StrictOrderingOnAppendList),
-        list, None),
+               list, None),
     'HOGEHOGE': (ContextDerivedTypedListWithItems(
         Piyo,
         StrictOrderingOnAppendListWithFlagsFactory({
             'foo': bool,
         })), list, None),
 }
+
 
 class TestContext(unittest.TestCase):
     def test_key_rejection(self):
@@ -104,7 +118,7 @@ class TestContext(unittest.TestCase):
         self.assertEqual(e[1], 'set_type')
         self.assertEqual(e[2], 'HOGE')
         self.assertEqual(e[3], True)
-        self.assertEqual(e[4], unicode)
+        self.assertEqual(e[4], six.text_type)
 
     def test_key_checking(self):
         # Checking for existence of a key should not populate the key if it
@@ -127,7 +141,7 @@ class TestContext(unittest.TestCase):
         self.assertEqual(e[1], 'set_type')
         self.assertEqual(e[2], 'FUGA')
         self.assertEqual(e[3], False)
-        self.assertEqual(e[4], unicode)
+        self.assertEqual(e[4], six.text_type)
 
         ns['FUGA'] = 'fuga'
         self.assertIsInstance(ns['FUGA'], Fuga)
@@ -150,7 +164,7 @@ class TestContext(unittest.TestCase):
         self.assertEqual(e[1], 'set_type')
         self.assertEqual(e[2], 'PIYO')
         self.assertEqual(e[3], False)
-        self.assertEqual(e[4], unicode)
+        self.assertEqual(e[4], six.text_type)
 
         ns['PIYO'] = 'piyo'
         self.assertIsInstance(ns['PIYO'], Piyo)
@@ -202,6 +216,7 @@ class TestContext(unittest.TestCase):
 
         with self.assertRaises(UnsortedError):
             ns['HOGEHOGE'] += ['f', 'e', 'd']
+
 
 if __name__ == '__main__':
     main()

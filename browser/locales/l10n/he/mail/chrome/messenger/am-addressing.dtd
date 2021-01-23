@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "חיבור ומיעון הודעה">
+<!ENTITY addressingGroupTitle.label "מיעון">
+<!ENTITY addressingText.label      "בעת חיפוש כתובות:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "השתמש בהעדפות שרת LDAP הכלליות שלי עבור חשבון זה">
+<!ENTITY useGlobal.accesskey       "L">
+<!ENTITY editDirectories.label     "עריכת מדריכים…">
+<!ENTITY editDirectories.accesskey "ע">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "השתמש בשרת LDAP אחר:">
+<!ENTITY directories.accesskey     "ש">
+<!ENTITY directoriesNone.label     "ללא">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "חיבור הודעה">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "חבר הודעות בתבנית HTML">
+<!ENTITY useHtml.accesskey                    "ת">
+<!ENTITY autoQuote.label                      "צטט אוטומטית הודעה מקורית בעת מענה">
+<!ENTITY autoQuote.accesskey                  "צ">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "כשמצטטים,">
+<!ENTITY quoting.accesskey                    "צ">
+<!ENTITY aboveQuote.label                     "התחל את תשובתי מעל הציטוט">
+<!ENTITY belowQuote.label                     "התחל את תשובתי מתחת לציטוט">
+<!ENTITY selectAndQuote.label                 "בחר את הציטוט">
+<!ENTITY place.label                          "והוסף את חתימתי">
+<!ENTITY place.accesskey                      "ח">
+<!ENTITY belowText.label                      "מתחת לציטוט (מומלץ)">
+<!ENTITY aboveText.label                      "מתחת לתשובתי (מעל הציטוט)">
+<!ENTITY includeSigOnReply.label              "כלול חתימה בתגובות">
+<!ENTITY includeSigOnReply.accesskey          "ת">
+<!ENTITY includeSigOnForward.label            "כלול חתימה בהעברות">
+<!ENTITY includeSigOnForward.accesskey        "ע">
+
+<!ENTITY globalComposingPrefs.label           "העדפות כתיבה כלליות…">
+<!ENTITY globalComposingPrefs.accesskey       "כ">
+
+<!ENTITY globalAddressingPrefs.label          "העדפות מיעון כלליות…">
+<!ENTITY globalAddressingPrefs.accesskey      "ע">

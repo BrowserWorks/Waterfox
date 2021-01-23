@@ -47,16 +47,19 @@ const testCases = [
       getCookieId(
         "sc1",
         "sectest1.example.org",
-        "/browser/devtools/client/storage/test/"
+        "/browser/devtools/client/storage/test"
       ),
       getCookieId(
         "sc2",
         "sectest1.example.org",
-        "/browser/devtools/client/storage/test/"
+        "/browser/devtools/client/storage/test"
       ),
     ],
   ],
-  [["localStorage", "http://test1.example.org"], ["ls1", "ls2"]],
+  [
+    ["localStorage", "http://test1.example.org"],
+    ["ls1", "ls2"],
+  ],
   [["localStorage", "http://sectest1.example.org"], ["iframe-u-ls1"]],
   [["localStorage", "https://sectest1.example.org"], ["iframe-s-ls1"]],
   [["sessionStorage", "http://test1.example.org"], ["ss1"]],

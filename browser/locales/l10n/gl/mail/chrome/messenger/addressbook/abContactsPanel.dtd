@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookPicker.label            "Axenda de enderezos:">
+<!ENTITY addressbookPicker.accesskey        "z">
+<!ENTITY SearchNameOrEmail.label            "Nome ou correo electrónico">
+
+<!ENTITY addtoToFieldMenu.label             "Engadir no campo Para">
+<!ENTITY addtoToFieldMenu.accesskey         "a">
+<!ENTITY addtoCcFieldMenu.label             "Engadir no campo CC">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Engadir no campo CCO">
+<!ENTITY addtoBccFieldMenu.accesskey        "O">
+
+<!ENTITY deleteAddrBookCard.label           "Eliminar">
+<!ENTITY deleteAddrBookCard.accesskey       "l">
+
+<!ENTITY toButton.label                     "Engadir en Para:">
+<!ENTITY toButton.accesskey                 "a">
+<!ENTITY ccButton.label                     "Engadir en CC:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Engadir en CCO:">
+<!ENTITY bccButton.accesskey                "O">

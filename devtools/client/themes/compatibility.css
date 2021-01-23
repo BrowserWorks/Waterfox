@@ -1,0 +1,249 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+:root {
+  --compatibility-base-unit: 4px;
+  --compatibility-cause-color: var(--theme-text-color-alt);
+  --compatibility-issue-icon-size: calc(var(--compatibility-base-unit) * 3);
+  --compatibility-browser-icon-size: calc(var(--compatibility-base-unit) * 4);
+}
+
+.compatibility-app {
+  height: 100%;
+}
+
+.compatibility-app__throbber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--compatibility-base-unit) * 8);
+}
+
+.compatibility-app__container {
+  display: grid;
+  grid-template-rows: 1fr calc(var(--compatibility-base-unit) * 7);
+  height: 100%;
+}
+
+.compatibility-app__container-hidden {
+  display: none;
+}
+
+.compatibility-app__main {
+  overflow: auto;
+}
+
+.compatibility-issue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.compatibility-issue-item {
+  padding-inline-start: calc(var(--compatibility-base-unit) * 2);
+  padding-inline-end: calc(var(--compatibility-base-unit) * 4);
+  padding-block: calc(var(--compatibility-base-unit) * 2);
+}
+
+.compatibility-issue-item:not(:last-child) {
+  border-block-end: 1px solid var(--theme-splitter-color);
+}
+
+/*
+ * Layout of the issue description
+ *  +------+--------------+-----------------+---------------------------+
+ *  | icon | issue factor | (issue causes)? | unsupported browser icons |
+ *  +------+--------------+-----------------+---------------------------+
+ */
+.compatibility-issue-item__description {
+  display: grid;
+  grid-template-columns: var(--compatibility-issue-icon-size) max-content 1fr max-content;
+  align-items: center;
+}
+
+.compatibility-issue-item__description > *:nth-child(-n+2) {
+  /*
+   * The reason why we don't use `gap` in `.compatibility-issue-item` is
+   * because there are cases that the `issue causes` element is null,
+   * then the layout will be broken a bit.
+   */
+  margin-inline-start: var(--compatibility-base-unit);
+}
+
+.compatibility-issue-item__description::before {
+  content: "";
+  width: var(--compatibility-issue-icon-size);
+  height: var(--compatibility-issue-icon-size);
+  background-size: var(--compatibility-issue-icon-size);
+  -moz-context-properties: fill;
+}
+
+.compatibility-issue-item__description--experimental::before,
+.compatibility-issue-item__description--unsupported::before {
+  background-image: url(chrome://devtools/skin/images/info.svg);
+}
+
+.compatibility-issue-item__description--deprecated::before {
+  background-image: url(chrome://devtools/skin/images/alert-small.svg);
+  fill: var(--theme-icon-warning-color);
+}
+
+.compatibility-issue-item__causes {
+  color: var(--compatibility-cause-color);
+}
+
+.compatibility-issue-item__mdn-link {
+  color: var(--theme-highlight-blue);
+  text-decoration: none;
+}
+
+.compatibility-unsupported-browser-list {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  list-style: none;
+  padding: 0;
+  gap: var(--compatibility-base-unit);
+}
+
+.compatibility-browser-icon {
+  display: inline-block;
+  width: var(--compatibility-browser-icon-size);
+  height: var(--compatibility-browser-icon-size);
+  position: relative;
+}
+
+.compatibility-browser-icon--mobile::after {
+  content: "";
+  width: calc(var(--compatibility-base-unit) * 2);
+  height: calc(var(--compatibility-base-unit) * 3);
+  background-color: var(--theme-body-background);
+  background-size: calc(var(--compatibility-base-unit) * 2 - 2px);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: url(chrome://devtools/skin/images/browsers/mobile.svg);
+  -moz-context-properties: fill;
+  fill: var(--theme-icon-dimmed-color);
+  position: absolute;
+  right: calc(var(--compatibility-base-unit) * -1);
+  bottom: calc(var(--compatibility-base-unit) * -1);
+}
+
+.compatibility-browser-icon__image {
+  width: 100%;
+  height: 100%;
+  fill: var(--theme-icon-dimmed-color);
+  -moz-context-properties: fill;
+}
+
+.compatibility-node-pane {
+  padding-inline-start: calc(var(--compatibility-base-unit) * 4);
+}
+
+.compatibility-node-pane__summary {
+  color: var(--theme-comment);
+  cursor: pointer;
+  padding-block-start: var(--compatibility-base-unit);
+}
+
+.compatibility-node-list {
+  list-style: none;
+  margin: 0;
+  padding-inline-start: calc(var(--compatibility-base-unit) * 2);
+}
+
+.compatibility-node-item {
+  padding-block-start: var(--compatibility-base-unit);
+}
+
+.compatibility-footer {
+  border-top: 1px solid var(--theme-splitter-color);
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.compatibility-footer__button {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  column-gap: var(--compatibility-base-unit);
+}
+
+.compatibility-footer__icon {
+  -moz-context-properties: fill;
+  fill: var(--theme-icon-color);
+  width: calc(var(--compatibility-base-unit) * 4);
+  height: calc(var(--compatibility-base-unit) * 4);
+}
+
+.compatibility-footer__label {
+  color: var(--theme-toolbar-color);
+  font-size: calc(var(--compatibility-base-unit) * 3);
+}
+
+.compatibility-settings {
+  width: 100%;
+  height: 100%;
+  background-color: var(--theme-body-background);
+  overflow: auto;
+}
+
+.compatibility-settings__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding-block: calc(var(--compatibility-base-unit) * 3);
+  padding-inline: calc(var(--compatibility-base-unit) * 4);
+}
+
+.compatibility-settings__header-label {
+  color: var(--theme-toolbar-color);
+  font-size: calc(var(--compatibility-base-unit) * 3);
+  font-weight: bold;
+}
+
+.compatibility-settings__header-button {
+  background: none;
+  border: none;
+}
+
+.compatibility-settings__header-icon {
+  -moz-context-properties: fill;
+  fill: var(--theme-icon-color);
+  width: calc(var(--compatibility-base-unit) * 4);
+  height: calc(var(--compatibility-base-unit) * 4);
+}
+
+.compatibility-settings__target-browsers-header {
+  font-size: calc(var(--compatibility-base-unit) * 3);
+  line-height: calc(var(--compatibility-base-unit) * 4);
+  padding-block: var(--compatibility-base-unit);
+  padding-inline: calc(var(--compatibility-base-unit) * 4);
+  background-color: var(--theme-toolbar-background);
+  border-top: 1px solid var(--theme-splitter-color);
+  border-bottom: 1px solid var(--theme-splitter-color);
+}
+
+.compatibility-settings__target-browsers-list {
+  display: grid;
+  list-style: none;
+  margin: 0;
+  padding-block: calc(var(--compatibility-base-unit) * 3);
+  padding-inline: calc(var(--compatibility-base-unit) * 4);
+  row-gap: calc(var(--compatibility-base-unit) * 2);
+}
+
+.compatibility-settings__target-browsers-item {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  padding-inline-start: calc(var(--compatibility-base-unit) * 2);
+  column-gap: calc(var(--compatibility-base-unit) * 2);
+}
+
+.compatibility-settings__target-browsers-item-label {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 2/-1;
+}

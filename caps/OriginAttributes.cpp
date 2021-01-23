@@ -13,82 +13,67 @@
 #include "nsIURI.h"
 #include "nsURLHelper.h"
 
+static const char kSourceChar = ':';
+static const char kSanitizedChar = '+';
+
 namespace mozilla {
 
 using dom::URLParams;
 
-bool OriginAttributes::sFirstPartyIsolation = false;
-bool OriginAttributes::sRestrictedOpenerAccess = false;
-bool OriginAttributes::sBlockPostMessageForFPI = false;
-
-void OriginAttributes::InitPrefs() {
-  MOZ_ASSERT(NS_IsMainThread());
-  static bool sInited = false;
-  if (!sInited) {
-    sInited = true;
-    Preferences::AddBoolVarCache(&sFirstPartyIsolation,
-                                 "privacy.firstparty.isolate");
-    Preferences::AddBoolVarCache(
-        &sRestrictedOpenerAccess,
-        "privacy.firstparty.isolate.restrict_opener_access");
-    Preferences::AddBoolVarCache(
-        &sBlockPostMessageForFPI,
-        "privacy.firstparty.isolate.block_post_message");
+void MakeFirstPartyDomain(const nsACString& aScheme, const nsACString& aHost,
+                          int32_t aPort, nsAString& aFirstPartyDomain) {
+  if (!OriginAttributes::UseSiteForFirstPartyDomain()) {
+    aFirstPartyDomain.Assign(NS_ConvertUTF8toUTF16(aHost));
+    return;
   }
+
+  nsAutoCString site;
+  site.AssignLiteral("(");
+  site.Append(aScheme);
+  site.Append(",");
+  site.Append(aHost);
+  if (aPort != -1) {
+    site.Append(",");
+    site.AppendInt(aPort);
+  }
+  site.AppendLiteral(")");
+
+  aFirstPartyDomain.Assign(NS_ConvertUTF8toUTF16(site));
+}
+
+void MakeFirstPartyDomain(const nsACString& aScheme, const nsACString& aHost,
+                          nsAString& aFirstPartyDomain) {
+  MakeFirstPartyDomain(aScheme, aHost, -1, aFirstPartyDomain);
 }
 
 void OriginAttributes::SetFirstPartyDomain(const bool aIsTopLevelDocument,
                                            nsIURI* aURI, bool aForced) {
-  bool isFirstPartyEnabled = IsFirstPartyEnabled();
+  nsresult rv;
+
+  if (!aURI) {
+    return;
+  }
 
   // If the prefs are off or this is not a top level load, bail out.
-  if ((!isFirstPartyEnabled || !aIsTopLevelDocument) && !aForced) {
+  if ((!IsFirstPartyEnabled() || !aIsTopLevelDocument) && !aForced) {
     return;
   }
 
-  nsCOMPtr<nsIEffectiveTLDService> tldService =
-      do_GetService(NS_EFFECTIVETLDSERVICE_CONTRACTID);
-  MOZ_ASSERT(tldService);
-  if (!tldService) {
-    return;
-  }
-
-  nsAutoCString baseDomain;
-  nsresult rv = tldService->GetBaseDomain(aURI, 0, baseDomain);
-  if (NS_SUCCEEDED(rv)) {
-    mFirstPartyDomain = NS_ConvertUTF8toUTF16(baseDomain);
-    return;
-  }
-
-  if (rv == NS_ERROR_HOST_IS_IP_ADDRESS) {
-    // If the host is an IPv4/IPv6 address, we still accept it as a
-    // valid firstPartyDomain.
-    nsAutoCString ipAddr;
-    rv = aURI->GetHost(ipAddr);
-    NS_ENSURE_SUCCESS_VOID(rv);
-
-    if (net_IsValidIPv6Addr(ipAddr)) {
-      // According to RFC2732, the host of an IPv6 address should be an
-      // IPv6reference. The GetHost() of nsIURI will only return the IPv6
-      // address. So, we need to convert it back to IPv6reference here.
-      mFirstPartyDomain.Truncate();
-      mFirstPartyDomain.AssignLiteral("[");
-      mFirstPartyDomain.Append(NS_ConvertUTF8toUTF16(ipAddr));
-      mFirstPartyDomain.AppendLiteral("]");
-    } else {
-      mFirstPartyDomain = NS_ConvertUTF8toUTF16(ipAddr);
-    }
-
-    return;
-  }
-
-  // Saving isInsufficientDomainLevels before rv is overwritten.
-  bool isInsufficientDomainLevels = (rv == NS_ERROR_INSUFFICIENT_DOMAIN_LEVELS);
   nsAutoCString scheme;
   rv = aURI->GetScheme(scheme);
   NS_ENSURE_SUCCESS_VOID(rv);
+
   if (scheme.EqualsLiteral("about")) {
-    mFirstPartyDomain.AssignLiteral(ABOUT_URI_FIRST_PARTY_DOMAIN);
+    MakeFirstPartyDomain(scheme,
+                         NS_LITERAL_CSTRING(ABOUT_URI_FIRST_PARTY_DOMAIN),
+                         mFirstPartyDomain);
+    return;
+  }
+
+  // Add-on principals should never get any first-party domain
+  // attributes in order to guarantee their storage integrity when switching
+  // FPI on and off.
+  if (scheme.EqualsLiteral("moz-extension")) {
     return;
   }
 
@@ -100,26 +85,79 @@ void OriginAttributes::SetFirstPartyDomain(const bool aIsTopLevelDocument,
     return;
   }
 
+  nsCOMPtr<nsIEffectiveTLDService> tldService =
+      do_GetService(NS_EFFECTIVETLDSERVICE_CONTRACTID);
+  MOZ_ASSERT(tldService);
+  NS_ENSURE_TRUE_VOID(tldService);
+
+  nsAutoCString baseDomain;
+  rv = tldService->GetBaseDomain(aURI, 0, baseDomain);
+  if (NS_SUCCEEDED(rv)) {
+    MakeFirstPartyDomain(scheme, baseDomain, mFirstPartyDomain);
+    return;
+  }
+
+  // Saving before rv is overwritten.
+  bool isIpAddress = (rv == NS_ERROR_HOST_IS_IP_ADDRESS);
+  bool isInsufficientDomainLevels = (rv == NS_ERROR_INSUFFICIENT_DOMAIN_LEVELS);
+
+  int32_t port;
+  rv = aURI->GetPort(&port);
+  NS_ENSURE_SUCCESS_VOID(rv);
+
+  nsAutoCString host;
+  rv = aURI->GetHost(host);
+  NS_ENSURE_SUCCESS_VOID(rv);
+
+  if (isIpAddress) {
+    // If the host is an IPv4/IPv6 address, we still accept it as a
+    // valid firstPartyDomain.
+    nsAutoCString ipAddr;
+
+    if (net_IsValidIPv6Addr(host)) {
+      // According to RFC2732, the host of an IPv6 address should be an
+      // IPv6reference. The GetHost() of nsIURI will only return the IPv6
+      // address. So, we need to convert it back to IPv6reference here.
+      ipAddr.AssignLiteral("[");
+      ipAddr.Append(host);
+      ipAddr.AppendLiteral("]");
+    } else {
+      ipAddr = host;
+    }
+
+    MakeFirstPartyDomain(scheme, ipAddr, port, mFirstPartyDomain);
+    return;
+  }
+
+  if (OriginAttributes::UseSiteForFirstPartyDomain()) {
+    MakeFirstPartyDomain(scheme, host, port, mFirstPartyDomain);
+    return;
+  }
+
   if (isInsufficientDomainLevels) {
     nsAutoCString publicSuffix;
     rv = tldService->GetPublicSuffix(aURI, publicSuffix);
     if (NS_SUCCEEDED(rv)) {
-      mFirstPartyDomain = NS_ConvertUTF8toUTF16(publicSuffix);
+      MakeFirstPartyDomain(scheme, publicSuffix, port, mFirstPartyDomain);
+      return;
     }
-    return;
   }
 }
 
 void OriginAttributes::SetFirstPartyDomain(const bool aIsTopLevelDocument,
                                            const nsACString& aDomain) {
-  bool isFirstPartyEnabled = IsFirstPartyEnabled();
+  SetFirstPartyDomain(aIsTopLevelDocument, NS_ConvertUTF8toUTF16(aDomain));
+}
 
+void OriginAttributes::SetFirstPartyDomain(const bool aIsTopLevelDocument,
+                                           const nsAString& aDomain,
+                                           bool aForced) {
   // If the pref is off or this is not a top level load, bail out.
-  if (!isFirstPartyEnabled || !aIsTopLevelDocument) {
+  if ((!IsFirstPartyEnabled() || !aIsTopLevelDocument) && !aForced) {
     return;
   }
 
-  mFirstPartyDomain = NS_ConvertUTF8toUTF16(aDomain);
+  mFirstPartyDomain = aDomain;
 }
 
 void OriginAttributes::CreateSuffix(nsACString& aStr) const {
@@ -151,11 +189,19 @@ void OriginAttributes::CreateSuffix(nsACString& aStr) const {
 
   if (!mFirstPartyDomain.IsEmpty()) {
     nsAutoString sanitizedFirstPartyDomain(mFirstPartyDomain);
-    sanitizedFirstPartyDomain.ReplaceChar(
-        dom::quota::QuotaManager::kReplaceChars, '+');
+    sanitizedFirstPartyDomain.ReplaceChar(kSourceChar, kSanitizedChar);
 
     params.Set(NS_LITERAL_STRING("firstPartyDomain"),
                sanitizedFirstPartyDomain);
+  }
+
+  if (!mGeckoViewSessionContextId.IsEmpty()) {
+    nsAutoString sanitizedGeckoViewUserContextId(mGeckoViewSessionContextId);
+    sanitizedGeckoViewUserContextId.ReplaceChar(
+        dom::quota::QuotaManager::kReplaceChars, kSanitizedChar);
+
+    params.Set(NS_LITERAL_STRING("geckoViewUserContextId"),
+               sanitizedGeckoViewUserContextId);
   }
 
   aStr.Truncate();
@@ -194,10 +240,11 @@ class MOZ_STACK_CLASS PopulateFromSuffixIterator final
   explicit PopulateFromSuffixIterator(OriginAttributes* aOriginAttributes)
       : mOriginAttributes(aOriginAttributes) {
     MOZ_ASSERT(aOriginAttributes);
-    // If mPrivateBrowsingId is passed in as >0 and is not present in the
-    // suffix, then it will remain >0 when it should be 0 according to the
-    // suffix. Set to 0 before iterating to fix this.
-    mOriginAttributes->mPrivateBrowsingId = 0;
+    // If a non-default mPrivateBrowsingId is passed and is not present in the
+    // suffix, then it will retain the id when it should be default according
+    // to the suffix. Set to default before iterating to fix this.
+    mOriginAttributes->mPrivateBrowsingId =
+        nsIScriptSecurityManager::DEFAULT_PRIVATE_BROWSING_ID;
   }
 
   bool URLParamsIterator(const nsAString& aName,
@@ -239,7 +286,16 @@ class MOZ_STACK_CLASS PopulateFromSuffixIterator final
 
     if (aName.EqualsLiteral("firstPartyDomain")) {
       MOZ_RELEASE_ASSERT(mOriginAttributes->mFirstPartyDomain.IsEmpty());
-      mOriginAttributes->mFirstPartyDomain.Assign(aValue);
+      nsAutoString firstPartyDomain(aValue);
+      firstPartyDomain.ReplaceChar(kSanitizedChar, kSourceChar);
+      mOriginAttributes->mFirstPartyDomain.Assign(firstPartyDomain);
+      return true;
+    }
+
+    if (aName.EqualsLiteral("geckoViewUserContextId")) {
+      MOZ_RELEASE_ASSERT(
+          mOriginAttributes->mGeckoViewSessionContextId.IsEmpty());
+      mOriginAttributes->mGeckoViewSessionContextId.Assign(aValue);
       return true;
     }
 

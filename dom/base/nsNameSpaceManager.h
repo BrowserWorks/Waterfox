@@ -10,7 +10,6 @@
 #include "nsDataHashtable.h"
 #include "nsHashKeys.h"
 #include "nsAtom.h"
-#include "mozilla/dom/Document.h"
 #include "nsStringFwd.h"
 #include "nsTArray.h"
 
@@ -56,6 +55,8 @@ class nsNameSpaceManager final {
   int32_t GetNameSpaceID(const nsAString& aURI, bool aInChromeDoc);
   int32_t GetNameSpaceID(nsAtom* aURI, bool aInChromeDoc);
 
+  static const char* GetNameSpaceDisplayName(uint32_t aNameSpaceID);
+
   bool HasElementCreator(int32_t aNameSpaceID);
 
   static nsNameSpaceManager* GetInstance();
@@ -63,6 +64,7 @@ class nsNameSpaceManager final {
   bool mSVGDisabled;
 
  private:
+  static void PrefChanged(const char* aPref, void* aSelf);
   void PrefChanged(const char* aPref);
 
   bool Init();
@@ -70,7 +72,7 @@ class nsNameSpaceManager final {
                         const int32_t aNameSpaceID);
   nsresult AddDisabledNameSpace(already_AddRefed<nsAtom> aURI,
                                 const int32_t aNameSpaceID);
-  ~nsNameSpaceManager(){};
+  ~nsNameSpaceManager() = default;
 
   nsDataHashtable<nsRefPtrHashKey<nsAtom>, int32_t> mURIToIDTable;
   nsDataHashtable<nsRefPtrHashKey<nsAtom>, int32_t> mDisabledURIToIDTable;

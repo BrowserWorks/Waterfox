@@ -2,9 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http:mozilla.org/MPL/2.0/. */
 
+#include <type_traits>
+
 #include "nsComponentManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "mozilla/IdleTaskRunner.h"
+#include "mozilla/RefCounted.h"
 #include "mozilla/UniquePtr.h"
 
 #include "gtest/gtest.h"
@@ -40,7 +43,7 @@ class nsFoo : public nsISupports {
   }
 
  private:
-  virtual ~nsFoo() {}
+  virtual ~nsFoo() = default;
 };
 
 NS_IMPL_ISUPPORTS0(nsFoo)
@@ -66,7 +69,7 @@ class TestSuicide : public mozilla::Runnable {
 };
 
 class nsBar : public nsISupports {
-  virtual ~nsBar() {}
+  virtual ~nsBar() = default;
 
  public:
   NS_DECL_ISUPPORTS
@@ -129,7 +132,7 @@ struct TestCopyWithNoMove {
   explicit TestCopyWithNoMove(int* aCopyCounter) : mCopyCounter(aCopyCounter) {}
   TestCopyWithNoMove(const TestCopyWithNoMove& a)
       : mCopyCounter(a.mCopyCounter) {
-    ++mCopyCounter;
+    *mCopyCounter += 1;
   };
   // No 'move' declaration, allows passing object by rvalue copy.
   // Destructor nulls member variable...
@@ -143,7 +146,7 @@ struct TestCopyWithDeletedMove {
       : mCopyCounter(aCopyCounter) {}
   TestCopyWithDeletedMove(const TestCopyWithDeletedMove& a)
       : mCopyCounter(a.mCopyCounter) {
-    ++mCopyCounter;
+    *mCopyCounter += 1;
   };
   // Deleted move prevents passing by rvalue (even if copy would work)
   TestCopyWithDeletedMove(TestCopyWithDeletedMove&&) = delete;
@@ -156,7 +159,7 @@ struct TestMove {
   TestMove(const TestMove&) = delete;
   TestMove(TestMove&& a) : mMoveCounter(a.mMoveCounter) {
     a.mMoveCounter = nullptr;
-    ++mMoveCounter;
+    *mMoveCounter += 1;
   }
   ~TestMove() { mMoveCounter = nullptr; }
   void operator()() { MOZ_RELEASE_ASSERT(mMoveCounter); }
@@ -167,12 +170,12 @@ struct TestCopyMove {
       : mCopyCounter(aCopyCounter), mMoveCounter(aMoveCounter) {}
   TestCopyMove(const TestCopyMove& a)
       : mCopyCounter(a.mCopyCounter), mMoveCounter(a.mMoveCounter) {
-    ++mCopyCounter;
+    *mCopyCounter += 1;
   };
   TestCopyMove(TestCopyMove&& a)
       : mCopyCounter(a.mCopyCounter), mMoveCounter(a.mMoveCounter) {
     a.mMoveCounter = nullptr;
-    ++mMoveCounter;
+    *mMoveCounter += 1;
   }
   ~TestCopyMove() {
     mCopyCounter = nullptr;
@@ -184,6 +187,10 @@ struct TestCopyMove {
   }
   int* mCopyCounter;
   int* mMoveCounter;
+};
+
+struct TestRefCounted : RefCounted<TestRefCounted> {
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(TestRefCounted);
 };
 
 static void Expect(const char* aContext, int aCounter, int aMaxExpected) {
@@ -198,24 +205,44 @@ static void ExpectRunnableName(Runnable* aRunnable, const char* aExpectedName) {
 #endif
 }
 
-static void TestNewRunnableFunction(bool aNamed) {
-  // Test NS_NewRunnableFunction with copyable-only function object.
+struct BasicRunnableFactory {
+  static constexpr bool SupportsCopyWithDeletedMove = true;
+
+  template <typename Function>
+  static auto Create(const char* aName, Function&& aFunc) {
+    return NS_NewRunnableFunction(aName, std::forward<Function>(aFunc));
+  }
+};
+
+struct CancelableRunnableFactory {
+  static constexpr bool SupportsCopyWithDeletedMove = false;
+
+  template <typename Function>
+  static auto Create(const char* aName, Function&& aFunc) {
+    return NS_NewCancelableRunnableFunction(aName,
+                                            std::forward<Function>(aFunc));
+  }
+};
+
+template <typename RunnableFactory>
+static void TestRunnableFactory(bool aNamed) {
+  // Test RunnableFactory with copyable-only function object.
   {
     int copyCounter = 0;
     {
       nsCOMPtr<nsIRunnable> trackedRunnable;
       {
         TestCopyWithNoMove tracker(&copyCounter);
-        trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused", tracker)
-                   : NS_NewRunnableFunction("TestNewRunnableFunction", tracker);
+        trackedRunnable = aNamed ? RunnableFactory::Create("unused", tracker)
+                                 : RunnableFactory::Create(
+                                       "TestNewRunnableFunction", tracker);
         // Original 'tracker' is destroyed here.
       }
       // Verify that the runnable contains a non-destroyed function object.
       trackedRunnable->Run();
     }
     Expect(
-        "NS_NewRunnableFunction with copyable-only (and no move) function, "
+        "RunnableFactory with copyable-only (and no move) function, "
         "copies",
         copyCounter, 1);
   }
@@ -227,37 +254,37 @@ static void TestNewRunnableFunction(bool aNamed) {
         // Passing as rvalue, but using copy.
         // (TestCopyWithDeletedMove wouldn't allow this.)
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused",
-                                            TestCopyWithNoMove(&copyCounter))
-                   : NS_NewRunnableFunction("TestNewRunnableFunction",
-                                            TestCopyWithNoMove(&copyCounter));
+            aNamed ? RunnableFactory::Create("unused",
+                                             TestCopyWithNoMove(&copyCounter))
+                   : RunnableFactory::Create("TestNewRunnableFunction",
+                                             TestCopyWithNoMove(&copyCounter));
       }
       trackedRunnable->Run();
     }
     Expect(
-        "NS_NewRunnableFunction with copyable-only (and no move) function "
+        "RunnableFactory with copyable-only (and no move) function "
         "rvalue, copies",
         copyCounter, 1);
   }
-  {
+  if constexpr (RunnableFactory::SupportsCopyWithDeletedMove) {
     int copyCounter = 0;
     {
       nsCOMPtr<nsIRunnable> trackedRunnable;
       {
         TestCopyWithDeletedMove tracker(&copyCounter);
-        trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused", tracker)
-                   : NS_NewRunnableFunction("TestNewRunnableFunction", tracker);
+        trackedRunnable = aNamed ? RunnableFactory::Create("unused", tracker)
+                                 : RunnableFactory::Create(
+                                       "TestNewRunnableFunction", tracker);
       }
       trackedRunnable->Run();
     }
     Expect(
-        "NS_NewRunnableFunction with copyable-only (and deleted move) "
+        "RunnableFactory with copyable-only (and deleted move) "
         "function, copies",
         copyCounter, 1);
   }
 
-  // Test NS_NewRunnableFunction with movable-only function object.
+  // Test RunnableFactory with movable-only function object.
   {
     int moveCounter = 0;
     {
@@ -265,14 +292,13 @@ static void TestNewRunnableFunction(bool aNamed) {
       {
         TestMove tracker(&moveCounter);
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused", std::move(tracker))
-                   : NS_NewRunnableFunction("TestNewRunnableFunction",
-                                            std::move(tracker));
+            aNamed ? RunnableFactory::Create("unused", std::move(tracker))
+                   : RunnableFactory::Create("TestNewRunnableFunction",
+                                             std::move(tracker));
       }
       trackedRunnable->Run();
     }
-    Expect("NS_NewRunnableFunction with movable-only function, moves",
-           moveCounter, 1);
+    Expect("RunnableFactory with movable-only function, moves", moveCounter, 1);
   }
   {
     int moveCounter = 0;
@@ -280,17 +306,17 @@ static void TestNewRunnableFunction(bool aNamed) {
       nsCOMPtr<nsIRunnable> trackedRunnable;
       {
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused", TestMove(&moveCounter))
-                   : NS_NewRunnableFunction("TestNewRunnableFunction",
-                                            TestMove(&moveCounter));
+            aNamed ? RunnableFactory::Create("unused", TestMove(&moveCounter))
+                   : RunnableFactory::Create("TestNewRunnableFunction",
+                                             TestMove(&moveCounter));
       }
       trackedRunnable->Run();
     }
-    Expect("NS_NewRunnableFunction with movable-only function rvalue, moves",
+    Expect("RunnableFactory with movable-only function rvalue, moves",
            moveCounter, 1);
   }
 
-  // Test NS_NewRunnableFunction with copyable&movable function object.
+  // Test RunnableFactory with copyable&movable function object.
   {
     int copyCounter = 0;
     int moveCounter = 0;
@@ -299,16 +325,16 @@ static void TestNewRunnableFunction(bool aNamed) {
       {
         TestCopyMove tracker(&copyCounter, &moveCounter);
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused", std::move(tracker))
-                   : NS_NewRunnableFunction("TestNewRunnableFunction",
-                                            std::move(tracker));
+            aNamed ? RunnableFactory::Create("unused", std::move(tracker))
+                   : RunnableFactory::Create("TestNewRunnableFunction",
+                                             std::move(tracker));
       }
       trackedRunnable->Run();
     }
-    Expect("NS_NewRunnableFunction with copyable&movable function, copies",
+    Expect("RunnableFactory with copyable&movable function, copies",
            copyCounter, 0);
-    Expect("NS_NewRunnableFunction with copyable&movable function, moves",
-           moveCounter, 1);
+    Expect("RunnableFactory with copyable&movable function, moves", moveCounter,
+           1);
   }
   {
     int copyCounter = 0;
@@ -317,23 +343,21 @@ static void TestNewRunnableFunction(bool aNamed) {
       nsCOMPtr<nsIRunnable> trackedRunnable;
       {
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction(
+            aNamed ? RunnableFactory::Create(
                          "unused", TestCopyMove(&copyCounter, &moveCounter))
-                   : NS_NewRunnableFunction(
+                   : RunnableFactory::Create(
                          "TestNewRunnableFunction",
                          TestCopyMove(&copyCounter, &moveCounter));
       }
       trackedRunnable->Run();
     }
-    Expect(
-        "NS_NewRunnableFunction with copyable&movable function rvalue, copies",
-        copyCounter, 0);
-    Expect(
-        "NS_NewRunnableFunction with copyable&movable function rvalue, moves",
-        moveCounter, 1);
+    Expect("RunnableFactory with copyable&movable function rvalue, copies",
+           copyCounter, 0);
+    Expect("RunnableFactory with copyable&movable function rvalue, moves",
+           moveCounter, 1);
   }
 
-  // Test NS_NewRunnableFunction with copyable-only lambda capture.
+  // Test RunnableFactory with copyable-only lambda capture.
   {
     int copyCounter = 0;
     {
@@ -342,15 +366,16 @@ static void TestNewRunnableFunction(bool aNamed) {
         TestCopyWithNoMove tracker(&copyCounter);
         // Expect 2 copies (here -> local lambda -> runnable lambda).
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused",
-                                            [tracker]() mutable { tracker(); })
-                   : NS_NewRunnableFunction("TestNewRunnableFunction",
-                                            [tracker]() mutable { tracker(); });
+            aNamed
+                ? RunnableFactory::Create("unused",
+                                          [tracker]() mutable { tracker(); })
+                : RunnableFactory::Create("TestNewRunnableFunction",
+                                          [tracker]() mutable { tracker(); });
       }
       trackedRunnable->Run();
     }
     Expect(
-        "NS_NewRunnableFunction with copyable-only (and no move) capture, "
+        "RunnableFactory with copyable-only (and no move) capture, "
         "copies",
         copyCounter, 2);
   }
@@ -362,15 +387,16 @@ static void TestNewRunnableFunction(bool aNamed) {
         TestCopyWithDeletedMove tracker(&copyCounter);
         // Expect 2 copies (here -> local lambda -> runnable lambda).
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused",
-                                            [tracker]() mutable { tracker(); })
-                   : NS_NewRunnableFunction("TestNewRunnableFunction",
-                                            [tracker]() mutable { tracker(); });
+            aNamed
+                ? RunnableFactory::Create("unused",
+                                          [tracker]() mutable { tracker(); })
+                : RunnableFactory::Create("TestNewRunnableFunction",
+                                          [tracker]() mutable { tracker(); });
       }
       trackedRunnable->Run();
     }
     Expect(
-        "NS_NewRunnableFunction with copyable-only (and deleted move) capture, "
+        "RunnableFactory with copyable-only (and deleted move) capture, "
         "copies",
         copyCounter, 2);
   }
@@ -378,7 +404,7 @@ static void TestNewRunnableFunction(bool aNamed) {
   // Note: Not possible to use move-only captures.
   // (Until we can use C++14 generalized lambda captures)
 
-  // Test NS_NewRunnableFunction with copyable&movable lambda capture.
+  // Test RunnableFactory with copyable&movable lambda capture.
   {
     int copyCounter = 0;
     int moveCounter = 0;
@@ -387,29 +413,30 @@ static void TestNewRunnableFunction(bool aNamed) {
       {
         TestCopyMove tracker(&copyCounter, &moveCounter);
         trackedRunnable =
-            aNamed ? NS_NewRunnableFunction("unused",
-                                            [tracker]() mutable { tracker(); })
-                   : NS_NewRunnableFunction("TestNewRunnableFunction",
-                                            [tracker]() mutable { tracker(); });
+            aNamed
+                ? RunnableFactory::Create("unused",
+                                          [tracker]() mutable { tracker(); })
+                : RunnableFactory::Create("TestNewRunnableFunction",
+                                          [tracker]() mutable { tracker(); });
         // Expect 1 copy (here -> local lambda) and 1 move (local -> runnable
         // lambda).
       }
       trackedRunnable->Run();
     }
-    Expect("NS_NewRunnableFunction with copyable&movable capture, copies",
-           copyCounter, 1);
-    Expect("NS_NewRunnableFunction with copyable&movable capture, moves",
-           moveCounter, 1);
+    Expect("RunnableFactory with copyable&movable capture, copies", copyCounter,
+           1);
+    Expect("RunnableFactory with copyable&movable capture, moves", moveCounter,
+           1);
   }
 }
 
 TEST(ThreadUtils, NewRunnableFunction)
-{ TestNewRunnableFunction(/*aNamed*/ false); }
+{ TestRunnableFactory<BasicRunnableFactory>(/*aNamed*/ false); }
 
 TEST(ThreadUtils, NewNamedRunnableFunction)
 {
   // The named overload shall behave identical to the non-named counterpart.
-  TestNewRunnableFunction(/*aNamed*/ true);
+  TestRunnableFactory<BasicRunnableFactory>(/*aNamed*/ true);
 
   // Test naming.
   {
@@ -417,6 +444,38 @@ TEST(ThreadUtils, NewNamedRunnableFunction)
     RefPtr<Runnable> NamedRunnable =
         NS_NewRunnableFunction(expectedName, [] {});
     ExpectRunnableName(NamedRunnable, expectedName);
+  }
+}
+
+TEST(ThreadUtils, NewCancelableRunnableFunction)
+{ TestRunnableFactory<CancelableRunnableFactory>(/*aNamed*/ false); }
+
+TEST(ThreadUtils, NewNamedCancelableRunnableFunction)
+{
+  // The named overload shall behave identical to the non-named counterpart.
+  TestRunnableFactory<CancelableRunnableFactory>(/*aNamed*/ true);
+
+  // Test naming.
+  {
+    const char* expectedName = "NamedRunnable";
+    RefPtr<Runnable> NamedRunnable =
+        NS_NewCancelableRunnableFunction(expectedName, [] {});
+    ExpectRunnableName(NamedRunnable, expectedName);
+  }
+
+  // Test release on cancelation.
+  {
+    auto foo = MakeRefPtr<TestRefCounted>();
+    bool ran = false;
+
+    RefPtr<CancelableRunnable> func =
+        NS_NewCancelableRunnableFunction("unused", [foo, &ran] { ran = true; });
+
+    EXPECT_EQ(foo->refCount(), 2u);
+    func->Cancel();
+
+    EXPECT_EQ(foo->refCount(), 1u);
+    EXPECT_FALSE(ran);
   }
 }
 
@@ -536,7 +595,7 @@ class IdleObjectWithoutSetDeadline final {
   bool mRunnableExecuted;
 
  private:
-  ~IdleObjectWithoutSetDeadline() {}
+  ~IdleObjectWithoutSetDeadline() = default;
 };
 
 class IdleObjectParentWithSetDeadline {
@@ -555,7 +614,7 @@ class IdleObjectInheritedSetDeadline final
   bool mRunnableExecuted;
 
  private:
-  ~IdleObjectInheritedSetDeadline() {}
+  ~IdleObjectInheritedSetDeadline() = default;
 };
 
 class IdleObject final {
@@ -653,7 +712,7 @@ class IdleObject final {
   nsCOMPtr<nsITimer> mTimer;
   bool mRunnableExecuted[8];
   bool mSetIdleDeadlineCalled;
-  ~IdleObject() {}
+  ~IdleObject() = default;
 };
 
 TEST(ThreadUtils, IdleRunnableMethod)
@@ -771,9 +830,9 @@ TEST(ThreadUtils, IdleTaskRunner)
     return cnt4 == 1;
   }));
 
-  // The repeating timer with no "exit" condition requires an explicit
-  // Cancel() call.
+  // The repeating timers require an explicit Cancel() call.
   runner1->Cancel();
+  runner2->Cancel();
 }
 
 // {9e70a320-be02-11d1-8031-006008159b5a}
@@ -809,105 +868,98 @@ TEST(ThreadUtils, TypeTraits)
       mozilla::IsRefcountedSmartPointer<const volatile nsCOMPtr<int>>::value,
       "IsRefcountedSmartPointer<const volatile nsCOMPtr<...>> should be true");
 
+  static_assert(std::is_same_v<int, mozilla::RemoveSmartPointer<int>::Type>,
+                "RemoveSmartPointer<int>::Type should be int");
+  static_assert(std::is_same_v<int*, mozilla::RemoveSmartPointer<int*>::Type>,
+                "RemoveSmartPointer<int*>::Type should be int*");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveSmartPointer<int>::Type>::value,
-      "RemoveSmartPointer<int>::Type should be int");
-  static_assert(
-      mozilla::IsSame<int*, mozilla::RemoveSmartPointer<int*>::Type>::value,
-      "RemoveSmartPointer<int*>::Type should be int*");
-  static_assert(
-      mozilla::IsSame<UniquePtr<int>,
-                      mozilla::RemoveSmartPointer<UniquePtr<int>>::Type>::value,
+      std::is_same_v<UniquePtr<int>,
+                     mozilla::RemoveSmartPointer<UniquePtr<int>>::Type>,
       "RemoveSmartPointer<UniquePtr<int>>::Type should be UniquePtr<int>");
   static_assert(
-      mozilla::IsSame<int,
-                      mozilla::RemoveSmartPointer<RefPtr<int>>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveSmartPointer<RefPtr<int>>::Type>,
       "RemoveSmartPointer<RefPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<
-          int, mozilla::RemoveSmartPointer<const RefPtr<int>>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveSmartPointer<const RefPtr<int>>::Type>,
       "RemoveSmartPointer<const RefPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<
-          int, mozilla::RemoveSmartPointer<volatile RefPtr<int>>::Type>::value,
+      std::is_same_v<int,
+                     mozilla::RemoveSmartPointer<volatile RefPtr<int>>::Type>,
       "RemoveSmartPointer<volatile RefPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveSmartPointer<
-                               const volatile RefPtr<int>>::Type>::value,
+      std::is_same_v<
+          int, mozilla::RemoveSmartPointer<const volatile RefPtr<int>>::Type>,
       "RemoveSmartPointer<const volatile RefPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int,
-                      mozilla::RemoveSmartPointer<nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveSmartPointer<nsCOMPtr<int>>::Type>,
       "RemoveSmartPointer<nsCOMPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<
-          int, mozilla::RemoveSmartPointer<const nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<int,
+                     mozilla::RemoveSmartPointer<const nsCOMPtr<int>>::Type>,
       "RemoveSmartPointer<const nsCOMPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveSmartPointer<
-                               volatile nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<int,
+                     mozilla::RemoveSmartPointer<volatile nsCOMPtr<int>>::Type>,
       "RemoveSmartPointer<volatile nsCOMPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveSmartPointer<
-                               const volatile nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<
+          int, mozilla::RemoveSmartPointer<const volatile nsCOMPtr<int>>::Type>,
       "RemoveSmartPointer<const volatile nsCOMPtr<int>>::Type should be int");
 
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<int>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveRawOrSmartPointer<int>::Type>,
       "RemoveRawOrSmartPointer<int>::Type should be int");
   static_assert(
-      mozilla::IsSame<UniquePtr<int>, mozilla::RemoveRawOrSmartPointer<
-                                          UniquePtr<int>>::Type>::value,
+      std::is_same_v<UniquePtr<int>,
+                     mozilla::RemoveRawOrSmartPointer<UniquePtr<int>>::Type>,
       "RemoveRawOrSmartPointer<UniquePtr<int>>::Type should be UniquePtr<int>");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<int*>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveRawOrSmartPointer<int*>::Type>,
       "RemoveRawOrSmartPointer<int*>::Type should be int");
   static_assert(
-      mozilla::IsSame<
-          const int, mozilla::RemoveRawOrSmartPointer<const int*>::Type>::value,
+      std::is_same_v<const int,
+                     mozilla::RemoveRawOrSmartPointer<const int*>::Type>,
       "RemoveRawOrSmartPointer<const int*>::Type should be const int");
   static_assert(
-      mozilla::IsSame<volatile int, mozilla::RemoveRawOrSmartPointer<
-                                        volatile int*>::Type>::value,
+      std::is_same_v<volatile int,
+                     mozilla::RemoveRawOrSmartPointer<volatile int*>::Type>,
       "RemoveRawOrSmartPointer<volatile int*>::Type should be volatile int");
   static_assert(
-      mozilla::IsSame<
-          const volatile int,
-          mozilla::RemoveRawOrSmartPointer<const volatile int*>::Type>::value,
+      std::is_same_v<const volatile int, mozilla::RemoveRawOrSmartPointer<
+                                             const volatile int*>::Type>,
       "RemoveRawOrSmartPointer<const volatile int*>::Type should be const "
       "volatile int");
   static_assert(
-      mozilla::IsSame<
-          int, mozilla::RemoveRawOrSmartPointer<RefPtr<int>>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveRawOrSmartPointer<RefPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<RefPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<
-                               const RefPtr<int>>::Type>::value,
+      std::is_same_v<int,
+                     mozilla::RemoveRawOrSmartPointer<const RefPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<const RefPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<
-                               volatile RefPtr<int>>::Type>::value,
+      std::is_same_v<
+          int, mozilla::RemoveRawOrSmartPointer<volatile RefPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<volatile RefPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<
-                               const volatile RefPtr<int>>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveRawOrSmartPointer<
+                              const volatile RefPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<const volatile RefPtr<int>>::Type should be "
       "int");
   static_assert(
-      mozilla::IsSame<
-          int, mozilla::RemoveRawOrSmartPointer<nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<int,
+                     mozilla::RemoveRawOrSmartPointer<nsCOMPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<nsCOMPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<
-                               const nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<
+          int, mozilla::RemoveRawOrSmartPointer<const nsCOMPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<const nsCOMPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<
-                               volatile nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<
+          int, mozilla::RemoveRawOrSmartPointer<volatile nsCOMPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<volatile nsCOMPtr<int>>::Type should be int");
   static_assert(
-      mozilla::IsSame<int, mozilla::RemoveRawOrSmartPointer<
-                               const volatile nsCOMPtr<int>>::Type>::value,
+      std::is_same_v<int, mozilla::RemoveRawOrSmartPointer<
+                              const volatile nsCOMPtr<int>>::Type>,
       "RemoveRawOrSmartPointer<const volatile nsCOMPtr<int>>::Type should be "
       "int");
 }
@@ -1161,7 +1213,7 @@ NS_IMPL_ISUPPORTS(ThreadUtilsObject, IThreadUtilsObject)
 class ThreadUtilsRefCountedFinal final {
  public:
   ThreadUtilsRefCountedFinal() : m_refCount(0) {}
-  ~ThreadUtilsRefCountedFinal() {}
+  ~ThreadUtilsRefCountedFinal() = default;
   // 'AddRef' and 'Release' methods with different return types, to verify
   // that the return type doesn't influence storage selection.
   long AddRef(void) { return ++m_refCount; }
@@ -1174,7 +1226,7 @@ class ThreadUtilsRefCountedFinal final {
 class ThreadUtilsRefCountedBase {
  public:
   ThreadUtilsRefCountedBase() : m_refCount(0) {}
-  virtual ~ThreadUtilsRefCountedBase() {}
+  virtual ~ThreadUtilsRefCountedBase() = default;
   // 'AddRef' and 'Release' methods with different return types, to verify
   // that the return type doesn't influence storage selection.
   virtual void AddRef(void) { ++m_refCount; }
@@ -1263,13 +1315,13 @@ TEST(ThreadUtils, main)
   r1->Run();
   EXPECT_EQ(count += 1, rpt->mCount);
 
-  static_assert(mozilla::IsSame<::detail::ParameterStorage<int>::Type,
-                                StoreCopyPassByConstLRef<int>>::value,
+  static_assert(std::is_same_v<::detail::ParameterStorage<int>::Type,
+                               StoreCopyPassByConstLRef<int>>,
                 "detail::ParameterStorage<int>::Type should be "
                 "StoreCopyPassByConstLRef<int>");
-  static_assert(mozilla::IsSame<
+  static_assert(std::is_same_v<
                     ::detail::ParameterStorage<StoreCopyPassByValue<int>>::Type,
-                    StoreCopyPassByValue<int>>::value,
+                    StoreCopyPassByValue<int>>,
                 "detail::ParameterStorage<StoreCopyPassByValue<int>>::Type "
                 "should be StoreCopyPassByValue<int>");
 
@@ -1317,29 +1369,27 @@ TEST(ThreadUtils, main)
 
   // Raw pointer, possible cv-qualified.
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int*>::Type,
-                      StorePtrPassByPtr<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<int*>::Type,
+                     StorePtrPassByPtr<int>>,
       "detail::ParameterStorage<int*>::Type should be StorePtrPassByPtr<int>");
-  static_assert(mozilla::IsSame<::detail::ParameterStorage<int* const>::Type,
-                                StorePtrPassByPtr<int>>::value,
+  static_assert(std::is_same_v<::detail::ParameterStorage<int* const>::Type,
+                               StorePtrPassByPtr<int>>,
                 "detail::ParameterStorage<int* const>::Type should be "
                 "StorePtrPassByPtr<int>");
-  static_assert(mozilla::IsSame<::detail::ParameterStorage<int* volatile>::Type,
-                                StorePtrPassByPtr<int>>::value,
+  static_assert(std::is_same_v<::detail::ParameterStorage<int* volatile>::Type,
+                               StorePtrPassByPtr<int>>,
                 "detail::ParameterStorage<int* volatile>::Type should be "
                 "StorePtrPassByPtr<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int* const volatile>::Type,
-                      StorePtrPassByPtr<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<int* const volatile>::Type,
+                     StorePtrPassByPtr<int>>,
       "detail::ParameterStorage<int* const volatile>::Type should be "
       "StorePtrPassByPtr<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int*>::Type::stored_type,
-                      int*>::value,
+      std::is_same_v<::detail::ParameterStorage<int*>::Type::stored_type, int*>,
       "detail::ParameterStorage<int*>::Type::stored_type should be int*");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int*>::Type::passed_type,
-                      int*>::value,
+      std::is_same_v<::detail::ParameterStorage<int*>::Type::passed_type, int*>,
       "detail::ParameterStorage<int*>::Type::passed_type should be int*");
   {
     int i = 12;
@@ -1351,33 +1401,33 @@ TEST(ThreadUtils, main)
   }
 
   // Raw pointer to const.
-  static_assert(mozilla::IsSame<::detail::ParameterStorage<const int*>::Type,
-                                StoreConstPtrPassByConstPtr<int>>::value,
+  static_assert(std::is_same_v<::detail::ParameterStorage<const int*>::Type,
+                               StoreConstPtrPassByConstPtr<int>>,
                 "detail::ParameterStorage<const int*>::Type should be "
                 "StoreConstPtrPassByConstPtr<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<const int* const>::Type,
-                      StoreConstPtrPassByConstPtr<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<const int* const>::Type,
+                     StoreConstPtrPassByConstPtr<int>>,
       "detail::ParameterStorage<const int* const>::Type should be "
       "StoreConstPtrPassByConstPtr<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<const int* volatile>::Type,
-                      StoreConstPtrPassByConstPtr<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<const int* volatile>::Type,
+                     StoreConstPtrPassByConstPtr<int>>,
       "detail::ParameterStorage<const int* volatile>::Type should be "
       "StoreConstPtrPassByConstPtr<int>");
-  static_assert(mozilla::IsSame<
+  static_assert(std::is_same_v<
                     ::detail::ParameterStorage<const int* const volatile>::Type,
-                    StoreConstPtrPassByConstPtr<int>>::value,
+                    StoreConstPtrPassByConstPtr<int>>,
                 "detail::ParameterStorage<const int* const volatile>::Type "
                 "should be StoreConstPtrPassByConstPtr<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<const int*>::Type::stored_type,
-                      const int*>::value,
+      std::is_same_v<::detail::ParameterStorage<const int*>::Type::stored_type,
+                     const int*>,
       "detail::ParameterStorage<const int*>::Type::stored_type should be const "
       "int*");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<const int*>::Type::passed_type,
-                      const int*>::value,
+      std::is_same_v<::detail::ParameterStorage<const int*>::Type::passed_type,
+                     const int*>,
       "detail::ParameterStorage<const int*>::Type::passed_type should be const "
       "int*");
   {
@@ -1391,12 +1441,10 @@ TEST(ThreadUtils, main)
   }
 
   // Raw pointer to copy.
-  static_assert(
-      mozilla::IsSame<StoreCopyPassByPtr<int>::stored_type, int>::value,
-      "StoreCopyPassByPtr<int>::stored_type should be int");
-  static_assert(
-      mozilla::IsSame<StoreCopyPassByPtr<int>::passed_type, int*>::value,
-      "StoreCopyPassByPtr<int>::passed_type should be int*");
+  static_assert(std::is_same_v<StoreCopyPassByPtr<int>::stored_type, int>,
+                "StoreCopyPassByPtr<int>::stored_type should be int");
+  static_assert(std::is_same_v<StoreCopyPassByPtr<int>::passed_type, int*>,
+                "StoreCopyPassByPtr<int>::passed_type should be int*");
   {
     int i = 1202;
     r1 = NewRunnableMethod<StoreCopyPassByPtr<int>>(
@@ -1408,12 +1456,10 @@ TEST(ThreadUtils, main)
   }
 
   // Raw pointer to const copy.
+  static_assert(std::is_same_v<StoreCopyPassByConstPtr<int>::stored_type, int>,
+                "StoreCopyPassByConstPtr<int>::stored_type should be int");
   static_assert(
-      mozilla::IsSame<StoreCopyPassByConstPtr<int>::stored_type, int>::value,
-      "StoreCopyPassByConstPtr<int>::stored_type should be int");
-  static_assert(
-      mozilla::IsSame<StoreCopyPassByConstPtr<int>::passed_type,
-                      const int*>::value,
+      std::is_same_v<StoreCopyPassByConstPtr<int>::passed_type, const int*>,
       "StoreCopyPassByConstPtr<int>::passed_type should be const int*");
   {
     int i = 1203;
@@ -1427,24 +1473,24 @@ TEST(ThreadUtils, main)
 
   // nsRefPtr to pointer.
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<
-                          StoreRefPtrPassByPtr<SpyWithISupports>>::Type,
-                      StoreRefPtrPassByPtr<SpyWithISupports>>::value,
+      std::is_same_v<::detail::ParameterStorage<
+                         StoreRefPtrPassByPtr<SpyWithISupports>>::Type,
+                     StoreRefPtrPassByPtr<SpyWithISupports>>,
       "ParameterStorage<StoreRefPtrPassByPtr<SpyWithISupports>>::Type should "
       "be StoreRefPtrPassByPtr<SpyWithISupports>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<SpyWithISupports*>::Type,
-                      StoreRefPtrPassByPtr<SpyWithISupports>>::value,
+      std::is_same_v<::detail::ParameterStorage<SpyWithISupports*>::Type,
+                     StoreRefPtrPassByPtr<SpyWithISupports>>,
       "ParameterStorage<SpyWithISupports*>::Type should be "
       "StoreRefPtrPassByPtr<SpyWithISupports>");
   static_assert(
-      mozilla::IsSame<StoreRefPtrPassByPtr<SpyWithISupports>::stored_type,
-                      RefPtr<SpyWithISupports>>::value,
+      std::is_same_v<StoreRefPtrPassByPtr<SpyWithISupports>::stored_type,
+                     RefPtr<SpyWithISupports>>,
       "StoreRefPtrPassByPtr<SpyWithISupports>::stored_type should be "
       "RefPtr<SpyWithISupports>");
   static_assert(
-      mozilla::IsSame<StoreRefPtrPassByPtr<SpyWithISupports>::passed_type,
-                      SpyWithISupports*>::value,
+      std::is_same_v<StoreRefPtrPassByPtr<SpyWithISupports>::passed_type,
+                     SpyWithISupports*>,
       "StoreRefPtrPassByPtr<SpyWithISupports>::passed_type should be "
       "SpyWithISupports*");
   // (more nsRefPtr tests below)
@@ -1453,54 +1499,52 @@ TEST(ThreadUtils, main)
   static_assert(::detail::HasRefCountMethods<ThreadUtilsRefCountedFinal>::value,
                 "ThreadUtilsRefCountedFinal has AddRef() and Release()");
   static_assert(
-      mozilla::IsSame<
+      std::is_same_v<
           ::detail::ParameterStorage<ThreadUtilsRefCountedFinal*>::Type,
-          StoreRefPtrPassByPtr<ThreadUtilsRefCountedFinal>>::value,
+          StoreRefPtrPassByPtr<ThreadUtilsRefCountedFinal>>,
       "ParameterStorage<ThreadUtilsRefCountedFinal*>::Type should be "
       "StoreRefPtrPassByPtr<ThreadUtilsRefCountedFinal>");
   static_assert(::detail::HasRefCountMethods<ThreadUtilsRefCountedBase>::value,
                 "ThreadUtilsRefCountedBase has AddRef() and Release()");
   static_assert(
-      mozilla::IsSame<
+      std::is_same_v<
           ::detail::ParameterStorage<ThreadUtilsRefCountedBase*>::Type,
-          StoreRefPtrPassByPtr<ThreadUtilsRefCountedBase>>::value,
+          StoreRefPtrPassByPtr<ThreadUtilsRefCountedBase>>,
       "ParameterStorage<ThreadUtilsRefCountedBase*>::Type should be "
       "StoreRefPtrPassByPtr<ThreadUtilsRefCountedBase>");
   static_assert(
       ::detail::HasRefCountMethods<ThreadUtilsRefCountedDerived>::value,
       "ThreadUtilsRefCountedDerived has AddRef() and Release()");
   static_assert(
-      mozilla::IsSame<
+      std::is_same_v<
           ::detail::ParameterStorage<ThreadUtilsRefCountedDerived*>::Type,
-          StoreRefPtrPassByPtr<ThreadUtilsRefCountedDerived>>::value,
+          StoreRefPtrPassByPtr<ThreadUtilsRefCountedDerived>>,
       "ParameterStorage<ThreadUtilsRefCountedDerived*>::Type should be "
       "StoreRefPtrPassByPtr<ThreadUtilsRefCountedDerived>");
 
   static_assert(!::detail::HasRefCountMethods<ThreadUtilsNonRefCounted>::value,
                 "ThreadUtilsNonRefCounted doesn't have AddRef() and Release()");
-  static_assert(!mozilla::IsSame<
+  static_assert(!std::is_same_v<
                     ::detail::ParameterStorage<ThreadUtilsNonRefCounted*>::Type,
-                    StoreRefPtrPassByPtr<ThreadUtilsNonRefCounted>>::value,
+                    StoreRefPtrPassByPtr<ThreadUtilsNonRefCounted>>,
                 "ParameterStorage<ThreadUtilsNonRefCounted*>::Type should NOT "
                 "be StoreRefPtrPassByPtr<ThreadUtilsNonRefCounted>");
 
   // Lvalue reference.
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&>::Type,
-                      StoreRefPassByLRef<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<int&>::Type,
+                     StoreRefPassByLRef<int>>,
       "ParameterStorage<int&>::Type should be StoreRefPassByLRef<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&>::Type::stored_type,
-                      StoreRefPassByLRef<int>::stored_type>::value,
+      std::is_same_v<::detail::ParameterStorage<int&>::Type::stored_type,
+                     StoreRefPassByLRef<int>::stored_type>,
       "ParameterStorage<int&>::Type::stored_type should be "
       "StoreRefPassByLRef<int>::stored_type");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&>::Type::stored_type,
-                      int&>::value,
+      std::is_same_v<::detail::ParameterStorage<int&>::Type::stored_type, int&>,
       "ParameterStorage<int&>::Type::stored_type should be int&");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&>::Type::passed_type,
-                      int&>::value,
+      std::is_same_v<::detail::ParameterStorage<int&>::Type::passed_type, int&>,
       "ParameterStorage<int&>::Type::passed_type should be int&");
   {
     int i = 13;
@@ -1513,21 +1557,20 @@ TEST(ThreadUtils, main)
 
   // Rvalue reference -- Actually storing a copy and then moving it.
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&&>::Type,
-                      StoreCopyPassByRRef<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<int&&>::Type,
+                     StoreCopyPassByRRef<int>>,
       "ParameterStorage<int&&>::Type should be StoreCopyPassByRRef<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&&>::Type::stored_type,
-                      StoreCopyPassByRRef<int>::stored_type>::value,
+      std::is_same_v<::detail::ParameterStorage<int&&>::Type::stored_type,
+                     StoreCopyPassByRRef<int>::stored_type>,
       "ParameterStorage<int&&>::Type::stored_type should be "
       "StoreCopyPassByRRef<int>::stored_type");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&&>::Type::stored_type,
-                      int>::value,
+      std::is_same_v<::detail::ParameterStorage<int&&>::Type::stored_type, int>,
       "ParameterStorage<int&&>::Type::stored_type should be int");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<int&&>::Type::passed_type,
-                      int&&>::value,
+      std::is_same_v<::detail::ParameterStorage<int&&>::Type::passed_type,
+                     int&&>,
       "ParameterStorage<int&&>::Type::passed_type should be int&&");
   {
     int i = 14;
@@ -1540,28 +1583,27 @@ TEST(ThreadUtils, main)
   EXPECT_EQ(14, rpt->mA0);
 
   // Null unique pointer, by semi-implicit store&move with "T&&" syntax.
-  static_assert(mozilla::IsSame<
+  static_assert(std::is_same_v<
                     ::detail::ParameterStorage<mozilla::UniquePtr<int>&&>::Type,
-                    StoreCopyPassByRRef<mozilla::UniquePtr<int>>>::value,
+                    StoreCopyPassByRRef<mozilla::UniquePtr<int>>>,
                 "ParameterStorage<UniquePtr<int>&&>::Type should be "
                 "StoreCopyPassByRRef<UniquePtr<int>>");
   static_assert(
-      mozilla::IsSame<
-          ::detail::ParameterStorage<
-              mozilla::UniquePtr<int>&&>::Type::stored_type,
-          StoreCopyPassByRRef<mozilla::UniquePtr<int>>::stored_type>::value,
+      std::is_same_v<::detail::ParameterStorage<
+                         mozilla::UniquePtr<int>&&>::Type::stored_type,
+                     StoreCopyPassByRRef<mozilla::UniquePtr<int>>::stored_type>,
       "ParameterStorage<UniquePtr<int>&&>::Type::stored_type should be "
       "StoreCopyPassByRRef<UniquePtr<int>>::stored_type");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<
-                          mozilla::UniquePtr<int>&&>::Type::stored_type,
-                      mozilla::UniquePtr<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<
+                         mozilla::UniquePtr<int>&&>::Type::stored_type,
+                     mozilla::UniquePtr<int>>,
       "ParameterStorage<UniquePtr<int>&&>::Type::stored_type should be "
       "UniquePtr<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<
-                          mozilla::UniquePtr<int>&&>::Type::passed_type,
-                      mozilla::UniquePtr<int>&&>::value,
+      std::is_same_v<::detail::ParameterStorage<
+                         mozilla::UniquePtr<int>&&>::Type::passed_type,
+                     mozilla::UniquePtr<int>&&>,
       "ParameterStorage<UniquePtr<int>&&>::Type::passed_type should be "
       "UniquePtr<int>&&");
   {
@@ -1578,29 +1620,27 @@ TEST(ThreadUtils, main)
   // Null unique pointer, by explicit store&move with "StoreCopyPassByRRef<T>"
   // syntax.
   static_assert(
-      mozilla::IsSame<
-          ::detail::ParameterStorage<
-              StoreCopyPassByRRef<mozilla::UniquePtr<int>>>::Type::stored_type,
-          StoreCopyPassByRRef<mozilla::UniquePtr<int>>::stored_type>::value,
+      std::is_same_v<::detail::ParameterStorage<StoreCopyPassByRRef<
+                         mozilla::UniquePtr<int>>>::Type::stored_type,
+                     StoreCopyPassByRRef<mozilla::UniquePtr<int>>::stored_type>,
       "ParameterStorage<StoreCopyPassByRRef<UniquePtr<int>>>::Type::stored_"
       "type should be StoreCopyPassByRRef<UniquePtr<int>>::stored_type");
   static_assert(
-      mozilla::IsSame<
-          ::detail::ParameterStorage<
-              StoreCopyPassByRRef<mozilla::UniquePtr<int>>>::Type::stored_type,
-          StoreCopyPassByRRef<mozilla::UniquePtr<int>>::stored_type>::value,
+      std::is_same_v<::detail::ParameterStorage<StoreCopyPassByRRef<
+                         mozilla::UniquePtr<int>>>::Type::stored_type,
+                     StoreCopyPassByRRef<mozilla::UniquePtr<int>>::stored_type>,
       "ParameterStorage<StoreCopyPassByRRef<UniquePtr<int>>>::Type::stored_"
       "type should be StoreCopyPassByRRef<UniquePtr<int>>::stored_type");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<StoreCopyPassByRRef<
-                          mozilla::UniquePtr<int>>>::Type::stored_type,
-                      mozilla::UniquePtr<int>>::value,
+      std::is_same_v<::detail::ParameterStorage<StoreCopyPassByRRef<
+                         mozilla::UniquePtr<int>>>::Type::stored_type,
+                     mozilla::UniquePtr<int>>,
       "ParameterStorage<StoreCopyPassByRRef<UniquePtr<int>>>::Type::stored_"
       "type should be UniquePtr<int>");
   static_assert(
-      mozilla::IsSame<::detail::ParameterStorage<StoreCopyPassByRRef<
-                          mozilla::UniquePtr<int>>>::Type::passed_type,
-                      mozilla::UniquePtr<int>&&>::value,
+      std::is_same_v<::detail::ParameterStorage<StoreCopyPassByRRef<
+                         mozilla::UniquePtr<int>>>::Type::passed_type,
+                     mozilla::UniquePtr<int>&&>,
       "ParameterStorage<StoreCopyPassByRRef<UniquePtr<int>>>::Type::passed_"
       "type should be UniquePtr<int>&&");
   {

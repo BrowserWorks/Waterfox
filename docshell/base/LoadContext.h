@@ -22,7 +22,7 @@ namespace mozilla {
  * from Child via SerializedLoadContext.
  *
  * Note: this is not the "normal" or "original" nsILoadContext.  That is
- * typically provided by nsDocShell.  This is only used when the original
+ * typically provided by BrowsingContext.  This is only used when the original
  * docshell is in a different process and we need to copy certain values from
  * it.
  */
@@ -33,79 +33,20 @@ class LoadContext final : public nsILoadContext, public nsIInterfaceRequestor {
   NS_DECL_NSILOADCONTEXT
   NS_DECL_NSIINTERFACEREQUESTOR
 
-  // inIsolatedMozBrowser argumentsoverrides that in
-  // SerializedLoadContext provided by child process.
   LoadContext(const IPC::SerializedLoadContext& aToCopy,
-              dom::Element* aTopFrameElement, OriginAttributes& aAttrs)
-      : mTopFrameElement(do_GetWeakReference(aTopFrameElement)),
-        mNestedFrameId(0),
-        mIsContent(aToCopy.mIsContent),
-        mUseRemoteTabs(aToCopy.mUseRemoteTabs),
-        mUseRemoteSubframes(aToCopy.mUseRemoteSubframes),
-        mUseTrackingProtection(aToCopy.mUseTrackingProtection),
-#ifdef DEBUG
-        mIsNotNull(aToCopy.mIsNotNull),
-#endif
-        mOriginAttributes(aAttrs) {
-  }
-
-  // inIsolatedMozBrowser argument overrides that in
-  // SerializedLoadContext provided by child process.
-  LoadContext(const IPC::SerializedLoadContext& aToCopy,
-              uint64_t aNestedFrameId, OriginAttributes& aAttrs)
-      : mTopFrameElement(nullptr),
-        mNestedFrameId(aNestedFrameId),
-        mIsContent(aToCopy.mIsContent),
-        mUseRemoteTabs(aToCopy.mUseRemoteTabs),
-        mUseRemoteSubframes(aToCopy.mUseRemoteSubframes),
-        mUseTrackingProtection(aToCopy.mUseTrackingProtection),
-#ifdef DEBUG
-        mIsNotNull(aToCopy.mIsNotNull),
-#endif
-        mOriginAttributes(aAttrs) {
-  }
-
-  LoadContext(dom::Element* aTopFrameElement, bool aIsContent,
-              bool aUsePrivateBrowsing, bool aUseRemoteTabs,
-              bool aUseRemoteSubframes, bool aUseTrackingProtection,
-              const OriginAttributes& aAttrs)
-      : mTopFrameElement(do_GetWeakReference(aTopFrameElement)),
-        mNestedFrameId(0),
-        mIsContent(aIsContent),
-        mUseRemoteTabs(aUseRemoteTabs),
-        mUseRemoteSubframes(aUseRemoteSubframes),
-        mUseTrackingProtection(aUseTrackingProtection),
-#ifdef DEBUG
-        mIsNotNull(true),
-#endif
-        mOriginAttributes(aAttrs) {
-    MOZ_DIAGNOSTIC_ASSERT(aUsePrivateBrowsing ==
-                          (aAttrs.mPrivateBrowsingId > 0));
-  }
+              dom::Element* aTopFrameElement, OriginAttributes& aAttrs);
 
   // Constructor taking reserved origin attributes.
-  explicit LoadContext(OriginAttributes& aAttrs)
-      : mTopFrameElement(nullptr),
-        mNestedFrameId(0),
-        mIsContent(false),
-        mUseRemoteTabs(false),
-        mUseRemoteSubframes(false),
-        mUseTrackingProtection(false),
-#ifdef DEBUG
-        mIsNotNull(true),
-#endif
-        mOriginAttributes(aAttrs) {
-  }
+  explicit LoadContext(OriginAttributes& aAttrs);
 
   // Constructor for creating a LoadContext with a given browser flag.
   explicit LoadContext(nsIPrincipal* aPrincipal,
                        nsILoadContext* aOptionalBase = nullptr);
 
  private:
-  ~LoadContext() {}
+  ~LoadContext();
 
   nsWeakPtr mTopFrameElement;
-  uint64_t mNestedFrameId;
   bool mIsContent;
   bool mUseRemoteTabs;
   bool mUseRemoteSubframes;

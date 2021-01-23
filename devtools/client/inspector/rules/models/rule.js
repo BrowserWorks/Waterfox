@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -77,13 +75,30 @@ class Rule {
     this.textProps = this.textProps.concat(this._getDisabledProperties());
 
     this.getUniqueSelector = this.getUniqueSelector.bind(this);
+    this.onDeclarationsUpdated = this.onDeclarationsUpdated.bind(this);
     this.onLocationChanged = this.onLocationChanged.bind(this);
+    this.onStyleRuleFrontUpdated = this.onStyleRuleFrontUpdated.bind(this);
     this.updateSourceLocation = this.updateSourceLocation.bind(this);
+
+    // Added in Firefox 72 for backwards compatibility of initial fix for Bug 1557689.
+    // See follow-up fix in Bug 1593944.
+    if (this.domRule.traits.emitsRuleUpdatedEvent) {
+      this.domRule.on("rule-updated", this.onStyleRuleFrontUpdated);
+    } else {
+      this.domRule.on("declarations-updated", this.onDeclarationsUpdated);
+    }
   }
 
   destroy() {
     if (this.unsubscribeSourceMap) {
       this.unsubscribeSourceMap();
+    }
+
+    // Added in Firefox 72
+    if (this.domRule.traits.emitsRuleUpdatedEvent) {
+      this.domRule.off("rule-updated", this.onStyleRuleFrontUpdated);
+    } else {
+      this.domRule.off("declarations-updated", this.onDeclarationsUpdated);
     }
 
     this.domRule.off("location-changed", this.onLocationChanged);
@@ -224,13 +239,13 @@ class Rule {
   /**
    * Returns the TextProperty with the given id or undefined if it cannot be found.
    *
-   * @param {String} id
+   * @param {String|null} id
    *        A TextProperty id.
    * @return {TextProperty|undefined} with the given id in the current Rule or undefined
    * if it cannot be found.
    */
   getDeclaration(id) {
-    return this.textProps.find(textProp => textProp.id === id);
+    return id ? this.textProps.find(textProp => textProp.id === id) : undefined;
   }
 
   /**
@@ -575,6 +590,22 @@ class Rule {
   }
 
   /**
+   * Event handler for "rule-updated" event fired by StyleRuleActor.
+   *
+   * @param {StyleRuleFront} front
+   */
+  onStyleRuleFrontUpdated(front) {
+    // Overwritting this reference is not required, but it's here to avoid confusion.
+    // Whenever an actor is passed over the protocol, either as a return value or as
+    // payload on an event, the `form` of its corresponding front will be automatically
+    // updated. No action required.
+    // Even if this `domRule` reference here is not explicitly updated, lookups of
+    // `this.domRule.declarations` will point to the latest state of declarations set
+    // on the actor. Everything on `StyleRuleForm.form` will point to the latest state.
+    this.domRule = front;
+  }
+
+  /**
    * Get the list of TextProperties from the style. Needs
    * to parse the style's authoredText.
    */
@@ -851,6 +882,39 @@ class Rule {
       }
     }
     return false;
+  }
+
+  /**
+   * TODO: Remove after Firefox 75. Keep until then for backwards-compatibility for Bug
+   * 1557689 which has an updated fix from Bug 1593944.
+   * Handler for "declarations-updated" events fired from the StyleRuleActor for a
+   * CSS rule when the status of any of its CSS declarations change.
+   *
+   * Check whether the used/unused status of any declaration has changed and update the
+   * inactive CSS indicator in the UI accordingly.
+   *
+   * @param {Array} declarations
+   *        List of objects describing all CSS declarations of this CSS rule.
+   *        @See StyleRuleActor._declarations
+   */
+  onDeclarationsUpdated(declarations) {
+    this.textProps.forEach((textProp, index) => {
+      const isUsedPrevious = textProp.isUsed().used;
+      const isUsedCurrent = declarations[index].isUsed.used;
+
+      // Skip if property used state did not change.
+      if (isUsedPrevious === isUsedCurrent) {
+        return;
+      }
+
+      // Replace the method called by TextPropertyEditor to check whether the CSS
+      // declaration is used with the updated declaration's `isUsed` object.
+      // TODO: convert from Object to Boolean. See Bug 1574471
+      textProp.isUsed = () => declarations[index].isUsed;
+
+      // Reflect the new active/inactive flag state in the UI.
+      textProp.editor.updatePropertyUsedIndicator();
+    });
   }
 
   /**

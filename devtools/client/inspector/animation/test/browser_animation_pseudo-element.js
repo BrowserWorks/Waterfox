@@ -9,16 +9,26 @@ const TEST_DATA = [
   {
     expectedTargetLabel: "::before",
     expectedAnimationNameLabel: "body",
-    expectedKeyframsGraphPathSegments: [{ x: 0, y: 0 }, { x: 1000, y: 100 }],
+    expectedKeyframsGraphPathSegments: [
+      { x: 0, y: 0 },
+      { x: 1000, y: 100 },
+    ],
   },
   {
     expectedTargetLabel: "::before",
     expectedAnimationNameLabel: "div-before",
-    expectedKeyframsGraphPathSegments: [{ x: 0, y: 100 }, { x: 1000, y: 0 }],
+    expectedKeyframsGraphPathSegments: [
+      { x: 0, y: 100 },
+      { x: 1000, y: 0 },
+    ],
   },
   {
     expectedTargetLabel: "::after",
     expectedAnimationNameLabel: "div-after",
+  },
+  {
+    expectedTargetLabel: "::marker",
+    expectedAnimationNameLabel: "div-marker",
   },
 ];
 
@@ -54,9 +64,7 @@ add_task(async function() {
     is(
       animationTargetEl.textContent,
       testData.expectedTargetLabel,
-      `Text content of animation target[${i}] should be ${
-        testData.expectedTarget
-      }`
+      `Text content of animation target[${i}] should be ${testData.expectedTarget}`
     );
 
     info("Checking text content of animation name");

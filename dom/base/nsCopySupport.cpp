@@ -8,8 +8,6 @@
 #include "nsIDocumentEncoder.h"
 #include "nsISupports.h"
 #include "nsIContent.h"
-#include "nsIComponentManager.h"
-#include "nsIServiceManager.h"
 #include "nsIClipboard.h"
 #include "nsIFormControl.h"
 #include "nsWidgetsCID.h"
@@ -19,21 +17,19 @@
 #include "imgIContainer.h"
 #include "imgIRequest.h"
 #include "nsFocusManager.h"
+#include "nsFrameSelection.h"
 #include "mozilla/dom/DataTransfer.h"
 
 #include "nsIDocShell.h"
 #include "nsIContentViewerEdit.h"
-#include "nsIClipboardHelper.h"
 #include "nsISelectionController.h"
 
 #include "nsPIDOMWindow.h"
 #include "mozilla/dom/Document.h"
-#include "nsIHTMLDocument.h"
+#include "nsHTMLDocument.h"
 #include "nsGkAtoms.h"
 #include "nsIFrame.h"
 #include "nsIURI.h"
-#include "nsIURIMutator.h"
-#include "nsISimpleEnumerator.h"
 #include "nsGenericHTMLElement.h"
 
 // image copy stuff
@@ -53,12 +49,14 @@
 #endif
 
 #include "mozilla/ContentEvents.h"
-#include "mozilla/dom/Element.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
-#include "mozilla/dom/Selection.h"
+#include "mozilla/TextEditor.h"
 #include "mozilla/IntegerRange.h"
+#include "mozilla/dom/Element.h"
+#include "mozilla/dom/HTMLInputElement.h"
+#include "mozilla/dom/Selection.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -120,16 +118,6 @@ static nsresult EncodeForTextUnicode(nsIDocumentEncoder& aEncoder,
   rv = aEncoder.GetMimeType(mimeType);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!selForcedTextPlain && mimeType.EqualsLiteral(kTextMime)) {
-    // SetSelection and EncodeToString use this case to signal that text/plain
-    // was forced because the document is either not an nsIHTMLDocument or it's
-    // XHTML.  We want to pretty print XHTML but not non-nsIHTMLDocuments.
-    nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(&aDocument);
-    if (!htmlDoc) {
-      selForcedTextPlain = true;
-    }
-  }
-
   // The mime type is ultimately text/html if the encoder successfully encoded
   // the selection as text/html.
   aEncodedAsTextHTMLResult = mimeType.EqualsLiteral(kHTMLMime);
@@ -184,7 +172,7 @@ struct EncodedDocumentWithContext {
   // as mime type to the encoder. It uses this as a switch to decide whether to
   // encode the document as `text/html` or `text/plain`. It  is `true` iff
   // `text/html` was used.
-  bool mUnicodeEncodingIsTextHTML;
+  bool mUnicodeEncodingIsTextHTML = false;
 
   // The serialized document when encoding the document with `text/unicode`. See
   // comment of `mUnicodeEncodingIsTextHTML`.
@@ -346,9 +334,9 @@ static nsresult PutToClipboard(
   return rv;
 }
 
-nsresult nsCopySupport::HTMLCopy(Selection* aSel, Document* aDoc,
-                                 int16_t aClipboardID,
-                                 bool aWithRubyAnnotation) {
+nsresult nsCopySupport::EncodeDocumentWithContextAndPutToClipboard(
+    Selection* aSel, Document* aDoc, int16_t aClipboardID,
+    bool aWithRubyAnnotation) {
   NS_ENSURE_TRUE(aDoc, NS_ERROR_NULL_POINTER);
 
   uint32_t additionalFlags = nsIDocumentEncoder::SkipInvisibleContent;
@@ -419,14 +407,14 @@ nsresult nsCopySupport::GetTransferableForNode(
   // Make a temporary selection with aNode in a single range.
   // XXX We should try to get rid of the Selection object here.
   // XXX bug 1245883
-  RefPtr<Selection> selection = new Selection();
-  RefPtr<nsRange> range = new nsRange(aNode);
+  RefPtr<Selection> selection = new Selection(SelectionType::eNormal, nullptr);
+  RefPtr<nsRange> range = nsRange::Create(aNode);
   ErrorResult result;
   range->SelectNode(*aNode, result);
   if (NS_WARN_IF(result.Failed())) {
     return result.StealNSResult();
   }
-  selection->AddRangeInternal(*range, aDoc, result);
+  selection->AddRangeAndSelectFramesAndNotifyListeners(*range, aDoc, result);
   if (NS_WARN_IF(result.Failed())) {
     return result.StealNSResult();
   }
@@ -562,10 +550,6 @@ static nsresult AppendDOMNode(nsITransferable* aTransferable,
   // Note that XHTML is not counted as HTML here, because we can't copy it
   // properly (all the copy code for non-plaintext assumes using HTML
   // serializers and parsers is OK, and those mess up XHTML).
-  DebugOnly<nsCOMPtr<nsIHTMLDocument>> htmlDoc =
-      nsCOMPtr<nsIHTMLDocument>(do_QueryInterface(document, &rv));
-  NS_ENSURE_SUCCESS(rv, NS_OK);
-
   NS_ENSURE_TRUE(document->IsHTMLDocument(), NS_OK);
 
   // init encoder with document and node
@@ -656,12 +640,13 @@ static nsresult AppendImagePromise(nsITransferable* aTransferable,
     // Fix the file extension in the URL
     nsAutoCString primaryExtension;
     mimeInfo->GetPrimaryExtension(primaryExtension);
-
-    rv = NS_MutateURI(imgUri)
-             .Apply(NS_MutatorMethod(&nsIURLMutator::SetFileExtension,
-                                     primaryExtension, nullptr))
-             .Finalize(imgUrl);
-    NS_ENSURE_SUCCESS(rv, rv);
+    if (!primaryExtension.IsEmpty()) {
+      rv = NS_MutateURI(imgUri)
+               .Apply(NS_MutatorMethod(&nsIURLMutator::SetFileExtension,
+                                       primaryExtension, nullptr))
+               .Finalize(imgUrl);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
   }
 
   nsAutoCString fileName;
@@ -689,37 +674,27 @@ static nsresult AppendImagePromise(nsITransferable* aTransferable,
 }
 #endif  // XP_WIN
 
-nsIContent* nsCopySupport::GetSelectionForCopy(Document* aDocument,
-                                               Selection** aSelection) {
-  *aSelection = nullptr;
-
+already_AddRefed<Selection> nsCopySupport::GetSelectionForCopy(
+    Document* aDocument) {
   PresShell* presShell = aDocument->GetPresShell();
   if (!presShell) {
     return nullptr;
   }
 
-  nsCOMPtr<nsIContent> focusedContent;
-  nsCOMPtr<nsISelectionController> selectionController =
-      presShell->GetSelectionControllerForFocusedContent(
-          getter_AddRefs(focusedContent));
-  if (!selectionController) {
+  RefPtr<nsFrameSelection> frameSel = presShell->GetLastFocusedFrameSelection();
+  if (!frameSel) {
     return nullptr;
   }
 
-  RefPtr<Selection> sel = selectionController->GetSelection(
-      nsISelectionController::SELECTION_NORMAL);
-  sel.forget(aSelection);
-  return focusedContent;
+  RefPtr<Selection> sel = frameSel->GetSelection(SelectionType::eNormal);
+  return sel.forget();
 }
 
 bool nsCopySupport::CanCopy(Document* aDocument) {
   if (!aDocument) return false;
 
-  RefPtr<Selection> sel;
-  GetSelectionForCopy(aDocument, getter_AddRefs(sel));
-  NS_ENSURE_TRUE(sel, false);
-
-  return !sel->IsCollapsed();
+  RefPtr<Selection> sel = GetSelectionForCopy(aDocument);
+  return sel && !sel->IsCollapsed();
 }
 
 static bool IsInsideRuby(nsINode* aNode) {
@@ -733,10 +708,9 @@ static bool IsInsideRuby(nsINode* aNode) {
 
 static bool IsSelectionInsideRuby(Selection* aSelection) {
   uint32_t rangeCount = aSelection->RangeCount();
-  ;
   for (auto i : IntegerRange(rangeCount)) {
-    nsRange* range = aSelection->GetRangeAt(i);
-    if (!IsInsideRuby(range->GetCommonAncestor())) {
+    const nsRange* range = aSelection->GetRangeAt(i);
+    if (!IsInsideRuby(range->GetClosestCommonInclusiveAncestor())) {
       return false;
     }
   }
@@ -792,12 +766,12 @@ bool nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
   // If a selection was not supplied, try to find it.
   RefPtr<Selection> sel = aSelection;
   if (!sel) {
-    GetSelectionForCopy(doc, getter_AddRefs(sel));
+    sel = GetSelectionForCopy(doc);
   }
 
   // Retrieve the event target node from the start of the selection.
   if (sel) {
-    nsRange* range = sel->GetRangeAt(0);
+    const nsRange* range = sel->GetRangeAt(0);
     if (range) {
       targetElement = GetElementOrNearestFlattenedTreeParentElement(
           range->GetStartContainer());
@@ -818,9 +792,8 @@ bool nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
     return false;
   }
 
-  nsCOMPtr<nsIDocShell> docShell = piWindow->GetDocShell();
-  const bool chromeShell =
-      docShell && docShell->ItemType() == nsIDocShellTreeItem::typeChrome;
+  BrowsingContext* bc = piWindow->GetBrowsingContext();
+  const bool chromeShell = bc && bc->IsChrome();
 
   // next, fire the cut, copy or paste event
   bool doDefault = true;
@@ -884,11 +857,17 @@ bool nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
       sourceContent = targetElement->FindFirstNonChromeOnlyAccessContent();
     }
 
-    // check if we are looking at a password input
-    nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(sourceContent);
-    if (formControl) {
-      if (formControl->ControlType() == NS_FORM_INPUT_PASSWORD) {
-        return false;
+    // If it's <input type="password"> and there is no unmasked range or
+    // there is unmasked range but it's collapsed or it'll be masked
+    // automatically, the selected password shouldn't be copied into the
+    // clipboard.
+    if (RefPtr<HTMLInputElement> inputElement =
+            HTMLInputElement::FromNodeOrNull(sourceContent)) {
+      if (TextEditor* textEditor = inputElement->GetTextEditor()) {
+        if (textEditor->IsPasswordEditor() &&
+            !textEditor->IsCopyToClipboardAllowed()) {
+          return false;
+        }
       }
     }
 
@@ -907,8 +886,8 @@ bool nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
       // selection is inside a same ruby container. But we really should
       // expose the full functionality in browser. See bug 1130891.
       bool withRubyAnnotation = IsSelectionInsideRuby(sel);
-      // call the copy code
-      nsresult rv = HTMLCopy(sel, doc, aClipboardType, withRubyAnnotation);
+      nsresult rv = EncodeDocumentWithContextAndPutToClipboard(
+          sel, doc, aClipboardType, withRubyAnnotation);
       if (NS_FAILED(rv)) {
         return false;
       }

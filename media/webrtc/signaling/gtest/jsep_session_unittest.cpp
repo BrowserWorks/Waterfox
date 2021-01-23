@@ -11,6 +11,7 @@
 #include "nss.h"
 #include "ssl.h"
 
+#include "mozilla/Preferences.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Tuple.h"
 
@@ -57,6 +58,12 @@ class JsepSessionTest : public JsepSessionTestBase,
                         public ::testing::WithParamInterface<std::string> {
  public:
   JsepSessionTest() : mSdpHelper(&mLastError) {
+    Preferences::SetCString("media.peerconnection.sdp.parser", "legacy");
+    Preferences::SetCString("media.peerconnection.sdp.alternate_parse_mode",
+                            "never");
+    Preferences::SetBool("media.peerconnection.video.use_rtx", true);
+    Preferences::SetBool("media.navigator.video.use_transport_cc", true);
+
     mSessionOff =
         MakeUnique<JsepSessionImpl>("Offerer", MakeUnique<FakeUuidGenerator>());
     mSessionAns = MakeUnique<JsepSessionImpl>("Answerer",
@@ -95,12 +102,13 @@ class JsepSessionTest : public JsepSessionTestBase,
   }
 
   void CheckTransceiverInvariants(
-      const std::vector<RefPtr<JsepTransceiver>>& oldTransceivers,
-      const std::vector<RefPtr<JsepTransceiver>>& newTransceivers) {
+      const std::map<size_t, RefPtr<JsepTransceiver>>& oldTransceivers,
+      const std::map<size_t, RefPtr<JsepTransceiver>>& newTransceivers) {
     ASSERT_LE(oldTransceivers.size(), newTransceivers.size());
     std::set<size_t> levels;
 
-    for (const RefPtr<JsepTransceiver>& newTransceiver : newTransceivers) {
+    for (const auto& [id, newTransceiver] : newTransceivers) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (newTransceiver->HasLevel()) {
         ASSERT_FALSE(levels.count(newTransceiver->GetLevel()))
         << "Two new transceivers are mapped to level "
@@ -118,7 +126,8 @@ class JsepSessionTest : public JsepSessionTestBase,
              "transceivers.";
     }
 
-    for (const RefPtr<JsepTransceiver>& oldTransceiver : oldTransceivers) {
+    for (const auto& [id, oldTransceiver] : oldTransceivers) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (oldTransceiver->HasLevel()) {
         ASSERT_TRUE(levels.count(oldTransceiver->GetLevel()))
         << "Level " << oldTransceiver->GetLevel()
@@ -130,18 +139,17 @@ class JsepSessionTest : public JsepSessionTestBase,
     }
   }
 
-  std::vector<RefPtr<JsepTransceiver>> DeepCopy(
-      const std::vector<RefPtr<JsepTransceiver>>& transceivers) {
-    std::vector<RefPtr<JsepTransceiver>> copy;
-    copy.reserve(transceivers.size());
-    for (const RefPtr<JsepTransceiver>& transceiver : transceivers) {
-      copy.push_back(new JsepTransceiver(*transceiver));
+  std::map<size_t, RefPtr<JsepTransceiver>> DeepCopy(
+      const std::map<size_t, RefPtr<JsepTransceiver>>& transceivers) {
+    std::map<size_t, RefPtr<JsepTransceiver>> copy;
+    for (const auto& [id, transceiver] : transceivers) {
+      copy[id] = new JsepTransceiver(*transceiver);
     }
     return copy;
   }
 
   std::string CreateOffer(const Maybe<JsepOfferOptions>& options = Nothing()) {
-    std::vector<RefPtr<JsepTransceiver>> transceiversBefore =
+    std::map<size_t, RefPtr<JsepTransceiver>> transceiversBefore =
         DeepCopy(mSessionOff->GetTransceivers());
     JsepOfferOptions defaultOptions;
     const JsepOfferOptions& optionsRef = options ? *options : defaultOptions;
@@ -296,35 +304,36 @@ class JsepSessionTest : public JsepSessionTestBase,
     for (auto type : mediatypes) {
       ASSERT_TRUE(uuid_gen.Generate(&track_id));
 
-      std::vector<RefPtr<JsepTransceiver>>& transceivers(
-          side.GetTransceivers());
-      size_t i = transceivers.size();
+      RefPtr<JsepTransceiver> suitableTransceiver;
+      size_t i;
       if (magic == ADDTRACK_MAGIC) {
-        for (i = 0; i < transceivers.size(); ++i) {
-          if (transceivers[i]->mSendTrack.GetMediaType() != type) {
+        for (auto& [id, transceiver] : side.GetTransceivers()) {
+          if (transceiver->mSendTrack.GetMediaType() != type) {
             continue;
           }
 
-          if (IsNull(transceivers[i]->mSendTrack) ||
-              transceivers[i]->GetMediaType() ==
-                  SdpMediaSection::kApplication) {
+          if (IsNull(transceiver->mSendTrack) ||
+              transceiver->GetMediaType() == SdpMediaSection::kApplication) {
+            suitableTransceiver = transceiver;
+            i = id;
             break;
           }
         }
       }
 
-      if (i == transceivers.size()) {
-        side.AddTransceiver(new JsepTransceiver(type));
-        MOZ_ASSERT(i < transceivers.size());
+      if (!suitableTransceiver) {
+        suitableTransceiver = new JsepTransceiver(type);
+        side.AddTransceiver(suitableTransceiver);
+        i = side.GetTransceivers().rbegin()->first;
       }
 
       std::cerr << "Updating send track for transceiver " << i << std::endl;
       if (magic == ADDTRACK_MAGIC) {
-        transceivers[i]->SetAddTrackMagic();
+        suitableTransceiver->SetAddTrackMagic();
       }
-      transceivers[i]->mJsDirection |=
+      suitableTransceiver->mJsDirection |=
           SdpDirectionAttribute::Direction::kSendonly;
-      transceivers[i]->mSendTrack.UpdateStreamIds(
+      suitableTransceiver->mSendTrack.UpdateStreamIds(
           std::vector<std::string>(1, stream_id));
     }
   }
@@ -345,7 +354,8 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   std::vector<JsepTrack> GetLocalTracks(const JsepSession& session) const {
     std::vector<JsepTrack> result;
-    for (const auto& transceiver : session.GetTransceivers()) {
+    for (const auto& [id, transceiver] : session.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (!IsNull(transceiver->mSendTrack)) {
         result.push_back(transceiver->mSendTrack);
       }
@@ -355,7 +365,8 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   std::vector<JsepTrack> GetRemoteTracks(const JsepSession& session) const {
     std::vector<JsepTrack> result;
-    for (const auto& transceiver : session.GetTransceivers()) {
+    for (const auto& [id, transceiver] : session.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (!IsNull(transceiver->mRecvTrack)) {
         result.push_back(transceiver->mRecvTrack);
       }
@@ -364,7 +375,8 @@ class JsepSessionTest : public JsepSessionTestBase,
   }
 
   JsepTransceiver* GetDatachannelTransceiver(JsepSession& side) {
-    for (const auto& transceiver : side.GetTransceivers()) {
+    for (const auto& [id, transceiver] : side.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (transceiver->mSendTrack.GetMediaType() ==
           SdpMediaSection::MediaType::kApplication) {
         return transceiver.get();
@@ -375,7 +387,8 @@ class JsepSessionTest : public JsepSessionTestBase,
   }
 
   JsepTransceiver* GetNegotiatedTransceiver(JsepSession& side, size_t index) {
-    for (RefPtr<JsepTransceiver>& transceiver : side.GetTransceivers()) {
+    for (const auto& [id, transceiver] : side.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (transceiver->mSendTrack.GetNegotiatedDetails() ||
           transceiver->mRecvTrack.GetNegotiatedDetails()) {
         if (index) {
@@ -391,8 +404,10 @@ class JsepSessionTest : public JsepSessionTestBase,
   }
 
   JsepTransceiver* GetTransceiverByLevel(
-      const std::vector<RefPtr<JsepTransceiver>>& transceivers, size_t level) {
-    for (auto& transceiver : transceivers) {
+      const std::map<size_t, RefPtr<JsepTransceiver>>& transceivers,
+      size_t level) {
+    for (const auto& [id, transceiver] : transceivers) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (transceiver->HasLevel() && transceiver->GetLevel() == level) {
         return transceiver.get();
       }
@@ -448,7 +463,8 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   JsepTrack GetTrack(JsepSessionImpl& side, SdpMediaSection::MediaType type,
                      size_t index) const {
-    for (const auto& transceiver : side.GetTransceivers()) {
+    for (const auto& [id, transceiver] : side.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (IsNull(transceiver->mSendTrack) ||
           transceiver->mSendTrack.GetMediaType() != type) {
         continue;
@@ -641,16 +657,19 @@ class JsepSessionTest : public JsepSessionTestBase,
     return true;
   }
 
-  bool Equals(const std::vector<RefPtr<JsepTransceiver>>& t1,
-              const std::vector<RefPtr<JsepTransceiver>>& t2) const {
+  bool Equals(const std::map<size_t, RefPtr<JsepTransceiver>>& t1,
+              const std::map<size_t, RefPtr<JsepTransceiver>>& t2) const {
     if (t1.size() != t2.size()) {
       std::cerr << "Size differs: t1.size = " << t1.size()
                 << ", t2.size = " << t2.size() << std::endl;
       return false;
     }
 
-    for (size_t i = 0; i < t1.size(); ++i) {
-      if (!Equals(*t1[i], *t2[i])) {
+    for (const auto& [id, transceiver] : t1) {
+      if (!t2.count(id)) {
+        return false;
+      }
+      if (!Equals(*transceiver, *t2.at(id))) {
         return false;
       }
     }
@@ -726,7 +745,7 @@ class JsepSessionTest : public JsepSessionTestBase,
   }
 
   std::string CreateAnswer() {
-    std::vector<RefPtr<JsepTransceiver>> transceiversBefore =
+    std::map<size_t, RefPtr<JsepTransceiver>> transceiversBefore =
         DeepCopy(mSessionAns->GetTransceivers());
 
     JsepAnswerOptions options;
@@ -762,7 +781,7 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   void SetLocalOffer(const std::string& offer,
                      uint32_t checkFlags = ALL_CHECKS) {
-    std::vector<RefPtr<JsepTransceiver>> transceiversBefore =
+    std::map<size_t, RefPtr<JsepTransceiver>> transceiversBefore =
         DeepCopy(mSessionOff->GetTransceivers());
 
     JsepSession::Result result =
@@ -778,7 +797,8 @@ class JsepSessionTest : public JsepSessionTestBase,
     if (checkFlags & CHECK_TRACKS) {
       // This assumes no recvonly or inactive transceivers.
       ASSERT_EQ(types.size(), mSessionOff->GetTransceivers().size());
-      for (const auto& transceiver : mSessionOff->GetTransceivers()) {
+      for (const auto& [id, transceiver] : mSessionOff->GetTransceivers()) {
+        (void)id;  // Lame, but no better way to do this right now.
         if (!transceiver->HasLevel()) {
           continue;
         }
@@ -802,7 +822,7 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   void SetRemoteOffer(const std::string& offer,
                       uint32_t checkFlags = ALL_CHECKS) {
-    std::vector<RefPtr<JsepTransceiver>> transceiversBefore =
+    std::map<size_t, RefPtr<JsepTransceiver>> transceiversBefore =
         DeepCopy(mSessionAns->GetTransceivers());
 
     JsepSession::Result result =
@@ -818,7 +838,8 @@ class JsepSessionTest : public JsepSessionTestBase,
     if (checkFlags & CHECK_TRACKS) {
       // This assumes no recvonly or inactive transceivers.
       ASSERT_EQ(types.size(), mSessionAns->GetTransceivers().size());
-      for (const auto& transceiver : mSessionAns->GetTransceivers()) {
+      for (const auto& [id, transceiver] : mSessionAns->GetTransceivers()) {
+        (void)id;  // Lame, but no better way to do this right now.
         if (!transceiver->HasLevel()) {
           continue;
         }
@@ -839,7 +860,7 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   void SetLocalAnswer(const std::string& answer,
                       uint32_t checkFlags = ALL_CHECKS) {
-    std::vector<RefPtr<JsepTransceiver>> transceiversBefore =
+    std::map<size_t, RefPtr<JsepTransceiver>> transceiversBefore =
         DeepCopy(mSessionAns->GetTransceivers());
 
     JsepSession::Result result =
@@ -854,7 +875,8 @@ class JsepSessionTest : public JsepSessionTestBase,
     if (checkFlags & CHECK_TRACKS) {
       // Verify that the right stuff is in the tracks.
       ASSERT_EQ(types.size(), mSessionAns->GetTransceivers().size());
-      for (const auto& transceiver : mSessionAns->GetTransceivers()) {
+      for (const auto& [id, transceiver] : mSessionAns->GetTransceivers()) {
+        (void)id;  // Lame, but no better way to do this right now.
         if (!transceiver->HasLevel()) {
           continue;
         }
@@ -886,7 +908,7 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   void SetRemoteAnswer(const std::string& answer,
                        uint32_t checkFlags = ALL_CHECKS) {
-    std::vector<RefPtr<JsepTransceiver>> transceiversBefore =
+    std::map<size_t, RefPtr<JsepTransceiver>> transceiversBefore =
         DeepCopy(mSessionOff->GetTransceivers());
 
     JsepSession::Result result =
@@ -901,7 +923,8 @@ class JsepSessionTest : public JsepSessionTestBase,
     if (checkFlags & CHECK_TRACKS) {
       // Verify that the right stuff is in the tracks.
       ASSERT_EQ(types.size(), mSessionOff->GetTransceivers().size());
-      for (const auto& transceiver : mSessionOff->GetTransceivers()) {
+      for (const auto& [id, transceiver] : mSessionOff->GetTransceivers()) {
+        (void)id;  // Lame, but no better way to do this right now.
         if (!transceiver->HasLevel()) {
           continue;
         }
@@ -929,7 +952,8 @@ class JsepSessionTest : public JsepSessionTestBase,
   }
 
   std::string GetTransportId(const JsepSession& session, size_t level) {
-    for (const auto& transceiver : session.GetTransceivers()) {
+    for (const auto& [id, transceiver] : session.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       if (transceiver->HasLevel() && transceiver->GetLevel() == level) {
         return transceiver->mTransport.mTransportId;
       }
@@ -944,7 +968,8 @@ class JsepSessionTest : public JsepSessionTestBase,
     CandidateSet() {}
 
     void Gather(JsepSession& session, ComponentType maxComponent = RTCP) {
-      for (const auto& transceiver : session.GetTransceivers()) {
+      for (const auto& [id, transceiver] : session.GetTransceivers()) {
+        (void)id;  // Lame, but no better way to do this right now.
         if (transceiver->HasOwnTransport()) {
           Gather(session, transceiver->mTransport.mTransportId, RTP);
           if (transceiver->mTransport.mComponents > 1) {
@@ -1151,11 +1176,12 @@ class JsepSessionTest : public JsepSessionTestBase,
   };
 
   // For streaming parse errors
-  std::string GetParseErrors(const SipccSdpParser& parser) const {
+  std::string GetParseErrors(
+      const UniquePtr<SdpParser::Results>& results) const {
     std::stringstream output;
-    for (auto e = parser.GetParseErrors().begin();
-         e != parser.GetParseErrors().end(); ++e) {
-      output << e->first << ": " << e->second << std::endl;
+    auto errors = std::move(results->Errors());
+    for (auto error : errors) {
+      output << error.first << ": " << error.second << std::endl;
     }
     return output.str();
   }
@@ -1175,7 +1201,8 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   void CheckTransceiversAreBundled(const JsepSession& session,
                                    const std::string& context) {
-    for (const auto& transceiver : session.GetTransceivers()) {
+    for (const auto& [id, transceiver] : session.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       ASSERT_TRUE(transceiver->HasBundleLevel())
       << context;
       ASSERT_EQ(0U, transceiver->BundleLevel()) << context;
@@ -1312,6 +1339,14 @@ class JsepSessionTest : public JsepSessionTestBase,
           std::cerr << " dtmf(" << (audioCodec->mDtmfEnabled ? "yes" : "no")
                     << ")";
         }
+        if (track.GetMediaType() == SdpMediaSection::kVideo) {
+          const JsepVideoCodecDescription* videoCodec =
+              static_cast<const JsepVideoCodecDescription*>(codec.get());
+          std::cerr << " rtx("
+                    << (videoCodec->mRtxEnabled ? videoCodec->mRtxPayloadType
+                                                : "no")
+                    << ")";
+        }
         std::cerr << std::endl;
       }
     }
@@ -1323,7 +1358,8 @@ class JsepSessionTest : public JsepSessionTestBase,
   }
 
   void DumpTransceivers(const JsepSessionImpl& session) {
-    for (const auto& transceiver : session.GetTransceivers()) {
+    for (const auto& [id, transceiver] : session.GetTransceivers()) {
+      (void)id;  // Lame, but no better way to do this right now.
       std::cerr << "Transceiver ";
       if (transceiver->HasLevel()) {
         std::cerr << transceiver->GetLevel() << std::endl;
@@ -1349,9 +1385,10 @@ class JsepSessionTest : public JsepSessionTestBase,
 
   UniquePtr<Sdp> Parse(const std::string& sdp) const {
     SipccSdpParser parser;
-    UniquePtr<Sdp> parsed = parser.Parse(sdp);
+    auto results = parser.Parse(sdp);
+    UniquePtr<Sdp> parsed = std::move(results->Sdp());
     EXPECT_TRUE(parsed.get()) << "Should have valid SDP" << std::endl
-                              << "Errors were: " << GetParseErrors(parser);
+                              << "Errors were: " << GetParseErrors(results);
     return parsed;
   }
 
@@ -1559,9 +1596,9 @@ TEST_P(JsepSessionTest, RenegotiationNoChange) {
   ValidateSetupAttribute(*mSessionOff, SdpSetupAttribute::kActpass);
   ValidateSetupAttribute(*mSessionAns, SdpSetupAttribute::kActive);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   std::string reoffer = CreateOffer();
@@ -1620,6 +1657,14 @@ TEST_P(JsepSessionTest, DISABLED_RenegotiationSwappedRolesNoChange) {
   ASSERT_TRUE(Equals(answererTransceivers, newOffererTransceivers));
 }
 
+static void RemoveLastN(
+    std::map<size_t, RefPtr<JsepTransceiver>>& aTransceivers, size_t aNum) {
+  while (aNum--) {
+    // erase doesn't take reverse_iterator :(
+    aTransceivers.erase(--aTransceivers.end());
+  }
+}
+
 TEST_P(JsepSessionTest, RenegotiationOffererAddsTrack) {
   AddTracks(*mSessionOff);
   AddTracks(*mSessionAns);
@@ -1629,9 +1674,9 @@ TEST_P(JsepSessionTest, RenegotiationOffererAddsTrack) {
   ValidateSetupAttribute(*mSessionOff, SdpSetupAttribute::kActpass);
   ValidateSetupAttribute(*mSessionAns, SdpSetupAttribute::kActive);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   std::vector<SdpMediaSection::MediaType> extraTypes;
@@ -1649,11 +1694,11 @@ TEST_P(JsepSessionTest, RenegotiationOffererAddsTrack) {
   auto newAnswererTransceivers = mSessionAns->GetTransceivers();
 
   ASSERT_LE(2U, newOffererTransceivers.size());
-  newOffererTransceivers.resize(newOffererTransceivers.size() - 2);
+  RemoveLastN(newOffererTransceivers, 2);
   ASSERT_TRUE(Equals(origOffererTransceivers, newOffererTransceivers));
 
   ASSERT_LE(2U, newAnswererTransceivers.size());
-  newAnswererTransceivers.resize(newAnswererTransceivers.size() - 2);
+  RemoveLastN(newAnswererTransceivers, 2);
   ASSERT_TRUE(Equals(origAnswererTransceivers, newAnswererTransceivers));
 }
 
@@ -1666,9 +1711,9 @@ TEST_P(JsepSessionTest, RenegotiationAnswererAddsTrack) {
   ValidateSetupAttribute(*mSessionOff, SdpSetupAttribute::kActpass);
   ValidateSetupAttribute(*mSessionAns, SdpSetupAttribute::kActive);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   std::vector<SdpMediaSection::MediaType> extraTypes;
@@ -1698,11 +1743,11 @@ TEST_P(JsepSessionTest, RenegotiationAnswererAddsTrack) {
   auto newAnswererTransceivers = mSessionAns->GetTransceivers();
 
   ASSERT_LE(2U, newOffererTransceivers.size());
-  newOffererTransceivers.resize(newOffererTransceivers.size() - 2);
+  RemoveLastN(newOffererTransceivers, 2);
   ASSERT_TRUE(Equals(origOffererTransceivers, newOffererTransceivers));
 
   ASSERT_LE(2U, newAnswererTransceivers.size());
-  newAnswererTransceivers.resize(newAnswererTransceivers.size() - 2);
+  RemoveLastN(newAnswererTransceivers, 2);
   ASSERT_TRUE(Equals(origAnswererTransceivers, newAnswererTransceivers));
 }
 
@@ -1715,9 +1760,9 @@ TEST_P(JsepSessionTest, RenegotiationBothAddTrack) {
   ValidateSetupAttribute(*mSessionOff, SdpSetupAttribute::kActpass);
   ValidateSetupAttribute(*mSessionAns, SdpSetupAttribute::kActive);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   std::vector<SdpMediaSection::MediaType> extraTypes;
@@ -1736,11 +1781,11 @@ TEST_P(JsepSessionTest, RenegotiationBothAddTrack) {
   auto newAnswererTransceivers = mSessionAns->GetTransceivers();
 
   ASSERT_LE(2U, newOffererTransceivers.size());
-  newOffererTransceivers.resize(newOffererTransceivers.size() - 2);
+  RemoveLastN(newOffererTransceivers, 2);
   ASSERT_TRUE(Equals(origOffererTransceivers, newOffererTransceivers));
 
   ASSERT_LE(2U, newAnswererTransceivers.size());
-  newAnswererTransceivers.resize(newAnswererTransceivers.size() - 2);
+  RemoveLastN(newAnswererTransceivers, 2);
   ASSERT_TRUE(Equals(origAnswererTransceivers, newAnswererTransceivers));
 }
 
@@ -1878,14 +1923,15 @@ TEST_P(JsepSessionTest, RenegotiationOffererStopsTransceiver) {
 
   OfferAnswer();
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
+  auto lastTransceiver = mSessionOff->GetTransceivers().rbegin()->second;
   // Avoid bundle transport side effects; don't stop the BUNDLE-tag!
-  mSessionOff->GetTransceivers().back()->Stop();
-  JsepTrack removedTrack(mSessionOff->GetTransceivers().back()->mSendTrack);
+  lastTransceiver->Stop();
+  JsepTrack removedTrack(lastTransceiver->mSendTrack);
 
   OfferAnswer(CHECK_SUCCESS);
 
@@ -1907,17 +1953,15 @@ TEST_P(JsepSessionTest, RenegotiationOffererStopsTransceiver) {
 
   ASSERT_EQ(origOffererTransceivers.size(), newOffererTransceivers.size());
 
-  ASSERT_FALSE(origOffererTransceivers.back()->IsStopped());
-  ASSERT_TRUE(newOffererTransceivers.back()->IsStopped());
+  ASSERT_FALSE(origOffererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_TRUE(newOffererTransceivers.rbegin()->second->IsStopped());
 
-  ASSERT_FALSE(origOffererTransceivers.back()->IsStopped());
-  ASSERT_TRUE(newOffererTransceivers.back()->IsStopped());
-  ASSERT_FALSE(origAnswererTransceivers.back()->IsStopped());
-  ASSERT_TRUE(newAnswererTransceivers.back()->IsStopped());
-  origOffererTransceivers.pop_back();   // Ignore this one
-  newOffererTransceivers.pop_back();    // Ignore this one
-  origAnswererTransceivers.pop_back();  // Ignore this one
-  newAnswererTransceivers.pop_back();   // Ignore this one
+  ASSERT_FALSE(origAnswererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_TRUE(newAnswererTransceivers.rbegin()->second->IsStopped());
+  RemoveLastN(origOffererTransceivers, 1);   // Ignore this one
+  RemoveLastN(newOffererTransceivers, 1);    // Ignore this one
+  RemoveLastN(origAnswererTransceivers, 1);  // Ignore this one
+  RemoveLastN(newAnswererTransceivers, 1);   // Ignore this one
 
   ASSERT_TRUE(Equals(origOffererTransceivers, newOffererTransceivers));
   ASSERT_TRUE(Equals(origAnswererTransceivers, newAnswererTransceivers));
@@ -1932,14 +1976,15 @@ TEST_P(JsepSessionTest, RenegotiationAnswererStopsTransceiver) {
 
   OfferAnswer();
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   // Avoid bundle transport side effects; don't stop the BUNDLE-tag!
-  mSessionAns->GetTransceivers().back()->Stop();
-  JsepTrack removedTrack(mSessionAns->GetTransceivers().back()->mSendTrack);
+  mSessionAns->GetTransceivers().rbegin()->second->Stop();
+  JsepTrack removedTrack(
+      mSessionAns->GetTransceivers().rbegin()->second->mSendTrack);
 
   OfferAnswer(CHECK_SUCCESS);
 
@@ -1962,14 +2007,14 @@ TEST_P(JsepSessionTest, RenegotiationAnswererStopsTransceiver) {
 
   ASSERT_EQ(origOffererTransceivers.size(), newOffererTransceivers.size());
 
-  ASSERT_FALSE(origOffererTransceivers.back()->IsStopped());
-  ASSERT_TRUE(newOffererTransceivers.back()->IsStopped());
-  ASSERT_FALSE(origAnswererTransceivers.back()->IsStopped());
-  ASSERT_TRUE(newAnswererTransceivers.back()->IsStopped());
-  origOffererTransceivers.pop_back();   // Ignore this one
-  newOffererTransceivers.pop_back();    // Ignore this one
-  origAnswererTransceivers.pop_back();  // Ignore this one
-  newAnswererTransceivers.pop_back();   // Ignore this one
+  ASSERT_FALSE(origOffererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_TRUE(newOffererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_FALSE(origAnswererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_TRUE(newAnswererTransceivers.rbegin()->second->IsStopped());
+  RemoveLastN(origOffererTransceivers, 1);   // Ignore this one
+  RemoveLastN(newOffererTransceivers, 1);    // Ignore this one
+  RemoveLastN(origAnswererTransceivers, 1);  // Ignore this one
+  RemoveLastN(newAnswererTransceivers, 1);   // Ignore this one
 
   ASSERT_TRUE(Equals(origOffererTransceivers, newOffererTransceivers));
   ASSERT_TRUE(Equals(origAnswererTransceivers, newAnswererTransceivers));
@@ -1984,18 +2029,18 @@ TEST_P(JsepSessionTest, RenegotiationBothStopSameTransceiver) {
 
   OfferAnswer();
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   // Avoid bundle transport side effects; don't stop the BUNDLE-tag!
-  mSessionOff->GetTransceivers().back()->Stop();
+  mSessionOff->GetTransceivers().rbegin()->second->Stop();
   JsepTrack removedTrackOffer(
-      mSessionOff->GetTransceivers().back()->mSendTrack);
-  mSessionAns->GetTransceivers().back()->Stop();
+      mSessionOff->GetTransceivers().rbegin()->second->mSendTrack);
+  mSessionAns->GetTransceivers().rbegin()->second->Stop();
   JsepTrack removedTrackAnswer(
-      mSessionAns->GetTransceivers().back()->mSendTrack);
+      mSessionAns->GetTransceivers().rbegin()->second->mSendTrack);
 
   OfferAnswer(CHECK_SUCCESS);
 
@@ -2017,14 +2062,14 @@ TEST_P(JsepSessionTest, RenegotiationBothStopSameTransceiver) {
 
   ASSERT_EQ(origOffererTransceivers.size(), newOffererTransceivers.size());
 
-  ASSERT_FALSE(origOffererTransceivers.back()->IsStopped());
-  ASSERT_TRUE(newOffererTransceivers.back()->IsStopped());
-  ASSERT_FALSE(origAnswererTransceivers.back()->IsStopped());
-  ASSERT_TRUE(newAnswererTransceivers.back()->IsStopped());
-  origOffererTransceivers.pop_back();   // Ignore this one
-  newOffererTransceivers.pop_back();    // Ignore this one
-  origAnswererTransceivers.pop_back();  // Ignore this one
-  newAnswererTransceivers.pop_back();   // Ignore this one
+  ASSERT_FALSE(origOffererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_TRUE(newOffererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_FALSE(origAnswererTransceivers.rbegin()->second->IsStopped());
+  ASSERT_TRUE(newAnswererTransceivers.rbegin()->second->IsStopped());
+  RemoveLastN(origOffererTransceivers, 1);   // Ignore this one
+  RemoveLastN(newOffererTransceivers, 1);    // Ignore this one
+  RemoveLastN(origAnswererTransceivers, 1);  // Ignore this one
+  RemoveLastN(newAnswererTransceivers, 1);   // Ignore this one
 
   ASSERT_TRUE(Equals(origOffererTransceivers, newOffererTransceivers));
   ASSERT_TRUE(Equals(origAnswererTransceivers, newAnswererTransceivers));
@@ -2042,18 +2087,18 @@ TEST_P(JsepSessionTest, RenegotiationBothStopTransceiverThenAddTrack) {
   OfferAnswer();
 
   // Avoid bundle transport side effects; don't stop the BUNDLE-tag!
-  mSessionOff->GetTransceivers().back()->Stop();
+  mSessionOff->GetTransceivers().rbegin()->second->Stop();
   JsepTrack removedTrackOffer(
-      mSessionOff->GetTransceivers().back()->mSendTrack);
-  mSessionOff->GetTransceivers().back()->Stop();
+      mSessionOff->GetTransceivers().rbegin()->second->mSendTrack);
+  mSessionOff->GetTransceivers().rbegin()->second->Stop();
   JsepTrack removedTrackAnswer(
-      mSessionOff->GetTransceivers().back()->mSendTrack);
+      mSessionOff->GetTransceivers().rbegin()->second->mSendTrack);
 
   OfferAnswer(CHECK_SUCCESS);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   std::vector<SdpMediaSection::MediaType> extraTypes;
@@ -2072,11 +2117,11 @@ TEST_P(JsepSessionTest, RenegotiationBothStopTransceiverThenAddTrack) {
             newAnswererTransceivers.size());
 
   // Ensure that the m-section was re-used; no gaps
-  ASSERT_EQ(origOffererTransceivers.back()->GetLevel(),
-            newOffererTransceivers.back()->GetLevel());
+  ASSERT_EQ(origOffererTransceivers.rbegin()->second->GetLevel(),
+            newOffererTransceivers.rbegin()->second->GetLevel());
 
-  ASSERT_EQ(origAnswererTransceivers.back()->GetLevel(),
-            newAnswererTransceivers.back()->GetLevel());
+  ASSERT_EQ(origAnswererTransceivers.rbegin()->second->GetLevel(),
+            newAnswererTransceivers.rbegin()->second->GetLevel());
 }
 
 TEST_P(JsepSessionTest, RenegotiationBothStopTransceiverDifferentMsection) {
@@ -2159,9 +2204,9 @@ TEST_P(JsepSessionTest, RenegotiationAutoAssignedMsidIsStable) {
 
   SetRemoteAnswer(answer, CHECK_SUCCESS);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   ASSERT_EQ(origOffererTransceivers.size(), origAnswererTransceivers.size());
@@ -2196,7 +2241,8 @@ TEST_P(JsepSessionTest, RenegotiationOffererDisablesTelephoneEvent) {
   // check all the audio tracks to make sure they have 2 codecs (109 and 101),
   // and dtmf is enabled on all audio tracks
   std::vector<JsepTrack> tracks;
-  for (const auto& transceiver : mSessionOff->GetTransceivers()) {
+  for (const auto& [id, transceiver] : mSessionOff->GetTransceivers()) {
+    (void)id;  // Lame, but no better way to do this right now.
     tracks.push_back(transceiver->mSendTrack);
     tracks.push_back(transceiver->mRecvTrack);
   }
@@ -2208,7 +2254,7 @@ TEST_P(JsepSessionTest, RenegotiationOffererDisablesTelephoneEvent) {
     const JsepTrackNegotiatedDetails* details = track.GetNegotiatedDetails();
     ASSERT_EQ(1U, details->GetEncodingCount());
     const JsepTrackEncoding& encoding = details->GetEncoding(0);
-    ASSERT_EQ(2U, encoding.GetCodecs().size());
+    ASSERT_EQ(5U, encoding.GetCodecs().size());
     ASSERT_TRUE(encoding.HasFormat("109"));
     ASSERT_TRUE(encoding.HasFormat("101"));
     for (const auto& codec : encoding.GetCodecs()) {
@@ -2221,7 +2267,7 @@ TEST_P(JsepSessionTest, RenegotiationOffererDisablesTelephoneEvent) {
   }
 
   std::string offer = CreateOffer();
-  ReplaceInSdp(&offer, " 109 101 ", " 109 ");
+  ReplaceInSdp(&offer, "8 101", "8");
   ReplaceInSdp(&offer, "a=fmtp:101 0-15\r\n", "");
   ReplaceInSdp(&offer, "a=rtpmap:101 telephone-event/8000/1\r\n", "");
   std::cerr << "modified OFFER: " << offer << std::endl;
@@ -2235,7 +2281,8 @@ TEST_P(JsepSessionTest, RenegotiationOffererDisablesTelephoneEvent) {
   // check all the audio tracks to make sure they have 1 codec (109),
   // and dtmf is disabled on all audio tracks
   tracks.clear();
-  for (const auto& transceiver : mSessionOff->GetTransceivers()) {
+  for (const auto& [id, transceiver] : mSessionOff->GetTransceivers()) {
+    (void)id;  // Lame, but no better way to do this right now.
     tracks.push_back(transceiver->mSendTrack);
     tracks.push_back(transceiver->mRecvTrack);
   }
@@ -2247,7 +2294,7 @@ TEST_P(JsepSessionTest, RenegotiationOffererDisablesTelephoneEvent) {
     const JsepTrackNegotiatedDetails* details = track.GetNegotiatedDetails();
     ASSERT_EQ(1U, details->GetEncodingCount());
     const JsepTrackEncoding& encoding = details->GetEncoding(0);
-    ASSERT_EQ(1U, encoding.GetCodecs().size());
+    ASSERT_EQ(4U, encoding.GetCodecs().size());
     ASSERT_TRUE(encoding.HasFormat("109"));
     // we can cast here because we've already checked for audio track
     const JsepAudioCodecDescription* audioCodec =
@@ -2273,9 +2320,9 @@ TEST_P(JsepSessionTest, RenegotiationAnswererEnablesMsid) {
 
   SetRemoteAnswer(answer, CHECK_SUCCESS);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   offer = CreateOffer();
@@ -2319,9 +2366,9 @@ TEST_P(JsepSessionTest, RenegotiationAnswererDisablesMsid) {
   SetLocalAnswer(answer);
   SetRemoteAnswer(answer, CHECK_SUCCESS);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   offer = CreateOffer();
@@ -2379,9 +2426,9 @@ TEST_P(JsepSessionTest, RenegotiationOffererEnablesBundle) {
   SetLocalAnswer(answer);
   SetRemoteAnswer(answer);
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   OfferAnswer();
@@ -2426,9 +2473,9 @@ TEST_P(JsepSessionTest, RenegotiationOffererDisablesBundleTransport) {
 
   GetTransceiverByLevel(*mSessionOff, 0)->Stop();
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   OfferAnswer(CHECK_SUCCESS);
@@ -2477,9 +2524,9 @@ TEST_P(JsepSessionTest, RenegotiationAnswererDisablesBundleTransport) {
 
   OfferAnswer();
 
-  std::vector<RefPtr<JsepTransceiver>> origOffererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origOffererTransceivers =
       DeepCopy(mSessionOff->GetTransceivers());
-  std::vector<RefPtr<JsepTransceiver>> origAnswererTransceivers =
+  std::map<size_t, RefPtr<JsepTransceiver>> origAnswererTransceivers =
       DeepCopy(mSessionAns->GetTransceivers());
 
   GetTransceiverByLevel(*mSessionAns, 0)->Stop();
@@ -3030,15 +3077,19 @@ TEST_F(JsepSessionTest, OfferAnswerRecvOnlyLines) {
   SetLocalAnswer(answer, CHECK_SUCCESS);
   SetRemoteAnswer(answer, CHECK_SUCCESS);
 
-  std::vector<RefPtr<JsepTransceiver>> transceivers(
+  std::map<size_t, RefPtr<JsepTransceiver>> transceivers(
       mSessionOff->GetTransceivers());
   ASSERT_EQ(3U, transceivers.size());
-  for (const auto& transceiver : transceivers) {
-    auto ssrcs = parsedOffer->GetMediaSection(transceiver->GetLevel())
-                     .GetAttributeList()
-                     .GetSsrc()
-                     .mSsrcs;
-    ASSERT_EQ(1U, ssrcs.size());
+  for (const auto& [id, transceiver] : transceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
+    const auto& msection =
+        parsedOffer->GetMediaSection(transceiver->GetLevel());
+    const auto& ssrcs = msection.GetAttributeList().GetSsrc().mSsrcs;
+    if (msection.GetMediaType() == SdpMediaSection::kVideo) {
+      ASSERT_EQ(2U, ssrcs.size());
+    } else {
+      ASSERT_EQ(1U, ssrcs.size());
+    }
   }
 }
 
@@ -3185,40 +3236,56 @@ TEST_F(JsepSessionTest, ValidateOfferedVideoCodecParams) {
   ASSERT_TRUE(!!outputSdp);
 
   ASSERT_EQ(2U, outputSdp->GetMediaSectionCount());
-  auto& video_section = outputSdp->GetMediaSection(1);
+  const auto& video_section = outputSdp->GetMediaSection(1);
   ASSERT_EQ(SdpMediaSection::kVideo, video_section.GetMediaType());
-  auto& video_attrs = video_section.GetAttributeList();
+  const auto& video_attrs = video_section.GetAttributeList();
   ASSERT_EQ(SdpDirectionAttribute::kSendrecv, video_attrs.GetDirection());
 
-  ASSERT_EQ(6U, video_section.GetFormats().size());
+  ASSERT_EQ(10U, video_section.GetFormats().size());
   ASSERT_EQ("120", video_section.GetFormats()[0]);
-  ASSERT_EQ("121", video_section.GetFormats()[1]);
-  ASSERT_EQ("126", video_section.GetFormats()[2]);
-  ASSERT_EQ("97", video_section.GetFormats()[3]);
-  ASSERT_EQ("123", video_section.GetFormats()[4]);
-  ASSERT_EQ("122", video_section.GetFormats()[5]);
+  ASSERT_EQ("124", video_section.GetFormats()[1]);
+  ASSERT_EQ("121", video_section.GetFormats()[2]);
+  ASSERT_EQ("125", video_section.GetFormats()[3]);
+  ASSERT_EQ("126", video_section.GetFormats()[4]);
+  ASSERT_EQ("127", video_section.GetFormats()[5]);
+  ASSERT_EQ("97", video_section.GetFormats()[6]);
+  ASSERT_EQ("98", video_section.GetFormats()[7]);
+  ASSERT_EQ("123", video_section.GetFormats()[8]);
+  ASSERT_EQ("122", video_section.GetFormats()[9]);
 
   // Validate rtpmap
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kRtpmapAttribute));
   auto& rtpmaps = video_attrs.GetRtpmap();
   ASSERT_TRUE(rtpmaps.HasEntry("120"));
+  ASSERT_TRUE(rtpmaps.HasEntry("124"));
   ASSERT_TRUE(rtpmaps.HasEntry("121"));
+  ASSERT_TRUE(rtpmaps.HasEntry("125"));
   ASSERT_TRUE(rtpmaps.HasEntry("126"));
+  ASSERT_TRUE(rtpmaps.HasEntry("127"));
   ASSERT_TRUE(rtpmaps.HasEntry("97"));
-  ASSERT_TRUE(rtpmaps.HasEntry("122"));
+  ASSERT_TRUE(rtpmaps.HasEntry("98"));
   ASSERT_TRUE(rtpmaps.HasEntry("123"));
+  ASSERT_TRUE(rtpmaps.HasEntry("122"));
 
-  auto& vp8_entry = rtpmaps.GetEntry("120");
-  auto& vp9_entry = rtpmaps.GetEntry("121");
-  auto& h264_1_entry = rtpmaps.GetEntry("126");
-  auto& h264_0_entry = rtpmaps.GetEntry("97");
-  auto& red_0_entry = rtpmaps.GetEntry("122");
-  auto& ulpfec_0_entry = rtpmaps.GetEntry("123");
+  const auto& vp8_entry = rtpmaps.GetEntry("120");
+  const auto& vp8_rtx_entry = rtpmaps.GetEntry("124");
+  const auto& vp9_entry = rtpmaps.GetEntry("121");
+  const auto& vp9_rtx_entry = rtpmaps.GetEntry("125");
+  const auto& h264_1_entry = rtpmaps.GetEntry("126");
+  const auto& h264_1_rtx_entry = rtpmaps.GetEntry("127");
+  const auto& h264_0_entry = rtpmaps.GetEntry("97");
+  const auto& h264_0_rtx_entry = rtpmaps.GetEntry("98");
+  const auto& ulpfec_0_entry = rtpmaps.GetEntry("123");
+  const auto& red_0_entry = rtpmaps.GetEntry("122");
 
   ASSERT_EQ("VP8", vp8_entry.name);
+  ASSERT_EQ("rtx", vp8_rtx_entry.name);
   ASSERT_EQ("VP9", vp9_entry.name);
+  ASSERT_EQ("rtx", vp9_rtx_entry.name);
   ASSERT_EQ("H264", h264_1_entry.name);
+  ASSERT_EQ("rtx", h264_1_rtx_entry.name);
   ASSERT_EQ("H264", h264_0_entry.name);
+  ASSERT_EQ("rtx", h264_0_rtx_entry.name);
   ASSERT_EQ("red", red_0_entry.name);
   ASSERT_EQ("ulpfec", ulpfec_0_entry.name);
 
@@ -3226,7 +3293,7 @@ TEST_F(JsepSessionTest, ValidateOfferedVideoCodecParams) {
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kFmtpAttribute));
   auto& fmtps = video_attrs.GetFmtp().mFmtps;
 
-  ASSERT_EQ(5U, fmtps.size());
+  ASSERT_EQ(9U, fmtps.size());
 
   // VP8
   const SdpFmtpAttributeList::Parameters* vp8_params =
@@ -3240,17 +3307,38 @@ TEST_F(JsepSessionTest, ValidateOfferedVideoCodecParams) {
   ASSERT_EQ((uint32_t)12288, parsed_vp8_params.max_fs);
   ASSERT_EQ((uint32_t)60, parsed_vp8_params.max_fr);
 
+  // VP8 RTX
+  const SdpFmtpAttributeList::Parameters* vp8_rtx_params =
+      video_section.FindFmtp("124");
+  ASSERT_TRUE(vp8_rtx_params);
+  ASSERT_EQ(SdpRtpmapAttributeList::kRtx, vp8_rtx_params->codec_type);
+
+  const auto& parsed_vp8_rtx_params =
+      *static_cast<const SdpFmtpAttributeList::RtxParameters*>(vp8_rtx_params);
+
+  ASSERT_EQ((uint32_t)120, parsed_vp8_rtx_params.apt);
+
   // VP9
   const SdpFmtpAttributeList::Parameters* vp9_params =
       video_section.FindFmtp("121");
   ASSERT_TRUE(vp9_params);
   ASSERT_EQ(SdpRtpmapAttributeList::kVP9, vp9_params->codec_type);
 
-  auto& parsed_vp9_params =
+  const auto& parsed_vp9_params =
       *static_cast<const SdpFmtpAttributeList::VP8Parameters*>(vp9_params);
 
   ASSERT_EQ((uint32_t)12288, parsed_vp9_params.max_fs);
   ASSERT_EQ((uint32_t)60, parsed_vp9_params.max_fr);
+
+  // VP9 RTX
+  const SdpFmtpAttributeList::Parameters* vp9_rtx_params =
+      video_section.FindFmtp("125");
+  ASSERT_TRUE(vp9_rtx_params);
+  ASSERT_EQ(SdpRtpmapAttributeList::kRtx, vp9_rtx_params->codec_type);
+
+  const auto& parsed_vp9_rtx_params =
+      *static_cast<const SdpFmtpAttributeList::RtxParameters*>(vp9_rtx_params);
+  ASSERT_EQ((uint32_t)121, parsed_vp9_rtx_params.apt);
 
   // H264 packetization mode 1
   const SdpFmtpAttributeList::Parameters* h264_1_params =
@@ -3258,12 +3346,24 @@ TEST_F(JsepSessionTest, ValidateOfferedVideoCodecParams) {
   ASSERT_TRUE(h264_1_params);
   ASSERT_EQ(SdpRtpmapAttributeList::kH264, h264_1_params->codec_type);
 
-  auto& parsed_h264_1_params =
+  const auto& parsed_h264_1_params =
       *static_cast<const SdpFmtpAttributeList::H264Parameters*>(h264_1_params);
 
   ASSERT_EQ((uint32_t)0x42e00d, parsed_h264_1_params.profile_level_id);
   ASSERT_TRUE(parsed_h264_1_params.level_asymmetry_allowed);
   ASSERT_EQ(1U, parsed_h264_1_params.packetization_mode);
+
+  // H264 packetization mode 1 RTX
+  const SdpFmtpAttributeList::Parameters* h264_1_rtx_params =
+      video_section.FindFmtp("127");
+  ASSERT_TRUE(h264_1_rtx_params);
+  ASSERT_EQ(SdpRtpmapAttributeList::kRtx, h264_1_rtx_params->codec_type);
+
+  const auto& parsed_h264_1_rtx_params =
+      *static_cast<const SdpFmtpAttributeList::RtxParameters*>(
+          h264_1_rtx_params);
+
+  ASSERT_EQ((uint32_t)126, parsed_h264_1_rtx_params.apt);
 
   // H264 packetization mode 0
   const SdpFmtpAttributeList::Parameters* h264_0_params =
@@ -3271,12 +3371,24 @@ TEST_F(JsepSessionTest, ValidateOfferedVideoCodecParams) {
   ASSERT_TRUE(h264_0_params);
   ASSERT_EQ(SdpRtpmapAttributeList::kH264, h264_0_params->codec_type);
 
-  auto& parsed_h264_0_params =
+  const auto& parsed_h264_0_params =
       *static_cast<const SdpFmtpAttributeList::H264Parameters*>(h264_0_params);
 
   ASSERT_EQ((uint32_t)0x42e00d, parsed_h264_0_params.profile_level_id);
   ASSERT_TRUE(parsed_h264_0_params.level_asymmetry_allowed);
   ASSERT_EQ(0U, parsed_h264_0_params.packetization_mode);
+
+  // H264 packetization mode 0 RTX
+  const SdpFmtpAttributeList::Parameters* h264_0_rtx_params =
+      video_section.FindFmtp("98");
+  ASSERT_TRUE(h264_0_rtx_params);
+  ASSERT_EQ(SdpRtpmapAttributeList::kRtx, h264_0_rtx_params->codec_type);
+
+  const auto& parsed_h264_0_rtx_params =
+      *static_cast<const SdpFmtpAttributeList::RtxParameters*>(
+          h264_0_rtx_params);
+
+  ASSERT_EQ((uint32_t)97, parsed_h264_0_rtx_params.apt);
 
   // red
   const SdpFmtpAttributeList::Parameters* red_params =
@@ -3284,7 +3396,7 @@ TEST_F(JsepSessionTest, ValidateOfferedVideoCodecParams) {
   ASSERT_TRUE(red_params);
   ASSERT_EQ(SdpRtpmapAttributeList::kRed, red_params->codec_type);
 
-  auto& parsed_red_params =
+  const auto& parsed_red_params =
       *static_cast<const SdpFmtpAttributeList::RedParameters*>(red_params);
   ASSERT_EQ(5U, parsed_red_params.encodings.size());
   ASSERT_EQ(120, parsed_red_params.encodings[0]);
@@ -3364,6 +3476,12 @@ TEST_F(JsepSessionTest, ValidateOfferedAudioCodecParams) {
   ASSERT_EQ((uint32_t)48000, parsed_opus_params.maxplaybackrate);
   ASSERT_EQ((uint32_t)1, parsed_opus_params.stereo);
   ASSERT_EQ((uint32_t)0, parsed_opus_params.useInBandFec);
+  ASSERT_EQ((uint32_t)0, parsed_opus_params.maxAverageBitrate);
+  ASSERT_EQ((uint32_t)0, parsed_opus_params.useDTX);
+  ASSERT_EQ((uint32_t)0, parsed_opus_params.useCbr);
+  ASSERT_EQ((uint32_t)0, parsed_opus_params.frameSizeMs);
+  ASSERT_EQ((uint32_t)0, parsed_opus_params.minFrameSizeMs);
+  ASSERT_EQ((uint32_t)0, parsed_opus_params.maxFrameSizeMs);
 
   // dtmf
   const SdpFmtpAttributeList::Parameters* dtmf_params =
@@ -3410,33 +3528,45 @@ TEST_F(JsepSessionTest, ValidateNoFmtpLineForRedInOfferAndAnswer) {
   auto& video_attrs = video_section.GetAttributeList();
   ASSERT_EQ(SdpDirectionAttribute::kSendrecv, video_attrs.GetDirection());
 
-  ASSERT_EQ(6U, video_section.GetFormats().size());
+  ASSERT_EQ(10U, video_section.GetFormats().size());
   ASSERT_EQ("120", video_section.GetFormats()[0]);
-  ASSERT_EQ("121", video_section.GetFormats()[1]);
-  ASSERT_EQ("126", video_section.GetFormats()[2]);
-  ASSERT_EQ("97", video_section.GetFormats()[3]);
-  ASSERT_EQ("123", video_section.GetFormats()[4]);
-  ASSERT_EQ("122", video_section.GetFormats()[5]);
+  ASSERT_EQ("124", video_section.GetFormats()[1]);
+  ASSERT_EQ("121", video_section.GetFormats()[2]);
+  ASSERT_EQ("125", video_section.GetFormats()[3]);
+  ASSERT_EQ("126", video_section.GetFormats()[4]);
+  ASSERT_EQ("127", video_section.GetFormats()[5]);
+  ASSERT_EQ("97", video_section.GetFormats()[6]);
+  ASSERT_EQ("98", video_section.GetFormats()[7]);
+  ASSERT_EQ("123", video_section.GetFormats()[8]);
+  ASSERT_EQ("122", video_section.GetFormats()[9]);
 
   // Validate rtpmap
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kRtpmapAttribute));
   auto& rtpmaps = video_attrs.GetRtpmap();
   ASSERT_TRUE(rtpmaps.HasEntry("120"));
+  ASSERT_TRUE(rtpmaps.HasEntry("124"));
   ASSERT_TRUE(rtpmaps.HasEntry("121"));
+  ASSERT_TRUE(rtpmaps.HasEntry("125"));
   ASSERT_TRUE(rtpmaps.HasEntry("126"));
+  ASSERT_TRUE(rtpmaps.HasEntry("127"));
   ASSERT_TRUE(rtpmaps.HasEntry("97"));
-  ASSERT_TRUE(rtpmaps.HasEntry("122"));
+  ASSERT_TRUE(rtpmaps.HasEntry("98"));
   ASSERT_TRUE(rtpmaps.HasEntry("123"));
+  ASSERT_TRUE(rtpmaps.HasEntry("122"));
 
   // Validate fmtps
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kFmtpAttribute));
   auto& fmtps = video_attrs.GetFmtp().mFmtps;
 
-  ASSERT_EQ(4U, fmtps.size());
+  ASSERT_EQ(8U, fmtps.size());
   ASSERT_EQ("126", fmtps[0].format);
   ASSERT_EQ("97", fmtps[1].format);
   ASSERT_EQ("120", fmtps[2].format);
-  ASSERT_EQ("121", fmtps[3].format);
+  ASSERT_EQ("124", fmtps[3].format);
+  ASSERT_EQ("121", fmtps[4].format);
+  ASSERT_EQ("125", fmtps[5].format);
+  ASSERT_EQ("127", fmtps[6].format);
+  ASSERT_EQ("98", fmtps[7].format);
 
   SetLocalAnswer(answer);
   SetRemoteAnswer(answer);
@@ -3476,7 +3606,7 @@ TEST_F(JsepSessionTest, ValidateNoFmtpLineForRedInOfferAndAnswer) {
                     .size());
 }
 
-TEST_F(JsepSessionTest, ValidateAnsweredCodecParams) {
+TEST_F(JsepSessionTest, ValidateAnsweredCodecParamsNoRed) {
   // TODO(bug 1099351): Once fixed, we can allow red in this offer,
   // which will also cause multiple codecs in answer.  For now,
   // red/ulpfec for video are behind a pref to mitigate potential for
@@ -3518,38 +3648,29 @@ TEST_F(JsepSessionTest, ValidateAnsweredCodecParams) {
   auto& video_attrs = video_section.GetAttributeList();
   ASSERT_EQ(SdpDirectionAttribute::kSendrecv, video_attrs.GetDirection());
 
-  // TODO(bug 1099351): Once fixed, this stuff will need to be updated.
-  ASSERT_EQ(1U, video_section.GetFormats().size());
-  // ASSERT_EQ(3U, video_section.GetFormats().size());
+  ASSERT_EQ(4U, video_section.GetFormats().size());
   ASSERT_EQ("120", video_section.GetFormats()[0]);
-  // ASSERT_EQ("121", video_section.GetFormats()[1]);
-  // ASSERT_EQ("126", video_section.GetFormats()[2]);
-  // ASSERT_EQ("97", video_section.GetFormats()[3]);
+  ASSERT_EQ("124", video_section.GetFormats()[1]);
+  ASSERT_EQ("121", video_section.GetFormats()[2]);
+  ASSERT_EQ("125", video_section.GetFormats()[3]);
 
   // Validate rtpmap
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kRtpmapAttribute));
   auto& rtpmaps = video_attrs.GetRtpmap();
   ASSERT_TRUE(rtpmaps.HasEntry("120"));
-  // ASSERT_TRUE(rtpmaps.HasEntry("121"));
-  // ASSERT_TRUE(rtpmaps.HasEntry("126"));
-  // ASSERT_TRUE(rtpmaps.HasEntry("97"));
+  ASSERT_TRUE(rtpmaps.HasEntry("121"));
 
   auto& vp8_entry = rtpmaps.GetEntry("120");
-  // auto& vp9_entry = rtpmaps.GetEntry("121");
-  // auto& h264_1_entry = rtpmaps.GetEntry("126");
-  // auto& h264_0_entry = rtpmaps.GetEntry("97");
+  auto& vp9_entry = rtpmaps.GetEntry("121");
 
   ASSERT_EQ("VP8", vp8_entry.name);
-  // ASSERT_EQ("VP9", vp9_entry.name);
-  // ASSERT_EQ("H264", h264_1_entry.name);
-  // ASSERT_EQ("H264", h264_0_entry.name);
+  ASSERT_EQ("VP9", vp9_entry.name);
 
   // Validate fmtps
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kFmtpAttribute));
   auto& fmtps = video_attrs.GetFmtp().mFmtps;
 
-  ASSERT_EQ(1U, fmtps.size());
-  // ASSERT_EQ(3U, fmtps.size());
+  ASSERT_EQ(4U, fmtps.size());
 
   // VP8
   ASSERT_EQ("120", fmtps[0].format);
@@ -3563,6 +3684,18 @@ TEST_F(JsepSessionTest, ValidateAnsweredCodecParams) {
   ASSERT_EQ((uint32_t)12288, parsed_vp8_params.max_fs);
   ASSERT_EQ((uint32_t)60, parsed_vp8_params.max_fr);
 
+  // VP9
+  ASSERT_EQ("121", fmtps[2].format);
+  ASSERT_TRUE(!!fmtps[2].parameters);
+  ASSERT_EQ(SdpRtpmapAttributeList::kVP9, fmtps[2].parameters->codec_type);
+
+  auto& parsed_vp9_params =
+      *static_cast<const SdpFmtpAttributeList::VP8Parameters*>(
+          fmtps[2].parameters.get());
+
+  ASSERT_EQ((uint32_t)12288, parsed_vp9_params.max_fs);
+  ASSERT_EQ((uint32_t)60, parsed_vp9_params.max_fr);
+
   SetLocalAnswer(answer);
   SetRemoteAnswer(answer);
 
@@ -3572,12 +3705,12 @@ TEST_F(JsepSessionTest, ValidateAnsweredCodecParams) {
   ASSERT_FALSE(IsNull(offerTransceivers[1]->mRecvTrack));
   ASSERT_TRUE(offerTransceivers[1]->mSendTrack.GetNegotiatedDetails());
   ASSERT_TRUE(offerTransceivers[1]->mRecvTrack.GetNegotiatedDetails());
-  ASSERT_EQ(1U, offerTransceivers[1]
+  ASSERT_EQ(2U, offerTransceivers[1]
                     ->mSendTrack.GetNegotiatedDetails()
                     ->GetEncoding(0)
                     .GetCodecs()
                     .size());
-  ASSERT_EQ(1U, offerTransceivers[1]
+  ASSERT_EQ(2U, offerTransceivers[1]
                     ->mRecvTrack.GetNegotiatedDetails()
                     ->GetEncoding(0)
                     .GetCodecs()
@@ -3589,12 +3722,12 @@ TEST_F(JsepSessionTest, ValidateAnsweredCodecParams) {
   ASSERT_FALSE(IsNull(answerTransceivers[1]->mRecvTrack));
   ASSERT_TRUE(answerTransceivers[1]->mSendTrack.GetNegotiatedDetails());
   ASSERT_TRUE(answerTransceivers[1]->mRecvTrack.GetNegotiatedDetails());
-  ASSERT_EQ(1U, answerTransceivers[1]
+  ASSERT_EQ(2U, answerTransceivers[1]
                     ->mSendTrack.GetNegotiatedDetails()
                     ->GetEncoding(0)
                     .GetCodecs()
                     .size());
-  ASSERT_EQ(1U, answerTransceivers[1]
+  ASSERT_EQ(2U, answerTransceivers[1]
                     ->mRecvTrack.GetNegotiatedDetails()
                     ->GetEncoding(0)
                     .GetCodecs()
@@ -4194,10 +4327,10 @@ TEST_F(JsepSessionTest, TestExtmap) {
   // ssrc-audio-level will be extmap 1 for both
   // csrc-audio-level will be 2 for both
   // mid will be 3 for both
-  // video related extensions take 4 and 5
-  mSessionOff->AddAudioRtpExtension("foo");  // Default mapping of 6
-  mSessionOff->AddAudioRtpExtension("bar");  // Default mapping of 7
-  mSessionAns->AddAudioRtpExtension("bar");  // Default mapping of 6
+  // video related extensions take 4 - 7
+  mSessionOff->AddAudioRtpExtension("foo");  // Default mapping of 8
+  mSessionOff->AddAudioRtpExtension("bar");  // Default mapping of 9
+  mSessionAns->AddAudioRtpExtension("bar");  // Default mapping of 8
   std::string offer = CreateOffer();
   SetLocalOffer(offer, CHECK_SUCCESS);
   SetRemoteOffer(offer, CHECK_SUCCESS);
@@ -4222,9 +4355,9 @@ TEST_F(JsepSessionTest, TestExtmap) {
             offerExtmap[2].extensionname);
   ASSERT_EQ(3U, offerExtmap[2].entry);
   ASSERT_EQ("foo", offerExtmap[3].extensionname);
-  ASSERT_EQ(6U, offerExtmap[3].entry);
+  ASSERT_EQ(8U, offerExtmap[3].entry);
   ASSERT_EQ("bar", offerExtmap[4].extensionname);
-  ASSERT_EQ(7U, offerExtmap[4].entry);
+  ASSERT_EQ(9U, offerExtmap[4].entry);
 
   UniquePtr<Sdp> parsedAnswer(Parse(answer));
   ASSERT_EQ(1U, parsedAnswer->GetMediaSectionCount());
@@ -4241,7 +4374,104 @@ TEST_F(JsepSessionTest, TestExtmap) {
   ASSERT_EQ(3U, answerExtmap[1].entry);
   // We ensure that the entry for "bar" matches what was in the offer
   ASSERT_EQ("bar", answerExtmap[2].extensionname);
-  ASSERT_EQ(7U, answerExtmap[2].entry);
+  ASSERT_EQ(9U, answerExtmap[2].entry);
+}
+
+TEST_F(JsepSessionTest, TestExtmapDefaults) {
+  types.push_back(SdpMediaSection::kAudio);
+  types.push_back(SdpMediaSection::kVideo);
+  AddTracks(*mSessionOff, "audio,video");
+
+  std::string offer = CreateOffer();
+  SetLocalOffer(offer, CHECK_SUCCESS);
+  SetRemoteOffer(offer, CHECK_SUCCESS);
+
+  std::string answer = CreateAnswer();
+  SetLocalAnswer(answer, CHECK_SUCCESS);
+  SetRemoteAnswer(answer, CHECK_SUCCESS);
+
+  UniquePtr<Sdp> parsedOffer(Parse(offer));
+  ASSERT_EQ(2U, parsedOffer->GetMediaSectionCount());
+
+  auto& offerAudioMediaAttrs =
+      parsedOffer->GetMediaSection(0).GetAttributeList();
+  ASSERT_TRUE(
+      offerAudioMediaAttrs.HasAttribute(SdpAttribute::kExtmapAttribute));
+  auto& offerAudioExtmap = offerAudioMediaAttrs.GetExtmap().mExtmaps;
+  ASSERT_EQ(3U, offerAudioExtmap.size());
+
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:ssrc-audio-level",
+            offerAudioExtmap[0].extensionname);
+  ASSERT_EQ(1U, offerAudioExtmap[0].entry);
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:csrc-audio-level",
+            offerAudioExtmap[1].extensionname);
+  ASSERT_EQ(2U, offerAudioExtmap[1].entry);
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:sdes:mid",
+            offerAudioExtmap[2].extensionname);
+
+  auto& offerVideoMediaAttrs =
+      parsedOffer->GetMediaSection(1).GetAttributeList();
+  ASSERT_TRUE(
+      offerVideoMediaAttrs.HasAttribute(SdpAttribute::kExtmapAttribute));
+  auto& offerVideoExtmap = offerVideoMediaAttrs.GetExtmap().mExtmaps;
+  ASSERT_EQ(5U, offerVideoExtmap.size());
+
+  ASSERT_EQ(3U, offerVideoExtmap[0].entry);
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:sdes:mid",
+            offerVideoExtmap[0].extensionname);
+  ASSERT_EQ("http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+            offerVideoExtmap[1].extensionname);
+  ASSERT_EQ(4U, offerVideoExtmap[1].entry);
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:toffset",
+            offerVideoExtmap[2].extensionname);
+  ASSERT_EQ(5U, offerVideoExtmap[2].entry);
+  ASSERT_EQ("http://www.webrtc.org/experiments/rtp-hdrext/playout-delay",
+            offerVideoExtmap[3].extensionname);
+  ASSERT_EQ(6U, offerVideoExtmap[3].entry);
+  ASSERT_EQ(
+      "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-"
+      "extensions-01",
+      offerVideoExtmap[4].extensionname);
+  ASSERT_EQ(7U, offerVideoExtmap[4].entry);
+
+  UniquePtr<Sdp> parsedAnswer(Parse(answer));
+  ASSERT_EQ(2U, parsedAnswer->GetMediaSectionCount());
+
+  auto& answerAudioMediaAttrs =
+      parsedAnswer->GetMediaSection(0).GetAttributeList();
+  ASSERT_TRUE(
+      answerAudioMediaAttrs.HasAttribute(SdpAttribute::kExtmapAttribute));
+  auto& answerAudioExtmap = answerAudioMediaAttrs.GetExtmap().mExtmaps;
+  ASSERT_EQ(2U, answerAudioExtmap.size());
+
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:ssrc-audio-level",
+            answerAudioExtmap[0].extensionname);
+  ASSERT_EQ(1U, answerAudioExtmap[0].entry);
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:sdes:mid",
+            answerAudioExtmap[1].extensionname);
+  ASSERT_EQ(3U, answerAudioExtmap[1].entry);
+
+  auto& answerVideoMediaAttrs =
+      parsedAnswer->GetMediaSection(1).GetAttributeList();
+  ASSERT_TRUE(
+      answerVideoMediaAttrs.HasAttribute(SdpAttribute::kExtmapAttribute));
+  auto& answerVideoExtmap = answerVideoMediaAttrs.GetExtmap().mExtmaps;
+  ASSERT_EQ(4U, answerVideoExtmap.size());
+
+  ASSERT_EQ(3U, answerVideoExtmap[0].entry);
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:sdes:mid",
+            answerVideoExtmap[0].extensionname);
+  ASSERT_EQ("http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time",
+            answerVideoExtmap[1].extensionname);
+  ASSERT_EQ(4U, answerVideoExtmap[1].entry);
+  ASSERT_EQ("urn:ietf:params:rtp-hdrext:toffset",
+            answerVideoExtmap[2].extensionname);
+  ASSERT_EQ(5U, answerVideoExtmap[2].entry);
+  ASSERT_EQ(
+      "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-"
+      "extensions-01",
+      answerVideoExtmap[3].extensionname);
+  ASSERT_EQ(7U, answerVideoExtmap[3].entry);
 }
 
 TEST_F(JsepSessionTest, TestExtmapWithDuplicates) {
@@ -4250,12 +4480,12 @@ TEST_F(JsepSessionTest, TestExtmapWithDuplicates) {
   // ssrc-audio-level will be extmap 1 for both
   // csrc-audio-level will be 2 for both
   // mid will be 3 for both
-  // video related extensions take 4 and 5
-  mSessionOff->AddAudioRtpExtension("foo");  // Default mapping of 6
-  mSessionOff->AddAudioRtpExtension("bar");  // Default mapping of 7
+  // video related extensions take 4 - 7
+  mSessionOff->AddAudioRtpExtension("foo");  // Default mapping of 8
+  mSessionOff->AddAudioRtpExtension("bar");  // Default mapping of 9
   mSessionOff->AddAudioRtpExtension("bar");  // Should be ignored
   mSessionOff->AddAudioRtpExtension("bar");  // Should be ignored
-  mSessionOff->AddAudioRtpExtension("baz");  // Default mapping of 8
+  mSessionOff->AddAudioRtpExtension("baz");  // Default mapping of 10
   mSessionOff->AddAudioRtpExtension("bar");  // Should be ignored
 
   std::string offer = CreateOffer();
@@ -4276,11 +4506,91 @@ TEST_F(JsepSessionTest, TestExtmapWithDuplicates) {
             offerExtmap[2].extensionname);
   ASSERT_EQ(3U, offerExtmap[2].entry);
   ASSERT_EQ("foo", offerExtmap[3].extensionname);
-  ASSERT_EQ(6U, offerExtmap[3].entry);
+  ASSERT_EQ(8U, offerExtmap[3].entry);
   ASSERT_EQ("bar", offerExtmap[4].extensionname);
-  ASSERT_EQ(7U, offerExtmap[4].entry);
+  ASSERT_EQ(9U, offerExtmap[4].entry);
   ASSERT_EQ("baz", offerExtmap[5].extensionname);
-  ASSERT_EQ(8U, offerExtmap[5].entry);
+  ASSERT_EQ(10U, offerExtmap[5].entry);
+}
+
+TEST_F(JsepSessionTest, TestExtmapZeroId) {
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+
+  std::string sdp =
+      "v=0\r\n"
+      "o=- 6 2 IN IP4 1r\r\n"
+      "t=0 0a\r\n"
+      "a=ice-ufrag:Xp\r\n"
+      "a=ice-pwd:he\r\n"
+      "a=setup:actpass\r\n"
+      "a=fingerprint:sha-256 "
+      "DC:FC:25:56:2B:88:77:2F:E4:FA:97:4E:2E:F1:D6:34:A6:A0:11:E2:E4:38:B3:98:"
+      "08:D2:F7:9D:F5:E2:C1:15\r\n"
+      "m=video 9 UDP/TLS/RTP/SAVPF 100\r\n"
+      "c=IN IP4 0\r\n"
+      "a=rtpmap:100 VP8/90000\r\n"
+      "a=extmap:0 urn:ietf:params:rtp-hdrext:toffset\r\n";
+  auto result = mSessionAns->SetRemoteDescription(kJsepSdpOffer, sdp);
+  ASSERT_TRUE(result.mError == Some(dom::PCError::OperationError));
+  ASSERT_EQ(
+      "Description contains invalid extension id 0 on level 0 which is"
+      " unsupported until 2-byte rtp header extensions are supported in"
+      " webrtc.org",
+      mSessionAns->GetLastError());
+}
+
+TEST_F(JsepSessionTest, TestExtmapInvalidId) {
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+
+  std::string sdp =
+      "v=0\r\n"
+      "o=- 6 2 IN IP4 1r\r\n"
+      "t=0 0a\r\n"
+      "a=ice-ufrag:Xp\r\n"
+      "a=ice-pwd:he\r\n"
+      "a=setup:actpass\r\n"
+      "a=fingerprint:sha-256 "
+      "DC:FC:25:56:2B:88:77:2F:E4:FA:97:4E:2E:F1:D6:34:A6:A0:11:E2:E4:38:B3:98:"
+      "08:D2:F7:9D:F5:E2:C1:15\r\n"
+      "m=video 9 UDP/TLS/RTP/SAVPF 100\r\n"
+      "c=IN IP4 0\r\n"
+      "a=rtpmap:100 VP8/90000\r\n"
+      "a=extmap:15 urn:ietf:params:rtp-hdrext:toffset\r\n";
+  auto result = mSessionAns->SetRemoteDescription(kJsepSdpOffer, sdp);
+  ASSERT_TRUE(result.mError == Some(dom::PCError::OperationError));
+  ASSERT_EQ(
+      "Description contains invalid extension id 15 on level 0 which is"
+      " unsupported until 2-byte rtp header extensions are supported in"
+      " webrtc.org",
+      mSessionAns->GetLastError());
+}
+
+TEST_F(JsepSessionTest, TestExtmapDuplicateId) {
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+
+  std::string sdp =
+      "v=0\r\n"
+      "o=- 6 2 IN IP4 1r\r\n"
+      "t=0 0a\r\n"
+      "a=ice-ufrag:Xp\r\n"
+      "a=ice-pwd:he\r\n"
+      "a=setup:actpass\r\n"
+      "a=fingerprint:sha-256 "
+      "DC:FC:25:56:2B:88:77:2F:E4:FA:97:4E:2E:F1:D6:34:A6:A0:11:E2:E4:38:B3:98:"
+      "08:D2:F7:9D:F5:E2:C1:15\r\n"
+      "m=video 9 UDP/TLS/RTP/SAVPF 100\r\n"
+      "c=IN IP4 0\r\n"
+      "a=rtpmap:100 VP8/90000\r\n"
+      "a=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\n"
+      "a=extmap:2 "
+      "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\n";
+  auto result = mSessionAns->SetRemoteDescription(kJsepSdpOffer, sdp);
+  ASSERT_TRUE(result.mError == Some(dom::PCError::OperationError));
+  ASSERT_EQ("Description contains duplicate extension id 2 on level 0",
+            mSessionAns->GetLastError());
 }
 
 TEST_F(JsepSessionTest, TestRtcpFbStar) {
@@ -4613,7 +4923,8 @@ TEST_P(JsepSessionTest, TestRejectOfferRollback) {
   ASSERT_FALSE(
       mSessionAns->SetRemoteDescription(kJsepSdpRollback, "").mError.isSome());
   ASSERT_EQ(kJsepStateStable, mSessionAns->GetState());
-  for (const auto& transceiver : mSessionAns->GetTransceivers()) {
+  for (const auto& [id, transceiver] : mSessionAns->GetTransceivers()) {
+    (void)id;  // Lame, but no better way to do this right now.
     ASSERT_EQ(0U, transceiver->mRecvTrack.GetStreamIds().size());
   }
 
@@ -4666,7 +4977,8 @@ TEST_P(JsepSessionTest, TestInvalidRollback) {
 
 size_t GetActiveTransportCount(const JsepSession& session) {
   size_t activeTransportCount = 0;
-  for (const auto& transceiver : session.GetTransceivers()) {
+  for (const auto& [id, transceiver] : session.GetTransceivers()) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (!transceiver->HasBundleLevel() ||
         (transceiver->BundleLevel() == transceiver->GetLevel())) {
       activeTransportCount += transceiver->mTransport.mComponents;
@@ -4682,8 +4994,8 @@ TEST_P(JsepSessionTest, TestBalancedBundle) {
   mSessionOff->SetBundlePolicy(kBundleBalanced);
 
   std::string offer = CreateOffer();
-  SipccSdpParser parser;
-  UniquePtr<Sdp> parsedOffer = parser.Parse(offer);
+  UniquePtr<Sdp> parsedOffer = std::move(SipccSdpParser().Parse(offer)->Sdp());
+
   ASSERT_TRUE(parsedOffer.get());
 
   std::map<SdpMediaSection::MediaType, SdpMediaSection*> firstByType;
@@ -4718,8 +5030,7 @@ TEST_P(JsepSessionTest, TestMaxBundle) {
   OfferAnswer();
 
   std::string offer = mSessionOff->GetLocalDescription(kJsepDescriptionCurrent);
-  SipccSdpParser parser;
-  UniquePtr<Sdp> parsedOffer = parser.Parse(offer);
+  UniquePtr<Sdp> parsedOffer = std::move(SipccSdpParser().Parse(offer)->Sdp());
   ASSERT_TRUE(parsedOffer.get());
 
   ASSERT_FALSE(parsedOffer->GetMediaSection(0).GetAttributeList().HasAttribute(
@@ -5141,12 +5452,9 @@ TEST_F(JsepSessionTest, AudioOnlyG722Rejected) {
   SetLocalAnswer(answer);
   SetRemoteAnswer(answer);
 
-  // TODO(bug 814227): Use commented out code instead.
   ASSERT_NE(mSessionAns->GetLocalDescription(kJsepDescriptionCurrent)
-                .find("UDP/TLS/RTP/SAVPF 0\r"),
+                .find("UDP/TLS/RTP/SAVPF 0 8\r"),
             std::string::npos);
-  // ASSERT_NE(mSessionAns->GetLocalDescription(kJsepDescriptionCurrent)
-  //           .find("UDP/TLS/RTP/SAVPF 0 8\r"), std::string::npos);
   ASSERT_NE(mSessionAns->GetLocalDescription(kJsepDescriptionCurrent)
                 .find("a=rtpmap:0 PCMU/8000"),
             std::string::npos);
@@ -6347,12 +6655,12 @@ TEST_F(JsepSessionTest, ComplicatedRemoteRollback) {
   // Third audio transceiver should also be gone.
 
   // Fourth audio transceiver, created after SetRemote
-  ASSERT_FALSE(mSessionAns->GetTransceivers()[3]->HasLevel());
-  ASSERT_FALSE(mSessionAns->GetTransceivers()[3]->IsStopped());
-  ASSERT_FALSE(mSessionAns->GetTransceivers()[3]->IsAssociated());
-  ASSERT_FALSE(mSessionAns->GetTransceivers()[3]->HasAddTrackMagic());
+  ASSERT_FALSE(mSessionAns->GetTransceivers()[5]->HasLevel());
+  ASSERT_FALSE(mSessionAns->GetTransceivers()[5]->IsStopped());
+  ASSERT_FALSE(mSessionAns->GetTransceivers()[5]->IsAssociated());
+  ASSERT_FALSE(mSessionAns->GetTransceivers()[5]->HasAddTrackMagic());
   ASSERT_TRUE(
-      mSessionAns->GetTransceivers()[3]->mSendTrack.GetStreamIds().empty());
+      mSessionAns->GetTransceivers()[5]->mSendTrack.GetStreamIds().empty());
 }
 
 TEST_F(JsepSessionTest, LocalRollback) {
@@ -6392,6 +6700,227 @@ TEST_F(JsepSessionTest, JsStopsTransceiverBeforeAnswer) {
   ASSERT_EQ(1U, mSessionOff->GetTransceivers()[0]->mTransport.mComponents);
   ASSERT_FALSE(mSessionOff->GetTransceivers()[0]->mSendTrack.GetActive());
   ASSERT_FALSE(mSessionOff->GetTransceivers()[0]->mRecvTrack.GetActive());
+}
+
+TEST_F(JsepSessionTest, TestOfferPTAsymmetryRtxApt) {
+  for (auto& codec : mSessionAns->Codecs()) {
+    if (codec->mName == "VP8") {
+      JsepVideoCodecDescription* vp8 =
+          static_cast<JsepVideoCodecDescription*>(codec.get());
+      vp8->EnableRtx("42");
+      break;
+    }
+  }
+
+  types.push_back(SdpMediaSection::kVideo);
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+  JsepOfferOptions options;
+
+  // Ensure that mSessionAns is appropriately configured.
+  std::string offer;
+  JsepSession::Result result = mSessionAns->CreateOffer(options, &offer);
+  ASSERT_FALSE(result.mError.isSome());
+  ASSERT_NE(std::string::npos, offer.find("a=rtpmap:42 rtx")) << offer;
+
+  OfferAnswer();
+
+  // Answerer should use what the offerer suggested
+  UniquePtr<JsepCodecDescription> codec;
+  GetCodec(*mSessionAns, 0, sdp::kSend, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  JsepVideoCodecDescription* vp8 =
+      static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("120", vp8->mDefaultPt);
+  ASSERT_EQ("124", vp8->mRtxPayloadType);
+  GetCodec(*mSessionAns, 0, sdp::kRecv, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  vp8 = static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("120", vp8->mDefaultPt);
+  ASSERT_EQ("124", vp8->mRtxPayloadType);
+
+  // Answerer should not change back when it reoffers
+  result = mSessionAns->CreateOffer(options, &offer);
+  ASSERT_FALSE(result.mError.isSome());
+  ASSERT_NE(std::string::npos, offer.find("a=rtpmap:124 rtx")) << offer;
+}
+
+TEST_F(JsepSessionTest, TestAnswerPTAsymmetryRtx) {
+  // JsepSessionImpl will never answer with an asymmetric payload type
+  // (tested in TestOfferPTAsymmetry), so we have to rewrite SDP a little.
+  types.push_back(SdpMediaSection::kVideo);
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+
+  std::string offer = CreateOffer();
+  SetLocalOffer(offer);
+
+  Replace("a=rtpmap:120 VP8", "a=rtpmap:119 VP8", &offer);
+  Replace("m=video 9 UDP/TLS/RTP/SAVPF 120", "m=video 9 UDP/TLS/RTP/SAVPF 119",
+          &offer);
+  ReplaceAll("a=fmtp:120", "a=fmtp:119", &offer);
+  ReplaceAll("a=fmtp:122 120", "a=fmtp:122 119", &offer);
+  ReplaceAll("a=fmtp:124 apt=120", "a=fmtp:124 apt=119", &offer);
+  ReplaceAll("a=rtcp-fb:120", "a=rtcp-fb:119", &offer);
+
+  SetRemoteOffer(offer);
+
+  std::string answer = CreateAnswer();
+  SetLocalAnswer(answer);
+  SetRemoteAnswer(answer);
+
+  UniquePtr<JsepCodecDescription> codec;
+  GetCodec(*mSessionOff, 0, sdp::kSend, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  ASSERT_EQ("119", codec->mDefaultPt);
+  JsepVideoCodecDescription* vp8 =
+      static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("124", vp8->mRtxPayloadType);
+  GetCodec(*mSessionOff, 0, sdp::kRecv, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  ASSERT_EQ("120", codec->mDefaultPt);
+  vp8 = static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("124", vp8->mRtxPayloadType);
+
+  GetCodec(*mSessionAns, 0, sdp::kSend, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  ASSERT_EQ("119", codec->mDefaultPt);
+  vp8 = static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("124", vp8->mRtxPayloadType);
+  GetCodec(*mSessionAns, 0, sdp::kRecv, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  ASSERT_EQ("119", codec->mDefaultPt);
+  vp8 = static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("124", vp8->mRtxPayloadType);
+}
+
+TEST_F(JsepSessionTest, TestAnswerPTAsymmetryRtxApt) {
+  // JsepSessionImpl will never answer with an asymmetric payload type
+  // so we have to rewrite SDP a little.
+  types.push_back(SdpMediaSection::kVideo);
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+
+  std::string offer = CreateOffer();
+  SetLocalOffer(offer);
+
+  Replace("a=rtpmap:124 rtx", "a=rtpmap:42 rtx", &offer);
+  Replace("m=video 9 UDP/TLS/RTP/SAVPF 120 124",
+          "m=video 9 UDP/TLS/RTP/SAVPF 120 42", &offer);
+  ReplaceAll("a=fmtp:124", "a=fmtp:42", &offer);
+
+  SetRemoteOffer(offer);
+
+  std::string answer = CreateAnswer();
+  SetLocalAnswer(answer);
+  SetRemoteAnswer(answer);
+
+  UniquePtr<JsepCodecDescription> codec;
+  GetCodec(*mSessionOff, 0, sdp::kSend, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  ASSERT_EQ("120", codec->mDefaultPt);
+  JsepVideoCodecDescription* vp8 =
+      static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("42", vp8->mRtxPayloadType);
+  GetCodec(*mSessionOff, 0, sdp::kRecv, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  ASSERT_EQ("120", codec->mDefaultPt);
+  vp8 = static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("124", vp8->mRtxPayloadType);
+
+  GetCodec(*mSessionAns, 0, sdp::kSend, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  vp8 = static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("120", vp8->mDefaultPt);
+  ASSERT_EQ("42", vp8->mRtxPayloadType);
+  GetCodec(*mSessionAns, 0, sdp::kRecv, 0, 0, &codec);
+  ASSERT_TRUE(codec);
+  ASSERT_EQ("VP8", codec->mName);
+  vp8 = static_cast<JsepVideoCodecDescription*>(codec.get());
+  ASSERT_EQ("120", vp8->mDefaultPt);
+  ASSERT_EQ("42", vp8->mRtxPayloadType);
+}
+
+TEST_F(JsepSessionTest, TestOfferNoRtx) {
+  for (auto& codec : mSessionOff->Codecs()) {
+    if (codec->mType == SdpMediaSection::kVideo) {
+      JsepVideoCodecDescription* videoCodec =
+          static_cast<JsepVideoCodecDescription*>(codec.get());
+      videoCodec->mRtxEnabled = false;
+    }
+  }
+
+  types.push_back(SdpMediaSection::kVideo);
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+  JsepOfferOptions options;
+
+  std::string offer;
+  JsepSession::Result result = mSessionOff->CreateOffer(options, &offer);
+  ASSERT_FALSE(result.mError.isSome());
+  ASSERT_EQ(std::string::npos, offer.find("rtx")) << offer;
+
+  OfferAnswer();
+
+  // Answerer should use what the offerer suggested
+  UniquePtr<JsepCodecDescription> codec;
+  for (size_t i = 0; i < 4; ++i) {
+    GetCodec(*mSessionAns, 0, sdp::kSend, 0, i, &codec);
+    ASSERT_TRUE(codec);
+    JsepVideoCodecDescription* videoCodec =
+        static_cast<JsepVideoCodecDescription*>(codec.get());
+    ASSERT_FALSE(videoCodec->mRtxEnabled);
+    GetCodec(*mSessionAns, 0, sdp::kRecv, 0, i, &codec);
+    ASSERT_TRUE(codec);
+    videoCodec = static_cast<JsepVideoCodecDescription*>(codec.get());
+    ASSERT_FALSE(videoCodec->mRtxEnabled);
+  }
+}
+
+TEST_F(JsepSessionTest, TestOneWayRtx) {
+  for (auto& codec : mSessionAns->Codecs()) {
+    if (codec->mType == SdpMediaSection::kVideo) {
+      JsepVideoCodecDescription* videoCodec =
+          static_cast<JsepVideoCodecDescription*>(codec.get());
+      videoCodec->mRtxEnabled = false;
+    }
+  }
+
+  types.push_back(SdpMediaSection::kVideo);
+  AddTracks(*mSessionOff, "video");
+  AddTracks(*mSessionAns, "video");
+  JsepOfferOptions options;
+
+  std::string offer;
+  JsepSession::Result result = mSessionAns->CreateOffer(options, &offer);
+  ASSERT_FALSE(result.mError.isSome());
+  ASSERT_EQ(std::string::npos, offer.find("rtx")) << offer;
+
+  OfferAnswer();
+
+  // If the answerer does not support rtx, the offerer should not send it,
+  // but it is too late to turn off recv on the offerer side.
+  UniquePtr<JsepCodecDescription> codec;
+  for (size_t i = 0; i < 4; ++i) {
+    GetCodec(*mSessionOff, 0, sdp::kSend, 0, i, &codec);
+    ASSERT_TRUE(codec);
+    JsepVideoCodecDescription* videoCodec =
+        static_cast<JsepVideoCodecDescription*>(codec.get());
+    ASSERT_FALSE(videoCodec->mRtxEnabled);
+    GetCodec(*mSessionOff, 0, sdp::kRecv, 0, i, &codec);
+    ASSERT_TRUE(codec);
+    videoCodec = static_cast<JsepVideoCodecDescription*>(codec.get());
+    ASSERT_TRUE(videoCodec->mRtxEnabled);
+  }
 }
 
 }  // namespace mozilla

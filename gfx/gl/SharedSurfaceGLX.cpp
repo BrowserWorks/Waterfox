@@ -16,8 +16,7 @@
 #include "mozilla/layers/TextureForwarder.h"
 #include "mozilla/X11Util.h"
 
-namespace mozilla {
-namespace gl {
+namespace mozilla::gl {
 
 /* static */
 UniquePtr<SharedSurface_GLXDrawable> SharedSurface_GLXDrawable::Create(
@@ -50,7 +49,6 @@ void SharedSurface_GLXDrawable::ProducerReleaseImpl() {
 }
 
 void SharedSurface_GLXDrawable::LockProdImpl() {
-  mGL->Screen()->SetReadBuffer(LOCAL_GL_FRONT);
   GLContextGLX::Cast(mGL)->OverrideDrawable(mXlibSurface->GetGLXPixmap());
 }
 
@@ -119,5 +117,4 @@ UniquePtr<SharedSurface> SurfaceFactory_GLXDrawable::CreateShared(
                                            mAllocator->IsSameProcess());
 }
 
-}  // namespace gl
-}  // namespace mozilla
+}  // namespace mozilla::gl

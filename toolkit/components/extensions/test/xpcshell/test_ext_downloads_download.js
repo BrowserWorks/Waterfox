@@ -16,6 +16,7 @@ const WINDOWS = AppConstants.platform == "win";
 
 const BASE = `http://localhost:${gServer.identity.primaryPort}/`;
 const FILE_NAME = "file_download.txt";
+const FILE_NAME_W_SPACES = "file   download.txt";
 const FILE_URL = BASE + "data/" + FILE_NAME;
 const FILE_NAME_UNIQUE = "file_download(1).txt";
 const FILE_LEN = 46;
@@ -338,24 +339,18 @@ add_task(async function test_downloads() {
     );
   });
 
-  // Test illegal characters on Windows.
-  if (WINDOWS) {
-    await download({
-      url: FILE_URL,
-      filename: "like:this",
-    }).then(msg => {
-      equal(
-        msg.status,
-        "error",
-        "downloads.download() fails with illegal chars"
-      );
-      equal(
-        msg.errmsg,
-        "filename must not contain illegal characters",
-        "error message correct"
-      );
-    });
-  }
+  // Test illegal characters.
+  await download({
+    url: FILE_URL,
+    filename: "like:this",
+  }).then(msg => {
+    equal(msg.status, "error", "downloads.download() fails with illegal chars");
+    equal(
+      msg.errmsg,
+      "filename must not contain illegal characters",
+      "error message correct"
+    );
+  });
 
   // Try to download a blob url
   const BLOB_STRING = "Hello, world";
@@ -391,6 +386,28 @@ add_task(async function test_downloads() {
     "normal url with empty filename"
   );
 
+  // Download a filename with multiple spaces, url is ignored for this test.
+  await testDownload(
+    {
+      url: FILE_URL,
+      filename: "a   file.txt",
+    },
+    "a   file.txt",
+    FILE_LEN,
+    "filename with multiple spaces"
+  );
+
+  // Download a normal URL with a leafname containing multiple spaces.
+  // Note: spaces are compressed by file name normalization.
+  await testDownload(
+    {
+      url: BASE + "data/" + FILE_NAME_W_SPACES,
+    },
+    FILE_NAME_W_SPACES.replace(/\s+/, " "),
+    FILE_LEN,
+    "leafname with multiple spaces"
+  );
+
   // Check that the "incognito" property is supported.
   await testDownload(
     {
@@ -413,6 +430,105 @@ add_task(async function test_downloads() {
   );
 
   await extension.unload();
+});
+
+async function testHttpErrors(allowHttpErrors) {
+  const server = createHttpServer();
+  const url = `http://localhost:${server.identity.primaryPort}/error`;
+  const content = "HTTP Error test";
+
+  server.registerPathHandler("/error", (request, response) => {
+    response.setStatusLine(
+      "1.1",
+      parseInt(request.queryString, 10),
+      "Some Error"
+    );
+    response.setHeader("Content-Type", "text/plain", false);
+    response.setHeader("Content-Length", content.length.toString());
+    response.write(content);
+  });
+
+  function background(code) {
+    let dlid = 0;
+    let expectedState;
+    browser.test.onMessage.addListener(async options => {
+      try {
+        expectedState = options.allowHttpErrors ? "complete" : "interrupted";
+        dlid = await browser.downloads.download(options);
+      } catch (err) {
+        browser.test.fail(`Unexpected error in downloads.download(): ${err}`);
+      }
+    });
+    function onChanged({ id, state }) {
+      if (dlid !== id || !state || state.current === "in_progress") {
+        return;
+      }
+      browser.test.assertEq(state.current, expectedState, "correct state");
+      browser.downloads.search({ id }).then(([download]) => {
+        browser.test.sendMessage("done", download.error);
+      });
+    }
+    browser.downloads.onChanged.addListener(onChanged);
+  }
+
+  const extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      permissions: ["downloads"],
+    },
+    background,
+  });
+  await extension.startup();
+
+  async function download(code, expected_when_disallowed) {
+    const options = {
+      url: url + "?" + code,
+      filename: `test-${code}`,
+      conflictAction: "overwrite",
+      allowHttpErrors,
+    };
+    extension.sendMessage(options);
+    const rv = await extension.awaitMessage("done");
+
+    if (allowHttpErrors) {
+      const localPath = downloadDir.clone();
+      localPath.append(options.filename);
+      equal(
+        localPath.fileSize,
+        // The 20x No content errors will not produce any response body,
+        // only "true" errors do.
+        code >= 400 ? content.length : 0,
+        "Downloaded file has expected size" + code
+      );
+      localPath.remove(false);
+
+      ok(!rv, "error must be ignored and hence false-y");
+      return;
+    }
+
+    equal(
+      rv,
+      expected_when_disallowed,
+      "error must have the correct InterruptReason"
+    );
+  }
+
+  await download(204, "SERVER_BAD_CONTENT"); // No Content
+  await download(205, "SERVER_BAD_CONTENT"); // Reset Content
+  await download(404, "SERVER_BAD_CONTENT"); // Not Found
+  await download(403, "SERVER_FORBIDDEN"); // Forbidden
+  await download(402, "SERVER_UNAUTHORIZED"); // Unauthorized
+  await download(407, "SERVER_UNAUTHORIZED"); // Proxy auth required
+  await download(504, "SERVER_FAILED"); //General errors, here Gateway Timeout
+
+  await extension.unload();
+}
+
+add_task(function test_download_disallowed_http_errors() {
+  return testHttpErrors(false);
+});
+
+add_task(function test_download_allowed_http_errors() {
+  return testHttpErrors(true);
 });
 
 add_task(async function test_download_http_details() {
@@ -531,6 +647,12 @@ add_task(async function test_download_http_details() {
   result = await download({ headers: [{ name: "X-Custom", value: "13" }] });
   ok(result.ok, "download works with a custom header");
   confirm("GET", { "X-Custom": "13" });
+
+  // Test Referer header.
+  const referer = "http://example.org";
+  result = await download({ headers: [{ name: "Referer", value: referer }] });
+  ok(result.ok, "download works with Referer header");
+  confirm("GET", { Referer: referer });
 
   // Test forbidden headers.
   result = await download({ headers: [{ name: "DNT", value: "1" }] });

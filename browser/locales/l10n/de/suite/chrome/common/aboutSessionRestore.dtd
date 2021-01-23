@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Sitzung wiederherstellen">
+<!ENTITY restorepage.pagetitle      "Soll Ihre letzte Sitzung wiederhergestellt werden?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Ihre vorhergehende &brandShortName;-Sitzung wurde unerwartet beendet. Wir entschuldigen uns für die Unannehmlichkeiten. Sie können die Tabs und Fenster Ihrer letzten Sitzung wiederherstellen oder eine neue Sitzung beginnen, wenn diese nicht länger benötigt werden.">
+<!ENTITY restorepage.remedies       "Wenn sich &brandShortName; wiederholt schließt:">
+<!ENTITY restorepage.dueToChrome    "Versuchen Sie, jegliche kürzlich installierten Erweiterungen in der Add-on-Verwaltung zu deaktivieren.">
+<!ENTITY restorepage.dueToContent   "Versuchen Sie, Ihre Sitzung ohne jene Webseiten wiederherzustellen, von denen Sie vermuten, dass sie das Problem verursachen könnten:">
+
+<!ENTITY restorepage.restoreButton  "Vorherige Sitzung wiederherstellen">
+<!ENTITY restorepage.restore.access "V">
+<!ENTITY restorepage.cancelButton   "Neue Sitzung starten">
+<!ENTITY restorepage.cancel.access  "N">
+
+<!ENTITY restorepage.restoreHeader  "Wiederherstellen">
+<!ENTITY restorepage.listHeader     "Fenster und Tabs">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Fenster &#037;S">

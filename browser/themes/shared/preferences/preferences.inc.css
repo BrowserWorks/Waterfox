@@ -1,0 +1,1102 @@
+%if 0
+/* - This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. */
+%endif
+@namespace html "http://www.w3.org/1999/xhtml";
+
+:root {
+  --in-content-warning-container: var(--grey-20);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --in-content-warning-container: var(--grey-90-a30);
+  }
+}
+
+#preferences-root {
+  text-rendering: optimizeLegibility;
+}
+
+#preferences-root,
+#preferences-body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#preferences-body {
+  vertical-align: top; /* See bug 1606130 */
+  display: -moz-box;
+  -moz-box-orient: vertical;
+}
+
+* {
+  -moz-user-select: text;
+}
+
+/*
+  The stack has some very tall content but it shouldn't be taller than the
+  viewport (and we know the tall content will still be accessible via scrollbars
+  regardless if the stack has a shorter height). So we use min-height: 0 to allow
+  the stack to be smaller than its content height so it can fit the viewport size.
+*/
+#preferences-stack {
+  min-height: 0;
+}
+
+.main-content {
+  padding-top: 0;
+}
+
+.pane-container {
+  /* A workaround to keep the container always float on the `top: 0` (Bug 1377009) */
+  display: block;
+  width: 664px;
+}
+
+#mainPrefPane {
+  width: 100%;
+  padding: 0;
+}
+
+groupbox[data-category] {
+  margin: 0 0 32px;
+}
+
+html|h1 {
+  margin: 0 0 8px;
+  font-size: 1.46em;
+  font-weight: 300;
+  line-height: 1.3em;
+}
+
+html|h2 {
+  margin: 16px 0 4px;
+  font-size: 1.14em;
+  line-height: normal;
+}
+
+description.indent,
+.indent:not(#browserPrivateEngineSelection) > description {
+  color: var(--in-content-deemphasized-text);
+}
+
+button,
+treecol,
+html|option {
+  /* override the * rule */
+  -moz-user-select: none;
+}
+
+/* Buttons get a default min-width in XUL. When they also have flex, they will
+ * be large enough anyway, and we don't want them to become smaller than their inner
+ * text which would then overflow the button. Set min-width back to auto for that:
+ */
+button[flex] {
+  min-width: auto;
+}
+
+description,
+label {
+  line-height: 1.8em;
+  margin: 0;
+}
+
+.tip-caption {
+  font-size: .9em;
+}
+
+menulist::part(label),
+menuitem > label,
+button > hbox > label {
+  line-height: unset;
+}
+
+.indent {
+  margin-inline-start: 28px !important;
+}
+
+.checkbox-check {
+  margin-inline-end: 8px;
+}
+
+.tail-with-learn-more {
+  margin-inline: 0 10px;
+}
+
+/* Add a bit of space to the end of descriptions to
+ * leave margin with e.g. additional buttons on the side. */
+.description-with-side-element {
+  margin-inline-end: 10px !important;
+}
+
+.learnMore {
+  margin-inline-start: 0;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.accessory-button {
+  min-width: 150px;
+  margin: 4px 0;
+}
+
+.spotlight {
+  background-color: var(--blue-40-a10);
+  outline: var(--blue-60) 1px dotted;
+  -moz-outline-radius: 2px;
+  animation: fade-out 0.5s ease-out 2s forwards;
+  /* Show the border to spotlight the components in high-contrast mode. */
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+@keyframes fade-out {
+  100% {
+    background-color: transparent;
+    outline-color: transparent;
+   }
+}
+
+[data-subcategory] {
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+
+.ac-site-icon {
+  display: -moz-box;
+}
+
+/* Subcategory title */
+
+/**
+ * The first subcategory title for each category should not have margin-top.
+ */
+
+.subcategory:not([hidden]) ~ .subcategory {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--in-content-border-color);
+}
+
+/* Category List */
+
+#categories {
+  overflow: visible !important; /* Cancel scrollbar and do not clip overflow content when window size goes very small */
+  padding: 1px; /* Adding padding around richlistitem in order to make entire keyboard focusing outline visible */
+}
+
+#category-general > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/general.svg");
+}
+
+#category-home > .category-icon {
+  list-style-image: url("chrome://browser/skin/home.svg");
+}
+
+#category-search > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/search.svg");
+}
+
+#category-privacy > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/privacy-security.svg");
+}
+
+#category-sync > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/sync.svg");
+}
+
+/* header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header[hidden=true] {
+  display: none;
+}
+
+/* All panes */
+
+.info-icon,
+.androidIcon,
+.iOSIcon,
+#updateSettingCrossUserWarning,
+.extension-controlled > description,
+.info-panel > description {
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+/* General Pane */
+
+#isDefaultLabel,
+#isNotDefaultLabel {
+  font-weight: 600;
+}
+
+.info-panel,
+.extension-controlled {
+  margin-block: 18px !important;
+  background: var(--in-content-warning-container);
+  border-radius: 5px;
+  padding-inline-end: 10px;
+}
+
+.info-panel > description,
+.extension-controlled > description {
+  line-height: 16px;
+  background: url(chrome://global/skin/icons/identity-icon.svg) 10px 14px no-repeat;
+  padding: 10px;
+  padding-inline-start: 32px;
+}
+
+.info-panel > description {
+  line-height: unset;
+}
+
+.info-panel > description:-moz-locale-dir(rtl),
+.extension-controlled > description:-moz-locale-dir(rtl) {
+  background-position-x: right 10px;
+}
+
+.extension-controlled-icon {
+  height: 20px;
+  margin: 2px 0 6px;
+  vertical-align: middle;
+  width: 20px;
+}
+
+.extension-controlled-disabled {
+  -moz-context-properties: fill, fill-opacity, stroke-opacity;
+  color: GrayText;
+  fill: currentColor;
+  fill-opacity: 1;
+  stroke-opacity: 1;
+}
+
+.extension-controlled-disabled > .extension-controlled-button {
+  display: none;
+}
+
+.extension-controlled-icon.close-icon {
+  height: 30px;
+  width: 30px;
+  margin-inline-start: 5px;
+}
+
+#getStarted {
+  font-size: 90%;
+}
+
+#useDocumentColors {
+  margin: 0;
+}
+
+#translationAttributionImage {
+  width: 70px;
+  cursor: pointer;
+}
+
+#activeLanguages > richlistitem {
+  padding: 0.3em;
+}
+
+#downloadFolder {
+  -moz-box-flex: 1;
+  margin-block: 4px;
+  margin-inline-start: 0;
+  padding-inline-start: 30px;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-position: center left 8px;
+}
+
+#downloadFolder:-moz-locale-dir(rtl) {
+  background-position-x: right 8px;
+}
+
+#updateBox {
+  margin-block: 4px 32px;
+}
+
+#updateDeck > hbox > button {
+  margin-block: 0;
+  margin-inline-end: 0;
+}
+
+#updateDeck > hbox > label {
+  -moz-box-flex: 1;
+}
+
+#manualLink {
+  margin-inline-start: 6px !important;
+}
+
+#updateRadioGroup > radio {
+  height: 30px;
+  margin: 2px 0;
+}
+
+#filter {
+  margin: 4px 0 8px;
+}
+
+#handlersView {
+  height: 25em;
+  margin-inline-end: 0;
+}
+
+#handlersView > richlistitem {
+  min-height: 30px !important;
+}
+
+#handlersView > richlistitem > hbox > hbox > menulist {
+  margin-block: 0;
+  margin-inline-end: 0;
+  min-height: 0;
+}
+
+#rememberedList > richlistitem {
+  min-height: 30px !important;
+}
+
+.typeIcon {
+  margin-inline: 10px 9px !important;
+}
+
+.actionIcon {
+  margin-inline: 11px 8px !important;
+}
+
+.actionsMenu {
+  min-height: 36px;
+}
+
+.actionsMenu > menupopup > menuitem {
+  padding-inline-start: 10px !important;
+}
+
+.actionsMenu > menupopup > menuitem > .menu-iconic-left {
+  margin-inline-end: 8px !important;
+}
+
+/* Home Pane */
+
+#homepageGroup menulist,
+#homepageGroup html|input {
+  margin: 5px 0;
+}
+
+#homepageGroup html|input {
+  text-align: match-parent;
+}
+
+#homepageGroup:-moz-locale-dir(rtl) html|input {
+  unicode-bidi: plaintext;
+}
+
+#homepageAndNewWindowsOption {
+  margin-top: 20px;
+}
+
+#homepageGroup:-moz-locale-dir(rtl) panel[type="autocomplete-richlistbox"] {
+  direction: rtl;
+}
+
+.homepage-button:first-of-type {
+  margin-inline-start: 0;
+}
+
+.homepage-button:last-of-type {
+  margin-inline-end: 0;
+}
+
+#homeContentsGroup checkbox[src] .checkbox-icon {
+  -moz-context-properties: fill;
+  fill: currentColor;
+  margin-inline: 4px 8px;
+  width: 16px;
+}
+
+#homeContentsGroup [data-subcategory] {
+  margin-top: 14px;
+}
+
+#homeContentsGroup [data-subcategory] .section-checkbox {
+  font-weight: 600;
+}
+
+#homeContentsGroup [data-subcategory] > vbox menulist {
+  margin-block: 0;
+}
+
+/* Search Pane */
+
+#engineList {
+  margin: 2px 0 5px;
+}
+
+#engineList > treechildren::-moz-tree-image(engineShown, checked),
+#blocklistsTree > treechildren::-moz-tree-image(selectionCol, checked) {
+  list-style-image: url("chrome://global/skin/icons/check.svg");
+  -moz-context-properties: fill, stroke;
+  fill: #2292d0;
+}
+
+#engineList > treechildren::-moz-tree-image(engineShown, checked, selected),
+#blocklistsTree > treechildren::-moz-tree-image(selectionCol, checked, selected) {
+  fill: white;
+  stroke: #0095dd;
+}
+
+#engineList > treechildren::-moz-tree-row,
+#blocklistsTree > treechildren::-moz-tree-row {
+  min-height: 36px;
+}
+
+#selectionCol {
+  min-width: 26px;
+}
+
+#addEnginesBox {
+  margin: 4px 0 0;
+}
+
+/* Privacy Pane */
+
+#locationBarGroup > .text-link {
+  margin-top: 6px;
+  line-height: 30px;
+}
+
+#allowSmartSize {
+  margin-block: 0 4px;
+}
+
+#doNotTrackLearnMoreBox {
+  margin-top: 32px;
+}
+
+#historyPane {
+  margin-top: 4px;
+}
+
+#historyButtons {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#blockCookies,
+#keepRow {
+  margin-top: 1.5em;
+}
+
+/* Collapse the non-active vboxes in decks to use only the height the
+   active vbox needs */
+#historyPane:not([selectedIndex="1"]) > #historyDontRememberPane,
+#historyPane:not([selectedIndex="2"]) > #historyCustomPane,
+#weavePrefsDeck:not([selectedIndex="1"]) > #hasFxaAccount,
+#fxaLoginStatus:not([selectedIndex="1"]) > #fxaLoginUnverified,
+#fxaLoginStatus:not([selectedIndex="2"]) > #fxaLoginRejected,
+#syncStatus:not([selectedIndex="1"]) > #syncConfigured {
+  visibility: collapse;
+}
+
+#tabsElement {
+  margin-inline-end: 4px; /* add the 4px end-margin of other elements */
+}
+
+.text-link {
+  margin-bottom: 0;
+}
+
+.text-link[disabled="true"] {
+  pointer-events: none;
+}
+
+#showUpdateHistory {
+  margin-inline-start: 0;
+}
+
+/**
+ * Dialog
+ */
+
+.dialogOverlay {
+  visibility: hidden;
+}
+
+.dialogOverlay[topmost="true"] {
+  background-color: rgba(0,0,0,0.5);
+}
+
+.dialogBox {
+  background-color: var(--in-content-page-background);
+  background-clip: content-box;
+  color: var(--in-content-page-color);
+  /* `transparent` will use the dialogText color in high-contrast themes and
+     when page colors are disabled */
+  border: 1px solid transparent;
+  border-radius: 3.5px;
+  box-shadow: 0 2px 6px 0 rgba(0,0,0,0.3);
+  display: -moz-box;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.dialogBox[resizable="true"] {
+  resize: both;
+  overflow: hidden;
+  min-height: 20em;
+  min-width: 66ch;
+}
+
+.dialogTitleBar {
+  margin-top: 0;
+  padding: 3.5px 0;
+  background-color: var(--in-content-dialog-header-background);
+  border-bottom: 1px solid var(--in-content-border-color);
+}
+
+.dialogTitle {
+  font-size: .9em;
+  font-weight: 600;
+  text-align: center;
+  -moz-user-select: none;
+}
+
+.close-icon {
+  border: none;
+  background: none !important;
+  min-width: 0;
+  min-height: auto;
+  padding-inline: 0;
+  margin-inline: 0 8px;
+}
+
+.dialogFrame {
+  margin: 20px;
+  -moz-box-flex: 1;
+  /* Default dialog dimensions */
+  width: 66ch;
+}
+
+/**
+ * End Dialog
+ */
+
+/**
+ * Font group and font dialog menulist fixes
+ */
+
+#defaultFont {
+  width: 25ch;
+}
+
+#defaultFontType,
+#serif,
+#sans-serif,
+#monospace {
+  min-width: 30ch;
+}
+
+/**
+ * Sync
+ */
+
+.fxaProfileImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  list-style-image: url(chrome://browser/skin/fxa/avatar-color.svg);
+  margin-inline-end: 24px;
+  -moz-user-focus: normal;
+}
+
+.fxaProfileImage.actionable {
+  cursor: pointer;
+}
+
+.fxaProfileImage.actionable:hover {
+  border-color: #0095DD;
+}
+
+.fxaProfileImage.actionable:hover:active {
+  border-color: #ff9500;
+}
+
+#useFirefoxSync {
+  font-size: 90%;
+  margin-inline-end: 8px !important;
+}
+
+#fxaNoLoginStatus {
+  margin-block: 46px 64px;
+}
+
+#fxaSyncComputerName {
+  -moz-box-flex: 1;
+  margin-block: 4px;
+  margin-inline-start: 0;
+}
+
+#fxaChangeDeviceName {
+  margin-block: 4px;
+  margin-inline-end: 0;
+}
+
+#noFxaAccount {
+  line-height: 1.2em;
+}
+
+#noFxaAccount > label:first-child {
+  margin-bottom: 0.6em;
+}
+
+#noFxaCaption {
+  line-height: 30px;
+  margin-block: 0 4px;
+}
+
+#noFxaSignIn {
+  margin-inline-start: 8px;
+}
+
+.fxaSyncIllustration {
+  list-style-image: url(chrome://browser/skin/fxa/sync-devices.svg);
+  width: 312px;
+  height: 136px;
+}
+
+#noFxaDescription {
+  padding-inline-end: 52px;
+}
+
+.separator {
+  border-bottom: 1px solid var(--in-content-box-border-color);
+}
+
+#fxaGroup {
+  margin-bottom: 32px;
+}
+
+.openLink {
+  line-height: 30px;
+  cursor: pointer;
+}
+
+.openLink:visited {
+  color: var(--in-content-link-color);
+}
+
+#fxaDisplayName {
+  margin-inline-end: 10px !important;
+}
+
+.fxaLoginRejectedWarning {
+  list-style-image: url(chrome://browser/skin/warning.svg);
+  margin-inline: 4px 8px;
+}
+
+#syncStatus {
+  margin-top: 32px;
+}
+
+.sync-group {
+  border-radius: 4px;
+  padding: 16px;
+  margin-block: 16px;
+  background-color: var(--in-content-box-info-background);
+  border: 1px solid var(--in-content-border-color);
+}
+
+.sync-configured {
+  display: block;
+}
+
+.sync-engines-list > div,
+.sync-engines-list + hbox {
+  margin-top: 0;
+  padding-top: 16px;
+  max-width: 300px;
+  height: auto;
+}
+
+dialog > .sync-engines-list > div,
+dialog > .sync-engines-list + hbox {
+  padding-top: 0;
+}
+
+.sync-engines-list checkbox .checkbox-icon,
+.sync-engine-image {
+  margin-inline: 4px 8px;
+  min-width: 16px;
+  min-height: 16px;
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+.sync-engines-list checkbox {
+  min-width: max-content;
+  max-width: calc(50vw - 10px);
+}
+
+.sync-engines-list {
+  column-count: 2;
+  column-fill: balance;
+}
+
+.sync-engines-list > div:not([hidden]) {
+  display: flex;
+}
+
+.sync-engine-bookmarks .checkbox-icon,
+.sync-engine-bookmarks.sync-engine-image {
+  list-style-image: url("chrome://browser/skin/preferences/bookmark.svg");
+}
+
+.sync-engine-history .checkbox-icon,
+.sync-engine-history.sync-engine-image {
+  list-style-image: url("chrome://browser/skin/preferences/history.svg");
+}
+
+.sync-engine-tabs .checkbox-icon,
+.sync-engine-tabs.sync-engine-image {
+  list-style-image: url("chrome://browser/skin/preferences/tab.svg");
+}
+
+.sync-engine-passwords .checkbox-icon,
+.sync-engine-passwords.sync-engine-image {
+  list-style-image: url("chrome://browser/skin/login.svg");
+}
+
+.sync-engine-addons .checkbox-icon,
+.sync-engine-addons.sync-engine-image {
+  list-style-image: url("chrome://browser/skin/preferences/extensions.svg");
+}
+
+.sync-engine-prefs .checkbox-icon,
+.sync-engine-prefs.sync-engine-image {
+  list-style-image: url("chrome://browser/skin/preferences/preferences.svg");
+}
+
+.sync-engine-addresses .checkbox-icon,
+.sync-engine-addresses.sync-engine-image {
+  list-style-image: url("chrome://browser/skin/preferences/formfill.svg");
+}
+
+.fxaMobilePromo {
+  margin-top: 2px !important;
+  display: none !important;
+}
+
+.androidIcon,
+.iOSIcon {
+  margin-inline: 2px 4px;
+  width: 20px;
+  height: 20px;
+  vertical-align: text-bottom;
+}
+
+#updateDeck > hbox > label {
+  margin-inline-end: 5px ! important;
+}
+
+.update-throbber {
+  width: 16px;
+  min-height: 16px;
+  margin-block: 7px;
+  margin-inline-end: 8px;
+}
+
+html|img.update-throbber {
+  vertical-align: middle;
+}
+
+image.update-throbber {
+  list-style-image: url("chrome://global/skin/icons/loading.png");
+}
+
+@media (min-resolution: 1.1dppx) {
+  .update-throbber {
+    list-style-image: url("chrome://global/skin/icons/loading@2x.png");
+  }
+}
+
+.navigation {
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+@media (prefers-reduced-motion) {
+  /* Setting border-inline-end on .navigation makes it a focusable element */
+  .navigation::after {
+    content: "";
+    width: 1px;
+    height: 100%;
+    background-color: var(--in-content-border-color);
+    top: 0;
+    inset-inline-end: 0;
+    position: absolute;
+  }
+}
+
+.face-sad {
+  list-style-image: url("chrome://browser/skin/preferences/face-sad.svg");
+  width: 20px;
+  height: 20px;
+  margin-block: 5px;
+  margin-inline-end: 8px;
+}
+
+.face-smile {
+  list-style-image: url("chrome://browser/skin/preferences/face-smile.svg");
+  width: 20px;
+  height: 20px;
+  margin-block: 5px;
+  margin-inline-end: 8px;
+}
+
+#policies-container,
+#searchInput {
+  min-height: 32px;
+  margin: 20px 0 30px;
+}
+
+#policies-container {
+  background-color: var(--in-content-warning-container);
+  padding: 0 8px;
+  margin-inline-end: 16px;
+  border-radius: 2px;
+  font-size: 85%;
+}
+
+.policies-label {
+  margin-inline-start: 2px;
+}
+
+.info-icon {
+  list-style-image: url("chrome://global/skin/icons/identity-icon.svg");
+  width: 16px;
+  height: 16px;
+}
+
+.info-icon-telemetry {
+  list-style-image: url("chrome://global/skin/icons/identity-icon.svg");
+  width: 16px;
+  height: 16px;
+  margin-inline: 2px 8px;
+}
+
+.sticky-container {
+  position: sticky;
+  background-color: var(--in-content-page-background);
+  top: 0;
+  z-index: 1;
+  /* The sticky-container should have the capability to cover all spotlight area. */
+  width: calc(100% + 8px);
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+
+.search-tooltip {
+  max-width: 150px;
+  font-size: 1.25rem;
+  position: absolute;
+  padding: 0 10px;
+  background-color: #ffe900;
+  color: #000;
+  border: 1px solid #d7b600;
+  bottom: 36px;
+  opacity: .85;
+}
+
+.search-tooltip:hover {
+  opacity: .1;
+}
+
+.search-tooltip::before {
+  position: absolute;
+  content: "";
+  border: 7px solid transparent;
+  border-top-color: #d7b600;
+  top: 100%;
+  inset-inline-start: calc(50% - 7px);
+}
+
+.search-tooltip::after {
+  position: absolute;
+  content: "";
+  border: 6px solid transparent;
+  border-top-color: #ffe900;
+  top: 100%;
+  inset-inline-start: calc(50% - 6px);
+}
+
+.search-tooltip-parent {
+  position: relative;
+}
+
+.search-tooltip > span {
+  -moz-user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.visually-hidden {
+  visibility: collapse;
+}
+
+menulist[indicator=true] > menupopup menuitem:not([image]) > .menu-iconic-left {
+  display: -moz-box;
+  min-width: auto; /* Override the min-width defined in menu.css */
+  margin-inline-end: 6px;
+}
+
+menulist[indicator=true] > menupopup menuitem:not([image]) > .menu-iconic-left > .menu-iconic-icon {
+  width: 8px;
+  height: 10px;
+  margin: 0;
+}
+
+menulist[indicator=true] > menupopup menuitem[indicator=true]:not([image]) > .menu-iconic-left > .menu-iconic-icon {
+  list-style-image: url(chrome://browser/skin/preferences/search-arrow-indicator.svg);
+}
+
+menulist[indicator=true] > menupopup menuitem[indicator=true]:not([image]) > .menu-iconic-left > .menu-iconic-icon:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
+}
+
+.menu-iconic-highlightable-text {
+  margin: 0; /* Align with the margin of xul:label.menu-iconic-text */
+}
+
+#no-results-message > label {
+  margin: 2px 0;
+  line-height: 30px;
+}
+
+.no-results-image-container {
+  margin-top: 64px;
+}
+
+.no-results-image {
+  list-style-image: url("chrome://browser/skin/preferences/no-search-results.svg");
+  width: 380px;
+  height: 293px;
+}
+
+#no-results-message[query*=🔥🦊] {
+  background-image: url("chrome://browser/skin/preferences/critters-postcard.jpg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+#no-results-message[query*=🔥🦊] > .no-results-container {
+  visibility: hidden;
+}
+
+/* Proxy port input */
+
+.proxy-port-input {
+  width: calc(5ch + 18px); /* 5 chars + (8px padding + 1px border) on both sides */
+  margin-inline-start: 4px;
+}
+
+#defaultBrowserLanguage {
+  margin-inline-start: 0;
+  min-width: 20em;
+}
+
+#availableLanguages,
+#availableLocales {
+  margin-inline-start: 0;
+}
+
+#availableLanguages,
+#availableLocales,
+#activeLanguages,
+#selectedLocales {
+  margin-inline-end: 4px;
+}
+
+#selectedLocales > richlistitem {
+  padding-inline-start: 13px;
+}
+
+#warning-message > .message-bar-description {
+  width: 32em;
+}
+
+#warning-message {
+  margin-top: 8px;
+}
+
+.action-button {
+  margin-inline-end: 0;
+}
+
+/* Menulist styles */
+.label-item {
+  font-size: 0.8em;
+}
+
+.updateSettingCrossUserWarningContainer {
+  background: var(--in-content-warning-container);
+  border-radius: 5px;
+  padding: 2px 8px 8px;
+  margin-block-end: 17px;
+}
+
+#updateSettingCrossUserWarning {
+  padding-inline-start: 30px;
+  margin-block-start: 20px;
+  line-height: 20px;
+  background-image: url("chrome://global/skin/icons/identity-icon.svg");
+  background-position-x: left 2px;
+  background-position-y: top 2px;
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+}
+
+#updateSettingCrossUserWarning:-moz-locale-dir(rtl) {
+  background-position-x: right 2px;
+}
+
+richlistitem .text-link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+richlistitem .text-link:hover {
+  color: inherit;
+}
+
+#proxy-grid,
+#dnsOverHttps-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.proxy-grid-row:not([hidden]),
+.dnsOverHttps-grid-row:not([hidden]) {
+  display: contents;
+}
+
+#proxy-grid > .thin {
+  grid-column: span 2;
+  height: 20px;
+}

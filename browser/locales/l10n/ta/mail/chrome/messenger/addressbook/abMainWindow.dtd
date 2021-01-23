@@ -1,0 +1,217 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label                                 "கோப்பு">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "புதிய">
+<!ENTITY newMenu.accesskey                              "N">
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label                                 "தொகு">
+<!ENTITY editMenu.accesskey                             "E">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+
+
+
+
+
+
+
+
+
+<!-- View Menu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+
+
+
+
+
+
+
+<!-- Tools Menu -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Address Book Toolbar and Context Menus -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Address Book Toolbar Tooltips -->
+
+
+
+
+
+
+
+
+<!-- Dir Tree header -->
+<!-- Search Bar -->
+
+
+
+
+<!-- Results Pane -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+
+
+
+
+
+<!-- Special Box Headings, for mailing lists -->
+
+<!-- For Map It! -->
+
+<!-- Status Bar -->
+
+<!ENTITY statusText.label                               "">
+<!--  Mac OS X Window Menu -->
+
+
+
+

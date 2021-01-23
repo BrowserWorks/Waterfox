@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>CSS UI Level 3: getComputedValue().outlineWidth</title>
+<title>CSS UI Level 3: getComputedStyle().outlineWidth</title>
 <link rel="help" href="https://drafts.csswg.org/css-ui-3/#outline-width">
 <meta name="assert" content="outline-width computed value is absolute length, 0 if the outline style is none.">
 <script src="/resources/testharness.js"></script>
@@ -24,6 +24,7 @@
 </style>
 <div id="target"></div>
 <script>
+test_computed_value("outline-width", "2.5px");
 test_computed_value("outline-width", "10px");
 test_computed_value("outline-width", "0.5em", "20px");
 test_computed_value("outline-width", "calc(10px + 0.5em)", "30px");

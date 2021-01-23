@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Nastavitve neželene pošte">
+<!ENTITY trainingDescription.label "V primeru, da se odločite za to izbiro, morate najprej s pomočjo gumba za neželeno pošto v orodni vrstici sporočila označevati kot neželena ali želena, tako da se &brandShortName; lahko nauči, kako neželeno pošto prepoznati. Označiti morate tako neželena kot tudi želena sporočila. Po tem bo &brandShortName; zmožen neželeno pošto samodejno označiti.">
+<!ENTITY level.label "Za ta račun omogoči prilagodljiv nadzor nad neželeno pošto">
+<!ENTITY level.accesskey "o">
+
+<!ENTITY move.label "Nova neželena sporočila premakni v:">
+<!ENTITY move.accesskey "N">
+<!ENTITY junkFolderOn.label "Mapo &quot;Neželeno&quot; na:">
+<!ENTITY junkFolderOn.accesskey "M">
+<!ENTITY otherFolder.label "Drugo:">
+<!ENTITY otherFolder.accesskey "D">
+<!ENTITY purge1.label "Samodejno izbriši neželeno pošto, ki je starejša od:">
+<!ENTITY purge1.accesskey "S">
+<!ENTITY purge2.label "dni">
+
+<!ENTITY whitelistHeader.label "Ne označi kot neželeno pošto, če je pošiljatelj v: ">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "V primeru, da je omogočeno, bo &brandShortName; samodejno obravnaval sporočila označena s tem zunanjim razvrščevalcem kot neželena.">
+<!ENTITY ispHeaders.label "Zaupaj glavam neželene pošte, ki jih je nastavil: ">
+<!ENTITY ispHeaders.accesskey "Z">
+
+<!ENTITY junkClassification.label "Izbira">
+<!ENTITY junkActions.label "Cilj in ohranitev">
+
+<!ENTITY globalJunkPrefs.label "Splošne nastavitve neželene pošte …">
+<!ENTITY globalJunkPrefs.accesskey "S">

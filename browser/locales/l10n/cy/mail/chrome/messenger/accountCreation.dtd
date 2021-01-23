@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Gosod eich Cyfrif E-bost Cyfredol">
+<!ENTITY emailWizard.caption             "Defnyddiwch eich cyfeiriad e-bost cyfredol">
+<!ENTITY name.label                      "Eich enw:">
+<!ENTITY name.accesskey                  "E">
+<!ENTITY fullname.placeholder            "Eich enw llawn">
+<!ENTITY name.text                       "Eich enw fel mae'n cael ei ddangos i eraill">
+<!ENTITY name.error                      "Rhowch eich enw">
+<!ENTITY email.label                     "Cyfeiriad e-bost:">
+<!ENTITY email.accesskey                 "y">
+<!ENTITY email3.placeholder              "Eich cyfeiriad e-bost">
+<!ENTITY email.text                      "Eich cyfeiriad e-bost cyfredol">
+<!ENTITY email.error                     "Cyfeiriad e-bost annilys">
+<!ENTITY password.label                  "Cyfrinair:">
+<!ENTITY password.accesskey              "C">
+<!ENTITY password.placeholder            "Cyfrinair">
+<!ENTITY password.text                   "Dewisol, fydd ond yn cael ei ddefnyddio i ddilysu'r enw defnyddiwr">
+<!ENTITY password.toggle                 "Dangos/Cuddio cyfrinair">
+<!ENTITY rememberPassword.label          "Cofio'r cyfrinair">
+<!ENTITY rememberPassword.accesskey      "o">
+<!ENTITY usernameEx.label                "Eich mewngofnod:">
+<!ENTITY usernameEx.accesskey            "m">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Mewngofnod parth">
+
+<!ENTITY protocol.label                  "Protocol:">
+<!ENTITY imapLong.label                  "IMAP (ffolder pell)">
+<!ENTITY pop3Long.label                  "POP3 (cadw e-bost ar eich cyfrifiadur)">
+
+<!ENTITY manualConfigTable.summary       "Gosodiadau gweinydd">
+<!ENTITY incoming.label                  "Derbyn:">
+<!ENTITY incomingColumn.label            "Derbyn">
+<!ENTITY outgoing.label                  "Anfon:">
+<!ENTITY outgoingColumn.label            "Anfon">
+<!ENTITY username.label                  "Enw Defnyddiwr:">
+<!ENTITY serverRow.label                 "Gweinydd:">
+<!ENTITY portRow.label                   "Porth:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Dilysu">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Awtoganfod">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Dim">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Gweinydd Exchange:">
+
+<!ENTITY advancedSetup.label             "Ffurfweddiad uwch">
+<!ENTITY advancedSetup.accesskey         "F">
+<!ENTITY cancel.label                    "Diddymu">
+<!ENTITY cancel.accesskey                "D">
+<!ENTITY continue.label                  "Parhau">
+<!ENTITY continue.accesskey              "P">
+<!ENTITY stop.label                      "Atal">
+<!ENTITY stop.accesskey                  "A">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Ail brofi">
+<!ENTITY half-manual-test.accesskey      "A">
+<!ENTITY manual-config.label             "Ffurfweddu â llaw…">
+<!ENTITY manual-config.accesskey         "F">
+<!ENTITY open-provisioner.label          "Cael cyfeiriad e-bost newydd…">
+<!ENTITY open-provisioner.accesskey      "c">
+
+
+<!ENTITY get-help.label                  "Derbyn Cymorth">
+<!ENTITY get-help.accesskey              "C">
+
+
+<!ENTITY warning.label                   "Rhybudd!">
+<!ENTITY incomingSettings.label          "Gosodiadau derbyn:">
+<!ENTITY outgoingSettings.label          "Gosodiadau anfon:">
+<!ENTITY technicaldetails.label          "Manylion Technegol">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Rwy'n deall y peryglon.">
+<!ENTITY confirmWarning.accesskey        "p">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Gorffen">
+<!ENTITY doneAccount.accesskey           "G">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Newid Gosodiadau">
+<!ENTITY changeSettings.accesskey        "G">
+
+<!ENTITY contactYourProvider.description "Mae &brandShortName; yn gallu caniatáu i chi estyn eich e-bost drwy ddefnyddio'r ffurfweddiad parod. Er hynny, dylech gysylltu â'ch gweinyddwr neu ddarparwr e-bost ynghylch cysylltiadau anaddas. Gw. Cwestiynau Thunderbird am ragor o wybodaeth.">
+
+<!ENTITY insecureServer.tooltip.title    "Rhybudd! Mae hwn yn weinydd anniogel.">
+<!ENTITY insecureServer.tooltip.details  "Cliciwch y cylch am ragor o wybodaeth.">
+
+<!ENTITY insecureUnencrypted.description "Mae eich e-bost a'ch dilysu yn cael eu hanfon heb eu hamgryptio, felly mae modd i eraill ddarllen eich cyfrinair (a'ch neges) yn hawdd. Bydd &brandShortName; yn caniatáu i chi estyn eich e-bost ond dylech gysylltu â'ch darparwr ynghylch ffurfweddu'r gweinydd gyda chysylltiad diogel.">
+<!ENTITY insecureSelfSigned.description  "Mae'r gweinydd yn defnyddio tystysgrif nad ydym yn gallu ymddiried ynddi, felly nid ydym yn gallu bod yn siŵr nad oes rhywun yn cipio'r traffig rhwng &brandShortName; a'ch gweinydd. Bydd &brandShortName; yn caniatáu i chi estyn eich e-bost ond dylech sicrhau fod y darparwr e-bost yn ffurfweddu'r gweinydd gyda tystysgrif mae modd ymddiried ynddi.">
+<!ENTITY secureServer.description        "Llongyfarchiadau! Mae hwn yn weinydd diogel.">

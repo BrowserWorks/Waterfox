@@ -16,9 +16,14 @@ function GetPermissionsFile(profile) {
 }
 
 add_task(async function test() {
-  /* Create and set up the permissions database */
-  let profile = do_get_profile();
+  // Create and set up the permissions database.
   Services.prefs.setCharPref("permissions.manager.defaultsUrl", "");
+  let profile = do_get_profile();
+
+  // We need to execute a pm method to be sure that the DB is fully
+  // initialized.
+  var pm = Services.perms;
+  Assert.equal(pm.all.length, 0, "No cookies");
 
   let db = Services.storage.openDatabase(GetPermissionsFile(profile));
   db.schemaVersion = 6;
@@ -158,6 +163,7 @@ add_task(async function test() {
   ];
 
   // Add some rows to the database
+  // eslint-disable-next-line no-unused-vars
   let created = [
     insertHost("foo.com", "A", 1, 0, 0, 0, 0, false),
     insertHost("foo.com", "C", 1, 0, 0, 0, 0, false),
@@ -262,8 +268,8 @@ add_task(async function test() {
   // This will force the permission-manager to reload the data.
   Services.obs.notifyObservers(null, "testonly-reload-permissions-from-disk");
 
-  // Force initialization of the nsPermissionManager
-  for (let permission of Services.perms.enumerator) {
+  // Force initialization of the PermissionManager
+  for (let permission of Services.perms.all) {
     let isExpected = false;
 
     expected.forEach((it, i) => {

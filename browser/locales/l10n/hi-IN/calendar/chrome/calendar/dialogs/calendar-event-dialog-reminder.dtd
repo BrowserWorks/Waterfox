@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "अनुस्मारक सेट अप">
+
+
+<!ENTITY reminder.remove.label                             "मिटाएँ">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "अनुस्मारक विवरण">
+<!ENTITY reminder.action.label                             "एक अनुस्मारक कार्रवाई चुनें">
+
+<!ENTITY reminder.action.alert.label                       "एक चेतावनी दिखाएँ">
+<!ENTITY reminder.action.email.label                       "एक ईमेल भेजो">
+
+<!ENTITY alarm.units.minutes                               "मिनट" >
+<!ENTITY alarm.units.hours                                 "घंटे" >
+<!ENTITY alarm.units.days                                  "दिन" >

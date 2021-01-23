@@ -200,7 +200,7 @@ function run_test() {
   run_port_equivalency_test(443, -1);
 
   Services.prefs.setIntPref("security.OCSP.enabled", 1);
-  add_tls_server_setup("BadCertServer", "bad_certs");
+  add_tls_server_setup("BadCertAndPinningServer", "bad_certs");
 
   let fakeOCSPResponder = new HttpServer();
   fakeOCSPResponder.registerPrefixHandler("/", function(request, response) {
@@ -488,16 +488,121 @@ function add_simple_tests() {
       ),
       "IDN certificate should have matching override using ascii host"
     );
+    Assert.throws(
+      () =>
+        !certOverrideService.hasMatchingOverride(
+          uri.displayHost,
+          8443,
+          cert,
+          {},
+          {}
+        ),
+      /NS_ERROR_ILLEGAL_VALUE/,
+      "IDN certificate should not have matching override using (non-ascii) host"
+    );
+    let invalidHost = uri.asciiHost.replace(/./g, c =>
+      String.fromCharCode(c.charCodeAt(0) | 0x100)
+    );
+    Assert.throws(
+      () =>
+        !certOverrideService.hasMatchingOverride(
+          invalidHost,
+          8443,
+          cert,
+          {},
+          {}
+        ),
+      /NS_ERROR_ILLEGAL_VALUE/,
+      "hasMatchingOverride should not truncate high-bytes"
+    );
+    run_next_test();
+  });
+
+  add_test(function() {
+    // Add a bunch of overrides...
+    let certOverrideService = Cc[
+      "@mozilla.org/security/certoverride;1"
+    ].getService(Ci.nsICertOverrideService);
+    let cert = constructCertFromFile("bad_certs/default-ee.pem");
+    let expectedBits = Ci.nsICertOverrideService.ERROR_UNTRUSTED;
+    certOverrideService.rememberValidityOverride(
+      "example.com",
+      443,
+      cert,
+      expectedBits,
+      false
+    );
+    Assert.ok(
+      certOverrideService.hasMatchingOverride("example.com", 443, cert, {}, {}),
+      "Should have added override for example.com:443"
+    );
+    certOverrideService.rememberValidityOverride(
+      "example.com",
+      80,
+      cert,
+      expectedBits,
+      false
+    );
+    Assert.ok(
+      certOverrideService.hasMatchingOverride("example.com", 80, cert, {}, {}),
+      "Should have added override for example.com:80"
+    );
+    certOverrideService.rememberValidityOverride(
+      "example.org",
+      443,
+      cert,
+      expectedBits,
+      false
+    );
+    Assert.ok(
+      certOverrideService.hasMatchingOverride("example.org", 443, cert, {}, {}),
+      "Should have added override for example.org:443"
+    );
+    certOverrideService.rememberValidityOverride(
+      "example.org",
+      80,
+      cert,
+      expectedBits,
+      true
+    );
+    Assert.ok(
+      certOverrideService.hasMatchingOverride("example.org", 80, cert, {}, {}),
+      "Should have added override for example.org:80"
+    );
+
+    // Clear them all...
+    certOverrideService.clearAllOverrides();
+
+    // And ensure they're all gone.
     Assert.ok(
       !certOverrideService.hasMatchingOverride(
-        uri.displayHost,
-        8443,
+        "example.com",
+        443,
         cert,
         {},
         {}
       ),
-      "IDN certificate should not have matching override using (non-ascii) host"
+      "Should have removed override for example.com:443"
     );
+    Assert.ok(
+      !certOverrideService.hasMatchingOverride("example.com", 80, cert, {}, {}),
+      "Should have removed override for example.com:80"
+    );
+    Assert.ok(
+      !certOverrideService.hasMatchingOverride(
+        "example.org",
+        443,
+        cert,
+        {},
+        {}
+      ),
+      "Should have removed override for example.org:443"
+    );
+    Assert.ok(
+      !certOverrideService.hasMatchingOverride("example.org", 80, cert, {}, {}),
+      "Should have removed override for example.org:80"
+    );
+
     run_next_test();
   });
 }

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Póbitowarja wótinstalěrowaś">
+<!ENTITY providerUninstall.accept.label                    "Wubranego wótskazaś">
+<!ENTITY providerUninstall.accept.accesskey                "u">
+<!ENTITY providerUninstall.cancel.label                    "Dodank wobchowaś">
+<!ENTITY providerUninstall.cancel.accesskey                "D">
+<!ENTITY providerUninstall.preName.label                   "Vośo slědujucego póbitowarja wótinstalěrowaś ao znjemóžniś:">
+<!ENTITY providerUninstall.postName.label                  "To zawinujo, až slědujuce kalendery se znjemóžniju.">
+<!ENTITY providerUninstall.reinstallNote.label             "Jolic njocośo toś togo póbitowarja znowego instalěrowaś, móžośo kalendery toś togo póbitowarja wótskazaś.">

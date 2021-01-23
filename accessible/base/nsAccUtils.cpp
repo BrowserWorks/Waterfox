@@ -20,6 +20,7 @@
 #include "nsIPersistentProperties2.h"
 #include "mozilla/a11y/PDocAccessibleChild.h"
 #include "mozilla/dom/Element.h"
+#include "nsAccessibilityService.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -96,7 +97,7 @@ int32_t nsAccUtils::GetLevelForXULContainerItem(nsIContent* aContent) {
       aContent->AsElement()->AsXULContainerItem();
   if (!item) return 0;
 
-  nsCOMPtr<Element> containerElement;
+  nsCOMPtr<dom::Element> containerElement;
   item->GetParentContainer(getter_AddRefs(containerElement));
   nsCOMPtr<nsIDOMXULContainerElement> container =
       containerElement ? containerElement->AsXULContainer() : nullptr;
@@ -115,9 +116,13 @@ int32_t nsAccUtils::GetLevelForXULContainerItem(nsIContent* aContent) {
 }
 
 void nsAccUtils::SetLiveContainerAttributes(
-    nsIPersistentProperties* aAttributes, nsIContent* aStartContent,
-    dom::Element* aTopEl) {
+    nsIPersistentProperties* aAttributes, nsIContent* aStartContent) {
   nsAutoString live, relevant, busy;
+  dom::Document* doc = aStartContent->GetComposedDoc();
+  if (!doc) {
+    return;
+  }
+  dom::Element* topEl = doc->GetRootElement();
   nsIContent* ancestor = aStartContent;
   while (ancestor) {
     // container-relevant attribute
@@ -138,7 +143,11 @@ void nsAccUtils::SetLiveContainerAttributes(
                                        live);
       } else if (role) {
         GetLiveAttrValue(role->liveAttRule, live);
+      } else if (nsStaticAtom* value = GetAccService()->MarkupAttribute(
+                     ancestor, nsGkAtoms::live)) {
+        value->ToString(live);
       }
+
       if (!live.IsEmpty()) {
         SetAccAttr(aAttributes, nsGkAtoms::containerLive, live);
         if (role) {
@@ -162,10 +171,14 @@ void nsAccUtils::SetLiveContainerAttributes(
                                        busy))
       SetAccAttr(aAttributes, nsGkAtoms::containerBusy, busy);
 
-    if (ancestor == aTopEl) break;
+    if (ancestor == topEl) {
+      break;
+    }
 
     ancestor = ancestor->GetParent();
-    if (!ancestor) ancestor = aTopEl;  // Use <body>/<frameset>
+    if (!ancestor) {
+      ancestor = topEl;  // Use <body>/<frameset>
+    }
   }
 }
 
@@ -174,7 +187,7 @@ bool nsAccUtils::HasDefinedARIAToken(nsIContent* aContent, nsAtom* aAtom) {
 
   if (!aContent->IsElement()) return false;
 
-  Element* element = aContent->AsElement();
+  dom::Element* element = aContent->AsElement();
   if (!element->HasAttr(kNameSpaceID_None, aAtom) ||
       element->AttrValueIs(kNameSpaceID_None, aAtom, nsGkAtoms::_empty,
                            eCaseMatters) ||
@@ -188,7 +201,7 @@ bool nsAccUtils::HasDefinedARIAToken(nsIContent* aContent, nsAtom* aAtom) {
 nsStaticAtom* nsAccUtils::GetARIAToken(dom::Element* aElement, nsAtom* aAttr) {
   if (!HasDefinedARIAToken(aElement, aAttr)) return nsGkAtoms::_empty;
 
-  static Element::AttrValuesArray tokens[] = {
+  static dom::Element::AttrValuesArray tokens[] = {
       nsGkAtoms::_false, nsGkAtoms::_true, nsGkAtoms::mixed, nullptr};
 
   int32_t idx =
@@ -205,7 +218,7 @@ nsStaticAtom* nsAccUtils::NormalizeARIAToken(dom::Element* aElement,
   }
 
   if (aAttr == nsGkAtoms::aria_current) {
-    static Element::AttrValuesArray tokens[] = {
+    static dom::Element::AttrValuesArray tokens[] = {
         nsGkAtoms::page, nsGkAtoms::step, nsGkAtoms::location_,
         nsGkAtoms::date, nsGkAtoms::time, nsGkAtoms::_true,
         nullptr};
@@ -242,7 +255,10 @@ Accessible* nsAccUtils::TableFor(Accessible* aRow) {
     Accessible* table = aRow->Parent();
     if (table) {
       roles::Role tableRole = table->Role();
-      if (tableRole == roles::GROUPING) {  // if there's a rowgroup.
+      const nsRoleMapEntry* roleMapEntry = table->ARIARoleMap();
+      if (tableRole == roles::GROUPING ||  // if there's a rowgroup.
+          (table->IsGenericHyperText() && !roleMapEntry &&
+           !table->IsTable())) {  // or there is a wrapping text container
         table = table->Parent();
         if (table) tableRole = table->Role();
       }
@@ -399,21 +415,11 @@ bool nsAccUtils::MustPrune(AccessibleOrProxy aAccessible) {
     return true;
   }
 
-#if defined(ANDROID)
-  if (role == roles::LINK) {
-    // Always prune links in Android
-    return true;
-  }
-#endif
-
   if (role != roles::MENUITEM && role != roles::COMBOBOX_OPTION &&
       role != roles::OPTION && role != roles::ENTRY &&
       role != roles::FLAT_EQUATION && role != roles::PASSWORD_TEXT &&
       role != roles::PUSHBUTTON && role != roles::TOGGLE_BUTTON &&
       role != roles::GRAPHIC && role != roles::PROGRESSBAR &&
-#if defined(ANDROID)
-      role != roles::HEADING &&
-#endif
       role != roles::SEPARATOR) {
     // If it doesn't match any of these roles, don't prune its children.
     return false;
@@ -464,65 +470,46 @@ bool nsAccUtils::PersistentPropertiesToArray(nsIPersistentProperties* aProps,
 bool nsAccUtils::IsARIALive(const Accessible* aAccessible) {
   // Get computed aria-live property based on the closest container with the
   // attribute. Inner nodes override outer nodes within the same
-  // document, but nodes in outer documents override nodes in inner documents.
+  // document.
   // This should be the same as the container-live attribute, but we don't need
   // the other container-* attributes, so we can't use the same function.
-  nsAutoString live;
-  nsIContent* startContent = aAccessible->GetContent();
-  while (startContent) {
-    dom::Document* doc = startContent->GetComposedDoc();
-    if (!doc) {
+  nsIContent* ancestor = aAccessible->GetContent();
+  if (!ancestor) {
+    return false;
+  }
+  dom::Document* doc = ancestor->GetComposedDoc();
+  if (!doc) {
+    return false;
+  }
+  dom::Element* topEl = doc->GetRootElement();
+  while (ancestor) {
+    const nsRoleMapEntry* role = nullptr;
+    if (ancestor->IsElement()) {
+      role = aria::GetRoleMap(ancestor->AsElement());
+    }
+    nsAutoString live;
+    if (HasDefinedARIAToken(ancestor, nsGkAtoms::aria_live)) {
+      ancestor->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::aria_live,
+                                     live);
+    } else if (role) {
+      GetLiveAttrValue(role->liveAttRule, live);
+    } else if (nsStaticAtom* value = GetAccService()->MarkupAttribute(
+                   ancestor, nsGkAtoms::live)) {
+      value->ToString(live);
+    }
+    if (!live.IsEmpty() && !live.EqualsLiteral("off")) {
+      return true;
+    }
+
+    if (ancestor == topEl) {
       break;
     }
 
-    dom::Element* aTopEl = doc->GetRootElement();
-    nsIContent* ancestor = startContent;
-    while (ancestor) {
-      nsAutoString docLive;
-      const nsRoleMapEntry* role = nullptr;
-      if (ancestor->IsElement()) {
-        role = aria::GetRoleMap(ancestor->AsElement());
-      }
-      if (HasDefinedARIAToken(ancestor, nsGkAtoms::aria_live)) {
-        ancestor->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::aria_live,
-                                       docLive);
-      } else if (role) {
-        GetLiveAttrValue(role->liveAttRule, docLive);
-      }
-      if (!docLive.IsEmpty()) {
-        live = docLive;
-        break;
-      }
-
-      if (ancestor == aTopEl) {
-        break;
-      }
-
-      ancestor = ancestor->GetParent();
-      if (!ancestor) {
-        ancestor = aTopEl;  // Use <body>/<frameset>
-      }
+    ancestor = ancestor->GetParent();
+    if (!ancestor) {
+      ancestor = topEl;  // Use <body>/<frameset>
     }
-
-    // Allow ARIA live region markup from outer documents to override.
-    nsCOMPtr<nsIDocShellTreeItem> docShellTreeItem = doc->GetDocShell();
-    if (!docShellTreeItem) {
-      break;
-    }
-
-    nsCOMPtr<nsIDocShellTreeItem> sameTypeParent;
-    docShellTreeItem->GetSameTypeParent(getter_AddRefs(sameTypeParent));
-    if (!sameTypeParent || sameTypeParent == docShellTreeItem) {
-      break;
-    }
-
-    dom::Document* parentDoc = doc->GetParentDocument();
-    if (!parentDoc) {
-      break;
-    }
-
-    startContent = parentDoc->FindContentForSubDocument(doc);
   }
 
-  return !live.IsEmpty() && !live.EqualsLiteral("off");
+  return false;
 }

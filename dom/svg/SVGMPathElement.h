@@ -44,9 +44,8 @@ class SVGMPathElement final : public SVGMPathElementBase,
 
   // nsIContent interface
   virtual nsresult Clone(dom::NodeInfo*, nsINode** aResult) const override;
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent) override;
 
   // Element specializations
   virtual bool ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,

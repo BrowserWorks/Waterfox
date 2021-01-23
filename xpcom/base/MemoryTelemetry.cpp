@@ -14,7 +14,6 @@
 #include "mozilla/Services.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/SimpleEnumerator.h"
-#include "mozilla/SystemGroup.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/dom/ContentParent.h"
@@ -231,8 +230,6 @@ nsresult MemoryTelemetry::GatherReports(
   MOZ_DIAGNOSTIC_ASSERT(mgr);
   NS_ENSURE_TRUE(mgr, NS_ERROR_FAILURE);
 
-  auto startTime = TimeStamp::Now();
-
 #define RECORD(id, metric, units)                                       \
   do {                                                                  \
     int64_t amt;                                                        \
@@ -246,6 +243,13 @@ nsresult MemoryTelemetry::GatherReports(
 
   // GHOST_WINDOWS is opt-out as of Firefox 55
   RECORD(GHOST_WINDOWS, GhostWindows, UNITS_COUNT);
+
+  // If we're running in the parent process, collect data from all processes for
+  // the MEMORY_TOTAL histogram.
+  if (XRE_IsParentProcess() && !mTotalMemoryGatherer) {
+    mTotalMemoryGatherer = new TotalMemoryGatherer();
+    mTotalMemoryGatherer->Begin(mThreadPool);
+  }
 
   if (!Telemetry::CanRecordReleaseData()) {
     return NS_OK;
@@ -306,6 +310,7 @@ nsresult MemoryTelemetry::GatherReports(
         RECORD(MEMORY_VSIZE_MAX_CONTIGUOUS, VsizeMaxContiguous, UNITS_BYTES);
 #endif
         RECORD(MEMORY_RESIDENT_FAST, ResidentFast, UNITS_BYTES);
+        RECORD(MEMORY_RESIDENT_PEAK, ResidentPeak, UNITS_BYTES);
         RECORD(MEMORY_UNIQUE, ResidentUnique, UNITS_BYTES);
         RECORD(MEMORY_HEAP_ALLOCATED, HeapAllocated, UNITS_BYTES);
         RECORD(MEMORY_HEAP_OVERHEAD_FRACTION, HeapOverheadFraction,
@@ -324,16 +329,6 @@ nsresult MemoryTelemetry::GatherReports(
     cleanup.release();
   }
 
-  // If we're running in the parent process, collect data from all processes for
-  // the MEMORY_TOTAL histogram.
-  if (XRE_IsParentProcess() && !mTotalMemoryGatherer) {
-    mTotalMemoryGatherer = new TotalMemoryGatherer();
-    mTotalMemoryGatherer->Begin(mThreadPool);
-  }
-
-  Telemetry::AccumulateTimeDelta(
-      Telemetry::HistogramID::TELEMETRY_MEMORY_REPORTER_MS, startTime,
-      TimeStamp::Now());
   return NS_OK;
 }
 
@@ -345,8 +340,7 @@ NS_IMPL_ISUPPORTS(MemoryTelemetry::TotalMemoryGatherer, nsITimerCallback)
  * results.
  */
 void MemoryTelemetry::TotalMemoryGatherer::Begin(nsIEventTarget* aThreadPool) {
-  nsCOMPtr<nsISerialEventTarget> target =
-      SystemGroup::EventTargetFor(TaskCategory::Other);
+  nsCOMPtr<nsISerialEventTarget> target = GetMainThreadSerialEventTarget();
 
   nsTArray<ContentParent*> parents;
   ContentParent::GetAll(parents);

@@ -17,7 +17,6 @@ var EXPORTED_SYMBOLS = [
   "MockFxaStorageManager",
   "AccountState", // from a module import
   "sumHistogram",
-  "getLoginTelemetryScalar",
   "syncTestLogging",
 ];
 
@@ -67,8 +66,26 @@ MockFxaStorageManager.prototype = {
     return Promise.resolve();
   },
 
-  getAccountData() {
-    return Promise.resolve(this.accountData);
+  getAccountData(fields = null) {
+    let result;
+    if (!this.accountData) {
+      result = null;
+    } else if (fields == null) {
+      // can't use cloneInto as the keys get upset...
+      result = {};
+      for (let field of Object.keys(this.accountData)) {
+        result[field] = this.accountData[field];
+      }
+    } else {
+      if (!Array.isArray(fields)) {
+        fields = [fields];
+      }
+      result = {};
+      for (let field of fields) {
+        result[field] = this.accountData[field];
+      }
+    }
+    return Promise.resolve(result);
   },
 
   updateAccountData(updatedFields) {
@@ -160,6 +177,9 @@ var makeIdentityConfig = function(overrides) {
       // TODO: allow just some attributes to be specified
       result.fxaccount = overrides.fxaccount;
     }
+    if (overrides.node_type) {
+      result.fxaccount.token.node_type = overrides.node_type;
+    }
   }
   return result;
 };
@@ -179,6 +199,23 @@ var makeFxAccountsInternalMock = function(config) {
     },
     _getAssertion(audience) {
       return Promise.resolve(config.fxaccount.user.assertion);
+    },
+    getOAuthToken: () => Promise.resolve("some-access-token"),
+    keys: {
+      getScopedKeys: () =>
+        Promise.resolve({
+          "https://identity.mozilla.com/apps/oldsync": {
+            identifier: "https://identity.mozilla.com/apps/oldsync",
+            keyRotationSecret:
+              "0000000000000000000000000000000000000000000000000000000000000000",
+            keyRotationTimestamp: 1510726317123,
+          },
+        }),
+    },
+    profile: {
+      getProfile() {
+        return null;
+      },
     },
   };
 };
@@ -206,7 +243,7 @@ var configureFxAccountIdentity = function(
     },
   };
   let mockFxAClient = new MockFxAccountsClient();
-  fxa.internal._fxAccountsClient = mockFxAClient;
+  fxa._internal._fxAccountsClient = mockFxAClient;
 
   let mockTSC = {
     // TokenServerClient
@@ -216,6 +253,15 @@ var configureFxAccountIdentity = function(
         Services.prefs.getStringPref("identity.sync.tokenserver.uri")
       );
       Assert.equal(assertion, config.fxaccount.user.assertion);
+      config.fxaccount.token.uid = config.username;
+      return config.fxaccount.token;
+    },
+    async getTokenFromOAuthToken(url, oauthToken) {
+      Assert.equal(
+        url,
+        Services.prefs.getStringPref("identity.sync.tokenserver.uri")
+      );
+      Assert.ok(oauthToken, "oauth token present");
       config.fxaccount.token.uid = config.username;
       return config.fxaccount.token;
     },
@@ -244,8 +290,7 @@ var configureIdentity = async function(identityOverrides, server) {
   }
 
   configureFxAccountIdentity(ns.Service.identity, config);
-  // because we didn't send any FxA LOGIN notifications we must set the username.
-  ns.Service.identity.username = config.username;
+  Services.prefs.setStringPref("services.sync.username", config.username);
   // many of these tests assume all the auth stuff is setup and don't hit
   // a path which causes that auth to magically happen - so do it now.
   await ns.Service.identity._ensureValidToken();
@@ -308,11 +353,4 @@ var sumHistogram = function(name, options = {}) {
   }
   histogram.clear();
   return sum;
-};
-
-var getLoginTelemetryScalar = function() {
-  let snapshot = Services.telemetry.getSnapshotForKeyedScalars("main", true);
-  return snapshot.parent
-    ? snapshot.parent["services.sync.sync_login_state_transitions"]
-    : {};
 };

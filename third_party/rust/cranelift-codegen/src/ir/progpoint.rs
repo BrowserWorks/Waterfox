@@ -1,7 +1,7 @@
 //! Program points.
 
 use crate::entity::EntityRef;
-use crate::ir::{Ebb, Inst, ValueDef};
+use crate::ir::{Block, Inst, ValueDef};
 use core::cmp;
 use core::fmt;
 use core::u32;
@@ -10,7 +10,7 @@ use core::u32;
 /// begin or end. It can be either:
 ///
 /// 1. An instruction or
-/// 2. An EBB header.
+/// 2. A block header.
 ///
 /// This corresponds more or less to the lines in the textual form of Cranelift IR.
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -20,15 +20,15 @@ impl From<Inst> for ProgramPoint {
     fn from(inst: Inst) -> Self {
         let idx = inst.index();
         debug_assert!(idx < (u32::MAX / 2) as usize);
-        ProgramPoint((idx * 2) as u32)
+        Self((idx * 2) as u32)
     }
 }
 
-impl From<Ebb> for ProgramPoint {
-    fn from(ebb: Ebb) -> Self {
-        let idx = ebb.index();
+impl From<Block> for ProgramPoint {
+    fn from(block: Block) -> Self {
+        let idx = block.index();
         debug_assert!(idx < (u32::MAX / 2) as usize);
-        ProgramPoint((idx * 2 + 1) as u32)
+        Self((idx * 2 + 1) as u32)
     }
 }
 
@@ -36,7 +36,7 @@ impl From<ValueDef> for ProgramPoint {
     fn from(def: ValueDef) -> Self {
         match def {
             ValueDef::Result(inst, _) => inst.into(),
-            ValueDef::Param(ebb, _) => ebb.into(),
+            ValueDef::Param(block, _) => block.into(),
         }
     }
 }
@@ -47,29 +47,29 @@ impl From<ValueDef> for ProgramPoint {
 pub enum ExpandedProgramPoint {
     /// An instruction in the function.
     Inst(Inst),
-    /// An EBB header.
-    Ebb(Ebb),
+    /// A block header.
+    Block(Block),
 }
 
 impl ExpandedProgramPoint {
     /// Get the instruction we know is inside.
     pub fn unwrap_inst(self) -> Inst {
         match self {
-            ExpandedProgramPoint::Inst(x) => x,
-            ExpandedProgramPoint::Ebb(x) => panic!("expected inst: {}", x),
+            Self::Inst(x) => x,
+            Self::Block(x) => panic!("expected inst: {}", x),
         }
     }
 }
 
 impl From<Inst> for ExpandedProgramPoint {
     fn from(inst: Inst) -> Self {
-        ExpandedProgramPoint::Inst(inst)
+        Self::Inst(inst)
     }
 }
 
-impl From<Ebb> for ExpandedProgramPoint {
-    fn from(ebb: Ebb) -> Self {
-        ExpandedProgramPoint::Ebb(ebb)
+impl From<Block> for ExpandedProgramPoint {
+    fn from(block: Block) -> Self {
+        Self::Block(block)
     }
 }
 
@@ -77,7 +77,7 @@ impl From<ValueDef> for ExpandedProgramPoint {
     fn from(def: ValueDef) -> Self {
         match def {
             ValueDef::Result(inst, _) => inst.into(),
-            ValueDef::Param(ebb, _) => ebb.into(),
+            ValueDef::Param(block, _) => block.into(),
         }
     }
 }
@@ -85,9 +85,9 @@ impl From<ValueDef> for ExpandedProgramPoint {
 impl From<ProgramPoint> for ExpandedProgramPoint {
     fn from(pp: ProgramPoint) -> Self {
         if pp.0 & 1 == 0 {
-            ExpandedProgramPoint::Inst(Inst::from_u32(pp.0 / 2))
+            Self::Inst(Inst::from_u32(pp.0 / 2))
         } else {
-            ExpandedProgramPoint::Ebb(Ebb::from_u32(pp.0 / 2))
+            Self::Block(Block::from_u32(pp.0 / 2))
         }
     }
 }
@@ -95,8 +95,8 @@ impl From<ProgramPoint> for ExpandedProgramPoint {
 impl fmt::Display for ExpandedProgramPoint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ExpandedProgramPoint::Inst(x) => write!(f, "{}", x),
-            ExpandedProgramPoint::Ebb(x) => write!(f, "{}", x),
+            Self::Inst(x) => write!(f, "{}", x),
+            Self::Block(x) => write!(f, "{}", x),
         }
     }
 }
@@ -129,7 +129,7 @@ pub trait ProgramOrder {
     ///
     /// Return `Less` if `a` appears in the program before `b`.
     ///
-    /// This is declared as a generic such that it can be called with `Inst` and `Ebb` arguments
+    /// This is declared as a generic such that it can be called with `Inst` and `Block` arguments
     /// directly. Depending on the implementation, there is a good chance performance will be
     /// improved for those cases where the type of either argument is known statically.
     fn cmp<A, B>(&self, a: A, b: B) -> cmp::Ordering
@@ -137,28 +137,28 @@ pub trait ProgramOrder {
         A: Into<ExpandedProgramPoint>,
         B: Into<ExpandedProgramPoint>;
 
-    /// Is the range from `inst` to `ebb` just the gap between consecutive EBBs?
+    /// Is the range from `inst` to `block` just the gap between consecutive blocks?
     ///
-    /// This returns true if `inst` is the terminator in the EBB immediately before `ebb`.
-    fn is_ebb_gap(&self, inst: Inst, ebb: Ebb) -> bool;
+    /// This returns true if `inst` is the terminator in the block immediately before `block`.
+    fn is_block_gap(&self, inst: Inst, block: Block) -> bool;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::entity::EntityRef;
-    use crate::ir::{Ebb, Inst};
-    use std::string::ToString;
+    use crate::ir::{Block, Inst};
+    use alloc::string::ToString;
 
     #[test]
     fn convert() {
         let i5 = Inst::new(5);
-        let b3 = Ebb::new(3);
+        let b3 = Block::new(3);
 
         let pp1: ProgramPoint = i5.into();
         let pp2: ProgramPoint = b3.into();
 
         assert_eq!(pp1.to_string(), "inst5");
-        assert_eq!(pp2.to_string(), "ebb3");
+        assert_eq!(pp2.to_string(), "block3");
     }
 }

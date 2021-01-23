@@ -214,6 +214,7 @@ SelectorAutocompleter.prototype = {
    *        '#f' requires an Id suggestion, so the state is States.ID
    *        'div > .foo' requires class suggestion, so state is States.CLASS
    */
+  // eslint-disable-next-line complexity
   get state() {
     if (!this.searchBox || !this.searchBox.value) {
       return null;
@@ -479,7 +480,7 @@ SelectorAutocompleter.prototype = {
    * Suggests classes,ids and tags based on the user input as user types in the
    * searchbox.
    */
-  showSuggestions: function() {
+  showSuggestions: async function() {
     let query = this.searchBox.value;
     const state = this.state;
     let firstPart = "";
@@ -512,37 +513,52 @@ SelectorAutocompleter.prototype = {
       query += "*";
     }
 
-    const suggestionsPromise = this.walker.getSuggestionsForQuery(
-      query,
-      firstPart,
-      state
-    );
-    this._lastQuery = suggestionsPromise.then(result => {
-      this.emit("processing-done");
-      if (result.query !== query) {
-        // This means that this response is for a previous request and the user
-        // as since typed something extra leading to a new request.
-        return promise.resolve(null);
-      }
+    this._lastQuery = this.inspector
+      // Get all inspectors where we want suggestions from.
+      .getAllInspectorFronts()
+      .then(inspectors => {
+        // Get all of the suggestions.
+        return Promise.all(
+          inspectors.map(async ({ walker }) => {
+            return walker.getSuggestionsForQuery(query, firstPart, state);
+          })
+        );
+      })
+      .then(suggestions => {
+        // Merge all the results
+        const result = { query: "", suggestions: [] };
+        for (const r of suggestions) {
+          result.query = r.query;
+          result.suggestions = result.suggestions.concat(r.suggestions);
+        }
+        return result;
+      })
+      .then(result => {
+        this.emit("processing-done");
+        if (result.query !== query) {
+          // This means that this response is for a previous request and the user
+          // as since typed something extra leading to a new request.
+          return promise.resolve(null);
+        }
 
-      if (state === this.States.CLASS) {
-        firstPart = "." + firstPart;
-      } else if (state === this.States.ID) {
-        firstPart = "#" + firstPart;
-      }
+        if (state === this.States.CLASS) {
+          firstPart = "." + firstPart;
+        } else if (state === this.States.ID) {
+          firstPart = "#" + firstPart;
+        }
 
-      // If there is a single tag match and it's what the user typed, then
-      // don't need to show a popup.
-      if (
-        result.suggestions.length === 1 &&
-        result.suggestions[0][0] === firstPart
-      ) {
-        result.suggestions = [];
-      }
+        // If there is a single tag match and it's what the user typed, then
+        // don't need to show a popup.
+        if (
+          result.suggestions.length === 1 &&
+          result.suggestions[0][0] === firstPart
+        ) {
+          result.suggestions = [];
+        }
 
-      // Wait for the autocomplete-popup to fire its popup-opened event, to make sure
-      // the autoSelect item has been selected.
-      return this._showPopup(result.suggestions, state);
-    });
+        // Wait for the autocomplete-popup to fire its popup-opened event, to make sure
+        // the autoSelect item has been selected.
+        return this._showPopup(result.suggestions, state);
+      });
   },
 };

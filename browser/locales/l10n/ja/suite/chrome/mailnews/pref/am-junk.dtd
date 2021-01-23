@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label	"迷惑メールフィルターの設定">
+<!ENTITY trainingDescription.label "フィルターを有効にした場合、どのようなメッセージが迷惑メールなのかを &brandShortName; に学習させる必要があります。迷惑メールを受信したら、ヘッダーツールバーの [迷惑マークを付ける] ボタンを押してください。間違って迷惑メールと判断されたメールがあれば、[非迷惑メール] ボタンで訂正してください。迷惑または非迷惑を学習させると、&brandShortName; が自動的に迷惑マークを付けられるようになります。">
+<!ENTITY level.label		"このアカウントで迷惑メールの学習を有効にする">
+<!ENTITY level.accesskey	"E">
+
+<!ENTITY move.label		"迷惑メールと判断された受信メッセージを次のフォルダーに移動する:">
+<!ENTITY move.accesskey		"M">
+<!ENTITY junkFolderOn.label	"次のアカウントの &quot;迷惑メール&quot; フォルダー:">
+<!ENTITY junkFolderOn.accesskey	"J">
+<!ENTITY otherFolder.label	"その他のフォルダーを指定する:">
+<!ENTITY otherFolder.accesskey	"O">
+<!ENTITY purge1.label		"このフォルダーの迷惑メールのうち">
+<!ENTITY purge1.accesskey	"u">
+<!ENTITY purge2.label		"日以上前のものは自動的に削除する">
+
+<!ENTITY whitelistHeader.label		"送信者が以下に含まれる場合は自動的に迷惑マークを付けない:">
+<!ENTITY whitelistHeader.accesskey	"D">
+
+<!ENTITY ispHeadersWarning.label	"有効にした場合、外部で分類された迷惑メールヘッダーを尊重して自動的に迷惑マークを付けます。">
+<!ENTITY ispHeaders.label		"次の迷惑メールヘッダーを信用する:">
+<!ENTITY ispHeaders.accesskey		"T">
+
+<!ENTITY junkClassification.label	"選別">
+<!ENTITY junkActions.label		"移動先と保存期間">
+
+<!ENTITY globalJunkPrefs.label		"共通の迷惑メール設定...">
+<!ENTITY globalJunkPrefs.accesskey	"G">

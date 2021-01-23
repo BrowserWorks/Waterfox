@@ -1,7 +1,6 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
-/* global Services, do_register_cleanup, do_test_pending */
 
 "use strict";
 
@@ -53,7 +52,7 @@ function MockFactory(aClass) {
 MockFactory.prototype = {
   createInstance(aOuter, aIID) {
     if (aOuter) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     }
     switch (typeof this._cls) {
       case "function":
@@ -65,7 +64,7 @@ MockFactory.prototype = {
     }
   },
   lockFactory(aLock) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   QueryInterface: ChromeUtils.generateQI([Ci.nsIFactory]),
 };

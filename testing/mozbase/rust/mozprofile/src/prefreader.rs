@@ -14,7 +14,7 @@ impl PrefReaderError {
     fn new(
         message: &'static str,
         position: Position,
-        parent: Option<Box<Error>>,
+        parent: Option<Box<dyn Error>>,
     ) -> PrefReaderError {
         PrefReaderError {
             message,
@@ -39,7 +39,7 @@ impl Error for PrefReaderError {
         self.message
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         match self.parent {
             None => None,
             Some(ref cause) => Some(cause.deref()),
@@ -143,7 +143,7 @@ impl<'a> PrefToken<'a> {
 pub struct PrefReaderError {
     message: &'static str,
     position: Position,
-    parent: Option<Box<Error>>,
+    parent: Option<Box<dyn Error>>,
 }
 
 struct TokenData<'a> {
@@ -356,11 +356,11 @@ impl<'a> PrefTokenizer<'a> {
         for _ in 0..hex_chars {
             match self.get_char() {
                 Some(x) => {
-                    value = value << 4;
+                    value <<= 4;
                     match x {
-                        '0'...'9' => value += x as u32 - '0' as u32,
-                        'a'...'f' => value += x as u32 - 'a' as u32,
-                        'A'...'F' => value += x as u32 - 'A' as u32,
+                        '0'..='9' => value += x as u32 - '0' as u32,
+                        'a'..='f' => value += x as u32 - 'a' as u32,
+                        'A'..='F' => value += x as u32 - 'A' as u32,
                         _ => {
                             return Err(PrefReaderError::new(
                                 "Unexpected character in escape",
@@ -594,7 +594,7 @@ impl<'a> PrefTokenizer<'a> {
                         self.unget_char();
                         TokenizerState::Bool
                     }
-                    '0'...'9' | '-' | '+' => {
+                    '0'..='9' | '-' | '+' => {
                         token_data.start(&self, TokenType::Int);
                         TokenizerState::Number
                     }
@@ -645,7 +645,7 @@ impl<'a> PrefTokenizer<'a> {
                     _ => TokenizerState::SingleQuotedString,
                 },
                 TokenizerState::Number => match c {
-                    '0'...'9' => TokenizerState::Number,
+                    '0'..='9' => TokenizerState::Number,
                     ')' | ',' => {
                         token_data.end(&self.data, self.pos)?;
                         self.unget_char();
@@ -1025,7 +1025,8 @@ pub fn serialize<W: Write>(prefs: &Preferences, output: &mut W) -> io::Result<()
             "sticky_pref("
         } else {
             "user_pref("
-        }.as_bytes();
+        }
+        .as_bytes();
         output.write_all(func)?;
         output.write_all(b"\"")?;
         output.write_all(escape_quote(key).as_bytes())?;

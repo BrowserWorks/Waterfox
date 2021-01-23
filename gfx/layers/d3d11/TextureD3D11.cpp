@@ -11,13 +11,15 @@
 #include "ReadbackManagerD3D11.h"
 #include "gfx2DGlue.h"
 #include "gfxContext.h"
-#include "gfxPrefs.h"
+#include "mozilla/StaticPrefs_gfx.h"
 #include "gfxWindowsPlatform.h"
+#include "MainThreadUtils.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/layers/CompositorBridgeChild.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/webrender/RenderD3D11TextureHostOGL.h"
 #include "mozilla/webrender/RenderThread.h"
 #include "mozilla/webrender/WebRenderAPI.h"
@@ -286,7 +288,8 @@ static void DestroyDrawTarget(RefPtr<DrawTarget>& aDT,
 
 D3D11TextureData::~D3D11TextureData() {
   if (mDrawTarget) {
-    if (PaintThread::Get() && gfxPrefs::Direct2DDestroyDTOnPaintThread()) {
+    if (PaintThread::Get() &&
+        StaticPrefs::gfx_direct2d_destroy_dt_on_paintthread()) {
       RefPtr<DrawTarget> dt = mDrawTarget;
       RefPtr<ID3D11Texture2D> tex = mTexture;
       RefPtr<Runnable> task = NS_NewRunnableFunction(
@@ -337,7 +340,7 @@ bool D3D11TextureData::PrepareDrawTargetInLock(OpenMode aMode) {
   }
   if (mNeedsClearWhite) {
     mDrawTarget->FillRect(Rect(0, 0, mSize.width, mSize.height),
-                          ColorPattern(Color(1.0, 1.0, 1.0, 1.0)));
+                          ColorPattern(DeviceColor(1.0, 1.0, 1.0, 1.0)));
     mNeedsClearWhite = false;
   }
 
@@ -354,7 +357,7 @@ void D3D11TextureData::FillInfo(TextureData::Info& aInfo) const {
   aInfo.hasSynchronization = mHasSynchronization;
 }
 
-void D3D11TextureData::SyncWithObject(SyncObjectClient* aSyncObject) {
+void D3D11TextureData::SyncWithObject(RefPtr<SyncObjectClient> aSyncObject) {
   if (!aSyncObject || mHasSynchronization) {
     // When we have per texture synchronization we sync using the keyed mutex.
     return;
@@ -362,7 +365,7 @@ void D3D11TextureData::SyncWithObject(SyncObjectClient* aSyncObject) {
 
   MOZ_ASSERT(aSyncObject->GetSyncType() == SyncObjectClient::SyncType::D3D11);
   SyncObjectD3D11Client* sync =
-      static_cast<SyncObjectD3D11Client*>(aSyncObject);
+      static_cast<SyncObjectD3D11Client*>(aSyncObject.get());
   sync->RegisterTexture(mTexture);
 }
 
@@ -381,7 +384,7 @@ bool D3D11TextureData::SerializeSpecific(
   }
 
   *aOutDesc = SurfaceDescriptorD3D10((WindowsHandle)sharedHandle, mFormat,
-                                     mSize, mYUVColorSpace);
+                                     mSize, mYUVColorSpace, mColorRange);
   return true;
 }
 
@@ -393,7 +396,8 @@ bool D3D11TextureData::Serialize(SurfaceDescriptor& aOutDescriptor) {
   return true;
 }
 
-void D3D11TextureData::GetSubDescriptor(GPUVideoSubDescriptor* const aOutDesc) {
+void D3D11TextureData::GetSubDescriptor(
+    RemoteDecoderVideoSubDescriptor* const aOutDesc) {
   SurfaceDescriptorD3D10 ret;
   if (!SerializeSpecific(&ret)) return;
 
@@ -553,12 +557,23 @@ void D3D11TextureData::GetDXGIResource(IDXGIResource** aOutResource) {
   mTexture->QueryInterface(aOutResource);
 }
 
+TextureFlags D3D11TextureData::GetTextureFlags() const {
+  TextureFlags flags = TextureFlags::NO_FLAGS;
+  // With WebRender, resource open happens asynchronously on RenderThread.
+  // During opening the resource on host side, TextureClient needs to be alive.
+  // With WAIT_HOST_USAGE_END, keep TextureClient alive during host side usage.
+  if (gfx::gfxVars::UseWebRender()) {
+    flags |= TextureFlags::WAIT_HOST_USAGE_END;
+  }
+  return flags;
+}
+
 DXGIYCbCrTextureData* DXGIYCbCrTextureData::Create(
     IDirect3DTexture9* aTextureY, IDirect3DTexture9* aTextureCb,
     IDirect3DTexture9* aTextureCr, HANDLE aHandleY, HANDLE aHandleCb,
     HANDLE aHandleCr, const gfx::IntSize& aSize, const gfx::IntSize& aSizeY,
     const gfx::IntSize& aSizeCbCr, gfx::ColorDepth aColorDepth,
-    YUVColorSpace aYUVColorSpace) {
+    YUVColorSpace aYUVColorSpace, gfx::ColorRange aColorRange) {
   if (!aHandleY || !aHandleCb || !aHandleCr || !aTextureY || !aTextureCb ||
       !aTextureCr) {
     return nullptr;
@@ -576,6 +591,7 @@ DXGIYCbCrTextureData* DXGIYCbCrTextureData::Create(
   texture->mSizeCbCr = aSizeCbCr;
   texture->mColorDepth = aColorDepth;
   texture->mYUVColorSpace = aYUVColorSpace;
+  texture->mColorRange = aColorRange;
 
   return texture;
 }
@@ -584,7 +600,8 @@ DXGIYCbCrTextureData* DXGIYCbCrTextureData::Create(
     ID3D11Texture2D* aTextureY, ID3D11Texture2D* aTextureCb,
     ID3D11Texture2D* aTextureCr, const gfx::IntSize& aSize,
     const gfx::IntSize& aSizeY, const gfx::IntSize& aSizeCbCr,
-    gfx::ColorDepth aColorDepth, YUVColorSpace aYUVColorSpace) {
+    gfx::ColorDepth aColorDepth, YUVColorSpace aYUVColorSpace,
+    gfx::ColorRange aColorRange) {
   if (!aTextureY || !aTextureCb || !aTextureCr) {
     return nullptr;
   }
@@ -636,6 +653,7 @@ DXGIYCbCrTextureData* DXGIYCbCrTextureData::Create(
   texture->mSizeCbCr = aSizeCbCr;
   texture->mColorDepth = aColorDepth;
   texture->mYUVColorSpace = aYUVColorSpace;
+  texture->mColorRange = aColorRange;
 
   return texture;
 }
@@ -653,7 +671,7 @@ void DXGIYCbCrTextureData::SerializeSpecific(
   *aOutDesc = SurfaceDescriptorDXGIYCbCr(
       (WindowsHandle)mHandles[0], (WindowsHandle)mHandles[1],
       (WindowsHandle)mHandles[2], mSize, mSizeY, mSizeCbCr, mColorDepth,
-      mYUVColorSpace);
+      mYUVColorSpace, mColorRange);
 }
 
 bool DXGIYCbCrTextureData::Serialize(SurfaceDescriptor& aOutDescriptor) {
@@ -665,7 +683,7 @@ bool DXGIYCbCrTextureData::Serialize(SurfaceDescriptor& aOutDescriptor) {
 }
 
 void DXGIYCbCrTextureData::GetSubDescriptor(
-    GPUVideoSubDescriptor* const aOutDesc) {
+    RemoteDecoderVideoSubDescriptor* const aOutDesc) {
   SurfaceDescriptorDXGIYCbCr desc;
   SerializeSpecific(&desc);
 
@@ -679,6 +697,17 @@ void DXGIYCbCrTextureData::Deallocate(LayersIPCChannel*) {
   mD3D11Textures[0] = nullptr;
   mD3D11Textures[1] = nullptr;
   mD3D11Textures[2] = nullptr;
+}
+
+TextureFlags DXGIYCbCrTextureData::GetTextureFlags() const {
+  TextureFlags flags = TextureFlags::DEALLOCATE_MAIN_THREAD;
+  // With WebRender, resource open happens asynchronously on RenderThread.
+  // During opening the resource on host side, TextureClient needs to be alive.
+  // With WAIT_HOST_USAGE_END, keep TextureClient alive during host side usage.
+  if (gfx::gfxVars::UseWebRender()) {
+    flags |= TextureFlags::WAIT_HOST_USAGE_END;
+  }
+  return flags;
 }
 
 already_AddRefed<TextureHost> CreateTextureHostD3D11(
@@ -704,7 +733,8 @@ already_AddRefed<TextureHost> CreateTextureHostD3D11(
 }
 
 already_AddRefed<DrawTarget> D3D11TextureData::BorrowDrawTarget() {
-  MOZ_ASSERT(NS_IsMainThread() || PaintThread::IsOnPaintThread());
+  MOZ_ASSERT(NS_IsMainThread() || PaintThread::IsOnPaintThread() ||
+             NS_IsInCanvasThreadOrWorker());
 
   if (!mDrawTarget && mTexture) {
     // This may return a null DrawTarget
@@ -736,6 +766,7 @@ DXGITextureHostD3D11::DXGITextureHostD3D11(
       mHandle(aDescriptor.handle()),
       mFormat(aDescriptor.format()),
       mYUVColorSpace(aDescriptor.yUVColorSpace()),
+      mColorRange(aDescriptor.colorRange()),
       mIsLocked(false) {}
 
 bool DXGITextureHostD3D11::EnsureTexture() {
@@ -957,7 +988,7 @@ void DXGITextureHostD3D11::CreateRenderTexture(
                                                  texture.forget());
 }
 
-uint32_t DXGITextureHostD3D11::NumSubTextures() const {
+uint32_t DXGITextureHostD3D11::NumSubTextures() {
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
     case gfx::SurfaceFormat::R8G8B8A8:
@@ -997,8 +1028,9 @@ void DXGITextureHostD3D11::PushResourceUpdates(
       MOZ_ASSERT(aImageKeys.length() == 1);
 
       wr::ImageDescriptor descriptor(mSize, GetFormat());
-      auto bufferType = wr::WrExternalImageBufferType::TextureExternalHandle;
-      (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+      auto imageType =
+          wr::ExternalImageType::TextureHandle(wr::TextureTarget::External);
+      (aResources.*method)(aImageKeys[0], descriptor, aExtID, imageType, 0);
       break;
     }
     case gfx::SurfaceFormat::P010:
@@ -1015,9 +1047,10 @@ void DXGITextureHostD3D11::PushResourceUpdates(
                                       mFormat == gfx::SurfaceFormat::NV12
                                           ? gfx::SurfaceFormat::R8G8
                                           : gfx::SurfaceFormat::R16G16);
-      auto bufferType = wr::WrExternalImageBufferType::TextureExternalHandle;
-      (aResources.*method)(aImageKeys[0], descriptor0, aExtID, bufferType, 0);
-      (aResources.*method)(aImageKeys[1], descriptor1, aExtID, bufferType, 1);
+      auto imageType =
+          wr::ExternalImageType::TextureHandle(wr::TextureTarget::External);
+      (aResources.*method)(aImageKeys[0], descriptor0, aExtID, imageType, 0);
+      (aResources.*method)(aImageKeys[1], descriptor1, aExtID, imageType, 1);
       break;
     }
     default: {
@@ -1029,7 +1062,8 @@ void DXGITextureHostD3D11::PushResourceUpdates(
 void DXGITextureHostD3D11::PushDisplayItems(
     wr::DisplayListBuilder& aBuilder, const wr::LayoutRect& aBounds,
     const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-    const Range<wr::ImageKey>& aImageKeys) {
+    const Range<wr::ImageKey>& aImageKeys,
+    const bool aPreferCompositorSurface) {
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
     case gfx::SurfaceFormat::R8G8B8A8:
@@ -1037,18 +1071,21 @@ void DXGITextureHostD3D11::PushDisplayItems(
     case gfx::SurfaceFormat::B8G8R8X8: {
       MOZ_ASSERT(aImageKeys.length() == 1);
       aBuilder.PushImage(aBounds, aClip, true, aFilter, aImageKeys[0],
-                         !(mFlags & TextureFlags::NON_PREMULTIPLIED));
+                         !(mFlags & TextureFlags::NON_PREMULTIPLIED),
+                         wr::ColorF{1.0f, 1.0f, 1.0f, 1.0f},
+                         aPreferCompositorSurface);
       break;
     }
     case gfx::SurfaceFormat::P010:
     case gfx::SurfaceFormat::P016:
     case gfx::SurfaceFormat::NV12: {
       MOZ_ASSERT(aImageKeys.length() == 2);
-      aBuilder.PushNV12Image(aBounds, aClip, true, aImageKeys[0], aImageKeys[1],
-                             GetFormat() == gfx::SurfaceFormat::NV12
-                                 ? wr::ColorDepth::Color8
-                                 : wr::ColorDepth::Color16,
-                             wr::ToWrYuvColorSpace(mYUVColorSpace), aFilter);
+      aBuilder.PushNV12Image(
+          aBounds, aClip, true, aImageKeys[0], aImageKeys[1],
+          GetFormat() == gfx::SurfaceFormat::NV12 ? wr::ColorDepth::Color8
+                                                  : wr::ColorDepth::Color16,
+          wr::ToWrYuvColorSpace(mYUVColorSpace),
+          wr::ToWrColorRange(mColorRange), aFilter, aPreferCompositorSurface);
       break;
     }
     default: {
@@ -1064,7 +1101,8 @@ DXGIYCbCrTextureHostD3D11::DXGIYCbCrTextureHostD3D11(
       mSizeCbCr(aDescriptor.sizeCbCr()),
       mIsLocked(false),
       mColorDepth(aDescriptor.colorDepth()),
-      mYUVColorSpace(aDescriptor.yUVColorSpace()) {
+      mYUVColorSpace(aDescriptor.yUVColorSpace()),
+      mColorRange(aDescriptor.colorRange()) {
   mHandles[0] = aDescriptor.handleY();
   mHandles[1] = aDescriptor.handleCb();
   mHandles[2] = aDescriptor.handleCr();
@@ -1215,7 +1253,7 @@ void DXGIYCbCrTextureHostD3D11::CreateRenderTexture(
                                                  texture.forget());
 }
 
-uint32_t DXGIYCbCrTextureHostD3D11::NumSubTextures() const {
+uint32_t DXGIYCbCrTextureHostD3D11::NumSubTextures() {
   // ycbcr use 3 sub textures.
   return 3;
 }
@@ -1239,27 +1277,29 @@ void DXGIYCbCrTextureHostD3D11::PushResourceUpdates(
   auto method = aOp == TextureHost::ADD_IMAGE
                     ? &wr::TransactionBuilder::AddExternalImage
                     : &wr::TransactionBuilder::UpdateExternalImage;
-  auto bufferType = wr::WrExternalImageBufferType::TextureExternalHandle;
+  auto imageType =
+      wr::ExternalImageType::TextureHandle(wr::TextureTarget::External);
 
   // y
   wr::ImageDescriptor descriptor0(mSize, gfx::SurfaceFormat::A8);
   // cb and cr
   wr::ImageDescriptor descriptor1(mSizeCbCr, gfx::SurfaceFormat::A8);
-  (aResources.*method)(aImageKeys[0], descriptor0, aExtID, bufferType, 0);
-  (aResources.*method)(aImageKeys[1], descriptor1, aExtID, bufferType, 1);
-  (aResources.*method)(aImageKeys[2], descriptor1, aExtID, bufferType, 2);
+  (aResources.*method)(aImageKeys[0], descriptor0, aExtID, imageType, 0);
+  (aResources.*method)(aImageKeys[1], descriptor1, aExtID, imageType, 1);
+  (aResources.*method)(aImageKeys[2], descriptor1, aExtID, imageType, 2);
 }
 
 void DXGIYCbCrTextureHostD3D11::PushDisplayItems(
     wr::DisplayListBuilder& aBuilder, const wr::LayoutRect& aBounds,
     const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-    const Range<wr::ImageKey>& aImageKeys) {
+    const Range<wr::ImageKey>& aImageKeys,
+    const bool aPreferCompositorSurface) {
   MOZ_ASSERT(aImageKeys.length() == 3);
 
-  aBuilder.PushYCbCrPlanarImage(aBounds, aClip, true, aImageKeys[0],
-                                aImageKeys[1], aImageKeys[2],
-                                wr::ToWrColorDepth(mColorDepth),
-                                wr::ToWrYuvColorSpace(mYUVColorSpace), aFilter);
+  aBuilder.PushYCbCrPlanarImage(
+      aBounds, aClip, true, aImageKeys[0], aImageKeys[1], aImageKeys[2],
+      wr::ToWrColorDepth(mColorDepth), wr::ToWrYuvColorSpace(mYUVColorSpace),
+      wr::ToWrColorRange(mColorRange), aFilter, aPreferCompositorSurface);
 }
 
 bool DXGIYCbCrTextureHostD3D11::AcquireTextureSource(

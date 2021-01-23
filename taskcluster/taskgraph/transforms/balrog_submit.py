@@ -7,14 +7,12 @@ Transform the per-locale balrog task into an actual task description.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.loader.single_dep import schema
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.schema import (
     optionally_keyed_by, resolve_keyed_by,
-)
-from taskgraph.util.scriptworker import (
-    get_balrog_server_scope, get_worker_type_for_scope
 )
 from taskgraph.util.treeherder import replace_group
 from taskgraph.transforms.task import task_description_schema
@@ -23,7 +21,7 @@ from voluptuous import Optional
 
 balrog_description_schema = schema.extend({
     # unique label to describe this balrog task, defaults to balrog-{dep.label}
-    Optional('label'): basestring,
+    Optional('label'): text_type,
 
 
     Optional(
@@ -111,16 +109,14 @@ def make_task_description(config, jobs):
             ],
         }]
 
-        server_scope = get_balrog_server_scope(config)
-
         task = {
             'label': label,
             'description': description,
-            'worker-type': get_worker_type_for_scope(config, server_scope),
+            'worker-type': 'balrog',
             'worker': {
                 'implementation': 'balrog',
                 'upstream-artifacts': upstream_artifacts,
-                'balrog-action': 'submit-locale',
+                'balrog-action': 'v2-submit-locale',
                 'suffixes': ['', '-No-WNP'] if job.get('update-no-wnp') else [''],
             },
             'dependencies': {'beetmover': dep_job.label},

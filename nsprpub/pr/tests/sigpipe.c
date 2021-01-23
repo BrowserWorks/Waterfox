@@ -60,12 +60,7 @@ static void Test(void *arg)
         fprintf(stderr, "write to broken pipe should have failed with EPIPE but returned %d\n", rv);
         exit(1);
     }
-#ifdef SYMBIAN
-    /* Have mercy on the unknown 142 errno, it seems ok */
-    if (errno != EPIPE && errno != 142) {
-#else
     if (errno != EPIPE) {
-#endif
         fprintf(stderr, "write to broken pipe failed but with wrong errno: %d\n", errno);
         exit(1);
     }
@@ -81,7 +76,7 @@ int main(int argc, char **argv)
     PR_SetError(0, 0);
 
     thread = PR_CreateThread(PR_USER_THREAD, Test, NULL, PR_PRIORITY_NORMAL,
-            PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
+                             PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
     if (thread == NULL) {
         fprintf(stderr, "PR_CreateThread failed\n");
         exit(1);

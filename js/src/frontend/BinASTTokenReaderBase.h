@@ -7,6 +7,10 @@
 #ifndef frontend_BinASTTokenReaderBase_h
 #define frontend_BinASTTokenReaderBase_h
 
+#include "mozilla/Variant.h"
+
+#include <string.h>
+
 #include "frontend/BinASTToken.h"
 #include "frontend/ErrorReporter.h"
 #include "frontend/TokenStream.h"
@@ -25,53 +29,58 @@ class MOZ_STACK_CLASS BinASTTokenReaderBase {
   template <typename T>
   using ErrorResult = mozilla::GenericErrorResult<T>;
 
-  // The context in which we read a token.
-  struct Context {
-    // Construct a context for a root node.
-    constexpr static Context topLevel() {
-      return Context(BinASTKind::_Null, 0, ElementOf::TaggedTuple);
-    }
+  // Part of variant `Context`
+  // Reading the root of the tree, before we enter any tagged tuple.
+  struct RootContext {};
 
-    Context arrayElement() const {
-      return Context(kind, fieldIndex, ElementOf::Array);
-    }
-
-    // Construct a context for a field of a tagged tuple.
-    constexpr static Context firstField(BinASTKind kind) {
-      return Context(kind, 0, ElementOf::TaggedTuple);
-    }
-
-    const Context operator++(int) {
-      MOZ_ASSERT(elementOf == ElementOf::TaggedTuple);
-      Context result = *this;
-      fieldIndex++;
-      return result;
-    }
-
-    // The kind of the tagged tuple containing the token.
-    //
-    // If the parent is the root, use `BinASTKind::_Null`.
-    BinASTKind kind;
-
-    // The index of the token as a field of the parent.
-    uint8_t fieldIndex;
-
-    enum class ElementOf {
-      // This token is an element of an array.
-      Array,
-
-      // This token is a field of a tagged tuple.
-      TaggedTuple,
-    };
-    ElementOf elementOf;
-
-    Context() = delete;
-
-   private:
-    constexpr Context(BinASTKind kind_, uint8_t fieldIndex_,
-                      ElementOf elementOf_)
-        : kind(kind_), fieldIndex(fieldIndex_), elementOf(elementOf_) {}
+  // Part of variant `Context`
+  // Reading an element from a list.
+  struct ListContext {
+    const BinASTInterfaceAndField position_;
+    const BinASTList content_;
+    ListContext(const BinASTInterfaceAndField position,
+                const BinASTList content)
+        : position_(position), content_(content) {}
   };
+
+  // Part of variant `Context`
+  // Reading a field from an interface.
+  struct FieldContext {
+    const BinASTInterfaceAndField position_;
+    explicit FieldContext(const BinASTInterfaceAndField position)
+        : position_(position) {}
+  };
+
+  // The context in which we read a token.
+  using FieldOrRootContext = mozilla::Variant<FieldContext, RootContext>;
+  using FieldOrListContext = mozilla::Variant<FieldContext, ListContext>;
+
+#ifdef DEBUG
+  // Utility matcher, used to print a `Context` during debugging.
+  struct ContextPrinter {
+    static void print(const char* text, const FieldOrRootContext& context) {
+      fprintf(stderr, "%s ", text);
+      context.match(ContextPrinter());
+      fprintf(stderr, "\n");
+    }
+    static void print(const char* text, const FieldOrListContext& context) {
+      fprintf(stderr, "%s ", text);
+      context.match(ContextPrinter());
+      fprintf(stderr, "\n");
+    }
+
+    void operator()(const RootContext&) { fprintf(stderr, "<Root context>"); }
+    void operator()(const ListContext& context) {
+      fprintf(stderr, "<List context>: %s => %s",
+              describeBinASTInterfaceAndField(context.position_),
+              describeBinASTList(context.content_));
+    }
+    void operator()(const FieldContext& context) {
+      fprintf(stderr, "<Field context>: %s",
+              describeBinASTInterfaceAndField(context.position_));
+    }
+  };
+#endif  // DEBUG
 
   // The information needed to skip a subtree.
   class SkippableSubTree {
@@ -97,7 +106,7 @@ class MOZ_STACK_CLASS BinASTTokenReaderBase {
    */
   TokenPos pos();
   TokenPos pos(size_t startOffset);
-  size_t offset() const;
+  size_t offset() const { return current_ - start_; }
 
   // Set the tokenizer's cursor in the file. Use with caution.
   void seek(size_t offset);
@@ -154,7 +163,7 @@ class MOZ_STACK_CLASS BinASTTokenReaderBase {
   template <size_t N>
   MOZ_MUST_USE JS::Result<Ok> readConst(const char (&value)[N]) {
     updateLatestKnownGood();
-    if (!matchConst(value, false)) {
+    if (MOZ_UNLIKELY(!matchConst(value, false))) {
       return raiseError("Could not find expected literal");
     }
     return Ok();
@@ -176,15 +185,14 @@ class MOZ_STACK_CLASS BinASTTokenReaderBase {
     MOZ_ASSERT(value[N - 1] == 0);
     MOZ_ASSERT(!hasRaisedError());
 
-    if (current_ + N - 1 > stop_) {
+    if (MOZ_UNLIKELY(current_ + N - 1 > stop_)) {
       return false;
     }
 
 #ifndef FUZZING
     // Perform lookup, without side-effects.
-    if (!std::equal(current_,
-                    current_ + N + (expectNul ? 0 : -1) /*implicit NUL*/,
-                    value)) {
+    if (memcmp(current_, value, N + (expectNul ? 0 : -1) /*implicit NUL*/) !=
+        0) {
       return false;
     }
 #endif

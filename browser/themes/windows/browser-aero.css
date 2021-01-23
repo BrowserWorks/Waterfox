@@ -9,8 +9,8 @@
 @media (-moz-os-version: windows-win7),
        (-moz-os-version: windows-win8) {
   @media (-moz-windows-classic: 0) {
-    #main-window[sizemode="normal"] > #navigator-toolbox > #titlebar > #toolbar-menubar:not([autohide="true"]) > #menubar-items,
-    #main-window[sizemode="normal"] > #navigator-toolbox > #titlebar > #toolbar-menubar[autohide="true"][inactive] + #TabsToolbar > .toolbar-items {
+    :root[sizemode="normal"] #toolbar-menubar:not([autohide="true"]) > #menubar-items,
+    :root[sizemode="normal"] #toolbar-menubar[autohide="true"][inactive] + #TabsToolbar > .toolbar-items {
       margin-top: 1px;
     }
     /**
@@ -26,12 +26,12 @@
      *   The margin is also unwanted in the maximized case, but we want
      *   it in the restored window case.
      */
-    #main-window[sizemode="normal"] .titlebar-buttonbox {
+    :root[sizemode="normal"] .titlebar-buttonbox {
       -moz-appearance: -moz-window-button-box;
     }
 
     @media (-moz-windows-compositor) {
-      #main-window[sizemode="maximized"] .titlebar-buttonbox {
+      :root[sizemode="maximized"] .titlebar-buttonbox {
         -moz-appearance: -moz-window-button-box-maximized;
       }
     }
@@ -128,8 +128,12 @@
         list-style-image: url(chrome://browser/skin/window-controls/maximize.svg);
       }
 
-      :root[sizemode="maximized"] .titlebar-max {
+      .titlebar-restore {
         list-style-image: url(chrome://browser/skin/window-controls/restore.svg);
+      }
+
+      .titlebar-restore > .toolbarbutton-icon:-moz-locale-dir(rtl) {
+        transform: scaleX(-1);
       }
 
       .titlebar-close {
@@ -145,7 +149,7 @@
       :root[lwtheme-image] .titlebar-max {
         list-style-image: url(chrome://browser/skin/window-controls/maximize-themes.svg);
       }
-      :root[lwtheme-image][sizemode="maximized"] .titlebar-max {
+      :root[lwtheme-image] .titlebar-restore {
         list-style-image: url(chrome://browser/skin/window-controls/restore-themes.svg);
       }
       :root[lwtheme-image] .titlebar-close {
@@ -164,8 +168,7 @@
       /* 175% dpi should result in the same device pixel sizes as 150% dpi. */
       @media (min-resolution: 1.70dppx) and (max-resolution: 1.95dppx) {
         .titlebar-button {
-          padding-left: 14.1px;
-          padding-right: 14.1px;
+          padding-inline: 14.1px;
         }
 
         .titlebar-button > .toolbarbutton-icon {
@@ -177,8 +180,7 @@
       /* 225% dpi should result in the same device pixel sizes as 200% dpi. */
       @media (min-resolution: 2.20dppx) and (max-resolution: 2.45dppx) {
         .titlebar-button {
-          padding-left: 15.3333px;
-          padding-right: 15.3333px;
+          padding-inline: 15.3333px;
         }
 
         .titlebar-button > .toolbarbutton-icon {
@@ -250,7 +252,7 @@
           list-style-image: url(chrome://browser/skin/window-controls/maximize-highcontrast.svg);
         }
 
-        :root[sizemode="maximized"] .titlebar-max {
+        .titlebar-restore {
           list-style-image: url(chrome://browser/skin/window-controls/restore-highcontrast.svg);
         }
 
@@ -288,7 +290,7 @@
   @media (-moz-os-version: windows-win8) {
     /* Artificially draw window borders that are covered by lwtheme, see bug 591930.
      * Borders for win7 are below, win10 doesn't need them. */
-    #main-window[sizemode="normal"] > #navigator-toolbox:-moz-lwtheme {
+    #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
       border-top: 1px solid @glassShadowColor@;
     }
   }
@@ -303,8 +305,7 @@
     /* Vertical toolbar border */
     #main-window[sizemode=normal] .browser-toolbar:not(.titlebar-color):not(:-moz-lwtheme),
     #main-window[sizemode=normal] .browser-toolbar:-moz-lwtheme {
-      border-left: 1px solid @glassShadowColor@;
-      border-right: 1px solid @glassShadowColor@;
+      border-inline: 1px solid @glassShadowColor@;
       background-clip: padding-box;
     }
 
@@ -321,8 +322,7 @@
 
     :root[sizemode=normal] #navigator-toolbox::after {
       box-shadow: 1px 0 0 @glassShadowColor@, -1px 0 0 @glassShadowColor@;
-      margin-left: 1px;
-      margin-right: 1px;
+      margin-inline: 1px;
     }
 
     #main-window[sizemode=normal] #browser-border-start,
@@ -362,13 +362,13 @@
 
   /* Artificially draw window borders that are covered by lwtheme, see bug 591930.
    * We use a different border for win8, and this is not necessary on win10+ */
-  #main-window[sizemode="normal"] > #navigator-toolbox:-moz-lwtheme {
+  #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
     border-top: 1px solid @glassActiveBorderColor@;
     padding-top: 1px;
     box-shadow: 0 1px 0 rgba(255,255,255,.6) inset;
   }
 
-  #main-window[sizemode="normal"] > #navigator-toolbox:-moz-lwtheme:-moz-window-inactive {
+  #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme:-moz-window-inactive {
     border-top-color: @glassInactiveBorderColor@;
   }
 }
@@ -384,13 +384,13 @@
     }
 
     /* Render a window top border for lwthemes: */
-    #main-window[tabsintitlebar][sizemode="normal"] > #navigator-toolbox:-moz-lwtheme {
+    #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
       background-image: linear-gradient(to bottom,
             @glassActiveBorderColor@ 0, @glassActiveBorderColor@ 1px,
             rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);
     }
 
-    #main-window[tabsintitlebar][sizemode="normal"] > #navigator-toolbox:-moz-lwtheme:-moz-window-inactive {
+    #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-lwtheme:-moz-window-inactive {
       background-image: linear-gradient(to bottom,
             @glassInactiveBorderColor@ 0, @glassInactiveBorderColor@ 1px,
             rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);

@@ -61,12 +61,13 @@ class nsRootBoxFrame final : public nsBoxFrame, public nsIPopupContainer {
 
   virtual nsPopupSetFrame* GetPopupSetFrame() override;
   virtual void SetPopupSetFrame(nsPopupSetFrame* aPopupSet) override;
-  virtual Element* GetDefaultTooltip() override;
-  virtual void SetDefaultTooltip(Element* aTooltip) override;
+  virtual dom::Element* GetDefaultTooltip() override;
+  virtual void SetDefaultTooltip(dom::Element* aTooltip) override;
 
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 
@@ -94,7 +95,7 @@ class nsRootBoxFrame final : public nsBoxFrame, public nsIPopupContainer {
   nsPopupSetFrame* mPopupSetFrame;
 
  protected:
-  Element* mDefaultTooltip;
+  dom::Element* mDefaultTooltip;
 };
 
 //----------------------------------------------------------------------
@@ -124,6 +125,7 @@ void nsRootBoxFrame::AppendFrames(ChildListID aListID,
 }
 
 void nsRootBoxFrame::InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                                  const nsLineList::iterator* aPrevFrameLine,
                                   nsFrameList& aFrameList) {
   // Because we only support a single child frame inserting is the same
   // as appending.
@@ -208,9 +210,9 @@ void nsRootBoxFrame::SetPopupSetFrame(nsPopupSetFrame* aPopupSet) {
   mPopupSetFrame = aPopupSet;
 }
 
-Element* nsRootBoxFrame::GetDefaultTooltip() { return mDefaultTooltip; }
+dom::Element* nsRootBoxFrame::GetDefaultTooltip() { return mDefaultTooltip; }
 
-void nsRootBoxFrame::SetDefaultTooltip(Element* aTooltip) {
+void nsRootBoxFrame::SetDefaultTooltip(dom::Element* aTooltip) {
   mDefaultTooltip = aTooltip;
 }
 

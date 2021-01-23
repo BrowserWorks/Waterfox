@@ -25,7 +25,7 @@ class HttpBackgroundChannelParent final : public PHttpBackgroundChannelParent {
  public:
   explicit HttpBackgroundChannelParent();
 
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(HttpBackgroundChannelParent)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(HttpBackgroundChannelParent, final)
 
   // Try to find associated HttpChannelParent with the same
   // channel Id.
@@ -50,44 +50,13 @@ class HttpBackgroundChannelParent final : public PHttpBackgroundChannelParent {
 
   // To send OnStopRequest message over background channel.
   bool OnStopRequest(const nsresult& aChannelStatus,
-                     const ResourceTimingStruct& aTiming,
-                     const nsHttpHeaderArray& aResponseTrailers);
-
-  // To send OnProgress message over background channel.
-  bool OnProgress(const int64_t& aProgress, const int64_t& aProgressMax);
-
-  // To send OnStatus message over background channel.
-  bool OnStatus(const nsresult& aStatus);
+                     const ResourceTimingStructArgs& aTiming,
+                     const nsHttpHeaderArray& aResponseTrailers,
+                     const nsTArray<ConsoleReportCollected>& aConsoleReports);
 
   // To send FlushedForDiversion and DivertMessages messages
   // over background channel.
   bool OnDiversion();
-
-  // To send NotifyChannelClassifierProtectionDisabled message over background
-  // channel.
-  bool OnNotifyChannelClassifierProtectionDisabled(uint32_t aAcceptedReason);
-
-  // To send NotifyCookieAllowed message over background channel.
-  bool OnNotifyCookieAllowed();
-
-  // To send NotifyCookieBlocked message over background channel.
-  bool OnNotifyCookieBlocked(uint32_t aRejectedReason);
-
-  // To send NotifyClassificationFlags message over background channel.
-  bool OnNotifyClassificationFlags(uint32_t aClassificationFlags,
-                                   bool aIsThirdParty);
-
-  // To send NotifyFlashPluginStateChanged message over background channel.
-  bool OnNotifyFlashPluginStateChanged(nsIHttpChannel::FlashPluginState aState);
-
-  // To send SetClassifierMatchedInfo message over background channel.
-  bool OnSetClassifierMatchedInfo(const nsACString& aList,
-                                  const nsACString& aProvider,
-                                  const nsACString& aFullHash);
-
-  // To send SetClassifierMatchedTrackingInfo message over background channel.
-  bool OnSetClassifierMatchedTrackingInfo(const nsACString& aLists,
-                                          const nsACString& aFullHashes);
 
  protected:
   void ActorDestroy(ActorDestroyReason aWhy) override;

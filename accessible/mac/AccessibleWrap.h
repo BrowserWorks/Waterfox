@@ -47,16 +47,10 @@ class AccessibleWrap : public Accessible {
 
   virtual void Shutdown() override;
 
-  virtual bool InsertChildAt(uint32_t aIdx, Accessible* aChild) override;
-  virtual bool RemoveChild(Accessible* aAccessible) override;
-
   virtual nsresult HandleAccEvent(AccEvent* aEvent) override;
 
  protected:
-  /**
-   * Return true if the parent doesn't have children to expose to AT.
-   */
-  bool AncestorIsFlat();
+  friend class xpcAccessibleMacInterface;
 
   /**
    * Get the native object. Create it if needed.
@@ -87,12 +81,6 @@ class AccessibleWrap : public Accessible {
    */
   bool mNativeInited;
 };
-
-#if defined(__OBJC__)
-void FireNativeEvent(mozAccessible* aNativeAcc, uint32_t aEventType);
-#else
-void FireNativeEvent(id aNativeAcc, uint32_t aEventType);
-#endif
 
 Class GetTypeFromRole(roles::Role aRole);
 

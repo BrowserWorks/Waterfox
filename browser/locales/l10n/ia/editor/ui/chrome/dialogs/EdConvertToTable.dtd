@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Converter a tabella">
+<!ENTITY instructions1.label   "Composer crea un nove linea in le tabella pro cata paragrapho in le selection.">
+<!ENTITY instructions2.label   "Eliger un character pro le separation in columnas del selection:">
+<!ENTITY commaRadio.label      "Virgula">
+<!ENTITY spaceRadio.label      "Spatio">
+<!ENTITY otherRadio.label      "Altere character:">
+<!ENTITY deleteCharCheck.label "Deler character separator">
+<!ENTITY collapseSpaces.label  "Ignorar le spatios extra">
+<!ENTITY collapseSpaces.tooltip "Converter le spatios adjacente in un sol separator">

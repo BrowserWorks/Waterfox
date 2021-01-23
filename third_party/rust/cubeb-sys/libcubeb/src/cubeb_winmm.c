@@ -4,7 +4,6 @@
  * This program is made available under an ISC-style license.  See the
  * accompanying file LICENSE for details.
  */
-#define __MSVCRT_VERSION__ 0x0700
 #undef WINVER
 #define WINVER 0x0501
 #undef WIN32_LEAN_AND_MEAN
@@ -1060,8 +1059,8 @@ static struct cubeb_ops const winmm_ops = {
   /*.stream_reset_default_device =*/ NULL,
   /*.stream_get_position =*/ winmm_stream_get_position,
   /*.stream_get_latency = */ winmm_stream_get_latency,
+  /*.stream_get_input_latency = */ NULL,
   /*.stream_set_volume =*/ winmm_stream_set_volume,
-  /*.stream_set_panning =*/ NULL,
   /*.stream_get_current_device =*/ NULL,
   /*.stream_device_destroy =*/ NULL,
   /*.stream_register_device_changed_callback=*/ NULL,

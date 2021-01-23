@@ -1,0 +1,289 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Ldi umuɣ">
+<!ENTITY navbarOverflow.label                "Ugar n yifecka…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Rzi iccer-a">
+<!ENTITY  unpinTab.label                     "Serreḥ i yiccer-a">
+
+<!ENTITY  listAllTabs.label      "Bder akk accaren">
+
+<!ENTITY tabCmd.label "Iccer amaynut">
+<!ENTITY openFileCmd.label "Ldi afaylu…">
+<!ENTITY printCmd.label "Siggez">
+
+<!ENTITY taskManagerCmd.label "Amsefrak n twuri">
+
+<!ENTITY menubarCmd.label "Afeggag n wumuɣ">
+<!ENTITY menubarCmd.accesskey "A">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Tunigin">
+<!ENTITY personalbarCmd.label "Afeggag n tecraḍ">
+<!ENTITY personalbarCmd.accesskey "d">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Ticraḍ n isebtar">
+<!ENTITY bookmarksToolbarItem.label "Iferdisen n ufeggag n tecraḍ">
+
+<!ENTITY fullScreenCmd.label "Agdil Ačaran">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Ffer asfaylu tugna deg tugna">
+<!ENTITY pictureInPictureHideToggle.accesskey "H">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; Iɣewwaṛen">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Qqen ibenk-nniḍen...">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Qqen ɣer &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Rmed &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; Tanfiwin">
+<!ENTITY fxa.menu.account.label "Amiḍan">
+<!ENTITY fxa.menu.settings.label "Iɣewwaṛen">
+<!ENTITY fxa.menu.accountSettings.label "Iɣewwaṛen n umiḍan">
+<!ENTITY fxa.menu.manageAccount2.label "Sefrek amiḍan">
+<!ENTITY fxa.menu.signOut.label "Ffeɣ…">
+<!ENTITY fxa.menu.setupSync.label "Swel &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Azen iccer imir imir i yal ibenk i ɣur teqqneḍ.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "atan tura deg ugdil ačaran">
+<!ENTITY fullscreenWarning.generic.label "Isemli-a, atan tura deg ugdil ačuṛan">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Ffeɣ seg ugdil ačuṛan (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Ffeɣ seg ugdil ačuṛan (Esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "Ɣur-s asenqed n usewwaṛ-inek. Sit ɣef tqeffalt n usenser akken ad teṭṭfeḍ asewwaṛ.">
+<!ENTITY pointerlockWarning.generic.label "Isemli-a yeṭṭef asewwaṛ-ik. Sit ɣef Esc akken ad teṭṭfeḍ asewwaṛ.">
+
+<!ENTITY showAllBookmarks2.label "Sken akk ticraḍ n yisebtar">
+<!ENTITY recentBookmarks.label "Wid ittwacerḍen melmi kan">
+<!ENTITY bookmarksToolbarChevron.tooltip "Sken ugar n tecraḍ n yisebtar">
+
+<!ENTITY printButton.label            "Siggez">
+<!ENTITY printButton.tooltip          "Siggez asebtar-a">
+
+
+<!ENTITY searchItem.title             "Nadi">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Asebter agejdan">
+<!ENTITY homeButton.defaultPage.tooltip "Asebter agejdan &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Ticraḍ n yisebtar">
+
+<!ENTITY bookmarksSubview.label             "Ticraḍ n yisebtar">
+<!ENTITY bookmarksMenuButton2.label         "Umuɣ n tecraḍ n yisebtar">
+<!ENTITY bookmarksMenuButton.other.label    "Ticraḍ-nniḍen">
+<!ENTITY bookmarksMenuButton.mobile.label   "Ticraḍ n yisebtar n uziraz">
+<!ENTITY viewBookmarksSidebar2.label        "Sken agalis n tecraḍ n yisebtar">
+<!ENTITY hideBookmarksSidebar.label         "Ffer ticraḍ n yisebtar">
+<!ENTITY viewBookmarksToolbar.label         "Sken afeggag n tecraḍ">
+<!ENTITY hideBookmarksToolbar.label         "Ffer afeggag n tecraḍ">
+<!ENTITY searchBookmarks.label              "Nadi ticraḍ n yisebtar">
+<!ENTITY bookmarkingTools.label             "Ifecka n tecraḍ">
+<!ENTITY addBookmarksMenu.label             "Rnu umuγ n tecraḍ n yisebtar ɣer ufeggag">
+<!ENTITY removeBookmarksMenu.label          "Kkes umuγ n tecraḍ n yisebtar seg ufeggag">
+
+<!ENTITY historyButton.label            "Azray">
+
+<!ENTITY downloads.label              "Isadaren">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Isadaren">
+<!ENTITY addons.label                 "Izegrar">
+
+<!ENTITY webDeveloperMenu.label       "Aneflay web">
+
+<!ENTITY newNavigatorCmd.label        "Asfaylu amaynut">
+<!ENTITY newPrivateWindow.label     "Asfaylu amaynut n tunigin tusligt">
+
+<!ENTITY editMenu.label         "Taẓrigt">
+<!ENTITY preferencesCmd2.label       "Iɣewwaren">
+<!ENTITY preferencesCmdUnix.label       "Ismenyifen">
+<!ENTITY logins.label                           "Inekcam d wawalen uffiren">
+
+<!ENTITY overflowCustomizeToolbar.label       "Sagen afeggag n yifecka…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "M">
+
+<!ENTITY historyMenu.label "Azray">
+<!ENTITY historyUndoMenu.label "Accaren imedlen melmi kan">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Isfuyla imedlen melmi kan">
+
+<!ENTITY appMenuHistory.showAll.label "Sken akk azray">
+<!ENTITY appMenuHistory.clearRecent.label "Sfeḍ azray-ik n melmi kan…">
+<!ENTITY appMenuHistory.restoreSession.label "Err-d tiɣimit yezrin">
+<!ENTITY appMenuHistory.viewSidebar.label "Sken agalis adisan n umazray">
+<!ENTITY appMenuHistory.hideSidebar.label "Ffer agalis adisan n umazray">
+<!ENTITY appMenuHistory.recentHistory.label "Azray n melmi kan">
+<!ENTITY appMenuHelp.label "Tallelt">
+
+<!ENTITY appMenuRemoteTabs.label "Accaren yemtawin">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Ulac accaren yeldin">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Sken ugar">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Sken ugar n waccaren seg yibenk-a">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Sken kullec">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Sken akk accaren seg yibenk-a">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Rmed amtawi n yiccer akken ad d-tsekneḍ tabdart n waccaren seg yibenkan-ik-nniḍen.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Tebɣid ad twaliḍ da accaren-ik seg yibenkan-nniḍen?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Ldi amtawi n Ismenyifen">
+<!ENTITY appMenuRemoteTabs.welcome.label "Wali tabdart n waccaren seg yibenkan-ik-nniḍen.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Amiḍan-ik yeḥwaǧ ad ittusenqed.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Qqen ɣer &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Rmed &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Sefrek ibenkan…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Sken agalis adisan n waccaren yemtawin">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Ffer agalis adisan n waccaren yemtawin">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Qqen ibenk-nniḍen">
+
+<!ENTITY appMenuRecentHighlights.label "Izwilen n melmi kan">
+
+<!ENTITY customizeMenu.addToToolbar.label "Rnu ɣer ufeggag n yifecka">
+<!ENTITY customizeMenu.addToToolbar.accesskey "R">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Rnu ɣer wumuɣ n tfuli">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "F">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Kkes seg wumuɣ n tfuli">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "S">
+<!ENTITY customizeMenu.removeFromToolbar.label "Kkes seg ufeggag n yifecka">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "K">
+<!ENTITY customizeMenu.addMoreItems.label "Rnu ugar n yiferdisen…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "n">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Ugar">
+
+<!ENTITY contentSearchSubmit.tooltip  "Azen anadi">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Nadi">
+<!ENTITY searchIcon.tooltip           "Nadi">
+
+<!ENTITY openLinkCmdInTab.accesskey   "d">
+
+<!ENTITY pageAction.copyLink.label    "Nɣel aseɣwen">
+
+<!ENTITY saveToPocketCmd.label        "Sekles asebter ɣer Pocket">
+<!ENTITY pocketMenuitem.label         "Sken tabdart n Pocket">
+
+<!ENTITY emailPageCmd.label           "Azen s yimayl aseɣwen ɣeṛ usebter…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Semɣer">
+
+<!ENTITY sidebarCloseButton.tooltip     "Mdel agalis adisan">
+
+<!ENTITY quitApplicationCmdWin2.label       "Ffeɣ">
+<!ENTITY quitApplicationCmdWin2.accesskey   "F">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Anef &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Ffeɣ">
+<!ENTITY quitApplicationCmd.accesskey   "F">
+<!ENTITY quitApplicationCmdMac2.label   "Anef &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Ẓreg ismenyifen n usewḥel n yisfuyla udhimen…">
+<!ENTITY editPopupSettings.label "Ẓreg ismenyifen n usewḥel n yisfuyla udhimen…">
+<!ENTITY editPopupSettings.accesskey "r">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Nadi deg usebter-a…">
+
+<!ENTITY spellAddDictionaries.label "Rnu isegzawalen ...">
+<!ENTITY spellAddDictionaries.accesskey "n">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Accaren n yiminig">
+
+<!ENTITY syncBrand.shortName.label    "Mtawi">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Ffer s wudem awurman">
+
+
+<!ENTITY uiTour.infoPanel.close "Mdel">
+
+<!ENTITY panicButton.thankyou.msg1                "Azray-ik n melmi kan yesfeḍ.">
+<!ENTITY panicButton.thankyou.msg2                "Tunigin igerrzen!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Tanemmirt!">
+
+<!ENTITY updateAvailable.panelUI.label "Sider lqem n &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Sider anɣel amaynut n &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Ur tezmireḍ ara ad tgeḍ aleqqem-nniḍen">
+<!ENTITY updateRestart.panelUI.label2 "Sker i tikkelt-nniḍen akken ad tleqqmeḍ&brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Amtawi n yibenkan…">
+
+<!ENTITY pageAction.shareUrl.label "Bḍu">
+<!ENTITY pageAction.shareMore.label "Ugar…">
+
+<!ENTITY libraryButton.tooltip "Sken azray, ticraḍ yettwakelsen, d wayen-nniḍen">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Timahilin n unekcum remdent">

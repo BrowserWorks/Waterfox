@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "გამართეთ თქვენი არსებული ელფოსტის მისამართი">
+<!ENTITY emailWizard.caption             "გამოიყენეთ თქვენი არსებული ელფოსტის მისამართი">
+<!ENTITY name.label                      "თქვენი სახელი:">
+<!ENTITY name.accesskey                  "ს">
+<!ENTITY fullname.placeholder            "თქვენი სრული სახელი">
+<!ENTITY name.text                       "სახელი, რომლებსაც სხვები დაინახავენ">
+<!ENTITY name.error                      "გთხოვთ მიუთითოთ თქვენი სახელი">
+<!ENTITY email.label                     "ელფოსტის მისამართი:">
+<!ENTITY email.accesskey                 "ე">
+<!ENTITY email3.placeholder              "თქვენი ელფოსტის მისამართი">
+<!ENTITY email.text                      "თქვენი მიმდინარე ელფოსტის მისამართი">
+<!ENTITY email.error                     "ელფოსტის არასწორი მისამართი">
+<!ENTITY password.label                  "პაროლი:">
+<!ENTITY password.accesskey              "პ">
+<!ENTITY password.placeholder            "პაროლი">
+<!ENTITY password.text                   "სურვილისამებრ, გამოიყენება მხოლოდ სახელის ამოსაცნობად">
+<!ENTITY password.toggle                 "პაროლის გამოჩენა/დამალვა">
+<!ENTITY rememberPassword.label          "პაროლის დამახსოვრება">
+<!ENTITY rememberPassword.accesskey      "ვ">
+<!ENTITY usernameEx.label                "თქვენი შესვლის მონაცემები:">
+<!ENTITY usernameEx.accesskey            "შ">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Domain-ანგარიშის მონაცემები">
+
+<!ENTITY protocol.label                  "ოქმი:">
+<!ENTITY imapLong.label                  "IMAP (ვებსაქაღალდეები)">
+<!ENTITY pop3Long.label                  "POP3 (ფოსტის შენახვა თქვენს კომპიუტერში)">
+
+<!ENTITY manualConfigTable.summary       "სერვერის პარამეტრები">
+<!ENTITY incoming.label                  "შემომავალი:">
+<!ENTITY incomingColumn.label            "მიღებული">
+<!ENTITY outgoing.label                  "გამავალი:">
+<!ENTITY outgoingColumn.label            "გაგზავნილი">
+<!ENTITY username.label                  "სახელი:">
+<!ENTITY serverRow.label                 "სერვერი:">
+<!ENTITY portRow.label                   "პორტი:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "აუთენტიფიკაცია">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "თვითამოცნობა">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "არა">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange-სერვერი:">
+
+<!ENTITY advancedSetup.label             "სრულად გამართვა">
+<!ENTITY advancedSetup.accesskey         "გ">
+<!ENTITY cancel.label                    "გაუქმება">
+<!ENTITY cancel.accesskey                "უ">
+<!ENTITY continue.label                  "გარძელება">
+<!ENTITY continue.accesskey              "ძ">
+<!ENTITY stop.label                      "შეწყვეტა">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "ხელახლა შემოწმება">
+<!ENTITY half-manual-test.accesskey      "წ">
+<!ENTITY manual-config.label             "ხელით გამართვა…">
+<!ENTITY manual-config.accesskey         "ხ">
+<!ENTITY open-provisioner.label          "ელფოსტის ახალი მისამართის მიღება…">
+<!ENTITY open-provisioner.accesskey      "რ">
+
+
+<!ENTITY get-help.label                  "დახმარების მიღება">
+<!ENTITY get-help.accesskey              "დ">
+
+
+<!ENTITY warning.label                   "გაფრთხილება!">
+<!ENTITY incomingSettings.label          "შემომავალის პარამეტრები:">
+<!ENTITY outgoingSettings.label          "გამავალის პარამეტრები:">
+<!ENTITY technicaldetails.label          "ტექნიკური დეტალები">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "ვაცნობიერებ საფრთხეებს.">
+<!ENTITY confirmWarning.accesskey        "ვ">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "მზადაა">
+<!ENTITY doneAccount.accesskey           "მ">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "პარამეტრების შეცვლა">
+<!ENTITY changeSettings.accesskey        "პ">
+
+<!ENTITY contactYourProvider.description "&brandShortName; პროგრამა საშუალებას მოგცემთ ისარგებლოთ ელფოსტის ამ ანგარიშით, თუმცა მკაცრად რეკომენდებულია მიმართოთ და აცნობოთ ადმინს ან ელფოსტის პროვაიდერს ამ კავშირის არცთუ უსაფრთხო პარამეტრების შესახებ. დაწვრილებით იხილეთ Thunderbird FAQ.">
+
+<!ENTITY insecureServer.tooltip.title    "გაფრთხილება! ეს სერვერი უსაფრთხო არაა.">
+<!ENTITY insecureServer.tooltip.details  "დეტალებისთვის დაწკაპეთ წრე.">
+
+<!ENTITY insecureUnencrypted.description "ელფოსტა გაიგზავნება როგორც ტექსტი და მისი წაკითხვა სხვა პირების მიერ შესაძლებელია. &brandShortName; პროგრამა საშუალებას მოგცემთ ისარგებლოთ ელფოსტის ამ ანგარიშით, მაგრამ მკაცრად რეკომენდებულია სთხოვოთ თქვენი ელფოსტის პროვაიდერს გამართოს სერვერი უსაფრთხო კავშირით მუშაობის შესაძლებლობით.">
+<!ENTITY insecureSelfSigned.description  "სერვერი იყენებს სერტიფიკატს, რომლის ნდობაც არ შეიძლება.  ამგვარად, დარწმუნებული ვერ ვიქნებით, რომ ვიღაც არ აკონტროლებს კავშირს &brandShortName; პროგრამასა და თქვენს სერვერს შორის. &brandShortName; პროგრამა საშუალებას მოგცემთ ისარგებლოთ ელფოსტის ამ ანგარიშით, მაგრამ მკაცრად რეკომენდებულია სთხოვოთ თქვენი ელფოსტის პროვაიდერს ისარგებლოს სანდო სერტიფიკატით.">
+<!ENTITY secureServer.description        "გილოცავთ! ეს სერვერი უსაფრთხოა.">

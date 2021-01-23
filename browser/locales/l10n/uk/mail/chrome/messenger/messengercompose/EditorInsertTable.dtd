@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Вставка таблиці">
+
+<!ENTITY size.label "Розмір">
+<!ENTITY numRowsEditField.label "Рядків:">
+<!ENTITY numRowsEditField.accessKey "я">
+<!ENTITY numColumnsEditField.label "Стовпців:">
+<!ENTITY numColumnsEditField.accessKey "т">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "Ш">
+<!ENTITY borderEditField.label "Рамка:">
+<!ENTITY borderEditField.accessKey "Р">
+<!ENTITY borderEditField.tooltip "Введіть ширину рамки або нуль (0), якщо бажаєте зробити рамку невидимою">
+<!ENTITY pixels.label "пікселів">

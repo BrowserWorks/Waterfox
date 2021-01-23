@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -44,14 +43,14 @@ const afterIframeAdded = {
       getCookieId(
         "sc1",
         "sectest1.example.org",
-        "/browser/devtools/server/tests/browser/"
+        "/browser/devtools/server/tests/browser"
       ),
     ],
     "http://sectest1.example.org": [
       getCookieId(
         "sc1",
         "sectest1.example.org",
-        "/browser/devtools/server/tests/browser/"
+        "/browser/devtools/server/tests/browser"
       ),
     ],
   },
@@ -100,7 +99,7 @@ add_task(async function() {
   forceCollections();
   await target.destroy();
   forceCollections();
-  DebuggerServer.destroy();
+  DevToolsServer.destroy();
   forceCollections();
 });
 
@@ -138,9 +137,9 @@ async function testAddIframe(front) {
 
   const update = front.once("stores-update");
 
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    ALT_DOMAIN_SECURED,
+    [ALT_DOMAIN_SECURED],
     secured => {
       const doc = content.document;
 
@@ -161,7 +160,7 @@ async function testRemoveIframe(front) {
 
   const update = front.once("stores-update");
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, () => {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], () => {
     for (const iframe of content.document.querySelectorAll("iframe")) {
       if (iframe.src.startsWith("http:")) {
         iframe.remove();

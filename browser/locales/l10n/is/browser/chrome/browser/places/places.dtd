@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Safn">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Breyta">
+<!ENTITY organize.accesskey    "B">
+<!ENTITY organize.tooltip      "Sýsla með bókamerki">
+
+<!ENTITY file.close.label               "Loka">
+<!ENTITY file.close.accesskey           "L">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Sýn">
+<!ENTITY views.accesskey                "S">
+<!ENTITY views.tooltip                  "Breyta sýn">
+<!ENTITY view.columns.label             "Sýna dálka">
+<!ENTITY view.columns.accesskey         "d">
+<!ENTITY view.sort.label                "Raða">
+<!ENTITY view.sort.accesskey            "R">
+<!ENTITY view.unsorted.label            "Óraðað">
+<!ENTITY view.unsorted.accesskey        "a">
+<!ENTITY view.sortAscending.label       "A > Ö röðun">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ö > A röðun">
+<!ENTITY view.sortDescending.accesskey  "Ö">
+
+<!ENTITY importBookmarksFromHTML.label     "Flytja inn bókamerki frá HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Flytja út bókamerki sem HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "e">
+<!ENTITY importOtherBrowser.label          "Flytja inn gögn frá öðrum vafra…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Afrita…">
+<!ENTITY cmd.backup.accesskey           "A">
+<!ENTITY cmd.restore2.label             "Endurheimta">
+<!ENTITY cmd.restore2.accesskey         "r">
+<!ENTITY cmd.restoreFromFile.label      "Veldu skrá…">
+<!ENTITY cmd.restoreFromFile.accesskey  "V">
+
+<!ENTITY col.name.label          "Nafn">
+<!ENTITY col.tags.label          "Tög">
+<!ENTITY col.url.label           "Staðsetning">
+<!ENTITY col.mostrecentvisit.label "Nýjasta heimsókn">
+<!ENTITY col.visitcount.label    "Fjöldi heimsókna">
+<!ENTITY col.dateadded.label     "Bætt við">
+<!ENTITY col.lastmodified.label  "Síðast breytt">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Flytja inn og afrita">
+<!ENTITY maintenance.accesskey  "i">
+<!ENTITY maintenance.tooltip    "Flytja inn og afrita bókamerki">
+
+<!ENTITY backButton.tooltip  "Til baka">
+
+<!ENTITY forwardButton.tooltip  "Fara áfram">
+
+<!ENTITY detailsPane.selectAnItemText.description "Veldu hlut til að skoða og breyta">
+

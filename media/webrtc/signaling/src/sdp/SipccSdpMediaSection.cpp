@@ -7,7 +7,7 @@
 #include "signaling/src/sdp/SipccSdpMediaSection.h"
 
 #include <ostream>
-#include "signaling/src/sdp/SdpErrorHolder.h"
+#include "signaling/src/sdp/SdpParser.h"
 
 #ifdef CRLF
 #  undef CRLF
@@ -57,7 +57,7 @@ SdpDirectionAttribute SipccSdpMediaSection::GetDirectionAttribute() const {
 }
 
 bool SipccSdpMediaSection::Load(sdp_t* sdp, uint16_t level,
-                                SdpErrorHolder& errorHolder) {
+                                InternalResults& results) {
   switch (sdp_get_media_type(sdp, level)) {
     case SDP_MEDIA_AUDIO:
       mMediaType = kAudio;
@@ -73,8 +73,8 @@ bool SipccSdpMediaSection::Load(sdp_t* sdp, uint16_t level,
       break;
 
     default:
-      errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                                "Unsupported media section type");
+      results.AddParseError(sdp_get_media_line_number(sdp, level),
+                            "Unsupported media section type");
       return false;
   }
 
@@ -84,38 +84,38 @@ bool SipccSdpMediaSection::Load(sdp_t* sdp, uint16_t level,
     // SDP_INVALID_VALUE (ie; -2) is used when there is no port count. :(
     mPortCount = 0;
   } else if (pc > static_cast<int32_t>(UINT16_MAX) || pc < 0) {
-    errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                              "Invalid port count");
+    results.AddParseError(sdp_get_media_line_number(sdp, level),
+                          "Invalid port count");
     return false;
   } else {
     mPortCount = pc;
   }
 
-  if (!LoadProtocol(sdp, level, errorHolder)) {
+  if (!LoadProtocol(sdp, level, results)) {
     return false;
   }
 
-  if (!LoadFormats(sdp, level, errorHolder)) {
+  if (!LoadFormats(sdp, level, results)) {
     return false;
   }
 
-  if (!mAttributeList.Load(sdp, level, errorHolder)) {
+  if (!mAttributeList.Load(sdp, level, results)) {
     return false;
   }
 
-  if (!ValidateSimulcast(sdp, level, errorHolder)) {
+  if (!ValidateSimulcast(sdp, level, results)) {
     return false;
   }
 
-  if (!mBandwidths.Load(sdp, level, errorHolder)) {
+  if (!mBandwidths.Load(sdp, level, results)) {
     return false;
   }
 
-  return LoadConnection(sdp, level, errorHolder);
+  return LoadConnection(sdp, level, results);
 }
 
 bool SipccSdpMediaSection::LoadProtocol(sdp_t* sdp, uint16_t level,
-                                        SdpErrorHolder& errorHolder) {
+                                        InternalResults& results) {
   switch (sdp_get_media_transport(sdp, level)) {
     case SDP_TRANSPORT_RTPAVP:
       mProtocol = kRtpAvp;
@@ -135,14 +135,8 @@ bool SipccSdpMediaSection::LoadProtocol(sdp_t* sdp, uint16_t level,
     case SDP_TRANSPORT_UDPTLSRTPSAVPF:
       mProtocol = kUdpTlsRtpSavpf;
       break;
-    case SDP_TRANSPORT_TCPTLSRTPSAVP:
-      mProtocol = kTcpTlsRtpSavp;
-      break;
     case SDP_TRANSPORT_TCPDTLSRTPSAVP:
       mProtocol = kTcpDtlsRtpSavp;
-      break;
-    case SDP_TRANSPORT_TCPTLSRTPSAVPF:
-      mProtocol = kTcpTlsRtpSavpf;
       break;
     case SDP_TRANSPORT_TCPDTLSRTPSAVPF:
       mProtocol = kTcpDtlsRtpSavpf;
@@ -158,15 +152,15 @@ bool SipccSdpMediaSection::LoadProtocol(sdp_t* sdp, uint16_t level,
       break;
 
     default:
-      errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                                "Unsupported media transport type");
+      results.AddParseError(sdp_get_media_line_number(sdp, level),
+                            "Unsupported media transport type");
       return false;
   }
   return true;
 }
 
 bool SipccSdpMediaSection::LoadFormats(sdp_t* sdp, uint16_t level,
-                                       SdpErrorHolder& errorHolder) {
+                                       InternalResults& results) {
   sdp_media_e mtype = sdp_get_media_type(sdp, level);
 
   if (mtype == SDP_MEDIA_APPLICATION) {
@@ -191,8 +185,8 @@ bool SipccSdpMediaSection::LoadFormats(sdp_t* sdp, uint16_t level,
           sdp_get_media_payload_type(sdp, level, i + 1, &indicator);
 
       if (GET_DYN_PAYLOAD_TYPE_VALUE(ptype) > UINT8_MAX) {
-        errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                                  "Format is too large");
+        results.AddParseError(sdp_get_media_line_number(sdp, level),
+                              "Format is too large");
         return false;
       }
 
@@ -210,19 +204,19 @@ bool SipccSdpMediaSection::LoadFormats(sdp_t* sdp, uint16_t level,
   return true;
 }
 
-bool SipccSdpMediaSection::ValidateSimulcast(
-    sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder) const {
+bool SipccSdpMediaSection::ValidateSimulcast(sdp_t* sdp, uint16_t level,
+                                             InternalResults& results) const {
   if (!GetAttributeList().HasAttribute(SdpAttribute::kSimulcastAttribute)) {
     return true;
   }
 
   const SdpSimulcastAttribute& simulcast(GetAttributeList().GetSimulcast());
   if (!ValidateSimulcastVersions(sdp, level, simulcast.sendVersions, sdp::kSend,
-                                 errorHolder)) {
+                                 results)) {
     return false;
   }
   if (!ValidateSimulcastVersions(sdp, level, simulcast.recvVersions, sdp::kRecv,
-                                 errorHolder)) {
+                                 results)) {
     return false;
   }
   return true;
@@ -230,34 +224,24 @@ bool SipccSdpMediaSection::ValidateSimulcast(
 
 bool SipccSdpMediaSection::ValidateSimulcastVersions(
     sdp_t* sdp, uint16_t level, const SdpSimulcastAttribute::Versions& versions,
-    sdp::Direction direction, SdpErrorHolder& errorHolder) const {
+    sdp::Direction direction, InternalResults& results) const {
   if (versions.IsSet() && !(direction & GetDirectionAttribute().mValue)) {
-    errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                              "simulcast attribute has a direction that is "
-                              "inconsistent with the direction of this media "
-                              "section.");
+    results.AddParseError(sdp_get_media_line_number(sdp, level),
+                          "simulcast attribute has a direction that is "
+                          "inconsistent with the direction of this media "
+                          "section.");
     return false;
   }
 
   for (const SdpSimulcastAttribute::Version& version : versions) {
-    for (const std::string& id : version.choices) {
-      if (versions.type == SdpSimulcastAttribute::Versions::kRid) {
-        const SdpRidAttributeList::Rid* ridAttr = FindRid(id);
-        if (!ridAttr || (ridAttr->direction != direction)) {
-          std::ostringstream os;
-          os << "No rid attribute for \'" << id << "\'";
-          errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                                    os.str());
-          return false;
-        }
-      } else if (versions.type == SdpSimulcastAttribute::Versions::kPt) {
-        if (std::find(mFormats.begin(), mFormats.end(), id) == mFormats.end()) {
-          std::ostringstream os;
-          os << "No pt for \'" << id << "\'";
-          errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                                    os.str());
-          return false;
-        }
+    for (const SdpSimulcastAttribute::Encoding& encoding : version.choices) {
+      const SdpRidAttributeList::Rid* ridAttr = FindRid(encoding.rid);
+      if (!ridAttr || (ridAttr->direction != direction)) {
+        std::ostringstream os;
+        os << "No rid attribute for \'" << encoding.rid << "\'";
+        results.AddParseError(sdp_get_media_line_number(sdp, level), os.str());
+        results.AddParseError(sdp_get_media_line_number(sdp, level), os.str());
+        return false;
       }
     }
   }
@@ -265,20 +249,20 @@ bool SipccSdpMediaSection::ValidateSimulcastVersions(
 }
 
 bool SipccSdpMediaSection::LoadConnection(sdp_t* sdp, uint16_t level,
-                                          SdpErrorHolder& errorHolder) {
+                                          InternalResults& results) {
   if (!sdp_connection_valid(sdp, level)) {
     level = SDP_SESSION_LEVEL;
     if (!sdp_connection_valid(sdp, level)) {
-      errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                                "Missing c= line");
+      results.AddParseError(sdp_get_media_line_number(sdp, level),
+                            "Missing c= line");
       return false;
     }
   }
 
   sdp_nettype_e type = sdp_get_conn_nettype(sdp, level);
   if (type != SDP_NT_INTERNET) {
-    errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                              "Unsupported network type");
+    results.AddParseError(sdp_get_media_line_number(sdp, level),
+                          "Unsupported network type");
     return false;
   }
 
@@ -291,8 +275,8 @@ bool SipccSdpMediaSection::LoadConnection(sdp_t* sdp, uint16_t level,
       addrType = sdp::kIPv6;
       break;
     default:
-      errorHolder.AddParseError(sdp_get_media_line_number(sdp, level),
-                                "Unsupported address type");
+      results.AddParseError(sdp_get_media_line_number(sdp, level),
+                            "Unsupported address type");
       return false;
   }
 

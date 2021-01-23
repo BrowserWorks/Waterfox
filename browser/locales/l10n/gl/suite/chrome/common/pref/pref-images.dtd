@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Imaxes">
+
+<!ENTITY imageBlocking.label            "Política de aceptación de imaxes">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Especifique como &brandShortName; xestiona as imaxes.">
+
+<!ENTITY loadAllImagesRadio.label       "Cargar todas as imaxes">
+<!ENTITY loadAllImagesRadio.accesskey   "g">
+<!ENTITY loadOrgImagesRadio.label       "Só cargar as imaxes que proveñan do servidor orixinal">
+<!ENTITY loadOrgImagesRadio.accesskey   "n">
+<!ENTITY loadNoImagesRadio.label        "Non cargar ningunha imaxe">
+<!ENTITY loadNoImagesRadio.accesskey    "o">
+<!ENTITY viewPermissions.label          "Xestionar permisos">
+<!ENTITY viewPermissions.accesskey      "p">
+<!ENTITY animLoopingTitle.label         "Deberían repetirse as imaxes animadas">
+<!ENTITY animLoopAsSpecified.label      "Tantas veces como especifique a imaxe">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "Unha vez">
+<!ENTITY animLoopOnce.accesskey         "U">
+<!ENTITY animLoopNever.label            "Nunca">
+<!ENTITY animLoopNever.accesskey        "N">

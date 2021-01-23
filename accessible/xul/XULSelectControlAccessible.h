@@ -8,7 +8,6 @@
 #define mozilla_a11y_XULSelectControlAccessible_h__
 
 #include "AccessibleWrap.h"
-#include "nsIDOMXULSelectCntrlEl.h"
 
 namespace mozilla {
 namespace a11y {
@@ -39,7 +38,7 @@ class XULSelectControlAccessible : public AccessibleWrap {
   virtual void SetCurrentItem(const Accessible* aItem) override;
 
  protected:
-  RefPtr<Element> mSelectControl;
+  RefPtr<dom::Element> mSelectControl;
 };
 
 }  // namespace a11y

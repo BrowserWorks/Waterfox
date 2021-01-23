@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Airíonna an Limistéir Théacs">
+
+<!ENTITY Settings.label "Socruithe">
+
+<!ENTITY TextAreaName.label "Ainm Réimse:">
+<!ENTITY TextAreaName.accessKey "R">
+<!ENTITY TextAreaRows.label "Rónna:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Colúin:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "Léamh Amháin">
+<!ENTITY TextAreaReadOnly.accessKey "A">
+<!ENTITY TextAreaDisabled.label "Díchumasaithe">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "Innéacs Cluaisín:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "Eochair Rochtana:">
+<!ENTITY TextAreaAccessKey.accessKey "c">
+<!ENTITY InitialText.label "Téacs ar dTús:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Mód Timfhillte:">
+<!ENTITY TextAreaWrap.accessKey "M">
+<!ENTITY WrapDefault.value "Réamhshocrú">
+<!ENTITY WrapOff.value "As">
+<!ENTITY WrapHard.value "Crua">
+<!ENTITY WrapSoft.value "Bog">
+<!ENTITY WrapPhysical.value "Fisiceach">
+<!ENTITY WrapVirtual.value "Fíorúil">

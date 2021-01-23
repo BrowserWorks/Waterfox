@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "جست‌وجو">
+
+<!ENTITY newPref.namePlaceholder       "نام">
+
+<!ENTITY newPref.valueBoolean          "بولی">
+<!ENTITY newPref.valueString           "رشته">
+<!ENTITY newPref.valueInteger          "عدد صحیح">
+
+<!ENTITY newPref.stringPlaceholder     "یک رشته وارد کنید">
+<!ENTITY newPref.numberPlaceholder     "یک عدد وارد کنید">
+
+<!ENTITY newPref.toggleButton          "تغییر وضعیت">
+<!ENTITY newPref.cancelButton          "انصراف">
+
+<!ENTITY contextMenu.copyPrefName      "رونوشت  از نام">
+<!ENTITY contextMenu.copyPrefValue     "رونوشت  از مقدار">

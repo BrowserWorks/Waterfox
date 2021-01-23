@@ -8,7 +8,7 @@
  */
 
 add_task(async function() {
-  let { monitor } = await initNetMonitor(SIMPLE_URL);
+  let { monitor } = await initNetMonitor(SIMPLE_URL, { requestCount: 1 });
   const Actions = monitor.panelWin.windowRequire(
     "devtools/client/netmonitor/src/actions/index"
   );
@@ -99,17 +99,16 @@ add_task(async function() {
       }
 
       const currentValue = getPrefs()[name];
-      const firstValue = prefsToCheck[name].firstValue;
-      const validateValue = prefsToCheck[name].validateValue;
+      const { firstValue, validateValue } = prefsToCheck[name];
 
       is(
-        firstValue.toSource(),
-        currentValue.toSource(),
+        firstValue.toString(),
+        currentValue.toString(),
         "Pref " + name + " should be equal to first value: " + currentValue
       );
       is(
-        validateValue().toSource(),
-        currentValue.toSource(),
+        validateValue().toString(),
+        currentValue.toString(),
         "Pref " + name + " should validate: " + currentValue
       );
     }
@@ -127,33 +126,31 @@ add_task(async function() {
       }
 
       const currentValue = getPrefs()[name];
-      const firstValue = prefsToCheck[name].firstValue;
-      const newValue = prefsToCheck[name].newValue;
-      const validateValue = prefsToCheck[name].validateValue;
+      const { firstValue, newValue, validateValue } = prefsToCheck[name];
       const modFrontend = prefsToCheck[name].modifyFrontend;
 
       modFrontend(newValue);
       info("Modified UI element affecting " + name + " to: " + newValue);
 
       is(
-        firstValue.toSource(),
-        currentValue.toSource(),
+        firstValue.toString(),
+        currentValue.toString(),
         "Pref " +
           name +
           " should still be equal to first value: " +
           currentValue
       );
       isnot(
-        newValue.toSource(),
-        currentValue.toSource(),
+        newValue.toString(),
+        currentValue.toString(),
         "Pref " +
           name +
           " should't yet be equal to second value: " +
           currentValue
       );
       is(
-        validateValue().toSource(),
-        newValue.toSource(),
+        validateValue().toString(),
+        newValue.toString(),
         "The UI element affecting " + name + " should validate: " + newValue
       );
     }
@@ -171,23 +168,21 @@ add_task(async function() {
       }
 
       const currentValue = getPrefs()[name];
-      const firstValue = prefsToCheck[name].firstValue;
-      const newValue = prefsToCheck[name].newValue;
-      const validateValue = prefsToCheck[name].validateValue;
+      const { firstValue, newValue, validateValue } = prefsToCheck[name];
 
       isnot(
-        firstValue.toSource(),
-        currentValue.toSource(),
+        firstValue.toString(),
+        currentValue.toString(),
         "Pref " + name + " should't be equal to first value: " + currentValue
       );
       is(
-        newValue.toSource(),
-        currentValue.toSource(),
+        newValue.toString(),
+        currentValue.toString(),
         "Pref " + name + " should now be equal to second value: " + currentValue
       );
       is(
-        validateValue().toSource(),
-        newValue.toSource(),
+        validateValue().toString(),
+        newValue.toString(),
         "The UI element affecting " + name + " should validate: " + newValue
       );
     }
@@ -205,47 +200,45 @@ add_task(async function() {
       }
 
       const currentValue = getPrefs()[name];
-      const firstValue = prefsToCheck[name].firstValue;
-      const newValue = prefsToCheck[name].newValue;
-      const validateValue = prefsToCheck[name].validateValue;
+      const { firstValue, newValue, validateValue } = prefsToCheck[name];
       const modFrontend = prefsToCheck[name].modifyFrontend;
 
       modFrontend(firstValue);
       info("Modified UI element affecting " + name + " to: " + firstValue);
 
       isnot(
-        firstValue.toSource(),
-        currentValue.toSource(),
+        firstValue.toString(),
+        currentValue.toString(),
         "Pref " +
           name +
           " should't yet be equal to first value: " +
           currentValue
       );
       is(
-        newValue.toSource(),
-        currentValue.toSource(),
+        newValue.toString(),
+        currentValue.toString(),
         "Pref " +
           name +
           " should still be equal to second value: " +
           currentValue
       );
       is(
-        validateValue().toSource(),
-        firstValue.toSource(),
+        validateValue().toString(),
+        firstValue.toString(),
         "The UI element affecting " + name + " should validate: " + firstValue
       );
     }
   }
 
   async function restartNetMonitorAndSetupEnv() {
-    const newMonitor = await restartNetMonitor(monitor);
+    const newMonitor = await restartNetMonitor(monitor, { requestCount: 1 });
     monitor = newMonitor.monitor;
 
     const networkEvent = waitForNetworkEvents(monitor, 1);
     newMonitor.tab.linkedBrowser.reload();
     await networkEvent;
 
-    const wait = waitForDOM(getDoc(), ".network-details-panel");
+    const wait = waitForDOM(getDoc(), ".network-details-bar");
     getStore().dispatch(Actions.toggleNetworkDetails());
     await wait;
   }
@@ -278,6 +271,11 @@ add_task(async function() {
     info("Moving toolbox to the right...");
 
     await monitor.toolbox.switchHost("right");
+
+    // Switching hosts is not correctly waiting when DevTools run in content frame
+    // See Bug 1571421.
+    await wait(1000);
+
     info("Testing prefs reload for a right host.");
     storeFirstPrefValues();
 
@@ -303,6 +301,11 @@ add_task(async function() {
     info("Moving toolbox into a window...");
 
     await monitor.toolbox.switchHost("window");
+
+    // Switching hosts is not correctly waiting when DevTools run in content frame
+    // See Bug 1571421.
+    await wait(1000);
+
     info("Testing prefs reload for a window host.");
     storeFirstPrefValues();
 

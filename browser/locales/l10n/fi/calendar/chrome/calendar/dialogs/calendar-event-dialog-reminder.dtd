@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Aseta muistutus">
+<!ENTITY reminder.add.label                                "Lisää">
+<!ENTITY reminder.add.accesskey                            "L">
+<!ENTITY reminder.remove.label                             "Poista">
+<!ENTITY reminder.remove.accesskey                         "P">
+
+<!ENTITY reminder.reminderDetails.label                    "Muistutuksen lisätiedot">
+<!ENTITY reminder.action.label                             "Valitse muistutustapa">
+
+<!ENTITY reminder.action.alert.label                       "Näytä ilmoitus">
+<!ENTITY reminder.action.email.label                       "Lähetä sähköpostiviesti">
+
+<!ENTITY alarm.units.minutes                               "minuuttia" >
+<!ENTITY alarm.units.hours                                 "tuntia" >
+<!ENTITY alarm.units.days                                  "päivää" >

@@ -4,6 +4,8 @@
 // Test that domain eviction occurs when the cookies per base domain limit is
 // reached, and that expired cookies are evicted before live cookies.
 
+"use strict";
+
 var test_generator = do_run_test();
 
 function run_test() {
@@ -56,7 +58,7 @@ function* do_run_test() {
   setCookies("tasty.horse.radish", 50, futureExpiry);
   Assert.equal(countCookies("horse.radish", "horse.radish"), 50);
 
-  for (let cookie of Services.cookiemgr.enumerator) {
+  for (let cookie of Services.cookiemgr.cookies) {
     if (cookie.host == "horse.radish") {
       do_throw("cookies not evicted by lastAccessed order");
     }
@@ -75,7 +77,7 @@ function* do_run_test() {
     false,
     shortExpiry,
     {},
-    Ci.nsICookie2.SAMESITE_UNSET
+    Ci.nsICookie.SAMESITE_NONE
   );
   do_timeout(2100, continue_test);
   yield;
@@ -91,7 +93,7 @@ function* do_run_test() {
     false,
     futureExpiry,
     {},
-    Ci.nsICookie2.SAMESITE_UNSET
+    Ci.nsICookie.SAMESITE_NONE
   );
   Assert.equal(countCookies("captchart.com", "captchart.com"), 50);
 
@@ -118,22 +120,22 @@ function setCookies(aHost, aNumber, aExpiry) {
       false,
       aExpiry,
       {},
-      Ci.nsICookie2.SAMESITE_UNSET
+      Ci.nsICookie.SAMESITE_NONE
     );
   }
 }
 
 // count how many cookies are within domain 'aBaseDomain', using three
 // independent interface methods on nsICookieManager:
-// 1) 'enumerator', an enumerator of all cookies;
+// 1) 'cookies', an array of all cookies;
 // 2) 'countCookiesFromHost', which returns the number of cookies within the
 //    base domain of 'aHost',
-// 3) 'getCookiesFromHost', which returns an enumerator of 2).
+// 3) 'getCookiesFromHost', which returns an array of 2).
 function countCookies(aBaseDomain, aHost) {
-  // count how many cookies are within domain 'aBaseDomain' using the cookie
-  // enumerator.
+  // count how many cookies are within domain 'aBaseDomain' using the cookies
+  // array.
   let cookies = [];
-  for (let cookie of Services.cookiemgr.enumerator) {
+  for (let cookie of Services.cookiemgr.cookies) {
     if (
       cookie.host.length >= aBaseDomain.length &&
       cookie.host.slice(cookie.host.length - aBaseDomain.length) == aBaseDomain
@@ -165,7 +167,7 @@ function countCookies(aBaseDomain, aHost) {
       }
 
       if (!found) {
-        do_throw("cookie " + cookie.name + " not found in master enumerator");
+        do_throw("cookie " + cookie.name + " not found in master cookies");
       }
     } else {
       do_throw(

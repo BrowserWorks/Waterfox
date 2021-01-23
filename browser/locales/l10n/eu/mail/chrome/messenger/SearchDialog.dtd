@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Bilatu mezuak hemen:">
+<!ENTITY searchHeading.accesskey     "t">
+<!ENTITY searchSubfolders.label      "Bilatu azpikarpetetan">
+<!ENTITY searchSubfolders.accesskey  "l">
+<!ENTITY searchOnServer.label        "Exekutatu bilaketa zerbitzarian">
+<!ENTITY searchOnServer.accesskey    "x">
+<!ENTITY resetButton.label           "Garbitu">
+<!ENTITY resetButton.accesskey       "G">
+<!ENTITY openButton.label            "Ireki">
+<!ENTITY openButton.accesskey        "I">
+<!ENTITY deleteButton.label          "Ezabatu">
+<!ENTITY deleteButton.accesskey      "E">
+<!ENTITY searchDialogTitle.label     "Bilatu mezuak">
+<!ENTITY results.label               "Emaitzak">
+<!ENTITY moveButton.label            "Eraman hona">
+<!ENTITY moveButton.accesskey        "h">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Ireki karpetan">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "Gorde bilaketa-karpeta bezala">
+<!ENTITY saveAsVFButton.accesskey    "o">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Bilatu hemen:">
+<!ENTITY abSearchHeading.accesskey   "B">
+<!ENTITY propertiesButton.label      "Propietateak">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Idatzi">
+<!ENTITY composeButton.accesskey     "I">
+<!ENTITY deleteCardButton.label      "Ezabatu">
+<!ENTITY deleteCardButton.accesskey  "E">
+<!ENTITY abSearchDialogTitle.label   "Bilaketa aurreratua helbide-liburuan">
+

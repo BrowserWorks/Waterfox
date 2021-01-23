@@ -5,11 +5,12 @@
 # This module produces a JSON file that provides basic build info and
 # configuration metadata.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
+import json
 import os
 import re
-import json
+import six
 
 
 def build_dict(config, env=os.environ):
@@ -58,7 +59,7 @@ def build_dict(config, env=os.environ):
     # processor
     p = substs["TARGET_CPU"]
     # do some slight massaging for some values
-    #TODO: retain specific values in case someone wants them?
+    # TODO: retain specific values in case someone wants them?
     if p.startswith("arm"):
         p = "arm"
     elif re.match("i[3-9]86", p):
@@ -74,10 +75,12 @@ def build_dict(config, env=os.environ):
 
     d['debug'] = substs.get('MOZ_DEBUG') == '1'
     d['nightly_build'] = substs.get('NIGHTLY_BUILD') == '1'
+    d['early_beta_or_earlier'] = substs.get('EARLY_BETA_OR_EARLIER') == '1'
     d['release_or_beta'] = substs.get('RELEASE_OR_BETA') == '1'
     d['devedition'] = substs.get('MOZ_DEV_EDITION') == '1'
     d['pgo'] = substs.get('MOZ_PGO') == '1'
     d['crashreporter'] = bool(substs.get('MOZ_CRASHREPORTER'))
+    d['normandy'] = substs.get('MOZ_NORMANDY') == '1'
     d['datareporting'] = bool(substs.get('MOZ_DATA_REPORTING'))
     d['healthreport'] = substs.get('MOZ_SERVICES_HEALTHREPORT') == '1'
     d['sync'] = substs.get('MOZ_SERVICES_SYNC') == '1'
@@ -90,7 +93,6 @@ def build_dict(config, env=os.environ):
     d['tests_enabled'] = substs.get('ENABLE_TESTS') == "1"
     d['bin_suffix'] = substs.get('BIN_SUFFIX', '')
     d['require_signing'] = substs.get('MOZ_REQUIRE_SIGNING') == '1'
-    d['allow_legacy_extensions'] = substs.get('MOZ_ALLOW_LEGACY_EXTENSIONS') == '1'
     d['official'] = bool(substs.get('MOZILLA_OFFICIAL'))
     d['updater'] = substs.get('MOZ_UPDATER') == '1'
     d['artifact'] = substs.get('MOZ_ARTIFACT_BUILDS') == '1'
@@ -115,6 +117,10 @@ def build_dict(config, env=os.environ):
         if d['buildapp'] == 'mobile/android':
             if d['processor'] == 'x86':
                 return 'android-x86'
+            if d['processor'] == 'x86_64':
+                return 'android-x86_64'
+            if d['processor'] == 'aarch64':
+                return 'android-aarch64'
             return 'android-arm'
 
     def guess_buildtype():
@@ -130,7 +136,7 @@ def build_dict(config, env=os.environ):
         d['platform_guess'] = guess_platform()
         d['buildtype_guess'] = guess_buildtype()
 
-    if 'buildapp' in d and d['buildapp'] == 'mobile/android' and 'MOZ_ANDROID_MIN_SDK_VERSION' in substs:
+    if d.get('buildapp', '') == 'mobile/android' and 'MOZ_ANDROID_MIN_SDK_VERSION' in substs:
         d['android_min_sdk'] = substs['MOZ_ANDROID_MIN_SDK_VERSION']
 
     return d
@@ -138,13 +144,13 @@ def build_dict(config, env=os.environ):
 
 def write_mozinfo(file, config, env=os.environ):
     """Write JSON data about the configuration specified in config and an
-    environment variable dict to |file|, which may be a filename or file-like
+    environment variable dict to ``|file|``, which may be a filename or file-like
     object.
     See build_dict for information about what  environment variables are used,
     and what keys are produced.
     """
     build_conf = build_dict(config, env)
-    if isinstance(file, basestring):
-        file = open(file, 'wb')
+    if isinstance(file, six.text_type):
+        file = open(file, 'wt')
 
     json.dump(build_conf, file, sort_keys=True, indent=4)

@@ -33,6 +33,7 @@ class nsIFrame;
 namespace mozilla {
 class TimeStamp;
 class SVGImageContext;
+struct MediaFeatureChange;
 }
 
 namespace mozilla {
@@ -106,6 +107,16 @@ interface imgIContainer : nsISupports
   [notxpcom, nostdcall] readonly attribute MaybeAspectRatio intrinsicRatio;
 
   /**
+   * The x coordinate of the image's hotspot, or 0 if there is no hotspot.
+   */
+  readonly attribute int32_t hotspotX;
+
+  /**
+   * The y coordinate of the image's hotspot, or 0 if there is no hotspot.
+   */
+  readonly attribute int32_t hotspotY;
+
+  /**
    * Given a size at which this image will be displayed, and the drawing
    * parameters affecting how it will be drawn, returns the image size which
    * should be used to draw to produce the highest quality result. This is the
@@ -130,6 +141,7 @@ interface imgIContainer : nsISupports
     */
   const unsigned short TYPE_RASTER = 0;
   const unsigned short TYPE_VECTOR = 1;
+  const unsigned short TYPE_REQUEST = 2;
 
   /**
    * The type of this image (one of the TYPE_* values above).
@@ -163,7 +175,7 @@ interface imgIContainer : nsISupports
    * be performed only if ImageLib estimates it can be completed very quickly.
    *
    * FLAG_ASYNC_NOTIFY: Send notifications asynchronously, even if we decode
-   * synchronously beause of FLAG_SYNC_DECODE or FLAG_SYNC_DECODE_IF_FAST.
+   * synchronously because of FLAG_SYNC_DECODE or FLAG_SYNC_DECODE_IF_FAST.
    *
    * FLAG_DECODE_NO_PREMULTIPLY_ALPHA: Do not premultiply alpha if
    * it's not already premultiplied in the image data.
@@ -215,6 +227,9 @@ interface imgIContainer : nsISupports
    * FLAG_AVOID_REDECODE_FOR_SIZE: If there is already a raster surface
    * available for this image, but it is not the same size as requested, skip
    * starting a new decode for said size.
+   *
+   * FLAG_DECODE_TO_SRGB_COLORSPACE: Instead of converting the colorspace to
+   * the display's colorspace, use sRGB.
    */
   const unsigned long FLAG_NONE                            = 0x0;
   const unsigned long FLAG_SYNC_DECODE                     = 0x1;
@@ -229,12 +244,20 @@ interface imgIContainer : nsISupports
   const unsigned long FLAG_FORCE_PRESERVEASPECTRATIO_NONE  = 0x200;
   const unsigned long FLAG_FORCE_UNIFORM_SCALING           = 0x400;
   const unsigned long FLAG_AVOID_REDECODE_FOR_SIZE         = 0x800;
+  const unsigned long FLAG_DECODE_TO_SRGB_COLORSPACE       = 0x1000;
 
   /**
    * A constant specifying the default set of decode flags (i.e., the default
    * values for FLAG_DECODE_*).
    */
   const unsigned long DECODE_FLAGS_DEFAULT = 0;
+
+  /**
+   * A constant specifying the decode flags recommended to be used when
+   * re-encoding an image, or with the clipboard.
+   */
+  const unsigned long DECODE_FLAGS_FOR_REENCODE =
+      FLAG_DECODE_NO_PREMULTIPLY_ALPHA | FLAG_DECODE_TO_SRGB_COLORSPACE;
 
   /**
     * Constants for specifying various "special" frames.
@@ -500,13 +523,22 @@ interface imgIContainer : nsISupports
    *
    * @param aFlags Flags of the FLAG_* variety.
    * @param aWhichFrame Frame specifier of the FRAME_* variety.
-   * @return True there is a surface that satisfies the request and it is
-   *         fully decoded, else false.
+   * @return DECODE_SURFACE_AVAILABLE if is a surface that satisfies the
+   *         request and it is fully decoded.
+   *         DECODE_REQUESTED if we requested a decode.
+   *         DECODE_REQUEST_FAILED if we failed to request a decode. This means
+   *         that either there is an error in the image or we cannot allocate a
+   *         surface that big.
    */
-  [noscript, notxpcom] boolean requestDecodeWithResult(in uint32_t aFlags, in uint32_t aWhichFrame);
+   cenum DecodeResult : 8 {
+     DECODE_SURFACE_AVAILABLE = 0,
+     DECODE_REQUESTED = 1,
+     DECODE_REQUEST_FAILED = 2
+   };
+  [noscript, notxpcom] imgIContainer_DecodeResult requestDecodeWithResult(in uint32_t aFlags, in uint32_t aWhichFrame);
 
 %{C++
-  bool RequestDecodeWithResult(uint32_t aFlags) {
+  DecodeResult RequestDecodeWithResult(uint32_t aFlags) {
     return RequestDecodeWithResult(aFlags, FRAME_CURRENT);
   }
 %}
@@ -601,6 +633,12 @@ interface imgIContainer : nsISupports
   [notxpcom] Orientation getOrientation();
 
   /*
+   * Returns whether the image handles the orientation returned by
+   * getOrientation() itself.
+   */
+  [notxpcom] bool handledOrientation();
+
+  /*
    * Returns the delay, in ms, between the first and second frame. If this
    * returns 0, there is no delay between first and second frame (i.e., this
    * image could render differently whenever it draws).
@@ -646,6 +684,14 @@ interface imgIContainer : nsISupports
   [noscript, notxpcom] void propagateUseCounters(in Document aDocument);
 
   %{C++
+  /*
+   * Called when media feature values that apply to all documents (such as
+   * those based on system metrics) have changed.  If this image is a type
+   * that can respond to media queries (i.e., an SVG image), this function
+   * is overridden to handle restyling and invalidating the image.
+   */
+  virtual void MediaFeatureValuesChangedAllDocuments(const mozilla::MediaFeatureChange& aChange) {}
+
   /*
    * Get the set of sizes the image can decode to natively.
    */

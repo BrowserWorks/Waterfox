@@ -843,14 +843,14 @@ class WindowBase {
   }
 
   /**
-   * @property {nsIXULWindow} xulWindow
-   *        The nsIXULWindow object for this browser window.
+   * @property {nsIAppWindow} appWindow
+   *        The nsIAppWindow object for this browser window.
    *        @readonly
    */
-  get xulWindow() {
+  get appWindow() {
     return this.window.docShell.treeOwner
       .QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIXULWindow);
+      .getInterface(Ci.nsIAppWindow);
   }
 
   /**
@@ -876,7 +876,7 @@ class WindowBase {
    *        @readonly
    */
   get type() {
-    let { chromeFlags } = this.xulWindow;
+    let { chromeFlags } = this.appWindow;
 
     if (chromeFlags & Ci.nsIWebBrowserChrome.CHROME_OPENAS_DIALOG) {
       return "popup";
@@ -2068,6 +2068,23 @@ class WindowManagerBase {
     if (this.extension.canAccessWindow(window)) {
       return this._windows.get(window);
     }
+  }
+
+  /**
+   * Returns whether this window can be accessed by the extension in the given
+   * context.
+   *
+   * @param {DOMWindow} window
+   *        The browser window that is being tested
+   * @param {BaseContext|null} context
+   *        The extension context for which this test is being performed.
+   * @returns {boolean}
+   */
+  canAccessWindow(window, context) {
+    return (
+      (context && context.canAccessWindow(window)) ||
+      this.extension.canAccessWindow(window)
+    );
   }
 
   // The JSDoc validator does not support @returns tags in abstract functions or

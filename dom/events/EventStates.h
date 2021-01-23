@@ -228,11 +228,12 @@ class EventStates {
 #define NS_EVENT_STATE_INRANGE NS_DEFINE_EVENT_STATE_MACRO(27)
 // Content value is out-of-range.
 #define NS_EVENT_STATE_OUTOFRANGE NS_DEFINE_EVENT_STATE_MACRO(28)
-// These two are temporary (see bug 302188)
 // Content is read-only.
-#define NS_EVENT_STATE_MOZ_READONLY NS_DEFINE_EVENT_STATE_MACRO(29)
+// TODO(emilio): This is always the inverse of READWRITE. With some style system
+// work we could remove one of the two bits.
+#define NS_EVENT_STATE_READONLY NS_DEFINE_EVENT_STATE_MACRO(29)
 // Content is editable.
-#define NS_EVENT_STATE_MOZ_READWRITE NS_DEFINE_EVENT_STATE_MACRO(30)
+#define NS_EVENT_STATE_READWRITE NS_DEFINE_EVENT_STATE_MACRO(30)
 // Content is the default one (meaning depends of the context).
 #define NS_EVENT_STATE_DEFAULT NS_DEFINE_EVENT_STATE_MACRO(31)
 // Content is a submit control and the form isn't valid.
@@ -287,9 +288,12 @@ class EventStates {
 #define NS_EVENT_STATE_AUTOFILL NS_DEFINE_EVENT_STATE_MACRO(50)
 // Element is filled with preview data by Autofill feature.
 #define NS_EVENT_STATE_AUTOFILL_PREVIEW NS_DEFINE_EVENT_STATE_MACRO(51)
-
-// Event state that is used for values that need to be parsed but do nothing.
-#define NS_EVENT_STATE_IGNORE NS_DEFINE_EVENT_STATE_MACRO(63)
+// Element matches the :focus-visible pseudo-class.
+//
+// TODO(emilio): We should eventually unify this and FOCUSRING.
+#define NS_EVENT_STATE_FOCUS_VISIBLE NS_DEFINE_EVENT_STATE_MACRO(52)
+// Modal <dialog> element
+#define NS_EVENT_STATE_MODAL_DIALOG NS_DEFINE_EVENT_STATE_MACRO(53)
 
 /**
  * NOTE: do not go over 63 without updating EventStates::InternalType!
@@ -324,7 +328,8 @@ class EventStates {
    REQUIRED_STATES | NS_EVENT_STATE_ACTIVE | NS_EVENT_STATE_DEFINED |          \
    NS_EVENT_STATE_DRAGOVER | NS_EVENT_STATE_FOCUS | NS_EVENT_STATE_FOCUSRING | \
    NS_EVENT_STATE_FOCUS_WITHIN | NS_EVENT_STATE_FULLSCREEN |                   \
-   NS_EVENT_STATE_HOVER | NS_EVENT_STATE_URLTARGET)
+   NS_EVENT_STATE_HOVER | NS_EVENT_STATE_URLTARGET |                           \
+   NS_EVENT_STATE_FOCUS_VISIBLE | NS_EVENT_STATE_MODAL_DIALOG)
 
 #define INTRINSIC_STATES (~EXTERNALLY_MANAGED_STATES)
 

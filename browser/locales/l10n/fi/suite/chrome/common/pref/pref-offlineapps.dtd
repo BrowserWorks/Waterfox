@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Verkkosovellukset yhteydettömässä tilassa">
+<!ENTITY pref.offlineCache.caption          "Verkkosovellukset ja käyttäjätiedot yhteydettömässä tilassa">
+
+<!ENTITY clearOfflineAppCache.label         "Tyhjennä">
+<!ENTITY clearOfflineAppCache.accesskey     "T">
+
+<!ENTITY offlineAlwaysAllow.label           "Salli kaikkien verkkosivujen tallentaa dataa yhteydettömässä tilassa käytettäväksi">
+<!ENTITY offlineAlwaysAllow.accesskey       "S">
+<!ENTITY offlineExplicit.label              "Salli tämä vain verkkosivuille, joilla on lupa siihen">
+<!ENTITY offlineExplicit.accesskey          "v">
+<!ENTITY offlineNotifyAsk.label             "Ilmoita, kun verkkosivu pyytää lupaa tallentaa dataa yhteydettömässä tilassa käytettäväksi">
+<!ENTITY offlineNotifyAsk.accesskey         "I">
+<!ENTITY offlineNotifyPermissions.label     "Muokkaa oikeuksia">
+<!ENTITY offlineNotifyPermissions.accesskey "M">
+
+<!ENTITY offlineAppsUsage.label             "Seuraavat sivustot ovat tallentaneet dataa yhteydettömässä tilassa käytettäväksi:">
+<!ENTITY offlineAppsListRemove.label        "Tyhjennä datat…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

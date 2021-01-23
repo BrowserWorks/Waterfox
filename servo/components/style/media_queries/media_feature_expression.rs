@@ -11,12 +11,11 @@ use super::Device;
 use crate::context::QuirksMode;
 #[cfg(feature = "gecko")]
 use crate::gecko::media_features::MEDIA_FEATURES;
-#[cfg(feature = "gecko")]
-use crate::gecko_bindings::structs;
 use crate::parser::{Parse, ParserContext};
 #[cfg(feature = "servo")]
 use crate::servo::media_queries::MEDIA_FEATURES;
 use crate::str::{starts_with_ignore_ascii_case, string_as_ascii_lowercase};
+use crate::values::computed::position::Ratio;
 use crate::values::computed::{self, ToComputedValue};
 use crate::values::specified::{Integer, Length, Number, Resolution};
 use crate::values::{serialize_atom_identifier, CSSFloat};
@@ -25,30 +24,6 @@ use cssparser::{Parser, Token};
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt::{self, Write};
 use style_traits::{CssWriter, ParseError, StyleParseErrorKind, ToCss};
-
-/// An aspect ratio, with a numerator and denominator.
-#[derive(Clone, Copy, Debug, Eq, MallocSizeOf, PartialEq, ToShmem)]
-pub struct AspectRatio(pub u32, pub u32);
-
-impl ToCss for AspectRatio {
-    fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
-    where
-        W: fmt::Write,
-    {
-        self.0.to_css(dest)?;
-        dest.write_char('/')?;
-        self.1.to_css(dest)
-    }
-}
-
-impl PartialOrd for AspectRatio {
-    fn partial_cmp(&self, other: &AspectRatio) -> Option<Ordering> {
-        u64::partial_cmp(
-            &(self.0 as u64 * other.1 as u64),
-            &(self.1 as u64 * other.0 as u64),
-        )
-    }
-}
 
 /// The kind of matching that should be performed on a media feature value.
 #[derive(Clone, Copy, Debug, Eq, MallocSizeOf, PartialEq, ToShmem)]
@@ -242,6 +217,17 @@ fn consume_operation_or_colon(input: &mut Parser) -> Result<Option<Operator>, ()
     }))
 }
 
+#[allow(unused_variables)]
+fn disabled_by_pref(feature: &Atom) -> bool {
+    #[cfg(feature = "gecko")]
+    {
+        if *feature == atom!("-moz-touch-enabled") {
+            return !static_prefs::pref!("layout.css.moz-touch-enabled.enabled");
+        }
+    }
+    false
+}
+
 impl MediaFeatureExpression {
     fn new(
         feature_index: usize,
@@ -279,85 +265,53 @@ impl MediaFeatureExpression {
         context: &ParserContext,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i>> {
-        // FIXME: remove extra indented block when lifetimes are non-lexical
-        let feature_index;
-        let feature;
-        let range;
+        let mut requirements = ParsingRequirements::empty();
+        let location = input.current_source_location();
+        let ident = input.expect_ident()?;
+
+        if context.in_ua_or_chrome_sheet() {
+            requirements.insert(ParsingRequirements::CHROME_AND_UA_ONLY);
+        }
+
+        let mut feature_name = &**ident;
+
+        if starts_with_ignore_ascii_case(feature_name, "-webkit-") {
+            feature_name = &feature_name[8..];
+            requirements.insert(ParsingRequirements::WEBKIT_PREFIX);
+        }
+
+        let range = if starts_with_ignore_ascii_case(feature_name, "min-") {
+            feature_name = &feature_name[4..];
+            Some(Range::Min)
+        } else if starts_with_ignore_ascii_case(feature_name, "max-") {
+            feature_name = &feature_name[4..];
+            Some(Range::Max)
+        } else {
+            None
+        };
+
+        let atom = Atom::from(string_as_ascii_lowercase(feature_name));
+
+        let (feature_index, feature) = match MEDIA_FEATURES
+            .iter()
+            .enumerate()
+            .find(|(_, f)| f.name == atom)
         {
-            let location = input.current_source_location();
-            let ident = input.expect_ident()?;
-
-            let mut requirements = ParsingRequirements::empty();
-
-            if context.in_ua_or_chrome_sheet() {
-                requirements.insert(ParsingRequirements::CHROME_AND_UA_ONLY);
-            }
-
-            let result = {
-                let mut feature_name = &**ident;
-
-                #[cfg(feature = "gecko")]
-                {
-                    if unsafe { structs::StaticPrefs_sVarCache_layout_css_prefixes_webkit } &&
-                        starts_with_ignore_ascii_case(feature_name, "-webkit-")
-                    {
-                        feature_name = &feature_name[8..];
-                        requirements.insert(ParsingRequirements::WEBKIT_PREFIX);
-                        if unsafe {
-                            structs::StaticPrefs_sVarCache_layout_css_prefixes_device_pixel_ratio_webkit
-                        } {
-                            requirements.insert(
-                                ParsingRequirements::WEBKIT_DEVICE_PIXEL_RATIO_PREF_ENABLED,
-                            );
-                        }
-                    }
-                }
-
-                let range = if starts_with_ignore_ascii_case(feature_name, "min-") {
-                    feature_name = &feature_name[4..];
-                    Some(Range::Min)
-                } else if starts_with_ignore_ascii_case(feature_name, "max-") {
-                    feature_name = &feature_name[4..];
-                    Some(Range::Max)
-                } else {
-                    None
-                };
-
-                let atom = Atom::from(string_as_ascii_lowercase(feature_name));
-                match MEDIA_FEATURES
-                    .iter()
-                    .enumerate()
-                    .find(|(_, f)| f.name == atom)
-                {
-                    Some((i, f)) => Ok((i, f, range)),
-                    None => Err(()),
-                }
-            };
-
-            match result {
-                Ok((i, f, r)) => {
-                    feature_index = i;
-                    feature = f;
-                    range = r;
-                },
-                Err(()) => {
-                    return Err(location.new_custom_error(
-                        StyleParseErrorKind::MediaQueryExpectedFeatureName(ident.clone()),
-                    ));
-                },
-            }
-
-            if !(feature.requirements & !requirements).is_empty() {
+            Some((i, f)) => (i, f),
+            None => {
                 return Err(location.new_custom_error(
                     StyleParseErrorKind::MediaQueryExpectedFeatureName(ident.clone()),
-                ));
-            }
+                ))
+            },
+        };
 
-            if range.is_some() && !feature.allows_ranges() {
-                return Err(location.new_custom_error(
-                    StyleParseErrorKind::MediaQueryExpectedFeatureName(ident.clone()),
-                ));
-            }
+        if disabled_by_pref(&feature.name) ||
+            !requirements.contains(feature.requirements) ||
+            (range.is_some() && !feature.allows_ranges())
+        {
+            return Err(location.new_custom_error(
+                StyleParseErrorKind::MediaQueryExpectedFeatureName(ident.clone()),
+            ));
         }
 
         let operator = input.try(consume_operation_or_colon);
@@ -435,9 +389,11 @@ impl MediaFeatureExpression {
                 eval(device, expect!(Integer).cloned(), self.range_or_operator)
             },
             Evaluator::Float(eval) => eval(device, expect!(Float).cloned(), self.range_or_operator),
-            Evaluator::IntRatio(eval) => {
-                eval(device, expect!(IntRatio).cloned(), self.range_or_operator)
-            },
+            Evaluator::NumberRatio(eval) => eval(
+                device,
+                expect!(NumberRatio).cloned(),
+                self.range_or_operator,
+            ),
             Evaluator::Resolution(eval) => {
                 let computed = expect!(Resolution).map(|specified| {
                     computed::Context::for_media_query_evaluation(device, quirks_mode, |context| {
@@ -462,7 +418,7 @@ impl MediaFeatureExpression {
 /// A value found or expected in a media expression.
 ///
 /// FIXME(emilio): How should calc() serialize in the Number / Integer /
-/// BoolInteger / IntRatio case, as computed or as specified value?
+/// BoolInteger / NumberRatio case, as computed or as specified value?
 ///
 /// If the first, this would need to store the relevant values.
 ///
@@ -477,9 +433,9 @@ pub enum MediaExpressionValue {
     Float(CSSFloat),
     /// A boolean value, specified as an integer (i.e., either 0 or 1).
     BoolInteger(bool),
-    /// Two integers separated by '/', with optional whitespace on either side
-    /// of the '/'.
-    IntRatio(AspectRatio),
+    /// A single non-negative number or two non-negative numbers separated by '/',
+    /// with optional whitespace on either side of the '/'.
+    NumberRatio(Ratio),
     /// A resolution.
     Resolution(Resolution),
     /// An enumerated value, defined by the variant keyword table in the
@@ -499,7 +455,7 @@ impl MediaExpressionValue {
             MediaExpressionValue::Integer(v) => v.to_css(dest),
             MediaExpressionValue::Float(v) => v.to_css(dest),
             MediaExpressionValue::BoolInteger(v) => dest.write_str(if v { "1" } else { "0" }),
-            MediaExpressionValue::IntRatio(ratio) => ratio.to_css(dest),
+            MediaExpressionValue::NumberRatio(ratio) => ratio.to_css(dest),
             MediaExpressionValue::Resolution(ref r) => r.to_css(dest),
             MediaExpressionValue::Ident(ref ident) => serialize_atom_identifier(ident, dest),
             MediaExpressionValue::Enumerated(value) => match for_expr.feature().evaluator {
@@ -535,11 +491,16 @@ impl MediaExpressionValue {
                 let number = Number::parse(context, input)?;
                 MediaExpressionValue::Float(number.get())
             },
-            Evaluator::IntRatio(..) => {
-                let a = Integer::parse_positive(context, input)?;
-                input.expect_delim('/')?;
-                let b = Integer::parse_positive(context, input)?;
-                MediaExpressionValue::IntRatio(AspectRatio(a.value() as u32, b.value() as u32))
+            Evaluator::NumberRatio(..) => {
+                use crate::values::generics::position::Ratio as GenericRatio;
+                use crate::values::generics::NonNegative;
+                use crate::values::specified::position::Ratio;
+
+                let ratio = Ratio::parse(context, input)?;
+                MediaExpressionValue::NumberRatio(GenericRatio(
+                    NonNegative(ratio.0.get()),
+                    NonNegative(ratio.1.get()),
+                ))
             },
             Evaluator::Resolution(..) => {
                 MediaExpressionValue::Resolution(Resolution::parse(context, input)?)

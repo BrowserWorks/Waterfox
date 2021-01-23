@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Maxfiy ko‘rish">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Kuzatishdan himoyalanish">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Siz maxfiy ko‘rish rejimida emassiz">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "Internetdagi faoliyatingizni kuzatishi mumkin bo‘lgan sahifalar qismlarini &brandShortName; bloklaydi.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Biz hech qanday tarixni eslab qolmaymiz, lekin yuklab olingan fayllar va yangi qo‘shilgan xatcho‘plar qurilmangizda saqlanib qolaveradi.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "Maxfiy ko‘rish rejimida biz ko‘rish tarixi yoki kukilarni saqlab qolmaymiz. Siz qo‘shgan xatcho‘plar va yuklab olingan fayllar qurilmagizda saqlanib qoladi.">
+
+<!ENTITY privatebrowsingpage.link.private "Ko‘proq o‘rganishni xohlaysizmi?">
+<!ENTITY privatebrowsingpage.link.normal "Yangi maxfiy ichki oyna ochish">

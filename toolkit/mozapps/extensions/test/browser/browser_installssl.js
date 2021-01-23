@@ -36,10 +36,6 @@ function test() {
     cos.clearValidityOverride("untrusted.example.com", -1);
     cos.clearValidityOverride("expired.example.com", -1);
 
-    try {
-      Services.prefs.clearUserPref(PREF_INSTALL_REQUIREBUILTINCERTS);
-    } catch (e) {}
-
     if (gPendingInstall) {
       gTests = [];
       ok(
@@ -67,7 +63,7 @@ function add_install_test(mainURL, redirectURL, expectedStatus) {
 
 function run_install_tests(callback) {
   async function run_next_install_test() {
-    if (gTests.length == 0) {
+    if (!gTests.length) {
       callback();
       return;
     }

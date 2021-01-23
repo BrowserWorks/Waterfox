@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #ifndef dom_plugins_ipc_ipdltuple_h
 #define dom_plugins_ipc_ipdltuple_h
 
@@ -8,8 +14,8 @@ namespace mozilla {
 namespace plugins {
 
 // The stuff in this "internal" namespace used to be inside the IpdlTuple
-// class, but that prevented the DECLARE_USE_COPY_CONSTRUCTORS that is
-// needed on the IpdlTupleElement struct. Without this, nsTArray can end
+// class, but that prevented the MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR
+// that is needed on the IpdlTupleElement struct. Without this, nsTArray can end
 // up using a move constructor on this struct, which is not memmovable on
 // Windows.
 namespace internal {
@@ -53,7 +59,8 @@ typedef MaybeVariant<int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
 }  // namespace plugins
 }  // namespace mozilla
 
-DECLARE_USE_COPY_CONSTRUCTORS(mozilla::plugins::internal::IpdlTupleElement)
+MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR(
+    mozilla::plugins::internal::IpdlTupleElement)
 
 namespace mozilla {
 namespace plugins {

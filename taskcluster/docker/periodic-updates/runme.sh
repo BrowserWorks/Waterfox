@@ -3,7 +3,7 @@
 set -xe
 
 # Things to be set by task definition.
-# --pinset --hsts --hpkp --blocklist
+# --pinset --hsts --hpkp
 # -b branch
 # --use-mozilla-central
 # -p firefox
@@ -16,35 +16,35 @@ test "${PRODUCT}"
 
 PARAMS=""
 
-if [ ! -z "${USE_MOZILLA_CENTRAL}" ]
+if [ -n "${USE_MOZILLA_CENTRAL}" ]
 then
   PARAMS="${PARAMS} --use-mozilla-central"
 fi
 
 # TODO change these, so that they're run if the artifact location is specified?
-if [ ! -z "${DO_HSTS}" ]
+if [ -n "${DO_HSTS}" ]
 then
   PARAMS="${PARAMS} --hsts"
 fi
 
-if [ ! -z "${DO_HPKP}" ]
+if [ -n "${DO_HPKP}" ]
 then
   PARAMS="${PARAMS} --hpkp"
 fi
 
-if [ ! -z "${DO_BLOCKLIST}" ]
-then
-  PARAMS="${PARAMS} --blocklist"
-fi
-
-if [ ! -z "${DO_REMOTE_SETTINGS}" ]
+if [ -n "${DO_REMOTE_SETTINGS}" ]
 then
   PARAMS="${PARAMS} --remote-settings"
 fi
 
-if [ ! -z "${DO_SUFFIX_LIST}" ]
+if [ -n "${DO_SUFFIX_LIST}" ]
 then
   PARAMS="${PARAMS} --suffix-list"
+fi
+
+if [ -n "${DONTBUILD}" ]
+then
+  PARAMS="${PARAMS} -d"
 fi
 
 
@@ -52,11 +52,7 @@ export ARTIFACTS_DIR="/home/worker/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
 
 # duplicate the functionality of taskcluster-lib-urls, but in bash..
-if [ "$TASKCLUSTER_ROOT_URL" = "https://taskcluster.net" ]; then
-    queue_base='https://queue.taskcluster.net/v1'
-else
-    queue_base="$TASKCLUSTER_ROOT_URL/api/queue/v1"
-fi
+queue_base="$TASKCLUSTER_ROOT_URL/api/queue/v1"
 
 # Get Arcanist API token
 

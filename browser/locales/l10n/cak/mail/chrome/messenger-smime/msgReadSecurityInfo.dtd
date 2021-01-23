@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Rujikomal Tzijol">
+<!ENTITY signatureCert.label "Titz'et Riqitzijib'al Juch'">
+<!ENTITY encryptionCert.label "Titz'et Riqitzijib'al Ewan Rusik'ixik">
+
+<!ENTITY signer.name "Juch'un ruma:">
+<!ENTITY recipient.name "Ewan rusik'ixik ruma:">
+<!ENTITY email.address "Kochochib'al taqoya'l:">
+<!ENTITY issuer.name "Iqitzijib'äl talun ruma:">
+

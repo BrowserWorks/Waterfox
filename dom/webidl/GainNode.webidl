@@ -15,13 +15,15 @@ dictionary GainOptions : AudioNodeOptions {
 };
 
 [Pref="dom.webaudio.enabled",
- Constructor(BaseAudioContext context, optional GainOptions options)]
+ Exposed=Window]
 interface GainNode : AudioNode {
+    [Throws]
+    constructor(BaseAudioContext context, optional GainOptions options = {});
 
     readonly attribute AudioParam gain;
 
 };
 
 // Mozilla extension
-GainNode implements AudioNodePassThrough;
+GainNode includes AudioNodePassThrough;
 

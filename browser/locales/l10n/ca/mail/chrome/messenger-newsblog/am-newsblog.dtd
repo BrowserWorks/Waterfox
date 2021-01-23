@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Habilita les actualitzacions per a tots els canals d'informació">
+<!ENTITY biffAll.accesskey             "H">
+
+<!ENTITY newFeedSettings.label         "Paràmetres per defecte per als canals de notícies">
+
+<!ENTITY manageSubscriptions.label     "Gestiona les subscripcions…">
+<!ENTITY manageSubscriptions.accesskey "G">
+
+<!ENTITY feedWindowTitle.label         "Auxiliar de comptes de canals d'informació">
+<!ENTITY feeds.accountName             "Blogs i canals de notícies">

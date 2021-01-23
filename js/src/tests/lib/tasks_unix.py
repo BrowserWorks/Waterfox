@@ -7,9 +7,17 @@ import os
 import select
 import signal
 import sys
+
 from datetime import datetime, timedelta
-from progressbar import ProgressBar
-from results import NullTestOutput, TestOutput, escape_cmdline
+
+from .progressbar import ProgressBar
+from .results import (
+    NullTestOutput,
+    TestOutput,
+    escape_cmdline,
+)
+
+PY2 = sys.version_info.major == 2
 
 
 class Task(object):
@@ -154,6 +162,19 @@ def timed_out(task, timeout):
     return over if over.total_seconds() > 0 else False
 
 
+# Local copy of six.ensure_str for when six is unavailable or too old.
+def ensure_str(s, encoding='utf-8', errors='strict'):
+    if PY2:
+        if isinstance(s, str):
+            return s
+        else:
+            return s.encode(encoding, errors)
+    elif isinstance(s, bytes):
+        return s.decode(encoding, errors)
+    else:
+        return s
+
+
 def reap_zombies(tasks, timeout):
     """
     Search for children of this process that have finished. If they are tasks,
@@ -186,8 +207,8 @@ def reap_zombies(tasks, timeout):
             TestOutput(
                 ended.test,
                 ended.cmd,
-                ''.join(ended.out),
-                ''.join(ended.err),
+                ensure_str(b''.join(ended.out), errors='replace'),
+                ensure_str(b''.join(ended.err), errors='replace'),
                 returncode,
                 (datetime.now() - ended.start).total_seconds(),
                 timed_out(ended, timeout),

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Ponnahdusikkunat">
+
+<!ENTITY pref.popups.caption            "Ponnahdusikkunat">
+
+<!ENTITY popupBlock.label               "Estä ponnahdusikkunat">
+<!ENTITY popupBlock.accesskey           "E">
+
+<!ENTITY viewPermissions.label          "Muokkaa oikeuksia">
+<!ENTITY viewPermissions.accesskey      "u">
+
+<!ENTITY whenBlock.description          "Kun ponnahdusikkuna on estetty:">
+<!ENTITY playSound.label                "Anna äänimerkki:">
+<!ENTITY playSound.accesskey            "A">
+<!ENTITY systemSound.label              "Tietokoneen piipperin kautta">
+<!ENTITY systemSound.accesskey          "i">
+<!ENTITY customSound.label              "Oma äänitiedosto">
+<!ENTITY customSound.accesskey          "m">
+
+<!ENTITY selectSound.label              "Selaa…">
+<!ENTITY selectSound.accesskey          "S">
+<!ENTITY playSoundButton.label          "Toista">
+<!ENTITY playSoundButton.accesskey      "T">
+
+<!ENTITY displayIcon.label              "Näytä kuvake selaimen tilarivillä">
+<!ENTITY displayIcon.accesskey          "N">
+
+<!ENTITY displayNotification.label      "Näytä ilmoitus sivun yläreunassa">
+<!ENTITY displayNotification.accesskey  "ä">
+
+<!ENTITY popupNote.description          "Huom. Kaikkien ponnahdusikkunoiden estäminen saattaa estää joidenkin sivustojen, esim. verkkopankkien ja -kauppojen tärkeät toiminnallisuudet. Valitse Ohje, jos haluat lisätietoja siitä kuinka sallia tiettyjen sivustojen ponnahdusikkunat. Estetyt sivustot saattavat silti käyttää muita keinoja ponnahdusikkunoiden avaamiseksi.">
+

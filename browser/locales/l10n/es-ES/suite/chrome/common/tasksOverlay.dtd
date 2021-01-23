@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY minimizeWindowCmd.label "Minimizar">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "Tamaño">
+<!ENTITY navigatorCmd.label "Navegador">
+<!ENTITY navigatorCmd.accesskey "N">
+<!ENTITY navigatorCmd.commandkey "1">
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "C">
+<!ENTITY editorCmd.commandkey "4">
+<!ENTITY errorConsoleCmd.label "Consola de errores">
+<!ENTITY errorConsoleCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+<!ENTITY taskNavigator.tooltip "Navegador">
+<!ENTITY taskComposer.tooltip "Composer">
+<!ENTITY webDevelopment.label "Desarrollo web">
+<!ENTITY webDevelopment.accesskey "W">
+<!ENTITY windowMenu.label "Ventana">
+<!ENTITY windowMenu.accesskey "n">
+<!ENTITY tasksMenu.label "Herramientas">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY datamanCmd.label "Administrador de datos">
+<!ENTITY datamanCmd.accesskey "s">
+<!ENTITY passwordManagerCmd.label "Administrador de contraseñas">
+<!ENTITY passwordManagerCmd.accesskey "A">
+<!ENTITY passwordDisplayCmd.label "Administrar contraseñas guardadas">
+<!ENTITY passwordDisplayCmd.accesskey "A">
+<!ENTITY passwordExpireCmd.label "Cerrar sesión">
+<!ENTITY passwordExpireCmd.accesskey "C">
+<!ENTITY downloadManagerCmd.label "Administrador de descargas">
+<!ENTITY downloadManagerCmd.accesskey "n">
+<!ENTITY downloadManagerCmd.commandkey "j">
+<!ENTITY addOnsManagerCmd.label "Administrador de complementos">
+<!ENTITY addOnsManagerCmd.accesskey "c">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+<!ENTITY switchProfileCmd.label "Intercambiar perfil…">
+<!ENTITY switchProfileCmd.accesskey "I">
+<!ENTITY syncBrand.shortName.label "Sync">
+<!ENTITY syncSetup.label "Configurar Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Sincronizar ahora">
+<!ENTITY syncSyncNowItem.accesskey "S">

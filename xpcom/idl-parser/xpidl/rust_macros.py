@@ -6,8 +6,10 @@
 
 """Generate rust bindings information for the IDL file specified"""
 
-import rust
-import xpidl
+from __future__ import absolute_import
+
+from xpidl import rust
+from xpidl import xpidl
 
 
 derive_method_tmpl = """\
@@ -51,12 +53,7 @@ def write_interface(iface, fd):
     if iface.namemap is None:
         raise Exception("Interface was not resolved.")
 
-    # if we see a base class-less type other than nsISupports, we just need
-    # to discard anything else about it other than its constants.
-    if iface.base is None and iface.name != "nsISupports":
-        assert len([m for m in iface.members
-                    if type(m) == xpidl.Attribute or type(m) == xpidl.Method]) == 0
-        return
+    assert iface.base or (iface.name == "nsISupports")
 
     base = 'Some("%s")' % iface.base if iface.base is not None else 'None'
     try:
@@ -87,16 +84,16 @@ def write_interface(iface, fd):
 
 header = """\
 //
-// DO NOT EDIT.  THIS FILE IS GENERATED FROM %(filename)s
+// DO NOT EDIT.  THIS FILE IS GENERATED FROM $SRCDIR/%(relpath)s
 //
 
 """
 
 
-def print_rust_macros_bindings(idl, fd, filename):
+def print_rust_macros_bindings(idl, fd, relpath):
     fd = rust.AutoIndent(fd)
 
-    fd.write(header % {'filename': filename})
+    fd.write(header % {'relpath': relpath})
     fd.write("{static D: &'static [Interface] = &[\n")
 
     for p in idl.productions:

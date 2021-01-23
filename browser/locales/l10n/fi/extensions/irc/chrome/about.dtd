@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Tietoja ChatZillasta">
+
+<!ENTITY chatzilla.label       "ChatZilla">
+<!ENTITY version.unknown.label "Versio ei tiedossa">
+<!ENTITY version.known.label   "Versio &#37;S">
+<!ENTITY description.label     "Siisti, helppokäyttöinen ja erittäin laajennettava IRC-ohjelma.">
+
+<!ENTITY homepage.label    "Avaa kotisivu">
+<!ENTITY copyversion.label "Kopioi versionumero">
+
+<!ENTITY section.core.label    "Kehitysryhmä:">
+<!ENTITY section.locale.label  "Suomennos:">
+<!ENTITY section.contrib.label "Tukijat:">

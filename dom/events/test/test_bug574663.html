@@ -47,27 +47,15 @@ function waitForPaint(win, utils, callback) {
   }
 }
 
-function forceScrollAndWait(scrollbox, callback) {
-  let win = scrollbox.ownerDocument.defaultView;
-  let utils = SpecialPowers.getDOMWindowUtils(win);
-
-  utils.advanceTimeAndRefresh(1000);
-
-  let postApzFlush = function() {
-    SpecialPowers.Services.obs.removeObserver(postApzFlush, "apz-repaints-flushed", false);
-    waitForPaint(win, utils, callback);
-  }
-  SpecialPowers.Services.obs.addObserver(postApzFlush, "apz-repaints-flushed");
-  if (!utils.flushApzRepaints()) {
-    postApzFlush();
-  }
-}
-
-var kExtraEvents = 5;
+// This is a magic number representing how many device pixels we are attempting to
+// scroll or zoom.  We use it for sending the wheel events, but we don't actually
+// check that we have scrolled by that amount.
 var kDelta = 3;
 
 function sendTouchpadScrollMotion(scrollbox, direction, ctrl, momentum, callback) {
   var win = scrollbox.ownerDocument.defaultView;
+  let winUtils = SpecialPowers.getDOMWindowUtils(win);
+
   let event = {
     deltaMode: WheelEvent.DOM_DELTA_PIXEL,
     deltaY: direction * kDelta,
@@ -75,27 +63,34 @@ function sendTouchpadScrollMotion(scrollbox, direction, ctrl, momentum, callback
     ctrlKey: ctrl,
     isMomentum: momentum
   };
-  let received = 0;
-  let deltaY = 0;
-  var onwheel = function(e) {
-    deltaY += e.deltaY;
-    if (++received == 2) {
-      // We have captured all the outstanding wheel events. Wait for the
-      // animation to add itself to the refresh driver.
-      scrollbox.removeEventListener("wheel", onwheel);
-      setTimeout(function() {
-        forceScrollAndWait(scrollbox, callback);
-      }, 0);
-    }
-  };
-  scrollbox.addEventListener("wheel", onwheel);
+
+  // Construct a promise that will resolve when either scroll or zoom has changed.
+  // --- Intermittent Warning ---
+  // Two wheel events are sent, but our promise resolves when any change has been
+  // made to scroll or zoom. That makes it possible that the effect of the second
+  // event may not yet be applied when the promise resolves. This shouldn't lead
+  // to any errors, since the two wheel events are moving in the same direction,
+  // and our later checks will only ensure that the value has changed from its
+  // initial value. This was done intentionally, because attempting to wait after
+  // both events yields problems when the second event has no effect, which does
+  // happen in testing. It's not clear why this is happening. Since the testing
+  // pattern is scroll (twice), then scroll back (twice), it's possible that the
+  // first scroll back event is sufficient to return the scrollbox to its minimal
+  // scrollTop position, and so the second event doesn't scroll any further.
+  const initialZoom = winUtils.fullZoom;
+  const initialScroll = scrollbox.scrollTop;
+
+  const effectOfWheelEvent = SimpleTest.promiseWaitForCondition(() => {
+    return ((winUtils.fullZoom != initialZoom) || (scrollbox.scrollTop != initialScroll));
+  }, "Mouse wheel should have caused us to either zoom or scroll.");
 
   synthesizeWheel(scrollbox, 10, 10, event, win);
-  // then 5 additional pixel scrolls
+
+  // then additional pixel scroll
   event.lineOrPageDeltaY = 0;
-  for (let i = 1; i <= kExtraEvents; ++i) {
-    synthesizeWheel(scrollbox, 10, 10, event, win);
-  }
+  synthesizeWheel(scrollbox, 10, 10, event, win);
+
+  effectOfWheelEvent.then(callback);
 }
 
 function runTest() {
@@ -149,7 +144,7 @@ function runTest() {
           let postfix = isMomentum ? ", even after releasing the touchpad" : "";
           // Normal scroll: scroll
           is(winUtils.fullZoom, zoomFactorBefore, "Normal scrolling shouldn't change zoom" + postfix);
-          is(scrollbox.scrollTop, scrollTopBefore + kDelta * (kExtraEvents + 1),
+          isnot(scrollbox.scrollTop, scrollTopBefore,
              "Normal scrolling should scroll" + postfix);
         } else {
           if (!isMomentum) {
@@ -157,7 +152,7 @@ function runTest() {
             is(scrollbox.scrollTop, scrollTopBefore, "Ctrl-scrolling shouldn't scroll while the user is touching the touchpad");
           } else {
             is(winUtils.fullZoom, zoomFactorBefore, "Momentum scrolling shouldn't zoom, even when pressing Ctrl");
-            is(scrollbox.scrollTop, scrollTopBefore + kDelta * (kExtraEvents + 1),
+            isnot(scrollbox.scrollTop, scrollTopBefore,
                "Momentum scrolling should scroll, even when pressing Ctrl");
           }
         }

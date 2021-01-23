@@ -9,6 +9,7 @@
 #include "nsISupportsUtils.h"
 #include "nsStringEnumerator.h"
 #include "nsNetUtil.h"
+#include "mozilla/Utf8.h"
 
 using namespace mozilla;
 
@@ -55,7 +56,7 @@ bool nsMIMEInfoAndroid::GetMimeInfoForMimeType(const nsACString& aMimeType,
 
   nsIHandlerApp* systemDefault = nullptr;
 
-  if (!IsUTF8(aMimeType)) return false;
+  if (!IsUtf8(aMimeType)) return false;
 
   NS_ConvertUTF8toUTF16 mimeType(aMimeType);
 
@@ -87,7 +88,7 @@ bool nsMIMEInfoAndroid::GetMimeInfoForFileExt(const nsACString& aFileExt,
 
   // "*/*" means that the bridge didn't know.
   if (mimeType.Equals(nsDependentCString("*/*"),
-                      nsCaseInsensitiveCStringComparator()))
+                      nsCaseInsensitiveCStringComparator))
     return false;
 
   bool found = GetMimeInfoForMimeType(mimeType, aMimeInfo);
@@ -201,8 +202,9 @@ nsMIMEInfoAndroid::GetDefaultDescription(nsAString& aDesc) {
 }
 
 NS_IMETHODIMP
-nsMIMEInfoAndroid::LaunchWithURI(nsIURI* aURI, nsIInterfaceRequestor* req) {
-  return mPrefApp->LaunchWithURI(aURI, req);
+nsMIMEInfoAndroid::LaunchWithURI(
+    nsIURI* aURI, mozilla::dom::BrowsingContext* aBrowsingContext) {
+  return mPrefApp->LaunchWithURI(aURI, aBrowsingContext);
 }
 
 NS_IMETHODIMP
@@ -237,15 +239,16 @@ nsMIMEInfoAndroid::GetFileExtensions(nsIUTF8StringEnumerator** aResult) {
 NS_IMETHODIMP
 nsMIMEInfoAndroid::SetFileExtensions(const nsACString& aExtensions) {
   mExtensions.Clear();
-  nsCString extList(aExtensions);
-
-  int32_t breakLocation = -1;
-  while ((breakLocation = extList.FindChar(',')) != -1) {
-    mExtensions.AppendElement(
-        Substring(extList.get(), extList.get() + breakLocation));
-    extList.Cut(0, breakLocation + 1);
+  nsACString::const_iterator start, end;
+  aExtensions.BeginReading(start);
+  aExtensions.EndReading(end);
+  while (start != end) {
+    nsACString::const_iterator cursor = start;
+    mozilla::Unused << FindCharInReadable(',', cursor, end);
+    AddUniqueExtension(Substring(start, cursor));
+    // If a comma was found, skip it for the next search.
+    start = cursor != end ? ++cursor : cursor;
   }
-  if (!extList.IsEmpty()) mExtensions.AppendElement(extList);
   return NS_OK;
 }
 
@@ -263,42 +266,47 @@ nsMIMEInfoAndroid::ExtensionExists(const nsACString& aExtension,
   // "*/*" means the bridge didn't find anything (i.e., extension doesn't
   // exist).
   *aRetVal = !mimeType.Equals(nsDependentCString("*/*"),
-                              nsCaseInsensitiveCStringComparator());
+                              nsCaseInsensitiveCStringComparator);
   return NS_OK;
+}
+
+void nsMIMEInfoAndroid::AddUniqueExtension(const nsACString& aExtension) {
+  if (!aExtension.IsEmpty() &&
+      !mExtensions.Contains(aExtension,
+                            nsCaseInsensitiveCStringArrayComparator())) {
+    mExtensions.AppendElement(aExtension);
+  }
 }
 
 NS_IMETHODIMP
 nsMIMEInfoAndroid::AppendExtension(const nsACString& aExtension) {
-  mExtensions.AppendElement(aExtension);
+  MOZ_ASSERT(!aExtension.IsEmpty(), "No extension");
+  AddUniqueExtension(aExtension);
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsMIMEInfoAndroid::GetPrimaryExtension(nsACString& aPrimaryExtension) {
-  if (!mExtensions.Length()) return NS_ERROR_NOT_INITIALIZED;
-
+  if (!mExtensions.Length()) {
+    aPrimaryExtension.Truncate();
+    return NS_ERROR_NOT_INITIALIZED;
+  }
   aPrimaryExtension = mExtensions[0];
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsMIMEInfoAndroid::SetPrimaryExtension(const nsACString& aExtension) {
-  uint32_t extCount = mExtensions.Length();
-  uint8_t i;
-  bool found = false;
-  for (i = 0; i < extCount; i++) {
-    const nsCString& ext = mExtensions[i];
-    if (ext.Equals(aExtension, nsCaseInsensitiveCStringComparator())) {
-      found = true;
-      break;
-    }
+  if (MOZ_UNLIKELY(aExtension.IsEmpty())) {
+    // Don't assert since Java may return an empty extension for unknown types.
+    return NS_ERROR_INVALID_ARG;
   }
-  if (found) {
+  int32_t i = mExtensions.IndexOf(aExtension, 0,
+                                  nsCaseInsensitiveCStringArrayComparator());
+  if (i != -1) {
     mExtensions.RemoveElementAt(i);
   }
-
   mExtensions.InsertElementAt(0, aExtension);
-
   return NS_OK;
 }
 
@@ -331,6 +339,20 @@ nsMIMEInfoAndroid::LaunchWithFile(nsIFile* aFile) {
   nsCOMPtr<nsIURI> uri;
   NS_NewFileURI(getter_AddRefs(uri), aFile);
   return LoadUriInternal(uri);
+}
+
+NS_IMETHODIMP
+nsMIMEInfoAndroid::IsCurrentAppOSDefault(bool* aRetVal) {
+  // FIXME: this should in theory be meaningfully implemented. However, android
+  // implements its own version of nsIHandlerApp instances which internally
+  // have package and class names - but do not expose those. So to meaningfully
+  // compare the handler app would require access to those and knowing what
+  // our own package/class names are, and it's not clear how to do that.
+  // It also seems less important to do this right on Android, given that
+  // Android UI normally limits what apps you can associate with what files, so
+  // it shouldn't be possible to get into the same kind of loop as on desktop.
+  *aRetVal = false;
+  return NS_OK;
 }
 
 nsMIMEInfoAndroid::nsMIMEInfoAndroid(const nsACString& aMIMEType)
@@ -387,6 +409,6 @@ nsresult nsMIMEInfoAndroid::SystemChooser::Equals(nsIHandlerApp* aHandlerApp,
 }
 
 nsresult nsMIMEInfoAndroid::SystemChooser::LaunchWithURI(
-    nsIURI* aURI, nsIInterfaceRequestor*) {
+    nsIURI* aURI, mozilla::dom::BrowsingContext*) {
   return mOuter->LoadUriInternal(aURI);
 }

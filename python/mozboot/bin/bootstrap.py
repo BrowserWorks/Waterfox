@@ -10,35 +10,39 @@
 # bootstrap support. It does this through various means, including fetching
 # content from the upstream source repository.
 
-# If we add unicode_literals, optparse breaks on Python 2.6.1 (which is needed
-# to support OS X 10.6).
-
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 
 WRONG_PYTHON_VERSION_MESSAGE = '''
-Bootstrap currently only runs on Python 2.7 or Python 2.6.
-Please try re-running with python2.7 or python2.6.
+Bootstrap currently only runs on Python 2.7 or Python 3.5+.
+Please try re-running with python2.7 or python3.5+.
 
 If these aren't available on your system, you may need to install them.
-Look for a "python2" or "python27" package in your package manager.
+Look for a "python2" or "python3.5" package in your package manager.
 '''
 
 import sys
-if sys.version_info[:2] not in [(2, 6), (2, 7)]:
+
+major, minor = sys.version_info[:2]
+if (major == 2 and minor < 7) or (major == 3 and minor < 5):
     print(WRONG_PYTHON_VERSION_MESSAGE)
     sys.exit(1)
 
 import os
 import shutil
-from StringIO import StringIO
 import tempfile
+import zipfile
+
+from io import BytesIO
+from optparse import OptionParser
+
+# NOTE: This script is intended to be run with a vanilla Python install.  We
+# have to rely on the standard library instead of Python 2+3 helpers like
+# the six module.
 try:
     from urllib2 import urlopen
 except ImportError:
     from urllib.request import urlopen
-import zipfile
 
-from optparse import OptionParser
 
 # The next two variables define where in the repository the Python files
 # reside. This is used to remotely download file content when it isn't
@@ -67,7 +71,7 @@ def fetch_files(repo_url, repo_rev, repo_type):
     if repo_type == 'hgweb':
         url = repo_url + '/archive/%s.zip/python/mozboot' % repo_rev
         req = urlopen(url=url, timeout=30)
-        data = StringIO(req.read())
+        data = BytesIO(req.read())
         data.seek(0)
         zip = zipfile.ZipFile(data, 'r')
         for f in zip.infolist():
@@ -81,6 +85,15 @@ def fetch_files(repo_url, repo_rev, repo_type):
                 continue
 
             files[name] = zip.read(f)
+
+        # Retrieve distro script
+        url = repo_url + '/archive/%s.zip/third_party/python/distro/distro.py' % repo_rev
+        req = urlopen(url=url, timeout=30)
+        data = BytesIO(req.read())
+        data.seek(0)
+        zip = zipfile.ZipFile(data, 'r')
+        files["distro.py"] = zip.read(zip.infolist()[0])
+
     else:
         raise NotImplementedError('Not sure how to handle repo type.', repo_type)
 
@@ -133,10 +146,6 @@ def ensure_environment(repo_url=None, repo_rev=None, repo_type=None):
 
 def main(args):
     parser = OptionParser()
-    parser.add_option('--vcs', dest='vcs',
-                      default='hg',
-                      help='VCS (hg or git) to use for downloading the source code. '
-                      'Uses hg if omitted.')
     parser.add_option('-r', '--repo-url', dest='repo_url',
                       default='https://hg.mozilla.org/mozilla-central/',
                       help='Base URL of source control repository where bootstrap files can '
@@ -152,8 +161,14 @@ def main(args):
     parser.add_option('--application-choice', dest='application_choice',
                       help='Pass in an application choice (see mozboot.bootstrap.APPLICATIONS) '
                       'instead of using the default interactive prompt.')
+    parser.add_option('--vcs', dest='vcs', default=None,
+                      help='VCS (hg or git) to use for downloading the source code, '
+                      'instead of using the default interactive prompt.')
     parser.add_option('--no-interactive', dest='no_interactive', action='store_true',
                       help='Answer yes to any (Y/n) interactive prompts.')
+    parser.add_option('--debug', dest='debug', action='store_true',
+                      help='Print extra runtime information useful for debugging and '
+                      'bug reports.')
 
     options, leftover = parser.parse_args(args)
 
@@ -165,8 +180,14 @@ def main(args):
             print('Could not load the bootstrap Python environment.\n')
             print('This should never happen. Consider filing a bug.\n')
             print('\n')
+
+            if options.debug:
+                # Raise full tracebacks during debugging and for bug reporting.
+                raise
+
             print(e)
             return 1
+
         dasboot = cls(choice=options.application_choice, no_interactive=options.no_interactive,
                       vcs=options.vcs)
         dasboot.bootstrap()

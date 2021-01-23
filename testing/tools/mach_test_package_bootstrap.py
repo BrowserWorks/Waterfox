@@ -12,6 +12,7 @@ import types
 
 
 SEARCH_PATHS = [
+    'gtest',
     'marionette/client',
     'marionette/harness',
     'mochitest',
@@ -20,12 +21,14 @@ SEARCH_PATHS = [
     'mozbase/mozdebug',
     'mozbase/mozdevice',
     'mozbase/mozfile',
+    'mozbase/mozgeckoprofile',
     'mozbase/mozhttpd',
     'mozbase/mozinfo',
     'mozbase/mozinstall',
     'mozbase/mozleak',
     'mozbase/mozlog',
     'mozbase/moznetwork',
+    'mozbase/mozpower',
     'mozbase/mozprocess',
     'mozbase/mozprofile',
     'mozbase/mozrunner',
@@ -45,6 +48,7 @@ SEARCH_PATHS = [
 
 # Individual files providing mach commands.
 MACH_MODULES = [
+    'gtest/mach_test_package_commands.py',
     'marionette/mach_test_package_commands.py',
     'mochitest/mach_test_package_commands.py',
     'reftest/mach_test_package_commands.py',
@@ -81,6 +85,12 @@ CATEGORIES = {
 
 
 IS_WIN = sys.platform in ('win32', 'cygwin')
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    text_type = str
+else:
+    text_type = unicode  # noqa
 
 
 def ancestors(path, depth=0):
@@ -107,9 +117,9 @@ def activate_mozharness_venv(context):
     venv_bin = os.path.join(venv, 'Scripts' if IS_WIN else 'bin')
     activate_path = os.path.join(venv_bin, 'activate_this.py')
 
-    execfile(activate_path, dict(__file__=activate_path))
+    exec(open(activate_path).read(), dict(__file__=activate_path))
 
-    if isinstance(os.environ['PATH'], unicode):
+    if isinstance(os.environ['PATH'], text_type):
         os.environ['PATH'] = os.environ['PATH'].encode('utf-8')
 
     # sys.executable is used by mochitest-media to start the websocketprocessbridge,

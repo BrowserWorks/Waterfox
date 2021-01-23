@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Du har valt att öppna:">
+<!ENTITY  from.label                  "från:">
+<!ENTITY  actionQuestion.label        "Vad vill du att &brandShortName; gör med denna fil?">
+
+<!ENTITY  openWith.label              "Öppna med">
+<!ENTITY  openWith.accesskey          "Ö">
+<!ENTITY  other.label                 "Annat program…">
+
+<!ENTITY  saveFile.label              "Spara fil">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "Gör detta automatiskt för denna filtyp i fortsättningen.">
+<!ENTITY  rememberChoice.accesskey    "G">
+
+<!ENTITY  whichIs.label              "som är en fil av typen:">
+
+<!ENTITY  chooseHandlerMac.label      "Välj…">
+<!ENTITY  chooseHandlerMac.accesskey  "V">
+<!ENTITY  chooseHandler.label         "Bläddra…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "Vill du spara den här filen?">

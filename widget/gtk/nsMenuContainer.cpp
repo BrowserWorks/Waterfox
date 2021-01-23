@@ -6,7 +6,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Move.h"
 #include "nsGkAtoms.h"
 #include "nsIContent.h"
 
@@ -137,7 +136,7 @@ nsMenuContainer::InsertChildAfter(UniquePtr<nsMenuObject> aChild,
                                                  index));
     }
 
-    MOZ_ALWAYS_TRUE(mChildren.InsertElementAt(index, std::move(aChild)));
+    mChildren.InsertElementAt(index, std::move(aChild));
 }
 
 void
@@ -151,7 +150,7 @@ nsMenuContainer::AppendChild(UniquePtr<nsMenuObject> aChild,
                                            aChild->GetNativeData()));
     }
 
-    MOZ_ALWAYS_TRUE(mChildren.AppendElement(std::move(aChild)));
+    mChildren.AppendElement(std::move(aChild));
 }
 
 bool

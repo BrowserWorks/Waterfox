@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+
+<!ENTITY places.library.title  "Biblioteek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organiseer">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organiseer jou boekmerke">
+
+<!ENTITY file.close.label               "Sluit">
+<!ENTITY file.close.accesskey           "S">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Aansigte">
+<!ENTITY views.accesskey                "A">
+<!ENTITY views.tooltip                  "Wysig jou aansig">
+<!ENTITY view.columns.label             "Wys kolomme">
+<!ENTITY view.columns.accesskey         "W">
+<!ENTITY view.sort.label                "Rangskik">
+<!ENTITY view.sort.accesskey            "R">
+<!ENTITY view.unsorted.label            "Ongerangskik">
+<!ENTITY view.unsorted.accesskey        "O">
+<!ENTITY view.sortAscending.label       "A>Z-rangskikking">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z>A-rangskikking">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Voer boekmerke in vanaf HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Voer boekmerke uit na HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "u">
+<!ENTITY importOtherBrowser.label          "Voer boekmerke in vanaf 'n ander blaaier…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Rugsteun…">
+<!ENTITY cmd.backup.accesskey           "R">
+<!ENTITY cmd.restore2.label             "Laai terug">
+<!ENTITY cmd.restore2.accesskey         "L">
+<!ENTITY cmd.restoreFromFile.label      "Kies lêer…">
+<!ENTITY cmd.restoreFromFile.accesskey  "K">
+
+<!ENTITY col.name.label          "Naam">
+<!ENTITY col.tags.label          "Merkers">
+<!ENTITY col.url.label           "Ligging">
+<!ENTITY col.mostrecentvisit.label "Onlangsste besoek">
+<!ENTITY col.visitcount.label    "Besoektelling">
+<!ENTITY col.dateadded.label     "Bygevoeg">
+<!ENTITY col.lastmodified.label  "Laas gewysig">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Invoer en rugsteun">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Voer jou boekmerke in en rugsteun dit">
+
+<!ENTITY backButton.tooltip  "Gaan terug">
+
+<!ENTITY forwardButton.tooltip  "Gaan vorentoe">
+
+<!ENTITY detailsPane.selectAnItemText.description "Kies 'n item om sy eienskappe te kyk en te redigeer">
+

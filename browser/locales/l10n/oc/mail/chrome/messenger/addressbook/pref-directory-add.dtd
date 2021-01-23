@@ -1,0 +1,50 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Nom :">
+<!ENTITY directoryName.accesskey           "n">
+<!ENTITY directoryHostname.label           "Nom d'òste :">
+<!ENTITY directoryHostname.accesskey       "h">
+<!ENTITY directoryBaseDN.label             "Nom distincte de basa :">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "Trobar">
+<!ENTITY findButton.accesskey              "v">
+<!ENTITY directorySecure.label             "Utilizar una connexion chifrada (SSL)">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "Connectar amb l'utilizaire :">
+<!ENTITY directoryLogin.accesskey          "C">
+<!ENTITY General.tab                       "General">
+<!ENTITY Offline.tab                       "Fòra de linha">
+<!ENTITY Advanced.tab                      "Avançadas">
+<!ENTITY portNumber.label                  "Numèro de pòrt :">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "Filtre de recèrca :">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "Portada :">
+<!ENTITY scope.accesskey                   "e">
+<!ENTITY scopeOneLevel.label               "Un nivèl">
+<!ENTITY scopeOneLevel.accesskey           "i">
+<!ENTITY scopeSubtree.label                "Sosarbre">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "Retornar pas mai de">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "resultats">
+<!ENTITY offlineText.label                 "Podètz crear una còpia locala d'aqueste annuari per o poder utilizar un còp deconnectat.">
+<!ENTITY saslMechanism.label               "Metòde d'identificacion : ">
+<!ENTITY saslMechanism.accesskey           "M">
+<!ENTITY saslOff.label                     "Simple">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "42em">

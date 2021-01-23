@@ -13,6 +13,13 @@
   --breakpoint-active-color-hover: rgba(0,255,175,.7);
 }
 
+/* We don't want the focus style to be displayed on the CodeMirror scrollbars.
+ * See Bug 1590707.
+ */
+.CodeMirror-vscrollbar, .CodeMirror-hscrollbar {
+  outline: none !important;
+}
+
 .CodeMirror .errors {
   width: 16px;
 }
@@ -96,46 +103,14 @@
   background-repeat: repeat-x;
 }
 
+/* Search highlight style
+ * cm-searching is used in Style Editor, and cm-highlight in Debugger */
+.cm-searching,
 .cm-highlight {
-  position: relative;
-}
-
-.cm-highlight:before {
-  position: absolute;
-  border-top-style: solid;
-  border-bottom-style: solid;
-  border-top-color: var(--theme-text-color-inactive);
-  border-bottom-color: var(--theme-text-color-inactive);
-  border-top-width: 1px;
-  border-bottom-width: 1px;
-  top: -1px;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  content: "";
-  margin-bottom: -1px;
-}
-
-.cm-highlight-full:before {
-  border: 1px solid var(--theme-text-color-inactive);
-}
-
-.cm-highlight-start:before {
-  border-left-width: 1px;
-  border-left-style: solid;
-  border-left-color: var(--theme-text-color-inactive);
-  margin: 0 0 -1px -1px;
-  border-top-left-radius: 2px;
-  border-bottom-left-radius: 2px;
-}
-
-.cm-highlight-end:before {
-  border-right-width: 1px;
-  border-right-style: solid;
-  border-right-color: var(--theme-text-color-inactive);
-  margin: 0 -1px -1px 0;
-  border-top-right-radius: 2px;
-  border-bottom-right-radius: 2px;
+  border-bottom: 1px solid var(--theme-contrast-border);
+  /* Use the translucent yellow background, because we want the text selection
+     background (CodeMirror-selected) to show through this. */
+  background-color: var(--theme-contrast-background-alpha);
 }
 
 /* CodeMirror dialogs styling */
@@ -171,6 +146,7 @@
 .CodeMirror-foldgutter-open,
 .CodeMirror-foldgutter-folded {
   height: 14px;
+  margin-top: 1px;
   background-image: url("chrome://devtools/skin/images/arrow.svg");
   background-position: center;
   background-repeat: no-repeat;
@@ -285,4 +261,29 @@
 /* Override the background-color: white applied to filler elements in codemirror.css */
 .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
   -moz-appearance: scrollcorner;
+}
+
+/* Markup view and Event tooltip styles */
+
+.CodeMirror.cm-s-markup-view pre {
+  font-size: var(--theme-code-font-size);
+  line-height: var(--theme-code-line-height);
+  min-height: 15px;
+}
+
+/* Make our own cursor-blink animation */
+@keyframes cursor-blink {
+  0% {}
+  50% { opacity: 0; }
+  100% {}
+}
+
+.CodeMirror-cursor {
+  /*
+   * We're using the --caret-blink-time custom property for the animation duration.
+   * It is set in editor.js when we setup the CodeMirror instance, and will map either
+   * to the value of the ui.caretBlinkTime preference, or to CodeMirror's default for
+   * cursorBlinkRate. (See Bug 1609567 for more information on why this is needed).
+   */
+  animation: cursor-blink calc(var(--caret-blink-time, 0.53s) * 2) steps(1) infinite;
 }

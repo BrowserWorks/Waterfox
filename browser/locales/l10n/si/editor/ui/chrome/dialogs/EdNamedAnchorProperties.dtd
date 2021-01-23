@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "නම්කළ නැංගූරම් ලක්ෂණ">
+<!ENTITY anchorNameEditField.label "නැංගූරම් නම:">
+<!ENTITY anchorNameEditField.accessKey "N">
+<!ENTITY nameInput.tooltip "මෙම නම්කළ නැංගූර සඳහා අනන්‍ය නමක් ඇතුළත් කරන්න(ඉලක්කය)">
+
+

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adreçament">
+<!ENTITY emailCollectiontitle.label            "Recollida d'adreces electròniques">
+<!ENTITY emailCollectionPicker.label           "Afegeix les adreces electròniques al meu:">
+<!ENTITY emailCollectionPicker.accesskey       "A">
+<!ENTITY emailCollectiontext.label             "Les adreces electròniques dels missatges es poden afegir a una llibreta d'adreces local, «Adreces recollides». Afegeix les adreces electròniques de:">
+<!-- Autocompletion -->
+
+<!ENTITY addressingTitle.label                 "Compleció automàtica d'adreces">
+<!ENTITY highlightNonMatches.label             "Ressalta les adreces que no se completen automàticament">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "Llibretes d'adreces locals">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "En adreçar missatges, cerca entrades coincidents a:">
+<!ENTITY directories.label                     "Servidor de directori:">
+<!ENTITY directories.accesskey                 "S">
+<!ENTITY directoriesNone.label                 "Cap">
+<!ENTITY editDirectories.label                 "Edita els directoris…">
+<!ENTITY editDirectories.accesskey             "E">

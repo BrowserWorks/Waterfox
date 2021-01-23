@@ -14,10 +14,11 @@
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
 #include "nsGkAtoms.h"
+#include "nsFieldSetFrame.h"
 #include "nsPageContentFrame.h"
 #include "nsDisplayList.h"
-#include "nsSimplePageSequenceFrame.h"  // for nsSharedPageData
-#include "nsTextFormatter.h"  // for page number localization formatting
+#include "nsPageSequenceFrame.h"  // for nsSharedPageData
+#include "nsTextFormatter.h"      // for page number localization formatting
 #include "nsBidiUtils.h"
 #include "nsIPrintSettings.h"
 
@@ -41,7 +42,7 @@ NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 nsPageFrame::nsPageFrame(ComputedStyle* aStyle, nsPresContext* aPresContext)
     : nsContainerFrame(aStyle, aPresContext, kClassID) {}
 
-nsPageFrame::~nsPageFrame() {}
+nsPageFrame::~nsPageFrame() = default;
 
 void nsPageFrame::Reflow(nsPresContext* aPresContext,
                          ReflowOutput& aDesiredSize,
@@ -95,7 +96,7 @@ void nsPageFrame::Reflow(nsPresContext* aPresContext,
     // If a margin is 'auto', use the margin from the print settings for that
     // side.
     const auto& marginStyle = kidReflowInput.mStyleMargin->mMargin;
-    NS_FOR_CSS_SIDES(side) {
+    for (const auto side : mozilla::AllPhysicalSides()) {
       if (marginStyle.Get(side).IsAuto()) {
         mPageContentMargin.Side(side) = mPD->mReflowMargin.Side(side);
       } else {
@@ -116,7 +117,7 @@ void nsPageFrame::Reflow(nsPresContext* aPresContext,
     // back to the default.
     if (maxWidth < onePixelInTwips ||
         (maxHeight != NS_UNCONSTRAINEDSIZE && maxHeight < onePixelInTwips)) {
-      NS_FOR_CSS_SIDES(side) {
+      for (const auto side : mozilla::AllPhysicalSides()) {
         mPageContentMargin.Side(side) = mPD->mReflowMargin.Side(side);
       }
       maxWidth = maxSize.width - mPageContentMargin.LeftRight() / scale;
@@ -133,12 +134,12 @@ void nsPageFrame::Reflow(nsPresContext* aPresContext,
     nscoord yc = mPageContentMargin.top;
 
     // Get the child's desired size
-    ReflowChild(frame, aPresContext, aDesiredSize, kidReflowInput, xc, yc, 0,
-                aStatus);
+    ReflowChild(frame, aPresContext, aDesiredSize, kidReflowInput, xc, yc,
+                ReflowChildFlags::Default, aStatus);
 
     // Place and size the child
     FinishReflowChild(frame, aPresContext, aDesiredSize, &kidReflowInput, xc,
-                      yc, 0);
+                      yc, ReflowChildFlags::Default);
 
     NS_ASSERTION(!aStatus.IsFullyComplete() || !frame->GetNextInFlow(),
                  "bad child flow list");
@@ -359,7 +360,7 @@ void nsPageFrame::DrawHeaderFooter(gfxContext& aRenderingContext,
     aRenderingContext.Save();
     aRenderingContext.Clip(NSRectToSnappedRect(
         aRect, PresContext()->AppUnitsPerDevPixel(), *drawTarget));
-    aRenderingContext.SetColor(Color(0.f, 0.f, 0.f));
+    aRenderingContext.SetColor(sRGBColor::OpaqueBlack());
     nsLayoutUtils::DrawString(this, aFontMetrics, &aRenderingContext, str.get(),
                               str.Length(), nsPoint(x, y + aAscent), nullptr,
                               DrawStringFlags::ForceHorizontal);
@@ -405,8 +406,8 @@ static void BuildDisplayListForExtraPage(nsDisplayListBuilder* aBuilder,
                                          nsPageFrame* aPage,
                                          nsIFrame* aExtraPage,
                                          nsDisplayList* aList) {
-  // The only content in aExtraPage we care about is out-of-flow content whose
-  // placeholders have occurred in aPage. If
+  // The only content in aExtraPage we care about is out-of-flow content from
+  // aPage, whose placeholders have occurred in aExtraPage. If
   // NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO is not set, then aExtraPage has
   // no such content.
   if (!aExtraPage->HasAnyStateBits(NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO)) {
@@ -446,9 +447,7 @@ class nsDisplayHeaderFooter final : public nsPaintedDisplayItem {
       : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayHeaderFooter);
   }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayHeaderFooter() { MOZ_COUNT_DTOR(nsDisplayHeaderFooter); }
-#endif
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayHeaderFooter)
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      gfxContext* aCtx) override {
@@ -520,13 +519,27 @@ void nsPageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     // these extra pages are pruned so that only display items for the
     // page we currently care about (which we would have reached by
     // following placeholders to their out-of-flows) end up on the list.
-    nsIFrame* page = child;
-    while ((page = GetNextPage(page)) != nullptr) {
-      nsRect childVisible = visibleRect + child->GetOffsetTo(page);
+    //
+    // Stacking context frames that wrap content on their normal page,
+    // as well as OOF content for this page will have their container
+    // items duplicated. We tell the builder to include our page number
+    // in the unique key for any extra page items so that they can be
+    // differentiated from the ones created on the normal page.
+    NS_ASSERTION(mPageNum <= 255, "Too many pages to handle OOFs");
+    if (mPageNum <= 255) {
+      uint8_t oldPageNum = aBuilder->GetBuildingExtraPagesForPageNum();
+      aBuilder->SetBuildingExtraPagesForPageNum(mPageNum);
 
-      nsDisplayListBuilder::AutoBuildingDisplayList buildingForChild(
-          aBuilder, page, childVisible, childVisible);
-      BuildDisplayListForExtraPage(aBuilder, this, page, &content);
+      nsIFrame* page = child;
+      while ((page = GetNextPage(page)) != nullptr) {
+        nsRect childVisible = visibleRect + child->GetOffsetTo(page);
+
+        nsDisplayListBuilder::AutoBuildingDisplayList buildingForChild(
+            aBuilder, page, childVisible, childVisible);
+        BuildDisplayListForExtraPage(aBuilder, this, page, &content);
+      }
+
+      aBuilder->SetBuildingExtraPagesForPageNum(oldPageNum);
     }
 
     // Invoke AutoBuildingDisplayList to ensure that the correct visibleRect
@@ -542,11 +555,11 @@ void nsPageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         nsRect(aBuilder->ToReferenceFrame(child), child->GetSize());
 
     PresContext()->GetPresShell()->AddCanvasBackgroundColorItem(
-        *aBuilder, content, child, backgroundRect, NS_RGBA(0, 0, 0, 0));
+        aBuilder, &content, child, backgroundRect, NS_RGBA(0, 0, 0, 0));
   }
 
   content.AppendNewToTop<nsDisplayTransform>(aBuilder, child, &content,
-                                             content.GetBuildingRect(), 0,
+                                             content.GetBuildingRect(),
                                              ::ComputePageTransform);
 
   set.Content()->AppendToTop(&content);
@@ -575,7 +588,7 @@ void nsPageFrame::PaintHeaderFooter(gfxContext& aRenderingContext, nsPoint aPt,
   }
 
   nsRect rect(aPt, mRect.Size());
-  aRenderingContext.SetColor(Color(0.f, 0.f, 0.f));
+  aRenderingContext.SetColor(sRGBColor::OpaqueBlack());
 
   DrawTargetAutoDisableSubpixelAntialiasing disable(
       aRenderingContext.GetDrawTarget(), aDisableSubpixelAA);
@@ -584,6 +597,7 @@ void nsPageFrame::PaintHeaderFooter(gfxContext& aRenderingContext, nsPoint aPt,
   nsFontMetrics::Params params;
   params.userFontSet = pc->GetUserFontSet();
   params.textPerf = pc->GetTextPerfMetrics();
+  params.fontStats = pc->GetFontMatchingStats();
   params.featureValueLookup = pc->GetFontFeatureValuesLookup();
   RefPtr<nsFontMetrics> fontMet =
       pc->DeviceContext()->GetMetricsFor(mPD->mHeadFootFont, params);
@@ -644,7 +658,7 @@ nsPageBreakFrame::nsPageBreakFrame(ComputedStyle* aStyle,
                                    nsPresContext* aPresContext)
     : nsLeafFrame(aStyle, aPresContext, kClassID), mHaveReflowed(false) {}
 
-nsPageBreakFrame::~nsPageBreakFrame() {}
+nsPageBreakFrame::~nsPageBreakFrame() = default;
 
 nscoord nsPageBreakFrame::GetIntrinsicISize() {
   return nsPresContext::CSSPixelsToAppUnits(1);
@@ -663,11 +677,31 @@ void nsPageBreakFrame::Reflow(nsPresContext* aPresContext,
   // Override reflow, since we don't want to deal with what our
   // computed values are.
   WritingMode wm = aReflowInput.GetWritingMode();
-  LogicalSize finalSize(wm, GetIntrinsicISize(),
-                        aReflowInput.AvailableBSize() == NS_UNCONSTRAINEDSIZE
-                            ? 0
-                            : aReflowInput.AvailableBSize());
+  nscoord bSize = aReflowInput.AvailableBSize();
+  if (aReflowInput.AvailableBSize() == NS_UNCONSTRAINEDSIZE) {
+    bSize = nscoord(0);
+  } else if (GetContent()->IsHTMLElement(nsGkAtoms::legend)) {
+    // If this is a page break frame for a _rendered legend_ then it should be
+    // ignored since these frames are inserted inside the fieldset's inner
+    // frame and thus "misplaced".  nsFieldSetFrame::Reflow deals with these
+    // forced breaks explicitly instead.
+    nsContainerFrame* parent = GetParent();
+    if (parent &&
+        parent->Style()->GetPseudoType() == PseudoStyleType::fieldsetContent) {
+      while ((parent = parent->GetParent())) {
+        if (nsFieldSetFrame* fieldset = do_QueryFrame(parent)) {
+          auto* legend = fieldset->GetLegend();
+          if (legend && legend->GetContent() == GetContent()) {
+            bSize = nscoord(0);
+          }
+          break;
+        }
+      }
+    }
+  }
+  LogicalSize finalSize(wm, GetIntrinsicISize(), bSize);
   // round the height down to the nearest pixel
+  // XXX(mats) why???
   finalSize.BSize(wm) -=
       finalSize.BSize(wm) % nsPresContext::CSSPixelsToAppUnits(1);
   aDesiredSize.SetSize(wm, finalSize);

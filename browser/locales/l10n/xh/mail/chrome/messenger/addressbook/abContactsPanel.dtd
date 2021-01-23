@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookPicker.label            "Incwadi Yeedilesi:">
+<!ENTITY addressbookPicker.accesskey        "k">
+<!ENTITY SearchNameOrEmail.label            "Igama okanye Imeyile">
+
+<!ENTITY addtoToFieldMenu.label             "Fakela ku-Kummandla">
+<!ENTITY addtoToFieldMenu.accesskey         "A">
+<!ENTITY addtoCcFieldMenu.label             "Fakela kummandla we-Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Fakela kummandla we-Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+
+<!ENTITY deleteAddrBookCard.label           "Delete">
+<!ENTITY deleteAddrBookCard.accesskey       "D">
+
+<!ENTITY toButton.label                     "Fakela ku-Kwi:">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Fakela kwi-Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Add to Bcc:">
+<!ENTITY bccButton.accesskey                "B">

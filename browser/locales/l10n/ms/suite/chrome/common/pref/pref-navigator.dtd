@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Pelayar">
+
+<!ENTITY navRadio.label                 "Paparan aktif">
+<!ENTITY navRadio.accesskey             "n">
+<!ENTITY navStartPageMenu.label         "Penetapan Pelayar">
+<!ENTITY newWinPageMenu.label           "Tetingkap Baru">
+<!ENTITY newTabPageMenu.label           "Tab Baru">
+
+<!ENTITY blankPageRadio.label           "Halaman kosong">
+<!ENTITY blankPageRadio.accesskey       "K">
+<!ENTITY homePageRadio.label            "Laman">
+<!ENTITY homePageRadio.accesskey        "m">
+<!ENTITY lastPageRadio.label            "Halaman terakhir yang dilawati">
+<!ENTITY lastPageRadio.accesskey        "H">
+<!ENTITY restoreSessionRadio.label      "Pulih Sesi Dahulu">
+<!ENTITY restoreSessionRadio.accesskey  "P">
+
+<!ENTITY restoreSessionIntro.label      "Apabila memulihkan sesi dan tetingkap">
+<!ENTITY restoreImmediately.label       "Pulih semua tab serta-merta">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Pulih">
+<!ENTITY restoreTabs.accesskey          "h">
+<!ENTITY restoreTabsAtATime.label       "tab pada sesuatu masa">
+<!ENTITY restoreDeferred.label          "Pulih tab hanya apabila saya perlukannya">
+<!ENTITY restoreDeferred.accesskey      "P">
+
+<!ENTITY homePageIntro.label            "Mengklik butang Halaman utama akan pergi ke kumpulan halaman berikut:">
+<!ENTITY useCurrent.label               "Gunakan Halaman Semasa">
+<!ENTITY useCurrent.accesskey           "G">
+<!ENTITY useCurrentGroup.label          "Gunakan Kumpulan Semasa">
+<!ENTITY useCurrentGroup.accesskey      "G">
+<!ENTITY browseFile.label               "Pilih Fail…">
+<!ENTITY browseFile.accesskey           "F">
+<!ENTITY useDefault.label               "Pulih Piawai">
+<!ENTITY useDefault.accesskey           "P">
+
+<!ENTITY defaultBrowserGroup.label      "Pelayar Piawai">
+<!ENTITY defaultBrowserButton.label     "Tetapkan Pelayar Piawai">
+<!ENTITY defaultBrowserButton.accesskey "T">
+<!ENTITY alreadyDefaultText             "&brandShortName; adalah pelayar piawai anda.">
+<!ENTITY defaultPendingText             "&brandShortName; akan ditetapkan sebagai pelayar piawai apabila anda klik OK.">
+<!ENTITY wasMadeDefaultText             "l&brandShortName; telah ditetapkan sebagai pelayar piawai anda.">
+<!ENTITY makeDefaultText                "Tetapkan &brandShortName; sebagai pelayar piawai anda.">

@@ -7,7 +7,6 @@
 #ifndef mozilla_HoldDropJSObjects_h
 #define mozilla_HoldDropJSObjects_h
 
-#include "mozilla/TypeTraits.h"
 #include "nsCycleCollectionParticipant.h"
 
 class nsISupports;
@@ -18,14 +17,15 @@ class nsScriptObjectTracer;
 namespace mozilla {
 namespace cyclecollector {
 
-void HoldJSObjectsImpl(void* aHolder, nsScriptObjectTracer* aTracer);
+void HoldJSObjectsImpl(void* aHolder, nsScriptObjectTracer* aTracer,
+                       JS::Zone* aZone = nullptr);
 void HoldJSObjectsImpl(nsISupports* aHolder);
 void DropJSObjectsImpl(void* aHolder);
 void DropJSObjectsImpl(nsISupports* aHolder);
 
 }  // namespace cyclecollector
 
-template <class T, bool isISupports = IsBaseOf<nsISupports, T>::value>
+template <class T, bool isISupports = std::is_base_of<nsISupports, T>::value>
 struct HoldDropJSObjectsHelper {
   static void Hold(T* aHolder) {
     cyclecollector::HoldJSObjectsImpl(aHolder,
@@ -53,10 +53,6 @@ template <class T>
 void DropJSObjects(T* aHolder) {
   HoldDropJSObjectsHelper<T>::Drop(aHolder);
 }
-
-#ifdef DEBUG
-bool IsJSHolder(void* aHolder);
-#endif
 
 }  // namespace mozilla
 

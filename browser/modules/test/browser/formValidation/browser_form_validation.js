@@ -94,19 +94,19 @@ async function openNewTab(uri, background) {
 }
 
 async function clickChildElement(browser) {
-  await ContentTask.spawn(browser, {}, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     content.document.getElementById("s").click();
   });
 }
 
 async function blurChildElement(browser) {
-  await ContentTask.spawn(browser, {}, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     content.document.getElementById("i").blur();
   });
 }
 
 async function checkChildFocus(browser, message) {
-  await ContentTask.spawn(browser, [message, testId], async function(args) {
+  await SpecialPowers.spawn(browser, [[message, testId]], async function(args) {
     let [msg, id] = args;
     var focused =
       content.document.activeElement == content.document.getElementById("i");
@@ -493,10 +493,7 @@ add_task(async function() {
     gInvalidFormPopup.firstElementChild.textContent
   );
 
-  let inputPromise = BrowserTestUtils.waitForEvent(
-    gBrowser.contentDocument.getElementById("i"),
-    "input"
-  );
+  let inputPromise = BrowserTestUtils.waitForContentEvent(browser, "input");
   EventUtils.sendString("f");
   await inputPromise;
 

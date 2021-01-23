@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Nastavite obstoječi e-poštni naslov">
+<!ENTITY emailWizard.caption             "Uporabi svoj trenutni e-poštni naslov">
+<!ENTITY name.label                      "Vaše ime:">
+<!ENTITY name.accesskey                  "m">
+<!ENTITY fullname.placeholder            "Vaše polno ime">
+<!ENTITY name.text                       "Vaše ime, s katerim se predstavljate">
+<!ENTITY name.error                      "Vnesite svoje ime">
+<!ENTITY email.label                     "E-poštni naslov:">
+<!ENTITY email.accesskey                 "E">
+<!ENTITY email3.placeholder              "Vaš e-poštni naslov">
+<!ENTITY email.text                      "Vaš obstoječi e-poštni naslov">
+<!ENTITY email.error                     "Neveljaven e-poštni naslov">
+<!ENTITY password.label                  "Geslo:">
+<!ENTITY password.accesskey              "G">
+<!ENTITY password.placeholder            "Geslo">
+<!ENTITY password.text                   "Izbirno, uporabilo se bo samo za potrditev vašega uporabniškega imena">
+<!ENTITY password.toggle                 "Prikaži/skrij geslo">
+<!ENTITY rememberPassword.label          "Zapomni si geslo">
+<!ENTITY rememberPassword.accesskey      "Z">
+<!ENTITY usernameEx.label                "Vaša prijava:">
+<!ENTITY usernameEx.accesskey            "p">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "VAŠADOMENA\vašeuporabniškoime">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Domena prijave">
+
+<!ENTITY protocol.label                  "Protokol:">
+<!ENTITY imapLong.label                  "IMAP (oddaljene mape)">
+<!ENTITY pop3Long.label                  "POP3 (pošto se hrani na vašem računalniku)">
+
+<!ENTITY manualConfigTable.summary       "Nastavitve strežnika">
+<!ENTITY incoming.label                  "Dohodni:">
+<!ENTITY incomingColumn.label            "Dohodni">
+<!ENTITY outgoing.label                  "Odhodni:">
+<!ENTITY outgoingColumn.label            "Odhodni">
+<!ENTITY username.label                  "Uporabniško ime:">
+<!ENTITY serverRow.label                 "Strežnik:">
+<!ENTITY portRow.label                   "Vrata:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Overitev">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Samodejno zaznaj">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Brez">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Strežnik Exchange:">
+
+<!ENTITY advancedSetup.label             "Napredna nastavitev …">
+<!ENTITY advancedSetup.accesskey         "N">
+<!ENTITY cancel.label                    "Prekliči">
+<!ENTITY cancel.accesskey                "P">
+<!ENTITY continue.label                  "Nadaljuj">
+<!ENTITY continue.accesskey              "N">
+<!ENTITY stop.label                      "Ustavi">
+<!ENTITY stop.accesskey                  "U">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Ponovno preskusi">
+<!ENTITY half-manual-test.accesskey      "P">
+<!ENTITY manual-config.label             "Nastavi ročno …">
+<!ENTITY manual-config.accesskey         "r">
+<!ENTITY open-provisioner.label          "Pridobite nov e-poštni naslov …">
+<!ENTITY open-provisioner.accesskey      "n">
+
+
+<!ENTITY get-help.label                  "Pomoč">
+<!ENTITY get-help.accesskey              "P">
+
+
+<!ENTITY warning.label                   "Opozorilo!">
+<!ENTITY incomingSettings.label          "Nastavitve za dohodno pošto:">
+<!ENTITY outgoingSettings.label          "Nastavitve za odhodno pošto:">
+<!ENTITY technicaldetails.label          "Tehnične podrobnosti">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Razumem tveganje.">
+<!ENTITY confirmWarning.accesskey        "R">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Končano">
+<!ENTITY doneAccount.accesskey           "K">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Spremeni nastavitve">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; vam lahko omogoči, da pridete s pomočjo navedenih nastavitev do svoje pošte. Glede teh nepravilnih nastavitev pa se boste morali obrniti na svojega skrbnika ali ponudnika e-poštnih storitev . Oglejte si pogosta vprašanja o Thunderbirdu, če potrebujete dodatne podatke.">
+
+<!ENTITY insecureServer.tooltip.title    "Opozorilo! Ta strežnik ni varen.">
+<!ENTITY insecureServer.tooltip.details  "Kliknite na krog za podrobnosti.">
+
+<!ENTITY insecureUnencrypted.description "Svojo e-pošto in overitev pa pošiljate nešifrirano, tako da vaše geslo (in vaše sporočilo) zlahka berejo tudi drugi. &brandShortName; vam bo dovolil priti do vaše pošte, vendar pa bi se morali obrniti na svojega ponudnika e-pošte glede nastavitev strežnika z varno povezavo.">
+<!ENTITY insecureSelfSigned.description  "Strežnik uporablja potrdilo, ki ni zaupanja vredno, tako da ni gotovo, da nekdo ne prestreza prometa med &brandShortName; in strežnikom. &brandShortName; vam bo dovolil priti do vaše pošte, vendar pa bi se res morali obrniti na svojega e-poštnega ponudnika glede nastavitve strežnika z zaupanja vrednim potrdilom.">
+<!ENTITY secureServer.description        "Čestitke! Ta strežnik je varen.">

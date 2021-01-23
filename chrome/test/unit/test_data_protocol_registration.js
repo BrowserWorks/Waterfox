@@ -30,7 +30,7 @@ function run_test() {
     contractID: XULAPPINFO_CONTRACTID,
     createInstance(outer, iid) {
       if (outer != null) {
-        throw Cr.NS_ERROR_NO_AGGREGATION;
+        throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
       }
       return XULAppInfo.QueryInterface(iid);
     },
@@ -89,7 +89,7 @@ function run_test() {
   cr.checkForNewChrome();
 
   // Check that our override worked
-  let expectedURI = "data:application/vnd.mozilla.xul+xml,";
+  let expectedURI = "data:application/xhtml+xml,";
   let sourceURI = "chrome://good-package/content/test.xul";
   try {
     sourceURI = Services.io.newURI(sourceURI);

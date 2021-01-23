@@ -395,8 +395,8 @@ function test() {
         "We should have reset the load state when the tab loaded"
       );
       is(
-        gURLBar.textValue,
-        gURLBar.trimValue("http://example.com/"),
+        gURLBar.value,
+        BrowserUtils.trimURL("http://example.com/"),
         "Address bar's value set after loading URI"
       );
       runNextTest();
@@ -426,13 +426,13 @@ function test() {
     if (tests.length) {
       waitForBrowserState(state, function() {
         gBrowser.selectedBrowser.userTypedValue = null;
-        URLBarSetURI();
+        gURLBar.setURI();
         tests.shift()();
       });
     } else {
       waitForBrowserState(originalState, function() {
         gBrowser.selectedBrowser.userTypedValue = null;
-        URLBarSetURI();
+        gURLBar.setURI();
         finish();
       });
     }

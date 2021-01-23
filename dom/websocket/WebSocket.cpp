@@ -11,6 +11,7 @@
 #include "jsapi.h"
 #include "jsfriendapi.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/net/WebSocketChannel.h"
 #include "mozilla/dom/File.h"
@@ -18,23 +19,24 @@
 #include "mozilla/dom/MessageEventBinding.h"
 #include "mozilla/dom/nsCSPContext.h"
 #include "mozilla/dom/nsCSPUtils.h"
+#include "mozilla/dom/nsHTTPSOnlyUtils.h"
+#include "mozilla/dom/nsMixedContentBlocker.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/SerializedStackHolder.h"
+#include "mozilla/dom/UnionTypes.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerRef.h"
 #include "mozilla/dom/WorkerRunnable.h"
 #include "mozilla/dom/WorkerScope.h"
-#include "nsAutoPtr.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/LoadInfo.h"
 #include "nsGlobalWindow.h"
 #include "nsIScriptGlobalObject.h"
-#include "nsIDOMWindow.h"
 #include "mozilla/dom/Document.h"
 #include "nsXPCOM.h"
-#include "nsIXPConnect.h"
 #include "nsContentUtils.h"
 #include "nsError.h"
-#include "nsICookieSettings.h"
+#include "nsICookieJarSettings.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIURL.h"
 #include "nsThreadUtils.h"
@@ -45,7 +47,6 @@
 #include "nsIConsoleService.h"
 #include "mozilla/dom/CloseEvent.h"
 #include "mozilla/net/WebSocketEventService.h"
-#include "nsICryptoHash.h"
 #include "nsJSUtils.h"
 #include "nsIScriptError.h"
 #include "nsNetUtil.h"
@@ -131,7 +132,7 @@ class WebSocketImpl final : public nsIInterfaceRequestor,
 
   nsresult ParseURL(const nsAString& aURL);
   nsresult InitializeConnection(nsIPrincipal* aPrincipal,
-                                nsICookieSettings* aCookieSettings);
+                                nsICookieJarSettings* aCookieJarSettings);
 
   // These methods when called can release the WebSocket object
   void FailConnection(uint16_t reasonCode,
@@ -143,8 +144,7 @@ class WebSocketImpl final : public nsIInterfaceRequestor,
 
   nsresult ConsoleError();
   void PrintErrorOnConsole(const char* aBundleURI, const char* aError,
-                           const char16_t** aFormatStrings,
-                           uint32_t aFormatStringsLen);
+                           nsTArray<nsString>&& aFormatStrings);
 
   nsresult DoOnMessageAvailable(const nsACString& aMsg, bool isBinary);
 
@@ -226,6 +226,9 @@ class WebSocketImpl final : public nsIInterfaceRequestor,
 
  private:
   ~WebSocketImpl() {
+    MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread() == mIsMainThread ||
+                          mDisconnectingOrDisconnected);
+
     // If we threw during Init we never called disconnect
     if (!mDisconnectingOrDisconnected) {
       Disconnect();
@@ -233,42 +236,9 @@ class WebSocketImpl final : public nsIInterfaceRequestor,
   }
 };
 
-NS_IMPL_ADDREF(WebSocketImpl)
-NS_IMPL_QUERY_INTERFACE(WebSocketImpl, nsIInterfaceRequestor,
-                        nsIWebSocketListener, nsIObserver,
-                        nsISupportsWeakReference, nsIRequest, nsIEventTarget)
-
-NS_IMETHODIMP_(MozExternalRefCountType) WebSocketImpl::Release(void) {
-  MOZ_ASSERT(int32_t(mRefCnt) > 0, "dup release");
-
-  if (!mRefCnt.isThreadSafe) {
-    NS_ASSERT_OWNINGTHREAD(WebSocketImpl);
-  }
-
-  nsrefcnt count = mRefCnt - 1;
-  // If WebSocketImpl::Disconnect is not called, the last release of
-  // WebSocketImpl should be on the right thread.
-  if (count == 0 && !IsTargetThread() && !mDisconnectingOrDisconnected) {
-    DebugOnly<nsresult> rv = Dispatch(NewNonOwningRunnableMethod(
-        "dom::WebSocketImpl::Release", this, &WebSocketImpl::Release));
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return count;
-  }
-
-  count = --mRefCnt;
-  NS_LOG_RELEASE(this, count, "WebSocketImpl");
-
-  if (count == 0) {
-    if (!mRefCnt.isThreadSafe) {
-      NS_ASSERT_OWNINGTHREAD(WebSocketImpl);
-    }
-
-    mRefCnt = 1; /* stabilize */
-    delete (this);
-    return 0;
-  }
-  return count;
-}
+NS_IMPL_ISUPPORTS(WebSocketImpl, nsIInterfaceRequestor, nsIWebSocketListener,
+                  nsIObserver, nsISupportsWeakReference, nsIRequest,
+                  nsIEventTarget)
 
 class CallDispatchConnectionCloseEvents final : public CancelableRunnable {
  public:
@@ -298,20 +268,17 @@ class PrintErrorOnConsoleRunnable final : public WorkerMainThreadRunnable {
  public:
   PrintErrorOnConsoleRunnable(WebSocketImpl* aImpl, const char* aBundleURI,
                               const char* aError,
-                              const char16_t** aFormatStrings,
-                              uint32_t aFormatStringsLen)
+                              nsTArray<nsString>&& aFormatStrings)
       : WorkerMainThreadRunnable(
             aImpl->mWorkerRef->Private(),
             NS_LITERAL_CSTRING("WebSocket :: print error on console")),
         mImpl(aImpl),
         mBundleURI(aBundleURI),
         mError(aError),
-        mFormatStrings(aFormatStrings),
-        mFormatStringsLen(aFormatStringsLen) {}
+        mFormatStrings(std::move(aFormatStrings)) {}
 
   bool MainThreadRun() override {
-    mImpl->PrintErrorOnConsole(mBundleURI, mError, mFormatStrings,
-                               mFormatStringsLen);
+    mImpl->PrintErrorOnConsole(mBundleURI, mError, std::move(mFormatStrings));
     return true;
   }
 
@@ -321,16 +288,14 @@ class PrintErrorOnConsoleRunnable final : public WorkerMainThreadRunnable {
 
   const char* mBundleURI;
   const char* mError;
-  const char16_t** mFormatStrings;
-  uint32_t mFormatStringsLen;
+  nsTArray<nsString> mFormatStrings;
 };
 
 }  // namespace
 
 void WebSocketImpl::PrintErrorOnConsole(const char* aBundleURI,
                                         const char* aError,
-                                        const char16_t** aFormatStrings,
-                                        uint32_t aFormatStringsLen) {
+                                        nsTArray<nsString>&& aFormatStrings) {
   // This method must run on the main thread.
 
   if (!NS_IsMainThread()) {
@@ -338,7 +303,7 @@ void WebSocketImpl::PrintErrorOnConsole(const char* aBundleURI,
 
     RefPtr<PrintErrorOnConsoleRunnable> runnable =
         new PrintErrorOnConsoleRunnable(this, aBundleURI, aError,
-                                        aFormatStrings, aFormatStringsLen);
+                                        std::move(aFormatStrings));
     ErrorResult rv;
     runnable->Dispatch(Killing, rv);
     // XXXbz this seems totally broken.  We should be propagating this out, but
@@ -368,9 +333,8 @@ void WebSocketImpl::PrintErrorOnConsole(const char* aBundleURI,
 
   // Localize the error message
   nsAutoString message;
-  if (aFormatStrings) {
-    rv = strBundle->FormatStringFromName(aError, aFormatStrings,
-                                         aFormatStringsLen, message);
+  if (!aFormatStrings.IsEmpty()) {
+    rv = strBundle->FormatStringFromName(aError, aFormatStrings, message);
   } else {
     rv = strBundle->GetStringFromName(aError, message);
   }
@@ -530,17 +494,15 @@ nsresult WebSocketImpl::ConsoleError() {
     }
   }
 
-  NS_ConvertUTF8toUTF16 specUTF16(mURI);
-  const char16_t* formatStrings[] = {specUTF16.get()};
+  nsTArray<nsString> formatStrings;
+  CopyUTF8toUTF16(mURI, *formatStrings.AppendElement());
 
   if (mWebSocket->ReadyState() < WebSocket::OPEN) {
     PrintErrorOnConsole("chrome://global/locale/appstrings.properties",
-                        "connectionFailure", formatStrings,
-                        ArrayLength(formatStrings));
+                        "connectionFailure", std::move(formatStrings));
   } else {
     PrintErrorOnConsole("chrome://global/locale/appstrings.properties",
-                        "netInterrupt", formatStrings,
-                        ArrayLength(formatStrings));
+                        "netInterrupt", std::move(formatStrings));
   }
   /// todo some specific errors - like for message too large
   return NS_OK;
@@ -581,11 +543,11 @@ class DisconnectInternalRunnable final : public WorkerMainThreadRunnable {
 }  // namespace
 
 void WebSocketImpl::Disconnect() {
+  MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread() == mIsMainThread);
+
   if (mDisconnectingOrDisconnected) {
     return;
   }
-
-  AssertIsOnTargetThread();
 
   // DontKeepAliveAnyMore() and DisconnectInternal() can release the object. So
   // hold a reference to this until the end of the method.
@@ -618,10 +580,8 @@ void WebSocketImpl::Disconnect() {
     rv.SuppressException();
   }
 
-  NS_ReleaseOnMainThreadSystemGroup("WebSocketImpl::mChannel",
-                                    mChannel.forget());
-  NS_ReleaseOnMainThreadSystemGroup("WebSocketImpl::mService",
-                                    mService.forget());
+  NS_ReleaseOnMainThread("WebSocketImpl::mChannel", mChannel.forget());
+  NS_ReleaseOnMainThread("WebSocketImpl::mService", mService.forget());
 
   mWebSocket->DontKeepAliveAnyMore();
   mWebSocket->mImpl = nullptr;
@@ -830,10 +790,14 @@ WebSocketImpl::OnAcknowledge(nsISupports* aContext, uint32_t aSize) {
     return NS_ERROR_UNEXPECTED;
   }
 
-  mWebSocket->mOutgoingBufferedAmount -= aSize;
-  if (!mWebSocket->mOutgoingBufferedAmount.isValid()) {
+  CheckedUint64 outgoingBufferedAmount = mWebSocket->mOutgoingBufferedAmount;
+  outgoingBufferedAmount -= aSize;
+  if (!outgoingBufferedAmount.isValid()) {
     return NS_ERROR_UNEXPECTED;
   }
+
+  mWebSocket->mOutgoingBufferedAmount = outgoingBufferedAmount;
+  MOZ_RELEASE_ASSERT(mWebSocket->mOutgoingBufferedAmount.isValid());
 
   return NS_OK;
 }
@@ -926,32 +890,11 @@ WebSocket::WebSocket(nsIGlobalObject* aGlobal)
   mIsMainThread = mImpl->mIsMainThread;
 }
 
-WebSocket::~WebSocket() {}
+WebSocket::~WebSocket() = default;
 
 JSObject* WebSocket::WrapObject(JSContext* cx,
                                 JS::Handle<JSObject*> aGivenProto) {
   return WebSocket_Binding::Wrap(cx, this, aGivenProto);
-}
-
-void WebSocket::BindToOwner(nsIGlobalObject* aNew) {
-  auto scopeExit =
-      MakeScopeExit([&] { DOMEventTargetHelper::BindToOwner(aNew); });
-
-  // If we're disconnected, then there is no state to update.
-  if (!mImpl || mImpl->mDisconnectingOrDisconnected) {
-    return;
-  }
-
-  // Update state on the old window.
-  if (GetOwner()) {
-    GetOwner()->UpdateWebSocketCount(-1);
-  }
-
-  // Update state on the new window
-  nsCOMPtr<nsPIDOMWindowInner> newWindow = do_QueryInterface(aNew);
-  if (newWindow) {
-    newWindow->UpdateWebSocketCount(1);
-  }
 }
 
 //---------------------------------------------------------------------------
@@ -959,32 +902,22 @@ void WebSocket::BindToOwner(nsIGlobalObject* aNew) {
 //---------------------------------------------------------------------------
 
 // Constructor:
-already_AddRefed<WebSocket> WebSocket::Constructor(const GlobalObject& aGlobal,
-                                                   const nsAString& aUrl,
-                                                   ErrorResult& aRv) {
-  Sequence<nsString> protocols;
-  return WebSocket::ConstructorCommon(aGlobal, aUrl, protocols, nullptr,
-                                      EmptyCString(), aRv);
-}
+already_AddRefed<WebSocket> WebSocket::Constructor(
+    const GlobalObject& aGlobal, const nsAString& aUrl,
+    const StringOrStringSequence& aProtocols, ErrorResult& aRv) {
+  if (aProtocols.IsStringSequence()) {
+    return WebSocket::ConstructorCommon(aGlobal, aUrl,
+                                        aProtocols.GetAsStringSequence(),
+                                        nullptr, EmptyCString(), aRv);
+  }
 
-already_AddRefed<WebSocket> WebSocket::Constructor(const GlobalObject& aGlobal,
-                                                   const nsAString& aUrl,
-                                                   const nsAString& aProtocol,
-                                                   ErrorResult& aRv) {
   Sequence<nsString> protocols;
-  if (!protocols.AppendElement(aProtocol, fallible)) {
+  if (!protocols.AppendElement(aProtocols.GetAsString(), fallible)) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;
   }
 
   return WebSocket::ConstructorCommon(aGlobal, aUrl, protocols, nullptr,
-                                      EmptyCString(), aRv);
-}
-
-already_AddRefed<WebSocket> WebSocket::Constructor(
-    const GlobalObject& aGlobal, const nsAString& aUrl,
-    const Sequence<nsString>& aProtocols, ErrorResult& aRv) {
-  return WebSocket::ConstructorCommon(aGlobal, aUrl, aProtocols, nullptr,
                                       EmptyCString(), aRv);
 }
 
@@ -1133,7 +1066,7 @@ class ConnectRunnable final : public WebSocketMainThreadRunnable {
     }
 
     mConnectionFailed = NS_FAILED(mImpl->InitializeConnection(
-        doc->NodePrincipal(), mWorkerPrivate->CookieSettings()));
+        doc->NodePrincipal(), mWorkerPrivate->CookieJarSettings()));
     return true;
   }
 
@@ -1143,7 +1076,7 @@ class ConnectRunnable final : public WebSocketMainThreadRunnable {
 
     mConnectionFailed = NS_FAILED(
         mImpl->InitializeConnection(aTopLevelWorkerPrivate->GetPrincipal(),
-                                    mWorkerPrivate->CookieSettings()));
+                                    mWorkerPrivate->CookieJarSettings()));
     return true;
   }
 
@@ -1187,7 +1120,8 @@ class AsyncOpenRunnable final : public WebSocketMainThreadRunnable {
     }
 
     uint64_t windowID = 0;
-    nsCOMPtr<nsPIDOMWindowOuter> topWindow = aWindow->GetScriptableTop();
+    nsCOMPtr<nsPIDOMWindowOuter> topWindow =
+        aWindow->GetInProcessScriptableTop();
     nsCOMPtr<nsPIDOMWindowInner> topInner;
     if (topWindow) {
       topInner = topWindow->GetCurrentInnerWindow();
@@ -1309,7 +1243,7 @@ already_AddRefed<WebSocket> WebSocket::ConstructorCommon(
     // url parameter, so don't throw if InitializeConnection fails, and call
     // onerror/onclose asynchronously
     connectionFailed = NS_FAILED(webSocketImpl->InitializeConnection(
-        principal, doc ? doc->CookieSettings() : nullptr));
+        principal, doc ? doc->CookieJarSettings() : nullptr));
   } else {
     WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
     MOZ_ASSERT(workerPrivate);
@@ -1403,13 +1337,14 @@ already_AddRefed<WebSocket> WebSocket::ConstructorCommon(
     nsPIDOMWindowOuter* outerWindow = ownerWindow->GetOuterWindow();
 
     UniquePtr<SerializedStackHolder> stack;
-    nsIDocShell* docShell = outerWindow->GetDocShell();
-    if (docShell && docShell->GetWatchedByDevtools()) {
+    BrowsingContext* browsingContext = ownerWindow->GetBrowsingContext();
+    if (browsingContext && browsingContext->WatchedByDevTools()) {
       stack = GetCurrentStackForNetMonitor(aGlobal.Context());
     }
 
     uint64_t windowID = 0;
-    nsCOMPtr<nsPIDOMWindowOuter> topWindow = outerWindow->GetScriptableTop();
+    nsCOMPtr<nsPIDOMWindowOuter> topWindow =
+        outerWindow->GetInProcessScriptableTop();
     nsCOMPtr<nsPIDOMWindowInner> topInner;
     if (topWindow) {
       topInner = topWindow->GetCurrentInnerWindow();
@@ -1427,7 +1362,7 @@ already_AddRefed<WebSocket> WebSocket::ConstructorCommon(
 
     UniquePtr<SerializedStackHolder> stack;
     WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
-    if (workerPrivate->IsWatchedByDevtools()) {
+    if (workerPrivate->IsWatchedByDevTools()) {
       stack = GetCurrentStackForNetMonitor(aGlobal.Context());
     }
 
@@ -1567,7 +1502,7 @@ nsresult WebSocketImpl::Init(JSContext* aCx, nsIPrincipal* aLoadingPrincipal,
   }
 
   mPrivateBrowsing = !!aPrincipal->OriginAttributesRef().mPrivateBrowsingId;
-  mIsChromeContext = nsContentUtils::IsSystemPrincipal(aPrincipal);
+  mIsChromeContext = aPrincipal->IsSystemPrincipal();
 
   // parses the url
   rv = ParseURL(aURL);
@@ -1616,6 +1551,32 @@ nsresult WebSocketImpl::Init(JSContext* aCx, nsIPrincipal* aLoadingPrincipal,
     }
   }
 
+  // If the HTTPS-Only mode is enabled, we need to upgrade the websocket
+  // connection from ws:// to wss:// and mark it as secure.
+  if (!mIsServerSide && !mSecure) {
+    nsCOMPtr<nsIURI> uri;
+    nsresult rv = NS_NewURI(getter_AddRefs(uri), mURI);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    uint32_t httpsOnlyStatus = nsILoadInfo::HTTPS_ONLY_UNINITIALIZED;
+    if (originDoc) {
+      nsCOMPtr<nsIChannel> channel = originDoc->GetChannel();
+      if (channel) {
+        nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+        httpsOnlyStatus = loadInfo->GetHttpsOnlyStatus();
+      }
+    }
+
+    if (nsHTTPSOnlyUtils::ShouldUpgradeWebSocket(
+            uri, mInnerWindowID, mPrivateBrowsing, httpsOnlyStatus)) {
+      mURI.ReplaceSubstring("ws://", "wss://");
+      if (NS_WARN_IF(mURI.Find("wss://") != 0)) {
+        return NS_OK;
+      }
+      mSecure = true;
+    }
+  }
+
   // Potentially the page uses the CSP directive 'upgrade-insecure-requests'.
   // In such a case we have to upgrade ws: to wss: and also update mSecure
   // to reflect that upgrade. Please note that we can not upgrade from ws:
@@ -1624,7 +1585,8 @@ nsresult WebSocketImpl::Init(JSContext* aCx, nsIPrincipal* aLoadingPrincipal,
   if (!mIsServerSide && !mSecure && originDoc &&
       originDoc->GetUpgradeInsecureRequests(false)) {
     // let's use the old specification before the upgrade for logging
-    NS_ConvertUTF8toUTF16 reportSpec(mURI);
+    AutoTArray<nsString, 2> params;
+    CopyUTF8toUTF16(mURI, *params.AppendElement());
 
     // upgrade the request from ws:// to wss:// and mark as secure
     mURI.ReplaceSubstring("ws://", "wss://");
@@ -1633,8 +1595,8 @@ nsresult WebSocketImpl::Init(JSContext* aCx, nsIPrincipal* aLoadingPrincipal,
     }
     mSecure = true;
 
-    const char16_t* params[] = {reportSpec.get(), u"wss"};
-    CSP_LogLocalizedStr("upgradeInsecureRequest", params, ArrayLength(params),
+    params.AppendElement(NS_LITERAL_STRING("wss"));
+    CSP_LogLocalizedStr("upgradeInsecureRequest", params,
                         EmptyString(),  // aSourceFile
                         EmptyString(),  // aScriptSample
                         0,              // aLineNumber
@@ -1647,20 +1609,11 @@ nsresult WebSocketImpl::Init(JSContext* aCx, nsIPrincipal* aLoadingPrincipal,
   // Don't allow https:// to open ws://
   if (!mIsServerSide && !mSecure &&
       !Preferences::GetBool("network.websocket.allowInsecureFromHTTPS",
-                            false)) {
-    nsCOMPtr<nsIURI> originURI;
-    if (aLoadingPrincipal) {
-      aLoadingPrincipal->GetURI(getter_AddRefs(originURI));
-    }
-
-    if (originURI) {
-      bool originIsHttps = false;
-      rv = originURI->SchemeIs("https", &originIsHttps);
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      if (originIsHttps) {
-        return NS_ERROR_DOM_SECURITY_ERR;
-      }
+                            false) &&
+      !nsMixedContentBlocker::IsPotentiallyTrustworthyLoopbackHost(
+          mAsciiHost)) {
+    if (aLoadingPrincipal->SchemeIs("https")) {
+      return NS_ERROR_DOM_SECURITY_ERR;
     }
   }
 
@@ -1683,17 +1636,19 @@ nsresult WebSocketImpl::Init(JSContext* aCx, nsIPrincipal* aLoadingPrincipal,
   return NS_OK;
 }
 
-nsresult WebSocketImpl::AsyncOpen(nsIPrincipal* aPrincipal,
-                                  uint64_t aInnerWindowID,
-                                  nsITransportProvider* aTransportProvider,
-                                  const nsACString& aNegotiatedExtensions,
-                                  UniquePtr<SerializedStackHolder> aOriginStack) {
+nsresult WebSocketImpl::AsyncOpen(
+    nsIPrincipal* aPrincipal, uint64_t aInnerWindowID,
+    nsITransportProvider* aTransportProvider,
+    const nsACString& aNegotiatedExtensions,
+    UniquePtr<SerializedStackHolder> aOriginStack) {
   MOZ_ASSERT(NS_IsMainThread(), "Not running on main thread");
   MOZ_ASSERT_IF(!aTransportProvider, aNegotiatedExtensions.IsEmpty());
 
   nsCString asciiOrigin;
-  nsresult rv = nsContentUtils::GetASCIIOrigin(aPrincipal, asciiOrigin);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsresult rv = aPrincipal->GetAsciiOrigin(asciiOrigin);
+  if (NS_FAILED(rv)) {
+    asciiOrigin.AssignLiteral("null");
+  }
 
   if (aTransportProvider) {
     rv = mChannel->SetServerParameters(aTransportProvider,
@@ -1742,7 +1697,7 @@ class nsAutoCloseWS final {
 };
 
 nsresult WebSocketImpl::InitializeConnection(
-    nsIPrincipal* aPrincipal, nsICookieSettings* aCookieSettings) {
+    nsIPrincipal* aPrincipal, nsICookieJarSettings* aCookieJarSettings) {
   AssertIsOnMainThread();
   MOZ_ASSERT(!mChannel, "mChannel should be null");
 
@@ -1786,9 +1741,9 @@ nsresult WebSocketImpl::InitializeConnection(
   MOZ_ASSERT(!doc || doc->NodePrincipal()->Equals(aPrincipal));
 
   rv = wsChannel->InitLoadInfoNative(
-      doc, doc ? doc->NodePrincipal() : aPrincipal, aPrincipal, aCookieSettings,
-      nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-      nsIContentPolicy::TYPE_WEBSOCKET);
+      doc, doc ? doc->NodePrincipal() : aPrincipal, aPrincipal,
+      aCookieJarSettings, nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+      nsIContentPolicy::TYPE_WEBSOCKET, 0);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   if (!mRequestedProtocolList.IsEmpty()) {
@@ -1889,7 +1844,9 @@ nsresult WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
 
       RefPtr<Blob> blob =
           Blob::CreateStringBlob(GetOwnerGlobal(), aData, EmptyString());
-      MOZ_ASSERT(blob);
+      if (NS_WARN_IF(!blob)) {
+        return NS_ERROR_FAILURE;
+      }
 
       if (!ToJSValue(cx, blob, &jsData)) {
         return NS_ERROR_FAILURE;
@@ -2216,8 +2173,8 @@ void WebSocket::SetReadyState(uint16_t aReadyState) {
   mReadyState = aReadyState;
 }
 
-// webIDL: readonly attribute unsigned long bufferedAmount;
-uint32_t WebSocket::BufferedAmount() const {
+// webIDL: readonly attribute unsigned long long bufferedAmount;
+uint64_t WebSocket::BufferedAmount() const {
   AssertIsOnTargetThread();
   MOZ_RELEASE_ASSERT(mOutgoingBufferedAmount.isValid());
   return mOutgoingBufferedAmount.value();
@@ -2291,7 +2248,7 @@ void WebSocket::Send(Blob& aData, ErrorResult& aRv) {
 void WebSocket::Send(const ArrayBuffer& aData, ErrorResult& aRv) {
   AssertIsOnTargetThread();
 
-  aData.ComputeLengthAndData();
+  aData.ComputeState();
 
   static_assert(sizeof(*aData.Data()) == 1, "byte-sized data required");
 
@@ -2305,7 +2262,7 @@ void WebSocket::Send(const ArrayBuffer& aData, ErrorResult& aRv) {
 void WebSocket::Send(const ArrayBufferView& aData, ErrorResult& aRv) {
   AssertIsOnTargetThread();
 
-  aData.ComputeLengthAndData();
+  aData.ComputeState();
 
   static_assert(sizeof(*aData.Data()) == 1, "byte-sized data required");
 
@@ -2326,12 +2283,16 @@ void WebSocket::Send(nsIInputStream* aMsgStream, const nsACString& aMsgString,
     return;
   }
 
-  // Always increment outgoing buffer len, even if closed
-  mOutgoingBufferedAmount += aMsgLength;
-  if (!mOutgoingBufferedAmount.isValid()) {
+  CheckedUint64 outgoingBufferedAmount = mOutgoingBufferedAmount;
+  outgoingBufferedAmount += aMsgLength;
+  if (!outgoingBufferedAmount.isValid()) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
   }
+
+  // Always increment outgoing buffer len, even if closed
+  mOutgoingBufferedAmount = outgoingBufferedAmount;
+  MOZ_RELEASE_ASSERT(mOutgoingBufferedAmount.isValid());
 
   if (readyState == CLOSING || readyState == CLOSED) {
     return;
@@ -2589,6 +2550,16 @@ WebSocketImpl::SetLoadFlags(nsLoadFlags aLoadFlags) {
   return NS_OK;
 }
 
+NS_IMETHODIMP
+WebSocketImpl::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+WebSocketImpl::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
+}
+
 namespace {
 
 class WorkerRunnableDispatcher final : public WorkerRunnable {
@@ -2727,7 +2698,7 @@ nsresult WebSocketImpl::GetLoadingPrincipal(nsIPrincipal** aPrincipal) {
     }
 
     nsCOMPtr<nsPIDOMWindowOuter> parentWindow =
-        innerWindow->GetScriptableParent();
+        innerWindow->GetInProcessScriptableParent();
     if (NS_WARN_IF(!parentWindow)) {
       return NS_ERROR_DOM_SECURITY_ERR;
     }
@@ -2740,19 +2711,14 @@ nsresult WebSocketImpl::GetLoadingPrincipal(nsIPrincipal** aPrincipal) {
 
     // We are at the top. Let's see if we have an opener window.
     if (innerWindow == currentInnerWindow) {
-      ErrorResult error;
-      parentWindow =
-          nsGlobalWindowInner::Cast(innerWindow)->GetOpenerWindow(error);
-      if (NS_WARN_IF(error.Failed())) {
-        error.SuppressException();
-        return NS_ERROR_DOM_SECURITY_ERR;
-      }
-
+      parentWindow = nsGlobalWindowOuter::Cast(innerWindow->GetOuterWindow())
+                         ->GetSameProcessOpener();
       if (!parentWindow) {
         break;
       }
 
-      if (parentWindow->GetScriptableTop() == innerWindow->GetScriptableTop()) {
+      if (parentWindow->GetInProcessScriptableTop() ==
+          innerWindow->GetInProcessScriptableTop()) {
         break;
       }
 

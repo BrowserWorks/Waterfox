@@ -5,6 +5,7 @@
 
 #include "nsISupports.idl"
 
+interface nsIChannel;
 interface nsIInputStream;
 interface nsIStreamListener;
 
@@ -35,6 +36,14 @@ interface nsIStreamConverterService : nsISupports {
     boolean canConvert(in string aFromType, in string aToType);
 
     /**
+     * Returns the content type that will be returned from a converter
+     * created with aFromType and  * /*.
+     * Can fail if no converters support this conversion, or if the
+     * output type isn't known in advance.
+     */
+    ACString convertedType(in ACString aFromType, in nsIChannel aChannel);
+
+    /**
      * <b>SYNCHRONOUS VERSION</b>
      * Converts a stream of one type, to a stream of another type.
      *
@@ -59,7 +68,7 @@ interface nsIStreamConverterService : nsISupports {
     /**
      * <b>ASYNCHRONOUS VERSION</b>
      * Retrieves a nsIStreamListener that receives the original/raw data via its
-     * nsIStreamListener::OnDataAvailable() callback, then converts and pushes 
+     * nsIStreamListener::OnDataAvailable() callback, then converts and pushes
      * the data to aListener.
      *
      * Use this method when you want to proxy (and convert) nsIStreamListener
@@ -73,8 +82,8 @@ interface nsIStreamConverterService : nsISupports {
      * @return              A nsIStreamListener that receives data via its
      *                      OnDataAvailable() method.
      */
-    nsIStreamListener asyncConvertData(in string aFromType, 
-                                       in string aToType, 
+    nsIStreamListener asyncConvertData(in string aFromType,
+                                       in string aToType,
                                        in nsIStreamListener aListener,
                                        in nsISupports aContext);
 };

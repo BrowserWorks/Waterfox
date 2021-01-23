@@ -1,0 +1,24 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "מאפייני דף">
+<!ENTITY location.label "מיקום:">
+<!ENTITY lastModified.label "שונה לאחרונה:">
+<!ENTITY titleInput.label "כותרת:">
+<!ENTITY titleInput.accessKey "כ">
+<!ENTITY authorInput.label "מחבר:">
+<!ENTITY authorInput.accessKey "מ">
+<!ENTITY descriptionInput.label "תיאור:">
+<!ENTITY descriptionInput.accessKey "ת">
+<!ENTITY locationNewPage.label "[דף חדש, לא נשמר עדיין]">
+<!ENTITY EditHEADSource1.label "משתמשים מתקדמים:">
+<!ENTITY EditHEADSource2.label "כדי לערוך תכנים אחרים של אזור ה־&lt;head&gt;, השתמש ב&quot;קוד מקור HTML&quot;  בתפריט תצוגה או סרגל הכלים מצב עריכה.">
+

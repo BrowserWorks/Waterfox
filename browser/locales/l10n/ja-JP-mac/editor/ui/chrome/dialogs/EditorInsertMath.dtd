@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label	"数式を挿入">
+
+<!ENTITY sourceEditField.label	"LaTeX ソースコードを入力してください:">
+
+<!ENTITY options.label		"オプション">
+<!ENTITY optionInline.label	"インラインモード">
+<!ENTITY optionInline.accesskey	"N">
+<!ENTITY optionDisplay.label	"表示モード">
+<!ENTITY optionDisplay.accesskey	"D">
+<!ENTITY optionLTR.label	"左から右の記述方向">
+<!ENTITY optionLTR.accesskey	"L">
+<!ENTITY optionRTL.label	"右から左の記述方向">
+<!ENTITY optionRTL.accesskey	"R">
+
+<!ENTITY insertButton.label	"挿入">
+<!ENTITY insertButton.accesskey	"I">

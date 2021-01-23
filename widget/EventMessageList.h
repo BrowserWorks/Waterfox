@@ -130,6 +130,7 @@ NS_EVENT_MESSAGE(eFormSelect)
 NS_EVENT_MESSAGE(eFormInvalid)
 NS_EVENT_MESSAGE(eFormCheckboxStateChange)
 NS_EVENT_MESSAGE(eFormRadioStateChange)
+NS_EVENT_MESSAGE(eFormData)
 
 // Need separate focus/blur notifications for non-native widgets
 NS_EVENT_MESSAGE(eFocus)
@@ -457,6 +458,7 @@ NS_EVENT_MESSAGE_FIRST_LAST(eGamepadEvent, eGamepadButtonDown,
 
 // input and beforeinput events.
 NS_EVENT_MESSAGE(eEditorInput)
+NS_EVENT_MESSAGE(eEditorBeforeInput)
 
 // selection events
 NS_EVENT_MESSAGE(eSelectStart)

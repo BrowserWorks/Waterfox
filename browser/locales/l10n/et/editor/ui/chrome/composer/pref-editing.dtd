@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Uue lehe sätted">
+
+<!ENTITY  authorName.label          "Autor:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Lehe vaikimisi välimus">
+
+<!ENTITY defaultColors.label        "Kliendi vaikimisi värvid (lehele ei määrata värve)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Kasutatakse kohandatud värve:">
+<!ENTITY customColors.accesskey     "K">
+
+<!ENTITY normalText.label           "Tavaline tekst">
+<!ENTITY normalText.accesskey       "T">
+<!ENTITY linkText.label             "Lingi tekst">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "Aktiivse lingi tekst">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "Külastatud lingi tekst">
+<!ENTITY visitedLinkText.accesskey  "K">
+<!ENTITY background.label           "Taust:">
+<!ENTITY background.accesskey       "a">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Taustapilt:">
+<!ENTITY backgroundImage.accesskey  "s">
+<!ENTITY chooseFile.label           "Vali fail…">
+<!ENTITY chooseFile.accesskey       "V">
+

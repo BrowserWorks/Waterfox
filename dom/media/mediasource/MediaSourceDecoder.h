@@ -9,6 +9,7 @@
 
 #include "MediaDecoder.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/dom/MediaDebugInfoBinding.h"
 
 namespace mozilla {
 
@@ -49,11 +50,13 @@ class MediaSourceDecoder : public MediaDecoder,
 
   already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
 
+  bool HadCrossOriginRedirects() override;
+
   bool IsTransportSeekable() override { return true; }
 
-  // Returns a string describing the state of the MediaSource internal
+  // Returns a structure describing the state of the MediaSource internal
   // buffered data. Used for debugging purposes.
-  void GetMozDebugReaderData(nsACString& aString) override;
+  void GetDebugInfo(dom::MediaSourceDecoderDebugInfo& aInfo);
 
   void AddSizeOfResources(ResourceSizes* aSizes) override;
 

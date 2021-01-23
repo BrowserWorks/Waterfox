@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "ספר כתובות">
+<!ENTITY blankResultsPaneMessage.label                  "פנקס כתובות זה מציג אנשי קשר רק לאחר חיפוש">
+<!ENTITY localResultsOnlyMessage.label                  "אנשי קשר מפנקסי כתובות מרוחקים לא יופיעו עד לחיפוש">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "קובץ">
+<!ENTITY fileMenu.accesskey                             "ק">
+<!ENTITY newMenu.label                                  "חדש">
+<!ENTITY newMenu.accesskey                              "ח">
+<!ENTITY newContact.label                               "איש קשר בספר הכתובות…">
+<!ENTITY newContact.accesskey                           "ק">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "רשימת דיוור...">
+<!ENTITY newListCmd.accesskey                           "ר">
+<!ENTITY newAddressBookCmd.label                        "ספר כתובות...">
+<!ENTITY newAddressBookCmd.accesskey                    "ס">
+<!ENTITY newLDAPDirectoryCmd.label                      "מדריך LDAP...">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "מ">
+<!ENTITY newMessageCmd.label                            "הודעה">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "ה">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "שימוש בספר הכתובות של Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "סגירה">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "c">
+<!ENTITY printSetupCmd.label                            "הגדרת עמוד…">
+<!ENTITY printSetupCmd.accesskey                        "ג">
+<!ENTITY printPreviewContactCmd.label                   "תצוגה לפני הדפסה של איש הקשר">
+<!ENTITY printPreviewContactCmd.accesskey               "ה">
+<!ENTITY printPreviewAddressBook.label                  "הצג לפני הדפסה את פנקס הכתובות">
+<!ENTITY printPreviewAddressBook.accesskey              "צ">
+<!ENTITY printContactCmd.label                          "הדפס פרטי איש קשר…">
+<!ENTITY printContactCmd.accesskey                      "ד">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "הדפס ספר כתובות...">
+<!ENTITY printAddressBook.accesskey                     "ס">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "עריכה">
+<!ENTITY editMenu.accesskey                             "ע">
+<!ENTITY deleteCmd.label                                "מחיקה">
+<!ENTITY deleteAbCmd.label                              "מחק ספר כתובות">
+<!ENTITY deleteContactCmd.label                         "מחיקת איש קשר">
+<!ENTITY deleteContactsCmd.label                        "מחיקת אנשי קשר">
+<!ENTITY deleteListCmd.label                            "מחק רשימה">
+<!ENTITY deleteListsCmd.label                           "מחק רשימות">
+<!ENTITY deleteItemsCmd.label                           "מחק פרטים">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "מאפיינים">
+<!ENTITY propertiesMenu.accesskey                       "א">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "מאפייני פנקס כתובות">
+<!ENTITY abPropertiesMenu.accesskey                     "א">
+<!ENTITY contactPropertiesMenu.label                    "מאפייני איש קשר">
+<!ENTITY contactPropertiesMenu.accesskey                "א">
+<!ENTITY mailingListPropertiesMenu.label                "מאפייני רשימת דיוור">
+<!ENTITY mailingListPropertiesMenu.accesskey            "א">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "תצוגה">
+<!ENTITY viewMenu.accesskey                             "v">
+<!ENTITY viewToolbarsMenu.label                         "סרגלי כלים">
+<!ENTITY viewToolbarsMenu.accesskey                     "T">
+<!ENTITY menubarCmd.label                               "שורת תפריט">
+<!ENTITY menubarCmd.accesskey                           "ש">
+<!ENTITY showAbToolbarCmd.label                         "סרגל כלים פנקס כתובות">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "שורת מצב">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "התאמה אישית…">
+<!ENTITY customizeToolbar.accesskey                     "א">
+<!ENTITY layoutMenu.label                               "פריסה">
+<!ENTITY layoutMenu.accesskey                           "פ">
+<!ENTITY showDirectoryPane.label                        "לוח מדריך">
+<!ENTITY showDirectoryPane.accesskey                    "מ">
+<!ENTITY showContactPane2.label                         "לוח אנשי קשר">
+<!ENTITY showContactPane2.accesskey                     "א">
+<!ENTITY menu_ShowNameAs.label                          "הצג שם בצורה">
+<!ENTITY menu_ShowNameAs.accesskey                      "צ">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "פרטי משפחה">
+<!ENTITY firstLastCmd2.accesskey                        "פ">
+<!ENTITY lastFirstCmd.label                             "שם משפחה, שם פרטי">
+<!ENTITY lastFirstCmd.accesskey                         "מ">
+<!ENTITY displayNameCmd.label                           "שם תצוגה">
+<!ENTITY displayNameCmd.accesskey                       "ת">
+<!ENTITY sortMenu.label                                 "מיין לפי">
+<!ENTITY sortMenu.accesskey                             "מ">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "כלים">
+<!ENTITY tasksMenu.accesskey                            "כ">
+<!ENTITY messengerCmd.label                             "דואר וקבוצות דיון">
+<!ENTITY messengerCmd.accesskey                         "ד">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "פנקס כתובות">
+<!ENTITY addressBookCmd.accesskey                       "פ">
+<!ENTITY addressBookCmd.key                             "כ">
+<!ENTITY searchAddressesCmd.label                       "חפש בכתובות…">
+<!ENTITY searchAddressesCmd.accesskey                   "ח">
+<!ENTITY importCmd.label                                "יבוא…">
+<!ENTITY importCmd.accesskey                            "ב">
+<!ENTITY exportCmd.label                                "יצוא…">
+<!ENTITY exportCmd.accesskey                            "צ">
+<!ENTITY preferencesCmd2.label                          "אפשרויות">
+<!ENTITY preferencesCmd2.accesskey                      "א">
+<!ENTITY preferencesCmdUnix.label                       "העדפות">
+<!ENTITY preferencesCmdUnix.accesskey                   "ע">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "איש קשר חדש">
+<!ENTITY newContactButton.accesskey                     "ק">
+<!ENTITY newlistButton.label                            "רשימה חדשה">
+<!ENTITY newlistButton.accesskey                        "ר">
+<!ENTITY showAsDefault.label                            "תיקיית בררת מחדל בהפעלה">
+<!ENTITY showAsDefault.accesskey                        "פ">
+<!ENTITY editPropertiesButton.label                     "עריכה">
+<!ENTITY propertiesContext.label                        "מאפיינים">
+<!ENTITY propertiesContext.accesskey                    "מ">
+<!ENTITY abPropertiesContext.label                      "מאפיינים">
+<!ENTITY abPropertiesContext.accesskey                  "א">
+<!ENTITY editContactContext.label                       "עריכת איש קשר">
+<!ENTITY editContactContext.accesskey                   "ע">
+<!ENTITY editMailingListContext.label                   "עריכת רשימה">
+<!ENTITY editMailingListContext.accesskey               "ר">
+<!ENTITY newmsgButton.label                             "כתיבה">
+<!ENTITY newmsgButton.accesskey                         "כ">
+<!ENTITY newIM.label                                    "הודעה מידית">
+<!ENTITY newIM.accesskey                                "מ">
+<!ENTITY printButton.label                              "הדפסה…">
+<!ENTITY printButton.accesskey                          "פ">
+<!ENTITY deleteButton2.label                            "מחיקה">
+<!ENTITY deleteButton2.accesskey                        "מ">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "צור איש קשר חדש בספר הכתובות">
+<!ENTITY newlistButton.tooltip                          "צור רשימה חדשה">
+<!ENTITY editPropertiesButton.tooltip                   "עריכת הפריט הנבחר">
+<!ENTITY editAbPropertiesButton.tooltip                 "עריכת מאפייני פנקס הכתובות הנבחר">
+<!ENTITY editContactPropertiesButton.tooltip            "עריכת איש הקשר הנבחר">
+<!ENTITY editMailingListPropertiesButton.tooltip        "עריכת רשימת הדיוור שנבחרה">
+<!ENTITY newmsgButton.tooltip                           "שלח הודעת דואר">
+<!ENTITY newIM.tooltip                                  "שלח הודעה מידית או צ׳אט">
+<!ENTITY deleteButton2.tooltip                          "מחיקת פריטים נבחרים">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "שם או דוא״ל">
+<!ENTITY SearchNameOrEmail.accesskey                    "ש">
+<!ENTITY advancedButton.tooltip                         "חיפוש כתובות מתקדם">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "חיפוש מהיר">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "פנקס כתובות">
+<!ENTITY Addrbook.accesskey                             "פ">
+<!ENTITY GeneratedName.label                            "שם">
+<!ENTITY GeneratedName.accesskey                        "ש">
+<!ENTITY PrimaryEmail.label                             "דוא״ל">
+<!ENTITY PrimaryEmail.accesskey                         "ד">
+<!ENTITY ChatName.label                                 "שם הצ׳אט">
+<!ENTITY ChatName.accesskey                             "צ">
+<!ENTITY Company.label                                  "ארגון">
+<!ENTITY Company.accesskey                              "א">
+<!ENTITY NickName.label                                 "כינוי">
+<!ENTITY NickName.accesskey                             "כ">
+<!ENTITY SecondEmail.label                              "דוא״ל נוסף">
+<!ENTITY SecondEmail.accesskey                          "ו">
+<!ENTITY Department.label                               "מחלקה">
+<!ENTITY Department.accesskey                           "מ">
+<!ENTITY JobTitle.label                                 "תפקיד">
+<!ENTITY JobTitle.accesskey                             "ת">
+<!ENTITY CellularNumber.label                           "נייד">
+<!ENTITY CellularNumber.accesskey                       "נ">
+<!ENTITY PagerNumber.label                              "איתורית">
+<!ENTITY PagerNumber.accesskey                          "א">
+<!ENTITY FaxNumber.label                                "פקס">
+<!ENTITY FaxNumber.accesskey                            "פ">
+<!ENTITY HomePhone.label                                "טלפון בבית">
+<!ENTITY HomePhone.accesskey                            "ב">
+<!ENTITY WorkPhone.label                                "טלפון בעבודה">
+<!ENTITY WorkPhone.accesskey                            "ע">
+<!ENTITY sortAscending.label                            "עולה">
+<!ENTITY sortAscending.accesskey                        "ל">
+<!ENTITY sortDescending.label                           "יורד">
+<!ENTITY sortDescending.accesskey                       "ר">
+<!ENTITY _PhoneticName.label                            "שם פונטי">
+<!ENTITY _PhoneticName.accesskey                        "פ">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "איש קשר">
+<!ENTITY home.heading                                   "בית">
+<!ENTITY other.heading                                  "אחר">
+<!ENTITY chat.heading                                   "צ׳אט">
+<!ENTITY phone.heading                                  "טלפון">
+<!ENTITY work.heading                                   "עבודה">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "תיאור">
+<!ENTITY addresses.heading                              "כתובות">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "השג מפה">
+<!ENTITY mapIt.tooltip                                  "הצג מפה של כתובת זו מהאינטרנט">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "חלון">
+<!ENTITY minimizeWindow.label                           "מזער חלון">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "הבא הכול לקידמה">
+<!ENTITY zoomWindow.label                               "הגדל חלון">

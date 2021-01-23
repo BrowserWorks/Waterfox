@@ -1,0 +1,251 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Atvērt izvēlni">
+<!ENTITY navbarOverflow.label                "Citi rīki…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Pielīmēt cilni">
+<!ENTITY  unpinTab.label                     "Atbrīvot cilni">
+
+<!ENTITY  listAllTabs.label      "Visu ciļņu saraksts">
+
+<!ENTITY tabCmd.label "Jauna cilne">
+<!ENTITY openFileCmd.label "Atvērt failu…">
+<!ENTITY printCmd.label "Drukāt…">
+
+<!ENTITY taskManagerCmd.label "Uzdevumu pārvaldnieks">
+
+<!ENTITY menubarCmd.label "Izvēlne">
+<!ENTITY menubarCmd.accesskey "I">
+<!ENTITY personalbarCmd.label "Grāmatzīmju rīkjosla">
+<!ENTITY personalbarCmd.accesskey "G">
+<!ENTITY bookmarksToolbarItem.label "Grāmatzīmju rīkjoslas elementi">
+
+<!ENTITY fullScreenCmd.label "Pa visu ekrānu">
+
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "ir pa visu ekrānu">
+<!ENTITY fullscreenWarning.generic.label "Šis dokuments ir pa visu ekrānu">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Iziet no pilnā ekrāna (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Iziet no pilnā ekrāna (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "kontrolē kursoru. Nospiediet taustiņu Esc, lai atgūtu kontroli.">
+<!ENTITY pointerlockWarning.generic.label "Šis dokuments kontrolē kursoru. Nospiediet taustiņu Esc, lai atgūtu kontroli.">
+
+<!ENTITY showAllBookmarks2.label "Rādīt visas grāmatzīmes">
+<!ENTITY recentBookmarks.label "Nesen saglabātās">
+<!ENTITY bookmarksToolbarChevron.tooltip "Rādīt vairāk grāmatzīmju">
+
+<!ENTITY printButton.label            "Drukāt">
+<!ENTITY printButton.tooltip          "Drukāt šo lapu">
+
+
+<!ENTITY searchItem.title             "Meklēt">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Sākumlapa">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; sākumlapa">
+
+<!ENTITY bookmarksButton.label          "Grāmatzīmes">
+
+<!ENTITY bookmarksSubview.label             "Grāmatzīmes">
+<!ENTITY bookmarksMenuButton2.label         "Grāmatzīmju izvēlne">
+<!ENTITY bookmarksMenuButton.other.label    "Citas grāmatzīmes">
+<!ENTITY bookmarksMenuButton.mobile.label   "Mobilās grāmatzīmes">
+<!ENTITY viewBookmarksSidebar2.label        "Atvērt grāmatzīmes sānjoslā">
+<!ENTITY hideBookmarksSidebar.label         "Paslēpt grāmatzīmju sānjoslu">
+<!ENTITY viewBookmarksToolbar.label         "Attēlo grāmatzīmes sānu joslā">
+<!ENTITY hideBookmarksToolbar.label         "Paslēpt grāmatzīmju sānjoslu">
+<!ENTITY searchBookmarks.label              "Meklēt grāmatzīmes">
+<!ENTITY bookmarkingTools.label             "Grāmatzīmju rīki">
+<!ENTITY addBookmarksMenu.label             "Pievienot grāmatzīmju izvēlni rīkjoslai">
+<!ENTITY removeBookmarksMenu.label          "Aizvākt grāmatzīmju izvēlni no rīkjoslas">
+
+<!ENTITY historyButton.label            "Vēsture">
+
+<!ENTITY downloads.label              "Lejupielādes">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Lejupielādes">
+<!ENTITY addons.label                 "Papildinājumi">
+
+<!ENTITY webDeveloperMenu.label       "Izstrādātāju rīki">
+
+<!ENTITY newNavigatorCmd.label        "Jauns logs">
+<!ENTITY newPrivateWindow.label     "Jauns privātais logs">
+
+<!ENTITY editMenu.label         "Rediģēt">
+<!ENTITY preferencesCmd2.label       "Iestatījumi">
+<!ENTITY preferencesCmdUnix.label       "Iestatījumi">
+
+<!ENTITY overflowCustomizeToolbar.label       "Pielāgot rīkjoslu…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Vēsture">
+<!ENTITY historyUndoMenu.label "Nesen aizvērtās cilnes">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Nesen aizvērtie logi">
+
+<!ENTITY appMenuHistory.showAll.label "Parādīt visu vēsturi">
+<!ENTITY appMenuHistory.clearRecent.label "Dzēst neseno vēsturi…">
+<!ENTITY appMenuHistory.restoreSession.label "Atjaunot iepriekšējo sesiju">
+<!ENTITY appMenuHistory.viewSidebar.label "Rādīt vēstures sānjoslu">
+<!ENTITY appMenuHistory.recentHistory.label "Nesenā vēsture">
+<!ENTITY appMenuHelp.label "Palīdzība">
+
+<!ENTITY appMenuRemoteTabs.label "Sinhronizētās cilnes">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Nav atvērto cilņu">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Rādīt vairāk">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Rādīt vairāk cilnes no šīs ierīces">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Rādīt visu">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Rādīt visas cilnes no šīs ierīces">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ieslēdziet cilņu sinhronizāciju, lai redzētu cilnes no citām ierīcēm.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Gribat redzēt cilnes no citām savām ierīcēm?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Atvērt Sync iestatījumus">
+<!ENTITY appMenuRemoteTabs.unverified.label "Jūsu kontam nepieciešams apstiprinājums.">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Pārvaldīt ierīces…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Rādīt sinhronizēto cilņu sānu joslu">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Savienot citu ierīci">
+
+<!ENTITY appMenuRecentHighlights.label "Nesenie jaunumi">
+
+<!ENTITY customizeMenu.addToToolbar.label "Pievienot rīkjoslai">
+<!ENTITY customizeMenu.addToToolbar.accesskey "a">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Pievienot izvēlnei">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Atslēgt no izvēlnes">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "Aizvākt no rīkjoslas">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "r">
+<!ENTITY customizeMenu.addMoreItems.label "Pievienot citas lietas…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "a">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Vairāk">
+
+<!ENTITY contentSearchSubmit.tooltip  "Nosūtīt meklējumu">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Meklēt">
+<!ENTITY searchIcon.tooltip           "Meklēt">
+
+<!ENTITY openLinkCmdInTab.accesskey   "c">
+
+<!ENTITY pageAction.copyLink.label    "Kopēt saiti">
+
+<!ENTITY emailPageCmd.label           "Nosūtīt saiti…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Mērogs">
+
+<!ENTITY sidebarCloseButton.tooltip     "Aizvērt sānu joslu">
+
+<!ENTITY quitApplicationCmdWin2.label       "Iziet">
+<!ENTITY quitApplicationCmdWin2.accesskey   "z">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Aizvērt &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Iziet">
+<!ENTITY quitApplicationCmd.accesskey   "e">
+<!ENTITY quitApplicationCmdMac2.label   "Iziet no &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Rediģēt jauno logu bloķētāja iestatījumus…">
+<!ENTITY editPopupSettings.label "Rediģēt jauno logu bloķētāja iestatījumus…">
+<!ENTITY editPopupSettings.accesskey "e">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Atrast šajā lapā…">
+
+<!ENTITY spellAddDictionaries.label "Pievienot vārdnīcas…">
+<!ENTITY spellAddDictionaries.accesskey "i">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Pārlūka cilnes">
+
+
+<!ENTITY syncBrand.shortName.label    "Sinhronizēt">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Auto slēpšana">
+
+
+<!ENTITY uiTour.infoPanel.close "Aizvērt">
+
+<!ENTITY panicButton.thankyou.msg1                "Jūsu nesenā vēsture ir notīrīta.">
+<!ENTITY panicButton.thankyou.msg2                "Sērfojiet droši!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Paldies!">
+
+<!ENTITY updateAvailable.panelUI.label "Lejupielādē &brandShorterName; atjauninājumu">
+
+<!ENTITY updateManual.panelUI.label "Lejupielādējiet jaunu &brandShorterName; versiju">
+
+<!ENTITY updateRestart.panelUI.label2 "Pārstartēt &brandShorterName;, lai atjauninātu">
+
+<!ENTITY sendToDevice.syncNotReady.label "Sinhronizē ierīces…">
+
+<!ENTITY pageAction.shareUrl.label "Dalīties">
+<!ENTITY pageAction.shareMore.label "Vairāk…">
+
+<!ENTITY libraryButton.tooltip "Skatīt vēsturi, saglabātās grāmatzīmes un daudz ko citu">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Aktivēti pieejamības rīki">
+

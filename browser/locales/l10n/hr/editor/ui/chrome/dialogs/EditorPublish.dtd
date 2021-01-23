@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Objavi stranicu">
+<!ENTITY windowTitleSettings.label    "Postavke objavljivanja">
+<!ENTITY publishTab.label             "Objavi">
+<!ENTITY settingsTab.label            "Postavke">
+<!ENTITY publishButton.label          "Objavi">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Naziv stranice:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Odaberite stranicu na koju želite objaviti">
+<!ENTITY newSiteButton.label          "Nova stranica">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Poddirektorij stranice za ovu stranicu:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Odaberite ili upišite naziv vanjskog poddirektorija za ovu stranicu">
+<!ENTITY publishImgCheckbox.label     "Obuhvati slike i druge datoteke">
+<!ENTITY publishImgCheckbox.accesskey "O">
+<!ENTITY publishImgCheckbox.tooltip   "Objavi slike i druge datoteke povezane s ovom stranicom">
+<!ENTITY sameLocationRadio.label      "Koristi istu lokaciju kao i stranica">
+<!ENTITY sameLocationRadio.accesskey  "K">
+<!ENTITY sameLocationRadio.tooltip    "Objavi datoteke na istoj lokaciji kao i stranicu">
+<!ENTITY useSubdirRadio.label         "Koristi poddirektorij ove stranice:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Objavi datoteke u odabrani vanjski poddirektorij">
+<!ENTITY otherDirList.tooltip         "Odaberite ili upišite naziv vanjskog poddirektorija gdje će datoteke biti objavljene">
+<!ENTITY pageTitle.label              "Naslov stranice:">
+<!ENTITY pageTitle.accesskey          "t">
+<!ENTITY pageTitle.tooltip            "Upišite naslov kako bi stranica bila prepoznatljiva u prozoru i zabilješkama">
+<!ENTITY pageTitleExample.label       "npr.,: &quot;Moja Web Stranica&quot;">
+<!ENTITY filename.label               "Naziv datoteke:">
+<!ENTITY filename.accesskey           "a">
+<!ENTITY filename.tooltip             "Upišite naziv za ovu datoteku, uključujući '.html' za web stranicu">
+<!ENTITY filenameExample.label        "npr.,: &quot;mojastranica.html&quot;">
+<!ENTITY setDefaultButton.label       "Postavi kao zadano">
+<!ENTITY setDefaultButton.accesskey   "P">
+<!ENTITY removeButton.label           "Ukloni stranicu">
+<!ENTITY removeButton.accesskey       "U">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Objavljivanje stranica">
+<!ENTITY serverInfo.label             "Informacije o poslužitelju">
+<!ENTITY loginInfo.label              "Informacije za prijavu">
+<!ENTITY siteName.label               "Naziv stranice:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Nadimak koji označava ovu stranicu prilikom objavljivanja (npr.: 'MojaStranica')">
+<!ENTITY siteUrl.label                "Adresa za objavljivanje (npr.: 'ftp://ftp.mojisp.com/mojekorisnickoime'):">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "FTP:// ili HTTP:// adresa dobivena od vašeg ISP-a ili pružatelja usluge web hostinga">
+<!ENTITY browseUrl.label              "HTTP adresa vaše početne stranice (npr.: 'http://www.mojisp.com/mojekorisnickoime'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "HTTP:// adresa direktorija vaše početne stranice (ne upisujte nazive datoteka)">
+<!ENTITY username.label               "Korisničko ime:">
+<!ENTITY username.accesskey           "K">
+<!ENTITY username.tooltip             "Korisničko ime koje koristite kako bi se prijavili na svoj ISP ili uslugu web hostinga">
+<!ENTITY password.label               "Lozinka:">
+<!ENTITY password.accesskey           "L">
+<!ENTITY password.tooltip             "Lozinka koja je povezana s vašim korisničkim imenom">
+<!ENTITY savePassword.label           "Spremi lozinku">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Odaberite ovo kako bi sigurno spremili vašu lozinku koristeći upravitelja lozinki">

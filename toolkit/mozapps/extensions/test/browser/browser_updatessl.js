@@ -68,8 +68,6 @@ function test() {
 }
 
 function end_test() {
-  Services.prefs.clearUserPref(PREF_UPDATE_REQUIREBUILTINCERTS);
-
   var cos = Cc["@mozilla.org/security/certoverride;1"].getService(
     Ci.nsICertOverrideService
   );
@@ -88,7 +86,7 @@ function add_update_test(mainURL, redirectURL, expectedStatus) {
 
 function run_update_tests(callback) {
   function run_next_update_test() {
-    if (gTests.length == 0) {
+    if (!gTests.length) {
       callback();
       return;
     }

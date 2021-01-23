@@ -6,6 +6,8 @@
 
 #include "mozilla/dom/PerformanceNavigationTiming.h"
 #include "mozilla/dom/PerformanceNavigationTimingBinding.h"
+#include "mozilla/StaticPrefs_dom.h"
+#include "mozilla/StaticPrefs_privacy.h"
 
 using namespace mozilla::dom;
 
@@ -21,12 +23,10 @@ JSObject* PerformanceNavigationTiming::WrapObject(
   return PerformanceNavigationTiming_Binding::Wrap(aCx, this, aGivenProto);
 }
 
-#define REDUCE_TIME_PRECISION                      \
-  if (mPerformance->IsSystemPrincipal()) {         \
-    return rawValue;                               \
-  }                                                \
-  return nsRFPService::ReduceTimePrecisionAsMSecs( \
-      rawValue, mPerformance->GetRandomTimelineSeed())
+#define REDUCE_TIME_PRECISION                          \
+  return nsRFPService::ReduceTimePrecisionAsMSecs(     \
+      rawValue, mPerformance->GetRandomTimelineSeed(), \
+      mPerformance->IsSystemPrincipal(), mPerformance->CrossOriginIsolated())
 
 DOMHighResTimeStamp PerformanceNavigationTiming::UnloadEventStart() const {
   DOMHighResTimeStamp rawValue = 0;
@@ -137,4 +137,9 @@ uint16_t PerformanceNavigationTiming::RedirectCount() const {
 void PerformanceNavigationTiming::UpdatePropertiesFromHttpChannel(
     nsIHttpChannel* aHttpChannel, nsITimedChannel* aChannel) {
   mTimingData->SetPropertiesFromHttpChannel(aHttpChannel, aChannel);
+}
+
+bool PerformanceNavigationTiming::Enabled(JSContext* aCx, JSObject* aGlobal) {
+  return (StaticPrefs::dom_enable_performance_navigation_timing() &&
+          !StaticPrefs::privacy_resistFingerprinting());
 }

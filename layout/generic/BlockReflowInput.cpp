@@ -17,6 +17,7 @@
 #include "mozilla/AutoRestore.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "TextOverflow.h"
 
 #ifdef DEBUG
@@ -25,9 +26,6 @@
 
 using namespace mozilla;
 using namespace mozilla::layout;
-
-static bool sFloatFragmentsInsideColumnEnabled;
-static bool sFloatFragmentsInsideColumnPrefCached;
 
 BlockReflowInput::BlockReflowInput(const ReflowInput& aReflowInput,
                                    nsPresContext* aPresContext,
@@ -41,27 +39,16 @@ BlockReflowInput::BlockReflowInput(const ReflowInput& aReflowInput,
       mContentArea(aReflowInput.GetWritingMode()),
       mPushedFloats(nullptr),
       mOverflowTracker(nullptr),
-      mBorderPadding(mReflowInput.ComputedLogicalBorderPadding()),
+      mBorderPadding(mReflowInput.ComputedLogicalBorderPadding().ApplySkipSides(
+          aFrame->GetLogicalSkipSides(&aReflowInput))),
       mPrevBEndMargin(),
       mLineNumber(0),
       mFloatBreakType(StyleClear::None),
       mConsumedBSize(aConsumedBSize) {
-  if (!sFloatFragmentsInsideColumnPrefCached) {
-    sFloatFragmentsInsideColumnPrefCached = true;
-    Preferences::AddBoolVarCache(
-        &sFloatFragmentsInsideColumnEnabled,
-        "layout.float-fragments-inside-column.enabled");
-  }
-  mFlags.mFloatFragmentsInsideColumnEnabled =
-      sFloatFragmentsInsideColumnEnabled;
+  NS_ASSERTION(mConsumedBSize != NS_UNCONSTRAINEDSIZE,
+               "The consumed block-size should be constrained!");
 
   WritingMode wm = aReflowInput.GetWritingMode();
-  mFlags.mIsFirstInflow = !aFrame->GetPrevInFlow();
-  mFlags.mIsOverflowContainer = IS_TRUE_OVERFLOW_CONTAINER(aFrame);
-
-  nsIFrame::LogicalSides logicalSkipSides =
-      aFrame->GetLogicalSkipSides(&aReflowInput);
-  mBorderPadding.ApplySkipSides(logicalSkipSides);
 
   // Note that mContainerSize is the physical size, needed to
   // convert logical block-coordinates in vertical-rl writing mode
@@ -85,13 +72,11 @@ BlockReflowInput::BlockReflowInput(const ReflowInput& aReflowInput,
   mContainerSize.height =
       aReflowInput.ComputedHeight() + mBorderPadding.TopBottom(wm);
 
-  if ((aBStartMarginRoot && !logicalSkipSides.BStart()) ||
-      0 != mBorderPadding.BStart(wm)) {
+  if (aBStartMarginRoot || 0 != mBorderPadding.BStart(wm)) {
     mFlags.mIsBStartMarginRoot = true;
     mFlags.mShouldApplyBStartMargin = true;
   }
-  if ((aBEndMarginRoot && !logicalSkipSides.BEnd()) ||
-      0 != mBorderPadding.BEnd(wm)) {
+  if (aBEndMarginRoot || 0 != mBorderPadding.BEnd(wm)) {
     mFlags.mIsBEndMarginRoot = true;
   }
   if (aBlockNeedsFloatManager) {
@@ -122,23 +107,21 @@ BlockReflowInput::BlockReflowInput(const ReflowInput& aReflowInput,
                        "width calculation");
   mContentArea.ISize(wm) = aReflowInput.ComputedISize();
 
-  // Compute content area height. Unlike the width, if we have a
-  // specified style height we ignore it since extra content is
-  // managed by the "overflow" property. When we don't have a
-  // specified style height then we may end up limiting our height if
-  // the availableHeight is constrained (this situation occurs when we
-  // are paginated).
+  // Compute content area block-size. Unlike the inline-size, if we have a
+  // specified style block-size, we ignore it since extra content is managed by
+  // the "overflow" property. When we don't have a specified style block-size,
+  // then we may end up limiting our block-size if the available block-size is
+  // constrained (this situation occurs when we are paginated).
   if (NS_UNCONSTRAINEDSIZE != aReflowInput.AvailableBSize()) {
-    // We are in a paginated situation. The bottom edge is just inside
-    // the bottom border and padding. The content area height doesn't
-    // include either border or padding edge.
-    mBEndEdge = aReflowInput.AvailableBSize() - mBorderPadding.BEnd(wm);
-    mContentArea.BSize(wm) = std::max(0, mBEndEdge - mBorderPadding.BStart(wm));
+    // We are in a paginated situation. The block-end edge is just inside the
+    // block-end border and padding. The content area block-size doesn't include
+    // either border or padding edge.
+    mContentArea.BSize(wm) = std::max(
+        0, aReflowInput.AvailableBSize() - mBorderPadding.BStartEnd(wm));
   } else {
-    // When we are not in a paginated situation then we always use
-    // a constrained height.
-    mFlags.mHasUnconstrainedBSize = true;
-    mContentArea.BSize(wm) = mBEndEdge = NS_UNCONSTRAINEDSIZE;
+    // When we are not in a paginated situation, then we always use a
+    // unconstrained block-size.
+    mContentArea.BSize(wm) = NS_UNCONSTRAINEDSIZE;
   }
   mContentArea.IStart(wm) = mBorderPadding.IStart(wm);
   mBCoord = mContentArea.BStart(wm) = mBorderPadding.BStart(wm);
@@ -147,14 +130,6 @@ BlockReflowInput::BlockReflowInput(const ReflowInput& aReflowInput,
   mCurrentLine = aFrame->LinesEnd();
 
   mMinLineHeight = aReflowInput.CalcLineHeight();
-}
-
-nscoord BlockReflowInput::ConsumedBSize() {
-  if (mConsumedBSize == NS_INTRINSICSIZE) {
-    mConsumedBSize = mBlock->ConsumedBSize(mReflowInput.GetWritingMode());
-  }
-
-  return mConsumedBSize;
 }
 
 void BlockReflowInput::ComputeReplacedBlockOffsetsForFloats(
@@ -198,21 +173,6 @@ void BlockReflowInput::ComputeReplacedBlockOffsetsForFloats(
   aIEndResult = iEndOffset;
 }
 
-static nscoord GetBEndMarginClone(nsIFrame* aFrame,
-                                  gfxContext* aRenderingContext,
-                                  const LogicalRect& aContentArea,
-                                  WritingMode aWritingMode) {
-  if (aFrame->StyleBorder()->mBoxDecorationBreak ==
-      StyleBoxDecorationBreak::Clone) {
-    SizeComputationInput os(aFrame, aRenderingContext, aWritingMode,
-                            aContentArea.ISize(aWritingMode));
-    return os.ComputedLogicalMargin()
-        .ConvertTo(aWritingMode, aFrame->GetWritingMode())
-        .BEnd(aWritingMode);
-  }
-  return 0;
-}
-
 // Compute the amount of available space for reflowing a block frame
 // at the current block-direction coordinate. This method assumes that
 // GetFloatAvailableSpace has already been called.
@@ -224,16 +184,13 @@ void BlockReflowInput::ComputeBlockAvailSpace(
          aFloatAvailableSpace.HasFloats());
 #endif
   WritingMode wm = mReflowInput.GetWritingMode();
+  const nscoord availBSize = mReflowInput.AvailableBSize();
   aResult.BStart(wm) = mBCoord;
-  aResult.BSize(wm) =
-      mFlags.mHasUnconstrainedBSize
-          ? NS_UNCONSTRAINEDSIZE
-          : mReflowInput.AvailableBSize() - mBCoord -
-                GetBEndMarginClone(aFrame, mReflowInput.mRenderingContext,
-                                   mContentArea, wm);
-  // mBCoord might be greater than mBEndEdge if the block's top margin pushes
-  // it off the page/column. Negative available height can confuse other code
-  // and is nonsense in principle.
+  aResult.BSize(wm) = availBSize == NS_UNCONSTRAINEDSIZE ? NS_UNCONSTRAINEDSIZE
+                                                         : availBSize - mBCoord;
+  // mBCoord might be greater than ContentBEnd() if the block's top margin
+  // pushes it off the page/column. Negative available block-size can confuse
+  // other code and is nonsense in principle.
 
   // XXX Do we really want this condition to be this restrictive (i.e.,
   // more restrictive than it used to be)?  The |else| here is allowed
@@ -692,9 +649,9 @@ static nscoord FloatMarginISize(const ReflowInput& aCBReflowInput,
 // Maybe all this code could be refactored to make this cleaner, but keeping the
 // two properties separated was slightly nicer.
 struct ShapeInvalidationData {
-  StyleShapeSource mShapeOutside;
+  StyleShapeOutside mShapeOutside{StyleShapeOutside::None()};
   float mShapeImageThreshold = 0.0;
-  mozilla::LengthPercentage mShapeMargin;
+  LengthPercentage mShapeMargin;
 
   ShapeInvalidationData() = default;
 
@@ -703,7 +660,7 @@ struct ShapeInvalidationData {
   }
 
   static bool IsNeeded(const nsStyleDisplay& aDisplay) {
-    return aDisplay.mShapeOutside.GetType() != StyleShapeSourceType::None;
+    return !aDisplay.mShapeOutside.IsNone();
   }
 
   void Update(const nsStyleDisplay& aDisplay) {
@@ -918,23 +875,16 @@ bool BlockReflowInput::FlowAndPlaceFloat(nsIFrame* aFloat) {
     mBlock->ReflowFloat(*this, adjustedAvailableSpace, aFloat, floatMargin,
                         floatOffsets, pushedDown, reflowStatus);
   }
-  if (aFloat->GetPrevInFlow()) floatMargin.BStart(wm) = 0;
-  if (reflowStatus.IsIncomplete()) floatMargin.BEnd(wm) = 0;
+  if (aFloat->GetPrevInFlow()) {
+    floatMargin.BStart(wm) = 0;
+  }
+  if (reflowStatus.IsIncomplete()) {
+    floatMargin.BEnd(wm) = 0;
+  }
 
-  // In the case that we're in columns and not splitting floats, we need
-  // to check here that the float's height fit, and if it didn't, bail.
-  // (controlled by the pref "layout.float-fragments-inside-column.enabled")
-  //
-  // Likewise, if none of the float fit, and it needs to be pushed in
-  // its entirety to the next page (IsTruncated() or IsInlineBreakBefore()),
-  // we need to do the same.
-  if ((ContentBSize() != NS_UNCONSTRAINEDSIZE &&
-       !mFlags.mFloatFragmentsInsideColumnEnabled &&
-       adjustedAvailableSpace.BSize(wm) == NS_UNCONSTRAINEDSIZE &&
-       !mustPlaceFloat &&
-       aFloat->BSize(wm) + floatMargin.BStartEnd(wm) >
-           ContentBEnd() - floatPos.B(wm)) ||
-      reflowStatus.IsTruncated() || reflowStatus.IsInlineBreakBefore()) {
+  // If none of the float fit, and it needs to be pushed in its entirety to the
+  // next page, we need to bail.
+  if (reflowStatus.IsTruncated() || reflowStatus.IsInlineBreakBefore()) {
     PushFloatPastBreak(aFloat);
     return false;
   }
@@ -1018,7 +968,7 @@ bool BlockReflowInput::FlowAndPlaceFloat(nsIFrame* aFloat) {
     }
   } else if (invalidationData) {
     invalidationData = nullptr;
-    aFloat->DeleteProperty(ShapeInvalidationDataProperty());
+    aFloat->RemoveProperty(ShapeInvalidationDataProperty());
   }
 
   if (!reflowStatus.IsFullyComplete()) {

@@ -20,7 +20,6 @@
 #include "WebGLTexture.h"
 #include "WebGLTransformFeedback.h"
 #include "WebGLVertexArray.h"
-#include "WebGLVertexAttribData.h"
 
 #include <algorithm>
 
@@ -79,13 +78,14 @@ ScopedResolveTexturesForDraw::ScopedResolveTexturesForDraw(
   const auto& fb = mWebGL->mBoundDrawFramebuffer;
 
   MOZ_ASSERT(mWebGL->mActiveProgramLinkInfo);
-  const auto& uniformSamplers = mWebGL->mActiveProgramLinkInfo->uniformSamplers;
-  for (const auto& uniform : uniformSamplers) {
-    const auto& texList = *(uniform->mSamplerTexList);
+  const auto& samplerUniforms = mWebGL->mActiveProgramLinkInfo->samplerUniforms;
+  for (const auto& pUniform : samplerUniforms) {
+    const auto& uniform = *pUniform;
+    const auto& texList = uniform.texListForType;
 
-    const auto& uniformBaseType = uniform->mTexBaseType;
-    for (const auto& texUnit : uniform->mSamplerValues) {
-      if (texUnit >= texList.Length()) continue;
+    const auto& uniformBaseType = uniform.texBaseType;
+    for (const auto& texUnit : uniform.texUnits) {
+      MOZ_ASSERT(texUnit < texList.Length());
 
       const auto& tex = texList[texUnit];
       if (!tex) continue;
@@ -120,7 +120,7 @@ ScopedResolveTexturesForDraw::ScopedResolveTexturesForDraw(
         return;
       }
 
-      if (uniform->mIsShadowSampler != samplingInfo->isDepthTexCompare) {
+      if (uniform.isShadowSampler != samplingInfo->isDepthTexCompare) {
         const auto& targetName = GetEnumName(tex->Target().get());
         mWebGL->ErrorInvalidOperation(
             "%s at unit %u is%s a depth texture"
@@ -128,7 +128,7 @@ ScopedResolveTexturesForDraw::ScopedResolveTexturesForDraw(
             " the shader sampler is%s a shadow"
             " sampler.",
             targetName, texUnit, samplingInfo->isDepthTexCompare ? "" : " not",
-            uniform->mIsShadowSampler ? "" : " not");
+            uniform.isShadowSampler ? "" : " not");
         *out_error = true;
         return;
       }
@@ -200,6 +200,122 @@ bool WebGLContext::ValidateStencilParamsForDrawCall() const {
   return ok;
 }
 
+// -
+
+void WebGLContext::GenErrorIllegalUse(const GLenum useTarget,
+                                      const uint32_t useId,
+                                      const GLenum boundTarget,
+                                      const uint32_t boundId) const {
+  const auto fnName = [&](const GLenum target, const uint32_t id) {
+    auto name = nsCString(EnumString(target).c_str());
+    if (id != static_cast<uint32_t>(-1)) {
+      name += nsPrintfCString("[%u]", id);
+    }
+    return name;
+  };
+  const auto& useName = fnName(useTarget, useId);
+  const auto& boundName = fnName(boundTarget, boundId);
+  GenerateError(LOCAL_GL_INVALID_OPERATION,
+                "Illegal use of buffer at %s"
+                " while also bound to %s.",
+                useName.BeginReading(), boundName.BeginReading());
+}
+
+bool WebGLContext::ValidateBufferForNonTf(const WebGLBuffer& nonTfBuffer,
+                                          const GLenum nonTfTarget,
+                                          const uint32_t nonTfId) const {
+  bool dupe = false;
+  const auto& tfAttribs = mBoundTransformFeedback->mIndexedBindings;
+  for (const auto& cur : tfAttribs) {
+    dupe |= (&nonTfBuffer == cur.mBufferBinding.get());
+  }
+  if (MOZ_LIKELY(!dupe)) return true;
+
+  dupe = false;
+  for (const auto tfId : IntegerRange(tfAttribs.size())) {
+    const auto& tfBuffer = tfAttribs[tfId].mBufferBinding;
+    if (&nonTfBuffer == tfBuffer) {
+      dupe = true;
+      GenErrorIllegalUse(nonTfTarget, nonTfId,
+                         LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER, tfId);
+    }
+  }
+  MOZ_ASSERT(dupe);
+  return false;
+}
+
+bool WebGLContext::ValidateBuffersForTf(
+    const WebGLTransformFeedback& tfo,
+    const webgl::LinkedProgramInfo& linkInfo) const {
+  size_t numUsed;
+  switch (linkInfo.transformFeedbackBufferMode) {
+    case LOCAL_GL_INTERLEAVED_ATTRIBS:
+      numUsed = 1;
+      break;
+
+    case LOCAL_GL_SEPARATE_ATTRIBS:
+      numUsed = linkInfo.active.activeTfVaryings.size();
+      break;
+
+    default:
+      MOZ_CRASH();
+  }
+
+  std::vector<webgl::BufferAndIndex> tfBuffers;
+  tfBuffers.reserve(numUsed);
+  for (const auto i : IntegerRange(numUsed)) {
+    tfBuffers.push_back({tfo.mIndexedBindings[i].mBufferBinding.get(),
+                         static_cast<uint32_t>(i)});
+  }
+
+  return ValidateBuffersForTf(tfBuffers);
+}
+
+bool WebGLContext::ValidateBuffersForTf(
+    const std::vector<webgl::BufferAndIndex>& tfBuffers) const {
+  bool dupe = false;
+  const auto fnCheck = [&](const WebGLBuffer* const nonTf,
+                           const GLenum nonTfTarget, const uint32_t nonTfId) {
+    for (const auto& tf : tfBuffers) {
+      dupe |= (nonTf && tf.buffer == nonTf);
+    }
+
+    if (MOZ_LIKELY(!dupe)) return false;
+
+    for (const auto& tf : tfBuffers) {
+      if (nonTf && tf.buffer == nonTf) {
+        dupe = true;
+        GenErrorIllegalUse(LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER, tf.id,
+                           nonTfTarget, nonTfId);
+      }
+    }
+    return true;
+  };
+
+  fnCheck(mBoundArrayBuffer.get(), LOCAL_GL_ARRAY_BUFFER, -1);
+  fnCheck(mBoundCopyReadBuffer.get(), LOCAL_GL_COPY_READ_BUFFER, -1);
+  fnCheck(mBoundCopyWriteBuffer.get(), LOCAL_GL_COPY_WRITE_BUFFER, -1);
+  fnCheck(mBoundPixelPackBuffer.get(), LOCAL_GL_PIXEL_PACK_BUFFER, -1);
+  fnCheck(mBoundPixelUnpackBuffer.get(), LOCAL_GL_PIXEL_UNPACK_BUFFER, -1);
+  // fnCheck(mBoundTransformFeedbackBuffer.get(),
+  // LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER, -1);
+  fnCheck(mBoundUniformBuffer.get(), LOCAL_GL_UNIFORM_BUFFER, -1);
+
+  for (const auto i : IntegerRange(mIndexedUniformBufferBindings.size())) {
+    const auto& cur = mIndexedUniformBufferBindings[i];
+    fnCheck(cur.mBufferBinding.get(), LOCAL_GL_UNIFORM_BUFFER, i);
+  }
+
+  fnCheck(mBoundVertexArray->mElementArrayBuffer.get(),
+          LOCAL_GL_ELEMENT_ARRAY_BUFFER, -1);
+  for (const auto i : IntegerRange(MaxVertexAttribs())) {
+    const auto& binding = mBoundVertexArray->AttribBinding(i);
+    fnCheck(binding.buffer.get(), LOCAL_GL_ARRAY_BUFFER, i);
+  }
+
+  return !dupe;
+}
+
 ////////////////////////////////////////
 
 template <typename T>
@@ -216,13 +332,15 @@ const webgl::CachedDrawFetchLimits* ValidateDraw(WebGLContext* const webgl,
   if (!webgl->BindCurFBForDraw()) return nullptr;
 
   const auto& fb = webgl->mBoundDrawFramebuffer;
-  if (fb && !webgl->IsExtensionEnabled(WebGLExtensionID::EXT_float_blend) &&
-      webgl->mBlendEnabled) {
+  if (fb && webgl->mBlendEnabled) {
     const auto& info = *fb->GetCompletenessInfo();
     if (info.hasFloat32) {
-      webgl->ErrorInvalidOperation(
-          "Float32 blending requires EXT_float_blend.");
-      return nullptr;
+      if (!webgl->IsExtensionEnabled(WebGLExtensionID::EXT_float_blend)) {
+        webgl->ErrorInvalidOperation(
+            "Float32 blending requires EXT_float_blend.");
+        return nullptr;
+      }
+      webgl->WarnIfImplicit(WebGLExtensionID::EXT_float_blend);
     }
   }
 
@@ -251,9 +369,10 @@ const webgl::CachedDrawFetchLimits* ValidateDraw(WebGLContext* const webgl,
   // -
   // Check UBO sizes.
 
-  for (const auto& cur : linkInfo->uniformBlocks) {
-    const auto& dataSize = cur->mDataSize;
-    const auto& binding = cur->mBinding;
+  for (const auto i : IntegerRange(linkInfo->uniformBlocks.size())) {
+    const auto& cur = linkInfo->uniformBlocks[i];
+    const auto& dataSize = cur.info.dataSize;
+    const auto& binding = cur.binding;
     if (!binding) {
       webgl->ErrorInvalidOperation("Buffer for uniform block is null.");
       return nullptr;
@@ -267,46 +386,25 @@ const webgl::CachedDrawFetchLimits* ValidateDraw(WebGLContext* const webgl,
       return nullptr;
     }
 
-    if (binding->mBufferBinding->IsBoundForTF()) {
-      webgl->ErrorInvalidOperation(
-          "Buffer for uniform block is bound or"
-          " in use for transform feedback.");
+    if (!webgl->ValidateBufferForNonTf(binding->mBufferBinding,
+                                       LOCAL_GL_UNIFORM_BUFFER, i))
       return nullptr;
-    }
   }
 
   // -
 
   const auto& tfo = webgl->mBoundTransformFeedback;
   if (tfo && tfo->IsActiveAndNotPaused()) {
-    uint32_t numUsed;
-    switch (linkInfo->transformFeedbackBufferMode) {
-      case LOCAL_GL_INTERLEAVED_ATTRIBS:
-        numUsed = 1;
-        break;
-
-      case LOCAL_GL_SEPARATE_ATTRIBS:
-        numUsed = linkInfo->transformFeedbackVaryings.size();
-        break;
-
-      default:
-        MOZ_CRASH();
-    }
-
-    for (uint32_t i = 0; i < numUsed; ++i) {
-      const auto& buffer = tfo->mIndexedBindings[i].mBufferBinding;
-      if (buffer->IsBoundForNonTF()) {
+    if (fb) {
+      const auto& info = *fb->GetCompletenessInfo();
+      if (info.isMultiview) {
         webgl->ErrorInvalidOperation(
-            "Transform feedback varying %u's buffer"
-            " is bound for non-transform-feedback.",
-            i);
+            "Cannot render to multiview with transform feedback.");
         return nullptr;
       }
-
-      // Technically we don't know that this will be updated yet, but we can
-      // speculatively mark it.
-      buffer->ResetLastUpdateFenceId();
     }
+
+    if (!webgl->ValidateBuffersForTf(*tfo, *linkInfo)) return nullptr;
   }
 
   // -
@@ -339,18 +437,33 @@ const webgl::CachedDrawFetchLimits* ValidateDraw(WebGLContext* const webgl,
       };
 
   if (!webgl->mRasterizerDiscardEnabled) {
+    uint8_t fbZLayerCount = 1;
     if (fb) {
-      for (const auto& attach : fb->ColorDrawBuffers()) {
-        const auto i =
-            uint8_t(attach->mAttachmentPoint - LOCAL_GL_COLOR_ATTACHMENT0);
-        const auto& imageInfo = attach->GetImageInfo();
-        if (!imageInfo) continue;
-        const auto& dstBaseType = imageInfo->mFormat->format->baseType;
-        if (!fnValidateFragOutputType(i, dstBaseType)) return nullptr;
+      const auto& info = *fb->GetCompletenessInfo();
+      fbZLayerCount = info.zLayerCount;
+    }
+
+    if (fbZLayerCount != linkInfo->zLayerCount) {
+      webgl->ErrorInvalidOperation(
+          "Multiview count mismatch: shader: %u, framebuffer: %u",
+          uint32_t{linkInfo->zLayerCount}, uint32_t{fbZLayerCount});
+      return nullptr;
+    }
+
+    if (webgl->mColorWriteMask) {
+      if (fb) {
+        for (const auto& attach : fb->ColorDrawBuffers()) {
+          const auto i =
+              uint8_t(attach->mAttachmentPoint - LOCAL_GL_COLOR_ATTACHMENT0);
+          const auto& imageInfo = attach->GetImageInfo();
+          if (!imageInfo) continue;
+          const auto& dstBaseType = imageInfo->mFormat->format->baseType;
+          if (!fnValidateFragOutputType(i, dstBaseType)) return nullptr;
+        }
+      } else {
+        if (!fnValidateFragOutputType(0, webgl::TextureBaseType::Float))
+          return nullptr;
       }
-    } else {
-      if (!fnValidateFragOutputType(0, webgl::TextureBaseType::Float))
-        return nullptr;
     }
   }
 
@@ -365,6 +478,15 @@ const webgl::CachedDrawFetchLimits* ValidateDraw(WebGLContext* const webgl,
         " supply %u.",
         instanceCount, uint32_t(fetchLimits->maxInstances));
     return nullptr;
+  }
+
+  if (tfo) {
+    for (const auto& used : fetchLimits->usedBuffers) {
+      MOZ_ASSERT(used.buffer);
+      if (!webgl->ValidateBufferForNonTf(*used.buffer, LOCAL_GL_ARRAY_BUFFER,
+                                         used.id))
+        return nullptr;
+    }
   }
 
   // -
@@ -469,6 +591,13 @@ class ScopedDrawWithTransformFeedback final {
     if (!mWithTF) return;
 
     mTFO->mActive_VertPosition += mUsedVerts;
+
+    for (const auto& cur : mTFO->mIndexedBindings) {
+      const auto& buffer = cur.mBufferBinding;
+      if (buffer) {
+        buffer->ResetLastUpdateFenceId();
+      }
+    }
   }
 };
 
@@ -625,7 +754,6 @@ WebGLBuffer* WebGLContext::DrawElements_check(const GLsizei rawIndexCount,
     ErrorInvalidOperation("Index buffer not bound.");
     return nullptr;
   }
-  MOZ_ASSERT(!indexBuffer->IsBoundForTF(), "This should be impossible.");
 
   const size_t availBytes = indexBuffer->ByteLength();
   const auto availIndices =
@@ -820,6 +948,10 @@ WebGLVertexAttrib0Status WebGLContext::WhatDoesVertexAttrib0Need() const {
     // Failures in conformance/attribs/gl-disabled-vertex-attrib.
     // Even in Core profiles on NV. Sigh.
     legacyAttrib0 |= (gl->Vendor() == gl::GLVendor::NVIDIA);
+
+    // Also programs with no attribs:
+    // conformance/attribs/gl-vertex-attrib-unconsumed-out-of-bounds.html
+    legacyAttrib0 |= !mActiveProgramLinkInfo->active.activeAttribs.size();
   }
 #endif
 
@@ -830,7 +962,8 @@ WebGLVertexAttrib0Status WebGLContext::WhatDoesVertexAttrib0Need() const {
     return WebGLVertexAttrib0Status::EmulatedUninitializedArray;
   }
 
-  const auto& isAttribArray0Enabled = mBoundVertexArray->mAttribs[0].mEnabled;
+  const auto& isAttribArray0Enabled =
+      mBoundVertexArray->AttribBinding(0).layout.isArray;
   return isAttribArray0Enabled
              ? WebGLVertexAttrib0Status::Default
              : WebGLVertexAttrib0Status::EmulatedInitializedArray;
@@ -871,7 +1004,7 @@ bool WebGLContext::DoFakeVertexAttrib0(const uint64_t vertexCount) {
       gl->fVertexAttribIPointer(0, 4, LOCAL_GL_INT, 0, 0);
       break;
 
-    case webgl::AttribBaseType::UInt:
+    case webgl::AttribBaseType::Uint:
       gl->fVertexAttribIPointer(0, 4, LOCAL_GL_UNSIGNED_INT, 0, 0);
       break;
   }
@@ -948,16 +1081,18 @@ void WebGLContext::UndoFakeVertexAttrib0() {
   if (MOZ_LIKELY(whatDoesAttrib0Need == WebGLVertexAttrib0Status::Default))
     return;
 
-  if (mBoundVertexArray->mAttribs[0].mBuf) {
-    const WebGLVertexAttribData& attrib0 = mBoundVertexArray->mAttribs[0];
-    gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, attrib0.mBuf->mGLName);
-    attrib0.DoVertexAttribPointer(gl, 0);
-  } else {
+  const auto& binding = mBoundVertexArray->AttribBinding(0);
+  const auto& buffer = binding.buffer;
+
+  static_assert(IsBufferTargetLazilyBound(LOCAL_GL_ARRAY_BUFFER));
+
+  if (buffer) {
+    const auto& desc = mBoundVertexArray->AttribDesc(0);
+
+    gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, buffer->mGLName);
+    DoVertexAttribPointer(*gl, 0, desc);
     gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, 0);
   }
-
-  gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER,
-                  mBoundArrayBuffer ? mBoundArrayBuffer->mGLName : 0);
 }
 
 }  // namespace mozilla

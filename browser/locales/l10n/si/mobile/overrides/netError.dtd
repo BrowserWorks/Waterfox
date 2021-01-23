@@ -1,0 +1,195 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "පිටුව පූරණය ගැටලු සහිතයි">
+<!ENTITY retry.label "නැවත උත්සාහ කරන්න">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "සම්බන්ධ වීමට නොහැක">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "මෙම ලිපිනය වාරණය කර ඇත">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "සේවාදායකය හමු නොවුනි">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Check the address for typing errors such as
+    <strong>ww</strong>.example.com instead of
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Search</button>
+    </div>
+  <li>If you are unable to load any pages, check your device's data or Wi-Fi connection.
+    <button id='wifi'>Enable Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "ගොනුව හමු නොවුනි">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>විශාල අකුරු හෝ වෙනත් යතුරුකරණ දෝෂයන් සඳහා ගොනු නම පරික්‍ෂා කරන්න.</li> 
+<li>ගොනුව ඉවත්කර, නම වෙනස්කර හෝ මකා ඇති දැයි පරික්‍ෂා කරන්න.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "ගොනුවට පිවිසීම වළක්වා ඇත">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>එය ඉවත් කර හෝ ස්ථාන මාරු කර තිබිය හැකි, හෝ පිවිසුම වළක්වමින් ගොනු බලතල සකසා තිබිය හැක.</li>
+</ul>
+">
+
+<!ENTITY generic.title "ඔහ්!">
+<!ENTITY generic.longDesc "<p> කුමන හෝ හේතුවක් නිසා මේ පිටුව &brandShortName; හට පූරණය කළ නොහැක.</p>">
+
+<!ENTITY malformedURI.title "ලිපිනය නිරවද්‍ය නොවේ">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Web addresses are usually written like
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Search</button>
+    </div>
+  <li>Make sure that you're using forward slashes (i.e.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "සම්බන්ධය බාධා සහිත විය">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "ලේඛනය කල් ඉකුත්වී ඇත">
+<!ENTITY notCached.longDesc "<p>ඉල්ලූ ලේඛනය &brandShortName;හි කෑෂ් තුළ නැත.</p><ul><li> ආරක්ෂක ක්‍රමවේදයක් ලෙස, &brandShortName; ස්වයංක්‍රීයව සංවේදී දත්ත සහිත ලේඛන යළි ලබා ගන්නේ නැත.</li><li>වෙබ් අඩවියෙන් ලේඛන යළි ලබා ගැනීමට නැවත උත්සාහ කරන්න මත ක්ලික් කරන්න.</li></ul>">
+
+<!ENTITY netOffline.title "නොබැඳි ආකාරය">
+
+<!ENTITY contentEncodingError.title "Content Encoding Error">
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>කරුණාකර මෙම ගැටලුව පිළිබද අඩවියේ හිමිකරුට දන්වන්න.</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "Unsafe File Type">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>Please contact the website owners to inform them of this problem.</li> 
+</ul>">
+
+<!ENTITY netReset.title "සම්බන්ධය යළි සකසන ලදි">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "සම්බන්ධක කාළය ඉකුත් විය">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "The address wasn't understood">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>You might need to install other software to open this address.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "ප්‍රොක්සි සේවාදායකය සම්බන්ධතාවය ඉවත දමයි">
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>ප්‍රොක්සි සේවාදායකයේ සැකසුම් නිවැරදි දැයි පරික්‍ෂා කරන්න.</li> 
+<li>ප්‍රොක්සි සේවාදායකය ක්‍රියාකාරි දැයි පරික්‍ෂා කිරීම සඳහා ඔබගේ පද්ධති පරිපාළක හමුවන්න.</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "ප්‍රොක්සි සේවාදායකය සොයාගත නොහැක">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Check the proxy settings to make sure that they are correct.</li>
+  <li>Check to make sure your device has a working data or Wi-Fi connection.
+    <button id='wifi'>Enable Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "මෙම පිටුව නිසියාකාරව ප්‍රතිමාර්ගගත වන්නේ නැත">
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>මෙම ගැටලුව සමහර විට කුකී අක්‍රීය වීම හෝ අනුමත කිරීම ප්‍රතික්‍ෂේප කිරීම නිසා විය හැක.</li> 
+</ul>">
+
+<!ENTITY unknownSocketType.title "සේවාදායකයෙන් අනපේක්‍ෂිත ප්‍රතිචාරයකි">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>ඔබගේ පද්ධතිය Personal Security Manager ස්ථාපනය කර ඇති දැයි පරික්‍ෂා කරන්න.</li> 
+<li>මෙය සමහරවිට සේවාදායකයේ අසම්මත මානකරණය නිසා සිදුවිය හැක.</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "Secure Connection Failed">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>The page you are trying to view cannot be shown because the authenticity of the received data could not be verified.</li>
+  <li>Please contact the website owners to inform them of this problem.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Secure Connection Failed">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>මෙය සේවාදායකයේ මානකරණය සම්බන්ධ ගැටලුවක් විය හැක, එසේ නැතිනම් වෙනත් අයෙකු සේවාදායකය ලෙස ව්‍යාජව පෙනිසීටිමක් විය හැක.</li> 
+<li>ඔබ සේවාදායකයට මිට පෙර සාර්ථකව සම්බන්ධ වූ අතර, මෙය තාවකාලික දෝෂයක් විය හැකි නිසා පසුව යළි උත්සාහ කරන්න.</li> 
+</ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>The site could be temporarily unavailable or too busy. Try again in a few moments.</li>
+  <li>If you are unable to load any pages, check your mobile device's data or Wi-Fi connection.
+    <button id='wifi'>Enable Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blocked by Content Security Policy">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "දූශිත අන්තර්ගත දෝශයක්">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>දත්ත සම්ප්‍රේශණයේ දෝශයක් හඳුනාගත් බැවින් ඔබ දැකීමට උත්සාහ කරන පිටුව දැක්විය නොහැක</p><ul>
+<li>කරුණාකර මෙම ගැටළුව පිළිබඳව ජාල අඩවියේ හිමිකරුවන් දැනුවත් කරන්න.</li></ul>">
+
+<!ENTITY securityOverride.linkText "හෝ ඔබට හැරදැමීමක් එක් කළ හැක…">
+<!ENTITY securityOverride.getMeOutOfHereButton "මා මෙතනින් ඉවතට ගන්න!">
+<!ENTITY securityOverride.exceptionButtonLabel "හැරදැමීමක් එක් කරන්න…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>ඔබ පූර්ණ විශ්වාසයක් නොමැති අන්තර්ජාල සම්බන්ධතාවයක් භාවිතා කරයි නම් හෝ ඔබ මෙම අඩවියට අවවාද පණිවිඩ දැක නැත්නම් ඔබ හැරදැමීම් එක් කළ නොකළ යුතුයි.</p> 
+ 
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> 
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Please contact the website owners to inform them of this problem.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "ආරක්ෂිතව සබඳ විය නොහැක">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "සංකීර්ණ තොරතුරු: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "ඔබේ සබඳතාවය අනාරක්ෂිතයි">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "සංකීර්ණ තොරතුරු: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "ඔබේ සබඳතාව අනාරක්ශිතයි">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> විසින් යල් පැනගිය සහ ප්‍රහාර වලට ලක් විය හැකි ආරක්ෂණයක් භාවිත කරයි. ඔබ ආරක්ෂිත යැයි සිතන තොරතුරු ප්‍රහාරකයකුට පහසුවෙන්ම ලබා ගත හැක. ඔබට මෙම අඩවියට පිවිසීමට හැකි වීමට පෙර ජාල අඩවි පරිපාලක විසින් සේවාදායකය අළුත්වැඩියා කළ යුතුයි.</p><p>දෝශ කේතය: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "ජාල ප්‍රතිපත්ති දෝශයක්">
+<!ENTITY networkProtocolError.longDesc "<p>ජාල ප්‍රතිපත්තියේ දෝශයක් හඳුනාගත් බැවින් ඔබ දැකීමට උත්සාහ කරන පිටුව පෙන්විය නොහැක.</p><ul>
+<li>කරුණාකර මෙම ගැටළුව පිළිබඳව ජාල අඩවියේ හිමිකරුවන් දැනුවත් කරන්න.</li></ul>">

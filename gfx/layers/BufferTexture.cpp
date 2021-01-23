@@ -5,8 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "BufferTexture.h"
+
+#include <utility>
+
 #include "libyuv.h"
-#include "mozilla/Move.h"
 #include "mozilla/fallible.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Logging.h"
@@ -17,6 +19,8 @@
 #ifdef MOZ_WIDGET_GTK
 #  include "gfxPlatformGtk.h"
 #endif
+
+using mozilla::ipc::IShmemAllocator;
 
 namespace mozilla {
 namespace layers {
@@ -29,7 +33,7 @@ class MemoryTextureData : public BufferTextureData {
                                    LayersBackend aLayersBackend,
                                    TextureFlags aFlags,
                                    TextureAllocationFlags aAllocFlags,
-                                   LayersIPCChannel* aAllocator);
+                                   IShmemAllocator* aAllocator);
 
   virtual TextureData* CreateSimilar(
       LayersIPCChannel* aAllocator, LayersBackend aLayersBackend,
@@ -67,7 +71,7 @@ class ShmemTextureData : public BufferTextureData {
                                   LayersBackend aLayersBackend,
                                   TextureFlags aFlags,
                                   TextureAllocationFlags aAllocFlags,
-                                  LayersIPCChannel* aAllocator);
+                                  IShmemAllocator* aAllocator);
 
   virtual TextureData* CreateSimilar(
       LayersIPCChannel* aAllocator, LayersBackend aLayersBackend,
@@ -110,14 +114,12 @@ bool ComputeHasIntermediateBuffer(gfx::SurfaceFormat aFormat,
          UsingX11Compositor() || aFormat == gfx::SurfaceFormat::UNKNOWN;
 }
 
-BufferTextureData* BufferTextureData::Create(gfx::IntSize aSize,
-                                             gfx::SurfaceFormat aFormat,
-                                             gfx::BackendType aMoz2DBackend,
-                                             LayersBackend aLayersBackend,
-                                             TextureFlags aFlags,
-                                             TextureAllocationFlags aAllocFlags,
-                                             LayersIPCChannel* aAllocator) {
-  if (!aAllocator || aAllocator->IsSameProcess()) {
+BufferTextureData* BufferTextureData::Create(
+    gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
+    gfx::BackendType aMoz2DBackend, LayersBackend aLayersBackend,
+    TextureFlags aFlags, TextureAllocationFlags aAllocFlags,
+    mozilla::ipc::IShmemAllocator* aAllocator, bool aIsSameProcess) {
+  if (!aAllocator || aIsSameProcess) {
     return MemoryTextureData::Create(aSize, aFormat, aMoz2DBackend,
                                      aLayersBackend, aFlags, aAllocFlags,
                                      aAllocator);
@@ -155,7 +157,7 @@ BufferTextureData* BufferTextureData::CreateForYCbCr(
     KnowsCompositor* aAllocator, gfx::IntSize aYSize, uint32_t aYStride,
     gfx::IntSize aCbCrSize, uint32_t aCbCrStride, StereoMode aStereoMode,
     gfx::ColorDepth aColorDepth, gfx::YUVColorSpace aYUVColorSpace,
-    TextureFlags aTextureFlags) {
+    gfx::ColorRange aColorRange, TextureFlags aTextureFlags) {
   uint32_t bufSize = ImageDataSerializer::ComputeYCbCrBufferSize(
       aYSize, aYStride, aCbCrSize, aCbCrStride);
   if (bufSize == 0) {
@@ -183,9 +185,10 @@ BufferTextureData* BufferTextureData::CreateForYCbCr(
                                          supportsTextureDirectMapping)
           : true;
 
-  YCbCrDescriptor descriptor = YCbCrDescriptor(
-      aYSize, aYStride, aCbCrSize, aCbCrStride, yOffset, cbOffset, crOffset,
-      aStereoMode, aColorDepth, aYUVColorSpace, hasIntermediateBuffer);
+  YCbCrDescriptor descriptor =
+      YCbCrDescriptor(aYSize, aYStride, aCbCrSize, aCbCrStride, yOffset,
+                      cbOffset, crOffset, aStereoMode, aColorDepth,
+                      aYUVColorSpace, aColorRange, hasIntermediateBuffer);
 
   return CreateInternal(
       aAllocator ? aAllocator->GetTextureForwarder() : nullptr, descriptor,
@@ -222,6 +225,14 @@ gfx::IntSize BufferTextureData::GetSize() const {
 
 Maybe<gfx::IntSize> BufferTextureData::GetCbCrSize() const {
   return ImageDataSerializer::CbCrSizeFromBufferDescriptor(mDescriptor);
+}
+
+Maybe<int32_t> BufferTextureData::GetYStride() const {
+  return ImageDataSerializer::YStrideFromBufferDescriptor(mDescriptor);
+}
+
+Maybe<int32_t> BufferTextureData::GetCbCrStride() const {
+  return ImageDataSerializer::CbCrStrideFromBufferDescriptor(mDescriptor);
 }
 
 Maybe<gfx::YUVColorSpace> BufferTextureData::GetYUVColorSpace() const {
@@ -432,7 +443,7 @@ MemoryTextureData* MemoryTextureData::Create(gfx::IntSize aSize,
                                              LayersBackend aLayersBackend,
                                              TextureFlags aFlags,
                                              TextureAllocationFlags aAllocFlags,
-                                             LayersIPCChannel* aAllocator) {
+                                             IShmemAllocator* aAllocator) {
   // Should have used CreateForYCbCr.
   MOZ_ASSERT(aFormat != gfx::SurfaceFormat::YUV);
 
@@ -496,7 +507,7 @@ ShmemTextureData* ShmemTextureData::Create(gfx::IntSize aSize,
                                            LayersBackend aLayersBackend,
                                            TextureFlags aFlags,
                                            TextureAllocationFlags aAllocFlags,
-                                           LayersIPCChannel* aAllocator) {
+                                           IShmemAllocator* aAllocator) {
   MOZ_ASSERT(aAllocator);
   // Should have used CreateForYCbCr.
   MOZ_ASSERT(aFormat != gfx::SurfaceFormat::YUV);

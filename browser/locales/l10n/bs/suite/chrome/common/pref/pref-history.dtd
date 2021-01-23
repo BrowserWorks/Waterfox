@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Historija">
+
+<!ENTITY  pref.history.caption              "Historija pretraživanja">
+<!ENTITY  historyPages.label                "Historija je lista prethodno posjećenih stranica.">
+<!ENTITY  enableHistory.label               "Zapamti posjećene stranice">
+<!ENTITY  clearHistory.label                "Očisti historiju">
+
+<!ENTITY  locationBarHistory.caption        "Historija adresne trake">
+<!ENTITY  urlBarHistoryEnabled.caption      "Omogući historiju adresne trake">
+<!ENTITY  clearLocationBar.label            "Očisti listu web stranica u meniju adresne trake.">
+<!ENTITY  clearLocationBarButton.label      "Očisti adresnu traku">
+<!ENTITY  formfillHistory.caption           "Historija obazaca i pretrage">
+<!ENTITY  enableFormfill.label              "Omogući historiju obrazaca i pretrage">
+<!ENTITY  formfillExpire.label              "Zapamti historiju obrazaca i pretrage do">
+<!ENTITY  formfillDays.label                "dana">

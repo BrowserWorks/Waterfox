@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Editor vlastností pre pokročilých">
+<!ENTITY AttName.label                  "Atribút: ">
+<!ENTITY AttValue.label                 "Hodnota: ">
+<!ENTITY PropertyName.label             "Vlastnosť: ">
+<!ENTITY currentattributesfor.label     "Aktuálne atribúty pre: ">
+<!ENTITY tree.attributeHeader.label     "Atribút">
+<!ENTITY tree.propertyHeader.label      "Vlastnosť">
+<!ENTITY tree.valueHeader.label         "Hodnota">
+<!ENTITY tabHTML.label                  "Atribúty HTML">
+<!ENTITY tabCSS.label                   "Vložený štýl">
+<!ENTITY tabJSE.label                   "Udalosti JavaScriptu">
+
+<!ENTITY editAttribute.label            "Kliknutím upravíte hodnotu položky">
+<!ENTITY removeAttribute.label          "Odstrániť">

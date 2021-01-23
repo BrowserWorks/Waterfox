@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ਬਟਨ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY Settings.label "ਸੈਟਿੰਗ">
+
+<!ENTITY ButtonType.label "ਟਾਈਪ">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "ਭੇਜੋ">
+<!ENTITY reset.value "ਰੀ-ਸੈੱਟ">
+<!ENTITY button.value "ਬਟਨ">
+
+<!ENTITY ButtonName.label "ਨਾਂ:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "ਮੁੱਲ:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "ਟੈਬ ਇੰਡੈਕਸ:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "ਆਯੋਗ ਹੈ">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "ਅਸੈੱਸ ਸਵਿੱਚ:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "ਬਟਨ ਹਟਾਓ">
+<!ENTITY RemoveButton.accesskey "R">

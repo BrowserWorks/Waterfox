@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Включване на обновяването за всички емисии">
+<!ENTITY biffAll.accesskey             "в">
+
+<!ENTITY newFeedSettings.label         "Настройки по подразбиране за нови емисии">
+
+<!ENTITY manageSubscriptions.label     "Управление на абонаменти…">
+<!ENTITY manageSubscriptions.accesskey "У">
+
+<!ENTITY feedWindowTitle.label         "Помощник за абониране към емисия">
+<!ENTITY feeds.accountName             "Блогове и новинарски емисии">

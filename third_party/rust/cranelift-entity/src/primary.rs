@@ -3,12 +3,14 @@ use crate::boxed_slice::BoxedSlice;
 use crate::iter::{Iter, IterMut};
 use crate::keys::Keys;
 use crate::EntityRef;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::ops::{Index, IndexMut};
 use core::slice;
-use std::boxed::Box;
-use std::vec::Vec;
+#[cfg(feature = "enable-serde")]
+use serde::{Deserialize, Serialize};
 
 /// A primary mapping `K -> V` allocating dense entity references.
 ///
@@ -25,7 +27,8 @@ use std::vec::Vec;
 /// that it only allows indexing with the distinct `EntityRef` key type, so converting to a
 /// plain slice would make it easier to use incorrectly. To make a slice of a `PrimaryMap`, use
 /// `into_boxed_slice`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 pub struct PrimaryMap<K, V>
 where
     K: EntityRef,

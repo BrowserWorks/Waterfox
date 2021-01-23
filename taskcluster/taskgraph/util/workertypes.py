@@ -11,19 +11,13 @@ from .attributes import keymatch
 
 WORKER_TYPES = {
     'gce/gecko-1-b-linux': ('docker-worker', 'linux'),
-    'releng-hardware/gecko-1-b-win2012-gamma': ('generic-worker', 'windows'),
+    'gce/gecko-2-b-linux': ('docker-worker', 'linux'),
+    'gce/gecko-3-b-linux': ('docker-worker', 'linux'),
     'invalid/invalid': ('invalid', None),
     'invalid/always-optimized': ('always-optimized', None),
-    'scriptworker-k8s/gecko-1-balrog': ('balrog', None),
-    'scriptworker-k8s/gecko-3-balrog': ('balrog', None),
-    'scriptworker-k8s/gecko-3-beetmover': ('beetmover', None),
-    'scriptworker-prov-v1/pushapk-v1': ('push-apk', None),
     "scriptworker-prov-v1/signing-linux-v1": ('scriptworker-signing', None),
     "scriptworker-k8s/gecko-3-shipit": ('shipit', None),
     "scriptworker-k8s/gecko-1-shipit": ('shipit', None),
-    "scriptworker-k8s/gecko-3-tree": ('treescript', None),
-    "scriptworker-k8s/gecko-1-tree": ('treescript', None),
-    'releng-hardware/gecko-t-osx-1014': ('generic-worker', 'macosx'),
 }
 
 
@@ -61,11 +55,15 @@ def _get(graph_config, alias, level, release_level):
     worker_config['provisioner'] = evaluate_keyed_by(
         worker_config['provisioner'],
         "worker-type alias {} field provisioner".format(alias),
-        {"level": level}).format(level=level, alias=alias)
+        {"level": level}).format(**{
+            "trust-domain": graph_config['trust-domain'], "level": level, "alias": alias,
+        })
     worker_config['worker-type'] = evaluate_keyed_by(
         worker_config['worker-type'],
         "worker-type alias {} field worker-type".format(alias),
-        {"level": level, 'release-level': release_level}).format(level=level, alias=alias)
+        {"level": level, 'release-level': release_level}).format(**{
+            "trust-domain": graph_config['trust-domain'], "level": level, "alias": alias,
+        })
 
     return worker_config
 
@@ -75,7 +73,7 @@ def worker_type_implementation(graph_config, worker_type):
     OS represents the host system, not the target OS, in the case of
     cross-compiles."""
     worker_config = _get(graph_config, worker_type, '1', 'staging')
-    return worker_config['implementation'], worker_config['os']
+    return worker_config['implementation'], worker_config.get('os')
 
 
 def get_worker_type(graph_config, worker_type, level, release_level):

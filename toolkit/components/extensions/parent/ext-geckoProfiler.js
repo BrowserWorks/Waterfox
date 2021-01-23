@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -93,9 +97,8 @@ this.geckoProfiler = class extends ExtensionAPI {
               bufferSize,
               interval,
               features,
-              features.length,
               threads,
-              threads.length,
+              0,
               windowLength
             );
           } else {
@@ -103,7 +106,6 @@ this.geckoProfiler = class extends ExtensionAPI {
               bufferSize,
               interval,
               features,
-              features.length,
               [],
               0,
               windowLength
@@ -127,6 +129,29 @@ this.geckoProfiler = class extends ExtensionAPI {
           Services.profiler.ResumeSampling();
         },
 
+        async dumpProfileToFile(fileName) {
+          if (!Services.profiler.IsActive()) {
+            throw new ExtensionError(
+              "The profiler is stopped. " +
+                "You need to start the profiler before you can capture a profile."
+            );
+          }
+
+          if (fileName.includes("\\") || fileName.includes("/")) {
+            throw new ExtensionError("Path cannot contain a subdirectory.");
+          }
+
+          let fragments = [OS.Constants.Path.profileDir, "profiler", fileName];
+          let filePath = OS.Path.join(...fragments);
+
+          try {
+            await Services.profiler.dumpProfileToFileAsync(filePath);
+          } catch (e) {
+            Cu.reportError(e);
+            throw new ExtensionError(`Dumping profile to ${filePath} failed.`);
+          }
+        },
+
         async getProfile() {
           if (!Services.profiler.IsActive()) {
             throw new ExtensionError(
@@ -147,6 +172,17 @@ this.geckoProfiler = class extends ExtensionAPI {
           }
 
           return Services.profiler.getProfileDataAsArrayBuffer();
+        },
+
+        async getProfileAsGzippedArrayBuffer() {
+          if (!Services.profiler.IsActive()) {
+            throw new ExtensionError(
+              "The profiler is stopped. " +
+                "You need to start the profiler before you can capture a profile."
+            );
+          }
+
+          return Services.profiler.getProfileDataAsGzippedArrayBuffer();
         },
 
         async getSymbols(debugName, breakpadId) {

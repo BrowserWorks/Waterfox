@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Nom :">
+<!ENTITY directoryName.accesskey           "n">
+<!ENTITY directoryHostname.label           "Nom d’hôte :">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "Nom distinct de base :">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "Rechercher">
+<!ENTITY findButton.accesskey              "h">
+<!ENTITY directorySecure.label             "Utiliser une connexion chiffrée (SSL)">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "Connecter avec l’utilisateur :">
+<!ENTITY directoryLogin.accesskey          "C">
+<!ENTITY General.tab                       "Général">
+<!ENTITY Offline.tab                       "Hors connexion">
+<!ENTITY Advanced.tab                      "Avancé">
+<!ENTITY portNumber.label                  "Numéro de port :">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "Filtre de recherche :">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "Étendue :">
+<!ENTITY scope.accesskey                   "e">
+<!ENTITY scopeOneLevel.label               "Un niveau">
+<!ENTITY scopeOneLevel.accesskey           "i">
+<!ENTITY scopeSubtree.label                "Sous-arbre">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "Ne pas retourner plus de">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "résultats">
+<!ENTITY offlineText.label                 "Vous pouvez créer une copie locale de cet annuaire pour pouvoir l’utiliser une fois hors connexion.">
+<!ENTITY saslMechanism.label               "Méthode d’identification : ">
+<!ENTITY saslMechanism.accesskey           "M">
+<!ENTITY saslOff.label                     "Simple">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "42em">

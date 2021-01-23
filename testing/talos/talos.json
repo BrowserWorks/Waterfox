@@ -4,7 +4,7 @@
             "tests": ["basic_compositor_video"]
         },
         "chromez": {
-            "tests": ["about_preferences_basic", "tresize"]
+            "tests": ["about_preferences_basic", "tresize", "about_newtab_with_snippets"]
         },
         "dromaeojs": {
             "tests": ["dromaeo_css", "kraken"]
@@ -13,13 +13,13 @@
             "tests": ["tart_flex", "ts_paint_flex"]
         },
         "other": {
-            "tests": ["a11yr", "ts_paint", "twinopen", "sessionrestore", "sessionrestore_no_auto_restore", "tabpaint", "cpstartup", "startup_about_home_paint"]
+            "tests": ["a11yr", "ts_paint", "twinopen", "sessionrestore", "sessionrestore_no_auto_restore", "tabpaint", "cpstartup", "startup_about_home_paint", "pdfpaint"]
         },
         "sessionrestore-many-windows": {
             "tests": ["sessionrestore_many_windows"]
         },
         "g1": {
-            "tests": ["tp5o_scroll", "glterrain"],
+            "tests": ["tp5o_scroll"],
             "pagesets_name": "tp5n.zip"
         },
         "damp": {
@@ -34,7 +34,7 @@
             "tests": ["dromaeo_dom"]
         },
         "g4": {
-            "tests": ["glvideo", "displaylist_mutate", "rasterflood_svg", "rasterflood_gradient"]
+            "tests": ["displaylist_mutate", "rasterflood_svg", "rasterflood_gradient"]
         },
         "g5": {
             "tests": ["ts_paint_webext", "tp5o_webext"],
@@ -53,12 +53,12 @@
         "perf-reftest-singletons": {
             "tests": ["perf_reftest_singletons"]
         },
-        "speedometer": {
-            "tests": ["speedometer", "stylebench"]
-        },
         "tp5o": {
             "tests": ["tp5o"],
             "pagesets_name": "tp5n.zip"
+        },
+        "webgl": {
+            "tests": ["glterrain", "glvideo", "motionmark_webgl"]
         },
         "xperf": {
             "tests": ["tp5n"],
@@ -68,42 +68,12 @@
                 "\"c:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/xperf.exe\""
             ]
         },
-        "tp6": {
-            "tests": ["tp6_youtube", "tp6_amazon", "tp6_facebook"],
-            "mitmproxy_release_bin_osx": "mitmproxy-2.0.2-osx.tar.gz",
-            "mitmproxy_release_bin_linux64": "mitmproxy-2.0.2-linux.tar.gz",
-            "mitmproxy_recording_set": "mitmproxy-recording-set-win10.zip",
-            "talos_options": [
-                "--mitmproxy",
-                "mitmproxy-recording-google.mp mitmproxy-recording-youtube.mp mitmproxy-recording-amazon.mp mitmproxy-recording-facebook.mp",
-                "--firstNonBlankPaint"
-            ]
-        },
-        "tp6-stylo-threads": {
-            "tests": ["tp6_youtube", "tp6_amazon", "tp6_facebook"],
-            "mitmproxy_release_bin_osx": "mitmproxy-2.0.2-osx.tar.gz",
-            "mitmproxy_release_bin_linux64": "mitmproxy-2.0.2-linux.tar.gz",
-            "mitmproxy_recording_set": "mitmproxy-recording-set-win10.zip",
-            "talos_options": [
-                "--stylo-threads=1",
-                "--mitmproxy",
-                "mitmproxy-recording-google.mp mitmproxy-recording-youtube.mp mitmproxy-recording-amazon.mp mitmproxy-recording-facebook.mp",
-                "--firstNonBlankPaint"
-            ]
-        },
         "h1": {
             "tests": ["ts_paint_heavy"]
         },
-        "h2": {
-            "tests": ["tp6_google_heavy", "tp6_youtube_heavy", "tp6_amazon_heavy", "tp6_facebook_heavy"],
-            "mitmproxy_release_bin_osx": "mitmproxy-2.0.2-osx.tar.gz",
-            "mitmproxy_release_bin_linux64": "mitmproxy-2.0.2-linux.tar.gz",
-            "mitmproxy_recording_set": "mitmproxy-recording-set-win10.zip",
-            "talos_options": [
-                "--mitmproxy",
-                "mitmproxy-recording-google.mp mitmproxy-recording-youtube.mp mitmproxy-recording-amazon.mp mitmproxy-recording-facebook.mp",
-                "--firstNonBlankPaint"
-            ]
+        "realworld-webextensions": {
+            "tests": ["startup_about_home_paint_realworld_webextensions"],
+            "webextensions_zip": "webextensions.zip"
         }
     }
 }

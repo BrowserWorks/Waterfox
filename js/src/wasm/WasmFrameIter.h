@@ -45,7 +45,7 @@ struct CallableOffsets;
 struct FuncOffsets;
 struct Frame;
 
-typedef JS::ProfilingFrameIterator::RegisterState RegisterState;
+using RegisterState = JS::ProfilingFrameIterator::RegisterState;
 
 // Iterates over a linear group of wasm frames of a single wasm JitActivation,
 // called synchronously from C++ in the wasm thread. It will stop at the first
@@ -187,7 +187,7 @@ class ProfilingFrameIterator {
 
   // Start unwinding at a group of wasm frames after unwinding an inner group
   // of JSJit frames.
-  ProfilingFrameIterator(const jit::JitActivation& activation, const Frame* fp);
+  explicit ProfilingFrameIterator(const Frame* fp);
 
   // Start unwinding at the innermost activation given the register state when
   // the thread was suspended.

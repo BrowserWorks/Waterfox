@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Φίλτρα μηνύματος">
+<!ENTITY nameColumn.label "Περιγραφή">
+<!ENTITY activeColumn.label "Ενεργοποίηση">
+<!ENTITY newButton.label "Νέο...">
+<!ENTITY newButton.accesskey "Ν">
+<!ENTITY newButton.popupCopy.label "Αντιγραφή…">
+<!ENTITY newButton.popupCopy.accesskey "Α">
+<!ENTITY editButton.label "Επεξεργασία…">
+<!ENTITY editButton.accesskey "Ε">
+<!ENTITY deleteButton.label "Διαγραφή">
+<!ENTITY deleteButton.accesskey "Δ">
+<!ENTITY reorderTopButton "Μετακίνηση στην κορυφή">
+<!ENTITY reorderTopButton.accessKey "ο">
+<!ENTITY reorderTopButton.toolTip "Επανακατάταξη φίλτρου ώστε να εκτελείται πριν από όλα τα υπόλοιπα">
+<!ENTITY reorderUpButton.label "Μετακίνηση προς τα πάνω">
+<!ENTITY reorderUpButton.accesskey "Ν">
+<!ENTITY reorderDownButton.label "Μετακίνηση προς τα κάτω">
+<!ENTITY reorderDownButton.accesskey "κ">
+<!ENTITY reorderBottomButton "Μετακίνηση στο κάτω μέρος">
+<!ENTITY reorderBottomButton.accessKey "Π">
+<!ENTITY reorderBottomButton.toolTip "Επανακατάταξη φίλτρου ώστε να εκτελείται μετά από όλα τα υπόλοιπα">
+<!ENTITY filterHeader.label "Τα ενεργοποιημένα φίλτρα θα εκτελούνται με την παρακάτω σειρά.">
+<!ENTITY filtersForPrefix.label "Φίλτρα για:">
+<!ENTITY filtersForPrefix.accesskey "Φ">
+<!ENTITY viewLogButton.label "Αρχείο καταγραφής φίλτρου">
+<!ENTITY viewLogButton.accesskey "φ">
+<!ENTITY runFilters.label "Εκτέλεση τώρα">
+<!ENTITY runFilters.accesskey "ρ">
+<!ENTITY stopFilters.label "Διακοπή">
+<!ENTITY stopFilters.accesskey "κ">
+<!ENTITY folderPickerPrefix.label "Εκτέλεση επιλεγμένων φίλτρων στο:">
+<!ENTITY folderPickerPrefix.accesskey "λ">
+<!ENTITY helpButton.label "Βοήθεια">
+<!ENTITY helpButton.accesskey "Β">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Αναζήτηση φίλτρων κατά όνομα…">

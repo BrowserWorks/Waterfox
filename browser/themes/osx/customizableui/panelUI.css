@@ -25,13 +25,13 @@ panelmultiview .toolbaritem-combined-buttons > spacer.before-label {
   padding-inline-start: 18px;
 }
 
-#appMenu-fxa-container[fxastatus="signedin"] > #appMenu-fxa-status > #appMenu-fxa-label {
+#appMenu-fxa-status[fxastatus="signedin"] > #appMenu-fxa-label {
   /* 18px space before the avatar, then 16px for the avatar */
   padding-inline-start: 34px;
   margin-inline-start: -34px;
 }
 
-#appMenu-fxa-container[fxastatus="signedin"] > #appMenu-fxa-status > #appMenu-fxa-avatar {
+#appMenu-fxa-status[fxastatus="signedin"] > #appMenu-fxa-avatar {
   margin-inline-start: 18px;
 }
 
@@ -44,7 +44,7 @@ panelmultiview .toolbaritem-combined-buttons > spacer.before-label {
   background: transparent;
 }
 
-#BMB_bookmarksPopup menupopup[placespopup=true] > hbox:-moz-lwtheme {
+#BMB_bookmarksPopup menupopup[placespopup=true]:-moz-lwtheme::part(innerbox) {
   background: var(--arrowpanel-background);
   border-radius: var(--arrowpanel-border-radius);
   box-shadow: 0 0 0 1px var(--arrowpanel-border-color);
@@ -64,17 +64,17 @@ menu.subviewbutton > .menu-right {
   padding: 0 !important;
 }
 
-#PanelUI-remotetabs-tabslist > label[itemtype="client"] {
+.PanelUI-remotetabs-clientcontainer > label[itemtype="client"] {
   padding-inline-start: 6px;
 }
 
 .PanelUI-remotetabs-notabsforclient-label {
-  margin-left: 19px;
+  margin-inline-start: 19px;
   font-size: 13px;
 }
 
 #PanelUI-remotetabs[mainview] .PanelUI-remotetabs-notabsforclient-label {
-  margin-left: 23px;
+  margin-inline-start: 23px;
 }
 
 #PanelUI-remotetabs-tabslist {

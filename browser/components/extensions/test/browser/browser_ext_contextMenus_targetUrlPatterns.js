@@ -74,17 +74,13 @@ add_task(async function unsupportedSchemes() {
       for (let pattern of testcase.matchingPatterns) {
         browser.test.assertTrue(
           menuIds.includes(pattern),
-          `Menu item with targetUrlPattern="${pattern}" should be shown at ${
-            testcase.testUrl
-          }`
+          `Menu item with targetUrlPattern="${pattern}" should be shown at ${testcase.testUrl}`
         );
       }
       for (let pattern of testcase.nonmatchingPatterns) {
         browser.test.assertFalse(
           menuIds.includes(pattern),
-          `Menu item with targetUrlPattern="${pattern}" should not be shown at ${
-            testcase.testUrl
-          }`
+          `Menu item with targetUrlPattern="${pattern}" should not be shown at ${testcase.testUrl}`
         );
       }
       testcase = null;
@@ -217,8 +213,11 @@ add_task(async function privileged_are_allowed_to_use_restrictedSchemes() {
         documentUrlPatterns: ["about:reader*"],
       });
 
-      browser.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
-        if (changeInfo.url && changeInfo.url.startsWith("about:reader")) {
+      browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+        if (
+          changeInfo.status === "complete" &&
+          tab.url.startsWith("about:reader")
+        ) {
           browser.test.sendMessage("readerModeEntered");
         }
       });

@@ -23,7 +23,9 @@ class GMPVideoEncoderChild : public PGMPVideoEncoderChild,
   friend class PGMPVideoEncoderChild;
 
  public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPVideoEncoderChild);
+  // Mark AddRef and Release as `final`, as they overload pure virtual
+  // implementations in PGMPVideoEncoderChild.
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPVideoEncoderChild, final);
 
   explicit GMPVideoEncoderChild(GMPContentChild* aPlugin);
 
@@ -45,14 +47,13 @@ class GMPVideoEncoderChild : public PGMPVideoEncoderChild,
   virtual ~GMPVideoEncoderChild();
 
   // PGMPVideoEncoderChild
-  mozilla::ipc::IPCResult RecvInitEncode(
-      const GMPVideoCodec& aCodecSettings,
-      InfallibleTArray<uint8_t>&& aCodecSpecific, const int32_t& aNumberOfCores,
-      const uint32_t& aMaxPayloadSize);
-  mozilla::ipc::IPCResult RecvEncode(
-      const GMPVideoi420FrameData& aInputFrame,
-      InfallibleTArray<uint8_t>&& aCodecSpecificInfo,
-      InfallibleTArray<GMPVideoFrameType>&& aFrameTypes);
+  mozilla::ipc::IPCResult RecvInitEncode(const GMPVideoCodec& aCodecSettings,
+                                         nsTArray<uint8_t>&& aCodecSpecific,
+                                         const int32_t& aNumberOfCores,
+                                         const uint32_t& aMaxPayloadSize);
+  mozilla::ipc::IPCResult RecvEncode(const GMPVideoi420FrameData& aInputFrame,
+                                     nsTArray<uint8_t>&& aCodecSpecificInfo,
+                                     nsTArray<GMPVideoFrameType>&& aFrameTypes);
   mozilla::ipc::IPCResult RecvChildShmemForPool(Shmem&& aEncodedBuffer);
   mozilla::ipc::IPCResult RecvSetChannelParameters(const uint32_t& aPacketLoss,
                                                    const uint32_t& aRTT);

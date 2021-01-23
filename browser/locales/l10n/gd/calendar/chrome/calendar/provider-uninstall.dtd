@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Dì-stàlaich solaraiche">
+<!ENTITY providerUninstall.accept.label                    "Sguir dhen fho-sgrìobhadh dha na thagh thu">
+<!ENTITY providerUninstall.accept.accesskey                "u">
+<!ENTITY providerUninstall.cancel.label                    "Cum an tuilleadan">
+<!ENTITY providerUninstall.cancel.accesskey                "C">
+<!ENTITY providerUninstall.preName.label                   "Dh'iarr thu na leanas a dhì-stàladh no a chur à comas:">
+<!ENTITY providerUninstall.postName.label                  "Thèid na mìosachain gu h-ìosal a chur à comas an cois seo.">
+<!ENTITY providerUninstall.reinstallNote.label             "Mur eil dùil agad an solaraiche seo a stàladh as ùr, 's urrainn dhut sguir dhen fho-sgrìobhadh de mhìosachain an t-solaraiche seo.">

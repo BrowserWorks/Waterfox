@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Lanjutan">
+
+<!ENTITY systemPref.caption               "Keutamaan Sistem">
+<!ENTITY systemPrefCheck.label            "Gunakan Keutamaan Sistem">
+<!ENTITY systemPrefCheck.accesskey        "G">
+<!ENTITY systemPref.desc                  "Dengan pilihan ini, &brandShortName; akan menggunakan keutamaan sistem. Tetapan sistem ini akan menggantikan keutamaan &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption         "Integrasi Sistem">
+<!ENTITY prefCheckDefaultClient.label     "Semak tetapan aplikasi piawai apabila dimulakan">
+<!ENTITY prefCheckDefaultClient.accesskey "S">
+
+<!ENTITY crashReports.caption             "Pelapor Ranap">
+<!ENTITY submitCrashes.label              "Hantarkan laporan ranap">
+<!ENTITY submitCrashes.accesskey          "H">
+
+<!ENTITY devTools.caption                 "Alatan Pembangun">
+<!ENTITY allowDebugger.label              "Izinkan penyahpepijat untuk disambung ke &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "I">
+<!ENTITY allowRemoteConnections.label     "Izinkan sambungan daripada komputer lain">
+<!ENTITY allowRemoteConnections.accesskey "l">
+<!ENTITY connectionPrompt.label           "Maklumkan untuk sambungan masuk">
+<!ENTITY connectionPrompt.accesskey       "M">
+<!ENTITY remoteDebuggerPort.label         "Nombor port untuk sambungan:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

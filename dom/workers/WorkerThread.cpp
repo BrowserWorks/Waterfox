@@ -6,15 +6,15 @@
 
 #include "WorkerThread.h"
 
-#include "mozilla/Assertions.h"
-#include "mozilla/ipc/BackgroundChild.h"
 #include "EventQueue.h"
-#include "mozilla/ThreadEventQueue.h"
-#include "mozilla/PerformanceCounter.h"
-#include "mozilla/StaticPrefs.h"
-#include "nsIThreadInternal.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
+#include "mozilla/AbstractThread.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/PerformanceCounter.h"
+#include "mozilla/ThreadEventQueue.h"
+#include "mozilla/ipc/BackgroundChild.h"
+#include "nsIThreadInternal.h"
 
 #ifdef DEBUG
 #  include "nsThreadManager.h"
@@ -94,6 +94,8 @@ already_AddRefed<WorkerThread> WorkerThread::Create(
     NS_WARNING("Failed to create new thread!");
     return nullptr;
   }
+  thread->mAbstractThread = AbstractThread::CreateXPCOMThreadWrapper(
+      thread, false /* aRequireTailDispatch */);
 
   return thread.forget();
 }
@@ -126,10 +128,12 @@ void WorkerThread::SetWorker(const WorkerThreadFriendKey& /* aKey */,
 
       MOZ_ASSERT(mWorkerPrivate);
       MOZ_ASSERT(!mAcceptingNonWorkerRunnables);
-      MOZ_ASSERT(!mOtherThreadsDispatchingViaEventTarget,
-                 "XPCOM Dispatch hapenning at the same time our thread is "
-                 "being unset! This should not be possible!");
-
+      // mOtherThreadsDispatchingViaEventTarget can still be non-zero here
+      // because WorkerThread::Dispatch isn't atomic so a thread initiating
+      // dispatch can have dispatched a runnable at this thread allowing us to
+      // begin shutdown before that thread gets a chance to decrement
+      // mOtherThreadsDispatchingViaEventTarget back to 0.  So we need to wait
+      // for that.
       while (mOtherThreadsDispatchingViaEventTarget) {
         mWorkerPrivateCondVar.Wait();
       }
@@ -323,11 +327,20 @@ uint32_t WorkerThread::RecursionDepth(
   return mNestedEventLoopDepth;
 }
 
-PerformanceCounter* WorkerThread::GetPerformanceCounter(nsIRunnable* aEvent) {
+PerformanceCounter* WorkerThread::GetPerformanceCounter(
+    nsIRunnable* aEvent) const {
   if (mWorkerPrivate) {
     return mWorkerPrivate->GetPerformanceCounter();
   }
   return nullptr;
+}
+
+NS_IMETHODIMP
+WorkerThread::Shutdown() {
+  MOZ_ALWAYS_SUCCEEDS(nsThread::Shutdown());
+  // We need to break the cycle.
+  mAbstractThread = nullptr;
+  return NS_OK;
 }
 
 NS_IMPL_ISUPPORTS(WorkerThread::Observer, nsIThreadObserver)

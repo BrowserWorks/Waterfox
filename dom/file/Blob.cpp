@@ -5,10 +5,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "Blob.h"
+#include "EmptyBlobImpl.h"
 #include "File.h"
 #include "MemoryBlobImpl.h"
 #include "mozilla/dom/BlobBinding.h"
+#include "mozilla/dom/BodyStream.h"
+#include "mozilla/dom/WorkerCommon.h"
+#include "mozilla/dom/WorkerPrivate.h"
 #include "MultipartBlobImpl.h"
+#include "nsIGlobalObject.h"
 #include "nsIInputStream.h"
 #include "nsPIDOMWindow.h"
 #include "StreamBlobImpl.h"
@@ -21,12 +26,13 @@ namespace dom {
 NS_IMPL_CYCLE_COLLECTION_CLASS(Blob)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Blob)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mParent)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mGlobal)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_REFERENCE
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Blob)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mParent)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGlobal)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(Blob)
@@ -35,9 +41,8 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Blob)
   NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIMutable)
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
   NS_INTERFACE_MAP_ENTRY_CONCRETE(Blob)
-  NS_INTERFACE_MAP_ENTRY(nsIMutable)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
 NS_INTERFACE_MAP_END
 
@@ -63,39 +68,55 @@ void Blob::MakeValidBlobType(nsAString& aType) {
 }
 
 /* static */
-Blob* Blob::Create(nsISupports* aParent, BlobImpl* aImpl) {
+Blob* Blob::Create(nsIGlobalObject* aGlobal, BlobImpl* aImpl) {
   MOZ_ASSERT(aImpl);
 
-  return aImpl->IsFile() ? new File(aParent, aImpl) : new Blob(aParent, aImpl);
+  MOZ_ASSERT(aGlobal);
+  if (NS_WARN_IF(!aGlobal)) {
+    return nullptr;
+  }
+
+  return aImpl->IsFile() ? new File(aGlobal, aImpl) : new Blob(aGlobal, aImpl);
 }
 
 /* static */
-already_AddRefed<Blob> Blob::CreateStringBlob(nsISupports* aParent,
+already_AddRefed<Blob> Blob::CreateStringBlob(nsIGlobalObject* aGlobal,
                                               const nsACString& aData,
                                               const nsAString& aContentType) {
+  MOZ_ASSERT(aGlobal);
+  if (NS_WARN_IF(!aGlobal)) {
+    return nullptr;
+  }
+
   RefPtr<BlobImpl> blobImpl = StringBlobImpl::Create(aData, aContentType);
-  RefPtr<Blob> blob = Blob::Create(aParent, blobImpl);
+  RefPtr<Blob> blob = Blob::Create(aGlobal, blobImpl);
   MOZ_ASSERT(!blob->mImpl->IsFile());
   return blob.forget();
 }
 
 /* static */
-already_AddRefed<Blob> Blob::CreateMemoryBlob(nsISupports* aParent,
+already_AddRefed<Blob> Blob::CreateMemoryBlob(nsIGlobalObject* aGlobal,
                                               void* aMemoryBuffer,
                                               uint64_t aLength,
                                               const nsAString& aContentType) {
+  MOZ_ASSERT(aGlobal);
+  if (NS_WARN_IF(!aGlobal)) {
+    return nullptr;
+  }
+
   RefPtr<Blob> blob = Blob::Create(
-      aParent, new MemoryBlobImpl(aMemoryBuffer, aLength, aContentType));
+      aGlobal, new MemoryBlobImpl(aMemoryBuffer, aLength, aContentType));
   MOZ_ASSERT(!blob->mImpl->IsFile());
   return blob.forget();
 }
 
-Blob::Blob(nsISupports* aParent, BlobImpl* aImpl)
-    : mImpl(aImpl), mParent(aParent) {
+Blob::Blob(nsIGlobalObject* aGlobal, BlobImpl* aImpl)
+    : mImpl(aImpl), mGlobal(aGlobal) {
   MOZ_ASSERT(mImpl);
+  MOZ_ASSERT(mGlobal);
 }
 
-Blob::~Blob() {}
+Blob::~Blob() = default;
 
 bool Blob::IsFile() const { return mImpl->IsFile(); }
 
@@ -112,7 +133,7 @@ already_AddRefed<File> Blob::ToFile() {
   if (HasFileInterface()) {
     file = static_cast<File*>(this);
   } else {
-    file = new File(mParent, mImpl);
+    file = new File(mGlobal, mImpl);
   }
 
   return file.forget();
@@ -126,12 +147,13 @@ already_AddRefed<File> Blob::ToFile(const nsAString& aName,
   mImpl->GetType(contentType);
 
   RefPtr<MultipartBlobImpl> impl =
-      MultipartBlobImpl::Create(std::move(blobImpls), aName, contentType, aRv);
+      MultipartBlobImpl::Create(std::move(blobImpls), aName, contentType,
+                                mGlobal->CrossOriginIsolated(), aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
 
-  RefPtr<File> file = new File(mParent, impl);
+  RefPtr<File> file = new File(mGlobal, impl);
   return file.forget();
 }
 
@@ -144,7 +166,7 @@ already_AddRefed<Blob> Blob::CreateSlice(uint64_t aStart, uint64_t aLength,
     return nullptr;
   }
 
-  RefPtr<Blob> blob = Blob::Create(mParent, impl);
+  RefPtr<Blob> blob = Blob::Create(mGlobal, impl);
   return blob.forget();
 }
 
@@ -170,7 +192,7 @@ already_AddRefed<Blob> Blob::Slice(const Optional<int64_t>& aStart,
     return nullptr;
   }
 
-  RefPtr<Blob> blob = Blob::Create(mParent, impl);
+  RefPtr<Blob> blob = Blob::Create(mGlobal, impl);
   return blob.forget();
 }
 
@@ -185,12 +207,6 @@ nsresult Blob::GetSendInfo(nsIInputStream** aBody, uint64_t* aContentLength,
   return mImpl->GetSendInfo(aBody, aContentLength, aContentType, aCharset);
 }
 
-NS_IMETHODIMP
-Blob::GetMutable(bool* aMutable) { return mImpl->GetMutable(aMutable); }
-
-NS_IMETHODIMP
-Blob::SetMutable(bool aMutable) { return mImpl->SetMutable(aMutable); }
-
 JSObject* Blob::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) {
   return Blob_Binding::Wrap(aCx, this, aGivenProto);
 }
@@ -201,13 +217,16 @@ already_AddRefed<Blob> Blob::Constructor(
     const BlobPropertyBag& aBag, ErrorResult& aRv) {
   RefPtr<MultipartBlobImpl> impl = new MultipartBlobImpl();
 
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
+  MOZ_ASSERT(global);
   if (aData.WasPassed()) {
     nsAutoString type(aBag.mType);
     MakeValidBlobType(type);
     impl->InitializeBlob(aData.Value(), type,
-                         aBag.mEndings == EndingTypes::Native, aRv);
+                         aBag.mEndings == EndingType::Native,
+                         global->CrossOriginIsolated(), aRv);
   } else {
-    impl->InitializeBlob(aRv);
+    impl->InitializeBlob(global->CrossOriginIsolated(), aRv);
   }
 
   if (NS_WARN_IF(aRv.Failed())) {
@@ -216,7 +235,7 @@ already_AddRefed<Blob> Blob::Constructor(
 
   MOZ_ASSERT(!impl->IsFile());
 
-  RefPtr<Blob> blob = Blob::Create(aGlobal.GetAsSupports(), impl);
+  RefPtr<Blob> blob = Blob::Create(global, impl);
   return blob.forget();
 }
 
@@ -237,6 +256,122 @@ size_t BindingJSObjectMallocBytes(Blob* aBlob) {
   JS::AutoSuppressGCAnalysis nogc;
 
   return aBlob->GetAllocationSize();
+}
+
+already_AddRefed<Promise> Blob::Text(ErrorResult& aRv) {
+  return ConsumeBody(BodyConsumer::CONSUME_TEXT, aRv);
+}
+
+already_AddRefed<Promise> Blob::ArrayBuffer(ErrorResult& aRv) {
+  return ConsumeBody(BodyConsumer::CONSUME_ARRAYBUFFER, aRv);
+}
+
+already_AddRefed<Promise> Blob::ConsumeBody(
+    BodyConsumer::ConsumeType aConsumeType, ErrorResult& aRv) {
+  if (NS_WARN_IF(!mGlobal)) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIEventTarget> mainThreadEventTarget;
+  if (!NS_IsMainThread()) {
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+    mainThreadEventTarget = workerPrivate->MainThreadEventTarget();
+  } else {
+    mainThreadEventTarget = mGlobal->EventTargetFor(TaskCategory::Other);
+  }
+
+  MOZ_ASSERT(mainThreadEventTarget);
+
+  nsCOMPtr<nsIInputStream> inputStream;
+  CreateInputStream(getter_AddRefs(inputStream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  return BodyConsumer::Create(mGlobal, mainThreadEventTarget, inputStream,
+                              nullptr, aConsumeType, VoidCString(),
+                              VoidString(), VoidCString(),
+                              MutableBlobStorage::eOnlyInMemory, aRv);
+}
+
+namespace {
+
+class BlobBodyStreamHolder final : public BodyStreamHolder {
+ public:
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(BlobBodyStreamHolder,
+                                                         BodyStreamHolder)
+
+  BlobBodyStreamHolder() { mozilla::HoldJSObjects(this); }
+
+  void NullifyStream() override {
+    mozilla::DropJSObjects(this);
+    mStream = nullptr;
+  }
+
+  void MarkAsRead() override {}
+
+  void SetReadableStreamBody(JSObject* aBody) override {
+    MOZ_ASSERT(aBody);
+    mStream = aBody;
+  }
+
+  JSObject* GetReadableStreamBody() override { return mStream; }
+
+  // Public to make trace happy.
+  JS::Heap<JSObject*> mStream;
+
+ protected:
+  virtual ~BlobBodyStreamHolder() { NullifyStream(); }
+};
+
+NS_IMPL_CYCLE_COLLECTION_CLASS(BlobBodyStreamHolder)
+
+NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(BlobBodyStreamHolder,
+                                               BodyStreamHolder)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mStream)
+NS_IMPL_CYCLE_COLLECTION_TRACE_END
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(BlobBodyStreamHolder,
+                                                  BodyStreamHolder)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(BlobBodyStreamHolder,
+                                                BodyStreamHolder)
+  tmp->NullifyStream();
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_ADDREF_INHERITED(BlobBodyStreamHolder, BodyStreamHolder)
+NS_IMPL_RELEASE_INHERITED(BlobBodyStreamHolder, BodyStreamHolder)
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(BlobBodyStreamHolder)
+NS_INTERFACE_MAP_END_INHERITING(BodyStreamHolder)
+
+}  // anonymous namespace
+
+void Blob::Stream(JSContext* aCx, JS::MutableHandle<JSObject*> aStream,
+                  ErrorResult& aRv) {
+  nsCOMPtr<nsIInputStream> stream;
+  CreateInputStream(getter_AddRefs(stream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+
+  if (NS_WARN_IF(!mGlobal)) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return;
+  }
+
+  RefPtr<BlobBodyStreamHolder> holder = new BlobBodyStreamHolder();
+
+  BodyStream::Create(aCx, holder, mGlobal, stream, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+
+  aStream.set(holder->GetReadableStreamBody());
 }
 
 }  // namespace dom

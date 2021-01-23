@@ -13,7 +13,7 @@
 #include "nsNetUtil.h"
 #include "nsXPCOM.h"
 #include "mozilla/dom/ServiceWorkerManager.h"
-
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/Services.h"
 #include "mozilla/Unused.h"
 
@@ -24,9 +24,9 @@
 namespace mozilla {
 namespace dom {
 
-PushNotifier::PushNotifier() {}
+PushNotifier::PushNotifier() = default;
 
-PushNotifier::~PushNotifier() {}
+PushNotifier::~PushNotifier() = default;
 
 NS_IMPL_CYCLE_COLLECTION_0(PushNotifier)
 
@@ -100,7 +100,9 @@ nsresult PushNotifier::Dispatch(PushDispatcher& aDispatcher) {
       // Broadcast a message to notify observers and service workers.
       for (uint32_t i = 0; i < contentActors.Length(); ++i) {
         // We need to filter based on process type, only "web" AKA the default
-        // remote type is acceptable.
+        // remote type is acceptable. This should not run when Fission is
+        // enabled, and we specifically don't want this for
+        // LARGE_ALLOCATION_REMOTE_TYPE, so don't use IsWebRemoteType().
         if (!contentActors[i]->GetRemoteType().EqualsLiteral(
                 DEFAULT_REMOTE_TYPE)) {
           continue;
@@ -145,9 +147,9 @@ nsresult PushNotifier::Dispatch(PushDispatcher& aDispatcher) {
   return rv;
 }
 
-PushData::PushData(const nsTArray<uint8_t>& aData) : mData(aData) {}
+PushData::PushData(const nsTArray<uint8_t>& aData) : mData(aData.Clone()) {}
 
-PushData::~PushData() {}
+PushData::~PushData() = default;
 
 NS_IMPL_CYCLE_COLLECTION_0(PushData)
 
@@ -196,14 +198,14 @@ PushData::Json(JSContext* aCx, JS::MutableHandle<JS::Value> aResult) {
 
 NS_IMETHODIMP
 PushData::Binary(nsTArray<uint8_t>& aData) {
-  aData = mData;
+  aData = mData.Clone();
   return NS_OK;
 }
 
 PushMessage::PushMessage(nsIPrincipal* aPrincipal, nsIPushData* aData)
     : mPrincipal(aPrincipal), mData(aData) {}
 
-PushMessage::~PushMessage() {}
+PushMessage::~PushMessage() = default;
 
 NS_IMPL_CYCLE_COLLECTION(PushMessage, mPrincipal, mData)
 
@@ -237,7 +239,7 @@ PushDispatcher::PushDispatcher(const nsACString& aScope,
                                nsIPrincipal* aPrincipal)
     : mScope(aScope), mPrincipal(aPrincipal) {}
 
-PushDispatcher::~PushDispatcher() {}
+PushDispatcher::~PushDispatcher() = default;
 
 nsresult PushDispatcher::HandleNoChildProcesses() { return NS_OK; }
 
@@ -254,7 +256,7 @@ bool PushDispatcher::ShouldNotifyWorkers() {
   // System subscriptions use observer notifications instead of service worker
   // events. The `testing.notifyWorkers` pref disables worker events for
   // non-system subscriptions.
-  if (nsContentUtils::IsSystemPrincipal(mPrincipal) ||
+  if (mPrincipal->IsSystemPrincipal() ||
       !Preferences::GetBool("dom.push.testing.notifyWorkers", true)) {
     return false;
   }
@@ -304,9 +306,9 @@ PushMessageDispatcher::PushMessageDispatcher(
     const nsAString& aMessageId, const Maybe<nsTArray<uint8_t>>& aData)
     : PushDispatcher(aScope, aPrincipal),
       mMessageId(aMessageId),
-      mData(aData) {}
+      mData(aData ? Some(aData->Clone()) : Nothing()) {}
 
-PushMessageDispatcher::~PushMessageDispatcher() {}
+PushMessageDispatcher::~PushMessageDispatcher() = default;
 
 nsresult PushMessageDispatcher::NotifyObservers() {
   nsCOMPtr<nsIPushData> data;
@@ -355,7 +357,7 @@ PushSubscriptionChangeDispatcher::PushSubscriptionChangeDispatcher(
     const nsACString& aScope, nsIPrincipal* aPrincipal)
     : PushDispatcher(aScope, aPrincipal) {}
 
-PushSubscriptionChangeDispatcher::~PushSubscriptionChangeDispatcher() {}
+PushSubscriptionChangeDispatcher::~PushSubscriptionChangeDispatcher() = default;
 
 nsresult PushSubscriptionChangeDispatcher::NotifyObservers() {
   return DoNotifyObservers(mPrincipal, OBSERVER_TOPIC_SUBSCRIPTION_CHANGE,
@@ -394,7 +396,8 @@ PushSubscriptionModifiedDispatcher::PushSubscriptionModifiedDispatcher(
     const nsACString& aScope, nsIPrincipal* aPrincipal)
     : PushDispatcher(aScope, aPrincipal) {}
 
-PushSubscriptionModifiedDispatcher::~PushSubscriptionModifiedDispatcher() {}
+PushSubscriptionModifiedDispatcher::~PushSubscriptionModifiedDispatcher() =
+    default;
 
 nsresult PushSubscriptionModifiedDispatcher::NotifyObservers() {
   return DoNotifyObservers(mPrincipal, OBSERVER_TOPIC_SUBSCRIPTION_MODIFIED,
@@ -421,13 +424,13 @@ PushErrorDispatcher::PushErrorDispatcher(const nsACString& aScope,
                                          uint32_t aFlags)
     : PushDispatcher(aScope, aPrincipal), mMessage(aMessage), mFlags(aFlags) {}
 
-PushErrorDispatcher::~PushErrorDispatcher() {}
+PushErrorDispatcher::~PushErrorDispatcher() = default;
 
 nsresult PushErrorDispatcher::NotifyObservers() { return NS_OK; }
 
 nsresult PushErrorDispatcher::NotifyWorkers() {
   if (!ShouldNotifyWorkers() &&
-      (!mPrincipal || nsContentUtils::IsSystemPrincipal(mPrincipal))) {
+      (!mPrincipal || mPrincipal->IsSystemPrincipal())) {
     // For system subscriptions, log the error directly to the browser console.
     return nsContentUtils::ReportToConsoleNonLocalized(
         mMessage, mFlags, NS_LITERAL_CSTRING("Push"), nullptr, /* aDocument */

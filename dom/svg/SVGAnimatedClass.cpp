@@ -6,11 +6,12 @@
 
 #include "SVGAnimatedClass.h"
 
-#include "mozilla/dom/SVGElement.h"
-#include "mozilla/Move.h"
-#include "mozilla/SMILValue.h"
+#include <utility>
+
 #include "DOMSVGAnimatedString.h"
 #include "SMILStringType.h"
+#include "mozilla/SMILValue.h"
+#include "mozilla/dom/SVGElement.h"
 
 namespace mozilla {
 namespace dom {
@@ -92,7 +93,7 @@ void SVGAnimatedClass::SetAnimValue(const nsAString& aValue,
     return;
   }
   if (!mAnimVal) {
-    mAnimVal = new nsString();
+    mAnimVal = MakeUnique<nsString>();
   }
   *mAnimVal = aValue;
   aSVGElement->SetMayHaveClass();

@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -17,7 +16,7 @@ const {
 const TEST_URI = CHROME_URL_ROOT + "doc_cubic-bezier-01.html";
 
 add_task(async function() {
-  const [host, , doc] = await createHost("bottom", TEST_URI);
+  const { host, doc } = await createHost("bottom", TEST_URI);
 
   const container = doc.querySelector("#cubic-bezier-container");
   const w = new CubicBezierWidget(container, PREDEFINED.linear);
@@ -41,9 +40,7 @@ async function previewDotReactsToChanges(widget, coords, expectedEasing) {
   const animations = animatedDot.getAnimations();
 
   if (!expectedEasing) {
-    expectedEasing = `cubic-bezier(${coords[0]}, ${coords[1]}, ${coords[2]}, ${
-      coords[3]
-    })`;
+    expectedEasing = `cubic-bezier(${coords[0]}, ${coords[1]}, ${coords[2]}, ${coords[3]})`;
   }
 
   is(animations.length, 1, "The dot is animated");

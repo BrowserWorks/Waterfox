@@ -14,17 +14,16 @@
 
 #include "APZTestCommon.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
+
 #include "mozilla/layers/APZSampler.h"
 #include "mozilla/layers/APZUpdater.h"
 
 class APZCTreeManagerTester : public APZCTesterBase {
  protected:
   virtual void SetUp() {
-    gfxPrefs::GetSingleton();
     gfxPlatform::GetPlatform();
     APZThreadUtils::SetThreadAssertionsEnabled(false);
-    APZThreadUtils::SetControllerThread(MessageLoop::current());
+    APZThreadUtils::SetControllerThread(NS_GetCurrentThread());
 
     manager = new TestAPZCTreeManager(mcc);
     updater = new APZUpdater(manager, false);
@@ -62,6 +61,12 @@ class APZCTreeManagerTester : public APZCTesterBase {
     ScrollMetadata metadata = aLayer->GetScrollMetadata(0);
     aCallback(metadata.GetMetrics());
     aLayer->SetScrollMetadata(metadata);
+  }
+
+  // A convenience wrapper for manager->UpdateHitTestingTree().
+  void UpdateHitTestingTree(uint32_t aPaintSequenceNumber = 0) {
+    manager->UpdateHitTestingTree(root, /* is first paint = */ false,
+                                  LayersId{0}, aPaintSequenceNumber);
   }
 
   nsTArray<RefPtr<Layer> > layers;
@@ -150,76 +155,6 @@ class APZCTreeManagerTester : public APZCTesterBase {
                            layers);
     SetScrollableFrameMetrics(root, ScrollableLayerGuid::START_SCROLL_ID,
                               CSSRect(0, 0, 500, 500));
-  }
-
-  void CreateSimpleDTCScrollingLayer() {
-    const char* layerTreeSyntax = "t";
-    nsIntRegion layerVisibleRegion[] = {
-        nsIntRegion(IntRect(0, 0, 200, 200)),
-    };
-    root = CreateLayerTree(layerTreeSyntax, layerVisibleRegion, nullptr, lm,
-                           layers);
-    SetScrollableFrameMetrics(root, ScrollableLayerGuid::START_SCROLL_ID,
-                              CSSRect(0, 0, 500, 500));
-
-    EventRegions regions;
-    regions.mHitRegion = nsIntRegion(IntRect(0, 0, 200, 200));
-    regions.mDispatchToContentHitRegion = regions.mHitRegion;
-    layers[0]->SetEventRegions(regions);
-  }
-
-  void CreateSimpleMultiLayerTree() {
-    const char* layerTreeSyntax = "c(tt)";
-    // LayerID                     0 12
-    nsIntRegion layerVisibleRegion[] = {
-        nsIntRegion(IntRect(0, 0, 100, 100)),
-        nsIntRegion(IntRect(0, 0, 100, 50)),
-        nsIntRegion(IntRect(0, 50, 100, 50)),
-    };
-    root = CreateLayerTree(layerTreeSyntax, layerVisibleRegion, nullptr, lm,
-                           layers);
-  }
-
-  void CreatePotentiallyLeakingTree() {
-    const char* layerTreeSyntax = "c(c(c(t))c(c(t)))";
-    // LayerID                     0 1 2 3  4 5 6
-    root = CreateLayerTree(layerTreeSyntax, nullptr, nullptr, lm, layers);
-    SetScrollableFrameMetrics(layers[0], ScrollableLayerGuid::START_SCROLL_ID);
-    SetScrollableFrameMetrics(layers[2],
-                              ScrollableLayerGuid::START_SCROLL_ID + 1);
-    SetScrollableFrameMetrics(layers[5],
-                              ScrollableLayerGuid::START_SCROLL_ID + 1);
-    SetScrollableFrameMetrics(layers[3],
-                              ScrollableLayerGuid::START_SCROLL_ID + 2);
-    SetScrollableFrameMetrics(layers[6],
-                              ScrollableLayerGuid::START_SCROLL_ID + 3);
-  }
-
-  void CreateBug1194876Tree() {
-    const char* layerTreeSyntax = "c(t)";
-    // LayerID                     0 1
-    nsIntRegion layerVisibleRegion[] = {
-        nsIntRegion(IntRect(0, 0, 100, 100)),
-        nsIntRegion(IntRect(0, 0, 100, 100)),
-    };
-    root = CreateLayerTree(layerTreeSyntax, layerVisibleRegion, nullptr, lm,
-                           layers);
-    SetScrollableFrameMetrics(layers[0], ScrollableLayerGuid::START_SCROLL_ID);
-    SetScrollableFrameMetrics(layers[1],
-                              ScrollableLayerGuid::START_SCROLL_ID + 1);
-    SetScrollHandoff(layers[1], layers[0]);
-
-    // Make layers[1] the root content
-    ScrollMetadata childMetadata = layers[1]->GetScrollMetadata(0);
-    childMetadata.GetMetrics().SetIsRootContent(true);
-    layers[1]->SetScrollMetadata(childMetadata);
-
-    // Both layers are fully dispatch-to-content
-    EventRegions regions;
-    regions.mHitRegion = nsIntRegion(IntRect(0, 0, 100, 100));
-    regions.mDispatchToContentHitRegion = regions.mHitRegion;
-    layers[0]->SetEventRegions(regions);
-    layers[1]->SetEventRegions(regions);
   }
 };
 

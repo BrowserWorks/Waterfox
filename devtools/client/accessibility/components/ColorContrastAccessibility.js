@@ -14,10 +14,14 @@ const {
   span,
   h3,
 } = require("devtools/client/shared/vendor/react-dom-factories");
-const LearnMoreLink = createFactory(require("./LearnMoreLink"));
+const LearnMoreLink = createFactory(
+  require("devtools/client/accessibility/components/LearnMoreLink")
+);
 
-const { A11Y_CONTRAST_LEARN_MORE_LINK } = require("../constants");
-const { L10N } = require("../utils/l10n");
+const {
+  A11Y_CONTRAST_LEARN_MORE_LINK,
+} = require("devtools/client/accessibility/constants");
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
 
 /**
  * Component that renders a colour contrast value along with a swatch preview of what the
@@ -175,7 +179,7 @@ class ContrastAnnotationClass extends Component {
     const { score } = this.props;
 
     return LearnMoreLink({
-      className: "accessibility-color-contrast-annotation",
+      className: "accessibility-check-annotation",
       href: A11Y_CONTRAST_LEARN_MORE_LINK,
       learnMoreStringKey: "accessibility.learnMore",
       l10n: L10N,
@@ -199,11 +203,11 @@ class ColorContrastCheck extends Component {
     return div(
       {
         role: "presentation",
-        className: "accessibility-color-contrast-check",
+        className: "accessibility-check",
       },
       h3(
         {
-          className: "accessibility-color-contrast-header",
+          className: "accessibility-check-header",
         },
         L10N.getStr("accessibility.contrast.header")
       ),

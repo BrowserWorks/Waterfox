@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY navRadio.label                 "Rodyti">
+<!ENTITY navRadio.accesskey             "R">
+<!ENTITY navStartPageMenu.label         "paleidžiant naršyklę:">
+<!ENTITY newWinPageMenu.label           "atveriant naują langą:">
+<!ENTITY newTabPageMenu.label           "atveriant naują kortelę:">
+
+<!ENTITY blankPageRadio.label           "tuščią puslapį">
+<!ENTITY blankPageRadio.accesskey       "š">
+<!ENTITY homePageRadio.label            "pradžios tinklalapį">
+<!ENTITY homePageRadio.accesskey        "p">
+<!ENTITY lastPageRadio.label            "paskiausiai aplankytą tinklalapį">
+<!ENTITY lastPageRadio.accesskey        "k">
+<!ENTITY restoreSessionRadio.label      "paskutinio seanso langus ir korteles">
+<!ENTITY restoreSessionRadio.accesskey  "s">
+
+<!ENTITY restoreSessionIntro.label      "Atkuriant sesijas ir langus:">
+<!ENTITY restoreImmediately.label       "atkurti iškart visas korteles">
+<!ENTITY restoreImmediately.accesskey   "i">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "atkurti po">
+<!ENTITY restoreTabs.accesskey          "o">
+<!ENTITY restoreTabsAtATime.label       "korteles (-ių)">
+<!ENTITY restoreDeferred.label          "atkurti korteles tik jas aktyvinant">
+<!ENTITY restoreDeferred.accesskey      "a">
+
+<!ENTITY homePageIntro.label            "Šis tinklalapis bus įkeliamas spustelėjus mygtuką „Pradžia“.">
+<!ENTITY useCurrent.label               "Šiuo metu atvertas tinklalapis">
+<!ENTITY useCurrent.accesskey           "v">
+<!ENTITY useCurrentGroup.label          "Šiuo metu atverta tinklalapių grupė">
+<!ENTITY useCurrentGroup.accesskey      "g">
+
+
+<!ENTITY useDefault.label               "Atstatyti numatytąjį">
+<!ENTITY useDefault.accesskey           "n">
+
+<!ENTITY defaultBrowserGroup.label      "Numatytoji naršyklė">
+<!ENTITY defaultBrowserButton.label     "Skirti numatytąja naršykle">
+<!ENTITY defaultBrowserButton.accesskey "n">
+<!ENTITY alreadyDefaultText             "Programa „&brandShortName;“ jau yra skirta numatytąja naršykle.">
+<!ENTITY defaultPendingText             "Paspaudus mygtuką „Gerai“, programa „&brandShortName;“ bus skirta numatytąja naršykle.">
+<!ENTITY wasMadeDefaultText             "Programa „&brandShortName;“ skirta numatytąja naršykle.">
+<!ENTITY makeDefaultText                "Skirti programą „&brandShortName;“ numatytąja naršykle.">

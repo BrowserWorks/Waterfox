@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Թափոնի կարգավորումներ">
+<!ENTITY trainingDescription.label "Եթե միացված է, ապա Դուք նախ պետք է վարժեցնեք &brandShortName;-ը՝ որոշելու ոչ պիտանի նամակները՝ օգտագործելով Փոստաղբ գործիքաշերտը և նշելով արդյոք նամակը թափոն է, թե ոչ: Միայն դրանից հետո &brandShortName;-ը կկարողանա ինքնաբերաբար որոշել ոչ պիտանի նամակները:">
+<!ENTITY level.label "Միացնել փոստաղբի ղեկավարումը այս փոստարկղում">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Տեղափ. թափոն նամակները՝">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "&quot;Թափոն&quot; թղթապանակ՝">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "Այլ.">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Միանգամից ջնջել թափոն նամակը, որը հին է՝">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "օր">
+
+<!ENTITY whitelistHeader.label "Նամակը ինքնաբերաբար չնշել որպես թափոն, եթե ուղարկողը առկա է այստեղ՝">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "Եթե միացված է, &brandShortName;-ը ինքնաբերաբար կնշի ոչ պիտանի նամակները:">
+<!ENTITY ispHeaders.label "Վստահել թափոն նամակի վերնագրին՝">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Ընտրությունը">
+<!ENTITY junkActions.label "Տեղափոխումը">
+
+<!ENTITY globalJunkPrefs.label "Թափոնի ընդհ. նախապատվություններ…">
+<!ENTITY globalJunkPrefs.accesskey "G">

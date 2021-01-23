@@ -65,7 +65,7 @@ function setupTestPreferences() {
   return SpecialPowers.pushPrefEnv({
     set: [
       ["media.autoplay.default", SpecialPowers.Ci.nsIAutoplay.BLOCKED],
-      ["media.autoplay.enabled.user-gestures-needed", true],
+      ["media.autoplay.blocking_policy", 0],
       ["media.autoplay.block-event.enabled", true],
       ["media.autoplay.block-webaudio", true],
       ["media.navigator.permission.fake", true],
@@ -126,7 +126,7 @@ async function testPlayWithoutUserGesture() {
     await canplayPromise;
     ok(video.paused, "video can't start without user input.");
   }
-  await ContentTask.spawn(tab.linkedBrowser, null, checkAutoplayKeyword);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], checkAutoplayKeyword);
 
   async function playVideo() {
     let video = content.document.getElementById("v");
@@ -135,7 +135,7 @@ async function testPlayWithoutUserGesture() {
       ok(video.paused, "video can't start play without user input.");
     });
   }
-  await ContentTask.spawn(tab.linkedBrowser, null, playVideo);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], playVideo);
 
   info("- remove tab -");
   BrowserTestUtils.removeTab(tab);
@@ -169,7 +169,7 @@ async function testPlayWithUserGesture(gesture) {
     }
   }
 
-  await ContentTask.spawn(tab.linkedBrowser, gesture, playVideo);
+  await SpecialPowers.spawn(tab.linkedBrowser, [gesture], playVideo);
 
   info("- remove tab -");
   BrowserTestUtils.removeTab(tab);
@@ -199,18 +199,12 @@ function createAudioContext() {
   });
 }
 
-async function checkingAudioContextRunningState() {
-  let ac = content.ac;
-  await ac.notAllowedToStart;
-  ok(ac.state === "suspended", `AudioContext is not started yet.`);
-}
-
 function resumeWithoutExpectedSuccess() {
   let ac = content.ac;
   let promise = ac.resume();
   ac.resumePromises.push(promise);
   return new Promise((resolve, reject) => {
-    setTimeout(() => {
+    content.setTimeout(() => {
       if (ac.state == "suspended") {
         ok(true, "audio context is still suspended");
         resolve();
@@ -236,27 +230,31 @@ async function testWebAudioWithUserGesture(gesture) {
     "about:blank"
   );
   info("- create audio context -");
-  // We want the same audio context to be used across different content
-  // tasks, so it needs to be loaded by a frame script.
-  const mm = tab.linkedBrowser.messageManager;
-  mm.loadFrameScript("data:,(" + createAudioContext.toString() + ")();", false);
-
-  info("- check whether audio context starts running -");
-  try {
-    await ContentTask.spawn(
-      tab.linkedBrowser,
-      null,
-      checkingAudioContextRunningState
-    );
-  } catch (error) {
-    ok(false, error.toString());
-  }
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
+    content.ac = new content.AudioContext();
+    let ac = content.ac;
+    ac.resumePromises = [];
+    return new Promise(resolve => {
+      ac.addEventListener(
+        "blocked",
+        function() {
+          Assert.equal(
+            ac.state,
+            "suspended",
+            `AudioContext is not started yet.`
+          );
+          resolve();
+        },
+        { once: true }
+      );
+    });
+  });
 
   info("- calling resume() -");
   try {
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       tab.linkedBrowser,
-      null,
+      [],
       resumeWithoutExpectedSuccess
     );
   } catch (error) {
@@ -271,7 +269,7 @@ async function testWebAudioWithUserGesture(gesture) {
     let resumeFunc = gesture.isActivationGesture
       ? resumeWithExpectedSuccess
       : resumeWithoutExpectedSuccess;
-    await ContentTask.spawn(tab.linkedBrowser, null, resumeFunc);
+    await SpecialPowers.spawn(tab.linkedBrowser, [], resumeFunc);
   } catch (error) {
     ok(false, error.toString());
   }

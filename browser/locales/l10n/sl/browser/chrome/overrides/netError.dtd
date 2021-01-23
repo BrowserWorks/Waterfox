@@ -1,0 +1,204 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Napaka pri nalaganju strani">
+<!ENTITY retry.label "Poskusi znova">
+<!ENTITY returnToPreviousPage.label "Nazaj">
+<!ENTITY returnToPreviousPage1.label "Pojdi nazaj (priporočeno)">
+<!ENTITY advanced2.label "Napredno …">
+<!ENTITY viewCertificate.label "Ogled digitalnega potrdila">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Strežnika ni mogoče najti">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Če je naslov pravilen, lahko poskusite z naslednjim:</strong>
+<ul>
+  <li>Poskusite znova pozneje.</li>
+  <li>Preverite povezavo z internetom.</li>
+  <li>Če ste povezani in uporabljate požarni zid, preverite, ali ima &brandShortName; dovoljenje za dostop do spleta.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Preverite, ali so bile velike in male črke v imenu datoteke pravilno uporabljene in da ni drugih tipkarskih napak.</li>
+  <li>Preverite, ali je bila datoteka premaknjena, preimenovana ali izbrisana.</li>
+</ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Morda je bila odstranjena, premaknjena ali pa dovoljenja datoteke preprečujejo dostop.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; iz neznanega razloga ne more naložiti te strani.</p>
+">
+
+<!ENTITY captivePortal.title "Prijavite se v omrežje">
+<!ENTITY captivePortal.longDesc2 "
+<p>Za dostop do interneta se morate prijaviti v to omrežje.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Odpri stran za prijavo v omrežje">
+
+<!ENTITY malformedURI.pageTitle "Neveljaven URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Zahtevan dokument ni več na voljo v predpomnilniku &brandShortName;a.</p><ul><li>&brandShortName; občutljivih dokumentov iz varnostnih razlogov samodejno ne nalaga ponovno.</li><li>Kliknite poskusi znova za ponovno nalaganje dokumenta s spletne strani.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Kliknite &quot;Poskusi znova&quot; za preklop v povezan način in ponovno naložite stran.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>O napaki obvestite lastnike spletne strani.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>O napaki obvestite lastnike spletne strani.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Za odpiranje tega naslova boste morda morali namestiti dodaten program.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Preverite nastavitve posrednika in se prepričajte, da so pravilne.</li>
+  <li>Pri skrbniku svojega omrežja preverite, da posrednik deluje.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Preverite nastavitve posrednika in se prepričajte, da so pravilne.</li>
+  <li>Prepričajte se, da ima vaš računalnik delujočo omrežno povezavo.</li>
+  <li>Če uporabljate posrednika ali požarni zid, se prepričajte, 
+    da ima &brandShortName; dovoljenja za dostop do spleta.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Težavo lahko povzroča onemogočanje ali zavračanje piškotkov.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Prepričajte se, da je nameščen upravitelj osebne varnosti.</li>
+  <li>Vzrok napaki je lahko nestandardna nastavitev strežnika.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Strani, ki si jo želite ogledati, ni mogoče prikazati, ker ni mogoče preveriti pristnosti sprejetih podatkov.</li>
+  <li>O napaki obvestite lastnike spletne strani.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; je zaznal morebitno varnostno grožnjo in ni nadaljeval na <span class='hostname'/>. Če obiščete to stran, bodo napadalci morda poskušali ukrasti vaše podatke, kot so gesla, e-poštni naslovi ali podrobnosti kreditnih kartic.">
+<!ENTITY certerror.sts.introPara "&brandShortName; je zaznal morebitno varnostno grožnjo in ni nadaljeval na <span class='hostname'/>, ker ta spletna stran zahteva varno povezavo.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; je zaznal težavo in ni nadaljeval na <span class='hostname'/>. Spletna stran je nepravilno nastavljena ali pa je ura računalnika nastavljena na napačen čas.">
+<!ENTITY certerror.expiredCert.secondPara2 "Digitalno potrdilo spletne strani je najverjetneje poteklo, kar &brandShortName;u preprečuje varno povezovanje. Če obiščete to stran, bi napadalci lahko poskušali ukrasti vaše podatke, kot so gesla, e-poštna sporočila ali podatki o kreditni kartici.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Digitalno potrdilo spletne strani je najverjetneje poteklo, kar &brandShortName;u preprečuje varno povezovanje.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Kaj lahko storite?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Težava je najverjetneje na spletni strani, zato je sami ne morete odpraviti.</p>
+<p>Če ste povezani z omrežjem v podjetju ali uporabljate protivirusno programsko opremo, se lahko za pomoč obrnete na ekipo za podporo. O težavi lahko tudi obvestite skrbnika spletne strani.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Ura vašega računalnika je nastavljena na datum <span id='wrongSystemTime_systemDate2'/>. V nastavitvah sistema nastavite računalnik na pravilen datum in čas ter časovni pas, nato osvežite <span class='hostname'/>.</p>
+<p>Če je ura že nastavljena pravilno, je težava verjetno v spletni strani in je sami ne morete odpraviti. O njej lahko obvestite skrbnika spletne strani.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Težava je najverjetneje na spletni strani, zato je sami ne morete odpraviti. Lahko pa obvestite skrbnika spletne strani.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Stran je morda začasno nedosegljiva ali preobremenjena. Poskusite znova
+    nekoliko pozneje.</li>
+  <li>Če ne uspete naložiti nobene strani, preverite povezavo svojega računalnika
+    do interneta.</li>
+  <li>Če uporabljate posrednika ali požarni zid, se prepričajte, da ima
+    &brandShortName; dovoljenja za dostop do spleta.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; je preprečil nalaganje strani v taki obliki, ker tako določa varnostna politika vsebine strani.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; je preprečil nalaganje te strani, ker le-ta vsebuje pravilnik X-Frame-Options, ki ne dovoljuje nalaganja na ta način.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Strani, ki si jo želite ogledati, ni mogoče prikazati, ker je bila zaznana napaka pri prenosu podatkov.</p><ul><li>O napaki obvestite lastnike spletne strani.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Sprejmi tveganje in nadaljuj">
+
+<!ENTITY errorReporting.automatic2 "S prijavo podobnih napak pomagajte Mozilli prepoznati in zavračati zlonamerne strani">
+<!ENTITY errorReporting.learnMore "Več o tem …">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>O napaki obvestite lastnike spletne strani.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Napredni podatki: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Pozor: možno varnostno tveganje">
+<!ENTITY certerror.sts.pagetitle  "Povezava ni bila vzpostavljena: morebitna varnostna težava">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> uporablja varnostni pravilnik, imenovan HTTP Strict Transport Security (HSTS), kar pomeni, da se lahko &brandShortName; nanjo poveže zgolj varno. Za obisk te strani ne morete dodati izjeme.">
+<!ENTITY certerror.copyToClipboard.label "Kopiraj besedilo v odložišče">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> uporablja varnostno tehnologijo, ki je zastarela in ranljiva na napade. Napadalec lahko zlahka razkrije podatke, ki naj bi bili zaščiteni. Preden lahko obiščete to stran, bo moral njen skrbnik popraviti strežnik.</p><p>Koda napake: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Zavrnjena stran">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> je najverjetneje varna stran, vendar varne povezave ni bilo mogoče vzpostaviti. Težavo povzroča <span class='mitm-name'/>, ki je ali program na vašem računalniku ali vaše omrežje.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 'Če vaš protivirusni program vključuje možnost pregledovanja šifriranih povezav (pogosto imenovano "spletna zaščita" ali "pregledovanje HTTPS"), jo poskusite onemogočiti. Če to ne odpravi težave, lahko protivirusni program odstranite in znova namestite.'>
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Če ste povezani v podjetje omrežja, se obrnite na njegov oddelek za IT.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Če ne poznate <span class='mitm-name'/>, gre morda za napad in raje ne nadaljujte na spletno stran.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Če ne poznate <span class='mitm-name'/>, gre morda za napad in do spletne strani ne morete dostopati.">
+
+<!ENTITY clockSkewError.longDesc "Vaš računalnik misli, da smo <span id='wrongSystemTime_systemDate1'/>, kar &brandShortName;u preprečuje varno povezavo. Da boste lahko obiskali <span class='hostname'></span>, v nastavitvah sistema nastavite uro računalnika na trenutni datum in čas ter časovni pas, nato osvežite <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Videti je, da to povzročajo omrežne nastavitve. Ali želite obnoviti privzete nastavitve?">
+<!ENTITY prefReset.label "Obnovi privzete nastavitve">
+
+<!ENTITY enableTls10.longDesc "To spletno mesto ne podpira protokola TLS 1.2, ki je najnižja različica, podprta v &brandShortName;u. Če omogočite TLS 1.0 in 1.1, bo povezava morda uspela.">
+<!ENTITY enableTls10.note "TLS 1.0 in TLS 1.1 bosta v prihodnji izdaji trajno onemogočena.">
+<!ENTITY enableTls10.label "Omogoči TLS 1.0 in 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Strani, ki si jo poskušate ogledati, ni mogoče prikazati, ker je bila zaznana napaka omrežnega protokola.</p><ul><li>O napaki obvestite lastnike spletne strani.</li></ul>">

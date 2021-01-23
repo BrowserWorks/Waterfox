@@ -179,6 +179,14 @@ must be one of the following:
       asserts-if(condition,minCount-maxCount)
           Same as above, but only if condition is true.
 
+      noautofuzz
+          Disables the autofuzzing behaviour hard-coded in the reftest harness
+          for specific platform configurations. The autofuzzing is intended to
+          compensate for inherent nondeterminism that results in intermittently
+          fuzzy results (with small amounts of fuzz) across many/all tests on
+          a given platform. Specifying 'noautofuzz' on the test will disable
+          the autofuzzing for that test and require an exact match.
+
       Conditions are JavaScript expressions *without spaces* in them.
       They are evaluated in a sandbox in which a limited set of
       variables are defined.  See the BuildConditionSandbox function in
@@ -366,27 +374,29 @@ must be one of the following:
    a manifest, it is legal to use it anywhere in a manifest. Subsequent uses
    of url-prefix overwrite any existing values.
 
-4. Specification of default preferences
+4. Specification of defaults
 
-   default-preferences <preference>*
+   defaults [<failure-type> | <preference> | <http>]
 
-   where <preference> is defined above.
+   where <failure-type>, <preference> and <http> are defined above.
 
-   The <preference> settings will be used for all following test items in the
-   manifest.
+   The default settings will be used for all following test items in the manifest.
+   Any test specific settings will override the defaults, just as later items
+   within a line override earlier ones.
 
-   If a test item includes its own preference settings, then they will override
-   any settings for preferences of the same names that are set using
-   default-preferences, just as later items within a line override earlier ones.
+   A defaults line with no settings will reset the defaults to be empty.
 
-   A default-preferences line with no <preference> settings following it will
-   reset the set of default preferences to be empty.
+   As with url-prefix, defaults will often be used at the start of a manifest file
+   so that it applies to all test items, but it is legal for defaults to appear
+   anywhere in the manifest. A subsequent defaults will reset any previous default
+   settings and overwrite them with the new settings.
 
-   As with url-prefix, default-preferences will often be used at the start of a
-   manifest file so that it applies to all test items, but it is legal for
-   default-preferences to appear anywhere in the manifest. A subsequent
-   default-preferences will reset any previous default preference values and
-   overwrite them with the specified <preference> values.
+   It is invalid to set non-skip defaults before an include line, just as it is
+   invalid to specify non-skip settings directly on the include line itself. If a
+   manifest needs to use both defaults and include, the include should appear
+   before the defaults. If it's important to specify the include later on in the
+   manifest, a blank defaults line directly preceding the include can be used to
+   reset the defaults.
 
 This test manifest format could be used by other harnesses, such as ones
 that do not depend on XUL, or even ones testing other layout engines.
@@ -587,6 +597,20 @@ If either of the "reftest-scrollport-w" and "reftest-scrollport-h" attributes on
 the root element are non-zero, sets the scroll-position-clamping scroll-port
 size to the given size in CSS pixels. This does not affect the size of the
 snapshot that is taken.
+
+Setting Resolution: reftest-resolution="<float>"
+================================================
+
+If the root element of a test has a "reftest-resolution" attribute, the page
+is rendered with the specified resolution (as if the user pinch-zoomed in
+to that scale). Note that the difference between reftest-async-zoom and
+reftest-resolution is that reftest-async-zoom only applies the scale in
+the compositor, while reftest-resolution causes the page to be paint at that
+resolution. This attribute can be used together with initial-scale in meta
+viewport tag, in such cases initial-scale is applied first then
+reftest-resolution changes the scale.
+
+This attributes requires the pref apz.allow_zooming=true to have an effect.
 
 Setting Async Scroll Mode: reftest-async-scroll attribute
 =========================================================

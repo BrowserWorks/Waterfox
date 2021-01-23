@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "রং">
+<!ENTITY lastPickedColor.label "সর্বশেষ বেছে নেয়া রং (L)">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY setColor1.label "একটি রঙে ক্লিক করুন বা">
+<!ENTITY setColor2.label "একটি HTML রঙে স্ট্রিং দিন (H)">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY setColorExample.label "(e.g.: &quot;#0000ff&quot; or &quot;blue&quot;):">
+<!ENTITY default.label "ডিফল্ট (D)">
+<!ENTITY default.accessKey "D">
+<!ENTITY palette.label "প্যালেট:">
+<!ENTITY standardPalette.label "আদর্শ">
+<!ENTITY webPalette.label "সকল ওয়েব রং">
+<!ENTITY background.label "পটভূমি (B):">
+<!ENTITY background.accessKey "B">
+<!ENTITY table.label "সারণি (T)">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "ঘর (C)">
+<!ENTITY cell.accessKey "C">

@@ -70,7 +70,7 @@ class ServiceWorkerDescriptor final {
 
   const mozilla::ipc::PrincipalInfo& PrincipalInfo() const;
 
-  nsCOMPtr<nsIPrincipal> GetPrincipal() const;
+  Result<nsCOMPtr<nsIPrincipal>, nsresult> GetPrincipal() const;
 
   const nsCString& Scope() const;
 
@@ -81,6 +81,10 @@ class ServiceWorkerDescriptor final {
   void SetState(ServiceWorkerState aState);
 
   void SetRegistrationVersion(uint64_t aVersion);
+
+  bool HandlesFetch() const;
+
+  void SetHandlesFetch(bool aHandlesFetch);
 
   // Try to determine if two workers match each other.  This is less strict
   // than an operator==() call since it ignores mutable values like State().

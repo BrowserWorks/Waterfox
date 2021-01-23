@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Sáqueme de aquí!">
+<!ENTITY safeb.palm.decline.label "Ignorar este aviso ">
+<!ENTITY safeb.palm.reportPage.label "Por que se bloqueou este sitio?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Sitio considerado de ataque!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "O sitio web en <span id='malware_sitename'/> consta como de ataque e foi bloqueado segundo as preferencias de seguranza actuais.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Os sitios de ataque tentan instalar programas que rouban información privada, que utilizan o computador para atacar a terceiros ou que danan o sistema.</p><p>Algúns deles distribúen de forma intencionada software pernicioso, mais moitos comprométense sen o permiso ou coñecemento dos propietarios.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title "Web denunciada como falsificación!">
+<!-- Localization note (safeb.blocked.phishing.shortDesc) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc "O sitio web en <span id='phishing_sitename'/> consta como falsificación web e foi bloqueado segundo as preferencias de seguranza actuais.">
+<!ENTITY safeb.blocked.phishingPage.longDesc "<p>As falsificacións web están deseñadas para facerse pasar por sitios de confianza e así enganar e obter información financeira ou persoal relevante.</p><p>Fornecer información neste tipo de páxinas pode levar a roubos ou fraude.</p>">
+
+<!ENTITY reportPhishSite.label         "Informar de falsificación web…">
+<!ENTITY reportPhishSite.accesskey     "f">
+<!ENTITY notAForgery.label             "Non é unha falsificación…">
+<!ENTITY notAForgery.accesskey         "f">

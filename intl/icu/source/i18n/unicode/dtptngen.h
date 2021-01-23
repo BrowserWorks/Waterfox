@@ -14,6 +14,10 @@
 #ifndef __DTPTNGEN_H__
 #define __DTPTNGEN_H__
 
+#include "unicode/utypes.h"
+
+#if U_SHOW_CPLUSPLUS_API
+
 #include "unicode/datefmt.h"
 #include "unicode/locid.h"
 #include "unicode/udat.h"
@@ -279,7 +283,7 @@ public:
      *
      * @param field  The desired UDateTimePatternField, such as UDATPG_ERA_FIELD.
      * @param width  The desired UDateTimePGDisplayWidth, such as UDATPG_ABBREVIATED.
-     * @return.      The display name for field
+     * @return       The display name for field
      * @stable ICU 61
      */
     UnicodeString getFieldDisplayName(UDateTimePatternField field, UDateTimePGDisplayWidth width) const;
@@ -479,6 +483,26 @@ public:
      */
     const UnicodeString& getDecimal() const;
 
+#if !UCONFIG_NO_FORMATTING
+
+#ifndef U_HIDE_DRAFT_API
+    /**
+     * Get the default hour cycle for a locale. Uses the locale that the
+     * DateTimePatternGenerator was initially created with.
+     * 
+     * Cannot be used on an empty DateTimePatternGenerator instance.
+     * 
+     * @param status  Output param set to success/failure code on exit, which
+     *                which must not indicate a failure before the function call.
+     *                Set to U_UNSUPPORTED_ERROR if used on an empty instance.
+     * @return the default hour cycle.
+     * @draft ICU 67
+     */
+    UDateFormatHourCycle getDefaultHourCycle(UErrorCode& status) const;
+#endif  /* U_HIDE_DRAFT_API */
+
+#endif /* #if !UCONFIG_NO_FORMATTING */
+    
     /**
      * ICU "poor man's RTTI", returns a UClassID for the actual class.
      *
@@ -561,12 +585,10 @@ private:
     void setDateTimeFromCalendar(const Locale& locale, UErrorCode& status);
     void setDecimalSymbols(const Locale& locale, UErrorCode& status);
     UDateTimePatternField getAppendFormatNumber(const char* field) const;
-#ifndef U_HIDE_DRAFT_API
-    // The following three have to be U_HIDE_DRAFT_API (though private) because UDateTimePGDisplayWidth is
+    // Note for the next 3: UDateTimePGDisplayWidth is now stable ICU 61
     UDateTimePatternField getFieldAndWidthIndices(const char* key, UDateTimePGDisplayWidth* widthP) const;
     void setFieldDisplayName(UDateTimePatternField field, UDateTimePGDisplayWidth width, const UnicodeString& value);
     UnicodeString& getMutableFieldDisplayName(UDateTimePatternField field, UDateTimePGDisplayWidth width);
-#endif  // U_HIDE_DRAFT_API
     void getAppendName(UDateTimePatternField field, UnicodeString& value);
     UnicodeString mapSkeletonMetacharacters(const UnicodeString& patternForm, int32_t* flags, UErrorCode& status);
     const UnicodeString* getBestRaw(DateTimeMatcher& source, int32_t includeMask, DistanceInfo* missingFields, UErrorCode& status, const PtnSkeleton** specifiedSkeletonPtr = 0);
@@ -586,5 +608,7 @@ private:
 } ;// end class DateTimePatternGenerator
 
 U_NAMESPACE_END
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif

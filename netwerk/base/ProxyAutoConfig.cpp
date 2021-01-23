@@ -15,7 +15,7 @@
 #include "nsIURLParser.h"
 #include "nsJSUtils.h"
 #include "jsfriendapi.h"
-#include "js/CompilationAndEvaluation.h"  // JS::Compile{,DontInflate}
+#include "js/CompilationAndEvaluation.h"  // JS::Compile
 #include "js/ContextOptions.h"
 #include "js/PropertySpec.h"
 #include "js/SourceText.h"  // JS::Source{Ownership,Text}
@@ -23,6 +23,7 @@
 #include "js/Warnings.h"  // JS::SetWarningReporter
 #include "prnetdb.h"
 #include "nsITimer.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/net/DNS.h"
 #include "mozilla/Utf8.h"  // mozilla::Utf8Unit
 #include "nsServiceManagerUtils.h"
@@ -281,15 +282,18 @@ static const char sAsciiPacUtils[] =
 // sRunning is defined for the helper functions only while the
 // Javascript engine is running and the PAC object cannot be deleted
 // or reset.
-static uint32_t sRunningIndex = 0xdeadbeef;
+static Atomic<uint32_t, Relaxed>& RunningIndex() {
+  static Atomic<uint32_t, Relaxed> sRunningIndex(0xdeadbeef);
+  return sRunningIndex;
+}
 static ProxyAutoConfig* GetRunning() {
-  MOZ_ASSERT(sRunningIndex != 0xdeadbeef);
-  return static_cast<ProxyAutoConfig*>(PR_GetThreadPrivate(sRunningIndex));
+  MOZ_ASSERT(RunningIndex() != 0xdeadbeef);
+  return static_cast<ProxyAutoConfig*>(PR_GetThreadPrivate(RunningIndex()));
 }
 
 static void SetRunning(ProxyAutoConfig* arg) {
-  MOZ_ASSERT(sRunningIndex != 0xdeadbeef);
-  PR_SetThreadPrivate(sRunningIndex, arg);
+  MOZ_ASSERT(RunningIndex() != 0xdeadbeef);
+  PR_SetThreadPrivate(RunningIndex(), arg);
 }
 
 // The PACResolver is used for dnsResolve()
@@ -320,12 +324,6 @@ class PACResolver final : public nsIDNSListener,
 
     mStatus = status;
     mResponse = record;
-    return NS_OK;
-  }
-
-  NS_IMETHOD OnLookupByTypeComplete(nsICancelable* request,
-                                    nsIDNSByTypeRecord* res,
-                                    nsresult status) override {
     return NS_OK;
   }
 
@@ -385,7 +383,7 @@ static void PACLogErrorOrWarning(const nsAString& aKind,
 
 static void PACWarningReporter(JSContext* aCx, JSErrorReport* aReport) {
   MOZ_ASSERT(aReport);
-  MOZ_ASSERT(JSREPORT_IS_WARNING(aReport->flags));
+  MOZ_ASSERT(aReport->isWarning());
 
   PACLogErrorOrWarning(NS_LITERAL_STRING("Warning"), aReport);
 }
@@ -399,14 +397,13 @@ class MOZ_STACK_CLASS AutoPACErrorReporter {
     if (!JS_IsExceptionPending(mCx)) {
       return;
     }
-    JS::RootedValue exn(mCx);
-    if (!JS_GetPendingException(mCx, &exn)) {
+    JS::ExceptionStack exnStack(mCx);
+    if (!JS::StealPendingExceptionStack(mCx, &exnStack)) {
       return;
     }
-    JS_ClearPendingException(mCx);
 
-    js::ErrorReport report(mCx);
-    if (!report.init(mCx, exn, js::ErrorReport::WithSideEffects)) {
+    JS::ErrorReportBuilder report(mCx);
+    if (!report.init(mCx, exnStack, JS::ErrorReportBuilder::WithSideEffects)) {
       JS_ClearPendingException(mCx);
       return;
     }
@@ -444,11 +441,18 @@ bool ProxyAutoConfig::ResolveAddress(const nsCString& aHostName,
   RefPtr<PACResolver> helper = new PACResolver(mMainThreadEventTarget);
   OriginAttributes attrs;
 
-  if (NS_FAILED(dns->AsyncResolveNative(
-          aHostName, nsIDNSService::RESOLVE_PRIORITY_MEDIUM, helper,
-          GetCurrentThreadEventTarget(), attrs,
-          getter_AddRefs(helper->mRequest))))
+  // When the PAC script attempts to resolve a domain, we must make sure we
+  // don't use TRR, otherwise the TRR channel might also attempt to resolve
+  // a name and we'll have a deadlock.
+  uint32_t flags =
+      nsIDNSService::RESOLVE_PRIORITY_MEDIUM |
+      nsIDNSService::GetFlagsFromTRRMode(nsIRequest::TRR_DISABLED_MODE);
+
+  if (NS_FAILED(dns->AsyncResolveNative(aHostName, flags, helper,
+                                        GetCurrentThreadEventTarget(), attrs,
+                                        getter_AddRefs(helper->mRequest)))) {
     return false;
+  }
 
   if (aTimeout && helper->mRequest) {
     if (!mTimer) mTimer = NS_NewTimer();
@@ -580,7 +584,7 @@ class JSContextWrapper {
     JSContext* cx = JS_NewContext(JS::DefaultHeapMaxBytes + aExtraHeapSize);
     if (NS_WARN_IF(!cx)) return nullptr;
 
-    JS::ContextOptionsRef(cx).setIon(false);
+    JS::ContextOptionsRef(cx).setDisableIon().setDisableEvalSecurityChecks();
 
     JSContextWrapper* entry = new JSContextWrapper(cx);
     if (NS_FAILED(entry->Init())) {
@@ -636,6 +640,7 @@ class JSContextWrapper {
 
     JS::RealmOptions options;
     options.creationOptions().setNewCompartmentInSystemZone();
+    options.behaviors().setClampAndJitterTime(false);
     mGlobal = JS_NewGlobalObject(mContext, &sGlobalClass, nullptr,
                                  JS::DontFireOnNewGlobalHook, options);
     if (!mGlobal) {
@@ -661,7 +666,7 @@ const JSClass JSContextWrapper::sGlobalClass = {"PACResolutionThreadGlobal",
                                                 &JS::DefaultGlobalClassOps};
 
 void ProxyAutoConfig::SetThreadLocalIndex(uint32_t index) {
-  sRunningIndex = index;
+  RunningIndex() = index;
 }
 
 nsresult ProxyAutoConfig::Init(const nsCString& aPACURI,
@@ -731,20 +736,21 @@ nsresult ProxyAutoConfig::SetupJS() {
 
   auto CompilePACScript = [this](JSContext* cx) -> JSScript* {
     JS::CompileOptions options(cx);
+    options.setSkipFilenameValidation(true);
     options.setFileAndLine(this->mPACURI.get(), 1);
 
     // Per ProxyAutoConfig::Init, compile as UTF-8 if the full data is UTF-8,
     // and otherwise inflate Latin-1 to UTF-16 and compile that.
     const char* scriptData = this->mConcatenatedPACData.get();
     size_t scriptLength = this->mConcatenatedPACData.Length();
-    if (mozilla::IsValidUtf8(scriptData, scriptLength)) {
+    if (mozilla::IsUtf8(mozilla::MakeSpan(scriptData, scriptLength))) {
       JS::SourceText<Utf8Unit> srcBuf;
       if (!srcBuf.init(cx, scriptData, scriptLength,
                        JS::SourceOwnership::Borrowed)) {
         return nullptr;
       }
 
-      return JS::CompileDontInflate(cx, options, srcBuf);
+      return JS::Compile(cx, options, srcBuf);
     }
 
     // nsReadableUtils.h says that "ASCII" is a misnomer "for legacy reasons",
@@ -837,7 +843,7 @@ nsresult ProxyAutoConfig::GetProxyForURI(const nsCString& aTestURI,
   JS::RootedString hostString(cx, JS_NewStringCopyZ(cx, aTestHost.get()));
 
   if (uriString && hostString) {
-    JS::AutoValueArray<2> args(cx);
+    JS::RootedValueArray<2> args(cx);
     args[0].setString(uriString);
     args[1].setString(hostString);
 

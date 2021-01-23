@@ -7,14 +7,8 @@
 #define SystemTimeConverter_h
 
 #include <limits>
+#include <type_traits>
 #include "mozilla/TimeStamp.h"
-#include "mozilla/TypeTraits.h"
-
-// GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
-// GetTickCount().
-#ifdef GetCurrentTime
-#  undef GetCurrentTime
-#endif
 
 namespace mozilla {
 
@@ -31,7 +25,7 @@ namespace mozilla {
 // For performance reasons, this class is careful to minimize calls to the
 // native "current time" function (e.g. gdk_x11_server_get_time) since this can
 // be slow.
-template <typename Time>
+template <typename Time, typename TimeStampNowProvider = TimeStamp>
 class SystemTimeConverter {
  public:
   SystemTimeConverter()
@@ -42,13 +36,13 @@ class SystemTimeConverter {
         kTimeRange(std::numeric_limits<Time>::max()),
         kTimeHalfRange(kTimeRange / 2),
         kBackwardsSkewCheckInterval(Time(2000)) {
-    static_assert(!IsSigned<Time>::value, "Expected Time to be unsigned");
+    static_assert(!std::is_signed_v<Time>, "Expected Time to be unsigned");
   }
 
   template <typename CurrentTimeGetter>
   mozilla::TimeStamp GetTimeStampFromSystemTime(
       Time aTime, CurrentTimeGetter& aCurrentTimeGetter) {
-    TimeStamp roughlyNow = TimeStamp::Now();
+    TimeStamp roughlyNow = TimeStampNowProvider::Now();
 
     // If the reference time is not set, use the current time value to fill
     // it in.
@@ -79,7 +73,8 @@ class SystemTimeConverter {
     // the case when we have a backlog of events and by the time we process
     // them, the time given by the system is comparatively "old".
     //
-    // We call the absolute difference between (i) and (ii), "deltaFromNow".
+    // The IsNewerThanTimestamp function computes the equivalent of |aTime| in
+    // the TimeStamp scale and returns that in |timeAsTimeStamp|.
     //
     // Graphically:
     //
@@ -92,13 +87,13 @@ class SystemTimeConverter {
     //                          |------timeStampDelta-------|
     //
     //                                                  |---|
-    //                                               deltaFromNow
+    //                                         roughlyNow-timeAsTimeStamp
     //
-    Time deltaFromNow;
-    bool newer = IsTimeNewerThanTimestamp(aTime, roughlyNow, &deltaFromNow);
+    TimeStamp timeAsTimeStamp;
+    bool newer = IsTimeNewerThanTimestamp(aTime, roughlyNow, &timeAsTimeStamp);
 
     // Tolerance when detecting clock skew.
-    static const Time kTolerance = 30;
+    static const TimeDuration kTolerance = TimeDuration::FromMilliseconds(30.0);
 
     // Check for forwards skew
     if (newer) {
@@ -112,7 +107,7 @@ class SystemTimeConverter {
       return roughlyNow;
     }
 
-    if (deltaFromNow <= kTolerance) {
+    if (roughlyNow - timeAsTimeStamp <= kTolerance) {
       // If the time between event times and TimeStamp values is within
       // the tolerance then assume we don't have clock skew so we can
       // avoid checking for backwards skew for a while.
@@ -123,7 +118,7 @@ class SystemTimeConverter {
     }
 
     // Finally, calculate the timestamp
-    return roughlyNow - TimeDuration::FromMilliseconds(deltaFromNow);
+    return timeAsTimeStamp;
   }
 
   void CompensateForBackwardsSkew(Time aReferenceTime,
@@ -161,8 +156,7 @@ class SystemTimeConverter {
     //
     // If that's not the case, then we probably just got caught behind
     // temporarily.
-    Time delta;
-    if (IsTimeNewerThanTimestamp(aReferenceTime, aLowerBound, &delta)) {
+    if (IsTimeNewerThanTimestamp(aReferenceTime, aLowerBound, nullptr)) {
       return;
     }
 
@@ -182,7 +176,7 @@ class SystemTimeConverter {
   void UpdateReferenceTime(Time aReferenceTime,
                            const CurrentTimeGetter& aCurrentTimeGetter) {
     Time currentTime = aCurrentTimeGetter.GetCurrentTime();
-    TimeStamp currentTimeStamp = TimeStamp::Now();
+    TimeStamp currentTimeStamp = TimeStampNowProvider::Now();
     Time timeSinceReference = currentTime - aReferenceTime;
     TimeStamp referenceTimeStamp =
         currentTimeStamp - TimeDuration::FromMilliseconds(timeSinceReference);
@@ -196,7 +190,7 @@ class SystemTimeConverter {
   }
 
   bool IsTimeNewerThanTimestamp(Time aTime, TimeStamp aTimeStamp,
-                                Time* aDelta) {
+                                TimeStamp* aTimeAsTimeStamp) {
     Time timeDelta = aTime - mReferenceTime;
 
     // Cast the result to signed 64-bit integer first since that should be
@@ -205,18 +199,23 @@ class SystemTimeConverter {
     // is outside the integer range is undefined.
     // Then we do an implicit cast to Time (typically an unsigned 32-bit
     // integer) which wraps times outside that range.
-    Time timeStampDelta = static_cast<int64_t>(
-        (aTimeStamp - mReferenceTimeStamp).ToMilliseconds());
+    TimeDuration timeStampDelta = (aTimeStamp - mReferenceTimeStamp);
+    int64_t wholeMillis = static_cast<int64_t>(timeStampDelta.ToMilliseconds());
+    Time wrappedTimeStampDelta = wholeMillis;  // truncate to unsigned
 
-    Time timeToTimeStamp = timeStampDelta - timeDelta;
+    Time timeToTimeStamp = wrappedTimeStampDelta - timeDelta;
     bool isNewer = false;
     if (timeToTimeStamp == 0) {
-      *aDelta = 0;
+      // wholeMillis needs no adjustment
     } else if (timeToTimeStamp < kTimeHalfRange) {
-      *aDelta = timeToTimeStamp;
+      wholeMillis -= timeToTimeStamp;
     } else {
       isNewer = true;
-      *aDelta = timeDelta - timeStampDelta;
+      wholeMillis += (-timeToTimeStamp);
+    }
+    if (aTimeAsTimeStamp) {
+      *aTimeAsTimeStamp =
+          mReferenceTimeStamp + TimeDuration::FromMilliseconds(wholeMillis);
     }
 
     return isNewer;

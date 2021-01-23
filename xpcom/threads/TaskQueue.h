@@ -54,20 +54,21 @@ class TaskQueue : public AbstractThread {
 
  public:
   explicit TaskQueue(already_AddRefed<nsIEventTarget> aTarget,
-                     bool aSupportsTailDispatch = false);
+                     bool aSupportsTailDispatch = false,
+                     bool aRetainFlags = false);
 
   TaskQueue(already_AddRefed<nsIEventTarget> aTarget, const char* aName,
-            bool aSupportsTailDispatch = false);
+            bool aSupportsTailDispatch = false, bool aRetainFlags = false);
 
   TaskDispatcher& TailDispatcher() override;
 
-  MOZ_MUST_USE nsresult
-  Dispatch(already_AddRefed<nsIRunnable> aRunnable,
-           DispatchReason aReason = NormalDispatch) override {
+  [[nodiscard]] nsresult Dispatch(
+      already_AddRefed<nsIRunnable> aRunnable,
+      DispatchReason aReason = NormalDispatch) override {
     nsCOMPtr<nsIRunnable> r = aRunnable;
     {
       MonitorAutoLock mon(mQueueMonitor);
-      return DispatchLocked(/* passed by ref */ r, aReason);
+      return DispatchLocked(/* passed by ref */ r, NS_DISPATCH_NORMAL, aReason);
     }
     // If the ownership of |r| is not transferred in DispatchLocked() due to
     // dispatch failure, it will be deleted here outside the lock. We do so
@@ -111,7 +112,7 @@ class TaskQueue : public AbstractThread {
   // mQueueMonitor must be held.
   void AwaitIdleLocked();
 
-  nsresult DispatchLocked(nsCOMPtr<nsIRunnable>& aRunnable,
+  nsresult DispatchLocked(nsCOMPtr<nsIRunnable>& aRunnable, uint32_t aFlags,
                           DispatchReason aReason = NormalDispatch);
 
   void MaybeResolveShutdown() {
@@ -127,8 +128,13 @@ class TaskQueue : public AbstractThread {
   // Monitor that protects the queue and mIsRunning;
   Monitor mQueueMonitor;
 
+  typedef struct TaskStruct {
+    nsCOMPtr<nsIRunnable> event;
+    uint32_t flags;
+  } TaskStruct;
+
   // Queue of tasks to run.
-  std::queue<nsCOMPtr<nsIRunnable>> mTasks;
+  std::queue<TaskStruct> mTasks;
 
   // The thread currently running the task queue. We store a reference
   // to this so that IsCurrentThreadIn() can tell if the current thread
@@ -156,13 +162,13 @@ class TaskQueue : public AbstractThread {
       sCurrentThreadTLS.set(aQueue);
 
       MOZ_ASSERT(mQueue->mRunningThread == nullptr);
-      mQueue->mRunningThread = GetCurrentPhysicalThread();
+      mQueue->mRunningThread = PR_GetCurrentThread();
     }
 
     ~AutoTaskGuard() {
       DrainDirectTasks();
 
-      MOZ_ASSERT(mQueue->mRunningThread == GetCurrentPhysicalThread());
+      MOZ_ASSERT(mQueue->mRunningThread == PR_GetCurrentThread());
       mQueue->mRunningThread = nullptr;
 
       sCurrentThreadTLS.set(mLastCurrentThread);
@@ -175,6 +181,11 @@ class TaskQueue : public AbstractThread {
   };
 
   TaskDispatcher* mTailDispatcher;
+
+  // TaskQueues should specify if they want all tasks to dispatch with their
+  // original flags included, which means the flags will be retained in the
+  // TaskStruct.
+  bool mShouldRetainFlags;
 
   // True if we've dispatched an event to the target to execute events from
   // the queue.

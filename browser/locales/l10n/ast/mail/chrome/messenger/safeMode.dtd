@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title "Mou seguru de &brandShortName;">
+<!ENTITY window.width "47em">
+
+<!ENTITY safeModeDescription.label "&brandShortName; ta executándose en mou seguru, que desactiva temporalmente les tos personalizaciones d'opciones, temes y estensiones.">
+<!ENTITY safeModeDescription2.label "Pues facer permanentes toos o dalgunos d'estos cambeos:">
+
+<!ENTITY disableAddons.label "Desactivar tolos complementos">
+<!ENTITY disableAddons.accesskey "D">
+
+<!ENTITY resetToolbars.label "Reanicializar barres de ferramientes y controles">
+<!ENTITY resetToolbars.accesskey "R">
+
+<!ENTITY changeAndRestartButton.label "Facer cambeos y reaniciar">
+<!ENTITY changeAndRestartButton.accesskey "H">
+
+<!ENTITY continueButton.label "Continuar en mou seguru">
+<!ENTITY continueButton.accesskey "C">

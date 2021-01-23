@@ -5,14 +5,6 @@
 # Add-on signing is not required for DevEdition
 MOZ_REQUIRE_SIGNING=0
 
-export MOZ_LTO=1
-
 ac_add_options --with-branding=browser/branding/aurora
 
-# Enable MOZ_ALLOW_LEGACY_EXTENSIONS
-ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
-
-unset ENABLE_CLANG_PLUGIN
-
 . "$topsrcdir/build/mozconfig.common.override"
-

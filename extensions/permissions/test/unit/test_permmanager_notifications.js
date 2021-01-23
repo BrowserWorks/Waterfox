@@ -17,17 +17,12 @@ function continue_test() {
 }
 
 function* do_run_test() {
-  // Set up a profile.
-  let profile = do_get_profile();
-
   let pm = Services.perms;
   let now = Number(Date.now());
   let permType = "test/expiration-perm";
-  let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(
-    Ci.nsIScriptSecurityManager
-  );
+  let ssm = Services.scriptSecurityManager;
   let uri = NetUtil.newURI("http://example.com");
-  let principal = ssm.createCodebasePrincipal(uri, {});
+  let principal = ssm.createContentPrincipal(uri, {});
 
   let observer = new permission_observer(test_generator, now, permType);
   Services.obs.addObserver(observer, "perm-changed");
@@ -136,7 +131,7 @@ permission_observer.prototype = {
     } else if (data == "cleared") {
       // only clear once: at the end
       Assert.ok(!this.cleared);
-      Assert.equal(do_count_enumerator(Services.perms.enumerator), 0);
+      Assert.equal(do_count_array(Services.perms.all), 0);
       this.cleared = true;
     } else {
       do_throw("unexpected data '" + data + "'!");

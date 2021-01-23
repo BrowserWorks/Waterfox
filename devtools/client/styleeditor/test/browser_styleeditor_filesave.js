@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -8,11 +7,9 @@
 const TESTCASE_URI_HTML = TEST_BASE_HTTP + "simple.html";
 const TESTCASE_URI_CSS = TEST_BASE_HTTP + "simple.css";
 
-var tempScope = {};
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm", tempScope);
-ChromeUtils.import("resource://gre/modules/NetUtil.jsm", tempScope);
-var FileUtils = tempScope.FileUtils;
-var NetUtil = tempScope.NetUtil;
+const { FileUtils } = ChromeUtils.import(
+  "resource://gre/modules/FileUtils.jsm"
+);
 
 add_task(async function() {
   const htmlFile = await copy(TESTCASE_URI_HTML, "simple.html");

@@ -42,6 +42,12 @@ TEST_FAIL_STRING = "TEST-UNEXPECTED-FAIL"
 
 SIMPLE_PASSING_TEST = "function run_test() { Assert.ok(true); }"
 SIMPLE_FAILING_TEST = "function run_test() { Assert.ok(false); }"
+SIMPLE_PREFCHECK_TEST = '''
+function run_test() {
+  const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+  Assert.ok(Services.prefs.getBoolPref("fake.pref.to.test"));
+}
+'''
 
 SIMPLE_UNCAUGHT_REJECTION_TEST = '''
 function run_test() {
@@ -319,9 +325,18 @@ function run_test(
 
 # A test for failure to load a test due to an error other than a syntax error
 LOAD_ERROR_OTHER_ERROR = '''
-function run_test() {
-    1 = "foo"; // invalid assignment left-hand side
-};
+"use strict";
+no_such_var = "foo"; // assignment to undeclared variable
+'''
+
+# A test that crashes outright.
+TEST_CRASHING = '''
+function run_test () {
+  Components.utils.import("resource://gre/modules/ctypes.jsm", this);
+  let zero = new ctypes.intptr_t(8);
+  let badptr = ctypes.cast(zero, ctypes.PointerType(ctypes.int32_t));
+  badptr.contents;
+}
 '''
 
 # A test for asynchronous cleanup functions
@@ -450,6 +465,26 @@ add_test(function test_child_mozinfo () {
 });
 '''
 
+HEADLESS_TRUE = '''
+add_task(function headless_true() {
+  let env = Cc["@mozilla.org/process/environment;1"].getService(
+    Ci.nsIEnvironment
+  );
+  Assert.equal(env.get("MOZ_HEADLESS"), "1", "Check MOZ_HEADLESS");
+  Assert.equal(env.get("DISPLAY"), "77", "Check DISPLAY");
+});
+'''
+
+HEADLESS_FALSE = '''
+add_task(function headless_false() {
+  let env = Cc["@mozilla.org/process/environment;1"].getService(
+    Ci.nsIEnvironment
+  );
+  Assert.notEqual(env.get("MOZ_HEADLESS"), "1", "Check MOZ_HEADLESS");
+  Assert.notEqual(env.get("DISPLAY"), "77", "Check DISPLAY");
+});
+'''
+
 
 class XPCShellTestsTests(unittest.TestCase):
     """
@@ -463,7 +498,7 @@ class XPCShellTestsTests(unittest.TestCase):
                                                       {},
                                                       {"tbpl": self.log})
         self.x = XPCShellTests(logger)
-        self.x.harness_timeout = 15 if not mozinfo.info["ccov"] else 60
+        self.x.harness_timeout = 30 if not mozinfo.info["ccov"] else 60
         self.symbols_path = None
         candidate_path = os.path.join(build_obj.distdir, 'crashreporter-symbols')
         if (os.path.isdir(candidate_path)):
@@ -483,13 +518,14 @@ class XPCShellTestsTests(unittest.TestCase):
             f.write(contents)
         return fullpath
 
-    def writeManifest(self, tests):
+    def writeManifest(self, tests, prefs=[]):
         """
         Write an xpcshell.ini in the temp directory and set
         self.manifest to its pathname. |tests| is a list containing
         either strings (for test names), or tuples with a test name
         as the first element and manifest conditions as the following
-        elements.
+        elements. |prefs| is an optional list of prefs in the form of
+        "prefname=prefvalue" strings.
         """
         testlines = []
         for t in tests:
@@ -497,14 +533,19 @@ class XPCShellTestsTests(unittest.TestCase):
                                        else t[0]))
             if isinstance(t, tuple):
                 testlines.extend(t[1:])
+        prefslines = []
+        for p in prefs:
+            # Append prefs lines as indented inside "prefs=" manifest option.
+            prefslines.append("  %s" % p)
+
         self.manifest = self.writeFile("xpcshell.ini", """
 [DEFAULT]
 head =
 tail =
+prefs =
+""" + "\n".join(prefslines) + "\n" + "\n".join(testlines))
 
-""" + "\n".join(testlines))
-
-    def assertTestResult(self, expected, shuffle=False, verbose=False):
+    def assertTestResult(self, expected, shuffle=False, verbose=False, headless=False):
         """
         Assert that self.x.runTests with manifest=self.manifest
         returns |expected|.
@@ -516,6 +557,7 @@ tail =
         kwargs['mozInfo'] = mozinfo.info
         kwargs['shuffle'] = shuffle
         kwargs['verbose'] = verbose
+        kwargs['headless'] = headless
         kwargs['sequential'] = True
         kwargs['testingModulesDir'] = os.path.join(objdir, '_tests', 'modules')
         kwargs['utility_path'] = self.utility_path
@@ -576,6 +618,24 @@ tail =
         self.assertEquals(0, self.x.todoCount)
         self.assertInLog(TEST_FAIL_STRING)
         self.assertNotInLog(TEST_PASS_STRING)
+
+    def testPrefsInManifest(self):
+        """
+        Check prefs configuration option is supported in xpcshell manifests.
+        """
+        self.writeFile("test_prefs.js", SIMPLE_PREFCHECK_TEST)
+        self.writeManifest(
+            tests=["test_prefs.js"],
+            prefs=["fake.pref.to.test=true"]
+        )
+
+        self.assertTestResult(True)
+        self.assertInLog(TEST_PASS_STRING)
+        self.assertNotInLog(TEST_FAIL_STRING)
+        self.assertEquals(1, self.x.testCount)
+        self.assertEquals(1, self.x.passCount)
+        self.assertInLog("Per-test extra prefs will be set:")
+        self.assertInLog("fake.pref.to.test=true")
 
     @unittest.skipIf(mozinfo.isWin or not mozinfo.info.get('debug'),
                      'We don\'t have a stack fixer on hand for windows.')
@@ -933,6 +993,20 @@ add_test({
         self.assertEquals(1, self.x.passCount)
         self.assertEquals(0, self.x.failCount)
 
+    def testCrashLogging(self):
+        """
+        Test that a crashing test process logs a failure.
+        """
+        self.writeFile("test_crashes.js", TEST_CRASHING)
+        self.writeManifest(["test_crashes.js"])
+
+        self.assertTestResult(False)
+        self.assertEquals(1, self.x.testCount)
+        self.assertEquals(0, self.x.passCount)
+        self.assertEquals(1, self.x.failCount)
+        if substs.get('MOZ_CRASHREPORTER'):
+            self.assertInLog("\nPROCESS-CRASH")
+
     def testLogCorrectFileName(self):
         """
         Make sure a meaningful filename and line number is logged
@@ -1195,7 +1269,7 @@ add_test({
 
         self.assertTestResult(False)
         self.assertInLog(TEST_FAIL_STRING)
-        self.assertInLog("ReferenceError: invalid assignment left-hand side at")
+        self.assertInLog("ReferenceError: assignment to undeclared variable")
         self.assertInLog("test_error.js:3")
         self.assertNotInLog(TEST_PASS_STRING)
 
@@ -1371,6 +1445,38 @@ add_test({
         self.assertEquals(0, self.x.todoCount)
         self.assertInLog(TEST_PASS_STRING)
         self.assertNotInLog(TEST_FAIL_STRING)
+
+    def testNotHeadlessByDefault(self):
+        """
+        Check that the default is not headless.
+        """
+        self.writeFile("test_notHeadlessByDefault.js", HEADLESS_FALSE)
+        self.writeManifest(["test_notHeadlessByDefault.js"])
+        self.assertTestResult(True)
+
+    def testHeadlessWhenHeadlessExplicit(self):
+        """
+        Check that explicitly requesting headless works when the manifest doesn't override.
+        """
+        self.writeFile("test_headlessWhenExplicit.js", HEADLESS_TRUE)
+        self.writeManifest(["test_headlessWhenExplicit.js"])
+        self.assertTestResult(True, headless=True)
+
+    def testHeadlessWhenHeadlessTrueInManifest(self):
+        """
+        Check that enabling headless in the manifest alone works.
+        """
+        self.writeFile("test_headlessWhenTrueInManifest.js", HEADLESS_TRUE)
+        self.writeManifest([("test_headlessWhenTrueInManifest.js", "headless = true")])
+        self.assertTestResult(True)
+
+    def testNotHeadlessWhenHeadlessFalseInManifest(self):
+        """
+        Check that the manifest entry overrides the explicit default.
+        """
+        self.writeFile("test_notHeadlessWhenFalseInManifest.js", HEADLESS_FALSE)
+        self.writeManifest([("test_notHeadlessWhenFalseInManifest.js", "headless = false")])
+        self.assertTestResult(True, headless=True)
 
 
 if __name__ == "__main__":

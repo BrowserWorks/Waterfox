@@ -9,7 +9,6 @@
 #include "nsString.h"
 #include "nsCRT.h"
 
-#include "nsIServiceManager.h"
 #include "nsIDNSService.h"
 #include "nsIDNSRecord.h"
 #include "nsISOCKSSocketInfo.h"
@@ -494,13 +493,6 @@ nsSOCKSSocketInfo::OnLookupComplete(nsICancelable* aRequest,
     ConnectToProxy(mFD);
     ForgetFD();
   }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsSOCKSSocketInfo::OnLookupByTypeComplete(nsICancelable* aRequest,
-                                          nsIDNSByTypeRecord* res,
-                                          nsresult aStatus) {
   return NS_OK;
 }
 

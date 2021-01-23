@@ -1,0 +1,413 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Bandni tahrirlash" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Tugash sanasi o‘zgartirilganda davomiylikni saqlash">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Boshlanishi" >
+<!ENTITY newevent.to.label                  "Tugashi" >
+
+<!ENTITY newevent.status.label                    "Holati" >
+<!ENTITY newevent.status.accesskey                "H" >
+<!ENTITY newevent.eventStatus.none.label          "Ko‘rsatilmagan" >
+<!ENTITY newevent.eventStatus.none.accesskey      "o" >
+<!ENTITY newevent.todoStatus.none.label           "Ko‘rsatilmagan" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Bekor qilingan" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Bekor qilindi" >
+<!ENTITY newevent.status.tentative.label          "Noaniq" >
+<!ENTITY newevent.status.tentative.accesskey      "N" >
+<!ENTITY newevent.status.confirmed.label          "Tasdiqlangan" >
+<!ENTITY newevent.status.confirmed.accesskey      "T" >
+<!ENTITY newevent.status.needsaction.label        "Kerakli amallar" >
+<!ENTITY newevent.status.inprogress.label         "Amalda" >
+<!ENTITY newevent.status.completed.label          "Tugagan" >
+<!-- The following entity is for New Task dialog only -->
+
+<!ENTITY newtodo.percentcomplete.label      "&#037; tugadi">
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+
+<!ENTITY event.attendees.notify.label                "Ishtirokchilarga xabar berish">
+<!ENTITY event.attendees.notify.accesskey            "I">
+<!ENTITY event.attendees.notifyundisclosed.label     "Har bir ishtirokchiga alohida taklif">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Buni tanlasangiz, har bir ishtirokchiga alohida taklif xatini jo‘natadi. Har bir takli faqatgina ishtirok etadigan qabul qiluvchini jamlagan, shunday ekan boshqa ishtirokchilar shaxsiy ma’lumotlari oshkor qilinmaydi.">
+<!ENTITY event.attendees.disallowcounter.label       "Hisoblagichni to‘xtatish">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+
+<!-- Keyboard Shortcuts -->
+
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+<!-- Menubar -->
+
+<!ENTITY  event.menu.item.new.label                       "Yangi">
+<!ENTITY  event.menu.item.new.accesskey                   "Y">
+<!ENTITY  event.menu.item.new.event.label                 "Tadbir">
+<!ENTITY  event.menu.item.new.event.accesskey             "T">
+<!ENTITY  event.menu.item.new.task.label                  "Vazifa">
+<!ENTITY  event.menu.item.new.task.accesskey              "V">
+<!ENTITY  event.menu.item.new.message.label               "Xabar">
+<!ENTITY  event.menu.item.new.message.accesskey           "X">
+<!ENTITY  event.menu.item.new.contact.label               "Manzillar kitobi va Kontakt">
+<!ENTITY  event.menu.item.new.contact.accesskey           "K">
+<!ENTITY  event.menu.item.close.label                     "Yopish">
+<!ENTITY  event.menu.item.close.accesskey                 "Y">
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+
+<!ENTITY  event.menu.item.save.label                      "Saqlash">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+
+<!ENTITY  event.menu.item.saveandclose.label              "Saqlash va Yopish">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "Y">
+
+
+<!ENTITY  event.menu.item.delete.label                    "O‘chirish…">
+<!ENTITY  event.menu.item.delete.accesskey                "O">
+<!ENTITY  event.menu.item.page.setup.label                "Sahifa sozlamalari">
+<!ENTITY  event.menu.item.page.setup.accesskey            "m">
+<!ENTITY  event.menu.item.print.label                     "Chop qilish">
+<!ENTITY  event.menu.item.print.accesskey                 "C">
+
+<!ENTITY  event.menu.edit.label                           "Tahrirlash">
+<!ENTITY  event.menu.edit.accesskey                       "T">
+<!ENTITY  event.menu.edit.undo.label                      "Qaytarish">
+<!ENTITY  event.menu.edit.undo.accesskey                  "Q">
+<!ENTITY  event.menu.edit.redo.label                      "Qayta bajarish">
+<!ENTITY  event.menu.edit.redo.accesskey                  "Q">
+<!ENTITY  event.menu.edit.cut.label                       "Kesib olish">
+<!ENTITY  event.menu.edit.cut.accesskey                   "K">
+<!ENTITY  event.menu.edit.copy.label                      "Nusxa olish">
+<!ENTITY  event.menu.edit.copy.accesskey                  "N">
+<!ENTITY  event.menu.edit.paste.label                     "Qo‘yish">
+<!ENTITY  event.menu.edit.paste.accesskey                 "Q">
+<!ENTITY  event.menu.edit.select.all.label                "Barchasini belgilash">
+<!ENTITY  event.menu.edit.select.all.accesskey            "a">
+
+<!ENTITY  event.menu.view.label                           "Ko‘rinishi">
+<!ENTITY  event.menu.view.accesskey                       "K">
+<!ENTITY  event.menu.view.toolbars.label                  "Asboblar paneli">
+<!ENTITY  event.menu.view.toolbars.accesskey              "T">
+<!ENTITY  event.menu.view.toolbars.event.label            "Tadbir paneli">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "T">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Qulaylashtirish…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "Q">
+<!ENTITY  event.menu.view.showlink.label                  "Aloqador havolani ko‘rsatish">
+<!ENTITY  event.menu.view.showlink.accesskey              "A">
+
+<!ENTITY  event.menu.options.label                            "Moslamalar">
+<!ENTITY  event.menu.options.accesskey                        "M">
+<!ENTITY  event.menu.options.attendees.label                  "Ishtirokchilarni taklif qilish…">
+<!ENTITY  event.menu.options.attendees.accesskey              "i">
+<!ENTITY  event.menu.options.timezone2.label                  "Vaqt hududlarini ko‘rsatish">
+<!ENTITY  event.menu.options.timezone2.accesskey              "h">
+<!ENTITY  event.menu.options.priority2.label                  "Muhimligi">
+<!ENTITY  event.menu.options.priority2.accesskey              "l">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Ko‘rsatilmagan">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "o">
+<!ENTITY  event.menu.options.priority.low.label               "Past">
+<!ENTITY  event.menu.options.priority.low.accesskey           "P">
+<!ENTITY  event.menu.options.priority.normal.label            "O‘rtacha">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "O">
+<!ENTITY  event.menu.options.priority.high.label              "Yuqori">
+<!ENTITY  event.menu.options.priority.high.accesskey          "Y">
+<!ENTITY  event.menu.options.privacy.label                    "Maxfiylik">
+<!ENTITY  event.menu.options.privacy.accesskey                "M">
+<!ENTITY  event.menu.options.privacy.public.label             "Ommaviy tadbir">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "O">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Faqat vaqt va sana ko‘rsatilsin">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "s">
+<!ENTITY  event.menu.options.privacy.private.label            "Maxfiy tadbir">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Vaqtni ko‘rsatish">
+<!ENTITY  event.menu.options.show.time.accesskey              "V">
+<!ENTITY  event.menu.options.show.time.busy.label             "Band">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "B">
+<!ENTITY  event.menu.options.show.time.free.label             "Bo‘sh">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "B">
+
+<!ENTITY event.invite.attendees.label                     "Ishtirokchilarni taklif qilish…">
+<!ENTITY event.invite.attendees.accesskey                 "i">
+<!ENTITY event.email.attendees.label                      "Barcha ishtirokchilarga xat yozish…">
+<!ENTITY event.email.attendees.accesskey                  "a">
+<!ENTITY event.email.tentative.attendees.label            "Borishi noma’lum bo‘lgan ishtirokchilarga xat yozish…">
+<!ENTITY event.email.tentative.attendees.accesskey        "o">
+<!ENTITY event.remove.attendees.label2                    "Barcha ishtirokchilarni olib tashlash">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Ishtirokchini olib tashlash">
+<!ENTITY event.remove.attendee.accesskey                  "o">
+<!-- Toolbar -->
+
+<!ENTITY  event.toolbar.delete.label                      "O‘chirish">
+<!ENTITY  event.toolbar.attendees.label                   "Ishtirokchilarni taklif qilish">
+<!ENTITY  event.toolbar.privacy.label                     "&amp;Maxfiylik">
+
+
+<!ENTITY  event.toolbar.delete.tooltip                    "O‘chirish">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Ishtirokchilarni taklif qilish">
+<!ENTITY  event.toolbar.attachments.tooltip               "Biriktirmalarni qo‘shish">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Maxfiylikni o‘zgartirish">
+<!ENTITY  event.toolbar.priority.tooltip                  "Muhimligini o‘zgartrisih">
+<!ENTITY  event.toolbar.status.tooltip                    "Holatini o‘zgartirish">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Bo‘sh/band vaqtni o‘zgartirish">
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+
+
+
+
+
+<!-- Main page -->
+
+<!ENTITY event.title.textbox.label                        "Sarlavha:" >
+<!ENTITY event.title.textbox.accesskey                    "i">
+<!ENTITY event.location.label                             "Joylashuvi:" >
+<!ENTITY event.location.accesskey                         "l">
+<!ENTITY event.categories.label                           "Turkumi:">
+<!ENTITY event.categories.accesskey                       "T">
+<!ENTITY event.categories.textbox.label                   "Yangi turkum qo‘shish" >
+<!ENTITY event.calendar.label                             "Taqvim:" >
+<!ENTITY event.calendar.accesskey                         "T">
+<!ENTITY event.attendees.label                            "Ishtirokchilar:" >
+<!ENTITY event.attendees.accesskey                        "I">
+<!ENTITY event.alldayevent.label                          "Tadbir kunlik tadbir" >
+<!ENTITY event.alldayevent.accesskey                      "b">
+<!ENTITY event.from.label                                 "Boshlanishi:" >
+<!ENTITY event.from.accesskey                             "B">
+<!ENTITY task.from.label                                  "Boshlanishi:" >
+<!ENTITY task.from.accesskey                              "B">
+<!ENTITY event.to.label                                   "Tugashi:" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "Tugash sanasi:" >
+<!ENTITY task.to.accesskey                                "u">
+<!ENTITY task.status.label                                "Holati:" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "Takrorlash:" >
+<!ENTITY event.repeat.accesskey                           "T">
+<!ENTITY event.until.label                                "&amp;Ushbu vaqtgacha:">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "Eslatkich:" >
+<!ENTITY event.reminder.accesskey                         "E">
+<!ENTITY event.description.label                          "Ta’rifi:" >
+<!ENTITY event.description.accesskey                      "T">
+<!ENTITY event.attachments.label                          "Biriktirmalar:" >
+<!ENTITY event.attachments.accesskey                      "B" >
+<!ENTITY event.attachments.menubutton.label               "Biriktirish">
+<!ENTITY event.attachments.menubutton.accesskey           "B">
+<!ENTITY event.attachments.url.label                      "Vebsahifa…">
+<!ENTITY event.attachments.url.accesskey                  "V">
+<!ENTITY event.attachments.popup.remove.label             "Olib tashlash" >
+<!ENTITY event.attachments.popup.remove.accesskey         "O" >
+<!ENTITY event.attachments.popup.open.label               "Ochish" >
+<!ENTITY event.attachments.popup.open.accesskey           "O" >
+<!ENTITY event.attachments.popup.removeAll.label          "Barchasini olib tashlash" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "B" >
+<!ENTITY event.attachments.popup.attachPage.label         "Veb sahifani ilova qilish…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "g" >
+<!ENTITY event.url.label                                  "Aloqador havola:" >
+<!ENTITY event.priority2.label                            "Muhimligi">
+
+<!ENTITY event.reminder.none.label                        "Eslatgichlar o‘rnatilmagan" >
+<!ENTITY event.reminder.0minutes.before.label             "0 daqiqa oldin" >
+<!ENTITY event.reminder.5minutes.before.label             "5 daqiqa oldin" >
+<!ENTITY event.reminder.15minutes.before.label            "15 daqiqa oldin" >
+<!ENTITY event.reminder.30minutes.before.label            "30 daqiqa oldin" >
+<!ENTITY event.reminder.1hour.before.label                "1 soat oldin" >
+<!ENTITY event.reminder.2hours.before.label               "2 soat oldin" >
+<!ENTITY event.reminder.12hours.before.label              "12 soat oldin" >
+<!ENTITY event.reminder.1day.before.label                 "1 kun oldin" >
+<!ENTITY event.reminder.2days.before.label                "2 kun oldin" >
+<!ENTITY event.reminder.1week.before.label                "1 hafta oldin" >
+<!ENTITY event.reminder.custom.label                      "Boshqa…" >
+
+<!ENTITY event.reminder.multiple.label                    "Bir nechta eslatkichlar…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Vaqt:">
+<!ENTITY event.statusbarpanel.privacy.label               "Maxfiylik:">
+<!-- Recurrence dialog -->
+
+<!ENTITY recurrence.title.label                         "Qaytishni tahrirlash">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Takrorlanmadi">
+<!ENTITY event.repeat.daily.label                       "Kunlik">
+<!ENTITY event.repeat.weekly.label                      "Haftalik">
+<!ENTITY event.repeat.every.weekday.label               "Haftaning har bir kunida">
+<!ENTITY event.repeat.bi.weekly.label                   "Ikki haftalik">
+<!ENTITY event.repeat.monthly.label                     "Oylik">
+<!ENTITY event.repeat.yearly.label                      "Yillik">
+<!ENTITY event.repeat.custom.label                      "Boshqa…">
+
+<!ENTITY event.recurrence.pattern.label                 "Qaytish namunasi">
+<!ENTITY event.recurrence.occurs.label                  "Takrorlash" >
+<!ENTITY event.recurrence.day.label                     "kunlik" >
+<!ENTITY event.recurrence.week.label                    "haftalik" >
+<!ENTITY event.recurrence.month.label                   "oylik" >
+<!ENTITY event.recurrence.year.label                    "har yillik" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Har" >
+<!ENTITY repeat.units.days.both                         "Kun(lar)" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Haftaning har bir kunida" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Har" >
+<!ENTITY repeat.units.weeks.both                        "Hafta(lar)" >
+<!ENTITY event.recurrence.on.label                      "Vaqti:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Har" >
+<!ENTITY repeat.units.months.both                       "Oy(lar)" >
+<!ENTITY event.recurrence.monthly.every.label           "Har" >
+<!ENTITY event.recurrence.monthly.first.label           "Birinchi">
+<!ENTITY event.recurrence.monthly.second.label          "Ikkinchi">
+<!ENTITY event.recurrence.monthly.third.label           "Uchinchi">
+<!ENTITY event.recurrence.monthly.fourth.label          "To‘rtinchi">
+<!ENTITY event.recurrence.monthly.fifth.label           "Beshinchi">
+<!ENTITY event.recurrence.monthly.last.label            "So‘nggi">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Yakshanba" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Dushanba" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Seshanba" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Chorchanba" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Payshanba" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Juma" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Shanba" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Oy kunlari">
+<!ENTITY event.recurrence.repeat.recur.label            "Qaytarilishi kun(lar)i">
+
+<!ENTITY event.recurrence.every.label                        "Har:" >
+<!ENTITY repeat.units.years.both                             "Yil(lar)" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Har" >
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Yanvar" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Fevral" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Mart" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Aprel" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "May" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Iyun" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Iyul" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Avgust" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Sentabr" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Oktabr" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Noyabr" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Dekabr" >
+<!ENTITY event.recurrence.yearly.every.label                 "Har">
+<!ENTITY event.recurrence.yearly.first.label                 "Birinchi">
+<!ENTITY event.recurrence.yearly.second.label                "Ikkinchi">
+<!ENTITY event.recurrence.yearly.third.label                 "Uchinchi">
+<!ENTITY event.recurrence.yearly.fourth.label                "To‘rtinchi">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Beshinchi">
+<!ENTITY event.recurrence.yearly.last.label                  "So‘nggi">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Yakshanba" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Dushanba" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Seshanba" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Chorchanba" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Payshanba" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Juma" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Shanba" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "kun" >
+<!ENTITY event.recurrence.of.label                           "/" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Yanvar" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Fevral" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Mart" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Aprel" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "May" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Iyun" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Iyul" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Avgust" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Sentabr" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Oktabr" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Noyabr" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Dekabr" >
+
+<!ENTITY event.recurrence.range.label                   "Qaytarish oralig‘i">
+<!ENTITY event.recurrence.forever.label                 "Tugash sanasi yo‘q" >
+<!ENTITY event.recurrence.repeat.for.label              "Yaratish" >
+<!ENTITY event.recurrence.appointments.label            "Belgilangan uchrashuv(lar)" >
+<!ENTITY event.repeat.until.label                       "Ushbugacha takrorlash" >
+<!ENTITY event.recurrence.preview.label                 "Oldindan ko‘rish">
+<!-- Attendees dialog -->
+
+<!ENTITY invite.title.label                     "Ishtirokchilarni taklif qilish">
+<!ENTITY event.organizer.label                  "Tashkilotchi">
+<!ENTITY event.freebusy.suggest.slot            "Vaqtinchalik intervalni taklif qilish">
+<!ENTITY event.freebusy.button.next.slot        "Keyingi interval">
+<!ENTITY event.freebusy.button.previous.slot    "Oldingi interval">
+<!ENTITY event.freebusy.zoom                    "Masshtab:">
+<!ENTITY event.freebusy.legend.free             "Bo‘sh" >
+<!ENTITY event.freebusy.legend.busy             "Band" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Noaniq" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Ishxonadan tashqarida" >
+<!ENTITY event.freebusy.legend.unknown          "Maʼlumot berilmagan" >
+<!ENTITY event.attendee.role.required           "Kerakli ishtirokchi">
+<!ENTITY event.attendee.role.optional           "Ixtiyoriy ishtirokchi">
+<!ENTITY event.attendee.role.chair              "Rais">
+<!ENTITY event.attendee.role.nonparticipant     "Ishtirok etmaydi">
+<!ENTITY event.attendee.usertype.individual     "Alohida">
+<!ENTITY event.attendee.usertype.group          "Guruh">
+<!ENTITY event.attendee.usertype.resource       "Manba">
+<!ENTITY event.attendee.usertype.room           "Xona">
+<!ENTITY event.attendee.usertype.unknown        "Noma’lum">
+<!-- Timezone dialog -->
+
+<!ENTITY timezone.title.label            "Vaqt hududini ko‘rsating">
+<!ENTITY event.timezone.custom.label     "Boshqa vaqt hududlari…">
+<!-- Read-Only dialog -->
+
+<!ENTITY read.only.general.label         "Umumiy">
+<!ENTITY read.only.title.label           "Nomi:">
+<!ENTITY read.only.event.start.label     "Boshlanish sanasi:">
+<!ENTITY read.only.task.start.label      "Boshlanish sanasi:">
+<!ENTITY read.only.event.end.label       "Tugash sanasi">
+<!ENTITY read.only.task.due.label        "Tugash sanasi:">
+<!ENTITY read.only.repeat.label          "Takrorlash:">
+<!ENTITY read.only.location.label        "Joylashuvi:">
+<!ENTITY read.only.category.label        "Turkum:">
+<!ENTITY read.only.organizer.label       "Tashkilotchi:">
+<!ENTITY read.only.reply.label           "Javob qaytarish:">
+<!ENTITY read.only.accept.label          "Ishtirok etaman">
+<!ENTITY read.only.decline.label         "Ishtirok etmayman">
+<!ENTITY read.only.tentative.label       "Ishtirok etishim mumkin">
+<!ENTITY read.only.needs.action.label    "Keyinroq tasdiqlayman">
+<!ENTITY read.only.reminder.label        "Eslatgich:">
+
+<!ENTITY read.only.attendees.label       "Ishtirokchilar">
+<!ENTITY read.only.description.label     "Ta’rifi">
+<!ENTITY read.only.link.label            "Aloqador havola">

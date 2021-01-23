@@ -66,6 +66,7 @@ struct JSPropertySpec {
     union {
       const char* string;
       int32_t int32;
+      double double_;
     };
 
    private:
@@ -77,6 +78,9 @@ struct JSPropertySpec {
     explicit constexpr ValueWrapper(const char* s)
         : type(JSVAL_TYPE_STRING), string(s) {}
 
+    explicit constexpr ValueWrapper(double d)
+        : type(JSVAL_TYPE_DOUBLE), double_(d) {}
+
    public:
     ValueWrapper(const ValueWrapper& other) = default;
 
@@ -86,6 +90,10 @@ struct JSPropertySpec {
 
     static constexpr ValueWrapper stringValue(const char* s) {
       return ValueWrapper(s);
+    }
+
+    static constexpr ValueWrapper doubleValue(double d) {
+      return ValueWrapper(d);
     }
   };
 
@@ -176,17 +184,21 @@ struct JSPropertySpec {
   };
 
   Name name;
-  uint8_t flags;
+
+ private:
+  uint8_t flags_;
+
+ public:
   AccessorsOrValue u;
 
  private:
   JSPropertySpec() = delete;
 
   constexpr JSPropertySpec(const char* name, uint8_t flags, AccessorsOrValue u)
-      : name(name), flags(flags), u(u) {}
+      : name(name), flags_(flags), u(u) {}
   constexpr JSPropertySpec(JS::SymbolCode name, uint8_t flags,
                            AccessorsOrValue u)
-      : name(name), flags(flags), u(u) {}
+      : name(name), flags_(flags), u(u) {}
 
  public:
   JSPropertySpec(const JSPropertySpec& other) = default;
@@ -265,6 +277,13 @@ struct JSPropertySpec {
                               JSPropertySpec::ValueWrapper::stringValue(s)));
   }
 
+  static constexpr JSPropertySpec doubleValue(const char* name, uint8_t flags,
+                                              double d) {
+    return JSPropertySpec(name, flags | JSPROP_INTERNAL_USE_BIT,
+                          AccessorsOrValue::fromValue(
+                              JSPropertySpec::ValueWrapper::doubleValue(d)));
+  }
+
   static constexpr JSPropertySpec sentinel() {
     return JSPropertySpec(nullptr, 0,
                           AccessorsOrValue::fromAccessors(
@@ -272,7 +291,11 @@ struct JSPropertySpec {
                               JSPropertySpec::Accessor::noAccessor()));
   }
 
-  bool isAccessor() const { return !(flags & JSPROP_INTERNAL_USE_BIT); }
+  // JSPROP_* property attributes as defined in PropertyDescriptor.h
+  unsigned attributes() const { return flags_ & ~JSPROP_INTERNAL_USE_BIT; }
+
+  bool isAccessor() const { return !(flags_ & JSPROP_INTERNAL_USE_BIT); }
+
   JS_PUBLIC_API bool getValue(JSContext* cx,
                               JS::MutableHandle<JS::Value> value) const;
 
@@ -281,13 +304,13 @@ struct JSPropertySpec {
 
 #ifdef DEBUG
     // Verify that our accessors match our JSPROP_GETTER flag.
-    if (flags & JSPROP_GETTER) {
+    if (flags_ & JSPROP_GETTER) {
       checkAccessorsAreSelfHosted();
     } else {
       checkAccessorsAreNative();
     }
 #endif
-    return (flags & JSPROP_GETTER);
+    return (flags_ & JSPROP_GETTER);
   }
 
   static_assert(sizeof(SelfHostedWrapper) == sizeof(JSNativeWrapper),
@@ -316,9 +339,9 @@ struct JSPropertySpec {
   }
 };
 
-#define JS_CHECK_ACCESSOR_FLAGS(flags)                                         \
-  (static_cast<std::enable_if<((flags) & ~(JSPROP_ENUMERATE |                  \
-                                           JSPROP_PERMANENT)) == 0>::type>(0), \
+#define JS_CHECK_ACCESSOR_FLAGS(flags)                                     \
+  (static_cast<std::enable_if_t<((flags) & ~(JSPROP_ENUMERATE |            \
+                                             JSPROP_PERMANENT)) == 0>>(0), \
    (flags))
 
 #define JS_PSG(name, getter, flags)                                     \
@@ -346,6 +369,8 @@ struct JSPropertySpec {
   JSPropertySpec::stringValue(::JS::SymbolCode::symbol, flags, string)
 #define JS_INT32_PS(name, value, flags) \
   JSPropertySpec::int32Value(name, flags, value)
+#define JS_DOUBLE_PS(name, value, flags) \
+  JSPropertySpec::doubleValue(name, flags, value)
 #define JS_PS_END JSPropertySpec::sentinel()
 
 /**
@@ -361,6 +386,9 @@ struct JSFunctionSpec {
   uint16_t nargs;
   uint16_t flags;
   const char* selfHostedName;
+
+  // JSPROP_* property attributes as defined in PropertyDescriptor.h
+  unsigned attributes() const { return flags; }
 };
 
 /*

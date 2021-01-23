@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Dnevnik prilagodljive neželene pošte">
+<!ENTITY adaptiveJunkLogInfo.label "Dnevnik dejavnosti prilagodljivega nadzora neželene pošte.">
+<!ENTITY clearLog.label "Počisti dnevnik">
+<!ENTITY clearLog.accesskey "P">
+<!ENTITY closeLog.label "Zapri">
+<!ENTITY closeLog.accesskey "Z">

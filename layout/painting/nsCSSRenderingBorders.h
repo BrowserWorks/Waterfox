@@ -17,15 +17,16 @@
 #include "nsCOMPtr.h"
 #include "nsIFrame.h"
 #include "nsImageRenderer.h"
-#include "nsStyleConsts.h"
-#include "nsStyleStruct.h"
-#include "nsPresContext.h"
 #include "gfxUtils.h"
 
 struct nsBorderColors;
 class nsDisplayBorder;
 
 namespace mozilla {
+
+enum class StyleBorderStyle : uint8_t;
+enum class StyleBorderImageRepeat : uint8_t;
+
 namespace gfx {
 class GradientStops;
 }  // namespace gfx
@@ -151,7 +152,7 @@ class nsCSSBorderRenderer final {
 
   // For all the sides in the bitmask, would they be rendered
   // in an identical color and style?
-  bool AreBorderSideFinalStylesSame(uint8_t aSides);
+  bool AreBorderSideFinalStylesSame(mozilla::SideBits aSides);
 
   // For the given style, is the given corner a solid color?
   bool IsSolidCornerStyle(mozilla::StyleBorderStyle aStyle,
@@ -207,7 +208,7 @@ class nsCSSBorderRenderer final {
   // clip is needed if we can render the entire border in 1 or 2 passes.
   void FillSolidBorder(const Rect& aOuterRect, const Rect& aInnerRect,
                        const RectCornerRadii& aBorderRadii,
-                       const Float* aBorderSizes, int aSides,
+                       const Float* aBorderSizes, mozilla::SideBits aSides,
                        const ColorPattern& aColor);
 
   //
@@ -216,7 +217,7 @@ class nsCSSBorderRenderer final {
 
   // draw the border for the given sides, using the style of the first side
   // present in the bitmask
-  void DrawBorderSides(int aSides);
+  void DrawBorderSides(mozilla::SideBits aSides);
 
   // Setup the stroke options for the given dashed/dotted side
   void SetupDashedOptions(StrokeOptions* aStrokeOptions, Float aDash[2],

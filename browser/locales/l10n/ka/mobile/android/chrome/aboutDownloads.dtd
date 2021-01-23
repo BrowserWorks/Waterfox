@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "ჩამოტვირთვები">
+<!ENTITY aboutDownloads.header                     "თქვენი ჩამოტვირთვები">
+<!ENTITY aboutDownloads.empty                      "ჩამოტვირთვები არაა">
+
+<!ENTITY aboutDownloads.open                       "გახსნა">
+<!ENTITY aboutDownloads.remove                     "წაშლა">
+<!ENTITY aboutDownloads.removeAll                  "ყველას წაშლა">
+<!ENTITY aboutDownloads.pause                      "შეჩერება">
+<!ENTITY aboutDownloads.resume                     "გაგრძელება">
+<!ENTITY aboutDownloads.cancel                     "გაუქმება">
+<!ENTITY aboutDownloads.retry                      "ხელახლა">

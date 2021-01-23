@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Name.box                        "Ime">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "Ime">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "Prezime">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Prvo:">
+<!ENTITY NameField2.label               "Zadnje:">
+<!ENTITY PhoneticField1.label           "Fonetski:">
+<!ENTITY PhoneticField2.label           "Fonetski:">
+<!ENTITY DisplayName.label              "Prikaži:">
+<!ENTITY preferDisplayName.label        "Uvijek preferiraj prikaz imena prije zaglavlja poruke">
+<!ENTITY NickName.label                 "Nadimak:">
+
+<!ENTITY PrimaryEmail.label             "Email:">
+<!ENTITY SecondEmail.label              "Dodatni email:">
+<!ENTITY PreferMailFormat.label         "Preferira primati poruke formartirane kao:">
+<!ENTITY PlainText.label                "Običan tekst">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Nepoznato">
+<!ENTITY ScreenName.label               "Ime na ekranu:">
+
+<!ENTITY WorkPhone.label                "Poslovni telefon:">
+<!ENTITY HomePhone.label                "Kućni telefon:">
+<!ENTITY FaxNumber.label                "Fax:">
+<!ENTITY PagerNumber.label              "Pager:">
+<!ENTITY CellularNumber.label           "Mobitel:">
+
+<!ENTITY Home.tab                       "Privatno">
+<!ENTITY HomeAddress.label              "Adresa:">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Grad:">
+<!ENTITY HomeState.label                "Regija/Pokrajina:">
+<!ENTITY HomeZipCode.label              "Poštanski broj:">
+<!ENTITY HomeCountry.label              "Država:">
+<!ENTITY HomeWebPage.label              "Web stranica:">
+<!ENTITY Birthday.label                 "Rođendan:">
+<!ENTITY In.label                       "">
+<!ENTITY Year.placeholder               "Godina">
+<!ENTITY Or.value                       "ili">
+<!ENTITY Age.placeholder                "Starost">
+<!ENTITY YearsOld.label                 "">
+
+<!ENTITY Work.tab                       "Posao">
+<!ENTITY JobTitle.label                 "Naslov:">
+<!ENTITY Department.label               "Odjel:">
+<!ENTITY Company.label                  "Organizacija:">
+<!ENTITY WorkAddress.label              "Adresa:">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Grad:">
+<!ENTITY WorkState.label                "Regija/Pokrajina:">
+<!ENTITY WorkZipCode.label              "Poštanski broj:">
+<!ENTITY WorkCountry.label              "Država:">
+<!ENTITY WorkWebPage.label              "Web stranica:">
+
+<!ENTITY Other.tab                      "Ostalo">
+<!ENTITY Custom1.label                  "Proizvoljno 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Proizvoljno 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Proizvoljno 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Proizvoljno 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Bilješke:">
+
+<!ENTITY Photo.tab                      "Slika">
+<!ENTITY PhotoDesc.label                "Izaberite jedno od sljedećih:">
+<!ENTITY GenericPhoto.label             "Standardna slika">
+<!ENTITY DefaultPhoto.label             "Izvorno">
+<!ENTITY PhotoFile.label                "Na ovom računaru">
+<!ENTITY BrowsePhoto.label              "Pretraži">
+<!ENTITY PhotoURL.label                 "Na webu">
+<!ENTITY PhotoURL.placeholder           "Zalijepite ili unesite web adresu slike">
+<!ENTITY UpdatePhoto.label              "Ažuriraj">

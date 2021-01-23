@@ -62,7 +62,7 @@ static nsresult convertRtfToNode(txIEvalContext* aContext,
   }
 
   RefPtr<DocumentFragment> domFragment =
-      new DocumentFragment(doc->NodeInfoManager());
+      new (doc->NodeInfoManager()) DocumentFragment(doc->NodeInfoManager());
 
   txOutputFormat format;
   txMozillaXMLOutput mozHandler(&format, domFragment, true);
@@ -90,7 +90,8 @@ static nsresult createTextNode(txIEvalContext* aContext, nsString& aValue,
     return NS_ERROR_UNEXPECTED;
   }
 
-  RefPtr<nsTextNode> text = new nsTextNode(doc->NodeInfoManager());
+  RefPtr<nsTextNode> text =
+      new (doc->NodeInfoManager()) nsTextNode(doc->NodeInfoManager());
 
   nsresult rv = text->SetText(aValue, false);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -109,7 +110,8 @@ static nsresult createAndAddToResult(nsAtom* aName, const nsAString& aValue,
       doc->CreateElem(nsDependentAtomString(aName), nullptr, kNameSpaceID_None);
   NS_ENSURE_TRUE(elem, NS_ERROR_NULL_POINTER);
 
-  RefPtr<nsTextNode> text = new nsTextNode(doc->NodeInfoManager());
+  RefPtr<nsTextNode> text =
+      new (doc->NodeInfoManager()) nsTextNode(doc->NodeInfoManager());
 
   nsresult rv = text->SetText(aValue, false);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -120,7 +122,7 @@ static nsresult createAndAddToResult(nsAtom* aName, const nsAString& aValue,
   rv = aResultHolder->AppendChildTo(elem, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoPtr<txXPathNode> xpathNode(
+  UniquePtr<txXPathNode> xpathNode(
       txXPathNativeNode::createXPathNode(elem, true));
   NS_ENSURE_TRUE(xpathNode, NS_ERROR_OUT_OF_MEMORY);
 
@@ -158,7 +160,7 @@ enum class txEXSLTType {
   TEST,
 
   // http://exslt.org/sets
-  DIFFERENCE,
+  DIFFERENCE_,  // not DIFFERENCE to avoid a conflict with a winuser.h macro
   DISTINCT,
   HAS_SAME_NODE,
   INTERSECTION,
@@ -256,7 +258,7 @@ nsresult txEXSLTFunctionCall::evaluate(txIEvalContext* aContext,
           nsAutoString value;
           exprResult->stringValue(value);
 
-          nsAutoPtr<txXPathNode> node;
+          UniquePtr<txXPathNode> node;
           rv = createTextNode(aContext, value, getter_Transfers(node));
           NS_ENSURE_SUCCESS(rv, rv);
 
@@ -284,7 +286,7 @@ nsresult txEXSLTFunctionCall::evaluate(txIEvalContext* aContext,
 
       return NS_OK;
     }
-    case txEXSLTType::DIFFERENCE:
+    case txEXSLTType::DIFFERENCE_:
     case txEXSLTType::INTERSECTION: {
       RefPtr<txNodeSet> nodes1;
       rv = evaluateToNodeSet(mParams[0], aContext, getter_AddRefs(nodes1));
@@ -440,8 +442,8 @@ nsresult txEXSLTFunctionCall::evaluate(txIEvalContext* aContext,
       Document* sourceDoc = getSourceDocument(aContext);
       NS_ENSURE_STATE(sourceDoc);
 
-      RefPtr<DocumentFragment> docFrag =
-          new DocumentFragment(sourceDoc->NodeInfoManager());
+      RefPtr<DocumentFragment> docFrag = new (sourceDoc->NodeInfoManager())
+          DocumentFragment(sourceDoc->NodeInfoManager());
 
       RefPtr<txNodeSet> resultSet;
       rv = aContext->recycler()->getNodeSet(getter_AddRefs(resultSet));
@@ -683,10 +685,10 @@ nsresult txEXSLTRegExFunctionCall::evaluate(txIEvalContext* aContext,
       rv = aContext->recycler()->getNodeSet(getter_AddRefs(resultSet));
       NS_ENSURE_SUCCESS(rv, rv);
 
-      nsAutoPtr<txXPathNode> node;
+      UniquePtr<txXPathNode> node;
       for (nsIContent* result = docFrag->GetFirstChild(); result;
            result = result->GetNextSibling()) {
-        node = txXPathNativeNode::createXPathNode(result, true);
+        node = WrapUnique(txXPathNativeNode::createXPathNode(result, true));
         rv = resultSet->add(*node);
         NS_ENSURE_SUCCESS(rv, rv);
       }
@@ -793,7 +795,7 @@ extern bool TX_InitEXSLTFunction() {
 
   EXSLT_FUNCS(
       "http://exslt.org/sets", txEXSLTFunctionCall,
-      (DIFFERENCE, 2, 2, Expr::NODESET_RESULT, nsGkAtoms::difference),
+      (DIFFERENCE_, 2, 2, Expr::NODESET_RESULT, nsGkAtoms::difference),
       (DISTINCT, 1, 1, Expr::NODESET_RESULT, nsGkAtoms::distinct),
       (HAS_SAME_NODE, 2, 2, Expr::BOOLEAN_RESULT, nsGkAtoms::hasSameNode),
       (INTERSECTION, 2, 2, Expr::NODESET_RESULT, nsGkAtoms::intersection),

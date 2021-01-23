@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Lethbhreacan ⁊ pasganan">
+<!ENTITY sendingPrefix.label "Nuair a chuireas mi teachdaireachd, dèan na leanas a ghnàth: ">
+<!ENTITY fccMailFolder.label "Cuir lethbhreac ann an:">
+<!ENTITY fccMailFolder.accesskey "C">
+<!ENTITY fccReplyFollowsParent.label "Cuir na freagairtean sa phasgan far a bheil an teachdaireachd a tha mi a' toirt freagairt dhi">
+<!ENTITY fccReplyFollowsParent.accesskey "C">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cuir Cc dha na seòlaidhean a leanas:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Sgar seòlaidhean le cromagan">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Cuir Bcc dha na seòlaidhean a leanas:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Sgar seòlaidhean le cromagan">
+<!ENTITY saveMessageDlg.label "Seall an conaltradh dearbhachaidh nuair a thèid teachdaireachdan a shàbhaladh">
+<!ENTITY saveMessageDlg.accesskey "S">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Pasgan a&apos; phuist &quot;chuirte&quot; anns:">
+<!ENTITY sentFolderOn.accesskey "s">
+<!ENTITY sentInOtherFolder.label "Eile:">
+<!ENTITY sentInOtherFolder.accesskey "E">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Tasg-lannan nan teachdaireachdan">
+<!ENTITY keepArchives.label "Cum tasg-lannan de theachdaireachdan ann an:">
+<!ENTITY keepArchives.accesskey "C">
+<!ENTITY archiveHierarchyButton.label "Roghainnean nan tasg-lannan…">
+<!ENTITY archiveHierarchyButton.accesskey "a">
+<!ENTITY archivesFolderOn.label "Pasgan nan &quot;tasg-lann&quot; air:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "Eile:">
+<!ENTITY archiveInOtherFolder.accesskey "E">
+<!ENTITY specialFolders.label "Dreachdan, tasg-lannan is teamplaidean">
+<!ENTITY keepDrafts2.label "Cum dreachdan an-seo:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Pasgan nan &quot;dreachdan&quot; anns:">
+<!ENTITY draftsFolderOn.accesskey "d">
+<!ENTITY draftInOtherFolder.label "Eile:">
+<!ENTITY draftInOtherFolder.accesskey "E">
+<!ENTITY keepTemplates.label "Cum teamplaidean de theachdaireachdan ann an:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Pasgan nan &quot;teamplaid&quot; air:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Eile:">
+<!ENTITY templateInOtherFolder.accesskey "E">

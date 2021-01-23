@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Дневник на нежеланата поща">
+<!ENTITY adaptiveJunkLogInfo.label "Журнал за действията при разпознаване на нежелана поща.">
+<!ENTITY clearLog.label "Изчистване на журнала">
+<!ENTITY clearLog.accesskey "И">
+<!ENTITY closeLog.label "Затваряне">
+<!ENTITY closeLog.accesskey "З">

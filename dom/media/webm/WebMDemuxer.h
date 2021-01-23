@@ -3,17 +3,17 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-#if !defined(WebMDemuxer_h_)
-#  define WebMDemuxer_h_
+#ifndef WebMDemuxer_h_
+#define WebMDemuxer_h_
 
-#  include "nsTArray.h"
-#  include "MediaDataDemuxer.h"
-#  include "MediaResource.h"
-#  include "NesteggPacketHolder.h"
-#  include "mozilla/Move.h"
+#include "nsTArray.h"
+#include "MediaDataDemuxer.h"
+#include "MediaResource.h"
+#include "NesteggPacketHolder.h"
 
-#  include <deque>
-#  include <stdint.h>
+#include <deque>
+#include <stdint.h>
+#include <utility>
 
 typedef struct nestegg nestegg;
 
@@ -47,13 +47,13 @@ class MediaRawDataQueue {
   }
 
   already_AddRefed<MediaRawData> PopFront() {
-    RefPtr<MediaRawData> result = mQueue.front().forget();
+    RefPtr<MediaRawData> result = std::move(mQueue.front());
     mQueue.pop_front();
     return result.forget();
   }
 
   already_AddRefed<MediaRawData> Pop() {
-    RefPtr<MediaRawData> result = mQueue.back().forget();
+    RefPtr<MediaRawData> result = std::move(mQueue.back());
     mQueue.pop_back();
     return result.forget();
   }
@@ -64,10 +64,7 @@ class MediaRawDataQueue {
     }
   }
 
-  MediaRawDataQueue& operator=(const MediaRawDataQueue& aOther) {
-    mQueue = aOther.mQueue;
-    return *this;
-  }
+  MediaRawDataQueue& operator=(const MediaRawDataQueue& aOther) = delete;
 
   const RefPtr<MediaRawData>& First() const { return mQueue.front(); }
 
@@ -121,7 +118,7 @@ class WebMDemuxer : public MediaDataDemuxer,
   nsresult GetNextPacket(TrackInfo::TrackType aType,
                          MediaRawDataQueue* aSamples);
 
-  nsresult Reset(TrackInfo::TrackType aType);
+  void Reset(TrackInfo::TrackType aType);
 
   // Pushes a packet to the front of the audio packet queue.
   void PushAudioPacket(NesteggPacketHolder* aItem);
@@ -267,7 +264,7 @@ class WebMTrackDemuxer : public MediaTrackDemuxer,
  private:
   friend class WebMDemuxer;
   ~WebMTrackDemuxer();
-  void UpdateSamples(nsTArray<RefPtr<MediaRawData>>& aSamples);
+  void UpdateSamples(const nsTArray<RefPtr<MediaRawData>>& aSamples);
   void SetNextKeyFrameTime();
   nsresult NextSample(RefPtr<MediaRawData>& aData);
   RefPtr<WebMDemuxer> mParent;

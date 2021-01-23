@@ -2,9 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-@import "chrome://global/skin/";
-
-%include ../../../toolkit/themes/osx/global/shared.inc
+@import "chrome://global/skin/global.css";
+@namespace html url("http://www.w3.org/1999/xhtml");
 
 #topBar {
   -moz-appearance: toolbar;
@@ -23,7 +22,6 @@
   -moz-box-align: center;
   -moz-appearance: toolbarbutton;
   font: menu;
-  text-shadow: @loweredShadow@;
   margin: 0;
   padding: 0 6px;
   height: 22px;
@@ -44,19 +42,13 @@ tree {
   margin: .5em;
 }
 
-.gridSeparator {
-  width: .5em;
-}
-
-textbox {
-  background: transparent !important;
+html|input {
+  background: transparent;
   border: none;
   padding: 0;
-  margin-top: 1px;
-  -moz-appearance: none;
 }
 
-textbox.header {
+html|input.header {
   margin-inline-start: 0;
 }
 
@@ -67,7 +59,7 @@ textbox.header {
   border: 1px solid ThreeDLightShadow;
 }
 
-textbox[disabled] {
+html|input:disabled {
   font-style: italic;
 }
 
@@ -92,8 +84,8 @@ textbox[disabled] {
   background: none;
 }
 
-#mediaGrid {
-  min-height: 9em;
+#mediaTable {
+  margin-bottom: 2em;
 }
 
 #mediaLabelColumn {
@@ -134,10 +126,6 @@ treechildren::-moz-tree-cell-text(broken) {
 
 /* Security Tab */
 
-#securityPanel grid {
+#securityPanel table {
   margin-bottom: 1em;
-}
-
-#securityPanel row {
-  -moz-box-align: center;
 }

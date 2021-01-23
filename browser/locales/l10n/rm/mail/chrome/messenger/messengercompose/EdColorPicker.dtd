@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Colur">
+<!ENTITY lastPickedColor.label "Colur tschernida l'ulitma giada">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY chooseColor1.label "Tscherna ina colur:">
+<!ENTITY chooseColor2.label "Endatar in code da colur HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(p.ex.: &quot;#0000ff&quot; u &quot;blue&quot;):">
+<!ENTITY default.label "Standard">
+<!ENTITY default.accessKey "S">
+<!ENTITY palette.label "Paletta:">
+<!ENTITY standardPalette.label "Standard">
+<!ENTITY webPalette.label "Tut las colurs da web">
+<!ENTITY background.label "Fund davos da la:">
+<!ENTITY background.accessKey "F">
+<!ENTITY table.label "Tabella">
+<!ENTITY table.accessKey "t">
+<!ENTITY cell.label "Cella(s)">
+<!ENTITY cell.accessKey "C">

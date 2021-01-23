@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "પાનાંના ગુણધર્મો">
+<!ENTITY location.label "સ્થાન:">
+<!ENTITY lastModified.label "છેલ્લે સુધારાયેલ:">
+<!ENTITY titleInput.label "શીર્ષક:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "લેખક:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "વર્ણન:">
+<!ENTITY descriptionInput.accessKey "D">
+<!ENTITY locationNewPage.label "[નવું પાનું, હજુ સંગ્રહાયેલ નથી]">
+<!ENTITY EditHEADSource1.label "અદ્યતન વપરાશકર્તાઓ:">
+<!ENTITY EditHEADSource2.label "&lt;હેડ&gt; વિસ્તારના અન્ય સમાવિષ્ટોમાં ફેરફાર કરવા માટે, દેખાવ મેનુ અથવા સંપાદન સ્થિતિ સાધનપટ્ટીમાં &quot;HTML સ્રોત&quot; વાપરો.">

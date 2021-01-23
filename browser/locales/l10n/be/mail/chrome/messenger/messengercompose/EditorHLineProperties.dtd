@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY windowTitle.label "Уласцівасці гарызантальнай рыскі">
+
+<!ENTITY dimensionsBox.label "Вымярэнні">
+<!ENTITY heightEditField.label "Вышыня">
+<!ENTITY heightEditField.accessKey "В">
+<!ENTITY widthEditField.label "Шырыня:">
+<!ENTITY widthEditField.accessKey "Ш">
+<!ENTITY pixelsPopup.value "пікселяў">
+<!ENTITY alignmentBox.label "Выраўноўванне">
+<!ENTITY leftRadio.label "Улева">
+<!ENTITY leftRadio.accessKey "л">
+<!ENTITY centerRadio.label "Пасярэдзіне">
+<!ENTITY centerRadio.accessKey "с">
+<!ENTITY rightRadio.label "Направа">
+<!ENTITY rightRadio.accessKey "п">
+
+<!ENTITY threeDShading.label "3-М зацяненне">
+<!ENTITY threeDShading.accessKey "ц">
+<!ENTITY saveSettings.label "Ужываць як змоўчную">
+<!ENTITY saveSettings.accessKey "З">
+<!ENTITY saveSettings.tooltip "Захаваць гэтыя наладжванні для ўстаўкі новых гарызантальных рысак">

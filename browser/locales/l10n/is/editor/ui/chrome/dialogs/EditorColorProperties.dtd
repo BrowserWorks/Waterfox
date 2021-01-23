@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Litir síðu og bakgrunnur">
+<!ENTITY pageColors.label "Litir síðu">
+<!ENTITY defaultColorsRadio.label "Sjálfgefnir litir lesara (Ekki breyta litum í síðu)">
+<!ENTITY defaultColorsRadio.accessKey "S">
+<!ENTITY defaultColorsRadio.tooltip "Nota litastillingar aðeins frá vafra">
+<!ENTITY customColorsRadio.label "Nota sérsniðna liti:">
+<!ENTITY customColorsRadio.accessKey "o">
+<!ENTITY customColorsRadio.tooltip "Þessar litastillingar hafa forgang yfir stillingar vafra">
+<!ENTITY normalText.label "Venjulegur texti">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Texti tengils">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "Virkur texta tengill">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Heimsóttur texta tengill">
+<!ENTITY visitedLinkText.accessKey "H">
+<!ENTITY background.label "Bakgrunnur:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Bakgrunnsmynd:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "Nota mynd sem bakgrunn fyrir síðuna">

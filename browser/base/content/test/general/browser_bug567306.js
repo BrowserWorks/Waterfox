@@ -14,7 +14,7 @@ add_task(async function() {
       "pageshow",
       true,
       event => {
-        return content.location.href != "about:blank";
+        return event.target.location != "about:blank";
       }
     ).then(function pageshowListener() {
       ok(
@@ -33,7 +33,7 @@ add_task(async function() {
   ok(!newwindow.gFindBarInitialized, "find bar is not yet initialized");
   let findBar = await newwindow.gFindBarPromise;
 
-  await ContentTask.spawn(selectedBrowser, {}, async function() {
+  await SpecialPowers.spawn(selectedBrowser, [], async function() {
     let elt = content.document.getElementById("h1");
     let selection = content.getSelection();
     let range = content.document.createRange();

@@ -1,6 +1,8 @@
 load 448064.xhtml # This test instantiates a11y, so be careful about adding tests before it
-load 471493.xul
+load chrome://reftest/content/crashtests/accessible/tests/crashtests/471493.xhtml
 asserts-if(!browserIsRemote,2) load 884202.html
+load 1572811.html
+load 1578282.html
 load 890760.html
 load 893515.html
 load 1072792.xhtml
@@ -10,7 +12,9 @@ load 1463962.html
 load 1484778.html
 load 1494707.html
 load 1503964.html
+load 1415667.html
+load 1585851.html
 
-# last_test_to_unload_testsuite.xul MUST be the last test in the list because it
+# last_test_to_unload_testsuite.xhtml MUST be the last test in the list because it
 # is responsible for shutting down accessibility service affecting later tests.
-skip-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)&&/^aarch64-msvc/.test(xulRuntime.XPCOMABI)) load last_test_to_unload_testsuite.xul
+skip-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)&&/^aarch64-msvc/.test(xulRuntime.XPCOMABI)) load chrome://reftest/content/crashtests/accessible/tests/crashtests/last_test_to_unload_testsuite.xhtml

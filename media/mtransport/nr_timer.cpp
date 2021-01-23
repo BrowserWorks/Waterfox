@@ -60,6 +60,7 @@
 #include "nsNetCID.h"
 #include "runnable_utils.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/UniquePtr.h"
 
 extern "C" {
 #include "nr_api.h"
@@ -72,7 +73,7 @@ class nrappkitCallback {
  public:
   nrappkitCallback(NR_async_cb cb, void* cb_arg, const char* function, int line)
       : cb_(cb), cb_arg_(cb_arg), function_(function), line_(line) {}
-  virtual ~nrappkitCallback() {}
+  virtual ~nrappkitCallback() = default;
 
   virtual void Cancel() = 0;
 
@@ -114,7 +115,7 @@ class nrappkitTimerCallback : public nrappkitCallback,
 
  private:
   nsCOMPtr<nsITimer> timer_;
-  virtual ~nrappkitTimerCallback() {}
+  virtual ~nrappkitTimerCallback() = default;
 };
 
 NS_IMPL_ISUPPORTS(nrappkitTimerCallback, nsITimerCallback, nsINamed)
@@ -144,7 +145,7 @@ class nrappkitScheduledCallback : public nrappkitCallback {
 
   virtual void Cancel() override { cb_ = nullptr; }
 
-  ~nrappkitScheduledCallback() {}
+  ~nrappkitScheduledCallback() = default;
 };
 
 }  // namespace mozilla
@@ -176,7 +177,7 @@ static int nr_async_timer_set_zero(NR_async_cb cb, void* arg, char* func, int l,
       new nrappkitScheduledCallback(cb, arg, func, l));
 
   nsresult rv = GetSTSThread()->Dispatch(
-      WrapRunnable(nsAutoPtr<nrappkitScheduledCallback>(callback),
+      WrapRunnable(UniquePtr<nrappkitScheduledCallback>(callback),
                    &nrappkitScheduledCallback::Run),
       NS_DISPATCH_NORMAL);
   if (NS_FAILED(rv)) return R_FAILED;

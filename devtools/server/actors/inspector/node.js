@@ -8,8 +8,8 @@ const { Cu } = require("chrome");
 const Services = require("Services");
 const InspectorUtils = require("InspectorUtils");
 const protocol = require("devtools/shared/protocol");
+const { PSEUDO_CLASSES } = require("devtools/shared/css/constants");
 const { nodeSpec, nodeListSpec } = require("devtools/shared/specs/node");
-
 loader.lazyRequireGetter(
   this,
   "getCssPath",
@@ -25,6 +25,12 @@ loader.lazyRequireGetter(
 loader.lazyRequireGetter(
   this,
   "findCssSelector",
+  "devtools/shared/inspector/css-logic",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "findAllCssSelectors",
   "devtools/shared/inspector/css-logic",
   true
 );
@@ -67,12 +73,6 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
-  "isShadowAnonymous",
-  "devtools/shared/layout/utils",
-  true
-);
-loader.lazyRequireGetter(
-  this,
   "isShadowHost",
   "devtools/shared/layout/utils",
   true
@@ -91,7 +91,7 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
-  "isXBLAnonymous",
+  "isRemoteFrame",
   "devtools/shared/layout/utils",
   true
 );
@@ -137,12 +137,17 @@ loader.lazyRequireGetter(
   "devtools/server/actors/inspector/utils",
   true
 );
+loader.lazyRequireGetter(
+  this,
+  "DOMHelpers",
+  "devtools/shared/dom-helpers",
+  true
+);
 
 const SUBGRID_ENABLED = Services.prefs.getBoolPref(
   "layout.css.grid-template-subgrid-value.enabled"
 );
 
-const PSEUDO_CLASSES = [":hover", ":active", ":focus", ":focus-within"];
 const FONT_FAMILY_PREVIEW_TEXT = "The quick brown fox jumps over the lazy dog";
 const FONT_FAMILY_PREVIEW_TEXT_SIZE = 20;
 
@@ -243,23 +248,36 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
       isAfterPseudoElement: isAfterPseudoElement(this.rawNode),
       isAnonymous: isAnonymous(this.rawNode),
       isNativeAnonymous: isNativeAnonymous(this.rawNode),
-      isXBLAnonymous: isXBLAnonymous(this.rawNode),
-      isShadowAnonymous: isShadowAnonymous(this.rawNode),
       isShadowRoot: shadowRoot,
       shadowRootMode: getShadowRootMode(this.rawNode),
       isShadowHost: isShadowHost(this.rawNode),
       isDirectShadowHostChild: isDirectShadowHostChild(this.rawNode),
       pseudoClassLocks: this.writePseudoClassLocks(),
+      mutationBreakpoints: this.walker.getMutationBreakpoints(this),
 
       isDisplayed: this.isDisplayed,
       isInHTMLDocument:
         this.rawNode.ownerDocument &&
         this.rawNode.ownerDocument.contentType === "text/html",
       hasEventListeners: this._hasEventListeners,
+      traits: {
+        // Added in FF72
+        supportsGetAllSelectors: true,
+        // Added in FF72
+        supportsWaitForFrameLoad: true,
+      },
     };
 
     if (this.isDocumentElement()) {
       form.isDocumentElement = true;
+    }
+
+    // Flag the remote frame and declare at least one child (the #document element) so
+    // that they can be expanded.
+    if (this.isRemoteFrame) {
+      form.remoteFrame = true;
+      form.numChildren = 1;
+      form.browsingContextID = this.rawNode.browsingContext.id;
     }
 
     return form;
@@ -294,6 +312,17 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
     this.rawNode.addEventListener("slotchange", this.slotchangeListener);
   },
 
+  /**
+   * Check if the current node is representing a remote frame.
+   * In the context of the browser toolbox, a remote frame can be the <browser remote>
+   * element found inside each tab.
+   * In the context of the content toolbox, a remote frame can be a <iframe> that contains
+   * a different origin document.
+   */
+  get isRemoteFrame() {
+    return isRemoteFrame(this.rawNode);
+  },
+
   // Estimate the number of children that the walker will return without making
   // a call to children() if possible.
   get numChildren() {
@@ -309,10 +338,6 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
 
     const rawNode = this.rawNode;
     let numChildren = rawNode.childNodes.length;
-    const hasAnonChildren =
-      rawNode.nodeType === Node.ELEMENT_NODE &&
-      rawNode.ownerDocument.getAnonymousNodes(rawNode);
-
     const hasContentDocument = rawNode.contentDocument;
     const hasSVGDocument = rawNode.getSVGDocument && rawNode.getSVGDocument();
     if (numChildren === 0 && (hasContentDocument || hasSVGDocument)) {
@@ -322,11 +347,13 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
 
     // Normal counting misses ::before/::after.  Also, some anonymous children
     // may ultimately be skipped, so we have to consult with the walker.
+    //
+    // FIXME: We should be able to just check <slot> rather than
+    // containingShadowRoot.
     if (
       numChildren === 0 ||
-      hasAnonChildren ||
       isShadowHost(this.rawNode) ||
-      isShadowAnonymous(this.rawNode)
+      this.rawNode.containingShadowRoot
     ) {
       numChildren = this.walker.countChildren(this);
     }
@@ -368,8 +395,8 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
     if (
       SUBGRID_ENABLED &&
       (display === "grid" || display === "inline-grid") &&
-      (style.gridTemplateRows === "subgrid" ||
-        style.gridTemplateColumns === "subgrid")
+      (style.gridTemplateRows.startsWith("subgrid") ||
+        style.gridTemplateColumns.startsWith("subgrid"))
     ) {
       display = "subgrid";
     }
@@ -428,7 +455,7 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
   get _hasEventListeners() {
     // We need to pass a debugger instance from this compartment because
     // otherwise we can't make use of it inside the event-collector module.
-    const dbg = this.parent().targetActor.makeDebugger();
+    const dbg = this.getParent().targetActor.makeDebugger();
     return this._eventCollector.hasEventListeners(this.rawNode, dbg);
   },
 
@@ -491,7 +518,25 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
     }
     // Create debugger object for the customElement function.
     const global = Cu.getGlobalForObject(customElement);
-    const dbg = this.parent().targetActor.makeDebugger();
+
+    const dbg = this.getParent().targetActor.makeDebugger();
+
+    // If we hit a <browser> element of Firefox, its global will be the chrome window
+    // which is system principal and will be in the same compartment as the debuggee.
+    // For some reason, this happens when we run the content toolbox. As for the content
+    // toolboxes, the modules are loaded in the same compartment as the <browser> element,
+    // this throws as the debugger can _not_ be in the same compartment as the debugger.
+    // This happens when we toggle fission for content toolbox because we try to reparent
+    // the Walker of the tab. This happens because we do not detect in Walker.reparentRemoteFrame
+    // that the target of the tab is the top level. That's because the target is a FrameTargetActor
+    // which is retrieved via Node.getEmbedderElement and doesn't return the LocalTabTargetActor.
+    // We should probably work on TabDescriptor so that the LocalTabTargetActor has a descriptor,
+    // and see if we can possibly move the local tab specific out of the TargetActor and have
+    // the TabDescriptor expose a pure FrameTargetActor?? (See bug 1579042)
+    if (Cu.getObjectPrincipal(global) == Cu.getObjectPrincipal(dbg)) {
+      return undefined;
+    }
+
     const globalDO = dbg.addDebuggee(global);
     const customElementDO = globalDO.makeDebuggeeValue(customElement);
 
@@ -503,6 +548,7 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
     return {
       url: customElementDO.script.url,
       line: customElementDO.script.startLine,
+      column: customElementDO.script.startColumn,
     };
   },
 
@@ -525,9 +571,20 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
    */
   getUniqueSelector: function() {
     if (Cu.isDeadWrapper(this.rawNode)) {
-      return "";
+      return [];
     }
     return findCssSelector(this.rawNode);
+  },
+
+  /**
+   * Get the full array of selectors from the topmost document, going through
+   * iframes.
+   */
+  getAllSelectors: function() {
+    if (Cu.isDeadWrapper(this.rawNode)) {
+      return "";
+    }
+    return findAllCssSelectors(this.rawNode);
   },
 
   /**
@@ -616,13 +673,13 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
           rawNode.removeAttribute(change.attributeName);
         }
       } else if (change.attributeNamespace) {
-        rawNode.setAttributeNS(
+        rawNode.setAttributeDevtoolsNS(
           change.attributeNamespace,
           change.attributeName,
           change.newValue
         );
       } else {
-        rawNode.setAttribute(change.attributeName, change.newValue);
+        rawNode.setAttributeDevtools(change.attributeName, change.newValue);
       }
     }
   },
@@ -659,6 +716,19 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
   },
 
   /**
+   * Finds the background color range for the parent of a single text node
+   * (i.e. for multi-colored backgrounds with gradients, images) or a single
+   * background color for single-colored backgrounds. Defaults to the closest
+   * background color if an error is encountered.
+   *
+   * @return {Object}
+   *         Object with one or more of the following properties: value, min, max
+   */
+  getBackgroundColor: function() {
+    return InspectorActorUtils.getBackgroundColor(this);
+  },
+
+  /**
    * Returns an object with the width and height of the node's owner window.
    *
    * @return {Object}
@@ -669,6 +739,22 @@ const NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
       innerWidth: win.innerWidth,
       innerHeight: win.innerHeight,
     };
+  },
+
+  /**
+   * If the current node is an iframe, wait for the content window to be loaded.
+   */
+  async waitForFrameLoad() {
+    if (Cu.isDeadWrapper(this.rawNode)) {
+      return;
+    }
+
+    const { contentDocument, contentWindow } = this.rawNode;
+    if (contentDocument && contentDocument.readyState !== "complete") {
+      await new Promise(resolve => {
+        DOMHelpers.onceDOMReady(contentWindow, resolve);
+      });
+    }
   },
 });
 

@@ -16,12 +16,11 @@ MIDL_GENERATED_FILES = \
 # midl targets to avoid timestamp caching issues.
 $(MIDL_GENERATED_FILES): done_gen ;
 
-done_gen: ISimpleDOM.idl \
-          ISimpleDOMNode.idl \
-          ISimpleDOMDocument.idl \
-          ISimpleDOMText.idl
-
-	$(MIDL) $(MIDL_FLAGS) -I $(srcdir) -robust -Oicf $(srcdir)/ISimpleDOM.idl
+done_gen: $(srcdir)/ISimpleDOM.idl \
+          $(srcdir)/ISimpleDOMNode.idl \
+          $(srcdir)/ISimpleDOMDocument.idl \
+          $(srcdir)/ISimpleDOMText.idl
+	$(call WINEWRAP,$(MIDL)) $(MIDL_FLAGS) -I $(srcdir_rel) -robust -Oicf $(srcdir_rel)/ISimpleDOM.idl
 	touch $@
 
 export:: done_gen

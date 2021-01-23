@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Allontanar il conto e las datas">
+<!ENTITY removeButton.label           "Allontanar">
+<!ENTITY removeButton.accesskey       "A">
+<!ENTITY removeAccount.label          "Allontanar las infurmaziuns dal conto">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Questa acziun stizza mo las datas da &brandShortName; davart quest conto. Quai na pertutga betg il conto sco tal sin il server.">
+<!ENTITY removeData.label             "Stizzar las datas dals messadis">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Stizzar las datas da las conversaziuns">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Stizza tut ils messadis, ordinaturs e filters associads cun quest conto da tes disc dir local. Quai na pertutga betg tscherts messadis che restan eventualmain sin il server. Na tscherna betg questa opziun sche ti vuls archivar las datas localas u las reutilisar pli tard en &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Stizza tut ils messadis, ordinaturs e filters associads cun quest conto da tes disc dir local. Tes messadis ed ordinaturs restan preservads sin il server.">
+<!ENTITY removeDataChatAccount.desc   "Stizza tut las registraziuns da conversaziuns memorisadas sin tes disc dir local ch'èn associadas cun quest conto.">
+<!ENTITY showData.label               "Mussar la posiziun da las datas">
+<!ENTITY showData.accesskey           "s">
+<!ENTITY progressPending              "Stizzar las datas tschernidas…">
+<!ENTITY progressSuccess              "Stizzà cun success.">
+<!ENTITY progressFailure              "Betg reussì da stizzar.">

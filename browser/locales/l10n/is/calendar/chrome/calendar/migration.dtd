@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Gagnainnflutningur">
+<!ENTITY migration.welcome "Velkominn">
+<!ENTITY migration.importing "Innflutningur">
+<!ENTITY migration.list.description "&brandShortName; getur flutt inn gögn frá mörgum þekktum forritum. Gögn frá eftirfarandi forritum fundust á tölvunni. Veldu hvað af þessu þú vilt flytja inn.">
+<!ENTITY migration.progress.description "Flytja inn valin gögn">

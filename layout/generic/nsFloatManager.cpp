@@ -18,6 +18,8 @@
 #include "nsBlockFrame.h"
 #include "nsDeviceContext.h"
 #include "nsError.h"
+#include "nsIFrame.h"
+#include "nsIFrameInlines.h"
 #include "nsImageRenderer.h"
 #include "nsMemory.h"
 
@@ -49,7 +51,7 @@ nsFloatManager::nsFloatManager(PresShell* aPresShell, WritingMode aWM)
 nsFloatManager::~nsFloatManager() { MOZ_COUNT_DTOR(nsFloatManager); }
 
 // static
-void* nsFloatManager::operator new(size_t aSize) CPP_THROW_NEW {
+void* nsFloatManager::operator new(size_t aSize) noexcept(true) {
   if (sCachedFloatManagerCount > 0) {
     // We have cached unused instances of this class, return a cached
     // instance in stead of always creating a new one.
@@ -333,7 +335,7 @@ void nsFloatManager::StoreRegionFor(WritingMode aWM, nsIFrame* aFloat,
   nsRect region = aRegion.GetPhysicalRect(aWM, aContainerSize);
   nsRect rect = aFloat->GetRect();
   if (region.IsEqualEdges(rect)) {
-    aFloat->DeleteProperty(FloatRegionProperty());
+    aFloat->RemoveProperty(FloatRegionProperty());
   } else {
     nsMargin* storedMargin = aFloat->GetProperty(FloatRegionProperty());
     if (!storedMargin) {
@@ -454,6 +456,9 @@ nsresult nsFloatManager::List(FILE* out) const {
 nscoord nsFloatManager::ClearFloats(nscoord aBCoord, StyleClear aBreakType,
                                     uint32_t aFlags) const {
   if (!(aFlags & DONT_CLEAR_PUSHED_FLOATS) && ClearContinues(aBreakType)) {
+    // FIXME bug 1574046. This makes no sense! we set aState.mBCoord from this
+    // result which will eventually make our parent's size nscoord_MAX!
+    // This is wallpapered over in nsBlockFrame::ComputeFinalSize for now...
     return nscoord_MAX;
   }
   if (!HasAnyFloats()) {
@@ -498,7 +503,7 @@ bool nsFloatManager::ClearContinues(StyleClear aBreakType) const {
 //
 class nsFloatManager::ShapeInfo {
  public:
-  virtual ~ShapeInfo() {}
+  virtual ~ShapeInfo() = default;
 
   virtual nscoord LineLeft(const nscoord aBStart,
                            const nscoord aBEnd) const = 0;
@@ -519,8 +524,7 @@ class nsFloatManager::ShapeInfo {
   // Translate the current origin by the specified offsets.
   virtual void Translate(nscoord aLineLeft, nscoord aBlockStart) = 0;
 
-  static LogicalRect ComputeShapeBoxRect(const StyleShapeSource& aShapeOutside,
-                                         nsIFrame* const aFrame,
+  static LogicalRect ComputeShapeBoxRect(StyleShapeBox, nsIFrame* const aFrame,
                                          const LogicalRect& aMarginRect,
                                          WritingMode aWM);
 
@@ -564,7 +568,7 @@ class nsFloatManager::ShapeInfo {
                                             WritingMode aWM,
                                             const nsSize& aContainerSize);
 
-  static UniquePtr<ShapeInfo> CreateImageShape(const nsStyleImage& aShapeImage,
+  static UniquePtr<ShapeInfo> CreateImageShape(const StyleImage& aShapeImage,
                                                float aShapeImageThreshold,
                                                nscoord aShapeMargin,
                                                nsIFrame* const aFrame,
@@ -1259,14 +1263,14 @@ class nsFloatManager::PolygonShapeInfo final
 
 nsFloatManager::PolygonShapeInfo::PolygonShapeInfo(
     nsTArray<nsPoint>&& aVertices)
-    : mVertices(aVertices) {
+    : mVertices(std::move(aVertices)) {
   ComputeExtent();
 }
 
 nsFloatManager::PolygonShapeInfo::PolygonShapeInfo(
     nsTArray<nsPoint>&& aVertices, nscoord aShapeMargin,
     int32_t aAppUnitsPerDevPixel, const nsRect& aMarginRect)
-    : mVertices(aVertices) {
+    : mVertices(std::move(aVertices)) {
   MOZ_ASSERT(aShapeMargin > 0,
              "This constructor should only be used for a "
              "polygon with a positive shape-margin.");
@@ -2202,12 +2206,8 @@ void nsFloatManager::ImageShapeInfo::CreateInterval(
     // constructed. We add 1 to aB to capture the end of the block axis pixel.
     origin.MoveBy(aIMin * aAppUnitsPerDevPixel,
                   (aB + 1) * -aAppUnitsPerDevPixel);
-  } else if (aWM.IsVerticalLR() && !aWM.IsLineInverted()) {
-    // sideways-lr.
-    // Checking IsLineInverted is the only reliable way to distinguish
-    // vertical-lr from sideways-lr. IsSideways and IsInlineReversed are both
-    // affected by bidi and text-direction, and so complicate detection.
-    // These writing modes proceed from the bottom left, and each interval
+  } else if (aWM.IsSidewaysLR()) {
+    // This writing mode proceeds from the bottom left, and each interval
     // moves in a negative inline direction and a positive block direction.
     // We add 1 to aIMax to capture the end of the inline axis pixel.
     origin.MoveBy((aIMax + 1) * -aAppUnitsPerDevPixel,
@@ -2256,6 +2256,7 @@ nsFloatManager::FloatInfo::FloatInfo(nsIFrame* aFrame, nscoord aLineLeft,
       mRect(ShapeInfo::ConvertToFloatLogical(aMarginRect, aWM, aContainerSize) +
             nsPoint(aLineLeft, aBlockStart)) {
   MOZ_COUNT_CTOR(nsFloatManager::FloatInfo);
+  using ShapeOutsideType = StyleShapeOutside::Tag;
 
   if (IsEmpty()) {
     // Per spec, a float area defined by a shape is clipped to the float’s
@@ -2268,31 +2269,23 @@ nsFloatManager::FloatInfo::FloatInfo(nsIFrame* aFrame, nscoord aLineLeft,
   }
 
   const nsStyleDisplay* styleDisplay = mFrame->StyleDisplay();
-  const StyleShapeSource& shapeOutside = styleDisplay->mShapeOutside;
+  const auto& shapeOutside = styleDisplay->mShapeOutside;
 
-  nscoord shapeMargin = (shapeOutside.GetType() == StyleShapeSourceType::None)
+  nscoord shapeMargin = shapeOutside.IsNone()
                             ? 0
                             : nsLayoutUtils::ResolveToLength<true>(
                                   styleDisplay->mShapeMargin,
                                   LogicalSize(aWM, aContainerSize).ISize(aWM));
 
-  switch (shapeOutside.GetType()) {
-    case StyleShapeSourceType::None:
+  switch (shapeOutside.tag) {
+    case ShapeOutsideType::None:
       // No need to create shape info.
       return;
 
-    case StyleShapeSourceType::URL:
-      MOZ_ASSERT_UNREACHABLE("shape-outside doesn't have URL source type!");
-      return;
-
-    case StyleShapeSourceType::Path:
-      MOZ_ASSERT_UNREACHABLE("shape-outside doesn't have Path source type!");
-      return;
-
-    case StyleShapeSourceType::Image: {
+    case ShapeOutsideType::Image: {
       float shapeImageThreshold = styleDisplay->mShapeImageThreshold;
       mShapeInfo = ShapeInfo::CreateImageShape(
-          shapeOutside.ShapeImage(), shapeImageThreshold, shapeMargin, mFrame,
+          shapeOutside.AsImage(), shapeImageThreshold, shapeMargin, mFrame,
           aMarginRect, aWM, aContainerSize);
       if (!mShapeInfo) {
         // Image is not ready, or fails to load, etc.
@@ -2302,23 +2295,23 @@ nsFloatManager::FloatInfo::FloatInfo(nsIFrame* aFrame, nscoord aLineLeft,
       break;
     }
 
-    case StyleShapeSourceType::Box: {
+    case ShapeOutsideType::Box: {
       // Initialize <shape-box>'s reference rect.
       LogicalRect shapeBoxRect = ShapeInfo::ComputeShapeBoxRect(
-          shapeOutside, mFrame, aMarginRect, aWM);
+          shapeOutside.AsBox(), mFrame, aMarginRect, aWM);
       mShapeInfo = ShapeInfo::CreateShapeBox(mFrame, shapeMargin, shapeBoxRect,
                                              aWM, aContainerSize);
       break;
     }
 
-    case StyleShapeSourceType::Shape: {
-      const StyleBasicShape& basicShape = shapeOutside.BasicShape();
+    case ShapeOutsideType::Shape: {
+      const auto& shape = *shapeOutside.AsShape()._0;
       // Initialize <shape-box>'s reference rect.
       LogicalRect shapeBoxRect = ShapeInfo::ComputeShapeBoxRect(
-          shapeOutside, mFrame, aMarginRect, aWM);
-      mShapeInfo = ShapeInfo::CreateBasicShape(basicShape, shapeMargin, mFrame,
-                                               shapeBoxRect, aMarginRect, aWM,
-                                               aContainerSize);
+          shapeOutside.AsShape()._1, mFrame, aMarginRect, aWM);
+      mShapeInfo =
+          ShapeInfo::CreateBasicShape(shape, shapeMargin, mFrame, shapeBoxRect,
+                                      aMarginRect, aWM, aContainerSize);
       break;
     }
   }
@@ -2440,27 +2433,25 @@ bool nsFloatManager::FloatInfo::MayNarrowInBlockDirection(
 
 /* static */
 LogicalRect nsFloatManager::ShapeInfo::ComputeShapeBoxRect(
-    const StyleShapeSource& aShapeOutside, nsIFrame* const aFrame,
-    const LogicalRect& aMarginRect, WritingMode aWM) {
+    StyleShapeBox aBox, nsIFrame* const aFrame, const LogicalRect& aMarginRect,
+    WritingMode aWM) {
   LogicalRect rect = aMarginRect;
 
-  switch (aShapeOutside.GetReferenceBox()) {
-    case StyleGeometryBox::ContentBox:
+  switch (aBox) {
+    case StyleShapeBox::ContentBox:
       rect.Deflate(aWM, aFrame->GetLogicalUsedPadding(aWM));
-      MOZ_FALLTHROUGH;
-    case StyleGeometryBox::PaddingBox:
+      [[fallthrough]];
+    case StyleShapeBox::PaddingBox:
       rect.Deflate(aWM, aFrame->GetLogicalUsedBorder(aWM));
-      MOZ_FALLTHROUGH;
-    case StyleGeometryBox::BorderBox:
+      [[fallthrough]];
+    case StyleShapeBox::BorderBox:
       rect.Deflate(aWM, aFrame->GetLogicalUsedMargin(aWM));
       break;
-    case StyleGeometryBox::MarginBox:
+    case StyleShapeBox::MarginBox:
       // Do nothing. rect is already a margin rect.
       break;
-    case StyleGeometryBox::NoBox:
     default:
-      MOZ_ASSERT(aShapeOutside.GetType() != StyleShapeSourceType::Box,
-                 "Box source type must have <shape-box> specified!");
+      MOZ_ASSERT_UNREACHABLE("Unknown shape box");
       break;
   }
 
@@ -2668,16 +2659,15 @@ nsFloatManager::ShapeInfo::CreatePolygon(const StyleBasicShape& aBasicShape,
 }
 
 /* static */ UniquePtr<nsFloatManager::ShapeInfo>
-nsFloatManager::ShapeInfo::CreateImageShape(const nsStyleImage& aShapeImage,
+nsFloatManager::ShapeInfo::CreateImageShape(const StyleImage& aShapeImage,
                                             float aShapeImageThreshold,
                                             nscoord aShapeMargin,
                                             nsIFrame* const aFrame,
                                             const LogicalRect& aMarginRect,
                                             WritingMode aWM,
                                             const nsSize& aContainerSize) {
-  MOZ_ASSERT(
-      &aShapeImage == &aFrame->StyleDisplay()->mShapeOutside.ShapeImage(),
-      "aFrame should be the frame that we got aShapeImage from");
+  MOZ_ASSERT(&aShapeImage == &aFrame->StyleDisplay()->mShapeOutside.AsImage(),
+             "aFrame should be the frame that we got aShapeImage from");
 
   nsImageRenderer imageRenderer(aFrame, &aShapeImage,
                                 nsImageRenderer::FLAG_SYNC_DECODE_IMAGES);
@@ -2685,10 +2675,8 @@ nsFloatManager::ShapeInfo::CreateImageShape(const nsStyleImage& aShapeImage,
   if (!imageRenderer.PrepareImage()) {
     // The image is not ready yet.  Boost its loading priority since it will
     // affect layout.
-    if (aShapeImage.GetType() == eStyleImageType_Image) {
-      if (imgRequestProxy* req = aShapeImage.GetImageData()) {
-        req->BoostPriority(imgIRequest::CATEGORY_SIZE_QUERY);
-      }
+    if (imgRequestProxy* req = aShapeImage.GetImageRequest()) {
+      req->BoostPriority(imgIRequest::CATEGORY_SIZE_QUERY);
     }
     return nullptr;
   }

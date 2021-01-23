@@ -4,22 +4,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <stddef.h>
+
+#include <type_traits>
+#include <utility>
+
 #include "mozilla/Assertions.h"
-#include "mozilla/Move.h"
-#include "mozilla/Pair.h"
+#include "mozilla/CompactPair.h"
 #include "mozilla/Tuple.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
 
-#include <stddef.h>
-#include <utility>
-
+using mozilla::CompactPair;
 using mozilla::Get;
-using mozilla::IsSame;
 using mozilla::MakeTuple;
 using mozilla::MakeUnique;
-using mozilla::Pair;
 using mozilla::Tie;
 using mozilla::Tuple;
 using mozilla::UniquePtr;
@@ -34,8 +33,8 @@ using std::pair;
 
 // The second argument is the expected type. It's variadic to allow the
 // type to contain commas.
-#define CHECK_TYPE(expression, ...)                               \
-  static_assert(IsSame<decltype(expression), __VA_ARGS__>::value, \
+#define CHECK_TYPE(expression, ...)                                \
+  static_assert(std::is_same_v<decltype(expression), __VA_ARGS__>, \
                 "Type mismatch!")
 
 struct ConvertibleToInt {
@@ -81,8 +80,8 @@ static void TestConstruction() {
 static void TestConstructionFromMozPair() {
   // Construction from elements
   int x = 1, y = 1;
-  Pair<int, int> a{x, y};
-  Pair<int&, const int&> b{x, y};
+  CompactPair<int, int> a{x, y};
+  CompactPair<int&, const int&> b{x, y};
   Tuple<int, int> c(a);
   Tuple<int&, const int&> d(b);
   x = 42;
@@ -134,7 +133,7 @@ static void TestAssignment() {
 static void TestAssignmentFromMozPair() {
   // Copy assignment
   Tuple<int, int> a{0, 0};
-  Pair<int, int> b{42, 42};
+  CompactPair<int, int> b{42, 42};
   a = b;
   CHECK(Get<0>(a) == 42);
   CHECK(Get<1>(a) == 42);
@@ -144,7 +143,7 @@ static void TestAssignmentFromMozPair() {
   int j = 0;
   int k = 42;
   Tuple<int&, int&> c{i, j};
-  Pair<int&, int&> d{k, k};
+  CompactPair<int&, int&> d{k, k};
   c = d;
   CHECK(i == 42);
   CHECK(j == 42);
@@ -152,8 +151,8 @@ static void TestAssignmentFromMozPair() {
   // Move assignment
   Tuple<UniquePtr<int>, UniquePtr<int>> e{MakeUnique<int>(0),
                                           MakeUnique<int>(0)};
-  Pair<UniquePtr<int>, UniquePtr<int>> f{MakeUnique<int>(42),
-                                         MakeUnique<int>(42)};
+  CompactPair<UniquePtr<int>, UniquePtr<int>> f{MakeUnique<int>(42),
+                                                MakeUnique<int>(42)};
   e = std::move(f);
   CHECK(*Get<0>(e) == 42);
   CHECK(*Get<1>(e) == 42);
@@ -230,6 +229,32 @@ static void TestMakeTuple() {
   CHECK(Get<0>(tuple2) == 1);
 }
 
+static bool TestTieMozPair() {
+  int i;
+  float f;
+  char c;
+  Tuple<int, float, char> rhs1(42, 0.5f, 'c');
+  Tie(i, f, c) = rhs1;
+  CHECK(i == Get<0>(rhs1));
+  CHECK(f == Get<1>(rhs1));
+  CHECK(c == Get<2>(rhs1));
+  // Test conversions
+  Tuple<ConvertibleToInt, double, unsigned char> rhs2(ConvertibleToInt(), 0.7f,
+                                                      'd');
+  Tie(i, f, c) = rhs2;
+  CHECK(i == Get<0>(rhs2));
+  CHECK(f == Get<1>(rhs2));
+  CHECK(c == Get<2>(rhs2));
+
+  // Test Pair
+  CompactPair<int, float> rhs3(42, 1.5f);
+  Tie(i, f) = rhs3;
+  CHECK(i == rhs3.first());
+  CHECK(f == rhs3.second());
+
+  return true;
+}
+
 static bool TestTie() {
   int i;
   float f;
@@ -248,15 +273,23 @@ static bool TestTie() {
   CHECK(c == Get<2>(rhs2));
 
   // Test Pair
-  Pair<int, float> rhs3(-1, 1.2f);
+  pair<int, float> rhs3(42, 1.5f);
   Tie(i, f) = rhs3;
-  CHECK(i == rhs3.first());
-  CHECK(f == rhs3.second());
+  CHECK(i == rhs3.first);
+  CHECK(f == rhs3.second);
 
-  pair<int, float> rhs4(42, 1.5f);
-  Tie(i, f) = rhs4;
-  CHECK(i == rhs4.first);
-  CHECK(f == rhs4.second);
+  return true;
+}
+
+static bool TestTieIgnore() {
+  int i;
+  char c;
+  Tuple<int, float, char> rhs1(42, 0.5f, 'c');
+
+  Tie(i, mozilla::Ignore, c) = rhs1;
+
+  CHECK(i == Get<0>(rhs1));
+  CHECK(c == Get<2>(rhs1));
 
   return true;
 }
@@ -271,5 +304,7 @@ int main() {
   TestGet();
   TestMakeTuple();
   TestTie();
+  TestTieIgnore();
+  TestTieMozPair();
   return 0;
 }

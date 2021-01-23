@@ -7,14 +7,22 @@
 #ifndef mozilla_dom_GridLines_h
 #define mozilla_dom_GridLines_h
 
+#include "nsCoord.h"
 #include "nsTArray.h"
 #include "nsWrapperCache.h"
 
+class nsAtom;
+
 namespace mozilla {
+
+struct ComputedGridTrackInfo;
+struct ComputedGridLineInfo;
+
 namespace dom {
 
 class GridDimension;
 class GridLine;
+class GridArea;
 
 class GridLines : public nsISupports, public nsWrapperCache {
  public:
@@ -45,7 +53,7 @@ class GridLines : public nsISupports, public nsWrapperCache {
                                  nscoord aLastTrackEdge, uint32_t& aRepeatIndex,
                                  uint32_t aNumRepeatTracks,
                                  uint32_t aNumLeadingTracks,
-                                 nsTArray<nsString>& aLineNames);
+                                 nsTArray<RefPtr<nsAtom>>& aLineNames);
 
   RefPtr<GridDimension> mParent;
   nsTArray<RefPtr<GridLine>> mLines;

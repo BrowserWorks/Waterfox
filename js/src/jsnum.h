@@ -7,7 +7,6 @@
 #ifndef jsnum_h
 #define jsnum_h
 
-#include "mozilla/Compiler.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/Range.h"
 #include "mozilla/Utf8.h"
@@ -18,21 +17,6 @@
 
 #include "vm/StringType.h"
 
-// This macro is should be `one' if current compiler supports builtin functions
-// like __builtin_sadd_overflow.
-#if MOZ_IS_GCC
-// GCC supports these functions.
-#  define BUILTIN_CHECKED_ARITHMETIC_SUPPORTED(x) 1
-#else
-// For CLANG, we use its own function to check for this.
-#  ifdef __has_builtin
-#    define BUILTIN_CHECKED_ARITHMETIC_SUPPORTED(x) __has_builtin(x)
-#  endif
-#endif
-#ifndef BUILTIN_CHECKED_ARITHMETIC_SUPPORTED
-#  define BUILTIN_CHECKED_ARITHMETIC_SUPPORTED(x) 0
-#endif
-
 namespace js {
 
 class GlobalObject;
@@ -40,9 +24,8 @@ class StringBuffer;
 
 extern MOZ_MUST_USE bool InitRuntimeNumberState(JSRuntime* rt);
 
-#if !EXPOSE_INTL_API
+// This is a no-op if built with JS_HAS_INTL_API.
 extern void FinishRuntimeNumberState(JSRuntime* rt);
-#endif
 
 /* Initialize the Number class, returning its prototype object. */
 extern JSObject* InitNumberClass(JSContext* cx, Handle<GlobalObject*> global);
@@ -60,14 +43,16 @@ extern JSString* NumberToStringHelperPure(JSContext* cx, double d);
 extern JSAtom* NumberToAtom(JSContext* cx, double d);
 
 template <AllowGC allowGC>
-extern JSFlatString* Int32ToString(JSContext* cx, int32_t i);
+extern JSLinearString* Int32ToString(JSContext* cx, int32_t i);
 
-extern JSFlatString* Int32ToStringHelperPure(JSContext* cx, int32_t i);
+extern JSLinearString* Int32ToStringHelperPure(JSContext* cx, int32_t i);
 
 extern JSAtom* Int32ToAtom(JSContext* cx, int32_t si);
 
 // ES6 15.7.3.12
 extern bool IsInteger(const Value& val);
+
+extern bool IsInteger(double d);
 
 /*
  * Convert an integer or double (contained in the given value) to a string and
@@ -76,7 +61,7 @@ extern bool IsInteger(const Value& val);
 extern MOZ_MUST_USE bool JS_FASTCALL
 NumberValueToStringBuffer(JSContext* cx, const Value& v, StringBuffer& sb);
 
-extern JSFlatString* IndexToString(JSContext* cx, uint32_t index);
+extern JSLinearString* IndexToString(JSContext* cx, uint32_t index);
 
 /*
  * Usually a small amount of static storage is enough, but sometimes we need
@@ -110,7 +95,7 @@ extern char* NumberToCString(JSContext* cx, ToCStringBuf* cbuf, double d,
  * The largest positive integer such that all positive integers less than it
  * may be precisely represented using the IEEE-754 double-precision format.
  */
-const double DOUBLE_INTEGRAL_PRECISION_LIMIT = uint64_t(1) << 53;
+constexpr double DOUBLE_INTEGRAL_PRECISION_LIMIT = uint64_t(1) << 53;
 
 /*
  * Parse a decimal number encoded in |chars|.  The decimal number must be
@@ -219,10 +204,7 @@ bool ToNumericSlow(JSContext* cx, JS::MutableHandleValue vp);
 // BigInt proposal section 3.1.6
 MOZ_ALWAYS_INLINE MOZ_MUST_USE bool ToNumeric(JSContext* cx,
                                               JS::MutableHandleValue vp) {
-  if (vp.isNumber()) {
-    return true;
-  }
-  if (vp.isBigInt()) {
+  if (vp.isNumeric()) {
     return true;
   }
   return ToNumericSlow(cx, vp);
@@ -310,7 +292,8 @@ static MOZ_ALWAYS_INLINE bool IsDefinitelyIndex(const Value& v,
   return false;
 }
 
-/* ES5 9.4 ToInteger. */
+// ES2020 draft rev 6b05bc56ba4e3c7a2b9922c4282d9eb844426d9b
+// 7.1.5 ToInteger ( argument )
 static MOZ_MUST_USE inline bool ToInteger(JSContext* cx, HandleValue v,
                                           double* dp) {
   if (v.isInt32()) {
@@ -360,39 +343,6 @@ static MOZ_MUST_USE inline bool ToIndex(JSContext* cx, JS::HandleValue v,
 static MOZ_MUST_USE inline bool ToIndex(JSContext* cx, JS::HandleValue v,
                                         uint64_t* index) {
   return ToIndex(cx, v, JSMSG_BAD_INDEX, index);
-}
-
-MOZ_MUST_USE inline bool SafeAdd(int32_t one, int32_t two, int32_t* res) {
-#if BUILTIN_CHECKED_ARITHMETIC_SUPPORTED(__builtin_sadd_overflow)
-  // Using compiler's builtin function.
-  return !__builtin_sadd_overflow(one, two, res);
-#else
-  // Use unsigned for the 32-bit operation since signed overflow gets
-  // undefined behavior.
-  *res = uint32_t(one) + uint32_t(two);
-  int64_t ores = (int64_t)one + (int64_t)two;
-  return ores == (int64_t)*res;
-#endif
-}
-
-MOZ_MUST_USE inline bool SafeSub(int32_t one, int32_t two, int32_t* res) {
-#if BUILTIN_CHECKED_ARITHMETIC_SUPPORTED(__builtin_ssub_overflow)
-  return !__builtin_ssub_overflow(one, two, res);
-#else
-  *res = uint32_t(one) - uint32_t(two);
-  int64_t ores = (int64_t)one - (int64_t)two;
-  return ores == (int64_t)*res;
-#endif
-}
-
-MOZ_MUST_USE inline bool SafeMul(int32_t one, int32_t two, int32_t* res) {
-#if BUILTIN_CHECKED_ARITHMETIC_SUPPORTED(__builtin_smul_overflow)
-  return !__builtin_smul_overflow(one, two, res);
-#else
-  *res = uint32_t(one) * uint32_t(two);
-  int64_t ores = (int64_t)one * (int64_t)two;
-  return ores == (int64_t)*res;
-#endif
 }
 
 } /* namespace js */

@@ -3,13 +3,22 @@
 <head>
 <meta charset="utf-8">
 <title>Fraction</title>
-<link rel="help" href="https://mathml-refresh.github.io/mathml-core/#mfrac">
+<link rel="help" href="https://mathml-refresh.github.io/mathml-core/#fractions-mfrac">
+<link rel="help" href="https://mathml-refresh.github.io/mathml-core/#fraction-with-nonzero-line-thickness">
+<link rel="help" href="https://mathml-refresh.github.io/mathml-core/#fraction-with-zero-line-thickness">
 <meta name="assert" content="Verify fraction metrics for different sizes of numerator and denominator.">
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
+<script src="/mathml/support/feature-detection.js"></script>
 <style>
   math, mspace {
     font-size: 10px;
+  }
+  div.shrink-wrap {
+    background: yellow;
+    display: inline-block;
+    margin-top: 5px;
+    padding-top: 5px;
   }
 </style>
 <script>
@@ -33,6 +42,8 @@
 
   function runTests() {
     test(function() {
+      assert_true(MathMLFeatureDetection.has_mspace());
+
       var e = 3;
       var mathAxis = getBox("axis").middle;
       // For stacks, nothing in the OpenType MATH specification seems to ensure
@@ -51,6 +62,8 @@
     }, "Fraction axis is aligned on the math axis");
 
     test(function() {
+      assert_true(MathMLFeatureDetection.has_mspace());
+
       for (var i = 0; i < 10; i++) {
         assert_less_than(getBox("frac" + i + "num").bottom, getBox("frac" + i + "den").top, "numerator is above denominator");
         assert_less_than(getBox("frac" + i + "den").top - getBox("frac" + i + "num").bottom, 5, "The gap between numerator and denominator is not too large");
@@ -58,12 +71,16 @@
     }, "Vertical positions of numerator and denominator");
 
     test(function() {
+      assert_true(MathMLFeatureDetection.has_mspace());
+
       var e = 3;
       for (var i = 0; i < 10; i++)
         assert_approx_equals(getBox("frac" + i + "num").center, getBox("frac" + i + "den").center, e, "numerator and denominator are horizontally centered");
     }, "Horizontal alignments of numerator and denominator");
 
     test(function() {
+      assert_true(MathMLFeatureDetection.has_mspace());
+
       var e = 5;
       for (var i = 0; i < 10; i++) {
         var frac = getBox("frac" + i);
@@ -73,6 +90,21 @@
         assert_approx_equals(frac.width, Math.max(num.right, den.right) - Math.min(num.left, den.left), e, "width of frac " + i + " is determined by the left/right sides of the denominator/numerator (plus some spacing)");
       }
     }, "Dimension of mfrac elements");
+
+    test(function() {
+      assert_true(MathMLFeatureDetection.has_mspace());
+      assert_true(MathMLFeatureDetection.has_mfrac());
+
+      Array.from(document.getElementsByClassName("shrink-wrap")).forEach((container) => {
+        var marginPx = 2; // By default fractions have 1px margin on each side.
+        var epsilon = 1;
+        var containerWidth = container.getBoundingClientRect().width;
+        var children = container.getElementsByTagName("mspace");
+        var numWidth = children[0].getBoundingClientRect().width;
+        var denWidth = children[1].getBoundingClientRect().width;
+        assert_approx_equals(containerWidth, marginPx + Math.max(numWidth, denWidth), epsilon, "Should be the maximum preferred width of numerator/denominator.");
+      });
+    }, "Preferred width of mfrac elements");
 
     done();
   }
@@ -125,5 +157,37 @@
       </mfrac>
     </math>
   </p>
+  <div class="shrink-wrap">
+    <math>
+      <mfrac>
+        <mspace width="30px" height="15px" style="background: blue"/>
+        <mspace width="15px" height="15px" style="background: green"/>
+      </mfrac>
+    </math>
+  </div>
+  <div class="shrink-wrap">
+    <math>
+      <mfrac>
+        <mspace width="15px" height="15px" style="background: blue"/>
+        <mspace width="30px" height="15px" style="background: green"/>
+      </mfrac>
+    </math>
+  </div>
+  <div class="shrink-wrap">
+    <math>
+      <mfrac linethickness="0px">
+        <mspace width="30px" height="15px" style="background: blue"/>
+        <mspace width="15px" height="15px" style="background: green"/>
+      </mfrac>
+    </math>
+  </div>
+  <div class="shrink-wrap">
+    <math>
+      <mfrac linethickness="0px">
+        <mspace width="15px" height="15px" style="background: blue"/>
+        <mspace width="30px" height="15px" style="background: green"/>
+      </mfrac>
+    </math>
+  </div>
 </body>
 </html>

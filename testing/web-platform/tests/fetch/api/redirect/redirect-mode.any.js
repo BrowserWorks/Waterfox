@@ -6,6 +6,7 @@ function testRedirect(origin, redirectStatus, redirectMode, corsMode) {
   var url = new URL("../resources/redirect.py", self.location);
   if (origin === "cross-origin") {
     url.host = get_host_info().REMOTE_HOST;
+    url.port = get_host_info().HTTP_PORT;
   }
 
   var urlParameters = "?redirect_status=" + redirectStatus;
@@ -16,7 +17,7 @@ function testRedirect(origin, redirectStatus, redirectMode, corsMode) {
   promise_test(function(test) {
     if (redirectMode === "error" ||
         (corsMode === "no-cors" && redirectMode !== "follow" && origin !== "same-origin"))
-      return promise_rejects(test, new TypeError(), fetch(url + urlParameters, requestInit));
+      return promise_rejects_js(test, TypeError, fetch(url + urlParameters, requestInit));
     if (redirectMode === "manual")
       return fetch(url + urlParameters, requestInit).then(function(resp) {
         assert_equals(resp.status, 0, "Response's status is 0");

@@ -7,6 +7,7 @@
 #include "jit/x86/Assembler-x86.h"
 
 #include "gc/Marking.h"
+#include "util/Memory.h"
 
 using namespace js;
 using namespace js::jit;
@@ -19,6 +20,7 @@ ABIArg ABIArgGenerator::next(MIRType type) {
     case MIRType::Float32:
     case MIRType::Pointer:
     case MIRType::RefOrNull:
+    case MIRType::StackResults:
       current_ = ABIArg(stackOffset_);
       stackOffset_ += sizeof(uint32_t);
       break;
@@ -27,16 +29,11 @@ ABIArg ABIArgGenerator::next(MIRType type) {
       current_ = ABIArg(stackOffset_);
       stackOffset_ += sizeof(uint64_t);
       break;
-    case MIRType::Int8x16:
-    case MIRType::Int16x8:
-    case MIRType::Int32x4:
-    case MIRType::Float32x4:
-    case MIRType::Bool8x16:
-    case MIRType::Bool16x8:
-    case MIRType::Bool32x4:
-      // SIMD values aren't passed in or out of C++, so we can make up
-      // whatever internal ABI we like. visitWasmStackArg assumes
-      // SimdMemoryAlignment.
+    case MIRType::Simd128:
+      // On Win64, >64 bit args need to be passed by reference.  However, wasm
+      // doesn't allow passing SIMD values to JS, so the only way to reach this
+      // is wasm to wasm calls.  Ergo we can break the native ABI here and use
+      // the Wasm ABI instead.
       stackOffset_ = AlignBytes(stackOffset_, SimdMemoryAlignment);
       current_ = ABIArg(stackOffset_);
       stackOffset_ += Simd128DataSize;
@@ -47,7 +44,7 @@ ABIArg ABIArgGenerator::next(MIRType type) {
   return current_;
 }
 
-void Assembler::executableCopy(uint8_t* buffer, bool flushICache) {
+void Assembler::executableCopy(uint8_t* buffer) {
   AssemblerX86Shared::executableCopy(buffer);
   for (RelativePatch& rp : jumps_) {
     X86Encoding::SetRel32(buffer + rp.offset, rp.target);

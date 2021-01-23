@@ -7,9 +7,11 @@
  * http://www.whatwg.org/specs/web-apps/current-work/#trackevent
  */
 
-[Constructor(DOMString type, optional TrackEventInit eventInitDict)]
+[Exposed=Window]
 interface TrackEvent : Event
 {
+  constructor(DOMString type, optional TrackEventInit eventInitDict = {});
+
   readonly attribute (VideoTrack or AudioTrack or TextTrack)? track;
 };
 

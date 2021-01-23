@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "ჯართის პარამეტრები">
+<!ENTITY trainingDescription.label "თუ ჩართულია, ჯერ &brandShortName; უნდა გავარჯიშდეს ჯართის ამოცნობაში, არასასურველი წერილების მონიშვნით, ჯართის სამართავ ზოლში არსებული ღილაკით. უნდა მიეთითოს ორივე, არასასურველი და საჭირო წერილები. ამის შემდეგ &brandShortName; ჯართს თავადვე აღნიშნავს.">
+<!ENTITY level.label "ჯართის მოქნილად მართვის ამოქმედება ამ ანგარიშისთვის">
+<!ENTITY level.accesskey "ქ">
+
+<!ENTITY move.label "ჯართის წერილების გადატანა:">
+<!ENTITY move.accesskey "ტ">
+<!ENTITY junkFolderOn.label "„ჯართის“ საქაღალდეში:">
+<!ENTITY junkFolderOn.accesskey "ჯ">
+<!ENTITY otherFolder.label "სხვაგან:">
+<!ENTITY otherFolder.accesskey "ს">
+<!ENTITY purge1.label "ჯართი თავისით წაიშალოს, თუ გასულია">
+<!ENTITY purge1.accesskey "უ">
+<!ENTITY purge2.label "დღე">
+
+<!ENTITY whitelistHeader.label "წერილის ჯართად მონიშვნის არიდება, თუ გამომგზავნს შეიცავს:">
+<!ENTITY whitelistHeader.accesskey "დ">
+
+<!ENTITY ispHeadersWarning.label "თუ მოქმედია, &brandShortName; გზავნილებს ავტომატურად მიიჩნევს ჯართად, ამ გარე მახარისხებლების დახმარებით.">
+<!ENTITY ispHeaders.label "ჯართის თავსართების ნდობა, რომელთაც უთითებს:">
+<!ENTITY ispHeaders.accesskey "ნ">
+
+<!ENTITY junkClassification.label "მონიშნული">
+<!ENTITY junkActions.label "მიკუთვნება და აღკვეთა">
+
+<!ENTITY globalJunkPrefs.label "ჯართის საერთო პარამეტრები…">
+<!ENTITY globalJunkPrefs.accesskey "ო">

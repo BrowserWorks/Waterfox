@@ -12,26 +12,40 @@
 #include "mozilla/Likely.h"
 #include "mozilla/Range.h"
 
+#include <algorithm>
+#include <iterator>
+
 #include "jsapi.h"
 
+#include "builtin/Array.h"
 #include "builtin/intl/Collator.h"
 #include "builtin/intl/CommonFunctions.h"
 #include "builtin/intl/DateTimeFormat.h"
-#include "builtin/intl/ICUStubs.h"
+#include "builtin/intl/LanguageTag.h"
 #include "builtin/intl/NumberFormat.h"
 #include "builtin/intl/PluralRules.h"
 #include "builtin/intl/RelativeTimeFormat.h"
 #include "builtin/intl/ScopedICUObject.h"
+#include "builtin/intl/SharedIntlData.h"
 #include "js/CharacterEncoding.h"
 #include "js/Class.h"
 #include "js/PropertySpec.h"
+#include "js/Result.h"
 #include "js/StableStringChars.h"
+#include "unicode/ucal.h"
+#include "unicode/udat.h"
+#include "unicode/udatpg.h"
+#include "unicode/uloc.h"
+#include "unicode/utypes.h"
 #include "vm/GlobalObject.h"
+#include "vm/JSAtom.h"
 #include "vm/JSContext.h"
 #include "vm/JSObject.h"
+#include "vm/PlainObject.h"  // js::PlainObject
 #include "vm/StringType.h"
 
 #include "vm/JSObject-inl.h"
+#include "vm/NativeObject-inl.h"
 
 using namespace js;
 
@@ -143,15 +157,11 @@ bool js::intl_GetCalendarInfo(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-static void ReportBadKey(JSContext* cx,
-                         const Range<const JS::Latin1Char>& range) {
-  JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr, JSMSG_INVALID_KEY,
-                             range.begin().get());
-}
-
-static void ReportBadKey(JSContext* cx, const Range<const char16_t>& range) {
-  JS_ReportErrorNumberUC(cx, GetErrorMessage, nullptr, JSMSG_INVALID_KEY,
-                         range.begin().get());
+static void ReportBadKey(JSContext* cx, HandleString key) {
+  if (UniqueChars chars = QuoteString(cx, key, '"')) {
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INVALID_KEY,
+                              chars.get());
+  }
 }
 
 template <typename ConstChar>
@@ -187,22 +197,23 @@ template <typename ConstChar>
 static JSString* ComputeSingleDisplayName(JSContext* cx, UDateFormat* fmt,
                                           UDateTimePatternGenerator* dtpg,
                                           DisplayNameStyle style,
-                                          const Range<ConstChar>& pattern) {
+                                          const Range<ConstChar>& pattern,
+                                          HandleString patternString) {
   RangedPtr<ConstChar> iter = pattern.begin();
   const RangedPtr<ConstChar> end = pattern.end();
 
-  auto MatchSlash = [cx, pattern, &iter, end]() {
+  auto MatchSlash = [cx, patternString, &iter, end]() {
     if (MOZ_LIKELY(iter != end && *iter == '/')) {
       iter++;
       return true;
     }
 
-    ReportBadKey(cx, pattern);
+    ReportBadKey(cx, patternString);
     return false;
   };
 
   if (!MatchPart(&iter, end, "dates")) {
-    ReportBadKey(cx, pattern);
+    ReportBadKey(cx, patternString);
     return nullptr;
   }
 
@@ -226,13 +237,13 @@ static JSString* ComputeSingleDisplayName(JSContext* cx, UDateFormat* fmt,
     } else if (MatchPart(&iter, end, "day")) {
       fieldType = UDATPG_DAY_FIELD;
     } else {
-      ReportBadKey(cx, pattern);
+      ReportBadKey(cx, patternString);
       return nullptr;
     }
 
     // This part must be the final part with no trailing data.
     if (iter != end) {
-      ReportBadKey(cx, pattern);
+      ReportBadKey(cx, patternString);
       return nullptr;
     }
 
@@ -295,7 +306,7 @@ static JSString* ComputeSingleDisplayName(JSContext* cx, UDateFormat* fmt,
       } else if (MatchPart(&iter, end, "december")) {
         index = UCAL_DECEMBER;
       } else {
-        ReportBadKey(cx, pattern);
+        ReportBadKey(cx, patternString);
         return nullptr;
       }
     } else if (MatchPart(&iter, end, "weekdays")) {
@@ -332,7 +343,7 @@ static JSString* ComputeSingleDisplayName(JSContext* cx, UDateFormat* fmt,
       } else if (MatchPart(&iter, end, "sunday")) {
         index = UCAL_SUNDAY;
       } else {
-        ReportBadKey(cx, pattern);
+        ReportBadKey(cx, patternString);
         return nullptr;
       }
     } else if (MatchPart(&iter, end, "dayperiods")) {
@@ -347,17 +358,17 @@ static JSString* ComputeSingleDisplayName(JSContext* cx, UDateFormat* fmt,
       } else if (MatchPart(&iter, end, "pm")) {
         index = UCAL_PM;
       } else {
-        ReportBadKey(cx, pattern);
+        ReportBadKey(cx, patternString);
         return nullptr;
       }
     } else {
-      ReportBadKey(cx, pattern);
+      ReportBadKey(cx, patternString);
       return nullptr;
     }
 
     // This part must be the final part with no trailing data.
     if (iter != end) {
-      ReportBadKey(cx, pattern);
+      ReportBadKey(cx, patternString);
       return nullptr;
     }
 
@@ -367,7 +378,7 @@ static JSString* ComputeSingleDisplayName(JSContext* cx, UDateFormat* fmt,
     });
   }
 
-  ReportBadKey(cx, pattern);
+  ReportBadKey(cx, patternString);
   return nullptr;
 }
 
@@ -389,12 +400,12 @@ bool js::intl_ComputeDisplayNames(JSContext* cx, unsigned argc, Value* vp) {
       return false;
     }
 
-    if (StringEqualsAscii(style, "narrow")) {
+    if (StringEqualsLiteral(style, "narrow")) {
       dnStyle = DisplayNameStyle::Narrow;
-    } else if (StringEqualsAscii(style, "short")) {
+    } else if (StringEqualsLiteral(style, "short")) {
       dnStyle = DisplayNameStyle::Short;
     } else {
-      MOZ_ASSERT(StringEqualsAscii(style, "long"));
+      MOZ_ASSERT(StringEqualsLiteral(style, "long"));
       dnStyle = DisplayNameStyle::Long;
     }
   }
@@ -406,10 +417,11 @@ bool js::intl_ComputeDisplayNames(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   // 4. Let result be ArrayCreate(0).
-  RootedArrayObject result(cx, NewDenseUnallocatedArray(cx, keys->length()));
+  RootedArrayObject result(cx, NewDenseFullyAllocatedArray(cx, keys->length()));
   if (!result) {
     return false;
   }
+  result->ensureDenseInitializedLength(cx, 0, keys->length());
 
   UErrorCode status = U_ZERO_ERROR;
 
@@ -452,18 +464,17 @@ bool js::intl_ComputeDisplayNames(JSContext* cx, unsigned argc, Value* vp) {
     JSString* displayName =
         stablePatternChars.isLatin1()
             ? ComputeSingleDisplayName(cx, fmt, dtpg, dnStyle,
-                                       stablePatternChars.latin1Range())
+                                       stablePatternChars.latin1Range(),
+                                       keyValStr)
             : ComputeSingleDisplayName(cx, fmt, dtpg, dnStyle,
-                                       stablePatternChars.twoByteRange());
+                                       stablePatternChars.twoByteRange(),
+                                       keyValStr);
     if (!displayName) {
       return false;
     }
 
     // 5.b. Append the result string to result.
-    v.setString(displayName);
-    if (!DefineDataElement(cx, result, i, v)) {
-      return false;
-    }
+    result->setDenseElement(i, StringValue(displayName));
   }
 
   // 6. Return result.
@@ -501,8 +512,276 @@ bool js::intl_GetLocaleInfo(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-const Class js::IntlClass = {js_Object_str,
-                             JSCLASS_HAS_CACHED_PROTO(JSProto_Intl)};
+using SupportedLocaleKind = js::intl::SharedIntlData::SupportedLocaleKind;
+
+// 9.2.2 BestAvailableLocale ( availableLocales, locale )
+static JS::Result<JSString*> BestAvailableLocale(
+    JSContext* cx, SupportedLocaleKind kind, HandleLinearString locale,
+    HandleLinearString defaultLocale) {
+  // In the spec, [[availableLocales]] is formally a list of all available
+  // locales. But in our implementation, it's an *incomplete* list, not
+  // necessarily including the default locale (and all locales implied by it,
+  // e.g. "de" implied by "de-CH"), if that locale isn't in every
+  // [[availableLocales]] list (because that locale is supported through
+  // fallback, e.g. "de-CH" supported through "de").
+  //
+  // If we're considering the default locale, augment the spec loop with
+  // additional checks to also test whether the current prefix is a prefix of
+  // the default locale.
+
+  intl::SharedIntlData& sharedIntlData = cx->runtime()->sharedIntlData.ref();
+
+  auto findLast = [](const auto* chars, size_t length) {
+    auto rbegin = std::make_reverse_iterator(chars + length);
+    auto rend = std::make_reverse_iterator(chars);
+    auto p = std::find(rbegin, rend, '-');
+
+    // |dist(chars, p.base())| is equal to |dist(p, rend)|, pick whichever you
+    // find easier to reason about when using reserve iterators.
+    ptrdiff_t r = std::distance(chars, p.base());
+    MOZ_ASSERT(r == std::distance(p, rend));
+
+    // But always subtract one to convert from the reverse iterator result to
+    // the correspoding forward iterator value, because reserve iterators point
+    // to one element past the forward iterator value.
+    return r - 1;
+  };
+
+  // Step 1.
+  RootedLinearString candidate(cx, locale);
+
+  // Step 2.
+  while (true) {
+    // Step 2.a.
+    bool supported = false;
+    if (!sharedIntlData.isSupportedLocale(cx, kind, candidate, &supported)) {
+      return cx->alreadyReportedError();
+    }
+    if (supported) {
+      return candidate.get();
+    }
+
+    if (defaultLocale && candidate->length() <= defaultLocale->length()) {
+      if (EqualStrings(candidate, defaultLocale)) {
+        return candidate.get();
+      }
+
+      if (candidate->length() < defaultLocale->length() &&
+          HasSubstringAt(defaultLocale, candidate, 0) &&
+          defaultLocale->latin1OrTwoByteChar(candidate->length()) == '-') {
+        return candidate.get();
+      }
+    }
+
+    // Step 2.b.
+    ptrdiff_t pos;
+    if (candidate->hasLatin1Chars()) {
+      JS::AutoCheckCannotGC nogc;
+      pos = findLast(candidate->latin1Chars(nogc), candidate->length());
+    } else {
+      JS::AutoCheckCannotGC nogc;
+      pos = findLast(candidate->twoByteChars(nogc), candidate->length());
+    }
+
+    if (pos < 0) {
+      return nullptr;
+    }
+
+    // Step 2.c.
+    size_t length = size_t(pos);
+    if (length >= 2 && candidate->latin1OrTwoByteChar(length - 2) == '-') {
+      length -= 2;
+    }
+
+    // Step 2.d.
+    candidate = NewDependentString(cx, candidate, 0, length);
+    if (!candidate) {
+      return cx->alreadyReportedError();
+    }
+  }
+}
+
+// 9.2.2 BestAvailableLocale ( availableLocales, locale )
+//
+// Carries an additional third argument in our implementation to provide the
+// default locale. See the doc-comment in the header file.
+bool js::intl_BestAvailableLocale(JSContext* cx, unsigned argc, Value* vp) {
+  CallArgs args = CallArgsFromVp(argc, vp);
+  MOZ_ASSERT(args.length() == 3);
+
+  SupportedLocaleKind kind;
+  {
+    JSLinearString* typeStr = args[0].toString()->ensureLinear(cx);
+    if (!typeStr) {
+      return false;
+    }
+
+    if (StringEqualsLiteral(typeStr, "Collator")) {
+      kind = SupportedLocaleKind::Collator;
+    } else if (StringEqualsLiteral(typeStr, "DateTimeFormat")) {
+      kind = SupportedLocaleKind::DateTimeFormat;
+    } else if (StringEqualsLiteral(typeStr, "DisplayNames")) {
+      kind = SupportedLocaleKind::DisplayNames;
+    } else if (StringEqualsLiteral(typeStr, "ListFormat")) {
+      kind = SupportedLocaleKind::ListFormat;
+    } else if (StringEqualsLiteral(typeStr, "NumberFormat")) {
+      kind = SupportedLocaleKind::NumberFormat;
+    } else if (StringEqualsLiteral(typeStr, "PluralRules")) {
+      kind = SupportedLocaleKind::PluralRules;
+    } else {
+      MOZ_ASSERT(StringEqualsLiteral(typeStr, "RelativeTimeFormat"));
+      kind = SupportedLocaleKind::RelativeTimeFormat;
+    }
+  }
+
+  RootedLinearString locale(cx, args[1].toString()->ensureLinear(cx));
+  if (!locale) {
+    return false;
+  }
+
+#ifdef DEBUG
+  {
+    intl::LanguageTag tag(cx);
+    bool ok;
+    JS_TRY_VAR_OR_RETURN_FALSE(
+        cx, ok, intl::LanguageTagParser::tryParse(cx, locale, tag));
+    MOZ_ASSERT(ok, "locale is a structurally valid language tag");
+
+    MOZ_ASSERT(!tag.unicodeExtension(),
+               "locale must contain no Unicode extensions");
+
+    if (!tag.canonicalize(cx)) {
+      return false;
+    }
+
+    JSString* tagStr = tag.toString(cx);
+    if (!tagStr) {
+      return false;
+    }
+
+    bool canonical;
+    if (!EqualStrings(cx, locale, tagStr, &canonical)) {
+      return false;
+    }
+    MOZ_ASSERT(canonical, "locale is a canonicalized language tag");
+  }
+#endif
+
+  MOZ_ASSERT(args[2].isNull() || args[2].isString());
+
+  RootedLinearString defaultLocale(cx);
+  if (args[2].isString()) {
+    defaultLocale = args[2].toString()->ensureLinear(cx);
+    if (!defaultLocale) {
+      return false;
+    }
+  }
+
+  JSString* result;
+  JS_TRY_VAR_OR_RETURN_FALSE(
+      cx, result, BestAvailableLocale(cx, kind, locale, defaultLocale));
+
+  if (result) {
+    args.rval().setString(result);
+  } else {
+    args.rval().setUndefined();
+  }
+  return true;
+}
+
+bool js::intl_supportedLocaleOrFallback(JSContext* cx, unsigned argc,
+                                        Value* vp) {
+  CallArgs args = CallArgsFromVp(argc, vp);
+  MOZ_ASSERT(args.length() == 1);
+
+  RootedLinearString locale(cx, args[0].toString()->ensureLinear(cx));
+  if (!locale) {
+    return false;
+  }
+
+  intl::LanguageTag tag(cx);
+  bool ok;
+  JS_TRY_VAR_OR_RETURN_FALSE(
+      cx, ok, intl::LanguageTagParser::tryParse(cx, locale, tag));
+
+  RootedLinearString candidate(cx);
+  if (!ok) {
+    candidate = NewStringCopyZ<CanGC>(cx, intl::LastDitchLocale());
+    if (!candidate) {
+      return false;
+    }
+  } else {
+    if (!tag.canonicalize(cx)) {
+      return false;
+    }
+
+    // The default locale must be in [[AvailableLocales]], and that list must
+    // not contain any locales with Unicode extension sequences, so remove any
+    // present in the candidate.
+    tag.clearUnicodeExtension();
+
+    JSString* canonical = tag.toString(cx);
+    if (!canonical) {
+      return false;
+    }
+
+    candidate = canonical->ensureLinear(cx);
+    if (!candidate) {
+      return false;
+    }
+
+    for (const auto& mapping : js::intl::oldStyleLanguageTagMappings) {
+      const char* oldStyle = mapping.oldStyle;
+      const char* modernStyle = mapping.modernStyle;
+
+      if (StringEqualsAscii(candidate, oldStyle)) {
+        candidate = NewStringCopyZ<CanGC>(cx, modernStyle);
+        if (!candidate) {
+          return false;
+        }
+        break;
+      }
+    }
+  }
+
+  // 9.1 Internal slots of Service Constructors
+  //
+  // - [[AvailableLocales]] is a List [...]. The list must include the value
+  //   returned by the DefaultLocale abstract operation (6.2.4), [...].
+  //
+  // That implies we must ignore any candidate which isn't supported by all Intl
+  // service constructors.
+  //
+  // Note: We don't test the supported locales of either Intl.ListFormat,
+  // Intl.PluralRules, Intl.RelativeTimeFormat, because ICU doesn't provide the
+  // necessary API to return actual set of supported locales for these
+  // constructors. Instead it returns the complete set of available locales for
+  // ULocale, which is a superset of the locales supported by Collator,
+  // NumberFormat, and DateTimeFormat.
+  bool isSupported = true;
+  for (auto kind :
+       {SupportedLocaleKind::Collator, SupportedLocaleKind::DateTimeFormat,
+        SupportedLocaleKind::NumberFormat}) {
+    JSString* supported;
+    JS_TRY_VAR_OR_RETURN_FALSE(
+        cx, supported, BestAvailableLocale(cx, kind, candidate, nullptr));
+
+    if (!supported) {
+      isSupported = false;
+      break;
+    }
+  }
+
+  if (!isSupported) {
+    candidate = NewStringCopyZ<CanGC>(cx, intl::LastDitchLocale());
+    if (!candidate) {
+      return false;
+    }
+  }
+
+  args.rval().setString(candidate);
+  return true;
+}
 
 static bool intl_toSource(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
@@ -515,98 +794,50 @@ static const JSFunctionSpec intl_static_methods[] = {
     JS_SELF_HOSTED_FN("getCanonicalLocales", "Intl_getCanonicalLocales", 1, 0),
     JS_FS_END};
 
-/**
- * Initializes the Intl Object and its standard built-in properties.
- * Spec: ECMAScript Internationalization API Specification, 8.0, 8.1
- */
-/* static */
-bool GlobalObject::initIntlObject(JSContext* cx, Handle<GlobalObject*> global) {
+static JSObject* CreateIntlObject(JSContext* cx, JSProtoKey key) {
+  Handle<GlobalObject*> global = cx->global();
   RootedObject proto(cx, GlobalObject::getOrCreateObjectPrototype(cx, global));
   if (!proto) {
-    return false;
+    return nullptr;
   }
 
   // The |Intl| object is just a plain object with some "static" function
   // properties and some constructor properties.
-  RootedObject intl(
-      cx, NewObjectWithGivenProto(cx, &IntlClass, proto, SingletonObject));
-  if (!intl) {
-    return false;
+  return NewSingletonObjectWithGivenProto(cx, &IntlClass, proto);
+}
+
+/**
+ * Initializes the Intl Object and its standard built-in properties.
+ * Spec: ECMAScript Internationalization API Specification, 8.0, 8.1
+ */
+static bool IntlClassFinish(JSContext* cx, HandleObject intl,
+                            HandleObject proto) {
+  // Add the constructor properties.
+  RootedId ctorId(cx);
+  RootedValue ctorValue(cx);
+  for (const auto& protoKey :
+       {JSProto_Collator, JSProto_DateTimeFormat, JSProto_ListFormat,
+        JSProto_Locale, JSProto_NumberFormat, JSProto_PluralRules,
+        JSProto_RelativeTimeFormat}) {
+    JSObject* ctor = GlobalObject::getOrCreateConstructor(cx, protoKey);
+    if (!ctor) {
+      return false;
+    }
+
+    ctorId = NameToId(ClassName(protoKey, cx));
+    ctorValue.setObject(*ctor);
+    if (!DefineDataProperty(cx, intl, ctorId, ctorValue, 0)) {
+      return false;
+    }
   }
 
-  // Add the static functions.
-  if (!JS_DefineFunctions(cx, intl, intl_static_methods)) {
-    return false;
-  }
-
-  // Add the constructor properties, computing and returning the relevant
-  // prototype objects needed below.
-  RootedObject collatorProto(cx, CreateCollatorPrototype(cx, intl, global));
-  if (!collatorProto) {
-    return false;
-  }
-  RootedObject dateTimeFormatProto(cx), dateTimeFormat(cx);
-  dateTimeFormatProto = CreateDateTimeFormatPrototype(
-      cx, intl, global, &dateTimeFormat, DateTimeFormatOptions::Standard);
-  if (!dateTimeFormatProto) {
-    return false;
-  }
-  RootedObject numberFormatProto(cx), numberFormat(cx);
-  numberFormatProto =
-      CreateNumberFormatPrototype(cx, intl, global, &numberFormat);
-  if (!numberFormatProto) {
-    return false;
-  }
-  RootedObject pluralRulesProto(cx,
-                                CreatePluralRulesPrototype(cx, intl, global));
-  if (!pluralRulesProto) {
-    return false;
-  }
-  RootedObject relativeTimeFmtProto(
-      cx, CreateRelativeTimeFormatPrototype(cx, intl, global));
-  if (!relativeTimeFmtProto) {
-    return false;
-  }
-
-  // The |Intl| object is fully set up now, so define the global property.
-  RootedValue intlValue(cx, ObjectValue(*intl));
-  if (!DefineDataProperty(cx, global, cx->names().Intl, intlValue,
-                          JSPROP_RESOLVING)) {
-    return false;
-  }
-
-  // Now that the |Intl| object is successfully added, we can OOM-safely fill
-  // in all relevant reserved global slots.
-
-  // Cache the various prototypes, for use in creating instances of these
-  // objects with the proper [[Prototype]] as "the original value of
-  // |Intl.Collator.prototype|" and similar.  For builtin classes like
-  // |String.prototype| we have |JSProto_*| that enables
-  // |getPrototype(JSProto_*)|, but that has global-object-property-related
-  // baggage we don't need or want, so we use one-off reserved slots.
-  global->setReservedSlot(COLLATOR_PROTO, ObjectValue(*collatorProto));
-  global->setReservedSlot(DATE_TIME_FORMAT, ObjectValue(*dateTimeFormat));
-  global->setReservedSlot(DATE_TIME_FORMAT_PROTO,
-                          ObjectValue(*dateTimeFormatProto));
-  global->setReservedSlot(NUMBER_FORMAT, ObjectValue(*numberFormat));
-  global->setReservedSlot(NUMBER_FORMAT_PROTO, ObjectValue(*numberFormatProto));
-  global->setReservedSlot(PLURAL_RULES_PROTO, ObjectValue(*pluralRulesProto));
-  global->setReservedSlot(RELATIVE_TIME_FORMAT_PROTO,
-                          ObjectValue(*relativeTimeFmtProto));
-
-  // Also cache |Intl| to implement spec language that conditions behavior
-  // based on values being equal to "the standard built-in |Intl| object".
-  // Use |setConstructor| to correspond with |JSProto_Intl|.
-  //
-  // XXX We should possibly do a one-off reserved slot like above.
-  global->setConstructor(JSProto_Intl, ObjectValue(*intl));
   return true;
 }
 
-JSObject* js::InitIntlClass(JSContext* cx, Handle<GlobalObject*> global) {
-  if (!GlobalObject::initIntlObject(cx, global)) {
-    return nullptr;
-  }
+static const ClassSpec IntlClassSpec = {
+    CreateIntlObject, nullptr, intl_static_methods, nullptr,
+    nullptr,          nullptr, IntlClassFinish};
 
-  return &global->getConstructor(JSProto_Intl).toObject();
-}
+const JSClass js::IntlClass = {js_Object_str,
+                               JSCLASS_HAS_CACHED_PROTO(JSProto_Intl),
+                               JS_NULL_CLASS_OPS, &IntlClassSpec};

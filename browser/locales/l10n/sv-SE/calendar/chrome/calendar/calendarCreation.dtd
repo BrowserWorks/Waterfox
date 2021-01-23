@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Skapa ny kalender" >
+<!ENTITY wizard.label             "Skapa en ny kalender" >
+<!ENTITY wizard.description       "Placering av kalender" >
+
+<!ENTITY initialpage.description    "Din kalender kan lagras på din dator eller på en filserver. Du kan då fjärransluta till den eller dela ut den så att vänner eller kollegor kan se den." >
+<!ENTITY initialpage.computer.label  "På min dator">
+<!ENTITY initialpage.network.label  "I nätverket">
+
+<!ENTITY locationpage.description         "Ange nödvändig information för åtkomst till ej lokal kalender" >
+<!ENTITY locationpage.login.description   "Frivilligt: ange användarnamn och lösenord" >
+<!ENTITY locationpage.username.label      "Användarnamn:" >
+<!ENTITY locationpage.password.label      "Lösenord:" >
+
+<!ENTITY custompage.shortdescription  "Anpassa din kalender" >
+<!ENTITY custompage.longdescription   "Du kan ge din kalender ett smeknamn samt färglägga händelser från denna kalender" >
+
+<!ENTITY finishpage.shortdescription  "Kalender skapad" >
+<!ENTITY finishpage.longdescription   "Din kalender har blivit skapad" >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Annan">
+
+<!ENTITY buttons.create.label "Skapa kalender">
+<!ENTITY buttons.create.accesskey "k">
+
+<!ENTITY buttons.find.label "Sök kalendrar">
+<!ENTITY buttons.find.accesskey "S">
+
+<!ENTITY buttons.back.label "Tillbaka">
+<!ENTITY buttons.back.accesskey "T">
+
+<!ENTITY buttons.subscribe.label "Prenumerera">
+<!ENTITY buttons.subscribe.accesskey "P">
+
+<!ENTITY calendartype.label "Kalendertyp:">
+<!ENTITY location.label "Plats:">
+<!ENTITY location.placeholder "URL eller namn på kalender-servern">
+
+<!ENTITY network.nocredentials.label "Denna adress kräver inte inloggning">
+<!ENTITY network.loading.description "Var god vänta medan dina kalendrar undersöks.">
+<!ENTITY network.notfound.description "Kan inte hitta någon kalender på denna adress. Var god kontrollera dina inställningar.">
+<!ENTITY network.authfail.description "Inloggningen du angav fungerade inte. Var god kontrollera dina inställningar.">
+
+<!ENTITY network.subscribe.single.description "Välj de kalendrar du vill prenumerera på.">
+<!ENTITY network.subscribe.multiple.description "Flera kalendertyper är tillgängliga på denna adress. Välj en kalendertyp och markera sedan de kalendrar du vill prenumerera på.">

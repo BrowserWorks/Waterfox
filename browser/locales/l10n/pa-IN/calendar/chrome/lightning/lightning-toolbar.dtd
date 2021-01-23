@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Calendar Toolbar">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "Task Toolbar">
+<!ENTITY lightning.toolbar.task.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Synchronize">
+<!ENTITY lightning.toolbar.delete.label "Delete">
+<!ENTITY lightning.toolbar.edit.label "Edit">
+<!ENTITY lightning.toolbar.gototoday.label "Go to Today">
+<!ENTITY lightning.toolbar.print.label "Print">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.mail.label         "Mail">
+<!ENTITY lightning.toolbar.mail.accesskey     "M">
+<!ENTITY lightning.toolbar.calendar.label     "Calendar">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Switch to the calendar tab">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "Tasks">
+<!ENTITY lightning.toolbar.task.tooltip       "Switch to the tasks tab">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Event">
+<!ENTITY lightning.toolbar.newtask.label      "Task">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Day">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Week">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "Multiweek">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "Month">
+<!ENTITY lightning.toolbar.month.accesskey           "M">

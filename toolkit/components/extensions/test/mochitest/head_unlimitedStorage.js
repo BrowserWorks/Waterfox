@@ -18,7 +18,7 @@ function checkSitePermissions(uuid, expectedPermAction, assertMessage) {
   }
 
   const baseURI = NetUtil.newURI(`moz-extension://${uuid}/`);
-  const principal = Services.scriptSecurityManager.createCodebasePrincipal(
+  const principal = Services.scriptSecurityManager.createContentPrincipal(
     baseURI,
     {}
   );
@@ -34,7 +34,7 @@ function checkSitePermissions(uuid, expectedPermAction, assertMessage) {
     ),
     persistentStorage: Services.perms.testPermissionFromPrincipal(
       principal,
-      "WebExtensions-unlimitedStorage"
+      "persistent-storage"
     ),
   };
 

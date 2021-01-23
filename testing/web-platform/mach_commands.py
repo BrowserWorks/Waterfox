@@ -9,6 +9,8 @@ from __future__ import absolute_import, unicode_literals, print_function
 import os
 import sys
 
+from six import iteritems
+
 from mozbuild.base import (
     MachCommandBase,
     MachCommandConditions as conditions,
@@ -37,17 +39,17 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
 
     def kwargs_common(self, kwargs):
         tests_src_path = os.path.join(self._here, "tests")
-        if kwargs["product"] == "fennec":
-            # package_name may be non-fennec in the future
+        if kwargs["product"] == "firefox_android":
+            # package_name may be different in the future
             package_name = kwargs["package_name"]
             if not package_name:
-                package_name = self.substs["ANDROID_PACKAGE_NAME"]
+                kwargs["package_name"] = package_name = "org.mozilla.geckoview.test"
 
-            # Note that this import may fail in non-fennec trees
-            from mozrunner.devices.android_device import verify_android_device, grant_runtime_permissions
-            verify_android_device(self, install=True, verbose=False, xre=True, app=package_name)
+            # Note that this import may fail in non-firefox-for-android trees
+            from mozrunner.devices.android_device import (verify_android_device, InstallIntent)
+            install = InstallIntent.NO if kwargs.pop('no_install') else InstallIntent.YES
+            verify_android_device(self, install=install, verbose=False, xre=True, app=package_name)
 
-            grant_runtime_permissions(self, package_name, kwargs["device_serial"])
             if kwargs["certutil_binary"] is None:
                 kwargs["certutil_binary"] = os.path.join(os.environ.get('MOZ_HOST_BIN'), "certutil")
 
@@ -77,9 +79,6 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
             if kwargs["host_cert_path"] is None:
                 kwargs["host_cert_path"] = os.path.join(cert_root, "web-platform.test.pem")
 
-        if kwargs["lsan_dir"] is None:
-            kwargs["lsan_dir"] = os.path.join(self.topsrcdir, "build", "sanitizers")
-
         if kwargs["reftest_screenshot"] is None:
             kwargs["reftest_screenshot"] = "fail"
 
@@ -101,12 +100,16 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
         if kwargs["webdriver_binary"] is None:
             kwargs["webdriver_binary"] = self.get_binary_path("geckodriver", validate_exists=False)
 
+        if kwargs["install_fonts"] is None:
+            kwargs["install_fonts"] = True
 
-        if mozinfo.info["os"] == "win" and mozinfo.info["os_version"] == "6.1":
+        if kwargs["install_fonts"] and mozinfo.info["os"] == "win" and mozinfo.info["os_version"] == "6.1":
             # On Windows 7 --install-fonts fails, so fall back to a Firefox-specific codepath
             self.setup_fonts_firefox()
-        else:
-            kwargs["install_fonts"] = True
+            kwargs["install_fonts"] = False
+
+        if kwargs["preload_browser"] is None:
+            kwargs["preload_browser"] = False
 
         kwargs = wptcommandline.check_args(kwargs)
 
@@ -136,9 +139,24 @@ class WebPlatformTestsRunnerSetup(MozbuildObject):
         kwargs["prompt"] = True
         kwargs["install_browser"] = False
 
+        # Install the deps
+        # We do this explicitly to avoid calling pip with options that aren't
+        # supported in the in-tree version
+        wptrunner_path = os.path.join(self._here, "tests", "tools", "wptrunner")
+        browser_cls = run.product_setup[kwargs["product"]].browser_cls
+        requirements = ["requirements.txt"]
+        if hasattr(browser_cls, "requirements"):
+            requirements.append(browser_cls.requirements)
+
+        for filename in requirements:
+            path = os.path.join(wptrunner_path, filename)
+            if os.path.exists(path):
+                self.virtualenv_manager.install_pip_requirements(path, require_hashes=False)
+
+        venv = run.virtualenv.Virtualenv(self.virtualenv_manager.virtualenv_root,
+                                         skip_virtualenv_setup=True)
         try:
-            kwargs = run.setup_wptrunner(run.virtualenv.Virtualenv(self.virtualenv_manager.virtualenv_root, False),
-                                         **kwargs)
+            kwargs = run.setup_wptrunner(venv, **kwargs)
         except run.WptrunError as e:
             print(e.message, file=sys.stderr)
             sys.exit(1)
@@ -196,6 +214,51 @@ class WebPlatformTestsUpdater(MozbuildObject):
 #            pdb.post_mortem()
 
 
+class WebPlatformTestsUnittestRunner(MozbuildObject):
+    def run(self, **kwargs):
+        import unittestrunner
+        return unittestrunner.run(self.topsrcdir, **kwargs)
+
+
+class WebPlatformTestsTestPathsRunner(MozbuildObject):
+    """Update web platform tests."""
+    def run(self, **kwargs):
+        sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                        "tests", "tools")))
+        from wptrunner import wptcommandline
+        from manifest import testpaths
+        import manifestupdate
+
+        import logging
+        logger = logging.getLogger("web-platform-tests")
+
+        src_root = self.topsrcdir
+        obj_root = self.topobjdir
+        src_wpt_dir = os.path.join(src_root, "testing", "web-platform")
+
+        config_path = manifestupdate.generate_config(logger, src_root, src_wpt_dir,
+                                                     os.path.join(obj_root, "_tests", "web-platform"),
+                                                     False)
+
+        test_paths = wptcommandline.get_test_paths(wptcommandline.config.read(config_path))
+        results = {}
+        for url_base, paths in iteritems(test_paths):
+            if "manifest_path" not in paths:
+                paths["manifest_path"] = os.path.join(paths["metadata_path"],
+                                                      "MANIFEST.json")
+            results.update(
+                testpaths.get_paths(path=paths["manifest_path"],
+                                    src_root=src_root,
+                                    tests_root=paths["tests_path"],
+                                    update=kwargs["update"],
+                                    rebuild=kwargs["rebuild"],
+                                    url_base=url_base,
+                                    cache_root=kwargs["cache_root"],
+                                    test_ids=kwargs["test_ids"]))
+        testpaths.write_output(results, kwargs["json"])
+        return True
+
+
 def create_parser_update():
     from update import updatecommandline
     return updatecommandline.create_parser()
@@ -232,11 +295,42 @@ def create_parser_metadata_summary():
     return metasummary.create_parser()
 
 
+def create_parser_metadata_merge():
+    import metamerge
+    return metamerge.get_parser()
+
 def create_parser_serve():
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                     "tests", "tools")))
     import serve
     return serve.serve.get_parser()
+
+
+def create_parser_unittest():
+    import unittestrunner
+    return unittestrunner.get_parser()
+
+
+def create_parser_testpaths():
+    import argparse
+    from mozboot.util import get_state_dir
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--no-update", dest="update", action="store_false", default=True,
+        help="Don't update manifest before continuing")
+    parser.add_argument(
+        "-r", "--rebuild", action="store_true", default=False,
+        help="Force a full rebuild of the manifest.")
+    parser.add_argument(
+        "--cache-root", action="store", default=os.path.join(get_state_dir(), "cache", "wpt"),
+        help="Path in which to store any caches (default <tests_root>/.wptcache/)")
+    parser.add_argument(
+        "test_ids", action="store", nargs="+",
+        help="Test ids for which to get paths")
+    parser.add_argument(
+        "--json", action="store_true", default=False,
+        help="Output as JSON")
+    return parser
 
 
 @CommandProvider
@@ -251,23 +345,26 @@ class MachCommands(MachCommandBase):
              parser=create_parser_wpt)
     def run_web_platform_tests(self, **params):
         self.setup()
-        if conditions.is_android(self) and params["product"] != "fennec":
+        if conditions.is_android(self) and params["product"] != "firefox_android":
             if params["product"] is None:
-                params["product"] = "fennec"
-            else:
-                raise ValueError("Must specify --product=fennec in Android environment.")
+                params["product"] = "firefox_android"
         if "test_objects" in params:
             for item in params["test_objects"]:
                 params["include"].append(item["name"])
             del params["test_objects"]
+        if params.get('debugger', None):
+            import mozdebug
+            if not mozdebug.get_debugger_info(params.get('debugger')):
+                sys.exit(1)
 
         wpt_setup = self._spawn(WebPlatformTestsRunnerSetup)
+        wpt_setup._mach_context = self._mach_context
         wpt_runner = WebPlatformTestsRunner(wpt_setup)
 
-        if params["log_mach_screenshot"] is None:
-            params["log_mach_screenshot"] = True
-
         logger = wpt_runner.setup_logging(**params)
+
+        if conditions.is_android(self) and params["product"] != "firefox_android":
+            logger.warning("Must specify --product=firefox_android in Android environment.")
 
         return wpt_runner.run(logger, **params)
 
@@ -333,3 +430,31 @@ class MachCommands(MachCommandBase):
         import metasummary
         wpt_setup = self._spawn(WebPlatformTestsRunnerSetup)
         return metasummary.run(wpt_setup.topsrcdir, wpt_setup.topobjdir, **params)
+
+    @Command("wpt-metadata-merge",
+             category="testing",
+             parser=create_parser_metadata_merge)
+    def wpt_meta_merge(self, **params):
+        import metamerge
+        if params["dest"] is None:
+            params["dest"] = params["current"]
+        return metamerge.run(**params)
+
+    @Command("wpt-unittest",
+             category="testing",
+             description="Run the wpt tools and wptrunner unit tests",
+             parser=create_parser_unittest)
+    def wpt_unittest(self, **params):
+        self.setup()
+        self.virtualenv_manager.install_pip_package('tox')
+        runner = self._spawn(WebPlatformTestsUnittestRunner)
+        return 0 if runner.run(**params) else 1
+
+    @Command("wpt-test-paths",
+             category="testing",
+             description="Get a mapping from test ids to files",
+             parser=create_parser_testpaths)
+    def wpt_test_paths(self, **params):
+        runner = self._spawn(WebPlatformTestsTestPathsRunner)
+        runner.run(**params)
+        return 0

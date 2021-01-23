@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; מצב בטוח של">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; פועל כעת במצב בטוח, המנטרל זמנית את ההרחבות, ערכות הנושא, ואת ההגדרות המותאמות אישית שלך.">
+<!ENTITY safeModeDescription2.label       "ביכולתך להגדיר שינוים אלה או חלקם באופן קבוע:">
+
+<!ENTITY disableAddons.label              "נטרל את כל התוספות">
+<!ENTITY disableAddons.accesskey          "נ">
+
+<!ENTITY resetToolbars.label              "איפוס סרגלי כלים ופקדים">
+<!ENTITY resetToolbars.accesskey          "א">
+
+<!ENTITY changeAndRestartButton.label     "בצע שינויים והפעל מחדש">
+<!ENTITY changeAndRestartButton.accesskey "פ">
+
+<!ENTITY continueButton.label             "המשך במצב בטוח">
+<!ENTITY continueButton.accesskey         "מ">

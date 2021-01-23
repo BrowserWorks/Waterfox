@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "पता पुस्तिका लायें">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "रिकार्ड के लिये आयातित आंकड़ा: ">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "दांये आयात के लिये आंकडे को सही करने के लिये बांयें भाग में Move Up और Move Down को मेल खिलाने के लिये प्रयोग करें. उन मद को अनचेक करें जिसे आप आयात करना चाहते हैं.">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "पता पुस्तिका क्षेत्र">
+<!ENTITY fieldMapImport.dataTitle "आयात के लिये आंकड़ा रिकार्ड करें">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">
+
+

@@ -24,32 +24,11 @@ XREAppData& XREAppData::operator=(const StaticXREAppData& aOther) {
   profile = aOther.profile;
   UAName = aOther.UAName;
   sourceURL = aOther.sourceURL;
+  updateURL = aOther.updateURL;
 
   return *this;
 }
 
-XREAppData& XREAppData::operator=(const XREAppData& aOther) {
-  directory = aOther.directory;
-  vendor = aOther.vendor;
-  name = aOther.name;
-  remotingName = aOther.remotingName;
-  version = aOther.version;
-  buildID = aOther.buildID;
-  ID = aOther.ID;
-  copyright = aOther.copyright;
-  flags = aOther.flags;
-  xreDirectory = aOther.xreDirectory;
-  minVersion = aOther.minVersion;
-  maxVersion = aOther.maxVersion;
-  crashReporterURL = aOther.crashReporterURL;
-  profile = aOther.profile;
-  UAName = aOther.UAName;
-  sourceURL = aOther.sourceURL;
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  sandboxBrokerServices = aOther.sandboxBrokerServices;
-  sandboxPermissionsService = aOther.sandboxPermissionsService;
-#endif
-  return *this;
-}
+XREAppData& XREAppData::operator=(const XREAppData& aOther) = default;
 
 }  // namespace mozilla

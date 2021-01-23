@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2; fill-column: 80 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -11,7 +9,7 @@ function testJumpToLine(ed, inputLine, expectCursor) {
   const lineInput = editorDoc.querySelector("input");
   lineInput.value = inputLine;
   EventUtils.synthesizeKey("VK_RETURN", {}, editorDoc.defaultView);
-  // CodeMirror lines and columns are 0-based, Scratchpad UI is 1-based.
+  // CodeMirror lines and columns are 0-based.
   ch(
     ed.getCursor(),
     expectCursor,

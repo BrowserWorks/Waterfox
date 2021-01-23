@@ -10,13 +10,14 @@
 #include "js/Class.h"
 #include "vm/ArgumentsObject.h"
 #include "vm/ArrayObject.h"
+#include "vm/GeneratorResumeKind.h"  // GeneratorResumeKind
 #include "vm/JSContext.h"
 #include "vm/JSObject.h"
 #include "vm/Stack.h"
 
 namespace js {
 
-enum class GeneratorResumeKind { Next, Throw, Return };
+extern const JSClass GeneratorFunctionClass;
 
 class AbstractGeneratorObject : public NativeObject {
  public:
@@ -38,28 +39,11 @@ class AbstractGeneratorObject : public NativeObject {
                       jsbytecode* pc, Value* vp, unsigned nvalues);
 
  public:
-  static GeneratorResumeKind getResumeKind(jsbytecode* pc) {
-    MOZ_ASSERT(*pc == JSOP_RESUME);
-    unsigned arg = GET_UINT8(pc);
-    MOZ_ASSERT(arg <= unsigned(GeneratorResumeKind::Return));
-    return static_cast<GeneratorResumeKind>(arg);
-  }
-
-  static GeneratorResumeKind getResumeKind(JSContext* cx, JSAtom* atom) {
-    if (atom == cx->names().next) {
-      return GeneratorResumeKind::Next;
-    }
-    if (atom == cx->names().throw_) {
-      return GeneratorResumeKind::Throw;
-    }
-    MOZ_ASSERT(atom == cx->names().return_);
-    return GeneratorResumeKind::Return;
-  }
-
   static JSObject* create(JSContext* cx, AbstractFramePtr frame);
 
   static bool resume(JSContext* cx, InterpreterActivation& activation,
-                     Handle<AbstractGeneratorObject*> genObj, HandleValue arg);
+                     Handle<AbstractGeneratorObject*> genObj, HandleValue arg,
+                     HandleValue resumeKind);
 
   static bool initialSuspend(JSContext* cx, HandleObject obj,
                              AbstractFramePtr frame, jsbytecode* pc) {
@@ -118,9 +102,9 @@ class AbstractGeneratorObject : public NativeObject {
   // RESUME_INDEX_RUNNING.
   //
   // If the generator is suspended, it's the resumeIndex (stored as
-  // JSOP_INITIALYIELD/JSOP_YIELD/JSOP_AWAIT operand) of the yield instruction
-  // that suspended the generator. The resumeIndex can be mapped to the
-  // bytecode offset (interpreter) or to the native code offset (JIT).
+  // JSOp::InitialYield/JSOp::Yield/JSOp::Await operand) of the yield
+  // instruction that suspended the generator. The resumeIndex can be mapped to
+  // the bytecode offset (interpreter) or to the native code offset (JIT).
 
   bool isBeforeInitialYield() const {
     return getFixedSlot(RESUME_INDEX_SLOT).isUndefined();
@@ -132,19 +116,20 @@ class AbstractGeneratorObject : public NativeObject {
     // Note: also update Baseline's IsSuspendedGenerator code if this
     // changes.
     Value resumeIndex = getFixedSlot(RESUME_INDEX_SLOT);
-    return resumeIndex.isInt32() && resumeIndex.toInt32() < RESUME_INDEX_RUNNING;
+    return resumeIndex.isInt32() &&
+           resumeIndex.toInt32() < RESUME_INDEX_RUNNING;
   }
   void setRunning() {
     MOZ_ASSERT(isSuspended());
     setFixedSlot(RESUME_INDEX_SLOT, Int32Value(RESUME_INDEX_RUNNING));
   }
   void setResumeIndex(jsbytecode* pc) {
-    MOZ_ASSERT(*pc == JSOP_INITIALYIELD || *pc == JSOP_YIELD ||
-               *pc == JSOP_AWAIT);
+    MOZ_ASSERT(JSOp(*pc) == JSOp::InitialYield || JSOp(*pc) == JSOp::Yield ||
+               JSOp(*pc) == JSOp::Await);
 
-    MOZ_ASSERT_IF(JSOp(*pc) == JSOP_INITIALYIELD,
+    MOZ_ASSERT_IF(JSOp(*pc) == JSOp::InitialYield,
                   getFixedSlot(RESUME_INDEX_SLOT).isUndefined());
-    MOZ_ASSERT_IF(JSOp(*pc) != JSOP_INITIALYIELD, isRunning());
+    MOZ_ASSERT_IF(JSOp(*pc) != JSOp::InitialYield, isRunning());
 
     uint32_t resumeIndex = GET_UINT24(pc);
     MOZ_ASSERT(resumeIndex < uint32_t(RESUME_INDEX_RUNNING));
@@ -175,6 +160,8 @@ class AbstractGeneratorObject : public NativeObject {
   bool isAfterYieldOrAwait(JSOp op);
 
  public:
+  void trace(JSTracer* trc);
+
   static size_t offsetOfCalleeSlot() { return getFixedSlotOffset(CALLEE_SLOT); }
   static size_t offsetOfEnvironmentChainSlot() {
     return getFixedSlotOffset(ENV_CHAIN_SLOT);
@@ -194,7 +181,8 @@ class GeneratorObject : public AbstractGeneratorObject {
  public:
   enum { RESERVED_SLOTS = AbstractGeneratorObject::RESERVED_SLOTS };
 
-  static const Class class_;
+  static const JSClass class_;
+  static const JSClassOps classOps_;
 
   static GeneratorObject* create(JSContext* cx, HandleFunction fun);
 };
@@ -212,7 +200,7 @@ bool GeneratorThrowOrReturn(JSContext* cx, AbstractFramePtr frame,
  * - While a generator call evaluates default argument values and performs
  *   destructuring, which occurs before the generator object is created.
  *
- * - Between the `GENERATOR` instruction and the `SETALIASEDVAR .generator`
+ * - Between the `Generator` instruction and the `SetAliasedVar .generator`
  *   instruction, at which point the generator object does exist, but is held
  *   only on the stack, and not the `.generator` pseudo-variable this function
  *   consults.
@@ -221,6 +209,19 @@ AbstractGeneratorObject* GetGeneratorObjectForFrame(JSContext* cx,
                                                     AbstractFramePtr frame);
 
 void SetGeneratorClosed(JSContext* cx, AbstractFramePtr frame);
+
+inline GeneratorResumeKind IntToResumeKind(int32_t value) {
+  MOZ_ASSERT(uint32_t(value) <= uint32_t(GeneratorResumeKind::Return));
+  return static_cast<GeneratorResumeKind>(value);
+}
+
+inline GeneratorResumeKind ResumeKindFromPC(jsbytecode* pc) {
+  MOZ_ASSERT(JSOp(*pc) == JSOp::ResumeKind);
+  return IntToResumeKind(GET_UINT8(pc));
+}
+
+GeneratorResumeKind AtomToResumeKind(JSContext* cx, JSAtom* atom);
+JSAtom* ResumeKindToAtom(JSContext* cx, GeneratorResumeKind kind);
 
 }  // namespace js
 

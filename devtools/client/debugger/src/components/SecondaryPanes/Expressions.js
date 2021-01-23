@@ -19,7 +19,7 @@ import {
   getThreadContext,
 } from "../../selectors";
 import { getValue } from "../../utils/expressions";
-import { createObjectClient } from "../../client/firefox";
+import { getGrip, getFront } from "../../utils/evaluation-result";
 
 import { CloseButton } from "../shared/Button";
 import { debounce } from "lodash";
@@ -38,18 +38,21 @@ type State = {
   focused: boolean,
 };
 
+type OwnProps = {|
+  showInput: boolean,
+  onExpressionAdded: () => void,
+|};
 type Props = {
   cx: ThreadContext,
   expressions: List<Expression>,
   expressionError: boolean,
   showInput: boolean,
-  autocompleteMatches: string[],
+  autocompleteMatches: ?(string[]),
   onExpressionAdded: () => void,
   autocomplete: typeof actions.autocomplete,
   clearAutocomplete: typeof actions.clearAutocomplete,
   addExpression: typeof actions.addExpression,
   clearExpressionError: typeof actions.clearExpressionError,
-  evaluateExpressions: typeof actions.evaluateExpressions,
   updateExpression: typeof actions.updateExpression,
   deleteExpression: typeof actions.deleteExpression,
   openLink: typeof actions.openLink,
@@ -77,11 +80,7 @@ class Expressions extends Component<Props, State> {
   }
 
   componentDidMount() {
-    const { cx, expressions, evaluateExpressions, showInput } = this.props;
-
-    if (expressions.size > 0) {
-      evaluateExpressions(cx);
-    }
+    const { showInput } = this.props;
 
     // Ensures that the input is focused when the "+"
     // is clicked while the panel is collapsed
@@ -93,17 +92,17 @@ class Expressions extends Component<Props, State> {
   clear = () => {
     this.setState(() => {
       this.props.clearExpressionError();
-      return { editing: false, editIndex: -1, inputValue: "" };
+      return { editing: false, editIndex: -1, inputValue: "", focused: false };
     });
   };
 
-  componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps: Props) {
     if (this.state.editing && !nextProps.expressionError) {
       this.clear();
     }
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
+  shouldComponentUpdate(nextProps: Props, nextState: State) {
     const { editing, inputValue, focused } = this.state;
     const {
       expressions,
@@ -123,7 +122,7 @@ class Expressions extends Component<Props, State> {
     );
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     const input = this._input;
 
     if (!input) {
@@ -156,17 +155,20 @@ class Expressions extends Component<Props, State> {
   }
 
   handleChange = (e: SyntheticInputEvent<HTMLInputElement>) => {
-    const target = e.target;
+    const { target } = e;
     if (features.autocompleteExpression) {
       this.findAutocompleteMatches(target.value, target.selectionStart);
     }
     this.setState({ inputValue: target.value });
   };
 
-  findAutocompleteMatches = debounce((value, selectionStart) => {
-    const { autocomplete } = this.props;
-    autocomplete(this.props.cx, value, selectionStart);
-  }, 250);
+  findAutocompleteMatches = debounce(
+    (value: string, selectionStart: number) => {
+      const { autocomplete } = this.props;
+      autocomplete(this.props.cx, value, selectionStart);
+    },
+    250
+  );
 
   handleKeyDown = (e: SyntheticKeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Escape") {
@@ -244,30 +246,35 @@ class Expressions extends Component<Props, State> {
       return;
     }
 
-    const { value } = getValue(expression);
+    let value = getValue(expression);
+    let front = null;
+    if (value && value.unavailable !== true) {
+      value = getGrip(value);
+      front = getFront(value);
+    }
 
     const root = {
       name: expression.input,
       path: input,
-      contents: { value },
+      contents: {
+        value,
+        front,
+      },
     };
 
     return (
-      <li
-        className="expression-container"
-        key={input}
-        title={expression.input}
-        onDoubleClick={(items, options) =>
-          this.editExpression(expression, index)
-        }
-      >
+      <li className="expression-container" key={input} title={expression.input}>
         <div className="expression-content">
           <ObjectInspector
             roots={[root]}
             autoExpandDepth={0}
             disableWrap={true}
             openLink={openLink}
-            createObjectClient={grip => createObjectClient(grip)}
+            onDoubleClick={(items, { depth }) => {
+              if (depth === 0) {
+                this.editExpression(expression, index);
+              }
+            }}
             onDOMNodeClick={grip => openElementInInspector(grip)}
             onInspectIconClick={grip => openElementInInspector(grip)}
             onDOMNodeMouseOver={grip => highlightDomElement(grip)}
@@ -324,9 +331,9 @@ class Expressions extends Component<Props, State> {
             onFocus={this.onFocus}
             value={!editing ? inputValue : ""}
             ref={c => (this._input = c)}
-            {...features.autocompleteExpression && {
+            {...(features.autocompleteExpression && {
               list: "autocomplete-matches",
-            }}
+            })}
           />
           {this.renderAutoCompleteMatches()}
           <input type="submit" style={{ display: "none" }} />
@@ -360,9 +367,9 @@ class Expressions extends Component<Props, State> {
             onFocus={this.onFocus}
             value={editing ? inputValue : expression.input}
             ref={c => (this._input = c)}
-            {...features.autocompleteExpression && {
+            {...(features.autocompleteExpression && {
               list: "autocomplete-matches",
-            }}
+            })}
           />
           {this.renderAutoCompleteMatches()}
           <input type="submit" style={{ display: "none" }} />
@@ -377,34 +384,28 @@ class Expressions extends Component<Props, State> {
     return (
       <ul className="pane expressions-list">
         {expressions.map(this.renderExpression)}
-        {(showInput || !expressions.size) && this.renderNewExpressionInput()}
+        {(showInput || !expressions.length) && this.renderNewExpressionInput()}
       </ul>
     );
   }
 }
 
-const mapStateToProps = state => {
-  return {
-    cx: getThreadContext(state),
-    autocompleteMatches: getAutocompleteMatchset(state),
-    expressions: getExpressions(state),
-    expressionError: getExpressionError(state),
-  };
-};
+const mapStateToProps = state => ({
+  cx: getThreadContext(state),
+  autocompleteMatches: (getAutocompleteMatchset(state): ?(string[])),
+  expressions: getExpressions(state),
+  expressionError: getExpressionError(state),
+});
 
-export default connect(
-  mapStateToProps,
-  {
-    autocomplete: actions.autocomplete,
-    clearAutocomplete: actions.clearAutocomplete,
-    addExpression: actions.addExpression,
-    clearExpressionError: actions.clearExpressionError,
-    evaluateExpressions: actions.evaluateExpressions,
-    updateExpression: actions.updateExpression,
-    deleteExpression: actions.deleteExpression,
-    openLink: actions.openLink,
-    openElementInInspector: actions.openElementInInspectorCommand,
-    highlightDomElement: actions.highlightDomElement,
-    unHighlightDomElement: actions.unHighlightDomElement,
-  }
-)(Expressions);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  autocomplete: actions.autocomplete,
+  clearAutocomplete: actions.clearAutocomplete,
+  addExpression: actions.addExpression,
+  clearExpressionError: actions.clearExpressionError,
+  updateExpression: actions.updateExpression,
+  deleteExpression: actions.deleteExpression,
+  openLink: actions.openLink,
+  openElementInInspector: actions.openElementInInspectorCommand,
+  highlightDomElement: actions.highlightDomElement,
+  unHighlightDomElement: actions.unHighlightDomElement,
+})(Expressions);

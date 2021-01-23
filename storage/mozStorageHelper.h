@@ -6,18 +6,13 @@
 #ifndef MOZSTORAGEHELPER_H
 #define MOZSTORAGEHELPER_H
 
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include "mozilla/DebugOnly.h"
-#include "nsIConsoleService.h"
-#include "nsIScriptError.h"
 
-#include "mozIStorageAsyncConnection.h"
 #include "mozIStorageConnection.h"
 #include "mozIStorageStatement.h"
 #include "mozIStoragePendingStatement.h"
 #include "nsError.h"
-#include "nsIXPConnect.h"
 
 /**
  * This class wraps a transaction inside a given C++ scope, guaranteeing that

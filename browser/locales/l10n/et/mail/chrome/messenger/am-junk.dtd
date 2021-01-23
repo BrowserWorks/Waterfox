@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label     "Rämpsposti sätted">
+<!ENTITY trainingDescription.label "Kui see säte on lubatud, siis tuleb kõigepealt õpetada &brandShortName; rämpsposti ära tundma. Seda saab teha tööriistaribal oleva nupu Rämpspost abil. Sa pead märkima nii rämpsposti kui ka need kirjad, mis pole rämpspost. Alles pärast seda suudab &brandShortName; rämpsposti automaatselt tuvastada.">
+<!ENTITY level.label            "Selle konto jaoks lubatakse õppiv rämpspostifilter">
+<!ENTITY level.accesskey        "S">
+
+<!ENTITY move.label             "Uued rämpskirjad liigutatakse:">
+<!ENTITY move.accesskey         "U">
+<!ENTITY junkFolderOn.label     "&quot;Rämpspost&quot; kausta kontos:">
+<!ENTITY junkFolderOn.accesskey "R">
+<!ENTITY otherFolder.label      "muusse kausta:">
+<!ENTITY otherFolder.accesskey  "m">
+<!ENTITY purge1.label           "Kustutatakse rämpspost, mis on vanem kui">
+<!ENTITY purge1.accesskey       "K">
+<!ENTITY purge2.label           "päeva">
+
+<!ENTITY whitelistHeader.label  "Kirja ei märgita automaatselt rämpspostiks, kui saatja on järgnevates aadressiraamatutes: ">
+<!ENTITY whitelistHeader.accesskey "K">
+
+<!ENTITY ispHeadersWarning.label "Selle sätte lubamise korral märgib &brandShortName; ülal määratud filtri poolt märgistatud kirjad automaatselt rämpsuks.">
+<!ENTITY ispHeaders.label       "Usaldatakse rämpsposti päiseid, mille on määranud:">
+<!ENTITY ispHeaders.accesskey   "L">
+
+<!ENTITY junkClassification.label "Valik">
+<!ENTITY junkActions.label      "Sihtkoht ja säilitamine">
+
+<!ENTITY globalJunkPrefs.label  "Üldised rämpsposti sätted…">
+<!ENTITY globalJunkPrefs.accesskey "d">

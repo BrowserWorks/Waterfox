@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -12,9 +11,9 @@
 
 const TEST_URI_HTML = TEST_URL_ROOT + "doc_content_stylesheet.html";
 const TEST_URI_AUTHOR = TEST_URL_ROOT + "doc_author-sheet.html";
-const TEST_URI_XUL = TEST_URL_ROOT + "doc_content_stylesheet.xul";
+const TEST_URI_XUL = TEST_URL_ROOT + "doc_content_stylesheet.xhtml";
 const XUL_URI = Services.io.newURI(TEST_URI_XUL);
-const XUL_PRINCIPAL = Services.scriptSecurityManager.createCodebasePrincipal(
+const XUL_PRINCIPAL = Services.scriptSecurityManager.createContentPrincipal(
   XUL_URI,
   {}
 );

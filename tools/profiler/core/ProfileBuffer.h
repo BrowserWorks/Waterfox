@@ -6,35 +6,31 @@
 #ifndef MOZ_PROFILE_BUFFER_H
 #define MOZ_PROFILE_BUFFER_H
 
+#include "GeckoProfiler.h"
 #include "ProfileBufferEntry.h"
-#include "ProfilerMarker.h"
 
 #include "mozilla/Maybe.h"
+#include "mozilla/PowerOfTwo.h"
+#include "mozilla/ProfileBufferChunkManagerSingle.h"
+#include "mozilla/ProfileChunkedBuffer.h"
 
-// A fixed-capacity circular buffer.
+// Class storing most profiling data in a ProfileChunkedBuffer.
+//
 // This class is used as a queue of entries which, after construction, never
 // allocates. This makes it safe to use in the profiler's "critical section".
-// Entries are appended at the end. Once the queue capacity has been reached,
-// adding a new entry will evict an old entry from the start of the queue.
-// Positions in the queue are represented as 64-bit unsigned integers which
-// only increase and never wrap around.
-// mRangeStart and mRangeEnd describe the range in that uint64_t space which is
-// covered by the queue contents.
-// Internally, the buffer uses a fixed-size storage and applies a modulo
-// operation when accessing entries in that storage buffer. "Evicting" an entry
-// really just means that an existing entry in the storage buffer gets
-// overwritten and that mRangeStart gets incremented.
 class ProfileBuffer final {
  public:
   // ProfileBuffer constructor
-  // @param aCapacity The minimum capacity of the buffer. The actual buffer
-  //                   capacity will be rounded up to the next power of two.
-  explicit ProfileBuffer(uint32_t aCapacity);
+  // @param aBuffer The in-session ProfileChunkedBuffer to use as buffer
+  // manager.
+  explicit ProfileBuffer(mozilla::ProfileChunkedBuffer& aBuffer);
 
   ~ProfileBuffer();
 
+  bool IsThreadSafe() const { return mEntries.IsThreadSafe(); }
+
   // Add |aEntry| to the buffer, ignoring what kind of entry it is.
-  void AddEntry(const ProfileBufferEntry& aEntry);
+  uint64_t AddEntry(const ProfileBufferEntry& aEntry);
 
   // Add to the buffer a sample start (ThreadId) entry for aThreadId.
   // Returns the position of the entry.
@@ -42,7 +38,7 @@ class ProfileBuffer final {
 
   void CollectCodeLocation(
       const char* aLabel, const char* aStr, uint32_t aFrameFlags,
-      const mozilla::Maybe<uint32_t>& aLineNumber,
+      uint64_t aInnerWindowID, const mozilla::Maybe<uint32_t>& aLineNumber,
       const mozilla::Maybe<uint32_t>& aColumnNumber,
       const mozilla::Maybe<JS::ProfilingCategoryPair>& aCategoryPair);
 
@@ -80,9 +76,6 @@ class ProfileBuffer final {
   void StreamCountersToJSON(SpliceableJSONWriter& aWriter,
                             const mozilla::TimeStamp& aProcessStartTime,
                             double aSinceTime) const;
-  void StreamMemoryToJSON(SpliceableJSONWriter& aWriter,
-                          const mozilla::TimeStamp& aProcessStartTime,
-                          double aSinceTime) const;
 
   // Find (via |aLastSample|) the most recent sample for the thread denoted by
   // |aThreadId| and clone it, patching in the current time as appropriate.
@@ -94,52 +87,97 @@ class ProfileBuffer final {
 
   void DiscardSamplesBeforeTime(double aTime);
 
-  void AddStoredMarker(ProfilerMarker* aStoredMarker);
-
-  // The following method is not signal safe!
-  void DeleteExpiredStoredMarkers();
-
-  // Access an entry in the buffer.
-  ProfileBufferEntry& GetEntry(uint64_t aPosition) const {
-    return mEntries[aPosition & mEntryIndexMask];
+  // Read an entry in the buffer.
+  ProfileBufferEntry GetEntry(uint64_t aPosition) const {
+    return mEntries.ReadAt(
+        mozilla::ProfileBufferBlockIndex::CreateFromProfileBufferIndex(
+            aPosition),
+        [&](mozilla::Maybe<mozilla::ProfileBufferEntryReader>&& aMER) {
+          ProfileBufferEntry entry;
+          if (aMER.isSome()) {
+            if (aMER->CurrentBlockIndex().ConvertToProfileBufferIndex() ==
+                aPosition) {
+              // If we're here, it means `aPosition` pointed at a valid block.
+              MOZ_RELEASE_ASSERT(aMER->RemainingBytes() <= sizeof(entry));
+              aMER->ReadBytes(&entry, aMER->RemainingBytes());
+            } else {
+              // EntryReader at the wrong position, pretend to have read
+              // everything.
+              aMER->SetRemainingBytes(0);
+            }
+          }
+          return entry;
+        });
   }
 
+  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
- private:
-  // The storage that backs our buffer. Holds mCapacity entries.
-  // All accesses to entries in mEntries need to go through GetEntry(), which
-  // translates the given buffer position from the near-infinite uint64_t space
-  // into the entry storage space.
-  mozilla::UniquePtr<ProfileBufferEntry[]> mEntries;
+  void CollectOverheadStats(mozilla::TimeDuration aSamplingTime,
+                            mozilla::TimeDuration aLocking,
+                            mozilla::TimeDuration aCleaning,
+                            mozilla::TimeDuration aCounters,
+                            mozilla::TimeDuration aThreads);
 
-  // A mask such that pos & mEntryIndexMask == pos % mCapacity.
-  uint32_t mEntryIndexMask;
+  ProfilerBufferInfo GetProfilerBufferInfo() const;
+
+ private:
+  // Add |aEntry| to the provided ProfileChunkedBuffer.
+  // `static` because it may be used to add an entry to a `ProfileChunkedBuffer`
+  // that is not attached to a `ProfileBuffer`.
+  static mozilla::ProfileBufferBlockIndex AddEntry(
+      mozilla::ProfileChunkedBuffer& aProfileChunkedBuffer,
+      const ProfileBufferEntry& aEntry);
+
+  // Add a sample start (ThreadId) entry for aThreadId to the provided
+  // ProfileChunkedBuffer. Returns the position of the entry.
+  // `static` because it may be used to add an entry to a `ProfileChunkedBuffer`
+  // that is not attached to a `ProfileBuffer`.
+  static mozilla::ProfileBufferBlockIndex AddThreadIdEntry(
+      mozilla::ProfileChunkedBuffer& aProfileChunkedBuffer, int aThreadId);
+
+  // The storage in which this ProfileBuffer stores its entries.
+  mozilla::ProfileChunkedBuffer& mEntries;
 
  public:
-  // mRangeStart and mRangeEnd are uint64_t values that strictly advance and
-  // never wrap around. mRangeEnd is always greater than or equal to
-  // mRangeStart, but never gets more than mCapacity steps ahead of
-  // mRangeStart, because we can only store a fixed number of entries in the
-  // buffer. Once the entire buffer is in use, adding a new entry will evict an
-  // entry from the front of the buffer (and increase mRangeStart).
-  // In other words, the following conditions hold true at all times:
-  //  (1) mRangeStart <= mRangeEnd
-  //  (2) mRangeEnd - mRangeStart <= mCapacity
+  // `BufferRangeStart()` and `BufferRangeEnd()` return `uint64_t` values
+  // corresponding to the first entry and past the last entry stored in
+  // `mEntries`.
   //
-  // If there are no live entries, then mRangeStart == mRangeEnd.
-  // Otherwise, mRangeStart is the first live entry and mRangeEnd is one past
-  // the last live entry, and also the position at which the next entry will be
-  // added.
-  // (mRangeEnd - mRangeStart) always gives the number of live entries.
-  uint64_t mRangeStart;
-  uint64_t mRangeEnd;
+  // The returned values are not guaranteed to be stable, because other threads
+  // may also be accessing the buffer concurrently. But they will always
+  // increase, and can therefore give an indication of how far these values have
+  // *at least* reached. In particular:
+  // - Entries whose index is strictly less that `BufferRangeStart()` have been
+  //   discarded by now, so any related data may also be safely discarded.
+  // - It is safe to try and read entries at any index strictly less than
+  //   `BufferRangeEnd()` -- but note that these reads may fail by the time you
+  //   request them, as old entries get overwritten by new ones.
+  uint64_t BufferRangeStart() const { return mEntries.GetState().mRangeStart; }
+  uint64_t BufferRangeEnd() const { return mEntries.GetState().mRangeEnd; }
 
-  // The number of entries in our buffer. Always a power of two.
-  uint32_t mCapacity;
+ private:
+  // 65536 bytes should be plenty for a single backtrace.
+  static constexpr auto WorkerBufferBytes = mozilla::MakePowerOfTwo32<65536>();
 
-  // Markers that marker entries in the buffer might refer to.
-  ProfilerMarkerLinkedList mStoredMarkers;
+  // Single pre-allocated chunk (to avoid spurious mallocs), used when:
+  // - Duplicating sleeping stacks.
+  // - Adding JIT info.
+  // - Streaming stacks to JSON.
+  // Mutable because it's accessed from non-multithreaded const methods.
+  mutable mozilla::ProfileBufferChunkManagerSingle mWorkerChunkManager{
+      mozilla::ProfileBufferChunk::Create(
+          mozilla::ProfileBufferChunk::SizeofChunkMetadata() +
+          WorkerBufferBytes.Value())};
+
+  double mFirstSamplingTimeNs = 0.0;
+  double mLastSamplingTimeNs = 0.0;
+  ProfilerStats mIntervalsNs;
+  ProfilerStats mOverheadsNs;
+  ProfilerStats mLockingsNs;
+  ProfilerStats mCleaningsNs;
+  ProfilerStats mCountersNs;
+  ProfilerStats mThreadsNs;
 };
 
 /**
@@ -150,16 +188,15 @@ class ProfileBuffer final {
  */
 class ProfileBufferCollector final : public ProfilerStackCollector {
  public:
-  ProfileBufferCollector(ProfileBuffer& aBuf, uint32_t aFeatures,
-                         uint64_t aSamplePos)
-      : mBuf(aBuf), mSamplePositionInBuffer(aSamplePos), mFeatures(aFeatures) {}
+  ProfileBufferCollector(ProfileBuffer& aBuf, uint64_t aSamplePos)
+      : mBuf(aBuf), mSamplePositionInBuffer(aSamplePos) {}
 
   mozilla::Maybe<uint64_t> SamplePositionInBuffer() override {
     return mozilla::Some(mSamplePositionInBuffer);
   }
 
   mozilla::Maybe<uint64_t> BufferRangeStart() override {
-    return mozilla::Some(mBuf.mRangeStart);
+    return mozilla::Some(mBuf.BufferRangeStart());
   }
 
   virtual void CollectNativeLeafAddr(void* aAddr) override;
@@ -171,7 +208,6 @@ class ProfileBufferCollector final : public ProfilerStackCollector {
  private:
   ProfileBuffer& mBuf;
   uint64_t mSamplePositionInBuffer;
-  uint32_t mFeatures;
 };
 
 #endif

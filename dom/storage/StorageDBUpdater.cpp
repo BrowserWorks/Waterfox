@@ -7,7 +7,6 @@
 #include "LocalStorageManager.h"
 #include "StorageUtils.h"
 
-#include "mozIStorageBindingParamsArray.h"
 #include "mozIStorageBindingParams.h"
 #include "mozIStorageValueArray.h"
 #include "mozIStorageFunction.h"
@@ -26,7 +25,7 @@ using namespace StorageUtils;
 namespace {
 
 class nsReverseStringSQLFunction final : public mozIStorageFunction {
-  ~nsReverseStringSQLFunction() {}
+  ~nsReverseStringSQLFunction() = default;
 
   NS_DECL_ISUPPORTS
   NS_DECL_MOZISTORAGEFUNCTION
@@ -149,7 +148,7 @@ class GetOriginParticular final : public mozIStorageFunction {
 
  private:
   GetOriginParticular() = delete;
-  ~GetOriginParticular() {}
+  ~GetOriginParticular() = default;
 
   EParticular mParticular;
 
@@ -190,10 +189,10 @@ GetOriginParticular::OnFunctionCall(mozIStorageValueArray* aFunctionArguments,
 
 class StripOriginAddonId final : public mozIStorageFunction {
  public:
-  explicit StripOriginAddonId() {}
+  explicit StripOriginAddonId() = default;
 
  private:
-  ~StripOriginAddonId() {}
+  ~StripOriginAddonId() = default;
 
   NS_DECL_ISUPPORTS
   NS_DECL_MOZISTORAGEFUNCTION
@@ -420,7 +419,7 @@ nsresult Update(mozIStorageConnection* aWorkerConnection) {
       rv = aWorkerConnection->SetSchemaVersion(1);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     }
     case 1: {
       nsCOMPtr<mozIStorageFunction> oaStripAddonId(new StripOriginAddonId());
@@ -439,7 +438,7 @@ nsresult Update(mozIStorageConnection* aWorkerConnection) {
       rv = aWorkerConnection->SetSchemaVersion(2);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     }
     case CURRENT_SCHEMA_VERSION:
       // Ensure the tables and indexes are up.  This is mostly a no-op

@@ -11,6 +11,7 @@
 
 #include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/DeferredFinalize.h"
+#include "mozilla/HashTable.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/mozalloc.h"
 #include "mozilla/MemoryReporting.h"
@@ -28,10 +29,6 @@ class nsCycleCollectionNoteRootCallback;
 class nsIException;
 class nsIRunnable;
 class nsWrapperCache;
-
-namespace js {
-struct Class;
-}  // namespace js
 
 namespace mozilla {
 
@@ -89,9 +86,64 @@ class JSZoneParticipant : public nsCycleCollectionParticipant {
 
 class IncrementalFinalizeRunnable;
 
-struct JSHolderInfo {
-  void* mHolder;
-  nsScriptObjectTracer* mTracer;
+// A map from JS holders to tracer objects, where the values are stored in
+// SegmentedVector to speed up iteration.
+class JSHolderMap {
+ public:
+  enum WhichHolders { AllHolders, HoldersInCollectingZones };
+
+  JSHolderMap();
+
+  // Call functor |f| for each holder.
+  template <typename F>
+  void ForEach(F&& f, WhichHolders aWhich = AllHolders);
+
+  bool Has(void* aHolder) const;
+  nsScriptObjectTracer* Get(void* aHolder) const;
+  nsScriptObjectTracer* GetAndRemove(void* aHolder);
+  void Put(void* aHolder, nsScriptObjectTracer* aTracer, JS::Zone* aZone);
+
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const;
+
+ private:
+  struct Entry {
+    void* mHolder;
+    nsScriptObjectTracer* mTracer;
+#ifdef DEBUG
+    JS::Zone* mZone;
+#endif
+
+    Entry();
+    Entry(void* aHolder, nsScriptObjectTracer* aTracer, JS::Zone* aZone);
+  };
+
+  using EntryMap = mozilla::HashMap<void*, Entry*, DefaultHasher<void*>,
+                                    InfallibleAllocPolicy>;
+
+  using EntryVector = SegmentedVector<Entry, 256, InfallibleAllocPolicy>;
+
+  using EntryVectorMap =
+      mozilla::HashMap<JS::Zone*, UniquePtr<EntryVector>,
+                       DefaultHasher<JS::Zone*>, InfallibleAllocPolicy>;
+
+  template <typename F>
+  void ForEach(EntryVector& aJSHolders, const F& f, JS::Zone* aZone);
+
+  bool RemoveEntry(EntryVector& aJSHolders, Entry* aEntry);
+
+  // A map from a holder pointer to a pointer to an entry in a vector.
+  EntryMap mJSHolderMap;
+
+  // A vector of holders not associated with a particular zone or that can
+  // contain pointers to GC things in more than one zone.
+  EntryVector mAnyZoneJSHolders;
+
+  // A map from a zone to a vector of holders that only contain pointers to GC
+  // things in that zone.
+  //
+  // Currently this will only contain wrapper cache wrappers since these are the
+  // only holders to pass a zone parameter through to AddJSHolder.
+  EntryVectorMap mPerZoneJSHolders;
 };
 
 class CycleCollectedJSRuntime {
@@ -116,13 +168,13 @@ class CycleCollectedJSRuntime {
   virtual void CustomGCCallback(JSGCStatus aStatus) {}
   virtual void CustomOutOfMemoryCallback() {}
 
-  LinkedList<CycleCollectedJSContext>& Contexts() { return mContexts; }
+  CycleCollectedJSContext* GetContext() { return mContext; }
 
  private:
   void DescribeGCThing(bool aIsMarked, JS::GCCellPtr aThing,
                        nsCycleCollectionTraversalCallback& aCb) const;
 
-  virtual bool DescribeCustomObjects(JSObject* aObject, const js::Class* aClasp,
+  virtual bool DescribeCustomObjects(JSObject* aObject, const JSClass* aClasp,
                                      char (&aName)[72]) const {
     return false;  // We did nothing.
   }
@@ -130,11 +182,11 @@ class CycleCollectedJSRuntime {
   void NoteGCThingJSChildren(JS::GCCellPtr aThing,
                              nsCycleCollectionTraversalCallback& aCb) const;
 
-  void NoteGCThingXPCOMChildren(const js::Class* aClasp, JSObject* aObj,
+  void NoteGCThingXPCOMChildren(const JSClass* aClasp, JSObject* aObj,
                                 nsCycleCollectionTraversalCallback& aCb) const;
 
   virtual bool NoteCustomGCThingXPCOMChildren(
-      const js::Class* aClasp, JSObject* aObj,
+      const JSClass* aClasp, JSObject* aObj,
       nsCycleCollectionTraversalCallback& aCb) const {
     return false;  // We did nothing.
   }
@@ -152,23 +204,23 @@ class CycleCollectedJSRuntime {
 
   static void TraceBlackJS(JSTracer* aTracer, void* aData);
   static void TraceGrayJS(JSTracer* aTracer, void* aData);
-  static void GCCallback(JSContext* aContext, JSGCStatus aStatus, void* aData);
+  static void GCCallback(JSContext* aContext, JSGCStatus aStatus,
+                         JS::GCReason aReason, void* aData);
   static void GCSliceCallback(JSContext* aContext, JS::GCProgress aProgress,
                               const JS::GCDescription& aDesc);
   static void GCNurseryCollectionCallback(JSContext* aContext,
                                           JS::GCNurseryProgress aProgress,
                                           JS::GCReason aReason);
   static void OutOfMemoryCallback(JSContext* aContext, void* aData);
-  /**
-   * Callback for reporting external string memory.
-   */
-  static size_t SizeofExternalStringCallback(
-      JSString* aStr, mozilla::MallocSizeOf aMallocSizeOf);
 
   static bool ContextCallback(JSContext* aCx, unsigned aOperation, void* aData);
 
+  static void* BeforeWaitCallback(uint8_t* aMemory);
+  static void AfterWaitCallback(void* aCookie);
+
   virtual void TraceNativeBlackRoots(JSTracer* aTracer){};
-  void TraceNativeGrayRoots(JSTracer* aTracer);
+  void TraceNativeGrayRoots(JSTracer* aTracer,
+                            JSHolderMap::WhichHolders aWhich);
 
  public:
   void FinalizeDeferredThings(
@@ -217,7 +269,7 @@ class CycleCollectedJSRuntime {
   void SetLargeAllocationFailure(OOMState aNewState);
 
   void AnnotateAndSetOutOfMemory(OOMState* aStatePtr, OOMState aNewState);
-  void OnGC(JSContext* aContext, JSGCStatus aStatus);
+  void OnGC(JSContext* aContext, JSGCStatus aStatus, JS::GCReason aReason);
   void OnOutOfMemory();
   void OnLargeAllocationFailure();
 
@@ -249,10 +301,10 @@ class CycleCollectedJSRuntime {
   }
 
  public:
-  void AddJSHolder(void* aHolder, nsScriptObjectTracer* aTracer);
+  void AddJSHolder(void* aHolder, nsScriptObjectTracer* aTracer,
+                   JS::Zone* aZone);
   void RemoveJSHolder(void* aHolder);
 #ifdef DEBUG
-  bool IsJSHolder(void* aHolder);
   void AssertNoObjectsToTrace(void* aPossibleJSHolder);
 #endif
 
@@ -285,6 +337,8 @@ class CycleCollectedJSRuntime {
     mZonesWaitingForGC.PutEntry(aZone);
   }
 
+  static void OnZoneDestroyed(JSFreeOp* aFop, JS::Zone* aZone);
+
   // Prepare any zones for GC that have been passed to AddZoneWaitingForGC()
   // since the last GC or since the last call to PrepareWaitingZonesForGC(),
   // whichever was most recent. If there were no such zones, prepare for a
@@ -295,8 +349,7 @@ class CycleCollectedJSRuntime {
   // isn't one.
   static CycleCollectedJSRuntime* Get();
 
-  void AddContext(CycleCollectedJSContext* aContext);
-  void RemoveContext(CycleCollectedJSContext* aContext);
+  void SetContext(CycleCollectedJSContext* aContext);
 
 #ifdef NIGHTLY_BUILD
   bool GetRecentDevError(JSContext* aContext,
@@ -305,7 +358,7 @@ class CycleCollectedJSRuntime {
 #endif  // defined(NIGHTLY_BUILD)
 
  private:
-  LinkedList<CycleCollectedJSContext> mContexts;
+  CycleCollectedJSContext* mContext;
 
   JSGCThingParticipant mGCThingCycleCollectorGlobal;
 
@@ -319,8 +372,7 @@ class CycleCollectedJSRuntime {
 
   mozilla::TimeStamp mLatestNurseryCollectionStart;
 
-  SegmentedVector<JSHolderInfo, 1024, InfallibleAllocPolicy> mJSHolders;
-  nsDataHashtable<nsPtrHashKey<void>, JSHolderInfo*> mJSHolderMap;
+  JSHolderMap mJSHolders;
 
   typedef nsDataHashtable<nsFuncPtrHashKey<DeferredFinalizeFunction>, void*>
       DeferredFinalizerTable;

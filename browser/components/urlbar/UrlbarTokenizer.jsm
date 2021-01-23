@@ -32,15 +32,16 @@ var UrlbarTokenizer = {
   REGEXP_LIKE_PROTOCOL: /^[A-Z+.-]+:\/*(?!\/)/i,
   REGEXP_USERINFO_INVALID_CHARS: /[^\w.~%!$&'()*+,;=:-]/,
   REGEXP_HOSTPORT_INVALID_CHARS: /[^\[\]A-Z0-9.:-]/i,
-  REGEXP_HOSTPORT_IP_LIKE: /^[a-f0-9\.\[\]:]+$/i,
+  REGEXP_SINGLE_WORD_HOST: /^[^.:]+$/i,
+  REGEXP_HOSTPORT_IP_LIKE: /^(?=(.*[.:].*){2})[a-f0-9\.\[\]:]+$/i,
   // This accepts partial IPv4.
   REGEXP_HOSTPORT_INVALID_IP: /\.{2,}|\d{5,}|\d{4,}(?![:\]])|^\.|^(\d+\.){4,}\d+$|^\d{4,}$/,
   // This only accepts complete IPv4.
   REGEXP_HOSTPORT_IPV4: /^(\d{1,3}\.){3,}\d{1,3}(:\d+)?$/,
   // This accepts partial IPv6.
   REGEXP_HOSTPORT_IPV6: /^\[([0-9a-f]{0,4}:){0,7}[0-9a-f]{0,4}\]?$/i,
-  REGEXP_COMMON_EMAIL: /^[\w!#$%&'*+\/=?^`{|}~-]+@[\[\]A-Z0-9.-]+$/i,
-
+  REGEXP_COMMON_EMAIL: /^[\w!#$%&'*+/=?^`{|}~.-]+@[\[\]A-Z0-9.-]+$/i,
+  REGEXP_HAS_PORT: /:\d+$/,
   // Regex matching a percent encoded char at the beginning of a string.
   REGEXP_PERCENT_ENCODED_START: /^(%[0-9a-f]{2}){2,}/i,
 
@@ -81,16 +82,17 @@ var UrlbarTokenizer = {
    *
    * @param {string} token
    *        The string token to verify
-   * @param {object} options {
-   *          requirePath: the url must have a path
-   *        }
+   * @param {boolean} [requirePath] The url must have a path
    * @returns {boolean} whether the token looks like a URL.
    */
-  looksLikeUrl(token, options = {}) {
+  looksLikeUrl(token, { requirePath = false } = {}) {
     if (token.length < 2) {
       return false;
     }
-    // It should be a single word.
+    // Ignore spaces and require path for the data: protocol.
+    if (token.startsWith("data:")) {
+      return token.length > 5;
+    }
     if (this.REGEXP_SPACES.test(token)) {
       return false;
     }
@@ -102,13 +104,13 @@ var UrlbarTokenizer = {
     // having a protocol.
     let slashIndex = token.indexOf("/");
     let prePath = slashIndex != -1 ? token.slice(0, slashIndex) : token;
-    if (!this.looksLikeOrigin(prePath)) {
+    if (!this.looksLikeOrigin(prePath, { ignoreWhitelist: true })) {
       return false;
     }
 
     let path = slashIndex != -1 ? token.slice(slashIndex) : "";
     logger.debug("path", path);
-    if (options.requirePath && !path) {
+    if (requirePath && !path) {
       return false;
     }
     // If there are both path and userinfo, it's likely a url.
@@ -141,7 +143,7 @@ var UrlbarTokenizer = {
     ) {
       return true;
     }
-    if (Services.uriFixup.isDomainWhitelisted(hostPort, -1)) {
+    if (Services.uriFixup.isDomainWhitelisted(hostPort)) {
       return true;
     }
     return false;
@@ -155,10 +157,17 @@ var UrlbarTokenizer = {
    *
    * @param {string} token
    *        The string token to verify
+   * @param {boolean} [ignoreWhitelist] If true, the origin doesn't have to be
+   *        in the whitelist
+   * @param {boolean} [noIp] If true, the origin cannot be an IP address
+   * @param {boolean} [noPort] If true, the origin cannot have a port number
    * @returns {boolean} whether the token looks like an origin.
    */
-  looksLikeOrigin(token) {
-    if (token.length == 0) {
+  looksLikeOrigin(
+    token,
+    { ignoreWhitelist = false, noIp = false, noPort = false } = {}
+  ) {
+    if (!token.length) {
       return false;
     }
     let atIndex = token.indexOf("@");
@@ -168,23 +177,42 @@ var UrlbarTokenizer = {
     }
     let userinfo = atIndex != -1 ? token.slice(0, atIndex) : "";
     let hostPort = atIndex != -1 ? token.slice(atIndex + 1) : token;
+    let hasPort = this.REGEXP_HAS_PORT.test(hostPort);
     logger.debug("userinfo", userinfo);
     logger.debug("hostPort", hostPort);
+    if (noPort && hasPort) {
+      return false;
+    }
     if (
       this.REGEXP_HOSTPORT_IPV4.test(hostPort) ||
       this.REGEXP_HOSTPORT_IPV6.test(hostPort)
     ) {
-      return true;
+      return !noIp;
     }
 
     // Check for invalid chars.
-    return (
-      !this.REGEXP_LIKE_PROTOCOL.test(hostPort) &&
-      !this.REGEXP_USERINFO_INVALID_CHARS.test(userinfo) &&
-      !this.REGEXP_HOSTPORT_INVALID_CHARS.test(hostPort) &&
-      (!this.REGEXP_HOSTPORT_IP_LIKE.test(hostPort) ||
-        !this.REGEXP_HOSTPORT_INVALID_IP.test(hostPort))
-    );
+    if (
+      this.REGEXP_LIKE_PROTOCOL.test(hostPort) ||
+      this.REGEXP_USERINFO_INVALID_CHARS.test(userinfo) ||
+      this.REGEXP_HOSTPORT_INVALID_CHARS.test(hostPort) ||
+      (!this.REGEXP_SINGLE_WORD_HOST.test(hostPort) &&
+        this.REGEXP_HOSTPORT_IP_LIKE.test(hostPort) &&
+        this.REGEXP_HOSTPORT_INVALID_IP.test(hostPort))
+    ) {
+      return false;
+    }
+
+    // If it looks like a single word host, check the whitelist.
+    if (
+      !ignoreWhitelist &&
+      !userinfo &&
+      !hasPort &&
+      this.REGEXP_SINGLE_WORD_HOST.test(hostPort)
+    ) {
+      return Services.uriFixup.isDomainWhitelisted(hostPort);
+    }
+
+    return true;
   },
 
   /**
@@ -235,8 +263,13 @@ const CHAR_TO_TYPE_MAP = new Map(
  * @returns {array} An array of string tokens.
  */
 function splitString(searchString) {
-  // The first step is splitting on unicode whitespaces.
-  let tokens = searchString.trim().split(UrlbarTokenizer.REGEXP_SPACES);
+  // The first step is splitting on unicode whitespaces. We ignore whitespaces
+  // if the search string starts with "data:", to better support Web developers
+  // and compatiblity with other browsers.
+  let trimmed = searchString.trim();
+  let tokens = trimmed.startsWith("data:")
+    ? [trimmed]
+    : trimmed.split(UrlbarTokenizer.REGEXP_SPACES);
   let accumulator = [];
   let hasRestrictionToken = tokens.some(t => CHAR_TO_TYPE_MAP.has(t));
   let chars = Array.from(CHAR_TO_TYPE_MAP.keys()).join("");
@@ -251,7 +284,9 @@ function splitString(searchString) {
     let token = tokens[i];
     if (!hasRestrictionToken && token.length > 1) {
       // Check for an unambiguous restriction char at the beginning of the
-      // first token, or at the end of the last token.
+      // first token, or at the end of the last token. We only count trailing
+      // restriction chars if they are the search restriction char, which is
+      // "?". This is to allow for a typed question to yield only search results.
       if (
         i == 0 &&
         chars.includes(token[0]) &&
@@ -263,7 +298,7 @@ function splitString(searchString) {
         continue;
       } else if (
         i == tokens.length - 1 &&
-        chars.includes(token[token.length - 1]) &&
+        token[token.length - 1] == UrlbarTokenizer.RESTRICT.SEARCH &&
         !UrlbarTokenizer.looksLikeUrl(token, { requirePath: true })
       ) {
         hasRestrictionToken = true;
@@ -312,7 +347,7 @@ function filterTokens(tokens) {
   }
 
   // Handle restriction characters.
-  if (restrictions.length > 0) {
+  if (restrictions.length) {
     // We can apply two kind of restrictions: type (bookmark, search, ...) and
     // matching (url, title). These kind of restrictions can be combined, but we
     // can only have one restriction per kind.

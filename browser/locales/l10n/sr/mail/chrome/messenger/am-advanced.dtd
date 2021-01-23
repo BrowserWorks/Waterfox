@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Подешавања одлазног (SMTP) сервера">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Када управљате својим идентитетима, можете користити сервер са овог списка тако што ћете га изабрати као одлазни сервер (SMTP) или можете користити подразумевани сервер са овог списка бирањем опције &quot;Користи подразумевани сервер&quot;.">
+
+<!ENTITY smtpListAdd.label  "Додај…">
+<!ENTITY smtpListAdd.accesskey  "д">
+<!ENTITY smtpListEdit.label "Уреди…">
+<!ENTITY smtpListEdit.accesskey "е">
+<!ENTITY smtpListDelete.label "Уклони">
+<!ENTITY smtpListDelete.accesskey "У">
+<!ENTITY smtpListSetDefault.label "Подеси подразумевани">
+<!ENTITY smtpListSetDefault.accesskey "д">
+
+<!ENTITY serverDetails.label "Детаљи изабраног сервера:">
+<!ENTITY serverDescription.label "Опис: ">
+<!ENTITY serverName.label "Име сервера: ">
+<!ENTITY serverPort.label "Порт: ">
+<!ENTITY userName.label   "Корисничко име: ">
+<!ENTITY connectionSecurity.label "Безбедност везе: ">
+<!ENTITY authMethod.label   "Начин идентификације: ">

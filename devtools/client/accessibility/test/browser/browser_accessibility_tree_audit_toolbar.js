@@ -3,7 +3,7 @@
 
 "use strict";
 
-/* global toggleRow, toggleFilter */
+/* global toggleMenuItem, TREE_FILTERS_MENU_ID */
 
 const TEST_URI = `<html>
   <head>
@@ -40,12 +40,13 @@ const tests = [
           selected: true,
         },
       ],
+      activeToolbarFilters: [true, false, false, false, false],
     },
   },
   {
-    desc: "Run an audit from a11y panel toolbar by activating a filter.",
-    setup: async ({ doc }) => {
-      await toggleFilter(doc, 0);
+    desc: "Run an audit (all) from a11y panel toolbar by activating a filter.",
+    setup: async ({ doc, toolbox }) => {
+      await toggleMenuItem(doc, toolbox.doc, TREE_FILTERS_MENU_ID, 1);
     },
     expected: {
       tree: [
@@ -61,12 +62,13 @@ const tests = [
           badges: ["contrast"],
         },
       ],
+      activeToolbarFilters: [false, true, true, true, true],
     },
   },
   {
     desc: "Click on the filter again.",
-    setup: async ({ doc }) => {
-      await toggleFilter(doc, 0);
+    setup: async ({ doc, toolbox }) => {
+      await toggleMenuItem(doc, toolbox.doc, TREE_FILTERS_MENU_ID, 1);
     },
     expected: {
       tree: [
@@ -94,6 +96,7 @@ const tests = [
           badges: ["contrast"],
         },
       ],
+      activeToolbarFilters: [true, false, false, false, false],
     },
   },
 ];
@@ -105,5 +108,5 @@ const tests = [
 addA11yPanelTestsTask(
   tests,
   TEST_URI,
-  "Test Accessibility panel tree with contrast filter audit activation."
+  "Test Accessibility panel tree with 'all' filter audit activation."
 );

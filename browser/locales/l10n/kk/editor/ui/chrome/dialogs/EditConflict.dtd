@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Өзгерістерді таңдау">
+<!ENTITY conflictWarning.label "Бұл парақ басқа қолданбада түзетілген, бірақ, сізде Құрастырушыда да сақталмаған өзгерістер бар.">
+<!ENTITY conflictResolve.label "Сақтау үшін нұсқаны таңдаңыз:">
+<!ENTITY keepCurrentPageButton.label "Ағымдағы парақтың өзгерістерін сақтау">
+<!ENTITY useOtherPageButton.label "Ағымдағы парақты басқа өзгерістермен ауыстыру">

@@ -14,16 +14,15 @@ UNIFIED_SOURCES += [
     'nsHyphenator.cpp',
 ]
 
-# These files cannot be built in unified mode because they include hnjalloc.h.
-SOURCES += [
-    'hnjstdio.cpp',
-]
-
-LOCAL_INCLUDES += [
-    '../hyphen',
-]
+include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']
+
+if CONFIG['COMPILE_ENVIRONMENT']:
+    GeneratedFile('mapped_hyph.h',
+                  script='/build/RunCbindgen.py',
+                  entry_point='generate',
+                  inputs=['/third_party/rust/mapped_hyph'])

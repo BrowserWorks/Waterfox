@@ -1,0 +1,138 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File Menu -->
+
+<!ENTITY tabCmd.label "Obre una pestanya">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Obre una ubicació…">
+<!ENTITY openCmd.accesskey "a">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Obre un fitxer…">
+<!ENTITY openFileCmd.accesskey "f">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Tanca les altres pestanyes">
+<!ENTITY closeOtherTabs.accesskey "T">
+
+<!ENTITY uploadFile.label "Puja un fitxer…">
+<!ENTITY uploadFile.accesskey "f">
+
+<!ENTITY printSetupCmd.label "Configuració de la pàgina…">
+<!ENTITY printSetupCmd.accesskey "g">
+<!-- Edit Menu -->
+
+<!ENTITY findOnCmd.label "Cerca en aquesta pàgina…">
+<!-- View Menu -->
+
+<!ENTITY toolbarsCmd.label "Mostra/amaga">
+<!ENTITY toolbarsCmd.accesskey "s">
+<!ENTITY tabbarCmd.label "Barra de pestanyes">
+<!ENTITY tabbarCmd.accesskey "t">
+<!ENTITY taskbarCmd.label "Barra d'estat">
+<!ENTITY taskbarCmd.accesskey "s">
+<!ENTITY componentbarCmd.label "Barra de components">
+<!ENTITY componentbarCmd.accesskey "c">
+
+<!ENTITY fullScreenCmd.label "Pantalla completa">
+<!ENTITY fullScreenCmd.accesskey "P">
+
+<!ENTITY useStyleSheetMenu.label "Utilitza un estil">
+<!ENTITY useStyleSheetMenu.accesskey "U">
+<!ENTITY useStyleSheetNone.label "Cap">
+<!ENTITY useStyleSheetNone.accesskey "p">
+<!ENTITY useStyleSheetPersistentOnly.label "Estil per defecte">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "d">
+<!ENTITY bidiSwitchPageDirectionItem.label "Canvia la direcció de la pàgina">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "g">
+<!ENTITY pageSourceCmd.label "Codi font de la pàgina">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Informació de la pàgina">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!-- Go Menu -->
+
+<!ENTITY goMenu.label "Vés">
+<!ENTITY goMenu.accesskey "s">
+<!ENTITY goHomeCmd.label "Inici">
+<!ENTITY goHomeCmd.accesskey "n">
+<!ENTITY historyCmd.label "Historial">
+<!ENTITY historyCmd.accesskey "H">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Pestanyes tancades recentment">
+<!ENTITY recentTabs.accesskey "c">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Finestres tancades recentment">
+<!ENTITY recentWindows.accesskey "F">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Restaura la sessió anterior">
+<!ENTITY historyRestoreLastSession.accesskey "R">
+<!ENTITY syncTabsMenu.label "Pestanyes d'altres ordinadors">
+<!ENTITY syncTabsMenu.accesskey "o">
+<!-- Bookmarks Menu -->
+
+<!ENTITY bookmarksMenu.label "Adreces d'interès">
+<!ENTITY bookmarksMenu.accesskey "r">
+<!ENTITY addCurPageCmd.label "Afegeix aquesta pàgina a les adreces d'interès">
+<!ENTITY addCurPageCmd.accesskey "f">
+<!ENTITY addCurPageAsCmd.label "Arxiva l'adreça d'interès…">
+<!ENTITY addCurPageAsCmd.accesskey "x">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Afegeix aquest grup de pestanyes a les adreces d'interès…">
+<!ENTITY addCurTabsAsCmd.accesskey "u">
+<!ENTITY manBookmarksCmd.label "Gestiona les adreces d'interès…">
+<!ENTITY manBookmarksCmd.accesskey "G">
+<!ENTITY manBookmarksCmd.commandkey "b">
+<!-- Tools Menu -->
+
+<!ENTITY searchInternetCmd.label "Cerca al web">
+<!ENTITY searchInternetCmd.accesskey "r">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Tradueix la pàgina">
+<!ENTITY translateMenu.accesskey "T">
+
+<!ENTITY cookieMessageTitle.label "Els permisos de les galetes han canviat">
+<!ENTITY cookieDisplayCookiesCmd.label "Gestiona les galetes emmagatzemades">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "n">
+<!ENTITY cookieAllowCookiesCmd.label "Permet les galetes d'aquest lloc">
+<!ENTITY cookieAllowCookiesCmd.accesskey "P">
+<!ENTITY cookieAllowCookiesMsg.label "Les galetes d'aquest lloc sempre es permetran.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Permet les galetes de secció d'aquest lloc">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "s">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Aquest lloc podrà definir galetes només per a la sessió actual.">
+<!ENTITY cookieCookiesDefaultCmd.label "Utilitza els permisos per defecte de les galetes">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "Les galetes d'aquest lloc s'acceptaran o es rebutjaran d'acord amb els paràmetres per defecte.">
+<!ENTITY cookieBlockCookiesCmd.label "Bloca les galetes d'aquest lloc">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "Les galetes d'aquest lloc seran sempre rebutjades">
+
+<!ENTITY cookieImageMessageTitle.label "Els permisos de les imatges han canviat">
+<!ENTITY cookieDisplayImagesCmd.label "Gestiona els permisos de les imatges">
+<!ENTITY cookieDisplayImagesCmd.accesskey "n">
+<!ENTITY cookieAllowImagesCmd.label "Permet les imatges d'aquest lloc">
+<!ENTITY cookieAllowImagesCmd.accesskey "P">
+<!ENTITY cookieAllowImagesMsg.label "Les imatges d'aquest lloc sempre es baixaran.">
+<!ENTITY cookieImagesDefaultCmd.label "Utilitza els permisos per defecte de les imatges">
+<!ENTITY cookieImagesDefaultCmd.accesskey "U">
+<!ENTITY cookieImagesDefaultMsg.label "Les imatges d'aquest lloc es baixaran d'acord amb els paràmetres per defecte.">
+<!ENTITY cookieBlockImagesCmd.label "Bloca les imatges d'aquest lloc">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "Les imatges d'aquest lloc mai es baixaran.">
+
+<!ENTITY cookieAllowPopupsCmd.label "Permet les finestres emergents d'aquest lloc">
+<!ENTITY cookieAllowPopupsCmd.accesskey "P">
+<!ENTITY cookieManagePopups.label "Gestiona les finestres emergents">
+<!ENTITY cookieManagePopups.accesskey "n">
+
+<!ENTITY cookieCookieManager.label "Gestor de les galetes">
+<!ENTITY cookieCookieManager.accesskey "G">
+<!ENTITY cookieImageManager.label "Gestor d'imatges">
+<!ENTITY cookieImageManager.accesskey "m">
+<!ENTITY cookiePopupManager.label "Gestor de les finestres emergents">
+<!ENTITY cookiePopupManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Neteja les dades privades…">
+<!ENTITY clearPrivateDataCmd.accesskey "e">

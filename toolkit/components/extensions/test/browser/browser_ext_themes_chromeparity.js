@@ -2,7 +2,7 @@
 
 add_task(async function test_support_theme_frame() {
   const FRAME_COLOR = [71, 105, 91];
-  const TAB_TEXT_COLOR = [207, 221, 192];
+  const TAB_TEXT_COLOR = [0, 0, 0];
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       theme: {
@@ -24,14 +24,23 @@ add_task(async function test_support_theme_frame() {
 
   let docEl = window.document.documentElement;
   Assert.ok(docEl.hasAttribute("lwtheme"), "LWT attribute should be set");
+
+  Assert.ok(
+    docEl.hasAttribute("lwtheme-image"),
+    "LWT image attribute should be set"
+  );
+
   Assert.equal(
     docEl.getAttribute("lwthemetextcolor"),
-    "bright",
+    "dark",
     "LWT text color attribute should be set"
   );
 
   let style = window.getComputedStyle(docEl);
-  checkThemeHeaderImage(window, `moz-extension://${extension.uuid}/face.png`);
+  Assert.ok(
+    style.backgroundImage.includes("face.png"),
+    `The backgroundImage should use face.png. Actual value is: ${style.backgroundImage}`
+  );
   Assert.equal(
     style.backgroundColor,
     "rgb(" + FRAME_COLOR.join(", ") + ")",
@@ -46,6 +55,16 @@ add_task(async function test_support_theme_frame() {
   await extension.unload();
 
   Assert.ok(!docEl.hasAttribute("lwtheme"), "LWT attribute should not be set");
+
+  Assert.ok(
+    !docEl.hasAttribute("lwtheme-image"),
+    "LWT image attribute should not be set"
+  );
+
+  Assert.ok(
+    !docEl.hasAttribute("lwthemetextcolor"),
+    "LWT text color attribute should not be set"
+  );
 });
 
 add_task(async function test_support_theme_frame_inactive() {

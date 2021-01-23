@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "TypedObjectConstants.h"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -43,9 +47,6 @@ function TypedObjectGet(descr, typedObj, offset) {
   assert(IsObject(descr) && ObjectIsTypeDescr(descr),
          "get() called with bad type descr");
 
-  if (!TypedObjectIsAttached(typedObj))
-    ThrowTypeError(JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
-
   switch (DESCR_KIND(descr)) {
   case JS_TYPEREPR_SCALAR_KIND:
     return TypedObjectGetScalar(descr, typedObj, offset);
@@ -75,9 +76,7 @@ function TypedObjectGetDerivedIf(descr, typedObj, offset, cond) {
 function TypedObjectGetOpaque(descr, typedObj, offset) {
   assert(!TypeDescrIsSimpleType(descr),
          "getDerived() used with simple type");
-  var opaqueTypedObj = NewOpaqueTypedObject(descr);
-  AttachTypedObject(opaqueTypedObj, typedObj, offset | 0);
-  return opaqueTypedObj;
+  return NewOpaqueTypedObject(descr, typedObj, offset | 0);
 }
 
 function TypedObjectGetOpaqueIf(descr, typedObj, offset, cond) {
@@ -111,6 +110,12 @@ function TypedObjectGetScalar(descr, typedObj, offset) {
 
   case JS_SCALARTYPEREPR_FLOAT64:
     return Load_float64(typedObj, offset | 0);
+
+  case JS_SCALARTYPEREPR_BIGINT64:
+    return Load_bigint64(typedObj, offset | 0);
+
+  case JS_SCALARTYPEREPR_BIGUINT64:
+    return Load_biguint64(typedObj, offset | 0);
   }
 
   assert(false, "Unhandled scalar type: " + type);
@@ -149,9 +154,6 @@ function TypedObjectGetReference(descr, typedObj, offset) {
 // it to `descr` as needed. This is the most general entry point
 // and works for any type.
 function TypedObjectSet(descr, typedObj, offset, name, fromValue) {
-  if (!TypedObjectIsAttached(typedObj))
-    ThrowTypeError(JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
-
   switch (DESCR_KIND(descr)) {
   case JS_TYPEREPR_SCALAR_KIND:
     TypedObjectSetScalar(descr, typedObj, offset, fromValue);
@@ -250,6 +252,12 @@ function TypedObjectSetScalar(descr, typedObj, offset, fromValue) {
 
   case JS_SCALARTYPEREPR_FLOAT64:
     return Store_float64(typedObj, offset | 0, +fromValue);
+
+  case JS_SCALARTYPEREPR_BIGINT64:
+    return Store_bigint64(typedObj, offset | 0, fromValue);
+
+  case JS_SCALARTYPEREPR_BIGUINT64:
+    return Store_biguint64(typedObj, offset | 0, fromValue);
   }
 
   assert(false, "Unhandled scalar type: " + type);
@@ -296,9 +304,6 @@ function ConvertAndCopyTo(destDescr,
   assert(IsObject(destTypedObj) && ObjectIsTypedObject(destTypedObj),
          "ConvertAndCopyTo: not type typedObj");
 
-  if (!TypedObjectIsAttached(destTypedObj))
-    ThrowTypeError(JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
-
   TypedObjectSet(destDescr, destTypedObj, destOffset, fieldName, fromValue);
 }
 
@@ -310,9 +315,6 @@ function Reify(sourceDescr,
          "Reify: not type obj");
   assert(IsObject(sourceTypedObj) && ObjectIsTypedObject(sourceTypedObj),
          "Reify: not type typedObj");
-
-  if (!TypedObjectIsAttached(sourceTypedObj))
-    ThrowTypeError(JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
 
   return TypedObjectGet(sourceDescr, sourceTypedObj, sourceOffset);
 }
@@ -481,6 +483,7 @@ function TypedObjectArrayTypeBuild(a, b, c) {
       ThrowTypeError(JSMSG_TYPEDOBJECT_BAD_ARGS);
     else
       ThrowTypeError(JSMSG_TYPEDOBJECT_BAD_ARGS);
+      break;
   default:
     ThrowTypeError(JSMSG_TYPEDOBJECT_BAD_ARGS);
   }

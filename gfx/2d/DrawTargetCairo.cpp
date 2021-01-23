@@ -9,13 +9,12 @@
 #include "SourceSurfaceCairo.h"
 #include "PathCairo.h"
 #include "HelpersCairo.h"
-#include "ScaledFontBase.h"
 #include "BorrowedContext.h"
 #include "FilterNodeSoftware.h"
 #include "mozilla/Scoped.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Vector.h"
-#include "gfxPrefs.h"
+#include "mozilla/StaticPrefs_print.h"
 
 #include "cairo.h"
 #include "cairo-tee.h"
@@ -183,6 +182,11 @@ static bool PatternIsCompatible(const Pattern& aPattern) {
     case PatternType::RADIAL_GRADIENT: {
       const RadialGradientPattern& pattern =
           static_cast<const RadialGradientPattern&>(aPattern);
+      return pattern.mStops->GetBackendType() == BackendType::CAIRO;
+    }
+    case PatternType::CONIC_GRADIENT: {
+      const ConicGradientPattern& pattern =
+          static_cast<const ConicGradientPattern&>(aPattern);
       return pattern.mStops->GetBackendType() == BackendType::CAIRO;
     }
     default:
@@ -452,7 +456,7 @@ static cairo_pattern_t* GfxPatternToCairoPattern(const Pattern& aPattern,
 
   switch (aPattern.GetType()) {
     case PatternType::COLOR: {
-      Color color = static_cast<const ColorPattern&>(aPattern).mColor;
+      DeviceColor color = static_cast<const ColorPattern&>(aPattern).mColor;
       pat = cairo_pattern_create_rgba(color.r, color.g, color.b,
                                       color.a * aAlpha);
       break;
@@ -519,6 +523,12 @@ static cairo_pattern_t* GfxPatternToCairoPattern(const Pattern& aPattern,
       for (size_t i = 0; i < stops.size(); ++i) {
         CairoPatternAddGradientStop(pat, stops[i]);
       }
+
+      break;
+    }
+    case PatternType::CONIC_GRADIENT: {
+      // XXX(ntim): Bug 1617039 - Implement conic-gradient for Cairo
+      pat = cairo_pattern_create_rgba(0.0, 0.0, 0.0, 0.0);
 
       break;
     }
@@ -839,9 +849,15 @@ void DrawTargetCairo::DrawFilter(FilterNode* aNode, const Rect& aSourceRect,
 
 void DrawTargetCairo::DrawSurfaceWithShadow(SourceSurface* aSurface,
                                             const Point& aDest,
-                                            const Color& aColor,
+                                            const DeviceColor& aColor,
                                             const Point& aOffset, Float aSigma,
                                             CompositionOp aOperator) {
+  if (!IsValid() || !aSurface) {
+    gfxCriticalNote << "DrawSurfaceWithShadow with bad surface "
+                    << cairo_surface_status(cairo_get_group_target(mContext));
+    return;
+  }
+
   if (aSurface->GetType() != SurfaceType::CAIRO) {
     return;
   }
@@ -1196,7 +1212,7 @@ bool DrawTargetCairo::IsCurrentGroupOpaque() {
   return cairo_surface_get_content(surf) == CAIRO_CONTENT_COLOR;
 }
 
-void DrawTargetCairo::SetFontOptions() {
+void DrawTargetCairo::SetFontOptions(cairo_antialias_t aAAMode) {
   //   This will attempt to detect if the currently set scaled font on the
   // context has enabled subpixel AA. If it is not permitted, then it will
   // downgrade to grayscale AA.
@@ -1212,7 +1228,7 @@ void DrawTargetCairo::SetFontOptions() {
   // cairo_surface_set_subpixel_antialiasing extension.
 
   // If allowing subpixel AA, then leave Cairo's default AA state.
-  if (mPermitSubpixelAA) {
+  if (mPermitSubpixelAA && aAAMode == CAIRO_ANTIALIAS_DEFAULT) {
     return;
   }
 
@@ -1224,12 +1240,22 @@ void DrawTargetCairo::SetFontOptions() {
     }
   }
 
+  cairo_get_font_options(mContext, mFontOptions);
+  cairo_antialias_t oldAA = cairo_font_options_get_antialias(mFontOptions);
+  cairo_antialias_t newAA =
+      aAAMode == CAIRO_ANTIALIAS_DEFAULT ? oldAA : aAAMode;
+  // Nothing to change if switching to default AA.
+  if (newAA == CAIRO_ANTIALIAS_DEFAULT) {
+    return;
+  }
   // If the current font requests subpixel AA, force it to gray since we don't
   // allow subpixel AA.
-  cairo_get_font_options(mContext, mFontOptions);
-  cairo_antialias_t antialias = cairo_font_options_get_antialias(mFontOptions);
-  if (antialias == CAIRO_ANTIALIAS_SUBPIXEL) {
-    cairo_font_options_set_antialias(mFontOptions, CAIRO_ANTIALIAS_GRAY);
+  if (!mPermitSubpixelAA && newAA == CAIRO_ANTIALIAS_SUBPIXEL) {
+    newAA = CAIRO_ANTIALIAS_GRAY;
+  }
+  // Only override old AA with lower levels of AA.
+  if (oldAA == CAIRO_ANTIALIAS_DEFAULT || (int)newAA < (int)oldAA) {
+    cairo_font_options_set_antialias(mFontOptions, newAA);
     cairo_set_font_options(mContext, mFontOptions);
   }
 }
@@ -1267,7 +1293,9 @@ void DrawTargetCairo::FillGlyphs(ScaledFont* aFont, const GlyphBuffer& aBuffer,
     return;
   }
 
-  if (!aFont) {
+  cairo_scaled_font_t* cairoScaledFont =
+      aFont ? aFont->GetCairoScaledFont() : nullptr;
+  if (!cairoScaledFont) {
     gfxDevCrash(LogReason::InvalidFont) << "Invalid scaled font";
     return;
   }
@@ -1275,8 +1303,7 @@ void DrawTargetCairo::FillGlyphs(ScaledFont* aFont, const GlyphBuffer& aBuffer,
   AutoPrepareForDrawing prep(this, mContext);
   AutoClearDeviceOffset clear(aPattern);
 
-  ScaledFontBase* scaledFont = static_cast<ScaledFontBase*>(aFont);
-  cairo_set_scaled_font(mContext, scaledFont->GetCairoScaledFont());
+  cairo_set_scaled_font(mContext, cairoScaledFont);
 
   cairo_pattern_t* pat =
       GfxPatternToCairoPattern(aPattern, aOptions.mAlpha, GetTransform());
@@ -1285,11 +1312,11 @@ void DrawTargetCairo::FillGlyphs(ScaledFont* aFont, const GlyphBuffer& aBuffer,
   cairo_set_source(mContext, pat);
   cairo_pattern_destroy(pat);
 
-  cairo_set_antialias(mContext,
-                      GfxAntialiasToCairoAntialias(aOptions.mAntialiasMode));
+  cairo_antialias_t aa = GfxAntialiasToCairoAntialias(aOptions.mAntialiasMode);
+  cairo_set_antialias(mContext, aa);
 
   // Override any font-specific options as necessary.
-  SetFontOptions();
+  SetFontOptions(aa);
 
   // Convert our GlyphBuffer into a vector of Cairo glyphs. This code can
   // execute millions of times in short periods, so we want to avoid heap
@@ -1309,7 +1336,7 @@ void DrawTargetCairo::FillGlyphs(ScaledFont* aFont, const GlyphBuffer& aBuffer,
   }
 
   if (!SupportsVariationSettings(mSurface) && aFont->HasVariationSettings() &&
-      gfxPrefs::PrintFontVariationsAsPaths()) {
+      StaticPrefs::print_font_variations_as_paths()) {
     cairo_set_fill_rule(mContext, CAIRO_FILL_RULE_WINDING);
     cairo_new_path(mContext);
     cairo_glyph_path(mContext, &glyphs[0], aBuffer.mNumGlyphs);
@@ -1417,7 +1444,8 @@ void DrawTargetCairo::MaskSurface(const Pattern& aSource, SourceSurface* aMask,
   cairo_pattern_t* mask = cairo_pattern_create_for_surface(surf);
   cairo_matrix_t matrix;
 
-  cairo_matrix_init_translate(&matrix, -aOffset.x, -aOffset.y);
+  cairo_matrix_init_translate(&matrix, -aOffset.x - aMask->GetRect().x,
+                              -aOffset.y - aMask->GetRect().y);
   cairo_pattern_set_matrix(mask, &matrix);
 
   cairo_set_operator(mContext, GfxOpToCairoOp(aOptions.mCompositionOp));
@@ -1507,8 +1535,10 @@ void DrawTargetCairo::PushLayer(bool aOpaque, Float aOpacity,
     cairo_surface_t* surf = GetCairoSurfaceForSourceSurface(aMask);
     if (surf) {
       layer.mMaskPattern = cairo_pattern_create_for_surface(surf);
+      Matrix maskTransform = aMaskTransform;
+      maskTransform.PreTranslate(aMask->GetRect().X(), aMask->GetRect().Y());
       cairo_matrix_t mat;
-      GfxMatrixToCairoMatrix(aMaskTransform, mat);
+      GfxMatrixToCairoMatrix(maskTransform, mat);
       cairo_matrix_invert(&mat);
       cairo_pattern_set_matrix(layer.mMaskPattern, &mat);
       cairo_surface_destroy(surf);
@@ -1576,26 +1606,6 @@ already_AddRefed<GradientStops> DrawTargetCairo::CreateGradientStops(
 
 already_AddRefed<FilterNode> DrawTargetCairo::CreateFilter(FilterType aType) {
   return FilterNodeSoftware::Create(aType);
-}
-
-void DrawTargetCairo::GetGlyphRasterizationMetrics(
-    ScaledFont* aScaledFont, const uint16_t* aGlyphIndices, uint32_t aNumGlyphs,
-    GlyphMetrics* aGlyphMetrics) {
-  for (uint32_t i = 0; i < aNumGlyphs; i++) {
-    cairo_glyph_t glyph;
-    cairo_text_extents_t extents;
-    glyph.index = aGlyphIndices[i];
-    glyph.x = 0;
-    glyph.y = 0;
-    cairo_glyph_extents(mContext, &glyph, 1, &extents);
-
-    aGlyphMetrics[i].mXBearing = extents.x_bearing;
-    aGlyphMetrics[i].mXAdvance = extents.x_advance;
-    aGlyphMetrics[i].mYBearing = extents.y_bearing;
-    aGlyphMetrics[i].mYAdvance = extents.y_advance;
-    aGlyphMetrics[i].mWidth = extents.width;
-    aGlyphMetrics[i].mHeight = extents.height;
-  }
 }
 
 already_AddRefed<SourceSurface> DrawTargetCairo::CreateSourceSurfaceFromData(
@@ -1772,6 +1782,34 @@ already_AddRefed<DrawTarget> DrawTargetCairo::CreateSimilarDrawTarget(
   return nullptr;
 }
 
+RefPtr<DrawTarget> DrawTargetCairo::CreateClippedDrawTarget(
+    const Rect& aBounds, SurfaceFormat aFormat) {
+  RefPtr<DrawTarget> result;
+  // Doing this save()/restore() dance is wasteful
+  cairo_save(mContext);
+
+  if (!aBounds.IsEmpty()) {
+    cairo_new_path(mContext);
+    cairo_rectangle(mContext, aBounds.X(), aBounds.Y(), aBounds.Width(),
+                    aBounds.Height());
+    cairo_clip(mContext);
+  }
+  cairo_identity_matrix(mContext);
+  IntRect clipBounds = IntRect::RoundOut(GetUserSpaceClip());
+  if (!clipBounds.IsEmpty()) {
+    RefPtr<DrawTarget> dt = CreateSimilarDrawTarget(
+        IntSize(clipBounds.width, clipBounds.height), aFormat);
+    result = gfx::Factory::CreateOffsetDrawTarget(
+        dt, IntPoint(clipBounds.x, clipBounds.y));
+    result->SetTransform(mTransform);
+  } else {
+    // Everything is clipped but we still want some kind of surface
+    result = CreateSimilarDrawTarget(IntSize(1, 1), aFormat);
+  }
+
+  cairo_restore(mContext);
+  return result;
+}
 bool DrawTargetCairo::InitAlreadyReferenced(cairo_surface_t* aSurface,
                                             const IntSize& aSize,
                                             SurfaceFormat* aFormat) {
@@ -1850,6 +1888,7 @@ already_AddRefed<DrawTarget> DrawTargetCairo::CreateShadowDrawTarget(
   return nullptr;
 }
 
+#ifndef USE_SKIA
 static inline pixman_format_code_t GfxFormatToPixmanFormat(
     SurfaceFormat aFormat) {
   switch (aFormat) {
@@ -1871,6 +1910,7 @@ static inline pixman_format_code_t GfxFormatToPixmanFormat(
       return (pixman_format_code_t)0;
   }
 }
+#endif
 
 static inline bool GfxMatrixToPixmanTransform(const Matrix4x4& aMatrix,
                                               pixman_transform* aResult) {
@@ -2136,7 +2176,7 @@ void DrawTargetCairo::SetTransform(const Matrix& aTransform) {
   }
 }
 
-Rect DrawTargetCairo::GetUserSpaceClip() {
+Rect DrawTargetCairo::GetUserSpaceClip() const {
   double clipX1, clipY1, clipX2, clipY2;
   cairo_clip_extents(mContext, &clipX1, &clipY1, &clipX2, &clipY2);
   return Rect(clipX1, clipY1, clipX2 - clipX1,

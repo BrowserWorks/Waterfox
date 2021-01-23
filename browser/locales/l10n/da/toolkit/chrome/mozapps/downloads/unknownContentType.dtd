@@ -1,0 +1,32 @@
+<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Du har valgt at åbne:">
+<!ENTITY from.label                  "fra:">
+<!ENTITY actionQuestion.label        "Hvad skal &brandShortName; gøre med denne fil ?">
+
+<!ENTITY openWith.label              "Åbn med">
+<!ENTITY openWith.accesskey          "Å">
+<!ENTITY other.label                 "Anden…">
+
+<!ENTITY saveFile.label              "Gem fil">
+<!ENTITY saveFile.accesskey          "G">
+
+<!ENTITY rememberChoice.label        "Gør dette automatisk med filer som denne fremover.">
+<!ENTITY rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "som er:">
+
+<!ENTITY chooseHandlerMac.label      "Vælg…">
+<!ENTITY chooseHandlerMac.accesskey  "V">
+<!ENTITY chooseHandler.label         "Søg…">
+<!ENTITY chooseHandler.accesskey     "S">
+
+<!ENTITY  unknownPromptText.label     "Ønsker du at gemme denne fil?">

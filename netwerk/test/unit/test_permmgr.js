@@ -1,5 +1,7 @@
 // tests nsIPermissionManager
 
+"use strict";
+
 var hosts = [
   // format: [host, type, permission]
   ["http://mozilla.org", "cookie", 1],
@@ -51,7 +53,7 @@ function run_test() {
   // put a few hosts in
   for (var i = 0; i < hosts.length; ++i) {
     let uri = ioService.newURI(hosts[i][0]);
-    let principal = secMan.createCodebasePrincipal(uri, {});
+    let principal = secMan.createContentPrincipal(uri, {});
 
     pm.addFromPrincipal(principal, hosts[i][1], hosts[i][2]);
   }
@@ -59,7 +61,7 @@ function run_test() {
   // test the result
   for (var i = 0; i < results.length; ++i) {
     let uri = ioService.newURI(results[i][0]);
-    let principal = secMan.createCodebasePrincipal(uri, {});
+    let principal = secMan.createContentPrincipal(uri, {});
 
     Assert.equal(
       pm.testPermissionFromPrincipal(principal, results[i][1]),
@@ -71,8 +73,8 @@ function run_test() {
     );
   }
 
-  // test the enumerator ...
-  var perms = Array.from(pm.enumerator);
+  // test the all property ...
+  var perms = pm.all;
   Assert.equal(perms.length, hosts.length);
 
   // ... remove all the hosts ...
@@ -96,33 +98,34 @@ function run_test() {
   Assert.equal(perms.length, 0);
 
   // ... and check the permmgr's empty
-  Assert.equal(pm.enumerator.hasMoreElements(), false);
+  Assert.equal(pm.all.length, 0);
 
   // test UTF8 normalization behavior: expect ASCII/ACE host encodings
   var utf8 = "b\u00FCcher.dolske.org"; // "bücher.dolske.org"
   var aceref = "xn--bcher-kva.dolske.org";
-  var uri = ioService.newURI("http://" + utf8);
-  pm.add(uri, "utf8", 1);
-  var enumerator = pm.enumerator;
-  Assert.equal(enumerator.hasMoreElements(), true);
-  var ace = enumerator.getNext().QueryInterface(Ci.nsIPermission);
-  Assert.equal(ace.principal.URI.asciiHost, aceref);
-  Assert.equal(enumerator.hasMoreElements(), false);
+  var principal = secMan.createContentPrincipal(
+    ioService.newURI("http://" + utf8),
+    {}
+  );
+  pm.addFromPrincipal(principal, "utf8", 1);
+  Assert.notEqual(Services.perms.all.length, 0);
+  var ace = Services.perms.all[0];
+  Assert.equal(ace.principal.asciiHost, aceref);
+  Assert.equal(Services.perms.all.length > 1, false);
 
   // test removeAll()
   pm.removeAll();
-  Assert.equal(pm.enumerator.hasMoreElements(), false);
+  Assert.equal(Services.perms.all.length, 0);
 
-  uri = ioService.newURI("https://www.example.com");
-  pm.add(uri, "offline-app", pm.ALLOW_ACTION);
-  let principal = secMan.createCodebasePrincipalFromOrigin(
+  principal = secMan.createContentPrincipalFromOrigin(
     "https://www.example.com"
   );
+  pm.addFromPrincipal(principal, "offline-app", pm.ALLOW_ACTION);
   // Remove existing entry.
   let perm = pm.getPermissionObject(principal, "offline-app", true);
   pm.removePermission(perm);
   // Try to remove already deleted entry.
   perm = pm.getPermissionObject(principal, "offline-app", true);
   pm.removePermission(perm);
-  Assert.equal(pm.enumerator.hasMoreElements(), false);
+  Assert.equal(Services.perms.all.length, 0);
 }

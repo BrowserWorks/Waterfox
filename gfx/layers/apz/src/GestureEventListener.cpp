@@ -10,13 +10,14 @@
 #include "AsyncPanZoomController.h"  // for AsyncPanZoomController
 #include "InputBlockState.h"         // for TouchBlockState
 #include "base/task.h"               // for CancelableTask, etc
-#include "gfxPrefs.h"                // for gfxPrefs
 #include "InputBlockState.h"         // for TouchBlockState
-#include "nsDebug.h"                 // for NS_WARNING
-#include "nsMathUtils.h"             // for NS_hypot
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/StaticPrefs_ui.h"
+#include "nsDebug.h"      // for NS_WARNING
+#include "nsMathUtils.h"  // for NS_hypot
 
-#define GEL_LOG(...)
-// #define GEL_LOG(...) printf_stderr("GEL: " __VA_ARGS__)
+static mozilla::LazyLogModule sApzGelLog("apz.gesture");
+#define GEL_LOG(...) MOZ_LOG(sApzGelLog, LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 namespace layers {
@@ -299,13 +300,13 @@ nsEventStatus GestureEventListener::HandleInputTouchMove() {
 
     // The user has performed a double tap, but not lifted her finger.
     case GESTURE_SECOND_SINGLE_TOUCH_DOWN: {
-      // If touch has moved noticeably (within gfxPrefs::APZMaxTapTime()),
+      // If touch has moved noticeably (within StaticPrefs::apz_max_tap_time()),
       // change state.
       if (MoveDistanceIsLarge()) {
         CancelLongTapTimeoutTask();
         CancelMaxTapTimeoutTask();
         mSingleTapSent = Nothing();
-        if (!gfxPrefs::APZOneTouchPinchEnabled()) {
+        if (!StaticPrefs::apz_one_touch_pinch_enabled()) {
           // If the one-touch-pinch feature is disabled, bail out of the double-
           // tap gesture instead.
           SetState(GESTURE_NONE);
@@ -479,16 +480,19 @@ nsEventStatus GestureEventListener::HandleInputTouchEnd() {
     case GESTURE_PINCH:
       if (mTouches.Length() < 2) {
         SetState(GESTURE_NONE);
-        ScreenPoint point = PinchGestureInput::BothFingersLifted<ScreenPixel>();
+        PinchGestureInput::PinchGestureType type =
+            PinchGestureInput::PINCHGESTURE_END;
+        ScreenPoint point;
         if (mTouches.Length() == 1) {
           // As user still keeps one finger down the event's focus point should
           // contain meaningful data.
+          type = PinchGestureInput::PINCHGESTURE_FINGERLIFTED;
           point = mTouches[0].mScreenPoint;
         }
-        PinchGestureInput pinchEvent(
-            PinchGestureInput::PINCHGESTURE_END, mLastTouchInput.mTime,
-            mLastTouchInput.mTimeStamp, mLastTouchInput.mScreenOffset, point,
-            1.0f, 1.0f, mLastTouchInput.modifiers);
+        PinchGestureInput pinchEvent(type, mLastTouchInput.mTime,
+                                     mLastTouchInput.mTimeStamp,
+                                     mLastTouchInput.mScreenOffset, point, 1.0f,
+                                     1.0f, mLastTouchInput.modifiers);
         mAsyncPanZoomController->HandleGestureEvent(pinchEvent);
       }
 
@@ -498,11 +502,10 @@ nsEventStatus GestureEventListener::HandleInputTouchEnd() {
 
     case GESTURE_ONE_TOUCH_PINCH: {
       SetState(GESTURE_NONE);
-      ScreenPoint point = PinchGestureInput::BothFingersLifted<ScreenPixel>();
       PinchGestureInput pinchEvent(
           PinchGestureInput::PINCHGESTURE_END, mLastTouchInput.mTime,
-          mLastTouchInput.mTimeStamp, mLastTouchInput.mScreenOffset, point,
-          1.0f, 1.0f, mLastTouchInput.modifiers);
+          mLastTouchInput.mTimeStamp, mLastTouchInput.mScreenOffset,
+          ScreenPoint(), 1.0f, 1.0f, mLastTouchInput.modifiers);
       mAsyncPanZoomController->HandleGestureEvent(pinchEvent);
 
       rv = nsEventStatus_eConsumeNoDefault;
@@ -537,7 +540,7 @@ void GestureEventListener::HandleInputTimeoutLongTap() {
       // just in case MaxTapTime > ContextMenuDelay cancel MaxTap timer
       // and fall through
       CancelMaxTapTimeoutTask();
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     case GESTURE_FIRST_SINGLE_TOUCH_MAX_TAP_DOWN: {
       SetState(GESTURE_LONG_TOUCH_DOWN);
       mAsyncPanZoomController->HandleGestureEvent(
@@ -609,7 +612,7 @@ void GestureEventListener::CreateLongTapTimeoutTask() {
 
   mLongTapTimeoutTask = task;
   mAsyncPanZoomController->PostDelayedTask(
-      task.forget(), gfxPrefs::UiClickHoldContextMenusDelay());
+      task.forget(), StaticPrefs::ui_click_hold_context_menus_delay());
 }
 
 void GestureEventListener::CancelMaxTapTimeoutTask() {
@@ -637,7 +640,7 @@ void GestureEventListener::CreateMaxTapTimeoutTask() {
 
   mMaxTapTimeoutTask = task;
   mAsyncPanZoomController->PostDelayedTask(task.forget(),
-                                           gfxPrefs::APZMaxTapTime());
+                                           StaticPrefs::apz_max_tap_time());
 }
 
 }  // namespace layers

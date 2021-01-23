@@ -16,7 +16,9 @@ add_task(async function() {
     localhost: "security-state-secure",
   };
 
-  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL);
+  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL, {
+    requestCount: 1,
+  });
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
@@ -59,9 +61,9 @@ add_task(async function() {
    */
   async function performRequests() {
     function executeRequests(count, url) {
-      return ContentTask.spawn(
+      return SpecialPowers.spawn(
         tab.linkedBrowser,
-        { count, url },
+        [{ count, url }],
         async function(args) {
           content.wrappedJSObject.performRequests(args.count, args.url);
         }
@@ -96,7 +98,7 @@ add_task(async function() {
 
     const expectedCount = Object.keys(EXPECTED_SECURITY_STATES).length;
     is(
-      store.getState().requests.requests.size,
+      store.getState().requests.requests.length,
       expectedCount,
       expectedCount + " events logged."
     );

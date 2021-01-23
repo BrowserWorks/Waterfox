@@ -27,6 +27,7 @@ const test = new SearchConfigTest({
             "ast",
             "az",
             "ca",
+            "ca-valencia",
             "cak",
             "da",
             "de",
@@ -50,7 +51,7 @@ const test = new SearchConfigTest({
             "ia",
             "is",
             "it",
-            "ja-JP-mac",
+            "ja-JP-macos",
             "ja",
             "ka",
             "kab",
@@ -59,9 +60,7 @@ const test = new SearchConfigTest({
             "lij",
             "lo",
             "lt",
-            "mai",
             "mk",
-            "ml",
             "ms",
             "my",
             "nb-NO",
@@ -69,7 +68,6 @@ const test = new SearchConfigTest({
             "nl",
             "nn-NO",
             "oc",
-            "or",
             "pa-IN",
             "pt-BR",
             "rm",
@@ -97,6 +95,7 @@ const test = new SearchConfigTest({
     {
       included: [{}],
       domain: "bing.com",
+      telemetryId: "bing",
       codes: {
         searchbar: "form=MOZSBR",
         keyword: "form=MOZLBR",
@@ -115,5 +114,8 @@ add_task(async function setup() {
 });
 
 add_task(async function test_searchConfig_bing() {
-  await test.run();
+  await test.run(true);
+  // Only applies to the default locale fallback for the legacy config.
+  test._config.available.included[0].locales.matches.push("unknown");
+  await test.run(false);
 });

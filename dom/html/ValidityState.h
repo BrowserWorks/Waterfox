@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_ValidityState_h
 #define mozilla_dom_ValidityState_h
 
+#include "nsCOMPtr.h"
 #include "nsIConstraintValidation.h"
 #include "nsWrapperCache.h"
 #include "js/TypeDecls.h"
@@ -15,7 +16,7 @@ namespace mozilla {
 namespace dom {
 
 class ValidityState final : public nsISupports, public nsWrapperCache {
-  ~ValidityState() {}
+  ~ValidityState() = default;
 
  public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS

@@ -5,9 +5,9 @@
 #ifndef CacheFileContextEvictor__h__
 #define CacheFileContextEvictor__h__
 
+#include "mozilla/UniquePtr.h"
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 
 class nsIFile;
 class nsILoadContextInfo;
@@ -46,14 +46,14 @@ class CacheFileContextEvictor {
   // CacheFileIOManager calls this method when CacheIndex's state changes. We
   // check whether the index is up to date and start or stop evicting according
   // to index's state.
-  nsresult CacheIndexStateChanged();
+  void CacheIndexStateChanged();
   // CacheFileIOManager calls this method to check whether an entry file should
   // be considered as evicted. It returns true when there is a matching context
   // info to the given key and the last modified time of the entry file is
   // earlier than the time stamp of the time when the context was added to the
   // evictor.
-  nsresult WasEvicted(const nsACString& aKey, nsIFile* aFile,
-                      bool* aEvictedAsPinned, bool* aEvictedAsNonPinned);
+  void WasEvicted(const nsACString& aKey, nsIFile* aFile,
+                  bool* aEvictedAsPinned, bool* aEvictedAsNonPinned);
 
  private:
   // Writes information about eviction of the given context to the disk. This is
@@ -75,7 +75,7 @@ class CacheFileContextEvictor {
   void CreateIterators();
   void CloseIterators();
   void StartEvicting();
-  nsresult EvictEntries();
+  void EvictEntries();
 
   // Whether eviction is in progress
   bool mEvicting;
@@ -88,7 +88,7 @@ class CacheFileContextEvictor {
   // startup.
   static bool sDiskAlreadySearched;
   // Array of contexts being evicted.
-  nsTArray<nsAutoPtr<CacheFileContextEvictorEntry> > mEntries;
+  nsTArray<UniquePtr<CacheFileContextEvictorEntry>> mEntries;
   nsCOMPtr<nsIFile> mCacheDirectory;
   nsCOMPtr<nsIFile> mEntriesDir;
 };

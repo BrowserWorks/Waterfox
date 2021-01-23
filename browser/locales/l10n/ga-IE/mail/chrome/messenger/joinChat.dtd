@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Téigh isteach sa chomhrá">
+<!ENTITY name.label                     "Seomra">
+<!ENTITY optional.label                 "(roghnach)">
+<!ENTITY account.label                  "Cuntas">
+<!ENTITY autojoin.label                 "Téigh isteach sa seomra seo go huathoibríoch">
+<!ENTITY autojoin.accesskey             "a">

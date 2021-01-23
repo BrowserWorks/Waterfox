@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+
+<!ENTITY pref.ldap.window.title    "LDAP Directory Servers">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Iseva Kavimba Weefayili ze-LDAP:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Khetha Iseva Kavimba Weefayili ze-LDAP:">
+<!ENTITY directoriesText.accesskey "K">
+<!ENTITY addDirectory.label        "Fakela">
+<!ENTITY addDirectory.accesskey    "F">
+<!ENTITY editDirectory.label       "Hlela">
+<!ENTITY editDirectory.accesskey   "H">
+<!ENTITY deleteDirectory.label     "Cima">
+<!ENTITY deleteDirectory.accesskey "C">

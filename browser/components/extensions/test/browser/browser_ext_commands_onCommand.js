@@ -234,12 +234,13 @@ add_task(async function test_user_defined_commands() {
   let waitForConsole = new Promise(resolve => {
     SimpleTest.monitorConsole(resolve, [
       {
-        message: /Reading manifest: Error processing commands.*.unrecognized_property: An unexpected property was found/,
+        message: /Reading manifest: Warning processing commands.*.unrecognized_property: An unexpected property was found/,
       },
     ]);
   });
-
+  ExtensionTestUtils.failOnSchemaWarnings(false);
   await extension.startup();
+  ExtensionTestUtils.failOnSchemaWarnings(true);
   await extension.awaitMessage("ready");
 
   async function runTest(window) {
@@ -252,9 +253,7 @@ add_task(async function test_user_defined_commands() {
       is(
         message,
         testCommand.name,
-        `Expected onCommand listener to fire with the correct name: ${
-          testCommand.name
-        }`
+        `Expected onCommand listener to fire with the correct name: ${testCommand.name}`
       );
     }
   }
@@ -323,7 +322,11 @@ add_task(async function test_user_defined_commands() {
     incognitoOverride: "spanning",
     background,
   });
+
+  // unrecognized_property in manifest triggers warning.
+  ExtensionTestUtils.failOnSchemaWarnings(false);
   await extension.startup();
+  ExtensionTestUtils.failOnSchemaWarnings(true);
   await extension.awaitMessage("ready");
   keysetID = `ext-keyset-id-${makeWidgetId(extension.id)}`;
 

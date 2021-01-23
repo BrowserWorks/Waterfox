@@ -19,16 +19,15 @@
 
 using namespace mozilla;
 
-class Task final : public nsIRunnable {
+class Task final : public Runnable {
  public:
-  NS_DECL_THREADSAFE_ISUPPORTS
-
-  Task(int i, Atomic<int>& aCounter) : mIndex(i), mCounter(aCounter) {}
+  Task(int i, Atomic<int>& aCounter)
+      : Runnable("TestThreadPool::Task"), mIndex(i), mCounter(aCounter) {}
 
   NS_IMETHOD Run() override {
     printf("###(%d) running from thread: %p\n", mIndex,
            (void*)PR_GetCurrentThread());
-    int r = (int)((float)rand() * 200 / RAND_MAX);
+    int r = (int)((float)rand() * 200 / float(RAND_MAX));
     PR_Sleep(PR_MillisecondsToInterval(r));
     printf("###(%d) exiting from thread: %p\n", mIndex,
            (void*)PR_GetCurrentThread());
@@ -37,12 +36,11 @@ class Task final : public nsIRunnable {
   }
 
  private:
-  ~Task() {}
+  ~Task() = default;
 
   int mIndex;
   Atomic<int>& mCounter;
 };
-NS_IMPL_ISUPPORTS(Task, nsIRunnable)
 
 TEST(ThreadPool, Main)
 {
@@ -134,8 +132,8 @@ TEST(ThreadPool, ShutdownWithTimeout)
     pool->Dispatch(task, NS_DISPATCH_NORMAL);
   }
 
-  // Wait for a max of 300 ms. All threads should be done by then.
-  pool->ShutdownWithTimeout(300);
+  // Wait for a max of 350 ms. All threads should be done by then.
+  pool->ShutdownWithTimeout(350);
   EXPECT_EQ(allThreadsCount, 4);
 
   Atomic<int> infiniteLoopCount(0);
@@ -195,9 +193,9 @@ TEST(ThreadPool, ShutdownWithTimeoutThenSleep)
           }),
       NS_DISPATCH_NORMAL);
 
-  // Wait for a max of 300 ms. The thread should still be sleeping, and will
+  // Wait for a max of 350 ms. The thread should still be sleeping, and will
   // be leaked.
-  pool->ShutdownWithTimeout(300);
+  pool->ShutdownWithTimeout(350);
   // We can't be exact here; the thread we're running on might have gotten
   // suspended and the sleeping thread, above, might have finished.
   EXPECT_GE(count, 3);

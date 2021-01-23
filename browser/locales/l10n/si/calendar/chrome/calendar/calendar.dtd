@@ -1,0 +1,336 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "දිනදර්ශනය">
+<!ENTITY calendar.calendar.accesskey "C">
+
+<!--<!ENTITY calendar.weekview.accesskey           "W" >-->
+<!--<!ENTITY calendar.monthview.accesskey          "M" >-->
+<!--<!ENTITY calendar.multiweekview.accesskey      "u" >-->
+<!ENTITY calendar.dayView.key                  "1" >
+<!ENTITY calendar.weekView.key                 "2" >
+<!ENTITY calendar.multiweekView.key            "3" >
+<!ENTITY calendar.monthView.key                "4" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "කාර්යයන්" >
+
+<!--<!ENTITY calendar.listofcalendarstab.label "දිනදර්ශන">-->
+
+<!ENTITY calendar.newtask.button.tooltip          "නව කාර්යයක් නිර්මාණය" >
+<!ENTITY calendar.newevent.button.tooltip         "නව සිදුවීමක් නිර්මාණය" >
+<!ENTITY calendar.unifinder.showcompletedtodos.label "සම්පූර්ණ කළ කාර්යයන් පෙන්වන්න">
+
+<!ENTITY calendar.today.button.label       "අද">
+<!ENTITY calendar.tomorrow.button.label       "හෙට">
+<!ENTITY calendar.soon.button.label           "ඉක්මනින්">
+
+<!ENTITY calendar.events.filter.all.label "සියලු සිදුවීම්">
+<!ENTITY calendar.events.filter.today.label "අද සිදුවීම්">
+<!ENTITY calendar.events.filter.future.label "සියලු අනාගත සිදුවීම්">
+<!ENTITY calendar.events.filter.current.label "දැනට තෝරාගෙන ඇති දිනය">
+<!ENTITY calendar.events.filter.next7Days.label "ඊළඟ දින 7 තුළ සිදුවීම්">
+<!ENTITY calendar.events.filter.next14Days.label "ඊළඟ දින 14 තුළ සිදුවීම්">
+<!ENTITY calendar.events.filter.next31Days.label "ඊළඟ දින 31 තුළ සිදුවීම්">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "මෙම මාසයේ සිදුවීම්">
+
+<!ENTITY calendar.unifinder.tree.done.label          "කළා">
+<!ENTITY calendar.unifinder.tree.priority.label      "ප්‍රමුඛතාවය">
+<!ENTITY calendar.unifinder.tree.title.label         "මාතෘකාව">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label "&#37; සම්පූර්ණයි">
+<!ENTITY calendar.unifinder.tree.startdate.label     "ආරම්භය">
+<!ENTITY calendar.unifinder.tree.enddate.label       "අවසානය">
+<!ENTITY calendar.unifinder.tree.duedate.label       "නියමිත">
+<!ENTITY calendar.unifinder.tree.completeddate.label "නිමයි">
+<!ENTITY calendar.unifinder.tree.categories.label    "ප්‍රභේදය">
+<!ENTITY calendar.unifinder.tree.location.label      "ස්ථානය">
+<!ENTITY calendar.unifinder.tree.status.label        "තත්ත්වය">
+<!ENTITY calendar.unifinder.tree.calendarname.label  "දිනදර්ශන නාමය">
+<!ENTITY calendar.unifinder.tree.duration.label      "නියමිත">
+<!ENTITY calendar.unifinder.close.tooltip            "සිදුවීම් සෙවීම සහ සිදුවීම් ලැයිස්තුව වැසීම">
+
+<!ENTITY calendar.today.button.tooltip            "අද දිනයට යන්න" >
+<!ENTITY calendar.todaypane.button.tooltip        "අද දිනයේ තලය පෙන්යන්න" >
+<!ENTITY calendar.day.button.tooltip            "දින පෙනුමට මාරුවෙන්න" >
+<!ENTITY calendar.week.button.tooltip           "සති පෙනුමට මාරුවෙන්න" >
+<!ENTITY calendar.month.button.tooltip          "මාස පෙනුමට මාරුවෙන්න" >
+<!ENTITY calendar.multiweek.button.tooltip      "බහු-සති පෙනුමට මාරුවෙන්න" >
+
+<!ENTITY calendar.nextday.button.tooltip        "ඊළඟ දිනය" >
+<!ENTITY calendar.prevday.button.tooltip        "පෙර දිනය" >
+<!ENTITY calendar.nextweek.button.tooltip       "ඊළඟ සතිය" >
+<!ENTITY calendar.prevweek.button.tooltip       "පෙර සතිය" >
+<!ENTITY calendar.nextmonth.button.tooltip      "ඊළඟ මාසය" >
+<!ENTITY calendar.prevmonth.button.tooltip      "පෙර මාසය" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "දිනක් ඉදිරියට" >
+<!ENTITY calendar.navigation.prevday.tooltip    "දිනක් පසුපසට" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "සතියක් ඉදිරියට" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "සතියක් පසුපසට" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "මාසයක් ඉදිරියට" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "මාසයක් පසුපසට" >
+
+<!--<!ENTITY calendar.newtask.button.label          "නව කාර්යයන්" >-->
+<!--<!ENTITY calendar.newevent.button.label         "නව සිදුවීමක්" >-->
+
+<!--<!ENTITY calendar.paste.button.tooltip          "අලවන්න" >-->
+<!--<!ENTITY calendar.print.button.tooltip          "දිනදර්ශනය මුද්‍රණය" >-->
+
+<!--<!ENTITY calendar.paste.button.label            "අලවන්න" >-->
+<!--<!ENTITY calendar.print.button.label            "මුද්‍රණය" >-->
+
+
+<!ENTITY calendar.newtask.button.label          "නව කාර්යයන්" >
+<!ENTITY calendar.newevent.button.label         "නව සිදුවීමක්" >
+<!ENTITY calendar.print.button.label            "මුද්‍රණය" >
+
+<!ENTITY calendar.export.calendar                "දිනදර්ශනය නිර්යාත කරන්න…" >
+
+<!--<!ENTITY calendar.remotereload.button.label   "යළි පූරණය" >
+<!ENTITY calendar.remotereload.button.tooltip   "සියලු දුරස්ථ දිනදර්ශන යළි පූරණය" >-->
+
+<!ENTITY calendar.day.button.label              "දින" >
+<!ENTITY calendar.week.button.label             "සති" >
+<!ENTITY calendar.month.button.label            "මාස" >
+<!ENTITY calendar.multiweek.button.label        "බහු-සති" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "සතියේ වැඩකරන දින පමණි" >
+
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "r" >
+<!ENTITY calendar.displaytodos.checkbox.label   "දසුන තුළ කාර්යයන්" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "k" >
+<!ENTITY calendar.completedtasks.checkbox.label     "නිම කළ කාර්යයන් පෙන්වන්න" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "c" >
+
+<!ENTITY calendar.orientation.label "දසුන කරකැවීම" >
+<!ENTITY calendar.orientation.accesskey "o" >
+
+<!--<!ENTITY calendar.menu.options.close.key        "W">-->
+
+<!ENTITY calendar.search.options.searchfor " අඩංගු">
+
+<!--<!ENTITY calendar.menu.numberofweeks.label     "සති ගණන" >
+<!ENTITY calendar.menu.numberofweeks.accesskey "N" >
+<!ENTITY calendar.menu.numberofweeks.2      "සති 2" >
+<!ENTITY calendar.menu.numberofweeks.3      "සති 3" >
+<!ENTITY calendar.menu.numberofweeks.4      "සති 4" >
+<!ENTITY calendar.menu.numberofweeks.5      "සති 5" >
+<!ENTITY calendar.menu.numberofweeks.6      "සති 6" >-->
+
+
+<!ENTITY calendar.list.header.label                 "දිනදර්ශනය">
+
+<!ENTITY calendar.task.filter.title.label           "දර්ශනය">
+<!ENTITY calendar.task.filter.all.label             "සියල්ල">
+<!ENTITY calendar.task.filter.all.accesskey         "A">
+<!ENTITY calendar.task.filter.today.label           "අද">
+<!ENTITY calendar.task.filter.today.accesskey       "T">
+<!ENTITY calendar.task.filter.next7days.label       "ඊළඟ දින හත">
+<!ENTITY calendar.task.filter.next7days.accesskey   "N">
+<!ENTITY calendar.task.filter.notstarted.label      "ආරම්භ නොකළ කාර්යයන්">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "a">
+<!ENTITY calendar.task.filter.overdue.label         "පමා වූ කාර්යයන්">
+<!ENTITY calendar.task.filter.overdue.accesskey     "O">
+<!ENTITY calendar.task.filter.completed.label       "නිම කළ කාර්යයන්">
+<!ENTITY calendar.task.filter.completed.accesskey   "C">
+<!ENTITY calendar.task.filter.open.label            "නිම නොකළ කාර්යයන්">
+<!ENTITY calendar.task.filter.open.accesskey        "m">
+
+<!ENTITY calendar.task-details.title.label           "මාතෘකාව:">
+<!ENTITY calendar.task-details.organizer.label       "වෙතින්:">
+<!ENTITY calendar.task-details.priority.label       "ප්‍රමුඛතාවය:">
+<!ENTITY calendar.task-details.priority.low.label    "පහළ">
+<!ENTITY calendar.task-details.priority.normal.label "සාමාන්‍ය">
+<!ENTITY calendar.task-details.priority.high.label   "ඉහළ">
+<!ENTITY calendar.task-details.status.label          "තත්ත්වය:">
+<!ENTITY calendar.task-details.category.label        "ප්‍රභේදය:">
+<!ENTITY calendar.task-details.repeat.label          "යළි සිදුවීම:">
+
+<!--<!ENTITY calendar.task.delete.button.tooltip    "තෝරාගත් කාර්‍යය මකන්න">-->
+<!ENTITY calendar.task.category.button.tooltip  "ප්‍රභේදගත කාර්යයන්">
+<!ENTITY calendar.task.complete.button.tooltip  "තෝරාගත් කාර්යයන් සම්පූර්ණ කළ සේ සලකුණු කරන්න">
+<!ENTITY calendar.task.priority.button.tooltip  "ප්‍රමුඛතාවය වෙනස් කිරීම">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label            "ලේඛනය: කළා">
+
+<!-- customizable toolbars -->
+<!--<!ENTITY calendar.menu.customize.label                "මෙවලම් තීරුව රිසිකරණය…">
+<!ENTITY calendar.menu.customize.accesskey            "C">-->
+<!--<!ENTITY calendar.maintoolbar.name                    "ප්‍රධාන මෙවලම් තීරුව">-->
+<!--<!ENTITY calendar.maintoolbar.accesskey               "M">-->
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "විවෘත කරන්න">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "O">
+<!ENTITY calendar.context.modifyorviewtask.label      "කාර්යය විවෘත කරන්න…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "O">
+<!ENTITY calendar.context.newevent.label              "නව සිදුවීම…">
+<!ENTITY calendar.context.newevent.accesskey          "N">
+<!ENTITY calendar.context.newtodo.label               "නව කාර්යය">
+<!ENTITY calendar.context.newtodo.accesskey           "k">
+<!ENTITY calendar.context.modifytask.label            "කාර්යය සකසන්න…">
+<!ENTITY calendar.context.modifytask.accesskey        "E">
+<!ENTITY calendar.context.modifyitem.label            "අයිතමය සකසන්න…">
+<!ENTITY calendar.context.modifyitem.accesskey        "E">
+<!ENTITY calendar.context.deletetask.label            "කාර්යය මැකීම">
+<!ENTITY calendar.context.deletetask.accesskey        "l">
+<!ENTITY calendar.context.deleteitem.label            "මකන්න">
+<!ENTITY calendar.context.deleteitem.accesskey        "l">
+<!ENTITY calendar.context.deleteevent.label           "සිදුවීම මකන්න">
+<!ENTITY calendar.context.deleteevent.accesskey       "l">
+<!ENTITY calendar.context.deletethisevent.label       "මෙම සිදුවීම">
+<!ENTITY calendar.context.deletethisevent.accesskey   "T">
+<!ENTITY calendar.context.deletecompleteseries.label  "සම්පූර්ණ ශ්‍රේණිය">
+<!ENTITY calendar.context.deletecompleteseries.accesskey   "S">
+<!ENTITY calendar.context.deletefutureevents.label     "සියළු අනාගත සිදුවීම්">
+<!ENTITY calendar.context.deletefutureevents.accesskey "F">
+<!ENTITY calendar.context.deletefuturetasks.label     "සියළු අනාගත කාර්යයන්">
+<!ENTITY calendar.context.deletefuturetasks.accesskey "F">
+<!ENTITY calendar.context.cutevent.label              "කපන්න">
+<!ENTITY calendar.context.cutevent.accesskey          "t">
+<!ENTITY calendar.context.copyevent.label             "පිටපත් කරන්න">
+<!ENTITY calendar.context.copyevent.accesskey         "C">
+<!ENTITY calendar.context.pasteevent.label            "අලවන්න">
+<!ENTITY calendar.context.pasteevent.accesskey        "P">
+<!ENTITY calendar.context.selectall.label             "සියල්ල තෝරන්න">
+<!ENTITY calendar.context.selectall.accesskey         "A">
+<!ENTITY calendar.context.button.label                "අද පුවරුව" >
+<!ENTITY calendar.context.button.accesskey            "T" >
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "ප්‍රගතිය">
+<!ENTITY calendar.context.progress.accesskey          "P">
+<!ENTITY calendar.context.priority.label              "ප්‍රමුඛතාවය">
+<!ENTITY calendar.context.priority.accesskey          "r">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "සම්පූර්ණ කළ බව සටහන් කරන්න">
+<!ENTITY calendar.context.markcompleted.accesskey "o">
+
+<!ENTITY progress.level.0             "0&percnt; සම්පූර්ණ කළ">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt; සම්පූර්ණ කළ">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt; සම්පූර්ණ කළ">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt; සම්පූර්ණ කළ">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt; සම්පූර්ණ කළ">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "දක්වා නැත">
+<!ENTITY priority.level.none.accesskey      "s">
+<!ENTITY priority.level.low                 "අවම">
+<!ENTITY priority.level.low.accesskey       "L">
+<!ENTITY priority.level.normal              "සාමාන්‍ය">
+<!ENTITY priority.level.normal.accesskey    "N">
+<!ENTITY priority.level.high                "ඉහළ">
+<!ENTITY priority.level.high.accesskey      "H">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "නව දිනදර්ශනයක්…">
+<!ENTITY calendar.context.newserver.accesskey          "N">
+<!ENTITY calendar.context.findcalendar.label           "දිනදර්ශනය සොයන්න…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "F" >
+<!ENTITY calendar.context.deleteserver.label           "දිනදර්ශනය මකන්න">
+<!ENTITY calendar.context.deleteserver.accesskey       "D">
+<!ENTITY calendar.context.reloadserver.label           "දුරස්ථ දිනදර්ශන යළි පූරණය">
+<!ENTITY calendar.context.reloadserver.accesskey       "R">
+<!ENTITY calendar.context.publish.label                "දිනදර්ශනය පළ කරන්න…">
+<!ENTITY calendar.context.publish.accesskey            "b">
+<!ENTITY calendar.context.export.label                 "දිනදර්ශනය නිර්යාත කරන්න…">
+<!ENTITY calendar.context.export.accesskey             "E">
+<!ENTITY calendar.context.properties.label             "ලක්ෂණ">
+<!ENTITY calendar.context.properties.accesskey         "P">
+
+<!ENTITY calendar.context.convertmenu.label              "පරිවර්තනය වන්නේ">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "n">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "v">
+<!ENTITY calendar.context.convertmenu.event.label        "සිදුවීම…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "E">
+<!ENTITY calendar.context.convertmenu.message.label      "පණිවිඩය…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "M">
+<!ENTITY calendar.context.convertmenu.task.label         "කාර්යය…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "T">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "කෙටි මාසය">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "M">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "දිනදර්ශන ලැයිස්තුව">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "L">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "කාර්යය පෙරහන">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "F">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "ස්ථානය:" >
+<!ENTITY calendar.alarm.details.label               "විස්තර…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "නිද්‍රාව" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "සියල්ල නිද්‍රාව" >
+<!ENTITY calendar.alarm.title.label                 "දිනදර්ශන සංඥාව" >
+<!ENTITY calendar.alarm.dismiss.label               "ඉවතලන්න" >
+<!ENTITY calendar.alarm.dismissall.label            "සියල්ල ඉවතලන්න" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "විනාඩි 5" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "විනාඩි 10" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "විනාඩි 15" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "විනාඩි 30" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "විනාඩි 45" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "පැය 1" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "පැය 2" >
+<!ENTITY calendar.alarm.snooze.1day.label           "දින 1" >
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "දිනදර්ශනය සැකසීම">
+<!ENTITY calendar.server.dialog.name.label          "දිනදර්ශන නාමය:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label    "වර්ණය:">
+<!ENTITY calendarproperties.webdav.label   "iCalendar (ICS)">
+<!ENTITY calendarproperties.caldav.label   "CalDAV">
+<!ENTITY calendarproperties.wcap.label     "Sun Java System Calendar Server (WCAP)">
+<!ENTITY calendarproperties.format.label   "සංයුතිය:">
+<!ENTITY calendarproperties.location.label "ස්ථානය:">
+<!ENTITY calendarproperties.name.label     "නම:">
+<!ENTITY calendarproperties.readonly.label "කියවීම පමණයි">
+<!ENTITY calendarproperties.firealarms.label "සංඥා පෙන්වන්න">
+<!ENTITY calendarproperties.cache.label    "Cache (EXPERIMENTAL, requires restart)">
+<!ENTITY calendarproperties.enabled.label "මෙම දිනදර්ශනය සක්‍රීය කරන්න">
+<!ENTITY calendarproperties.forceDisabled.label            "The provider for this calendar could not be found. This often happens if you have disabled or uninstalled certain addons.">
+<!ENTITY calendarproperties.unsubscribe.label              "දායකත්වය හරින්න">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "U">
+
+<!-- Sunbird Help -->
+
+
+<!-- Calendar Publish Dialog -->
+
+<!ENTITY calendar.publish.dialog.title              "දිනදර්ශනය පළ කිරීම">
+<!ENTITY calendar.publish.url.label                 "පළ කරන URL">
+<!ENTITY calendar.publish.publish.button      "පළ කරන්න">
+<!ENTITY calendar.publish.close.button      "වසන්න">
+<!ENTITY calendar.publish.example.url.description   "http://www.myserver.com/webdav/test.ics ආකාරයේ">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "දිනදර්ශනය තේරීම">
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "දිනදර්ශනයක් මුද්‍රණය">
+<!ENTITY calendar.print.title.label "මාතෘකාව:">
+<!ENTITY calendar.print.layout.label "ආකෘතිය:">
+<!ENTITY calendar.print.range.label "මුද්‍රණය කරන්නේ කුමක්ද">
+<!ENTITY calendar.print.currentview.label "පවතින දසුනේ ඇති සිදුවීම්">
+<!ENTITY calendar.print.selected.label "තෝරාගත් සිදුවීම්">
+<!ENTITY calendar.print.custom.label "රිසිකරණ කළ දින පරාසය:">
+<!ENTITY calendar.print.from.label "සිට:">
+<!ENTITY calendar.print.to.label "දක්වා:">
+<!ENTITY calendar.print.settingsGroup.label "මුද්‍රණ සැකසුම්">
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "තොරතුරු…">
+<!ENTITY calendar.error.code "දෝෂ කේතය:">
+<!ENTITY calendar.error.description "විස්තරය:">
+<!ENTITY calendar.error.title "දෝෂයක් සිදුවී ඇත">
+

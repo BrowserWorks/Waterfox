@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Uvoz">
+<!ENTITY importAll.label          "Uvezi sve">
+<!ENTITY importAll.accesskey      "e">
+<!ENTITY importMail.label         "Pošta">
+<!ENTITY importMail.accesskey     "P">
+<!ENTITY importFeeds.label        "Pretplate na kanale">
+<!ENTITY importFeeds.accesskey    "r">
+<!ENTITY importAddressbook.label  "Adresari">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Postavke">
+<!ENTITY importSettings.accesskey "s">
+<!ENTITY importFilters.label      "Filteri">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; čarobnjak za uvoz">
+<!ENTITY importShortDesc.label    "Uvezite poštu, adresare, postavke i filtere iz drugih programa">
+
+<!ENTITY importDescription1.label "Ovaj čarobnjak će uvesti poruke e-pošte, kontakte adresara, postavke i/ili filtere iz drugih programa e-pošte i uobičajenih formata adresara u &brandShortName;.">
+<!ENTITY importDescription2.label "Jednom uvezeni biti će dostupni za korištenje unutar &brandShortName;a.">
+
+<!ENTITY selectDescription.label  "Odaberite vrstu datoteke koju želite uvesti:">
+<!ENTITY selectDescriptionB.label "Odaberite postojeći ili stvorite novi račun:">
+<!ENTITY selectDescription.accesskey "O">
+<!ENTITY acctName.label           "Naziv:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Niti jedna aplikacija ili datoteka za uvoz podataka nije pronađena.">
+
+<!ENTITY back.label               "&lt; Prethodna">
+<!ENTITY forward.label            "Sljedeća &gt;">
+<!ENTITY finish.label             "Završi">
+<!ENTITY cancel.label             "Odustani">
+
+<!ENTITY select.label             "ili odaberite vrstu podataka za uvoz:">
+
+<!ENTITY title.label              "Naslov">
+<!ENTITY processing.label         "Uvoz…">

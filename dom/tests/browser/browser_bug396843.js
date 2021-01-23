@@ -6,7 +6,7 @@ function testInDocument(doc, documentID) {
 
   // HTML
   function HTML_TAG(name) {
-    allNodes.push(doc.createElement(name));
+    allNodes.push(doc.createElementNS("http://www.w3.org/1999/xhtml", name));
   }
 
   /* List copy/pasted from nsHTMLTagList.h */
@@ -315,9 +315,9 @@ async function newTabTest(location) {
   await BrowserTestUtils.withNewTab({ gBrowser, url: location }, async function(
     browser
   ) {
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       browser,
-      { location, testInDocument_: testInDocument.toSource() },
+      [{ location, testInDocument_: testInDocument.toSource() }],
       async function({ location, testInDocument_ }) {
         // eslint-disable-next-line no-eval
         let testInDocument = eval(`(() => (${testInDocument_}))()`);

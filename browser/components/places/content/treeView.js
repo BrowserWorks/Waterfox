@@ -175,7 +175,7 @@ PlacesTreeView.prototype = {
     // for which nodeRemoved was called).
     let ancestors = Array.from(PlacesUtils.nodeAncestors(aNode));
     if (
-      ancestors.length == 0 ||
+      !ancestors.length ||
       ancestors[ancestors.length - 1] != this._rootNode
     ) {
       throw new Error("Removed node passed to _getRowForNode");
@@ -522,7 +522,7 @@ PlacesTreeView.prototype = {
     aNodesInfo,
     aUpdatedContainer
   ) {
-    if (aNodesInfo.length == 0) {
+    if (!aNodesInfo.length) {
       return;
     }
 
@@ -767,7 +767,7 @@ PlacesTreeView.prototype = {
 
     // XXX bug 517701: We don't know what to do when the root node is removed.
     if (aNode == this._rootNode) {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     }
 
     // Bail out for hidden separators.
@@ -781,7 +781,7 @@ PlacesTreeView.prototype = {
         : this._getRowForNode(aParentNode, true);
     let oldRow = this._getRowForNode(aNode, true, parentRow, aOldIndex);
     if (oldRow < 0) {
-      throw Cr.NS_ERROR_UNEXPECTED;
+      throw Components.Exception("", Cr.NS_ERROR_UNEXPECTED);
     }
 
     // If the node was exclusively selected, the node next to it will be
@@ -847,15 +847,18 @@ PlacesTreeView.prototype = {
         : this._getRowForNode(aOldParent, true);
     let oldRow = this._getRowForNode(aNode, true, oldParentRow, aOldIndex);
     if (oldRow < 0) {
-      throw Cr.NS_ERROR_UNEXPECTED;
+      throw Components.Exception("", Cr.NS_ERROR_UNEXPECTED);
     }
 
     // If this node is a container it could take up more than one row.
     let count = this._countVisibleRowsForNodeAtRow(oldRow);
 
     // Persist selection state.
-    let nodesToReselect = this._getSelectedNodesInRange(oldRow, oldRow + count);
-    if (nodesToReselect.length > 0) {
+    let nodesToReselect = this._getSelectedNodesInRange(
+      oldRow,
+      oldRow + count - 1
+    );
+    if (nodesToReselect.length) {
       this.selection.selectEventsSuppressed = true;
     }
 
@@ -875,7 +878,7 @@ PlacesTreeView.prototype = {
     this.nodeInserted(aNewParent, aNode, aNewIndex);
 
     // Restore selection.
-    if (nodesToReselect.length > 0) {
+    if (nodesToReselect.length) {
       this._restoreSelection(nodesToReselect, aNewParent);
       this.selection.selectEventsSuppressed = false;
     }
@@ -959,8 +962,6 @@ PlacesTreeView.prototype = {
   },
 
   nodeKeywordChanged(aNode, aNewKeyword) {},
-
-  nodeAnnotationChanged() {},
 
   nodeDateAddedChanged: function PTV_nodeDateAddedChanged(aNode, aNewValue) {
     this._invalidateCellValue(aNode, this.COLUMN_TYPE_DATEADDED);
@@ -1063,7 +1064,7 @@ PlacesTreeView.prototype = {
       // Select the row next to the closed container if any of its
       // children were selected, and nothing else is selected.
       if (
-        nodesToReselect.length > 0 &&
+        nodesToReselect.length &&
         nodesToReselect.length == oldSelectionCount
       ) {
         this.selection.rangedSelect(startReplacement, startReplacement, true);
@@ -1224,7 +1225,7 @@ PlacesTreeView.prototype = {
    */
   nodeForTreeIndex(aIndex) {
     if (aIndex > this._rows.length) {
-      throw Cr.NS_ERROR_INVALID_ARG;
+      throw Components.Exception("", Cr.NS_ERROR_INVALID_ARG);
     }
 
     return this._getNodeForRow(aIndex);
@@ -1393,7 +1394,7 @@ PlacesTreeView.prototype = {
 
   canDrop: function PTV_canDrop(aRow, aOrientation, aDataTransfer) {
     if (!this._result) {
-      throw Cr.NS_ERROR_UNEXPECTED;
+      throw Components.Exception("", Cr.NS_ERROR_UNEXPECTED);
     }
 
     if (this._controller.disableUserActions) {
@@ -1633,7 +1634,7 @@ PlacesTreeView.prototype = {
 
   toggleOpenState: function PTV_toggleOpenState(aRow) {
     if (!this._result) {
-      throw Cr.NS_ERROR_UNEXPECTED;
+      throw Components.Exception("", Cr.NS_ERROR_UNEXPECTED);
     }
 
     let node = this._rows[aRow];
@@ -1660,7 +1661,7 @@ PlacesTreeView.prototype = {
 
   cycleHeader: function PTV_cycleHeader(aColumn) {
     if (!this._result) {
-      throw Cr.NS_ERROR_UNEXPECTED;
+      throw Components.Exception("", Cr.NS_ERROR_UNEXPECTED);
     }
 
     // Sometimes you want a tri-state sorting, and sometimes you don't. This
@@ -1763,7 +1764,7 @@ PlacesTreeView.prototype = {
 
         break;
       default:
-        throw Cr.NS_ERROR_INVALID_ARG;
+        throw Components.Exception("", Cr.NS_ERROR_INVALID_ARG);
     }
     this._result.sortingMode = newSort;
   },
@@ -1832,7 +1833,4 @@ PlacesTreeView.prototype = {
 
   selectionChanged() {},
   cycleCell(aRow, aColumn) {},
-  performAction(aAction) {},
-  performActionOnRow(aAction, aRow) {},
-  performActionOnCell(aAction, aRow, aColumn) {},
 };

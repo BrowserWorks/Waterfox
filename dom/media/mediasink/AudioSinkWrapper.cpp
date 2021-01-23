@@ -13,27 +13,12 @@ namespace mozilla {
 
 using media::TimeUnit;
 
-AudioSinkWrapper::~AudioSinkWrapper() {}
+AudioSinkWrapper::~AudioSinkWrapper() = default;
 
 void AudioSinkWrapper::Shutdown() {
   AssertOwnerThread();
   MOZ_ASSERT(!mIsStarted, "Must be called after playback stopped.");
   mCreator = nullptr;
-}
-
-const MediaSink::PlaybackParams& AudioSinkWrapper::GetPlaybackParams() const {
-  AssertOwnerThread();
-  return mParams;
-}
-
-void AudioSinkWrapper::SetPlaybackParams(const PlaybackParams& aParams) {
-  AssertOwnerThread();
-  if (mAudioSink) {
-    mAudioSink->SetVolume(aParams.mVolume);
-    mAudioSink->SetPlaybackRate(aParams.mPlaybackRate);
-    mAudioSink->SetPreservesPitch(aParams.mPreservesPitch);
-  }
-  mParams = aParams;
 }
 
 RefPtr<MediaSink::EndedPromise> AudioSinkWrapper::OnEnded(TrackType aType) {
@@ -154,6 +139,11 @@ void AudioSinkWrapper::SetPlaying(bool aPlaying) {
   }
 }
 
+double AudioSinkWrapper::PlaybackRate() const {
+  AssertOwnerThread();
+  return mParams.mPlaybackRate;
+}
+
 nsresult AudioSinkWrapper::Start(const TimeUnit& aStartTime,
                                  const MediaInfo& aInfo) {
   AssertOwnerThread();
@@ -222,15 +212,14 @@ void AudioSinkWrapper::OnAudioEnded() {
   mAudioEnded = true;
 }
 
-nsCString AudioSinkWrapper::GetDebugInfo() {
+void AudioSinkWrapper::GetDebugInfo(dom::MediaSinkDebugInfo& aInfo) {
   AssertOwnerThread();
-  auto str = nsPrintfCString(
-      "AudioSinkWrapper: IsStarted=%d IsPlaying=%d AudioEnded=%d", IsStarted(),
-      IsPlaying(), mAudioEnded);
+  aInfo.mAudioSinkWrapper.mIsPlaying = IsPlaying();
+  aInfo.mAudioSinkWrapper.mIsStarted = IsStarted();
+  aInfo.mAudioSinkWrapper.mAudioEnded = mAudioEnded;
   if (mAudioSink) {
-    AppendStringIfNotEmpty(str, mAudioSink->GetDebugInfo());
+    mAudioSink->GetDebugInfo(aInfo);
   }
-  return std::move(str);
 }
 
 }  // namespace mozilla

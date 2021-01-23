@@ -183,25 +183,6 @@ typedef struct UText UText; /**< C typedef for struct UText. @stable ICU 3.6 */
 U_STABLE UText * U_EXPORT2
 utext_close(UText *ut);
 
-#if U_SHOW_CPLUSPLUS_API
-
-U_NAMESPACE_BEGIN
-
-/**
- * \class LocalUTextPointer
- * "Smart pointer" class, closes a UText via utext_close().
- * For most methods see the LocalPointerBase base class.
- *
- * @see LocalPointerBase
- * @see LocalPointer
- * @stable ICU 4.4
- */
-U_DEFINE_LOCAL_OPEN_POINTER(LocalUTextPointer, UText, utext_close);
-
-U_NAMESPACE_END
-
-#endif
-
 /**
  * Open a read-only UText implementation for UTF-8 strings.
  * 
@@ -766,12 +747,14 @@ utext_extract(UText *ut,
   *
   * @stable ICU 3.8
   */
-#define UTEXT_SETNATIVEINDEX(ut, ix)                       \
-    { int64_t __offset = (ix) - (ut)->chunkNativeStart; \
-      if (__offset>=0 && __offset<(int64_t)(ut)->nativeIndexingLimit && (ut)->chunkContents[__offset]<0xdc00) { \
-          (ut)->chunkOffset=(int32_t)__offset; \
-      } else { \
-          utext_setNativeIndex((ut), (ix)); } }
+#define UTEXT_SETNATIVEINDEX(ut, ix) UPRV_BLOCK_MACRO_BEGIN { \
+    int64_t __offset = (ix) - (ut)->chunkNativeStart; \
+    if (__offset>=0 && __offset<(int64_t)(ut)->nativeIndexingLimit && (ut)->chunkContents[__offset]<0xdc00) { \
+        (ut)->chunkOffset=(int32_t)__offset; \
+    } else { \
+        utext_setNativeIndex((ut), (ix)); \
+    } \
+} UPRV_BLOCK_MACRO_END
 
 
 
@@ -1596,6 +1579,25 @@ enum {
 
 U_CDECL_END
 
+
+#if U_SHOW_CPLUSPLUS_API
+
+U_NAMESPACE_BEGIN
+
+/**
+ * \class LocalUTextPointer
+ * "Smart pointer" class, closes a UText via utext_close().
+ * For most methods see the LocalPointerBase base class.
+ *
+ * @see LocalPointerBase
+ * @see LocalPointer
+ * @stable ICU 4.4
+ */
+U_DEFINE_LOCAL_OPEN_POINTER(LocalUTextPointer, UText, utext_close);
+
+U_NAMESPACE_END
+
+#endif
 
 
 #endif

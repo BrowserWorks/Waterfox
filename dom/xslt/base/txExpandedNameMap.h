@@ -6,7 +6,7 @@
 #ifndef TRANSFRMX_EXPANDEDNAMEMAP_H
 #define TRANSFRMX_EXPANDEDNAMEMAP_H
 
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsError.h"
 #include "txExpandedName.h"
 #include "nsTArray.h"
@@ -125,7 +125,7 @@ class txOwningExpandedNameMap : public txExpandedNameMap_base {
   }
 
   nsresult set(const txExpandedName& aKey, E* aValue) {
-    nsAutoPtr<E> oldValue;
+    mozilla::UniquePtr<E> oldValue;
     return setItem(aKey, (void*)aValue, getter_Transfers(oldValue));
   }
 

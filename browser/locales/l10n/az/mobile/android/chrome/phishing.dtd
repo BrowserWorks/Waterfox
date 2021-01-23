@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Məni burdan xilas et!">
+<!ENTITY safeb.palm.decline.label "Bu xəbərdarlığı göz ardı et">
+<!ENTITY safeb.palm.reportPage.label "Bu səhifə niyə əngəlləndi?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Məsləhətlər <a id='advisory_provider'/> tərəfindən təmin edilib">
+
+<!ENTITY safeb.blocked.malwarePage.title "Təhlükəli olaraq bildirilmiş sayt!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> ünvanındakı saytın hücum saytı olduğu bildirilib və təhlükəsizlik nizamlarınıza əsasən əngəlləndi.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Hücum saytı olaraq göstərilən saytlar şəxsi məlumatlarınızı oğurlayan, komputerinizi başqalarına hücum etməkçün istifadə etmək məqsədi ilə istifadə edən ya da sisteminizə zərər verəcək proqramları quraşdırmağa çalışan saytlardır.</p><p>Bəzi hücum saytları zərərli proqramları bilərək yayarkən, əksər saytlar, sahibinin məlumatı və icazəsi olmadan bu məqsədlə istifadə edilir.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Aldadıcı Sayt!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "<span id='phishing_sitename'/> ünvanındakı səhifənin aldadıcı sayt olduğu bildirilib və nizamlarınıza əsasən əngəlləndi.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Aldadıcı saytlar sizi aldadıb bir şeylər etməyiniz üçün dizayn ediliblər, məsələn, proqram qurma və ya parol, telefon nömrəsi və ya kredit kartı kimi şəxsi məlumatlarınızı alma.</p><p>Bu səhifədə məlumat daxil etmə şəxsiyyət oğurluğu və ya başqa fırıldaq ilə nəticələbə bilər.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "İstənməyən Proqram Saytı Bildirilib!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> ünvanındakı saytın istənməyən proqram məzmunu daşıdığı bildirilib və təhlükəsizlik nizamlarınıza əsasən əngəlləndi.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "İstənməyən proqram səhifələri aldadıcı və ya sisteminizə gözlənməyən yollarla zərər verici proqramlar qurmağa çalışırlar.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Bu saytda təhlükəli proqramlar ola bilər">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "Bu səhifə məlumatlarınızı (məsələn: şəkillər, parollar, mesajlar və kredit kartları) oğurlayacaq və ya siləcək təhlükəli tətbiqlər quraşdıra bilər deyə &brandShortName; səhifəni blokladı.">

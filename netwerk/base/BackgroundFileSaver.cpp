@@ -7,18 +7,17 @@
 #include "BackgroundFileSaver.h"
 
 #include "ScopedNSSTypes.h"
+#include "mozilla/ArrayAlgorithm.h"
 #include "mozilla/Casting.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Telemetry.h"
 #include "nsCOMArray.h"
+#include "nsComponentManagerUtils.h"
 #include "nsDependentSubstring.h"
 #include "nsIAsyncInputStream.h"
 #include "nsIFile.h"
 #include "nsIMutableArray.h"
 #include "nsIPipe.h"
-#include "nsIX509Cert.h"
-#include "nsIX509CertDB.h"
-#include "nsIX509CertList.h"
 #include "nsNetUtil.h"
 #include "nsThreadUtils.h"
 #include "pk11pub.h"
@@ -85,7 +84,7 @@ uint32_t BackgroundFileSaver::sTelemetryMaxThreadCount = 0;
 
 BackgroundFileSaver::BackgroundFileSaver()
     : mControlEventTarget(nullptr),
-      mWorkerThread(nullptr),
+      mBackgroundET(nullptr),
       mPipeOutputStream(nullptr),
       mPipeInputStream(nullptr),
       mObserver(nullptr),
@@ -126,7 +125,8 @@ nsresult BackgroundFileSaver::Init() {
   mControlEventTarget = GetCurrentThreadEventTarget();
   NS_ENSURE_TRUE(mControlEventTarget, NS_ERROR_NOT_INITIALIZED);
 
-  rv = NS_NewNamedThread("BgFileSaver", getter_AddRefs(mWorkerThread));
+  rv = NS_CreateBackgroundTaskQueue("BgFileSaver",
+                                    getter_AddRefs(mBackgroundET));
   NS_ENSURE_SUCCESS(rv, rv);
 
   sThreadCount++;
@@ -250,19 +250,18 @@ BackgroundFileSaver::EnableSignatureInfo() {
 }
 
 NS_IMETHODIMP
-BackgroundFileSaver::GetSignatureInfo(nsIArray** aSignatureInfo) {
+BackgroundFileSaver::GetSignatureInfo(
+    nsTArray<nsTArray<nsTArray<uint8_t>>>& aSignatureInfo) {
   MOZ_ASSERT(NS_IsMainThread(), "Can't inspect signature off the main thread");
   // We acquire a lock because mSignatureInfo is written on the worker thread.
   MutexAutoLock lock(mLock);
   if (!mComplete || !mSignatureInfoEnabled) {
     return NS_ERROR_NOT_AVAILABLE;
   }
-  nsCOMPtr<nsIMutableArray> sigArray = do_CreateInstance(NS_ARRAY_CONTRACTID);
-  for (int i = 0; i < mSignatureInfo.Count(); ++i) {
-    sigArray->AppendElement(mSignatureInfo[i]);
+  for (const auto& signatureChain : mSignatureInfo) {
+    aSignatureInfo.AppendElement(TransformIntoNewArray(
+        signatureChain, [](const auto& element) { return element.Clone(); }));
   }
-  *aSignatureInfo = sigArray;
-  NS_IF_ADDREF(*aSignatureInfo);
   return NS_OK;
 }
 
@@ -287,12 +286,20 @@ nsresult BackgroundFileSaver::GetWorkerThreadAttention(
   }
 
   if (!mAsyncCopyContext) {
+    // Background event queues are not shutdown and could be called after
+    // the queue is reset to null.  To match the behavior of nsIThread
+    // return NS_ERROR_UNEXPECTED
+    if (!mBackgroundET) {
+      return NS_ERROR_UNEXPECTED;
+    }
+
     // Copy is not in progress, post an event to handle the change manually.
-    rv = mWorkerThread->Dispatch(
+    rv = mBackgroundET->Dispatch(
         NewRunnableMethod("net::BackgroundFileSaver::ProcessAttention", this,
                           &BackgroundFileSaver::ProcessAttention),
-        NS_DISPATCH_NORMAL);
+        NS_DISPATCH_EVENT_MAY_BLOCK);
     NS_ENSURE_SUCCESS(rv, rv);
+
   } else if (aShouldInterruptCopy) {
     // Interrupt the copy.  The copy will be resumed, if needed, by the
     // ProcessAttention function, invoked by the AsyncCopyCallback function.
@@ -590,7 +597,7 @@ nsresult BackgroundFileSaver::ProcessStateChange() {
   {
     MutexAutoLock lock(mLock);
 
-    rv = NS_AsyncCopy(mPipeInputStream, outputStream, mWorkerThread,
+    rv = NS_AsyncCopy(mPipeInputStream, outputStream, mBackgroundET,
                       NS_ASYNCCOPY_VIA_READSEGMENTS, 4096, AsyncCopyCallback,
                       this, false, true, getter_AddRefs(mAsyncCopyContext),
                       GetProgressCallback());
@@ -736,7 +743,7 @@ nsresult BackgroundFileSaver::NotifySaveComplete() {
   // completion observer callback.  Re-entering the loop can only delay the
   // final release and destruction of this saver object, since we are keeping a
   // reference to it through the event object.
-  mWorkerThread->Shutdown();
+  mBackgroundET = nullptr;
 
   sThreadCount--;
 
@@ -761,9 +768,6 @@ nsresult BackgroundFileSaver::ExtractSignatureInfo(const nsAString& filePath) {
       return NS_OK;
     }
   }
-  nsresult rv;
-  nsCOMPtr<nsIX509CertDB> certDB = do_GetService(NS_X509CERTDB_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
 #ifdef XP_WIN
   // Setup the file to check.
   WINTRUST_FILE_INFO fileToCheck = {0};
@@ -820,11 +824,8 @@ nsresult BackgroundFileSaver::ExtractSignatureInfo(const nsAString& filePath) {
         if (!certSimpleChain) {
           break;
         }
-        nsCOMPtr<nsIX509CertList> nssCertList =
-            do_CreateInstance(NS_X509CERTLIST_CONTRACTID);
-        if (!nssCertList) {
-          break;
-        }
+
+        nsTArray<nsTArray<uint8_t>> certList;
         bool extractionSuccess = true;
         for (DWORD k = 0; k < certSimpleChain->cElement; ++k) {
           CERT_CHAIN_ELEMENT* certChainElement = certSimpleChain->rgpElement[k];
@@ -832,30 +833,13 @@ nsresult BackgroundFileSaver::ExtractSignatureInfo(const nsAString& filePath) {
               X509_ASN_ENCODING) {
             continue;
           }
-          nsCOMPtr<nsIX509Cert> nssCert = nullptr;
-          nsDependentCSubstring certDER(
-              reinterpret_cast<char*>(
-                  certChainElement->pCertContext->pbCertEncoded),
-              certChainElement->pCertContext->cbCertEncoded);
-          rv = certDB->ConstructX509(certDER, getter_AddRefs(nssCert));
-          if (!nssCert) {
-            extractionSuccess = false;
-            LOG(("Couldn't create NSS cert [this = %p]", this));
-            break;
-          }
-          rv = nssCertList->AddCert(nssCert);
-          if (NS_FAILED(rv)) {
-            extractionSuccess = false;
-            LOG(("Couldn't add NSS cert to cert list [this = %p]", this));
-            break;
-          }
-          nsString subjectName;
-          nssCert->GetSubjectName(subjectName);
-          LOG(("Adding cert %s [this = %p]",
-               NS_ConvertUTF16toUTF8(subjectName).get(), this));
+          nsTArray<uint8_t> cert;
+          cert.AppendElements(certChainElement->pCertContext->pbCertEncoded,
+                              certChainElement->pCertContext->cbCertEncoded);
+          certList.AppendElement(std::move(cert));
         }
         if (extractionSuccess) {
-          mSignatureInfo.AppendObject(nssCertList);
+          mSignatureInfo.AppendElement(std::move(certList));
         }
       }
     }

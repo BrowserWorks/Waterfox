@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Richin naköl rupam ri nimayakb'äl, man taqasaj:">
+<!ENTITY doNotDownloadNntp.label "Richin naköl rupam ri nimayakb'äl, man tiqasäx richin nokisäx toq man atokinäq ta pa k'amaya'l:">
+<!ENTITY doNotDownloadImap.label "Richin niköl rupam ri nimayakb'äl, yeqasäx taq rutzijol k'uxasamaj chuqa' yeyake' aj wawe' taq wachib'enï richin ye'okisäx toq majun okem, nitikïr nuq'ät ruma ojer chik o ruma ri runimilem.">
+<!ENTITY allFoldersOffline2.label "Keyake' taq rutzijol pa konojel ri taq yakwuj richin re rub'i' taqoya'l re' pa re kematz'ib' re'">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Ch'utitzijol: Re jaloj re' yerutz'ilaj konojel ri taq ruyakwuj re rub'i' taqoya'l re'. Richin nab'än kinuk'ulem re taq yakwuj tokisäx ri Q'axinäq… pitz'b'äl.">
+<!ENTITY offlineNotDownload.label "Rutzijol yalan nïm chuwäch">
+<!ENTITY offlineNotDownload.accesskey "R">
+<!ENTITY autosyncNotDownload.label "Man keqasäx taq rutzijol yalan nïm chuwäch">
+<!ENTITY autosyncNotDownload.accesskey "r">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "ojer taq q'ij">
+<!ENTITY message.label "kitzijol">
+<!ENTITY nntpNotDownloadRead.label "Sik'in taq rutzijol">
+<!ENTITY nntpNotDownloadRead.accesskey "S">
+<!ENTITY nntpDownloadMsg.label "Rutzijol nïm chuwäch">
+<!ENTITY nntpDownloadMsg.accesskey "u">
+<!ENTITY retentionCleanup.label "Richin nikol rupam ri nimayakb'äl, tikirel jumul yeyuj el ri ojer taq rutzijol.">
+<!ENTITY retentionCleanupImap.label "Richin nikol rupam ri nimayakb'äl, tikirel jumul yeyuj el ri ojer taq rutzijol, achi'el ri aj wawe' chuqa' nab'ey taq wachib'enïk pa ri näj k'uxasamaj.">
+<!ENTITY retentionCleanupPop.label "Richin nikol rupam ri nimayakb'äl, tikirel jumul yeyuj el ri ojer taq rutzijol, achi'el ri nab'ey taq wachib'enïk pa ri näj k'uxasamaj.">
+<!ENTITY retentionKeepMsg.label "Keyuj taq rutzijol nïm chuwäch">
+<!ENTITY retentionKeepMsg.accesskey "c">
+<!ENTITY retentionKeepAll.label "Man keyuj taq tzijol">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Keyuj konojel, man ke ta ri' ri e k'ak'a'">
+<!ENTITY retentionKeepRecent.accesskey "m">
+<!ENTITY retentionApplyToFlagged.label "Junelïk keyake' ri nimaläj taq rutzijol">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "Keyuj kich'akul taq rutzijol nïm chuwäch">
+<!ENTITY nntpRemoveMsgBody.accesskey "a">
+<!ENTITY offlineSelectNntp.label "Tichach kimolaj tzijol richin nokisäx toq majun okem…">
+<!ENTITY offlineSelectNntp.accesskey "T">
+<!ENTITY offlineImapAdvancedOffline.label "Taq q'axinäq…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "x">
+<!ENTITY syncGroupTitle.label "Ruximik Rutzijol">
+<!ENTITY diskspaceGroupTitle.label "Rupam Rujolom">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Kexim konojel ri aj wawe' taq rutzijol, akuchi' man nijik' taq ri rurijixik">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Kexim ri e k'ak'a'">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Taq q'ij">
+<!ENTITY weekAgeInterval.label           "Taq wuqq'ij">
+<!ENTITY monthAgeInterval.label          "Taq ik'">
+<!ENTITY yearAgeInterval.label           "Taq juna'">
+<!ENTITY ageAutosyncAfter.label          "">

@@ -4,7 +4,7 @@
 
 ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm", this);
 
-const UCT_URI = "chrome://mozapps/content/downloads/unknownContentType.xul";
+const UCT_URI = "chrome://mozapps/content/downloads/unknownContentType.xhtml";
 const LOAD_URI =
   "http://mochi.test:8888/browser/toolkit/mozapps/downloads/tests/browser/unknownContentType_dialog_layout_data.txt";
 
@@ -55,10 +55,13 @@ add_task(async function test_unknownContentType_delayedbutton() {
     {
       gBrowser,
       url: LOAD_URI,
+      waitForLoad: false,
+      waitForStateStop: true,
     },
     async function() {
       let uctWindow = await UCTObserver.opened.promise;
-      let ok = uctWindow.document.documentElement.getButton("accept");
+      let dialog = uctWindow.document.getElementById("unknownContentType");
+      let ok = dialog.getButton("accept");
 
       SimpleTest.is(ok.disabled, true, "button started disabled");
 
@@ -81,7 +84,7 @@ add_task(async function test_unknownContentType_delayedbutton() {
       await waitDelay(DIALOG_DELAY);
       SimpleTest.is(ok.disabled, false, "button re-enabled after delay");
 
-      uctWindow.document.documentElement.cancelDialog();
+      dialog.cancelDialog();
       await UCTObserver.closed.promise;
 
       Services.ww.unregisterNotification(UCTObserver);

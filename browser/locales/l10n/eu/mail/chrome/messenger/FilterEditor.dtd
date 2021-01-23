@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Iragazkien arauak">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Iragazkiaren izena:">
+<!ENTITY filterName.accesskey "I">
+
+<!ENTITY junk.label "Zaborra">
+<!ENTITY notJunk.label "Ez da zaborra">
+
+<!ENTITY lowestPriorityCmd.label "Baxuena">
+<!ENTITY lowPriorityCmd.label "Baxua">
+<!ENTITY normalPriorityCmd.label "Ertaina">
+<!ENTITY highPriorityCmd.label "Altua">
+<!ENTITY highestPriorityCmd.label "Altuena">
+
+<!ENTITY contextDesc.label "Iragazkia noiz aplikatu:">
+<!ENTITY contextIncomingMail.label "Posta berria eskuratzea:">
+<!ENTITY contextIncomingMail.accesskey "b">
+<!ENTITY contextManual.label "Exekutatu eskuz">
+<!ENTITY contextManual.accesskey "E">
+<!ENTITY contextBeforeCls.label "Iragazi zaborra sailkatu aurretik">
+<!ENTITY contextAfterCls.label "Iragazi zaborra sailkatu ondoren">
+<!ENTITY contextOutgoing.label "Bidali ostean">
+<!ENTITY contextOutgoing.accesskey "o">
+<!ENTITY contextArchive.label "Artxibatzen">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Burutu ekintza hauek:">
+<!ENTITY filterActionDesc.accesskey "B">
+
+<!ENTITY filterActionOrderWarning.label "Oharra: iragazte-ekintzak beste ordena batean exekutatuko dira.">
+<!ENTITY filterActionOrder.label "Ikusi exekuzio-ordena">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Mugitu mezua hona:">
+<!ENTITY copyMessage.label "Kopiatu mezua hona:">
+<!ENTITY forwardTo.label "Birbidali mezua hona:">
+<!ENTITY replyWithTemplate.label "Erantzun txantiloiarekin:">
+<!ENTITY markMessageRead.label "Markatu irakurritako gisa">
+<!ENTITY markMessageUnread.label "Markatu irakurri gabeko gisa">
+<!ENTITY markMessageStarred.label "Gehitu izarra">
+<!ENTITY setPriority.label "Ezarri lehentasuna honi:">
+<!ENTITY addTag.label "Etiketatu mezua">
+<!ENTITY setJunkScore.label "Ezarri zabor-egoera honi:">
+<!ENTITY deleteMessage.label "Ezabatu mezua">
+<!ENTITY deleteFromPOP.label "Ezabatu POP zerbitzaritik">
+<!ENTITY fetchFromPOP.label "Deskargatu POP zerbitzaritik">
+<!ENTITY ignoreThread.label "Ezikusi haria">
+<!ENTITY ignoreSubthread.label "Ezikusi azpiharia">
+<!ENTITY watchThread.label "Ikusi haria">
+<!ENTITY stopExecution.label "Gelditu iragazkiaren exekuzioa">
+
+<!ENTITY addAction.tooltip "Gehitu ekintza berria">
+<!ENTITY removeAction.tooltip "Kendu ekintza hau">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "පටුන">
+<!ENTITY buildToc.label      "මේවා ඇසුරින් පටුන ගොඩනගන්න:">
+<!ENTITY tag.label           "ටැග්:">
+<!ENTITY class.label         "පංතිය:">
+<!ENTITY header1.label       "පෙළ 1">
+<!ENTITY header2.label       "පෙළ 2">
+<!ENTITY header3.label       "පෙළ 3">
+<!ENTITY header4.label       "පෙළ 4">
+<!ENTITY header5.label       "පෙළ 5">
+<!ENTITY header6.label       "පෙළ 6">
+<!ENTITY makeReadOnly.label  "Make the table of contents read-only">
+<!ENTITY orderedList.label   "පටුනේ ඇති සියළු සටහන් අංක කරන්න">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Multeɣ">
+<!ENTITY subscribeButton.label        "Multeɣ">
+<!ENTITY subscribeButton.accesskey    "M">
+<!ENTITY unsubscribeButton.label      "Ffeɣ seg umulteɣ">
+<!ENTITY unsubscribeButton.accesskey  "F">
+<!ENTITY newGroupsTab.label           "Igrawen imaynuten">
+<!ENTITY newGroupsTab.accesskey       "m">
+<!ENTITY refreshButton.label          "Smiren">
+<!ENTITY refreshButton.accesskey      "r">
+<!ENTITY stopButton.label             "Ṛken">
+<!ENTITY stopButton.accesskey         "k">
+<!ENTITY server.label                 "Amiḍan">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "Multeɣ">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Sken iferdisen igebren:">
+<!ENTITY namefield.accesskey          "k">

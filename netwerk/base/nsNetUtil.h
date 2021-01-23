@@ -33,7 +33,7 @@ class nsIAuthPrompt;
 class nsIAuthPrompt2;
 class nsIChannel;
 class nsIChannelPolicy;
-class nsICookieSettings;
+class nsICookieJarSettings;
 class nsIDownloadObserver;
 class nsIEventTarget;
 class nsIFileProtocolHandler;
@@ -61,6 +61,11 @@ class ClientInfo;
 class PerformanceStorage;
 class ServiceWorkerDescriptor;
 }  // namespace dom
+
+namespace ipc {
+class FileDescriptor;
+}  // namespace ipc
+
 }  // namespace mozilla
 
 template <class>
@@ -76,43 +81,21 @@ already_AddRefed<nsINetUtil> do_GetNetUtil(nsresult* error = nullptr);
 nsresult net_EnsureIOService(nsIIOService** ios, nsCOMPtr<nsIIOService>& grip);
 
 nsresult NS_NewURI(nsIURI** result, const nsACString& spec,
-                   const char* charset = nullptr, nsIURI* baseURI = nullptr,
-                   nsIIOService* ioService =
-                       nullptr);  // pass in nsIIOService to optimize callers
+                   const char* charset = nullptr, nsIURI* baseURI = nullptr);
 
 nsresult NS_NewURI(nsIURI** result, const nsACString& spec,
                    mozilla::NotNull<const mozilla::Encoding*> encoding,
-                   nsIURI* baseURI = nullptr,
-                   nsIIOService* ioService =
-                       nullptr);  // pass in nsIIOService to optimize callers
+                   nsIURI* baseURI = nullptr);
 
 nsresult NS_NewURI(nsIURI** result, const nsAString& spec,
-                   const char* charset = nullptr, nsIURI* baseURI = nullptr,
-                   nsIIOService* ioService =
-                       nullptr);  // pass in nsIIOService to optimize callers
+                   const char* charset = nullptr, nsIURI* baseURI = nullptr);
 
 nsresult NS_NewURI(nsIURI** result, const nsAString& spec,
                    mozilla::NotNull<const mozilla::Encoding*> encoding,
-                   nsIURI* baseURI = nullptr,
-                   nsIIOService* ioService =
-                       nullptr);  // pass in nsIIOService to optimize callers
+                   nsIURI* baseURI = nullptr);
 
-nsresult NS_NewURI(nsIURI** result, const char* spec, nsIURI* baseURI = nullptr,
-                   nsIIOService* ioService =
-                       nullptr);  // pass in nsIIOService to optimize callers
-
-// This function attempts to create an nsIURI on any thread. This implies we
-// can't instantiate a protcol handler, since protocol handers may have a JS
-// implementation so they can't work off-main-thread.
-// When called off the main thread, if the nsIURI can't be created without
-// instantiating protocol handlers, the method will return
-// NS_ERROR_UNKNOWN_PROTOCOL. The caller may retry on the main thread.
-// When called on the main thread, this function will fall back on calling
-// nsIProtocolHandler.newURI
-nsresult NS_NewURIOnAnyThread(nsIURI** aResult, const nsACString& aSpec,
-                              const char* aCharset = nullptr,
-                              nsIURI* aBaseURI = nullptr,
-                              nsIIOService* aIOService = nullptr);
+nsresult NS_NewURI(nsIURI** result, const char* spec,
+                   nsIURI* baseURI = nullptr);
 
 nsresult NS_NewFileURI(
     nsIURI** result, nsIFile* spec,
@@ -181,12 +164,12 @@ nsresult NS_NewChannelInternal(
     const mozilla::Maybe<mozilla::dom::ClientInfo>& aLoadingClientInfo,
     const mozilla::Maybe<mozilla::dom::ServiceWorkerDescriptor>& aController,
     nsSecurityFlags aSecurityFlags, nsContentPolicyType aContentPolicyType,
-    nsICookieSettings* aCookieSettings = nullptr,
+    nsICookieJarSettings* aCookieJarSettings = nullptr,
     mozilla::dom::PerformanceStorage* aPerformanceStorage = nullptr,
     nsILoadGroup* aLoadGroup = nullptr,
     nsIInterfaceRequestor* aCallbacks = nullptr,
     nsLoadFlags aLoadFlags = nsIRequest::LOAD_NORMAL,
-    nsIIOService* aIoService = nullptr);
+    nsIIOService* aIoService = nullptr, uint32_t aSandboxFlags = 0);
 
 // See NS_NewChannelInternal for usage and argument description
 nsresult NS_NewChannelInternal(
@@ -214,7 +197,7 @@ nsresult NS_NewChannelWithTriggeringPrincipal(
     nsIChannel** outChannel, nsIURI* aUri, nsIPrincipal* aLoadingPrincipal,
     nsIPrincipal* aTriggeringPrincipal, nsSecurityFlags aSecurityFlags,
     nsContentPolicyType aContentPolicyType,
-    nsICookieSettings* aCookieSettings = nullptr,
+    nsICookieJarSettings* aCookieJarSettings = nullptr,
     mozilla::dom::PerformanceStorage* aPerformanceStorage = nullptr,
     nsILoadGroup* aLoadGroup = nullptr,
     nsIInterfaceRequestor* aCallbacks = nullptr,
@@ -228,7 +211,7 @@ nsresult NS_NewChannelWithTriggeringPrincipal(
     const mozilla::dom::ClientInfo& aLoadingClientInfo,
     const mozilla::Maybe<mozilla::dom::ServiceWorkerDescriptor>& aController,
     nsSecurityFlags aSecurityFlags, nsContentPolicyType aContentPolicyType,
-    nsICookieSettings* aCookieSettings = nullptr,
+    nsICookieJarSettings* aCookieJarSettings = nullptr,
     mozilla::dom::PerformanceStorage* aPerformanceStorage = nullptr,
     nsILoadGroup* aLoadGroup = nullptr,
     nsIInterfaceRequestor* aCallbacks = nullptr,
@@ -243,18 +226,18 @@ nsresult NS_NewChannel(
     nsILoadGroup* aLoadGroup = nullptr,
     nsIInterfaceRequestor* aCallbacks = nullptr,
     nsLoadFlags aLoadFlags = nsIRequest::LOAD_NORMAL,
-    nsIIOService* aIoService = nullptr);
+    nsIIOService* aIoService = nullptr, uint32_t aSandboxFlags = 0);
 
 // See NS_NewChannelInternal for usage and argument description
 nsresult NS_NewChannel(
     nsIChannel** outChannel, nsIURI* aUri, nsIPrincipal* aLoadingPrincipal,
     nsSecurityFlags aSecurityFlags, nsContentPolicyType aContentPolicyType,
-    nsICookieSettings* aCookieSettings = nullptr,
+    nsICookieJarSettings* aCookieJarSettings = nullptr,
     mozilla::dom::PerformanceStorage* aPerformanceStorage = nullptr,
     nsILoadGroup* aLoadGroup = nullptr,
     nsIInterfaceRequestor* aCallbacks = nullptr,
     nsLoadFlags aLoadFlags = nsIRequest::LOAD_NORMAL,
-    nsIIOService* aIoService = nullptr);
+    nsIIOService* aIoService = nullptr, uint32_t aSandboxFlags = 0);
 
 // See NS_NewChannelInternal for usage and argument description
 nsresult NS_NewChannel(
@@ -262,12 +245,12 @@ nsresult NS_NewChannel(
     const mozilla::dom::ClientInfo& aLoadingClientInfo,
     const mozilla::Maybe<mozilla::dom::ServiceWorkerDescriptor>& aController,
     nsSecurityFlags aSecurityFlags, nsContentPolicyType aContentPolicyType,
-    nsICookieSettings* aCookieSettings = nullptr,
+    nsICookieJarSettings* aCookieJarSettings = nullptr,
     mozilla::dom::PerformanceStorage* aPerformanceStorage = nullptr,
     nsILoadGroup* aLoadGroup = nullptr,
     nsIInterfaceRequestor* aCallbacks = nullptr,
     nsLoadFlags aLoadFlags = nsIRequest::LOAD_NORMAL,
-    nsIIOService* aIoService = nullptr);
+    nsIIOService* aIoService = nullptr, uint32_t aSandboxFlags = 0);
 
 nsresult NS_GetIsDocumentChannel(nsIChannel* aChannel, bool* aIsDocument);
 
@@ -484,6 +467,9 @@ nsresult NS_NewLocalFileOutputStream(nsIOutputStream** result, nsIFile* file,
                                      int32_t ioFlags = -1, int32_t perm = -1,
                                      int32_t behaviorFlags = 0);
 
+nsresult NS_NewLocalFileOutputStream(nsIOutputStream** result,
+                                     const mozilla::ipc::FileDescriptor& fd);
+
 // returns a file output stream which can be QI'ed to nsISafeOutputStream.
 nsresult NS_NewAtomicFileOutputStream(nsIOutputStream** result, nsIFile* file,
                                       int32_t ioFlags = -1, int32_t perm = -1,
@@ -499,7 +485,7 @@ nsresult NS_NewLocalFileStream(nsIFileStream** result, nsIFile* file,
                                int32_t ioFlags = -1, int32_t perm = -1,
                                int32_t behaviorFlags = 0);
 
-MOZ_MUST_USE nsresult NS_NewBufferedInputStream(
+[[nodiscard]] nsresult NS_NewBufferedInputStream(
     nsIInputStream** aResult, already_AddRefed<nsIInputStream> aInputStream,
     uint32_t aBufferSize);
 
@@ -605,15 +591,6 @@ inline void NS_QueryNotificationCallbacks(nsIInterfaceRequestor* callbacks,
 bool NS_UsePrivateBrowsing(nsIChannel* channel);
 
 /**
- * Extract the OriginAttributes from the channel's triggering principal.
- * If aUsingStoragePrincipal is set to true, the originAttributes could have
- * first-party isolation domain set to the top-level URI.
- */
-bool NS_GetOriginAttributes(nsIChannel* aChannel,
-                            mozilla::OriginAttributes& aAttributes,
-                            bool aUsingStoragePrincipal = false);
-
-/**
  * Returns true if the channel has visited any cross-origin URLs on any
  * URLs that it was redirected through.
  */
@@ -623,6 +600,11 @@ bool NS_HasBeenCrossOrigin(nsIChannel* aChannel, bool aReport = false);
  * Returns true if the channel is a safe top-level navigation.
  */
 bool NS_IsSafeTopLevelNav(nsIChannel* aChannel);
+
+/**
+ * Returns true if the channel has a safe method.
+ */
+bool NS_IsSafeMethodNav(nsIChannel* aChannel);
 
 /**
  * Returns true if the channel is a foreign with respect to the host-uri.
@@ -737,7 +719,6 @@ already_AddRefed<nsIURI> NS_GetInnermostURI(nsIURI* aURI);
  */
 void NS_TryToSetImmutable(nsIURI *uri);
 
-
 /**
  * Helper function for getting the host name of the innermost URI for a given
  * URI.  The return value could be the host name of the URI passed in if it's
@@ -812,12 +793,6 @@ nsresult NS_LinkRedirectChannels(uint32_t channelId,
                                  nsIChannel** _result);
 
 /**
- * Helper function to create a random URL string that's properly formed
- * but guaranteed to be invalid.
- */
-nsresult NS_MakeRandomInvalidURLString(nsCString &result);
-
-/**
  * Helper function which checks whether the channel can be
  * openend using Open() or has to fall back to opening
  * the channel using Open().
@@ -834,13 +809,17 @@ nsresult NS_MaybeOpenChannelUsingAsyncOpen(nsIChannel* aChannel,
                                            nsIStreamListener* aListener);
 
 /**
- * Helper function to determine whether urlString is Java-compatible --
- * whether it can be passed to the Java URL(String) constructor without the
- * latter throwing a MalformedURLException, or without Java otherwise
- * mishandling it.  This function (in effect) implements a scheme whitelist
- * for Java.
+ * Returns nsILoadInfo::EMBEDDER_POLICY_REQUIRE_CORP if `aHeader` is
+ * "require-corp" and nsILoadInfo::EMBEDDER_POLICY_NULL otherwise.
+ *
+ * See: https://mikewest.github.io/corpp/#parsing
  */
-nsresult NS_CheckIsJavaCompatibleURLString(nsCString& urlString, bool *result);
+inline nsILoadInfo::CrossOriginEmbedderPolicy
+NS_GetCrossOriginEmbedderPolicyFromHeader(const nsACString& aHeader) {
+  return aHeader.EqualsLiteral("require-corp")
+             ? nsILoadInfo::EMBEDDER_POLICY_REQUIRE_CORP
+             : nsILoadInfo::EMBEDDER_POLICY_NULL;
+}
 
 /** Given the first (disposition) token from a Content-Disposition header,
  * tell whether it indicates the content is inline or attachment
@@ -859,12 +838,10 @@ uint32_t NS_GetContentDispositionFromHeader(const nsACString& aHeader,
 /** Extracts the filename out of a content-disposition header
  * @param aFilename [out] The filename. Can be empty on error.
  * @param aDisposition Value of a Content-Disposition header
- * @param aURI Optional. Will be used to get a fallback charset for the
- *        filename, if it is QI'able to nsIURL
+
  */
 nsresult NS_GetFilenameFromDisposition(nsAString& aFilename,
-                                       const nsACString& aDisposition,
-                                       nsIURI* aURI = nullptr);
+                                       const nsACString& aDisposition);
 
 /**
  * Make sure Personal Security Manager is initialized
@@ -978,6 +955,16 @@ bool InScriptableRange(uint64_t val);
  */
 nsresult GetParameterHTTP(const nsACString& aHeaderVal, const char* aParamName,
                           nsAString& aResult);
+
+/**
+ * Helper function that determines if channel is an HTTP POST.
+ *
+ * @param aChannel
+ *        The channel to test
+ *
+ * @return True if channel is an HTTP post.
+ */
+bool ChannelIsPost(nsIChannel* aChannel);
 
 /**
  * Convenience functions for verifying nsIURI schemes. These functions simply

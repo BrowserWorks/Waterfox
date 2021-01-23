@@ -11,7 +11,7 @@ const gBrowserGlue = Cc["@mozilla.org/browser/browserglue;1"].getService(
 const accountsBundle = Services.strings.createBundle(
   "chrome://browser/locale/accounts.properties"
 );
-const DEVICES_URL = "http://localhost/devices";
+const DEVICES_URL = "https://example.com/devices";
 
 let expectedBody;
 
@@ -46,16 +46,15 @@ async function testDeviceConnected(deviceName) {
 
 add_task(async function() {
   expectedBody = accountsBundle.formatStringFromName(
-    "deviceConnectedBody",
-    ["My phone"],
-    1
+    "otherDeviceConnectedBody",
+    ["My phone"]
   );
   await testDeviceConnected("My phone");
 });
 
 add_task(async function() {
   expectedBody = accountsBundle.GetStringFromName(
-    "deviceConnectedBody.noDeviceName"
+    "otherDeviceConnectedBody.noDeviceName"
   );
   await testDeviceConnected(null);
 });

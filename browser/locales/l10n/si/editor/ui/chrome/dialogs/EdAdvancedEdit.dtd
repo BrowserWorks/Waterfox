@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "වැඩිමනත් ලක්ෂණ සකසනය">
+<!ENTITY AttName.label                  "ගතිලක්ෂණ: ">
+<!ENTITY AttValue.label                 "අගය: ">
+<!ENTITY PropertyName.label             "ලක්ෂණ: ">
+<!ENTITY currentattributesfor.label     "(සඳහා) වර්තමාන ගතිලක්ෂණ: ">
+<!ENTITY tree.attributeHeader.label     "ගතිලක්ෂණ">
+<!ENTITY tree.propertyHeader.label      "ලක්ෂණ">
+<!ENTITY tree.valueHeader.label         "අගය">
+<!ENTITY tabHTML.label                  "HTML ගතිලක්ෂණ">
+<!ENTITY tabCSS.label                   "පේළිගත විලාසය">
+<!ENTITY tabJSE.label                   "ජාවාකේත අංග">
+
+<!ENTITY editAttribute.label    "ඉහත අයිතමයන්ගේ අගයයන් සැකසීම සඳහා ඒ මත ක්ලික් කරන්න">
+<!ENTITY removeAttribute.label  "ඉවත් කරන්න">

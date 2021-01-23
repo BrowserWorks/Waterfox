@@ -10,7 +10,7 @@ const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 const { PluralForm } = require("devtools/shared/plural-form");
 
-const { L10N } = require("../utils/l10n");
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
 
 /**
  * Helper functional component to render an accessible text progressbar.
@@ -34,7 +34,7 @@ function TextProgressBar({ id, textStringKey }) {
 class AuditProgressOverlay extends React.Component {
   static get propTypes() {
     return {
-      auditing: PropTypes.array,
+      auditing: PropTypes.array.isRequired,
       total: PropTypes.number,
       percentage: PropTypes.number,
     };
@@ -42,7 +42,7 @@ class AuditProgressOverlay extends React.Component {
 
   render() {
     const { auditing, percentage, total } = this.props;
-    if (!auditing) {
+    if (auditing.length === 0) {
       return null;
     }
 

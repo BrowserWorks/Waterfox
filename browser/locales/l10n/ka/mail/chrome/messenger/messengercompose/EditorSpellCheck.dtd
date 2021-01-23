@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "მართლწერის შემოწმება">
+
+<!ENTITY misspelledWord.label "არასწორი სიტყვა:">
+<!ENTITY wordEditField.label "ჩანაცვლება:">
+<!ENTITY wordEditField.accessKey "ც">
+<!ENTITY checkwordButton.label "სიტყვის შემოწმება">
+<!ENTITY checkwordButton.accessKey "წ">
+<!ENTITY suggestions.label "შემოთავაზებები:">
+<!ENTITY suggestions.accessKey "შ">
+<!ENTITY ignoreButton.label "გამოტოვება">
+<!ENTITY ignoreButton.accessKey "ო">
+<!ENTITY ignoreAllButton.label "ყველას გამოტოვება">
+<!ENTITY ignoreAllButton.accessKey "გ">
+<!ENTITY replaceButton.label "შეცვლა">
+<!ENTITY replaceButton.accessKey "ც">
+<!ENTITY replaceAllButton.label "ყველას შეცვლა">
+<!ENTITY replaceAllButton.accessKey "ყ">
+<!ENTITY stopButton.label "შეჩერება">
+<!ENTITY stopButton.accessKey "ე">
+<!ENTITY userDictionary.label "თქვენი ლექსიკონი:">
+<!ENTITY moreDictionaries.label "დამატებით გადმოწერა">
+<!ENTITY addToUserDictionaryButton.label "სიტყვის დამატება">
+<!ENTITY addToUserDictionaryButton.accessKey "დ">
+<!ENTITY editUserDictionaryButton.label "ჩასწორება…">
+<!ENTITY editUserDictionaryButton.accessKey "ჩ">
+<!ENTITY recheckButton2.label "ტექსტის გადამოწმება">
+<!ENTITY recheckButton2.accessKey "ტ">
+<!ENTITY closeButton.label "დახურვა">
+<!ENTITY closeButton.accessKey "ხ">
+<!ENTITY sendButton.label "გაგზავნა">
+<!ENTITY sendButton.accessKey "ზ">
+<!ENTITY languagePopup.label "ენა:">
+<!ENTITY languagePopup.accessKey "ნ">

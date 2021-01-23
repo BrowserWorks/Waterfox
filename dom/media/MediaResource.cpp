@@ -8,8 +8,8 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Logging.h"
 #include "mozilla/MathAlgorithms.h"
-#include "mozilla/SystemGroup.h"
 #include "mozilla/ErrorNames.h"
+#include "mozilla/SchedulerGroup.h"
 
 using mozilla::media::TimeUnit;
 
@@ -29,15 +29,12 @@ void MediaResource::Destroy() {
     delete this;
     return;
   }
-  nsresult rv = SystemGroup::Dispatch(
+  nsresult rv = SchedulerGroup::Dispatch(
       TaskCategory::Other,
       NewNonOwningRunnableMethod("MediaResource::Destroy", this,
                                  &MediaResource::Destroy));
   MOZ_ALWAYS_SUCCEEDS(rv);
 }
-
-NS_IMPL_ADDREF(MediaResource)
-NS_IMPL_RELEASE_WITH_DESTROY(MediaResource, Destroy())
 
 static const uint32_t kMediaResourceIndexCacheSize = 8192;
 static_assert(IsPowerOfTwo(kMediaResourceIndexCacheSize),

@@ -7,6 +7,8 @@
 # of version 1.2. Its license (MPL2) is contained in repo root LICENSE file.
 # Please make modifications there where possible.
 
+from __future__ import absolute_import, print_function
+
 from itertools import islice
 
 
@@ -36,9 +38,9 @@ def split_evenly(n, chunks):
         raise ChunkingError("Number of chunks is greater than number")
     if n % chunks == 0:
         # Either we can evenly split or only 1 chunk left
-        return [n / chunks] * chunks
+        return [n // chunks] * chunks
     # otherwise the current chunk should be a bit larger
-    max_size = n / chunks + 1
+    max_size = n // chunks + 1
     return [max_size] + split_evenly(n - max_size, chunks - 1)
 
 
@@ -54,4 +56,3 @@ def chunkify(things, this_chunk, chunks):
         return things[start:end]
     except TypeError:
         return islice(things, start, end)
-

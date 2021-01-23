@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 this.runtime = class extends ExtensionAPI {
@@ -6,28 +10,20 @@ this.runtime = class extends ExtensionAPI {
 
     return {
       runtime: {
-        onConnect: context.messenger.onConnect("runtime.onConnect"),
+        onConnect: context.messenger.nm.onConnect.api(),
 
         onMessage: context.messenger.onMessage("runtime.onMessage"),
 
-        onConnectExternal: context.messenger.onConnectExternal(
-          "runtime.onConnectExternal"
-        ),
+        onConnectExternal: context.messenger.nm.onConnectEx.api(),
 
         onMessageExternal: context.messenger.onMessageExternal(
           "runtime.onMessageExternal"
         ),
 
-        connect: function(extensionId, connectInfo) {
-          let name = (connectInfo !== null && connectInfo.name) || "";
+        connect(extensionId, options) {
+          let { name = "" } = options || {};
           extensionId = extensionId || extension.id;
-          let recipient = { extensionId };
-
-          return context.messenger.connect(
-            context.messageManager,
-            name,
-            recipient
-          );
+          return context.messenger.nm.connect({ name, extensionId });
         },
 
         sendMessage(...args) {
@@ -38,7 +34,6 @@ this.runtime = class extends ExtensionAPI {
           }
 
           function checkOptions(options) {
-            let toProxyScript = false;
             if (typeof options !== "object") {
               return [
                 false,
@@ -47,21 +42,10 @@ this.runtime = class extends ExtensionAPI {
             }
 
             for (let key of Object.keys(options)) {
-              if (key === "toProxyScript") {
-                let value = options[key];
-                if (typeof value !== "boolean") {
-                  return [
-                    false,
-                    "runtime.sendMessage's options.toProxyScript argument is invalid",
-                  ];
-                }
-                toProxyScript = value;
-              } else {
-                return [false, `Unexpected property ${key}`];
-              }
+              return [false, `Unexpected property ${key}`];
             }
 
-            return [true, { toProxyScript }];
+            return [true, {}];
           }
 
           if (!args.length) {
@@ -123,29 +107,12 @@ this.runtime = class extends ExtensionAPI {
           );
         },
 
-        connectNative(application) {
-          let recipient = {
-            childId: context.childManager.id,
-            toNativeApp: application,
-          };
-
-          return context.messenger.connectNative(
-            context.messageManager,
-            "",
-            recipient
-          );
+        connectNative(name) {
+          return context.messenger.nm.connect({ name, native: true });
         },
 
-        sendNativeMessage(application, message) {
-          let recipient = {
-            childId: context.childManager.id,
-            toNativeApp: application,
-          };
-          return context.messenger.sendNativeMessage(
-            context.messageManager,
-            message,
-            recipient
-          );
+        sendNativeMessage(nativeApp, message) {
+          return context.messenger.nm.sendNativeMessage(nativeApp, message);
         },
 
         get lastError() {
@@ -158,7 +125,7 @@ this.runtime = class extends ExtensionAPI {
 
         id: extension.id,
 
-        getURL: function(url) {
+        getURL(url) {
           return extension.baseURI.resolve(url);
         },
       },

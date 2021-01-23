@@ -35,6 +35,10 @@ describe("shouldRenderRootsInReps", () => {
     ).toBeTruthy();
   });
 
+  it("returns false for empty roots", () => {
+    expect(shouldRenderRootsInReps([])).toBeFalsy();
+  });
+
   it("returns true for a big int", () => {
     expect(
       shouldRenderRootsInReps([
@@ -75,14 +79,30 @@ describe("shouldRenderRootsInReps", () => {
     ).toBeTruthy();
   });
 
-  it("returns true for Errors", () => {
+  it("returns true for Errors when customFormat prop is true", () => {
     expect(
-      shouldRenderRootsInReps([
-        {
-          contents: { value: errorStubs.get("MultilineStackError") },
-        },
-      ])
+      shouldRenderRootsInReps(
+        [
+          {
+            contents: { value: errorStubs.get("MultilineStackError") },
+          },
+        ],
+        { customFormat: true }
+      )
     ).toBeTruthy();
+  });
+
+  it("returns false for Errors when customFormat prop is false", () => {
+    expect(
+      shouldRenderRootsInReps(
+        [
+          {
+            contents: { value: errorStubs.get("MultilineStackError") },
+          },
+        ],
+        { customFormat: false }
+      )
+    ).toBeFalsy();
   });
 
   it("returns false when there are multiple primitive roots", () => {

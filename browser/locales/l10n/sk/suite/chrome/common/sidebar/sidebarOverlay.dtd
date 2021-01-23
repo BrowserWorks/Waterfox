@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Bočný panel">
+<!ENTITY sidebar.reload.label           "Obnoviť">
+<!ENTITY sidebar.reload.accesskey       "b">
+<!ENTITY sidebar.picker.label           "Karty">
+<!ENTITY sidebar.customize.label        "Prispôsobiť Bočný panel…">
+<!ENTITY sidebar.customize.accesskey    "P">
+<!ENTITY sidebar.hide.label             "Skryť kartu">
+<!ENTITY sidebar.hide.accesskey         "k">
+<!ENTITY sidebar.switch.label           "Prepnúť na kartu">
+<!ENTITY sidebar.switch.accesskey       "r">
+<!ENTITY sidebarCmd.label               "Bočný panel">
+<!ENTITY sidebarCmd.accesskey           "B">
+<!ENTITY sidebar.loading.label          "Načítava sa…">
+<!ENTITY sidebar.loadstopped.label      "Načítavanie zastavené">
+<!ENTITY sidebar.loading.stop.label     "Zastaviť">
+<!ENTITY sidebar.loading.stop.accesskey "s">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "Bočný panel je prázdny.">
+<!ENTITY sidebar.no-panels.add       'Karty môžete pridať kliknutím na tlačidlo &quot;Karty&quot;.'>
+<!ENTITY sidebar.no-panels.hide      'Ak chcete úplne skryť Bočný panel, prejdite do hlavnej ponuky &quot;Zobraziť&quot;, vyberte položku &quot;Panely s nástrojmi&quot; a kliknite na položku &quot;Bočný panel&quot;.'>
+<!ENTITY sidebar.sbDirectory.label   "Priečinok Bočného panela…">
+
+<!ENTITY sidebar.pagenotfound.label  "Táto karta nie je práve dostupná.">
+<!ENTITY sidebar.close.tooltip       "Zavrieť Bočný panel">
+<!ENTITY sidebar.open.tooltip        "Otvoriť Bočný panel">
+
+<!ENTITY sidebar.search.label         "Vyhľadávanie">
+<!ENTITY sidebar.client-bookmarks.label     "Záložky">
+<!ENTITY sidebar.client-history.label       "História">
+<!ENTITY sidebar.client-addressbook.label   "Adresár">

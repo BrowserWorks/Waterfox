@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Postavke računa">
+<!ENTITY accountName.label "Naziv računa:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Zadani identitet">
+<!ENTITY identityDesc.label "Svaki račun ima svoj identitet, to su informacije koje drugi ljudi vide kada čitaju vaše poruke.">
+<!ENTITY name.label "Vaše ime:">
+<!ENTITY name.accesskey "i">
+<!ENTITY email.label "Adresa e-pošte:">
+<!ENTITY email.accesskey "e">
+<!ENTITY catchAll.label "Odgovori s ovog identiteta kada se zaglavlja isporuke podudaraju:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Adresa za odgovor:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Primatelji će odgovarati na ovu adresu">
+<!ENTITY organization.label "Organizacija:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Tekst potpisa:">
+<!ENTITY signatureText.accesskey "k">
+<!ENTITY signatureHtml.label "Koristi HTML (npr., &lt;b&gt;podebljano&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Priloži potpis iz datoteke (tekst, HTML ili slika):">
+<!ENTITY signatureFile.accesskey "T">
+<!ENTITY edit.label "Uredi…">
+<!ENTITY choose.label "Odaberi…">
+<!ENTITY choose.accesskey "a">
+<!ENTITY editVCard.label "Uredi karticu…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Priloži moj vCard uz poruke">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Upravljanje identitetima…">
+<!ENTITY manageIdentities.accesskey "m">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Odlazni poslužitelj (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Koristi zadani poslužitelj">
+
+<!ENTITY smtpServerEdit.label "Uredi SMTP poslužitelj…">
+<!ENTITY smtpServerEdit.accesskey "P">

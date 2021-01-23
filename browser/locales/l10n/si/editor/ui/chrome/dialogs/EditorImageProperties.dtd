@@ -1,0 +1,78 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "රූපයේ ලක්ෂණ">
+
+<!ENTITY pixelsPopup.value "පික්සෙල්">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "රූපයේ ස්ථානය:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "රූපයේ ගොනුව හෝ ස්ථානය ටයිප් කරන්න">
+<!ENTITY title.label "මෙවලම් ඉඟිය:">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "The html 'title' attribute that displays as a tooltip">
+<!ENTITY altText.label "විකල්ප පාඨ:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "රූපය පිහිටන ස්ථානහේ පෙන්වීමට පාඨ ටයිප් කරන්න">
+<!ENTITY noAltText.label "විකල්ප පාඨ භාවිතා නොකරන්න">
+<!ENTITY noAltText.accessKey "D">
+
+<!ENTITY previewBox.label "රූපයේ පෙරදැක්ම">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "සත්‍ය විශාලත්වය:">
+<!ENTITY actualSizeRadio.label "සත්‍ය විශාලත්වය">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "රූපයේ සත්‍ය විශාලත්වයට යළි යන්න">
+<!ENTITY customSizeRadio.label "රිසිකරණ විශාලත්වය">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "පිටුවේ පෙනෙන ආකාරයට රූපයේ විශාලත්වය වෙනස් කරන්න">
+<!ENTITY heightEditField.label "උස:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "පළල:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY constrainCheckbox.label "Constrain">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "Maintain the image's aspect ratio">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "සිතියම් රූපය">
+<!ENTITY removeImageMapButton.label "ඉවත් කරන්න">
+<!ENTITY removeImageMapButton.accessKey "R">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "පාඨ රූපයට පෙළගසන්න">
+<!ENTITY bottomPopup.value "පහළදී">
+<!ENTITY topPopup.value "ඉහළදී">
+<!ENTITY centerPopup.value "මැදදී">
+<!ENTITY wrapRightPopup.value "පෙළ එතුම දකුණට">
+<!ENTITY wrapLeftPopup.value "පෙළ එතුම වමට">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "හිස් ඉඩ">
+<!ENTITY leftRightEditField.label "වම සහ දකුණ:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "ඉහළ සහ පහළ:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "තද දාරය:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "සබැඳි රූපය වටා දාරය පෙන්වන්න">
+<!ENTITY showImageLinkBorder.accessKey "B">
+<!ENTITY LinkAdvancedEditButton.label "Link Advanced Edit…">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Add or modify HTML attributes, style attributes, and JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "පෝරමය">
+<!ENTITY imageLocationTab.label "ස්ථානය">
+<!ENTITY imageDimensionsTab.label "මාන">
+<!ENTITY imageAppearanceTab.label "පෙනුම">
+<!ENTITY imageLinkTab.label "සබැඳිය">

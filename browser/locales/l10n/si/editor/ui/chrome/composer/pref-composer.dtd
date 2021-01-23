@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "සකසනය">
+
+<!ENTITY  recentFiles.title             "මෑතකාලීන පිටු මෙනුව">
+<!ENTITY  documentsInMenu.label         "ලැයිස්තුගතකරන උපරිම පිටු ගණන:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+
+<!ENTITY  savingFiles.title             "පිටු සුරැකීමේදී හෝ ප්‍රකාශණයේදී ">
+<!ENTITY  preserveExisting.label        "මූලික හැඩගැසුම් ආරක්ෂා කරන්න">
+<!ENTITY  preserveExisting.accesskey    "P">
+<!ENTITY  preserveExisting.tooltip      "පිටුවේ පේළි කඩනයන් හා මූලික හැඩගැසුම් ආරක්ෂා කරන්න">
+<!ENTITY  saveAssociatedFiles.label     "පිටු සුරැකීමේදී රූප සහ අනෙකුත් අදාල ගොනු ආරක්ෂා කරන්න">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "පිටු ප්‍රකාශණයේදී සෑමවිටම ප්‍රකාශණ දෙබස් කවුළුව පෙන්වන්න">
+<!ENTITY  showPublishDialog.accesskey   "A">
+
+<!ENTITY  composerEditing.label         "සැකසුමි">
+<!ENTITY  maintainStructure.label       "කොටු (cells) ඇතුළු කිරීමේදී හා මැකීමේදී වගුවේ සැකැස්ම (layout) පවත්වා ගන්න">
+<!ENTITY  maintainStructure.tooltip     "Preserves table's rectangular shape by automatically adding cells after inserting or deleting cells">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Use CSS styles instead of HTML elements and attributes">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Return in a paragraph always creates a new paragraph">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

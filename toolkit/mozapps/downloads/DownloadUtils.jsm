@@ -140,16 +140,11 @@ var DownloadUtils = {
       ];
       status = gBundle.formatStringFromName(
         gStr.statusFormatInfiniteRate,
-        params,
-        params.length
+        params
       );
     } else {
       let params = [transfer, rate, unit, timeLeft];
-      status = gBundle.formatStringFromName(
-        gStr.statusFormat,
-        params,
-        params.length
-      );
+      status = gBundle.formatStringFromName(gStr.statusFormat, params);
     }
     return [status, newLast];
   },
@@ -184,11 +179,7 @@ var DownloadUtils = {
     );
 
     let params = [transfer, timeLeft];
-    let status = gBundle.formatStringFromName(
-      gStr.statusFormatNoRate,
-      params,
-      params.length
-    );
+    let status = gBundle.formatStringFromName(gStr.statusFormatNoRate, params);
     return [status, newLast];
   },
 
@@ -263,7 +254,7 @@ var DownloadUtils = {
       values = [progress, progressUnits, total, totalUnits];
     }
 
-    return gBundle.formatStringFromName(name, values, values.length);
+    return gBundle.formatStringFromName(name, values);
   },
 
   /**
@@ -328,32 +319,25 @@ var DownloadUtils = {
         aSeconds
       );
 
-      let pair1 = gBundle.formatStringFromName(
-        gStr.timePair,
-        [nf.format(time1), unit1],
-        2
-      );
-      let pair2 = gBundle.formatStringFromName(
-        gStr.timePair,
-        [nf.format(time2), unit2],
-        2
-      );
+      let pair1 = gBundle.formatStringFromName(gStr.timePair, [
+        nf.format(time1),
+        unit1,
+      ]);
+      let pair2 = gBundle.formatStringFromName(gStr.timePair, [
+        nf.format(time2),
+        unit2,
+      ]);
 
       // Only show minutes for under 1 hour unless there's a few minutes left;
       // or the second pair is 0.
       if ((aSeconds < 3600 && time1 >= 4) || time2 == 0) {
-        timeLeft = gBundle.formatStringFromName(
-          gStr.timeLeftSingle,
-          [pair1],
-          1
-        );
+        timeLeft = gBundle.formatStringFromName(gStr.timeLeftSingle, [pair1]);
       } else {
         // We've got 2 pairs of times to display
-        timeLeft = gBundle.formatStringFromName(
-          gStr.timeLeftDouble,
-          [pair1, pair2],
-          2
-        );
+        timeLeft = gBundle.formatStringFromName(gStr.timeLeftDouble, [
+          pair1,
+          pair2,
+        ]);
       }
     }
 
@@ -469,13 +453,9 @@ var DownloadUtils = {
       // Display special text for file protocol
       displayHost = gBundle.GetStringFromName(gStr.doneFileScheme);
       fullHost = displayHost;
-    } else if (displayHost.length == 0) {
+    } else if (!displayHost.length) {
       // Got nothing; show the scheme (data: about: moz-icon:)
-      displayHost = gBundle.formatStringFromName(
-        gStr.doneScheme,
-        [uri.scheme],
-        1
-      );
+      displayHost = gBundle.formatStringFromName(gStr.doneScheme, [uri.scheme]);
       fullHost = displayHost;
     } else if (uri.port != -1) {
       // Tack on the port if it's not the default port

@@ -14,9 +14,6 @@ const {
 
 types.addDictType("console.traits", {
   evaluateJSAsync: "boolean",
-  transferredResponseSize: "boolean",
-  selectedObjectActor: "boolean",
-  fetchCacheDescriptor: "boolean",
 });
 
 types.addDictType("console.startlisteners", {
@@ -49,18 +46,19 @@ const webconsoleSpecPrototype = {
   events: {
     evaluationResult: {
       resultID: Option(0, "string"),
-      type: "evaluationResult",
       awaitResult: Option(0, "nullable:boolean"),
       errorMessageName: Option(0, "nullable:string"),
       exception: Option(0, "nullable:json"),
       exceptionMessage: Option(0, "nullable:string"),
       exceptionDocURL: Option(0, "nullable:string"),
       exceptionStack: Option(0, "nullable:json"),
+      hasException: Option(0, "nullable:boolean"),
       frame: Option(0, "nullable:json"),
       helperResult: Option(0, "nullable:json"),
       input: Option(0, "nullable:string"),
       notes: Option(0, "nullable:string"),
       result: Option(0, "nullable:json"),
+      startTime: Option(0, "number"),
       timestamp: Option(0, "string"),
       topLevelAwaitRejected: Option(0, "nullable:boolean"),
     },
@@ -106,9 +104,9 @@ const webconsoleSpecPrototype = {
      * Start the given Web Console listeners.
      *
      * @see webconsoleFront LISTENERS
-     * @Arg array listeners
-     *        Array of listeners you want to start. See this.LISTENERS for
-     *        known listeners.
+     * @Arg array events
+     *        Array of events you want to start. See this.LISTENERS for
+     *        known events.
      */
     startListeners: {
       request: {
@@ -120,9 +118,9 @@ const webconsoleSpecPrototype = {
      * Stop the given Web Console listeners.
      *
      * @see webconsoleFront LISTENERS
-     * @Arg array listeners
-     *        Array of listeners you want to stop. See this.LISTENERS for
-     *        known listeners.
+     * @Arg array events
+     *        Array of events you want to stop. See this.LISTENERS for
+     *        known events.
      * @Arg function onResponse
      *        Function to invoke when the server response is received.
      */
@@ -149,27 +147,16 @@ const webconsoleSpecPrototype = {
       // response
       response: RetVal("console.cachedmessages"),
     },
-    evaluateJS: {
-      request: {
-        text: Option(0, "string"),
-        bindObjectActor: Option(0, "string"),
-        frameActor: Option(0, "string"),
-        url: Option(0, "string"),
-        selectedNodeActor: Option(0, "string"),
-        selectedObjectActor: Option(0, "string"),
-        mapped: Option(0, "nullable:json"),
-      },
-      response: RetVal("json"),
-    },
     evaluateJSAsync: {
       request: {
         text: Option(0, "string"),
-        bindObjectActor: Option(0, "string"),
         frameActor: Option(0, "string"),
         url: Option(0, "string"),
         selectedNodeActor: Option(0, "string"),
         selectedObjectActor: Option(0, "string"),
+        innerWindowID: Option(0, "number"),
         mapped: Option(0, "nullable:json"),
+        eager: Option(0, "nullable:boolean"),
       },
       response: RetVal("console.evaluatejsasync"),
     },
@@ -195,6 +182,7 @@ const webconsoleSpecPrototype = {
         frameActor: Arg(2, "nullable:string"),
         selectedNodeActor: Arg(3, "nullable:string"),
         authorizedEvaluations: Arg(4, "nullable:json"),
+        expressionVars: Arg(5, "nullable:json"),
       },
       response: RetVal("console.autocomplete"),
     },
@@ -250,6 +238,12 @@ const webconsoleSpecPrototype = {
     unblockRequest: {
       request: {
         filter: Arg(0, "json"),
+      },
+    },
+
+    setBlockedUrls: {
+      request: {
+        url: Arg(0, "json"),
       },
     },
   },

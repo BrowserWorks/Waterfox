@@ -18,12 +18,21 @@
 //         GCHashMap and GCHashSet use this method to trace their children.
 //
 //   static bool needsSweep(T* tp)
-//       - Return true if |*tp| is about to be finalized. Otherwise, update the
+//       - [DEPRECATED], use traceWeak instead.
+//         Return true if |*tp| is about to be finalized. Otherwise, update the
 //         edge for moving GC, and return false. Containers like GCHashMap and
 //         GCHashSet use this method to decide when to remove an entry: if this
 //         function returns true on a key/value/member/etc, its entry is dropped
 //         from the container. Specializing this method is the standard way to
 //         get custom weak behavior from a container type.
+//
+//   static bool traceWeak(T* tp)
+//       - Return false if |*tp| has been set to nullptr. Otherwise, update the
+//         edge for moving GC, and return true. Containers like GCHashMap and
+//         GCHashSet use this method to decide when to remove an entry: if this
+//         function returns false on a key/value/member/etc, its entry is
+//         dropped from the container. Specializing this method is the standard
+//         way to get custom weak behavior from a container type.
 //
 //   static bool isValid(const T& t)
 //       - Return false only if |t| is corrupt in some way. The built-in GC
@@ -31,7 +40,7 @@
 //         to always return true or even to omit this member entirely.
 //
 // The default GCPolicy<T> assumes that T has a default constructor and |trace|
-// and |needsSweep| methods, and forwards to them. GCPolicy has appropriate
+// and |traceWeak| methods, and forwards to them. GCPolicy has appropriate
 // specializations for pointers to GC things and pointer-like types like
 // JS::Heap<T> and mozilla::UniquePtr<T>.
 //
@@ -45,26 +54,12 @@
 #include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 
+#include <type_traits>
+
+#include "js/GCTypeMacros.h"  // JS_FOR_EACH_PUBLIC_GC_POINTER_TYPE
 #include "js/TraceKind.h"
 #include "js/TracingAPI.h"
 #include "js/TypeDecls.h"
-
-// Expand the given macro D for each public GC pointer.
-#define FOR_EACH_PUBLIC_GC_POINTER_TYPE(D) \
-  D(JS::Symbol*)                           \
-  D(JS::BigInt*)                           \
-  D(JSAtom*)                               \
-  D(JSFunction*)                           \
-  D(JSObject*)                             \
-  D(JSScript*)                             \
-  D(JSString*)
-
-// Expand the given macro D for each public tagged GC pointer type.
-#define FOR_EACH_PUBLIC_TAGGED_GC_POINTER_TYPE(D) \
-  D(JS::Value)                                    \
-  D(jsid)
-
-#define FOR_EACH_PUBLIC_AGGREGATE_GC_POINTER_TYPE(D) D(JSPropertyDescriptor)
 
 namespace JS {
 
@@ -72,7 +67,7 @@ namespace JS {
 // policy dispatches to the underlying struct for GC interactions.
 template <typename T>
 struct StructGCPolicy {
-  static_assert(!mozilla::IsPointer<T>::value,
+  static_assert(!std::is_pointer_v<T>,
                 "Pointer type not allowed for StructGCPolicy");
 
   static void trace(JSTracer* trc, T* tp, const char* name) { tp->trace(trc); }
@@ -80,6 +75,8 @@ struct StructGCPolicy {
   static void sweep(T* tp) { return tp->sweep(); }
 
   static bool needsSweep(T* tp) { return tp->needsSweep(); }
+
+  static bool traceWeak(JSTracer* trc, T* tp) { return tp->traceWeak(trc); }
 
   static bool isValid(const T& tp) { return true; }
 };
@@ -96,6 +93,7 @@ template <typename T>
 struct IgnoreGCPolicy {
   static void trace(JSTracer* trc, T* t, const char* name) {}
   static bool needsSweep(T* v) { return false; }
+  static bool traceWeak(JSTracer*, T* v) { return true; }
   static bool isValid(const T& v) { return true; }
 };
 template <>
@@ -105,13 +103,13 @@ struct GCPolicy<uint64_t> : public IgnoreGCPolicy<uint64_t> {};
 
 template <typename T>
 struct GCPointerPolicy {
-  static_assert(mozilla::IsPointer<T>::value,
+  static_assert(std::is_pointer_v<T>,
                 "Non-pointer type not allowed for GCPointerPolicy");
 
   static void trace(JSTracer* trc, T* vp, const char* name) {
-    if (*vp) {
-      js::UnsafeTraceManuallyBarrieredEdge(trc, vp, name);
-    }
+    // It's not safe to trace unbarriered pointers except as part of root
+    // marking.
+    UnsafeTraceRoot(trc, vp, name);
   }
   static bool needsSweep(T* vp) {
     if (*vp) {
@@ -119,6 +117,13 @@ struct GCPointerPolicy {
     }
     return false;
   }
+  static bool traceWeak(JSTracer* trc, T* vp) {
+    if (*vp) {
+      return js::TraceManuallyBarrieredWeakEdge(trc, vp, "traceWeak");
+    }
+    return true;
+  }
+  static bool isTenured(T v) { return !js::gc::IsInsideNursery(v); }
   static bool isValid(T v) { return js::gc::IsCellPointerValidOrNull(v); }
 };
 #define EXPAND_SPECIALIZE_GCPOLICY(Type)                   \
@@ -126,7 +131,7 @@ struct GCPointerPolicy {
   struct GCPolicy<Type> : public GCPointerPolicy<Type> {}; \
   template <>                                              \
   struct GCPolicy<Type const> : public GCPointerPolicy<Type const> {};
-FOR_EACH_PUBLIC_GC_POINTER_TYPE(EXPAND_SPECIALIZE_GCPOLICY)
+JS_FOR_EACH_PUBLIC_GC_POINTER_TYPE(EXPAND_SPECIALIZE_GCPOLICY)
 #undef EXPAND_SPECIALIZE_GCPOLICY
 
 template <typename T>
@@ -142,6 +147,13 @@ struct NonGCPointerPolicy {
     }
     return false;
   }
+  static bool traceWeak(JSTracer* trc, T* vp) {
+    if (*vp) {
+      return (*vp)->traceWeak(trc);
+    }
+    return true;
+  }
+
   static bool isValid(T v) { return true; }
 };
 
@@ -152,6 +164,12 @@ struct GCPolicy<JS::Heap<T>> {
   }
   static bool needsSweep(JS::Heap<T>* thingp) {
     return *thingp && js::gc::EdgeNeedsSweep(thingp);
+  }
+  static bool traceWeak(JSTracer* trc, JS::Heap<T>* thingp) {
+    if (*thingp) {
+      return js::TraceWeakEdge(trc, thingp, "traceWeak");
+    }
+    return true;
   }
 };
 
@@ -170,6 +188,12 @@ struct GCPolicy<mozilla::UniquePtr<T, D>> {
     }
     return false;
   }
+  static bool traceWeak(JSTracer* trc, mozilla::UniquePtr<T, D>* tp) {
+    if (tp->get()) {
+      return GCPolicy<T>::traceWeak(trc, tp->get());
+    }
+    return true;
+  }
   static bool isValid(const mozilla::UniquePtr<T, D>& t) {
     if (t.get()) {
       return GCPolicy<T>::isValid(*t.get());
@@ -177,6 +201,9 @@ struct GCPolicy<mozilla::UniquePtr<T, D>> {
     return true;
   }
 };
+
+template <>
+struct GCPolicy<mozilla::Nothing> : public IgnoreGCPolicy<mozilla::Nothing> {};
 
 // GCPolicy<Maybe<T>> forwards tracing/sweeping to GCPolicy<T*> if
 // when the Maybe<T> is full.
@@ -192,6 +219,12 @@ struct GCPolicy<mozilla::Maybe<T>> {
       return GCPolicy<T>::needsSweep(tp->ptr());
     }
     return false;
+  }
+  static bool traceWeak(JSTracer* trc, mozilla::Maybe<T>* tp) {
+    if (tp->isSome()) {
+      return GCPolicy<T>::traceWeak(trc, tp->ptr());
+    }
+    return true;
   }
   static bool isValid(const mozilla::Maybe<T>& t) {
     if (t.isSome()) {

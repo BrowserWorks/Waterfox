@@ -5,15 +5,19 @@ from __future__ import absolute_import
 
 import json
 import os
+import re
 
+from six.moves.urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode, unquote
+
+from logger.logger import RaptorLogger
 from manifestparser import TestManifest
-from mozlog import get_proxy_logger
-from utils import transform_platform
+from utils import bool_from_str, transform_platform, transform_subtest
+from constants.raptor_tests_constants import YOUTUBE_PLAYBACK_MEASURE
 
 here = os.path.abspath(os.path.dirname(__file__))
 raptor_ini = os.path.join(here, 'raptor.ini')
 tests_dir = os.path.join(here, 'tests')
-LOG = get_proxy_logger(component="raptor-manifest")
+LOG = RaptorLogger(component='raptor-manifest')
 
 LIVE_SITE_TIMEOUT_MULTIPLIER = 1.2
 
@@ -35,7 +39,21 @@ playback_settings = [
 ]
 
 whitelist_live_site_tests = [
+    "booking-sf",
+    "discord",
+    "expedia",
+    "fashionbeans",
+    "google-accounts",
+    "imdb-firefox",
+    "medium-article",
+    "nytimes",
+    "people-article",
     "raptor-youtube-playback",
+    "reddit-thread",
+    "rumble-fox",
+    "stackoverflow-question",
+    "urbandictionary-define",
+    "wikia-marvel",
 ]
 
 
@@ -93,7 +111,7 @@ def validate_test_ini(test_details):
             if setting == "page-cycles" and test_details.get('browser_cycles') is not None:
                 continue
             valid_settings = False
-            LOG.error("ERROR: setting '%s' is required but not found in %s"
+            LOG.error("setting '%s' is required but not found in %s"
                       % (setting, test_details['manifest']))
 
     test_details.setdefault("page_timeout", 30000)
@@ -103,7 +121,7 @@ def validate_test_ini(test_details):
         for setting in playback_settings:
             if test_details.get(setting) is None:
                 valid_settings = False
-                LOG.error("ERROR: setting '%s' is required but not found in %s"
+                LOG.error("setting '%s' is required but not found in %s"
                           % (setting, test_details['manifest']))
 
     # if 'alert-on' is specified, we need to make sure that the value given is valid
@@ -112,17 +130,68 @@ def validate_test_ini(test_details):
 
         # support with or without spaces, i.e. 'measure = fcp, loadtime' or '= fcp,loadtime'
         # convert to a list; and remove any spaces
+        # this can also have regexes inside
         test_details['alert_on'] = [_item.strip() for _item in test_details['alert_on'].split(',')]
+
+        # this variable will store all the concrete values for alert_on elements
+        # that have a match in "measure" list
+        valid_alerts = []
+
+        # if test is raptor-youtube-playback and measure is empty, use all the tests
+        if test_details.get('measure') is None \
+                and 'youtube-playback' in test_details.get('name', ''):
+            test_details['measure'] = YOUTUBE_PLAYBACK_MEASURE
+
+        # convert "measure" to string, so we can use it inside a regex
+        measure_as_string = ' '.join(test_details['measure'])
 
         # now make sure each alert_on value provided is valid
         for alert_on_value in test_details['alert_on']:
-            if alert_on_value not in test_details['measure']:
-                LOG.error("ERROR: The 'alert_on' value of '%s' is not valid because "
+            # replace the '*' with a valid regex pattern
+            alert_on_value_pattern = alert_on_value.replace('*', '[a-zA-Z0-9.@_%]*')
+            # store all elements that have been found in "measure_as_string"
+            matches = re.findall(alert_on_value_pattern, measure_as_string)
+
+            if len(matches) == 0:
+                LOG.error("The 'alert_on' value of '%s' is not valid because "
                           "it doesn't exist in the 'measure' test setting!"
                           % alert_on_value)
                 valid_settings = False
+            else:
+                # add the matched elements to valid_alerts
+                valid_alerts.extend(matches)
+
+        # replace old alert_on values with valid elements (no more regexes inside)
+        # and also remove duplicates if any, by converting valid_alerts to a 'set' first
+        test_details['alert_on'] = sorted(set(valid_alerts))
 
     return valid_settings
+
+
+def add_test_url_params(url, extra_params):
+    # add extra parameters to the test_url query string
+    # the values that already exist are re-written
+
+    # urlsplit returns a result as a tuple like (scheme, netloc, path, query, fragment)
+    parsed_url = urlsplit(url)
+
+    parsed_query_params = parse_qs(parsed_url.query)
+    parsed_extra_params = parse_qs(extra_params)
+
+    for name, value in parsed_extra_params.items():
+        # overwrite the old value
+        parsed_query_params[name] = value
+
+    final_query_string = unquote(urlencode(parsed_query_params, doseq=True))
+
+    # reconstruct test_url with the changed query string
+    return urlunsplit((
+        parsed_url.scheme,
+        parsed_url.netloc,
+        parsed_url.path,
+        final_query_string,
+        parsed_url.fragment
+    ))
 
 
 def write_test_settings_json(args, test_details, oskey):
@@ -161,21 +230,19 @@ def write_test_settings_json(args, test_details, oskey):
 
     test_settings['raptor-options']['unit'] = test_details.get("unit", "ms")
 
-    test_settings['raptor-options']['lower_is_better'] = bool_from_str(
-        test_details.get("lower_is_better", "true"))
+    test_settings['raptor-options']['lower_is_better'] = test_details.get("lower_is_better", True)
 
     # support optional subtest unit/lower_is_better fields
     val = test_details.get('subtest_unit', test_settings['raptor-options']['unit'])
     test_settings['raptor-options']['subtest_unit'] = val
-    subtest_lower_is_better = test_details.get('subtest_lower_is_better', None)
+    subtest_lower_is_better = test_details.get('subtest_lower_is_better')
 
     if subtest_lower_is_better is None:
         # default to main test values if not set
         test_settings['raptor-options']['subtest_lower_is_better'] = (
             test_settings['raptor-options']['lower_is_better'])
     else:
-        test_settings['raptor-options']['subtest_lower_is_better'] = bool_from_str(
-            subtest_lower_is_better)
+        test_settings['raptor-options']['subtest_lower_is_better'] = subtest_lower_is_better
 
     if test_details.get("alert_change_type", None) is not None:
         test_settings['raptor-options']['alert_change_type'] = test_details['alert_change_type']
@@ -200,8 +267,8 @@ def write_test_settings_json(args, test_details, oskey):
 
         test_settings['raptor-options'].update({
             'gecko_profile': True,
-            'gecko_profile_entries': int(test_details.get('gecko_profile_entries')),
-            'gecko_profile_interval': int(test_details.get('gecko_profile_interval')),
+            'gecko_profile_entries': int(test_details.get('gecko_profile_entries', 1000000)),
+            'gecko_profile_interval': int(test_details.get('gecko_profile_interval', 1)),
             'gecko_profile_threads': ','.join(set(threads)),
         })
 
@@ -211,8 +278,18 @@ def write_test_settings_json(args, test_details, oskey):
 
     if test_details['type'] == "scenario":
         test_settings['raptor-options']['scenario_time'] = test_details['scenario_time']
+        if 'background_test' in test_details:
+            test_settings['raptor-options']['background_test'] = \
+                bool(test_details['background_test'])
+        else:
+            test_settings['raptor-options']['background_test'] = False
 
-    settings_file = os.path.join(tests_dir, test_details['name'] + '.json')
+    jsons_dir = os.path.join(tests_dir, 'json')
+
+    if not os.path.exists(jsons_dir):
+        os.mkdir(os.path.join(tests_dir, 'json'))
+
+    settings_file = os.path.join(jsons_dir, test_details['name'] + '.json')
     try:
         with open(settings_file, 'w') as out_file:
             json.dump(test_settings, out_file, indent=4, ensure_ascii=False)
@@ -264,17 +341,38 @@ def get_raptor_test_list(args, oskey):
                 # subtest comes from matching test ini file name, so add it
                 tests_to_run.append(next_test)
 
+    # enable live sites if requested with --live-sites
+    if args.live_sites:
+        for next_test in tests_to_run:
+            # set use_live_sites to `true` and disable mitmproxy playback
+            # immediately so we don't follow playback paths below
+            next_test['use_live_sites'] = "true"
+            next_test['playback'] = None
+
     # go through each test and set the page-cycles and page-timeout, and some config flags
     # the page-cycles value in the INI can be overriden when debug-mode enabled, when
     # gecko-profiling enabled, or when --page-cycles cmd line arg was used (that overrides all)
     for next_test in tests_to_run:
         LOG.info("configuring settings for test %s" % next_test['name'])
         max_page_cycles = next_test.get('page_cycles', 1)
+        max_browser_cycles = next_test.get('browser_cycles', 1)
+
+        # If using playback, the playback recording info may need to be transformed.
+        # This transformation needs to happen before the test name is changed
+        # below (for cold tests for instance)
+        if next_test.get('playback') is not None:
+            next_test['playback_pageset_manifest'] = \
+                transform_subtest(next_test['playback_pageset_manifest'],
+                                  next_test['name'])
+            next_test['playback_recordings'] = \
+                transform_subtest(next_test['playback_recordings'],
+                                  next_test['name'])
 
         if args.gecko_profile is True:
             next_test['gecko_profile'] = True
             LOG.info('gecko-profiling enabled')
             max_page_cycles = 3
+            max_browser_cycles = 3
 
             if 'gecko_profile_entries' in args and args.gecko_profile_entries is not None:
                 next_test['gecko_profile_entries'] = str(args.gecko_profile_entries)
@@ -301,25 +399,45 @@ def get_raptor_test_list(args, oskey):
             LOG.info("debug-mode enabled")
             max_page_cycles = 2
 
+        # if --page-cycles was provided on the command line, use that instead of INI
+        # if just provided in the INI use that but cap at 3 if gecko-profiling is enabled
         if args.page_cycles is not None:
             next_test['page_cycles'] = args.page_cycles
-            LOG.info("set page-cycles to %d as specified on cmd line" % args.page_cycles)
+            LOG.info("setting page-cycles to %d as specified on cmd line" % args.page_cycles)
         else:
             if int(next_test.get('page_cycles', 1)) > max_page_cycles:
                 next_test['page_cycles'] = max_page_cycles
-                LOG.info("page-cycles set to %d" % next_test['page_cycles'])
+                LOG.info("setting page-cycles to %d because gecko-profling is enabled"
+                         % next_test['page_cycles'])
+
+        # if --browser-cycles was provided on the command line, use that instead of INI
+        # if just provided in the INI use that but cap at 3 if gecko-profiling is enabled
+        if args.browser_cycles is not None:
+            next_test['browser_cycles'] = args.browser_cycles
+            LOG.info("setting browser-cycles to %d as specified on cmd line" % args.browser_cycles)
+        else:
+            if int(next_test.get('browser_cycles', 1)) > max_browser_cycles:
+                next_test['browser_cycles'] = max_browser_cycles
+                LOG.info("setting browser-cycles to %d because gecko-profilng is enabled"
+                         % next_test['browser_cycles'])
 
         # if --page-timeout was provided on the command line, use that instead of INI
         if args.page_timeout is not None:
             LOG.info("setting page-timeout to %d as specified on cmd line" % args.page_timeout)
             next_test['page_timeout'] = args.page_timeout
 
-        # if --browser-cycles was provided on the command line, use that instead of INI
-        if args.browser_cycles is not None:
-            LOG.info("setting browser-cycles to %d as specified on cmd line" % args.browser_cycles)
-            next_test['browser_cycles'] = args.browser_cycles
+        _running_cold = False
 
-        if next_test.get("cold", "false") == "true":
+        # check command line to see if we set cold page load from command line
+        if args.cold or next_test.get("cold") == "true":
+            # for raptor-webext jobs cold page-load is determined by the 'cold' key
+            # in test manifest INI
+            _running_cold = True
+        else:
+            # if it's a warm load test ignore browser_cycles if set
+            next_test['browser_cycles'] = 1
+
+        if _running_cold:
             # when running in cold mode, set browser-cycles to the page-cycles value; as we want
             # the browser to restart between page-cycles; and set page-cycles to 1 as we only
             # want 1 single page-load for every browser-cycle
@@ -337,16 +455,34 @@ def get_raptor_test_list(args, oskey):
         # either warm or cold-mode, initialize the starting current 'browser-cycle'
         next_test['browser_cycle'] = 1
 
+        # if --test-url-params was provided on the command line, add the params to the test_url
+        # provided in the INI
+        if args.test_url_params is not None:
+            initial_test_url = next_test['test_url']
+            next_test['test_url'] = add_test_url_params(initial_test_url, args.test_url_params)
+            LOG.info("adding extra test_url params (%s) as specified on cmd line "
+                     "to the current test_url (%s), resulting: %s" %
+                     (args.test_url_params, initial_test_url, next_test['test_url']))
+
         if next_test.get('use_live_sites', "false") == "true":
             # when using live sites we want to turn off playback
             LOG.info("using live sites so turning playback off!")
             next_test['playback'] = None
-            LOG.info("using live sites so appending '-live' to the test name")
-            next_test['name'] = next_test['name'] + "-live"
+            # Only for raptor-youtube-playback tests until they are removed
+            # in favor of the browsertime variant
+            if "raptor-youtube-playback" in next_test['name']:
+                next_test['name'] = next_test['name'] + "-live"
             # allow a slightly higher page timeout due to remote page loads
             next_test['page_timeout'] = int(
                 next_test['page_timeout']) * LIVE_SITE_TIMEOUT_MULTIPLIER
             LOG.info("using live sites so using page timeout of %dms" % next_test['page_timeout'])
+
+        # browsertime doesn't use the 'measure' test ini setting; however just for the sake
+        # of supporting both webext and browsertime, just provide a dummy 'measure' setting
+        # here to prevent having to check in multiple places; it has no effect on what
+        # browsertime actually measures; remove this when eventually we remove webext support
+        if args.browsertime and next_test.get('measure') is None:
+            next_test['measure'] = "fnbpaint, fcp, dcf, loadtime"
 
         # convert 'measure =' test INI line to list
         if next_test.get('measure') is not None:
@@ -364,6 +500,13 @@ def get_raptor_test_list(args, oskey):
                 # remove the 'hero =' line since no longer measuring hero
                 del next_test['hero']
 
+        if next_test.get('lower_is_better') is not None:
+            next_test['lower_is_better'] = bool_from_str(next_test.get('lower_is_better'))
+        if next_test.get('subtest_lower_is_better') is not None:
+            next_test['subtest_lower_is_better'] = bool_from_str(
+                next_test.get('subtest_lower_is_better')
+            )
+
     # write out .json test setting files for the control server to read and send to web ext
     if len(tests_to_run) != 0:
         for test in tests_to_run:
@@ -373,16 +516,5 @@ def get_raptor_test_list(args, oskey):
                 # test doesn't have valid settings, remove it from available list
                 LOG.info("test %s is not valid due to missing settings" % test['name'])
                 tests_to_run.remove(test)
-    else:
-        LOG.critical("abort: specified test name doesn't exist")
 
     return tests_to_run
-
-
-def bool_from_str(boolean_string):
-    if boolean_string == 'true':
-        return True
-    elif boolean_string == 'false':
-        return False
-    else:
-        raise ValueError("Expected either 'true' or 'false'")

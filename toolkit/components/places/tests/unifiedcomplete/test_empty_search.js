@@ -25,12 +25,12 @@ add_task(async function test_javascript_match() {
     { uri: uri7, title: "title" },
   ]);
 
-  await addBookmark({ uri: uri2, title: "title" });
-  await addBookmark({ uri: uri4, title: "title" });
-  await addBookmark({ uri: uri5, title: "title" });
-  await addBookmark({ uri: uri6, title: "title" });
+  await PlacesTestUtils.addBookmarkWithDetails({ uri: uri2, title: "title" });
+  await PlacesTestUtils.addBookmarkWithDetails({ uri: uri4, title: "title" });
+  await PlacesTestUtils.addBookmarkWithDetails({ uri: uri5, title: "title" });
+  await PlacesTestUtils.addBookmarkWithDetails({ uri: uri6, title: "title" });
 
-  addOpenPages(uri7, 1);
+  await addOpenPages(uri7, 1);
 
   // Now remove page 6 from history, so it is an unvisited bookmark.
   await PlacesUtils.history.remove(uri6);

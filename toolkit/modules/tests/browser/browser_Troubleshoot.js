@@ -119,6 +119,10 @@ const SNAPSHOT_SCHEMA = {
           required: true,
           type: "string",
         },
+        distributionID: {
+          required: true,
+          type: "string",
+        },
         userAgent: {
           required: true,
           type: "string",
@@ -285,6 +289,16 @@ const SNAPSHOT_SCHEMA = {
     lockedPreferences: {
       required: true,
       type: "object",
+      properties: {
+        "fission.autostart": {
+          required: false,
+          type: "boolean",
+        },
+        "dom.ipc.processCount.webIsolated": {
+          required: false,
+          type: "number",
+        },
+      },
     },
     graphics: {
       required: true,
@@ -333,7 +347,7 @@ const SNAPSHOT_SCHEMA = {
           type: "string",
         },
         adapterRAM: {
-          type: "string",
+          type: "number",
         },
         adapterDrivers: {
           type: "string",
@@ -360,7 +374,7 @@ const SNAPSHOT_SCHEMA = {
           type: "string",
         },
         adapterRAM2: {
-          type: "string",
+          type: "number",
         },
         adapterDrivers2: {
           type: "string",
@@ -476,6 +490,9 @@ const SNAPSHOT_SCHEMA = {
           type: "number",
         },
         windowProtocol: {
+          type: "string",
+        },
+        desktopEnvironment: {
           type: "string",
         },
       },
@@ -625,15 +642,6 @@ const SNAPSHOT_SCHEMA = {
               },
             },
           },
-        },
-      },
-    },
-    javaScript: {
-      required: true,
-      type: "object",
-      properties: {
-        incrementalGCEnabled: {
-          type: "boolean",
         },
       },
     },
@@ -816,6 +824,28 @@ const SNAPSHOT_SCHEMA = {
         },
       },
     },
+    startupCache: {
+      required: false,
+      type: "object",
+      properties: {
+        DiskCachePath: {
+          required: true,
+          type: "string",
+        },
+        IgnoreDiskCache: {
+          required: true,
+          type: "boolean",
+        },
+        FoundDiskCacheOnInit: {
+          required: true,
+          type: "boolean",
+        },
+        WroteToDiskCache: {
+          required: true,
+          type: "boolean",
+        },
+      },
+    },
     intl: {
       required: true,
       type: "object",
@@ -859,6 +889,19 @@ const SNAPSHOT_SCHEMA = {
               type: "array",
             },
           },
+        },
+      },
+    },
+    remoteAgent: {
+      type: "object",
+      properties: {
+        listening: {
+          required: true,
+          type: "boolean",
+        },
+        url: {
+          required: true,
+          type: "string",
         },
       },
     },

@@ -8,7 +8,7 @@ import { setupCommands, clientCommands } from "../commands";
 
 function makeThreadCLient(resp) {
   // Coerce this to any to avoid supplying the additional members needed in a
-  // thread client.
+  // thread front.
   return ({
     pauseGrip: () => ({
       getPrototypeAndProperties: async () => resp,
@@ -18,9 +18,10 @@ function makeThreadCLient(resp) {
 
 function makeDependencies() {
   return {
-    debuggerClient: (null: any),
+    devToolsClient: (null: any),
     supportsWasm: true,
-    tabTarget: (null: any),
+    currentTarget: (null: any),
+    targetList: (null: any),
   };
 }
 
@@ -49,19 +50,19 @@ describe("firefox commands", () => {
   describe("getProperties", () => {
     it("empty response", async () => {
       const { getProperties } = clientCommands;
-      const threadClient = makeThreadCLient({
+      const threadFront = makeThreadCLient({
         ownProperties: {},
         safeGetterValues: {},
       });
 
-      setupCommands({ ...makeDependencies(), threadClient });
+      setupCommands({ ...makeDependencies(), threadFront });
       const props = await getProperties("", makeGrip());
       expect(props).toMatchSnapshot();
     });
 
     it("simple properties", async () => {
       const { getProperties } = clientCommands;
-      const threadClient = makeThreadCLient({
+      const threadFront = makeThreadCLient({
         ownProperties: {
           obj: { value: "obj" },
           foo: { value: "foo" },
@@ -69,14 +70,14 @@ describe("firefox commands", () => {
         safeGetterValues: {},
       });
 
-      setupCommands({ ...makeDependencies(), threadClient });
+      setupCommands({ ...makeDependencies(), threadFront });
       const props = await getProperties("", makeGrip());
       expect(props).toMatchSnapshot();
     });
 
     it("getter values", async () => {
       const { getProperties } = clientCommands;
-      const threadClient = makeThreadCLient({
+      const threadFront = makeThreadCLient({
         ownProperties: {
           obj: { value: "obj" },
           foo: { value: "foo" },
@@ -86,14 +87,14 @@ describe("firefox commands", () => {
         },
       });
 
-      setupCommands({ ...makeDependencies(), threadClient });
+      setupCommands({ ...makeDependencies(), threadFront });
       const props = await getProperties("", makeGrip());
       expect(props).toMatchSnapshot();
     });
 
     it("new getter values", async () => {
       const { getProperties } = clientCommands;
-      const threadClient = makeThreadCLient({
+      const threadFront = makeThreadCLient({
         ownProperties: {
           foo: { value: "foo" },
         },
@@ -102,7 +103,7 @@ describe("firefox commands", () => {
         },
       });
 
-      setupCommands({ ...makeDependencies(), threadClient });
+      setupCommands({ ...makeDependencies(), threadFront });
       const props = await getProperties("", makeGrip());
       expect(props).toMatchSnapshot();
     });

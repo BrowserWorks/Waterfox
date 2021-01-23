@@ -129,8 +129,8 @@ Greenkeeper
 headlessly
 natively
 outputed
-threadClient
-tabTarget
+threadFront
+currentTarget
 bpClients
 originalToGeneratedId
 stopSourceMapWorker

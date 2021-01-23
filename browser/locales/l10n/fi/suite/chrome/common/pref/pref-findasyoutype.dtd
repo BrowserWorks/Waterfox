@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Pikahaut">
+<!ENTITY findAsYouTypeBehavior.label "Pikahaut">
+<!ENTITY findAsYouTypeTip.label "Vinkki: pikahaku käynnistyy painettaessa /, jolloin etsitään tekstiä tai ', jolloin etsitään linkkejä.">
+<!ENTITY findAsYouTypeTimeout.label "Lopeta haku muutaman sekunnin tauon jälkeen">
+<!ENTITY findAsYouTypeTimeout.accesskey "o">
+<!ENTITY findAsYouTypeSound.label "Anna äänimerkki, jos kirjoitettua tekstiä ei löydy">
+<!ENTITY findAsYouTypeSound.accesskey "ä">
+<!ENTITY findAsYouTypeEnableAuto.label "Etsi automaattisesti verkkosivulle kirjoitettaessa:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "E">
+<!ENTITY findAsYouTypeAutoText.label "Mitä tahansa tekstiä">
+<!ENTITY findAsYouTypeAutoText.accesskey "M">
+<!ENTITY findAsYouTypeAutoLinks.label "Vain linkkejä">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "V">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Näytä hakupalkki pikahaun aikana">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "N">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Huom. Et voi etsiä kansainvälistä tekstiä pikahaulla, jos et käytä hakupalkkia.">

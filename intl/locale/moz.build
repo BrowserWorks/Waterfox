@@ -12,7 +12,7 @@ if toolkit == 'windows':
     DIRS += ['windows']
 elif toolkit == 'cocoa':
     DIRS += ['mac']
-elif 'gtk' in toolkit:
+elif toolkit == 'gtk':
     DIRS += ['gtk']
 elif toolkit == 'android':
     DIRS += ['android']
@@ -35,7 +35,9 @@ EXPORTS += [
 EXPORTS.mozilla.intl += [
     'LocaleService.h',
     'MozLocale.h',
+    'MozLocaleBindings.h',
     'OSPreferences.h',
+    'Quotes.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -47,6 +49,7 @@ UNIFIED_SOURCES += [
     'nsLanguageAtomService.cpp',
     'nsUConvPropertySearch.cpp',
     'OSPreferences.cpp',
+    'Quotes.cpp',
 ]
 
 EXTRA_JS_MODULES += [
@@ -74,10 +77,22 @@ prefixes = (
 for prefix in prefixes:
     input_file = prefix + '.properties'
     header = prefix + '.properties.h'
-    GENERATED_FILES += [header]
-    props = GENERATED_FILES[header]
-    props.script = 'props2arrays.py'
-    props.inputs = [input_file]
+    GeneratedFile(header, script='props2arrays.py', inputs=[input_file])
 
 if CONFIG['ENABLE_TESTS']:
     DIRS += ['tests/gtest']
+
+if CONFIG['COMPILE_ENVIRONMENT']:
+    GeneratedFile('fluent_langneg_ffi_generated.h',
+                  script='/build/RunCbindgen.py',
+                  entry_point='generate',
+                  inputs=['/intl/locale/rust/fluent-langneg-ffi'])
+    GeneratedFile('unic_langid_ffi_generated.h',
+                  script='/build/RunCbindgen.py',
+                  entry_point='generate',
+                  inputs=['/intl/locale/rust/unic-langid-ffi'])
+
+    EXPORTS.mozilla.intl += [
+        '!fluent_langneg_ffi_generated.h',
+        '!unic_langid_ffi_generated.h',
+    ]

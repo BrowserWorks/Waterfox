@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "高级账户设置">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP 服务器目录：">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "仅显示已订阅的文件夹">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "服务器支持包含子文件夹和消息的文件夹">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "最大服务器连接缓冲数">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "此首选项指定您的 IMAP 服务器的名字空间">
+<!ENTITY personalNamespace.label "个人名字空间：">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "公共 （共享）：">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "其他用户：">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "允许服务器忽略这些名字空间">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "把从服务器上下载下来的此账户的新邮件存放到下列文件夹：">
+<!ENTITY accountInbox.label "此账户的收件箱">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "不同账户的收件箱">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "收取新邮件时包括此服务器">
+<!ENTITY deferGetNewMail.accesskey "I">

@@ -14,6 +14,7 @@
 #include "js/GCVector.h"
 #include "js/HeapAPI.h"
 #include "js/Wrapper.h"
+#include "vm/BytecodeUtil.h"
 #include "vm/Printer.h"
 #include "vm/Shape.h"
 #include "vm/StringType.h"
@@ -83,11 +84,13 @@ bool SetImmutablePrototype(JSContext* cx, JS::HandleObject obj,
  */
 class JSObject : public js::gc::Cell {
  protected:
-  js::GCPtrObjectGroup group_;
+  using HeaderWithObjectGroup =
+      js::gc::CellHeaderWithTenuredGCPointer<js::ObjectGroup>;
+  HeaderWithObjectGroup headerAndGroup_;
   js::GCPtrShape shape_;
 
  private:
-  friend class js::Shape;
+  friend class js::DictionaryShapeLink;
   friend class js::GCMarker;
   friend class js::NewObjectCache;
   friend class js::Nursery;
@@ -100,12 +103,13 @@ class JSObject : public js::gc::Cell {
   // Make a new group to use for a singleton object.
   static js::ObjectGroup* makeLazyGroup(JSContext* cx, js::HandleObject obj);
 
+  void setGroupRaw(js::ObjectGroup* group) { headerAndGroup_.setPtr(group); }
+
  public:
   bool isNative() const { return getClass()->isNative(); }
 
-  const js::Class* getClass() const { return group_->clasp(); }
-  const JSClass* getJSClass() const { return Jsvalify(getClass()); }
-  bool hasClass(const js::Class* c) const { return getClass() == c; }
+  const JSClass* getClass() const { return groupRaw()->clasp(); }
+  bool hasClass(const JSClass* c) const { return getClass() == c; }
 
   js::LookupPropertyOp getOpsLookupProperty() const {
     return getClass()->getOpsLookupProperty();
@@ -140,23 +144,23 @@ class JSObject : public js::gc::Cell {
     return groupRaw();
   }
 
-  js::ObjectGroup* groupRaw() const { return group_; }
+  js::ObjectGroup* groupRaw() const { return headerAndGroup_.ptr(); }
 
-  void initGroup(js::ObjectGroup* group) { group_.init(group); }
+  void initGroup(js::ObjectGroup* group) { headerAndGroup_.initPtr(group); }
 
   /*
    * Whether this is the only object which has its specified group. This
    * object will have its group constructed lazily as needed by analysis.
    */
-  bool isSingleton() const { return group_->singleton(); }
+  bool isSingleton() const { return groupRaw()->singleton(); }
 
   /*
    * Whether the object's group has not been constructed yet. If an object
    * might have a lazy group, use getGroup() below, otherwise group().
    */
-  bool hasLazyGroup() const { return group_->lazy(); }
+  bool hasLazyGroup() const { return groupRaw()->lazy(); }
 
-  JS::Compartment* compartment() const { return group_->compartment(); }
+  JS::Compartment* compartment() const { return groupRaw()->compartment(); }
   JS::Compartment* maybeCompartment() const { return compartment(); }
 
   void initShape(js::Shape* shape) {
@@ -184,8 +188,8 @@ class JSObject : public js::gc::Cell {
                        GenerateShape generateShape = GENERATE_NONE);
   inline bool hasAllFlags(js::BaseShape::Flag flags) const;
 
-  // An object is a delegate if it is on another object's prototype or
-  // environment chain. Optimization heuristics will make use of this flag.
+  // An object is a delegate if it is (or was) another object's prototype.
+  // Optimization heuristics will make use of this flag.
   // See: ReshapeForProtoMutation, ReshapeForShadowedProp
   inline bool isDelegate() const;
   static bool setDelegate(JSContext* cx, JS::HandleObject obj) {
@@ -266,17 +270,22 @@ class JSObject : public js::gc::Cell {
   void fixupAfterMovingGC();
 
   static const JS::TraceKind TraceKind = JS::TraceKind::Object;
-  static const size_t MaxTagBits = 3;
+  const js::gc::CellHeader& cellHeader() const { return headerAndGroup_; }
 
-  MOZ_ALWAYS_INLINE JS::Zone* zone() const { return group_->zone(); }
+  MOZ_ALWAYS_INLINE JS::Zone* zone() const {
+    MOZ_ASSERT_IF(!isTenured(), nurseryZone() == groupRaw()->zone());
+    return groupRaw()->zone();
+  }
   MOZ_ALWAYS_INLINE JS::shadow::Zone* shadowZone() const {
-    return JS::shadow::Zone::asShadowZone(zone());
+    return JS::shadow::Zone::from(zone());
   }
   MOZ_ALWAYS_INLINE JS::Zone* zoneFromAnyThread() const {
-    return group_->zoneFromAnyThread();
+    MOZ_ASSERT_IF(!isTenured(), nurseryZoneFromAnyThread() ==
+                                    groupRaw()->zoneFromAnyThread());
+    return groupRaw()->zoneFromAnyThread();
   }
   MOZ_ALWAYS_INLINE JS::shadow::Zone* shadowZoneFromAnyThread() const {
-    return JS::shadow::Zone::asShadowZone(zoneFromAnyThread());
+    return JS::shadow::Zone::from(zoneFromAnyThread());
   }
   static MOZ_ALWAYS_INLINE void readBarrier(JSObject* obj);
   static MOZ_ALWAYS_INLINE void writeBarrierPre(JSObject* obj);
@@ -310,11 +319,6 @@ class JSObject : public js::gc::Cell {
 
   static inline js::ObjectGroup* getGroup(JSContext* cx, js::HandleObject obj);
 
-  const js::GCPtrObjectGroup& groupFromGC() const {
-    /* Direct field access for use by GC. */
-    return group_;
-  }
-
 #ifdef DEBUG
   static void debugCheckNewObject(js::ObjectGroup* group, js::Shape* shape,
                                   js::gc::AllocKind allocKind,
@@ -345,7 +349,7 @@ class JSObject : public js::gc::Cell {
    *    the proto.
    */
 
-  js::TaggedProto taggedProto() const { return group_->proto(); }
+  js::TaggedProto taggedProto() const { return groupRaw()->proto(); }
 
   bool uninlinedIsProxy() const;
 
@@ -358,7 +362,7 @@ class JSObject : public js::gc::Cell {
   // (albeit perhaps mutable) [[Prototype]].  For such objects the
   // [[Prototype]] is just a value returned when needed for accesses, or
   // modified in response to requests.  These objects store the
-  // [[Prototype]] directly within |obj->group_|.
+  // [[Prototype]] directly within |obj->groupRaw()|.
   bool hasStaticPrototype() const { return !hasDynamicPrototype(); }
 
   // The remaining proxies have a [[Prototype]] requiring dynamic computation
@@ -394,7 +398,7 @@ class JSObject : public js::gc::Cell {
    */
   inline bool isNewGroupUnknown() const;
   static bool setNewGroupUnknown(JSContext* cx, js::ObjectGroupRealm& realm,
-                                 const js::Class* clasp, JS::HandleObject obj);
+                                 const JSClass* clasp, JS::HandleObject obj);
 
   /* Set a new prototype for an object with a singleton type. */
   static bool splicePrototype(JSContext* cx, js::HandleObject obj,
@@ -432,14 +436,14 @@ class JSObject : public js::gc::Cell {
 
   JS::Realm* nonCCWRealm() const {
     MOZ_ASSERT(!js::UninlinedIsCrossCompartmentWrapper(this));
-    return group_->realm();
+    return groupRaw()->realm();
   }
   bool hasSameRealmAs(JSContext* cx) const;
 
   // Returns the object's realm even if the object is a CCW (be careful, in
   // this case the realm is not very meaningful because wrappers are shared by
   // all realms in the compartment).
-  JS::Realm* maybeCCWRealm() const { return group_->realm(); }
+  JS::Realm* maybeCCWRealm() const { return groupRaw()->realm(); }
 
   /*
    * ES5 meta-object properties and operations.
@@ -462,7 +466,7 @@ class JSObject : public js::gc::Cell {
   MOZ_ALWAYS_INLINE JSNative callHook() const;
   MOZ_ALWAYS_INLINE JSNative constructHook() const;
 
-  MOZ_ALWAYS_INLINE void finalize(js::FreeOp* fop);
+  MOZ_ALWAYS_INLINE void finalize(JSFreeOp* fop);
 
  public:
   static bool nonNativeSetProperty(JSContext* cx, js::HandleObject obj,
@@ -577,7 +581,10 @@ class JSObject : public js::gc::Cell {
   friend class js::jit::MacroAssembler;
   friend class js::jit::CacheIRCompiler;
 
-  static constexpr size_t offsetOfGroup() { return offsetof(JSObject, group_); }
+  static constexpr size_t offsetOfGroup() {
+    return offsetof(JSObject, headerAndGroup_) +
+           HeaderWithObjectGroup::offsetOfPtr();
+  }
   static constexpr size_t offsetOfShape() { return offsetof(JSObject, shape_); }
 
  private:
@@ -614,7 +621,7 @@ MOZ_ALWAYS_INLINE JS::Handle<U*> js::HandleBase<JSObject*, Wrapper>::as()
 
 template <class T>
 bool JSObject::canUnwrapAs() {
-  static_assert(!std::is_convertible<T*, js::Wrapper*>::value,
+  static_assert(!std::is_convertible_v<T*, js::Wrapper*>,
                 "T can't be a Wrapper type; this function discards wrappers");
 
   if (is<T>()) {
@@ -626,7 +633,7 @@ bool JSObject::canUnwrapAs() {
 
 template <class T>
 T& JSObject::unwrapAs() {
-  static_assert(!std::is_convertible<T*, js::Wrapper*>::value,
+  static_assert(!std::is_convertible_v<T*, js::Wrapper*>,
                 "T can't be a Wrapper type; this function discards wrappers");
 
   if (is<T>()) {
@@ -643,7 +650,7 @@ T& JSObject::unwrapAs() {
 
 template <class T>
 T* JSObject::maybeUnwrapAs() {
-  static_assert(!std::is_convertible<T*, js::Wrapper*>::value,
+  static_assert(!std::is_convertible_v<T*, js::Wrapper*>,
                 "T can't be a Wrapper type; this function discards wrappers");
 
   if (is<T>()) {
@@ -664,7 +671,7 @@ T* JSObject::maybeUnwrapAs() {
 
 template <class T>
 T* JSObject::maybeUnwrapIf() {
-  static_assert(!std::is_convertible<T*, js::Wrapper*>::value,
+  static_assert(!std::is_convertible_v<T*, js::Wrapper*>,
                 "T can't be a Wrapper type; this function discards wrappers");
 
   if (is<T>()) {
@@ -742,18 +749,26 @@ struct JSObject_Slots16 : JSObject {
     if (prev && prev->storeBuffer()) {
       return;
     }
-    buffer->putCell(static_cast<js::gc::Cell**>(cellp));
+    buffer->putCell(static_cast<JSObject**>(cellp));
     return;
   }
 
   // Remove the prev entry if the new value does not need it. There will only
   // be a prev entry if the prev value was in the nursery.
   if (prev && (buffer = prev->storeBuffer())) {
-    buffer->unputCell(static_cast<js::gc::Cell**>(cellp));
+    buffer->unputCell(static_cast<JSObject**>(cellp));
   }
 }
 
 namespace js {
+
+// Returns true if object may possibly use JSObject::swap. The JITs may better
+// optimize objects that can never swap (and thus change their type).
+//
+// If ObjectMayBeSwapped is false, it is safe to guard on pointer identity to
+// test immutable features of the object. For example, the target of a
+// JSFunction will not change. Note: the object can still be moved by GC.
+extern bool ObjectMayBeSwapped(const JSObject* obj);
 
 /**
  * This enum is used to select whether the defined functions should be marked as
@@ -803,11 +818,6 @@ Value GetThisValueOfLexical(JSObject* env);
 
 Value GetThisValueOfWith(JSObject* env);
 
-/* * */
-
-using ClassInitializerOp = JSObject* (*)(JSContext* cx,
-                                         Handle<GlobalObject*> global);
-
 } /* namespace js */
 
 namespace js {
@@ -815,7 +825,7 @@ namespace js {
 bool NewObjectWithTaggedProtoIsCachable(JSContext* cx,
                                         Handle<TaggedProto> proto,
                                         NewObjectKind newKind,
-                                        const Class* clasp);
+                                        const JSClass* clasp);
 
 // ES6 9.1.15 GetPrototypeFromConstructor.
 extern bool GetPrototypeFromConstructor(JSContext* cx,
@@ -860,26 +870,11 @@ MOZ_ALWAYS_INLINE bool GetPrototypeFromBuiltinConstructor(
                                      proto);
 }
 
-// Specialized call for constructing |this| with a known function callee,
-// and a known prototype.
-extern JSObject* CreateThisForFunctionWithProto(
-    JSContext* cx, js::HandleFunction callee, HandleObject newTarget,
-    HandleObject proto, NewObjectKind newKind = GenericObject);
-
-// Specialized call for constructing |this| with a known function callee.
-extern JSObject* CreateThisForFunction(JSContext* cx, js::HandleFunction callee,
-                                       js::HandleObject newTarget,
-                                       NewObjectKind newKind);
-
 // Generic call for constructing |this|.
-extern JSObject* CreateThis(JSContext* cx, const js::Class* clasp,
+extern JSObject* CreateThis(JSContext* cx, const JSClass* clasp,
                             js::HandleObject callee);
 
-extern JSObject* CloneObject(JSContext* cx, HandleObject obj,
-                             Handle<js::TaggedProto> proto);
-
-extern JSObject* DeepCloneObjectLiteral(JSContext* cx, HandleObject obj,
-                                        NewObjectKind newKind = GenericObject);
+extern JSObject* DeepCloneObjectLiteral(JSContext* cx, HandleObject obj);
 
 /* ES6 draft rev 32 (2015 Feb 2) 6.2.4.5 ToPropertyDescriptor(Obj) */
 bool ToPropertyDescriptor(JSContext* cx, HandleValue descval,
@@ -991,12 +986,35 @@ extern JSObject* PrimitiveToObject(JSContext* cx, const Value& v);
 
 namespace js {
 
-/* For converting stack values to objects. */
-MOZ_ALWAYS_INLINE JSObject* ToObjectFromStack(JSContext* cx, HandleValue vp) {
+JSObject* ToObjectSlowForPropertyAccess(JSContext* cx, JS::HandleValue val,
+                                        int valIndex, HandleId key);
+JSObject* ToObjectSlowForPropertyAccess(JSContext* cx, JS::HandleValue val,
+                                        int valIndex, HandlePropertyName key);
+JSObject* ToObjectSlowForPropertyAccess(JSContext* cx, JS::HandleValue val,
+                                        int valIndex, HandleValue keyValue);
+
+MOZ_ALWAYS_INLINE JSObject* ToObjectFromStackForPropertyAccess(JSContext* cx,
+                                                               HandleValue vp,
+                                                               int vpIndex,
+                                                               HandleId key) {
   if (vp.isObject()) {
     return &vp.toObject();
   }
-  return js::ToObjectSlow(cx, vp, true);
+  return js::ToObjectSlowForPropertyAccess(cx, vp, vpIndex, key);
+}
+MOZ_ALWAYS_INLINE JSObject* ToObjectFromStackForPropertyAccess(
+    JSContext* cx, HandleValue vp, int vpIndex, HandlePropertyName key) {
+  if (vp.isObject()) {
+    return &vp.toObject();
+  }
+  return js::ToObjectSlowForPropertyAccess(cx, vp, vpIndex, key);
+}
+MOZ_ALWAYS_INLINE JSObject* ToObjectFromStackForPropertyAccess(
+    JSContext* cx, HandleValue vp, int vpIndex, HandleValue key) {
+  if (vp.isObject()) {
+    return &vp.toObject();
+  }
+  return js::ToObjectSlowForPropertyAccess(cx, vp, vpIndex, key);
 }
 
 template <XDRMode mode>
@@ -1006,13 +1024,43 @@ XDRResult XDRObjectLiteral(XDRState<mode>* xdr, MutableHandleObject obj);
  * Report a TypeError: "so-and-so is not an object".
  * Using NotNullObject is usually less code.
  */
-extern void ReportNotObject(JSContext* cx, HandleValue v);
+extern void ReportNotObject(JSContext* cx, const Value& v);
 
-inline JSObject* NonNullObject(JSContext* cx, HandleValue v) {
+inline JSObject* RequireObject(JSContext* cx, HandleValue v) {
   if (v.isObject()) {
     return &v.toObject();
   }
   ReportNotObject(cx, v);
+  return nullptr;
+}
+
+/*
+ * Report a TypeError: "SOMETHING must be an object, got VALUE".
+ * Using NotNullObject is usually less code.
+ *
+ * By default this function will attempt to report the expression which computed
+ * the value which given as argument. This can be disabled by using
+ * JSDVG_IGNORE_STACK.
+ */
+extern void ReportNotObject(JSContext* cx, JSErrNum err, int spindex,
+                            HandleValue v);
+
+inline JSObject* RequireObject(JSContext* cx, JSErrNum err, int spindex,
+                               HandleValue v) {
+  if (v.isObject()) {
+    return &v.toObject();
+  }
+  ReportNotObject(cx, err, spindex, v);
+  return nullptr;
+}
+
+extern void ReportNotObject(JSContext* cx, JSErrNum err, HandleValue v);
+
+inline JSObject* RequireObject(JSContext* cx, JSErrNum err, HandleValue v) {
+  if (v.isObject()) {
+    return &v.toObject();
+  }
+  ReportNotObject(cx, err, v);
   return nullptr;
 }
 
@@ -1023,28 +1071,12 @@ inline JSObject* NonNullObject(JSContext* cx, HandleValue v) {
 extern void ReportNotObjectArg(JSContext* cx, const char* nth, const char* fun,
                                HandleValue v);
 
-inline JSObject* NonNullObjectArg(JSContext* cx, const char* nth,
+inline JSObject* RequireObjectArg(JSContext* cx, const char* nth,
                                   const char* fun, HandleValue v) {
   if (v.isObject()) {
     return &v.toObject();
   }
   ReportNotObjectArg(cx, nth, fun, v);
-  return nullptr;
-}
-
-/*
- * Report a TypeError: "SOMETHING must be an object, got VALUE".
- * Using NotNullObjectWithName is usually less code.
- */
-extern void ReportNotObjectWithName(JSContext* cx, const char* name,
-                                    HandleValue v);
-
-inline JSObject* NonNullObjectWithName(JSContext* cx, const char* name,
-                                       HandleValue v) {
-  if (v.isObject()) {
-    return &v.toObject();
-  }
-  ReportNotObjectWithName(cx, name, v);
   return nullptr;
 }
 
@@ -1095,6 +1127,19 @@ inline bool IsObjectValueInCompartment(const Value& v, JS::Compartment* comp) {
   return v.toObject().compartment() == comp;
 }
 #endif
+
+/*
+ * A generic trace hook that calls the object's 'trace' method.
+ *
+ * If you are introducing a new JSObject subclass, MyObject, that needs a custom
+ * JSClassOps::trace function, it's often helpful to write `trace` as a
+ * non-static member function, since `this` will the correct type. In this case,
+ * you can use `CallTraceMethod<MyObject>` as your JSClassOps::trace value.
+ */
+template <typename ObjectSubclass>
+void CallTraceMethod(JSTracer* trc, JSObject* obj) {
+  obj->as<ObjectSubclass>().trace(trc);
+}
 
 } /* namespace js */
 

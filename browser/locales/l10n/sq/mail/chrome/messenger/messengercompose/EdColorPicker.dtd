@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Ngjyrë">
+<!ENTITY lastPickedColor.label "Ngjyrë e marrë së fundi">
+<!ENTITY lastPickedColor.accessKey "N">
+<!ENTITY chooseColor1.label "Zgjidhni një ngjyrë:">
+<!ENTITY chooseColor2.label "Jepni një varg HTML ngjyre">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(e.g.: &quot;#0000ff&quot; ose &quot;blue&quot;):">
+<!ENTITY default.label "Parazgjedhje">
+<!ENTITY default.accessKey "P">
+<!ENTITY palette.label "Paletë:">
+<!ENTITY standardPalette.label "Standard">
+<!ENTITY webPalette.label "Tërë ngjyrat web">
+<!ENTITY background.label "Sfond për:">
+<!ENTITY background.accessKey "S">
+<!ENTITY table.label "Tabelë">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Kuti">
+<!ENTITY cell.accessKey "K">

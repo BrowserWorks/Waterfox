@@ -38,7 +38,6 @@ const {
   nodeHasFullText,
   nodeHasGetter,
   getNonPrototypeParentGripValue,
-  getParentGripValue,
 } = Utils.node;
 
 type Props = {
@@ -77,9 +76,18 @@ type Props = {
       setExpanded: (Node, boolean) => any,
     }
   ) => any,
+  onContextMenu: (event: any, item: Node) => null,
+  renderItemActions: (item: Node) => ?ReactElement,
 };
 
 class ObjectInspectorItem extends Component<Props> {
+  static get defaultProps() {
+    return {
+      onContextMenu: () => {},
+      renderItemActions: () => null,
+    };
+  }
+
   // eslint-disable-next-line complexity
   getLabelAndValue(): {
     value?: string | Element,
@@ -168,17 +176,11 @@ class ObjectInspectorItem extends Component<Props> {
       }
 
       if (nodeHasGetter(item)) {
-        const targetGrip = getParentGripValue(item);
         const receiverGrip = getNonPrototypeParentGripValue(item);
-        if (targetGrip && receiverGrip) {
+        if (receiverGrip) {
           Object.assign(repProps, {
             onInvokeGetterButtonClick: () =>
-              this.props.invokeGetter(
-                item,
-                targetGrip,
-                receiverGrip.actor,
-                item.name
-              ),
+              this.props.invokeGetter(item, receiverGrip.actor),
           });
         }
       }
@@ -203,6 +205,7 @@ class ObjectInspectorItem extends Component<Props> {
       onCmdCtrlClick,
       onDoubleClick,
       dimTopLevelWindow,
+      onContextMenu,
     } = this.props;
 
     const parentElementProps: Object = {
@@ -239,12 +242,14 @@ class ObjectInspectorItem extends Component<Props> {
         // image, clicking on it does not remove any existing text selection.
         // So we need to also check if the arrow was clicked.
         if (
-          Utils.selection.documentHasSelection() &&
-          !(e.target && e.target.matches && e.target.matches(".arrow"))
+          e.target &&
+          Utils.selection.documentHasSelection(e.target.ownerDocument) &&
+          !(e.target.matches && e.target.matches(".arrow"))
         ) {
           e.stopPropagation();
         }
       },
+      onContextMenu: e => onContextMenu(e, item),
     };
 
     if (onDoubleClick) {
@@ -275,7 +280,9 @@ class ObjectInspectorItem extends Component<Props> {
               event.stopPropagation();
 
               // If the user selected text, bail out.
-              if (Utils.selection.documentHasSelection()) {
+              if (
+                Utils.selection.documentHasSelection(event.target.ownerDocument)
+              ) {
                 return;
               }
 
@@ -293,7 +300,7 @@ class ObjectInspectorItem extends Component<Props> {
   }
 
   render() {
-    const { arrow } = this.props;
+    const { arrow, renderItemActions, item } = this.props;
 
     const { label, value } = this.getLabelAndValue();
     const labelElement = this.renderLabel(label);
@@ -307,7 +314,8 @@ class ObjectInspectorItem extends Component<Props> {
       arrow,
       labelElement,
       delimiter,
-      value
+      value,
+      renderItemActions(item)
     );
   }
 }

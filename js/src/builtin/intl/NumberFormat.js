@@ -11,17 +11,6 @@
  */
 var numberFormatInternalProperties = {
     localeData: numberFormatLocaleData,
-    _availableLocales: null,
-    availableLocales: function() // eslint-disable-line object-shorthand
-    {
-        var locales = this._availableLocales;
-        if (locales)
-            return locales;
-
-        locales = intl_NumberFormat_availableLocales();
-        addSpecialMissingLanguageTags(locales);
-        return (this._availableLocales = locales);
-    },
     relevantExtensionKeys: ["nu"],
 };
 
@@ -41,7 +30,7 @@ function resolveNumberFormatInternals(lazyNumberFormatData) {
     var localeData = NumberFormat.localeData;
 
     // Step 8.
-    var r = ResolveLocale(callFunction(NumberFormat.availableLocales, NumberFormat),
+    var r = ResolveLocale("NumberFormat",
                           lazyNumberFormatData.requestedLocales,
                           lazyNumberFormatData.opt,
                           NumberFormat.relevantExtensionKeys,
@@ -60,12 +49,29 @@ function resolveNumberFormatInternals(lazyNumberFormatData) {
     if (style === "currency") {
         internalProps.currency = lazyNumberFormatData.currency;
         internalProps.currencyDisplay = lazyNumberFormatData.currencyDisplay;
+        internalProps.currencySign = lazyNumberFormatData.currencySign;
     }
+
+    // Intl.NumberFormat Unified API Proposal
+    if (style === "unit") {
+        internalProps.unit = lazyNumberFormatData.unit;
+        internalProps.unitDisplay = lazyNumberFormatData.unitDisplay;
+    }
+
+    // Intl.NumberFormat Unified API Proposal
+    var notation = lazyNumberFormatData.notation;
+    internalProps.notation = notation;
 
     // Step 22.
     internalProps.minimumIntegerDigits = lazyNumberFormatData.minimumIntegerDigits;
-    internalProps.minimumFractionDigits = lazyNumberFormatData.minimumFractionDigits;
-    internalProps.maximumFractionDigits = lazyNumberFormatData.maximumFractionDigits;
+
+    if ("minimumFractionDigits" in lazyNumberFormatData) {
+        // Note: Intl.NumberFormat.prototype.resolvedOptions() exposes the
+        // actual presence (versus undefined-ness) of these properties.
+        assert("maximumFractionDigits" in lazyNumberFormatData, "min/max frac digits mismatch");
+        internalProps.minimumFractionDigits = lazyNumberFormatData.minimumFractionDigits;
+        internalProps.maximumFractionDigits = lazyNumberFormatData.maximumFractionDigits;
+    }
 
     if ("minimumSignificantDigits" in lazyNumberFormatData) {
         // Note: Intl.NumberFormat.prototype.resolvedOptions() exposes the
@@ -75,8 +81,15 @@ function resolveNumberFormatInternals(lazyNumberFormatData) {
         internalProps.maximumSignificantDigits = lazyNumberFormatData.maximumSignificantDigits;
     }
 
+    // Intl.NumberFormat Unified API Proposal
+    if (notation === "compact")
+        internalProps.compactDisplay = lazyNumberFormatData.compactDisplay;
+
     // Step 24.
     internalProps.useGrouping = lazyNumberFormatData.useGrouping;
+
+    // Intl.NumberFormat Unified API Proposal
+    internalProps.signDisplay = lazyNumberFormatData.signDisplay;
 
     // The caller is responsible for associating |internalProps| with the right
     // object using |setInternalProperties|.
@@ -112,7 +125,7 @@ function UnwrapNumberFormat(nf) {
     if (IsObject(nf) &&
         GuardToNumberFormat(nf) === null &&
         !IsWrappedNumberFormat(nf) &&
-        nf instanceof GetNumberFormatConstructor())
+        nf instanceof GetBuiltinConstructor("NumberFormat"))
     {
         nf = nf[intlFallbackSymbol()];
     }
@@ -124,7 +137,7 @@ function UnwrapNumberFormat(nf) {
  *
  * Spec: ECMAScript Internationalization API Specification, 11.1.1.
  */
-function SetNumberFormatDigitOptions(lazyData, options, mnfdDefault, mxfdDefault) {
+function SetNumberFormatDigitOptions(lazyData, options, mnfdDefault, mxfdDefault, notation) {
     // We skip step 1 because we set the properties on a lazyData object.
 
     // Steps 2-4.
@@ -132,28 +145,69 @@ function SetNumberFormatDigitOptions(lazyData, options, mnfdDefault, mxfdDefault
     assert(typeof mnfdDefault === "number", "SetNumberFormatDigitOptions");
     assert(typeof mxfdDefault === "number", "SetNumberFormatDigitOptions");
     assert(mnfdDefault <= mxfdDefault, "SetNumberFormatDigitOptions");
+    assert(typeof notation === "string", "SetNumberFormatDigitOptions");
 
-    // Steps 5-8.
+    // Steps 5-9.
     const mnid = GetNumberOption(options, "minimumIntegerDigits", 1, 21, 1);
-    const mnfd = GetNumberOption(options, "minimumFractionDigits", 0, 20, mnfdDefault);
-    const mxfdActualDefault = std_Math_max(mnfd, mxfdDefault);
-    const mxfd = GetNumberOption(options, "maximumFractionDigits", mnfd, 20, mxfdActualDefault);
-
-    // Steps 9-10.
+    let mnfd = options.minimumFractionDigits;
+    let mxfd = options.maximumFractionDigits;
     let mnsd = options.minimumSignificantDigits;
     let mxsd = options.maximumSignificantDigits;
 
-    // Steps 11-13.
+    // Step 10.
     lazyData.minimumIntegerDigits = mnid;
-    lazyData.minimumFractionDigits = mnfd;
-    lazyData.maximumFractionDigits = mxfd;
+
+    // Step 11.
+    if (mnsd !== undefined || mxsd !== undefined) {
+        // Step 11.a (Omitted).
+
+        // Step 11.b.
+        mnsd = DefaultNumberOption(mnsd, 1, 21, 1);
+
+        // Step 11.c.
+        mxsd = DefaultNumberOption(mxsd, mnsd, 21, 21);
+
+        // Step 11.d.
+        lazyData.minimumSignificantDigits = mnsd;
+
+        // Step 11.e.
+        lazyData.maximumSignificantDigits = mxsd;
+    }
+
+    // Step 12.
+    else if (mnfd !== undefined || mxfd !== undefined) {
+        // Step 12.a (Omitted).
+
+        // Step 12.b.
+        mnfd = DefaultNumberOption(mnfd, 0, 20, mnfdDefault);
+
+        // Step 12.c.
+        const mxfdActualDefault = std_Math_max(mnfd, mxfdDefault);
+
+        // Step 12.d.
+        mxfd = DefaultNumberOption(mxfd, mnfd, 20, mxfdActualDefault);
+
+        // Step 12.e.
+        lazyData.minimumFractionDigits = mnfd;
+
+        // Step 12.f.
+        lazyData.maximumFractionDigits = mxfd;
+    }
+
+    // Step 13.
+    else if (notation === "compact") {
+        // Step 13.a (Omitted).
+    }
 
     // Step 14.
-    if (mnsd !== undefined || mxsd !== undefined) {
-        mnsd = DefaultNumberOption(mnsd, 1, 21, 1);
-        mxsd = DefaultNumberOption(mxsd, mnsd, 21, 21);
-        lazyData.minimumSignificantDigits = mnsd;
-        lazyData.maximumSignificantDigits = mxsd;
+    else {
+        // Step 14.a (Omitted).
+
+        // Step 14.b.
+        lazyData.minimumFractionDigits = mnfdDefault;
+
+        // Step 14.c.
+        lazyData.maximumFractionDigits = mxfdDefault;
     }
 }
 
@@ -190,6 +244,81 @@ function IsWellFormedCurrencyCode(currency) {
 }
 
 /**
+ * Verifies that the given string is a well-formed core unit identifier as
+ * defined in UTS #35, Part 2, Section 6. In addition to obeying the UTS #35
+ * core unit identifier syntax, |unitIdentifier| must be one of the identifiers
+ * sanctioned by UTS #35 or be a compound unit composed of two sanctioned simple
+ * units.
+ *
+ * Intl.NumberFormat Unified API Proposal
+ */
+function IsWellFormedUnitIdentifier(unitIdentifier) {
+    assert(typeof unitIdentifier === "string", "unitIdentifier is a string value");
+
+    // Step 1.
+    if (IsSanctionedSimpleUnitIdentifier(unitIdentifier))
+        return true;
+
+    // Step 2.
+    var pos = callFunction(std_String_indexOf, unitIdentifier, "-per-");
+    if (pos < 0)
+        return false;
+
+    var next = pos + "-per-".length;
+
+    // Steps 3 and 5.
+    var numerator = Substring(unitIdentifier, 0, pos);
+    var denominator = Substring(unitIdentifier, next, unitIdentifier.length - next);
+
+    // Steps 4 and 6.
+    return IsSanctionedSimpleUnitIdentifier(numerator) &&
+           IsSanctionedSimpleUnitIdentifier(denominator);
+}
+
+#if DEBUG || MOZ_SYSTEM_ICU
+var availableMeasurementUnits = {
+    value: null
+};
+#endif
+
+/**
+ * Verifies that the given string is a sanctioned simple core unit identifier.
+ *
+ * Intl.NumberFormat Unified API Proposal
+ *
+ * Also see: https://unicode.org/reports/tr35/tr35-general.html#Unit_Elements
+ */
+function IsSanctionedSimpleUnitIdentifier(unitIdentifier) {
+    assert(typeof unitIdentifier === "string", "unitIdentifier is a string value");
+
+    var isSanctioned = hasOwn(unitIdentifier, sanctionedSimpleUnitIdentifiers);
+
+#if DEBUG || MOZ_SYSTEM_ICU
+    if (isSanctioned) {
+        if (availableMeasurementUnits.value === null)
+            availableMeasurementUnits.value = intl_availableMeasurementUnits();
+
+        var isSupported = hasOwn(unitIdentifier, availableMeasurementUnits.value);
+
+#if MOZ_SYSTEM_ICU
+        // A system ICU may support fewer measurement units, so we need to make
+        // sure the unit is actually supported.
+        isSanctioned = isSupported;
+#else
+        // Otherwise just assert that the sanctioned unit is also supported.
+        assert(isSupported,
+`"${unitIdentifier}" is sanctioned but not supported. Did you forget to update
+intl/icu/data_filter.json to include the unit (and any implicit compound units)?
+For example "speed/kilometer-per-hour" is implied by "length/kilometer" and
+"duration/hour" and must therefore also be present.`);
+#endif
+    }
+#endif
+
+    return isSanctioned;
+}
+
+/**
  * Initializes an object as a NumberFormat.
  *
  * This method is complicated a moderate bit by its implementing initialization
@@ -208,26 +337,42 @@ function InitializeNumberFormat(numberFormat, thisValue, locales, options) {
     //
     //   {
     //     requestedLocales: List of locales,
-    //     style: "decimal" / "percent" / "currency",
+    //     style: "decimal" / "percent" / "currency" / "unit",
     //
     //     // fields present only if style === "currency":
     //     currency: a well-formed currency code (IsWellFormedCurrencyCode),
-    //     currencyDisplay: "code" / "symbol" / "name",
+    //     currencyDisplay: "code" / "symbol" / "narrowSymbol" / "name",
+    //     currencySign: "standard" / "accounting",
+    //
+    //     // fields present only if style === "unit":
+    //     unit: a well-formed unit identifier (IsWellFormedUnitIdentifier),
+    //     unitDisplay: "short" / "narrow" / "long",
     //
     //     opt: // opt object computed in InitializeNumberFormat
     //       {
     //         localeMatcher: "lookup" / "best fit",
+    //
+    //         nu: string matching a Unicode extension type, // optional
     //       }
     //
     //     minimumIntegerDigits: integer ∈ [1, 21],
+    //
+    //     // optional, mutually exclusive with the significant-digits option
     //     minimumFractionDigits: integer ∈ [0, 20],
     //     maximumFractionDigits: integer ∈ [0, 20],
     //
-    //     // optional
+    //     // optional, mutually exclusive with the fraction-digits option
     //     minimumSignificantDigits: integer ∈ [1, 21],
     //     maximumSignificantDigits: integer ∈ [1, 21],
     //
     //     useGrouping: true / false,
+    //
+    //     notation: "standard" / "scientific" / "engineering" / "compact",
+    //
+    //     // optional, if notation is "compact"
+    //     compactDisplay: "short" / "long",
+    //
+    //     signDisplay: "auto" / "never" / "always" / "exceptZero",
     //   }
     //
     // Note that lazy data is only installed as a final step of initialization,
@@ -258,32 +403,75 @@ function InitializeNumberFormat(numberFormat, thisValue, locales, options) {
     var matcher = GetOption(options, "localeMatcher", "string", ["lookup", "best fit"], "best fit");
     opt.localeMatcher = matcher;
 
+    var numberingSystem = GetOption(options, "numberingSystem", "string", undefined, undefined);
+
+    if (numberingSystem !== undefined) {
+        numberingSystem = intl_ValidateAndCanonicalizeUnicodeExtensionType(numberingSystem,
+                                                                           "numberingSystem",
+                                                                           "nu");
+    }
+
+    opt.nu = numberingSystem;
+
     // Compute formatting options.
     // Step 12.
-    var style = GetOption(options, "style", "string", ["decimal", "percent", "currency"], "decimal");
+    var style = GetOption(options, "style", "string", ["decimal", "percent", "currency", "unit"],
+                          "decimal");
     lazyNumberFormatData.style = style;
 
     // Steps 14-17.
-    var c = GetOption(options, "currency", "string", undefined, undefined);
-    if (c !== undefined && !IsWellFormedCurrencyCode(c))
-        ThrowRangeError(JSMSG_INVALID_CURRENCY_CODE, c);
+    var currency = GetOption(options, "currency", "string", undefined, undefined);
+
+    // Per the Intl.NumberFormat Unified API Proposal, this check should only
+    // happen for |style === "currency"|, which seems inconsistent, given that
+    // we normally validate all options when present, even the ones which are
+    // unused.
+    // TODO: File issue at <https://github.com/tc39/proposal-unified-intl-numberformat>.
+    if (currency !== undefined && !IsWellFormedCurrencyCode(currency))
+        ThrowRangeError(JSMSG_INVALID_CURRENCY_CODE, currency);
+
     var cDigits;
     if (style === "currency") {
-        if (c === undefined)
+        if (currency === undefined)
             ThrowTypeError(JSMSG_UNDEFINED_CURRENCY);
 
         // Steps 19.a-c.
-        c = toASCIIUpperCase(c);
-        lazyNumberFormatData.currency = c;
-        cDigits = CurrencyDigits(c);
+        currency = toASCIIUpperCase(currency);
+        lazyNumberFormatData.currency = currency;
+        cDigits = CurrencyDigits(currency);
     }
 
     // Step 18.
-    var cd = GetOption(options, "currencyDisplay", "string", ["code", "symbol", "name"], "symbol");
+    var currencyDisplay = GetOption(options, "currencyDisplay", "string",
+                                    ["code", "symbol", "narrowSymbol", "name"], "symbol");
     if (style === "currency")
-        lazyNumberFormatData.currencyDisplay = cd;
+        lazyNumberFormatData.currencyDisplay = currencyDisplay;
 
-    // Steps 20-22.
+    // Intl.NumberFormat Unified API Proposal
+    var currencySign = GetOption(options, "currencySign", "string", ["standard", "accounting"],
+                                 "standard");
+    if (style === "currency")
+        lazyNumberFormatData.currencySign = currencySign;
+
+    // Intl.NumberFormat Unified API Proposal
+    var unit = GetOption(options, "unit", "string", undefined, undefined);
+
+    // Aligned with |currency| check from above, see note about spec issue there.
+    if (unit !== undefined && !IsWellFormedUnitIdentifier(unit))
+        ThrowRangeError(JSMSG_INVALID_UNIT_IDENTIFIER, unit);
+
+    var unitDisplay = GetOption(options, "unitDisplay", "string",
+                                ["short", "narrow", "long"], "short");
+
+    if (style === "unit") {
+        if (unit === undefined)
+            ThrowTypeError(JSMSG_UNDEFINED_UNIT);
+
+        lazyNumberFormatData.unit = unit;
+        lazyNumberFormatData.unitDisplay = unitDisplay;
+    }
+
+    // Steps 20-21.
     var mnfdDefault, mxfdDefault;
     if (style === "currency") {
         mnfdDefault = cDigits;
@@ -292,11 +480,29 @@ function InitializeNumberFormat(numberFormat, thisValue, locales, options) {
         mnfdDefault = 0;
         mxfdDefault = style === "percent" ? 0 : 3;
     }
-    SetNumberFormatDigitOptions(lazyNumberFormatData, options, mnfdDefault, mxfdDefault);
+
+    // Intl.NumberFormat Unified API Proposal
+    var notation = GetOption(options, "notation", "string",
+                             ["standard", "scientific", "engineering", "compact"], "standard");
+    lazyNumberFormatData.notation = notation;
+
+    // Step 22.
+    SetNumberFormatDigitOptions(lazyNumberFormatData, options, mnfdDefault, mxfdDefault, notation);
+
+    // Intl.NumberFormat Unified API Proposal
+    var compactDisplay = GetOption(options, "compactDisplay", "string",
+                                   ["short", "long"], "short");
+    if (notation === "compact")
+        lazyNumberFormatData.compactDisplay = compactDisplay;
 
     // Steps 23.
-    var g = GetOption(options, "useGrouping", "boolean", undefined, true);
-    lazyNumberFormatData.useGrouping = g;
+    var useGrouping = GetOption(options, "useGrouping", "boolean", undefined, true);
+    lazyNumberFormatData.useGrouping = useGrouping;
+
+    // Intl.NumberFormat Unified API Proposal
+    var signDisplay = GetOption(options, "signDisplay", "string",
+                                ["auto", "never", "always", "exceptZero"], "auto");
+    lazyNumberFormatData.signDisplay = signDisplay;
 
     // Step 31.
     //
@@ -308,7 +514,7 @@ function InitializeNumberFormat(numberFormat, thisValue, locales, options) {
     // TODO: spec issue - The current spec doesn't have the IsObject check,
     // which means |Intl.NumberFormat.call(null)| is supposed to throw here.
     if (numberFormat !== thisValue && IsObject(thisValue) &&
-        thisValue instanceof GetNumberFormatConstructor())
+        thisValue instanceof GetBuiltinConstructor("NumberFormat"))
     {
         _DefineDataProperty(thisValue, intlFallbackSymbol(), numberFormat,
                             ATTR_NONENUMERABLE | ATTR_NONCONFIGURABLE | ATTR_NONWRITABLE);
@@ -346,8 +552,7 @@ function Intl_NumberFormat_supportedLocalesOf(locales /*, options*/) {
     var options = arguments.length > 1 ? arguments[1] : undefined;
 
     // Step 1.
-    var availableLocales = callFunction(numberFormatInternalProperties.availableLocales,
-                                        numberFormatInternalProperties);
+    var availableLocales = "NumberFormat";
 
     // Step 2.
     var requestedLocales = CanonicalizeLocaleList(locales);
@@ -392,23 +597,26 @@ function numberFormatLocaleData() {
 }
 
 /**
- * Function to be bound and returned by Intl.NumberFormat.prototype.format.
+ * Create function to be cached and returned by Intl.NumberFormat.prototype.format.
  *
  * Spec: ECMAScript Internationalization API Specification, 11.1.4.
  */
-function numberFormatFormatToBind(value) {
-    // Step 1.
-    var nf = this;
+function createNumberFormatFormat(nf) {
+    // This function is not inlined in $Intl_NumberFormat_format_get to avoid
+    // creating a call-object on each call to $Intl_NumberFormat_format_get.
+    return function(value) {
+        // Step 1 (implicit).
 
-    // Step 2.
-    assert(IsObject(nf), "InitializeNumberFormat called with non-object");
-    assert(GuardToNumberFormat(nf) !== null, "InitializeNumberFormat called with non-NumberFormat");
+        // Step 2.
+        assert(IsObject(nf), "InitializeNumberFormat called with non-object");
+        assert(GuardToNumberFormat(nf) !== null, "InitializeNumberFormat called with non-NumberFormat");
 
-    // Steps 3-4.
-    var x = ToNumber(value);
+        // Steps 3-4.
+        var x = ToNumeric(value);
 
-    // Step 5.
-    return intl_FormatNumber(nf, x, /* formatToParts = */ false);
+        // Step 5.
+        return intl_FormatNumber(nf, x, /* formatToParts = */ false, /* unitStyle = */ false);
+    };
 }
 
 /**
@@ -433,11 +641,8 @@ function $Intl_NumberFormat_format_get() {
 
     // Step 4.
     if (internals.boundFormat === undefined) {
-        // Steps 4.a-b.
-        var F = callFunction(FunctionBind, numberFormatFormatToBind, nf);
-
-        // Step 4.c.
-        internals.boundFormat = F;
+        // Steps 4.a-c.
+        internals.boundFormat = createNumberFormatFormat(nf);
     }
 
     // Step 5.
@@ -458,14 +663,14 @@ function Intl_NumberFormat_formatToParts(value) {
                             "Intl_NumberFormat_formatToParts");
     }
 
-    // Ensure the NumberFormat internals are resolved.
-    getNumberFormatInternals(nf);
+    var internals = getNumberFormatInternals(nf);
+    var unitStyle = internals.style === "unit";
 
     // Step 4.
-    var x = ToNumber(value);
+    var x = ToNumeric(value);
 
     // Step 5.
-    return intl_FormatNumber(nf, x, /* formatToParts = */ true);
+    return intl_FormatNumber(nf, x, /* formatToParts = */ true, unitStyle);
 }
 
 /**
@@ -491,22 +696,45 @@ function Intl_NumberFormat_resolvedOptions() {
         style: internals.style,
     };
 
-    // currency and currencyDisplay are only present for currency formatters.
+    // currency, currencyDisplay, and currencySign are only present for currency
+    // formatters.
     assert(hasOwn("currency", internals) === (internals.style === "currency"),
            "currency is present iff style is 'currency'");
     assert(hasOwn("currencyDisplay", internals) === (internals.style === "currency"),
            "currencyDisplay is present iff style is 'currency'");
+    assert(hasOwn("currencySign", internals) === (internals.style === "currency"),
+           "currencySign is present iff style is 'currency'");
 
     if (hasOwn("currency", internals)) {
         _DefineDataProperty(result, "currency", internals.currency);
         _DefineDataProperty(result, "currencyDisplay", internals.currencyDisplay);
+        _DefineDataProperty(result, "currencySign", internals.currencySign);
+    }
+
+    // unit and unitDisplay are only present for unit formatters.
+    assert(hasOwn("unit", internals) === (internals.style === "unit"),
+           "unit is present iff style is 'unit'");
+    assert(hasOwn("unitDisplay", internals) === (internals.style === "unit"),
+           "unitDisplay is present iff style is 'unit'");
+
+    if (hasOwn("unit", internals)) {
+        _DefineDataProperty(result, "unit", internals.unit);
+        _DefineDataProperty(result, "unitDisplay", internals.unitDisplay);
     }
 
     _DefineDataProperty(result, "minimumIntegerDigits", internals.minimumIntegerDigits);
-    _DefineDataProperty(result, "minimumFractionDigits", internals.minimumFractionDigits);
-    _DefineDataProperty(result, "maximumFractionDigits", internals.maximumFractionDigits);
 
-    // Min/Max significant digits are either both present or not at all.
+    // Min/Max fraction digits are either both present or not present at all.
+    assert(hasOwn("minimumFractionDigits", internals) ===
+           hasOwn("maximumFractionDigits", internals),
+           "minimumFractionDigits is present iff maximumFractionDigits is present");
+
+    if (hasOwn("minimumFractionDigits", internals)) {
+        _DefineDataProperty(result, "minimumFractionDigits", internals.minimumFractionDigits);
+        _DefineDataProperty(result, "maximumFractionDigits", internals.maximumFractionDigits);
+    }
+
+    // Min/Max significant digits are either both present or not present at all.
     assert(hasOwn("minimumSignificantDigits", internals) ===
            hasOwn("maximumSignificantDigits", internals),
            "minimumSignificantDigits is present iff maximumSignificantDigits is present");
@@ -519,6 +747,14 @@ function Intl_NumberFormat_resolvedOptions() {
     }
 
     _DefineDataProperty(result, "useGrouping", internals.useGrouping);
+
+    var notation = internals.notation;
+    _DefineDataProperty(result, "notation", notation);
+
+    if (notation === "compact")
+        _DefineDataProperty(result, "compactDisplay", internals.compactDisplay);
+
+    _DefineDataProperty(result, "signDisplay", internals.signDisplay);
 
     // Step 6.
     return result;

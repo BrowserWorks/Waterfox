@@ -9,11 +9,7 @@ const PAGE =
   "https://example.com/browser/toolkit/content/tests/browser/file_webAudio.html";
 
 async function click_icon(tab) {
-  let icon = document.getAnonymousElementByAttribute(
-    tab,
-    "anonid",
-    "soundplaying-icon"
-  );
+  let icon = tab.soundPlayingIcon;
 
   await hover_icon(icon, document.getElementById("tabbrowser-tab-tooltip"));
   EventUtils.synthesizeMouseAtCenter(icon, { button: 0 });
@@ -66,10 +62,10 @@ add_task(async function mute_web_audio() {
   ok(tab.linkedBrowser.audioMuted, "Audio should be muted now");
 
   info("- stop web audip -");
-  await ContentTask.spawn(tab.linkedBrowser, null, stop_webAudio);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], stop_webAudio);
 
   info("- start web audio -");
-  await ContentTask.spawn(tab.linkedBrowser, null, start_webAudio);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], start_webAudio);
 
   info("- unmute browser -");
   ok(tab.linkedBrowser.audioMuted, "Audio should be muted now");

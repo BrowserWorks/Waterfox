@@ -6,6 +6,7 @@
 
 #include "nsGkAtoms.h"
 #include "nsUnicharUtils.h"
+#include "mozilla/dom/LinkStyle.h"
 #include "mozilla/dom/ProcessingInstruction.h"
 #include "mozilla/dom/ProcessingInstructionBinding.h"
 #include "mozilla/dom/XMLStylesheetProcessingInstruction.h"
@@ -25,8 +26,8 @@ NS_NewXMLProcessingInstruction(nsNodeInfoManager* aNodeInfoManager,
   MOZ_ASSERT(target);
 
   if (target == nsGkAtoms::xml_stylesheet) {
-    RefPtr<XMLStylesheetProcessingInstruction> pi =
-        new XMLStylesheetProcessingInstruction(aNodeInfoManager, aData);
+    RefPtr<XMLStylesheetProcessingInstruction> pi = new (aNodeInfoManager)
+        XMLStylesheetProcessingInstruction(aNodeInfoManager, aData);
     return pi.forget();
   }
 
@@ -36,7 +37,7 @@ NS_NewXMLProcessingInstruction(nsNodeInfoManager* aNodeInfoManager,
       nsINode::PROCESSING_INSTRUCTION_NODE, target);
 
   RefPtr<ProcessingInstruction> instance =
-      new ProcessingInstruction(ni.forget(), aData);
+      new (aNodeInfoManager) ProcessingInstruction(ni.forget(), aData);
 
   return instance.forget();
 }
@@ -55,11 +56,14 @@ ProcessingInstruction::ProcessingInstruction(
                   false);  // Don't notify (bug 420429).
 }
 
-ProcessingInstruction::~ProcessingInstruction() {}
+ProcessingInstruction::~ProcessingInstruction() = default;
 
-// If you add nsIStyleSheetLinkingElement here, make sure we actually
-// implement the nsStyleLinkElement methods.
-NS_IMPL_ISUPPORTS_INHERITED0(ProcessingInstruction, CharacterData)
+StyleSheet* ProcessingInstruction::GetSheet() const {
+  if (const auto* linkStyle = LinkStyle::FromNode(*this)) {
+    return linkStyle->GetSheet();
+  }
+  return nullptr;
+}
 
 JSObject* ProcessingInstruction::WrapNode(JSContext* aCx,
                                           JS::Handle<JSObject*> aGivenProto) {
@@ -78,17 +82,8 @@ already_AddRefed<CharacterData> ProcessingInstruction::CloneDataNode(
   nsAutoString data;
   GetData(data);
   RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
-  return do_AddRef(new ProcessingInstruction(ni.forget(), data));
-}
-
-Maybe<nsStyleLinkElement::SheetInfo>
-ProcessingInstruction::GetStyleSheetInfo() {
-  MOZ_ASSERT_UNREACHABLE(
-      "XMLStylesheetProcessingInstruction should override "
-      "this and we don't try to do stylesheet stuff.  In "
-      "particular, we do not implement "
-      "nsIStyleSheetLinkingElement");
-  return Nothing();
+  auto* nim = ni->NodeInfoManager();
+  return do_AddRef(new (nim) ProcessingInstruction(ni.forget(), data));
 }
 
 #ifdef DEBUG

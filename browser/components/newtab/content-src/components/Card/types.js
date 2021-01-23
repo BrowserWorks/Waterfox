@@ -1,26 +1,30 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 export const cardContextTypes = {
   history: {
-    intlID: "type_label_visited",
+    fluentID: "newtab-label-visited",
     icon: "history-item",
   },
+  removedBookmark: {
+    fluentID: "newtab-label-removed-bookmark",
+    icon: "bookmark-removed",
+  },
   bookmark: {
-    intlID: "type_label_bookmarked",
+    fluentID: "newtab-label-bookmarked",
     icon: "bookmark-added",
   },
   trending: {
-    intlID: "type_label_recommended",
+    fluentID: "newtab-label-recommended",
     icon: "trending",
   },
-  now: {
-    intlID: "type_label_now",
-    icon: "now",
-  },
   pocket: {
-    intlID: "type_label_pocket",
+    fluentID: "newtab-label-saved",
     icon: "pocket",
   },
   download: {
-    intlID: "type_label_downloaded",
+    fluentID: "newtab-label-download",
     icon: "download",
   },
 };

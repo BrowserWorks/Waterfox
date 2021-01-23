@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Ezarri gogorarazleak">
+<!ENTITY reminder.add.label                                "Gehitu">
+<!ENTITY reminder.add.accesskey                            "G">
+<!ENTITY reminder.remove.label                             "Kendu">
+<!ENTITY reminder.remove.accesskey                         "K">
+
+<!ENTITY reminder.reminderDetails.label                    "Gogorarazleen zehaztapenak">
+<!ENTITY reminder.action.label                             "Aukeratu gogoratze ekintza">
+
+<!ENTITY reminder.action.alert.label                       "Abisua ikusi">
+<!ENTITY reminder.action.email.label                       "Bidali e-posta bat">
+
+<!ENTITY alarm.units.minutes                               "minutu" >
+<!ENTITY alarm.units.hours                                 "ordu" >
+<!ENTITY alarm.units.days                                  "egun" >

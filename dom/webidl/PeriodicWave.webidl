@@ -20,6 +20,9 @@ dictionary PeriodicWaveOptions : PeriodicWaveConstraints {
 };
 
 [Pref="dom.webaudio.enabled",
- Constructor(BaseAudioContext context, optional PeriodicWaveOptions options)]
+ Exposed=Window]
 interface PeriodicWave {
+  [Throws]
+  constructor(BaseAudioContext context,
+              optional PeriodicWaveOptions options = {});
 };

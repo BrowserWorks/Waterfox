@@ -16,11 +16,8 @@ transforms:
 job-defaults:
     description: nightly bouncer locations job
     attributes:
-        nightly: true
-    worker-type:
-        by-project:
-            mozilla-central: scriptworker-k8s/gecko-3-bouncer
-            default: scriptworker-k8s/gecko-1-bouncer
+        shippable: true
+    worker-type: bouncer
     worker:
         implementation: bouncer-locations
     scopes:
@@ -53,24 +50,3 @@ jobs:
             - firefox-nightly-pkg-latest-l10n-ssl
         treeherder:
             platform: firefox-release/opt
-    fennec:
-        run-on-projects: ['mozilla-esr68']
-        attributes:
-            release-type: nightly
-        shipping-product: fennec
-        bouncer-products:
-            - fennec-nightly-latest
-        treeherder:
-            platform: fennec-release/opt
-        worker-type:
-            by-project:
-                mozilla-esr68: scriptworker-k8s/gecko-3-bouncer
-                default: scriptworker-k8s/gecko-1-bouncer
-        scopes:
-            by-project:
-                mozilla-esr68:
-                    - project:releng:bouncer:action:locations
-                    - project:releng:bouncer:server:production
-                default:
-                    - project:releng:bouncer:action:locations
-                    - project:releng:bouncer:server:staging

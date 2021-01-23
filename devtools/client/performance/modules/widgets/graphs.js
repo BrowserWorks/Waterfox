@@ -227,13 +227,12 @@ GraphsController.prototype = {
       return;
     }
 
-    this._rendering = new Promise(async resolve => {
+    this._rendering = (async () => {
       for (const graph of await this._getEnabled()) {
         await graph.setPerformanceData(recordingData, resolution);
         this.emit("rendered", graph.graphName);
       }
-      resolve();
-    });
+    })();
     await this._rendering;
   },
 
@@ -490,9 +489,7 @@ OptimizationsGraph.prototype = extend(MountainGraphWidget.prototype, {
     // log an error.
     if (!data) {
       console.error(
-        `FrameNode#${
-          frameNode.location
-        } does not have optimizations data to render.`
+        `FrameNode#${frameNode.location} does not have optimizations data to render.`
       );
       return;
     }

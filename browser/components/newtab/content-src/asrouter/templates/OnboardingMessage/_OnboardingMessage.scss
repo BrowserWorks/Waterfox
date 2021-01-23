@@ -1,18 +1,4 @@
-.onboardingMessageContainer {
-  display: grid;
-  grid-column-gap: 21px;
-  grid-template-columns: auto auto auto;
-  padding-left: 30px;
-  padding-right: 30px;
-
-  // at 850px, the cards go from vertical layout to horizontal layout
-  @media(max-width: 850px) {
-    grid-template-columns: none;
-    grid-template-rows: auto auto auto;
-    padding-left: 110px;
-    padding-right: 110px;
-  }
-}
+@import '../../../styles/OnboardingImages';
 
 .onboardingMessage {
   height: 340px;
@@ -130,81 +116,17 @@
 
 // Also used for Trailhead
 .onboardingMessageImage {
-  height: 100px;
-  width: 120px;
-  background-size: 120px;
+  height: 112px;
+  width: 180px;
+  background-size: auto 140px;
   background-position: center center;
   background-repeat: no-repeat;
   display: inline-block;
-  vertical-align: middle;
 
-  @media(max-width: 850px) {
+  // Cards will wrap into the next line after this breakpoint
+  @media(max-width: 865px) {
     height: 75px;
     min-width: 80px;
-    background-size: 80px;
-  }
-
-  &.addons {
-    background-image: url('#{$image-path}illustration-addons@2x.png');
-  }
-
-  &.privatebrowsing {
-    background-image: url('#{$image-path}illustration-privatebrowsing@2x.png');
-  }
-
-  &.screenshots {
-    background-image: url('#{$image-path}illustration-screenshots@2x.png');
-  }
-
-  &.gift {
-    background-image: url('#{$image-path}illustration-gift@2x.png');
-  }
-
-  &.sync {
-    background-image: url('#{$image-path}illustration-sync@2x.png');
-  }
-
-  &.devices {
-    background-image: url('#{$image-path}trailhead/card-illo-devices.png');
-  }
-
-  &.fbcont {
-    background-image: url('#{$image-path}trailhead/card-illo-fbcont.png');
-  }
-
-  &.ffmonitor {
-    background-image: url('#{$image-path}trailhead/card-illo-ffmonitor.png');
-  }
-
-  &.ffsend {
-    background-image: url('#{$image-path}trailhead/card-illo-ffsend.png');
-  }
-
-  &.lockwise {
-    background-image: url('#{$image-path}trailhead/card-illo-lockwise.png');
-  }
-
-  &.mobile {
-    background-image: url('#{$image-path}trailhead/card-illo-mobile.png');
-  }
-
-  &.pledge {
-    background-image: url('#{$image-path}trailhead/card-illo-pledge.png');
-  }
-
-  &.pocket {
-    background-image: url('#{$image-path}trailhead/card-illo-pocket.png');
-  }
-
-  &.private {
-    background-image: url('#{$image-path}trailhead/card-illo-private.png');
-  }
-
-  &.sendtab {
-    background-image: url('#{$image-path}trailhead/card-illo-sendtab.png');
-  }
-
-  &.tracking {
-    background-image: url('#{$image-path}trailhead/card-illo-tracking.png');
+    background-size: 140px;
   }
 }

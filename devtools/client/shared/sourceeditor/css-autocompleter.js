@@ -4,14 +4,13 @@
 
 "use strict";
 
-/* eslint-disable complexity */
 const {
   cssTokenizer,
   cssTokenizerWithLineColumn,
 } = require("devtools/shared/css/parsing-utils");
 const {
   getClientCssProperties,
-} = require("devtools/shared/fronts/css-properties");
+} = require("devtools/client/fronts/css-properties");
 
 /**
  * Here is what this file (+ css-parsing-utils.js) do.
@@ -166,6 +165,7 @@ CSSCompleter.prototype = {
    * @returns CSS_STATE
    *          One of CSS_STATE enum or null if the state cannot be resolved.
    */
+  // eslint-disable-next-line complexity
   resolveState: function(source, { line, ch }) {
     // Function to return the last element of an array
     const peek = arr => arr[arr.length - 1];

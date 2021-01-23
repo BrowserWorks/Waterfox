@@ -13,6 +13,11 @@
 // will stop the post-processing (which includes stack fixing) from working
 // correctly.
 
+// This is required on some systems such as Fedora to allow
+// building with -O0 together with --warnings-as-errors due to
+// a check in /usr/include/features.h
+#undef _FORTIFY_SOURCE
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +27,6 @@
 #include "mozilla/UniquePtr.h"
 #include "DMD.h"
 
-using mozilla::JSONWriter;
 using mozilla::MakeUnique;
 using namespace mozilla::dmd;
 
@@ -42,6 +46,8 @@ class FpWriteFunc : public mozilla::JSONWriteFunc {
   ~FpWriteFunc() { fclose(mFp); }
 
   void Write(const char* aStr) override { fputs(aStr, mFp); }
+
+  void Write(const char* aStr, size_t aLen) override { fputs(aStr, mFp); }
 
  private:
   FILE* mFp;

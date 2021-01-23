@@ -62,7 +62,7 @@ var SessionCookiesInternal = {
         );
       } catch (ex) {
         Cu.reportError(
-          `nsCookieService::CookieExists failed with error '${ex}' for '${JSON.stringify(
+          `CookieService::CookieExists failed with error '${ex}' for '${JSON.stringify(
             cookie
           )}'.`
         );
@@ -79,11 +79,11 @@ var SessionCookiesInternal = {
             /* isSession = */ true,
             expiry,
             cookie.originAttributes || {},
-            Ci.nsICookie2.SAMESITE_UNSET
+            cookie.sameSite || Ci.nsICookie.SAMESITE_NONE
           );
         } catch (ex) {
           Cu.reportError(
-            `nsCookieService::Add failed with error '${ex}' for cookie ${JSON.stringify(
+            `CookieService::Add failed with error '${ex}' for cookie ${JSON.stringify(
               cookie
             )}.`
           );
@@ -140,7 +140,7 @@ var SessionCookiesInternal = {
    * Adds a given cookie to the store.
    */
   _addCookie(cookie) {
-    cookie.QueryInterface(Ci.nsICookie2);
+    cookie.QueryInterface(Ci.nsICookie);
 
     // Store only session cookies, obey the privacy level.
     if (cookie.isSession && PrivacyLevel.canSave(cookie.isSecure)) {
@@ -152,7 +152,7 @@ var SessionCookiesInternal = {
    * Updates a given cookie.
    */
   _updateCookie(cookie) {
-    cookie.QueryInterface(Ci.nsICookie2);
+    cookie.QueryInterface(Ci.nsICookie);
 
     // Store only session cookies, obey the privacy level.
     if (cookie.isSession && PrivacyLevel.canSave(cookie.isSecure)) {
@@ -166,7 +166,7 @@ var SessionCookiesInternal = {
    * Removes a given cookie from the store.
    */
   _removeCookie(cookie) {
-    cookie.QueryInterface(Ci.nsICookie2);
+    cookie.QueryInterface(Ci.nsICookie);
 
     if (cookie.isSession) {
       CookieStore.delete(cookie);
@@ -178,7 +178,7 @@ var SessionCookiesInternal = {
    */
   _removeCookies(cookies) {
     for (let i = 0; i < cookies.length; i++) {
-      this._removeCookie(cookies.queryElementAt(i, Ci.nsICookie2));
+      this._removeCookie(cookies.queryElementAt(i, Ci.nsICookie));
     }
   },
 
@@ -194,7 +194,7 @@ var SessionCookiesInternal = {
       return;
     }
 
-    for (let cookie of Services.cookies.sessionEnumerator) {
+    for (let cookie of Services.cookies.sessionCookies) {
       this._addCookie(cookie);
     }
   },
@@ -213,7 +213,7 @@ var CookieStore = {
    * Stores a given cookie.
    *
    * @param cookie
-   *        The nsICookie2 object to add to the storage.
+   *        The nsICookie object to add to the storage.
    */
   add(cookie) {
     let jscookie = { host: cookie.host, value: cookie.value };
@@ -243,6 +243,10 @@ var CookieStore = {
       jscookie.originAttributes = cookie.originAttributes;
     }
 
+    if (cookie.sameSite) {
+      jscookie.sameSite = cookie.sameSite;
+    }
+
     this._entries.set(this._getKeyForCookie(cookie), jscookie);
   },
 
@@ -250,7 +254,7 @@ var CookieStore = {
    * Removes a given cookie.
    *
    * @param cookie
-   *        The nsICookie2 object to be removed from storage.
+   *        The nsICookie object to be removed from storage.
    */
   delete(cookie) {
     this._entries.delete(this._getKeyForCookie(cookie));
@@ -276,7 +280,7 @@ var CookieStore = {
    * path, and originAttributes properties.
    *
    * @param cookie
-   *        The nsICookie2 object to compute a key for.
+   *        The nsICookie object to compute a key for.
    * @return string
    */
   _getKeyForCookie(cookie) {

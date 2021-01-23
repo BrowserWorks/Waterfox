@@ -19,6 +19,7 @@ color_dict = {
     'log_process_output': 'blue',
     'log_test_status_pass': 'green',
     'log_test_status_unexpected_fail': 'red',
+    'log_test_status_known_intermittent': 'yellow',
     'time': 'cyan',
     'action': 'yellow',
     'pid': 'cyan',
@@ -136,22 +137,28 @@ class MachFormatter(base.BaseFormatter):
                     self.summary.current))
         return "\n".join(rv)
 
-    def _format_expected(self, status, expected):
+    def _format_expected(self, status, expected, known_intermittent=[]):
         if status == expected:
             color = self.color_formatter.log_test_status_pass
             if expected not in ("PASS", "OK"):
                 color = self.color_formatter.log_test_status_fail
                 status = "EXPECTED-%s" % status
         else:
-            color = self.color_formatter.log_test_status_fail
-            if status in ("PASS", "OK"):
-                status = "UNEXPECTED-%s" % status
+            if status in known_intermittent:
+                color = self.color_formatter.log_test_status_known_intermittent
+                status = "KNOWN-INTERMITTENT-%s" % status
+            else:
+                color = self.color_formatter.log_test_status_fail
+                if status in ("PASS", "OK"):
+                    status = "UNEXPECTED-%s" % status
         return color(status)
 
     def _format_status(self, test, data):
         name = data.get("subtest", test)
-        rv = "%s %s" % (self._format_expected(
-            data["status"], data.get("expected", data["status"])), name)
+        rv = "%s %s" % (self._format_expected(data["status"],
+                        data.get("expected", data["status"]),
+                        data.get("known_intermittent", [])),
+                        name)
         if "message" in data:
             rv += " - %s" % data["message"]
         if "stack" in data:
@@ -164,6 +171,8 @@ class MachFormatter(base.BaseFormatter):
     def _format_suite_summary(self, suite, summary):
         count = summary['counts']
         logs = summary['unexpected_logs']
+        intermittent_logs = summary['intermittent_logs']
+        harness_errors = summary['harness_errors']
 
         rv = [
             "",
@@ -178,7 +187,11 @@ class MachFormatter(base.BaseFormatter):
 
         # Format expected counts
         checks = self.summary.aggregate('expected', count, include_skip=False)
-        rv.append("Expected results: {}".format(sum(checks.values())))
+        intermittent_checks = self.summary.aggregate('known_intermittent',
+                                                     count, include_skip=False)
+        intermittents = sum(intermittent_checks.values())
+        known = " ({} known intermittents)".format(intermittents) if intermittents else ""
+        rv.append("Expected results: {}{}".format(sum(checks.values()), known))
 
         # Format skip counts
         skip_tests = count["test"]["expected"]["skip"]
@@ -192,8 +205,8 @@ class MachFormatter(base.BaseFormatter):
         # Format unexpected counts
         checks = self.summary.aggregate('unexpected', count)
         unexpected_count = sum(checks.values())
+        rv.append("Unexpected results: {}".format(unexpected_count))
         if unexpected_count:
-            rv.append("Unexpected results: {}".format(unexpected_count))
             for key in ('test', 'subtest', 'assert'):
                 if not count[key]['unexpected']:
                     continue
@@ -202,10 +215,30 @@ class MachFormatter(base.BaseFormatter):
                 rv.append("  {}: {} ({})".format(
                           key, sum(count[key]['unexpected'].values()), status_str))
 
+        # Format intermittents
+        if intermittents > 0:
+            heading = "Known Intermittent Results"
+            rv.extend(["", self.color_formatter.heading(heading),
+                       self.color_formatter.heading("-" * len(heading))])
+            if count['subtest']['count']:
+                for test_id, results in intermittent_logs.items():
+                    test = self._get_file_name(test_id)
+                    rv.append(self.color_formatter.bold(test))
+                    for data in results:
+                        rv.append("  %s" % self._format_status(test, data).rstrip())
+            else:
+                for test_id, results in intermittent_logs.items():
+                    test = self._get_file_name(test_id)
+                    for data in results:
+                        assert "subtest" not in data
+                        rv.append(self._format_status(test, data).rstrip())
+
         # Format status
-        if not any(count[key]["unexpected"] for key in ('test', 'subtest', 'assert')):
+        testfailed = any(count[key]["unexpected"] for key in ('test', 'subtest', 'assert'))
+        if not testfailed and not harness_errors:
             rv.append(self.color_formatter.log_test_status_pass("OK"))
         else:
+            # Format test failures
             heading = "Unexpected Results"
             rv.extend(["", self.color_formatter.heading(heading),
                        self.color_formatter.heading("-" * len(heading))])
@@ -218,10 +251,14 @@ class MachFormatter(base.BaseFormatter):
             else:
                 for test_id, results in logs.items():
                     test = self._get_file_name(test_id)
-                    assert len(results) == 1
-                    data = results[0]
-                    assert "subtest" not in data
-                    rv.append(self._format_status(test, data).rstrip())
+                    for data in results:
+                        assert "subtest" not in data
+                        rv.append(self._format_status(test, data).rstrip())
+
+            # Format harness errors
+            if harness_errors:
+                for data in harness_errors:
+                    rv.append(self.log(data))
 
         return "\n".join(rv)
 
@@ -232,7 +269,8 @@ class MachFormatter(base.BaseFormatter):
     def test_end(self, data):
         subtests = self._get_subtest_data(data)
 
-        if "expected" in data:
+        if ("expected" in data and
+                data["status"] not in data.get("known_intermittent", [])):
             parent_unexpected = True
             expected_str = ", expected %s" % data["expected"]
         else:
@@ -266,6 +304,12 @@ class MachFormatter(base.BaseFormatter):
                 rv += "\n"
                 for d in unexpected:
                     rv += self._format_status(data['test'], d)
+
+        intermittents = self.summary.current["intermittent_logs"].get(data["test"])
+        if intermittents:
+            rv += "\n"
+            for d in intermittents:
+                rv += self._format_status(data['test'], d)
 
         if "expected" not in data and not bool(subtests['unexpected']):
             color = self.color_formatter.log_test_status_pass
@@ -357,8 +401,10 @@ class MachFormatter(base.BaseFormatter):
         if data["status"] == "PASS":
             self.status_buffer[test]["pass"] += 1
 
-        if 'expected' in data:
+        if ('expected' in data and
+                data["status"] not in data.get("known_intermittent", [])):
             self.status_buffer[test]["unexpected"] += 1
+
         if self.verbose:
             return self._format_status(test, data).rstrip('\n')
 
@@ -399,24 +445,30 @@ class MachFormatter(base.BaseFormatter):
         else:
             success = False
 
-        rv = ["pid:%s. Test:%s. Minidump anaylsed:%s. Signature:[%s]" %
+        rv = ["pid:%s. Test:%s. Minidump analysed:%s. Signature:[%s]" %
               (data.get("pid", None), test, success, data["signature"])]
 
-        if data.get("minidump_path"):
-            rv.append("Crash dump filename: %s" % data["minidump_path"])
+        if data.get("java_stack"):
+            rv.append("Java exception: %s" % data["java_stack"])
+        else:
+            if data.get("reason"):
+                rv.append("Mozilla crash reason: %s" % data["reason"])
 
-        if data.get("stackwalk_returncode", 0) != 0:
-            rv.append("minidump_stackwalk exited with return code %d" %
-                      data["stackwalk_returncode"])
+            if data.get("minidump_path"):
+                rv.append("Crash dump filename: %s" % data["minidump_path"])
 
-        if data.get("stackwalk_stderr"):
-            rv.append("stderr from minidump_stackwalk:")
-            rv.append(data["stackwalk_stderr"])
-        elif data.get("stackwalk_stdout"):
-            rv.append(data["stackwalk_stdout"])
+            if data.get("stackwalk_returncode", 0) != 0:
+                rv.append("minidump_stackwalk exited with return code %d" %
+                          data["stackwalk_returncode"])
 
-        if data.get("stackwalk_errors"):
-            rv.extend(data.get("stackwalk_errors"))
+            if data.get("stackwalk_stderr"):
+                rv.append("stderr from minidump_stackwalk:")
+                rv.append(data["stackwalk_stderr"])
+            elif data.get("stackwalk_stdout"):
+                rv.append(data["stackwalk_stdout"])
+
+            if data.get("stackwalk_errors"):
+                rv.extend(data.get("stackwalk_errors"))
 
         rv = "\n".join(rv)
         if not rv[-1] == "\n":

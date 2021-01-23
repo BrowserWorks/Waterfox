@@ -5,10 +5,18 @@
 #
 # Unit tests for xpidl.py
 
+from __future__ import absolute_import
+
+import sys
+# Hack: the first entry in sys.path is the directory containing the script.
+# This messes things up because that directory is the xpidl module, and that
+# which conflicts with the xpidl submodule in the imports further below.
+sys.path.pop(0)
+
 import mozunit
 import unittest
-import xpidl
-import header
+from xpidl import xpidl
+from xpidl import header
 
 
 class TestParser(unittest.TestCase):
@@ -63,13 +71,15 @@ void bar();
         self.assertEqual(xpidl.TypeId("void"), m.type)
 
     def testMethodParams(self):
-        i = self.p.parse("""[uuid(abc)] interface foo {
-long bar(in long a, in float b, [array] in long c);
-};""", filename='f')
+        i = self.p.parse("""
+        [scriptable, uuid(aaa)] interface nsISupports {};
+        [uuid(abc)] interface foo : nsISupports {
+          long bar(in long a, in float b, [array] in long c);
+        };""", filename='f')
         i.resolve([], self.p, {})
         self.assertTrue(isinstance(i, xpidl.IDL))
-        self.assertTrue(isinstance(i.productions[0], xpidl.Interface))
-        iface = i.productions[0]
+        self.assertTrue(isinstance(i.productions[1], xpidl.Interface))
+        iface = i.productions[1]
         m = iface.members[0]
         self.assertTrue(isinstance(m, xpidl.Method))
         self.assertEqual("bar", m.name)
@@ -97,10 +107,12 @@ attribute long bar;
         self.assertEqual(xpidl.TypeId("long"), a.type)
 
     def testOverloadedVirtual(self):
-        i = self.p.parse("""[uuid(abc)] interface foo {
-attribute long bar;
-void getBar();
-};""", filename='f')
+        i = self.p.parse("""
+        [scriptable, uuid(00000000-0000-0000-0000-000000000000)] interface nsISupports {};
+        [uuid(abc)] interface foo : nsISupports {
+          attribute long bar;
+          void getBar();
+        };""", filename='f')
         self.assertTrue(isinstance(i, xpidl.IDL))
         i.resolve([], self.p, {})
 
@@ -108,15 +120,30 @@ void getBar();
             def write(self, s):
                 pass
         try:
-            header.print_header(i, FdMock(), filename='f')
+            header.print_header(i, FdMock(), filename='f', relpath='f')
             self.assertTrue(False, "Header printing failed to fail")
         except Exception as e:
             self.assertEqual(
                 e.args[0], "Unexpected overloaded virtual method GetBar in interface foo")
 
+    def testNotISupports(self):
+        i = self.p.parse("""
+        [uuid(abc)] interface foo {};
+        """, filename='f')
+        self.assertTrue(isinstance(i, xpidl.IDL))
+        try:
+            i.resolve([], self.p, {})
+            self.assertTrue(False,
+                            "Must check that interfaces inherit from nsISupports")
+        except xpidl.IDLError as e:
+            self.assertEqual(
+                e.message,
+                "Interface 'foo' must inherit from nsISupports")
+
     def testBuiltinClassParent(self):
         i = self.p.parse("""
-        [scriptable, builtinclass, uuid(abc)] interface foo {};
+        [scriptable, uuid(aaa)] interface nsISupports {};
+        [scriptable, builtinclass, uuid(abc)] interface foo : nsISupports {};
         [scriptable, uuid(def)] interface bar : foo {};
         """, filename='f')
         self.assertTrue(isinstance(i, xpidl.IDL))
@@ -132,7 +159,8 @@ void getBar();
     def testScriptableNotXPCOM(self):
         # notxpcom method requires builtinclass on the interface
         i = self.p.parse("""
-        [scriptable, uuid(abc)] interface nsIScriptableWithNotXPCOM {
+        [scriptable, uuid(aaa)] interface nsISupports {};
+        [scriptable, uuid(abc)] interface nsIScriptableWithNotXPCOM : nsISupports {
           [notxpcom] void method2();
         };
         """, filename='f')
@@ -150,7 +178,8 @@ void getBar();
         # notxpcom attribute requires builtinclass on the interface
         i = self.p.parse("""
         interface nsISomeInterface;
-        [scriptable, uuid(abc)] interface nsIScriptableWithNotXPCOM {
+        [scriptable, uuid(aaa)] interface nsISupports {};
+        [scriptable, uuid(abc)] interface nsIScriptableWithNotXPCOM : nsISupports {
           [notxpcom] attribute nsISomeInterface attrib;
         };
         """, filename='f')

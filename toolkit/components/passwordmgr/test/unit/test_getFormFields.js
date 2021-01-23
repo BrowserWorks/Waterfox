@@ -1,10 +1,8 @@
-/*
- * Test for LoginManagerContent._getFormFields.
+/**
+ * Test for LoginManagerChild._getFormFields.
  */
 
 "use strict";
-
-// Services.prefs.setBoolPref("signon.debug", true);
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
 
@@ -12,29 +10,52 @@ const { LoginFormFactory } = ChromeUtils.import(
   "resource://gre/modules/LoginFormFactory.jsm"
 );
 const LMCBackstagePass = ChromeUtils.import(
-  "resource://gre/modules/LoginManagerContent.jsm",
+  "resource://gre/modules/LoginManagerChild.jsm",
   null
 );
-const { LoginManagerContent } = LMCBackstagePass;
+const { LoginManagerChild } = LMCBackstagePass;
+
+const TESTENVIRONMENTS = {
+  filledPW1WithGeneratedPassword: {
+    generatedPWFieldSelectors: ["#pw1"],
+  },
+};
+
 const TESTCASES = [
   {
     description: "1 password field outside of a <form>",
     document: `<input id="pw1" type=password>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description: "1 text field outside of a <form> without a password field",
     document: `<input id="un1">`,
-    returnedFieldIDs: [null, null, null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    // there is no password field to fill, so no sense testing with gen. passwords
+    extraTestEnvironments: [],
   },
   {
     description: "1 username & password field outside of a <form>",
     document: `<input id="un1">
       <input id="pw1" type=password>`,
-    returnedFieldIDs: ["un1", "pw1", null],
+    returnedFieldIDs: {
+      usernameField: "un1",
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     beforeGetFunction(doc, formLike) {
@@ -49,8 +70,13 @@ const TESTCASES = [
     description: "1 username & password field outside of a <form>, un1 removed",
     document: `<input id="un1">
       <input id="pw1" type=password>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description: "1 username & password field in a <form>",
@@ -58,17 +84,44 @@ const TESTCASES = [
       <input id="un1">
       <input id="pw1" type=password>
       </form>`,
-    returnedFieldIDs: ["un1", "pw1", null],
+    returnedFieldIDs: {
+      usernameField: "un1",
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
-    description: "4 empty password fields outside of a <form>",
+    description: "5 empty password fields outside of a <form>",
     document: `<input id="pw1" type=password>
       <input id="pw2" type=password>
       <input id="pw3" type=password>
-      <input id="pw4" type=password>`,
-    returnedFieldIDs: [null, null, null],
+      <input id="pw4" type=password>
+      <input id="pw5" type=password>`,
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+  },
+  {
+    description: "6 empty password fields outside of a <form>",
+    document: `<input id="pw1" type=password>
+      <input id="pw2" type=password>
+      <input id="pw3" type=password>
+      <input id="pw4" type=password>
+      <input id="pw5" type=password>
+      <input id="pw6" type=password>`,
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
+    skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description:
@@ -77,74 +130,150 @@ const TESTCASES = [
       <input id="pw2" type=password value="pass2">
       <input id="pw3" type=password value="pass3">
       <input id="pw4" type=password value="pass4">`,
-    returnedFieldIDs: [null, null, null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
     skipEmptyFields: true,
+    // This test assumes that pw1 has not been filled, so don't test prefilling it
+    extraTestEnvironments: [],
   },
   {
     description: "Form with 1 password field",
     document: `<form><input id="pw1" type=password></form>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description: "Form with 2 password fields",
     document: `<form><input id="pw1" type=password><input id='pw2' type=password></form>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description: "1 password field in a form, 1 outside (not processed)",
     document: `<form><input id="pw1" type=password></form><input id="pw2" type=password>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description:
       "1 password field in a form, 1 text field outside (not processed)",
     document: `<form><input id="pw1" type=password></form><input>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description:
       "1 text field in a form, 1 password field outside (not processed)",
     document: `<form><input></form><input id="pw1" type=password>`,
-    returnedFieldIDs: [null, null, null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description:
       "2 password fields outside of a <form> with 1 linked via @form",
     document: `<input id="pw1" type=password><input id="pw2" type=password form='form1'>
       <form id="form1"></form>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: undefined,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description:
       "2 password fields outside of a <form> with 1 linked via @form + skipEmpty",
     document: `<input id="pw1" type=password><input id="pw2" type=password form="form1">
       <form id="form1"></form>`,
-    returnedFieldIDs: [null, null, null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
     skipEmptyFields: true,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
   },
   {
     description:
       "2 password fields outside of a <form> with 1 linked via @form + skipEmpty with 1 empty",
     document: `<input id="pw1" type=password value="pass1"><input id="pw2" type=password form="form1">
       <form id="form1"></form>`,
-    returnedFieldIDs: [null, "pw1", null],
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw1",
+      oldPasswordField: null,
+    },
     skipEmptyFields: true,
+    extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+  },
+  {
+    description:
+      "3 password fields, 2nd and 3rd are filled with generated passwords",
+    document: `<input id="pw1" type=password>
+      <input id="pw2" type=password value="pass2">
+      <input id="pw3" type=password value="pass3">`,
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: "pw2",
+      confirmPasswordField: "pw3",
+      oldPasswordField: "pw1",
+    },
+    skipEmptyFields: undefined,
+    generatedPWFieldSelectors: ["#pw2", "#pw3"],
+    // this test doesn't make sense to run with different filled generated password values
+    extraTestEnvironments: [],
   },
 ];
 
-for (let tc of TESTCASES) {
+const TEST_ENVIRONMENT_CASES = TESTCASES.flatMap(tc => {
+  let arr = [tc];
+  // also run this test case with this different state
+  for (let env of tc.extraTestEnvironments) {
+    arr.push({
+      ...tc,
+      ...env,
+    });
+  }
+  return arr;
+});
+
+for (let tc of TEST_ENVIRONMENT_CASES) {
   info("Sanity checking the testcase: " + tc.description);
 
   (function() {
     let testcase = tc;
     add_task(async function() {
       info("Starting testcase: " + testcase.description);
+      info("Document string: " + testcase.document);
       let document = MockDocument.createTestDocument(
         "http://localhost:8080/test/",
         testcase.document
@@ -163,34 +292,68 @@ for (let tc of TESTCASES) {
         await testcase.beforeGetFunction(document, formLike);
       }
 
-      let actual = LoginManagerContent._getFormFields(
+      let lmc = new LoginManagerChild();
+      let loginFormState = lmc.stateForDocument(formLike.ownerDocument);
+      loginFormState.generatedPasswordFields = _generateDocStateFromTestCase(
+        testcase,
+        document
+      );
+
+      let actual = lmc._getFormFields(
         formLike,
         testcase.skipEmptyFields,
         new Set()
       );
 
-      Assert.strictEqual(
-        testcase.returnedFieldIDs.length,
-        3,
-        "_getFormFields returns 3 elements"
-      );
-
-      for (let i = 0; i < testcase.returnedFieldIDs.length; i++) {
-        let expectedID = testcase.returnedFieldIDs[i];
+      [
+        "usernameField",
+        "newPasswordField",
+        "oldPasswordField",
+        "confirmPasswordField",
+      ].forEach(fieldName => {
+        Assert.ok(
+          fieldName in actual,
+          "_getFormFields return value includes " + fieldName
+        );
+      });
+      for (let key of Object.keys(testcase.returnedFieldIDs)) {
+        let expectedID = testcase.returnedFieldIDs[key];
         if (expectedID === null) {
           Assert.strictEqual(
-            actual[i],
+            actual[key],
             expectedID,
-            "Check returned field " + i + " is null"
+            "Check returned field " + key + " is null"
           );
         } else {
           Assert.strictEqual(
-            actual[i].id,
+            actual[key].id,
             expectedID,
-            "Check returned field " + i + " ID"
+            "Check returned field " + key + " ID"
           );
         }
       }
     });
   })();
+}
+
+function _generateDocStateFromTestCase(stateProperties, document) {
+  // prepopulate the document form state LMC holds with
+  // any generated password fields defined in this testcase
+  let generatedPasswordFields = new Set();
+  info(
+    "stateProperties has generatedPWFieldSelectors: " +
+      stateProperties.generatedPWFieldSelectors?.join(", ")
+  );
+
+  if (stateProperties.generatedPWFieldSelectors?.length) {
+    stateProperties.generatedPWFieldSelectors.forEach(sel => {
+      let field = document.querySelector(sel);
+      if (field) {
+        generatedPasswordFields.add(field);
+      } else {
+        info(`No password field: ${sel} found in this document`);
+      }
+    });
+  }
+  return generatedPasswordFields;
 }

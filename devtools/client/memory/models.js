@@ -8,7 +8,7 @@
 "use strict";
 
 const { assert } = require("devtools/shared/DevToolsUtils");
-const { MemoryFront } = require("devtools/shared/fronts/memory");
+const { MemoryFront } = require("devtools/client/fronts/memory");
 const HeapAnalysesClient = require("devtools/shared/heapsnapshot/HeapAnalysesClient");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const {
@@ -17,7 +17,7 @@ const {
   dominatorTreeState,
   viewState,
   individualsState,
-} = require("./constants");
+} = require("devtools/client/memory/constants");
 
 /**
  * ONLY USE THIS FOR MODEL VALIDATORS IN CONJUCTION WITH assert()!

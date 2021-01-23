@@ -2,15 +2,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function, unicode_literals
-
 import os
 import sys
-from argparse import REMAINDER, ArgumentParser
+from argparse import REMAINDER, SUPPRESS, ArgumentParser
 
 from mozlint.formatters import all_formatters
-
-SEARCH_PATHS = []
 
 
 class MozlintParser(ArgumentParser):
@@ -40,6 +36,12 @@ class MozlintParser(ArgumentParser):
           'default': False,
           'action': 'store_true',
           'help': "Display and fail on warnings in addition to errors.",
+          }],
+        [['-v', '--verbose'],
+         {'dest': 'show_verbose',
+          'default': False,
+          'action': 'store_true',
+          'help': "Enable verbose logging.",
           }],
         [['-f', '--format'],
          {'dest': 'formats',
@@ -75,6 +77,12 @@ class MozlintParser(ArgumentParser):
                   "can be used to only consider staged files. Works with "
                   "mercurial or git.",
           }],
+        [['-r', '--rev'],
+         {'default': None,
+          'type': str,
+          'help': "Lint files touched by changes in revisions described by REV. "
+                  "For mercurial, it may be any revset. For git, it is a single tree-ish.",
+          }],
         [['--fix'],
          {'action': 'store_true',
           'default': False,
@@ -91,6 +99,21 @@ class MozlintParser(ArgumentParser):
          {'action': 'store_true',
           'default': False,
           'help': "Bootstrap linter dependencies without running any of the linters."
+          }],
+        [['-j', '--jobs'],
+         {'default': None,
+          'dest': 'num_procs',
+          'type': int,
+          'help': "Number of worker processes to spawn when running linters. "
+                  "Defaults to the number of cores in your CPU.",
+          }],
+        # Paths to check for linter configurations.
+        # Default: tools/lint set in tools/lint/mach_commands.py
+        [['--config-path'],
+         {'action': 'append',
+          'default': [],
+          'dest': 'config_paths',
+          'help': SUPPRESS,
           }],
         [['extra_args'],
          {'nargs': REMAINDER,
@@ -153,9 +176,9 @@ class MozlintParser(ArgumentParser):
             args.formats = [('stylish', None)]
 
 
-def find_linters(linters=None):
-    lints = []
-    for search_path in SEARCH_PATHS:
+def find_linters(config_paths, linters=None):
+    lints = {}
+    for search_path in config_paths:
         if not os.path.isdir(search_path):
             continue
 
@@ -172,24 +195,26 @@ def find_linters(linters=None):
             if linters and name not in linters:
                 continue
 
-            lints.append(os.path.join(search_path, f))
-    return lints
+            lints[name] = os.path.join(search_path, f)
+    return lints.values()
 
 
-def run(paths, linters, formats, outgoing, workdir, edit,
-        setup=False, list_linters=False, **lintargs):
+def run(paths, linters, formats, outgoing, workdir, rev, edit,
+        setup=False, list_linters=False, num_procs=None, **lintargs):
     from mozlint import LintRoller, formatters
     from mozlint.editor import edit_issues
 
+    lintargs['config_paths'] = [os.path.join(lintargs['root'], p) for p in
+                                lintargs['config_paths']]
+
     if list_linters:
-        lint_paths = find_linters(linters)
-        print("Available linters: {}".format(
-            [os.path.splitext(os.path.basename(l))[0] for l in lint_paths]
-        ))
+        lint_paths = find_linters(lintargs['config_paths'], linters)
+        linters = [os.path.splitext(os.path.basename(l))[0] for l in lint_paths]
+        print("\n".join(sorted(linters)))
         return 0
 
     lint = LintRoller(**lintargs)
-    lint.read(find_linters(linters))
+    lint.read(find_linters(lintargs['config_paths'], linters))
 
     # Always run bootstrapping, but return early if --setup was passed in.
     ret = lint.setup()
@@ -197,21 +222,35 @@ def run(paths, linters, formats, outgoing, workdir, edit,
         return ret
 
     # run all linters
-    result = lint.roll(paths, outgoing=outgoing, workdir=workdir)
+    result = lint.roll(
+        paths,
+        outgoing=outgoing, workdir=workdir, rev=rev,
+        num_procs=num_procs
+    )
 
     if edit and result.issues:
         edit_issues(result)
-        result = lint.roll(result.issues.keys())
+        result = lint.roll(result.issues.keys(), num_procs=num_procs)
 
     for formatter_name, path in formats:
         formatter = formatters.get(formatter_name)
 
-        # Encode output with 'replace' to avoid UnicodeEncodeErrors on
-        # environments that aren't using utf-8.
-        out = formatter(result).encode(sys.stdout.encoding or 'ascii', 'replace')
+        out = formatter(result)
         if out:
-            output_file = open(path, 'w') if path else sys.stdout
-            print(out, file=output_file)
+            fh = open(path, 'w') if path else sys.stdout
+
+            if not path and fh.encoding == 'ascii':
+                # If sys.stdout.encoding is ascii, printing output will fail
+                # due to the stylish formatter's use of unicode characters.
+                # Ideally the user should fix their environment by setting
+                # `LC_ALL=C.UTF-8` or similar. But this is a common enough
+                # problem that we help them out a little here by manually
+                # encoding and writing to the stdout buffer directly.
+                out += '\n'
+                fh.buffer.write(out.encode('utf-8', errors='replace'))
+                fh.buffer.flush()
+            else:
+                print(out, file=fh)
 
     return result.returncode
 

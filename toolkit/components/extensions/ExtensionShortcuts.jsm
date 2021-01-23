@@ -56,7 +56,7 @@ const EXECUTE_BROWSER_ACTION = "_execute_browser_action";
 const EXECUTE_SIDEBAR_ACTION = "_execute_sidebar_action";
 
 function normalizeShortcut(shortcut) {
-  return shortcut ? shortcut.replace(/\s+/g, "") : null;
+  return shortcut ? shortcut.replace(/\s+/g, "") : "";
 }
 
 /**
@@ -124,7 +124,7 @@ class ExtensionShortcuts {
       command.description = description;
     }
 
-    if (shortcut && shortcut != command.shortcut) {
+    if (shortcut != null && shortcut != command.shortcut) {
       shortcut = normalizeShortcut(shortcut);
       commandUpdates.shortcut = shortcut;
       command.shortcut = shortcut;
@@ -168,7 +168,7 @@ class ExtensionShortcuts {
     // Map[{String} commandName -> {Object} commandProperties]
     this.manifestCommands = this.loadCommandsFromManifest(extension.manifest);
 
-    this.commands = new Promise(async resolve => {
+    this.commands = (async () => {
       // Deep copy the manifest commands to commands so we can keep the original
       // manifest commands and update commands as needed.
       let commands = new Map();
@@ -187,8 +187,8 @@ class ExtensionShortcuts {
         }
       });
 
-      resolve(commands);
-    });
+      return commands;
+    })();
   }
 
   registerKeys(commands) {

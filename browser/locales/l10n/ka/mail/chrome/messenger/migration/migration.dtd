@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "გადმოტანის მეგზური">
+
+<!ENTITY importFromWin.label            "პარამეტრების, ანგარიშების, წიგნაკის, ფილტრებისა და სხვა მონაცემების იმპორტი:">
+<!ENTITY importFromNonWin.label         "პარამეტრების, ანგარიშების, წიგნაკის, ფილტრებისა და სხვა მონაცემების იმპორტი:">
+<!ENTITY importSourceNotFound.label     "პროგრამები მონაცემების გადმოსატანად, ვერ მოიძებნა.">
+
+<!ENTITY importFromNothing.label        "იმპორტის გარეშე">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 ან უფრო ახალი">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "პარამეტრებისა და წერილების საქაღალდეების იმპორტი">
+<!ENTITY importItems.title              "ელემენტები">
+<!ENTITY importItems.label              "ელემენტების მონიშვნა:">
+
+<!ENTITY migrating.title                "იმპორტირება…">
+<!ENTITY migrating.label                "იმპორტირებულია შემდეგი ელემენტები…">
+
+<!ENTITY selectProfile.title            "პროფილის არჩევა">
+<!ENTITY selectProfile.label            "შესაძლებელია შემდეგი პროფილების იმპორტი:">
+
+<!ENTITY done.title                     "იმპორტი დასრულდა">
+<!ENTITY done.label                     "წარმატებით დაიმპორტდა შემდეგი ელემენტები:">

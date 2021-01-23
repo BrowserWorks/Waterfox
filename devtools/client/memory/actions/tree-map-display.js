@@ -4,8 +4,8 @@
 "use strict";
 
 const { assert } = require("devtools/shared/DevToolsUtils");
-const { actions } = require("../constants");
-const { refresh } = require("./refresh");
+const { actions } = require("devtools/client/memory/constants");
+const { refresh } = require("devtools/client/memory/actions/refresh");
 /**
  * Sets the tree map display as the current display and refreshes the tree map
  * census.
@@ -30,7 +30,7 @@ const setTreeMap = (exports.setTreeMap = function(display) {
       display.breakdown &&
       display.breakdown.by,
     "Breakdowns must be an object with a `by` property, attempted to set: " +
-      uneval(display)
+      JSON.stringify(display)
   );
 
   return {

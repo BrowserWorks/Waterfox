@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -505,7 +509,6 @@ exports.compareByGeneratedPositionsInflated = compareByGeneratedPositionsInflate
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
-
 function networkRequest(url, opts) {
   return fetch(url, {
     cache: opts.loadFromCache ? "default" : "no-cache"
@@ -517,8 +520,12 @@ function networkRequest(url, opts) {
           isDwarf: true
         }));
       }
-      return res.text().then(text => ({ content: text }));
+
+      return res.text().then(text => ({
+        content: text
+      }));
     }
+
     return Promise.reject(`request failed with status ${res.status}`);
   });
 }
@@ -530,20 +537,20 @@ module.exports = networkRequest;
 /***/ 14:
 /***/ (function(module, exports) {
 
-
-
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 function WorkerDispatcher() {
   this.msgId = 1;
   this.worker = null;
-} /* This Source Code Form is subject to the terms of the Mozilla Public
-   * License, v. 2.0. If a copy of the MPL was not distributed with this
-   * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
+}
 
 WorkerDispatcher.prototype = {
   start(url, win = window) {
     this.worker = new win.Worker(url);
-    this.worker.onerror = () => {
-      console.error(`Error in worker ${url}`);
+
+    this.worker.onerror = err => {
+      console.error(`Error in worker ${url}`, err.message);
     };
   },
 
@@ -556,8 +563,11 @@ WorkerDispatcher.prototype = {
     this.worker = null;
   },
 
-  task(method, { queue = false } = {}) {
+  task(method, {
+    queue = false
+  } = {}) {
     const calls = [];
+
     const push = args => {
       return new Promise((resolve, reject) => {
         if (queue && calls.length === 0) {
@@ -587,7 +597,9 @@ WorkerDispatcher.prototype = {
         calls: items.map(item => item[0])
       });
 
-      const listener = ({ data: result }) => {
+      const listener = ({
+        data: result
+      }) => {
         if (result.id !== id) {
           return;
         }
@@ -597,12 +609,13 @@ WorkerDispatcher.prototype = {
         }
 
         this.worker.removeEventListener("message", listener);
-
         result.results.forEach((resultData, i) => {
           const [, resolve, reject] = items[i];
 
           if (resultData.error) {
-            reject(resultData.error);
+            const err = new Error(resultData.message);
+            err.metadata = resultData.metadata;
+            reject(err);
           } else {
             resolve(resultData.response);
           }
@@ -618,30 +631,56 @@ WorkerDispatcher.prototype = {
   invoke(method, ...args) {
     return this.task(method)(...args);
   }
+
 };
 
 function workerHandler(publicInterface) {
   return function (msg) {
-    const { id, method, calls } = msg.data;
-
+    const {
+      id,
+      method,
+      calls
+    } = msg.data;
     Promise.all(calls.map(args => {
       try {
         const response = publicInterface[method].apply(undefined, args);
+
         if (response instanceof Promise) {
-          return response.then(val => ({ response: val }),
-          // Error can't be sent via postMessage, so be sure to
-          // convert to string.
-          err => ({ error: err.toString() }));
+          return response.then(val => ({
+            response: val
+          }), err => asErrorMessage(err));
         }
-        return { response };
+
+        return {
+          response
+        };
       } catch (error) {
-        // Error can't be sent via postMessage, so be sure to convert to
-        // string.
-        return { error: error.toString() };
+        return asErrorMessage(error);
       }
     })).then(results => {
-      self.postMessage({ id, results });
+      self.postMessage({
+        id,
+        results
+      });
     });
+  };
+}
+
+function asErrorMessage(error) {
+  if (typeof error === "object" && error && "message" in error) {
+    // Error can't be sent via postMessage, so be sure to convert to
+    // string.
+    return {
+      error: true,
+      message: error.message,
+      metadata: error.metadata
+    };
+  }
+
+  return {
+    error: true,
+    message: error == null ? error : error.toString(),
+    metadata: undefined
   };
 }
 
@@ -1364,9 +1403,7 @@ module.exports = __webpack_require__(380);
 "use strict";
 
 
-var _prettyFast = __webpack_require__(381);
-
-var _prettyFast2 = _interopRequireDefault(_prettyFast);
+var _prettyFast = _interopRequireDefault(__webpack_require__(381));
 
 var _devtoolsUtils = __webpack_require__(7);
 
@@ -1375,15 +1412,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
+const {
+  workerHandler
+} = _devtoolsUtils.workerUtils;
 
-const { workerHandler } = _devtoolsUtils.workerUtils;
-
-function prettyPrint({ url, indent, sourceText }) {
-  const prettified = (0, _prettyFast2.default)(sourceText, {
-    url: url,
+function prettyPrint({
+  url,
+  indent,
+  sourceText
+}) {
+  const prettified = (0, _prettyFast.default)(sourceText, {
+    url,
     indent: " ".repeat(indent)
   });
-
   return {
     code: prettified.code,
     mappings: invertMappings(prettified.map._mappings)
@@ -1398,6 +1439,7 @@ function invertMappings(mappings) {
         column: m.originalColumn
       }
     };
+
     if (m.source) {
       mapping.source = m.source;
       mapping.original = {
@@ -1406,11 +1448,14 @@ function invertMappings(mappings) {
       };
       mapping.name = m.name;
     }
+
     return mapping;
   });
 }
 
-self.onmessage = workerHandler({ prettyPrint });
+self.onmessage = workerHandler({
+  prettyPrint
+});
 
 /***/ }),
 
@@ -6084,8 +6129,8 @@ Object.defineProperty(exports, '__esModule', { value: true });
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
-
 const networkRequest = __webpack_require__(13);
+
 const workerUtils = __webpack_require__(14);
 
 module.exports = {

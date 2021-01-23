@@ -5,6 +5,7 @@
 
 #include "WebGL2Context.h"
 
+#include "ClientWebGLContext.h"
 #include "GLContext.h"
 #include "WebGLBuffer.h"
 #include "WebGLTransformFeedback.h"
@@ -15,9 +16,8 @@ namespace mozilla {
 // Buffer objects
 
 void WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
-                                      WebGLintptr readOffset,
-                                      WebGLintptr writeOffset,
-                                      WebGLsizeiptr size) {
+                                      uint64_t readOffset, uint64_t writeOffset,
+                                      uint64_t size) const {
   const FuncScope funcScope(*this, "copyBufferSubData");
   if (IsContextLost()) return;
 
@@ -26,12 +26,6 @@ void WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
 
   const auto& writeBuffer = ValidateBufferSelection(writeTarget);
   if (!writeBuffer) return;
-
-  if (!ValidateNonNegative("readOffset", readOffset) ||
-      !ValidateNonNegative("writeOffset", writeOffset) ||
-      !ValidateNonNegative("size", size)) {
-    return;
-  }
 
   if (!CheckedInt<GLintptr>(readOffset).isValid() ||
       !CheckedInt<GLintptr>(writeOffset).isValid() ||
@@ -84,27 +78,15 @@ void WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
   writeBuffer->ResetLastUpdateFenceId();
 }
 
-void WebGL2Context::GetBufferSubData(GLenum target, WebGLintptr srcByteOffset,
-                                     const dom::ArrayBufferView& dstData,
-                                     GLuint dstElemOffset,
-                                     GLuint dstElemCountOverride) {
+void WebGL2Context::GetBufferSubData(GLenum target, uint64_t srcByteOffset,
+                                     const Range<uint8_t>& dest) const {
   const FuncScope funcScope(*this, "getBufferSubData");
   if (IsContextLost()) return;
-
-  if (!ValidateNonNegative("srcByteOffset", srcByteOffset)) return;
-
-  uint8_t* bytes;
-  size_t byteLen;
-  if (!ValidateArrayBufferView(dstData, dstElemOffset, dstElemCountOverride,
-                               LOCAL_GL_INVALID_VALUE, &bytes, &byteLen)) {
-    return;
-  }
-
-  ////
 
   const auto& buffer = ValidateBufferSelection(target);
   if (!buffer) return;
 
+  const auto byteLen = dest.length();
   if (!buffer->ValidateRange(srcByteOffset, byteLen)) return;
 
   ////
@@ -151,7 +133,7 @@ void WebGL2Context::GetBufferSubData(GLenum target, WebGLintptr srcByteOffset,
 
     const auto mappedBytes = gl->fMapBufferRange(
         mapTarget, srcByteOffset, glByteLen, LOCAL_GL_MAP_READ_BIT);
-    memcpy(bytes, mappedBytes, byteLen);
+    memcpy(dest.begin().get(), mappedBytes, dest.length());
     gl->fUnmapBuffer(mapTarget);
 
     if (isTF) {

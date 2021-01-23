@@ -9,11 +9,13 @@ import { connect } from "../../utils/connect";
 import { showMenu } from "devtools-contextmenu";
 
 import { getSourceLocationFromMouseEvent } from "../../utils/editor";
+import { isPretty } from "../../utils/source";
 import {
   getPrettySource,
   getIsPaused,
   getCurrentThread,
   getThreadContext,
+  isSourceWithMap,
 } from "../../selectors";
 
 import { editorMenuItems, editorItemActions } from "./menus/editor";
@@ -22,20 +24,24 @@ import type { SourceWithContent, ThreadContext } from "../../types";
 import type { EditorItemActions } from "./menus/editor";
 import type SourceEditor from "../../utils/editor/source-editor";
 
+type OwnProps = {|
+  selectedSource: SourceWithContent,
+  contextMenu: ?MouseEvent,
+  clearContextMenu: () => void,
+  editor: SourceEditor,
+|};
 type Props = {
   cx: ThreadContext,
   contextMenu: ?MouseEvent,
   editorActions: EditorItemActions,
   clearContextMenu: () => void,
   editor: SourceEditor,
-  hasPrettySource: boolean,
+  hasMappedLocation: boolean,
   isPaused: boolean,
-  selectedSourceWithContent: SourceWithContent,
+  selectedSource: SourceWithContent,
 };
 
 class EditorMenu extends Component<Props> {
-  props: Props;
-
   componentWillUpdate(nextProps: Props) {
     this.props.clearContextMenu();
     if (nextProps.contextMenu) {
@@ -43,20 +49,20 @@ class EditorMenu extends Component<Props> {
     }
   }
 
-  showMenu(props) {
+  showMenu(props: Props) {
     const {
       cx,
       editor,
-      selectedSourceWithContent,
+      selectedSource,
       editorActions,
-      hasPrettySource,
+      hasMappedLocation,
       isPaused,
       contextMenu: event,
     } = props;
 
     const location = getSourceLocationFromMouseEvent(
       editor,
-      selectedSourceWithContent.source,
+      selectedSource,
       // Use a coercion, as contextMenu is optional
       (event: any)
     );
@@ -66,8 +72,8 @@ class EditorMenu extends Component<Props> {
       editorMenuItems({
         cx,
         editorActions,
-        selectedSourceWithContent,
-        hasPrettySource,
+        selectedSource,
+        hasMappedLocation,
         location,
         isPaused,
         selectionText: editor.codeMirror.getSelection().trim(),
@@ -84,17 +90,18 @@ class EditorMenu extends Component<Props> {
 const mapStateToProps = (state, props) => ({
   cx: getThreadContext(state),
   isPaused: getIsPaused(state, getCurrentThread(state)),
-  hasPrettySource: !!getPrettySource(
-    state,
-    props.selectedSourceWithContent.source.id
-  ),
+  hasMappedLocation:
+    (props.selectedSource.isOriginal ||
+      isSourceWithMap(state, props.selectedSource.id) ||
+      isPretty(props.selectedSource)) &&
+    !getPrettySource(state, props.selectedSource.id),
 });
 
 const mapDispatchToProps = dispatch => ({
   editorActions: editorItemActions(dispatch),
 });
 
-export default connect(
+export default connect<Props, OwnProps, _, _, _, _>(
   mapStateToProps,
   mapDispatchToProps
 )(EditorMenu);

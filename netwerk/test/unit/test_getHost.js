@@ -1,5 +1,7 @@
 // Test getLocalHost/getLocalPort and getRemoteHost/getRemotePort.
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpserver = new HttpServer();
@@ -11,7 +13,7 @@ var gotOnStartRequest = false;
 function CheckGetHostListener() {}
 
 CheckGetHostListener.prototype = {
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     dump("*** listener onStartRequest\n");
 
     gotOnStartRequest = true;
@@ -28,19 +30,14 @@ CheckGetHostListener.prototype = {
     }
   },
 
-  onStopRequest: function(request, statusCode) {
+  onStopRequest(request, statusCode) {
     dump("*** listener onStopRequest\n");
 
     Assert.equal(gotOnStartRequest, true);
     httpserver.stop(do_test_finished);
   },
 
-  QueryInterface: function(iid) {
-    if (iid.equals(Ci.nsIRequestObserver) || iid.equals(Ci.nsISupports)) {
-      return this;
-    }
-    throw Cr.NS_NOINTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIRequestObserver"]),
 };
 
 function make_channel(url) {

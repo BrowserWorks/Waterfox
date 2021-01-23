@@ -8,6 +8,7 @@ include('/js/app.mozbuild')
 
 PYTHON_UNITTEST_MANIFESTS += [
     '/layout/tools/reftest/selftest/python.ini',
+    '/testing/condprofile/condprof/tests/python.ini',
     '/testing/marionette/harness/marionette_harness/tests/harness_unit/python.ini',
     '/testing/mochitest/tests/python/python.ini',
     '/testing/raptor/test/python.ini',
@@ -73,10 +74,8 @@ if CONFIG['MOZ_UPDATER'] and CONFIG['OS_TARGET'] != 'Android':
 
 DIRS += [
     '/ipc',
-    '/js/ipc',
     '/hal',
     '/js/xpconnect',
-    '/intl/chardet',
     '/modules/libjar',
     '/storage',
 ]
@@ -131,6 +130,7 @@ if CONFIG['MOZ_JPROF']:
 
 DIRS += [
     '/tools/code-coverage',
+    '/tools/performance',
     '/tools/power',
     '/tools/profiler',
 ]
@@ -155,7 +155,7 @@ DIRS += [
     '/other-licenses/snappy',
 ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     DIRS += [
         '/toolkit/system/gnome',
     ]
@@ -167,6 +167,7 @@ if CONFIG['ENABLE_MARIONETTE']:
     DIRS += [
         '/testing/firefox-ui',
         '/testing/marionette',
+        '/toolkit/components/telemetry/tests/marionette',
     ]
 
 if CONFIG['ENABLE_GECKODRIVER'] and not CONFIG['MOZ_TSAN'] and not CONFIG['FUZZING_INTERFACES']:

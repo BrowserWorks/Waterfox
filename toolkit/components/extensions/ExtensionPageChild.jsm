@@ -43,7 +43,7 @@ const CATEGORY_EXTENSION_SCRIPTS_DEVTOOLS = "webextension-scripts-devtools";
 const { ExtensionCommon } = ChromeUtils.import(
   "resource://gre/modules/ExtensionCommon.jsm"
 );
-const { ExtensionChild } = ChromeUtils.import(
+const { ExtensionChild, ExtensionActivityLogChild } = ChromeUtils.import(
   "resource://gre/modules/ExtensionChild.jsm"
 );
 const { ExtensionUtils } = ChromeUtils.import(
@@ -180,6 +180,7 @@ class ExtensionBaseContextChild extends BaseContext {
     this.uri = uri || extension.baseURI;
 
     this.setContentWindow(contentWindow);
+    this.browsingContextId = contentWindow.docShell.browsingContext.id;
 
     // This is the MessageSender property passed to extension.
     let sender = { id: extension.id };
@@ -213,6 +214,10 @@ class ExtensionBaseContextChild extends BaseContext {
     });
   }
 
+  logActivity(type, name, data) {
+    ExtensionActivityLogChild.log(this, type, name, data);
+  }
+
   get cloneScope() {
     return this.contentWindow;
   }
@@ -236,6 +241,10 @@ class ExtensionBaseContextChild extends BaseContext {
 
   // Called when the extension shuts down.
   shutdown() {
+    if (this.contentWindow) {
+      this.contentWindow.close();
+    }
+
     this.unload();
   }
 
@@ -247,10 +256,6 @@ class ExtensionBaseContextChild extends BaseContext {
     // triggered below.
     if (this.unloaded) {
       return;
-    }
-
-    if (this.contentWindow) {
-      this.contentWindow.close();
     }
 
     super.unload();
@@ -294,6 +299,10 @@ class ExtensionPageContextChild extends ExtensionBaseContextChild {
   constructor(extension, params) {
     super(extension, Object.assign(params, { envType: "addon_child" }));
 
+    if (this.viewType == "background") {
+      initializeBackgroundPage(this);
+    }
+
     this.extension.views.add(this);
   }
 
@@ -320,10 +329,6 @@ defineLazyGetter(
     });
 
     this.callOnClose(childManager);
-
-    if (this.viewType == "background") {
-      initializeBackgroundPage(this);
-    }
 
     return childManager;
   }

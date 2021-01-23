@@ -9,8 +9,9 @@
 #ifndef mozilla_IntegerTypeTraits_h
 #define mozilla_IntegerTypeTraits_h
 
-#include "mozilla/TypeTraits.h"
+#include <stddef.h>
 #include <stdint.h>
+#include <type_traits>
 
 namespace mozilla {
 
@@ -76,53 +77,10 @@ struct SignedStdintTypeForSize
 
 template <typename IntegerType>
 struct PositionOfSignBit {
-  static_assert(IsIntegral<IntegerType>::value,
+  static_assert(std::is_integral_v<IntegerType>,
                 "PositionOfSignBit is only for integral types");
   // 8 here should be CHAR_BIT from limits.h, but the world has moved on.
   static const size_t value = 8 * sizeof(IntegerType) - 1;
-};
-
-/**
- * MinValue returns the minimum value of the given integer type as a
- * compile-time constant, which std::numeric_limits<IntegerType>::min()
- * cannot do in c++98.
- */
-template <typename IntegerType>
-struct MinValue {
- private:
-  static_assert(IsIntegral<IntegerType>::value,
-                "MinValue is only for integral types");
-
-  typedef typename MakeUnsigned<IntegerType>::Type UnsignedIntegerType;
-  static const size_t PosOfSignBit = PositionOfSignBit<IntegerType>::value;
-
- public:
-  // Bitwise ops may return a larger type, that's why we cast explicitly.
-  // In C++, left bit shifts on signed values is undefined by the standard
-  // unless the shifted value is representable.
-  // Notice that signed-to-unsigned conversions are always well-defined in
-  // the standard as the value congruent to 2**n, as expected. By contrast,
-  // unsigned-to-signed is only well-defined if the value is representable.
-  static const IntegerType value =
-      IsSigned<IntegerType>::value
-          ? IntegerType(UnsignedIntegerType(1) << PosOfSignBit)
-          : IntegerType(0);
-};
-
-/**
- * MaxValue returns the maximum value of the given integer type as a
- * compile-time constant, which std::numeric_limits<IntegerType>::max()
- * cannot do in c++98.
- */
-template <typename IntegerType>
-struct MaxValue {
-  static_assert(IsIntegral<IntegerType>::value,
-                "MaxValue is only for integral types");
-
-  // Tricksy, but covered by the CheckedInt unit test.
-  // Relies on the type of MinValue<IntegerType>::value
-  // being IntegerType.
-  static const IntegerType value = ~MinValue<IntegerType>::value;
 };
 
 }  // namespace mozilla

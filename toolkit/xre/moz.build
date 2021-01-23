@@ -38,6 +38,7 @@ EXPORTS.mozilla += [
     'Bootstrap.h',
     'CmdLineAndEnvUtils.h',
     'SafeMode.h',
+    'UntrustedModulesData.h',
 ]
 
 if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
@@ -46,18 +47,21 @@ if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     EXPORTS.mozilla += [
         'AssembleCmdLine.h',
-        'LauncherResult.h',
-        'ModuleEvaluator_windows.h',
-        'ModuleVersionInfo_windows.h',
+        'ModuleVersionInfo.h',
         'PolicyChecks.h',
+        'UntrustedModulesProcessor.h',
         'WinDllServices.h',
+        'WinTokenUtils.h',
     ]
     UNIFIED_SOURCES += [
         '/toolkit/mozapps/update/common/updateutils_win.cpp',
-        'ModuleEvaluator_windows.cpp',
-        'ModuleVersionInfo_windows.cpp',
+        'ModuleEvaluator.cpp',
+        'ModuleVersionInfo.cpp',
         'nsNativeAppSupportWin.cpp',
+        'UntrustedModulesData.cpp',
+        'UntrustedModulesProcessor.cpp',
         'WinDllServices.cpp',
+        'WinTokenUtils.cpp',
     ]
     DEFINES['PROXY_PRINTING'] = 1
     LOCAL_INCLUDES += [
@@ -88,7 +92,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'uikit':
         'nsNativeAppSupportDefault.cpp',
         'UIKitDirProvider.mm',
     ]
-elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     UNIFIED_SOURCES += [
         'nsNativeAppSupportUnix.cpp',
     ]
@@ -102,7 +106,7 @@ if CONFIG['MOZ_HAS_REMOTE']:
         '../components/remote',
     ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     UNIFIED_SOURCES += [
         'nsGDKErrorHandler.cpp',
     ]
@@ -180,6 +184,9 @@ for var in ('MOZ_APP_NAME', 'MOZ_APP_BASENAME', 'MOZ_APP_DISPLAYNAME',
             'MOZ_WIDGET_TOOLKIT'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
+if CONFIG['MOZ_DEFAULT_BROWSER_AGENT'] and CONFIG['OS_ARCH'] == 'WINNT':
+    DEFINES['MOZ_DEFAULT_BROWSER_AGENT'] = CONFIG['MOZ_DEFAULT_BROWSER_AGENT']
+
 if CONFIG['MOZ_UPDATER'] and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     DEFINES['MOZ_UPDATER'] = True
 
@@ -246,7 +253,7 @@ CXXFLAGS += CONFIG['TK_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_DBUS_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
 
 DEFINES['TOPOBJDIR'] = TOPOBJDIR
@@ -259,9 +266,6 @@ if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
 
 if CONFIG['MOZ_IPDL_TESTS']:
     DEFINES['MOZ_IPDL_TESTS'] = True
-
-if CONFIG['MOZ_PROFILE_GENERATE']:
-    DEFINES['MOZ_PROFILE_GENERATE'] = True
 
 if CONFIG['ENABLE_TESTS']:
     DIRS += ['test/gtest']

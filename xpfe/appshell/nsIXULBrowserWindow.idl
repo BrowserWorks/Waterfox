@@ -15,13 +15,15 @@ interface nsIRemoteTab;
 interface nsIPrincipal;
 interface mozIDOMWindowProxy;
 interface nsIContentSecurityPolicy;
+interface nsIReferrerInfo;
+
 webidl Element;
 webidl Node;
 
 /**
  * The nsIXULBrowserWindow supplies the methods that may be called from the
  * internals of the browser area to tell the containing xul window to update
- * its ui. 
+ * its ui.
  */
 [scriptable, uuid(a8675fa9-c8b4-4350-9803-c38f344a9e38)]
 interface nsIXULBrowserWindow : nsISupports
@@ -30,7 +32,7 @@ interface nsIXULBrowserWindow : nsISupports
    * Tells the object implementing this function what link we are currently
    * over.
    */
-  void setOverLink(in AString link, in Element element);
+  void setOverLink(in AString link);
 
   /**
    * Determines the appropriate target for a link.
@@ -41,21 +43,14 @@ interface nsIXULBrowserWindow : nsISupports
                                 in boolean isAppTab);
 
   /**
-   * Find the initial browser of the window and set its remote attributes.
-   * This can be used to ensure that there is a browser in a new window of the
-   * correct type when it first spawns.
-   */
-  void forceInitialBrowserNonRemote(in mozIDOMWindowProxy openerWindow);
-
-  /**
    * Determines whether a load should continue.
    *
    * @param aDocShell
    *        The docshell performing the load.
    * @param aURI
    *        The URI being loaded.
-   * @param aReferrer
-   *        The referrer of the load.
+   * @param aReferrerInfo
+   *        The referrerInfo of the load.
    * @param aHasPostData
    *        True if the load which is being asked about has associated post data
    *        which would be discarded if the load was redirected across process
@@ -66,11 +61,11 @@ interface nsIXULBrowserWindow : nsISupports
    *        The CSP to be used for that load. That is the CSP that e.g. upgrades
    *        the load to HTTPS in case upgrade-insecure-requests is set
    */
-  bool shouldLoadURI(in nsIDocShell    aDocShell,
-                     in nsIURI         aURI,
-                     in nsIURI         aReferrer,
-                     in boolean        aHasPostData,
-                     in nsIPrincipal   aTriggeringPrincipal,
+  bool shouldLoadURI(in nsIDocShell              aDocShell,
+                     in nsIURI                   aURI,
+                     in nsIReferrerInfo          aReferrerInfo,
+                     in boolean                  aHasPostData,
+                     in nsIPrincipal             aTriggeringPrincipal,
                      in nsIContentSecurityPolicy aCsp);
   /**
    * Show/hide a tooltip (when the user mouses over a link, say).
@@ -91,11 +86,5 @@ interface nsIXULBrowserWindow : nsISupports
    * perform the load, this will also occur.
    */
   void navigateAndRestoreByIndex(in nsIBrowser aBrowser, in long aIndex);
-
-  // update sessionStore from the tabListener implemented by C++
-  void updateDocShellCaps(in ACString aDisCaps);
-  void updateIsPrivate(in boolean aIsPrivate);
-  void updateScrollPositions(in Array<ACString> aPositions, in Array<long> aChildren);
-  void updateSessionStore(in Element aBrowser, in uint32_t aFlushId);
 };
 

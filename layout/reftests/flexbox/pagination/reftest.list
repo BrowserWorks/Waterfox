@@ -13,10 +13,10 @@
 
 # Tests with an empty flex container being fragmented, with margin, border,
 # and/or padding being taller than the available height:
-== flexbox-empty-2a.html flexbox-empty-2-ref.html
-== flexbox-empty-2b.html flexbox-empty-2-ref.html
-== flexbox-empty-2c.html flexbox-empty-2-ref.html
-== flexbox-empty-2d.html flexbox-empty-2-ref.html
+fuzzy-if(Android&&webrender,0-128,0-10) == flexbox-empty-2a.html flexbox-empty-2-ref.html
+fuzzy-if(Android&&webrender,0-128,0-10) == flexbox-empty-2b.html flexbox-empty-2-ref.html
+fuzzy-if(Android&&webrender,0-128,0-10) == flexbox-empty-2c.html flexbox-empty-2-ref.html
+fuzzy-if(Android&&webrender,0-128,0-10) == flexbox-empty-2d.html flexbox-empty-2-ref.html
 
 # Tests for how we fragment a flex container with one unbreakable child
 == flexbox-unbreakable-child-1a.html      flexbox-unbreakable-child-1-ref.html
@@ -28,3 +28,45 @@
 == flexbox-unbreakable-child-1d.html      flexbox-unbreakable-child-1-ref.html
 == flexbox-unbreakable-child-1d-wrap.html flexbox-unbreakable-child-1-ref.html
 == flexbox-unbreakable-child-2.html       flexbox-unbreakable-child-2-ref.html
+
+# Tests for how we fragment a flex container with one unbreakable child and
+# "box-decoration-break: clone"
+== flexbox-unbreakable-child-3a.html      flexbox-unbreakable-child-3-ref.html
+== flexbox-unbreakable-child-3a-wrap.html flexbox-unbreakable-child-3-ref.html
+== flexbox-unbreakable-child-3b.html      flexbox-unbreakable-child-3-ref.html
+== flexbox-unbreakable-child-3b-wrap.html flexbox-unbreakable-child-3-ref.html
+== flexbox-unbreakable-child-3c.html      flexbox-unbreakable-child-3-ref.html
+== flexbox-unbreakable-child-3c-wrap.html flexbox-unbreakable-child-3-ref.html
+== flexbox-unbreakable-child-3d.html      flexbox-unbreakable-child-3-ref.html
+== flexbox-unbreakable-child-3d-wrap.html flexbox-unbreakable-child-3-ref.html
+
+# Tests for how we fragment flex items in a single-line column flex container.
+== flexbox-single-column-1a.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1b.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1c.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1d.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1e.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1f.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1g.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1h.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1i.html flexbox-single-column-1-ref.html
+== flexbox-single-column-1j.html flexbox-single-column-1-ref.html
+== flexbox-single-column-2.html flexbox-single-column-2-ref.html
+== flexbox-single-column-3a.html flexbox-single-column-3-ref.html
+== flexbox-single-column-3b.html flexbox-single-column-3-ref.html
+== flexbox-single-column-4.html flexbox-single-column-4-ref.html
+== flexbox-single-column-5.html flexbox-single-column-5-ref.html
+
+# Tests for how we fragment flex items in a single-line row flex container.
+== flexbox-single-row-1a.html flexbox-single-row-1-ref.html
+== flexbox-single-row-1b.html flexbox-single-row-1-ref.html
+== flexbox-single-row-1c.html flexbox-single-row-1-ref.html
+== flexbox-single-row-1d.html flexbox-single-row-1-ref.html
+== flexbox-single-row-1e.html flexbox-single-row-1-ref.html
+== flexbox-single-row-1f.html flexbox-single-row-1-ref.html
+== flexbox-single-row-1g.html flexbox-single-row-1-ref.html
+== flexbox-single-row-1h.html flexbox-single-row-1-ref.html
+== flexbox-single-row-2.html flexbox-single-row-2-ref.html
+== flexbox-single-row-3a.html flexbox-single-row-3-ref.html
+== flexbox-single-row-3b.html flexbox-single-row-3-ref.html
+== flexbox-single-row-4.html flexbox-single-row-4-ref.html

@@ -5,6 +5,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/NativeNt.h"
+#include "mozilla/ThreadLocal.h"
 #include "mozilla/UniquePtr.h"
 
 #include <stdio.h>
@@ -21,6 +22,8 @@ const wchar_t kNonHex12[] = L"Foo.ABCDEFG12345.dll";
 const wchar_t kHex13[] = L"Foo.ABCDEF0123456.dll";
 const wchar_t kHex11[] = L"Foo.ABCDEF01234.dll";
 const wchar_t kPrefixedHex16[] = L"Pabcdef0123456789.dll";
+const uint32_t kTlsDataValue = 1234;
+static MOZ_THREAD_LOCAL(uint32_t) sTlsData;
 
 const char kFailFmt[] =
     "TEST-FAILED | NativeNt | %s(%s) should have returned %s but did not\n";
@@ -38,7 +41,45 @@ const char kFailFmt[] =
 using namespace mozilla;
 using namespace mozilla::nt;
 
-int main(int argc, char* argv[]) {
+bool TestVirtualQuery(HANDLE aProcess, LPCVOID aAddress) {
+  MEMORY_BASIC_INFORMATION info1 = {}, info2 = {};
+  SIZE_T result1 = ::VirtualQueryEx(aProcess, aAddress, &info1, sizeof(info1)),
+         result2 = mozilla::nt::VirtualQueryEx(aProcess, aAddress, &info2,
+                                               sizeof(info2));
+  if (result1 != result2) {
+    printf("TEST-FAILED | NativeNt | The returned values mismatch\n");
+    return false;
+  }
+
+  if (!result1) {
+    // Both APIs failed.
+    return true;
+  }
+
+  if (memcmp(&info1, &info2, result1) != 0) {
+    printf("TEST-FAILED | NativeNt | The returned structures mismatch\n");
+    return false;
+  }
+
+  return true;
+}
+
+LauncherResult<HMODULE> GetModuleHandleFromLeafName(const wchar_t* aName) {
+  UNICODE_STRING name;
+  ::RtlInitUnicodeString(&name, aName);
+  return nt::GetModuleHandleFromLeafName(name);
+}
+
+// Need a non-inline function to bypass compiler optimization that the thread
+// local storage pointer is cached in a register before accessing a thread-local
+// variable.
+MOZ_NEVER_INLINE PVOID SwapThreadLocalStoragePointer(PVOID aNewValue) {
+  auto oldValue = RtlGetThreadLocalStoragePointer();
+  RtlSetThreadLocalStoragePointerForTestingOnly(aNewValue);
+  return oldValue;
+}
+
+int wmain(int argc, wchar_t* argv[]) {
   UNICODE_STRING normal;
   ::RtlInitUnicodeString(&normal, kNormal);
 
@@ -90,6 +131,41 @@ int main(int argc, char* argv[]) {
 
   if (RtlGetProcessHeap() != ::GetProcessHeap()) {
     printf("TEST-FAILED | NativeNt | RtlGetProcessHeap() is broken\n");
+    return 1;
+  }
+
+#ifdef HAVE_SEH_EXCEPTIONS
+  PVOID origTlsHead = nullptr;
+  bool isExceptionThrown = false;
+  // Touch sTlsData.get() several times to prevent the call to sTlsData.set()
+  // from being optimized out in PGO build.
+  printf("sTlsData#1 = %08x\n", sTlsData.get());
+  MOZ_SEH_TRY {
+    // Need to call SwapThreadLocalStoragePointer inside __try to make sure
+    // accessing sTlsData is caught by SEH.  This is due to clang's design.
+    // https://bugs.llvm.org/show_bug.cgi?id=44174.
+    origTlsHead = SwapThreadLocalStoragePointer(nullptr);
+    sTlsData.set(~kTlsDataValue);
+  }
+  MOZ_SEH_EXCEPT(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION
+                     ? EXCEPTION_EXECUTE_HANDLER
+                     : EXCEPTION_CONTINUE_SEARCH) {
+    isExceptionThrown = true;
+  }
+  SwapThreadLocalStoragePointer(origTlsHead);
+  printf("sTlsData#2 = %08x\n", sTlsData.get());
+  sTlsData.set(kTlsDataValue);
+  printf("sTlsData#3 = %08x\n", sTlsData.get());
+  if (!isExceptionThrown || sTlsData.get() != kTlsDataValue) {
+    printf(
+        "TEST-FAILED | NativeNt | RtlGetThreadLocalStoragePointer() is "
+        "broken\n");
+    return 1;
+  }
+#endif
+
+  if (RtlGetCurrentThreadId() != ::GetCurrentThreadId()) {
+    printf("TEST-FAILED | NativeNt | RtlGetCurrentThreadId() is broken\n");
     return 1;
   }
 
@@ -151,5 +227,68 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
+  Maybe<Span<IMAGE_THUNK_DATA>> iatThunks =
+      k32headers.GetIATThunksForModule("kernel32.dll");
+  if (iatThunks) {
+    printf(
+        "TEST-FAILED | NativeNt | Detected the IAT thunk for kernel32 "
+        "in kernel32.dll\n");
+    return 1;
+  }
+
+  PEHeaders ntdllheaders(::GetModuleHandleW(L"ntdll.dll"));
+
+  auto ntdllBoundaries = ntdllheaders.GetBounds();
+  if (!ntdllBoundaries) {
+    printf(
+        "TEST-FAILED | NativeNt | "
+        "Unable to obtain the boundaries of ntdll.dll\n");
+    return 1;
+  }
+
+  iatThunks =
+      k32headers.GetIATThunksForModule("ntdll.dll", ntdllBoundaries.ptr());
+  if (!iatThunks) {
+    printf(
+        "TEST-FAILED | NativeNt | Unable to find the IAT thunk for "
+        "ntdll.dll in kernel32.dll\n");
+    return 1;
+  }
+
+  // To test the Ex version of API, we purposely get a real handle
+  // instead of a pseudo handle.
+  nsAutoHandle process(
+      ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId()));
+  if (!process) {
+    printf("TEST-FAILED | NativeNt | OpenProcess() failed - %08lx\n",
+           ::GetLastError());
+    return 1;
+  }
+
+  // Test Null page, Heap, Mapped image, and Invalid handle
+  if (!TestVirtualQuery(process, nullptr) || !TestVirtualQuery(process, argv) ||
+      !TestVirtualQuery(process, kNormal) ||
+      !TestVirtualQuery(nullptr, kNormal)) {
+    return 1;
+  }
+
+  auto moduleResult = GetModuleHandleFromLeafName(kKernel32);
+  if (moduleResult.isErr() ||
+      moduleResult.inspect() != k32headers.template RVAToPtr<HMODULE>(0)) {
+    printf(
+        "TEST-FAILED | NativeNt | "
+        "GetModuleHandleFromLeafName returns a wrong value.\n");
+    return 1;
+  }
+
+  moduleResult = GetModuleHandleFromLeafName(L"invalid");
+  if (moduleResult.isOk()) {
+    printf(
+        "TEST-FAILED | NativeNt | "
+        "GetModuleHandleFromLeafName unexpectedly returns a value.\n");
+    return 1;
+  }
+
+  printf("TEST-PASS | NativeNt | All tests ran successfully\n");
   return 0;
 }

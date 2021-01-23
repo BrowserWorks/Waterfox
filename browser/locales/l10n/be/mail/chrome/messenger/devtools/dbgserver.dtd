@@ -1,0 +1,4 @@
+<!ENTITY options.title "Наладжванні распрацоўных прыладаў">
+<!ENTITY options.status.label "Статус:">
+<!ENTITY options.port.label "Порт:">
+<!ENTITY options.forcelocal.label "Дазволіць злучэнні з іншых кампутараў">

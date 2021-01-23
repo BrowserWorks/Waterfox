@@ -10,8 +10,6 @@
       "use strict";
 
       SimpleTest.waitForExplicitFinish();
-      ok(SpecialPowers.setTestPluginEnabledState(SpecialPowers.Ci.nsIPluginTag.STATE_ENABLED, "Shockwave Flash"), "Should find allowed test flash plugin");
-      ok(!SpecialPowers.setTestPluginEnabledState(SpecialPowers.Ci.nsIPluginTag.STATE_ENABLED, "Third Test Plug-in"), "Should not find disallowed plugin");
 
       function findPlugin(pluginName) {
           for (var i = 0; i < navigator.plugins.length; i++) {
@@ -42,7 +40,11 @@
           document.body.appendChild(obj);
       }
 
-      function run() {
+      async function run() {
+        ok(await SpecialPowers.setTestPluginEnabledState(SpecialPowers.Ci.nsIPluginTag.STATE_ENABLED, "Shockwave Flash"), "Should find allowed test flash plugin");
+        ok(!await SpecialPowers.setTestPluginEnabledState(SpecialPowers.Ci.nsIPluginTag.STATE_ENABLED, "Third Test Plug-in"), "Should not find disallowed plugin");
+        await SpecialPowers.pushPermissions([{type: "plugin:flash", allow: true, context: document}]);
+
         createNode("plugin-flash", "application/x-shockwave-flash-test");
         createNode("disallowedPlugin", "application/x-third-test");
         var pluginElement = document.getElementById("plugin-flash");

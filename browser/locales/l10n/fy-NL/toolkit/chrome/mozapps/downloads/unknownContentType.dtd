@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY intro2.label "Jo hawwe keazen om te iepenjen:">
+<!ENTITY from.label "Fan:">
+<!ENTITY actionQuestion.label "Wat moat &brandShortName; mei dit bestân dwaan?">
+
+<!ENTITY openWith.label "Iepenje mei">
+<!ENTITY openWith.accesskey "I">
+<!ENTITY other.label "Oars…">
+
+<!ENTITY saveFile.label "Bewarje Bestân">
+<!ENTITY saveFile.accesskey "B">
+
+<!ENTITY rememberChoice.label "Dit fan no ôf automatysk dwaan foar dit soarte bestannen.">
+<!ENTITY rememberChoice.accesskey "D">
+
+<!ENTITY whichIs.label "Dit is:">
+
+<!ENTITY chooseHandlerMac.label "Kieze…">
+<!ENTITY chooseHandlerMac.accesskey "K">
+<!ENTITY chooseHandler.label "Blêdzje…">
+<!ENTITY chooseHandler.accesskey "B">
+
+<!ENTITY  unknownPromptText.label     "Wolle jo dit bestân bewarje?">

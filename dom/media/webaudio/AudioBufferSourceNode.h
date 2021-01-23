@@ -17,13 +17,13 @@ struct AudioBufferSourceOptions;
 class AudioParam;
 
 class AudioBufferSourceNode final : public AudioScheduledSourceNode,
-                                    public MainThreadMediaStreamListener {
+                                    public MainThreadMediaTrackListener {
  public:
   static already_AddRefed<AudioBufferSourceNode> Create(
       JSContext* aCx, AudioContext& aAudioContext,
-      const AudioBufferSourceOptions& aOptions, ErrorResult& aRv);
+      const AudioBufferSourceOptions& aOptions);
 
-  void DestroyMediaStream() override;
+  void DestroyMediaTrack() override;
 
   uint16_t NumberOfInputs() const final { return 0; }
   AudioBufferSourceNode* AsAudioBufferSourceNode() override { return this; }
@@ -33,8 +33,8 @@ class AudioBufferSourceNode final : public AudioScheduledSourceNode,
 
   static already_AddRefed<AudioBufferSourceNode> Constructor(
       const GlobalObject& aGlobal, AudioContext& aAudioContext,
-      const AudioBufferSourceOptions& aOptions, ErrorResult& aRv) {
-    return Create(aGlobal.Context(), aAudioContext, aOptions, aRv);
+      const AudioBufferSourceOptions& aOptions) {
+    return Create(aGlobal.Context(), aAudioContext, aOptions);
   }
 
   JSObject* WrapObject(JSContext* aCx,
@@ -47,31 +47,38 @@ class AudioBufferSourceNode final : public AudioScheduledSourceNode,
   void Stop(double aWhen, ErrorResult& aRv) override;
 
   AudioBuffer* GetBuffer(JSContext* aCx) const { return mBuffer; }
-  void SetBuffer(JSContext* aCx, AudioBuffer* aBuffer) {
+  void SetBuffer(JSContext* aCx, AudioBuffer* aBuffer, ErrorResult& aRv) {
+    if (aBuffer && mBufferSet) {
+      aRv.ThrowInvalidStateError(
+          "Cannot set the buffer attribute of an AudioBufferSourceNode "
+          "with an AudioBuffer more than once");
+      return;
+    }
+    if (aBuffer) {
+      mBufferSet = true;
+    }
     mBuffer = aBuffer;
-    SendBufferParameterToStream(aCx);
-    SendLoopParametersToStream();
+    SendBufferParameterToTrack(aCx);
+    SendLoopParametersToTrack();
   }
   AudioParam* PlaybackRate() const { return mPlaybackRate; }
   AudioParam* Detune() const { return mDetune; }
   bool Loop() const { return mLoop; }
   void SetLoop(bool aLoop) {
     mLoop = aLoop;
-    SendLoopParametersToStream();
+    SendLoopParametersToTrack();
   }
   double LoopStart() const { return mLoopStart; }
   void SetLoopStart(double aStart) {
     mLoopStart = aStart;
-    SendLoopParametersToStream();
+    SendLoopParametersToTrack();
   }
   double LoopEnd() const { return mLoopEnd; }
   void SetLoopEnd(double aEnd) {
     mLoopEnd = aEnd;
-    SendLoopParametersToStream();
+    SendLoopParametersToTrack();
   }
-  void SendDopplerShiftToStream(double aDopplerShift);
-
-  void NotifyMainThreadStreamFinished() override;
+  void NotifyMainThreadTrackEnded() override;
 
   const char* NodeType() const override { return "AudioBufferSourceNode"; }
 
@@ -101,13 +108,12 @@ class AudioBufferSourceNode final : public AudioScheduledSourceNode,
     LOOPSTART,
     LOOPEND,
     PLAYBACKRATE,
-    DETUNE,
-    DOPPLERSHIFT
+    DETUNE
   };
 
-  void SendLoopParametersToStream();
-  void SendBufferParameterToStream(JSContext* aCx);
-  void SendOffsetAndDurationParametersToStream(AudioNodeStream* aStream);
+  void SendLoopParametersToTrack();
+  void SendBufferParameterToTrack(JSContext* aCx);
+  void SendOffsetAndDurationParametersToTrack(AudioNodeTrack* aTrack);
 
   double mLoopStart;
   double mLoopEnd;
@@ -118,6 +124,7 @@ class AudioBufferSourceNode final : public AudioScheduledSourceNode,
   RefPtr<AudioParam> mDetune;
   bool mLoop;
   bool mStartCalled;
+  bool mBufferSet;
 };
 
 }  // namespace dom

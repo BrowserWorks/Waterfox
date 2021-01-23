@@ -13,7 +13,6 @@ add_task(async function() {
       Ci.nsIPluginTag.STATE_ENABLED,
       "Second Test Plug-in"
     );
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     gBrowser.removeCurrentTab();
     window.focus();
@@ -21,7 +20,6 @@ add_task(async function() {
 });
 
 add_task(async function() {
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
 
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
@@ -50,7 +48,7 @@ add_task(async function() {
     null,
     true
   );
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     let plugin = content.document.getElementById("secondtestA");
     plugin.remove();
     plugin = content.document.getElementById("secondtestB");
@@ -69,7 +67,7 @@ add_task(async function() {
   );
   ok(popupNotification, "Test 2, Should have a click-to-play notification");
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
     plugin.remove();
   });

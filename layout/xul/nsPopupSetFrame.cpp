@@ -18,7 +18,8 @@
 
 typedef mozilla::ComputedStyle ComputedStyle;
 
-nsIFrame* NS_NewPopupSetFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
+nsIFrame* NS_NewPopupSetFrame(mozilla::PresShell* aPresShell,
+                              ComputedStyle* aStyle) {
   return new (aPresShell) nsPopupSetFrame(aStyle, aPresShell->GetPresContext());
 }
 
@@ -55,12 +56,13 @@ void nsPopupSetFrame::RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) {
 }
 
 void nsPopupSetFrame::InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                                   const nsLineList::iterator* aPrevFrameLine,
                                    nsFrameList& aFrameList) {
   if (aListID == kPopupList) {
     AddPopupFrameList(aFrameList);
     return;
   }
-  nsBoxFrame::InsertFrames(aListID, aPrevFrame, aFrameList);
+  nsBoxFrame::InsertFrames(aListID, aPrevFrame, aPrevFrameLine, aFrameList);
 }
 
 void nsPopupSetFrame::SetInitialChildList(ChildListID aListID,
@@ -109,7 +111,7 @@ nsPopupSetFrame::DoXULLayout(nsBoxLayoutState& aState) {
   // lay out all of our currently open popups.
   for (nsFrameList::Enumerator e(mPopupList); !e.AtEnd(); e.Next()) {
     nsMenuPopupFrame* popupChild = static_cast<nsMenuPopupFrame*>(e.get());
-    popupChild->LayoutPopup(aState, nullptr, nullptr, false);
+    popupChild->LayoutPopup(aState, nullptr, false);
   }
 
   return rv;

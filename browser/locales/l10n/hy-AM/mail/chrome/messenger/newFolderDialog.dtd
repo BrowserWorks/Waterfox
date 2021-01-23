@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Նոր թղթապանակ">
+<!ENTITY name.label                 "Անունը.">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Ստեղծել որպես ենթաթղթապանակ՝">
+<!ENTITY description.accesskey      "C">
+<!ENTITY folderRestriction1.label   "Այս սպասարկիչը սահ. է թղթապանակները երկու տեսակի։">
+<!ENTITY folderRestriction2.label   "Թույլատրել, որ թղթապանակը ունենա՝">
+<!ENTITY foldersOnly.label          "Միայն թղթ-ը">
+<!ENTITY messagesOnly.label         "Միայն նամակները">
+<!ENTITY accept.label               "Ստեղծել թղթապանակ">
+<!ENTITY accept.accesskey           "r">

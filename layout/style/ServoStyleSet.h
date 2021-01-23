@@ -7,10 +7,10 @@
 #ifndef mozilla_ServoStyleSet_h
 #define mozilla_ServoStyleSet_h
 
+#include "mozilla/AnonymousContentKey.h"
 #include "mozilla/AtomArray.h"
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/EventStates.h"
-#include "mozilla/MediaFeatureChange.h"
 #include "mozilla/PostTraversalTask.h"
 #include "mozilla/ServoBindingTypes.h"
 #include "mozilla/ServoUtils.h"
@@ -23,12 +23,15 @@
 #include "nsAtom.h"
 #include "nsIMemoryReporter.h"
 #include "nsTArray.h"
+#include "nsIMemoryReporter.h"
 
 namespace mozilla {
+enum class MediaFeatureChangeReason : uint8_t;
 namespace css {
 class Rule;
 }  // namespace css
 namespace dom {
+class CSSImportRule;
 class Element;
 class ShadowRoot;
 }  // namespace dom
@@ -43,6 +46,7 @@ class gfxFontFeatureValueSet;
 class nsIContent;
 
 class nsPresContext;
+class nsWindowSizes;
 struct nsTimingFunction;
 struct TreeMatchContext;
 
@@ -64,6 +68,8 @@ enum class StylistState : uint8_t {
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(StylistState)
 
+enum class StyleOrigin : uint8_t;
+
 // Bitfield type to represent Servo stylesheet origins.
 enum class OriginFlags : uint8_t {
   UserAgent = 0x01,
@@ -80,14 +86,17 @@ MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(OriginFlags)
  */
 class ServoStyleSet {
   friend class RestyleManager;
-  typedef ServoElementSnapshotTable SnapshotTable;
-
+  using SnapshotTable = ServoElementSnapshotTable;
   using Origin = StyleOrigin;
 
- public:
-  static constexpr const StyleOrigin kOrigins[] = {
-      StyleOrigin::UserAgent, StyleOrigin::User, StyleOrigin::Author};
+  // We assert that these match the Servo ones in the definition of this array.
+  static constexpr Origin kOrigins[] = {
+      Origin(static_cast<uint8_t>(OriginFlags::UserAgent)),
+      Origin(static_cast<uint8_t>(OriginFlags::User)),
+      Origin(static_cast<uint8_t>(OriginFlags::Author)),
+  };
 
+ public:
   static bool IsInServoTraversal() { return mozilla::IsInServoTraversal(); }
 
 #ifdef DEBUG
@@ -108,7 +117,9 @@ class ServoStyleSet {
   // are mutated from CSSOM.
   void RuleAdded(StyleSheet&, css::Rule&);
   void RuleRemoved(StyleSheet&, css::Rule&);
-  void RuleChanged(StyleSheet& aSheet, css::Rule* aRule);
+  void RuleChanged(StyleSheet&, css::Rule* aRule);
+  void SheetCloned(StyleSheet&) { mNeedsRestyleAfterEnsureUniqueInner = true; }
+  void ImportRuleLoaded(dom::CSSImportRule&, StyleSheet&);
 
   // Runs style invalidation due to document state changes.
   void InvalidateStyleForDocumentStateChanges(EventStates aStatesChanged);
@@ -168,14 +179,31 @@ class ServoStyleSet {
   // matching for them is a first step.)
   already_AddRefed<ComputedStyle> ResolveStyleForPlaceholder();
 
-  // Get a ComputedStyle for a pseudo-element.  aParentElement must be
-  // non-null.  aPseudoID is the PseudoStyleType for the
-  // pseudo-element.  aPseudoElement must be non-null if the pseudo-element
-  // type is one that allows user action pseudo-classes after it or allows
-  // style attributes; otherwise, it is ignored.
+  // Returns whether a given pseudo-element should exist or not.
+  static bool GeneratedContentPseudoExists(const ComputedStyle& aParentStyle,
+                                           const ComputedStyle& aPseudoStyle);
+
+  enum class IsProbe {
+    No,
+    Yes,
+  };
+
+  // Get a style for a pseudo-element.
+  //
+  // If IsProbe is Yes, then no style is returned if there are no rules matching
+  // for the pseudo-element, or GeneratedContentPseudoExists returns false.
+  //
+  // If IsProbe is No, then the style is guaranteed to be non-null.
   already_AddRefed<ComputedStyle> ResolvePseudoElementStyle(
-      dom::Element* aOriginatingElement, PseudoStyleType aType,
-      ComputedStyle* aParentStyle, dom::Element* aPseudoElement);
+      const dom::Element& aOriginatingElement, PseudoStyleType,
+      ComputedStyle* aParentStyle, IsProbe = IsProbe::No);
+
+  already_AddRefed<ComputedStyle> ProbePseudoElementStyle(
+      const dom::Element& aOriginatingElement, PseudoStyleType aType,
+      ComputedStyle* aParentStyle) {
+    return ResolvePseudoElementStyle(aOriginatingElement, aType, aParentStyle,
+                                     IsProbe::Yes);
+  }
 
   // Resolves style for a (possibly-pseudo) Element without assuming that the
   // style has been resolved. If the element was unstyled and a new style
@@ -203,26 +231,16 @@ class ServoStyleSet {
       ComputedStyle* aParentStyle, const AtomArray& aInputWord);
 #endif
 
-  // manage the set of style sheets in the style set
-  void AppendStyleSheet(Origin, StyleSheet*);
-  void RemoveStyleSheet(Origin, StyleSheet*);
-  void InsertStyleSheetBefore(Origin, StyleSheet*, StyleSheet* aReferenceSheet);
-
   size_t SheetCount(Origin) const;
   StyleSheet* SheetAt(Origin, size_t aIndex) const;
 
   void AppendAllNonDocumentAuthorSheets(nsTArray<StyleSheet*>& aArray) const;
 
-  void RemoveDocStyleSheet(StyleSheet* aSheet) {
-    RemoveStyleSheet(StyleOrigin::Author, aSheet);
-  }
-
-  void AddDocStyleSheet(StyleSheet* aSheet);
-
-  // check whether there is ::before/::after style for an element
-  already_AddRefed<ComputedStyle> ProbePseudoElementStyle(
-      const dom::Element& aOriginatingElement, PseudoStyleType aType,
-      ComputedStyle* aParentStyle);
+  // Manage the set of style sheets in the style set
+  void AppendStyleSheet(StyleSheet&);
+  void InsertStyleSheetBefore(StyleSheet&, StyleSheet& aReferenceSheet);
+  void RemoveStyleSheet(StyleSheet&);
+  void AddDocStyleSheet(StyleSheet&);
 
   /**
    * Performs a Servo traversal to compute style for all dirty nodes in the
@@ -281,8 +299,8 @@ class ServoStyleSet {
    * Clears any cached style data that may depend on all sorts of computed
    * values.
    *
-   * Right now this clears the non-inheriting ComputedStyle cache, and resets
-   * the default computed values.
+   * Right now this clears the non-inheriting ComputedStyle cache, resets the
+   * default computed values, and clears cached anonymous content style.
    *
    * This does _not_, however, clear the stylist.
    */
@@ -309,7 +327,8 @@ class ServoStyleSet {
    *
    * FIXME(emilio): Is there a point in this after bug 1367904?
    */
-  inline already_AddRefed<ComputedStyle> ResolveServoStyle(const dom::Element&);
+  static inline already_AddRefed<ComputedStyle> ResolveServoStyle(
+      const dom::Element&);
 
   bool GetKeyframesForName(const dom::Element&, const ComputedStyle&,
                            nsAtom* aName,
@@ -379,12 +398,6 @@ class ServoStyleSet {
   // sheet inners.
   bool EnsureUniqueInnerOnCSSSheets();
 
-  // Called by StyleSheet::EnsureUniqueInner to let us know it cloned
-  // its inner.
-  void SetNeedsRestyleAfterEnsureUniqueInner() {
-    mNeedsRestyleAfterEnsureUniqueInner = true;
-  }
-
   // Returns the style rule map.
   ServoStyleRuleMap* StyleRuleMap();
 
@@ -434,6 +447,19 @@ class ServoStyleSet {
   friend class PostTraversalTask;
 
   bool ShouldTraverseInParallel() const;
+
+  /**
+   * Forces all the ShadowRoot styles to be dirty.
+   *
+   * Only to be used for:
+   *
+   *  * Devtools (dealing with sheet cloning).
+   *  * Compatibility-mode changes.
+   *
+   * Try to do something more incremental for other callers that are exposed to
+   * the web.
+   */
+  void ForceDirtyAllShadowStyles();
 
   /**
    * Gets the pending snapshots to handle from the restyle manager.
@@ -532,6 +558,41 @@ class ServoStyleSet {
                   nsCSSAnonBoxes::NonInheriting::_Count, RefPtr<ComputedStyle>>
       mNonInheritingComputedStyles;
 
+ public:
+  void PutCachedAnonymousContentStyles(
+      AnonymousContentKey aKey, nsTArray<RefPtr<ComputedStyle>>&& aStyles) {
+    auto index = static_cast<size_t>(aKey);
+
+    MOZ_ASSERT(mCachedAnonymousContentStyles.Length() + aStyles.Length() < 256,
+               "(index, length) pairs must be bigger");
+    MOZ_ASSERT(mCachedAnonymousContentStyleIndexes[index].second == 0,
+               "shouldn't need to overwrite existing cached styles");
+    MOZ_ASSERT(!aStyles.IsEmpty(), "should have some styles to cache");
+
+    mCachedAnonymousContentStyleIndexes[index] = std::make_pair(
+        mCachedAnonymousContentStyles.Length(), aStyles.Length());
+    mCachedAnonymousContentStyles.AppendElements(std::move(aStyles));
+  }
+
+  void GetCachedAnonymousContentStyles(
+      AnonymousContentKey aKey, nsTArray<RefPtr<ComputedStyle>>& aStyles) {
+    auto index = static_cast<size_t>(aKey);
+    auto loc = mCachedAnonymousContentStyleIndexes[index];
+    aStyles.AppendElements(mCachedAnonymousContentStyles.Elements() + loc.first,
+                           loc.second);
+  }
+
+ private:
+  // Map of AnonymousContentKey values to an (index, length) pair pointing into
+  // mCachedAnonymousContentStyles.
+  //
+  // We assert that the index and length values fit into uint8_ts.
+  Array<std::pair<uint8_t, uint8_t>, 1 << sizeof(AnonymousContentKey) * 8>
+      mCachedAnonymousContentStyleIndexes;
+
+  // Stores cached ComputedStyles for certain native anonymous content.
+  nsTArray<RefPtr<ComputedStyle>> mCachedAnonymousContentStyles;
+
   StylistState mStylistState = StylistState::NotDirty;
   bool mAuthorStyleDisabled = false;
   bool mNeedsRestyleAfterEnsureUniqueInner = false;
@@ -542,7 +603,7 @@ class UACacheReporter final : public nsIMemoryReporter {
   NS_DECL_NSIMEMORYREPORTER
 
  private:
-  ~UACacheReporter() {}
+  ~UACacheReporter() = default;
 };
 
 }  // namespace mozilla

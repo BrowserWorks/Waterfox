@@ -3,7 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { UPDATE_DETAILS, RESET } = require("../constants");
+const {
+  UPDATE_DETAILS,
+  RESET,
+} = require("devtools/client/accessibility/constants");
 
 /**
  * Initial state definition
@@ -36,7 +39,11 @@ function onUpdateDetails(state, action) {
   const { accessible, response, error } = action;
   if (error) {
     if (accessible.actorID) {
-      console.warn(`Error fetching accessible details: `, accessible, error);
+      console.warn(
+        `Error fetching accessible details: `,
+        accessible.actorID,
+        error
+      );
     }
 
     return getInitialState();

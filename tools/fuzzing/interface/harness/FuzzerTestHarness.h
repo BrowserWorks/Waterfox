@@ -19,15 +19,14 @@
 #include "nsComponentManagerUtils.h"
 #include "nsServiceManagerUtils.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsIDirectoryService.h"
 #include "nsIFile.h"
-#include "nsIProperties.h"
 #include "nsIObserverService.h"
+#include "nsIServiceManager.h"
 #include "nsXULAppAPI.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,7 +56,7 @@ MOZ_FORMAT_PRINTF(1, 2) void fail(const char* msg, ...) {
 
 //-----------------------------------------------------------------------------
 
-class ScopedXPCOM : public nsIDirectoryServiceProvider2 {
+class ScopedXPCOM final : public nsIDirectoryServiceProvider2 {
  public:
   NS_DECL_ISUPPORTS
 

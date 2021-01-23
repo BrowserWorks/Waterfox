@@ -39,7 +39,7 @@ FlacFrameParser::FlacFrameParser()
       mFullMetadata(false),
       mPacketCount(0) {}
 
-FlacFrameParser::~FlacFrameParser() {}
+FlacFrameParser::~FlacFrameParser() = default;
 
 uint32_t FlacFrameParser::HeaderBlockLength(const uint8_t* aPacket) const {
   uint32_t extra = 4;
@@ -144,7 +144,7 @@ Result<Ok, nsresult> FlacFrameParser::DecodeHeaderBlock(const uint8_t* aPacket,
       mInfo.mCodecSpecificConfig->AppendElements(blockDataStart, blockDataSize);
       auto duration = FramesToTimeUnit(mNumFrames, sampleRate);
       mInfo.mDuration = duration.IsValid() ? duration : media::TimeUnit::Zero();
-      mParser = new OpusParser;
+      mParser = MakeUnique<OpusParser>();
       break;
     }
     case FLAC_METADATA_TYPE_VORBIS_COMMENT: {

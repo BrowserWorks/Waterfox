@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title "İleti görüntüleme">
+<!ENTITY style.label "Stil:">
+<!ENTITY style.accesskey "S">
+<!ENTITY regular.label "Düzenli">
+<!ENTITY bold.label "Kalın">
+<!ENTITY italic.label "Eğik">
+<!ENTITY boldItalic.label "Kalın ve eğik">
+<!ENTITY size.label "Boyut:">
+<!ENTITY size.accesskey "B">
+<!ENTITY bigger.label "Daha büyük">
+<!ENTITY smaller.label "Daha küçük">
+<!ENTITY color.label "Renk:">
+<!ENTITY color.accesskey "R">
+<!ENTITY displayPlainText.caption "Düz metin iletiler">
+<!ENTITY fontPlainText.label "Yazıtipi:">
+<!ENTITY fontPlainText.accesskey "z">
+<!ENTITY displayQuoted.label "Settings for quoted messages:">
+<!ENTITY wrapInMsg.label "Wrap text to fit window width">
+<!ENTITY wrapInMsg.accesskey "W">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label "Duygu simgelerini grafik olarak göster">
+<!ENTITY convertEmoticons.accesskey "D">
+<!ENTITY generalMessageDisplay.caption "Genel">
+<!ENTITY autoMarkAsRead.label "İletileri okunmuş olarak otomatik işaretle">
+<!ENTITY autoMarkAsRead.accesskey "o">
+<!ENTITY markAsReadNoDelay.label "Görüntüleme anında">
+<!ENTITY markAsReadNoDelay.accesskey "G">
+<!-- LOCALIZATION NOTE (markAsReadDelay.label): This will concatenate to
+     "After displaying for [___] seconds",
+     using (markAsReadDelay.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadDelay.label "Görüntülemeden">
+<!ENTITY markAsReadDelay.accesskey "ö">
+<!ENTITY secondsLabel.label "saniye sonra">
+
+<!ENTITY openingMessages.label "When opening messages, display them in:">
+<!ENTITY newWindowRadio.label "Yeni bir pencerede aç">
+<!ENTITY newWindowRadio.accesskey "i">
+<!ENTITY existingWindowRadio.label "Mevcut bir iletinin içinde aç">
+<!ENTITY existingWindowRadio.accesskey "c">
+<!ENTITY disableContent.label "Block images and other content from remote sources">
+<!ENTITY disableContent.accesskey "B">
+<!ENTITY showCondensedAddresses.label "Adres defterimdeki kişilerin sadece ekran ismini göster">
+<!ENTITY showCondensedAddresses.accesskey "d">
+<!ENTITY closeMsgWindowOnDelete.label "Close message window when deleting the message">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

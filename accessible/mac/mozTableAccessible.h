@@ -7,22 +7,103 @@
 
 #import "mozAccessible.h"
 
-@interface mozTablePartAccessible : mozAccessible
-- (BOOL)isLayoutTablePart;
-- (NSString*)role;
+@interface mozColumnContainer : MOXAccessibleBase {
+  uint32_t mIndex;
+  mozAccessible* mParent;
+  NSMutableArray* mChildren;
+}
+
+// override
+- (id)initWithIndex:(uint32_t)aIndex andParent:(mozAccessible*)aParent;
+
+// override
+- (NSString*)moxRole;
+
+// override
+- (NSString*)moxRoleDescription;
+
+// override
+- (mozAccessible*)moxParent;
+
+// override
+- (NSArray*)moxChildren;
+
+// override
+- (void)dealloc;
+
+// override
+- (void)expire;
+
+// override
+- (BOOL)isExpired;
+
+- (void)invalidateChildren;
+
 @end
 
-@interface mozTableAccessible : mozTablePartAccessible
-- (NSArray*)additionalAccessibilityAttributeNames;
-- (id)accessibilityAttributeValue:(NSString*)attribute;
+@interface mozTablePartAccessible : mozAccessible
+
+// override
+- (NSString*)moxTitle;
+
+// override
+- (NSString*)moxRole;
+
+- (BOOL)isLayoutTablePart;
+
+@end
+
+@interface mozTableAccessible : mozTablePartAccessible {
+  NSMutableArray* mColContainers;
+}
+
+- (void)invalidateColumns;
+
+// override
+- (void)handleAccessibleEvent:(uint32_t)eventType;
+
+// override
+- (void)dealloc;
+
+// override
+- (NSNumber*)moxRowCount;
+
+// override
+- (NSNumber*)moxColumnCount;
+
+// override
+- (NSArray*)moxRows;
+
+// override
+- (NSArray*)moxColumns;
+
+// override
+- (NSArray*)moxChildren;
+
 @end
 
 @interface mozTableRowAccessible : mozTablePartAccessible
-- (NSArray*)additionalAccessibilityAttributeNames;
-- (id)accessibilityAttributeValue:(NSString*)attribute;
+
+// override
+- (void)handleAccessibleEvent:(uint32_t)eventType;
+
+// override
+- (NSNumber*)moxIndex;
+
 @end
 
 @interface mozTableCellAccessible : mozTablePartAccessible
-- (NSArray*)additionalAccessibilityAttributeNames;
-- (id)accessibilityAttributeValue:(NSString*)attribute;
+
+// override
+- (NSValue*)moxRowIndexRange;
+
+// override
+- (NSValue*)moxColumnIndexRange;
+
+// override
+- (NSArray*)moxRowHeaderUIElements;
+
+// override
+- (NSArray*)moxColumnHeaderUIElements;
+
 @end

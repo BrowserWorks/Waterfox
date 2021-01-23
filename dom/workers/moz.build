@@ -12,13 +12,12 @@ DIRS += ['remoteworkers', 'sharedworkers']
 # Public stuff.
 EXPORTS.mozilla.dom += [
     'ChromeWorker.h',
+    'JSExecutionManager.h',
     'Worker.h',
     'WorkerCommon.h',
     'WorkerDebugger.h',
     'WorkerDebuggerManager.h',
     'WorkerError.h',
-    'WorkerHolder.h',
-    'WorkerHolderToken.h',
     'WorkerLoadInfo.h',
     'WorkerLocation.h',
     'WorkerNavigator.h',
@@ -26,6 +25,7 @@ EXPORTS.mozilla.dom += [
     'WorkerRef.h',
     'WorkerRunnable.h',
     'WorkerScope.h',
+    'WorkerStatus.h',
 ]
 
 # Private stuff.
@@ -46,6 +46,7 @@ XPIDL_SOURCES += [
 UNIFIED_SOURCES += [
     'ChromeWorker.cpp',
     'ChromeWorkerScope.cpp',
+    'JSExecutionManager.cpp',
     'MessageEventRunnable.cpp',
     'Principal.cpp',
     'RegisterBindings.cpp',
@@ -57,8 +58,6 @@ UNIFIED_SOURCES += [
     'WorkerDebuggerManager.cpp',
     'WorkerError.cpp',
     'WorkerEventTarget.cpp',
-    'WorkerHolder.cpp',
-    'WorkerHolderToken.cpp',
     'WorkerLoadInfo.cpp',
     'WorkerLocation.cpp',
     'WorkerNavigator.cpp',
@@ -74,6 +73,7 @@ LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/bindings',
     '/dom/system',
+    '/dom/workers/remoteworkers',
     '/js/xpconnect/loader',
     '/netwerk/base',
     '/xpcom/build',

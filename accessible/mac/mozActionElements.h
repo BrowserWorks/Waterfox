@@ -8,28 +8,71 @@
 
 /* Simple subclasses for things like checkboxes, buttons, etc. */
 
-@interface mozButtonAccessible : mozAccessible {
-}
-- (BOOL)hasPopup;
-- (void)click;
-- (BOOL)isTab;
+@interface mozButtonAccessible : mozAccessible
+
+// override
+- (NSNumber*)moxHasPopup;
+
+// override
+- (NSString*)moxPopupValue;
+
+@end
+
+@interface mozPopupButtonAccessible : mozButtonAccessible
+
+// override
+- (NSString*)moxTitle;
+
+// override
+- (BOOL)moxBlockSelector:(SEL)selector;
+
+// override
+- (NSArray*)moxChildren;
+
+// override
+- (void)stateChanged:(uint64_t)state isEnabled:(BOOL)enabled;
+
+// override
+- (BOOL)ignoreWithParent:(mozAccessible*)parent;
+
 @end
 
 @interface mozCheckboxAccessible : mozButtonAccessible
-// returns one of the constants defined in CheckboxValue
-- (int)isChecked;
+
+// override
+- (id)moxValue;
+
 @end
 
-/* Class for tabs - not individual tabs */
-@interface mozTabsAccessible : mozAccessible {
-  NSMutableArray* mTabs;
-}
-- (id)tabs;
+// Accessible for a radio button
+@interface mozRadioButtonAccessible : mozCheckboxAccessible
+- (id)accessibilityAttributeValue:(NSString*)attribute;
 @end
 
 /**
  * Accessible for a PANE
  */
 @interface mozPaneAccessible : mozAccessible
+
+// override
+- (NSArray*)moxChildren;
+
+@end
+
+/**
+ * Base accessible for an incrementable
+ */
+@interface mozIncrementableAccessible : mozAccessible
+
+// override
+- (void)moxPerformIncrement;
+
+// override
+- (void)moxPerformDecrement;
+
+// override
+- (void)handleAccessibleEvent:(uint32_t)eventType;
+
+- (void)changeValueBySteps:(int)factor;
 
 @end

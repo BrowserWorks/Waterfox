@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Eagarthóireacht Chasta…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Cuir tréithe HTML, tréithe stíle nó JavaScript leis, nó athraigh iad">
+<!ENTITY chooseFileButton.label "Roghnaigh Comhad...">
+<!ENTITY chooseFileButton.accessKey "C">
+<!ENTITY chooseFileLinkButton.label "Roghnaigh Comhad...">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "URL i gcoibhneas shuíomh an leathanaigh">
+<!ENTITY makeUrlRelative.accessKey "R">
+<!ENTITY makeUrlRelative.tooltip "Athraigh idir URL coibhneasta agus dearbh-URL. Chun é seo a athrú, ní mór duit an leathanach a shábháil ar dtús.">
+<!-- Shared by Link and Image dialogs -->
+
+<!ENTITY LinkURLEditField.label "Iontráil suíomh Gréasáin nó comhad logánta, nó roghnaigh Ancaire Ainmnithe nó Ceanntásc ón liosta aníos:">
+<!ENTITY LinkURLEditField.accessKey "G">

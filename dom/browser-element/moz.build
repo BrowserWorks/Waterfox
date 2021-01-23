@@ -7,14 +7,6 @@
 with Files("**"):
     BUG_COMPONENT = ("Core", "DOM: Core & HTML")
 
-EXPORTS.mozilla += [
-    'BrowserElementParent.h',
-]
-
-SOURCES += [
-    'BrowserElementParent.cpp',
-]
-
 XPIDL_SOURCES += [
     'nsIBrowserElementAPI.idl',
 ]
@@ -42,13 +34,4 @@ LOCAL_INCLUDES += [
     '/dom/',
     '/dom/base',
     '/dom/ipc',
-]
-
-MOCHITEST_MANIFESTS += [
-    'mochitest/mochitest-oop.ini',
-    'mochitest/mochitest.ini',
-]
-
-MOCHITEST_CHROME_MANIFESTS += [
-    'mochitest/chrome.ini',
 ]

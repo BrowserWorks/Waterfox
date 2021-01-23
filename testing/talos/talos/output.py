@@ -47,7 +47,8 @@ class Output(object):
                 suite = {
                     'name': test.name(),
                     'extraOptions': self.results.extra_options or [],
-                    'subtests': subtests
+                    'subtests': subtests,
+                    'shouldAlert': test.test_config.get('suite_should_alert', True)
                 }
 
                 suites.append(suite)
@@ -157,7 +158,7 @@ class Output(object):
 
                     # responsiveness has it's own metric, not the mean
                     # TODO: consider doing this for all counters
-                    if 'responsiveness' is name:
+                    if 'responsiveness' == name:
                         subtest = {
                             'name': name,
                             'value': filter.responsiveness_Metric(vals)
@@ -182,7 +183,8 @@ class Output(object):
             if counter_subtests:
                 suites.append({'name': test.name(),
                                'extraOptions': self.results.extra_options or [],
-                               'subtests': counter_subtests})
+                               'subtests': counter_subtests,
+                               'shouldAlert': test.test_config.get('suite_should_alert', True)})
         return test_results
 
     def output(self, results, results_url):
@@ -245,23 +247,6 @@ class Output(object):
         return sum(results)
 
     @classmethod
-    def speedometer_score(cls, val_list):
-        """
-        speedometer_score: https://bug-172968-attachments.webkit.org/attachment.cgi?id=319888
-        """
-        correctionFactor = 3
-        results = [i for i, j in val_list]
-        # speedometer has 16 tests, each of these are made of up 9 subtests
-        # and a sum of the 9 values.  We receive 160 values, and want to use
-        # the 16 test values, not the sub test values.
-        if len(results) != 160:
-            raise Exception("Speedometer has 160 subtests, found: %s instead" % len(results))
-
-        results = results[9::10]
-        score = 60 * 1000 / filter.geometric_mean(results) / correctionFactor
-        return score
-
-    @classmethod
     def benchmark_score(cls, val_list):
         """
         benchmark_score: ares6/jetstream self reported as 'geomean'
@@ -310,7 +295,8 @@ class Output(object):
         # We receive 76 entries per test, which ads up to 380. We want to use
         # the 5 test entries, not the rest.
         if len(results) != 380:
-            raise Exception("StyleBench has 380 entries, found: %s instead" % len(results))
+            raise Exception("StyleBench requires 380 entries, found: %s instead"
+                            % len(results))
 
         results = results[75::76]
         score = 60 * 1000 / filter.geometric_mean(results) / correctionFactor

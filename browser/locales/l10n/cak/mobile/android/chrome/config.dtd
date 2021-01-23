@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Tikanöx">
+
+<!ENTITY newPref.namePlaceholder       "B'i'aj">
+
+<!ENTITY newPref.valueBoolean          "Ja'/manäq">
+<!ENTITY newPref.valueString           "Cholajil">
+<!ENTITY newPref.valueInteger          "Chijun">
+
+<!ENTITY newPref.stringPlaceholder     "Tatz'ib'aj jun cholajil">
+<!ENTITY newPref.numberPlaceholder     "Tatz'ib'aj jun ajilab'äl">
+
+<!ENTITY newPref.toggleButton          "Jaloj">
+<!ENTITY newPref.cancelButton          "Jumul tiq'at">
+
+<!ENTITY contextMenu.copyPrefName      "Tiwachib'ëx ri b'i'aj">
+<!ENTITY contextMenu.copyPrefValue     "Tiwachib'ëx retal">

@@ -58,7 +58,7 @@ add_task(async function test_back_forward_button_contextmenu_touch() {
     let contextMenu = document.getElementById("backForwardMenu");
 
     let backbutton = document.getElementById("back-button");
-    let notDisabled = BrowserTestUtils.waitForCondition(
+    let notDisabled = TestUtils.waitForCondition(
       () => !backbutton.hasAttribute("disabled")
     );
     BrowserTestUtils.loadURI(browser, "http://example.org");
@@ -66,7 +66,7 @@ add_task(async function test_back_forward_button_contextmenu_touch() {
     await openAndCheckContextMenu(contextMenu, backbutton);
 
     let forwardbutton = document.getElementById("forward-button");
-    notDisabled = BrowserTestUtils.waitForCondition(
+    notDisabled = TestUtils.waitForCondition(
       () => !forwardbutton.hasAttribute("disabled")
     );
     backbutton.click();
@@ -85,11 +85,7 @@ add_task(async function test_toolbar_contextmenu_touch() {
 // Test the urlbar input context menu.
 add_task(async function test_urlbar_contextmenu_touch() {
   let urlbar = document.getElementById("urlbar");
-  let textBox = document.getAnonymousElementByAttribute(
-    urlbar,
-    "anonid",
-    "moz-input-box"
-  );
+  let textBox = urlbar.querySelector("moz-input-box");
   let menu = textBox.menupopup;
   await openAndCheckContextMenu(menu, textBox);
 });

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "LDAP Dizin Sunucuları">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP dizin sunucusu:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Bir LDAP Dizin Sunucusu Seçin:">
+<!ENTITY directoriesText.accesskey "B">
+<!ENTITY addDirectory.label        "Ekle">
+<!ENTITY addDirectory.accesskey    "E">
+<!ENTITY editDirectory.label       "Düzenle">
+<!ENTITY editDirectory.accesskey   "z">
+<!ENTITY deleteDirectory.label     "Sil">
+<!ENTITY deleteDirectory.accesskey "S">

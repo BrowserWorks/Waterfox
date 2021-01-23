@@ -17,7 +17,7 @@ cross-compile ARMv7 from a Linux host system is as follows:
 
          # apt install gcc-arm-linux-gnueabihf libc6-armhf-cross libc6-dev-armhf-cross
 
-  3. Createa a new shell, or to reuse the existing shell:
+  3. Create a new shell, or to reuse the existing shell:
 
          source $HOME/.cargo/env
 
@@ -35,5 +35,5 @@ cross-compile ARMv7 from a Linux host system is as follows:
          % cd testing/geckodriver
          % cargo build --release --target armv7-unknown-linux-gnueabihf
 
-[announce the intent]: https://lists.mozilla.org/pipermail/tools-marionette/2018-September/000035.html
+[announced the intent]: https://lists.mozilla.org/pipermail/tools-marionette/2018-September/000035.html
 [central]: https://hg.mozilla.org/mozilla-central/

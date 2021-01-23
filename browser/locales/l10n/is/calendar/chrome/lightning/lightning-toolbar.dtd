@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Dagatal verkfærarein">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "D">
+<!ENTITY lightning.toolbar.task.name "Verkefna verkfærarein">
+<!ENTITY lightning.toolbar.task.name.accesskey "V">
+<!ENTITY lightning.toolbar.sync.label "Samstilla">
+<!ENTITY lightning.toolbar.sync.tooltip "Endurnýja dagatöl og samstilla breytingar">
+<!ENTITY lightning.toolbar.delete.label "Eyða">
+<!ENTITY lightning.toolbar.delete.tooltip "Eyða völdum atburðum eða verkefnum">
+<!ENTITY lightning.toolbar.edit.label "Breyta">
+<!ENTITY lightning.toolbar.edit.tooltip "Breyta völdum atburðum eða verkefnum">
+<!ENTITY lightning.toolbar.gototoday.label "Hoppa á daginn í dag">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Hoppa á daginn í dag">
+<!ENTITY lightning.toolbar.print.label "Prenta">
+<!ENTITY lightning.toolbar.print.tooltip "Prenta atburði eða verkefni">
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label "Dagatal">
+<!ENTITY lightning.toolbar.calendar.tooltip "Skipta yfir í dagatalsflipa">
+<!ENTITY lightning.toolbar.calendar.accesskey "D">
+<!ENTITY lightning.toolbar.task.label "Verkefni">
+<!ENTITY lightning.toolbar.task.tooltip "Skipta yfir í verkefnaflipa">
+<!ENTITY lightning.toolbar.task.accesskey "V">
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label "Atburður">
+<!ENTITY lightning.toolbar.newevent.tooltip "Búa til nýjan atburð">
+<!ENTITY lightning.toolbar.newtask.label "Verkefni">
+<!ENTITY lightning.toolbar.newtask.tooltip "Búa til nýtt verkefni">
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label "Dagur">
+<!ENTITY lightning.toolbar.day.accesskey "D">
+<!ENTITY lightning.toolbar.week.label "Vika">
+<!ENTITY lightning.toolbar.week.accesskey "V">
+<!ENTITY lightning.toolbar.multiweek.label "Margar vikur">
+<!ENTITY lightning.toolbar.multiweek.accesskey "u">
+<!ENTITY lightning.toolbar.month.label "Mánuður">
+<!ENTITY lightning.toolbar.month.accesskey "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip "Birta &brandShortName; valmynd">
+<!ENTITY lightning.toolbar.calendarmenu.label "Dagatalsflipi">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey "p">
+<!ENTITY lightning.toolbar.calendarpane.label "Sýna dagatalsflipa">
+<!ENTITY lightning.toolbar.calendarpane.accesskey "p">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+
+<!ENTITY feedTitle.label             "தலைப்பு:">
+<!ENTITY feedTitle.accesskey         "T">
+
+
+
+<!ENTITY locationValidate.label      "சரிபார்">
+
+
+
+<!-- Account Settings and Subscription Dialog -->
+
+
+
+
+
+
+
+<!ENTITY quickMode.label             "வலைப்பக்கத்தை ஏற்றுவதற்க்கு பதிலாக கட்டுரை சுருக்கத்தை காண்பி">
+<!ENTITY quickMode.accesskey         "h">
+
+
+
+
+
+<!-- Subscription Dialog -->
+
+<!ENTITY button.addFeed.label        "சேர்">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.updateFeed.label     "மேம்படுத்து">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "நீக்கு">
+<!ENTITY button.removeFeed.accesskey "R">
+
+
+
+
+
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "மூடுக">

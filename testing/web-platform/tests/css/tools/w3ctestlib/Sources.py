@@ -13,11 +13,7 @@ import codecs
 import collections
 from xml import dom
 import html5lib
-<<<<<<< ours
-from html5lib import treebuilders, inputstream
-=======
 from html5lib import treebuilders
->>>>>>> theirs
 from lxml import etree
 from lxml.etree import ParseError
 from Utils import getMimeFromExt, escapeToNamedASCII, basepath, isPathInsideBase, relativeURL, assetName
@@ -538,7 +534,7 @@ class FileSource:
   def unicode(self):
     try:
       return self.data().decode(self.encoding)
-    except UnicodeDecodeError, e:
+    except UnicodeDecodeError:
       return None
 
   def parse(self):
@@ -1370,15 +1366,8 @@ class HTMLSource(XMLSource):
       if data:
         with warnings.catch_warnings():
           warnings.simplefilter("ignore")
-<<<<<<< ours
-          htmlStream = html5lib.inputstream.HTMLInputStream(data)
-          if ('utf-8-sig' != self.encoding):  # if we found a BOM, respect it
-            self.encoding = htmlStream.detectEncoding()[0]
-          self.tree = self.__parser.parse(data, encoding = self.encoding)
-=======
           self.tree = self.__parser.parse(data)
           self.encoding = self.__parser.documentEncoding
->>>>>>> theirs
           self.injectedTags = {}
       else:
         self.tree = None

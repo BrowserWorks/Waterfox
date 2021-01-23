@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Utjouwer de-ynstallearje">
+<!ENTITY providerUninstall.accept.label                    "Selektearre opsizze">
+<!ENTITY providerUninstall.accept.accesskey                "S">
+<!ENTITY providerUninstall.cancel.label                    "Add-on behâlde">
+<!ENTITY providerUninstall.cancel.accesskey                "A">
+<!ENTITY providerUninstall.preName.label                   "Jo hawwe probearre om te de-ynstallearjen of út te skeakeljen:">
+<!ENTITY providerUninstall.postName.label                  "Dit sil der foar soargje dat ûndersteande aginda's útskeakelje.">
+<!ENTITY providerUninstall.reinstallNote.label             "Allinnich as jo fan doel binne om dizze útjouwer opnij te ynstallearjen, kinne jo kieze om it abonnemint op dizze aginda's op te sizzen.">

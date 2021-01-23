@@ -2,6 +2,8 @@
 // POST test
 //
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -36,28 +38,23 @@ const BUFFERSIZE = 4096;
 var correctOnProgress = false;
 
 var listenerCallback = {
-  QueryInterface: function(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIProgressEventSink)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIProgressEventSink"]),
 
-  getInterface: function(iid) {
+  getInterface(iid) {
     if (iid.equals(Ci.nsIProgressEventSink)) {
       return this;
     }
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
-  onProgress: function(request, context, progress, progressMax) {
+  onProgress(request, progress, progressMax) {
     // this works because the response is 0 bytes and does not trigger onprogress
     if (progress === progressMax) {
       correctOnProgress = true;
     }
   },
 
-  onStatus: function(request, context, status, statusArg) {},
+  onStatus(request, status, statusArg) {},
 };
 
 function run_test() {

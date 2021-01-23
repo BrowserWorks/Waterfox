@@ -7,6 +7,8 @@
 #ifndef nsAtom_h
 #define nsAtom_h
 
+#include <type_traits>
+
 #include "nsISupportsImpl.h"
 #include "nsString.h"
 #include "mozilla/Atomics.h"
@@ -75,12 +77,19 @@ class nsAtom {
   // unchanged.
   bool IsAsciiLowercase() const { return mIsAsciiLowercase; }
 
+  // This function returns true if this is the empty atom. This is exactly
+  // equivalent to `this == nsGkAtoms::_empty`, but it's a bit less foot-gunny,
+  // since we also have `nsGkAtoms::empty`.
+  //
+  // Defined in nsGkAtoms.h
+  inline bool IsEmpty() const;
+
   // We can't use NS_INLINE_DECL_THREADSAFE_REFCOUNTING because the refcounting
   // of this type is special.
   inline MozExternalRefCountType AddRef();
   inline MozExternalRefCountType Release();
 
-  typedef mozilla::TrueType HasThreadSafeRefCnt;
+  using HasThreadSafeRefCnt = std::true_type;
 
  protected:
   // Used by nsStaticAtom.
@@ -185,16 +194,14 @@ class nsDynamicAtom : public nsAtom {
   friend class nsAtomSubTable;
   friend int32_t NS_GetUnusedAtomCount();
 
-  static mozilla::Atomic<int32_t, mozilla::ReleaseAcquire,
-                         mozilla::recordreplay::Behavior::DontPreserve>
-      gUnusedAtomCount;
+  static mozilla::Atomic<int32_t, mozilla::ReleaseAcquire> gUnusedAtomCount;
   static void GCAtomTable();
 
   // These shouldn't be used directly, even by friend classes. The
   // Create()/Destroy() methods use them.
   nsDynamicAtom(const nsAString& aString, uint32_t aHash,
                 bool aIsAsciiLowercase);
-  ~nsDynamicAtom() {}
+  ~nsDynamicAtom() = default;
 
   static nsDynamicAtom* Create(const nsAString& aString, uint32_t aHash);
   static void Destroy(nsDynamicAtom* aAtom);
@@ -269,7 +276,7 @@ class nsAtomString : public nsString {
 
 class nsAtomCString : public nsCString {
  public:
-  explicit nsAtomCString(nsAtom* aAtom) { aAtom->ToUTF8String(*this); }
+  explicit nsAtomCString(const nsAtom* aAtom) { aAtom->ToUTF8String(*this); }
 };
 
 class nsDependentAtomString : public nsDependentString {

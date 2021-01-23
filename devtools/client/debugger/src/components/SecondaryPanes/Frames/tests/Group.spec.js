@@ -25,11 +25,12 @@ function render(overrides = {}) {
     frameworkGroupingOn: true,
     toggleFrameworkGrouping: jest.fn(),
     selectFrame: jest.fn(),
+    selectLocation: jest.fn(),
     copyStackTrace: jest.fn(),
     toggleBlackBox: jest.fn(),
     disableContextMenu: false,
     displayFullUrl: false,
-    selectable: true,
+    panel: "webconsole",
   };
 
   const props = { ...defaultProps, ...overrides };
@@ -113,7 +114,12 @@ describe("Group", () => {
 
     it("calls FrameMenu on right click", () => {
       const { component, props } = render();
-      const { copyStackTrace, toggleFrameworkGrouping, toggleBlackBox } = props;
+      const {
+        copyStackTrace,
+        toggleFrameworkGrouping,
+        toggleBlackBox,
+        cx,
+      } = props;
       const mockEvent = "mockEvent";
       component.simulate("contextmenu", mockEvent);
 
@@ -125,7 +131,8 @@ describe("Group", () => {
           toggleFrameworkGrouping,
           toggleBlackBox,
         },
-        mockEvent
+        mockEvent,
+        cx
       );
     });
   });

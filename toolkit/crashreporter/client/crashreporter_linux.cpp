@@ -16,6 +16,7 @@
 
 #define LABEL_MAX_CHAR_WIDTH 48
 
+using std::ios;
 using std::string;
 using std::vector;
 
@@ -63,6 +64,53 @@ static void LoadSettings() {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gSubmitReportCheck),
                                  enabled);
   }
+}
+
+static string Escape(const string& str) {
+  string ret;
+  for (auto c : str) {
+    if (c == '\\') {
+      ret += "\\\\";
+    } else if (c == '\n') {
+      ret += "\\n";
+    } else if (c == '\t') {
+      ret += "\\t";
+    } else {
+      ret.push_back(c);
+    }
+  }
+
+  return ret;
+}
+
+static bool WriteStrings(ostream& out, const string& header,
+                         StringTable& strings, bool escape) {
+  out << "[" << header << "]" << std::endl;
+  for (const auto& iter : strings) {
+    out << iter.first << "=";
+    if (escape) {
+      out << Escape(iter.second);
+    } else {
+      out << iter.second;
+    }
+
+    out << std::endl;
+  }
+
+  return true;
+}
+
+static bool WriteStringsToFile(const string& path, const string& header,
+                               StringTable& strings, bool escape) {
+  ofstream* f = UIOpenWrite(path, ios::trunc);
+  bool success = false;
+  if (f->is_open()) {
+    success = WriteStrings(*f, header, strings, escape);
+    f->close();
+  }
+
+  delete f;
+  return success;
 }
 
 void SaveSettings() {
@@ -127,11 +175,20 @@ static void ShowReportInfo(GtkTextView* viewReportTextView) {
 
   gtk_text_buffer_delete(buffer, &start, &end);
 
-  for (StringTable::iterator iter = gQueryParameters.begin();
-       iter != gQueryParameters.end(); iter++) {
-    gtk_text_buffer_insert(buffer, &end, iter->first.c_str(), -1);
+  for (Json::ValueConstIterator iter = gQueryParameters.begin();
+       iter != gQueryParameters.end(); ++iter) {
+    gtk_text_buffer_insert(buffer, &end, iter.name().c_str(),
+                           iter.name().length());
     gtk_text_buffer_insert(buffer, &end, ": ", -1);
-    gtk_text_buffer_insert(buffer, &end, iter->second.c_str(), -1);
+    string value;
+    if (iter->isString()) {
+      value = iter->asString();
+    } else {
+      Json::StreamWriterBuilder builder;
+      builder["indentation"] = "";
+      value = writeString(builder, *iter);
+    }
+    gtk_text_buffer_insert(buffer, &end, value.c_str(), value.length());
     gtk_text_buffer_insert(buffer, &end, "\n", -1);
   }
 
@@ -195,10 +252,11 @@ static void CommentChanged(GtkTextBuffer* buffer, gpointer userData) {
   gtk_text_buffer_get_start_iter(buffer, &start);
   gtk_text_buffer_get_end_iter(buffer, &end);
   const char* comment = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
-  if (comment[0] == '\0' || gCommentFieldHint)
-    gQueryParameters.erase("Comments");
-  else
+  if (comment[0] == '\0' || gCommentFieldHint) {
+    gQueryParameters.removeMember("Comments");
+  } else {
     gQueryParameters["Comments"] = comment;
+  }
 }
 
 static void CommentInsert(GtkTextBuffer* buffer, GtkTextIter* location,
@@ -274,10 +332,11 @@ static void UpdateEmail() {
     email = "";
     gtk_widget_set_sensitive(gEmailEntry, FALSE);
   }
-  if (email[0] == '\0' || gEmailFieldHint)
-    gQueryParameters.erase("Email");
-  else
+  if (email[0] == '\0' || gEmailFieldHint) {
+    gQueryParameters.removeMember("Email");
+  } else {
     gQueryParameters["Email"] = email;
+  }
 }
 
 static void EmailMeClicked(GtkButton* sender, gpointer userData) {
@@ -344,14 +403,15 @@ void UIShutdown() {
   // Don't dlclose gnomeLib as libgnomevfs and libORBit-2 use atexit().
 }
 
-bool UIShowCrashUI(const StringTable& files, const StringTable& queryParameters,
+bool UIShowCrashUI(const StringTable& files, const Json::Value& queryParameters,
                    const string& sendURL, const vector<string>& restartArgs) {
   gFiles = files;
   gQueryParameters = queryParameters;
   gSendURL = sendURL;
   gRestartArgs = restartArgs;
-  if (gQueryParameters.find("URL") != gQueryParameters.end())
-    gURLParameter = gQueryParameters["URL"];
+  if (gQueryParameters.isMember("URL")) {
+    gURLParameter = gQueryParameters["URL"].asString();
+  }
 
   if (gAutoSubmit) {
     SendReport();
@@ -453,7 +513,7 @@ bool UIShowCrashUI(const StringTable& files, const StringTable& queryParameters,
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(gCommentText), GTK_WRAP_WORD_CHAR);
   gtk_widget_set_size_request(GTK_WIDGET(gCommentText), -1, 100);
 
-  if (gQueryParameters.find("URL") != gQueryParameters.end()) {
+  if (gQueryParameters.isMember("URL")) {
     gIncludeURLCheck =
         gtk_check_button_new_with_label(gStrings[ST_CHECKURL].c_str());
     gtk_box_pack_start(GTK_BOX(innerVBox), gIncludeURLCheck, FALSE, FALSE, 0);

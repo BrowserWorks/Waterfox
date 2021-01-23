@@ -7,12 +7,12 @@
 DIRS += [
     'accessibility',
     'addon',
+    'descriptors',
     'emulation',
     'highlighters',
     'inspector',
     'network-monitor',
     'object',
-    'replay',
     'targets',
     'utils',
     'webconsole',
@@ -20,7 +20,6 @@ DIRS += [
 ]
 
 DevToolsModules(
-    'actor-registry.js',
     'animation-type-longhand.js',
     'animation.js',
     'array-buffer.js',
@@ -29,7 +28,6 @@ DevToolsModules(
     'common.js',
     'css-properties.js',
     'device.js',
-    'emulation.js',
     'environment.js',
     'errordocs.js',
     'frame.js',
@@ -38,9 +36,8 @@ DevToolsModules(
     'highlighters.css',
     'highlighters.js',
     'layout.js',
+    'manifest.js',
     'memory.js',
-    'network-event.js',
-    'network-monitor.js',
     'object.js',
     'pause-scoped.js',
     'perf.js',
@@ -48,7 +45,6 @@ DevToolsModules(
     'performance.js',
     'preference.js',
     'process.js',
-    'promises.js',
     'reflow.js',
     'root.js',
     'screenshot.js',

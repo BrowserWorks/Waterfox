@@ -17,14 +17,18 @@ dictionary SVGBoundingBoxOptions {
   boolean clipped = false;
 };
 
+[Exposed=Window]
 interface SVGGraphicsElement : SVGElement {
+  [Pure]
+  attribute boolean autofocus;
+
   readonly attribute SVGAnimatedTransformList transform;
 
   readonly attribute SVGElement? nearestViewportElement;
   readonly attribute SVGElement? farthestViewportElement;
 
-  [NewObject, Throws]
-  SVGRect getBBox(optional SVGBoundingBoxOptions aOptions);
+  [NewObject]
+  SVGRect getBBox(optional SVGBoundingBoxOptions aOptions = {});
   // Not implemented
   // SVGRect getStrokeBBox();
   SVGMatrix? getCTM();
@@ -33,4 +37,4 @@ interface SVGGraphicsElement : SVGElement {
   SVGMatrix getTransformToElement(SVGGraphicsElement element);
 };
 
-SVGGraphicsElement implements SVGTests;
+SVGGraphicsElement includes SVGTests;

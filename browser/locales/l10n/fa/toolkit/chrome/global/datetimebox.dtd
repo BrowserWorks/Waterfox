@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "ساعت">
+<!ENTITY time.minute.label "دقیقه">
+<!ENTITY time.second.label "ثانیه">
+<!ENTITY time.millisecond.label "میلی‌ثانیه">
+<!ENTITY time.dayperiod.label "ق.ظ/ب.ظ">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "سال">
+<!ENTITY date.month.placeholder "ماه">
+<!ENTITY date.day.placeholder "روز">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "سال">
+<!ENTITY date.month.label "ماه">
+<!ENTITY date.day.label "روز">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "پاک کردن">

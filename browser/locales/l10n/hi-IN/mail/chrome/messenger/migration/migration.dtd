@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "विजार्ड आयात करें">
+
+<!ENTITY importFromNothing.label        "कुछ मत आयात करें">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "इससे आयात जमावट और डाक फोल्डर">
+<!ENTITY importItems.title              "आयात के लिये मद">
+<!ENTITY importItems.label              "चुनें कि किस मद को आयात किया जाना है:">
+
+<!ENTITY migrating.title                "आयात कर रहा है...">
+<!ENTITY migrating.label                "निम्न मद अभी आयात किया जा रहा है...">
+
+<!ENTITY selectProfile.title            "प्रोफाइल चुनें">
+<!ENTITY selectProfile.label            "निम्न प्रोफाइल है जिससे आयात होना है:">
+
+<!ENTITY done.title                     "आयात अपूर्ण">
+<!ENTITY done.label                     "निम्न मद सफलतापूर्वक आयात किया गया:">

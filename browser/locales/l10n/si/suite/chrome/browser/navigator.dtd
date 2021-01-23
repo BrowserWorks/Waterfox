@@ -1,0 +1,164 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate accesskey and commandkey --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!ENTITY tabCmd.label "Browser Tab">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Open Web Location…">
+<!ENTITY openCmd.accesskey "l">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Open File…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY recentTabs.label "Recently Closed Tabs">
+<!ENTITY recentTabs.accesskey "R">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY editPageCmd.label "Edit Page">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+<!ENTITY uploadFile.label "Upload File…">
+<!ENTITY uploadFile.accesskey "F">
+<!ENTITY printSetupCmd.label "Page Setup…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "Print Preview">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Print…">
+<!ENTITY printCmd.accesskey "p">
+<!ENTITY printCmd.commandkey "p">
+<!ENTITY viewMenu.label "View">
+<!ENTITY viewMenu.accesskey "v">
+<!ENTITY toolbarsCmd.label "Show/Hide">
+<!ENTITY toolbarsCmd.accesskey "w">
+<!ENTITY navbarCmd.label "Navigation Toolbar">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY personalbarCmd.label "Personal Toolbar">
+<!ENTITY personalbarCmd.accesskey "p">
+<!ENTITY tabbarCmd.label "Tab Bar">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "Status Bar">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Component Bar">
+<!ENTITY componentbarCmd.accesskey "C">
+<!ENTITY useStyleSheetMenu.label "Use Style">
+<!ENTITY useStyleSheetMenu.accesskey "u">
+<!ENTITY useStyleSheetNone.label "None">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "Default Style">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "d">
+<!ENTITY pageSourceCmd.label "Page Source">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Page Info">
+<!ENTITY pageInfoCmd.accesskey "i">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY fullScreenCmd.label "Full Screen">
+<!ENTITY fullScreenCmd.accesskey "f">
+<!ENTITY translateMenu.label "Translate Page">
+<!ENTITY translateMenu.accesskey "T">
+<!ENTITY closeOtherTabs.label "Close Other Tabs">
+<!ENTITY closeOtherTabs.accesskey "T">
+<!ENTITY closeWindow.label "Close Window">
+<!ENTITY closeWindow.accesskey "W">
+<!ENTITY minimizeButton.tooltip       "Minimize">
+<!ENTITY restoreButton.tooltip        "Restore">
+
+<!-- I'd like all this to move to an overlay or something -->
+
+<!ENTITY applyTheme.label	"Apply Theme"> 
+<!ENTITY applyTheme.accesskey	"A"> 
+<!ENTITY getNewThemesCmd.label "Get New Themes">
+<!ENTITY getNewThemesCmd.accesskey "G">
+<!ENTITY findOnCmd.label "Find in This Page…">
+<!ENTITY findOnCmd.accesskey "f">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label "Find Again">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findPrevCmd.label "Find Previous">
+<!ENTITY findPrevCmd.accesskey "v">
+<!ENTITY findPrevCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findPrevCmd.commandkey2 "VK_F3">
+<!ENTITY searchInternetCmd.label "Search the Web">
+<!ENTITY searchInternetCmd.accesskey "S">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY clearPrivateDataCmd.label "Clear Private Data…">
+<!ENTITY clearPrivateDataCmd.accesskey "e">
+<!ENTITY goMenu.label "Go">
+<!ENTITY goMenu.accesskey "g">
+<!ENTITY goHomeCmd.label "Home">
+<!ENTITY goHomeCmd.accesskey "h">
+<!ENTITY bookmarksMenu.label "Bookmarks">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY addCurPageCmd.label "Bookmark This Page">
+<!ENTITY addCurPageCmd.accesskey "B">
+<!ENTITY addCurPageAsCmd.label "File Bookmark…">
+<!ENTITY addCurPageAsCmd.accesskey "F">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Bookmark This Group of Tabs…">
+<!ENTITY addCurTabsAsCmd.accesskey "G">
+<!ENTITY manBookmarksCmd.label "Manage Bookmarks…">
+<!ENTITY manBookmarksCmd.accesskey "M">
+<!ENTITY manBookmarksCmd.commandkey "b">
+<!ENTITY feedsMenu.label "Subscribe to This Page">
+<!ENTITY feedsMenu.accesskey "S">
+<!ENTITY emptyItem.label "(Empty)">
+<!ENTITY menuBar.tooltip                  "Menu Bar">
+<!ENTITY personalToolbar.tooltip          "Personal Toolbar">
+<!ENTITY navigationToolbar.tooltip        "Navigation Toolbar">
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Back">
+<!ENTITY backButton.tooltip           "Go back one page">
+<!ENTITY forwardButton.label          "Forward">
+<!ENTITY forwardButton.tooltip        "Go forward one page">
+<!ENTITY reloadButton.label           "Reload">
+<!ENTITY reloadButton.tooltip         "Reload current page">
+<!ENTITY stopButton.label             "Stop">
+<!ENTITY stopButton.tooltip           "Stop loading this page">
+<!ENTITY searchButton.label           "Search">
+<!ENTITY searchButton.tooltip         "Type a word in the field to the left, then click Search">
+<!ENTITY goButton.label               "Go">
+<!ENTITY goButton.tooltip             "Type a location in the field to the left, then click Go">
+<!ENTITY printButton.label            "Print">
+<!ENTITY printButton.tooltip          "Print this page">
+<!ENTITY throbber.tooltip             "Go to the &vendorShortName; home page">
+<!ENTITY locationBar.tooltip          "Enter search term, keyword, or web address">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "Location">
+<!ENTITY proxyIcon.tooltip            "Drag and drop this icon to create a link to this page">
+<!-- Toolbar items --> 
+<!ENTITY  bookmarksButton.label       "Bookmarks">
+<!ENTITY  bookmarksButton.tooltip     "Bookmarks list">
+<!ENTITY  homeButton.label            "Home">
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Done">
+<!ENTITY historyCmd.label           "History">  
+<!ENTITY historyCmd.accesskey       "i">
+<!ENTITY history.commandKey         "h">
+<!ENTITY popupIcon.tooltiptext      "Unblock this site's popups">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Switch Page Direction">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "g">
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY bookmarksToolbarChevron.tooltip "Show more bookmarks">
+<!ENTITY recentWindows.label "Recently Closed Windows">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY recentWindows.accesskey "y">
+<!ENTITY bookmarksToolbarItem.label "Bookmarks Toolbar Items">

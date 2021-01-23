@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Sadržaj">
+<!ENTITY pref.content.description               "Ove postavke utiču kako se web stranica i sadržaj poruke pojavljuju u &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Ikone web stranice">
+<!ENTITY useSiteIcons.label                     "Prikaži ikone web stranice">
+<!ENTITY useFavIcons2.label                     "Pokušajte da koristite ikonu servera ako stranica ne određuje sopstvenu">
+
+<!ENTITY scrolling.label                        "Skrolanje">
+<!ENTITY useAutoScroll.label                    "Koristi automatsko skrolanje">
+<!ENTITY useSmoothScroll.label                  "Koristi glatko skrolanje">
+
+<!ENTITY zoomPrefs.label                        "Opcije uvećanja">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "U rasponu od">
+<!ENTITY maxZoom.label                          "do">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "Zapamtite nivo uvećanja na osnovu stranice">
+<!ENTITY textZoomOnly.label                     "Uvećajte samo tekst umjesto cijelih stranica">
+<!ENTITY enableAutomaticImageResizing.label     "Promijenite veličinu slika da odgovaraju prozoru browsera">
+
+<!ENTITY allowHWAccel.label                     "Koristite hardversko ubrzanje kada je dostupno">
+<!ENTITY blockAutoRefresh.label                 "Upozori me kada se web stranica pokuša preusmjeriti ili ponovo učitati">

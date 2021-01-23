@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Faner">
+
+<!ENTITY tabDisplay.label "Fanevisning">
+<!ENTITY autoHide.label "Skjul fanelinjen når bare en fane er åpen">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "Åpne lenker i bakgrunnen">
+<!ENTITY background.accesskey "Å">
+<!ENTITY warnOnClose.label "Advar meg ved lukking av et vindu med flere faner">
+<!ENTITY warnOnClose.accesskey "d">
+<!ENTITY relatedAfterCurrent.label "Åpne relaterte faner etter nåværende faner">
+<!ENTITY relatedAfterCurrent.accesskey "r">
+
+<!ENTITY loadGroup.label "Ved åpning av bokmerkegruppe">
+<!ENTITY loadGroupAppend.label "Legg til faner">
+<!ENTITY loadGroupAppend.accesskey "L">
+<!ENTITY loadGroupReplace.label "Erstatt eksisterende faner">
+<!ENTITY loadGroupReplace.accesskey "E">
+
+<!ENTITY openTabs.label "Åpne faner i stedet for vinduer for">
+
+<!ENTITY middleClick.label "Midt-trykk, Ctrl+trykk eller Ctrl+Enter på lenker i en nettside">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Midt-trykk, &#8984;+trykk eller &#8984;+Return på lenker i en nettside">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "Ctrl+Enter i adresselinjen">
+<!ENTITY urlbar.accesskey "a">
+<!ENTITY urlbarMac.label "&#8984;+Return i adresselinjen">
+<!ENTITY urlbarMac.accesskey "a">
+
+<!ENTITY openManagers.label "Åpne i en ny fane i stedet for et frittstående vindu">
+<!ENTITY openDataManager.label "Databehandler">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "Utvidelsesbehandler">
+<!ENTITY openAddOnsManager.accesskey "n">

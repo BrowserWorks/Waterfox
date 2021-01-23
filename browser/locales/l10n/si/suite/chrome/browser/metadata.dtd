@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "වත්කම් කුළකය නැත.">
+<!ENTITY image-width.label     "පළල:">
+<!ENTITY image-height.label    "උස:">
+<!ENTITY caption.label         "අංග වත්කම්">
+<!ENTITY image-sec.label       "රූපයේ වත්කම්">
+<!ENTITY image-url.label       "ස්ථානය:">
+<!ENTITY image-desc.label      "විස්තරය:">
+<!ENTITY image-alt.label       "විකල්පීය පෙළ:">
+<!ENTITY image-filesize.label  "ගොනුවේ පරිමාණය:">
+<!ENTITY insdel-sec.label      "වත්කම් ඇතුළත්/ඉවත් කිරීම">
+<!ENTITY insdel-cite.label     "තොරතුරු:">
+<!ENTITY insdel-date.label     "දිනය:">
+<!ENTITY link-sec.label        "පුරුක් වත්කම්">
+<!ENTITY link-url.label        "ලිපිනය:">
+<!ENTITY link-target.label     "විවෘත්ත වනුයේ:">
+<!ENTITY link-type.label       "ඉලක්ක වර්‍ගය:">
+<!ENTITY link-lang.label       "ඉලක්කගත භාෂාව:">
+<!ENTITY link-rel.label        "සම්බන්ධය:">
+<!ENTITY link-rev.label        "ප්‍රතිවර්තිත සම්බන්ධය:">
+<!ENTITY misc-sec.label        "විවිධ වත්කම්">
+<!ENTITY misc-lang.label       "පෙළ භාෂාව:">
+<!ENTITY misc-title.label      "සිරස්තල:">
+<!ENTITY misc-tblsummary.label "වගු සාරාංශය:">
+<!ENTITY quote-sec.label       "උපුටාගත් වත්කම්">
+<!ENTITY quote-cite.label      "තොරතුරු:">

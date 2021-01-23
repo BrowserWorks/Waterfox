@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Identity za toś to konto zastojaś. Prědna identita wužywa se ako standard.">
+<!ENTITY identitiesListAdd.label  "Pśidaś…">
+<!ENTITY identitiesListAdd.accesskey  "P">
+<!ENTITY identitiesListEdit.label "Wobźěłaś…">
+<!ENTITY identitiesListEdit.accesskey "b">
+<!ENTITY identitiesListDefault.label "Standard nastajiś">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "Wulašowaś">
+<!ENTITY identitiesListDelete.accesskey "l">
+<!ENTITY identitiesListClose.label "Zacyniś">
+<!ENTITY identitiesListClose.accesskey "Z">

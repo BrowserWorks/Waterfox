@@ -2,27 +2,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
+import concurrent.futures as futures
+import errno
 import os
 import stat
 import sys
+from collections import Counter, OrderedDict, defaultdict
 
-from mozpack.errors import errors
-from mozpack.files import (
-    BaseFile,
-    DeflatedFile,
-    Dest,
-    ManifestFile,
-)
+import six
+
 import mozpack.path as mozpath
-import errno
-from collections import (
-    defaultdict,
-    Counter,
-    OrderedDict,
-)
-import concurrent.futures as futures
+from mozpack.errors import errors
+from mozpack.files import BaseFile, DeflatedFile, Dest, ManifestFile
 
 
 class FileRegistry(object):
@@ -112,7 +105,7 @@ class FileRegistry(object):
         '''
         Return all paths stored in the container, in the order they were added.
         '''
-        return self._files.keys()
+        return list(self._files)
 
     def __len__(self):
         '''
@@ -145,7 +138,7 @@ class FileRegistry(object):
             for path, file in registry:
                 (...)
         '''
-        return self._files.iteritems()
+        return six.iteritems(self._files)
 
     def required_directories(self):
         '''
@@ -295,7 +288,7 @@ class FileCopier(FileRegistry):
 
         Returns a FileCopyResult that details what changed.
         '''
-        assert isinstance(destination, basestring)
+        assert isinstance(destination, six.string_types)
         assert not os.path.exists(destination) or os.path.isdir(destination)
 
         result = FileCopyResult()
@@ -564,7 +557,7 @@ class Jarrer(FileRegistry, BaseFile):
             def exists(self):
                 return self.deflater is not None
 
-        if isinstance(dest, basestring):
+        if isinstance(dest, six.string_types):
             dest = Dest(dest)
         assert isinstance(dest, Dest)
 

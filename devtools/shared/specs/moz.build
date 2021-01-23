@@ -6,20 +6,21 @@
 
 DIRS += [
     'addon',
+    'descriptors',
     'targets',
     'worker',
 ]
 
 DevToolsModules(
     'accessibility.js',
-    'actor-registry.js',
     'animation.js',
     'array-buffer.js',
     'changes.js',
+    'content-viewer.js',
     'css-properties.js',
     'device.js',
-    'emulation.js',
     'environment.js',
+    'eventsource.js',
     'frame.js',
     'framerate.js',
     'heap-snapshot-file.js',
@@ -27,6 +28,7 @@ DevToolsModules(
     'index.js',
     'inspector.js',
     'layout.js',
+    'manifest.js',
     'memory.js',
     'network-event.js',
     'network-monitor.js',
@@ -36,9 +38,9 @@ DevToolsModules(
     'performance-recording.js',
     'performance.js',
     'preference.js',
-    'promises.js',
     'property-iterator.js',
     'reflow.js',
+    'responsive.js',
     'root.js',
     'screenshot.js',
     'source.js',
@@ -50,5 +52,8 @@ DevToolsModules(
     'symbol.js',
     'thread.js',
     'timeline.js',
+    'walker.js',
+    'watcher.js',
     'webconsole.js',
+    'websocket.js',
 )

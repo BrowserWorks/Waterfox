@@ -50,7 +50,6 @@ MediaDecoderStateMachine* MediaSourceDecoder::CreateStateMachine() {
 nsresult MediaSourceDecoder::Load(nsIPrincipal* aPrincipal) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!GetStateMachine());
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   mPrincipal = aPrincipal;
 
@@ -75,7 +74,6 @@ nsresult MediaSourceDecoder::Load(nsIPrincipal* aPrincipal) {
 
 media::TimeIntervals MediaSourceDecoder::GetSeekable() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   if (!mMediaSource) {
     NS_WARNING("MediaSource element isn't attached");
     return media::TimeIntervals::Invalid();
@@ -102,7 +100,7 @@ media::TimeIntervals MediaSourceDecoder::GetSeekable() {
       return seekable;
     }
 
-    if (buffered.Length()) {
+    if (!buffered.IsEmpty()) {
       seekable += media::TimeInterval(TimeUnit::Zero(), buffered.GetEnd());
     }
   } else {
@@ -115,7 +113,6 @@ media::TimeIntervals MediaSourceDecoder::GetSeekable() {
 
 media::TimeIntervals MediaSourceDecoder::GetBuffered() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   if (!mMediaSource) {
     NS_WARNING("MediaSource element isn't attached");
@@ -143,7 +140,7 @@ media::TimeIntervals MediaSourceDecoder::GetBuffered() {
   buffered += media::TimeInterval(TimeUnit::Zero(), highestEndTime);
 
   for (auto& range : activeRanges) {
-    if (mEnded && range.Length()) {
+    if (mEnded && !range.IsEmpty()) {
       // Set the end time on the last range to highestEndTime by adding a
       // new range spanning the current end time to highestEndTime, which
       // Normalize() will then merge with the old last range.
@@ -158,7 +155,6 @@ media::TimeIntervals MediaSourceDecoder::GetBuffered() {
 
 void MediaSourceDecoder::Shutdown() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   MSE_DEBUG("Shutdown");
   // Detach first so that TrackBuffers are unused on the main thread when
   // shut down on the decode task queue.
@@ -184,7 +180,6 @@ void MediaSourceDecoder::DetachMediaSource() {
 
 void MediaSourceDecoder::Ended(bool aEnded) {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   if (aEnded) {
     // We want the MediaSourceReader to refresh its buffered range as it may
     // have been modified (end lined up).
@@ -196,7 +191,6 @@ void MediaSourceDecoder::Ended(bool aEnded) {
 
 void MediaSourceDecoder::AddSizeOfResources(ResourceSizes* aSizes) {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   if (GetDemuxer()) {
     GetDemuxer()->AddSizeOfResources(aSizes);
   }
@@ -204,7 +198,6 @@ void MediaSourceDecoder::AddSizeOfResources(ResourceSizes* aSizes) {
 
 void MediaSourceDecoder::SetInitialDuration(int64_t aDuration) {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   // Only use the decoded duration if one wasn't already
   // set.
   if (!mMediaSource || !IsNaN(ExplicitDuration())) {
@@ -220,7 +213,6 @@ void MediaSourceDecoder::SetInitialDuration(int64_t aDuration) {
 
 void MediaSourceDecoder::SetMediaSourceDuration(double aDuration) {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   MOZ_ASSERT(!IsShutdown());
   if (aDuration >= 0) {
     int64_t checkedDuration;
@@ -235,24 +227,21 @@ void MediaSourceDecoder::SetMediaSourceDuration(double aDuration) {
   }
 }
 
-void MediaSourceDecoder::GetMozDebugReaderData(nsACString& aString) {
-  aString += NS_LITERAL_CSTRING("Container Type: MediaSource\n");
+void MediaSourceDecoder::GetDebugInfo(dom::MediaSourceDecoderDebugInfo& aInfo) {
   if (mReader && mDemuxer) {
-    mReader->GetMozDebugReaderData(aString);
-    mDemuxer->GetMozDebugReaderData(aString);
+    mReader->GetDebugInfo(aInfo.mReader);
+    mDemuxer->GetDebugInfo(aInfo.mDemuxer);
   }
 }
 
 double MediaSourceDecoder::GetDuration() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   return ExplicitDuration();
 }
 
 MediaDecoderOwner::NextFrameStatus
 MediaSourceDecoder::NextFrameBufferedStatus() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   if (!mMediaSource ||
       mMediaSource->ReadyState() == dom::MediaSourceReadyState::Closed) {
@@ -273,7 +262,6 @@ MediaSourceDecoder::NextFrameBufferedStatus() {
 
 bool MediaSourceDecoder::CanPlayThroughImpl() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   if (NextFrameBufferedStatus() == MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE) {
     return false;
@@ -301,7 +289,6 @@ bool MediaSourceDecoder::CanPlayThroughImpl() {
 TimeInterval MediaSourceDecoder::ClampIntervalToEnd(
     const TimeInterval& aInterval) {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   if (!mEnded) {
     return aInterval;
@@ -316,7 +303,6 @@ TimeInterval MediaSourceDecoder::ClampIntervalToEnd(
 
 void MediaSourceDecoder::NotifyInitDataArrived() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   if (mDemuxer) {
     mDemuxer->NotifyInitDataArrived();
@@ -326,7 +312,6 @@ void MediaSourceDecoder::NotifyInitDataArrived() {
 void MediaSourceDecoder::NotifyDataArrived() {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_DIAGNOSTIC_ASSERT(!IsShutdown());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   NotifyReaderDataArrived();
   GetOwner()->DownloadProgressed();
 }
@@ -334,6 +319,11 @@ void MediaSourceDecoder::NotifyDataArrived() {
 already_AddRefed<nsIPrincipal> MediaSourceDecoder::GetCurrentPrincipal() {
   MOZ_ASSERT(NS_IsMainThread());
   return do_AddRef(mPrincipal);
+}
+
+bool MediaSourceDecoder::HadCrossOriginRedirects() {
+  MOZ_ASSERT(NS_IsMainThread());
+  return false;
 }
 
 #undef MSE_DEBUG

@@ -13,8 +13,10 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-br-element
-[HTMLConstructor]
-interface HTMLBRElement : HTMLElement {};
+[Exposed=Window]
+interface HTMLBRElement : HTMLElement {
+  [HTMLConstructor] constructor();
+};
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLBRElement {
@@ -22,3 +24,16 @@ partial interface HTMLBRElement {
              attribute DOMString clear;
 };
 
+// Mozilla extensions
+
+partial interface HTMLBRElement {
+  // Set to true if the <br> element is created by editor for placing caret
+  // at proper position in empty editor.
+  [ChromeOnly]
+  readonly attribute boolean isPaddingForEmptyEditor;
+  // Set to true if the <br> element is created by editor for placing caret
+  // at proper position making last empty line in a block element in HTML
+  // editor or <textarea> element visible.
+  [ChromeOnly]
+  readonly attribute boolean isPaddingForEmptyLastLine;
+};

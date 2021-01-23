@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Etiketaren propietateak">
+
+<!ENTITY Settings.label "Ezarpenak">
+<!ENTITY Settings.accesskey "E">
+
+<!ENTITY EditLabelText.label "Editatu testua:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "Kontrolarentzat:">
+<!ENTITY LabelFor.accesskey "K">
+<!ENTITY AccessKey.label "Laster-tekla:">
+<!ENTITY AccessKey.accesskey "k">
+
+<!ENTITY RemoveLabel.label "Ezabatu etiketa">
+<!ENTITY RemoveLabel.accesskey "z">

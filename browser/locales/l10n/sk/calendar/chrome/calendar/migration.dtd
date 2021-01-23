@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName; - Import údajov">
+<!ENTITY migration.welcome "Vitajte">
+<!ENTITY migration.importing "Importuje sa">
+<!ENTITY migration.list.description "&brandShortName; dokáže importovať údaje z rôznych obľúbených programov. Na vašom počítači boli nájdené nasledovné kalendáre. Vyberte, ktoré si želáte naimportovať.">
+<!ENTITY migration.progress.description "Importujú sa zvolené údaje">

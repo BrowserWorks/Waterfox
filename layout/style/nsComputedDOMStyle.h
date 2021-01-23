@@ -40,16 +40,14 @@ class nsIFrame;
 class nsDOMCSSValueList;
 struct nsMargin;
 class nsROCSSPrimitiveValue;
-class nsStyleCoord;
-struct nsStyleFilter;
 class nsStyleGradient;
-struct nsStyleImage;
-class nsStyleSides;
 
 class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
                                  public nsStubMutationObserver {
  private:
   // Convenience typedefs:
+  template <typename T>
+  using Span = mozilla::Span<T>;
   using KTableEntry = nsCSSKTableEntry;
   using CSSValue = mozilla::dom::CSSValue;
   using StyleGeometryBox = mozilla::StyleGeometryBox;
@@ -71,11 +69,12 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   NS_DECL_NSIDOMCSSSTYLEDECLARATION_HELPER
   nsresult GetPropertyValue(const nsCSSPropertyID aPropID,
                             nsAString& aValue) override;
-  nsresult SetPropertyValue(const nsCSSPropertyID aPropID,
-                            const nsAString& aValue,
-                            nsIPrincipal* aSubjectPrincipal) override;
+  void SetPropertyValue(const nsCSSPropertyID aPropID, const nsACString& aValue,
+                        nsIPrincipal* aSubjectPrincipal,
+                        mozilla::ErrorResult& aRv) override;
 
-  void IndexedGetter(uint32_t aIndex, bool& aFound, nsAString& aPropName) final;
+  void IndexedGetter(uint32_t aIndex, bool& aFound,
+                     nsACString& aPropName) final;
 
   enum StyleType {
     eDefaultOnly,  // Only includes UA and user sheets
@@ -106,8 +105,8 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
     mExposeVisitedStyle = aExpose;
   }
 
-  void GetCSSImageURLs(const nsAString& aPropertyName,
-                       nsTArray<nsString>& aImageURLs,
+  void GetCSSImageURLs(const nsACString& aPropertyName,
+                       nsTArray<nsCString>& aImageURLs,
                        mozilla::ErrorResult& aRv) final;
 
   // nsDOMCSSDeclaration abstract methods which should never be called
@@ -143,7 +142,7 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   nsMargin GetAdjustedValuesForBoxSizing();
 
   // This indicates error by leaving mComputedStyle null.
-  void UpdateCurrentStyleSources(bool aNeedsLayoutFlush);
+  void UpdateCurrentStyleSources(nsCSSPropertyID);
   void ClearCurrentStyleSources();
 
   // Helper functions called by UpdateCurrentStyleSources.
@@ -180,34 +179,21 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
 
   already_AddRefed<CSSValue> GetPaddingWidthFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetBorderStyleFor(mozilla::Side aSide);
-
   already_AddRefed<CSSValue> GetBorderWidthFor(mozilla::Side aSide);
-
-  already_AddRefed<CSSValue> GetBorderColorFor(mozilla::Side aSide);
 
   already_AddRefed<CSSValue> GetMarginWidthFor(mozilla::Side aSide);
 
   already_AddRefed<CSSValue> GetTransformValue(const mozilla::StyleTransform&);
 
-  // Appends all aLineNames (may be empty) space-separated to aResult.
-  void AppendGridLineNames(nsString& aResult,
-                           const nsTArray<nsString>& aLineNames);
-  // Appends aLineNames as a CSSValue* to aValueList.  If aLineNames is empty
-  // a value ("[]") is only appended if aSuppressEmptyList is false.
-  void AppendGridLineNames(nsDOMCSSValueList* aValueList,
-                           const nsTArray<nsString>& aLineNames,
-                           bool aSuppressEmptyList = true);
-  // Appends aLineNames1/2 (if non-empty) as a CSSValue* to aValueList.
-  void AppendGridLineNames(nsDOMCSSValueList* aValueList,
-                           const nsTArray<nsString>& aLineNames1,
-                           const nsTArray<nsString>& aLineNames2);
-  already_AddRefed<CSSValue> GetGridTrackSize(const nsStyleCoord& aMinSize,
-                                              const nsStyleCoord& aMaxSize);
+  already_AddRefed<nsROCSSPrimitiveValue> GetGridTrackSize(
+      const mozilla::StyleTrackSize&);
+  already_AddRefed<nsROCSSPrimitiveValue> GetGridTrackBreadth(
+      const mozilla::StyleTrackBreadth&);
+  void SetValueToTrackBreadth(nsROCSSPrimitiveValue*,
+                              const mozilla::StyleTrackBreadth&);
   already_AddRefed<CSSValue> GetGridTemplateColumnsRows(
-      const nsStyleGridTemplate& aTrackList,
-      const mozilla::ComputedGridTrackInfo* aTrackInfo);
-  already_AddRefed<CSSValue> GetGridLine(const nsStyleGridLine& aGridLine);
+      const mozilla::StyleGridTemplateComponent& aTrackList,
+      const mozilla::ComputedGridTrackInfo& aTrackInfo);
 
   bool GetLineHeightCoord(nscoord& aCoord);
 
@@ -235,8 +221,6 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   already_AddRefed<CSSValue> DoGetOsxFontSmoothing();
 
   /* Grid properties */
-  already_AddRefed<CSSValue> DoGetGridAutoColumns();
-  already_AddRefed<CSSValue> DoGetGridAutoRows();
   already_AddRefed<CSSValue> DoGetGridTemplateColumns();
   already_AddRefed<CSSValue> DoGetGridTemplateRows();
 
@@ -271,8 +255,6 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   /* Text Properties */
   already_AddRefed<CSSValue> DoGetLineHeight();
   already_AddRefed<CSSValue> DoGetTextDecoration();
-  already_AddRefed<CSSValue> DoGetTextDecorationColor();
-  already_AddRefed<CSSValue> DoGetTextDecorationStyle();
 
   /* Display properties */
   already_AddRefed<CSSValue> DoGetTransform();
@@ -291,7 +273,7 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
                                 const mozilla::StyleColor& aColor);
   void SetValueToPosition(const mozilla::Position& aPosition,
                           nsDOMCSSValueList* aValueList);
-  void SetValueToURLValue(const mozilla::css::URLValue* aURL,
+  void SetValueToURLValue(const mozilla::StyleComputedUrl* aURL,
                           nsROCSSPrimitiveValue* aValue);
 
   void SetValueToSize(nsROCSSPrimitiveValue* aValue, const mozilla::StyleSize&);
@@ -308,25 +290,6 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
 
   void SetValueToExtremumLength(nsROCSSPrimitiveValue* aValue,
                                 StyleExtremumLength);
-
-  /**
-   * Method to set aValue to aCoord.  If aCoord is a percentage value and
-   * aPercentageBaseGetter is not null, aPercentageBaseGetter is called.  If it
-   * returns true, the percentage base it outputs in its out param is used
-   * to compute an nscoord value.  If the getter is null or returns false,
-   * the percent value of aCoord is set as a percent value on aValue.  aTable,
-   * if not null, is the keyword table to handle eStyleUnit_Enumerated.  When
-   * calling SetAppUnits on aValue (for coord or percent values), the value
-   * passed in will be clamped to be no less than aMinAppUnits and no more than
-   * aMaxAppUnits.
-   *
-   * XXXbz should caller pass in some sort of bitfield indicating which units
-   * can be expected or something?
-   */
-  void SetValueToCoord(nsROCSSPrimitiveValue* aValue,
-                       const nsStyleCoord& aCoord, bool aClampNegativeCalc,
-                       PercentageBaseGetter aPercentageBaseGetter = nullptr,
-                       const KTableEntry aTable[] = nullptr);
 
   /**
    * If aCoord is a eStyleUnit_Coord returns the nscoord.  If it's
@@ -349,12 +312,6 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
     return aDefaultValue;
   }
 
-  /**
-   * Append coord values from four sides. It omits values when possible.
-   */
-  void AppendFourSideCoordValues(nsDOMCSSValueList* aList,
-                                 const nsStyleSides& aValues);
-
   bool GetCBContentWidth(nscoord& aWidth);
   bool GetCBContentHeight(nscoord& aHeight);
   bool GetCBPaddingRectWidth(nscoord& aWidth);
@@ -364,13 +321,16 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   bool GetFrameBorderRectWidth(nscoord& aWidth);
   bool GetFrameBorderRectHeight(nscoord& aHeight);
 
-  /* Helper functions for computing and serializing a nsStyleCoord. */
-  void SetCssTextToCoord(nsAString& aCssText, const nsStyleCoord& aCoord,
-                         bool aClampNegativeCalc);
-
   // Find out if we can safely skip flushing (i.e. pending restyles do not
-  // affect mElement).
-  bool NeedsToFlush() const;
+  // affect our element).
+  bool NeedsToFlushStyle(nsCSSPropertyID) const;
+  // Find out if we need to flush layout of the document, depending on the
+  // property that was requested.
+  bool NeedsToFlushLayout(nsCSSPropertyID) const;
+  // Flushes the given document, which must be our document, and potentially the
+  // mElement's document.
+  void Flush(Document&, mozilla::FlushType);
+  nsIFrame* GetOuterFrame() const;
 
   static ComputedStyleMap* GetComputedStyleMap();
 
@@ -437,7 +397,7 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   bool mResolvedComputedStyle;
 
 #ifdef DEBUG
-  bool mFlushedPendingReflows;
+  bool mFlushedPendingReflows = false;
 #endif
 
   friend struct ComputedStyleMap;

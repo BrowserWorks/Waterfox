@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "حساب فایرفاکس">
+<!ENTITY aboutAccounts.connected.description "شما متصل هستید به عنوان">
+<!ENTITY aboutAccounts.syncPreferences.label "اینجا را جهت بررسی تنظمیات همگام‌سازی تپ کنید">
+
+<!ENTITY aboutAccounts.noConnection.title "اتصال اینترنت موجود نیست">
+<!ENTITY aboutAccounts.retry.label "تلاش مجدد">
+
+<!ENTITY aboutAccounts.restrictedError.title "ممنوع">
+<!ENTITY aboutAccounts.restrictedError.description "از این پروفایل قادر به مدیریت حساب فایرفاکس نیستید.">

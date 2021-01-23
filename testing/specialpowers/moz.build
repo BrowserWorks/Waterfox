@@ -19,12 +19,15 @@ FINAL_TARGET_FILES.content += [
     'content/MockColorPicker.jsm',
     'content/MockFilePicker.jsm',
     'content/MockPermissionPrompt.jsm',
-    'content/MozillaLogger.js',
-    'content/specialpowers.js',
-    'content/specialpowersAPI.js',
-    'content/specialpowersFrameScript.js',
-    'content/SpecialPowersObserver.jsm',
-    'content/SpecialPowersObserverAPI.js',
+    'content/SpecialPowersChild.jsm',
+    'content/SpecialPowersEventUtils.jsm',
+    'content/SpecialPowersParent.jsm',
+    'content/SpecialPowersSandbox.jsm',
+    'content/WrapPrivileged.jsm',
+]
+
+TESTING_JS_MODULES += [
+    'content/MockFilePicker.jsm',
 ]
 
 with Files("**"):

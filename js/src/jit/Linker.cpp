@@ -7,6 +7,7 @@
 #include "jit/Linker.h"
 
 #include "gc/GC.h"
+#include "util/Memory.h"
 
 #include "gc/StoreBuffer-inl.h"
 
@@ -36,9 +37,15 @@ JitCode* Linker::newCode(JSContext* cx, CodeKind kind) {
   // ExecutableAllocator requires bytesNeeded to be aligned.
   bytesNeeded = AlignBytes(bytesNeeded, ExecutableAllocatorAlignment);
 
+  JitZone* jitZone = cx->zone()->getJitZone(cx);
+  if (!jitZone) {
+    // Note: don't call fail(cx) here, getJitZone reports OOM.
+    return nullptr;
+  }
+
   ExecutablePool* pool;
-  uint8_t* result = (uint8_t*)cx->runtime()->jitRuntime()->execAlloc().alloc(
-      cx, bytesNeeded, &pool, kind);
+  uint8_t* result =
+      (uint8_t*)jitZone->execAlloc().alloc(cx, bytesNeeded, &pool, kind);
   if (!result) {
     return fail(cx);
   }
@@ -50,8 +57,8 @@ JitCode* Linker::newCode(JSContext* cx, CodeKind kind) {
   codeStart = (uint8_t*)AlignBytes((uintptr_t)codeStart, CodeAlignment);
   MOZ_ASSERT(codeStart + masm.bytesNeeded() <= result + bytesNeeded);
   uint32_t headerSize = codeStart - result;
-  JitCode* code = JitCode::New<NoGC>(cx, codeStart, bytesNeeded - headerSize,
-                                     headerSize, pool, kind);
+  JitCode* code =
+      JitCode::New<NoGC>(cx, codeStart, bytesNeeded, headerSize, pool, kind);
   if (!code) {
     return fail(cx);
   }

@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 const Services = require("Services");
@@ -31,9 +35,11 @@ function makePrefTrackedFlag(exports, name, pref) {
     Services.prefs.addObserver(pref, prefObserver);
 
     // Also listen for Loader unload to unregister the pref observer and prevent leaking
-    const unloadObserver = function() {
-      Services.prefs.removeObserver(pref, prefObserver);
-      Services.obs.removeObserver(unloadObserver, "devtools:loader:destroy");
+    const unloadObserver = function(subject) {
+      if (subject.wrappedJSObject == require("@loader/unload")) {
+        Services.prefs.removeObserver(pref, prefObserver);
+        Services.obs.removeObserver(unloadObserver, "devtools:loader:destroy");
+      }
     };
     Services.obs.addObserver(unloadObserver, "devtools:loader:destroy");
   }
@@ -46,7 +52,7 @@ function makePrefTrackedFlag(exports, name, pref) {
 
 /**
  * Setting the "devtools.debugger.log" preference to true will enable logging of
- * the RDP calls to the debugger server.
+ * the RDP calls to the devtools server.
  */
 makePrefTrackedFlag(exports, "wantLogging", "devtools.debugger.log");
 

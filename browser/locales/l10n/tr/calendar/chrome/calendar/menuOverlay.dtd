@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Yeni etkinlik…">
+<!ENTITY event.new.event.accesskey              "Y">
+
+<!ENTITY event.new.task                         "Yeni görev…">
+<!ENTITY event.new.task.accesskey               "n">
+
+<!ENTITY calendar.import.label                  "İçe aktar…">
+<!ENTITY calendar.import.accesskey              "e">
+
+<!ENTITY calendar.export.label                  "Seçimi dışa aktar…">
+<!ENTITY calendar.export.accesskey              "e">
+
+<!ENTITY calendar.publish.label                 "Yayımla…">
+<!ENTITY calendar.publish.accesskey             "Y">
+
+<!ENTITY calendar.deletecalendar.label          "Seçili takvimi sil">
+<!ENTITY calendar.deletecalendar.accesskey      "l">
+<!ENTITY calendar.unsubscribecalendar.label     "Seçilen takvimin aboneliğinden çık…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "a">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Seçilen takvimi sil…">
+<!ENTITY calendar.removecalendar.accesskey      "s">
+
+
+<!ENTITY calendar.menu.customize.label          "Özelleştir…">
+<!ENTITY calendar.menu.customize.accesskey      "z">
+
+<!ENTITY showUnifinderCmd.label                 "Etkinlikleri bul">
+<!ENTITY showUnifinderCmd.accesskey             "b">
+<!ENTITY showUnifinderCmd.tooltip               "Etkinlik bulma bölmesini açar/kapatır">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Görevleri takvimde göster">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "t">
+
+<!ENTITY goTodayCmd.label                       "Bugün">
+<!ENTITY goTodayCmd.accesskey                   "B">
+
+<!ENTITY showCurrentView.label                  "Güncel görünüm">
+<!ENTITY showCurrentView.accesskey              "G">
+
+<!ENTITY calendar.properties.label              "Takvim özellikleri…">
+<!ENTITY calendar.properties.accesskey          "a">

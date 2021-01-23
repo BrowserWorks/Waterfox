@@ -9,5 +9,5 @@
 // but no associated rule) we fake a rule with the following style id.
 exports.ELEMENT_STYLE = 100;
 
-// Pseudo classes in the pseudo class panel.
-exports.PSEUDO_CLASSES = [":active", ":focus", ":focus-within", ":hover"];
+// An array of the possible color schemes that can be emulated.
+exports.COLOR_SCHEMES = [null, "dark", "light", "no-preference"];

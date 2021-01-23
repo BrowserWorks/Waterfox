@@ -108,10 +108,15 @@ interface nsIScriptSecurityManager : nsISupports
      * @param aPrincipal the principal identifying the actor causing the load
      * @param uri the URI that is being loaded
      * @param flags the permission set, see above
+     * @param innerWindowID the window ID for error reporting.  If this is 0
+     *        (which happens automatically if it's not passed from JS), errors
+     *        will only appear in the browser console, not window-associated
+     *        consoles like the web console.
      */
     void checkLoadURIWithPrincipal(in nsIPrincipal aPrincipal,
                                    in nsIURI uri,
-                                   in unsigned long flags);
+                                   in unsigned long flags,
+                                   [optional] in unsigned long long innerWindowID);
 
     /**
      * Similar to checkLoadURIWithPrincipal but there are two differences:
@@ -144,18 +149,18 @@ interface nsIScriptSecurityManager : nsISupports
      * Returns a principal that has the OriginAttributes of the load context.
      * @param loadContext to get the OriginAttributes from.
      */
-    nsIPrincipal getLoadContextCodebasePrincipal(in nsIURI uri,
+    nsIPrincipal getLoadContextContentPrincipal(in nsIURI uri,
                                                  in nsILoadContext loadContext);
 
     /**
      * Returns a principal that has the OriginAttributes of the docshell.
      * @param docShell to get the OriginAttributes from.
      */
-    nsIPrincipal getDocShellCodebasePrincipal(in nsIURI uri,
+    nsIPrincipal getDocShellContentPrincipal(in nsIURI uri,
                                               in nsIDocShell docShell);
 
     /**
-     * If this is a codebase principal, return a copy with different
+     * If this is a content principal, return a copy with different
      * origin attributes.
      */
     [implicit_jscontext]
@@ -168,14 +173,27 @@ interface nsIScriptSecurityManager : nsISupports
      * ChromeUtils.webidl for a list of origin attributes and their defaults.
      */
     [implicit_jscontext]
-    nsIPrincipal createCodebasePrincipal(in nsIURI uri, in jsval originAttributes);
+    nsIPrincipal createContentPrincipal(in nsIURI uri, in jsval originAttributes);
 
     /**
      * Returns a principal whose origin is the one we pass in.
      * See nsIPrincipal.idl for a description of origin attributes, and
      * ChromeUtils.webidl for a list of origin attributes and their defaults.
      */
-    nsIPrincipal createCodebasePrincipalFromOrigin(in ACString origin);
+    nsIPrincipal createContentPrincipalFromOrigin(in ACString origin);
+
+    /**
+     * Takes a principal and returns a string representation of it or a nullptr if it can't be serialized.
+     * Example output: `{"1": {"0": "https://mozilla.com", "2": "^privateBrowsingId=1"}}`
+     */
+    ACString principalToJSON(in nsIPrincipal principal);
+
+    /**
+     * Takes a string of the following format:
+     * `{"1": {"0": "https://mozilla.com", "2": "^privateBrowsingId=1"}}`
+     * and turns it into a principal or a nullptr on error.
+     */
+    nsIPrincipal JSONToPrincipal(in ACString json);
 
     /**
      * Returns a unique nonce principal with |originAttributes|.
@@ -200,7 +218,7 @@ interface nsIScriptSecurityManager : nsISupports
 
     /**
      * Get the principal for the given channel.  This will typically be the
-     * channel owner if there is one, and the codebase principal for the
+     * channel owner if there is one, and the content principal for the
      * channel's URI otherwise.  aChannel must not be null.
      */
     nsIPrincipal getChannelResultPrincipal(in nsIChannel aChannel);
@@ -241,12 +259,14 @@ interface nsIScriptSecurityManager : nsISupports
     nsIPrincipal getChannelResultPrincipalIfNotSandboxed(in nsIChannel aChannel);
 
     /**
-     * Get the codebase principal for the channel's URI.
+     * Get the content principal for the channel's URI.
      * aChannel must not be null.
      */
     nsIPrincipal getChannelURIPrincipal(in nsIChannel aChannel);
 
     const unsigned long DEFAULT_USER_CONTEXT_ID = 0;
+
+    const unsigned long DEFAULT_PRIVATE_BROWSING_ID = 0;
 
     /**
      * Per-domain controls to enable and disable script. This system is designed

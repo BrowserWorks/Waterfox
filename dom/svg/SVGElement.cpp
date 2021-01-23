@@ -7,6 +7,7 @@
 #include "mozilla/dom/SVGElement.h"
 
 #include "mozilla/dom/MutationEventBinding.h"
+#include "mozilla/dom/MutationObservers.h"
 #include "mozilla/dom/SVGElementBinding.h"
 #include "mozilla/dom/SVGGeometryElement.h"
 #include "mozilla/dom/SVGLengthBinding.h"
@@ -22,6 +23,7 @@
 #include "mozilla/PresShell.h"
 #include "mozilla/RestyleManager.h"
 #include "mozilla/SMILAnimationController.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "mozilla/SVGContentUtils.h"
 #include "mozilla/Unused.h"
 
@@ -30,6 +32,7 @@
 #include "nsAttrValueOrString.h"
 #include "nsCSSProps.h"
 #include "nsContentUtils.h"
+#include "nsDOMCSSAttrDeclaration.h"
 #include "nsICSSDeclaration.h"
 #include "nsIContentInlines.h"
 #include "mozilla/dom/Document.h"
@@ -53,6 +56,7 @@
 #include "SVGAnimatedOrient.h"
 #include "SVGAnimatedString.h"
 #include "SVGAnimatedViewBox.h"
+#include "SVGGeometryProperty.h"
 #include "SVGMotionSMILAttr.h"
 #include <stdarg.h>
 
@@ -65,8 +69,10 @@ static_assert(sizeof(void*) == sizeof(nullptr),
 
 nsresult NS_NewSVGElement(
     Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo) {
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo(aNodeInfo);
+  auto* nim = nodeInfo->NodeInfoManager();
   RefPtr<mozilla::dom::SVGElement> it =
-      new mozilla::dom::SVGElement(std::move(aNodeInfo));
+      new (nim) mozilla::dom::SVGElement(nodeInfo.forget());
   nsresult rv = it->Init();
 
   if (NS_FAILED(rv)) {
@@ -100,6 +106,18 @@ JSObject* SVGElement::WrapNode(JSContext* aCx,
   return SVGElement_Binding::Wrap(aCx, this, aGivenProto);
 }
 
+nsresult SVGElement::CopyInnerTo(mozilla::dom::Element* aDest) {
+  nsresult rv = Element::CopyInnerTo(aDest);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // cloning a node must retain its internal nonce slot
+  nsString* nonce = static_cast<nsString*>(GetProperty(nsGkAtoms::nonce));
+  if (nonce) {
+    static_cast<SVGElement*>(aDest)->SetNonce(*nonce);
+  }
+  return NS_OK;
+}
+
 //----------------------------------------------------------------------
 // SVGElement methods
 
@@ -115,14 +133,14 @@ void SVGElement::DidAnimateClass() {
   nsAutoString src;
   mClassAttribute.GetAnimValue(src, this);
   if (!mClassAnimAttr) {
-    mClassAnimAttr = new nsAttrValue();
+    mClassAnimAttr = MakeUnique<nsAttrValue>();
   }
   mClassAnimAttr->ParseAtomArray(src);
 
   // FIXME(emilio): This re-selector-matches, but we do the snapshot stuff right
   // above... Is this needed anymore?
   if (presShell) {
-    presShell->RestyleForAnimation(this, StyleRestyleHint_RESTYLE_SELF);
+    presShell->RestyleForAnimation(this, RestyleHint::RESTYLE_SELF);
   }
 }
 
@@ -225,10 +243,24 @@ nsresult SVGElement::Init() {
 //----------------------------------------------------------------------
 // nsIContent methods
 
-nsresult SVGElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                nsIContent* aBindingParent) {
-  nsresult rv = SVGElementBase::BindToTree(aDocument, aParent, aBindingParent);
+nsresult SVGElement::BindToTree(BindContext& aContext, nsINode& aParent) {
+  nsresult rv = SVGElementBase::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  // Hide any nonce from the DOM, but keep the internal value of the
+  // nonce by copying and resetting the internal nonce value.
+  if (HasFlag(NODE_HAS_NONCE_AND_HEADER_CSP) && IsInComposedDoc() &&
+      OwnerDoc()->GetBrowsingContext()) {
+    nsContentUtils::AddScriptRunner(NS_NewRunnableFunction(
+        "SVGElement::ResetNonce::Runnable",
+        [self = RefPtr<SVGElement>(this)]() {
+          nsAutoString nonce;
+          self->GetNonce(nonce);
+          self->SetAttr(kNameSpaceID_None, nsGkAtoms::nonce, EmptyString(),
+                        true);
+          self->SetNonce(nonce);
+        }));
+  }
 
   if (!MayHaveStyle()) {
     return NS_OK;
@@ -283,9 +315,21 @@ nsresult SVGElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
   if (IsEventAttributeName(aName) && aValue) {
     MOZ_ASSERT(aValue->Type() == nsAttrValue::eString,
                "Expected string value for script body");
-    nsresult rv =
-        SetEventHandler(GetEventNameForAttr(aName), aValue->GetStringValue());
-    NS_ENSURE_SUCCESS(rv, rv);
+    SetEventHandler(GetEventNameForAttr(aName), aValue->GetStringValue());
+  }
+
+  // The nonce will be copied over to an internal slot and cleared from the
+  // Element within BindToTree to avoid CSS Selector nonce exfiltration if
+  // the CSP list contains a header-delivered CSP.
+  if (nsGkAtoms::nonce == aName && kNameSpaceID_None == aNamespaceID) {
+    if (aValue) {
+      SetNonce(aValue->GetStringValue());
+      if (OwnerDoc()->GetHasCSPDeliveredThroughHeader()) {
+        SetFlags(NODE_HAS_NONCE_AND_HEADER_CSP);
+      }
+    } else {
+      RemoveNonce();
+    }
   }
 
   return SVGElementBase::AfterSetAttr(aNamespaceID, aName, aValue, aOldValue,
@@ -489,8 +533,10 @@ bool SVGElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
       for (i = 0; i < enumInfo.mEnumCount; i++) {
         if (aAttribute == enumInfo.mEnumInfo[i].mName) {
           RefPtr<nsAtom> valAtom = NS_Atomize(aValue);
-          rv = enumInfo.mEnums[i].SetBaseValueAtom(valAtom, this);
-          if (NS_FAILED(rv)) {
+          if (!enumInfo.mEnums[i].SetBaseValueAtom(valAtom, this)) {
+            // Exact error value does not matter; we just need to mark the
+            // parse as failed.
+            rv = NS_ERROR_FAILURE;
             enumInfo.SetUnknownValue(i);
           } else {
             aResult.SetTo(valAtom);
@@ -918,6 +964,7 @@ const Element::MappedAttributeEntry SVGElement::sGraphicsMap[] = {
     {nsGkAtoms::pointer_events},
     {nsGkAtoms::shape_rendering},
     {nsGkAtoms::text_rendering},
+    {nsGkAtoms::transform_origin},
     {nsGkAtoms::visibility},
     {nullptr}};
 
@@ -1020,6 +1067,41 @@ already_AddRefed<DOMSVGAnimatedString> SVGElement::ClassName() {
   return mClassAttribute.ToDOMAnimatedString(this);
 }
 
+/* static */
+bool SVGElement::UpdateDeclarationBlockFromLength(
+    DeclarationBlock& aBlock, nsCSSPropertyID aPropId,
+    const SVGAnimatedLength& aLength, ValToUse aValToUse) {
+  aBlock.AssertMutable();
+
+  float value;
+  if (aValToUse == ValToUse::Anim) {
+    value = aLength.GetAnimValInSpecifiedUnits();
+  } else {
+    MOZ_ASSERT(aValToUse == ValToUse::Base);
+    value = aLength.GetBaseValInSpecifiedUnits();
+  }
+
+  // SVG parser doesn't check non-negativity of some parsed value,
+  // we should not pass those to CSS side.
+  if (value < 0 &&
+      SVGGeometryProperty::IsNonNegativeGeometryProperty(aPropId)) {
+    return false;
+  }
+
+  nsCSSUnit cssUnit = SVGGeometryProperty::SpecifiedUnitTypeToCSSUnit(
+      aLength.GetSpecifiedUnitType());
+
+  if (cssUnit == eCSSUnit_Percent) {
+    Servo_DeclarationBlock_SetPercentValue(aBlock.Raw(), aPropId,
+                                           value / 100.f);
+  } else {
+    Servo_DeclarationBlock_SetLengthValue(aBlock.Raw(), aPropId, value,
+                                          cssUnit);
+  }
+
+  return true;
+}
+
 //------------------------------------------------------------------------
 // Helper class: MappedAttrParser, for parsing values of mapped attributes
 
@@ -1027,13 +1109,16 @@ namespace {
 
 class MOZ_STACK_CLASS MappedAttrParser {
  public:
-  MappedAttrParser(css::Loader* aLoader, nsIURI* aDocURI,
-                   already_AddRefed<nsIURI> aBaseURI, SVGElement* aElement);
+  MappedAttrParser(css::Loader* aLoader, nsIURI* aBaseURI,
+                   SVGElement* aElement);
   ~MappedAttrParser();
 
   // Parses a mapped attribute value.
   void ParseMappedAttrValue(nsAtom* aMappedAttrName,
                             const nsAString& aMappedAttrValue);
+
+  void TellStyleAlreadyParsedResult(nsAtom const* aAtom,
+                                    SVGAnimatedLength const& aLength);
 
   // If we've parsed any values for mapped attributes, this method returns the
   // already_AddRefed css::Declaration that incorporates the parsed
@@ -1045,8 +1130,6 @@ class MOZ_STACK_CLASS MappedAttrParser {
   // -----------
   css::Loader* mLoader;
 
-  // Arguments for nsCSSParser::ParseProperty
-  nsIURI* mDocURI;
   nsCOMPtr<nsIURI> mBaseURI;
 
   // Declaration for storing parsed values (lazily initialized)
@@ -1056,13 +1139,9 @@ class MOZ_STACK_CLASS MappedAttrParser {
   SVGElement* mElement;
 };
 
-MappedAttrParser::MappedAttrParser(css::Loader* aLoader, nsIURI* aDocURI,
-                                   already_AddRefed<nsIURI> aBaseURI,
+MappedAttrParser::MappedAttrParser(css::Loader* aLoader, nsIURI* aBaseURI,
                                    SVGElement* aElement)
-    : mLoader(aLoader),
-      mDocURI(aDocURI),
-      mBaseURI(aBaseURI),
-      mElement(aElement) {}
+    : mLoader(aLoader), mBaseURI(aBaseURI), mElement(aElement) {}
 
 MappedAttrParser::~MappedAttrParser() {
   MOZ_ASSERT(!mDecl,
@@ -1078,48 +1157,51 @@ void MappedAttrParser::ParseMappedAttrValue(nsAtom* aMappedAttrName,
 
   // Get the nsCSSPropertyID ID for our mapped attribute.
   nsCSSPropertyID propertyID =
-      nsCSSProps::LookupProperty(nsDependentAtomString(aMappedAttrName));
+      nsCSSProps::LookupProperty(nsAtomCString(aMappedAttrName));
   if (propertyID != eCSSProperty_UNKNOWN) {
     bool changed = false;  // outparam for ParseProperty.
     NS_ConvertUTF16toUTF8 value(aMappedAttrValue);
+
     // FIXME (bug 1343964): Figure out a better solution for sending the base
     // uri to servo
+    nsCOMPtr<nsIReferrerInfo> referrerInfo =
+        ReferrerInfo::CreateForSVGResources(mElement->OwnerDoc());
+
     RefPtr<URLExtraData> data =
-        new URLExtraData(mBaseURI, mDocURI, mElement->NodePrincipal(),
-                         mElement->OwnerDoc()->GetReferrerPolicy());
+        new URLExtraData(mBaseURI, referrerInfo, mElement->NodePrincipal());
     changed = Servo_DeclarationBlock_SetPropertyById(
         mDecl->Raw(), propertyID, &value, false, data,
         ParsingMode::AllowUnitlessLength,
         mElement->OwnerDoc()->GetCompatibilityMode(), mLoader, {});
 
-    if (changed) {
-      // The normal reporting of use counters by the nsCSSParser won't happen
-      // since it doesn't have a sheet.
-      if (nsCSSProps::IsShorthand(propertyID)) {
-        CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(subprop, propertyID,
-                                             CSSEnabledState::ForAllContent) {
-          UseCounter useCounter = nsCSSProps::UseCounterFor(*subprop);
-          if (useCounter != eUseCounter_UNKNOWN) {
-            mElement->OwnerDoc()->SetDocumentAndPageUseCounter(useCounter);
-          }
-        }
-      } else {
-        UseCounter useCounter = nsCSSProps::UseCounterFor(propertyID);
-        if (useCounter != eUseCounter_UNKNOWN) {
-          mElement->OwnerDoc()->SetDocumentAndPageUseCounter(useCounter);
-        }
-      }
+    // TODO(emilio): If we want to record these from CSSOM more generally, we
+    // can pass the document use counters down the FFI call. For now manually
+    // count them.
+    if (changed && StaticPrefs::layout_css_use_counters_enabled()) {
+      UseCounter useCounter = nsCSSProps::UseCounterFor(propertyID);
+      MOZ_ASSERT(useCounter != eUseCounter_UNKNOWN);
+      mElement->OwnerDoc()->SetUseCounter(useCounter);
     }
     return;
   }
   MOZ_ASSERT(aMappedAttrName == nsGkAtoms::lang,
              "Only 'lang' should be unrecognized!");
-  // nsCSSParser doesn't know about 'lang', so we need to handle it specially.
+  // CSS parser doesn't know about 'lang', so we need to handle it specially.
   if (aMappedAttrName == nsGkAtoms::lang) {
     propertyID = eCSSProperty__x_lang;
     RefPtr<nsAtom> atom = NS_Atomize(aMappedAttrValue);
     Servo_DeclarationBlock_SetIdentStringValue(mDecl->Raw(), propertyID, atom);
   }
+}
+
+void MappedAttrParser::TellStyleAlreadyParsedResult(
+    nsAtom const* aAtom, SVGAnimatedLength const& aLength) {
+  if (!mDecl) {
+    mDecl = new DeclarationBlock();
+  }
+  nsCSSPropertyID propertyID = nsCSSProps::LookupProperty(nsAtomCString(aAtom));
+  SVGElement::UpdateDeclarationBlockFromLength(*mDecl, propertyID, aLength,
+                                               SVGElement::ValToUse::Base);
 }
 
 already_AddRefed<DeclarationBlock> MappedAttrParser::GetDeclarationBlock() {
@@ -1142,8 +1224,10 @@ void SVGElement::UpdateContentDeclarationBlock() {
   }
 
   Document* doc = OwnerDoc();
-  MappedAttrParser mappedAttrParser(doc->CSSLoader(), doc->GetDocumentURI(),
-                                    GetBaseURI(), this);
+  MappedAttrParser mappedAttrParser(doc->CSSLoader(), GetBaseURI(), this);
+
+  bool lengthAffectsStyle =
+      SVGGeometryProperty::ElementMapsLengthsToStyle(this);
 
   for (uint32_t i = 0; i < attrCount; ++i) {
     const nsAttrName* attrName = mAttrs.AttrNameAt(i);
@@ -1159,20 +1243,16 @@ void SVGElement::UpdateContentDeclarationBlock() {
       continue;  // xml:lang has precedence
     }
 
-    if (IsSVGElement(nsGkAtoms::svg)) {
-      // Special case: we don't want <svg> 'width'/'height' mapped into style
-      // if the attribute value isn't a valid <length> according to SVG (which
-      // only supports a subset of the CSS <length> values). We don't enforce
-      // this by checking the attribute value in SVGSVGElement::
-      // IsAttributeMapped since we don't want that method to depend on the
-      // value of the attribute that is being checked. Rather we just prevent
-      // the actual mapping here, as necessary.
-      if (attrName->Atom() == nsGkAtoms::width &&
-          !GetAnimatedLength(nsGkAtoms::width)->HasBaseVal()) {
-        continue;
-      }
-      if (attrName->Atom() == nsGkAtoms::height &&
-          !GetAnimatedLength(nsGkAtoms::height)->HasBaseVal()) {
+    if (lengthAffectsStyle) {
+      auto const* length = GetAnimatedLength(attrName->Atom());
+
+      if (length && length->HasBaseVal()) {
+        // This is an element with geometry property set via SVG attribute,
+        // and the attribute is already successfully parsed. We want to go
+        // through the optimized path to tell the style system the result
+        // directly, rather than let it parse the same thing again.
+        mappedAttrParser.TellStyleAlreadyParsedResult(attrName->Atom(),
+                                                      *length);
         continue;
       }
     }
@@ -1231,7 +1311,8 @@ const DeclarationBlock* SVGElement::GetContentDeclarationBlock() const {
  * of the above for us. For such types there is no matching WillChangeXXX
  * method, only DidChangeXXX which calls SetParsedAttr.
  */
-nsAttrValue SVGElement::WillChangeValue(nsAtom* aName) {
+nsAttrValue SVGElement::WillChangeValue(
+    nsAtom* aName, const mozAutoDocUpdate& aProofOfUpdate) {
   // We need an empty attr value:
   //   a) to pass to BeforeSetAttr when GetParsedAttr returns nullptr
   //   b) to store the old value in the case we have mutation listeners
@@ -1255,7 +1336,8 @@ nsAttrValue SVGElement::WillChangeValue(nsAtom* aName) {
   uint8_t modType =
       attrValue ? static_cast<uint8_t>(MutationEvent_Binding::MODIFICATION)
                 : static_cast<uint8_t>(MutationEvent_Binding::ADDITION);
-  nsNodeUtils::AttributeWillChange(this, kNameSpaceID_None, aName, modType);
+  MutationObservers::NotifyAttributeWillChange(this, kNameSpaceID_None, aName,
+                                               modType);
 
   // This is not strictly correct--the attribute value parameter for
   // BeforeSetAttr should reflect the value that *will* be set but that implies
@@ -1289,7 +1371,8 @@ nsAttrValue SVGElement::WillChangeValue(nsAtom* aName) {
  */
 void SVGElement::DidChangeValue(nsAtom* aName,
                                 const nsAttrValue& aEmptyOrOldValue,
-                                nsAttrValue& aNewValue) {
+                                nsAttrValue& aNewValue,
+                                const mozAutoDocUpdate& aProofOfUpdate) {
   bool hasListeners = nsContentUtils::HasMutationListeners(
       this, NS_EVENT_BITS_MUTATION_ATTRMODIFIED, this);
   uint8_t modType =
@@ -1297,16 +1380,14 @@ void SVGElement::DidChangeValue(nsAtom* aName,
           ? static_cast<uint8_t>(MutationEvent_Binding::MODIFICATION)
           : static_cast<uint8_t>(MutationEvent_Binding::ADDITION);
 
-  Document* document = GetComposedDoc();
-  mozAutoDocUpdate updateBatch(document, kNotifyDocumentObservers);
   // XXX Really, the fourth argument to SetAttrAndNotify should be null if
   // aEmptyOrOldValue does not represent the actual previous value of the
   // attribute, but currently SVG elements do not even use the old attribute
   // value in |AfterSetAttr|, so this should be ok.
   SetAttrAndNotify(kNameSpaceID_None, aName, nullptr, &aEmptyOrOldValue,
                    aNewValue, nullptr, modType, hasListeners,
-                   kNotifyDocumentObservers, kCallAfterSetAttr, document,
-                   updateBatch);
+                   kNotifyDocumentObservers, kCallAfterSetAttr,
+                   GetComposedDoc(), aProofOfUpdate);
 }
 
 void SVGElement::MaybeSerializeAttrBeforeRemoval(nsAtom* aName, bool aNotify) {
@@ -1336,7 +1417,7 @@ nsAtom* SVGElement::GetEventNameForAttr(nsAtom* aAttr) {
   if (aAttr == nsGkAtoms::onrepeat) return nsGkAtoms::onrepeatEvent;
   if (aAttr == nsGkAtoms::onend) return nsGkAtoms::onendEvent;
 
-  return aAttr;
+  return SVGElementBase::GetEventNameForAttr(aAttr);
 }
 
 SVGViewportElement* SVGElement::GetCtx() const {
@@ -1372,12 +1453,15 @@ void SVGElement::SetLength(nsAtom* aName, const SVGAnimatedLength& aLength) {
   MOZ_ASSERT(false, "no length found to set");
 }
 
-nsAttrValue SVGElement::WillChangeLength(uint8_t aAttrEnum) {
-  return WillChangeValue(GetLengthInfo().mLengthInfo[aAttrEnum].mName);
+nsAttrValue SVGElement::WillChangeLength(
+    uint8_t aAttrEnum, const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(GetLengthInfo().mLengthInfo[aAttrEnum].mName,
+                         aProofOfUpdate);
 }
 
 void SVGElement::DidChangeLength(uint8_t aAttrEnum,
-                                 const nsAttrValue& aEmptyOrOldValue) {
+                                 const nsAttrValue& aEmptyOrOldValue,
+                                 const mozAutoDocUpdate& aProofOfUpdate) {
   LengthAttributesInfo info = GetLengthInfo();
 
   NS_ASSERTION(info.mLengthCount > 0,
@@ -1387,11 +1471,24 @@ void SVGElement::DidChangeLength(uint8_t aAttrEnum,
   nsAttrValue newValue;
   newValue.SetTo(info.mLengths[aAttrEnum], nullptr);
 
-  DidChangeValue(info.mLengthInfo[aAttrEnum].mName, aEmptyOrOldValue, newValue);
+  DidChangeValue(info.mLengthInfo[aAttrEnum].mName, aEmptyOrOldValue, newValue,
+                 aProofOfUpdate);
 }
 
 void SVGElement::DidAnimateLength(uint8_t aAttrEnum) {
+  // We need to do this here. Normally the SMIL restyle would also cause us to
+  // do this from DidSetComputedStyle, but we don't have that guarantee if our
+  // frame gets reconstructed.
   ClearAnyCachedPath();
+
+  if (SVGGeometryProperty::ElementMapsLengthsToStyle(this)) {
+    nsCSSPropertyID propId =
+        SVGGeometryProperty::AttrEnumToCSSPropId(this, aAttrEnum);
+
+    SMILOverrideStyle()->SetSMILValue(propId,
+                                      GetLengthInfo().mLengths[aAttrEnum]);
+    return;
+  }
 
   nsIFrame* frame = GetPrimaryFrame();
 
@@ -1411,7 +1508,6 @@ SVGAnimatedLength* SVGElement::GetAnimatedLength(const nsAtom* aAttrName) {
       return &lengthInfo.mLengths[i];
     }
   }
-  MOZ_ASSERT(false, "no matching length found");
   return nullptr;
 }
 
@@ -1456,12 +1552,15 @@ void SVGElement::LengthListAttributesInfo::Reset(uint8_t aAttrEnum) {
   // caller notifies
 }
 
-nsAttrValue SVGElement::WillChangeLengthList(uint8_t aAttrEnum) {
-  return WillChangeValue(GetLengthListInfo().mLengthListInfo[aAttrEnum].mName);
+nsAttrValue SVGElement::WillChangeLengthList(
+    uint8_t aAttrEnum, const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(GetLengthListInfo().mLengthListInfo[aAttrEnum].mName,
+                         aProofOfUpdate);
 }
 
 void SVGElement::DidChangeLengthList(uint8_t aAttrEnum,
-                                     const nsAttrValue& aEmptyOrOldValue) {
+                                     const nsAttrValue& aEmptyOrOldValue,
+                                     const mozAutoDocUpdate& aProofOfUpdate) {
   LengthListAttributesInfo info = GetLengthListInfo();
 
   NS_ASSERTION(info.mLengthListCount > 0,
@@ -1472,7 +1571,7 @@ void SVGElement::DidChangeLengthList(uint8_t aAttrEnum,
   newValue.SetTo(info.mLengthLists[aAttrEnum].GetBaseValue(), nullptr);
 
   DidChangeValue(info.mLengthListInfo[aAttrEnum].mName, aEmptyOrOldValue,
-                 newValue);
+                 newValue, aProofOfUpdate);
 }
 
 void SVGElement::DidAnimateLengthList(uint8_t aAttrEnum) {
@@ -1528,12 +1627,15 @@ void SVGElement::NumberListAttributesInfo::Reset(uint8_t aAttrEnum) {
   // caller notifies
 }
 
-nsAttrValue SVGElement::WillChangeNumberList(uint8_t aAttrEnum) {
-  return WillChangeValue(GetNumberListInfo().mNumberListInfo[aAttrEnum].mName);
+nsAttrValue SVGElement::WillChangeNumberList(
+    uint8_t aAttrEnum, const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(GetNumberListInfo().mNumberListInfo[aAttrEnum].mName,
+                         aProofOfUpdate);
 }
 
 void SVGElement::DidChangeNumberList(uint8_t aAttrEnum,
-                                     const nsAttrValue& aEmptyOrOldValue) {
+                                     const nsAttrValue& aEmptyOrOldValue,
+                                     const mozAutoDocUpdate& aProofOfUpdate) {
   NumberListAttributesInfo info = GetNumberListInfo();
 
   MOZ_ASSERT(info.mNumberListCount > 0,
@@ -1544,7 +1646,7 @@ void SVGElement::DidChangeNumberList(uint8_t aAttrEnum,
   newValue.SetTo(info.mNumberLists[aAttrEnum].GetBaseValue(), nullptr);
 
   DidChangeValue(info.mNumberListInfo[aAttrEnum].mName, aEmptyOrOldValue,
-                 newValue);
+                 newValue, aProofOfUpdate);
 }
 
 void SVGElement::DidAnimateNumberList(uint8_t aAttrEnum) {
@@ -1580,18 +1682,21 @@ SVGAnimatedNumberList* SVGElement::GetAnimatedNumberList(nsAtom* aAttrName) {
   return nullptr;
 }
 
-nsAttrValue SVGElement::WillChangePointList() {
+nsAttrValue SVGElement::WillChangePointList(
+    const mozAutoDocUpdate& aProofOfUpdate) {
   MOZ_ASSERT(GetPointListAttrName(), "Changing non-existent point list?");
-  return WillChangeValue(GetPointListAttrName());
+  return WillChangeValue(GetPointListAttrName(), aProofOfUpdate);
 }
 
-void SVGElement::DidChangePointList(const nsAttrValue& aEmptyOrOldValue) {
+void SVGElement::DidChangePointList(const nsAttrValue& aEmptyOrOldValue,
+                                    const mozAutoDocUpdate& aProofOfUpdate) {
   MOZ_ASSERT(GetPointListAttrName(), "Changing non-existent point list?");
 
   nsAttrValue newValue;
   newValue.SetTo(GetAnimatedPointList()->GetBaseValue(), nullptr);
 
-  DidChangeValue(GetPointListAttrName(), aEmptyOrOldValue, newValue);
+  DidChangeValue(GetPointListAttrName(), aEmptyOrOldValue, newValue,
+                 aProofOfUpdate);
 }
 
 void SVGElement::DidAnimatePointList() {
@@ -1607,18 +1712,21 @@ void SVGElement::DidAnimatePointList() {
   }
 }
 
-nsAttrValue SVGElement::WillChangePathSegList() {
+nsAttrValue SVGElement::WillChangePathSegList(
+    const mozAutoDocUpdate& aProofOfUpdate) {
   MOZ_ASSERT(GetPathDataAttrName(), "Changing non-existent path seg list?");
-  return WillChangeValue(GetPathDataAttrName());
+  return WillChangeValue(GetPathDataAttrName(), aProofOfUpdate);
 }
 
-void SVGElement::DidChangePathSegList(const nsAttrValue& aEmptyOrOldValue) {
+void SVGElement::DidChangePathSegList(const nsAttrValue& aEmptyOrOldValue,
+                                      const mozAutoDocUpdate& aProofOfUpdate) {
   MOZ_ASSERT(GetPathDataAttrName(), "Changing non-existent path seg list?");
 
   nsAttrValue newValue;
   newValue.SetTo(GetAnimPathSegList()->GetBaseValue(), nullptr);
 
-  DidChangeValue(GetPathDataAttrName(), aEmptyOrOldValue, newValue);
+  DidChangeValue(GetPathDataAttrName(), aEmptyOrOldValue, newValue,
+                 aProofOfUpdate);
 }
 
 void SVGElement::DidAnimatePathSegList() {
@@ -1697,7 +1805,9 @@ void SVGElement::NumberPairAttributesInfo::Reset(uint8_t aAttrEnum) {
 }
 
 nsAttrValue SVGElement::WillChangeNumberPair(uint8_t aAttrEnum) {
-  return WillChangeValue(GetNumberPairInfo().mNumberPairInfo[aAttrEnum].mName);
+  mozAutoDocUpdate updateBatch(GetComposedDoc(), kDontNotifyDocumentObservers);
+  return WillChangeValue(GetNumberPairInfo().mNumberPairInfo[aAttrEnum].mName,
+                         updateBatch);
 }
 
 void SVGElement::DidChangeNumberPair(uint8_t aAttrEnum,
@@ -1711,8 +1821,9 @@ void SVGElement::DidChangeNumberPair(uint8_t aAttrEnum,
   nsAttrValue newValue;
   newValue.SetTo(info.mNumberPairs[aAttrEnum], nullptr);
 
+  mozAutoDocUpdate updateBatch(GetComposedDoc(), kNotifyDocumentObservers);
   DidChangeValue(info.mNumberPairInfo[aAttrEnum].mName, aEmptyOrOldValue,
-                 newValue);
+                 newValue, updateBatch);
 }
 
 void SVGElement::DidAnimateNumberPair(uint8_t aAttrEnum) {
@@ -1788,13 +1899,15 @@ void SVGElement::IntegerPairAttributesInfo::Reset(uint8_t aAttrEnum) {
                                 mIntegerPairInfo[aAttrEnum].mDefaultValue2);
 }
 
-nsAttrValue SVGElement::WillChangeIntegerPair(uint8_t aAttrEnum) {
-  return WillChangeValue(
-      GetIntegerPairInfo().mIntegerPairInfo[aAttrEnum].mName);
+nsAttrValue SVGElement::WillChangeIntegerPair(
+    uint8_t aAttrEnum, const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(GetIntegerPairInfo().mIntegerPairInfo[aAttrEnum].mName,
+                         aProofOfUpdate);
 }
 
 void SVGElement::DidChangeIntegerPair(uint8_t aAttrEnum,
-                                      const nsAttrValue& aEmptyOrOldValue) {
+                                      const nsAttrValue& aEmptyOrOldValue,
+                                      const mozAutoDocUpdate& aProofOfUpdate) {
   IntegerPairAttributesInfo info = GetIntegerPairInfo();
 
   NS_ASSERTION(info.mIntegerPairCount > 0,
@@ -1805,7 +1918,7 @@ void SVGElement::DidChangeIntegerPair(uint8_t aAttrEnum,
   newValue.SetTo(info.mIntegerPairs[aAttrEnum], nullptr);
 
   DidChangeValue(info.mIntegerPairInfo[aAttrEnum].mName, aEmptyOrOldValue,
-                 newValue);
+                 newValue, aProofOfUpdate);
 }
 
 void SVGElement::DidAnimateIntegerPair(uint8_t aAttrEnum) {
@@ -1887,11 +2000,13 @@ void SVGElement::DidAnimateEnum(uint8_t aAttrEnum) {
 
 SVGAnimatedOrient* SVGElement::GetAnimatedOrient() { return nullptr; }
 
-nsAttrValue SVGElement::WillChangeOrient() {
-  return WillChangeValue(nsGkAtoms::orient);
+nsAttrValue SVGElement::WillChangeOrient(
+    const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(nsGkAtoms::orient, aProofOfUpdate);
 }
 
-void SVGElement::DidChangeOrient(const nsAttrValue& aEmptyOrOldValue) {
+void SVGElement::DidChangeOrient(const nsAttrValue& aEmptyOrOldValue,
+                                 const mozAutoDocUpdate& aProofOfUpdate) {
   SVGAnimatedOrient* orient = GetAnimatedOrient();
 
   NS_ASSERTION(orient, "DidChangeOrient on element with no orient attrib");
@@ -1899,7 +2014,7 @@ void SVGElement::DidChangeOrient(const nsAttrValue& aEmptyOrOldValue) {
   nsAttrValue newValue;
   newValue.SetTo(*orient, nullptr);
 
-  DidChangeValue(nsGkAtoms::orient, aEmptyOrOldValue, newValue);
+  DidChangeValue(nsGkAtoms::orient, aEmptyOrOldValue, newValue, aProofOfUpdate);
 }
 
 void SVGElement::DidAnimateOrient() {
@@ -1913,11 +2028,13 @@ void SVGElement::DidAnimateOrient() {
 
 SVGAnimatedViewBox* SVGElement::GetAnimatedViewBox() { return nullptr; }
 
-nsAttrValue SVGElement::WillChangeViewBox() {
-  return WillChangeValue(nsGkAtoms::viewBox);
+nsAttrValue SVGElement::WillChangeViewBox(
+    const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(nsGkAtoms::viewBox, aProofOfUpdate);
 }
 
-void SVGElement::DidChangeViewBox(const nsAttrValue& aEmptyOrOldValue) {
+void SVGElement::DidChangeViewBox(const nsAttrValue& aEmptyOrOldValue,
+                                  const mozAutoDocUpdate& aProofOfUpdate) {
   SVGAnimatedViewBox* viewBox = GetAnimatedViewBox();
 
   NS_ASSERTION(viewBox, "DidChangeViewBox on element with no viewBox attrib");
@@ -1925,7 +2042,8 @@ void SVGElement::DidChangeViewBox(const nsAttrValue& aEmptyOrOldValue) {
   nsAttrValue newValue;
   newValue.SetTo(*viewBox, nullptr);
 
-  DidChangeValue(nsGkAtoms::viewBox, aEmptyOrOldValue, newValue);
+  DidChangeValue(nsGkAtoms::viewBox, aEmptyOrOldValue, newValue,
+                 aProofOfUpdate);
 }
 
 void SVGElement::DidAnimateViewBox() {
@@ -1941,12 +2059,14 @@ SVGAnimatedPreserveAspectRatio* SVGElement::GetAnimatedPreserveAspectRatio() {
   return nullptr;
 }
 
-nsAttrValue SVGElement::WillChangePreserveAspectRatio() {
-  return WillChangeValue(nsGkAtoms::preserveAspectRatio);
+nsAttrValue SVGElement::WillChangePreserveAspectRatio(
+    const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(nsGkAtoms::preserveAspectRatio, aProofOfUpdate);
 }
 
 void SVGElement::DidChangePreserveAspectRatio(
-    const nsAttrValue& aEmptyOrOldValue) {
+    const nsAttrValue& aEmptyOrOldValue,
+    const mozAutoDocUpdate& aProofOfUpdate) {
   SVGAnimatedPreserveAspectRatio* preserveAspectRatio =
       GetAnimatedPreserveAspectRatio();
 
@@ -1957,7 +2077,8 @@ void SVGElement::DidChangePreserveAspectRatio(
   nsAttrValue newValue;
   newValue.SetTo(*preserveAspectRatio, nullptr);
 
-  DidChangeValue(nsGkAtoms::preserveAspectRatio, aEmptyOrOldValue, newValue);
+  DidChangeValue(nsGkAtoms::preserveAspectRatio, aEmptyOrOldValue, newValue,
+                 aProofOfUpdate);
 }
 
 void SVGElement::DidAnimatePreserveAspectRatio() {
@@ -1969,11 +2090,14 @@ void SVGElement::DidAnimatePreserveAspectRatio() {
   }
 }
 
-nsAttrValue SVGElement::WillChangeTransformList() {
-  return WillChangeValue(GetTransformListAttrName());
+nsAttrValue SVGElement::WillChangeTransformList(
+    const mozAutoDocUpdate& aProofOfUpdate) {
+  return WillChangeValue(GetTransformListAttrName(), aProofOfUpdate);
 }
 
-void SVGElement::DidChangeTransformList(const nsAttrValue& aEmptyOrOldValue) {
+void SVGElement::DidChangeTransformList(
+    const nsAttrValue& aEmptyOrOldValue,
+    const mozAutoDocUpdate& aProofOfUpdate) {
   MOZ_ASSERT(GetTransformListAttrName(),
              "Changing non-existent transform list?");
 
@@ -1983,7 +2107,8 @@ void SVGElement::DidChangeTransformList(const nsAttrValue& aEmptyOrOldValue) {
   newValue.SetTo(GetAnimatedTransformList(DO_ALLOCATE)->GetBaseValue(),
                  nullptr);
 
-  DidChangeValue(GetTransformListAttrName(), aEmptyOrOldValue, newValue);
+  DidChangeValue(GetTransformListAttrName(), aEmptyOrOldValue, newValue,
+                 aProofOfUpdate);
 }
 
 void SVGElement::DidAnimateTransformList(int32_t aModType) {
@@ -1996,13 +2121,13 @@ void SVGElement::DidAnimateTransformList(int32_t aModType) {
     nsAtom* transformAttr = GetTransformListAttrName();
     frame->AttributeChanged(kNameSpaceID_None, transformAttr, aModType);
     // When script changes the 'transform' attribute, Element::SetAttrAndNotify
-    // will call nsNodeUtils::AttributeChanged, under which
+    // will call MutationObservers::NotifyAttributeChanged, under which
     // SVGTransformableElement::GetAttributeChangeHint will be called and an
     // appropriate change event posted to update our frame's overflow rects.
     // The SetAttrAndNotify doesn't happen for transform changes caused by
     // 'animateTransform' though (and sending out the mutation events that
-    // nsNodeUtils::AttributeChanged dispatches would be inappropriate
-    // anyway), so we need to post the change event ourself.
+    // MutationObservers::NotifyAttributeChanged dispatches would be
+    // inappropriate anyway), so we need to post the change event ourself.
     nsChangeHint changeHint = GetAttributeChangeHint(transformAttr, aModType);
     if (changeHint) {
       nsLayoutUtils::PostRestyleEvent(this, RestyleHint{0}, changeHint);
@@ -2061,7 +2186,8 @@ SVGElement::StringListAttributesInfo SVGElement::GetStringListInfo() {
 }
 
 nsAttrValue SVGElement::WillChangeStringList(
-    bool aIsConditionalProcessingAttribute, uint8_t aAttrEnum) {
+    bool aIsConditionalProcessingAttribute, uint8_t aAttrEnum,
+    const mozAutoDocUpdate& aProofOfUpdate) {
   nsStaticAtom* name;
   if (aIsConditionalProcessingAttribute) {
     nsCOMPtr<SVGTests> tests(do_QueryInterface(this));
@@ -2069,12 +2195,13 @@ nsAttrValue SVGElement::WillChangeStringList(
   } else {
     name = GetStringListInfo().mStringListInfo[aAttrEnum].mName;
   }
-  return WillChangeValue(name);
+  return WillChangeValue(name, aProofOfUpdate);
 }
 
 void SVGElement::DidChangeStringList(bool aIsConditionalProcessingAttribute,
                                      uint8_t aAttrEnum,
-                                     const nsAttrValue& aEmptyOrOldValue) {
+                                     const nsAttrValue& aEmptyOrOldValue,
+                                     const mozAutoDocUpdate& aProofOfUpdate) {
   nsStaticAtom* name;
   nsAttrValue newValue;
   nsCOMPtr<SVGTests> tests;
@@ -2094,7 +2221,7 @@ void SVGElement::DidChangeStringList(bool aIsConditionalProcessingAttribute,
     newValue.SetTo(info.mStringLists[aAttrEnum], nullptr);
   }
 
-  DidChangeValue(name, aEmptyOrOldValue, newValue);
+  DidChangeValue(name, aEmptyOrOldValue, newValue, aProofOfUpdate);
 
   if (aIsConditionalProcessingAttribute) {
     tests->MaybeInvalidate();
@@ -2109,11 +2236,11 @@ void SVGElement::StringListAttributesInfo::Reset(uint8_t aAttrEnum) {
 nsresult SVGElement::ReportAttributeParseFailure(Document* aDocument,
                                                  nsAtom* aAttribute,
                                                  const nsAString& aValue) {
-  const nsString& attributeValue = PromiseFlatString(aValue);
-  const char16_t* strings[] = {aAttribute->GetUTF16String(),
-                               attributeValue.get()};
+  AutoTArray<nsString, 2> strings;
+  strings.AppendElement(nsDependentAtomString(aAttribute));
+  strings.AppendElement(aValue);
   return SVGContentUtils::ReportToConsole(aDocument, "AttributeParseWarning",
-                                          strings, ArrayLength(strings));
+                                          strings);
 }
 
 void SVGElement::RecompileScriptEventListeners() {
@@ -2314,6 +2441,21 @@ void SVGElement::FlushAnimations() {
   Document* doc = GetComposedDoc();
   if (doc && doc->HasAnimationController()) {
     doc->GetAnimationController()->FlushResampleRequests();
+  }
+}
+
+void SVGElement::AddSizeOfExcludingThis(nsWindowSizes& aSizes,
+                                        size_t* aNodeSize) const {
+  Element::AddSizeOfExcludingThis(aSizes, aNodeSize);
+
+  // These are owned by the element and not referenced from the stylesheets.
+  // They're referenced from the rule tree, but the rule nodes don't measure
+  // their style source (since they're non-owning), so unconditionally reporting
+  // them even though it's a refcounted object is ok.
+  if (mContentDeclarationBlock) {
+    aSizes.mLayoutSvgMappedDeclarations +=
+        mContentDeclarationBlock->SizeofIncludingThis(
+            aSizes.mState.mMallocSizeOf);
   }
 }
 

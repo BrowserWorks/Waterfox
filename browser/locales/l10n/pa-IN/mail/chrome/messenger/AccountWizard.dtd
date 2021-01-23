@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "ਅਕਾਊਂਟ ਸਹਾਇਕ">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!-- Entities for Account Type page -->
+<!ENTITY accountSetupInfo2.label "ਸੁਨੇਹੇ ਪ੍ਰਾਪਤ ਕਰਨ ਦੇ ਲਈ, ਤੁਹਾਨੂੰ ਪਹਿਲਾਂ ਇੱਕ ਅਕਾਊਂਟ ਸੈਟਅੱਪ ਕਰਨਾ ਪਵੇਗਾ।">
+<!ENTITY accountTypeTitle.label "ਨਵਾਂ ਅਕਾਊਂਟ ਸੈੱਟਅੱਪ">
+<!ENTITY accountTypeDesc2.label "ਇਹ ਸਹਾਇਕ ਅਕਾਊਂਟ ਬਣਾਉਣ ਬਾਰੇ ਜਾਣਕਾਰੀ ਇੱਕਠੀ ਕਰੇਗਾ। ਜੇਕਰ ਤੁਸੀਂ ਲੋੜੀਦੀਂ ਜਾਣਕਾਰੀ ਬਾਰੇ ਜਾਣਦੇ ਨਹੀਂ ਹੋ ਤਾਂ ਆਪਣੇ ਸਿਸਟਮ ਐਡਮਿਨ ਜਾਂ ਇੰਟਰਨੈੱਟ ਸੇਵਾ ਉਪਲੱਬਧ ਕਰਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ">
+<!ENTITY accountTypeDirections.label "ਕਿਸ ਕਿਸਮ ਦਾ ਅਕਾਊਂਟ ਤੁਸੀਂ ਬਣਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ:">
+<!ENTITY accountTypeMail.label "ਈ-ਮੇਲ ਅਕਾਊਂਟ">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "ਨਿਊਜ਼ਗਰੁੱਪ ਅਕਾਊਂਟ">
+<!ENTITY accountTypeNews.accesskey "w">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "ਪਛਾਣ">
+<!ENTITY identityDesc.label "ਹਰ ਅਕਾਊਂਟ ਦੀ ਪਛਾਣ ਹੁੰਦੀ ਹੈ, ਜੋ ਕਿ ਤੁਹਾਡਾ ਸੁਨੇਹਾ ਮਿਲਣ ਤੇ ਹੋਰਾਂ ਨੂੰ ਤੁਹਾਡੀ ਪਛਾਣ ਉਪਲੱਬਧ ਕਰਵਾਉਦੀ ਹੈ।">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "ਨਾਂ ਭਰੋ, ਜੋ ਕਿ ਤੁਸੀਂ ਬਾਹਰ ਜਾਣ ਵਾਲੇ ਸੁਨੇਹਿਆਂ ਦੇ &quot;ਵਲੋਂ(From)&quot; ਖੇਤਰ ਵਿੱਚ ਦੇਣਾ ਚਾਹੁੰਦੇ ਹੋ">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+	1, do not translate two of "&quot;"
+	2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(ਉਦਾਹਰਨ ਲਈ, &quot;ਜਰਨੈਲ ਸਿੰਘ &quot;)">
+<!ENTITY fullnameLabel.label "ਤੁਹਾਡਾ ਨਾਂ:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "ਈ-ਮੇਲ ਐਡਰੈੱਸ:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!-- Entities for Server page -->
+<!ENTITY incomingTitle.label "Incoming Server Information">
+<!ENTITY incomingServerTypeDesc.label "ਆਉਣ ਵਾਲੇ ਸਰਵਰ ਦੀ ਕਿਸਮ, ਜਿਸ ਦੀ ਤੁਸੀਂ ਵਰਤੋਂ ਕਰਦੇ ਹੋ, ਚੁਣੋ।">
+
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "ਸੁਨੇਹੇ ਸਰਵਰ ਉੱਤੇ ਰਹਿਣ ਦਿਓ">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "ਪੋਰਟ:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "ਡਿਫਾਲਟ:">
+<!ENTITY defaultPortValue.label "">
+
+<!-- for when the user has an SMTP server pre-configured -->
+<!-- LOCALIZATION NOTE (currentSmtpBefore.label) : Do not translate "SMTP" and "&quot;" in
+     this variable. Also, translate currentSmtpBefore.label and currentSmtpAfter.label as a single sentence,
+	  inserting text after the "&quot;" entity in currentSmtpAfter.label, if required grammatically
+-->
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Enter the name of your incoming server (for example, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "Incoming Server:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Enter the incoming user name given to you by your email provider (for example, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "User Name:">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "ਆਪਣੇ ਖਬਰ ਸਰਵਰ ਦਾ ਨਾਂ ਦਿਉ (NNTP) (ਉਦਾਹਰਨ ਲਈ, &quot;news.example.net&quot;)">
+
+<!ENTITY newsServerLabel.label "ਨਿਊਜ਼ਗਰੁੱਪ ਸਰਵਰ:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Outgoing Server Information">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Enter the name of your outgoing server (SMTP) (for example, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Outgoing Server:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "Enter the outgoing user name given to you by your email provider (this is typically the same as your incoming user name).">
+<!ENTITY outgoingUsername.label "Outgoing User Name:">
+<!ENTITY outgoingUsername.accesskey "U">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "You can change outgoing servers in the account settings.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Your existing outgoing server (SMTP), &quot;">
+
+<!ENTITY haveSmtp1.suffix3 "&quot;, will be used.">
+
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Your existing outgoing (SMTP) username, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, will be used.">
+
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "ਤੁਹਾਡਾ ਭੇਜਣ ਵਾਲਾ (SMTP) ਸਰਵਰ, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, is identical to your incoming server, your incoming user name will be used to access it.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "ਅਕਾਊਂਟ ਨਾਂ">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "ਨਾਂ ਦਿਉ, ਜਿਸ ਨਾਲ ਤੁਸੀਂ ਇਸ ਅਕਾਊਂਟ ਨੂੰ ਸੰਬੋਧਨ ਕਰੋਗੇ (ਉਦਾਹਰਨ ਲਈ, &quot;ਕੰਮ ਅਕਾਊਂਟ&quot;, &quot;ਘਰ ਅਕਾਊਂਟ&quot; ਜਾਂ &quot;ਨਿਊਜ਼ ਅਕਾਊਂਟ&quot;)">
+<!ENTITY accnameLabel.label "ਅਕਾਊਂਟ ਨਾਂ:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "ਵਧਾਈਆਂ!">
+<!ENTITY completionText.label "ਇਹ ਜਾਂਚ ਕਰੋ ਕਿ ਹੇਠ ਦਿੱਤੀ ਜਾਣਕਾਰੀ ਠੀਕ ਹੈ ਜੀ">
+<!ENTITY serverTypePrefix.label "ਆਉਣ ਵਾਲੇ ਸਰਵਰ ਦੀ ਕਿਸਮ:">
+<!ENTITY serverNamePrefix.label "ਆਉਣ ਵਾਲੇ ਸਰਵਰ ਦਾ ਨਾਂ:">
+<!ENTITY smtpServerNamePrefix.label "ਭੇਜਣ ਵਾਲੇ ਸਰਵਰ ਦਾ ਨਾਂ (SMTP):">
+<!ENTITY newsServerNamePrefix.label "ਖਬਰਸਾਰ ਸਰਵਰ ਨਾਂ (NNTP):">
+<!ENTITY downloadOnLogin.label "ਸੁਨੇਹੇ ਹੁਣੇ ਡਾਊਨਲੋਡ ਕਰੋ">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "ਇਹ ਚੋਣ ਬਕਸੇ ਦੀ ਚੋਣ ਨਾ ਕਰੋ, ਤਾਂ ਕਿ ਇਸ ਅਕਾਊਂਟ ਦੇ ਪੱਤਰ ਇਸ ਦੀ ਆਪਣੀ ਡਾਇਰੈਕਟਰੀ ਵਿੱਚ ਸੰਭਾਲੇ ਜਾਣ। ਇਸ ਨਾਲ ਇਹ ਅਕਾਊਂਟ ਉੱਚ-ਪੱਧਰੀ ਅਕਾਊਂਟ ਬਣ ਕੇ ਉੱਭਰੇਗਾ। ਨਹੀਂ ਤਾਂ, ਇਹ ਲੋਕਲ ਫੋਲਡਰ ਗਲੋਬਲ Inbox ਅਕਾਊਂਟ ਹੋਵੇਗਾ।">
+<!ENTITY deferStorage.label "ਗਲੋਬਲ Inbox (ਲੋਕਲ ਫੋਲਡਰ ਵਿੱਚ ਪੱਤਰ) ਵਰਤੋਂ">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "ਮੁਕੰਮਲ ਨੂੰ ਸੈਟਿੰਗ ਸੰਭਾਲਣ ਅਤੇ ਅਕਾਊਂਟ ਸਹਾਇਕ ਨੂੰ ਬੰਦ ਕਰਨ ਲਈ ਇਸਤੇਮਾਲ ਕਰੋ">
+<!ENTITY clickFinish.labelMac "ਇਹ ਸੈਟਿੰਗ ਸੰਭਾਲਣ ਅਤੇ ਅਕਾਊਂਟ ਸਹਾਇਕ ਨੂੰ ਬੰਦ ਕਰਨ ਵਾਸਤੇ ਮੁਕੰਮਲ ਨੂੰ ਕਲਿੱਕ ਕਰੋ।">
+

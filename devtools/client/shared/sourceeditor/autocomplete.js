@@ -1,5 +1,4 @@
-/* vim:set ts=2 sw=2 sts=2 et tw=80:
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -19,11 +18,6 @@ loader.lazyRequireGetter(
   "devtools/client/shared/sourceeditor/css-autocompleter"
 );
 
-const CM_TERN_SCRIPTS = [
-  "chrome://devtools/content/shared/sourceeditor/codemirror/addon/tern/tern.js",
-  "chrome://devtools/content/shared/sourceeditor/codemirror/addon/hint/show-hint.js",
-];
-
 const autocompleteMap = new WeakMap();
 
 /**
@@ -36,83 +30,12 @@ function initializeAutoCompletion(ctx, options = {}) {
   }
 
   const win = ed.container.contentWindow.wrappedJSObject;
-  const { CodeMirror, document } = win;
+  const { CodeMirror } = win;
 
   let completer = null;
   const autocompleteKey =
     "Ctrl-" + Editor.keyFor("autocompletion", { noaccel: true });
-  if (ed.config.mode == Editor.modes.js) {
-    const defs = [require("./tern/browser"), require("./tern/ecma5")];
-
-    CM_TERN_SCRIPTS.forEach(ed.loadScript, ed);
-    win.tern = require("./tern/tern");
-    cm.tern = new CodeMirror.TernServer({
-      defs: defs,
-      typeTip: function(data) {
-        const tip = document.createElement("span");
-        tip.className = "CodeMirror-Tern-information";
-        const tipType = document.createElement("strong");
-        const tipText = document.createTextNode(
-          data.type || cm.l10n("autocompletion.notFound")
-        );
-        tipType.appendChild(tipText);
-        tip.appendChild(tipType);
-
-        if (data.doc) {
-          tip.appendChild(document.createTextNode(" — " + data.doc));
-        }
-
-        if (data.url) {
-          tip.appendChild(document.createTextNode(" "));
-          const docLink = document.createElement("a");
-          docLink.textContent = "[" + cm.l10n("autocompletion.docsLink") + "]";
-          docLink.href = data.url;
-          docLink.className = "theme-link";
-          docLink.setAttribute("target", "_blank");
-          tip.appendChild(docLink);
-        }
-
-        return tip;
-      },
-    });
-
-    const keyMap = {};
-    const updateArgHintsCallback = cm.tern.updateArgHints.bind(cm.tern, cm);
-    cm.on("cursorActivity", updateArgHintsCallback);
-
-    keyMap[autocompleteKey] = cmArg => {
-      cmArg.tern.getHint(cmArg, data => {
-        CodeMirror.on(data, "shown", () => ed.emit("before-suggest"));
-        CodeMirror.on(data, "close", () => ed.emit("after-suggest"));
-        CodeMirror.on(data, "select", () => ed.emit("suggestion-entered"));
-        CodeMirror.showHint(cmArg, (cmIgnore, cb) => cb(data), { async: true });
-      });
-    };
-
-    keyMap[Editor.keyFor("showInformation2", { noaccel: true })] = cmArg => {
-      cmArg.tern.showType(cmArg, null, () => {
-        ed.emit("show-information");
-      });
-    };
-    cm.addKeyMap(keyMap);
-
-    const destroyTern = function() {
-      ed.off("destroy", destroyTern);
-      cm.off("cursorActivity", updateArgHintsCallback);
-      cm.removeKeyMap(keyMap);
-      win.tern = cm.tern = null;
-      autocompleteMap.delete(ed);
-    };
-
-    ed.on("destroy", destroyTern);
-
-    autocompleteMap.set(ed, {
-      destroy: destroyTern,
-    });
-
-    // TODO: Integrate tern autocompletion with this autocomplete API.
-    return;
-  } else if (ed.config.mode == Editor.modes.css) {
+  if (ed.config.mode == Editor.modes.css) {
     completer = new CSSCompleter({
       walker: options.walker,
       cssProperties: options.cssProperties,
@@ -147,7 +70,7 @@ function initializeAutoCompletion(ctx, options = {}) {
   });
 
   const cycle = reverse => {
-    if (popup && popup.isOpen) {
+    if (popup?.isOpen) {
       // eslint-disable-next-line mozilla/no-compare-against-boolean-literals
       cycleSuggestions(ed, reverse == true);
       return null;
@@ -370,6 +293,9 @@ function onEditorKeypress({ ed, Editor }, cm, event) {
       break;
     case KeyCodes.DOM_VK_ESCAPE:
       if (autocompleteOpts.popup.isOpen) {
+        // Prevent the Console input to open, but still remove the autocomplete popup.
+        autocompleteOpts.doNotAutocomplete = true;
+        autocompleteOpts.popup.hidePopup();
         event.preventDefault();
       }
       break;
@@ -411,7 +337,7 @@ function getPopup({ ed }) {
 function getInfoAt({ ed }, caret) {
   if (autocompleteMap.has(ed)) {
     const completer = autocompleteMap.get(ed).completer;
-    if (completer && completer.getInfoAt) {
+    if (completer?.getInfoAt) {
       return completer.getInfoAt(ed.getText(), caret);
     }
   }

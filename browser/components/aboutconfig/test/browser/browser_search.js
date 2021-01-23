@@ -1,21 +1,12 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-/**
- * This is a temporary workaround to
- * be resolved in bug 1539000.
- */
-ChromeUtils.import("resource://testing-common/PromiseTestUtils.jsm", this);
-PromiseTestUtils.whitelistRejectionsGlobally(
-  /Too many characters in placeable/
-);
-
 add_task(async function setup() {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["test.aboutconfig.a", "test value 1"],
       ["test.aboutconfig.ab", "test value 2"],
-      ["test.aboutconfig.b", "test value 3"],
+      ["test.aboutconfig.bc", "test value 3"],
     ],
   });
 });
@@ -63,6 +54,10 @@ add_task(async function test_search() {
     // Expecting 1 row to be returned since it offers the ability to add.
     this.search("aJunkValueasdf");
     Assert.equal(this.rows.length, 1);
+    // The has-visible-prefs attribute is used to style the border of the add row.
+    Assert.ok(!this.prefsTable.hasAttribute("has-visible-prefs"));
+    let addRow = this.getRow("aJunkValueasdf");
+    Assert.equal(getComputedStyle(addRow.valueCell)["border-top-width"], "0px");
 
     // Pressing ESC clears the field and returns to the initial page.
     EventUtils.sendKey("escape");
@@ -77,10 +72,39 @@ add_task(async function test_search() {
     // new preference with the same name but a different case.
     this.search("TEST.aboutconfig.a");
     Assert.equal(this.rows.length, 3);
+    // The has-visible-prefs attribute is used to style the border of the add row.
+    Assert.ok(this.prefsTable.hasAttribute("has-visible-prefs"));
+    addRow = this.getRow("TEST.aboutconfig.a");
+    Assert.equal(getComputedStyle(addRow.valueCell)["border-top-width"], "1px");
 
     // Entering an empty string returns to the initial page.
     this.search("");
     Assert.equal(this.rows.length, 0);
+    Assert.ok(!this.prefsTable.hasAttribute("has-visible-prefs"));
+  });
+});
+
+add_task(async function test_search_wildcard() {
+  await AboutConfigTest.withNewTab(async function() {
+    const extra = 1; // "Add" row
+
+    // A trailing wildcard
+    this.search("test.about*");
+    Assert.equal(this.rows.length, 3 + extra);
+
+    // A wildcard in middle
+    this.search("test.about*a");
+    Assert.equal(this.rows.length, 2 + extra);
+    this.search("test.about*ab");
+    Assert.equal(this.rows.length, 1 + extra);
+    this.search("test.aboutcon*fig");
+    Assert.equal(this.rows.length, 3 + extra);
+
+    // Multiple wildcards in middle
+    this.search("test.about*fig*ab");
+    Assert.equal(this.rows.length, 1 + extra);
+    this.search("test.about*config*ab");
+    Assert.equal(this.rows.length, 1 + extra);
   });
 });
 
@@ -126,5 +150,19 @@ add_task(async function test_search_delayed() {
     // The table will eventually be updated after a delay.
     await prefsTableChanged;
     Assert.equal(this.rows.length, 1);
+  });
+});
+
+add_task(async function test_search_add_row_color() {
+  await AboutConfigTest.withNewTab(async function() {
+    // When the row is the only one displayed, it doesn't have the "odd" class.
+    this.search("test.aboutconfig.add");
+    Assert.equal(this.rows.length, 1);
+    Assert.ok(!this.getRow("test.aboutconfig.add").hasClass("odd"));
+
+    // When displayed with one other preference, the "odd" class is present.
+    this.search("test.aboutconfig.b");
+    Assert.equal(this.rows.length, 2);
+    Assert.ok(this.getRow("test.aboutconfig.b").hasClass("odd"));
   });
 });

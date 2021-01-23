@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Písanie a adresovanie">
+<!ENTITY addressingGroupTitle.label "Adresovanie">
+<!ENTITY addressingText.label      "Pri hľadaní adries:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Použiť globálne nastavenie servera LDAP pre tento účet">
+<!ENTITY useGlobal.accesskey       "u">
+<!ENTITY editDirectories.label     "Upraviť adresáre…">
+<!ENTITY editDirectories.accesskey "r">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Použiť iný server LDAP:">
+<!ENTITY directories.accesskey     "L">
+<!ENTITY directoriesNone.label     "žiadny">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Písanie správ">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Písať správy vo formáte HTML">
+<!ENTITY useHtml.accesskey                    "H">
+<!ENTITY autoQuote.label                      "Automaticky pridať citáciu originálnej správy pri odpovedi,">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Pri citácii">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "začať odpoveď nad citovaným textom">
+<!ENTITY belowQuote.label                     "začať odpoveď pod citovaným textom">
+<!ENTITY selectAndQuote.label                 "vybrať citovaný text">
+<!ENTITY place.label                          "a môj podpis umiestniť">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "pod citovaný text (odporúča sa)">
+<!ENTITY aboveText.label                      "pod moju odpoveď (nad citovaný text)">
+<!ENTITY includeSigOnReply.label              "Pripájať podpis pri odpovedaní na správu">
+<!ENTITY includeSigOnReply.accesskey          "d">
+<!ENTITY includeSigOnForward.label            "Pripájať podpis pri preposielaní správy">
+<!ENTITY includeSigOnForward.accesskey        "e">
+
+<!ENTITY globalComposingPrefs.label           "Globálne nastavenia pre vytváranie správ…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globálne nastavenia adresovania…">
+<!ENTITY globalAddressingPrefs.accesskey      "a">

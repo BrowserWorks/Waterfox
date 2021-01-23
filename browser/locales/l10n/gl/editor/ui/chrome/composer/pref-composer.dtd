@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Menú de páxinas recentes">
+<!ENTITY  documentsInMenu.label         "Número máximo de páxinas listadas:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Ao gardar ou publicar páxinas">
+<!ENTITY  preserveExisting.label        "Conservar a formatación da fonte orixinal">
+<!ENTITY  preserveExisting.accesskey    "C">
+<!ENTITY  preserveExisting.tooltip      "Conserva a formatación orixinal da páxina e das quebras de liña">
+<!ENTITY  saveAssociatedFiles.label     "Gardar imaxes e outros ficheiros asociados ao gardar as páxinas">
+<!ENTITY  saveAssociatedFiles.accesskey "G">
+<!ENTITY  showPublishDialog.label       "Mostrar sempre a caixa de diálogo Publicar ao publicar páxinas">
+<!ENTITY  showPublishDialog.accesskey   "s">
+<!ENTITY  composerEditing.label         "Editar">
+<!ENTITY  maintainStructure.label       "Manter o deseño da táboa ao inserir ou eliminar celas">
+<!ENTITY  maintainStructure.tooltip     "Conserva a forma rectangular da táboa engadindo celas automaticamente despois de inserir ou eliminar celas">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Usar estilos CSS en lugar de atributos e elementos HTML">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Ao premer Intro crea un parágrafo novo">
+<!ENTITY  crInPCreatesNewP.accesskey    "I">

@@ -35,6 +35,8 @@
 
 namespace mozilla {
 
+using namespace gfx;
+
 static const char* StateTypeToStr(OMX_STATETYPE aType) {
   MOZ_ASSERT(aType == OMX_StateLoaded || aType == OMX_StateIdle ||
              aType == OMX_StateExecuting || aType == OMX_StatePause ||
@@ -61,7 +63,7 @@ static const char* StateTypeToStr(OMX_STATETYPE aType) {
 // A helper class to retrieve AudioData or VideoData.
 class MediaDataHelper {
  protected:
-  virtual ~MediaDataHelper() {}
+  virtual ~MediaDataHelper() = default;
 
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaDataHelper)
@@ -935,6 +937,11 @@ already_AddRefed<VideoData> MediaDataHelper::CreateYUV420VideoData(
   b.mPlanes[2].mStride = (stride + 1) / 2;
   b.mPlanes[2].mOffset = 0;
   b.mPlanes[2].mSkip = 0;
+
+  b.mYUVColorSpace =
+      mTrackInfo->GetAsVideoInfo()->mColorSpace == YUVColorSpace::UNKNOWN
+          ? DefaultColorSpace({width, height})
+          : mTrackInfo->GetAsVideoInfo()->mColorSpace;
 
   VideoInfo info(*mTrackInfo->GetAsVideoInfo());
   RefPtr<VideoData> data = VideoData::CreateAndCopyData(

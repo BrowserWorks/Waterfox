@@ -4,13 +4,15 @@
 
 "use strict";
 
-const { AutoRefreshHighlighter } = require("./auto-refresh");
+const {
+  AutoRefreshHighlighter,
+} = require("devtools/server/actors/highlighters/auto-refresh");
 const {
   CanvasFrameAnonymousContentHelper,
   getComputedStyle,
   createSVGNode,
   createNode,
-} = require("./utils/markup");
+} = require("devtools/server/actors/highlighters/utils/markup");
 const {
   setIgnoreLayoutChanges,
   getNodeBounds,
@@ -165,7 +167,7 @@ class CssTransformHighlighter extends AutoRefreshHighlighter {
    */
   _isTransformed(node) {
     const style = getComputedStyle(node);
-    return style && (style.transform !== "none" && style.display !== "inline");
+    return style && style.transform !== "none" && style.display !== "inline";
   }
 
   _setPolygonPoints(quad, id) {

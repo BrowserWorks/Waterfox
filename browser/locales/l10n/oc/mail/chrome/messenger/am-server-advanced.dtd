@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Paramètres avançats dels comptes">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Dorsièr sul servidor IMAP :">
+<!ENTITY serverDirectory.accesskey "D">
+<!ENTITY usingSubscription.label "Afichar unicament los dorsièrs amb abonament">
+<!ENTITY usingSubscription.accesskey "A">
+<!ENTITY dualUseFolders.label "Lo servidor supòrta los dorsièrs que contenon de sosdorsieès e de messatges">
+<!ENTITY dualUseFolders.accesskey "L">
+<!ENTITY maximumConnectionsNumber.label "Nombre maximum de connexions al servidor de gardar en amagatal">
+<!ENTITY maximumConnectionsNumber.accesskey "N">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Aquelas preferéncias especifican los espacis de noms sus vòstre servidor IMAP">
+<!ENTITY personalNamespace.label "Espaci de noms personal :">
+<!ENTITY personalNamespace.accesskey "E">
+<!ENTITY publicNamespace.label   "Public (partejat) :">
+<!ENTITY publicNamespace.accesskey "P">
+<!ENTITY otherUsersNamespace.label    "Autres utilizaires :">
+<!ENTITY otherUsersNamespace.accesskey "u">
+<!ENTITY overrideNamespaces.label "Permetre al servidor d'otrapassar aquestes espacis de noms">
+<!ENTITY overrideNamespaces.accesskey "r">
+<!ENTITY deferToServer.label "Corrièr entrant d'un autre compte">
+<!ENTITY deferToServer.accesskey "o">
+<!ENTITY deferGetNewMail.label "Inclure aqueste servidor al moment de la recuperacion dels messat	ges">
+<!ENTITY deferGetNewMail.accesskey "I">

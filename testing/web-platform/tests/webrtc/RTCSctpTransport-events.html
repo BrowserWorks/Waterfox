@@ -7,18 +7,6 @@
 <script>
 'use strict';
 
-function waitForState(transport, state) {
-  return new Promise((resolve, reject) => {
-    const eventHandler = () => {
-      if (transport.state == state) {
-        transport.removeEventListener('statechange', eventHandler, false);
-        resolve();
-      }
-    };
-    transport.addEventListener('statechange', eventHandler, false);
-  });
-}
-
 promise_test(async t => {
   const pc1 = new RTCPeerConnection();
   t.add_cleanup(() => pc1.close());
@@ -61,8 +49,7 @@ promise_test(async t => {
   const pc2ClosedWaiter = waitForState(pc2.sctp, 'closed');
   pc1.close();
   await pc1ClosedWaiter;
-  // TODO(https://bugs.webrtc.org/10468): Check for closed event
-  // await pc2ClosedWaiter;
+  await pc2ClosedWaiter;
 }, 'SctpTransport reaches connected and closed state');
 
 </script>

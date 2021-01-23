@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label          "HTML-kirja küsimus">
+
+<!ENTITY recipient.label            "Mõned adressaadid ei ole märgitud HTML-kirju vastu võtma.">
+
+<!ENTITY question.label             "Kas soovid sõnumi teisendada lihtteksti või saata selle HTML kujul?">
+
+<!ENTITY plainTextAndHtml.label     "Saada lihtteksti ja HTML-ina">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label        "Saada vaid lihttekstina">
+<!ENTITY plainTextOnly.accesskey    "l">
+<!ENTITY htmlOnly.label             "Saada vaid HTML-ina">
+<!ENTITY htmlOnly.accesskey         "H">
+
+<!ENTITY send.label                 "Saada">
+<!ENTITY send.accesskey             "S">

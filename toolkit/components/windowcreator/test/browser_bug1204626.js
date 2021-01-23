@@ -13,7 +13,7 @@ function one_test(delay, continuation) {
   BrowserTestUtils.openNewForegroundTab(gBrowser, testPageURL).then(tab => {
     browser = tab.linkedBrowser;
     let persistable = browser.frameLoader;
-    persistable.startPersistence(/* outer window ID: */ 0, {
+    persistable.startPersistence(null, {
       onDocumentReady,
       onError(status) {
         ok(false, new Components.Exception("startPersistence failed", status));
@@ -65,10 +65,9 @@ function one_test(delay, continuation) {
     } else {
       setTimeout(doSave, delay);
     }
-    browser.messageManager.loadFrameScript(
-      "data:,content.window.close()",
-      true
-    );
+    SpecialPowers.spawn(browser, [], () => {
+      content.window.close();
+    });
   }
 }
 

@@ -1,6 +1,12 @@
 /* import-globals-from antitracking_head.js */
 
-AntiTracking.runTest(
+if (AppConstants.MOZ_CODE_COVERAGE) {
+  requestLongerTimeout(12);
+} else {
+  requestLongerTimeout(6);
+}
+
+AntiTracking.runTestInNormalAndPrivateMode(
   "BroadcastChannel",
   async _ => {
     try {
@@ -24,7 +30,7 @@ AntiTracking.runTest(
   }
 );
 
-AntiTracking.runTest(
+AntiTracking.runTestInNormalAndPrivateMode(
   "BroadcastChannel in workers",
   async _ => {
     function blockingCode() {
@@ -97,7 +103,7 @@ AntiTracking.runTest(
   }
 );
 
-AntiTracking.runTest(
+AntiTracking.runTestInNormalAndPrivateMode(
   "BroadcastChannel and Storage Access API",
   async _ => {
     /* import-globals-from storageAccessAPIHelpers.js */
@@ -115,9 +121,12 @@ AntiTracking.runTest(
     await callRequestStorageAccess();
 
     if (
-      SpecialPowers.Services.prefs.getIntPref(
-        "network.cookie.cookieBehavior"
-      ) == SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT
+      [
+        SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT,
+        SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN,
+      ].includes(
+        SpecialPowers.Services.prefs.getIntPref("network.cookie.cookieBehavior")
+      )
     ) {
       try {
         new BroadcastChannel("hello");
@@ -160,7 +169,7 @@ AntiTracking.runTest(
   false
 );
 
-AntiTracking.runTest(
+AntiTracking.runTestInNormalAndPrivateMode(
   "BroadcastChannel in workers and Storage Access API",
   async _ => {
     function blockingCode() {
@@ -206,9 +215,12 @@ AntiTracking.runTest(
     await callRequestStorageAccess();
 
     if (
-      SpecialPowers.Services.prefs.getIntPref(
-        "network.cookie.cookieBehavior"
-      ) == SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT
+      [
+        SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT,
+        SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN,
+      ].includes(
+        SpecialPowers.Services.prefs.getIntPref("network.cookie.cookieBehavior")
+      )
     ) {
       blob = new Blob([blockingCode.toString() + "; blockingCode();"]);
     } else {

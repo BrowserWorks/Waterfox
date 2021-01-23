@@ -1,0 +1,291 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Hapni menunë">
+<!ENTITY navbarOverflow.label                "Më tepër mjete…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Fiksoje Skedën">
+<!ENTITY  unpinTab.label                     "Shfiksoje Skedën">
+
+<!ENTITY  listAllTabs.label      "Paraqiti krejt skedat">
+
+<!ENTITY tabCmd.label "Skedë e Re">
+<!ENTITY openFileCmd.label "Hapni Kartelë…">
+<!ENTITY printCmd.label "Shtypni…">
+
+<!ENTITY taskManagerCmd.label "Përgjegjës Punësh">
+
+<!ENTITY menubarCmd.label "Shtyllë Menush">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Lëvizje">
+<!ENTITY personalbarCmd.label "Panel Faqerojtësish">
+<!ENTITY personalbarCmd.accesskey "F">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Faqerojtës">
+<!ENTITY bookmarksToolbarItem.label "Objekte Paneli Faqerojtësish">
+
+<!ENTITY fullScreenCmd.label "Sa Krejt Ekrani">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Fshih Buton Picture-in-Picture">
+<!ENTITY pictureInPictureHideToggle.accesskey "F">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Rregullime të &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Lidhni Tjetër Pajisje…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Hyni te &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Aktivizoni &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Shërbime &brandProductName;">
+<!ENTITY fxa.menu.account.label "Llogari">
+<!ENTITY fxa.menu.settings.label "Rregullime">
+<!ENTITY fxa.menu.accountSettings.label "Rregullime Llogarie">
+<!ENTITY fxa.menu.manageAccount2.label "Administroni Llogarinë">
+<!ENTITY fxa.menu.signOut.label "Dilni…">
+<!ENTITY fxa.menu.setupSync.label "Ujdisni &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Dërgoni aty për aty një skedë te cilado pajisje në të cilën keni bërë hyrje.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "tani është sa krejt ekrani">
+<!ENTITY fullscreenWarning.generic.label "Ky dokument tani shfaqet sa krejt ekrani">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Dilni nga Sa Krejt Ekrani (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Dilni Nga Sa Krejt Ekrani (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "është në kontroll të kursorit tuaj. Shtypni Esc që të rimerrni kontrollin.">
+<!ENTITY pointerlockWarning.generic.label "Kursori është nën kontrollin e kursorit tuaj. Shtypni Esc që të rimerrni kontrollin.">
+
+<!ENTITY showAllBookmarks2.label "Shfaqni Krejt Faqerojtësit">
+<!ENTITY recentBookmarks.label "Faqeruajtur Së Fundi">
+<!ENTITY bookmarksToolbarChevron.tooltip "Shfaqni më tepër faqerojtës">
+
+<!ENTITY printButton.label            "Shtype">
+<!ENTITY printButton.tooltip          "Shtypeni këtë faqe">
+
+
+<!ENTITY searchItem.title             "Kërkoni">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Kreu">
+<!ENTITY homeButton.defaultPage.tooltip "Faqe Hyrëse e &brandShortName;-it">
+
+<!ENTITY bookmarksButton.label          "Faqerojtës">
+
+<!ENTITY bookmarksSubview.label             "Faqerojtës">
+<!ENTITY bookmarksMenuButton2.label         "Menu Faqerojtësish">
+<!ENTITY bookmarksMenuButton.other.label    "Faqerojtës të Tjerë">
+<!ENTITY bookmarksMenuButton.mobile.label   "Faqerojtës Celulari">
+<!ENTITY viewBookmarksSidebar2.label        "Shihni Anështyllë Faqerojtësish">
+<!ENTITY hideBookmarksSidebar.label         "Fshihe Anështyllën e Faqerojtësve">
+<!ENTITY viewBookmarksToolbar.label         "Shihni Panel Faqerojtësish">
+<!ENTITY hideBookmarksToolbar.label         "Fshihe Panelin e Faqerojtësve">
+<!ENTITY searchBookmarks.label              "Kërkoni Te Faqerojtësit">
+<!ENTITY bookmarkingTools.label             "Mjete Faqeruajtjeje">
+<!ENTITY addBookmarksMenu.label             "Shtoje Menunë e Faqerojtësve te Paneli">
+<!ENTITY removeBookmarksMenu.label          "Hiqe Menunë e Faqerojtësve nga Paneli">
+
+<!ENTITY historyButton.label            "Historik">
+
+<!ENTITY downloads.label              "Shkarkime">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Shkarkime">
+<!ENTITY addons.label                 "Shtesa">
+
+<!ENTITY webDeveloperMenu.label       "Zhvillues Web">
+
+<!ENTITY newNavigatorCmd.label        "Dritare e Re">
+<!ENTITY newPrivateWindow.label     "Dritare e Re Private">
+
+<!ENTITY editMenu.label         "Përpunim">
+<!ENTITY preferencesCmd2.label       "Mundësi">
+<!ENTITY preferencesCmdUnix.label       "Parapëlqime">
+<!ENTITY logins.label                           "Kredenciale Hyrjesh dhe Fjalëkalime">
+
+<!ENTITY overflowCustomizeToolbar.label       "Përshtateni Panelin…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Historik">
+<!ENTITY historyUndoMenu.label "Skeda të Mbyllura Së Fundi">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Dritare të mbyllura Së Fundi">
+
+<!ENTITY appMenuHistory.showAll.label "Shfaq Krejt Historikun">
+<!ENTITY appMenuHistory.clearRecent.label "Spastroni Historikun Së Fundi…">
+<!ENTITY appMenuHistory.restoreSession.label "Riktheni Sesionin e Mëparshëm">
+<!ENTITY appMenuHistory.viewSidebar.label "Shihni Anështyllë Historiku">
+<!ENTITY appMenuHistory.hideSidebar.label "Fshih Anështyllë Historiku">
+<!ENTITY appMenuHistory.recentHistory.label "Historik Së Fundi">
+<!ENTITY appMenuHelp.label "Ndihmë">
+
+<!ENTITY appMenuRemoteTabs.label "Skeda të Njëkohësuara">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "S&apos;ka skeda të hapura">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Shfaqni Më Tepër">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Shfaqni më tepër skeda nga kjo pajisje">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Shfaqini Krejt">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Shfaqni krejt skedat nga kjo pajisje">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Aktivizoni njëkohësim skedash që të shihni një listë skedash nga pajisje tuajat të tjera.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Doni të shihni këtu skedat tuaja nga pajisje të tjera?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Hapni Parapëlqime Sync-u">
+<!ENTITY appMenuRemoteTabs.welcome.label "Shihni një listë skedash nga pajisje tuajat të tjera.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Llogaria juaj duhet verifikuar.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Hyni në &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Aktivizoni &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Administroni Pajisje…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Shihni Anështyllën e Skedave të Njëkohësuara">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Fshih Anështyllë Skedash të Njëkohësuara">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Lidhni Tjetër Pajisje">
+
+<!ENTITY appMenuRecentHighlights.label "Në Pah Së Fundi">
+
+<!ENTITY customizeMenu.addToToolbar.label "Shtoje te Paneli">
+<!ENTITY customizeMenu.addToToolbar.accesskey "P">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Shtoje te Menuja Më Tepër Mjete">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Shfiksoje nga Menuja Më Tepër Mjete">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "S">
+<!ENTITY customizeMenu.removeFromToolbar.label "Hiqe nga Paneli">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "H">
+<!ENTITY customizeMenu.addMoreItems.label "Shtoni Më Tepër Objekte…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "S">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Më tepër">
+
+<!ENTITY contentSearchSubmit.tooltip  "Parashtrojeni kërkimin">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Kërkoni">
+<!ENTITY searchIcon.tooltip           "Kërkoni">
+
+<!ENTITY openLinkCmdInTab.accesskey   "S">
+
+<!ENTITY pageAction.copyLink.label    "Kopjoji Lidhjen">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Ruaje Faqen te Pocket">
+<!ENTITY pocketMenuitem.label         "Shihni Listën te Pocket">
+
+<!ENTITY emailPageCmd.label           "Dërgoni Lidhje me Email…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Zmadhim/Zvogëlim">
+
+<!ENTITY sidebarCloseButton.tooltip     "Mbylleni anështyllën">
+
+<!ENTITY quitApplicationCmdWin2.label       "Dilni">
+<!ENTITY quitApplicationCmdWin2.accesskey   "D">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Dilni nga &brandShorterName;-i">
+<!ENTITY quitApplicationCmd.label       "Dilni">
+<!ENTITY quitApplicationCmd.accesskey   "l">
+<!ENTITY quitApplicationCmdMac2.label   "Dilni prej &brandShorterName;-it">
+
+<!ENTITY allowPopups.accesskey "L">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Përpunoni Parapëlqime Bllokuesi Flluskash…">
+<!ENTITY editPopupSettings.label "Përpunoni Mundësi Bllokuesi Flluskash…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Gjeni në Këtë Faqe…">
+
+<!ENTITY spellAddDictionaries.label "Shtoni Fjalorë…">
+<!ENTITY spellAddDictionaries.accesskey "S">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Skedash shfletuesi">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Vetëfshihe">
+
+
+<!ENTITY uiTour.infoPanel.close "Mbylleni">
+
+<!ENTITY panicButton.thankyou.msg1                "Historiku juaj së fundi u spastrua.">
+<!ENTITY panicButton.thankyou.msg2                "Shfletim i parrezik!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Faleminderit!">
+
+<!ENTITY updateAvailable.panelUI.label "Shkarko përditësim &brandShorterName;-i">
+<!ENTITY updateManual.panelUI.label "Shkarkoni një kopje të freskët të &brandShorterName;-it">
+<!ENTITY updateUnsupported.panelUI.label "S&apos;mund të kryeni përditësime të mëtejshme">
+<!ENTITY updateRestart.panelUI.label2 "Që të përditësohet &brandShorterName;-i, riniseni">
+
+<!ENTITY sendToDevice.syncNotReady.label "Po njëkohësohen Pajisje…">
+
+<!ENTITY pageAction.shareUrl.label "Ndajeni me të tjerët">
+<!ENTITY pageAction.shareMore.label "Më tepër…">
+
+<!ENTITY libraryButton.tooltip "Shihni historikun, faqerojtësit e ruajtur, etj">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Me Veçori Përdorshmërie të Aktivizuara ">

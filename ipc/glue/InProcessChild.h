@@ -28,12 +28,12 @@ class InProcessParent;
  * for async actors which want to communicate uniformly between Content->Chrome
  * and Chrome->Chrome situations.
  */
-class InProcessChild : public PInProcessChild {
+class InProcessChild final : public PInProcessChild {
  public:
   friend class InProcessParent;
   friend class PInProcessChild;
 
-  NS_INLINE_DECL_REFCOUNTING(InProcessChild)
+  NS_INLINE_DECL_REFCOUNTING(InProcessChild, final)
 
   // Get the singleton instance of this actor.
   static InProcessChild* Singleton();
@@ -43,17 +43,10 @@ class InProcessChild : public PInProcessChild {
   // |nullptr|.
   static IProtocol* ParentActorFor(IProtocol* aActor);
 
- protected:
-  mozilla::dom::PWindowGlobalChild* AllocPWindowGlobalChild(
-      const WindowGlobalInit& aInit);
-
-  bool DeallocPWindowGlobalChild(mozilla::dom::PWindowGlobalChild* aActor);
-
  private:
   // NOTE: PInProcess lifecycle management is declared as staic methods and
   // state on InProcessParent, and implemented in InProcessImpl.cpp.
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
-  virtual void DeallocPInProcessChild() override;
   ~InProcessChild() = default;
 
   static StaticRefPtr<InProcessChild> sSingleton;

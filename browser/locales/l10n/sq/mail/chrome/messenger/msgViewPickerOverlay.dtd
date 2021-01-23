@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Shfaqje:">
+<!ENTITY viewPicker.accesskey "S">
+<!ENTITY viewAll.label "Krejt">
+<!ENTITY viewAll.accesskey "K">
+<!ENTITY viewUnread.label "Të palexuarat">
+<!ENTITY viewUnread.accesskey "a">
+<!ENTITY viewNotDeleted.label "Të pafshirat">
+<!ENTITY viewNotDeleted.accesskey "f">
+<!ENTITY viewTags.label "Etiketa">
+<!ENTITY viewTags.accesskey "E">
+<!ENTITY viewCustomViews.label "Shfaqje Vetjake">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "Ruajeni Shfaqjen si Dosje…">
+<!ENTITY viewVirtualFolder.accesskey "R">
+<!ENTITY viewCustomizeView.label "Përshtateni…">
+<!ENTITY viewCustomizeView.accesskey "P">

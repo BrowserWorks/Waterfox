@@ -6,7 +6,10 @@
 #ifndef include_dom_media_ipc_RemoteDecoderChild_h
 #define include_dom_media_ipc_RemoteDecoderChild_h
 #include "mozilla/PRemoteDecoderChild.h"
+
+#include <functional>
 #include "IRemoteDecoderChild.h"
+#include "mozilla/ShmemPool.h"
 
 namespace mozilla {
 
@@ -19,29 +22,17 @@ class RemoteDecoderChild : public PRemoteDecoderChild,
   friend class PRemoteDecoderChild;
 
  public:
-  explicit RemoteDecoderChild();
-
-  // PRemoteDecoderChild
-  virtual IPCResult RecvOutput(const DecodedOutputIPDL& aDecodedData) = 0;
-  IPCResult RecvInputExhausted();
-  IPCResult RecvDrainComplete();
-  IPCResult RecvError(const nsresult& aError);
-  IPCResult RecvInitComplete(const TrackInfo::TrackType& trackType,
-                             const nsCString& aDecoderDescription,
-                             const ConversionRequired& aConversion);
-  IPCResult RecvInitFailed(const nsresult& aReason);
-  IPCResult RecvFlushComplete();
-  IPCResult RecvShutdownComplete();
+  explicit RemoteDecoderChild(bool aRecreatedOnCrash = false);
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
   // IRemoteDecoderChild
   RefPtr<MediaDataDecoder::InitPromise> Init() override;
   RefPtr<MediaDataDecoder::DecodePromise> Decode(
-      MediaRawData* aSample) override;
+      const nsTArray<RefPtr<MediaRawData>>& aSamples) override;
   RefPtr<MediaDataDecoder::DecodePromise> Drain() override;
   RefPtr<MediaDataDecoder::FlushPromise> Flush() override;
-  RefPtr<ShutdownPromise> Shutdown() override;
+  RefPtr<mozilla::ShutdownPromise> Shutdown() override;
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
   nsCString GetDescriptionName() const override;
   void SetSeekThreshold(const media::TimeUnit& aTime) override;
@@ -54,31 +45,37 @@ class RemoteDecoderChild : public PRemoteDecoderChild,
   RemoteDecoderManagerChild* GetManager();
 
  protected:
-  virtual ~RemoteDecoderChild();
+  virtual ~RemoteDecoderChild() = default;
   void AssertOnManagerThread() const;
 
+  virtual MediaResult ProcessOutput(const DecodedOutputIPDL& aDecodedData) = 0;
+  virtual void RecordShutdownTelemetry(bool aForAbnormalShutdown) {}
+
   RefPtr<RemoteDecoderChild> mIPDLSelfRef;
-  bool mCanSend = false;
   MediaDataDecoder::DecodedData mDecodedData;
 
  private:
   RefPtr<nsIThread> mThread;
 
   MozPromiseHolder<MediaDataDecoder::InitPromise> mInitPromise;
+  MozPromiseRequestHolder<PRemoteDecoderChild::InitPromise> mInitPromiseRequest;
   MozPromiseHolder<MediaDataDecoder::DecodePromise> mDecodePromise;
   MozPromiseHolder<MediaDataDecoder::DecodePromise> mDrainPromise;
   MozPromiseHolder<MediaDataDecoder::FlushPromise> mFlushPromise;
-  MozPromiseHolder<ShutdownPromise> mShutdownPromise;
+  MozPromiseHolder<mozilla::ShutdownPromise> mShutdownPromise;
+
+  void HandleRejectionError(
+      const ipc::ResponseRejectReason& aReason,
+      std::function<void(const MediaResult&)>&& aCallback);
+  TimeStamp mRemoteProcessCrashTime;
 
   nsCString mHardwareAcceleratedReason;
   nsCString mDescription;
-  bool mInitialized = false;
   bool mIsHardwareAccelerated = false;
+  const bool mRecreatedOnCrash;
   MediaDataDecoder::ConversionRequired mConversion =
       MediaDataDecoder::ConversionRequired::kNeedNone;
-  // Keep this instance alive during SendShutdown RecvShutdownComplete
-  // handshake.
-  RefPtr<RemoteDecoderChild> mShutdownSelfRef;
+  ShmemPool mRawFramePool;
 };
 
 }  // namespace mozilla

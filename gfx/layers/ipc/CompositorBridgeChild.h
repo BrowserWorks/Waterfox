@@ -31,6 +31,11 @@ namespace dom {
 class BrowserChild;
 }  // namespace dom
 
+namespace webgpu {
+class PWebGPUChild;
+class WebGPUChild;
+}  // namespace webgpu
+
 namespace widget {
 class CompositorWidget;
 }  // namespace widget
@@ -41,6 +46,7 @@ using mozilla::dom::BrowserChild;
 
 class IAPZCTreeManager;
 class APZCTreeManagerChild;
+class CanvasChild;
 class ClientLayerManager;
 class CompositorBridgeParent;
 class CompositorManagerChild;
@@ -51,7 +57,7 @@ struct FrameMetrics;
 
 class CompositorBridgeChild final : public PCompositorBridgeChild,
                                     public TextureForwarder {
-  typedef InfallibleTArray<AsyncParentMessageData> AsyncParentMessageArray;
+  typedef nsTArray<AsyncParentMessageData> AsyncParentMessageArray;
 
   friend class PCompositorBridgeChild;
 
@@ -114,13 +120,19 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
   bool DeallocPTextureChild(PTextureChild* actor);
 
   mozilla::ipc::IPCResult RecvParentAsyncMessages(
-      InfallibleTArray<AsyncParentMessageData>&& aMessages);
+      nsTArray<AsyncParentMessageData>&& aMessages);
   PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
                                const ReadLockDescriptor& aReadLock,
                                LayersBackend aLayersBackend,
                                TextureFlags aFlags, uint64_t aSerial,
                                wr::MaybeExternalImageId& aExternalImageId,
                                nsIEventTarget* aTarget) override;
+
+  already_AddRefed<CanvasChild> GetCanvasChild() final;
+
+  void EndCanvasTransaction();
+
+  RefPtr<webgpu::WebGPUChild> GetWebGPUChild();
 
   /**
    * Request that the parent tell us when graphics are ready on GPU.
@@ -141,6 +153,7 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
   bool SendWillClose();
   bool SendPause();
   bool SendResume();
+  bool SendResumeAsync();
   bool SendNotifyChildCreated(const LayersId& id, CompositorOptions* aOptions);
   bool SendAdoptChild(const LayersId& id);
   bool SendMakeSnapshot(const SurfaceDescriptor& inSnapshot,
@@ -176,7 +189,7 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
    */
   void NotifyNotUsed(uint64_t aTextureId, uint64_t aFwdTransactionId);
 
-  void CancelWaitForRecycle(uint64_t aTextureId) override;
+  void CancelWaitForNotifyNotUsed(uint64_t aTextureId) override;
 
   TextureClientPool* GetTexturePool(KnowsCompositor* aAllocator,
                                     gfx::SurfaceFormat aFormat,
@@ -187,7 +200,7 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
 
   void HandleMemoryPressure();
 
-  MessageLoop* GetMessageLoop() const override { return mMessageLoop; }
+  nsISerialEventTarget* GetThread() const override { return mThread; }
 
   base::ProcessId GetParentPid() const override { return OtherPid(); }
 
@@ -214,6 +227,9 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
   PWebRenderBridgeChild* AllocPWebRenderBridgeChild(
       const wr::PipelineId& aPipelineId, const LayoutDeviceIntSize&);
   bool DeallocPWebRenderBridgeChild(PWebRenderBridgeChild* aActor);
+
+  webgpu::PWebGPUChild* AllocPWebGPUChild();
+  bool DeallocPWebGPUChild(webgpu::PWebGPUChild* aActor);
 
   wr::MaybeExternalImageId GetNextExternalImageId() override;
 
@@ -259,6 +275,7 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
   // and resumes IPC.
   void ResumeIPCAfterAsyncPaint();
 
+  void PrepareFinalDestroy();
   void AfterDestroy();
 
   PLayerTransactionChild* AllocPLayerTransactionChild(
@@ -281,6 +298,9 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
   mozilla::ipc::IPCResult RecvObserveLayersUpdate(
       const LayersId& aLayersId, const LayersObserverEpoch& aEpoch,
       const bool& aActive);
+
+  mozilla::ipc::IPCResult RecvCompositorOptionsChanged(
+      const LayersId& aLayersId, const CompositorOptions& aNewOptions);
 
   uint64_t GetNextResourceId();
 
@@ -350,9 +370,10 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
    * Hold TextureClients refs until end of their usages on host side.
    * It defer calling of TextureClient recycle callback.
    */
-  std::unordered_map<uint64_t, RefPtr<TextureClient>> mTexturesWaitingRecycled;
+  std::unordered_map<uint64_t, RefPtr<TextureClient>>
+      mTexturesWaitingNotifyNotUsed;
 
-  MessageLoop* mMessageLoop;
+  nsCOMPtr<nsISerialEventTarget> mThread;
 
   AutoTArray<RefPtr<TextureClientPool>, 2> mTexturePools;
 
@@ -390,6 +411,10 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
 
   uintptr_t mSlowFlushCount;
   uintptr_t mTotalFlushCount;
+
+  RefPtr<CanvasChild> mCanvasChild;
+
+  RefPtr<webgpu::WebGPUChild> mWebGPUChild;
 };
 
 }  // namespace layers

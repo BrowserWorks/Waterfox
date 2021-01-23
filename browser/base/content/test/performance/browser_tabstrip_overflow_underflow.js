@@ -29,36 +29,35 @@ const EXPECTED_UNDERFLOW_REFLOWS = [
  * underflow.
  */
 add_task(async function() {
+  // Force-enable tab animations
+  gReduceMotionOverride = false;
+
   await ensureNoPreloadedBrowser();
 
   const TAB_COUNT_FOR_OVERFLOW = computeMaxTabCount();
 
   await createTabs(TAB_COUNT_FOR_OVERFLOW);
 
-  await ensureFocusedUrlbar();
+  gURLBar.focus();
+  await disableFxaBadge();
 
   let tabStripRect = gBrowser.tabContainer.arrowScrollbox.getBoundingClientRect();
-  let textBoxRect = document
-    .getAnonymousElementByAttribute(gURLBar.textbox, "anonid", "moz-input-box")
-    .getBoundingClientRect();
-  let urlbarDropmarkerRect = document
-    .getAnonymousElementByAttribute(
-      gURLBar.textbox,
-      "anonid",
-      "historydropmarker"
-    )
+  let textBoxRect = gURLBar
+    .querySelector("moz-input-box")
     .getBoundingClientRect();
 
   let ignoreTabstripRects = {
     filter: rects =>
       rects.filter(
         r =>
-          !// We expect plenty of changed rects within the tab strip.
-          (
-            r.y1 >= tabStripRect.top &&
-            r.y2 <= tabStripRect.bottom &&
-            r.x1 >= tabStripRect.left &&
-            r.x2 <= tabStripRect.right
+          !(
+            // We expect plenty of changed rects within the tab strip.
+            (
+              r.y1 >= tabStripRect.top &&
+              r.y2 <= tabStripRect.bottom &&
+              r.x1 >= tabStripRect.left &&
+              r.x2 <= tabStripRect.right
+            )
           )
       ),
     exceptions: [
@@ -77,15 +76,6 @@ add_task(async function() {
           r.y1 >=
           document.getElementById("appcontent").getBoundingClientRect().top,
       },
-      {
-        name: "bug 1520032 - the urlbar dropmarker disappears periodically",
-        condition: r =>
-          AppConstants.DEBUG &&
-          r.x1 >= urlbarDropmarkerRect.left &&
-          r.x2 <= urlbarDropmarkerRect.right &&
-          r.y1 >= urlbarDropmarkerRect.top &&
-          r.y2 <= urlbarDropmarkerRect.bottom,
-      },
     ],
   };
 
@@ -98,7 +88,7 @@ add_task(async function() {
         "TabAnimationEnd"
       );
       await switchDone;
-      await BrowserTestUtils.waitForCondition(() => {
+      await TestUtils.waitForCondition(() => {
         return gBrowser.tabContainer.arrowScrollbox.hasAttribute(
           "scrolledtoend"
         );
@@ -119,7 +109,7 @@ add_task(async function() {
       let switchDone = BrowserTestUtils.waitForEvent(window, "TabSwitchDone");
       BrowserOpenTab();
       await switchDone;
-      await BrowserTestUtils.waitForCondition(() => {
+      await TestUtils.waitForCondition(() => {
         return gBrowser.tabContainer.arrowScrollbox.hasAttribute(
           "scrolledtoend"
         );
@@ -153,9 +143,9 @@ add_task(async function() {
   // Now switch to the first tab. We shouldn't flush layout at all.
   await withPerfObserver(
     async function() {
-      let firstTab = gBrowser.tabContainer.firstElementChild;
+      let firstTab = gBrowser.tabs[0];
       await BrowserTestUtils.switchTab(gBrowser, firstTab);
-      await BrowserTestUtils.waitForCondition(() => {
+      await TestUtils.waitForCondition(() => {
         return gBrowser.tabContainer.arrowScrollbox.hasAttribute(
           "scrolledtostart"
         );
@@ -177,7 +167,7 @@ add_task(async function() {
   // removals to put the tab strip out of the overflow state, so we'll just
   // keep testing removals until that occurs.
   while (gBrowser.tabContainer.hasAttribute("overflow")) {
-    lastTab = gBrowser.tabContainer.lastElementChild;
+    lastTab = gBrowser.tabs[gBrowser.tabs.length - 1];
     if (gBrowser.selectedTab !== lastTab) {
       await BrowserTestUtils.switchTab(gBrowser, lastTab);
     }
@@ -189,7 +179,7 @@ add_task(async function() {
         let switchDone = BrowserTestUtils.waitForEvent(window, "TabSwitchDone");
         BrowserTestUtils.removeTab(lastTab, { animate: true });
         await switchDone;
-        await BrowserTestUtils.waitForCondition(() => !lastTab.isConnected);
+        await TestUtils.waitForCondition(() => !lastTab.isConnected);
       },
       {
         expectedReflows: EXPECTED_UNDERFLOW_REFLOWS,

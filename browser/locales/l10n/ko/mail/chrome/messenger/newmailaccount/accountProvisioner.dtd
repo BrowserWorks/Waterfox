@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "&brandShortName;를 사용해 주셔서 감사합니다!">
+<!ENTITY header2.label "새 메일 주소가 필요하신 분">
+<!ENTITY other.languages "메일 주소를 제공하는 서비스 제공자의 목록을 제공해 드립니다. 모든 제공자를 보시려면 여기를 선택해 주십시오.">
+<!ENTITY error.line1 "죄송합니다. 추천 이메일 주소를 찾을 수 없습니다.">
+<!ENTITY error.line2 "메일 주소에 사용할 아이디나 다른 이름을 다시 검색하실 수 있습니다.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "여러분은 아래 ">
+<!ENTITY error.suggest.middle "무료 이메일 서비스">
+<!ENTITY error.suggest.after "중 하나를 선택하실 수 있습니다.">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "안녕하세요 ">
+<!ENTITY success.title.after " 아래 이메일 주소를 사용하실 수 있습니다.:">
+<!ENTITY success.tip "(다른 메일 주소를 검색하시려면 원하시는 아이디를 넣어주시기 바랍니다.)">
+<!ENTITY partnership.description "서비스 공급사와의 제휴에 따라 &brandShortName;는 새 메일 계정을 제공해 드립니다. 이름이나 원하는 닉네임을 넣으시고 검색하시면 가능한 아이디를 찾아드립니다.">
+<!ENTITY existing.header "사용하고자 하는 메일 주소가 이미 있으신가요?">
+<!ENTITY tinyheader.title "메일주소가 이미 있으신가요?">
+<!ENTITY tinyheader.existing "건너뛰고 기존 메일 사용하기">
+<!ENTITY content.close "계정을 나중에 설정합니다.">
+<!ENTITY successful.title "축하합니다!">
+<!ENTITY successful.successMessage "계정 설정을 완료하셨습니다.">
+<!ENTITY successful.write "메일 바로 써보기">
+<!ENTITY successful.write.desc "여러분의 새 메일 주소를 친구나 가족들에게 알려 주십시오.<br/> 더 빠르게 소식을 주고 받을 수 있습니다.">
+<!ENTITY successful.customize "멋진 부가 기능으로 &brandShortName; 최적화하기">
+<!ENTITY successful.customize.desc "여러분만의 맞춤형 &brandShortName;를 만들기 위해 필요에 따라 수 천가지 부가 기능을 이용할 수 있습니다.">
+<!ENTITY successful.attach "개인 서명 메일에 첨부하기">
+<!ENTITY successful.attach.desc "자신의 서명을 메일을 주고 받을 때 맨 마지막에 자동으로 첨부해서 주고 받으실 수 있습니다.">
+<!ENTITY successful.close "창 닫기">
+<!ENTITY input.namePlaceholder "이름 또는 아이디">
+<!ENTITY input.search "검색">
+<!ENTITY search_engine.title "검색 엔진 설정하기">
+<!ENTITY search_engine.message "메일 서비스 제공자는 웹 검색 기능도 제공하고 있습니다.">
+<!ENTITY search_engine.button "완료">

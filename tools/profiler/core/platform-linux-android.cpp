@@ -28,12 +28,15 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// This file is used for both Linux and Android.
+// This file is used for both Linux and Android as well as FreeBSD.
 
 #include <stdio.h>
 #include <math.h>
 
 #include <pthread.h>
+#if defined(GP_OS_freebsd)
+#  include <sys/thr.h>
+#endif
 #include <semaphore.h>
 #include <signal.h>
 #include <sys/time.h>
@@ -63,6 +66,9 @@
 #include "mozilla/LinuxSignal.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/DebugOnly.h"
+#if defined(GP_OS_linux) || defined(GP_OS_android)
+#  include "common/linux/breakpad_getcontext.h"
+#endif
 
 #include <string.h>
 #include <list>
@@ -72,11 +78,15 @@ using namespace mozilla;
 int profiler_current_process_id() { return getpid(); }
 
 int profiler_current_thread_id() {
+#if defined(GP_OS_linux) || defined(GP_OS_android)
   // glibc doesn't provide a wrapper for gettid().
-#if defined(__GLIBC__)
   return static_cast<int>(static_cast<pid_t>(syscall(SYS_gettid)));
+#elif defined(GP_OS_freebsd)
+  long id;
+  (void)thr_self(&id);
+  return static_cast<int>(id);
 #else
-  return static_cast<int>(gettid());
+#  error "bad platform"
 #endif
 }
 
@@ -87,27 +97,37 @@ static void PopulateRegsFromContext(Registers& aRegs, ucontext_t* aContext) {
   mcontext_t& mcontext = aContext->uc_mcontext;
 
   // Extracting the sample from the context is extremely machine dependent.
-#if defined(GP_ARCH_x86)
+#if defined(GP_PLAT_x86_linux) || defined(GP_PLAT_x86_android)
   aRegs.mPC = reinterpret_cast<Address>(mcontext.gregs[REG_EIP]);
   aRegs.mSP = reinterpret_cast<Address>(mcontext.gregs[REG_ESP]);
   aRegs.mFP = reinterpret_cast<Address>(mcontext.gregs[REG_EBP]);
   aRegs.mLR = 0;
-#elif defined(GP_ARCH_amd64)
+#elif defined(GP_PLAT_amd64_linux) || defined(GP_PLAT_amd64_android)
   aRegs.mPC = reinterpret_cast<Address>(mcontext.gregs[REG_RIP]);
   aRegs.mSP = reinterpret_cast<Address>(mcontext.gregs[REG_RSP]);
   aRegs.mFP = reinterpret_cast<Address>(mcontext.gregs[REG_RBP]);
   aRegs.mLR = 0;
-#elif defined(GP_ARCH_arm)
+#elif defined(GP_PLAT_amd64_freebsd)
+  aRegs.mPC = reinterpret_cast<Address>(mcontext.mc_rip);
+  aRegs.mSP = reinterpret_cast<Address>(mcontext.mc_rsp);
+  aRegs.mFP = reinterpret_cast<Address>(mcontext.mc_rbp);
+  aRegs.mLR = 0;
+#elif defined(GP_PLAT_arm_linux) || defined(GP_PLAT_arm_android)
   aRegs.mPC = reinterpret_cast<Address>(mcontext.arm_pc);
   aRegs.mSP = reinterpret_cast<Address>(mcontext.arm_sp);
   aRegs.mFP = reinterpret_cast<Address>(mcontext.arm_fp);
   aRegs.mLR = reinterpret_cast<Address>(mcontext.arm_lr);
-#elif defined(GP_ARCH_arm64)
+#elif defined(GP_PLAT_arm64_linux) || defined(GP_PLAT_arm64_android)
   aRegs.mPC = reinterpret_cast<Address>(mcontext.pc);
   aRegs.mSP = reinterpret_cast<Address>(mcontext.sp);
   aRegs.mFP = reinterpret_cast<Address>(mcontext.regs[29]);
   aRegs.mLR = reinterpret_cast<Address>(mcontext.regs[30]);
-#elif defined(GP_ARCH_mips64)
+#elif defined(GP_PLAT_arm64_freebsd)
+  aRegs.mPC = reinterpret_cast<Address>(mcontext.mc_gpregs.gp_elr);
+  aRegs.mSP = reinterpret_cast<Address>(mcontext.mc_gpregs.gp_sp);
+  aRegs.mFP = reinterpret_cast<Address>(mcontext.mc_gpregs.gp_x[29]);
+  aRegs.mLR = reinterpret_cast<Address>(mcontext.mc_gpregs.gp_lr);
+#elif defined(GP_PLAT_mips64_linux) || defined(GP_PLAT_mips64_android)
   aRegs.mPC = reinterpret_cast<Address>(mcontext.pc);
   aRegs.mSP = reinterpret_cast<Address>(mcontext.gregs[29]);
   aRegs.mFP = reinterpret_cast<Address>(mcontext.gregs[30]);
@@ -121,15 +141,21 @@ static void PopulateRegsFromContext(Registers& aRegs, ucontext_t* aContext) {
 #  define SYS_tgkill __NR_tgkill
 #endif
 
+#if defined(GP_OS_linux) || defined(GP_OS_android)
 int tgkill(pid_t tgid, pid_t tid, int signalno) {
   return syscall(SYS_tgkill, tgid, tid, signalno);
 }
+#endif
+
+#if defined(GP_OS_freebsd)
+#  define tgkill thr_kill2
+#endif
 
 class PlatformData {
  public:
   explicit PlatformData(int aThreadId) { MOZ_COUNT_CTOR(PlatformData); }
 
-  ~PlatformData() { MOZ_COUNT_DTOR(PlatformData); }
+  MOZ_COUNTED_DTOR(PlatformData)
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -279,7 +305,7 @@ void Sampler::Disable(PSLockRef aLock) {
 template <typename Func>
 void Sampler::SuspendAndSampleAndResumeThread(
     PSLockRef aLock, const RegisteredThread& aRegisteredThread,
-    const Func& aProcessRegs) {
+    const TimeStamp& aNow, const Func& aProcessRegs) {
   // Only one sampler thread can be sampling at once.  So we expect to have
   // complete control over |sSigHandlerCoordinator|.
   MOZ_ASSERT(!sSigHandlerCoordinator);
@@ -334,7 +360,7 @@ void Sampler::SuspendAndSampleAndResumeThread(
   // Extract the current register values.
   Registers regs;
   PopulateRegsFromContext(regs, &sSigHandlerCoordinator->mUContext);
-  aProcessRegs(regs);
+  aProcessRegs(regs, aNow);
 
   //----------------------------------------------------------------//
   // Resume the target thread.
@@ -378,7 +404,7 @@ static void* ThreadEntry(void* aArg) {
 
 SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
                              double aIntervalMilliseconds)
-    : Sampler(aLock),
+    : mSampler(aLock),
       mActivityGeneration(aActivityGeneration),
       mIntervalMicroseconds(
           std::max(1, int(floor(aIntervalMilliseconds * 1000 + 0.5)))) {
@@ -406,12 +432,26 @@ SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
   // Start the sampling thread. It repeatedly sends a SIGPROF signal. Sending
   // the signal ourselves instead of relying on itimer provides much better
   // accuracy.
-  if (pthread_create(&mThread, nullptr, ThreadEntry, this) != 0) {
+  //
+  // At least 350 KiB of stack space are needed when built with TSAN. This
+  // includes lul::N_STACK_BYTES plus whatever else is needed for the sampler
+  // thread. Set the stack size to 800 KiB to keep a safe margin above that.
+  pthread_attr_t attr;
+  if (pthread_attr_init(&attr) != 0 ||
+      pthread_attr_setstacksize(&attr, 800 * 1024) != 0 ||
+      pthread_create(&mThread, &attr, ThreadEntry, this) != 0) {
     MOZ_CRASH("pthread_create failed");
   }
+  pthread_attr_destroy(&attr);
 }
 
-SamplerThread::~SamplerThread() { pthread_join(mThread, nullptr); }
+SamplerThread::~SamplerThread() {
+  pthread_join(mThread, nullptr);
+  // Just in the unlikely case some callbacks were added between the end of the
+  // thread and now.
+  InvokePostSamplingCallbacks(std::move(mPostSamplingCallbackList),
+                              SamplingState::JustStopped);
+}
 
 void SamplerThread::SleepMicro(uint32_t aMicroseconds) {
   if (aMicroseconds >= 1000000) {
@@ -442,13 +482,13 @@ void SamplerThread::Stop(PSLockRef aLock) {
   // though this SamplerThread is still alive, because the next time the main
   // loop of Run() iterates it won't get past the mActivityGeneration check,
   // and so won't send any signals.
-  Sampler::Disable(aLock);
+  mSampler.Disable(aLock);
 }
 
 // END SamplerThread target specifics
 ////////////////////////////////////////////////////////////////////////
 
-#if defined(GP_OS_linux)
+#if defined(GP_OS_linux) || defined(GP_OS_freebsd)
 
 // We use pthread_atfork() to temporarily disable signal delivery during any
 // fork() call. Without that, fork() can be repeatedly interrupted by signal

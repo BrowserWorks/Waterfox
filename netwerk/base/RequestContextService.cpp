@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsAutoPtr.h"
 #include "nsIDocShell.h"
 #include "mozilla/dom/Document.h"
 #include "nsIDocumentLoader.h"
@@ -59,8 +58,7 @@ class RequestContext final : public nsIRequestContext, public nsITimerCallback {
 
   uint64_t mID;
   Atomic<uint32_t> mBlockingTransactionCount;
-  nsAutoPtr<SpdyPushCache> mSpdyCache;
-  nsCString mUserAgentOverride;
+  UniquePtr<SpdyPushCache> mSpdyCache;
 
   typedef nsCOMPtr<nsIRequestTailUnblockCallback> PendingTailRequest;
   // Number of known opened non-tailed requets
@@ -179,22 +177,13 @@ RequestContext::RemoveBlockingTransaction(uint32_t* outval) {
   return NS_OK;
 }
 
-SpdyPushCache* RequestContext::GetSpdyPushCache() { return mSpdyCache; }
+SpdyPushCache* RequestContext::GetSpdyPushCache() { return mSpdyCache.get(); }
 
 void RequestContext::SetSpdyPushCache(SpdyPushCache* aSpdyPushCache) {
-  mSpdyCache = aSpdyPushCache;
+  mSpdyCache = WrapUnique(aSpdyPushCache);
 }
 
 uint64_t RequestContext::GetID() { return mID; }
-
-const nsACString& RequestContext::GetUserAgentOverride() {
-  return mUserAgentOverride;
-}
-
-void RequestContext::SetUserAgentOverride(
-    const nsACString& aUserAgentOverride) {
-  mUserAgentOverride = aUserAgentOverride;
-}
 
 NS_IMETHODIMP
 RequestContext::AddNonTailRequest() {
@@ -487,6 +476,10 @@ already_AddRefed<nsIRequestContextService>
 RequestContextService::GetOrCreate() {
   MOZ_ASSERT(NS_IsMainThread());
 
+  if (sShutdown) {
+    return nullptr;
+  }
+
   RefPtr<RequestContextService> svc;
   if (gSingleton) {
     svc = gSingleton;
@@ -510,6 +503,10 @@ RequestContextService::GetRequestContext(const uint64_t rcID,
 
   if (sShutdown) {
     return NS_ERROR_ILLEGAL_DURING_SHUTDOWN;
+  }
+
+  if (!rcID) {
+    return NS_ERROR_INVALID_ARG;
   }
 
   if (!mTable.Get(rcID, rc)) {
@@ -558,10 +555,6 @@ RequestContextService::NewRequestContext(nsIRequestContext** rc) {
 
 NS_IMETHODIMP
 RequestContextService::RemoveRequestContext(const uint64_t rcID) {
-  if (IsNeckoChild() && gNeckoChild) {
-    gNeckoChild->SendRemoveRequestContext(rcID);
-  }
-
   MOZ_ASSERT(NS_IsMainThread());
   mTable.Remove(rcID);
   return NS_OK;

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (channel.description.start,channel.description.end):
+     channel.description.start and channel.description.end create one sentence,
+     with the current channel label inserted in between.
+     example: You are currently on the _Stable_ update channel. -->
+
+<!ENTITY channel.description.start  "Šiuo metu naudojamas ">
+<!ENTITY channel.description.end    " naujinimų kanalas.">
+<!ENTITY about.userAgent            "Naršyklės identifikacinė eilutė: ">

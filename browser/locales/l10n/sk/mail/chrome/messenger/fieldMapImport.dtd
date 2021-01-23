@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Import adresára">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Importované dáta pre záznam:">
+<!ENTITY fieldMapImport.next.label "Nasledujúci">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Prechádzajúci">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Použite tlačidlá Vyššie a Nižšie tak, aby importované polia odpovedali poliam adresára vľavo. Zrušte označenie polí, ktoré sa nemajú importovať.">
+<!ENTITY fieldMapImport.up.label "Vyššie">
+<!ENTITY fieldMapImport.up.accesskey "V">
+<!ENTITY fieldMapImport.down.label "Nižšie">
+<!ENTITY fieldMapImport.down.accesskey "i">
+<!ENTITY fieldMapImport.fieldListTitle "Polia adresára">
+<!ENTITY fieldMapImport.dataTitle "Importovať dáta záznamu">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Prvá položka obsahuje názvy stĺpcov">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "s">

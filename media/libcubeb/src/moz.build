@@ -29,10 +29,6 @@ if CONFIG['MOZ_PULSEAUDIO'] or CONFIG['MOZ_JACK']:
     ]
 
 if CONFIG['MOZ_PULSEAUDIO']:
-    SOURCES += [
-        'cubeb_pulse.c',
-    ]
-    DEFINES['USE_PULSE'] = True
     DEFINES['USE_PULSE_RUST'] = True
 
 if CONFIG['MOZ_JACK']:
@@ -49,6 +45,7 @@ if CONFIG['OS_ARCH'] == 'OpenBSD':
         'cubeb_sndio.c',
     ]
     DEFINES['USE_SNDIO'] = True
+    DEFINES['DISABLE_LIBSNDIO_DLOPEN'] = True
 
 if CONFIG['OS_TARGET'] == 'Darwin':
     SOURCES += [
@@ -60,6 +57,8 @@ if CONFIG['OS_TARGET'] == 'Darwin':
             'cubeb_osx_run_loop.c',
         ]
     DEFINES['USE_AUDIOUNIT'] = True
+    if CONFIG['MOZ_AUDIOUNIT_RUST']:
+        DEFINES['USE_AUDIOUNIT_RUST'] = True
 
 if CONFIG['OS_TARGET'] == 'WINNT':
     SOURCES += [
@@ -80,10 +79,6 @@ if CONFIG['OS_TARGET'] == 'Android':
     SOURCES += ['cubeb_resampler.cpp']
     SOURCES += ['cubeb-jni.cpp']
     DEFINES['USE_OPENSL'] = True
-    SOURCES += [
-        'cubeb_audiotrack.c',
-    ]
-    DEFINES['USE_AUDIOTRACK'] = True
 
 FINAL_LIBRARY = 'gkmedias'
 

@@ -4,21 +4,22 @@
 
 "use strict";
 
-const { SELECT_REQUEST } = require("../constants");
+const { SELECT_REQUEST } = require("devtools/client/netmonitor/src/constants");
 const {
   getDisplayedRequests,
   getSortedRequests,
-} = require("../selectors/index");
+} = require("devtools/client/netmonitor/src/selectors/index");
 
 const PAGE_SIZE_ITEM_COUNT_RATIO = 5;
 
 /**
  * Select request with a given id.
  */
-function selectRequest(id) {
+function selectRequest(id, httpChannelId) {
   return {
     type: SELECT_REQUEST,
     id,
+    httpChannelId,
   };
 }
 
@@ -29,8 +30,8 @@ function selectRequestByIndex(index) {
   return (dispatch, getState) => {
     const requests = getSortedRequests(getState());
     let itemId;
-    if (index >= 0 && index < requests.size) {
-      itemId = requests.get(index).id;
+    if (index >= 0 && index < requests.length) {
+      itemId = requests[index].id;
     }
     dispatch(selectRequest(itemId));
   };
@@ -47,7 +48,7 @@ function selectDelta(delta) {
     const state = getState();
     const requests = getDisplayedRequests(state);
 
-    if (requests.isEmpty()) {
+    if (!requests.length) {
       return;
     }
 
@@ -56,14 +57,17 @@ function selectDelta(delta) {
     );
 
     if (delta === "PAGE_DOWN") {
-      delta = Math.ceil(requests.size / PAGE_SIZE_ITEM_COUNT_RATIO);
+      delta = Math.ceil(requests.length / PAGE_SIZE_ITEM_COUNT_RATIO);
     } else if (delta === "PAGE_UP") {
-      delta = -Math.ceil(requests.size / PAGE_SIZE_ITEM_COUNT_RATIO);
+      delta = -Math.ceil(requests.length / PAGE_SIZE_ITEM_COUNT_RATIO);
     }
 
-    const newIndex = Math.min(Math.max(0, selIndex + delta), requests.size - 1);
-    const newItem = requests.get(newIndex);
-    dispatch(selectRequest(newItem.id));
+    const newIndex = Math.min(
+      Math.max(0, selIndex + delta),
+      requests.length - 1
+    );
+    const newItem = requests[newIndex];
+    dispatch(selectRequest(newItem.id, newItem.channelId));
   };
 }
 

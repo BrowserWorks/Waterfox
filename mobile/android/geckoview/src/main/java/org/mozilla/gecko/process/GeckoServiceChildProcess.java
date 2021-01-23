@@ -22,7 +22,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class GeckoServiceChildProcess extends Service {
-    private static final String LOGTAG = "GeckoServiceChildProcess";
+    private static final String LOGTAG = "ServiceChildProcess";
     private static IProcessManager sProcessManager;
 
     @WrapForJNI(calledFrom = "gecko")
@@ -83,7 +83,7 @@ public class GeckoServiceChildProcess extends Service {
             final int crashAnnotationFd = crashAnnotationPfd != null ?
                                           crashAnnotationPfd.detachFd() : -1;
 
-            ThreadUtils.postToUiThread(new Runnable() {
+            ThreadUtils.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (crashHandlerService != null) {
@@ -137,8 +137,4 @@ public class GeckoServiceChildProcess extends Service {
         Process.killProcess(Process.myPid());
         return false;
     }
-
-    public static final class gmplugin extends GeckoServiceChildProcess {}
-
-    public static final class tab extends GeckoServiceChildProcess {}
 }

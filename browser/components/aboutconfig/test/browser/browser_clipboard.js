@@ -1,15 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-/**
- * This is a temporary workaround to
- * be resolved in bug 1539000.
- */
-ChromeUtils.import("resource://testing-common/PromiseTestUtils.jsm", this);
-PromiseTestUtils.whitelistRejectionsGlobally(
-  /Too many characters in placeable/
-);
-
 add_task(async function setup() {
   await SpecialPowers.pushPrefEnv({
     set: [
@@ -40,12 +31,33 @@ add_task(async function test_copy() {
       this.search(name);
       let row = this.getRow(name);
 
-      // Triple click at any location in the name cell should select the name.
-      await BrowserTestUtils.synthesizeMouseAtCenter(
-        row.nameCell,
-        { clickCount: 3 },
-        this.browser
-      );
+      let selectText = async target => {
+        let { width, height } = target.getBoundingClientRect();
+        EventUtils.synthesizeMouse(
+          target,
+          1,
+          1,
+          { type: "mousedown" },
+          this.browser.contentWindow
+        );
+        EventUtils.synthesizeMouse(
+          target,
+          width - 1,
+          height - 1,
+          { type: "mousemove" },
+          this.browser.contentWindow
+        );
+        EventUtils.synthesizeMouse(
+          target,
+          width - 1,
+          height - 1,
+          { type: "mouseup" },
+          this.browser.contentWindow
+        );
+      };
+
+      // Drag across the name cell.
+      await selectText(row.nameCell);
       Assert.ok(row.nameCell.contains(this.window.getSelection().anchorNode));
       await SimpleTest.promiseClipboardChange(name, async () => {
         await BrowserTestUtils.synthesizeKey(
@@ -55,25 +67,25 @@ add_task(async function test_copy() {
         );
       });
 
-      // Triple click at any location in the value cell should select the value.
-      await BrowserTestUtils.synthesizeMouseAtCenter(
-        row.valueCell,
-        { clickCount: 3 },
-        this.browser
-      );
+      // Drag across the value cell.
+      await selectText(row.valueCell);
       let selection = this.window.getSelection();
       Assert.ok(row.valueCell.contains(selection.anchorNode));
 
-      // The selection is never collapsed because of the <span> element, and
-      // this makes sure that an empty string can be copied.
-      Assert.ok(!selection.isCollapsed);
-      await SimpleTest.promiseClipboardChange(expectedString, async () => {
-        await BrowserTestUtils.synthesizeKey(
-          "c",
-          { accelKey: true },
-          this.browser
-        );
-      });
+      if (expectedString !== "") {
+        // Non-empty values should have a selection.
+        Assert.ok(!selection.isCollapsed);
+        await SimpleTest.promiseClipboardChange(expectedString, async () => {
+          await BrowserTestUtils.synthesizeKey(
+            "c",
+            { accelKey: true },
+            this.browser
+          );
+        });
+      } else {
+        // Nothing is selected for an empty value.
+        Assert.equal(selection.toString(), "");
+      }
     }
   });
 });
@@ -95,26 +107,27 @@ add_task(async function test_copy_multiple() {
     let { width, height } = endRow.valueCell.getBoundingClientRect();
 
     // Drag from the top left of the first row to the bottom right of the last.
-    await BrowserTestUtils.synthesizeMouse(
+    EventUtils.synthesizeMouse(
       startRow.nameCell,
       1,
       1,
       { type: "mousedown" },
-      this.browser
+      this.browser.contentWindow
     );
-    await BrowserTestUtils.synthesizeMouse(
+
+    EventUtils.synthesizeMouse(
       endRow.valueCell,
       width - 1,
       height - 1,
       { type: "mousemove" },
-      this.browser
+      this.browser.contentWindow
     );
-    await BrowserTestUtils.synthesizeMouse(
+    EventUtils.synthesizeMouse(
       endRow.valueCell,
       width - 1,
       height - 1,
       { type: "mouseup" },
-      this.browser
+      this.browser.contentWindow
     );
 
     await SimpleTest.promiseClipboardChange(expectedString, async () => {

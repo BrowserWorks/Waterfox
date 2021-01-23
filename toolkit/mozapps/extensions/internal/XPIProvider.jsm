@@ -19,8 +19,6 @@
 
 var EXPORTED_SYMBOLS = ["XPIProvider", "XPIInternal"];
 
-/* globals WebExtensionPolicy */
-
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -30,6 +28,7 @@ const { AddonManager, AddonManagerPrivate } = ChromeUtils.import(
 );
 
 XPCOMUtils.defineLazyModuleGetters(this, {
+  AddonSettings: "resource://gre/modules/addons/AddonSettings.jsm",
   AppConstants: "resource://gre/modules/AppConstants.jsm",
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
   Dictionary: "resource://gre/modules/Extension.jsm",
@@ -82,7 +81,6 @@ const PREF_LANGPACK_SIGNATURES = "extensions.langpacks.signatures.required";
 const PREF_INSTALL_DISTRO_ADDONS = "extensions.installDistroAddons";
 const PREF_BRANCH_INSTALLED_ADDON = "extensions.installedDistroAddon.";
 const PREF_SYSTEM_ADDON_SET = "extensions.systemAddonSet";
-const PREF_ALLOW_LEGACY = "extensions.legacy.enabled";
 
 const PREF_EM_LAST_APP_BUILD_ID = "extensions.lastAppBuildId";
 
@@ -94,6 +92,7 @@ const URI_EXTENSION_STRINGS =
 
 const DIR_EXTENSIONS = "extensions";
 const DIR_SYSTEM_ADDONS = "features";
+const DIR_APP_SYSTEM_PROFILE = "system-extensions";
 const DIR_STAGE = "staged";
 const DIR_TRASH = "trash";
 
@@ -105,6 +104,7 @@ const KEY_APP_DISTRIBUTION = "XREAppDist";
 const KEY_APP_FEATURES = "XREAppFeat";
 
 const KEY_APP_PROFILE = "app-profile";
+const KEY_APP_SYSTEM_PROFILE = "app-system-profile";
 const KEY_APP_SYSTEM_ADDONS = "app-system-addons";
 const KEY_APP_SYSTEM_DEFAULTS = "app-system-defaults";
 const KEY_APP_BUILTINS = "app-builtin";
@@ -128,7 +128,7 @@ const XPI_PERMISSION = "install";
 
 const XPI_SIGNATURE_CHECK_PERIOD = 24 * 60 * 60;
 
-const DB_SCHEMA = 31;
+const DB_SCHEMA = 32;
 
 XPCOMUtils.defineLazyPreferenceGetter(
   this,
@@ -453,7 +453,6 @@ function migrateAddonLoader(addon) {
  * as stored in the addonStartup.json file.
  */
 const JSON_FIELDS = Object.freeze([
-  "changed",
   "dependencies",
   "enabled",
   "file",
@@ -463,6 +462,7 @@ const JSON_FIELDS = Object.freeze([
   "rootURI",
   "runInSafeMode",
   "signedState",
+  "signedDate",
   "startupData",
   "telemetryKey",
   "type",
@@ -498,10 +498,11 @@ class XPIState {
       saved.currentModifiedTime != this.lastModifiedTime
     ) {
       this.lastModifiedTime = saved.currentModifiedTime;
-      this.changed = true;
-    } else if (saved.currentModifiedTime === null) {
+    } else if (
+      saved.currentModifiedTime === null &&
+      (!location.changed || !this.file?.exists())
+    ) {
       this.missing = true;
-      this.changed = true;
     }
   }
 
@@ -556,6 +557,7 @@ class XPIState {
       rootURI: this.rootURI,
       runInSafeMode: this.runInSafeMode,
       signedState: this.signedState,
+      signedDate: this.signedDate,
       telemetryKey: this.telemetryKey,
       version: this.version,
     };
@@ -590,9 +592,9 @@ class XPIState {
       logger.warn("Can't get modified time of ${path}", aFile, e);
     }
 
-    this.changed = mtime != this.lastModifiedTime;
+    let changed = mtime != this.lastModifiedTime;
     this.lastModifiedTime = mtime;
-    return this.changed;
+    return changed;
   }
 
   /**
@@ -644,32 +646,16 @@ class XPIState {
     this.dependencies = aDBAddon.dependencies;
     this.runInSafeMode = canRunInSafeMode(aDBAddon);
     this.signedState = aDBAddon.signedState;
+    this.signedDate = aDBAddon.signedDate;
     this.file = aDBAddon._sourceBundle;
     this.rootURI = aDBAddon.rootURI;
 
-    if (aUpdated || mustGetMod) {
-      let file = this.file;
-
-      // Built-in addons should have jar: rootURIs, use the mod time
-      // for the containing jar file for those.
-      if (!file) {
-        let fileUrl = this.resolvedRootURI;
-
-        if (fileUrl instanceof Ci.nsIJARURI) {
-          fileUrl = fileUrl.JARFile;
-        }
-        if (fileUrl instanceof Ci.nsIFileURL) {
-          file = fileUrl.file;
-        }
-      }
-
-      if (file) {
-        this.getModTime(file);
-        if (this.lastModifiedTime != aDBAddon.updateDate) {
-          aDBAddon.updateDate = this.lastModifiedTime;
-          if (XPIDatabase.initialized) {
-            XPIDatabase.saveChanges();
-          }
+    if ((aUpdated || mustGetMod) && this.file) {
+      this.getModTime(this.file);
+      if (this.lastModifiedTime != aDBAddon.updateDate) {
+        aDBAddon.updateDate = this.lastModifiedTime;
+        if (XPIDatabase.initialized) {
+          XPIDatabase.saveChanges();
         }
       }
     }
@@ -721,6 +707,11 @@ class XPIStateLocation extends Map {
     this._installler = undefined;
   }
 
+  hasPrecedence(otherLocation) {
+    let locations = Array.from(XPIStates.locations());
+    return locations.indexOf(this) <= locations.indexOf(otherLocation);
+  }
+
   get installer() {
     if (this._installer === undefined) {
       this._installer = this.makeInstaller();
@@ -737,8 +728,15 @@ class XPIStateLocation extends Map {
       this.path = saved.path;
       this.dir = new nsIFile(this.path);
     }
+    const changedPath = this.path !== saved.path;
     this.staged = saved.staged || {};
-    this.changed = saved.changed || false;
+    this.changed = saved.changed || changedPath || false;
+
+    // Recompute rootURI for non-builtin addons if profile
+    // folder was relocated, see bug 1429838.
+    if (changedPath && this.file) {
+      this.rootURI = getURIForResourceInFile(this.file, "").spec;
+    }
 
     for (let [id, data] of Object.entries(saved.addons || {})) {
       let xpiState = this._addState(id, data);
@@ -746,7 +744,7 @@ class XPIStateLocation extends Map {
       // Make a note that this state was restored from saved data. But
       // only if this location hasn't moved since the last startup,
       // since that causes problems for new system add-on bundles.
-      if (!this.path || this.path == saved.path) {
+      if (!this.path || !changedPath) {
         xpiState.wasRestored = true;
       }
     }
@@ -1002,10 +1000,13 @@ class DirectoryLocation extends XPIStateLocation {
    *        The scope of add-ons installed in this location.
    * @param {boolean} [locked = true]
    *        If false, the location accepts new add-on installs.
+   * @param {boolean} [system = false]
+   *        If true, the location is a system addon location.
    */
-  constructor(name, dir, scope, locked = true) {
+  constructor(name, dir, scope, locked = true, system = false) {
     super(name, dir, scope);
     this.locked = locked;
+    this._isSystem = system;
   }
 
   makeInstaller() {
@@ -1128,6 +1129,10 @@ class DirectoryLocation extends XPIStateLocation {
     }
     return addons;
   }
+
+  get isSystem() {
+    return this._isSystem;
+  }
 }
 
 /**
@@ -1150,7 +1155,7 @@ class SystemAddonDefaults extends DirectoryLocation {
     let manifest = XPIProvider.builtInAddons;
 
     if (!("system" in manifest)) {
-      logger.warn("No list of valid system add-ons found.");
+      logger.debug("No list of valid system add-ons found.");
       return addons;
     }
 
@@ -1456,12 +1461,25 @@ var XPIStates = {
         continue;
       }
 
+      // Don't bother scanning scopes where we don't have addons installed if they
+      // do not allow sideloading new addons.  Once we have an addon in one of those
+      // locations, we need to check the location for changes (updates/deletions).
+      if (!loc.size && !(loc.scope & AddonSettings.SCOPES_SIDELOAD)) {
+        continue;
+      }
+
       let knownIds = new Set(loc.keys());
       for (let [id, file] of loc.readAddons()) {
         knownIds.delete(id);
 
         let xpiState = loc.get(id);
         if (!xpiState) {
+          // If the location is not supported for sideloading, skip new
+          // addons.  We handle this here so changes for existing sideloads
+          // will function.
+          if (!loc.isSystem && !(loc.scope & AddonSettings.SCOPES_SIDELOAD)) {
+            continue;
+          }
           logger.debug("New add-on ${id} in ${loc}", { id, loc: loc.name });
 
           changed = true;
@@ -1738,7 +1756,11 @@ class BootstrapScope {
    */
   async callBootstrapMethod(aMethod, aReason, aExtraParams = {}) {
     let { addon, runInSafeMode } = this;
-    if (Services.appinfo.inSafeMode && !runInSafeMode) {
+    if (
+      Services.appinfo.inSafeMode &&
+      !runInSafeMode &&
+      aMethod !== "uninstall"
+    ) {
       return null;
     }
 
@@ -1798,9 +1820,7 @@ class BootstrapScope {
         );
       } else {
         logger.debug(
-          `Calling bootstrap method ${aMethod} on ${addon.id} version ${
-            addon.version
-          }`
+          `Calling bootstrap method ${aMethod} on ${addon.id} version ${addon.version}`
         );
 
         this._beforeCallBootstrapMethod(aMethod, params, aReason);
@@ -2031,7 +2051,7 @@ class BootstrapScope {
    * add-on to the given new add-on, depending on the current state of
    * the scope.
    *
-   * @param {Object} newAddon
+   * @param {XPIState} newAddon
    *        The new add-on which is being installed, as expected by the
    *        constructor.
    * @param {boolean} [startup = false]
@@ -2051,12 +2071,41 @@ class BootstrapScope {
       this.addon.version,
       newAddon.version
     );
+
+    let callUpdate = this.addon.isWebExtension && newAddon.isWebExtension;
+
+    // BootstrapScope gets either an XPIState instance or an AddonInternal
+    // instance, when we update, we need the latter to access permissions
+    // from the manifest.
+    let existingAddon = this.addon;
+
     let extraArgs = {
-      oldVersion: this.addon.version,
+      oldVersion: existingAddon.version,
       newVersion: newAddon.version,
     };
 
-    let callUpdate = this.addon.isWebExtension && newAddon.isWebExtension;
+    // If we're updating an extension, we may need to read data to
+    // calculate permission changes.
+    if (callUpdate && existingAddon.type === "extension") {
+      if (this.addon instanceof XPIState) {
+        // The existing addon will be cached in the database.
+        existingAddon = await XPIDatabase.getAddonByID(this.addon.id);
+      }
+
+      if (newAddon instanceof XPIState) {
+        newAddon = await XPIInstall.loadManifestFromFile(
+          newAddon.file,
+          newAddon.location
+        );
+      }
+
+      Object.assign(extraArgs, {
+        userPermissions: newAddon.userPermissions,
+        optionalPermissions: newAddon.optionalPermissions,
+        oldPermissions: existingAddon.userPermissions,
+        oldOptionalPermissions: existingAddon.optionalPermissions,
+      });
+    }
 
     await this._uninstall(reason, callUpdate, extraArgs);
 
@@ -2180,13 +2229,13 @@ var XPIProvider = {
   },
 
   setupInstallLocations(aAppChanged) {
-    function DirectoryLoc(aName, aScope, aKey, aPaths, aLocked) {
+    function DirectoryLoc(aName, aScope, aKey, aPaths, aLocked, aIsSystem) {
       try {
         var dir = FileUtils.getDir(aKey, aPaths);
       } catch (e) {
         return null;
       }
-      return new DirectoryLocation(aName, dir, aScope, aLocked);
+      return new DirectoryLocation(aName, dir, aScope, aLocked, aIsSystem);
     }
 
     function SystemDefaultsLoc(name, scope, key, paths) {
@@ -2225,6 +2274,16 @@ var XPIProvider = {
         KEY_PROFILEDIR,
         [DIR_EXTENSIONS],
         false,
+      ],
+
+      [
+        DirectoryLoc,
+        KEY_APP_SYSTEM_PROFILE,
+        AddonManager.SCOPE_APPLICATION,
+        KEY_PROFILEDIR,
+        [DIR_APP_SYSTEM_PROFILE],
+        false,
+        true,
       ],
 
       [
@@ -2384,7 +2443,9 @@ var XPIProvider = {
         let data = Cu.readUTF8URI(url);
         this.builtInAddons = JSON.parse(data);
       } catch (e) {
-        logger.warn("List of valid built-in add-ons could not be parsed.", e);
+        if (AppConstants.DEBUG) {
+          logger.debug("List of built-in add-ons is missing or invalid.", e);
+        }
       }
 
       this.registerBuiltinDictionaries();
@@ -2400,7 +2461,6 @@ var XPIProvider = {
         Services.prefs.addObserver(PREF_XPI_SIGNATURES_REQUIRED, this);
       }
       Services.prefs.addObserver(PREF_LANGPACK_SIGNATURES, this);
-      Services.prefs.addObserver(PREF_ALLOW_LEGACY, this);
       Services.obs.addObserver(this, NOTIFICATION_FLUSH_PERMISSIONS);
 
       this.checkForChanges(aAppChanged, aOldAppVersion, aOldPlatformVersion);
@@ -2936,7 +2996,7 @@ var XPIProvider = {
       let extensionListChanged = false;
       // If the database needs to be updated then open it and then update it
       // from the filesystem
-      if (updateReasons.length > 0) {
+      if (updateReasons.length) {
         AddonManagerPrivate.recordSimpleMeasure(
           "XPIDB_startup_load_reasons",
           updateReasons
@@ -3108,11 +3168,15 @@ var XPIProvider = {
         switch (aData) {
           case PREF_XPI_SIGNATURES_REQUIRED:
           case PREF_LANGPACK_SIGNATURES:
-          case PREF_ALLOW_LEGACY:
             XPIDatabase.updateAddonAppDisabledStates();
             break;
         }
     }
+  },
+
+  uninstallSystemProfileAddon(aID) {
+    let location = XPIStates.getLocation(KEY_APP_SYSTEM_PROFILE);
+    return XPIInstall.uninstallAddonFromLocation(aID, location);
   },
 };
 
@@ -3148,8 +3212,13 @@ var XPIInternal = {
   BootstrapScope,
   BuiltInLocation,
   DB_SCHEMA,
+  DIR_STAGE,
+  DIR_TRASH,
+  KEY_APP_PROFILE,
+  KEY_APP_SYSTEM_PROFILE,
   KEY_APP_SYSTEM_ADDONS,
   KEY_APP_SYSTEM_DEFAULTS,
+  KEY_PROFILEDIR,
   PREF_BRANCH_INSTALLED_ADDON,
   PREF_SYSTEM_ADDON_SET,
   SystemAddonLocation,

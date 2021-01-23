@@ -6,7 +6,7 @@
 #ifndef nsFileStreams_h__
 #define nsFileStreams_h__
 
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsIFileStreams.h"
 #include "nsIFile.h"
 #include "nsICloneableInputStream.h"
@@ -20,14 +20,17 @@
 #include "nsReadLine.h"
 #include <algorithm>
 
+namespace mozilla {
+namespace ipc {
+class FileDescriptor;
+}  // namespace ipc
+}  // namespace mozilla
+
 ////////////////////////////////////////////////////////////////////////////////
 
 class nsFileStreamBase : public nsISeekableStream, public nsIFileMetadata {
  public:
-  // Record refcount changes to ensure that streams are destroyed on
-  // consistent threads when recording/replaying.
-  NS_DECL_THREADSAFE_ISUPPORTS_WITH_RECORDING(
-      mozilla::recordreplay::Behavior::Preserve)
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSISEEKABLESTREAM
   NS_DECL_NSITELLABLESTREAM
   NS_DECL_NSIFILEMETADATA
@@ -159,7 +162,7 @@ class nsFileInputStream : public nsFileStreamBase,
   nsresult SeekInternal(int32_t aWhence, int64_t aOffset,
                         bool aClearBuf = true);
 
-  nsAutoPtr<nsLineBuffer<char> > mLineBuffer;
+  mozilla::UniquePtr<nsLineBuffer<char>> mLineBuffer;
 
   /**
    * The file being opened.
@@ -198,6 +201,7 @@ class nsFileOutputStream : public nsFileStreamBase, public nsIFileOutputStream {
   NS_FORWARD_NSIOUTPUTSTREAM(nsFileStreamBase::)
 
   static nsresult Create(nsISupports* aOuter, REFNSIID aIID, void** aResult);
+  nsresult InitWithFileDescriptor(const mozilla::ipc::FileDescriptor& aFd);
 
  protected:
   virtual ~nsFileOutputStream() = default;

@@ -9,6 +9,8 @@
 
 #include "mozilla/Maybe.h"
 
+#include <algorithm>
+
 #include "jit/JitAllocPolicy.h"
 #include "jit/JitFrames.h"
 #include "jit/Registers.h"
@@ -122,14 +124,10 @@ class BytecodeSite : public TempObject {
   // Bytecode address within innermost active function.
   jsbytecode* pc_;
 
-  // Optimization information at the pc.
-  TrackedOptimizations* optimizations_;
-
  public:
-  BytecodeSite() : tree_(nullptr), pc_(nullptr), optimizations_(nullptr) {}
+  BytecodeSite() : tree_(nullptr), pc_(nullptr) {}
 
-  BytecodeSite(InlineScriptTree* tree, jsbytecode* pc)
-      : tree_(tree), pc_(pc), optimizations_(nullptr) {
+  BytecodeSite(InlineScriptTree* tree, jsbytecode* pc) : tree_(tree), pc_(pc) {
     MOZ_ASSERT(tree_ != nullptr);
     MOZ_ASSERT(pc_ != nullptr);
   }
@@ -139,17 +137,6 @@ class BytecodeSite : public TempObject {
   jsbytecode* pc() const { return pc_; }
 
   JSScript* script() const { return tree_ ? tree_->script() : nullptr; }
-
-  bool hasOptimizations() const { return !!optimizations_; }
-
-  TrackedOptimizations* optimizations() const {
-    MOZ_ASSERT(hasOptimizations());
-    return optimizations_;
-  }
-
-  void setOptimizations(TrackedOptimizations* optimizations) {
-    optimizations_ = optimizations;
-  }
 };
 
 enum AnalysisMode {
@@ -183,16 +170,15 @@ class CompileInfo {
         hadOverflowBailout_(script->hadOverflowBailout()),
         hadFrequentBailouts_(script->hadFrequentBailouts()),
         mayReadFrameArgsDirectly_(script->mayReadFrameArgsDirectly()),
-        trackRecordReplayProgress_(script->trackRecordReplayProgress()),
         inlineScriptTree_(inlineScriptTree) {
-    MOZ_ASSERT_IF(osrPc, JSOp(*osrPc) == JSOP_LOOPENTRY);
+    MOZ_ASSERT_IF(osrPc, JSOp(*osrPc) == JSOp::LoopHead);
 
     // The function here can flow in from anywhere so look up the canonical
     // function to ensure that we do not try to embed a nursery pointer in
     // jit-code. Precisely because it can flow in from anywhere, it's not
     // guaranteed to be non-lazy. Hence, don't access its script!
     if (fun_) {
-      fun_ = fun_->nonLazyScript()->functionNonDelazifying();
+      fun_ = fun_->baseScript()->function();
       MOZ_ASSERT(fun_->isTenured());
     }
 
@@ -201,13 +187,13 @@ class CompileInfo {
     nargs_ = fun ? fun->nargs() : 0;
     nlocals_ = script->nfixed();
 
-    // An extra slot is needed for global scopes because INITGLEXICAL (stack
-    // depth 1) is compiled as a SETPROP (stack depth 2) on the global lexical
+    // An extra slot is needed for global scopes because InitGLexical (stack
+    // depth 1) is compiled as a SetProp (stack depth 2) on the global lexical
     // scope.
     uint32_t extra = script->isGlobalCode() ? 1 : 0;
-    nstack_ =
-        Max<unsigned>(script->nslots() - script->nfixed(), MinJITStackSize) +
-        extra;
+    nstack_ = std::max<unsigned>(script->nslots() - script->nfixed(),
+                                 MinJITStackSize) +
+              extra;
     nslots_ = nimplicit_ + nargs_ + nlocals_ + nstack_;
 
     // For derived class constructors, find and cache the frame slot for
@@ -244,7 +230,6 @@ class CompileInfo {
         hadOverflowBailout_(false),
         hadFrequentBailouts_(false),
         mayReadFrameArgsDirectly_(false),
-        trackRecordReplayProgress_(false),
         inlineScriptTree_(nullptr),
         needsBodyEnvironmentObject_(false),
         funNeedsSomeEnvironmentObject_(false) {
@@ -263,7 +248,7 @@ class CompileInfo {
   InlineScriptTree* inlineScriptTree() const { return inlineScriptTree_; }
 
   bool hasOsrAt(jsbytecode* pc) const {
-    MOZ_ASSERT(JSOp(*pc) == JSOP_LOOPENTRY);
+    MOZ_ASSERT(JSOp(*pc) == JSOp::LoopHead);
     return pc == osrPc();
   }
 
@@ -293,13 +278,7 @@ class CompileInfo {
 
   inline JSFunction* getFunction(jsbytecode* pc) const;
 
-  const Value& getConst(jsbytecode* pc) const {
-    return script_->getConst(GET_UINT32_INDEX(pc));
-  }
-
-  jssrcnote* getNote(GSNCache& gsn, jsbytecode* pc) const {
-    return GetSrcNote(gsn, script(), pc);
-  }
+  BigInt* getBigInt(jsbytecode* pc) const { return script_->getBigInt(pc); }
 
   // Total number of slots: args, locals, and stack.
   unsigned nslots() const { return nslots_; }
@@ -377,6 +356,7 @@ class CompileInfo {
   bool argumentsAliasesFormals() const {
     return script()->argumentsAliasesFormals();
   }
+  bool hasMappedArgsObj() const { return script()->hasMappedArgsObj(); }
   bool needsArgsObj() const { return scriptNeedsArgsObj_; }
   bool argsObjAliasesFormals() const {
     return scriptNeedsArgsObj_ && script()->hasMappedArgsObj();
@@ -390,111 +370,96 @@ class CompileInfo {
     return needsBodyEnvironmentObject_;
   }
 
+  enum class SlotObservableKind {
+    // This slot must be preserved because it's observable outside SSA uses.
+    // It can't be recovered before or during bailout.
+    ObservableNotRecoverable,
+
+    // This slot must be preserved because it's observable, but it can be
+    // recovered.
+    ObservableRecoverable,
+
+    // This slot is not observable outside SSA uses.
+    NotObservable,
+  };
+
+  inline SlotObservableKind getSlotObservableKind(uint32_t slot) const {
+    // Locals and expression stack slots.
+    if (slot >= firstLocalSlot()) {
+      // The |this| slot for a derived class constructor is a local slot.
+      // It should never be optimized out, as a Debugger might need to perform
+      // TDZ checks on it via, e.g., an exceptionUnwind handler. The TDZ check
+      // is required for correctness if the handler decides to continue
+      // execution.
+      if (thisSlotForDerivedClassConstructor_ &&
+          *thisSlotForDerivedClassConstructor_ == slot) {
+        return SlotObservableKind::ObservableNotRecoverable;
+      }
+      return SlotObservableKind::NotObservable;
+    }
+
+    // Formal argument slots.
+    if (slot >= firstArgSlot()) {
+      MOZ_ASSERT(funMaybeLazy());
+      MOZ_ASSERT(slot - firstArgSlot() < nargs());
+
+      // Preserve formal arguments if they might be read when creating a rest or
+      // arguments object. In non-strict scripts, Function.arguments can create
+      // an arguments object dynamically so we always preserve the arguments.
+      if (mayReadFrameArgsDirectly_ || !script()->strict()) {
+        return SlotObservableKind::ObservableRecoverable;
+      }
+      return SlotObservableKind::NotObservable;
+    }
+
+    // |this| slot is observable but it can be recovered.
+    if (funMaybeLazy() && slot == thisSlot()) {
+      return SlotObservableKind::ObservableRecoverable;
+    }
+
+    // Environment chain slot.
+    if (slot == environmentChainSlot()) {
+      // If environments can be added in the body (after the prologue) we need
+      // to preserve the environment chain slot. It can't be recovered.
+      if (needsBodyEnvironmentObject()) {
+        return SlotObservableKind::ObservableNotRecoverable;
+      }
+      // If the function may need an arguments object, also preserve the
+      // environment chain because it may be needed to reconstruct the arguments
+      // object during bailout.
+      if (funNeedsSomeEnvironmentObject_ || hasArguments()) {
+        return SlotObservableKind::ObservableRecoverable;
+      }
+      return SlotObservableKind::NotObservable;
+    }
+
+    // The arguments object is observable and not recoverable.
+    if (hasArguments() && slot == argsObjSlot()) {
+      MOZ_ASSERT(funMaybeLazy());
+      return SlotObservableKind::ObservableNotRecoverable;
+    }
+
+    MOZ_ASSERT(slot == returnValueSlot());
+    return SlotObservableKind::NotObservable;
+  }
+
   // Returns true if a slot can be observed out-side the current frame while
   // the frame is active on the stack.  This implies that these definitions
   // would have to be executed and that they cannot be removed even if they
   // are unused.
   inline bool isObservableSlot(uint32_t slot) const {
-    if (slot >= firstLocalSlot()) {
-      // The |this| slot for a derived class constructor is a local slot.
-      if (thisSlotForDerivedClassConstructor_) {
-        return *thisSlotForDerivedClassConstructor_ == slot;
-      }
-      return false;
-    }
-
-    if (slot < firstArgSlot()) {
-      return isObservableFrameSlot(slot);
-    }
-
-    return isObservableArgumentSlot(slot);
-  }
-
-  bool isObservableFrameSlot(uint32_t slot) const {
-    // The |envChain| value must be preserved if environments are added
-    // after the prologue.
-    if (needsBodyEnvironmentObject() && slot == environmentChainSlot()) {
-      return true;
-    }
-
-    if (!funMaybeLazy()) {
-      return false;
-    }
-
-    // The |this| value must always be observable.
-    if (slot == thisSlot()) {
-      return true;
-    }
-
-    // The |this| frame slot in derived class constructors should never be
-    // optimized out, as a Debugger might need to perform TDZ checks on it
-    // via, e.g., an exceptionUnwind handler. The TDZ check is required
-    // for correctness if the handler decides to continue execution.
-    if (thisSlotForDerivedClassConstructor_ &&
-        *thisSlotForDerivedClassConstructor_ == slot) {
-      return true;
-    }
-
-    if (funNeedsSomeEnvironmentObject_ && slot == environmentChainSlot()) {
-      return true;
-    }
-
-    // If the function may need an arguments object, then make sure to
-    // preserve the env chain, because it may be needed to construct the
-    // arguments object during bailout. If we've already created an
-    // arguments object (or got one via OSR), preserve that as well.
-    if (hasArguments() &&
-        (slot == environmentChainSlot() || slot == argsObjSlot())) {
-      return true;
-    }
-
-    return false;
-  }
-
-  bool isObservableArgumentSlot(uint32_t slot) const {
-    if (!funMaybeLazy()) {
-      return false;
-    }
-
-    // Function.arguments can be used to access all arguments in non-strict
-    // scripts, so we can't optimize out any arguments.
-    if ((mayReadFrameArgsDirectly_ || !script()->strict()) &&
-        firstArgSlot() <= slot &&
-        slot - firstArgSlot() < nargs()) {
-      return true;
-    }
-
-    return false;
+    SlotObservableKind kind = getSlotObservableKind(slot);
+    return (kind == SlotObservableKind::ObservableNotRecoverable ||
+            kind == SlotObservableKind::ObservableRecoverable);
   }
 
   // Returns true if a slot can be recovered before or during a bailout.  A
   // definition which can be observed and recovered, implies that this
   // definition can be optimized away as long as we can compute its values.
   bool isRecoverableOperand(uint32_t slot) const {
-    // The |envChain| value cannot be recovered if environments can be
-    // added in body (after the prologue).
-    if (needsBodyEnvironmentObject() && slot == environmentChainSlot()) {
-      return false;
-    }
-
-    if (!funMaybeLazy()) {
-      return true;
-    }
-
-    // The |this| and the |envChain| values can be recovered.
-    if (slot == thisSlot() || slot == environmentChainSlot()) {
-      return true;
-    }
-
-    if (isObservableFrameSlot(slot)) {
-      return false;
-    }
-
-    if (needsArgsObj() && isObservableArgumentSlot(slot)) {
-      return false;
-    }
-
-    return true;
+    SlotObservableKind kind = getSlotObservableKind(slot);
+    return (kind == SlotObservableKind::ObservableRecoverable ||
+            kind == SlotObservableKind::NotObservable);
   }
 
   // Check previous bailout states to prevent doing the same bailout in the
@@ -502,7 +467,6 @@ class CompileInfo {
   bool hadOverflowBailout() const { return hadOverflowBailout_; }
   bool hadFrequentBailouts() const { return hadFrequentBailouts_; }
   bool mayReadFrameArgsDirectly() const { return mayReadFrameArgsDirectly_; }
-  bool trackRecordReplayProgress() const { return trackRecordReplayProgress_; }
 
  private:
   unsigned nimplicit_;
@@ -527,7 +491,6 @@ class CompileInfo {
   bool hadFrequentBailouts_;
 
   bool mayReadFrameArgsDirectly_;
-  bool trackRecordReplayProgress_;
 
   InlineScriptTree* inlineScriptTree_;
 

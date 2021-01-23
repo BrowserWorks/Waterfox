@@ -38,15 +38,13 @@ class HTMLAnchorElement final : public nsGenericHTMLElement, public Link {
   virtual bool Draggable() const override;
 
   // Element
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override;
+  virtual bool IsInteractiveHTMLContent() const override;
 
   // DOM memory reporter participant
   NS_DECL_ADDSIZEOFEXCLUDINGTHIS
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
   virtual bool IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
                                int32_t* aTabIndex) override;
 

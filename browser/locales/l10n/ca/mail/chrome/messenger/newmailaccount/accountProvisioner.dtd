@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Us donem la benvinguda al &brandShortName;">
+<!ENTITY header2.label "Voleu una adreça electrònica nova?">
+<!ENTITY other.languages "Només s'estan mostrant els proveïdors que ofereixen adreces a la vostra regió.  Feu clic aquí per mostrar tots els proveïdors.">
+<!ENTITY error.line1 "No s'ha pogut suggerir cap adreça electrònica.">
+<!ENTITY error.line2 "Podeu provar de cercar sobrenoms o qualsevol altre terme per trobar més missatges.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "També podeu provar un dels ">
+<!ENTITY error.suggest.middle "comptes de correu electrònic gratuïts alternatius">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hola ">
+<!ENTITY success.title.after ", l'adreça electrònica següent està disponible:">
+<!ENTITY success.tip "(Per trobar més missatges, també podeu cercar sobrenoms o qualsevol altre terme)">
+<!ENTITY partnership.description "Amb col·laboració amb diversos proveïdors, el &brandShortName; us pot oferir un compte de correu nou. Per començar només cal que doneu el vostre nom i cognom, o qualsevol altra paraula que us agradi, en els camps anteriors.">
+<!ENTITY existing.header "Ja teniu una adreça electrònica que voleu utilitzar?">
+<!ENTITY tinyheader.title "Ja teniu una adreça?">
+<!ENTITY tinyheader.existing "Salta aquest pas i utilitza l'adreça electrònica que ja tinc">
+<!ENTITY content.close "Crec que ja configuraré el meu compte més tard.">
+<!ENTITY successful.title "Felicitats.">
+<!ENTITY successful.successMessage "Heu configurat el vostre compte correctament.">
+<!ENTITY successful.write "Escriviu un correu">
+<!ENTITY successful.write.desc "Feu saber als vostres amics i a la vostra família que teniu una adreça electrònica nova. <br/> Que per això serveixen els comptes de correu, oi?">
+<!ENTITY successful.customize "Personalitzeu-vos el &brandShortName; amb alguns complements interessants">
+<!ENTITY successful.customize.desc "Hi ha milers de complements que us permetran personalitzar el &brandShortName; per tal que s'ajusti a les vostres necessitats.">
+<!ENTITY successful.attach "Afegeix una firma personal al meu correu">
+<!ENTITY successful.attach.desc "Podeu afegir automàticament un text o la vostra nota personal al final de cada missatge que envieu.">
+<!ENTITY successful.close "Tanca aquesta finestra.">
+<!ENTITY input.namePlaceholder "El vostre nom o pseudònim">
+<!ENTITY input.search "Cerca">
+<!ENTITY search_engine.title "Personalitza el vostre motor de cerca">
+<!ENTITY search_engine.message "El vostre proveïdor de correu us pot servir també amb funcionalitats de cerca.">
+<!ENTITY search_engine.button "Finalitza">

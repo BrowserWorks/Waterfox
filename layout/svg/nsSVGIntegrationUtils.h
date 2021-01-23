@@ -12,6 +12,7 @@
 #include "gfxRect.h"
 #include "nsRegionFwd.h"
 #include "mozilla/gfx/Rect.h"
+#include "mozilla/ServoStyleConsts.h"
 #include "mozilla/webrender/WebRenderTypes.h"
 
 class gfxContext;
@@ -158,7 +159,7 @@ class nsSVGIntegrationUtils final {
     mozilla::layers::LayerManager* layerManager;
     bool handleOpacity;  // If true, PaintMaskAndClipPath/ PaintFilter should
                          // apply css opacity.
-    IntRect maskRect;
+    mozilla::Maybe<mozilla::gfx::Rect> maskRect;
     imgDrawingParams& imgParams;
 
     explicit PaintFramesParams(gfxContext& aCtx, nsIFrame* aFrame,
@@ -189,11 +190,15 @@ class nsSVGIntegrationUtils final {
                                    const std::function<void()>& aPaintChild);
 
   /**
-   * Paint mask of non-SVG frame onto a given context, aParams.ctx.
+   * Paint mask of frame onto a given context, aParams.ctx.
    * aParams.ctx must contain an A8 surface. Returns false if the mask
    * didn't get painted and should be ignored at the call site.
+   * isMaskComplete is an outparameter returning whether the mask is complete.
+   * Incomplete masks should not be drawn and the proper fallback behaviour
+   * depends on if the masked element is html or svg.
    */
-  static bool PaintMask(const PaintFramesParams& aParams);
+  static bool PaintMask(const PaintFramesParams& aParams,
+                        bool& aOutIsMaskComplete);
 
   /**
    * Return true if all the mask resource of aFrame are ready.
@@ -206,12 +211,31 @@ class nsSVGIntegrationUtils final {
   static void PaintFilter(const PaintFramesParams& aParams);
 
   /**
-   * Try to build WebRender filters for a frame if the filters applied to it are
-   * supported.
+   * Build WebRender filters for a frame with CSS filters applied to it.
    */
-  static bool BuildWebRenderFilters(nsIFrame* aFilteredFrame,
-                                    WrFiltersHolder& aWrFilters,
-                                    mozilla::Maybe<nsRect>& aPostFilterClip);
+  static bool CreateWebRenderCSSFilters(
+      mozilla::Span<const mozilla::StyleFilter> aFilters, nsIFrame* aFrame,
+      WrFiltersHolder& aWrFilters);
+
+  /**
+   * Try to build WebRender filters for a frame with SVG filters applied to it
+   * if the filters are supported.
+   */
+  static bool BuildWebRenderFilters(
+      nsIFrame* aFilteredFrame,
+      mozilla::Span<const mozilla::StyleFilter> aFilters,
+      WrFiltersHolder& aWrFilters, mozilla::Maybe<nsRect>& aPostFilterClip);
+
+  /**
+   * Check if the filters present on |aFrame| are supported by WebRender.
+   */
+  static bool CanCreateWebRenderFiltersForFrame(nsIFrame* aFrame);
+
+  /**
+   * Check if |aFrame| uses any SVG effects that cannot be rendered in the
+   * compositor.
+   */
+  static bool UsesSVGEffectsNotSupportedInCompositor(nsIFrame* aFrame);
 
   /**
    * @param aRenderingContext the target rendering context in which the paint

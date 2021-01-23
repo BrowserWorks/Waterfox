@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Vaše pravice">
+<!ENTITY rights.intro "&brandFullName; je prost in odprtokoden program, ki ga je razvila skupnost na tisoče sodelavcev iz celega sveta. Seznaniti vas želimo z nekaterimi podrobnostmi:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; vam je na voljo pod pogoji">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". To pomeni, da lahko &brandShortName; uporabljate, kopirate in ga delite drugim. Spreminjate lahko tudi izvorno kodo programa &brandShortName;, tako da bo ustrezala vašim potrebam. Mozilla Public License vam daje tudi pravico do razširjanja vaših spremenjenih različic.">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; vam ne daje nikakršnih pravic do uporabe blagovnih znamk in logotipov &quot;&brandFullName;&quot;. Dodatne podatke o blagovnih znamkah lahko najdete">
+<!ENTITY rights.intro-point2b "tukaj">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Nekatera orodja brskalnika &brandShortName;, npr. poročevalec o sesutjih, organizaciji &vendorShortName; omogočajo zbiranje povratnih informacij. S soglasjem dajete organizaciji &vendorShortName; dovoljenje, da povratne informacije uporabi za izboljšanje svojih programov, jih objavi na svojih spletnih straneh in jih razpečuje.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "Politiko zasebnosti izdelkov &vendorShortName; lahko najdete">
+<!ENTITY rights.intro-point3b "tukaj">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; nudi tudi dodatne storitve, kot sta na primer storitvi za razširitve ali za varno brskanje. vendar ni mogoče zagotoviti, da so 100&#037; točne ali brez napak. Več podrobnosti o tem, vključno s podatki, kako lahko te storitve onemogočite, lahko najdete v">
+<!ENTITY rights.intro-point4b "pogojih storitve">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "&brandFullName;jeve spletne storitve">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "&vendorShortName; ponuja neobvezne spletne storitve (&quot;Storitve&quot;), ki so na voljo za uporabo s to binarno različico &brandShortName;, kot je spodaj opisano. Nekatere od teh storitev (na primer storitve dodatkov za predloge in posodobitve, storitev varnega brskanja ali funkcija obveščanja o brskanju z lokacijo) so privzeto omogočene. Če ne želite uporabljati nobene od teh storitev, ali pa so spodnji pogoji nesprejemljivi, lahko najdete navodila, kako onemogočiti določeno funkcijo ali storitev,">
+<!ENTITY rights3.webservices-b "tukaj">
+<!ENTITY rights3.webservices-c ". Druge možnosti in storitve lahko omogočite ali onemogočite v nastavitvah aplikacije.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "storitve dodatkov:">
+<!ENTITY rights.addons-b "&brandShortName; bo brez nastavljanja predlagal dodatke na strani &view.discover.label; in bo preverjal prisotnost posodobitev v rednih intervalih. Če želite onemogočiti te funkcije, da bi se izognili sporočanju o nameščenih dodatkih na strežniku, sledite tem korakom:">
+<!ENTITY rights.addons-term1 "Odprite nastavitve programa">
+<!ENTITY rights.addons-term2 "Izberite pano &smart.label; v kategoriji &advance.label;">
+<!ENTITY rights.addons-term3 "Počistite izbiro pred &quot;&autoAddOnsUpdates.label;&quot; in &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "Storitve dodatkov so zdaj onemogočene">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Varno brskanje:">
+<!ENTITY rights.safebrowsing-b "Možnosti Varno brskanje ni priporočljivo onemogočati, ker lahko zaradi tega zaidete na nevarne strani. Če želite možnost v celoti onemogočiti, sledite tem korakom:">
+<!ENTITY rights.safebrowsing-term1 "Odprite nastavitve programa">
+<!ENTITY rights.safebrowsing-term2 "Izberite glavno ploščo &security.label;">
+<!ENTITY rights.safebrowsing-term3 "Počistite možnosti &quot;&blockAttackSites.label;&quot; in &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Varno brskanje je zdaj onemogočeno">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Brskanje, ki se zaveda položaja:">
+<!ENTITY rights.locationawarebrowsing-b "je vedno izbirno. Podatki o položaju se tako nikoli ne pošiljajo brez vašega dovoljenja. Če želite v celoti onemogočiti to možnost, sledite tem korakom:">
+<!ENTITY rights.locationawarebrowsing-term1 "Odprite nastavitve programa">
+<!ENTITY rights.locationawarebrowsing-term2 "Izberite glavno ploščo &security.label;">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term1 "&vendorShortName; lahko prekine ali spremeni svoje storitve, kadarkoli mu ustreza.">

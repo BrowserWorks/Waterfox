@@ -5,9 +5,14 @@
 
 "use strict";
 
-const { EVENTS } = require("../constants");
+const {
+  EVENTS,
+  TEST_EVENTS,
+} = require("devtools/client/netmonitor/src/constants");
 const { CurlUtils } = require("devtools/client/shared/curl");
-const { fetchHeaders } = require("../utils/request-utils");
+const {
+  fetchHeaders,
+} = require("devtools/client/netmonitor/src/utils/request-utils");
 
 /**
  * This object is responsible for fetching additional HTTP
@@ -21,13 +26,13 @@ class FirefoxDataProvider {
   /**
    * Constructor for data provider
    *
-   * @param {Object} webConcoleClient represents the client object for Console actor.
+   * @param {Object} webConsoleFront represents the client object for Console actor.
    * @param {Object} actions set of actions fired during data fetching process
    * @params {Object} owner all events are fired on this object
    */
-  constructor({ webConsoleClient, actions, owner }) {
+  constructor({ webConsoleFront, actions, owner }) {
     // Options
-    this.webConsoleClient = webConsoleClient;
+    this.webConsoleFront = webConsoleFront;
     this.actions = actions || {};
     this.actionsEnabled = true;
     this.owner = owner;
@@ -45,6 +50,19 @@ class FirefoxDataProvider {
     // Event handlers
     this.onNetworkEvent = this.onNetworkEvent.bind(this);
     this.onNetworkEventUpdate = this.onNetworkEventUpdate.bind(this);
+
+    this.onWebSocketOpened = this.onWebSocketOpened.bind(this);
+    this.onWebSocketClosed = this.onWebSocketClosed.bind(this);
+    this.onFrameSent = this.onFrameSent.bind(this);
+    this.onFrameReceived = this.onFrameReceived.bind(this);
+
+    this.onEventSourceConnectionOpened = this.onEventSourceConnectionOpened.bind(
+      this
+    );
+    this.onEventSourceConnectionClosed = this.onEventSourceConnectionClosed.bind(
+      this
+    );
+    this.onEventReceived = this.onEventReceived.bind(this);
   }
 
   /**
@@ -74,6 +92,8 @@ class FirefoxDataProvider {
       isThirdPartyTrackingResource,
       referrerPolicy,
       blockedReason,
+      blockingExtension,
+      channelId,
     } = data;
 
     // Insert blocked reason in the payload queue as well, as we'll need it later
@@ -87,7 +107,7 @@ class FirefoxDataProvider {
         id,
         {
           // Convert the received date/time string to a unix timestamp.
-          startedMillis: Date.parse(startedDateTime),
+          startedMs: Date.parse(startedDateTime),
           method,
           url,
           isXHR,
@@ -103,6 +123,8 @@ class FirefoxDataProvider {
           isThirdPartyTrackingResource,
           referrerPolicy,
           blockedReason,
+          blockingExtension,
+          channelId,
         },
         true
       );
@@ -168,7 +190,7 @@ class FirefoxDataProvider {
 
   async fetchResponseContent(responseContent) {
     const payload = {};
-    if (responseContent && responseContent.content) {
+    if (responseContent?.content) {
       const { text } = responseContent.content;
       const response = await this.getLongString(text);
       responseContent.content.text = response;
@@ -179,11 +201,7 @@ class FirefoxDataProvider {
 
   async fetchRequestHeaders(requestHeaders) {
     const payload = {};
-    if (
-      requestHeaders &&
-      requestHeaders.headers &&
-      requestHeaders.headers.length
-    ) {
+    if (requestHeaders?.headers?.length) {
       const headers = await fetchHeaders(requestHeaders, this.getLongString);
       if (headers) {
         payload.requestHeaders = headers;
@@ -194,11 +212,7 @@ class FirefoxDataProvider {
 
   async fetchResponseHeaders(responseHeaders) {
     const payload = {};
-    if (
-      responseHeaders &&
-      responseHeaders.headers &&
-      responseHeaders.headers.length
-    ) {
+    if (responseHeaders?.headers?.length) {
       const headers = await fetchHeaders(responseHeaders, this.getLongString);
       if (headers) {
         payload.responseHeaders = headers;
@@ -209,7 +223,7 @@ class FirefoxDataProvider {
 
   async fetchPostData(requestPostData) {
     const payload = {};
-    if (requestPostData && requestPostData.postData) {
+    if (requestPostData?.postData) {
       const { text } = requestPostData.postData;
       const postData = await this.getLongString(text);
       const headers = CurlUtils.getHeadersFromMultipartText(postData);
@@ -319,7 +333,7 @@ class FirefoxDataProvider {
    * @return {object} networkInfo data packet
    */
   getNetworkRequest(id) {
-    return this.webConsoleClient.getNetworkRequest(id);
+    return this.webConsoleFront.getNetworkRequest(id);
   }
 
   /**
@@ -334,7 +348,10 @@ class FirefoxDataProvider {
    *         are available, or rejected if something goes wrong.
    */
   getLongString(stringGrip) {
-    return this.webConsoleClient.getString(stringGrip);
+    return this.webConsoleFront.getString(stringGrip).then(payload => {
+      this.emitForTests(TEST_EVENTS.LONGSTRING_RESOLVED, { payload });
+      return payload;
+    });
   }
 
   /**
@@ -354,6 +371,8 @@ class FirefoxDataProvider {
       isThirdPartyTrackingResource,
       referrerPolicy,
       blockedReason,
+      blockingExtension,
+      channelId,
     } = networkInfo;
 
     await this.addRequest(actor, {
@@ -367,9 +386,11 @@ class FirefoxDataProvider {
       isThirdPartyTrackingResource,
       referrerPolicy,
       blockedReason,
+      blockingExtension,
+      channelId,
     });
 
-    this.emit(EVENTS.NETWORK_EVENT, actor);
+    this.emitForTests(TEST_EVENTS.NETWORK_EVENT, actor);
   }
 
   /**
@@ -399,13 +420,15 @@ class FirefoxDataProvider {
           statusText: networkInfo.response.statusText,
           headersSize: networkInfo.response.headersSize,
         });
-        this.emit(EVENTS.STARTED_RECEIVING_RESPONSE, actor);
+        this.emitForTests(TEST_EVENTS.STARTED_RECEIVING_RESPONSE, actor);
         break;
       case "responseContent":
         this.pushRequestToQueue(actor, {
           contentSize: networkInfo.response.bodySize,
           transferredSize: networkInfo.response.transferredSize,
           mimeType: networkInfo.response.content.mimeType,
+          blockingExtension: packet.blockingExtension,
+          blockedReason: packet.blockedReason,
         });
         break;
       case "eventTimings":
@@ -425,7 +448,64 @@ class FirefoxDataProvider {
 
     this.onPayloadDataReceived(actor);
 
-    this.emit(EVENTS.NETWORK_EVENT_UPDATED, actor);
+    this.emitForTests(TEST_EVENTS.NETWORK_EVENT_UPDATED, actor);
+  }
+
+  /**
+   * The "webSocketOpened" message type handler.
+   *
+   * @param {number} httpChannelId the channel ID
+   * @param {string} effectiveURI the effective URI of the page
+   * @param {string} protocols webSocket protocols
+   * @param {string} extensions
+   */
+  async onWebSocketOpened(httpChannelId, effectiveURI, protocols, extensions) {}
+
+  /**
+   * The "webSocketClosed" message type handler.
+   *
+   * @param {number} httpChannelId
+   * @param {boolean} wasClean
+   * @param {number} code
+   * @param {string} reason
+   */
+  async onWebSocketClosed(httpChannelId, wasClean, code, reason) {
+    if (this.actionsEnabled && this.actions.closeConnection) {
+      await this.actions.closeConnection(httpChannelId, wasClean, code, reason);
+    }
+  }
+
+  /**
+   * The "frameSent" message type handler.
+   *
+   * @param {number} httpChannelId the channel ID
+   * @param {object} data websocket frame information
+   */
+  async onFrameSent(httpChannelId, data) {
+    this.addFrame(httpChannelId, data);
+  }
+
+  /**
+   * The "frameReceived" message type handler.
+   *
+   * @param {number} httpChannelId the channel ID
+   * @param {object} data websocket frame information
+   */
+  async onFrameReceived(httpChannelId, data) {
+    this.addFrame(httpChannelId, data);
+  }
+
+  /**
+   * Add a new WebSocket frame to application state.
+   *
+   * @param {number} httpChannelId the channel ID
+   * @param {object} data websocket frame information
+   */
+  async addFrame(httpChannelId, data) {
+    if (this.actionsEnabled && this.actions.addFrame) {
+      await this.actions.addFrame(httpChannelId, data, true);
+    }
+    // TODO: Emit an event for test here
   }
 
   /**
@@ -459,6 +539,8 @@ class FirefoxDataProvider {
 
     // This event is fired only once per request, once all the properties are fetched
     // from `onNetworkEventUpdate`. There should be no more RDP requests after this.
+    // Note that this event might be consumed by extension so, emit it in production
+    // release as well.
     this.emit(EVENTS.PAYLOAD_READY, actor);
   }
 
@@ -539,22 +621,20 @@ class FirefoxDataProvider {
       .toUpperCase()}`;
 
     // Emit event that tell we just start fetching some data
-    this.emit(EVENTS[updatingEventName], actor);
+    this.emitForTests(EVENTS[updatingEventName], actor);
 
     let response = await new Promise((resolve, reject) => {
       // Do a RDP request to fetch data from the actor.
-      if (typeof this.webConsoleClient[clientMethodName] === "function") {
+      if (typeof this.webConsoleFront[clientMethodName] === "function") {
         // Make sure we fetch the real actor data instead of cloned actor
         // e.g. CustomRequestPanel will clone a request with additional '-clone' actor id
-        this.webConsoleClient[clientMethodName](
+        this.webConsoleFront[clientMethodName](
           actor.replace("-clone", ""),
           res => {
             if (res.error) {
               reject(
                 new Error(
-                  `Error while calling method ${clientMethodName}: ${
-                    res.message
-                  }`
+                  `Error while calling method ${clientMethodName}: ${res.message}`
                 )
               );
             }
@@ -587,7 +667,7 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       requestHeaders: response,
     });
-    this.emit(EVENTS.RECEIVED_REQUEST_HEADERS, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_REQUEST_HEADERS, response.from);
     return payload.requestHeaders;
   }
 
@@ -600,7 +680,7 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       responseHeaders: response,
     });
-    this.emit(EVENTS.RECEIVED_RESPONSE_HEADERS, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_RESPONSE_HEADERS, response.from);
     return payload.responseHeaders;
   }
 
@@ -613,7 +693,7 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       requestCookies: response,
     });
-    this.emit(EVENTS.RECEIVED_REQUEST_COOKIES, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_REQUEST_COOKIES, response.from);
     return payload.requestCookies;
   }
 
@@ -626,7 +706,7 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       requestPostData: response,
     });
-    this.emit(EVENTS.RECEIVED_REQUEST_POST_DATA, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_REQUEST_POST_DATA, response.from);
     return payload.requestPostData;
   }
 
@@ -639,7 +719,7 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       securityInfo: response.securityInfo,
     });
-    this.emit(EVENTS.RECEIVED_SECURITY_INFO, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_SECURITY_INFO, response.from);
     return payload.securityInfo;
   }
 
@@ -652,7 +732,7 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       responseCookies: response,
     });
-    this.emit(EVENTS.RECEIVED_RESPONSE_COOKIES, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_RESPONSE_COOKIES, response.from);
     return payload.responseCookies;
   }
 
@@ -664,7 +744,7 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       responseCache: response,
     });
-    this.emit(EVENTS.RECEIVED_RESPONSE_CACHE, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_RESPONSE_CACHE, response.from);
     return payload.responseCache;
   }
 
@@ -681,7 +761,7 @@ class FirefoxDataProvider {
       mimeType: response.content.mimeType,
       responseContent: response,
     });
-    this.emit(EVENTS.RECEIVED_RESPONSE_CONTENT, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_RESPONSE_CONTENT, response.from);
     return payload.responseContent;
   }
 
@@ -694,6 +774,11 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       eventTimings: response,
     });
+
+    // This event is utilized only in tests but, DAMP is using it too
+    // and running DAMP test doesn't set the `devtools.testing` flag.
+    // So, emit this event even in the production mode.
+    // See also: https://bugzilla.mozilla.org/show_bug.cgi?id=1578215
     this.emit(EVENTS.RECEIVED_EVENT_TIMINGS, response.from);
     return payload.eventTimings;
   }
@@ -707,8 +792,32 @@ class FirefoxDataProvider {
     const payload = await this.updateRequest(response.from, {
       stacktrace: response.stacktrace,
     });
-    this.emit(EVENTS.RECEIVED_EVENT_STACKTRACE, response.from);
+    this.emitForTests(TEST_EVENTS.RECEIVED_EVENT_STACKTRACE, response.from);
     return payload.stacktrace;
+  }
+
+  /**
+   * Handle EventSource events.
+   */
+  async onEventSourceConnectionOpened(httpChannelId) {
+    // By default, an EventSource connection doesn't immediately get its mimeType, or
+    // any info which could help us identify a connection is an SSE channel.
+    // We can update the request's mimeType through this event.
+    if (this.actionsEnabled && this.actions.updateMimeType) {
+      // TODO: Implement action updateMimeType.
+      await this.actions.updateMimeType(
+        httpChannelId,
+        "text/event-stream",
+        true
+      );
+    }
+  }
+
+  async onEventSourceConnectionClosed(httpChannelId) {}
+
+  async onEventReceived(httpChannelId, data) {
+    // Dispatch the same action used by websocket inspector.
+    this.addFrame(httpChannelId, data);
   }
 
   /**
@@ -717,6 +826,16 @@ class FirefoxDataProvider {
   emit(type, data) {
     if (this.owner) {
       this.owner.emit(type, data);
+    }
+  }
+
+  /**
+   * Fire test events for the owner object. These events are
+   * emitted only when tests are running.
+   */
+  emitForTests(type, data) {
+    if (this.owner) {
+      this.owner.emitForTests(type, data);
     }
   }
 }

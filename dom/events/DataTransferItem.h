@@ -67,6 +67,7 @@ class DataTransferItem final : public nsISupports, public nsWrapperCache {
   }
 
   void GetInternalType(nsAString& aType) const { aType = mType; }
+  bool IsInternalType(const nsAString& aType) const { return aType == mType; }
 
   void GetType(nsAString& aType);
 
@@ -102,8 +103,10 @@ class DataTransferItem final : public nsISupports, public nsWrapperCache {
   static eKind KindFromData(nsIVariant* aData);
 
  private:
-  ~DataTransferItem() {}
+  ~DataTransferItem() = default;
   already_AddRefed<File> CreateFileFromInputStream(nsIInputStream* aStream);
+
+  already_AddRefed<nsIGlobalObject> GetGlobalFromDataTransfer();
 
   // The index in the 2d mIndexedItems array
   uint32_t mIndex;

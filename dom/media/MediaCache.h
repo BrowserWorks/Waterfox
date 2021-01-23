@@ -11,6 +11,7 @@
 #include "Intervals.h"
 #include "mozilla/Result.h"
 #include "mozilla/UniquePtr.h"
+#include "mozilla/dom/MediaDebugInfoBinding.h"
 #include "nsCOMPtr.h"
 #include "nsHashKeys.h"
 #include "nsTArray.h"
@@ -216,12 +217,12 @@ class MediaCacheStream : public DecoderDoctorLifeLogger<MediaCacheStream> {
   // on this class.
   void InitAsClone(MediaCacheStream* aOriginal);
 
-  nsIEventTarget* OwnerThread() const;
+  nsISerialEventTarget* OwnerThread() const;
 
   // These are called on the main thread.
-  // This must be called (and return) before the ChannelMediaResource
+  // This must be called (and resolve) before the ChannelMediaResource
   // used to create this MediaCacheStream is deleted.
-  void Close();
+  RefPtr<GenericPromise> Close();
   // This returns true when the stream has been closed.
   bool IsClosed(AutoLock&) const { return mClosed; }
   // Returns true when this stream is can be shared by a new resource load.
@@ -359,7 +360,7 @@ class MediaCacheStream : public DecoderDoctorLifeLogger<MediaCacheStream> {
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const;
 
-  nsCString GetDebugInfo();
+  void GetDebugInfo(dom::MediaCacheStreamDebugInfo& aInfo);
 
  private:
   friend class MediaCache;

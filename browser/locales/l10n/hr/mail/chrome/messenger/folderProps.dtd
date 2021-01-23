@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Postavke">
+
+<!ENTITY generalInfo.label                       "Opće informacije">
+<!ENTITY folderCharsetFallback2.label            "Rezervna kôdna stranica:">
+<!ENTITY folderCharsetFallback2.accesskey        "e">
+<!ENTITY folderCharsetEnforce2.label             "Primjeni kôdnu stranicu na sve poruke u mapi (postavke kôdne stranice pojedinih poruka i automatsko otkrivanje će biti zanemareno)">
+<!ENTITY folderCharsetEnforce2.accesskey         "a">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Ponovno izgradi skupnu indeks datoteku">
+<!ENTITY folderRebuildSummaryFile2.label         "Popravi mapu">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "r">
+<!ENTITY folderRebuildSummaryFile.explanation    "Ponekad se (.msf) datoteka koja je indeks mape ošteti i poruke izgledaju nedostupne ili se izbrisane poruke i dalje pojavljuju; popravak mape može riješiti ove probleme.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Uvrsti poruke iz ove mape u globalne rezultate pretraživanja">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Politika čuvanja">
+<!ENTITY retentionUseAccount.label  "Koristi moje postavke računa">
+<!ENTITY retentionUseAccount.accesskey "u">
+<!ENTITY daysOld.label "dana">
+<!ENTITY message.label "najnovijih poruka">
+<!ENTITY retentionCleanup.label "Kako biste oslobodili diskovni prostor, stare poruke mogu biti trajno izbrisane.">
+<!ENTITY retentionCleanupImap.label "Kako biste oslobodili diskovni prostor, stare poruke mogu biti trajno izbrisane (lokalne kopije i izvorne poruke na poslužitelju).">
+<!ENTITY retentionCleanupPop.label "Kako biste oslobodili diskovni prostor, stare poruke mogu biti trajno izbrisane, uključujući i izvorne poruke na udaljenom poslužitelju.">
+<!ENTITY retentionDeleteMsg.label "Obriši poruke starije od">
+<!ENTITY retentionDeleteMsg.accesskey "b">
+<!ENTITY retentionKeepAll.label "Ne briši nikakve poruke">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Obriši sve osim">
+<!ENTITY retentionKeepRecent.accesskey "i">
+<!ENTITY retentionApplyToFlagged.label "Uvijek zadrži poruke označene zvjezdicom">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sinkronizacija">
+<!ENTITY folderCheckForNewMessages2.label         "Prilikom primanja novih poruka za ovaj račun, uvijek provjeri ovu mapu">
+<!ENTITY folderCheckForNewMessages2.accesskey     "m">
+
+<!ENTITY offlineFolder.check.label               "Odaberi ovu mapu za izvanmrežno korištenje">
+<!ENTITY offlineFolder.check.accesskey           "v">
+<!ENTITY offlineFolder.button.label              "Preuzmi sada">
+<!ENTITY offlineFolder.button.accesskey          "z">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Odaberi ovu interesnu grupu za izvanmrežno korištenje">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "O">
+<!ENTITY offlineNewsgroup.button.label           "Preuzmi sada">
+<!ENTITY offlineNewsgroup.button.accesskey       "z">
+
+<!ENTITY folderProps.name.label                  "Naziv:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Boja ikone:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Vrati standardnu boju">
+<!ENTITY folderProps.location.label              "Lokacija:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Dijeljenje">
+<!ENTITY privileges.button.label                 "Povlastice…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Imate sljedeće dozvole:">
+<!ENTITY folderOtherUsers.label                  "Ostali s pristupom na ovu mapu:">
+<!ENTITY folderType.label                        "Vrsta mape:">
+
+<!ENTITY folderQuotaTab.label                    "Kvota">
+<!ENTITY folderQuotaUsage.label                  "Upotreba:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Broj poruka:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "nepoznato">
+<!ENTITY sizeOnDisk.label                        "Zauzeće:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "nepoznato">

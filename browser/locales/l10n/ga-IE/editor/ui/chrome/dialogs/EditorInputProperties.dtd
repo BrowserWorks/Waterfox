@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Airíonna Réimse Foirme">
+<!ENTITY windowTitleImage.label "Airíonna Íomhá Foirme">
+
+<!ENTITY InputType.label "Cineál an Réimse">
+<!ENTITY InputType.accesskey "C">
+<!ENTITY text.value "Téacs">
+<!ENTITY password.value "Focal Faire">
+<!ENTITY checkbox.value "Ticbhosca">
+<!ENTITY radio.value "Cnaipe Raidió">
+<!ENTITY submit.value "Cnaipe Seolta">
+<!ENTITY reset.value "Cnaipe Athshocraithe">
+<!ENTITY file.value "Comhad">
+<!ENTITY hidden.value "I bhFolach">
+<!ENTITY image.value "Íomhá">
+<!ENTITY button.value "Cnaipe">
+
+<!ENTITY InputSettings.label "Socruithe Réimse">
+<!ENTITY InputName.label "Ainm Réimse:">
+<!ENTITY InputName.accesskey "R">
+<!ENTITY GroupName.label "Ainm Grúpa:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label "Luach Réimse:">
+<!ENTITY InputValue.accesskey "L">
+<!ENTITY InitialValue.label "Luach Tosaigh:">
+<!ENTITY InitialValue.accesskey "T">
+<!ENTITY InputChecked.label "Roghnaithe ar dTús">
+<!ENTITY InputChecked.accesskey "o">
+<!ENTITY InputSelected.label "Roghnaithe ar dTús">
+<!ENTITY InputSelected.accesskey "s">
+<!ENTITY InputReadOnly.label "Léamh Amháin">
+<!ENTITY InputReadOnly.accesskey "L">
+<!ENTITY InputDisabled.label "Díchumasaithe">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Innéacs Cluaisín:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Méid Réimse:">
+<!ENTITY TextSize.accesskey "R">
+<!ENTITY TextLength.label "Uasfhad:">
+<!ENTITY TextLength.accesskey "f">
+<!ENTITY AccessKey.label "Eochair Rochtana:">
+<!ENTITY AccessKey.accesskey "c">
+<!ENTITY Accept.label "Glac le Cineálacha:">
+<!ENTITY Accept.accesskey "a">
+
+<!ENTITY ImageProperties.label "Airíonna Íomhá…">
+<!ENTITY ImageProperties.accesskey "m">

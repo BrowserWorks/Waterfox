@@ -28,7 +28,6 @@ function observe() {
 
 function Test(test) {
   var p = test.prefs ? SetPrefs(test.prefs) : Promise.resolve();
-  observedStatus = "nothing";
   var name = "'" + test.keySystem + "'";
 
   var res = observe().then((status) => {
@@ -60,7 +59,7 @@ var tests = [
   {
     keySystem: "com.widevine.alpha",
     expectedStatus: 'cdm-not-installed',
-    prefs: [["media.eme.enabled", true], , ["media.gmp-widevinecdm.enabled", true]]
+    prefs: [["media.eme.enabled", true], ["media.gmp-widevinecdm.enabled", true]]
   },
   {
     keySystem: CLEARKEY_KEYSYSTEM,

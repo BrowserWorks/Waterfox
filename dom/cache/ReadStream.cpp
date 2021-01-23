@@ -136,7 +136,7 @@ class ReadStream::Inner::NoteClosedRunnable final : public CancelableRunnable {
   }
 
  private:
-  ~NoteClosedRunnable() {}
+  ~NoteClosedRunnable() = default;
 
   RefPtr<ReadStream::Inner> mStream;
 };
@@ -168,7 +168,7 @@ class ReadStream::Inner::ForgetRunnable final : public CancelableRunnable {
   }
 
  private:
-  ~ForgetRunnable() {}
+  ~ForgetRunnable() = default;
 
   RefPtr<ReadStream::Inner> mStream;
 };
@@ -208,7 +208,8 @@ void ReadStream::Inner::Serialize(
   MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut);
 
   if (mState != Open) {
-    aRv.ThrowTypeError<MSG_CACHE_STREAM_CLOSED>();
+    aRv.ThrowTypeError(
+        "Response body is a cache file stream that has already been closed.");
     return;
   }
 

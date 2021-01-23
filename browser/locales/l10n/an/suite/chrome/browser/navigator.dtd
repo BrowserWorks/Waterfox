@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/navigator.xul -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+
+
+
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Private Browsing">
+
+<!ENTITY editPageCmd.label "Editar pachina">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "y">
+
+<!ENTITY navbarCmd.label "Barra d'herramientas de navegación">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label     "Bookmarks Toolbar">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+
+<!ENTITY closeWindow.label "Zarrar finestra">
+<!ENTITY closeWindow.accesskey "Z">
+
+<!ENTITY minimizeButton.tooltip       "Minimizar">
+<!ENTITY restoreButton.tooltip        "Restaurar">
+
+<!ENTITY feedsMenu.label "Suscribirse a ista pachina">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip                  "Barra de menú">
+<!ENTITY bookmarksToolbar.tooltip         "Bookmarks Toolbar">
+<!ENTITY navigationToolbar.tooltip        "Barra de ferramientas de navegación">
+<!-- Toolbar items --> 
+
+<!ENTITY backButton.label             "Anterior">
+<!ENTITY backButton.tooltip           "Ir a la pachina anterior">
+<!ENTITY forwardButton.label          "Siguient">
+<!ENTITY forwardButton.tooltip        "Ir a la pachina siguient">
+<!ENTITY reloadButton.label           "Recargar">
+<!ENTITY reloadButton.tooltip         "Recargar ista pachina">
+<!ENTITY stopButton.label             "Aturar">
+<!ENTITY stopButton.tooltip           "Aturar la carga d'ista pachina">
+<!ENTITY searchButton.label           "Buscar">
+<!ENTITY searchButton.tooltip         "Escriba una parola en o campo de texto d'a cucha, y prete Buscar">
+<!ENTITY goButton.label               "Ir">
+<!ENTITY goButton.tooltip             "Escriba una adreza en o campo d'a cucha, y prete Ir">
+<!ENTITY printButton.label            "Imprentar">
+<!ENTITY printButton.tooltip          "Imprentar ista pachina">
+
+<!ENTITY throbber.tooltip             "Ir a la pachina prencipal de &vendorShortName;">
+
+<!ENTITY locationBar.tooltip          "Introduzca o termin, parola clave u pachina web que deseya buscar">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "Adreza">
+<!ENTITY proxyIcon.tooltip            "Arrociegue y suelte iste icono ta creyar un vinclo ta ista pachina">
+
+<!ENTITY searchItem.title             "Buscar">
+
+<!ENTITY bookmarksButton.label        "Marcadors">
+<!ENTITY bookmarksButton.tooltip      "Lista de marcadors">
+<!ENTITY homeButton.label             "Encieto">
+<!ENTITY bookmarksToolbarItem.label   "Elementos d'a barra de ferramientas de marcadors">
+<!ENTITY bookmarksToolbarChevron.tooltip "Amostrar mas marcadors">
+<!-- Statusbar -->
+
+<!ENTITY  statusText.label            "Feito">
+
+<!ENTITY popupIcon.tooltiptext      "Desbloquiar as finestras emerchents d'iste puesto web">
+
+<!ENTITY viewSecurityInfo.label      "View Security Info">
+<!ENTITY viewSecurityInfo.accesskey  "S">
+<!ENTITY viewCertificate.label       "View Certificate">
+<!ENTITY viewCertificate.accesskey   "C">
+<!ENTITY viewCertManager.label       "Open Certificate Manager">
+<!ENTITY viewCertManager.accesskey   "M">

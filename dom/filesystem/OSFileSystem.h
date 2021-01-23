@@ -16,7 +16,7 @@ class OSFileSystem final : public FileSystemBase {
  public:
   explicit OSFileSystem(const nsAString& aRootDir);
 
-  void Init(nsISupports* aParent);
+  void Init(nsIGlobalObject* aGlobal);
 
   // Overrides FileSystemBase
 
@@ -29,7 +29,7 @@ class OSFileSystem final : public FileSystemBase {
     return false;
   }
 
-  virtual nsISupports* GetParentObject() const override;
+  virtual nsIGlobalObject* GetParentObject() const override;
 
   virtual bool IsSafeFile(nsIFile* aFile) const override;
 
@@ -42,9 +42,9 @@ class OSFileSystem final : public FileSystemBase {
   virtual void Traverse(nsCycleCollectionTraversalCallback& cb) override;
 
  private:
-  virtual ~OSFileSystem() {}
+  virtual ~OSFileSystem() = default;
 
-  nsCOMPtr<nsISupports> mParent;
+  nsCOMPtr<nsIGlobalObject> mGlobal;
 };
 
 class OSFileSystemParent final : public FileSystemBase {
@@ -60,7 +60,7 @@ class OSFileSystemParent final : public FileSystemBase {
 
   virtual bool ShouldCreateDirectory() override { return false; }
 
-  virtual nsISupports* GetParentObject() const override {
+  virtual nsIGlobalObject* GetParentObject() const override {
     MOZ_CRASH("This should not be called on the PBackground thread.");
     return nullptr;
   }
@@ -91,7 +91,7 @@ class OSFileSystemParent final : public FileSystemBase {
   }
 
  private:
-  virtual ~OSFileSystemParent() {}
+  virtual ~OSFileSystemParent() = default;
 };
 
 }  // namespace dom

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Senarai Mel Baru">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Tambah ke: ">
+<!ENTITY addToAddressBook.accesskey     "T">
+<!ENTITY ListName.label                 "Senarai Nama: ">
+<!ENTITY ListName.accesskey             "S">
+<!ENTITY ListNickName.label             "Senarai Nama gelaran: ">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "Keterangan: ">
+<!ENTITY ListDescription.accesskey      "K">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Taip alamat e-mel untuk ditambah dalam senarai mel:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Pindah Atas">
+<!ENTITY DownButton.label               "Pindah Bawah">
+

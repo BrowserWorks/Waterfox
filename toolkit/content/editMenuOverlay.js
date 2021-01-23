@@ -11,7 +11,7 @@ function goUpdateGlobalEditMenuItems(force) {
   // cut, copy, and paste buttons been added to the toolbars) for performance.
   // This only works in applications/on platforms that set the gEditUIVisible
   // flag, so we check to see if that flag is defined before using it.
-  if (!force && (typeof gEditUIVisible != "undefined" && !gEditUIVisible)) {
+  if (!force && typeof gEditUIVisible != "undefined" && !gEditUIVisible) {
     return;
   }
 
@@ -40,28 +40,54 @@ function goUpdatePasteMenuItems() {
 window.addEventListener(
   "DOMContentLoaded",
   () => {
+    // Bug 371900: Remove useless oncommand attribute once bug 371900 is fixed
+    // If you remove/update the oncommand attribute for any of the cmd_*, please
+    // also remove/update the sha512 hash in the CSP within about:downloads
     let container =
       document.querySelector("commandset") || document.documentElement;
-    container.appendChild(
-      MozXULElement.parseXULToFragment(`
-    <commandset id="editMenuCommands">
-      <commandset id="editMenuCommandSetAll" commandupdater="true" events="focus,select"
-                  oncommandupdate="goUpdateGlobalEditMenuItems()"/>
-      <commandset id="editMenuCommandSetUndo" commandupdater="true" events="undo"
-                  oncommandupdate="goUpdateUndoEditMenuItems()"/>
-      <commandset id="editMenuCommandSetPaste" commandupdater="true" events="clipboard"
-                  oncommandupdate="goUpdatePasteMenuItems()"/>
-      <command id="cmd_undo" oncommand="goDoCommand('cmd_undo')"/>
-      <command id="cmd_redo" oncommand="goDoCommand('cmd_redo')"/>
-      <command id="cmd_cut" oncommand="goDoCommand('cmd_cut')"/>
-      <command id="cmd_copy" oncommand="goDoCommand('cmd_copy')"/>
-      <command id="cmd_paste" oncommand="goDoCommand('cmd_paste')"/>
-      <command id="cmd_delete" oncommand="goDoCommand('cmd_delete')"/>
-      <command id="cmd_selectAll" oncommand="goDoCommand('cmd_selectAll')"/>
-      <command id="cmd_switchTextDirection" oncommand="goDoCommand('cmd_switchTextDirection');"/>
-    </commandset>
-  `)
+    let fragment = MozXULElement.parseXULToFragment(`
+      <commandset id="editMenuCommands">
+        <commandset id="editMenuCommandSetAll" commandupdater="true" events="focus,select" />
+        <commandset id="editMenuCommandSetUndo" commandupdater="true" events="undo" />
+        <commandset id="editMenuCommandSetPaste" commandupdater="true" events="clipboard" />
+        <command id="cmd_undo" oncommand=";" />
+        <command id="cmd_redo" oncommand=";" />
+        <command id="cmd_cut" oncommand=";" />
+        <command id="cmd_copy" oncommand=";" />
+        <command id="cmd_paste" oncommand=";" />
+        <command id="cmd_delete" oncommand=";" />
+        <command id="cmd_selectAll" oncommand=";" />
+        <command id="cmd_switchTextDirection" oncommand=";" />
+      </commandset>
+    `);
+
+    let editMenuCommandSetAll = fragment.querySelector(
+      "#editMenuCommandSetAll"
     );
+    editMenuCommandSetAll.addEventListener("commandupdate", function() {
+      goUpdateGlobalEditMenuItems();
+    });
+
+    let editMenuCommandSetUndo = fragment.querySelector(
+      "#editMenuCommandSetUndo"
+    );
+    editMenuCommandSetUndo.addEventListener("commandupdate", function() {
+      goUpdateUndoEditMenuItems();
+    });
+
+    let editMenuCommandSetPaste = fragment.querySelector(
+      "#editMenuCommandSetPaste"
+    );
+    editMenuCommandSetPaste.addEventListener("commandupdate", function() {
+      goUpdatePasteMenuItems();
+    });
+
+    fragment.firstElementChild.addEventListener("command", event => {
+      let commandID = event.target.id;
+      goDoCommand(commandID);
+    });
+
+    container.appendChild(fragment);
   },
   { once: true }
 );
@@ -69,14 +95,13 @@ window.addEventListener(
 // Support context menus on html textareas in the parent process:
 window.addEventListener("contextmenu", e => {
   const HTML_NS = "http://www.w3.org/1999/xhtml";
-  // Note that there's not a risk of e.target being XBL anonymous content for <textbox> (which manages
-  // its own context menu), because e.target will be the XBL binding parent in that case.
   let needsContextMenu =
-    e.target.ownerDocument == document &&
+    e.composedTarget.ownerDocument == document &&
     !e.defaultPrevented &&
-    ((["textarea", "input"].includes(e.target.localName) &&
-      e.target.namespaceURI == HTML_NS) ||
-      e.target.closest("textbox[is='search-textbox']"));
+    e.composedTarget.parentNode.nodeName != "moz-input-box" &&
+    ((["textarea", "input"].includes(e.composedTarget.localName) &&
+      e.composedTarget.namespaceURI == HTML_NS) ||
+      e.composedTarget.closest("search-textbox"));
 
   if (!needsContextMenu) {
     return;
@@ -84,18 +109,18 @@ window.addEventListener("contextmenu", e => {
 
   let popup = document.getElementById("textbox-contextmenu");
   if (!popup) {
-    MozXULElement.insertFTLIfNeeded("toolkit/main-window/editmenu.ftl");
+    MozXULElement.insertFTLIfNeeded("toolkit/global/textActions.ftl");
     document.documentElement.appendChild(
       MozXULElement.parseXULToFragment(`
       <menupopup id="textbox-contextmenu" class="textbox-contextmenu">
-        <menuitem data-l10n-id="editmenu-undo" command="cmd_undo"></menuitem>
+        <menuitem data-l10n-id="text-action-undo" command="cmd_undo"></menuitem>
         <menuseparator></menuseparator>
-        <menuitem data-l10n-id="editmenu-cut" command="cmd_cut"></menuitem>
-        <menuitem data-l10n-id="editmenu-copy" command="cmd_copy"></menuitem>
-        <menuitem data-l10n-id="editmenu-paste" command="cmd_paste"></menuitem>
-        <menuitem data-l10n-id="editmenu-delete" command="cmd_delete"></menuitem>
+        <menuitem data-l10n-id="text-action-cut" command="cmd_cut"></menuitem>
+        <menuitem data-l10n-id="text-action-copy" command="cmd_copy"></menuitem>
+        <menuitem data-l10n-id="text-action-paste" command="cmd_paste"></menuitem>
+        <menuitem data-l10n-id="text-action-delete" command="cmd_delete"></menuitem>
         <menuseparator></menuseparator>
-        <menuitem data-l10n-id="editmenu-select-all" command="cmd_selectAll"></menuitem>
+        <menuitem data-l10n-id="text-action-select-all" command="cmd_selectAll"></menuitem>
       </menupopup>
     `)
     );

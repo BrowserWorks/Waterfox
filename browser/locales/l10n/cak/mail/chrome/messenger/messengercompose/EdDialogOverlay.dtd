@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Q'axinäq Nuk'uj…">
+<!ENTITY AdvancedEditButton.accessKey "N">
+<!ENTITY AdvancedEditButton.tooltip "Ketz'aqatisäx o kejalwachïx HTML taq b'anikil, che't taq b'anikil chuqa' JavaScript">
+<!ENTITY chooseFileButton.label "Ticha' Yakb'äl...">
+<!ENTITY chooseFileButton.accessKey "Y">
+<!ENTITY chooseFileLinkButton.label "Ticha' Yakb'äl...">
+<!ENTITY chooseFileLinkButton.accessKey "c">
+<!ENTITY makeUrlRelative.label "URL ruximon ri' rik'in ri ruk'ojlib'al ruxaq">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Tijal chi kikojol ri junem chuqa' ri majalatel URL. Richin najäl, nab'ey tayaka' ri ruxaq.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Titz'ib'äx rochochib'al jun ruxaq ajk'amaya'l, jun aj wawe' yakb'äl, o ticha' jun ximonel rik'in ri rub'i' o rujub'i'aj pa ri ruk'ojlib'al ruk'utsamaj rokem:">
+<!ENTITY LinkURLEditField2.accessKey "a">

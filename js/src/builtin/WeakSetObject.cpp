@@ -34,7 +34,7 @@ using namespace js;
 
   // Step 4.
   if (!args.get(0).isObject()) {
-    ReportNotObjectWithName(cx, "WeakSet value", args.get(0));
+    ReportNotObject(cx, JSMSG_OBJECT_REQUIRED_WEAKSET_VAL, args.get(0));
     return false;
   }
 
@@ -71,10 +71,10 @@ bool WeakSetObject::add(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   // Steps 5-6.
-  if (ObjectValueMap* map =
+  if (ObjectValueWeakMap* map =
           args.thisv().toObject().as<WeakSetObject>().getMap()) {
     JSObject* value = &args[0].toObject();
-    if (ObjectValueMap::Ptr ptr = map->lookup(value)) {
+    if (ObjectValueWeakMap::Ptr ptr = map->lookup(value)) {
       map->remove(ptr);
       args.rval().setBoolean(true);
       return true;
@@ -107,7 +107,7 @@ bool WeakSetObject::delete_(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   // Steps 4, 6.
-  if (ObjectValueMap* map =
+  if (ObjectValueWeakMap* map =
           args.thisv().toObject().as<WeakSetObject>().getMap()) {
     JSObject* value = &args[0].toObject();
     if (map->has(value)) {
@@ -139,13 +139,13 @@ const ClassSpec WeakSetObject::classSpec_ = {
     WeakSetObject::properties,
 };
 
-const Class WeakSetObject::class_ = {
+const JSClass WeakSetObject::class_ = {
     "WeakSet",
     JSCLASS_HAS_PRIVATE | JSCLASS_HAS_CACHED_PROTO(JSProto_WeakSet) |
         JSCLASS_BACKGROUND_FINALIZE,
     &WeakCollectionObject::classOps_, &WeakSetObject::classSpec_};
 
-const Class WeakSetObject::protoClass_ = {
+const JSClass WeakSetObject::protoClass_ = {
     js_Object_str, JSCLASS_HAS_CACHED_PROTO(JSProto_WeakSet), JS_NULL_CLASS_OPS,
     &WeakSetObject::classSpec_};
 
@@ -201,7 +201,7 @@ bool WeakSetObject::construct(JSContext* cx, unsigned argc, Value* vp) {
         MOZ_ASSERT(!keyVal.isMagic(JS_ELEMENTS_HOLE));
 
         if (keyVal.isPrimitive()) {
-          ReportNotObjectWithName(cx, "WeakSet value", keyVal);
+          ReportNotObject(cx, JSMSG_OBJECT_REQUIRED_WEAKSET_VAL, keyVal);
           return false;
         }
 

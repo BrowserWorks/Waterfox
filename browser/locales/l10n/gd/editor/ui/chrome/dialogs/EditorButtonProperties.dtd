@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Roghainnean a' phutain">
+
+<!ENTITY Settings.label "Roghainnean">
+
+<!ENTITY ButtonType.label "Seòrsa">
+<!ENTITY ButtonType.accesskey "S">
+<!ENTITY submit.value "Cuir a-null">
+<!ENTITY reset.value "Ath-shuidhich">
+<!ENTITY button.value "Putan">
+
+<!ENTITY ButtonName.label "Ainm:">
+<!ENTITY ButtonName.accesskey "n">
+<!ENTITY ButtonValue.label "Luach:">
+<!ENTITY ButtonValue.accesskey "L">
+<!ENTITY tabIndex.label "Clàr-innse tabaichte:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "Air a chur à comas">
+<!ENTITY ButtonDisabled.accesskey "A">
+<!ENTITY AccessKey.label "Iuchair inntrigidh:">
+<!ENTITY AccessKey.accesskey "I">
+
+<!ENTITY RemoveButton.label "Thoir air falbh putan">
+<!ENTITY RemoveButton.accesskey "r">

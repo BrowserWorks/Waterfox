@@ -6,10 +6,8 @@
 #include "nsAutoCompleteController.h"
 #include "nsAutoCompleteSimpleResult.h"
 
-#include "nsAutoPtr.h"
 #include "nsNetCID.h"
 #include "nsIIOService.h"
-#include "nsIServiceManager.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsIScriptSecurityManager.h"
@@ -422,21 +420,16 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool* _retval) {
       aKey == dom::KeyboardEvent_Binding::DOM_VK_DOWN ||
       aKey == dom::KeyboardEvent_Binding::DOM_VK_PAGE_UP ||
       aKey == dom::KeyboardEvent_Binding::DOM_VK_PAGE_DOWN) {
-    // Prevent the input from handling up/down events, as it may move
-    // the cursor to home/end on some systems
-    *_retval = true;
-
     bool isOpen = false;
     input->GetPopupOpen(&isOpen);
     if (isOpen) {
+      // Prevent the input from handling up/down events, as it may move
+      // the cursor to home/end on some systems
+      *_retval = true;
       bool reverse = aKey == dom::KeyboardEvent_Binding::DOM_VK_UP ||
-                             aKey == dom::KeyboardEvent_Binding::DOM_VK_PAGE_UP
-                         ? true
-                         : false;
+                     aKey == dom::KeyboardEvent_Binding::DOM_VK_PAGE_UP;
       bool page = aKey == dom::KeyboardEvent_Binding::DOM_VK_PAGE_UP ||
-                          aKey == dom::KeyboardEvent_Binding::DOM_VK_PAGE_DOWN
-                      ? true
-                      : false;
+                  aKey == dom::KeyboardEvent_Binding::DOM_VK_PAGE_DOWN;
 
       // Fill in the value of the textbox with whatever is selected in the popup
       // if the completeSelectedIndex attribute is set.  We check this before
@@ -464,7 +457,7 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool* _retval) {
             // autofilled.  Else, fill the result and move the caret to the end.
             int32_t start;
             if (value.Equals(mPlaceholderCompletionString,
-                             nsCaseInsensitiveStringComparator())) {
+                             nsCaseInsensitiveStringComparator)) {
               start = mSearchString.Length();
               value = mPlaceholderCompletionString;
               SetValueOfInputTo(
@@ -490,59 +483,71 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool* _retval) {
         }
       }
     } else {
-#ifdef XP_MACOSX
-      // on Mac, only show the popup if the caret is at the start or end of
-      // the input and there is no selection, so that the default defined key
-      // shortcuts for up and down move to the beginning and end of the field
-      // otherwise.
-      int32_t start, end;
-      if (aKey == dom::KeyboardEvent_Binding::DOM_VK_UP) {
+      // Only show the popup if the caret is at the start or end of the input
+      // and there is no selection, so that the default defined key shortcuts
+      // for up and down move to the beginning and end of the field otherwise.
+      if (aKey == dom::KeyboardEvent_Binding::DOM_VK_UP ||
+          aKey == dom::KeyboardEvent_Binding::DOM_VK_DOWN) {
+        const bool isUp = aKey == dom::KeyboardEvent_Binding::DOM_VK_UP;
+
+        int32_t start, end;
         input->GetSelectionStart(&start);
         input->GetSelectionEnd(&end);
-        if (start > 0 || start != end) *_retval = false;
-      } else if (aKey == dom::KeyboardEvent_Binding::DOM_VK_DOWN) {
-        nsAutoString text;
-        input->GetTextValue(text);
-        input->GetSelectionStart(&start);
-        input->GetSelectionEnd(&end);
-        if (start != end || end < (int32_t)text.Length()) *_retval = false;
-      }
-#endif
-      if (*_retval) {
-        nsAutoString oldSearchString;
-        uint16_t oldResult = 0;
 
-        // Open the popup if there has been a previous non-errored search, or
-        // else kick off a new search
-        if (!mResults.IsEmpty() &&
-            NS_SUCCEEDED(mResults[0]->GetSearchResult(&oldResult)) &&
-            oldResult != nsIAutoCompleteResult::RESULT_FAILURE &&
-            NS_SUCCEEDED(mResults[0]->GetSearchString(oldSearchString)) &&
-            oldSearchString.Equals(mSearchString,
-                                   nsCaseInsensitiveStringComparator())) {
-          if (mMatchCount) {
-            OpenPopup();
-          }
-        } else {
-          // Stop all searches in case they are async.
-          StopSearch();
-
-          if (!mInput) {
-            // StopSearch() can call PostSearchCleanup() which might result
-            // in a blur event, which could null out mInput, so we need to check
-            // it again.  See bug #395344 for more details
+        if (isUp) {
+          if (start > 0 || start != end) {
             return NS_OK;
           }
-
-          // Some script may have changed the value of the text field since our
-          // last keypress or after our focus handler and we don't want to
-          // search for a stale string.
-          nsAutoString value;
-          input->GetTextValue(value);
-          SetSearchStringInternal(value);
-
-          StartSearches();
+        } else {
+          nsAutoString text;
+          input->GetTextValue(text);
+          if (start != end || end < (int32_t)text.Length()) {
+            return NS_OK;
+          }
         }
+      }
+
+      nsAutoString oldSearchString;
+      uint16_t oldResult = 0;
+
+      // Open the popup if there has been a previous non-errored search, or
+      // else kick off a new search
+      if (!mResults.IsEmpty() &&
+          NS_SUCCEEDED(mResults[0]->GetSearchResult(&oldResult)) &&
+          oldResult != nsIAutoCompleteResult::RESULT_FAILURE &&
+          NS_SUCCEEDED(mResults[0]->GetSearchString(oldSearchString)) &&
+          oldSearchString.Equals(mSearchString,
+                                 nsCaseInsensitiveStringComparator)) {
+        if (mMatchCount) {
+          OpenPopup();
+        }
+      } else {
+        // Stop all searches in case they are async.
+        StopSearch();
+
+        if (!mInput) {
+          // StopSearch() can call PostSearchCleanup() which might result
+          // in a blur event, which could null out mInput, so we need to check
+          // it again.  See bug #395344 for more details
+          return NS_OK;
+        }
+
+        // Some script may have changed the value of the text field since our
+        // last keypress or after our focus handler and we don't want to
+        // search for a stale string.
+        nsAutoString value;
+        input->GetTextValue(value);
+        SetSearchStringInternal(value);
+
+        StartSearches();
+      }
+
+      bool isOpen = false;
+      input->GetPopupOpen(&isOpen);
+      if (isOpen) {
+        // Prevent the default action if we opened the popup in any of the code
+        // paths above.
+        *_retval = true;
       }
     }
   } else if (aKey == dom::KeyboardEvent_Binding::DOM_VK_LEFT ||
@@ -607,8 +612,7 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool* _retval) {
             suggestedValue = inputValue;
           }
 
-          if (value.Equals(suggestedValue,
-                           nsCaseInsensitiveStringComparator())) {
+          if (value.Equals(suggestedValue, nsCaseInsensitiveStringComparator)) {
             SetValueOfInputTo(
                 value, nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETEDEFAULT);
             input->SelectTextRange(value.Length(), value.Length());
@@ -677,7 +681,7 @@ nsAutoCompleteController::HandleDelete(bool* _retval) {
   input->GetSearchParam(search);
 
   // Clear the match in our result and in the DB.
-  result->RemoveValueAt(matchIndex, true);
+  result->RemoveValueAt(matchIndex);
   --mMatchCount;
 
   // We removed it, so make sure we cancel the event that triggered this call.
@@ -988,7 +992,9 @@ nsresult nsAutoCompleteController::StartSearch(uint16_t aSearchType) {
 
 void nsAutoCompleteController::AfterSearches() {
   mResultCache.Clear();
-  if (mSearchesFailed == mSearches.Length()) PostSearchCleanup();
+  if (mSearchesFailed == mSearches.Length()) {
+    PostSearchCleanup();
+  }
 }
 
 NS_IMETHODIMP
@@ -1039,7 +1045,7 @@ void nsAutoCompleteController::MaybeCompletePlaceholder() {
       selectionEnd == selectionStart &&
       selectionEnd == (int32_t)mSearchString.Length() &&
       StringBeginsWith(mPlaceholderCompletionString, mSearchString,
-                       nsCaseInsensitiveStringComparator());
+                       nsCaseInsensitiveStringComparator);
 
   if (usePlaceholderCompletion) {
     CompleteValue(mPlaceholderCompletionString);
@@ -1178,7 +1184,7 @@ nsresult nsAutoCompleteController::EnterMatch(bool aIsPopupSelection,
         GetResultValueAt(selectedIndex, true, value);
       } else if (mDefaultIndexCompleted &&
                  inputValue.Equals(mPlaceholderCompletionString,
-                                   nsCaseInsensitiveStringComparator())) {
+                                   nsCaseInsensitiveStringComparator)) {
         // We also need to fill-in the value if the default index completion was
         // confirmed, though we cannot use the selectedIndex cause the selection
         // may have been changed by the mouse in the meanwhile.
@@ -1234,7 +1240,7 @@ nsresult nsAutoCompleteController::EnterMatch(bool aIsPopupSelection,
             nsAutoString matchValue;
             result->GetValueAt(j, matchValue);
             if (suggestedValue.Equals(matchValue,
-                                      nsCaseInsensitiveStringComparator())) {
+                                      nsCaseInsensitiveStringComparator)) {
               nsAutoString finalMatchValue;
               result->GetFinalCompleteValueAt(j, finalMatchValue);
               value = finalMatchValue;
@@ -1273,11 +1279,12 @@ nsresult nsAutoCompleteController::EnterMatch(bool aIsPopupSelection,
   }
 
   obsSvc->NotifyObservers(input, "autocomplete-did-enter-text", nullptr);
-  ClosePopup();
 
   bool cancel;
   bool itemWasSelected = selectedIndex >= 0 && !value.IsEmpty();
   input->OnTextEntered(aEvent, itemWasSelected, &cancel);
+
+  ClosePopup();
 
   return NS_OK;
 }
@@ -1466,7 +1473,7 @@ nsresult nsAutoCompleteController::CompleteDefaultIndex(int32_t aResultIndex) {
       selectionEnd == (int32_t)mPlaceholderCompletionString.Length() &&
       selectionStart == (int32_t)mSearchString.Length() &&
       StringBeginsWith(mPlaceholderCompletionString, mSearchString,
-                       nsCaseInsensitiveStringComparator());
+                       nsCaseInsensitiveStringComparator);
 
   // Don't try to automatically complete to the first result if there's already
   // a selection or the cursor isn't at the end of the input. In case the
@@ -1559,9 +1566,8 @@ nsresult nsAutoCompleteController::GetDefaultCompleteValue(int32_t aResultIndex,
 
   nsAutoString resultValue;
   result->GetValueAt(defaultIndex, resultValue);
-  if (aPreserveCasing &&
-      StringBeginsWith(resultValue, mSearchString,
-                       nsCaseInsensitiveStringComparator())) {
+  if (aPreserveCasing && StringBeginsWith(resultValue, mSearchString,
+                                          nsCaseInsensitiveStringComparator)) {
     // We try to preserve user casing, otherwise we would end up changing
     // the case of what he typed, if we have a result with a different casing.
     // For example if we have result "Test", and user starts writing "tuna",
@@ -1593,7 +1599,7 @@ nsresult nsAutoCompleteController::GetFinalDefaultCompleteValue(
   result->GetValueAt(defaultIndex, _retval);
   nsAutoString inputValue;
   input->GetTextValue(inputValue);
-  if (!_retval.Equals(inputValue, nsCaseInsensitiveStringComparator())) {
+  if (!_retval.Equals(inputValue, nsCaseInsensitiveStringComparator)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -1617,9 +1623,8 @@ nsresult nsAutoCompleteController::CompleteValue(nsString& aValue)
   const int32_t mSearchStringLength = mSearchString.Length();
   int32_t endSelect = aValue.Length();  // By default, select all of aValue.
 
-  if (aValue.IsEmpty() ||
-      StringBeginsWith(aValue, mSearchString,
-                       nsCaseInsensitiveStringComparator())) {
+  if (aValue.IsEmpty() || StringBeginsWith(aValue, mSearchString,
+                                           nsCaseInsensitiveStringComparator)) {
     // aValue is empty (we were asked to clear mInput), or mSearchString
     // matches the beginning of aValue.  In either case we can simply
     // autocomplete to aValue.
@@ -1642,7 +1647,7 @@ nsresult nsAutoCompleteController::CompleteValue(nsString& aValue)
       if ((endSelect < findIndex + mSearchStringLength) ||
           !scheme.EqualsLiteral("http") ||
           !Substring(aValue, findIndex, mSearchStringLength)
-               .Equals(mSearchString, nsCaseInsensitiveStringComparator())) {
+               .Equals(mSearchString, nsCaseInsensitiveStringComparator)) {
         return NS_OK;
       }
 

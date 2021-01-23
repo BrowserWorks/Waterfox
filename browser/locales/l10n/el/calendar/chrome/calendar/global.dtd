@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Μεσάνυχτα" >
+<!ENTITY time.noon "Μεσημέρι" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Κυρ" >
+<!ENTITY day.1.Ddd.accesskey "Κ">
+<!ENTITY day.2.Ddd "Δευ" >
+<!ENTITY day.2.Ddd.accesskey "Δ">
+<!ENTITY day.3.Ddd "Τρί" >
+<!ENTITY day.3.Ddd.accesskey "ρ">
+<!ENTITY day.4.Ddd "Τετ" >
+<!ENTITY day.4.Ddd.accesskey "Τ">
+<!ENTITY day.5.Ddd "Πέμ" >
+<!ENTITY day.5.Ddd.accesskey "μ">
+<!ENTITY day.6.Ddd "Παρ" >
+<!ENTITY day.6.Ddd.accesskey "Π">
+<!ENTITY day.7.Ddd "Σάβ" >
+<!ENTITY day.7.Ddd.accesskey "Σ">
+
+<!ENTITY day.1.name "Κυριακή" >
+<!ENTITY day.2.name "Δευτέρα" >
+<!ENTITY day.3.name "Τρίτη" >
+<!ENTITY day.4.name "Τετάρτη" >
+<!ENTITY day.5.name "Πέμπτη" >
+<!ENTITY day.6.name "Παρασκευή" >
+<!ENTITY day.7.name "Σάββατο" >
+
+<!ENTITY month.1.name "Ιανουάριος" >
+<!ENTITY month.2.name "Φεβρουάριος" >
+<!ENTITY month.3.name "Μάρτιος" >
+<!ENTITY month.4.name "Απρίλιος" >
+<!ENTITY month.5.name "Μάιος" >
+<!ENTITY month.6.name "Ιούνιος" >
+<!ENTITY month.7.name "Ιούλιος" >
+<!ENTITY month.8.name "Αύγουστος" >
+<!ENTITY month.9.name "Σεπτέμβριος" >
+<!ENTITY month.10.name "Οκτώβριος" >
+<!ENTITY month.11.name "Νοέμβριος" >
+<!ENTITY month.12.name "Δεκέμβριος" >
+
+<!ENTITY onemonthbackward.tooltip "Ένα μήνα πίσω" >
+<!ENTITY onemonthforward.tooltip "Ένα μήνα μπροστά" >
+<!ENTITY oneyearbackward.tooltip "Ένα έτος πριν" >
+<!ENTITY oneyearforward.tooltip "Ένα έτος μετά" >
+<!ENTITY showToday.tooltip "Μετάβαση στη σημερινή ημέρα">
+<!ENTITY onedayforward.tooltip "Μία ημέρα μπροστά">
+<!ENTITY onedaybackward.tooltip "Μία ημέρα πίσω">
+<!ENTITY showselectedday.tooltip "Εμφάνιση συμβάντων για την επιλεγμένη ημέρα">

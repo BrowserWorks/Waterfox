@@ -51,35 +51,7 @@ static bool IsInActiveTab(nsPIDOMWindowInner* aParent) {
     return false;
   }
 
-  nsCOMPtr<nsIDocShell> docShell = doc->GetDocShell();
-  if (!docShell) {
-    return false;
-  }
-
-  bool isActive = false;
-  docShell->GetIsActive(&isActive);
-  if (!isActive) {
-    return false;
-  }
-
-  nsCOMPtr<nsIDocShellTreeItem> rootItem;
-  docShell->GetRootTreeItem(getter_AddRefs(rootItem));
-  if (!rootItem) {
-    return false;
-  }
-  nsCOMPtr<nsPIDOMWindowOuter> rootWin = rootItem->GetWindow();
-  if (!rootWin) {
-    return false;
-  }
-
-  nsIFocusManager* fm = nsFocusManager::GetFocusManager();
-  if (!fm) {
-    return false;
-  }
-
-  nsCOMPtr<mozIDOMWindowProxy> activeWindow;
-  fm->GetActiveWindow(getter_AddRefs(activeWindow));
-  return activeWindow == rootWin;
+  return IsInActiveTab(doc);
 }
 
 static bool IsSameOriginWithAncestors(nsPIDOMWindowInner* aParent) {
@@ -124,7 +96,7 @@ CredentialsContainer::CredentialsContainer(nsPIDOMWindowInner* aParent)
   MOZ_ASSERT(aParent);
 }
 
-CredentialsContainer::~CredentialsContainer() {}
+CredentialsContainer::~CredentialsContainer() = default;
 
 void CredentialsContainer::EnsureWebAuthnManager() {
   MOZ_ASSERT(NS_IsMainThread());

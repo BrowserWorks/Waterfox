@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -15,10 +14,13 @@ add_task(async function testRemoveSubtree() {
     MAIN_DOMAIN + "inspector-traversal-data.html"
   );
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     function ignoreNode(node) {
       // Duplicate the walker logic to skip blank nodes...
-      return node.nodeType === Node.TEXT_NODE && !/[^\s]/.test(node.nodeValue);
+      return (
+        node.nodeType === content.Node.TEXT_NODE &&
+        !/[^\s]/.test(node.nodeValue)
+      );
     }
 
     let nextSibling = content.document.querySelector("#longlist").nextSibling;
@@ -55,23 +57,23 @@ add_task(async function testRemoveSubtree() {
   const onMutation = waitForMutation(walker, isChildList);
   const siblings = await walker.removeNode(longlist);
 
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    [siblings.previousSibling.actorID, siblings.nextSibling.actorID],
+    [[siblings.previousSibling.actorID, siblings.nextSibling.actorID]],
     function([previousActorID, nextActorID]) {
       const { require } = ChromeUtils.import(
         "resource://devtools/shared/Loader.jsm"
       );
-      const { DebuggerServer } = require("devtools/server/main");
+      const { DevToolsServer } = require("devtools/server/devtools-server");
 
       // Convert actorID to current compartment string otherwise
       // searchAllConnectionsForActor is confused and won't find the actor.
       previousActorID = String(previousActorID);
       nextActorID = String(nextActorID);
-      const previous = DebuggerServer.searchAllConnectionsForActor(
+      const previous = DevToolsServer.searchAllConnectionsForActor(
         previousActorID
       );
-      const next = DebuggerServer.searchAllConnectionsForActor(nextActorID);
+      const next = DevToolsServer.searchAllConnectionsForActor(nextActorID);
 
       is(
         previous.rawNode,

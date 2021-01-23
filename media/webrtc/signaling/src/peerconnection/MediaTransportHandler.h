@@ -10,12 +10,12 @@
 #include "sigslot.h"
 #include "transportlayer.h"  // Need the State enum
 #include "dtlsidentity.h"    // For DtlsDigest
-#include "mozilla/dom/PeerConnectionImplEnumsBinding.h"
+#include "mozilla/dom/RTCPeerConnectionBinding.h"
 #include "mozilla/dom/RTCConfigurationBinding.h"
-#include "nricectx.h"               // Need some enums
-#include "nsDOMNavigationTiming.h"  // DOMHighResTimeStamp
+#include "nricectx.h"  // Need some enums
 #include "signaling/src/common/CandidateInfo.h"
 #include "nr_socket_proxy_config.h"
+#include "RTCStatsReport.h"
 
 #include "nsString.h"
 
@@ -71,18 +71,22 @@ class MediaTransportHandler {
 
   // We will probably be able to move the proxy lookup stuff into
   // this class once we move mtransport to its own process.
-  virtual void SetProxyServer(NrSocketProxyConfig&& aProxyConfig) = 0;
+  virtual void SetProxyConfig(NrSocketProxyConfig&& aProxyConfig) = 0;
 
   virtual void EnsureProvisionalTransport(const std::string& aTransportId,
                                           const std::string& aLocalUfrag,
                                           const std::string& aLocalPwd,
                                           size_t aComponentCount) = 0;
 
+  virtual void SetTargetForDefaultLocalAddressLookup(
+      const std::string& aTargetIp, uint16_t aTargetPort) = 0;
+
   // We set default-route-only as late as possible because it depends on what
   // capture permissions have been granted on the window, which could easily
   // change between Init (ie; when the PC is created) and StartIceGathering
   // (ie; when we set the local description).
   virtual void StartIceGathering(bool aDefaultRouteOnly,
+                                 bool aObfuscateHostAddresses,
                                  // TODO: It probably makes sense to look
                                  // this up internally
                                  const nsTArray<NrIceStunAddr>& aStunAddrs) = 0;
@@ -98,7 +102,7 @@ class MediaTransportHandler {
   virtual void RemoveTransportsExcept(
       const std::set<std::string>& aTransportIds) = 0;
 
-  virtual void StartIceChecks(bool aIsControlling, bool aIsOfferer,
+  virtual void StartIceChecks(bool aIsControlling,
                               const std::vector<std::string>& aIceOptions) = 0;
 
   virtual void SendPacket(const std::string& aTransportId,
@@ -106,25 +110,22 @@ class MediaTransportHandler {
 
   virtual void AddIceCandidate(const std::string& aTransportId,
                                const std::string& aCandidate,
-                               const std::string& aUFrag) = 0;
+                               const std::string& aUFrag,
+                               const std::string& aObfuscatedAddress) = 0;
 
   virtual void UpdateNetworkState(bool aOnline) = 0;
 
-  // dom::RTCStatsReportInternal doesn't have move semantics.
-  typedef MozPromise<std::unique_ptr<dom::RTCStatsReportInternal>, nsresult,
-                     true>
-      StatsPromise;
-  virtual RefPtr<StatsPromise> GetIceStats(
-      const std::string& aTransportId, DOMHighResTimeStamp aNow,
-      std::unique_ptr<dom::RTCStatsReportInternal>&& aReport) = 0;
+  virtual RefPtr<dom::RTCStatsPromise> GetIceStats(
+      const std::string& aTransportId, DOMHighResTimeStamp aNow) = 0;
 
   sigslot::signal2<const std::string&, const CandidateInfo&> SignalCandidate;
-  sigslot::signal1<const std::string&> SignalAlpnNegotiated;
-  sigslot::signal1<dom::PCImplIceGatheringState> SignalGatheringStateChange;
-  sigslot::signal1<dom::PCImplIceConnectionState> SignalConnectionStateChange;
+  sigslot::signal2<const std::string&, bool> SignalAlpnNegotiated;
+  sigslot::signal1<dom::RTCIceGatheringState> SignalGatheringStateChange;
+  sigslot::signal1<dom::RTCIceConnectionState> SignalConnectionStateChange;
 
-  sigslot::signal2<const std::string&, MediaPacket&> SignalPacketReceived;
-  sigslot::signal2<const std::string&, MediaPacket&> SignalEncryptedSending;
+  sigslot::signal2<const std::string&, const MediaPacket&> SignalPacketReceived;
+  sigslot::signal2<const std::string&, const MediaPacket&>
+      SignalEncryptedSending;
   sigslot::signal2<const std::string&, TransportLayer::State> SignalStateChange;
   sigslot::signal2<const std::string&, TransportLayer::State>
       SignalRtcpStateChange;
@@ -137,11 +138,12 @@ class MediaTransportHandler {
   void OnCandidate(const std::string& aTransportId,
                    const CandidateInfo& aCandidateInfo);
   void OnAlpnNegotiated(const std::string& aAlpn);
-  void OnGatheringStateChange(dom::PCImplIceGatheringState aState);
-  void OnConnectionStateChange(dom::PCImplIceConnectionState aState);
-  void OnPacketReceived(const std::string& aTransportId, MediaPacket& aPacket);
+  void OnGatheringStateChange(dom::RTCIceGatheringState aState);
+  void OnConnectionStateChange(dom::RTCIceConnectionState aState);
+  void OnPacketReceived(const std::string& aTransportId,
+                        const MediaPacket& aPacket);
   void OnEncryptedSending(const std::string& aTransportId,
-                          MediaPacket& aPacket);
+                          const MediaPacket& aPacket);
   void OnStateChange(const std::string& aTransportId,
                      TransportLayer::State aState);
   void OnRtcpStateChange(const std::string& aTransportId,
@@ -151,6 +153,9 @@ class MediaTransportHandler {
   std::map<std::string, TransportLayer::State> mRtcpStateCache;
   RefPtr<nsISerialEventTarget> mCallbackThread;
 };
+
+void TokenizeCandidate(const std::string& aCandidate,
+                       std::vector<std::string>& aTokens);
 
 }  // namespace mozilla
 

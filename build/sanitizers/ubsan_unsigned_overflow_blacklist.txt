@@ -78,7 +78,6 @@ fun:*nsTArray_base*ShiftData*
 # makes sense to increase runtime performance.
 #
 src:*/netwerk/base/nsSocketTransportService2.cpp
-src:*/dom/xul/XULDocument.cpp
 src:*/nsCharTraits.h
 # Code in xpcom/base/CycleCollectedJSContext.cpp
 fun:*CycleCollectedJSContext*ProcessMetastableStateQueue*
@@ -112,7 +111,7 @@ fun:*CodedInputStream*ReadTagWithCutoff*
 
 
 # SQLite3 is full of overflows :/
-src:*/db/sqlite3/src/sqlite3.c
+src:*/third_party/sqlite3/src/sqlite3.c
 
 # zlib has some overflows, we can't deal with them right now
 src:*/modules/zlib/src/*
@@ -120,7 +119,7 @@ src:*/modules/zlib/src/*
 # Our LZ4 implementation uses overflows. By listing it here we might
 # miss some unintended overflows in that implementation, but we can't
 # check for it right now.
-src:*/mfbt/lz4.c
+src:*/mfbt/lz4/*
 
 # Apparently this overflows a lot, because it contains some allocators
 # that keep overflowing, not sure why. Disabling by function didn't seem

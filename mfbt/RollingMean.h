@@ -10,10 +10,10 @@
 #define mozilla_RollingMean_h_
 
 #include "mozilla/Assertions.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/Vector.h"
 
 #include <stddef.h>
+#include <type_traits>
 
 namespace mozilla {
 
@@ -35,7 +35,7 @@ class RollingMean {
   S mTotal;
 
  public:
-  static_assert(!IsFloatingPoint<T>::value,
+  static_assert(!std::is_floating_point_v<T>,
                 "floating-point types are unsupported due to rounding "
                 "errors");
 
@@ -44,15 +44,7 @@ class RollingMean {
     MOZ_ASSERT(aMaxValues > 0);
   }
 
-  RollingMean& operator=(RollingMean&& aOther) {
-    MOZ_ASSERT(this != &aOther, "self-assignment is forbidden");
-    this->~RollingMean();
-    new (this) RollingMean(aOther.mMaxValues);
-    mInsertIndex = aOther.mInsertIndex;
-    mTotal = aOther.mTotal;
-    mValues.swap(aOther.mValues);
-    return *this;
-  }
+  RollingMean& operator=(RollingMean&& aOther) = default;
 
   /**
    * Insert a value into the rolling mean.

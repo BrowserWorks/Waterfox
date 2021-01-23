@@ -49,7 +49,7 @@ interface nsIParentalControlsService : nsISupports
   /**
    * @returns true if the current user account parental controls
    * restrictions include the blocking of all file downloads.
-   */ 
+   */
   readonly attribute boolean blockFileDownloadsEnabled;
 
   /**
@@ -62,29 +62,16 @@ interface nsIParentalControlsService : nsISupports
    boolean isAllowed(in short aAction, [optional] in nsIURI aUri);
 
   /**
-   * Request that blocked URI(s) be allowed through parental
-   * control filters. Returns true if the URI was successfully
-   * overriden. Note, may block while native UI is shown.
-   *
-   * @param aTarget(s)          URI to be overridden. In the case of
-   *                            multiple URI, the first URI in the array
-   *                            should be the root URI of the site.
-   * @param window              Window that generates the event.
-   */
-  boolean requestURIOverride(in nsIURI aTarget, [optional] in nsIInterfaceRequestor aWindowContext);
-  boolean requestURIOverrides(in nsIArray aTargets, [optional] in nsIInterfaceRequestor aWindowContext);
-
-  /**
    * @returns true if the current user account has parental controls
    * logging enabled. If true, applications should log relevent events
    * using 'log'.
-   */ 
+   */
   readonly attribute boolean loggingEnabled;
 
   /**
    * Log entry types. Additional types can be defined and implemented
    * as needed. Other possible event types might include email events,
-   * media related events, and IM events. 
+   * media related events, and IM events.
    */
   const short ePCLog_URIVisit = 1;    /* Web content */
   const short ePCLog_FileDownload = 2;  /* File downloads */

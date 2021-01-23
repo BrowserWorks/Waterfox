@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* globals $, $$, PerformanceController */
+/* globals $, PerformanceController */
 "use strict";
 
 const { extend } = require("devtools/shared/extend");
@@ -9,13 +9,19 @@ const { extend } = require("devtools/shared/extend");
 const React = require("devtools/client/shared/vendor/react");
 const ReactDOM = require("devtools/client/shared/vendor/react-dom");
 
-const EVENTS = require("../events");
-const { CallView } = require("../modules/widgets/tree-view");
-const { ThreadNode } = require("../modules/logic/tree-model");
-const { DetailsSubview } = require("./details-abstract-subview");
+const EVENTS = require("devtools/client/performance/events");
+const {
+  CallView,
+} = require("devtools/client/performance/modules/widgets/tree-view");
+const {
+  ThreadNode,
+} = require("devtools/client/performance/modules/logic/tree-model");
+const {
+  DetailsSubview,
+} = require("devtools/client/performance/views/details-abstract-subview");
 
 const JITOptimizationsView = React.createFactory(
-  require("../components/JITOptimizations")
+  require("devtools/client/performance/components/JITOptimizations")
 );
 
 const EventEmitter = require("devtools/shared/event-emitter");

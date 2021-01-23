@@ -5,45 +5,67 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('**'):
-    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+    BUG_COMPONENT = ('Core', 'Graphics: WebGPU')
 
 MOCHITEST_MANIFESTS += [
     'mochitest/mochitest-no-pref.ini',
     'mochitest/mochitest.ini',
 ]
 
+DIRS += [
+]
+
 h_and_cpp = [
     'Adapter',
-    'AttachmentState',
     'BindGroup',
     'BindGroupLayout',
-    'BlendState',
     'Buffer',
+    'CanvasContext',
     'CommandBuffer',
     'CommandEncoder',
+    'ComputePassEncoder',
     'ComputePipeline',
-    'DepthStencilState',
     'Device',
+    'DeviceLostInfo',
     'Fence',
-    'InputState',
     'Instance',
-    'InstanceProvider',
-    'LogEntry',
     'ObjectModel',
+    'OutOfMemoryError',
     'PipelineLayout',
     'Queue',
+    'RenderBundle',
+    'RenderBundleEncoder',
+    'RenderPassEncoder',
     'RenderPipeline',
     'Sampler',
     'ShaderModule',
     'SwapChain',
     'Texture',
     'TextureView',
+    'ValidationError',
 ]
 EXPORTS.mozilla.webgpu += [x + '.h' for x in h_and_cpp]
 UNIFIED_SOURCES += [x + '.cpp' for x in h_and_cpp]
 
-EXPORTS.mozilla.webgpu += [
-#    'ObjectModel.h',
+IPDL_SOURCES += [
+    'ipc/PWebGPU.ipdl',
 ]
+
+EXPORTS.mozilla.webgpu += [
+    'ipc/WebGPUChild.h',
+    'ipc/WebGPUParent.h',
+    'ipc/WebGPUSerialize.h',
+    'ipc/WebGPUTypes.h',
+]
+
+UNIFIED_SOURCES += [
+    'ipc/WebGPUChild.cpp',
+    'ipc/WebGPUParent.cpp',
+]
+
+if CONFIG['CC_TYPE'] in ('clang', 'clang-cl'):
+    CXXFLAGS += ['-Werror=implicit-int-conversion']
+
+include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'

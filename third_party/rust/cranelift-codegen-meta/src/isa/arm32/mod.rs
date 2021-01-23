@@ -1,6 +1,7 @@
 use crate::cdsl::cpu_modes::CpuMode;
-use crate::cdsl::inst::InstructionGroup;
+use crate::cdsl::instructions::{InstructionGroupBuilder, InstructionPredicateMap};
 use crate::cdsl::isa::TargetIsa;
+use crate::cdsl::recipes::Recipes;
 use crate::cdsl::regs::{IsaRegs, IsaRegsBuilder, RegBankBuilder, RegClassBuilder};
 use crate::cdsl::settings::{SettingGroup, SettingGroupBuilder};
 
@@ -8,7 +9,7 @@ use crate::shared::Definitions as SharedDefinitions;
 
 fn define_settings(_shared: &SettingGroup) -> SettingGroup {
     let setting = SettingGroupBuilder::new("arm32");
-    setting.finish()
+    setting.build()
 }
 
 fn define_regs() -> IsaRegs {
@@ -45,25 +46,43 @@ fn define_regs() -> IsaRegs {
     let builder = RegClassBuilder::new_toplevel("FLAG", flag_reg);
     regs.add_class(builder);
 
-    regs.finish()
+    regs.build()
 }
 
-pub fn define(shared_defs: &mut SharedDefinitions) -> TargetIsa {
+pub(crate) fn define(shared_defs: &mut SharedDefinitions) -> TargetIsa {
     let settings = define_settings(&shared_defs.settings);
     let regs = define_regs();
 
-    let inst_group = InstructionGroup::new("arm32", "arm32 specific instruction set");
+    let inst_group = InstructionGroupBuilder::new(&mut shared_defs.all_instructions).build();
 
     // CPU modes for 32-bit ARM and Thumb2.
     let mut a32 = CpuMode::new("A32");
     let mut t32 = CpuMode::new("T32");
 
     // TODO refine these.
-    let narrow = shared_defs.transform_groups.by_name("narrow");
-    a32.legalize_default(narrow);
-    t32.legalize_default(narrow);
+    let narrow_flags = shared_defs.transform_groups.by_name("narrow_flags");
+    a32.legalize_default(narrow_flags);
+    t32.legalize_default(narrow_flags);
+
+    // Make sure that the expand code is used, thus generated.
+    let expand = shared_defs.transform_groups.by_name("expand");
+    a32.legalize_monomorphic(expand);
 
     let cpu_modes = vec![a32, t32];
 
-    TargetIsa::new("arm32", inst_group, settings, regs, cpu_modes)
+    // TODO implement arm32 recipes.
+    let recipes = Recipes::new();
+
+    // TODO implement arm32 encodings and predicates.
+    let encodings_predicates = InstructionPredicateMap::new();
+
+    TargetIsa::new(
+        "arm32",
+        inst_group,
+        settings,
+        regs,
+        recipes,
+        cpu_modes,
+        encodings_predicates,
+    )
 }

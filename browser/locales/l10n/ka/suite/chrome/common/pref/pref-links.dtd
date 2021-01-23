@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "ბმულის ქცევა">
+<!ENTITY newWindow.label "ბმულის ქცევა გახსნისას">
+<!ENTITY newWindowDescription.label "ახალ სარკმელში გასახსნელი ბმების გახსნა:">
+<!ENTITY newWindowRestriction.label "როცა სკრიპტი ითხოვს ახალი სარკმლის გახსნას:">
+<!ENTITY external.label "ბმები სხვა პროგრამებიდან">
+<!ENTITY externalDescription.label "სხვა პროგრამებიდან გადმოტანილი ბმების გახსნა:">
+
+<!ENTITY openCurrent.label "მიმდინარე ჩანართიზე/სარკმელში">
+<!ENTITY newWindowGroupCurrent.accesskey "c">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "მიმდინარე სარკმლის ახალ ჩანართიზე">
+<!ENTITY newWindowGroupTab.accesskey "მ">
+<!ENTITY externalGroupTab.accesskey "ი">
+
+<!ENTITY openWindow.label "ახალ დაფაზე">
+<!ENTITY newWindowGroupWindow.accesskey "w">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "სარკმლების ყოველთვის გადამისამართება ჩანართებზე">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "საკუთარი სარკმლების შენარჩუნება">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "ყოველთვის ახალი სარკმლების გახსნა">
+<!ENTITY dontDivert.accesskey "n">

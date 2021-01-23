@@ -6,8 +6,7 @@ Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/browser/components/places/tests/browser/head.js",
   this
 );
-/* globals withSidebarTree, synthesizeClickOnSelectedTreeCell,
- * promiseLibrary, promiseLibraryClosed
+/* globals withSidebarTree, synthesizeClickOnSelectedTreeCell, promiseLibrary, promiseLibraryClosed
  */
 
 const PAGE =
@@ -387,7 +386,7 @@ add_task(async function() {
   checkClickInfo(result);
 
   // Select some text
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function(arg) {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function(arg) {
     let doc = content.document;
     let range = doc.createRange();
     let selection = content.getSelection();
@@ -455,7 +454,7 @@ add_task(async function() {
   checkClickInfo(result);
 
   // Select a lot of text
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function*(arg) {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function(arg) {
     let doc = content.document;
     let range = doc.createRange();
     let selection = content.getSelection();
@@ -497,7 +496,7 @@ add_task(async function() {
 
   // Select a lot of text, excercise the editable element code path in
   // the Browser:GetSelection handler.
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function(arg) {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function(arg) {
     let doc = content.document;
     let node = doc.getElementById("editabletext");
     // content.js handleContentContextMenu fails intermittently without focus.

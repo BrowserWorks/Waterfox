@@ -11,23 +11,15 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/CORSMode.h"
+#include "mozilla/EnumTypeTraits.h"
 #include "mozilla/FontPropertyTypes.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ServoBindingTypes.h"
 #include "mozilla/URLExtraData.h"
 #include "mozilla/UniquePtr.h"
 
-#include "nsCSSKeywords.h"
-#include "nsCSSPropertyID.h"
 #include "nsCoord.h"
-#include "nsProxyRelease.h"
-#include "nsRefPtrHashtable.h"
-#include "nsString.h"
-#include "nsStringBuffer.h"
 #include "nsTArray.h"
-#include "nsStyleConsts.h"
-#include "nsStyleCoord.h"
-#include "gfxFontFamilyList.h"
 
 #include <type_traits>
 
@@ -46,201 +38,14 @@ namespace mozilla {
 class CSSStyleSheet;
 }  // namespace mozilla
 
-// Deletes a linked list iteratively to avoid blowing up the stack (bug 456196).
-#define NS_CSS_DELETE_LIST_MEMBER(type_, ptr_, member_) \
-  {                                                     \
-    type_* cur = (ptr_)->member_;                       \
-    (ptr_)->member_ = nullptr;                          \
-    while (cur) {                                       \
-      type_* dlm_next = cur->member_;                   \
-      cur->member_ = nullptr;                           \
-      delete cur;                                       \
-      cur = dlm_next;                                   \
-    }                                                   \
-  }
-// Ditto, but use NS_RELEASE instead of 'delete' (bug 1221902).
-#define NS_CSS_NS_RELEASE_LIST_MEMBER(type_, ptr_, member_) \
-  {                                                         \
-    type_* cur = (ptr_)->member_;                           \
-    (ptr_)->member_ = nullptr;                              \
-    while (cur) {                                           \
-      type_* dlm_next = cur->member_;                       \
-      cur->member_ = nullptr;                               \
-      NS_RELEASE(cur);                                      \
-      cur = dlm_next;                                       \
-    }                                                       \
-  }
-
-// Clones a linked list iteratively to avoid blowing up the stack.
-// If it fails to clone the entire list then 'to_' is deleted and
-// we return null.
-#define NS_CSS_CLONE_LIST_MEMBER(type_, from_, member_, to_, args_)      \
-  {                                                                      \
-    type_* dest = (to_);                                                 \
-    (to_)->member_ = nullptr;                                            \
-    for (const type_* src = (from_)->member_; src; src = src->member_) { \
-      type_* clm_clone = src->Clone args_;                               \
-      if (!clm_clone) {                                                  \
-        delete (to_);                                                    \
-        return nullptr;                                                  \
-      }                                                                  \
-      dest->member_ = clm_clone;                                         \
-      dest = clm_clone;                                                  \
-    }                                                                    \
-  }
-
 // Forward declaration copied here since ServoBindings.h #includes nsCSSValue.h.
 extern "C" {
 mozilla::URLExtraData* Servo_CssUrlData_GetExtraData(const RawServoCssUrlData*);
 bool Servo_CssUrlData_IsLocalRef(const RawServoCssUrlData* url);
 }
 
-namespace mozilla {
-namespace css {
-
-struct URLValue final {
- public:
-  // aCssUrl must not be null.
-  URLValue(already_AddRefed<RawServoCssUrlData> aCssUrl, CORSMode aCORSMode)
-      : mURIResolved(false), mCssUrl(aCssUrl), mCORSMode(aCORSMode) {
-    MOZ_ASSERT(mCssUrl);
-  }
-
-  // Returns true iff all fields of the two URLValue objects are equal.
-  //
-  // Only safe to call on the main thread, since this will call Equals on the
-  // nsIURI and nsIPrincipal objects stored on the URLValue objects.
-  bool Equals(const URLValue& aOther) const;
-
-  // Returns true iff we know for sure, by comparing the mBaseURI pointer,
-  // the specified url() value mString, and IsLocalRef(), that these
-  // two URLValue objects represent the same computed url() value.
-  //
-  // Doesn't look at mReferrer or mOriginPrincipal.
-  //
-  // Safe to call from any thread.
-  bool DefinitelyEqualURIs(const URLValue& aOther) const;
-
-  // Smae as DefinitelyEqualURIs but additionally compares the nsIPrincipal
-  // pointers of the two URLValue objects.
-  bool DefinitelyEqualURIsAndPrincipal(const URLValue& aOther) const;
-
-  nsIURI* GetURI() const;
-
-  bool IsLocalRef() const { return Servo_CssUrlData_IsLocalRef(mCssUrl); }
-
-  bool HasRef() const;
-
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(URLValue)
-
-  // When matching a local ref URL, resolve it against aURI;
-  // Otherwise, ignore aURL and return mURI directly.
-  already_AddRefed<nsIURI> ResolveLocalRef(nsIURI* aURI) const;
-  already_AddRefed<nsIURI> ResolveLocalRef(nsIContent* aContent) const;
-
-  // Serializes mURI as a computed URI value, taking into account IsLocalRef()
-  // and serializing just the fragment if true.
-  void GetSourceString(nsString& aRef) const;
-
-  nsDependentCSubstring GetString() const;
-
-  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
-
-  imgRequestProxy* LoadImage(mozilla::dom::Document* aDocument);
-
-  uint64_t LoadID() const { return mLoadID; }
-
-  CORSMode CorsMode() const { return mCORSMode; }
-
-  URLExtraData* ExtraData() const {
-    return Servo_CssUrlData_GetExtraData(mCssUrl);
-  }
-
- private:
-  // mURI stores the lazily resolved URI.  This may be null if the URI is
-  // invalid, even once resolved.
-  mutable nsCOMPtr<nsIURI> mURI;
-
-  mutable bool mURIResolved;
-
-  RefPtr<RawServoCssUrlData> mCssUrl;
-
-  const CORSMode mCORSMode;
-
-  // A unique, non-reused ID value for this URLValue over the life of the
-  // process.  This value is only valid after LoadImage has been called.
-  //
-  // We use this as a key in some tables in ImageLoader.  This is better than
-  // using the pointer value of the ImageValue object, since we can sometimes
-  // delete ImageValues OMT but cannot update the ImageLoader tables until
-  // we're back on the main thread.  So to avoid dangling pointers that might
-  // get re-used by the time we want to update the ImageLoader tables, we use
-  // these IDs.
-  uint64_t mLoadID = 0;
-
-  ~URLValue();
-
- private:
-  URLValue(const URLValue& aOther) = delete;
-  URLValue& operator=(const URLValue& aOther) = delete;
-};
-
-struct GridNamedArea {
-  nsString mName;
-  uint32_t mColumnStart;
-  uint32_t mColumnEnd;
-  uint32_t mRowStart;
-  uint32_t mRowEnd;
-};
-
-struct GridTemplateAreasValue final {
-  // Parsed value
-  nsTArray<GridNamedArea> mNamedAreas;
-
-  // Original <string> values. Length gives the number of rows,
-  // content makes serialization easier.
-  nsTArray<nsString> mTemplates;
-
-  // How many columns grid-template-areas contributes to the explicit grid.
-  // http://dev.w3.org/csswg/css-grid/#explicit-grid
-  uint32_t mNColumns;
-
-  // How many rows grid-template-areas contributes to the explicit grid.
-  // http://dev.w3.org/csswg/css-grid/#explicit-grid
-  uint32_t NRows() const { return mTemplates.Length(); }
-
-  GridTemplateAreasValue()
-      : mNColumns(0)
-  // Default constructors for mNamedAreas and mTemplates: empty arrays.
-  {}
-
-  bool operator==(const GridTemplateAreasValue& aOther) const {
-    return mTemplates == aOther.mTemplates;
-  }
-
-  bool operator!=(const GridTemplateAreasValue& aOther) const {
-    return !(*this == aOther);
-  }
-
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GridTemplateAreasValue)
-
-  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
-
- private:
-  // Private destructor to make sure this isn't used as a stack variable
-  // or member variable.
-  ~GridTemplateAreasValue() {}
-
-  GridTemplateAreasValue(const GridTemplateAreasValue& aOther) = delete;
-  GridTemplateAreasValue& operator=(const GridTemplateAreasValue& aOther) =
-      delete;
-};
-
-}  // namespace css
-}  // namespace mozilla
-
 enum nsCSSUnit : uint32_t {
-  eCSSUnit_Null = 0,     // (n/a) null unit, value is not specified
+  eCSSUnit_Null = 0,  // (n/a) null unit, value is not specified
 
   eCSSUnit_Integer = 70,     // (int) simple value
   eCSSUnit_Enumerated = 71,  // (int) value has enumerated meaning
@@ -300,8 +105,7 @@ class nsCSSValue {
   nsCSSValue(nsCSSValue&& aOther) : mUnit(aOther.mUnit), mValue(aOther.mValue) {
     aOther.mUnit = eCSSUnit_Null;
   }
-  template <typename T,
-            typename = typename std::enable_if<std::is_enum<T>::value>::type>
+  template <typename T, typename = std::enable_if_t<std::is_enum<T>::value>>
   explicit nsCSSValue(T aValue) : mUnit(eCSSUnit_Enumerated) {
     static_assert(mozilla::EnumTypeFitsWithin<T, int32_t>::value,
                   "aValue must be an enum that fits within mValue.mInt");
@@ -359,11 +163,6 @@ class nsCSSValue {
     return mValue.mInt;
   }
 
-  nsCSSKeyword GetKeywordValue() const {
-    MOZ_ASSERT(mUnit == eCSSUnit_Enumerated, "not a keyword value");
-    return static_cast<nsCSSKeyword>(mValue.mInt);
-  }
-
   float GetPercentValue() const {
     MOZ_ASSERT(mUnit == eCSSUnit_Percent, "not a percent value");
     return mValue.mFloat;
@@ -393,8 +192,7 @@ class nsCSSValue {
 
  public:
   void SetIntValue(int32_t aValue, nsCSSUnit aUnit);
-  template <typename T,
-            typename = typename std::enable_if<std::is_enum<T>::value>::type>
+  template <typename T, typename = std::enable_if_t<std::is_enum<T>::value>>
   void SetEnumValue(T aValue) {
     static_assert(mozilla::EnumTypeFitsWithin<T, int32_t>::value,
                   "aValue must be an enum that fits within mValue.mInt");

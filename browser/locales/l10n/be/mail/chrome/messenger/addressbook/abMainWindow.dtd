@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Адрасная кніга">
+<!ENTITY blankResultsPaneMessage.label                  "Гэта адрасная кніга паказвае кантакты толькі пасля пошуку">
+<!ENTITY localResultsOnlyMessage.label                  "Кантакты з аддаленых адрасных кніг не паказваюцца, пакуль вы не скарыстаецеся пошукам">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Файл">
+<!ENTITY fileMenu.accesskey                             "Ф">
+<!ENTITY newMenu.label                                  "Стварыць">
+<!ENTITY newMenu.accesskey                              "С">
+<!ENTITY newContact.label                               "Сувязь з адраснай кнігі…">
+<!ENTITY newContact.accesskey                           "с">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Адрасны спіс…">
+<!ENTITY newListCmd.accesskey                           "С">
+<!ENTITY newAddressBookCmd.label                        "Адрасную кнігу…">
+<!ENTITY newAddressBookCmd.accesskey                    "А">
+<!ENTITY newLDAPDirectoryCmd.label                      "Дырэкторыю LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newMessageCmd.label                            "Ліст">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "л">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Ужываць адрасную кнігу Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Зачыніць">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "ч">
+<!ENTITY printSetupCmd.label                            "Уладкаваць старонку…">
+<!ENTITY printSetupCmd.accesskey                        "н">
+<!ENTITY printPreviewContactCmd.label                   "Перадпрагляд сувязі">
+<!ENTITY printPreviewContactCmd.accesskey               "г">
+<!ENTITY printPreviewAddressBook.label                  "Перадпрагляд адраснай кнігі">
+<!ENTITY printPreviewAddressBook.accesskey              "К">
+<!ENTITY printContactCmd.label                          "Друкаваць сувязь…">
+<!ENTITY printContactCmd.accesskey                      "Д">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Надрукаваць адрасную кнігу…">
+<!ENTITY printAddressBook.accesskey                     "А">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Праўка">
+<!ENTITY editMenu.accesskey                             "П">
+<!ENTITY deleteCmd.label                                "Выдаліць">
+<!ENTITY deleteAbCmd.label                              "Выдаліць адрасную кнігу">
+<!ENTITY deleteContactCmd.label                         "Выдаліць сувязь">
+<!ENTITY deleteContactsCmd.label                        "Выдаліць сувязі">
+<!ENTITY deleteListCmd.label                            "Выдаліць спіс">
+<!ENTITY deleteListsCmd.label                           "Выдаліць спісы">
+<!ENTITY deleteItemsCmd.label                           "Выдаліць адзінкі">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Уласцівасці">
+<!ENTITY propertiesMenu.accesskey                       "i">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Уласцівасці адраснай кнігі">
+<!ENTITY abPropertiesMenu.accesskey                     "і">
+<!ENTITY contactPropertiesMenu.label                    "Уласцівасці кантакта">
+<!ENTITY contactPropertiesMenu.accesskey                "i">
+<!ENTITY mailingListPropertiesMenu.label                "Уласцівасці спіса рассылкі">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Прагляд">
+<!ENTITY viewMenu.accesskey                             "г">
+<!ENTITY viewToolbarsMenu.label                         "Прыладапаліцы">
+<!ENTITY viewToolbarsMenu.accesskey                     "П">
+<!ENTITY menubarCmd.label                               "Паліца меню">
+<!ENTITY menubarCmd.accesskey                           "м">
+<!ENTITY showAbToolbarCmd.label                         "Паліца прыладаў адраснай кнігі">
+<!ENTITY showAbToolbarCmd.accesskey                     "р">
+<!ENTITY showTaskbarCmd.label                           "Паліца статусу">
+<!ENTITY showTaskbarCmd.accesskey                       "с">
+<!ENTITY customizeToolbar.label                         "Наладзіць…">
+<!ENTITY customizeToolbar.accesskey                     "Н">
+<!ENTITY layoutMenu.label                               "Раскладка">
+<!ENTITY layoutMenu.accesskey                           "Р">
+<!ENTITY showDirectoryPane.label                        "Шыба дырэкторыяў">
+<!ENTITY showDirectoryPane.accesskey                    "д">
+<!ENTITY showContactPane2.label                         "Шыба сувязяў">
+<!ENTITY showContactPane2.accesskey                     "с">
+<!ENTITY menu_ShowNameAs.label                          "Паказваць імёны як">
+<!ENTITY menu_ShowNameAs.accesskey                      "І">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Імя Прозвішча">
+<!ENTITY firstLastCmd2.accesskey                        "і">
+<!ENTITY lastFirstCmd.label                             "Прозвішча Імя">
+<!ENTITY lastFirstCmd.accesskey                         "П">
+<!ENTITY displayNameCmd.label                           "Адлюстроўнае імя">
+<!ENTITY displayNameCmd.accesskey                       "А">
+<!ENTITY sortMenu.label                                 "Размеркаваць па">
+<!ENTITY sortMenu.accesskey                             "Р">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Прылады">
+<!ENTITY tasksMenu.accesskey                            "л">
+<!ENTITY messengerCmd.label                             "Пошта і Навінакупы">
+<!ENTITY messengerCmd.accesskey                         "П">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Адрасная кніга">
+<!ENTITY addressBookCmd.accesskey                       "а">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "Пошук адрасоў…">
+<!ENTITY searchAddressesCmd.accesskey                   "ш">
+<!ENTITY importCmd.label                                "Імпарт…">
+<!ENTITY importCmd.accesskey                            "І">
+<!ENTITY exportCmd.label                                "Экспарт…">
+<!ENTITY exportCmd.accesskey                            "Э">
+<!ENTITY preferencesCmd2.label                          "Наладжванні">
+<!ENTITY preferencesCmd2.accesskey                      "Н">
+<!ENTITY preferencesCmdUnix.label                       "Перавагі">
+<!ENTITY preferencesCmdUnix.accesskey                   "П">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Новая сувязь">
+<!ENTITY newContactButton.accesskey                     "с">
+<!ENTITY newlistButton.label                            "Новы спіс">
+<!ENTITY newlistButton.accesskey                        "С">
+<!ENTITY showAsDefault.label                            "Прадвызначаны пачатковы каталог">
+<!ENTITY showAsDefault.accesskey                        "П">
+<!ENTITY editPropertiesButton.label                     "Рэдагаваць">
+<!ENTITY propertiesContext.label                        "Уласцівасці">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "Уласцівасці">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY editContactContext.label                       "Рэдагаваць кантакт">
+<!ENTITY editContactContext.accesskey                   "Р">
+<!ENTITY editMailingListContext.label                   "Рэдагаваць спіс">
+<!ENTITY editMailingListContext.accesskey               "Р">
+<!ENTITY newmsgButton.label                             "Укласці">
+<!ENTITY newmsgButton.accesskey                         "У">
+<!ENTITY newIM.label                                    "Вокамгненнае паведамленне">
+<!ENTITY newIM.accesskey                                "В">
+<!ENTITY printButton.label                              "Друкаваць…">
+<!ENTITY printButton.accesskey                          "а">
+<!ENTITY deleteButton2.label                            "Выдаліць">
+<!ENTITY deleteButton2.accesskey                        "д">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "Стварыць новую сувязь у адраснай кнізе">
+<!ENTITY newlistButton.tooltip                          "Стварыць новы спіс">
+<!ENTITY editPropertiesButton.tooltip                   "Рэдагаваць вылучаную адзінку">
+<!ENTITY editAbPropertiesButton.tooltip                 "Рэдагаваць уласцівасці выбранай адраснай кнігі">
+<!ENTITY editContactPropertiesButton.tooltip            "Рэдагаваць вылучаны кантакт">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Рэдагаваць вылучаны спіс рассылкі">
+<!ENTITY newmsgButton.tooltip                           "Даслаць паштовы ліст">
+<!ENTITY newIM.tooltip                                  "Даслаць вокамгненнае паведамленне ці распачаць гутарку">
+<!ENTITY deleteButton2.tooltip                          "Выдаліць вылучаную адзінку">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Імя або э-пошта">
+<!ENTITY SearchNameOrEmail.accesskey                    "І">
+<!ENTITY advancedButton.tooltip                         "Пашыраны пошук адрасоў">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Хуткі пошук">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Адрасная кніга">
+<!ENTITY Addrbook.accesskey                             "к">
+<!ENTITY GeneratedName.label                            "Імя">
+<!ENTITY GeneratedName.accesskey                        "і">
+<!ENTITY PrimaryEmail.label                             "Э-пошта">
+<!ENTITY PrimaryEmail.accesskey                         "э">
+<!ENTITY ChatName.label                                 "Назва гутаркі">
+<!ENTITY ChatName.accesskey                             "г">
+<!ENTITY Company.label                                  "Установа">
+<!ENTITY Company.accesskey                              "у">
+<!ENTITY NickName.label                                 "Мянушка">
+<!ENTITY NickName.accesskey                             "м">
+<!ENTITY SecondEmail.label                              "Дадатковая э-пошта">
+<!ENTITY SecondEmail.accesskey                          "д">
+<!ENTITY Department.label                               "Аддзел">
+<!ENTITY Department.accesskey                           "А">
+<!ENTITY JobTitle.label                                 "Пасада">
+<!ENTITY JobTitle.accesskey                             "П">
+<!ENTITY CellularNumber.label                           "Мабільнік">
+<!ENTITY CellularNumber.accesskey                       "б">
+<!ENTITY PagerNumber.label                              "Гартач">
+<!ENTITY PagerNumber.accesskey                          "г">
+<!ENTITY FaxNumber.label                                "Факс">
+<!ENTITY FaxNumber.accesskey                            "ф">
+<!ENTITY HomePhone.label                                "Хатні тэляфон">
+<!ENTITY HomePhone.accesskey                            "х">
+<!ENTITY WorkPhone.label                                "Працоўны тэляфон">
+<!ENTITY WorkPhone.accesskey                            "п">
+<!ENTITY sortAscending.label                            "Узыходны">
+<!ENTITY sortAscending.accesskey                        "у">
+<!ENTITY sortDescending.label                           "Сыходны">
+<!ENTITY sortDescending.accesskey                       "с">
+<!ENTITY _PhoneticName.label                            "Фанетычнае імя">
+<!ENTITY _PhoneticName.accesskey                        "ф">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Сувязь">
+<!ENTITY home.heading                                   "Хатні">
+<!ENTITY other.heading                                  "Іншае">
+<!ENTITY chat.heading                                   "Гутарка">
+<!ENTITY phone.heading                                  "Тэляфон">
+<!ENTITY work.heading                                   "Працоўны">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Апісанне">
+<!ENTITY addresses.heading                              "Адрасы">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Атрымаць мапу">
+<!ENTITY mapIt.tooltip                                  "Адлюстроўваць мапу гэтага адраса з Сеціва">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Акно">
+<!ENTITY minimizeWindow.label                           "Мінімізаваць">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Выцягнуць усе наперад">
+<!ENTITY zoomWindow.label                               "Павялічэнне">

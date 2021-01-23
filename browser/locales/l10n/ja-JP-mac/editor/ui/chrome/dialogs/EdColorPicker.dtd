@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label		"カラー">
+<!ENTITY lastPickedColor.label		"最後に選んだカラー">
+<!ENTITY lastPickedColor.accessKey	"L">
+<!ENTITY chooseColor1.label		"カラーを選択してください:">
+<!ENTITY chooseColor2.label		"HTML カラー文字列">
+<!ENTITY chooseColor2.accessKey		"H">
+<!ENTITY setColorExample.label		"(例: &quot;#0000ff&quot; または &quot;blue&quot;):">
+<!ENTITY default.label			"デフォルト">
+<!ENTITY default.accessKey		"D">
+<!ENTITY palette.label			"パレット:">
+<!ENTITY standardPalette.label		"標準">
+<!ENTITY webPalette.label		"ウェブセーフカラー">
+<!ENTITY background.label		"対象:"><!-- en-US: Background for: -->
+<!ENTITY background.accessKey		"B">
+<!ENTITY table.label			"表">
+<!ENTITY table.accessKey		"T">
+<!ENTITY cell.label			"セル">
+<!ENTITY cell.accessKey			"C">

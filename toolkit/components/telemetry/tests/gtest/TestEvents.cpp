@@ -5,6 +5,7 @@
 
 #include "core/TelemetryEvent.h"
 #include "gtest/gtest.h"
+#include "js/Array.h"  // JS::GetArrayLength
 #include "mozilla/Maybe.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Unused.h"
@@ -59,12 +60,13 @@ TEST_F(TelemetryTestFixture, RecordEventNative) {
                          Nothing(), Nothing());
 
   // Try recording with normal value, extra
-  nsTArray<EventExtraEntry> extra({EventExtraEntry{extraKey, extraValue}});
+  CopyableTArray<EventExtraEntry> extra(
+      {EventExtraEntry{extraKey, extraValue}});
   Telemetry::RecordEvent(Telemetry::EventID::TelemetryTest_Test1_Object2,
                          mozilla::Some(value), mozilla::Some(extra));
 
   // Try recording with too-long value, extra
-  nsTArray<EventExtraEntry> longish(
+  CopyableTArray<EventExtraEntry> longish(
       {EventExtraEntry{extraKey, extraValueLong}});
   Telemetry::RecordEvent(Telemetry::EventID::TelemetryTest_Test2_Object2,
                          mozilla::Some(valueLong), mozilla::Some(longish));
@@ -93,7 +95,7 @@ TEST_F(TelemetryTestFixture, RecordEventNative) {
   << "Must be able to get record.";
   JS::RootedObject recordArray(aCx, &eventRecord.toObject());
   uint32_t recordLength;
-  ASSERT_TRUE(JS_GetArrayLength(aCx, recordArray, &recordLength))
+  ASSERT_TRUE(JS::GetArrayLength(aCx, recordArray, &recordLength))
   << "Event record array must have length.";
   ASSERT_TRUE(recordLength == 6)
   << "Event record must have 6 elements.";

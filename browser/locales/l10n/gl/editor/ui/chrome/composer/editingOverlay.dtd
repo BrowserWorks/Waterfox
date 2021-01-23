@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Abrir ficheiro…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Abrir localización web…">
+<!ENTITY openRemoteCmd.accesskey "l">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Páxinas recentes">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Gardar">
+<!ENTITY saveCmd.accesskey "G">
+<!ENTITY saveAsCmd.label "Gardar como…">
+<!ENTITY saveAsCmd.accesskey "c">
+<!ENTITY saveAsChangeEncodingCmd2.label "Gardar e modificar a codificación de texto">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Publicar">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publicar como…">
+<!ENTITY publishAsCmd.accesskey "b">
+<!ENTITY fileRevert.label "Volver">
+<!ENTITY fileRevert.accesskey "V">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Publicar configuración do sitio…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Novo">
+<!ENTITY newToolbarCmd.tooltip "Crear unha páxina nova do Composer">
+<!ENTITY openToolbarCmd.label "Abrir">
+<!ENTITY openToolbarCmd.tooltip "Abrir un ficheiro local">
+<!ENTITY saveToolbarCmd.tooltip "Gardar o ficheiro nunha localización local">
+<!ENTITY publishToolbarCmd.tooltip "Cargar ficheiro nunha localización remota">

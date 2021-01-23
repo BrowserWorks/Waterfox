@@ -11,7 +11,6 @@
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
 #include "nsIFile.h"
-#include "nsIFileStreams.h"
 #include "mozilla/RefPtr.h"
 #include "nsUrlClassifierPrefixSet.h"
 #include "VariableLengthPrefixSet.h"
@@ -91,7 +90,7 @@ class LookupResult {
   bool mProtocolV2;
 
  private:
-  ~LookupResult() {}
+  ~LookupResult() = default;
 };
 
 typedef nsTArray<RefPtr<LookupResult>> LookupResultArray;
@@ -116,7 +115,7 @@ class CacheResult {
   Prefix prefix;
 
  protected:
-  virtual ~CacheResult() {}
+  virtual ~CacheResult() = default;
 };
 
 class CacheResultV2 final : public CacheResult {
@@ -182,13 +181,9 @@ class LookupCache {
   // entry
   static nsresult GetLookupFragments(const nsACString& aSpec,
                                      nsTArray<nsCString>* aFragments);
-  // Similar to GetKey(), but if the domain contains three or more components,
-  // two keys will be returned:
-  //  hostname.com/foo/bar -> [hostname.com]
-  //  mail.hostname.com/foo/bar -> [hostname.com, mail.hostname.com]
-  //  www.mail.hostname.com/foo/bar -> [hostname.com, mail.hostname.com]
-  static nsresult GetHostKeys(const nsACString& aSpec,
-                              nsTArray<nsCString>* aHostKeys);
+
+  static nsresult GetLookupWhitelistFragments(const nsACString& aSpec,
+                                              nsTArray<nsCString>* aFragments);
 
   LookupCache(const nsACString& aTableName, const nsACString& aProvider,
               nsCOMPtr<nsIFile>& aStoreFile);
@@ -225,18 +220,29 @@ class LookupCache {
 
   void GetCacheInfo(nsIUrlClassifierCacheInfo** aCache) const;
 
+  nsresult VerifyCRC32(nsCOMPtr<nsIInputStream>& aIn);
+
   virtual nsresult Open();
-  virtual nsresult Init() = 0;
-  virtual nsresult ClearPrefixes() = 0;
+  virtual nsresult Init();
+  ;
+  virtual nsresult ClearPrefixes();
   virtual nsresult Has(const Completion& aCompletion, bool* aHas,
                        uint32_t* aMatchLength, bool* aConfirmed) = 0;
 
-  virtual nsresult StoreToFile(nsCOMPtr<nsIFile>& aFile) = 0;
-  virtual nsresult LoadFromFile(nsCOMPtr<nsIFile>& aFile) = 0;
+  // Prefix files file header
+  struct Header {
+    uint32_t magic;
+    uint32_t version;
+  };
 
-  virtual bool IsEmpty() const = 0;
+  virtual nsresult StoreToFile(nsCOMPtr<nsIFile>& aFile);
+  virtual nsresult LoadFromFile(nsCOMPtr<nsIFile>& aFile);
+
+  virtual bool IsEmpty() const;
 
   virtual void ClearAll();
+
+  virtual nsresult LoadMozEntries() = 0;
 
   template <typename T>
   static T* Cast(LookupCache* aThat) {
@@ -253,16 +259,20 @@ class LookupCache {
  private:
   nsresult LoadPrefixSet();
 
-  virtual size_t SizeOfPrefixSet() const = 0;
+  virtual size_t SizeOfPrefixSet() const;
   virtual nsCString GetPrefixSetSuffix() const = 0;
 
   virtual int Ver() const = 0;
 
+  virtual void GetHeader(Header& aHeader) = 0;
+  virtual nsresult SanityCheck(const Header& aHeader) = 0;
   virtual nsresult LoadLegacyFile() = 0;
+  virtual nsresult ClearLegacyFile() = 0;
 
  protected:
-  virtual ~LookupCache() {}
+  virtual ~LookupCache() = default;
 
+  // Buffer size for file read/write
   static const uint32_t MAX_BUFFER_SIZE;
 
   // Check completions in positive cache and prefix in negative cache.
@@ -281,6 +291,8 @@ class LookupCache {
 
   // Cache stores fullhash response(V4)/gethash response(V2)
   FullHashResponseMap mFullHashCache;
+
+  RefPtr<VariableLengthPrefixSet> mVLPrefixSet;
 };
 
 typedef nsTArray<RefPtr<LookupCache>> LookupCacheArray;
@@ -292,20 +304,14 @@ class LookupCacheV2 final : public LookupCache {
                          nsCOMPtr<nsIFile>& aStoreFile)
       : LookupCache(aTableName, aProvider, aStoreFile) {}
 
-  virtual nsresult Init() override;
-  virtual nsresult Open() override;
-  virtual void ClearAll() override;
   virtual nsresult Has(const Completion& aCompletion, bool* aHas,
                        uint32_t* aMatchLength, bool* aConfirmed) override;
-
-  virtual nsresult StoreToFile(nsCOMPtr<nsIFile>& aFile) override;
-  virtual nsresult LoadFromFile(nsCOMPtr<nsIFile>& aFile) override;
-
-  virtual bool IsEmpty() const override;
 
   nsresult Build(AddPrefixArray& aAddPrefixes, AddCompleteArray& aAddCompletes);
 
   nsresult GetPrefixes(FallibleTArray<uint32_t>& aAddPrefixes);
+  nsresult GetPrefixes(FallibleTArray<uint32_t>& aAddPrefixes,
+                       FallibleTArray<nsCString>& aAddCompletes);
 
   // This will Clear() the passed arrays when done.
   // 'aExpirySec' is used by testcase to config an expired time.
@@ -313,35 +319,25 @@ class LookupCacheV2 final : public LookupCache {
                                const MissPrefixArray& aMissPrefixes,
                                int64_t aExpirySec = 0);
 
-#if DEBUG
-  void DumpCompletions() const;
-#endif
+  virtual nsresult LoadMozEntries() override;
 
   static const int VER;
+  static const uint32_t VLPSET_MAGIC;
+  static const uint32_t VLPSET_VERSION;
 
  protected:
-  nsresult ReadCompletions();
-
-  virtual nsresult ClearPrefixes() override;
-  virtual size_t SizeOfPrefixSet() const override;
   virtual nsCString GetPrefixSetSuffix() const override;
 
  private:
-  ~LookupCacheV2() {}
+  ~LookupCacheV2() = default;
 
   virtual int Ver() const override { return VER; }
 
+  virtual void GetHeader(Header& aHeader) override;
+  virtual nsresult SanityCheck(const Header& aHeader) override;
+
   virtual nsresult LoadLegacyFile() override;
-
-  // Construct a Prefix Set with known prefixes.
-  // This will Clear() aAddPrefixes when done.
-  nsresult ConstructPrefixSet(AddPrefixArray& aAddPrefixes);
-
-  // Full length hashes obtained in update request
-  CompletionArray mUpdateCompletions;
-
-  // Set of prefixes known to be in the database
-  RefPtr<nsUrlClassifierPrefixSet> mPrefixSet;
+  virtual nsresult ClearLegacyFile() override;
 };
 
 }  // namespace safebrowsing

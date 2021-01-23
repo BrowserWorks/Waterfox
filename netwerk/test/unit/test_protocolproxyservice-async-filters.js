@@ -29,26 +29,20 @@ TestProtocolHandler.prototype = {
     Ci.nsIProtocolHandler.URI_NORELATIVE |
     Ci.nsIProtocolHandler.ALLOWS_PROXY |
     Ci.nsIProtocolHandler.URI_DANGEROUS_TO_LOAD,
-  newURI: function(spec, originCharset, baseURI) {
-    return Cc["@mozilla.org/network/simple-uri-mutator;1"]
-      .createInstance(Ci.nsIURIMutator)
-      .setSpec(spec)
-      .finalize();
+  newChannel(uri, aLoadInfo) {
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
-  newChannel: function(uri, aLoadInfo) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-  },
-  allowPort: function(port, scheme) {
+  allowPort(port, scheme) {
     return true;
   },
 };
 
 function TestProtocolHandlerFactory() {}
 TestProtocolHandlerFactory.prototype = {
-  createInstance: function(delegate, iid) {
+  createInstance(delegate, iid) {
     return new TestProtocolHandler().QueryInterface(iid);
   },
-  lockFactory: function(lock) {},
+  lockFactory(lock) {},
 };
 
 function register_test_protocol_handler() {
@@ -102,9 +96,9 @@ TestFilter.prototype = {
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolProxyFilter]),
 
-  applyFilter: function(pps, uri, pi, cb) {
+  applyFilter(uri, pi, cb) {
     if (this._result == THROW) {
-      throw Cr.NS_ERROR_FAILURE;
+      throw Components.Exception("", Cr.NS_ERROR_FAILURE);
     }
 
     var pi_tail = pps.newProxyInfo(
@@ -139,7 +133,7 @@ resolveCallback.prototype = {
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolProxyCallback]),
 
-  onProxyAvailable: function(req, channel, pi, status) {
+  onProxyAvailable(req, channel, pi, status) {
     this.nextFunction(pi);
   },
 };

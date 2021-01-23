@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# janimo <jani@ubuntu.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# Laudatti <Laudatti@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Setările serverului de trimitere (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDesc.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDesc.label "Deși puteți specifica mai multe servere de trimitere (SMTP), aceasta se recomandă doar utilizatorilor avansați. Definirea mai multor servere de trimitere poate cauza erori la trimiterea mesajelor.">
+
+<!ENTITY smtpListAdd.label  "Adaugă…">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "Editează">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Eliminați">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "Setează ca implicit">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDescription.label "Descriere:">
+<!ENTITY serverName.label "Nume server:">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY userName.label   "Nume utilizator:">
+<!ENTITY connectionSecurity.label "Securitatea conexiunii: ">
+<!ENTITY authMethod.label   "Authentication method: ">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title "Llimpiar historial recién">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!ENTITY clearTimeDuration.label "Intervalu de tiempu a llimpiar: ">
+<!ENTITY clearTimeDuration.accesskey "I">
+<!ENTITY clearTimeDuration.lastHour "La cabera hora">
+<!ENTITY clearTimeDuration.last2Hours "Les caberes dos hores">
+<!ENTITY clearTimeDuration.last4Hours "Les caberes cuatru hores">
+<!ENTITY clearTimeDuration.today "Güei">
+<!ENTITY clearTimeDuration.everything "Too">
+<!ENTITY clearTimeDuration.suffix "">
+
+<!ENTITY detailsProgressiveDisclosure.label "Detalles">
+<!ENTITY detailsProgressiveDisclosure.accesskey "D">
+
+
+<!ENTITY itemHistory.label "Historial de navegación">
+<!ENTITY itemHistory.accesskey "H">
+<!ENTITY itemCookies.label "Cookies">
+<!ENTITY itemCookies.accesskey "C">
+<!ENTITY itemCache.label "Caché">
+<!ENTITY itemCache.accesskey "a">
+
+<!ENTITY sanitizeEverythingUndoWarning "Esta aición nun pue desfacese.">
+
+<!ENTITY dialog.width "28em">

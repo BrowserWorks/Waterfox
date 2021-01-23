@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -77,12 +75,12 @@ DevToolsUtils.defineLazyGetter(this, "nssErrorsService", () => {
 var DebuggerSocket = {};
 
 /**
- * Connects to a debugger server socket.
+ * Connects to a devtools server socket.
  *
  * @param host string
- *        The host name or IP address of the debugger server.
+ *        The host name or IP address of the devtools server.
  * @param port number
- *        The port number of the debugger server.
+ *        The port number of the devtools server.
  * @param encryption boolean (optional)
  *        Whether the server requires encryption.  Defaults to false.
  * @param webSocket boolean (optional)
@@ -98,7 +96,7 @@ var DebuggerSocket = {};
 DebuggerSocket.connect = async function(settings) {
   // Default to PROMPT |Authenticator| instance if not supplied
   if (!settings.authenticator) {
-    settings.authenticator = new (Authenticators.get()).Client();
+    settings.authenticator = new (Authenticators.get().Client)();
   }
   _validateSettings(settings);
   // eslint-disable-next-line no-shadow
@@ -132,9 +130,9 @@ function _validateSettings(settings) {
  * connect attempts in the process.
  *
  * @param host string
- *        The host name or IP address of the debugger server.
+ *        The host name or IP address of the devtools server.
  * @param port number
- *        The port number of the debugger server.
+ *        The port number of the devtools server.
  * @param encryption boolean (optional)
  *        Whether the server requires encryption.  Defaults to false.
  * @param webSocket boolean (optional)
@@ -192,9 +190,9 @@ var _getTransport = async function(settings) {
  * after storing a cert override.
  *
  * @param host string
- *        The host name or IP address of the debugger server.
+ *        The host name or IP address of the devtools server.
  * @param port number
- *        The port number of the debugger server.
+ *        The port number of the devtools server.
  * @param encryption boolean (optional)
  *        Whether the server requires encryption.  Defaults to false.
  * @param authenticator Authenticator
@@ -273,10 +271,17 @@ var _attemptTransport = async function(settings) {
 var _attemptConnect = async function({ host, port, encryption }) {
   let s;
   if (encryption) {
-    s = socketTransportService.createTransport(["ssl"], 1, host, port, null);
+    s = socketTransportService.createTransport(["ssl"], host, port, null);
   } else {
-    s = socketTransportService.createTransport(null, 0, host, port, null);
+    s = socketTransportService.createTransport([], host, port, null);
   }
+
+  // Force disabling IPV6 if we aren't explicitely connecting to an IPv6 address
+  // It fails intermitently on MacOS when opening the Browser Toolbox (bug 1615412)
+  if (!host.includes(":")) {
+    s.connectionFlags |= Ci.nsISocketTransport.DISABLE_IPV6;
+  }
+
   // By default the CONNECT socket timeout is very long, 65535 seconds,
   // so that if we race to be in CONNECT state while the server socket is still
   // initializing, the connection is stuck in connecting state for 18.20 hours!
@@ -401,13 +406,13 @@ function _storeCertOverride(s, host, port) {
 }
 
 /**
- * Creates a new socket listener for remote connections to the DebuggerServer.
+ * Creates a new socket listener for remote connections to the DevToolsServer.
  * This helps contain and organize the parts of the server that may differ or
  * are particular to one given listener mechanism vs. another.
  * This can be closed at any later time by calling |close|.
  * If remote connections are disabled, an error is thrown.
  *
- * @param {DebuggerServer} debuggerServer
+ * @param {DevToolsServer} devToolsServer
  * @param {Object} socketOptions
  *        options of socket as follows
  *        {
@@ -431,13 +436,13 @@ function _storeCertOverride(s, host, port) {
  *            Whether to use WebSocket protocol. Defaults is false.
  *        }
  */
-function SocketListener(debuggerServer, socketOptions) {
-  this._debuggerServer = debuggerServer;
+function SocketListener(devToolsServer, socketOptions) {
+  this._devToolsServer = devToolsServer;
 
   // Set socket options with default value
   this._socketOptions = {
     authenticator:
-      socketOptions.authenticator || new (Authenticators.get()).Server(),
+      socketOptions.authenticator || new (Authenticators.get().Server)(),
     discoverable: !!socketOptions.discoverable,
     encryption: !!socketOptions.encryption,
     portOrPath: socketOptions.portOrPath || null,
@@ -489,7 +494,7 @@ SocketListener.prototype = {
    */
   open: function() {
     this._validateOptions();
-    this._debuggerServer.addSocketListener(this);
+    this._devToolsServer.addSocketListener(this);
 
     let flags = Ci.nsIServerSocket.KeepWhenOffline;
     // A preference setting can force binding on the loopback interface.
@@ -580,7 +585,7 @@ SocketListener.prototype = {
       this._socket.close();
       this._socket = null;
     }
-    this._debuggerServer.removeSocketListener(this);
+    this._devToolsServer.removeSocketListener(this);
   },
 
   get host() {
@@ -650,7 +655,7 @@ loader.lazyGetter(this, "HANDSHAKE_TIMEOUT", () => {
  * A |ServerSocketConnection| is created by a |SocketListener| for each accepted
  * incoming socket.  This is a short-lived object used to implement
  * authentication and verify encryption prior to handing off the connection to
- * the |DebuggerServer|.
+ * the |DevToolsServer|.
  */
 function ServerSocketConnection(listener, socketTransport) {
   this._listener = listener;
@@ -710,7 +715,7 @@ ServerSocketConnection.prototype = {
   /**
    * This is the main authentication workflow.  If any pieces reject a promise,
    * the connection is denied.  If the entire process resolves successfully,
-   * the connection is finally handed off to the |DebuggerServer|.
+   * the connection is finally handed off to the |DevToolsServer|.
    */
   async _handle() {
     dumpn("Debugging connection starting authentication on " + this.address);
@@ -828,7 +833,7 @@ ServerSocketConnection.prototype = {
     });
     switch (result) {
       case AuthenticationResult.DISABLE_ALL:
-        this._listener._debuggerServer.closeAllSocketListeners();
+        this._listener._devToolsServer.closeAllSocketListeners();
         Services.prefs.setBoolPref("devtools.debugger.remote-enabled", false);
         return promise.reject(Cr.NS_ERROR_CONNECTION_REFUSED);
       case AuthenticationResult.DENY:

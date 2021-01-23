@@ -4,37 +4,22 @@
 
 import re
 import os
-import signal
 import subprocess
 from collections import defaultdict
 
-import which
-from mozprocess import ProcessHandlerMixin
+from mozfile import which
 
 from mozlint import result
 from mozlint.pathutils import get_ancestors_by_name
+from mozlint.util.implementation import LintProcess
 
 
-here = os.path.abspath(os.path.dirname(__file__))
-YAMLLINT_REQUIREMENTS_PATH = os.path.join(here, 'yamllint_requirements.txt')
-
-
-YAMLLINT_INSTALL_ERROR = """
-Unable to install correct version of yamllint
-Try to install it manually with:
-    $ pip install -U --require-hashes -r {}
-""".strip().format(YAMLLINT_REQUIREMENTS_PATH)
-
-YAMLLINT_FORMAT_REGEX = re.compile(r'(.*):(.*):(.*): \[(error|warning)\] (.*) \((.*)\)$')
+YAMLLINT_FORMAT_REGEX = re.compile('(.*):(.*):(.*): \[(error|warning)\] (.*) \((.*)\)$')
 
 results = []
 
 
-class YAMLLintProcess(ProcessHandlerMixin):
-    def __init__(self, config, *args, **kwargs):
-        self.config = config
-        kwargs['processOutputLine'] = [self.process_line]
-        ProcessHandlerMixin.__init__(self, *args, **kwargs)
+class YAMLLintProcess(LintProcess):
 
     def process_line(self, line):
         try:
@@ -44,8 +29,8 @@ class YAMLLintProcess(ProcessHandlerMixin):
             print('Unable to match yaml regex against output: {}'.format(line))
             return
 
-        res = {'path': os.path.relpath(abspath, self.config['root']),
-               'message': message,
+        res = {'path': os.path.relpath(str(abspath), self.config['root']),
+               'message': str(message),
                'level': 'error',
                'lineno': line,
                'column': col,
@@ -54,15 +39,8 @@ class YAMLLintProcess(ProcessHandlerMixin):
 
         results.append(result.from_config(self.config, **res))
 
-    def run(self, *args, **kwargs):
-        # protect against poor SIGINT handling. Handle it here instead
-        # so we can kill the process without a cryptic traceback.
-        orig = signal.signal(signal.SIGINT, signal.SIG_IGN)
-        ProcessHandlerMixin.run(self, *args, **kwargs)
-        signal.signal(signal.SIGINT, orig)
 
-
-def get_yamllint_binary():
+def get_yamllint_binary(mc_root):
     """
     Returns the path of the first yamllint binary available
     if not found returns None
@@ -71,10 +49,9 @@ def get_yamllint_binary():
     if binary:
         return binary
 
-    try:
-        return which.which('yamllint')
-    except which.WhichError:
-        return None
+    # yamllint is vendored in mozilla-central: let's use this
+    # if no environment variable is found.
+    return os.path.join(mc_root, 'third_party', 'python', 'yamllint', 'yamllint')
 
 
 def _run_pip(*args):
@@ -90,19 +67,6 @@ def _run_pip(*args):
         return False
 
 
-def reinstall_yamllint():
-    """
-    Try to install yamllint at the target version, returns True on success
-    otherwise prints the otuput of the pip command and returns False
-    """
-    if _run_pip('install', '-U',
-                '--require-hashes', '-r',
-                YAMLLINT_REQUIREMENTS_PATH):
-        return True
-
-    return False
-
-
 def run_process(config, cmd):
     proc = YAMLLintProcess(config, cmd)
     proc.run()
@@ -114,7 +78,7 @@ def run_process(config, cmd):
 
 def gen_yamllint_args(cmdargs, paths=None, conf_file=None):
     args = cmdargs[:]
-    if isinstance(paths, basestring):
+    if isinstance(paths, str):
         paths = [paths]
     if conf_file and conf_file != 'default':
         return args + ['-c', conf_file] + paths
@@ -122,16 +86,16 @@ def gen_yamllint_args(cmdargs, paths=None, conf_file=None):
 
 
 def lint(files, config, **lintargs):
-    if not reinstall_yamllint():
-        print(YAMLLINT_INSTALL_ERROR)
-        return 1
+    log = lintargs['log']
 
-    binary = get_yamllint_binary()
+    binary = get_yamllint_binary(lintargs['root'])
 
     cmdargs = [
+        which('python'),
         binary,
         '-f', 'parsable'
     ]
+    log.debug("Command: {}".format(' '.join(cmdargs)))
 
     config = config.copy()
     config['root'] = lintargs['root']

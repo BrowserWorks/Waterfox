@@ -12,14 +12,15 @@ add_task(async function() {
     EventUtils
   );
 
-  // Since synthesizeDrop triggers the srcElement, need to use another button.
-  let dragSrcElement = document.getElementById("downloads-button");
-  ok(dragSrcElement, "Downloads button exists");
+  // Since synthesizeDrop triggers the srcElement, need to use another button
+  // that should be visible.
+  let dragSrcElement = document.getElementById("sidebar-button");
+  ok(dragSrcElement, "Sidebar button exists");
   let homeButton = document.getElementById("home-button");
   ok(homeButton, "home button present");
 
   async function drop(dragData, homepage) {
-    let setHomepageDialogPromise = BrowserTestUtils.domWindowOpened();
+    let setHomepageDialogPromise = BrowserTestUtils.domWindowOpenedAndLoaded();
 
     EventUtils.synthesizeDrop(
       dragSrcElement,
@@ -33,7 +34,6 @@ add_task(async function() {
 
     let setHomepageDialog = await setHomepageDialogPromise;
     ok(true, "dialog appeared in response to home button drop");
-    await BrowserTestUtils.waitForEvent(setHomepageDialog, "load", false);
 
     let setHomepagePromise = new Promise(function(resolve) {
       let observer = {
@@ -53,7 +53,7 @@ add_task(async function() {
       Services.prefs.addObserver(HOMEPAGE_PREF, observer);
     });
 
-    setHomepageDialog.document.documentElement.acceptDialog();
+    setHomepageDialog.document.getElementById("commonDialog").acceptDialog();
 
     await setHomepagePromise;
   }

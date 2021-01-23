@@ -33,13 +33,16 @@ var gSanitizePromptDialog = {
   init() {
     // This is used by selectByTimespan() to determine if the window has loaded.
     this._inited = true;
+    this._dialog = document.querySelector("dialog");
 
-    let OKButton = document.documentElement.getButton("accept");
+    let OKButton = this._dialog.getButton("accept");
     document.l10n.setAttributes(OKButton, "sanitize-button-ok");
 
     document.addEventListener("dialogaccept", function(e) {
       gSanitizePromptDialog.sanitize(e);
     });
+
+    this.registerSyncFromPrefListeners();
 
     if (this.selectedTimespan === Sanitizer.TIMESPAN_EVERYTHING) {
       this.prepareWarning();
@@ -64,7 +67,7 @@ var gSanitizePromptDialog = {
     }
 
     // Only apply the following if the dialog is opened outside of the Preferences.
-    if (!("gSubDialog" in window.opener)) {
+    if (!window.opener || !("gSubDialog" in window.opener)) {
       // The style attribute on the dialog may get set after the dialog has been sized.
       // Force the dialog to size again after the style attribute has been applied.
       document.l10n.translateElements([document.documentElement]).then(() => {
@@ -112,11 +115,10 @@ var gSanitizePromptDialog = {
     // the 'accept' button to indicate things are happening and return false -
     // once the async operation completes (either with or without errors)
     // we close the window.
-    let docElt = document.documentElement;
-    let acceptButton = docElt.getButton("accept");
+    let acceptButton = this._dialog.getButton("accept");
     acceptButton.disabled = true;
     document.l10n.setAttributes(acceptButton, "sanitize-button-clearing");
-    docElt.getButton("cancel").disabled = true;
+    this._dialog.getButton("cancel").disabled = true;
 
     try {
       let range = Sanitizer.getClearRange(this.selectedTimespan);
@@ -173,7 +175,7 @@ var gSanitizePromptDialog = {
     );
 
     try {
-      document.documentElement.getButton("accept").disabled = !found;
+      this._dialog.getButton("accept").disabled = !found;
     } catch (e) {}
 
     // Update the warning prompt if needed
@@ -202,7 +204,7 @@ var gSanitizePromptDialog = {
     var prefs = this._getItemPrefs();
     for (let i = 0; i < prefs.length; ++i) {
       var p = prefs[i];
-      Services.prefs.setBoolPref(p.name, p.value);
+      Services.prefs.setBoolPref(p.id, p.value);
     }
   },
 
@@ -218,5 +220,15 @@ var gSanitizePromptDialog = {
       }
     }
     return false;
+  },
+
+  /**
+   * Register syncFromPref listener functions.
+   */
+  registerSyncFromPrefListeners() {
+    let checkboxes = document.querySelectorAll("checkbox[preference]");
+    for (let checkbox of checkboxes) {
+      Preferences.addSyncFromPrefListener(checkbox, () => this.onReadGeneric());
+    }
   },
 };

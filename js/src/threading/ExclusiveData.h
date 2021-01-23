@@ -8,8 +8,9 @@
 #define threading_ExclusiveData_h
 
 #include "mozilla/Maybe.h"
-#include "mozilla/Move.h"
 #include "mozilla/OperatorNewExtensions.h"
+
+#include <utility>
 
 #include "threading/ConditionVariable.h"
 #include "threading/Mutex.h"
@@ -177,7 +178,7 @@ class ExclusiveData {
 
 template <class T>
 class ExclusiveWaitableData : public ExclusiveData<T> {
-  typedef ExclusiveData<T> Base;
+  using Base = ExclusiveData<T>;
 
   mutable ConditionVariable condVar_;
 
@@ -191,7 +192,7 @@ class ExclusiveWaitableData : public ExclusiveData<T> {
       : Base(id, std::forward<Args>(args)...) {}
 
   class MOZ_STACK_CLASS Guard : public ExclusiveData<T>::Guard {
-    typedef typename ExclusiveData<T>::Guard Base;
+    using Base = typename ExclusiveData<T>::Guard;
 
    public:
     explicit Guard(const ExclusiveWaitableData& parent) : Base(parent) {}
@@ -202,7 +203,7 @@ class ExclusiveWaitableData : public ExclusiveData<T> {
 
     void wait() {
       auto* parent = static_cast<const ExclusiveWaitableData*>(this->parent());
-      parent->condVar_.impl_.wait(parent->lock_);
+      parent->condVar_.wait(parent->lock_);
     }
 
     void notify_one() {

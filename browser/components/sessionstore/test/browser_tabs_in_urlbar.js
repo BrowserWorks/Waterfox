@@ -62,9 +62,9 @@ add_task(async function test_unrestored_tabs_listed() {
     ],
   };
 
-  const tabsForEnsure = {};
+  const tabsForEnsure = new Set();
   state.windows[0].tabs.forEach(function(tab) {
-    tabsForEnsure[tab.entries[0].url] = 1;
+    tabsForEnsure.add(tab.entries[0].url);
   });
 
   let tabsRestoring = 0;
@@ -103,6 +103,9 @@ add_task(async function test_unrestored_tabs_listed() {
     ss.setBrowserState(JSON.stringify(state));
   });
 
+  // Remove the current tab from tabsForEnsure, because switch to tab doesn't
+  // suggest it.
+  tabsForEnsure.delete(gBrowser.currentURI.spec);
   info("Searching open pages.");
   await UrlbarTestUtils.promiseAutocompleteResultPopup({
     window,
@@ -111,7 +114,6 @@ add_task(async function test_unrestored_tabs_listed() {
   });
   const total = UrlbarTestUtils.getResultCount(window);
   info(`Found ${total} matches`);
-  const quantumbar = UrlbarPrefs.get("quantumbar");
 
   // Check to see the expected uris and titles match up (in any order)
   for (let i = 0; i < total; i++) {
@@ -120,18 +122,14 @@ add_task(async function test_unrestored_tabs_listed() {
       info("Skip heuristic match");
       continue;
     }
-    const url = quantumbar
-      ? result.url
-      : PlacesUtils.parseActionUrl(result.url).params.url;
+    const url = result.url;
     Assert.ok(
-      url in tabsForEnsure,
+      tabsForEnsure.has(url),
       `Should have the found result '${url}' in the expected list of entries`
     );
     // Remove the found entry from expected results.
-    delete tabsForEnsure[url];
+    tabsForEnsure.delete(url);
   }
   // Make sure there is no reported open page that is not open.
-  for (const entry in tabsForEnsure) {
-    Assert.ok(!entry, `'${entry}' should have been in autocomplete results.`);
-  }
+  Assert.equal(tabsForEnsure.size, 0, "Should have found all the tabs");
 });

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Roda Tetikus">
+<!ENTITY mouseWheelPanel.label           "Tentukan tingkah laku roda tetikus apabila digunakan dengan kekunci pengubahsuai ini: ">
+<!ENTITY usingJustTheWheel.label         "Tiada kekunci pengubahsuai">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!ENTITY mouseWheelGroup.label           "Skrol menegak">
+<!ENTITY mouseWheelHorizGroup.label      "Skrol mengufuk">
+<!ENTITY sameAsVertical.label            "Sama seperti skrol menegak">
+<!ENTITY sameAsVertical.accesskey        "k">
+<!ENTITY doNothing.label                 "Jangan buat apa-apa">
+<!ENTITY doNothing.accesskey             "J">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "Skrol dokumen">
+<!ENTITY scrollDocument.accesskey        "S">
+<!ENTITY scrollDocumentHoriz.accesskey   "k">
+<!ENTITY history.label                   "Bergerak ke belakang dan ke hadapan dalam sejarah pelayaran">
+<!ENTITY history.accesskey               "B">
+<!ENTITY historyHoriz.accesskey          "b">
+<!ENTITY zoom.label                      "Zum masuk atau keluar halaman">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "u">
+<!ENTITY wheelSpeed.label                "Kelajuan roda tetikus:">
+<!ENTITY wheelSpeed.accesskey            "r">
+<!ENTITY wheelSpeedHoriz.accesskey       "u">
+<!ENTITY reverseDirection.label          "Hala songsang">
+<!ENTITY reverseDirection.accesskey      "H">
+<!ENTITY reverseDirectionHoriz.accesskey "a">

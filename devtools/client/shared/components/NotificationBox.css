@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -35,7 +34,17 @@
   color: var(--theme-toolbar-color);
   background-color: var(--theme-body-background);
   text-shadow: none;
-  border-bottom: 1px solid var(--theme-splitter-color);
+  border-color: var(--theme-splitter-color);
+  border-style: solid;
+  border-width: 0;
+}
+
+.notificationbox.border-top .notification {
+   border-top-width: 1px;
+}
+
+.notificationbox.border-bottom .notification {
+   border-bottom-width: 1px;
 }
 
 .notificationbox .notification[data-type="info"] {

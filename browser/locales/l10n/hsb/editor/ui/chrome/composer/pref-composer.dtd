@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Meni najnowšich stronow">
+<!ENTITY  documentsInMenu.label         "Maksimalna ličba nalistowanych stronow:">
+<!ENTITY  documentsInMenu.accesskey     "M">
+<!ENTITY  savingFiles.title             "Hdyž so strony składuja abo wozjewjeja">
+<!ENTITY  preserveExisting.label        "Originalne formatowanje žórłoweho koda wobchować">
+<!ENTITY  preserveExisting.accesskey    "O">
+<!ENTITY  preserveExisting.tooltip      "Wobchowuje łamanje linkow a originalne formatowanje strony">
+<!ENTITY  saveAssociatedFiles.label     "Wobrazy a druhe z nimi zwjazane dataje składować, hdyž so strony składuja">
+<!ENTITY  saveAssociatedFiles.accesskey "b">
+<!ENTITY  showPublishDialog.label       "Přeco wozjewjenski dialog pokazać, hdyž so strony wozjewjeja">
+<!ENTITY  showPublishDialog.accesskey   "P">
+<!ENTITY  composerEditing.label         "Wobdźěłować">
+<!ENTITY  maintainStructure.label       "Wuhotowanje tabele wobchować, hdyž so cele zasadźeja abo hašeja">
+<!ENTITY  maintainStructure.tooltip     "Wobchowuje praworóžkatu podobu tabele přez awtomatiske přidawanje celow po zasadźenju abo zhašenju celow">
+<!ENTITY  maintainStructure.accesskey   "h">
+<!ENTITY  useCSS.label                  "CSS-stile město HTML-elementow a atributow wužiwać">
+<!ENTITY  useCSS.accesskey              "S">
+<!ENTITY  crInPCreatesNewP.label        "Tłóčenje return-tasty we wotstawku přeco nowy wotstawk wutworja">
+<!ENTITY  crInPCreatesNewP.accesskey    "T">

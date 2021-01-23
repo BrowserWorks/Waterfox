@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Desinstal·la un proveïdor">
+<!ENTITY providerUninstall.accept.label                    "Cancel·la la subscripció seleccionada">
+<!ENTITY providerUninstall.accept.accesskey                "b">
+<!ENTITY providerUninstall.cancel.label                    "Conserva el complement">
+<!ENTITY providerUninstall.cancel.accesskey                "C">
+<!ENTITY providerUninstall.preName.label                   "Heu sol·licitat desinstal·lar o inhabilitar:">
+<!ENTITY providerUninstall.postName.label                  "Això farà que s'inhabilitin els calendaris següents.">
+<!ENTITY providerUninstall.reinstallNote.label             "Si no teniu intenció de reinstal·lar aquest proveïdor, podeu cancel·lar la subscripció als calendaris d'aquest proveïdor.">

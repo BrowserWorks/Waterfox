@@ -17,13 +17,15 @@ types.addDictType("root.listWorkers", {
 types.addDictType("root.listServiceWorkerRegistrations", {
   registrations: "array:serviceWorkerRegistration",
 });
-types.addDictType("root.listProcesses", {
-  processes: "array:json",
+// TODO: This can be removed once FF77 is the release
+// This is only kept to support older version. FF77+ uses watchTargets.
+types.addDictType("root.listRemoteFrames", {
+  frames: "array:frameDescriptor",
 });
-types.addDictType("root.listTabs", {
-  tabs: "array:browsingContextTarget",
-  selected: "number",
-});
+types.addPolymorphicType("root.browsingContextDescriptor", [
+  "frameDescriptor",
+  "processDescriptor",
+]);
 
 const rootSpecPrototype = {
   typeName: "root",
@@ -36,9 +38,13 @@ const rootSpecPrototype = {
 
     listTabs: {
       request: {
+        // Backward compatibility: this is only used for FF75 or older.
+        // The argument can be dropped when FF76 hits the release channel.
         favicons: Option(0, "boolean"),
       },
-      response: RetVal("root.listTabs"),
+      response: {
+        tabs: RetVal("array:tabDescriptor"),
+      },
     },
 
     getTab: {
@@ -47,7 +53,7 @@ const rootSpecPrototype = {
         tabId: Option(0, "number"),
       },
       response: {
-        tab: RetVal("browsingContextTarget"),
+        tab: RetVal("tabDescriptor"),
       },
     },
 
@@ -65,7 +71,7 @@ const rootSpecPrototype = {
         iconDataURL: Option(0, "boolean"),
       },
       response: {
-        addons: RetVal("array:addonTarget"),
+        addons: RetVal("array:webExtensionDescriptor"),
       },
     },
 
@@ -81,14 +87,35 @@ const rootSpecPrototype = {
 
     listProcesses: {
       request: {},
-      response: RetVal("root.listProcesses"),
+      response: {
+        processes: RetVal("array:processDescriptor"),
+      },
     },
 
     getProcess: {
       request: {
         id: Arg(0, "number"),
       },
-      response: RetVal("json"),
+      response: {
+        processDescriptor: RetVal("processDescriptor"),
+      },
+    },
+
+    // TODO: This can be removed once FF77 is the release
+    // This is only kept to support older version. FF77+ uses watchTargets.
+    listRemoteFrames: {
+      request: {
+        id: Arg(0, "number"),
+      },
+      response: RetVal("root.listRemoteFrames"),
+    },
+
+    // Can be removed when FF77 reach release channel
+    getBrowsingContextDescriptor: {
+      request: {
+        id: Arg(0, "number"),
+      },
+      response: RetVal("root.browsingContextDescriptor"),
     },
 
     protocolDescription: {

@@ -4,39 +4,24 @@
 
 #include "WebrtcGmpVideoCodec.h"
 
+#include <utility>
 #include <vector>
 
+#include "GMPLog.h"
+#include "MainThreadUtils.h"
+#include "VideoConduit.h"
+#include "gmp-video-frame-encoded.h"
+#include "gmp-video-frame-i420.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/IntegerPrintfMacros.h"
-#include "mozilla/Move.h"
 #include "mozilla/SyncRunnable.h"
-#include "VideoConduit.h"
-#include "AudioConduit.h"
-#include "runnable_utils.h"
-
-#include "mozIGeckoMediaPluginService.h"
 #include "nsServiceManagerUtils.h"
-#include "GMPVideoDecoderProxy.h"
-#include "GMPVideoEncoderProxy.h"
-#include "MainThreadUtils.h"
-
-#include "gmp-video-host.h"
-#include "gmp-video-frame-i420.h"
-#include "gmp-video-frame-encoded.h"
+#include "runnable_utils.h"
 #include "webrtc/common_video/include/video_frame_buffer.h"
 #include "webrtc/rtc_base/bind.h"
 
 namespace mozilla {
-
-#ifdef LOG
-#  undef LOG
-#endif
-
-extern mozilla::LogModule* GetGMPLog();
-
-#define LOGD(msg) MOZ_LOG(GetGMPLog(), mozilla::LogLevel::Debug, msg)
-#define LOG(level, msg) MOZ_LOG(GetGMPLog(), (level), msg)
 
 WebrtcGmpPCHandleSetter::WebrtcGmpPCHandleSetter(const std::string& aPCHandle) {
   if (!NS_IsMainThread()) {
@@ -143,7 +128,7 @@ static int GmpFrameTypeToWebrtcFrameType(GMPVideoFrameType aIn,
 
 int32_t WebrtcGmpVideoEncoder::InitEncode(
     const webrtc::VideoCodec* aCodecSettings, int32_t aNumberOfCores,
-    uint32_t aMaxPayloadSize) {
+    size_t aMaxPayloadSize) {
   if (!mMPS) {
     mMPS = do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   }
@@ -215,7 +200,7 @@ void WebrtcGmpVideoEncoder::InitEncode_g(
   nsresult rv = aThis->mMPS->GetGMPVideoEncoder(
       nullptr, &tags, NS_LITERAL_CSTRING(""), std::move(callback));
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    LOGD(("GMP Encode: GetGMPVideoEncoder failed"));
+    GMP_LOG_DEBUG("GMP Encode: GetGMPVideoEncoder failed");
     aThis->Close_g();
     aInitDone->Dispatch(WEBRTC_VIDEO_CODEC_ERROR,
                         "GMP Encode: GetGMPVideoEncoder failed");
@@ -337,11 +322,12 @@ void WebrtcGmpVideoEncoder::RegetEncoderForResolutionChange(
 }
 
 void WebrtcGmpVideoEncoder::Encode_g(
-    RefPtr<WebrtcGmpVideoEncoder>& aEncoder, webrtc::VideoFrame aInputImage,
+    const RefPtr<WebrtcGmpVideoEncoder>& aEncoder,
+    webrtc::VideoFrame aInputImage,
     std::vector<webrtc::FrameType> aFrameTypes) {
   if (!aEncoder->mGMP) {
     // destroyed via Terminate(), failed to init, or just not initted yet
-    LOGD(("GMP Encode: not initted yet"));
+    GMP_LOG_DEBUG("GMP Encode: not initted yet");
     return;
   }
   MOZ_ASSERT(aEncoder->mHost);
@@ -350,9 +336,9 @@ void WebrtcGmpVideoEncoder::Encode_g(
           aEncoder->mCodecParams.mWidth ||
       static_cast<uint32_t>(aInputImage.height()) !=
           aEncoder->mCodecParams.mHeight) {
-    LOGD(("GMP Encode: resolution change from %ux%u to %dx%d",
-          aEncoder->mCodecParams.mWidth, aEncoder->mCodecParams.mHeight,
-          aInputImage.width(), aInputImage.height()));
+    GMP_LOG_DEBUG("GMP Encode: resolution change from %ux%u to %dx%d",
+                  aEncoder->mCodecParams.mWidth, aEncoder->mCodecParams.mHeight,
+                  aInputImage.width(), aInputImage.height());
 
     RefPtr<GmpInitDoneRunnable> initDone(
         new GmpInitDoneRunnable(aEncoder->mPCHandle));
@@ -367,7 +353,7 @@ void WebrtcGmpVideoEncoder::Encode_g(
   GMPVideoFrame* ftmp = nullptr;
   GMPErr err = aEncoder->mHost->CreateFrame(kGMPI420VideoFrame, &ftmp);
   if (err != GMPNoErr) {
-    LOGD(("GMP Encode: failed to create frame on host"));
+    GMP_LOG_DEBUG("GMP Encode: failed to create frame on host");
     return;
   }
   GMPUniquePtr<GMPVideoi420Frame> frame(static_cast<GMPVideoi420Frame*>(ftmp));
@@ -387,7 +373,7 @@ void WebrtcGmpVideoEncoder::Encode_g(
       input_image->DataV(), input_image->width(), input_image->height(),
       input_image->StrideY(), input_image->StrideU(), input_image->StrideV());
   if (err != GMPNoErr) {
-    LOGD(("GMP Encode: failed to create frame"));
+    GMP_LOG_DEBUG("GMP Encode: failed to create frame");
     return;
   }
   frame->SetTimestamp((aInputImage.timestamp() * 1000ll) /
@@ -409,18 +395,19 @@ void WebrtcGmpVideoEncoder::Encode_g(
 
     int32_t ret = WebrtcFrameTypeToGmpFrameType(*it, &ft);
     if (ret != WEBRTC_VIDEO_CODEC_OK) {
-      LOGD(("GMP Encode: failed to map webrtc frame type to gmp frame type"));
+      GMP_LOG_DEBUG(
+          "GMP Encode: failed to map webrtc frame type to gmp frame type");
       return;
     }
 
     gmp_frame_types.AppendElement(ft);
   }
 
-  LOGD(("GMP Encode: %llu", (aInputImage.timestamp() * 1000ll) / 90));
+  GMP_LOG_DEBUG("GMP Encode: %llu", (aInputImage.timestamp() * 1000ll) / 90);
   err = aEncoder->mGMP->Encode(std::move(frame), codecSpecificInfo,
                                gmp_frame_types);
   if (err != GMPNoErr) {
-    LOGD(("GMP Encode: failed to encode frame"));
+    GMP_LOG_DEBUG("GMP Encode: failed to encode frame");
   }
 }
 
@@ -434,12 +421,12 @@ int32_t WebrtcGmpVideoEncoder::RegisterEncodeCompleteCallback(
 
 /* static */
 void WebrtcGmpVideoEncoder::ReleaseGmp_g(
-    RefPtr<WebrtcGmpVideoEncoder>& aEncoder) {
+    const RefPtr<WebrtcGmpVideoEncoder>& aEncoder) {
   aEncoder->Close_g();
 }
 
-int32_t WebrtcGmpVideoEncoder::ReleaseGmp() {
-  LOGD(("GMP Released:"));
+int32_t WebrtcGmpVideoEncoder::Shutdown() {
+  GMP_LOG_DEBUG("GMP Released:");
   if (mGMPThread) {
     mGMPThread->Dispatch(WrapRunnableNM(&WebrtcGmpVideoEncoder::ReleaseGmp_g,
                                         RefPtr<WebrtcGmpVideoEncoder>(this)),
@@ -449,7 +436,7 @@ int32_t WebrtcGmpVideoEncoder::ReleaseGmp() {
 }
 
 int32_t WebrtcGmpVideoEncoder::SetChannelParameters(uint32_t aPacketLoss,
-                                                    int aRTT) {
+                                                    int64_t aRTT) {
   return WEBRTC_VIDEO_CODEC_OK;
 }
 
@@ -486,7 +473,7 @@ int32_t WebrtcGmpVideoEncoder::SetRates_g(RefPtr<WebrtcGmpVideoEncoder> aThis,
 
 // GMPVideoEncoderCallback virtual functions.
 void WebrtcGmpVideoEncoder::Terminated() {
-  LOGD(("GMP Encoder Terminated: %p", (void*)this));
+  GMP_LOG_DEBUG("GMP Encoder Terminated: %p", (void*)this);
 
   mGMP->Close();
   mGMP = nullptr;
@@ -504,9 +491,9 @@ void WebrtcGmpVideoEncoder::Encoded(
     GmpFrameTypeToWebrtcFrameType(aEncodedFrame->FrameType(), &ft);
     uint32_t timestamp = (aEncodedFrame->TimeStamp() * 90ll + 999) / 1000;
 
-    LOGD(("GMP Encoded: %" PRIu64 ", type %d, len %d",
-          aEncodedFrame->TimeStamp(), aEncodedFrame->BufferType(),
-          aEncodedFrame->Size()));
+    GMP_LOG_DEBUG("GMP Encoded: %" PRIu64 ", type %d, len %d",
+                  aEncodedFrame->TimeStamp(), aEncodedFrame->BufferType(),
+                  aEncodedFrame->Size());
 
     // Right now makes one Encoded() callback per unit
     // XXX convert to FragmentationHeader format (array of offsets and sizes
@@ -515,7 +502,7 @@ void WebrtcGmpVideoEncoder::Encoded(
     uint8_t* buffer = aEncodedFrame->Buffer();
 
     if (!buffer) {
-      LOG(LogLevel::Error, ("GMP plugin returned null buffer"));
+      GMP_LOG_ERROR("GMP plugin returned null buffer");
       return;
     }
 
@@ -539,8 +526,8 @@ void WebrtcGmpVideoEncoder::Encoded(
         break;
       default:
         // Really that it's not in the enum
-        LOG(LogLevel::Error, ("GMP plugin returned incorrect type (%d)",
-                              aEncodedFrame->BufferType()));
+        GMP_LOG_ERROR("GMP plugin returned incorrect type (%d)",
+                      aEncodedFrame->BufferType());
         // XXX Bug 1041232 - need a better API for interfacing to the
         // plugin so we can kill it here
         return;
@@ -563,7 +550,7 @@ void WebrtcGmpVideoEncoder::Encoded(
           break;
         case GMP_BufferLength16:
 // The plugin is expected to encode data in native byte order
-#ifdef MOZ_LITTLE_ENDIAN
+#if MOZ_LITTLE_ENDIAN()
           size = LittleEndian::readUint16(buffer);
 #else
           size = BigEndian::readUint16(buffer);
@@ -580,7 +567,7 @@ void WebrtcGmpVideoEncoder::Encoded(
           break;
         case GMP_BufferLength32:
 // The plugin is expected to encode data in native byte order
-#ifdef MOZ_LITTLE_ENDIAN
+#if MOZ_LITTLE_ENDIAN()
           size = LittleEndian::readUint32(buffer);
 #else
           size = BigEndian::readUint32(buffer);
@@ -606,9 +593,10 @@ void WebrtcGmpVideoEncoder::Encoded(
       if (size == 0 || buffer + size > end) {
         // XXX see above - should we kill the plugin for returning extra bytes?
         // Probably
-        LOG(LogLevel::Error, ("GMP plugin returned badly formatted encoded "
-                              "data: buffer=%p, size=%d, end=%p",
-                              buffer, size, end));
+        GMP_LOG_ERROR(
+            "GMP plugin returned badly formatted encoded "
+            "data: buffer=%p, size=%d, end=%p",
+            buffer, size, end);
         return;
       }
       // XXX optimize by making buffer an offset
@@ -620,7 +608,7 @@ void WebrtcGmpVideoEncoder::Encoded(
     }
     if (buffer != end) {
       // At most 3 bytes can be left over, depending on buffertype
-      LOGD(("GMP plugin returned %td extra bytes", end - buffer));
+      GMP_LOG_DEBUG("GMP plugin returned %td extra bytes", end - buffer);
     }
 
     size_t num_nals = nals.Length();
@@ -703,7 +691,7 @@ void WebrtcGmpVideoDecoder::InitDecode_g(
   nsresult rv = aThis->mMPS->GetGMPVideoDecoder(
       nullptr, &tags, NS_LITERAL_CSTRING(""), std::move(callback));
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    LOGD(("GMP Decode: GetGMPVideoDecoder failed"));
+    GMP_LOG_DEBUG("GMP Decode: GetGMPVideoDecoder failed");
     aThis->Close_g();
     aInitDone->Dispatch(WEBRTC_VIDEO_CODEC_ERROR,
                         "GMP Decode: GetGMPVideoDecoder failed.");
@@ -756,8 +744,7 @@ int32_t WebrtcGmpVideoDecoder::GmpInitDone(GMPVideoDecoderProxy* aGMP,
     nsTArray<UniquePtr<GMPDecodeData>> temp;
     temp.SwapElements(mQueuedFrames);
     for (auto& queued : temp) {
-      Decode_g(RefPtr<WebrtcGmpVideoDecoder>(this),
-               nsAutoPtr<GMPDecodeData>(queued.release()));
+      Decode_g(RefPtr<WebrtcGmpVideoDecoder>(this), std::move(queued));
     }
   }
 
@@ -768,9 +755,8 @@ int32_t WebrtcGmpVideoDecoder::GmpInitDone(GMPVideoDecoderProxy* aGMP,
   // happens to arrive for other reasons. Bug 1492852 tracks implementing a
   // proper solution.
   if (mDecoderStatus != GMPNoErr) {
-    LOG(LogLevel::Error,
-        ("%s: Decoder status is bad (%u)!", __PRETTY_FUNCTION__,
-         static_cast<unsigned>(mDecoderStatus)));
+    GMP_LOG_ERROR("%s: Decoder status is bad (%u)!", __PRETTY_FUNCTION__,
+                  static_cast<unsigned>(mDecoderStatus));
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
@@ -806,18 +792,17 @@ int32_t WebrtcGmpVideoDecoder::Decode(
   // know to request a PLI and the video stream will remain frozen unless an IDR
   // happens to arrive for other reasons. Bug 1492852 tracks implementing a
   // proper solution.
-  nsAutoPtr<GMPDecodeData> decodeData(
-      new GMPDecodeData(aInputImage, aMissingFrames, aRenderTimeMs));
+  auto decodeData =
+      MakeUnique<GMPDecodeData>(aInputImage, aMissingFrames, aRenderTimeMs);
 
-  mGMPThread->Dispatch(
-      WrapRunnableNM(&WebrtcGmpVideoDecoder::Decode_g,
-                     RefPtr<WebrtcGmpVideoDecoder>(this), decodeData),
-      NS_DISPATCH_NORMAL);
+  mGMPThread->Dispatch(WrapRunnableNM(&WebrtcGmpVideoDecoder::Decode_g,
+                                      RefPtr<WebrtcGmpVideoDecoder>(this),
+                                      std::move(decodeData)),
+                       NS_DISPATCH_NORMAL);
 
   if (mDecoderStatus != GMPNoErr) {
-    LOG(LogLevel::Error,
-        ("%s: Decoder status is bad (%u)!", __PRETTY_FUNCTION__,
-         static_cast<unsigned>(mDecoderStatus)));
+    GMP_LOG_ERROR("%s: Decoder status is bad (%u)!", __PRETTY_FUNCTION__,
+                  static_cast<unsigned>(mDecoderStatus));
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
@@ -825,17 +810,16 @@ int32_t WebrtcGmpVideoDecoder::Decode(
 }
 
 /* static */
-// Using nsAutoPtr because WrapRunnable doesn't support move semantics
 void WebrtcGmpVideoDecoder::Decode_g(const RefPtr<WebrtcGmpVideoDecoder>& aThis,
-                                     nsAutoPtr<GMPDecodeData> aDecodeData) {
+                                     UniquePtr<GMPDecodeData>&& aDecodeData) {
   if (!aThis->mGMP) {
     if (aThis->mInitting) {
       // InitDone hasn't been called yet (race)
-      aThis->mQueuedFrames.AppendElement(aDecodeData.forget());
+      aThis->mQueuedFrames.AppendElement(std::move(aDecodeData));
       return;
     }
     // destroyed via Terminate(), failed to init, or just not initted yet
-    LOGD(("GMP Decode: not initted yet"));
+    GMP_LOG_DEBUG("GMP Decode: not initted yet");
 
     aThis->mDecoderStatus = GMPDecodeErr;
     return;
@@ -847,8 +831,8 @@ void WebrtcGmpVideoDecoder::Decode_g(const RefPtr<WebrtcGmpVideoDecoder>& aThis,
   GMPVideoFrame* ftmp = nullptr;
   GMPErr err = aThis->mHost->CreateFrame(kGMPEncodedVideoFrame, &ftmp);
   if (err != GMPNoErr) {
-    LOG(LogLevel::Error, ("%s: CreateFrame failed (%u)!", __PRETTY_FUNCTION__,
-                          static_cast<unsigned>(err)));
+    GMP_LOG_ERROR("%s: CreateFrame failed (%u)!", __PRETTY_FUNCTION__,
+                  static_cast<unsigned>(err));
     aThis->mDecoderStatus = err;
     return;
   }
@@ -857,8 +841,8 @@ void WebrtcGmpVideoDecoder::Decode_g(const RefPtr<WebrtcGmpVideoDecoder>& aThis,
       static_cast<GMPVideoEncodedFrame*>(ftmp));
   err = frame->CreateEmptyFrame(aDecodeData->mImage._length);
   if (err != GMPNoErr) {
-    LOG(LogLevel::Error, ("%s: CreateEmptyFrame failed (%u)!",
-                          __PRETTY_FUNCTION__, static_cast<unsigned>(err)));
+    GMP_LOG_ERROR("%s: CreateEmptyFrame failed (%u)!", __PRETTY_FUNCTION__,
+                  static_cast<unsigned>(err));
     aThis->mDecoderStatus = err;
     return;
   }
@@ -882,8 +866,8 @@ void WebrtcGmpVideoDecoder::Decode_g(const RefPtr<WebrtcGmpVideoDecoder>& aThis,
   int32_t ret =
       WebrtcFrameTypeToGmpFrameType(aDecodeData->mImage._frameType, &ft);
   if (ret != WEBRTC_VIDEO_CODEC_OK) {
-    LOG(LogLevel::Error, ("%s: WebrtcFrameTypeToGmpFrameType failed (%u)!",
-                          __PRETTY_FUNCTION__, static_cast<unsigned>(ret)));
+    GMP_LOG_ERROR("%s: WebrtcFrameTypeToGmpFrameType failed (%u)!",
+                  __PRETTY_FUNCTION__, static_cast<unsigned>(ret));
     aThis->mDecoderStatus = GMPDecodeErr;
     return;
   }
@@ -897,15 +881,16 @@ void WebrtcGmpVideoDecoder::Decode_g(const RefPtr<WebrtcGmpVideoDecoder>& aThis,
   codecSpecificInfo.AppendElements((uint8_t*)&info,
                                    sizeof(GMPCodecSpecificInfo));
 
-  LOGD(("GMP Decode: %" PRIu64 ", len %zu%s", frame->TimeStamp(),
-        aDecodeData->mImage._length, ft == kGMPKeyFrame ? ", KeyFrame" : ""));
+  GMP_LOG_DEBUG("GMP Decode: %" PRIu64 ", len %zu%s", frame->TimeStamp(),
+                aDecodeData->mImage._length,
+                ft == kGMPKeyFrame ? ", KeyFrame" : "");
 
   nsresult rv =
       aThis->mGMP->Decode(std::move(frame), aDecodeData->mMissingFrames,
                           codecSpecificInfo, aDecodeData->mRenderTimeMs);
   if (NS_FAILED(rv)) {
-    LOG(LogLevel::Error, ("%s: Decode failed (rv=%u)!", __PRETTY_FUNCTION__,
-                          static_cast<unsigned>(rv)));
+    GMP_LOG_ERROR("%s: Decode failed (rv=%u)!", __PRETTY_FUNCTION__,
+                  static_cast<unsigned>(rv));
     aThis->mDecoderStatus = GMPDecodeErr;
     return;
   }
@@ -923,12 +908,12 @@ int32_t WebrtcGmpVideoDecoder::RegisterDecodeCompleteCallback(
 
 /* static */
 void WebrtcGmpVideoDecoder::ReleaseGmp_g(
-    RefPtr<WebrtcGmpVideoDecoder>& aDecoder) {
+    const RefPtr<WebrtcGmpVideoDecoder>& aDecoder) {
   aDecoder->Close_g();
 }
 
 int32_t WebrtcGmpVideoDecoder::ReleaseGmp() {
-  LOGD(("GMP Released:"));
+  GMP_LOG_DEBUG("GMP Released:");
   RegisterDecodeCompleteCallback(nullptr);
 
   if (mGMPThread) {
@@ -940,7 +925,7 @@ int32_t WebrtcGmpVideoDecoder::ReleaseGmp() {
 }
 
 void WebrtcGmpVideoDecoder::Terminated() {
-  LOGD(("GMP Decoder Terminated: %p", (void*)this));
+  GMP_LOG_DEBUG("GMP Decoder Terminated: %p", (void*)this);
 
   mGMP->Close();
   mGMP = nullptr;
@@ -999,7 +984,7 @@ void WebrtcGmpVideoDecoder::Decoded(GMPVideoi420Frame* aDecodedFrame) {
       image.set_timestamp((aDecodedFrame->Timestamp() * 90ll + 999) /
                           1000);  // round up
 
-      LOGD(("GMP Decoded: %" PRIu64, aDecodedFrame->Timestamp()));
+      GMP_LOG_DEBUG("GMP Decoded: %" PRIu64, aDecodedFrame->Timestamp());
       mCallback->Decoded(image);
     }
   }

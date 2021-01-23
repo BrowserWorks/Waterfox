@@ -36,7 +36,7 @@ var TabsInTitlebar;
         case "cocoa":
           isSupported = true;
           break;
-        case "gtk3":
+        case "gtk":
           isSupported = window.matchMedia("(-moz-gtk-csd-available)").matches;
           break;
       }
@@ -74,7 +74,7 @@ var TabsInTitlebar;
       let allowed =
         this.systemSupported &&
         !window.fullScreen &&
-        Object.keys(this._disallowed).length == 0;
+        !Object.keys(this._disallowed).length;
       if (allowed) {
         document.documentElement.setAttribute("tabsintitlebar", "true");
         if (AppConstants.platform == "macosx") {
@@ -123,11 +123,3 @@ var TabsInTitlebar;
     },
   };
 } // end private TabsInTitlebar scope
-
-function onTitlebarMaxClick() {
-  if (window.windowState == window.STATE_MAXIMIZED) {
-    window.restore();
-  } else {
-    window.maximize();
-  }
-}

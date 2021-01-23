@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Sisältö">
+<!ENTITY pref.content.description               "Nämä asetukset vaikuttavat siihen, miltä verkkosivut ja sähköpostiviestit näyttävät &brandShortName;ssä.">
+
+<!ENTITY siteIcons.label                        "Verkkosivujen kuvakkeet">
+<!ENTITY useSiteIcons.label                     "Näytä verkkosivujen kuvakkeet">
+<!ENTITY useSiteIcons.accesskey                 "N">
+<!ENTITY useFavIcons2.label                     "Yritä käyttää palvelimen kuvaketta, kun sivu ei määritä omaa">
+<!ENTITY useFavIcons2.accesskey                 "p">
+
+<!ENTITY scrolling.label                        "Vieritys">
+<!ENTITY useAutoScroll.label                    "Vieritä sivua automaattisesti">
+<!ENTITY useAutoScroll.accesskey                "a">
+<!ENTITY useSmoothScroll.label                  "Vieritä sivua tasaisesti">
+<!ENTITY useSmoothScroll.accesskey              "V">
+
+<!ENTITY zoomPrefs.label                        "Skaalausasetuset">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Välillä">
+<!ENTITY minZoom.accesskey                      "l">
+<!ENTITY maxZoom.label                          "ja">
+<!ENTITY maxZoom.accesskey                      "j">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "Muista sivunsuurennustasot sivustokohtaisesti">
+<!ENTITY siteSpecific.accesskey                 "u">
+<!ENTITY textZoomOnly.label                     "Muuta vain tekstin kokoa">
+<!ENTITY textZoomOnly.accesskey                 "M">
+<!ENTITY enableAutomaticImageResizing.label     "Skaalaa suuret kuvat mahtumaan selainikkunaan">
+<!ENTITY enableAutomaticImageResizing.accesskey "S">
+
+<!ENTITY allowHWAccel.label                     "Käytä laitteistokiihdytystä, jos mahdollista">
+<!ENTITY allowHWAccel.accesskey                 "K">
+<!ENTITY blockAutoRefresh.label                 "Varoita, jos sivusto yrittää päivittää sivua tai uudelleenohjata toiselle sivulle">
+<!ENTITY blockAutoRefresh.accesskey             "a">
+
+<!ENTITY showZoomStatusPanel.label              "Näytä skaalaussäätimet tilarivillä">

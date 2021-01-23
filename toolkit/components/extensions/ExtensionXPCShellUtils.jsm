@@ -16,6 +16,9 @@ const { ExtensionUtils } = ChromeUtils.import(
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
 
 // Windowless browsers can create documents that rely on XUL Custom Elements:
 ChromeUtils.import("resource://gre/modules/CustomElementsListener.jsm", null);
@@ -136,6 +139,9 @@ function frameScript() {
 
 let kungFuDeathGrip = new Set();
 function promiseBrowserLoaded(browser, url, redirectUrl) {
+  url = url && Services.io.newURI(url);
+  redirectUrl = redirectUrl && Services.io.newURI(redirectUrl);
+
   return new Promise(resolve => {
     const listener = {
       QueryInterface: ChromeUtils.generateQI([
@@ -146,12 +152,12 @@ function promiseBrowserLoaded(browser, url, redirectUrl) {
       onStateChange(webProgress, request, stateFlags, statusCode) {
         request.QueryInterface(Ci.nsIChannel);
 
-        let requestUrl = request.originalURI
-          ? request.originalURI.spec
-          : webProgress.DOMWindow.location.href;
+        let requestURI =
+          request.originalURI ||
+          webProgress.DOMWindow.document.documentURIObject;
         if (
           webProgress.isTopLevel &&
-          (requestUrl === url || requestUrl === redirectUrl) &&
+          (url?.equals(requestURI) || redirectUrl?.equals(requestURI)) &&
           stateFlags & Ci.nsIWebProgressListener.STATE_STOP
         ) {
           resolve();
@@ -203,13 +209,13 @@ class ContentPage {
       Ci.nsIWebNavigation
     );
 
-    chromeShell.createAboutBlankContentViewer(system);
-    chromeShell.useGlobalHistory = false;
+    chromeShell.createAboutBlankContentViewer(system, system);
+    this.windowlessBrowser.browsingContext.useGlobalHistory = false;
     let loadURIOptions = {
       triggeringPrincipal: system,
     };
     chromeShell.loadURI(
-      "chrome://extensions/content/dummy.xul",
+      "chrome://extensions/content/dummy.xhtml",
       loadURIOptions
     );
 
@@ -220,7 +226,7 @@ class ContentPage {
 
     let chromeDoc = await promiseDocumentLoaded(chromeShell.document);
 
-    let browser = chromeDoc.createElement("browser");
+    let browser = chromeDoc.createXULElement("browser");
     browser.setAttribute("type", "content");
     browser.setAttribute("disableglobalhistory", "true");
     if (this.userContextId) {
@@ -467,10 +473,27 @@ class ExtensionWrapper {
     }
     this.state = "unloading";
 
+    if (this.addonPromise) {
+      // If addonPromise is still pending resolution, wait for it to make sure
+      // that add-ons that are installed through the AddonManager are properly
+      // uninstalled.
+      await this.addonPromise;
+    }
+
     if (this.addon) {
       await this.addon.uninstall();
     } else {
       await this.extension.shutdown();
+    }
+
+    if (AppConstants.platform === "android") {
+      // We need a way to notify the embedding layer that an extension has been
+      // uninstalled, so that the java layer can be updated too.
+      Services.obs.notifyObservers(
+        null,
+        "testing-uninstalled-addon",
+        this.addon ? this.addon.id : this.extension.id
+      );
     }
 
     this.state = "unloaded";
@@ -610,11 +633,19 @@ class AOMExtensionWrapper extends ExtensionWrapper {
   onEvent(kind, ...args) {
     switch (kind) {
       case "addon-manager-started":
+        if (this.state === "uninitialized") {
+          // startup() not called yet, ignore AddonManager startup notification.
+          return;
+        }
         this.addonPromise = AddonManager.getAddonByID(this.id).then(addon => {
           this.addon = addon;
+          this.addonPromise = null;
         });
       // FALLTHROUGH
       case "addon-manager-shutdown":
+        if (this.state === "uninitialized") {
+          return;
+        }
         this.addon = null;
 
         this.setRestarting();
@@ -644,6 +675,15 @@ class AOMExtensionWrapper extends ExtensionWrapper {
         let [extension] = args;
         if (extension.id === this.id) {
           this.state = "running";
+          if (AppConstants.platform === "android") {
+            // We need a way to notify the embedding layer that a new extension
+            // has been installed, so that the java layer can be updated too.
+            Services.obs.notifyObservers(
+              null,
+              "testing-installed-addon",
+              extension.id
+            );
+          }
           this.resolveStartup(extension);
         }
         break;
@@ -938,6 +978,16 @@ var ExtensionTestUtils = {
   // by some external process (e.g., Normandy)
   expectExtension(id) {
     return new ExternallyInstalledWrapper(this.currentScope, id);
+  },
+
+  failOnSchemaWarnings(warningsAsErrors = true) {
+    let prefName = "extensions.webextensions.warnings-as-errors";
+    Services.prefs.setBoolPref(prefName, warningsAsErrors);
+    if (!warningsAsErrors) {
+      this.currentScope.registerCleanupFunction(() => {
+        Services.prefs.setBoolPref(prefName, true);
+      });
+    }
   },
 
   get remoteContentScripts() {

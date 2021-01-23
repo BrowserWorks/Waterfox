@@ -9,7 +9,6 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "jsfriendapi.h"
 #include "nsIScriptGlobalObject.h"
-#include "nsIXPConnect.h"
 #include "nsIScriptContext.h"
 #include "nsPIDOMWindow.h"
 #include "nsJSUtils.h"
@@ -33,7 +32,7 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTING_ADDREF(CallbackObject)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(CallbackObject)
 
-NS_IMPL_CYCLE_COLLECTION_CLASS(CallbackObject)
+NS_IMPL_CYCLE_COLLECTION_MULTI_ZONE_JSHOLDER_CLASS(CallbackObject)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(CallbackObject)
   tmp->ClearJSReferences();
@@ -131,6 +130,64 @@ JSObject* CallbackObject::Callback(JSContext* aCx) {
   return callback;
 }
 
+void CallbackObject::GetDescription(nsACString& aOutString) {
+  JSObject* wrappedCallback = CallbackOrNull();
+  if (!wrappedCallback) {
+    aOutString.Append("<callback from a nuked compartment>");
+    return;
+  }
+
+  JS::Rooted<JSObject*> unwrappedCallback(
+      RootingCx(), js::CheckedUnwrapStatic(wrappedCallback));
+  if (!unwrappedCallback) {
+    aOutString.Append("<not a function>");
+    return;
+  }
+
+  AutoJSAPI jsapi;
+  jsapi.Init();
+  JSContext* cx = jsapi.cx();
+
+  JS::RootedObject rootedCallback(cx, unwrappedCallback);
+  JSAutoRealm ar(cx, rootedCallback);
+
+  JS::Rooted<JSFunction*> rootedFunction(cx,
+                                         JS_GetObjectFunction(rootedCallback));
+  if (!rootedFunction) {
+    aOutString.Append("<not a function>");
+    return;
+  }
+
+  JS::Rooted<JSString*> displayId(cx, JS_GetFunctionDisplayId(rootedFunction));
+  if (displayId) {
+    nsAutoJSString funcNameStr;
+    if (funcNameStr.init(cx, displayId)) {
+      if (funcNameStr.IsEmpty()) {
+        aOutString.Append("<empty name>");
+      } else {
+        AppendUTF16toUTF8(funcNameStr, aOutString);
+      }
+    } else {
+      aOutString.Append("<function name string failed to materialize>");
+      jsapi.ClearException();
+    }
+  } else {
+    aOutString.Append("<anonymous>");
+  }
+
+  JS::Rooted<JSScript*> rootedScript(cx,
+                                     JS_GetFunctionScript(cx, rootedFunction));
+  if (!rootedScript) {
+    return;
+  }
+
+  aOutString.Append(" (");
+  aOutString.Append(JS_GetScriptFilename(rootedScript));
+  aOutString.Append(":");
+  aOutString.AppendInt(JS_GetScriptBaseLineNumber(cx, rootedScript));
+  aOutString.Append(")");
+}
+
 CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
                                      ErrorResult& aRv,
                                      const char* aExecutionReason,
@@ -157,10 +214,8 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
 
   JSObject* wrappedCallback = aCallback->CallbackPreserveColor();
   if (!wrappedCallback) {
-    aRv.ThrowDOMException(
-        NS_ERROR_DOM_NOT_SUPPORTED_ERR,
-        NS_LITERAL_CSTRING(
-            "Cannot execute callback from a nuked compartment."));
+    aRv.ThrowNotSupportedError(
+        "Cannot execute callback from a nuked compartment.");
     return;
   }
 
@@ -180,10 +235,9 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
       // We don't want to run script in windows that have been navigated away
       // from.
       if (!win->HasActiveDocument()) {
-        aRv.ThrowDOMException(
-            NS_ERROR_DOM_NOT_SUPPORTED_ERR,
-            NS_LITERAL_CSTRING("Refusing to execute function from window "
-                               "whose document is no longer active."));
+        aRv.ThrowNotSupportedError(
+            "Refusing to execute function from window whose document is no "
+            "longer active.");
         return;
       }
       globalObject = win;
@@ -196,21 +250,17 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
     // Make sure to use realCallback to get the global of the callback
     // object, not the wrapper.
     if (globalObject->IsScriptForbidden(realCallback, aIsJSImplementedWebIDL)) {
-      aRv.ThrowDOMException(
-          NS_ERROR_DOM_NOT_SUPPORTED_ERR,
-          NS_LITERAL_CSTRING(
-              "Refusing to execute function from global in which "
-              "script is disabled."));
+      aRv.ThrowNotSupportedError(
+          "Refusing to execute function from global in which script is "
+          "disabled.");
       return;
     }
   }
 
   // Bail out if there's no useful global.
   if (!globalObject->HasJSGlobal()) {
-    aRv.ThrowDOMException(
-        NS_ERROR_DOM_NOT_SUPPORTED_ERR,
-        NS_LITERAL_CSTRING("Refusing to execute function from global which is "
-                           "being torn down."));
+    aRv.ThrowNotSupportedError(
+        "Refusing to execute function from global which is being torn down.");
     return;
   }
 
@@ -224,10 +274,9 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
     // nsIGlobalObject has severed its reference to the JS global. Let's just
     // be safe here, so that nobody has to waste a day debugging gaia-ui tests.
     if (!incumbent->HasJSGlobal()) {
-      aRv.ThrowDOMException(
-          NS_ERROR_DOM_NOT_SUPPORTED_ERR,
-          NS_LITERAL_CSTRING("Refusing to execute function because our "
-                             "incumbent global is being torn down."));
+      aRv.ThrowNotSupportedError(
+          "Refusing to execute function because our incumbent global is being "
+          "torn down.");
       return;
     }
     mAutoIncumbentScript.emplace(incumbent);
@@ -259,6 +308,10 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
 
   // And now we're ready to go.
   mCx = cx;
+
+  // We don't really have a good error message prefix to use for the
+  // BindingCallContext.
+  mCallContext.emplace(cx, nullptr);
 }
 
 bool CallbackObject::CallSetup::ShouldRethrowException(
@@ -342,7 +395,7 @@ CallbackObject::CallSetup::~CallSetup() {
 
         // IsJSContextException shouldn't be true anymore because we will report
         // the exception on the JSContext ... so throw something else.
-        mErrorResult.ThrowWithCustomCleanup(NS_ERROR_UNEXPECTED);
+        mErrorResult.Throw(NS_ERROR_UNEXPECTED);
       }
     }
   }

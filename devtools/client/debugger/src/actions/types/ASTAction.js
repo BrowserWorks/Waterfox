@@ -4,26 +4,22 @@
 
 // @flow
 
-import type { SymbolDeclarations, AstLocation } from "../../workers/parser";
+import type { SymbolDeclarations } from "../../workers/parser";
 import type { PromiseAction } from "../utils/middleware/promise";
-import type { Context } from "../../types";
+import type { Context, SourceLocation, SourceId } from "../../types";
 
 export type ASTAction =
   | PromiseAction<
       {|
         +type: "SET_SYMBOLS",
         +cx: Context,
-        +sourceId: string,
+        +sourceId: SourceId,
       |},
       SymbolDeclarations
     >
   | {|
-      +type: "OUT_OF_SCOPE_LOCATIONS",
-      +cx: Context,
-      +locations: ?(AstLocation[]),
-    |}
-  | {|
       +type: "IN_SCOPE_LINES",
       +cx: Context,
-      +lines: number[],
+      location: SourceLocation,
+      lines: Array<number>,
     |};

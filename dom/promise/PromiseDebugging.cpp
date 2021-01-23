@@ -9,7 +9,7 @@
 
 #include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/TimeStamp.h"
 
@@ -41,8 +41,10 @@ class FlushRejections : public CancelableRunnable {
       return;
     }
     sDispatched.set(true);
-    SystemGroup::Dispatch(TaskCategory::Other,
-                          do_AddRef(new FlushRejections()));
+
+    // Dispatch the runnable to the current thread where
+    // the Promise was rejected, e.g. workers or worklets.
+    NS_DispatchToCurrentThread(new FlushRejections());
   }
 
   static void FlushSync() {
@@ -78,8 +80,7 @@ void PromiseDebugging::GetState(GlobalObject& aGlobal,
   // CheckedUnwrapStatic is fine, since we're looking for promises only.
   JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrapStatic(aPromise));
   if (!obj || !JS::IsPromiseObject(obj)) {
-    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>(
-        NS_LITERAL_STRING("Argument of PromiseDebugging.getState"));
+    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>();
     return;
   }
   switch (JS::GetPromiseState(obj)) {
@@ -105,8 +106,7 @@ void PromiseDebugging::GetPromiseID(GlobalObject& aGlobal,
   // CheckedUnwrapStatic is fine, since we're looking for promises only.
   JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrapStatic(aPromise));
   if (!obj || !JS::IsPromiseObject(obj)) {
-    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>(
-        NS_LITERAL_STRING("Argument of PromiseDebugging.getState"));
+    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>();
     return;
   }
   uint64_t promiseID = JS::GetPromiseID(obj);
@@ -123,8 +123,7 @@ void PromiseDebugging::GetAllocationStack(GlobalObject& aGlobal,
   // CheckedUnwrapStatic is fine, since we're looking for promises only.
   JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrapStatic(aPromise));
   if (!obj || !JS::IsPromiseObject(obj)) {
-    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>(
-        NS_LITERAL_STRING("Argument of PromiseDebugging.getAllocationStack"));
+    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>();
     return;
   }
   aStack.set(JS::GetPromiseAllocationSite(obj));
@@ -139,8 +138,7 @@ void PromiseDebugging::GetRejectionStack(GlobalObject& aGlobal,
   // CheckedUnwrapStatic is fine, since we're looking for promises only.
   JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrapStatic(aPromise));
   if (!obj || !JS::IsPromiseObject(obj)) {
-    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>(
-        NS_LITERAL_STRING("Argument of PromiseDebugging.getRejectionStack"));
+    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>();
     return;
   }
   aStack.set(JS::GetPromiseResolutionSite(obj));
@@ -155,8 +153,7 @@ void PromiseDebugging::GetFullfillmentStack(GlobalObject& aGlobal,
   // CheckedUnwrapStatic is fine, since we're looking for promises only.
   JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrapStatic(aPromise));
   if (!obj || !JS::IsPromiseObject(obj)) {
-    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>(
-        NS_LITERAL_STRING("Argument of PromiseDebugging.getFulfillmentStack"));
+    aRv.ThrowTypeError<MSG_IS_NOT_PROMISE>();
     return;
   }
   aStack.set(JS::GetPromiseResolutionSite(obj));
@@ -265,14 +262,20 @@ void PromiseDebugging::FlushUncaughtRejectionsInternal() {
       continue;
     }
 
+    bool suppressReporting = false;
     for (size_t j = 0; j < observers.Length(); ++j) {
       RefPtr<UncaughtRejectionObserver> obs =
           static_cast<UncaughtRejectionObserver*>(observers[j].get());
 
-      obs->OnLeftUncaught(promise, IgnoreErrors());
+      if (obs->OnLeftUncaught(promise, IgnoreErrors())) {
+        suppressReporting = true;
+      }
     }
-    JSAutoRealm ar(cx, promise);
-    Promise::ReportRejectedPromise(cx, promise);
+
+    if (!suppressReporting) {
+      JSAutoRealm ar(cx, promise);
+      Promise::ReportRejectedPromise(cx, promise);
+    }
   }
   storage->mUncaughtRejections.clear();
 

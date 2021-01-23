@@ -10,18 +10,8 @@
 customElements.define(
   "printpreview-toolbar",
   class PrintPreviewToolbar extends MozXULElement {
-    constructor() {
-      super();
-      this.disconnectedCallback = this.disconnectedCallback.bind(this);
-    }
-    connectedCallback() {
-      window.addEventListener("unload", this.disconnectedCallback, {
-        once: true,
-      });
-
-      MozXULElement.insertFTLIfNeeded("toolkit/printing/printPreview.ftl");
-      this.appendChild(
-        MozXULElement.parseXULToFragment(`
+    static get markup() {
+      return `
       <button id="print-preview-print" oncommand="this.parentNode.print();" data-l10n-id="printpreview-print"/>
       <button id="print-preview-pageSetup" oncommand="this.parentNode.doPageSetup();" data-l10n-id="printpreview-page-setup"/>
       <vbox align="center" pack="center">
@@ -70,9 +60,20 @@ customElements.define(
       <checkbox id="print-preview-simplify" checked="false" disabled="true" oncommand="this.parentNode.simplify();" data-l10n-id="printpreview-simplify-page-checkbox"/>
       <toolbarseparator class="toolbarseparator-primary"/>
       <button id="print-preview-toolbar-close-button" oncommand="PrintUtils.exitPrintPreview();" data-l10n-id="printpreview-close"/>
-      <data id="print-preview-prompt-title" data-l10n-id="printpreview-custom-prompt"/>
-        `)
-      );
+      <data id="print-preview-custom-scale-prompt-title" data-l10n-id="printpreview-custom-scale-prompt-title"/>
+      `;
+    }
+    constructor() {
+      super();
+      this.disconnectedCallback = this.disconnectedCallback.bind(this);
+    }
+    connectedCallback() {
+      window.addEventListener("unload", this.disconnectedCallback, {
+        once: true,
+      });
+
+      MozXULElement.insertFTLIfNeeded("toolkit/printing/printPreview.ftl");
+      this.appendChild(this.constructor.fragment);
 
       this.mPrintButton = document.getElementById("print-preview-print");
 
@@ -282,14 +283,16 @@ customElements.define(
     }
 
     print() {
-      PrintUtils.printWindow(this.mPPBrowser.outerWindowID, this.mPPBrowser);
+      PrintUtils.printWindow(this.mPPBrowser.browsingContext);
     }
 
     promptForScaleValue(aValue) {
       var value = Math.round(aValue);
       var promptStr = document.getElementById("print-preview-scale-label")
         .value;
-      var renameTitle = document.getElementById("print-preview-prompt-title");
+      var renameTitle = document.getElementById(
+        "print-preview-custom-scale-prompt-title"
+      ).textContent;
       var result = { value };
       let { Services } = ChromeUtils.import(
         "resource://gre/modules/Services.jsm"

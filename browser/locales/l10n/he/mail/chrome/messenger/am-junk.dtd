@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "הגדרות זבל">
+<!ENTITY level.label "אפשר פקדי דואר זבל מסתגלים לחשבון זה">
+<!ENTITY level.accesskey "א">
+
+<!ENTITY move.label "העבר דואר זבל חדש אל:">
+<!ENTITY move.accesskey "ה">
+<!ENTITY junkFolderOn.label "התיקייה &quot;זבל&quot; על:">
+<!ENTITY junkFolderOn.accesskey "ז">
+<!ENTITY otherFolder.label "אחר:">
+<!ENTITY otherFolder.accesskey "א">
+<!ENTITY purge1.label "מחק אוטומטית דואר זבל ישן מאשר">
+<!ENTITY purge1.accesskey "א">
+<!ENTITY purge2.label "ימים">
+
+<!ENTITY whitelistHeader.label "לא לסמן כזבל אוטומטית אם השולח הוא מבין אלה: ">
+<!ENTITY whitelistHeader.accesskey "ל">
+
+<!ENTITY ispHeaders.label "סמוך על כותרי דואר זבל שנוצרו על־ידי:">
+<!ENTITY ispHeaders.accesskey "ס">
+
+<!ENTITY junkClassification.label "בחירה">
+<!ENTITY junkActions.label "יעד ותחלופה">
+
+<!ENTITY globalJunkPrefs.label "העדפות זבל כלליות…">
+<!ENTITY globalJunkPrefs.accesskey "כ">

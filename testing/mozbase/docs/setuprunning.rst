@@ -10,7 +10,9 @@ correctly handling the case where the system crashes.
    :maxdepth: 2
 
    mozfile
+   mozgeckoprofiler
    mozinstall
+   mozpower
    mozprofile
    mozprocess
    mozrunner

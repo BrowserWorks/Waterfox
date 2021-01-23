@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Knoppie-eienskappe">
+
+<!ENTITY Settings.label "Opstelling">
+
+<!ENTITY ButtonType.label "Soort">
+<!ENTITY ButtonType.accesskey "S">
+<!ENTITY submit.value "Indien">
+<!ENTITY reset.value "Teruglaai">
+<!ENTITY button.value "Knoppie">
+
+<!ENTITY ButtonName.label "Naam:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Waarde:">
+<!ENTITY ButtonValue.accesskey "W">
+<!ENTITY tabIndex.label "Oortjie-indeks:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "Gedeaktiveer">
+<!ENTITY ButtonDisabled.accesskey "G">
+<!ENTITY AccessKey.label "Toegangsleutel:">
+<!ENTITY AccessKey.accesskey "s">
+
+<!ENTITY RemoveButton.label "Verwyder knoppie">
+<!ENTITY RemoveButton.accesskey "V">

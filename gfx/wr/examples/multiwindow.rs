@@ -9,7 +9,7 @@ extern crate webrender;
 extern crate winit;
 
 use gleam::gl;
-use glutin::GlContext;
+use glutin::NotCurrent;
 use std::fs::File;
 use std::io::Read;
 use webrender::api::*;
@@ -28,7 +28,7 @@ impl Notifier {
 }
 
 impl RenderNotifier for Notifier {
-    fn clone(&self) -> Box<RenderNotifier> {
+    fn clone(&self) -> Box<dyn RenderNotifier> {
         Box::new(Notifier {
             events_proxy: self.events_proxy.clone(),
         })
@@ -50,7 +50,7 @@ impl RenderNotifier for Notifier {
 
 struct Window {
     events_loop: winit::EventsLoop, //TODO: share events loop?
-    window: glutin::GlWindow,
+    context: Option<glutin::WindowedContext<NotCurrent>>,
     renderer: webrender::Renderer,
     name: &'static str,
     pipeline_id: PipelineId,
@@ -63,33 +63,31 @@ struct Window {
 impl Window {
     fn new(name: &'static str, clear_color: ColorF) -> Self {
         let events_loop = winit::EventsLoop::new();
-        let context_builder = glutin::ContextBuilder::new()
-            .with_gl(glutin::GlRequest::GlThenGles {
-                opengl_version: (3, 2),
-                opengles_version: (3, 0),
-            });
         let window_builder = winit::WindowBuilder::new()
             .with_title(name)
             .with_multitouch()
             .with_dimensions(LogicalSize::new(800., 600.));
-        let window = glutin::GlWindow::new(window_builder, context_builder, &events_loop)
+        let context = glutin::ContextBuilder::new()
+            .with_gl(glutin::GlRequest::GlThenGles {
+                opengl_version: (3, 2),
+                opengles_version: (3, 0),
+            })
+            .build_windowed(window_builder, &events_loop)
             .unwrap();
 
-        unsafe {
-            window.make_current().ok();
-        }
+        let context = unsafe { context.make_current().unwrap() };
 
-        let gl = match window.get_api() {
+        let gl = match context.get_api() {
             glutin::Api::OpenGl => unsafe {
-                gl::GlFns::load_with(|symbol| window.get_proc_address(symbol) as *const _)
+                gl::GlFns::load_with(|symbol| context.get_proc_address(symbol) as *const _)
             },
             glutin::Api::OpenGlEs => unsafe {
-                gl::GlesFns::load_with(|symbol| window.get_proc_address(symbol) as *const _)
+                gl::GlesFns::load_with(|symbol| context.get_proc_address(symbol) as *const _)
             },
             glutin::Api::WebGl => unimplemented!(),
         };
 
-        let device_pixel_ratio = window.get_hidpi_factor() as f32;
+        let device_pixel_ratio = context.window().get_hidpi_factor() as f32;
 
         let opts = webrender::RendererOptions {
             device_pixel_ratio,
@@ -98,7 +96,8 @@ impl Window {
         };
 
         let device_size = {
-            let size = window
+            let size = context
+                .window()
                 .get_inner_size()
                 .unwrap()
                 .to_physical(device_pixel_ratio as f64);
@@ -106,7 +105,7 @@ impl Window {
         };
         let notifier = Box::new(Notifier::new(events_loop.create_proxy()));
         let (renderer, sender) = webrender::Renderer::new(gl.clone(), notifier, opts, None, device_size).unwrap();
-        let api = sender.create_api();
+        let mut api = sender.create_api();
         let document_id = api.add_document(device_size, 0);
 
         let epoch = Epoch(0);
@@ -118,13 +117,13 @@ impl Window {
         txn.add_raw_font(font_key, font_bytes, 0);
 
         let font_instance_key = api.generate_font_instance_key();
-        txn.add_font_instance(font_instance_key, font_key, Au::from_px(32), None, None, Vec::new());
+        txn.add_font_instance(font_instance_key, font_key, 32.0, None, None, Vec::new());
 
         api.send_transaction(document_id, txn);
 
         Window {
             events_loop,
-            window,
+            context: Some(unsafe { context.make_not_current().unwrap() }),
             renderer,
             name,
             epoch,
@@ -136,9 +135,6 @@ impl Window {
     }
 
     fn tick(&mut self) -> bool {
-        unsafe {
-            self.window.make_current().ok();
-        }
         let mut do_exit = false;
         let my_name = &self.name;
         let renderer = &mut self.renderer;
@@ -175,15 +171,17 @@ impl Window {
             return true
         }
 
-        let device_pixel_ratio = self.window.get_hidpi_factor() as f32;
+        let context = unsafe { self.context.take().unwrap().make_current().unwrap() };
+        let device_pixel_ratio = context.window().get_hidpi_factor() as f32;
         let device_size = {
-            let size = self.window
+            let size = context
+                .window()
                 .get_inner_size()
                 .unwrap()
                 .to_physical(device_pixel_ratio as f64);
             DeviceIntSize::new(size.width as i32, size.height as i32)
         };
-        let layout_size = device_size.to_f32() / euclid::TypedScale::new(device_pixel_ratio);
+        let layout_size = device_size.to_f32() / euclid::Scale::new(device_pixel_ratio);
         let mut txn = Transaction::new();
         let mut builder = DisplayListBuilder::new(self.pipeline_id, layout_size);
         let space_and_clip = SpaceAndClipInfo::root_scroll(self.pipeline_id);
@@ -192,7 +190,7 @@ impl Window {
         builder.push_simple_stacking_context(
             bounds.origin,
             space_and_clip.spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         builder.push_rect(
@@ -202,6 +200,10 @@ impl Window {
                     LayoutSize::new(100.0, 200.0),
                 ),
                 space_and_clip,
+            ),
+            LayoutRect::new(
+                LayoutPoint::new(100.0, 200.0),
+                LayoutSize::new(100.0, 200.0),
             ),
             ColorF::new(0.0, 1.0, 0.0, 1.0));
 
@@ -287,7 +289,9 @@ impl Window {
 
         renderer.update();
         renderer.render(device_size).unwrap();
-        self.window.swap_buffers().ok();
+        context.swap_buffers().ok();
+
+        self.context = Some(unsafe { context.make_not_current().unwrap() });
 
         false
     }

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "तालिका डालें">
+
+<!ENTITY size.label "आकार">
+<!ENTITY numRowsEditField.label "पंक्ति:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "कॉलम:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "चौड़ाई:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY borderEditField.label "किनारा:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "तालिका के किनारे के लिये एक संख्या टाइप करें, या बिना किनारे के लिये शून्य (0) टाइप करें">
+<!ENTITY pixels.label "पिक्सेल">

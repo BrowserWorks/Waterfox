@@ -2,7 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // This is the same value used by CustomizableUI tests.
-const kForceOverflowWidthPx = 200;
+const kForceOverflowWidthPx = 450;
 
 registerCleanupFunction(async function() {
   // Clean up when the test finishes.
@@ -39,14 +39,10 @@ add_task(async function test_overflow_anchor() {
 
   let panel = DownloadsPanel.panel;
   let chevron = document.getElementById("nav-bar-overflow-button");
-  let chevronIcon = document.getAnonymousElementByAttribute(
-    chevron,
-    "class",
-    "toolbarbutton-icon"
-  );
+
   is(
     panel.anchorNode,
-    chevronIcon,
+    chevron.icon,
     "Panel should be anchored to the chevron`s icon."
   );
 
@@ -59,11 +55,7 @@ add_task(async function test_overflow_anchor() {
   EventUtils.sendMouseEvent({ type: "mousedown", button: 0 }, button.node);
   await promise;
 
-  let downloadsAnchor = document.getAnonymousElementByAttribute(
-    button.node,
-    "class",
-    "toolbarbutton-badge-stack"
-  );
+  let downloadsAnchor = button.node.badgeStack;
   is(panel.anchorNode, downloadsAnchor);
 
   DownloadsPanel.hidePanel();

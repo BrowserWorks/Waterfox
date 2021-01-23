@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label "Sidebar">
+<!ENTITY sidebar.reload.label "再読み込み">
+<!ENTITY sidebar.reload.accesskey "R">
+<!ENTITY sidebar.picker.label "タブ">
+<!ENTITY sidebar.customize.label "Sidebar の設定...">
+<!ENTITY sidebar.customize.accesskey "u">
+<!ENTITY sidebar.hide.label "Sidebar タブを隠す">
+<!ENTITY sidebar.hide.accesskey "H">
+<!ENTITY sidebar.switch.label "Sidebar タブを切り換える">
+<!ENTITY sidebar.switch.accesskey "T">
+<!ENTITY sidebarCmd.label "Sidebar">
+<!ENTITY sidebarCmd.accesskey "b">
+<!ENTITY sidebar.loading.label "読み込み中...">
+<!ENTITY sidebar.loadstopped.label "読み込み中止">
+<!ENTITY sidebar.loading.stop.label "中止">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key "S">
+
+<!ENTITY sidebar.no-panels.state "Sidebar は、現在空白です。">
+<!ENTITY sidebar.no-panels.add "上の [タブ] ボタンをクリックすることでタブを追加できます。">
+<!ENTITY sidebar.no-panels.hide "Sidebar を表示したくない場合は、[表示] メニューをクリックし、[表示 / 隠す] サブメニューの [Sidebar] を選択してください。">
+<!ENTITY sidebar.sbDirectory.label "Sidebar ディレクトリー...">
+
+<!ENTITY sidebar.pagenotfound.label "このタブは現在有効ではありません。">
+<!ENTITY sidebar.close.tooltip "Sidebar を閉じる">
+<!ENTITY sidebar.open.tooltip "Sidebar を開く">
+
+<!ENTITY sidebar.search.label         "検索">
+<!ENTITY sidebar.client-bookmarks.label     "ブックマーク">
+<!ENTITY sidebar.client-history.label       "履歴">
+<!ENTITY sidebar.client-addressbook.label   "アドレス帳">

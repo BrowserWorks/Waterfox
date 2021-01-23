@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Laajennettu muokkaus…">
+<!ENTITY AdvancedEditButton.accessKey "L">
+<!ENTITY AdvancedEditButton.tooltip "Lisää tai muokkaa HTML:n määreitä, tyylin määreitä ja JavaScriptiä">
+<!ENTITY chooseFileButton.label "Valitse tiedosto...">
+<!ENTITY chooseFileButton.accessKey "V">
+<!ENTITY chooseFileLinkButton.label "Valitse tiedosto...">
+<!ENTITY chooseFileLinkButton.accessKey "a">
+<!ENTITY makeUrlRelative.label "URL on suhteessa sivun sijaintiin">
+<!ENTITY makeUrlRelative.accessKey "U">
+<!ENTITY makeUrlRelative.tooltip "Vaihda suhteellisen ja absoluuttisen URL:n välillä. Sinun täytyy ensin tallentaa sivu muuttaaksesi tämän.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Syötä kelvollinen verkkosivuston osoite, paikallinen tiedosto tai valitse kentän pikavalikosta nimetty ankkuri tai otsikko:">
+<!ENTITY LinkURLEditField2.accessKey "k">

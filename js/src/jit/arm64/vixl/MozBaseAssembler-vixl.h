@@ -108,7 +108,7 @@ class MozBaseAssembler : public js::jit::AssemblerShared {
   template <typename T>
   inline T GetLabelByteOffset(const js::jit::Label* label) {
     VIXL_ASSERT(label->bound());
-    JS_STATIC_ASSERT(sizeof(T) >= sizeof(uint32_t));
+    static_assert(sizeof(T) >= sizeof(uint32_t));
     return reinterpret_cast<T>(label->offset());
   }
 
@@ -225,7 +225,7 @@ class MozBaseAssembler : public js::jit::AssemblerShared {
 
   // Emit the instruction, returning its offset.
   BufferOffset Emit(Instr instruction, bool isBranch = false) {
-    JS_STATIC_ASSERT(sizeof(instruction) == kInstructionSize);
+    static_assert(sizeof(instruction) == kInstructionSize);
     // TODO: isBranch is obsolete and should be removed.
     (void)isBranch;
     BufferOffset offs = armbuffer_.putInt(*(uint32_t*)(&instruction));
@@ -247,7 +247,7 @@ class MozBaseAssembler : public js::jit::AssemblerShared {
  public:
   // Emit the instruction at |at|.
   static void Emit(Instruction* at, Instr instruction) {
-    JS_STATIC_ASSERT(sizeof(instruction) == kInstructionSize);
+    static_assert(sizeof(instruction) == kInstructionSize);
     memcpy(at, &instruction, sizeof(instruction));
   }
 
@@ -304,11 +304,6 @@ class MozBaseAssembler : public js::jit::AssemblerShared {
   static void WritePoolHeader(uint8_t* start, js::jit::Pool* p, bool isNatural);
   static void WritePoolFooter(uint8_t* start, js::jit::Pool* p, bool isNatural);
   static void WritePoolGuard(BufferOffset branch, Instruction* inst, BufferOffset dest);
-
-  static ptrdiff_t GetBranchOffset(const Instruction* i);
-  static void RetargetNearBranch(Instruction* i, int offset, Condition cond, bool final = true);
-  static void RetargetNearBranch(Instruction* i, int offset, bool final = true);
-  static void RetargetFarBranch(Instruction* i, uint8_t** slot, uint8_t* dest, Condition cond);
 
  protected:
   // Functions for managing Labels and linked lists of Label uses.

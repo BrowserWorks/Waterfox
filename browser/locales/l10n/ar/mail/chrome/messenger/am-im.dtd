@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "خصائص الحساب">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "عام">
+<!ENTITY account.advanced              "خيارات متقدمة">
+<!ENTITY account.name                  "اسم المستخدم:">
+<!ENTITY account.password              "كلمة السر:">
+<!ENTITY account.alias                 "الكنية:">
+<!ENTITY account.newMailNotification   "أعلِم بوصول بريد جديد">
+<!ENTITY account.autojoin              "القنوات المُنضم إليها تلقائيا:">
+<!ENTITY account.proxySettings.caption "إعدادات الوسيط:">
+<!ENTITY account.proxySettings.change.label     "غيّر…">
+<!ENTITY account.proxySettings.change.accessKey "غ">

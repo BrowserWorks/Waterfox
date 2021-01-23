@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 var charset = {};
 var hadCharset = {};
 var type;
@@ -21,7 +23,7 @@ function check(aType, aCharset, aHadCharset) {
   reset();
 }
 
-function run_test() {
+add_task(function test_parseResponseContentType() {
   var netutil = Cc["@mozilla.org/network/util;1"].getService(Ci.nsINetUtil);
 
   type = netutil.parseRequestContentType("text/html", charset, hadCharset);
@@ -360,4 +362,4 @@ function run_test() {
     hadCharset
   );
   check("text/plain", "'UTF-8'", true);
-}
+});

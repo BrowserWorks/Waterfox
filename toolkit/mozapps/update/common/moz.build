@@ -14,39 +14,53 @@ EXPORTS += [
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     EXPORTS += [
-        'certificatecheck.h',
         'pathhash.h',
-        'registrycertificates.h',
         'uachelper.h',
         'updatehelper.cpp',
         'updatehelper.h',
         'updateutils_win.h',
     ]
 
+    if CONFIG['MOZ_MAINTENANCE_SERVICE']:
+        EXPORTS += [
+            'certificatecheck.h',
+            'registrycertificates.h',
+        ]
+
 Library('updatecommon')
 
 DEFINES['NS_NO_XPCOM'] = True
 USE_STATIC_LIBS = True
 
+if CONFIG['OS_ARCH'] == 'WINNT':
+    # This forces the creation of updatecommon.lib, which the update agent needs
+    # in order to link to updatecommon library functions.
+    NO_EXPAND_LIBS = True
+
 DisableStlWrapping()
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     SOURCES += [
-        'certificatecheck.cpp',
         'pathhash.cpp',
-        'registrycertificates.cpp',
         'uachelper.cpp',
         'updatehelper.cpp',
         'updateutils_win.cpp',
     ]
     OS_LIBS += [
         'advapi32',
-        'crypt32',
         'ole32',
         'rpcrt4',
         'shell32',
-        'wintrust',
     ]
+    if CONFIG['MOZ_MAINTENANCE_SERVICE']:
+        SOURCES += [
+            'certificatecheck.cpp',
+            'registrycertificates.cpp',
+        ]
+        OS_LIBS += [
+            'crypt32',
+            'wintrust',
+        ]
 
 SOURCES += [
     '/other-licenses/nsis/Contrib/CityHash/cityhash/city.cpp',
@@ -54,9 +68,6 @@ SOURCES += [
     'readstrings.cpp',
     'updatecommon.cpp',
 ]
-
-if CONFIG['CC_TYPE'] == 'clang-cl':
-    AllowCompilerWarnings()  # workaround for bug 1090497
 
 LOCAL_INCLUDES += [
     '/other-licenses/nsis/Contrib/CityHash/cityhash',

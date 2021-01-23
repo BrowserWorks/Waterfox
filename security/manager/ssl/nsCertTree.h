@@ -6,15 +6,12 @@
 #define _NS_CERTTREE_H_
 
 #include "nsCOMPtr.h"
-#include "nsIServiceManager.h"
 #include "nsICertTree.h"
-#include "nsITreeView.h"
 #include "nsITreeSelection.h"
 #include "nsIMutableArray.h"
 #include "nsNSSComponent.h"
 #include "nsTArray.h"
 #include "PLDHashTable.h"
-#include "nsIX509CertDB.h"
 #include "nsCertOverrideService.h"
 #include "mozilla/Attributes.h"
 
@@ -55,7 +52,7 @@ struct CompareCacheHashEntryPtr : PLDHashEntryHdr {
 
 class nsCertAddonInfo final : public nsISupports {
  private:
-  ~nsCertAddonInfo() {}
+  ~nsCertAddonInfo() = default;
 
  public:
   NS_DECL_ISUPPORTS
@@ -132,7 +129,7 @@ class nsCertTree : public nsICertTree {
  private:
   static const uint32_t kInitialCacheLength = 64;
 
-  nsTArray<RefPtr<nsCertTreeDispInfo> > mDispInfo;
+  nsTArray<RefPtr<nsCertTreeDispInfo>> mDispInfo;
   RefPtr<mozilla::dom::XULTreeElement> mTree;
   nsCOMPtr<nsITreeSelection> mSelection;
   treeArrayEl* mTreeArray;
@@ -150,10 +147,9 @@ class nsCertTree : public nsICertTree {
   void FreeCertArray();
   nsresult UpdateUIContents();
 
-  nsresult GetCertsByTypeFromCertList(nsIX509CertList* aCertList,
-                                      uint32_t aType,
-                                      nsCertCompareFunc aCertCmpFn,
-                                      void* aCertCmpFnArg);
+  nsresult GetCertsByTypeFromCertList(
+      const nsTArray<RefPtr<nsIX509Cert>>& aCertList, uint32_t aWantedType,
+      nsCertCompareFunc aCertCmpFn, void* aCertCmpFnArg);
 
   nsCOMPtr<nsIMutableArray> mCellText;
 

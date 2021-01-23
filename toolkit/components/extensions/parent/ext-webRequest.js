@@ -1,8 +1,8 @@
-"use strict";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// This file expects tabTracker to be defined in the global scope (e.g.
-// by ext-utils.js).
-/* global tabTracker */
+"use strict";
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -21,27 +21,7 @@ function registerEvent(
   remoteTab = null
 ) {
   let listener = async data => {
-    let browserData = { tabId: -1, windowId: -1 };
-    if (data.browser) {
-      browserData = tabTracker.getBrowserData(data.browser);
-    }
-    if (filter.tabId != null && browserData.tabId != filter.tabId) {
-      return;
-    }
-    if (filter.windowId != null && browserData.windowId != filter.windowId) {
-      return;
-    }
-
-    let event = data.serialize(eventName);
-    event.tabId = browserData.tabId;
-    if (data.originAttributes) {
-      event.incognito = data.originAttributes.privateBrowsingId > 0;
-      if (extension.hasPermission("cookies")) {
-        event.cookieStoreId = getCookieStoreIdForOriginAttributes(
-          data.originAttributes
-        );
-      }
-    }
+    let event = data.serialize(eventName, extension);
     if (data.registerTraceableChannel) {
       // If this is a primed listener, no tabParent was passed in here,
       // but the convert() callback later in this function will be called
@@ -74,10 +54,10 @@ function registerEvent(
   if (filter.types) {
     filter2.types = filter.types;
   }
-  if (filter.tabId) {
+  if (filter.tabId !== undefined) {
     filter2.tabId = filter.tabId;
   }
-  if (filter.windowId) {
+  if (filter.windowId !== undefined) {
     filter2.windowId = filter.windowId;
   }
   if (filter.incognito !== undefined) {
@@ -106,7 +86,7 @@ function registerEvent(
 
   let listenerDetails = {
     addonId: extension.id,
-    extension: extension.policy,
+    policy: extension.policy,
     blockingAllowed,
   };
   WebRequest[eventName].addListener(listener, filter2, info2, listenerDetails);
@@ -166,7 +146,7 @@ this.webRequest = class extends ExtensionAPI {
         getSecurityInfo: function(requestId, options = {}) {
           return WebRequest.getSecurityInfo({
             id: requestId,
-            extension: context.extension.policy,
+            policy: context.extension.policy,
             remoteTab: context.xulBrowser.frameLoader.remoteTab,
             options,
           });

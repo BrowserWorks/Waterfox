@@ -13,6 +13,7 @@
 #include "jit/IonTypes.h"
 #include "jit/MacroAssembler.h"
 #include "jit/RegisterSets.h"
+#include "util/Poison.h"
 
 #include "jit/MacroAssembler-inl.h"
 
@@ -134,9 +135,7 @@ static constexpr Register AtomicTemp = edx;
 static constexpr Register64 AtomicValReg64(edx, eax);
 static constexpr Register64 AtomicVal2Reg64(ecx, ebx);
 
-// At the time of writing, ReturnReg64 is not edx:eax, but it is what our C/C++
-// compilers use.
-static constexpr Register64 AtomicReturnReg64(edx, eax);
+// AtomicReturnReg64 is unused on x86.
 
 #else
 #  error "Unsupported platform"
@@ -429,11 +428,12 @@ static uint32_t GenCmpxchg(MacroAssembler& masm, Scalar::Type size,
       GenGpr64Arg(masm, &iter, AtomicValReg64);
       GenGpr64Arg(masm, &iter, AtomicVal2Reg64);
 #if defined(JS_CODEGEN_X86)
-      MOZ_ASSERT(AtomicValReg64 == Register64(edx, eax));
-      MOZ_ASSERT(AtomicVal2Reg64 == Register64(ecx, ebx));
-      masm.lock_cmpxchg8b(edx, eax, ecx, ebx, Operand(addr));
+      static_assert(AtomicValReg64 == Register64(edx, eax));
+      static_assert(AtomicVal2Reg64 == Register64(ecx, ebx));
 
-      MOZ_ASSERT(AtomicReturnReg64 == Register64(edx, eax));
+      // The return register edx:eax is a compiler/ABI assumption that is *not*
+      // the same as ReturnReg64, so it's correct not to use that here.
+      masm.lock_cmpxchg8b(edx, eax, ecx, ebx, Operand(addr));
 #else
       masm.compareExchange64(sync, addr, AtomicValReg64, AtomicVal2Reg64,
                              AtomicReturnReg64);
@@ -659,8 +659,7 @@ void AtomicMemcpyDownUnsynchronized(uint8_t* dest, const uint8_t* src,
     void (*copyWord)(uint8_t * dest, const uint8_t* src);
 
     if (((uintptr_t(dest) ^ uintptr_t(src)) & WORDMASK) == 0) {
-      const uint8_t* cutoff =
-          (const uint8_t*)JS_ROUNDUP(uintptr_t(src), WORDSIZE);
+      const uint8_t* cutoff = (const uint8_t*)RoundUp(uintptr_t(src), WORDSIZE);
       MOZ_ASSERT(cutoff <= lim);  // because nbytes >= WORDSIZE
       while (src < cutoff) {
         AtomicCopyByteUnsynchronized(dest++, src++);
@@ -861,7 +860,7 @@ bool InitializeJittedAtomics() {
 
   // Allocate executable memory.
   uint32_t codeLength = masm.bytesNeeded();
-  size_t roundedCodeLength = JS_ROUNDUP(codeLength, ExecutableCodePageSize);
+  size_t roundedCodeLength = RoundUp(codeLength, ExecutableCodePageSize);
   uint8_t* code = (uint8_t*)AllocateExecutableMemory(
       roundedCodeLength, ProtectionSetting::Writable,
       MemCheckKind::MakeUndefined);
@@ -872,15 +871,12 @@ bool InitializeJittedAtomics() {
   // Zero the padding.
   memset(code + codeLength, 0, roundedCodeLength - codeLength);
 
-  // Copy the code into place but do not flush, as the flush path requires a
-  // JSContext* we do not have.
-  masm.executableCopy(code, /* flushICache = */ false);
-
-  // Flush the icache using a primitive method.
-  ExecutableAllocator::cacheFlush(code, roundedCodeLength);
+  // Copy the code into place.
+  masm.executableCopy(code);
 
   // Reprotect the whole region to avoid having separate RW and RX mappings.
-  if (!ExecutableAllocator::makeExecutable(code, roundedCodeLength)) {
+  if (!ExecutableAllocator::makeExecutableAndFlushICache(code,
+                                                         roundedCodeLength)) {
     DeallocateExecutableMemory(code, roundedCodeLength);
     return false;
   }

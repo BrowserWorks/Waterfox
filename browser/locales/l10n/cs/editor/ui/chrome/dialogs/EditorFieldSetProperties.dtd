@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti skupiny polí">
+<!ENTITY Legend.label "Legenda">
+<!ENTITY Legend.accesskey "L">
+<!ENTITY EditLegendText.label "Upravit legendu:">
+<!ENTITY EditLegendText.accesskey "U">
+<!ENTITY LegendAlign.label "Zarovnání legendy:">
+<!ENTITY LegendAlign.accesskey "Z">
+<!ENTITY AlignDefault.label "Výchozí">
+<!ENTITY AlignLeft.label "Doleva">
+<!ENTITY AlignCenter.label "Na střed">
+<!ENTITY AlignRight.label "Doprava">
+<!ENTITY RemoveFieldSet.label "Odebrat skupinu polí">
+<!ENTITY RemoveFieldSet.accesskey "O">

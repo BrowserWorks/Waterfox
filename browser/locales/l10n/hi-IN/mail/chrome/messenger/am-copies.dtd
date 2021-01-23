@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Copies &amp; Folders">
+<!ENTITY sendingPrefix.label "जब संदेश भेजा जा रहा हो, स्वचालित रूप से: ">
+<!ENTITY fccMailFolder.label "कॉपी यहां रखें:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "इन ईमेल पता को बीसीसी करें:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY saveMessageDlg.label "संदेश सहेजने पर संपुष्टि संवाद दिखायें">
+<!ENTITY saveMessageDlg.accesskey "S">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Sent&quot; इसपर फोल्डर:">
+<!ENTITY sentFolderOn.accesskey "e">
+<!ENTITY sentInOtherFolder.label "अन्य:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Drafts&quot; इसपर फोल्डर:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "अन्य:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Templates&quot; Folder on:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "अन्य:">
+<!ENTITY templateInOtherFolder.accesskey "r">

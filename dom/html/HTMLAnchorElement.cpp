@@ -6,6 +6,7 @@
 
 #include "mozilla/dom/HTMLAnchorElement.h"
 
+#include "mozilla/dom/BindContext.h"
 #include "mozilla/dom/HTMLAnchorElementBinding.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStates.h"
@@ -45,11 +46,11 @@ ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + 2);
 const DOMTokenListSupportedToken HTMLAnchorElement::sSupportedRelValues[] = {
     "noreferrer", "noopener", nullptr};
 
-HTMLAnchorElement::~HTMLAnchorElement() {}
+HTMLAnchorElement::~HTMLAnchorElement() = default;
 
-bool HTMLAnchorElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const {
+bool HTMLAnchorElement::IsInteractiveHTMLContent() const {
   return HasAttr(kNameSpaceID_None, nsGkAtoms::href) ||
-         nsGenericHTMLElement::IsInteractiveHTMLContent(aIgnoreTabindex);
+         nsGenericHTMLElement::IsInteractiveHTMLContent();
 }
 
 NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(HTMLAnchorElement,
@@ -93,25 +94,23 @@ bool HTMLAnchorElement::HasDeferredDNSPrefetchRequest() {
   return HasFlag(HTML_ANCHOR_DNS_PREFETCH_DEFERRED);
 }
 
-nsresult HTMLAnchorElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                       nsIContent* aBindingParent) {
+nsresult HTMLAnchorElement::BindToTree(BindContext& aContext,
+                                       nsINode& aParent) {
   Link::ResetLinkState(false, Link::ElementHasHref());
 
-  nsresult rv =
-      nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
+  nsresult rv = nsGenericHTMLElement::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Prefetch links
-  Document* doc = GetComposedDoc();
-  if (doc) {
-    doc->RegisterPendingLinkUpdate(this);
+  if (IsInComposedDoc()) {
+    aContext.OwnerDoc().RegisterPendingLinkUpdate(this);
     TryDNSPrefetch();
   }
 
   return rv;
 }
 
-void HTMLAnchorElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void HTMLAnchorElement::UnbindFromTree(bool aNullParent) {
   // Cancel any DNS prefetches
   // Note: Must come before ResetLinkState.  If called after, it will recreate
   // mCachedURI based on data that is invalid - due to a call to GetHostname.
@@ -122,17 +121,7 @@ void HTMLAnchorElement::UnbindFromTree(bool aDeep, bool aNullParent) {
   // in the mStyledLinks hashtable
   Link::ResetLinkState(false, Link::ElementHasHref());
 
-  nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
-}
-
-static bool IsNodeInEditableRegion(nsINode* aNode) {
-  while (aNode) {
-    if (aNode->IsEditable()) {
-      return true;
-    }
-    aNode = aNode->GetParent();
-  }
-  return false;
+  nsGenericHTMLElement::UnbindFromTree(aNullParent);
 }
 
 bool HTMLAnchorElement::IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
@@ -150,7 +139,7 @@ bool HTMLAnchorElement::IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
 
   // Links that are in an editable region should never be focusable, even if
   // they are in a contenteditable="false" region.
-  if (IsNodeInEditableRegion(this)) {
+  if (nsContentUtils::IsNodeInEditableRegion(this)) {
     if (aTabIndex) {
       *aTabIndex = -1;
     }
@@ -160,7 +149,7 @@ bool HTMLAnchorElement::IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
     return true;
   }
 
-  if (!HasAttr(kNameSpaceID_None, nsGkAtoms::tabindex)) {
+  if (GetTabIndexAttrValue().isNothing()) {
     // check whether we're actually a link
     if (!Link::HasURI()) {
       // Not tabbable or focusable without href (bug 17605), unless

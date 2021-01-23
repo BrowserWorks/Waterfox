@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Lastnosti vodoravne črte">
+
+<!ENTITY dimensionsBox.label "Mere">
+<!ENTITY heightEditField.label "Višina:">
+<!ENTITY heightEditField.accessKey "V">
+<!ENTITY widthEditField.label "Dolžina:">
+<!ENTITY widthEditField.accessKey "D">
+<!ENTITY pixelsPopup.value "slikovnih točk">
+<!ENTITY alignmentBox.label "Poravnava">
+<!ENTITY leftRadio.label "Levo">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "Na sredino">
+<!ENTITY centerRadio.accessKey "N">
+<!ENTITY rightRadio.label "Desno">
+<!ENTITY rightRadio.accessKey "D">
+
+<!ENTITY threeDShading.label "3-D senčenje">
+<!ENTITY threeDShading.accessKey "3">
+<!ENTITY saveSettings.label "Uporabi kot privzeto">
+<!ENTITY saveSettings.accessKey "p">
+<!ENTITY saveSettings.tooltip "Shrani te nastavitve za uporabo pri vstavljanju vodoravnih črt">

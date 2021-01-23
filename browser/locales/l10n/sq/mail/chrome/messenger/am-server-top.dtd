@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Depozitim Mesazhesh">
+<!ENTITY securitySettings.label "Rregullime Sigurie">
+<!ENTITY serverSettings.label "Rregullime Shërbyesi">
+<!ENTITY serverType.label "Lloj Shërbyesi:">
+<!ENTITY serverName.label "Emër Shërbyesi:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "Emër Përdoruesi:">
+<!ENTITY userName.accesskey "P">
+<!ENTITY port.label "Portë:">
+<!ENTITY port.accesskey "o">
+<!ENTITY serverPortDefault.label "Parazgjedhje:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Kontrollo për mesazhe të rinj çdo ">
+<!ENTITY biffStart.accesskey "k">
+<!ENTITY biffEnd.label "minuta">
+<!ENTITY useIdleNotifications.label "Lejo nga shërbyesi njoftime të menjëhershme kur arrijnë mesazhe të rinj">
+<!ENTITY useIdleNotifications.accesskey "L">
+<!ENTITY connectionSecurity.label "Siguri lidhjeje:">
+<!ENTITY connectionSecurity.accesskey "S">
+<!ENTITY connectionSecurityType-0.label "Asnjë">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, në pastë">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Metodë mirëfilltësimi:">
+<!ENTITY authMethod.accesskey "m">
+<!ENTITY leaveOnServer.label "Lëri mesazhet në shërbyes">
+<!ENTITY leaveOnServer.accesskey "n">
+<!ENTITY headersOnly.label "Sill vetëm titujt">
+<!ENTITY headersOnly.accesskey "v">
+<!ENTITY deleteByAgeFromServer.label "Për e shumta">
+<!ENTITY deleteByAgeFromServer.accesskey "u">
+<!ENTITY daysEnd.label "ditë">
+<!ENTITY deleteOnServer2.label "Derisa t&apos;i fshij ata">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Shkarko mesazhe të rinj vetvetiu">
+<!ENTITY downloadOnBiff.accesskey "k">
+<!ENTITY deleteMessagePrefix.label "Kur fshij një mesazh:">
+<!ENTITY modelMoveToTrash.label "Shpjere te kjo dosje:">
+<!ENTITY modelMoveToTrash.accesskey "s">
+<!ENTITY modelMarkDeleted.label "Thjesht shënoje si të fshirë">
+<!ENTITY modelMarkDeleted.accesskey "t">
+<!ENTITY modelDeleteImmediately.label "Hiqe aty për aty">
+<!ENTITY modelDeleteImmediately.accesskey "H">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Gjatë daljes Pastro (&quot;Fshiji&quot;) Të Marrët">
+<!ENTITY expungeOnExit.accesskey "P">
+<!ENTITY emptyTrashOnExit.label "Zbrazi Hedhurinat Gjatë Daljes">
+<!ENTITY emptyTrashOnExit.accesskey "Z">
+<!ENTITY loginAtStartup.label "Shih për mesazhe të rinj gjatë nisjes">
+<!ENTITY loginAtStartup.accesskey "S">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Pyetmë para se të shkarkosh më shumë se">
+<!ENTITY maxMessagesStart.accesskey "P">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "mesazhe">
+<!ENTITY alwaysAuthenticate.label "Kërko përherë mirëfilltësim kur lidhesh me këtë shërbyes">
+<!ENTITY alwaysAuthenticate.accesskey "k">
+<!ENTITY newsrcFilePath1.label "Kartelë News.rc:">
+<!ENTITY newsrcPicker1.label "Përzgjidhni Kartelë News.rc">
+<!ENTITY abbreviate.label "Trego emra grupe lajmesh tek pjesa Dosje Poste si:">
+<!ENTITY abbreviateOn.label "Emra të plotë (Për shembull, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Emra të shkurtuar (Për shembull, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Të mëtejshme…">
+<!ENTITY advancedButton.accesskey "m">
+<!ENTITY serverDefaultCharset2.label "Kodim Parazgjedhje Tekstesh:">
+<!ENTITY localPath1.label "Drejtori Vendore:">
+<!ENTITY localFolderPicker.label "Përzgjidhni Drejtori Vendore">
+<!ENTITY browseFolder.label "Shfletoni…">
+<!ENTITY browseFolder.accesskey "S">
+<!ENTITY browseNewsrc.label "Shfletoni…">
+<!ENTITY browseNewsrc.accesskey "S">
+
+<!ENTITY accountTitle.label "Rregullime Llogarie">
+<!ENTITY accountSettingsDesc.label "Kjo që vijon është një llogari speciale. Nuk ka identitete që i përshoqërohen asaj.">
+<!ENTITY storeType.label "Lloj Depozitimi Mesazhesh:">
+<!ENTITY storeType.accesskey "L">
+<!ENTITY mboxStore2.label "Një kartelë për dosje (mbox)">
+<!ENTITY maildirStore.label "Një kartelë për mesazh (maildir)">

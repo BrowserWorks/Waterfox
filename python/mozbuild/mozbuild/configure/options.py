@@ -4,15 +4,38 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import os
-import sys
-import types
 from collections import OrderedDict
+import inspect
+import os
+import six
+import sys
+
+
+HELP_OPTIONS_CATEGORY = 'Help options'
+# List of whitelisted option categories. If you want to add a new category,
+# simply add it to this list; however, exercise discretion as
+# "./configure --help" becomes less useful if there are an excessive number of
+# categories.
+_ALL_CATEGORIES = (
+    HELP_OPTIONS_CATEGORY,
+)
+
+
+def _infer_option_category(define_depth):
+    stack_frame = inspect.stack(0)[3 + define_depth]
+    try:
+        path = os.path.relpath(stack_frame[0].f_code.co_filename)
+    except ValueError:
+        # If this call fails, it means the relative path couldn't be determined
+        # (e.g. because this file is on a different drive than the cwd on a
+        # Windows machine). That's fine, just use the absolute filename.
+        path = stack_frame[0].f_code.co_filename
+    return 'Options from ' + path
 
 
 def istupleofstrings(obj):
     return isinstance(obj, tuple) and len(obj) and all(
-        isinstance(o, types.StringTypes) for o in obj)
+        isinstance(o, six.string_types) for o in obj)
 
 
 class OptionValue(tuple):
@@ -92,7 +115,7 @@ class OptionValue(tuple):
             return PositiveOptionValue()
         elif value is False or value == ():
             return NegativeOptionValue()
-        elif isinstance(value, types.StringTypes):
+        elif isinstance(value, six.string_types):
             return PositiveOptionValue((value,))
         elif isinstance(value, tuple):
             return PositiveOptionValue(value)
@@ -106,7 +129,11 @@ class PositiveOptionValue(OptionValue):
     in the form of a tuple for when values are given to the option (in the form
     --option=value[,value2...].
     '''
-    def __nonzero__(self):
+
+    def __nonzero__(self):  # py2
+        return True
+
+    def __bool__(self):  # py3
         return True
 
 
@@ -131,7 +158,7 @@ class ConflictingOptionError(InvalidOptionError):
         if format_data:
             message = message.format(**format_data)
         super(ConflictingOptionError, self).__init__(message)
-        for k, v in format_data.iteritems():
+        for k, v in six.iteritems(format_data):
             setattr(self, k, v)
 
 
@@ -154,20 +181,30 @@ class Option(object):
     - `help` is the option description for use in the --help output.
     - `possible_origins` is a tuple of strings that are origins accepted for
       this option. Example origins are 'mozconfig', 'implied', and 'environment'.
+    - `category` is a human-readable string used only for categorizing command-
+      line options when displaying the output of `configure --help`. If not
+      supplied, the script will attempt to infer an appropriate category based
+      on the name of the file where the option was defined. If supplied it must
+      be in the _ALL_CATEGORIES list above.
+    - `define_depth` should generally only be used by templates that are used
+      to instantiate an option indirectly. Set this to a positive integer to
+      force the script to look into a deeper stack frame when inferring the
+      `category`.
     '''
     __slots__ = (
         'id', 'prefix', 'name', 'env', 'nargs', 'default', 'choices', 'help',
-        'possible_origins',
+        'possible_origins', 'category', 'define_depth',
     )
 
     def __init__(self, name=None, env=None, nargs=None, default=None,
-                 possible_origins=None, choices=None, help=None):
+                 possible_origins=None, choices=None, category=None, help=None,
+                 define_depth=0):
         if not name and not env:
             raise InvalidOptionError(
                 'At least an option name or an environment variable name must '
                 'be given')
         if name:
-            if not isinstance(name, types.StringTypes):
+            if not isinstance(name, six.string_types):
                 raise InvalidOptionError('Option must be a string')
             if not name.startswith('--'):
                 raise InvalidOptionError('Option must start with `--`')
@@ -176,7 +213,7 @@ class Option(object):
             if not name.islower():
                 raise InvalidOptionError('Option must be all lowercase')
         if env:
-            if not isinstance(env, types.StringTypes):
+            if not isinstance(env, six.string_types):
                 raise InvalidOptionError(
                     'Environment variable name must be a string')
             if not env.isupper():
@@ -186,14 +223,22 @@ class Option(object):
                 isinstance(nargs, int) and nargs >= 0):
             raise InvalidOptionError(
                 "nargs must be a positive integer, '?', '*' or '+'")
-        if (not isinstance(default, types.StringTypes) and
-                not isinstance(default, (bool, types.NoneType)) and
+        if (not isinstance(default, six.string_types) and
+                not isinstance(default, (bool, type(None))) and
                 not istupleofstrings(default)):
             raise InvalidOptionError(
                 'default must be a bool, a string or a tuple of strings')
         if choices and not istupleofstrings(choices):
             raise InvalidOptionError(
                 'choices must be a tuple of strings')
+        if category and not isinstance(category, six.string_types):
+            raise InvalidOptionError('Category must be a string')
+        if category and category not in _ALL_CATEGORIES:
+            raise InvalidOptionError(
+                'Category must either be inferred or in the _ALL_CATEGORIES '
+                'list in options.py: %s' % ', '.join(_ALL_CATEGORIES))
+        if not isinstance(define_depth, int):
+            raise InvalidOptionError('DefineDepth must be an integer')
         if not help:
             raise InvalidOptionError('A help string must be provided')
         if possible_origins and not istupleofstrings(possible_origins):
@@ -259,10 +304,11 @@ class Option(object):
                     ', '.join("'%s'" % c for c in choices))
         elif has_choices:
             maxargs = self.maxargs
-            if len(choices) < maxargs and maxargs != sys.maxint:
+            if len(choices) < maxargs and maxargs != sys.maxsize:
                 raise InvalidOptionError('Not enough `choices` for `nargs`')
         self.choices = choices
         self.help = help
+        self.category = category or _infer_option_category(define_depth)
 
     @staticmethod
     def split_option(option):
@@ -273,7 +319,7 @@ class Option(object):
         where prefix is one of 'with', 'without', 'enable' or 'disable'.
         The '=values' part is optional. Values are separated with commas.
         '''
-        if not isinstance(option, types.StringTypes):
+        if not isinstance(option, six.string_types):
             raise InvalidOptionError('Option must be a string')
 
         elements = option.split('=', 1)
@@ -326,7 +372,7 @@ class Option(object):
     def maxargs(self):
         if isinstance(self.nargs, int):
             return self.nargs
-        return 1 if self.nargs == '?' else sys.maxint
+        return 1 if self.nargs == '?' else sys.maxsize
 
     def _validate_nargs(self, num):
         minargs, maxargs = self.minargs, self.maxargs
@@ -424,6 +470,7 @@ class CommandLineHelper(object):
     Extra options can be added afterwards through API calls. For those,
     conflicting values will raise an exception.
     '''
+
     def __init__(self, environ=os.environ, argv=sys.argv):
         self._environ = dict(environ)
         self._args = OrderedDict()
@@ -516,5 +563,5 @@ class CommandLineHelper(object):
 
     def __iter__(self):
         for d in (self._args, self._extra_args):
-            for arg, pos in d.itervalues():
+            for arg, pos in six.itervalues(d):
                 yield arg

@@ -48,7 +48,7 @@ template <AudioConfig::SampleFormat Format,
           typename Value = typename AudioDataBufferTypeChooser<Format>::Type>
 class AudioDataBuffer {
  public:
-  AudioDataBuffer() {}
+  AudioDataBuffer() = default;
   AudioDataBuffer(Value* aBuffer, size_t aLength) : mBuffer(aBuffer, aLength) {}
   explicit AudioDataBuffer(const AudioDataBuffer& aOther)
       : mBuffer(aOther.mBuffer) {}
@@ -233,6 +233,7 @@ class AudioConverter {
   bool CanReorderAudio() const {
     return mIn.Layout().MappingTable(mOut.Layout());
   }
+  static bool CanConvert(const AudioConfig& aIn, const AudioConfig& aOut);
 
   const AudioConfig& InputConfig() const { return mIn; }
   const AudioConfig& OutputConfig() const { return mOut; }

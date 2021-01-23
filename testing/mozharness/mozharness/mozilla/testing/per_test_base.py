@@ -10,15 +10,12 @@ import json
 import math
 import os
 import posixpath
-import re
 import sys
 import mozinfo
 from manifestparser import TestManifest
 
-from mozharness.mozilla.fetches import FetchesMixin
 
-
-class SingleTestMixin(FetchesMixin):
+class SingleTestMixin(object):
     """Utility functions for per-test testing like test verification and per-test coverage."""
 
     def __init__(self, **kwargs):
@@ -63,7 +60,7 @@ class SingleTestMixin(FetchesMixin):
                 # tests with the same path specified in multiple manifests).
                 disabled = [t['relpath'] for t in active if 'disabled' in t]
                 all_disabled += disabled
-                new_by_path = {t['relpath']: (suite, t.get('subsuite'))
+                new_by_path = {t['relpath']: (suite, t.get('subsuite'), None)
                                for t in active if 'disabled' not in t and
                                t['relpath'] not in disabled}
                 tests_by_path.update(new_by_path)
@@ -83,12 +80,13 @@ class SingleTestMixin(FetchesMixin):
             if os.path.exists(path):
                 man = manifest.ReftestManifest()
                 man.load(path)
-                for t in man.files:
-                    relpath = os.path.relpath(t, self.reftest_test_dir)
-                    tests_by_path[relpath] = (suite, subsuite)
-                    self._map_test_path_to_source(t, relpath)
+                for t in man.tests:
+                    relpath = os.path.relpath(t['path'], self.reftest_test_dir)
+                    referenced = t['referenced-test'] if 'referenced-test' in t else None
+                    tests_by_path[relpath] = (suite, subsuite, referenced)
+                    self._map_test_path_to_source(t['path'], relpath)
                 self.info("Per-test run updated with manifest %s (%d tests)" %
-                          (path, len(man.files)))
+                          (path, len(man.tests)))
 
         suite = 'jsreftest'
         self.jsreftest_test_dir = os.path.join(dirs['abs_test_install_dir'], 'jsreftest', 'tests')
@@ -107,7 +105,7 @@ class SingleTestMixin(FetchesMixin):
                     test_path = os.path.join(self.jsreftest_test_dir, relpath)
                     relpath = os.path.join('js', 'src', 'tests', relpath)
                     self._map_test_path_to_source(test_path, relpath)
-                    tests_by_path.update({relpath: (suite, None)})
+                    tests_by_path.update({relpath: (suite, None, None)})
                 else:
                     self.warning("unexpected jsreftest test format: %s" % str(t))
             self.info("Per-test run updated with manifest %s (%d tests)" %
@@ -133,23 +131,33 @@ class SingleTestMixin(FetchesMixin):
                 self.info("Per-test run (non-gpu) discarded gpu test %s (%s)" % (file, entry[1]))
                 continue
 
+            if entry[2] is not None:
+                # Test name substitution, for reftest reference file handling:
+                #  - if both test and reference modified, run the test file
+                #  - if only reference modified, run the test file
+                test_file = os.path.join(os.path.dirname(file), os.path.basename(entry[2]))
+                self.info("Per-test run substituting %s for %s" % (test_file, file))
+                file = test_file
+
             self.info("Per-test run found test %s (%s/%s)" % (file, entry[0], entry[1]))
             subsuite_mapping = {
                 # Map (<suite>, <subsuite>): <full-suite>
                 #   <suite> is associated with a manifest, explicitly in code above
                 #   <subsuite> comes from "subsuite" tags in some manifest entries
                 #   <full-suite> is a unique id for the suite, matching desktop mozharness configs
-                ('mochitest-browser-chrome', 'devtools'): 'mochitest-devtools-chrome',
-                ('mochitest-browser-chrome', 'screenshots'): 'mochitest-browser-chrome-screenshots',  # noqa
-                ('mochitest-plain', 'media'): 'mochitest-media',
+                ('mochitest-browser-chrome', 'devtools', None): 'mochitest-devtools-chrome',
+                ('mochitest-browser-chrome', 'remote', None): 'mochitest-remote',
+                ('mochitest-browser-chrome', 'screenshots', None): 'mochitest-browser-chrome-screenshots',  # noqa
+                ('mochitest-plain', 'media', None): 'mochitest-media',
                 # below should be on test-verify-gpu job
-                ('mochitest-chrome', 'gpu'): 'mochitest-chrome-gpu',
-                ('mochitest-plain', 'gpu'): 'mochitest-plain-gpu',
-                ('mochitest-plain', 'webgl1-core'): 'mochitest-webgl1-core',
-                ('mochitest-plain', 'webgl1-ext'): 'mochitest-webgl1-ext',
-                ('mochitest-plain', 'webgl2-core'): 'mochitest-webgl2-core',
-                ('mochitest-plain', 'webgl2-ext'): 'mochitest-webgl2-ext',
-                ('mochitest-plain', 'webgl2-deqp'): 'mochitest-webgl2-deqp',
+                ('mochitest-chrome', 'gpu', None): 'mochitest-chrome-gpu',
+                ('mochitest-plain', 'gpu', None): 'mochitest-plain-gpu',
+                ('mochitest-plain', 'webgl1-core', None): 'mochitest-webgl1-core',
+                ('mochitest-plain', 'webgl1-ext', None): 'mochitest-webgl1-ext',
+                ('mochitest-plain', 'webgl2-core', None): 'mochitest-webgl2-core',
+                ('mochitest-plain', 'webgl2-ext', None): 'mochitest-webgl2-ext',
+                ('mochitest-plain', 'webgl2-deqp', None): 'mochitest-webgl2-deqp',
+                ('mochitest-plain', 'webgpu', None): 'mochitest-webgpu',
             }
             if entry in subsuite_mapping:
                 suite = subsuite_mapping[entry]
@@ -158,7 +166,8 @@ class SingleTestMixin(FetchesMixin):
             suite_files = self.suites.get(suite)
             if not suite_files:
                 suite_files = []
-            suite_files.append(file)
+            if file not in suite_files:
+                suite_files.append(file)
             self.suites[suite] = suite_files
 
     def _find_wpt_tests(self, dirs, changed_files):
@@ -217,7 +226,9 @@ class SingleTestMixin(FetchesMixin):
         revision = os.environ.get("GECKO_HEAD_REV")
         if not repository or not revision:
             self.warning("unable to run tests in per-test mode: no repo or revision!")
-            return []
+            self.suites = {}
+            self.tests_downloaded = True
+            return
 
         def get_automationrelevance():
             response = self.load_json_url(url)
@@ -232,8 +243,8 @@ class SingleTestMixin(FetchesMixin):
         if mozinfo.info['buildapp'] == 'mobile/android':
             # extra android mozinfo normally comes from device queries, but this
             # code may run before the device is ready, so rely on configuration
-            mozinfo.update({'android_version': self.config.get('android_version', 18)})
-            mozinfo.update({'is_fennec': self.config.get('is_fennec', True)})
+            mozinfo.update({'android_version': self.config.get('android_version', 24)})
+            mozinfo.update({'is_fennec': self.config.get('is_fennec', False)})
             mozinfo.update({'is_emulator': self.config.get('is_emulator', True)})
         mozinfo.update({'verify': True})
         self.info("Per-test run using mozinfo: %s" % str(mozinfo.info))
@@ -269,6 +280,12 @@ class SingleTestMixin(FetchesMixin):
         # chunk files
         total_tests = sum([len(self.suites[x]) for x in self.suites])
 
+        if total_tests == 0:
+            self.warning("No tests to verify.")
+            self.suites = {}
+            self.tests_downloaded = True
+            return
+
         files_per_chunk = total_tests / float(self.config.get('total_chunks', 1))
         files_per_chunk = int(math.ceil(files_per_chunk))
 
@@ -302,7 +319,6 @@ class SingleTestMixin(FetchesMixin):
         if not self.per_test_coverage and not self.verify_enabled:
             return [[]]
 
-        references = re.compile(r"(-ref|-notref|-noref|-noref.)\.")
         files = []
         jsreftest_extra_dir = os.path.join('js', 'src', 'tests')
         # For some suites, the test path needs to be updated before passing to
@@ -311,15 +327,6 @@ class SingleTestMixin(FetchesMixin):
             if (self.config.get('per_test_category') != "web-platform" and
                 suite in ['reftest', 'crashtest']):
                 file = os.path.join(self.reftest_test_dir, file)
-                if suite == 'reftest':
-                    # Special handling for modified reftest reference files:
-                    #  - if both test and reference modified, run the test file
-                    #  - if only reference modified, run the test file
-                    nonref = references.sub('.', file)
-                    if nonref != file:
-                        file = None
-                        if nonref not in files and os.path.exists(nonref):
-                            file = nonref
             elif (self.config.get('per_test_category') != "web-platform" and
                   suite == 'jsreftest'):
                 file = os.path.relpath(file, jsreftest_extra_dir)

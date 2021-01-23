@@ -30,7 +30,7 @@ void gfxVars::SetValuesForInitialize(
     }
   } else {
     // Save the values for Initialize call
-    gGfxVarInitUpdates = new nsTArray<GfxVarUpdate>(aInitUpdates);
+    gGfxVarInitUpdates = new nsTArray<GfxVarUpdate>(aInitUpdates.Clone());
   }
 }
 
@@ -54,7 +54,7 @@ void gfxVars::Initialize() {
                "Initial updates should be provided in content process");
     if (!gGfxVarInitUpdates) {
       // No provided initial updates, sync-request them from parent.
-      InfallibleTArray<GfxVarUpdate> initUpdates;
+      nsTArray<GfxVarUpdate> initUpdates;
       dom::ContentChild::GetSingleton()->SendGetGfxVars(&initUpdates);
       gGfxVarInitUpdates = new nsTArray<GfxVarUpdate>(std::move(initUpdates));
     }
@@ -65,7 +65,7 @@ void gfxVars::Initialize() {
   }
 }
 
-gfxVars::gfxVars() {}
+gfxVars::gfxVars() = default;
 
 void gfxVars::Shutdown() {
   sInstance = nullptr;

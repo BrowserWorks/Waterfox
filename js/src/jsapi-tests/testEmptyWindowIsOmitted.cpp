@@ -11,7 +11,8 @@
 #include "jsfriendapi.h"
 
 #include "js/CharacterEncoding.h"
-#include "js/CompilationAndEvaluation.h"  // JS::Compile{,DontInflate}
+#include "js/CompilationAndEvaluation.h"  // JS::Compile
+#include "js/Exception.h"
 #include "js/SourceText.h"
 #include "jsapi-tests/tests.h"
 #include "vm/ErrorReporting.h"
@@ -100,7 +101,7 @@ JSScript* compile(const char* chars, size_t len) {
       source.init(cx, chars, len, JS::SourceOwnership::Borrowed));
 
   JS::CompileOptions options(cx);
-  return JS::CompileDontInflate(cx, options, source);
+  return JS::Compile(cx, options, source);
 }
 
 template <typename CharT, size_t N>
@@ -109,12 +110,11 @@ bool testOmittedWindow(const CharT (&chars)[N], unsigned expectedErrorNumber,
   JS::Rooted<JSScript*> script(cx, compile(chars, N - 1));
   CHECK(!script);
 
-  JS::RootedValue exn(cx);
-  CHECK(JS_GetPendingException(cx, &exn));
-  JS_ClearPendingException(cx);
+  JS::ExceptionStack exnStack(cx);
+  CHECK(JS::StealPendingExceptionStack(cx, &exnStack));
 
-  js::ErrorReport report(cx);
-  CHECK(report.init(cx, exn, js::ErrorReport::WithSideEffects));
+  JS::ErrorReportBuilder report(cx);
+  CHECK(report.init(cx, exnStack, JS::ErrorReportBuilder::WithSideEffects));
 
   const auto* errorReport = report.report();
 

@@ -5,7 +5,11 @@
 
 interface nsIContentSecurityPolicy;
 interface nsIPrincipal;
+interface nsITransportSecurityInfo;
+interface nsIURI;
 interface nsIWebProgress;
+interface nsIReferrerInfo;
+interface nsIOpenWindowInfo;
 
 webidl FrameLoader;
 
@@ -20,6 +24,12 @@ interface nsIBrowser : nsISupports
    * they are loaded in the same process as the content.
    */
   readonly attribute FrameLoader sameProcessAsFrameLoader;
+
+  /**
+   * Gets the optional open window information provided by the window creation
+   * code and used to initialize a new browser.
+   */
+  attribute nsIOpenWindowInfo openWindowInfo;
 
   /*
    * Called by the child to inform the parent that links are dropped into
@@ -66,18 +76,108 @@ interface nsIBrowser : nsISupports
    */
   readonly attribute nsIWebProgress remoteWebProgressManager;
 
-  /**
-   * Called by the child to inform the parent that a command update has occurred
-   * and the supplied set of commands are now enabled and disabled.
-   *
-   * @param action command updater action
-   * @param enabledCommands commands to enable
-   * @param disabledCommand commands to disable
-   */
-  void enableDisableCommandsRemoteOnly(in AString action,
-                                       in Array<ACString> enabledCommands,
-                                       in Array<ACString> disabledCommands);
-
   readonly attribute nsIPrincipal contentPrincipal;
+  readonly attribute nsIPrincipal contentStoragePrincipal;
+  readonly attribute nsIPrincipal contentBlockingAllowListPrincipal;
   readonly attribute nsIContentSecurityPolicy csp;
+  readonly attribute nsIReferrerInfo referrerInfo;
+
+  /**
+   * Whether or not the browser is in the process of an nsIWebNavigation
+   * navigation method.
+   */
+  attribute boolean isNavigating;
+
+  /**
+   * Whether or not the character encoding menu may be enabled.
+   */
+  attribute boolean mayEnableCharacterEncodingMenu;
+
+  /**
+   * Whether or not the character encoding was detected by analyzing
+   * content (as opposed to reading a protocol label).
+   */
+  attribute boolean charsetAutodetected;
+
+  /**
+   * Called by Gecko to update the browser when its state changes.
+   *
+   * @param aCharset the new character set of the document
+   * @param aDocumentURI the URI of the current document
+   * @param aContentType the content type of the document
+   */
+  void updateForStateChange(in AString aCharset,
+                            in nsIURI aDocumentURI,
+                            in AString aContentType);
+
+  /**
+   * Called by Gecko to update the nsIWebNavigation when a location change occurs.
+   *
+   * @param aCanGoBack whether or not the nsIWebNavigation can go backwards in
+   *                   history
+   * @param aCanGoForward whether or not the nsIWebNavigation can go
+   *                      forward in history
+   */
+  void updateWebNavigationForLocationChange(in boolean aCanGoBack,
+                                            in boolean aCanGoForward);
+
+  /**
+   * Called by Gecko to update the browser when a location change occurs.
+   *
+   * @param aLocation the new location
+   * @param aCharset the character set of the document
+   * @param aMayEnableCharacterEncodingMenu whether or not the content encoding
+   *                                        menu may be enabled
+   * @param aCharsetAutodetected whether or not the given character set was
+   *                             autodetected
+   * @param aDocumentURI the URI of the new document
+   * @param aTitle the title of the new doucment
+   * @param aContentPrincipal the security principal of the new document
+   * @param aContentStoragePrincipal the security principal for the new
+   *                                 document's storage
+   * @param aCSP the content security policy of the new document
+   * @param aReferrerInfo the referrer info of the new document
+   * @param aIsSynthetic whether or not the document is synthetic
+   * @param aInnerWindowID the inner window ID of the document
+   * @param aHasRequestContextID whether or not the the request context has a
+   *                             value (true) or null should be used (false)
+   * @param aRequestContextID the request context ID
+   * @param aContentType the content type of the document
+   */
+  void updateForLocationChange(in nsIURI aLocation,
+                               in AString aCharset,
+                               in boolean aMayEnableCharacterEncodingMenu,
+                               in boolean aCharsetAutodetected,
+                               in nsIURI aDocumentURI,
+                               in AString aTitle,
+                               in nsIPrincipal aContentPrincipal,
+                               in nsIPrincipal aContentStoragePrincipal,
+                               in nsIContentSecurityPolicy aCSP,
+                               in nsIReferrerInfo aReferrerInfo,
+                               in boolean aIsSynthetic,
+                               in uint64_t aInnerWindowID,
+                               in boolean aHasRequestContextID,
+                               in uint64_t aRequestContextID,
+                               in AString aContentType);
+
+  /**
+   * Called by Gecko when it wants to change the process which is currently
+   * being used to render content in this tab.
+   *
+   * Returns a promise which will be resolved with the ChildID of the new
+   * process.
+   *
+   * @param aRemoteType the new remote type to switch this browser into
+   * @param aPendingSwitchId unique identifier for the ongoing
+   *                         process-switching load
+   * @param aReplaceBrowsingContext if true, do not preserve the
+   *                                BrowsingContext loaded inside this
+   *                                browser after changing processes.
+   */
+  Promise performProcessSwitch(in AString aRemoteType,
+                               in uint64_t aPendingSwitchId,
+                               in boolean aReplaceBrowsingContext);
+
+  /** If `true`, this browser supports the `performProcessSwitch` method */
+  readonly attribute bool canPerformProcessSwitch;
 };

@@ -14,14 +14,17 @@
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
 #include "nsEscape.h"
-#include "nsIServiceManager.h"
 #include "nsMIMEHeaderParamImpl.h"
 #include "nsReadableUtils.h"
 #include "nsNativeCharsetUtils.h"
 #include "nsError.h"
 #include "mozilla/Encoding.h"
+#include "mozilla/TextUtils.h"
+#include "mozilla/Utf8.h"
 
 using mozilla::Encoding;
+using mozilla::IsAscii;
+using mozilla::IsUtf8;
 
 // static functions declared below are moved from mailnews/mime/src/comi18n.cpp
 
@@ -64,7 +67,7 @@ static nsresult ConvertStringToUTF8(const nsACString& aString,
   // check is requested. It may not be asked for if a caller suspects
   // that the input is in non-ASCII 7bit charset (ISO-2022-xx, HZ) or
   // it's in a charset other than UTF-8 that can be mistaken for UTF-8.
-  if (!aSkipCheck && (IsASCII(aString) || IsUTF8(aString))) {
+  if (!aSkipCheck && (IsAscii(aString) || IsUtf8(aString))) {
     aUTF8String = aString;
     return NS_OK;
   }
@@ -77,7 +80,7 @@ static nsresult ConvertStringToUTF8(const nsACString& aString,
   // is actually in UTF-8 as opposed to aCharset. (i.e. caller's hunch
   // was wrong.) We don't check ASCIIness assuming there's no charset
   // incompatible with ASCII (we don't support EBCDIC).
-  if (aSkipCheck && NS_FAILED(rv) && IsUTF8(aString)) {
+  if (aSkipCheck && NS_FAILED(rv) && IsUtf8(aString)) {
     aUTF8String = aString;
     return NS_OK;
   }
@@ -160,7 +163,7 @@ nsresult nsMIMEHeaderParamImpl::DoGetParameter(
     }
   }
 
-  if (IsUTF8(str1)) {
+  if (IsUtf8(str1)) {
     CopyUTF8toUTF16(str1, aResult);
     return NS_OK;
   }
@@ -494,10 +497,13 @@ nsresult nsMIMEHeaderParamImpl::DoParameterInternal(
     if (*str != '"') {
       // The value is a token, not a quoted string.
       valueStart = str;
-      for (valueEnd = str;
-           *valueEnd && !nsCRT::IsAsciiSpace(*valueEnd) && *valueEnd != ';';
-           valueEnd++)
+      for (valueEnd = str; *valueEnd && *valueEnd != ';'; valueEnd++) {
         ;
+      }
+      // ignore trailing whitespace:
+      while (valueEnd > valueStart && nsCRT::IsAsciiSpace(*(valueEnd - 1))) {
+        valueEnd--;
+      }
       str = valueEnd;
     } else {
       isQuotedString = true;
@@ -529,7 +535,7 @@ nsresult nsMIMEHeaderParamImpl::DoParameterInternal(
       //     line continuation -- jht 4/29/98
       nsAutoCString tempStr(valueStart, valueEnd - valueStart);
       tempStr.StripCRLF();
-      char* res = ToNewCString(tempStr);
+      char* res = ToNewCString(tempStr, mozilla::fallible);
       NS_ENSURE_TRUE(res, NS_ERROR_OUT_OF_MEMORY);
 
       if (isQuotedString) RemoveQuotedStringEscapes(res);
@@ -741,7 +747,7 @@ nsresult internalDecodeRFC2047Header(const char* aHeaderVal,
   // to UTF-8. Otherwise, just strips away CRLF.
   if (PL_strstr(aHeaderVal, "=?") ||
       (!aDefaultCharset.IsEmpty() &&
-       (!IsUTF8(nsDependentCString(aHeaderVal)) ||
+       (!IsUtf8(nsDependentCString(aHeaderVal)) ||
         Is7bitNonAsciiString(aHeaderVal, strlen(aHeaderVal))))) {
     DecodeRFC2047Str(aHeaderVal, aDefaultCharset, aOverrideCharset, aResult);
   } else if (aEatContinuations &&

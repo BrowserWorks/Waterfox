@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "ਐਡ-ਆਨ">
+<!ENTITY aboutAddons.header2                    "ਤੁਹਾਡੇ ਐਡ-ਆਨ">
+
+<!ENTITY addonAction.enable                     "ਸਮਰੱਥ ਕਰੋ">
+<!ENTITY addonAction.disable                    "ਅਸਮਰੱਥ ਕਰੋ">
+<!ENTITY addonAction.uninstall                  "ਅਣ-ਇੰਸਟਾਲ ਕਰੋ">
+<!ENTITY addonAction.undo                       "ਵਾਪਸ ਲਵੋ">
+<!ENTITY addonAction.update                     "ਅੱਪਡੇਟ ਕਰੋ">
+
+<!ENTITY addonUnsigned.message                  "ਇਸ ਐਡ-ਆਨ ਨੂੰ &brandShortName; ਵਲੋਂ ਤਸਦੀਕ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।">
+<!ENTITY addonUnsigned.learnMore                "ਹੋਰ ਜਾਣੋ">

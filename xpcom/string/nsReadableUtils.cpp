@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "mozilla/CheckedInt.h"
+#include "mozilla/Utf8.h"
 
 #include "nscore.h"
 #include "nsMemory.h"
@@ -23,30 +24,38 @@ using mozilla::MakeSpan;
  * enough to hold a copy of the supplied string (plus a zero terminator).
  *
  * @param aSource an string you will eventually be making a copy of
- * @return a new buffer (of the type specified by the second parameter) which
- * you must free with |free|.
+ * @return a new buffer which you must free with |free|.
  *
  */
-template <class FromStringT, class ToCharT>
-inline ToCharT* AllocateStringCopy(const FromStringT& aSource, ToCharT*) {
-  // Can't overflow due to the definition of nsTSubstring<T>::kMaxCapacity
-  return static_cast<ToCharT*>(
-      moz_xmalloc((size_t(aSource.Length()) + 1) * sizeof(ToCharT)));
+template <class FromStringT, class CharT>
+inline CharT* AllocateStringCopy(const FromStringT& aSource, CharT*) {
+  return static_cast<CharT*>(
+      malloc((size_t(aSource.Length()) + 1) * sizeof(CharT)));
 }
 
 char* ToNewCString(const nsAString& aSource) {
+  char* str = ToNewCString(aSource, mozilla::fallible);
+  if (!str) {
+    MOZ_CRASH("Unable to allocate memory");
+  }
+  return str;
+}
+
+char* ToNewCString(const nsAString& aSource,
+                   const mozilla::fallible_t& aFallible) {
   char* dest = AllocateStringCopy(aSource, (char*)nullptr);
   if (!dest) {
     return nullptr;
   }
 
   auto len = aSource.Length();
-  LossyConvertUTF16toLatin1(aSource, MakeSpan(dest, len));
+  LossyConvertUtf16toLatin1(aSource, MakeSpan(dest, len));
   dest[len] = 0;
   return dest;
 }
 
-char* ToNewUTF8String(const nsAString& aSource, uint32_t* aUTF8Count) {
+char* ToNewUTF8String(const nsAString& aSource, uint32_t* aUTF8Count,
+                      const mozilla::fallible_t& aFallible) {
   auto len = aSource.Length();
   // The uses of this function seem temporary enough that it's not
   // worthwhile to be fancy about the allocation size. Let's just use
@@ -62,9 +71,12 @@ char* ToNewUTF8String(const nsAString& aSource, uint32_t* aUTF8Count) {
     return nullptr;
   }
   size_t destLenVal = destLen.value();
-  char* dest = static_cast<char*>(moz_xmalloc(destLenVal));
+  char* dest = static_cast<char*>(malloc(destLenVal));
+  if (!dest) {
+    return nullptr;
+  }
 
-  size_t written = ConvertUTF16toUTF8(aSource, MakeSpan(dest, destLenVal));
+  size_t written = ConvertUtf16toUtf8(aSource, MakeSpan(dest, destLenVal));
   dest[written] = 0;
 
   if (aUTF8Count) {
@@ -74,7 +86,24 @@ char* ToNewUTF8String(const nsAString& aSource, uint32_t* aUTF8Count) {
   return dest;
 }
 
+char* ToNewUTF8String(const nsAString& aSource, uint32_t* aUTF8Count) {
+  char* str = ToNewUTF8String(aSource, aUTF8Count, mozilla::fallible);
+  if (!str) {
+    MOZ_CRASH("Unable to allocate memory");
+  }
+  return str;
+}
+
 char* ToNewCString(const nsACString& aSource) {
+  char* str = ToNewCString(aSource, mozilla::fallible);
+  if (!str) {
+    MOZ_CRASH("Unable to allocate memory");
+  }
+  return str;
+}
+
+char* ToNewCString(const nsACString& aSource,
+                   const mozilla::fallible_t& aFallible) {
   // no conversion needed, just allocate a buffer of the correct length and copy
   // into it
 
@@ -90,6 +119,15 @@ char* ToNewCString(const nsACString& aSource) {
 }
 
 char16_t* ToNewUnicode(const nsAString& aSource) {
+  char16_t* str = ToNewUnicode(aSource, mozilla::fallible);
+  if (!str) {
+    MOZ_CRASH("Unable to allocate memory");
+  }
+  return str;
+}
+
+char16_t* ToNewUnicode(const nsAString& aSource,
+                       const mozilla::fallible_t& aFallible) {
   // no conversion needed, just allocate a buffer of the correct length and copy
   // into it
 
@@ -105,18 +143,28 @@ char16_t* ToNewUnicode(const nsAString& aSource) {
 }
 
 char16_t* ToNewUnicode(const nsACString& aSource) {
+  char16_t* str = ToNewUnicode(aSource, mozilla::fallible);
+  if (!str) {
+    MOZ_CRASH("Unable to allocate memory");
+  }
+  return str;
+}
+
+char16_t* ToNewUnicode(const nsACString& aSource,
+                       const mozilla::fallible_t& aFallible) {
   char16_t* dest = AllocateStringCopy(aSource, (char16_t*)nullptr);
   if (!dest) {
     return nullptr;
   }
 
   auto len = aSource.Length();
-  ConvertLatin1toUTF16(aSource, MakeSpan(dest, len));
+  ConvertLatin1toUtf16(aSource, MakeSpan(dest, len));
   dest[len] = 0;
   return dest;
 }
 
-char16_t* UTF8ToNewUnicode(const nsACString& aSource, uint32_t* aUTF16Count) {
+char16_t* UTF8ToNewUnicode(const nsACString& aSource, uint32_t* aUTF16Count,
+                           const mozilla::fallible_t& aFallible) {
   // Compute length plus one as required by ConvertUTF8toUTF16
   uint32_t lengthPlusOne = aSource.Length() + 1;  // Can't overflow
 
@@ -130,9 +178,12 @@ char16_t* UTF8ToNewUnicode(const nsACString& aSource, uint32_t* aUTF16Count) {
     return nullptr;
   }
 
-  char16_t* dest = (char16_t*)moz_xmalloc(allocLength.value());
+  char16_t* dest = (char16_t*)malloc(allocLength.value());
+  if (!dest) {
+    return nullptr;
+  }
 
-  size_t written = ConvertUTF8toUTF16(aSource, MakeSpan(dest, lengthPlusOne));
+  size_t written = ConvertUtf8toUtf16(aSource, MakeSpan(dest, lengthPlusOne));
   dest[written] = 0;
 
   if (aUTF16Count) {
@@ -140,6 +191,14 @@ char16_t* UTF8ToNewUnicode(const nsACString& aSource, uint32_t* aUTF16Count) {
   }
 
   return dest;
+}
+
+char16_t* UTF8ToNewUnicode(const nsACString& aSource, uint32_t* aUTF16Count) {
+  char16_t* str = UTF8ToNewUnicode(aSource, aUTF16Count, mozilla::fallible);
+  if (!str) {
+    MOZ_CRASH("Unable to allocate memory");
+  }
+  return str;
 }
 
 char16_t* CopyUnicodeTo(const nsAString& aSource, uint32_t aSrcOffset,
@@ -208,23 +267,18 @@ void ToLowerCase(const nsACString& aSource, nsACString& aDest) {
   }
 }
 
-bool ParseString(const nsACString& aSource, char aDelimiter,
+void ParseString(const nsACString& aSource, char aDelimiter,
                  nsTArray<nsCString>& aArray) {
   nsACString::const_iterator start, end;
   aSource.BeginReading(start);
   aSource.EndReading(end);
-
-  uint32_t oldLength = aArray.Length();
 
   for (;;) {
     nsACString::const_iterator delimiter = start;
     FindCharInReadable(aDelimiter, delimiter, end);
 
     if (delimiter != start) {
-      if (!aArray.AppendElement(Substring(start, delimiter))) {
-        aArray.RemoveElementsAt(oldLength, aArray.Length() - oldLength);
-        return false;
-      }
+      aArray.AppendElement(Substring(start, delimiter));
     }
 
     if (delimiter == end) {
@@ -235,13 +289,12 @@ bool ParseString(const nsACString& aSource, char aDelimiter,
       break;
     }
   }
-
-  return true;
 }
 
-template <class StringT, class IteratorT, class Comparator>
-bool FindInReadable_Impl(const StringT& aPattern, IteratorT& aSearchStart,
-                         IteratorT& aSearchEnd, const Comparator& aCompare) {
+template <class StringT, class IteratorT>
+bool FindInReadable_Impl(
+    const StringT& aPattern, IteratorT& aSearchStart, IteratorT& aSearchEnd,
+    nsTStringComparator<typename StringT::char_type> aCompare) {
   bool found_it = false;
 
   // only bother searching at all if we're given a non-empty range to search
@@ -312,9 +365,10 @@ bool FindInReadable_Impl(const StringT& aPattern, IteratorT& aSearchStart,
  * This searches the entire string from right to left, and returns the first
  * match found, if any.
  */
-template <class StringT, class IteratorT, class Comparator>
-bool RFindInReadable_Impl(const StringT& aPattern, IteratorT& aSearchStart,
-                          IteratorT& aSearchEnd, const Comparator& aCompare) {
+template <class StringT, class IteratorT>
+bool RFindInReadable_Impl(
+    const StringT& aPattern, IteratorT& aSearchStart, IteratorT& aSearchEnd,
+    nsTStringComparator<typename StringT::char_type> aCompare) {
   IteratorT patternStart, patternEnd, searchEnd = aSearchEnd;
   aPattern.BeginReading(patternStart);
   aPattern.EndReading(patternEnd);
@@ -364,14 +418,14 @@ bool RFindInReadable_Impl(const StringT& aPattern, IteratorT& aSearchStart,
 bool FindInReadable(const nsAString& aPattern,
                     nsAString::const_iterator& aSearchStart,
                     nsAString::const_iterator& aSearchEnd,
-                    const nsStringComparator& aComparator) {
+                    nsStringComparator aComparator) {
   return FindInReadable_Impl(aPattern, aSearchStart, aSearchEnd, aComparator);
 }
 
 bool FindInReadable(const nsACString& aPattern,
                     nsACString::const_iterator& aSearchStart,
                     nsACString::const_iterator& aSearchEnd,
-                    const nsCStringComparator& aComparator) {
+                    nsCStringComparator aComparator) {
   return FindInReadable_Impl(aPattern, aSearchStart, aSearchEnd, aComparator);
 }
 
@@ -379,20 +433,20 @@ bool CaseInsensitiveFindInReadable(const nsACString& aPattern,
                                    nsACString::const_iterator& aSearchStart,
                                    nsACString::const_iterator& aSearchEnd) {
   return FindInReadable_Impl(aPattern, aSearchStart, aSearchEnd,
-                             nsCaseInsensitiveCStringComparator());
+                             nsCaseInsensitiveCStringComparator);
 }
 
 bool RFindInReadable(const nsAString& aPattern,
                      nsAString::const_iterator& aSearchStart,
                      nsAString::const_iterator& aSearchEnd,
-                     const nsStringComparator& aComparator) {
+                     const nsStringComparator aComparator) {
   return RFindInReadable_Impl(aPattern, aSearchStart, aSearchEnd, aComparator);
 }
 
 bool RFindInReadable(const nsACString& aPattern,
                      nsACString::const_iterator& aSearchStart,
                      nsACString::const_iterator& aSearchEnd,
-                     const nsCStringComparator& aComparator) {
+                     const nsCStringComparator aComparator) {
   return RFindInReadable_Impl(aPattern, aSearchStart, aSearchEnd, aComparator);
 }
 
@@ -436,7 +490,7 @@ bool StringBeginsWith(const nsAString& aSource, const nsAString& aSubstring) {
 }
 
 bool StringBeginsWith(const nsAString& aSource, const nsAString& aSubstring,
-                      const nsStringComparator& aComparator) {
+                      nsStringComparator aComparator) {
   nsAString::size_type src_len = aSource.Length(),
                        sub_len = aSubstring.Length();
   if (sub_len > src_len) {
@@ -455,7 +509,7 @@ bool StringBeginsWith(const nsACString& aSource, const nsACString& aSubstring) {
 }
 
 bool StringBeginsWith(const nsACString& aSource, const nsACString& aSubstring,
-                      const nsCStringComparator& aComparator) {
+                      nsCStringComparator aComparator) {
   nsACString::size_type src_len = aSource.Length(),
                         sub_len = aSubstring.Length();
   if (sub_len > src_len) {
@@ -474,7 +528,7 @@ bool StringEndsWith(const nsAString& aSource, const nsAString& aSubstring) {
 }
 
 bool StringEndsWith(const nsAString& aSource, const nsAString& aSubstring,
-                    const nsStringComparator& aComparator) {
+                    nsStringComparator aComparator) {
   nsAString::size_type src_len = aSource.Length(),
                        sub_len = aSubstring.Length();
   if (sub_len > src_len) {
@@ -494,7 +548,7 @@ bool StringEndsWith(const nsACString& aSource, const nsACString& aSubstring) {
 }
 
 bool StringEndsWith(const nsACString& aSource, const nsACString& aSubstring,
-                    const nsCStringComparator& aComparator) {
+                    nsCStringComparator aComparator) {
   nsACString::size_type src_len = aSource.Length(),
                         sub_len = aSubstring.Length();
   if (sub_len > src_len) {

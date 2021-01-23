@@ -21,12 +21,12 @@ class NS_NO_VTABLE IPCBlobInputStreamParentCallback {
   NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 
  protected:
-  virtual ~IPCBlobInputStreamParentCallback() {}
+  virtual ~IPCBlobInputStreamParentCallback() = default;
 };
 
 class IPCBlobInputStreamParent final : public PIPCBlobInputStreamParent {
  public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(IPCBlobInputStreamParent)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(IPCBlobInputStreamParent, final)
 
   // The size of the inputStream must be passed as argument in order to avoid
   // the use of nsIInputStream::Available() which could open a fileDescriptor in

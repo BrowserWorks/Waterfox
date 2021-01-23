@@ -1,10 +1,14 @@
+/* eslint-env mozilla/frame-script */
+
+"use strict";
+
 function getCookieService() {
   return Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieManager);
 }
 
 function getCookies(cs) {
   let cookies = [];
-  for (let cookie of cs.enumerator) {
+  for (let cookie of cs.cookies) {
     cookies.push({
       host: cookie.host,
       path: cookie.path,

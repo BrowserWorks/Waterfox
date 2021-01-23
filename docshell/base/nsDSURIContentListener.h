@@ -17,19 +17,24 @@ class nsIInterfaceRequestor;
 class nsIWebNavigationInfo;
 class nsPIDOMWindowOuter;
 
-// Helper Class to eventually close an already openend window
+// Helper Class to eventually close an already opened window
 class MaybeCloseWindowHelper final : public nsITimerCallback {
  public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
 
-  explicit MaybeCloseWindowHelper(nsIInterfaceRequestor* aContentContext);
+  explicit MaybeCloseWindowHelper(
+      mozilla::dom::BrowsingContext* aContentContext);
 
   /**
-   * Closes the provided window async (if mShouldCloseWindow is true)
-   * and returns its opener if the window was just openend.
+   * Closes the provided window async (if mShouldCloseWindow is true) and
+   * returns a valid browsingContext to be used instead as parent for dialogs or
+   * similar things.
+   * In case mShouldCloseWindow is true, the returned BrowsingContext will be
+   * the window's opener (or original cross-group opener in the case of a
+   * `noopener` popup).
    */
-  nsIInterfaceRequestor* MaybeCloseWindow();
+  mozilla::dom::BrowsingContext* MaybeCloseWindow();
 
   void SetShouldCloseWindow(bool aShouldCloseWindow);
 
@@ -37,16 +42,19 @@ class MaybeCloseWindowHelper final : public nsITimerCallback {
   ~MaybeCloseWindowHelper();
 
  private:
+  already_AddRefed<mozilla::dom::BrowsingContext> ChooseNewBrowsingContext(
+      mozilla::dom::BrowsingContext* aBC);
+
   /**
    * The dom window associated to handle content.
    */
-  nsCOMPtr<nsIInterfaceRequestor> mContentContext;
+  RefPtr<mozilla::dom::BrowsingContext> mBrowsingContext;
 
   /**
    * Used to close the window on a timer, to avoid any exceptions that are
    * thrown if we try to close the window before it's fully loaded.
    */
-  nsCOMPtr<nsPIDOMWindowOuter> mWindowToClose;
+  RefPtr<mozilla::dom::BrowsingContext> mBCToClose;
   nsCOMPtr<nsITimer> mTimer;
 
   /**
@@ -64,8 +72,6 @@ class nsDSURIContentListener final : public nsIURIContentListener,
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIURICONTENTLISTENER
-
-  nsresult Init();
 
  protected:
   explicit nsDSURIContentListener(nsDocShell* aDocShell);
@@ -88,8 +94,6 @@ class nsDSURIContentListener final : public nsIURIContentListener,
   // preferred and encouraged!
   nsWeakPtr mWeakParentContentListener;
   nsIURIContentListener* mParentContentListener;
-
-  nsCOMPtr<nsIWebNavigationInfo> mNavInfo;
 };
 
 #endif /* nsDSURIContentListener_h__ */

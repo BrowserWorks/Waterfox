@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "Nafn: ">
+<!ENTITY directoryName.accesskey "n">
+<!ENTITY directoryHostname.label "Vélarheiti: ">
+<!ENTITY directoryHostname.accesskey "V">
+<!ENTITY directoryBaseDN.label "Grunn DN: ">
+<!ENTITY directoryBaseDN.accesskey "G">
+<!ENTITY findButton.label "Leita">
+<!ENTITY findButton.accesskey "L">
+<!ENTITY directorySecure.label "Nota örugga tengingu (SSL)">
+<!ENTITY directorySecure.accesskey "u">
+<!ENTITY directoryLogin.label "Nota DN: ">
+<!ENTITY directoryLogin.accesskey "N">
+<!ENTITY General.tab "Almennt">
+<!ENTITY Offline.tab "Ónettengdur">
+<!ENTITY Advanced.tab "Ítarlegt">
+<!ENTITY portNumber.label "Gáttnúmer: ">
+<!ENTITY portNumber.accesskey "n">
+<!ENTITY searchFilter.label "Leitarsía: ">
+<!ENTITY searchFilter.accesskey "s">
+<!ENTITY scope.label "Umfang: ">
+<!ENTITY scope.accesskey "U">
+<!ENTITY scopeOneLevel.label "Ein hæð">
+<!ENTITY scopeOneLevel.accesskey "h">
+<!ENTITY scopeSubtree.label "Undirtré">
+<!ENTITY scopeSubtree.accesskey "U">
+<!ENTITY return.label "Ekki skila meira en">
+<!ENTITY return.accesskey "r">
+<!ENTITY results.label "niðurstöðum">
+<!ENTITY offlineText.label "Þú getur niðurhalið staðbundnu afriti af þessari möppu svo það sé aðgengilegt þegar þú ert að vinna án nettengingar.">
+<!ENTITY saslMechanism.label "Innskráningaraðferð: ">
+<!ENTITY saslMechanism.accesskey "I">
+<!ENTITY saslOff.label "Einfalt">
+<!ENTITY saslOff.accesskey "l">
+<!ENTITY saslGSSAPI.label "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth "36em">

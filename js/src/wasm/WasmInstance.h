@@ -21,9 +21,11 @@
 
 #include "builtin/TypedObject.h"
 #include "gc/Barrier.h"
+#include "gc/Zone.h"
 #include "vm/SharedMem.h"
 #include "wasm/WasmCode.h"
 #include "wasm/WasmDebug.h"
+#include "wasm/WasmFrameIter.h"  // js::wasm::WasmFrameIter
 #include "wasm/WasmProcess.h"
 #include "wasm/WasmTable.h"
 
@@ -49,14 +51,12 @@ class Instance {
   void* preBarrierCode_;
   const SharedCode code_;
   const UniqueTlsData tlsData_;
-  GCPtrWasmMemoryObject memory_;
+  const GCPtrWasmMemoryObject memory_;
   const SharedTableVector tables_;
   DataSegmentVector passiveDataSegments_;
   ElemSegmentVector passiveElemSegments_;
   const UniqueDebugState maybeDebug_;
   StructTypeDescrVector structTypeDescrs_;
-
-  friend void Zone::sweepBreakpoints(js::FreeOp*);
 
   // Internal helpers:
   const void** addressOfFuncTypeId(const FuncTypeIdDesc& funcTypeId) const;
@@ -74,12 +74,12 @@ class Instance {
   Instance(JSContext* cx, HandleWasmInstanceObject object, SharedCode code,
            UniqueTlsData tlsData, HandleWasmMemoryObject memory,
            SharedTableVector&& tables, StructTypeDescrVector&& structTypeDescrs,
-           const JSFunctionVector& funcImports,
-           const ValVector& globalImportValues,
-           const WasmGlobalObjectVector& globalObjs,
            UniqueDebugState maybeDebug);
   ~Instance();
-  bool init(JSContext* cx, const DataSegmentVector& dataSegments,
+  bool init(JSContext* cx, const JSFunctionVector& funcImports,
+            const ValVector& globalImportValues,
+            const WasmGlobalObjectVector& globalObjs,
+            const DataSegmentVector& dataSegments,
             const ElemSegmentVector& elemSegments);
   void trace(JSTracer* trc);
 
@@ -155,31 +155,39 @@ class Instance {
 
   // Called by Wasm(Memory|Table)Object when a moving resize occurs:
 
-  void onMovingGrowMemory(uint8_t* prevMemoryBase);
+  void onMovingGrowMemory();
   void onMovingGrowTable(const Table* theTable);
 
   // Called to apply a single ElemSegment at a given offset, assuming
   // that all bounds validation has already been performed.
 
-  void initElems(uint32_t tableIndex, const ElemSegment& seg,
-                 uint32_t dstOffset, uint32_t srcOffset, uint32_t len);
+  MOZ_MUST_USE bool initElems(uint32_t tableIndex, const ElemSegment& seg,
+                              uint32_t dstOffset, uint32_t srcOffset,
+                              uint32_t len);
 
   // Debugger support:
 
   JSString* createDisplayURL(JSContext* cx);
+  WasmBreakpointSite* getOrCreateBreakpointSite(JSContext* cx, uint32_t offset);
+  void destroyBreakpointSite(JSFreeOp* fop, uint32_t offset);
 
   // about:memory reporting:
 
   void addSizeOfMisc(MallocSizeOf mallocSizeOf, Metadata::SeenSet* seenMetadata,
-                     ShareableBytes::SeenSet* seenBytes,
                      Code::SeenSet* seenCode, Table::SeenSet* seenTables,
                      size_t* code, size_t* data) const;
+
+  // Wasm disassembly support
+
+  void disassembleExport(JSContext* cx, uint32_t funcIndex, Tier tier,
+                         PrintCallback callback) const;
 
  public:
   // Functions to be called directly from wasm code.
   static int32_t callImport_void(Instance*, int32_t, int32_t, uint64_t*);
   static int32_t callImport_i32(Instance*, int32_t, int32_t, uint64_t*);
   static int32_t callImport_i64(Instance*, int32_t, int32_t, uint64_t*);
+  static int32_t callImport_v128(Instance*, int32_t, int32_t, uint64_t*);
   static int32_t callImport_f64(Instance*, int32_t, int32_t, uint64_t*);
   static int32_t callImport_anyref(Instance*, int32_t, int32_t, uint64_t*);
   static int32_t callImport_funcref(Instance*, int32_t, int32_t, uint64_t*);
@@ -191,10 +199,16 @@ class Instance {
                           int64_t value, int64_t timeout);
   static int32_t wake(Instance* instance, uint32_t byteOffset, int32_t count);
   static int32_t memCopy(Instance* instance, uint32_t destByteOffset,
-                         uint32_t srcByteOffset, uint32_t len);
+                         uint32_t srcByteOffset, uint32_t len,
+                         uint8_t* memBase);
+  static int32_t memCopyShared(Instance* instance, uint32_t destByteOffset,
+                               uint32_t srcByteOffset, uint32_t len,
+                               uint8_t* memBase);
   static int32_t dataDrop(Instance* instance, uint32_t segIndex);
   static int32_t memFill(Instance* instance, uint32_t byteOffset,
-                         uint32_t value, uint32_t len);
+                         uint32_t value, uint32_t len, uint8_t* memBase);
+  static int32_t memFillShared(Instance* instance, uint32_t byteOffset,
+                               uint32_t value, uint32_t len, uint8_t* memBase);
   static int32_t memInit(Instance* instance, uint32_t dstOffset,
                          uint32_t srcOffset, uint32_t len, uint32_t segIndex);
   static int32_t tableCopy(Instance* instance, uint32_t dstOffset,
@@ -213,6 +227,8 @@ class Instance {
   static int32_t tableInit(Instance* instance, uint32_t dstOffset,
                            uint32_t srcOffset, uint32_t len, uint32_t segIndex,
                            uint32_t tableIndex);
+  static void* refFunc(Instance* instance, uint32_t funcIndex);
+  static void preBarrierFiltering(Instance* instance, gc::Cell** location);
   static void postBarrier(Instance* instance, gc::Cell** location);
   static void postBarrierFiltering(Instance* instance, gc::Cell** location);
   static void* structNew(Instance* instance, uint32_t typeIndex);
@@ -220,7 +236,10 @@ class Instance {
                             uint32_t outputTypeIndex, void* maybeNullPtr);
 };
 
-typedef UniquePtr<Instance> UniqueInstance;
+using UniqueInstance = UniquePtr<Instance>;
+
+bool ResultsToJSValue(JSContext* cx, ResultType type, void* registerResultLoc,
+                      Maybe<char*> stackResultsLoc, MutableHandleValue rval);
 
 }  // namespace wasm
 }  // namespace js

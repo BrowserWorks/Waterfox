@@ -15,6 +15,7 @@
 #include "nsIX509Cert.h"
 #include "nsIX509CertValidity.h"
 #include "nsLiteralString.h"
+#include "nsNSSCertificate.h"
 #include "nsProxyRelease.h"
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
@@ -344,9 +345,9 @@ class LocalCertRemoveTask final : public LocalCertTask {
 
 NS_IMPL_ISUPPORTS(LocalCertService, nsILocalCertService)
 
-LocalCertService::LocalCertService() {}
+LocalCertService::LocalCertService() = default;
 
-LocalCertService::~LocalCertService() {}
+LocalCertService::~LocalCertService() = default;
 
 nsresult LocalCertService::LoginToKeySlot() {
   nsresult rv;
@@ -402,7 +403,7 @@ LocalCertService::GetOrCreateCert(const nsACString& aNickname,
   }
 
   RefPtr<LocalCertGetTask> task(new LocalCertGetTask(aNickname, aCallback));
-  return task->Dispatch("LocalCertGet");
+  return task->Dispatch();
 }
 
 NS_IMETHODIMP
@@ -424,7 +425,7 @@ LocalCertService::RemoveCert(const nsACString& aNickname,
 
   RefPtr<LocalCertRemoveTask> task(
       new LocalCertRemoveTask(aNickname, aCallback));
-  return task->Dispatch("LocalCertRm");
+  return task->Dispatch();
 }
 
 NS_IMETHODIMP

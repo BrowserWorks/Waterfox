@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "වගු ඇතුළු කිරීම">
+
+<!ENTITY size.label "විශාලත්වය">
+<!ENTITY numRowsEditField.label "පේළි:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "තීරු:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "පළල:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY borderEditField.label "දාරය:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "වගුවේ දාරය සඳහා අගයක් ඇතුළු කරන්න, හෝ දාරයක් නැති වගුවක් සඳහා (0) ඇතුළු කරන්න">
+<!ENTITY pixels.label "පික්සෙල්">

@@ -27,12 +27,13 @@ typedef uint8_t jsbytecode;
 
 class JS_PUBLIC_API JSAtom;
 struct JS_PUBLIC_API JSContext;
+struct JS_PUBLIC_API JSClass;
 class JS_PUBLIC_API JSFunction;
+class JS_PUBLIC_API JSFreeOp;
 class JS_PUBLIC_API JSObject;
 struct JS_PUBLIC_API JSRuntime;
 class JS_PUBLIC_API JSScript;
 class JS_PUBLIC_API JSString;
-struct JS_PUBLIC_API JSFreeOp;
 
 namespace js {
 class JS_PUBLIC_API TempAllocPolicy;
@@ -46,7 +47,7 @@ typedef unsigned char Latin1Char;
 
 class JS_PUBLIC_API Symbol;
 class JS_PUBLIC_API BigInt;
-union JS_PUBLIC_API Value;
+class JS_PUBLIC_API Value;
 
 class JS_PUBLIC_API Compartment;
 class JS_PUBLIC_API Realm;

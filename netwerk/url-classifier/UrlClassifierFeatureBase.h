@@ -11,7 +11,6 @@
 #include "nsIUrlClassifierSkipListService.h"
 #include "nsTArray.h"
 #include "nsString.h"
-#include "mozilla/AntiTrackingCommon.h"
 
 namespace mozilla {
 namespace net {
@@ -58,9 +57,9 @@ class UrlClassifierFeatureBase : public nsIUrlClassifierFeature,
   void InitializePreferences();
   void ShutdownPreferences();
 
- private:
   nsCString mName;
 
+ private:
   nsCString mPrefSkipHosts;
 
   // 2: blacklist and whitelist.

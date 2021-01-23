@@ -1,4 +1,0 @@
-<?xml-stylesheet type="text/css" href="data:text/css,hbox::before { content: 'This is some text'; }" ?>
-<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <hbox/>
-</window>

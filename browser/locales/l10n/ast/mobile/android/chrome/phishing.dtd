@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "¡Sacáime d'equí!">
+<!ENTITY safeb.palm.decline.label "Inorar esta alvertencia">
+<!ENTITY safeb.palm.reportPage.label "¿Por qué se bloquió esta páxina?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Asesoramientu forníu por <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "¡Informóse de páxina atacante!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Informóse d'esta páxina web en <span id='malware_sitename'/> como páxina atacante y bloquióse basándose nes tos preferencies de seguranza.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Les páxines atacantes tenten d'usar el to ordenador p'atacar a otros, marafundiar información privada o dañar el to sistema.</p><p>Delles páxines atacantes distribúin arré software dañible pero munches tán comprometíes ensin la conocencia o permisu de los sos dueños.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "¡Sitiu fraudulentu!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Informóse d'esta páxina web en <span id='phishing_sitename'/> como un sitiu fraudulentu y bloquióse basándose nes tos preferencies de seguranza.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Los sitios fraudulentos tán diseñaos pa engañifate a facer daqué peligroso, como instalar software o revelar la to información personal, como contraseñes, númberos de teléfonu o tarxetes de creitu.</p><p>Introducir cualesquier información nesta web quiciabes resulte nun robu d'identidá u otru fraude.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "¡Informóse de sitiu de software indeseyáu!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Informóse de la páxina web en <span id='unwanted_sitename'/> por contener software indeseyáu y bloquióse basándose nes tos preferencies de seguranza.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Les páxines de software indeseyáu tenten d'instalar software que pue ser fraudulentu y afeutar al to sistema de formes inesperaes.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "El sitiu de darréu igual contién malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; bloquió esta páxina porque quiciabes tente d'instalar aplicaciones peligroses que roben o desanicien la to información (por exemplu: semeyes, contraseñes, mensaxe o tarxetes de creitu).">

@@ -12,7 +12,7 @@ extern crate winit;
 mod boilerplate;
 
 use crate::boilerplate::{Example, HandyDandyRectBuilder};
-use euclid::TypedScale;
+use euclid::Scale;
 use gleam::gl;
 use webrender::api::*;
 use webrender::api::units::*;
@@ -43,7 +43,7 @@ struct ExternalHandler {
     texture_id: gl::GLuint
 }
 
-impl webrender::OutputImageHandler for OutputHandler {
+impl OutputImageHandler for OutputHandler {
     fn lock(&mut self, _id: PipelineId) -> Option<(u32, FramebufferIntSize)> {
         Some((self.texture_id, FramebufferIntSize::new(500, 500)))
     }
@@ -51,16 +51,16 @@ impl webrender::OutputImageHandler for OutputHandler {
     fn unlock(&mut self, _id: PipelineId) {}
 }
 
-impl webrender::ExternalImageHandler for ExternalHandler {
+impl ExternalImageHandler for ExternalHandler {
     fn lock(
         &mut self,
         _key: ExternalImageId,
         _channel_index: u8,
         _rendering: ImageRendering
-    ) -> webrender::ExternalImage {
-        webrender::ExternalImage {
+    ) -> ExternalImage {
+        ExternalImage {
             uv: TexelRect::new(0.0, 0.0, 1.0, 1.0),
-            source: webrender::ExternalImageSource::NativeTexture(self.texture_id),
+            source: ExternalImageSource::NativeTexture(self.texture_id),
         }
     }
     fn unlock(&mut self, _key: ExternalImageId, _channel_index: u8) {}
@@ -69,7 +69,7 @@ impl webrender::ExternalImageHandler for ExternalHandler {
 impl App {
     fn init_output_document(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         device_size: DeviceIntSize,
         device_pixel_ratio: f32,
     ) {
@@ -92,7 +92,7 @@ impl App {
             pipeline_id,
             content_rect: LayoutRect::new(
                 LayoutPoint::zero(),
-                device_size.to_f32() / TypedScale::new(device_pixel_ratio),
+                device_size.to_f32() / Scale::new(device_pixel_ratio),
             ),
             color,
         };
@@ -101,7 +101,7 @@ impl App {
 
         txn.add_image(
             self.external_image_key.unwrap(),
-            ImageDescriptor::new(100, 100, ImageFormat::BGRA8, true, false),
+            ImageDescriptor::new(100, 100, ImageFormat::BGRA8, ImageDescriptorFlags::IS_OPAQUE),
             ImageData::External(ExternalImageData {
                 id: ExternalImageId(0),
                 channel_index: 0,
@@ -119,11 +119,12 @@ impl App {
         builder.push_simple_stacking_context(
             document.content_rect.origin,
             space_and_clip.spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         builder.push_rect(
             &CommonItemProperties::new(document.content_rect, space_and_clip),
+            document.content_rect,
             ColorF::new(1.0, 1.0, 0.0, 1.0)
         );
         builder.pop_stacking_context();
@@ -145,7 +146,7 @@ impl App {
 impl Example for App {
     fn render(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         builder: &mut DisplayListBuilder,
         _txn: &mut Transaction,
         device_size: DeviceIntSize,
@@ -164,14 +165,12 @@ impl Example for App {
         builder.push_simple_stacking_context(
             bounds.origin,
             space_and_clip.spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         builder.push_image(
             &CommonItemProperties::new(bounds, space_and_clip),
             bounds,
-            bounds.size,
-            LayoutSize::zero(),
             ImageRendering::Auto,
             AlphaType::PremultipliedAlpha,
             self.external_image_key.unwrap(),
@@ -183,9 +182,9 @@ impl Example for App {
 
     fn get_image_handlers(
         &mut self,
-        gl: &gl::Gl,
-    ) -> (Option<Box<webrender::ExternalImageHandler>>,
-          Option<Box<webrender::OutputImageHandler>>) {
+        gl: &dyn gl::Gl,
+    ) -> (Option<Box<dyn ExternalImageHandler>>,
+          Option<Box<dyn OutputImageHandler>>) {
         let texture_id = gl.gen_textures(1)[0];
 
         gl.bind_texture(gl::TEXTURE_2D, texture_id);

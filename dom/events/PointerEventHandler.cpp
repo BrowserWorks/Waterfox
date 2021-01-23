@@ -8,14 +8,12 @@
 #include "nsIFrame.h"
 #include "PointerEvent.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/dom/MouseEventBinding.h"
 
 namespace mozilla {
 
 using namespace dom;
-
-static bool sPointerEventEnabled = true;
-static bool sPointerEventImplicitCapture = false;
 
 Maybe<int32_t> PointerEventHandler::sSpoofedPointerId;
 
@@ -44,19 +42,6 @@ static nsClassHashtable<nsUint32HashKey, PointerCaptureInfo>*
 static nsClassHashtable<nsUint32HashKey, PointerInfo>* sActivePointersIds;
 
 /* static */
-void PointerEventHandler::Initialize() {
-  static bool initialized = false;
-  if (initialized) {
-    return;
-  }
-  initialized = true;
-  Preferences::AddBoolVarCache(&sPointerEventEnabled,
-                               "dom.w3c_pointer_events.enabled", true);
-  Preferences::AddBoolVarCache(&sPointerEventImplicitCapture,
-                               "dom.w3c_pointer_events.implicit_capture", true);
-}
-
-/* static */
 void PointerEventHandler::InitializeStatics() {
   MOZ_ASSERT(!sPointerCaptureList, "InitializeStatics called multiple times!");
   sPointerCaptureList =
@@ -74,18 +59,14 @@ void PointerEventHandler::ReleaseStatics() {
 }
 
 /* static */
-bool PointerEventHandler::IsPointerEventEnabled() {
-  return sPointerEventEnabled;
-}
-
-/* static */
 bool PointerEventHandler::IsPointerEventImplicitCaptureForTouchEnabled() {
-  return sPointerEventEnabled && sPointerEventImplicitCapture;
+  return StaticPrefs::dom_w3c_pointer_events_enabled() &&
+         StaticPrefs::dom_w3c_pointer_events_implicit_capture();
 }
 
 /* static */
 void PointerEventHandler::UpdateActivePointerState(WidgetMouseEvent* aEvent) {
-  if (!IsPointerEventEnabled() || !aEvent) {
+  if (!StaticPrefs::dom_w3c_pointer_events_enabled() || !aEvent) {
     return;
   }
   switch (aEvent->mMessage) {
@@ -253,7 +234,7 @@ void PointerEventHandler::CheckPointerCaptureState(WidgetPointerEvent* aEvent) {
   if (!aEvent) {
     return;
   }
-  MOZ_ASSERT(IsPointerEventEnabled());
+  MOZ_ASSERT(StaticPrefs::dom_w3c_pointer_events_enabled());
   MOZ_ASSERT(aEvent->mClass == ePointerEventClass);
 
   PointerCaptureInfo* captureInfo = GetPointerCaptureInfo(aEvent->pointerId);
@@ -309,7 +290,7 @@ void PointerEventHandler::CheckPointerCaptureState(WidgetPointerEvent* aEvent) {
 void PointerEventHandler::ImplicitlyCapturePointer(nsIFrame* aFrame,
                                                    WidgetEvent* aEvent) {
   MOZ_ASSERT(aEvent->mMessage == ePointerDown);
-  if (!aFrame || !IsPointerEventEnabled() ||
+  if (!aFrame || !StaticPrefs::dom_w3c_pointer_events_enabled() ||
       !IsPointerEventImplicitCaptureForTouchEnabled()) {
     return;
   }
@@ -355,7 +336,7 @@ nsIContent* PointerEventHandler::GetPointerCapturingContent(
 /* static */
 nsIContent* PointerEventHandler::GetPointerCapturingContent(
     WidgetGUIEvent* aEvent) {
-  if (!IsPointerEventEnabled() ||
+  if (!StaticPrefs::dom_w3c_pointer_events_enabled() ||
       (aEvent->mClass != ePointerEventClass &&
        aEvent->mClass != eMouseEventClass) ||
       aEvent->mMessage == ePointerDown || aEvent->mMessage == eMouseDown) {
@@ -378,8 +359,7 @@ void PointerEventHandler::ReleaseIfCaptureByDescendant(nsIContent* aContent) {
   for (auto iter = sPointerCaptureList->Iter(); !iter.Done(); iter.Next()) {
     PointerCaptureInfo* data = iter.UserData();
     if (data && data->mPendingContent &&
-        nsContentUtils::ContentIsDescendantOf(data->mPendingContent,
-                                              aContent)) {
+        data->mPendingContent->IsInclusiveDescendantOf(aContent)) {
       ReleasePointerCaptureById(iter.Key());
     }
   }
@@ -494,13 +474,32 @@ void PointerEventHandler::DispatchPointerFromMouseOrTouch(
     PresShell* aShell, nsIFrame* aFrame, nsIContent* aContent,
     WidgetGUIEvent* aEvent, bool aDontRetargetEvents, nsEventStatus* aStatus,
     nsIContent** aTargetContent) {
-  MOZ_ASSERT(IsPointerEventEnabled());
+  MOZ_ASSERT(StaticPrefs::dom_w3c_pointer_events_enabled());
   MOZ_ASSERT(aFrame || aContent);
   MOZ_ASSERT(aEvent);
 
   EventMessage pointerMessage = eVoidEvent;
   if (aEvent->mClass == eMouseEventClass) {
     WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
+    // Don't dispatch pointer events caused by a mouse when simulating touch
+    // devices in RDM.
+    Document* doc = aShell->GetDocument();
+    if (!doc) {
+      return;
+    }
+
+    nsCOMPtr<nsIDocShell> docShell = doc->GetDocShell();
+    if (!docShell) {
+      return;
+    }
+
+    BrowsingContext* bc = doc->GetBrowsingContext();
+    if (docShell->GetTouchEventsOverride() ==
+            nsIDocShell::TOUCHEVENTS_OVERRIDE_ENABLED &&
+        bc && bc->InRDMPane()) {
+      return;
+    }
+
     // 1. If it is not mouse then it is likely will come as touch event
     // 2. We don't synthesize pointer events for those events that are not
     //    dispatched to DOM.
@@ -518,8 +517,8 @@ void PointerEventHandler::DispatchPointerFromMouseOrTouch(
         break;
       case eMouseDown:
         pointerMessage =
-            mouseEvent->mButtons &
-                    ~nsContentUtils::GetButtonsFlagForButton(mouseEvent->mButton)
+            mouseEvent->mButtons & ~nsContentUtils::GetButtonsFlagForButton(
+                                       mouseEvent->mButton)
                 ? ePointerMove
                 : ePointerDown;
         break;

@@ -21,7 +21,7 @@ warning; etc.) or platform or language or whatever.
 
 import re
 
-from mozharness.base.log import DEBUG, WARNING, ERROR, CRITICAL, FATAL
+from mozharness.base.log import CRITICAL, DEBUG, ERROR, FATAL, WARNING
 
 
 # Exceptions
@@ -32,57 +32,6 @@ class VCSException(Exception):
 # ErrorLists {{{1
 BaseErrorList = [{
     'substr': r'''command not found''',
-    'level': ERROR
-}]
-
-# For ssh, scp, rsync over ssh
-SSHErrorList = BaseErrorList + [{
-    'substr': r'''Name or service not known''',
-    'level': ERROR
-}, {
-    'substr': r'''Could not resolve hostname''',
-    'level': ERROR
-}, {
-    'substr': r'''POSSIBLE BREAK-IN ATTEMPT''',
-    'level': WARNING
-}, {
-    'substr': r'''Network error:''',
-    'level': ERROR
-}, {
-    'substr': r'''Access denied''',
-    'level': ERROR
-}, {
-    'substr': r'''Authentication refused''',
-    'level': ERROR
-}, {
-    'substr': r'''Out of memory''',
-    'level': ERROR
-}, {
-    'substr': r'''Connection reset by peer''',
-    'level': WARNING
-}, {
-    'substr': r'''Host key verification failed''',
-    'level': ERROR
-}, {
-    'substr': r'''WARNING:''',
-    'level': WARNING
-}, {
-    'substr': r'''rsync error:''',
-    'level': ERROR
-}, {
-    'substr': r'''Broken pipe:''',
-    'level': ERROR
-}, {
-    'substr': r'''Permission denied:''',
-    'level': ERROR
-}, {
-    'substr': r'''connection unexpectedly closed''',
-    'level': ERROR
-}, {
-    'substr': r'''Warning: Identity file''',
-    'level': ERROR
-}, {
-    'substr': r'''command-line line 0: Missing argument''',
     'level': ERROR
 }]
 
@@ -111,7 +60,8 @@ GitErrorList = BaseErrorList + [
     {'substr': r'''error: failed to push some refs to ''', 'level': ERROR},
     {'substr': r'''remote: error: denying non-fast-forward ''', 'level': ERROR},
     {'substr': r'''! [remote rejected] ''', 'level': ERROR},
-    {'regex': re.compile(r'''remote:.*No such file or directory'''), 'level': ERROR},
+    {'regex': re.compile(
+        r'''remote:.*No such file or directory'''), 'level': ERROR},
 ]
 
 PythonErrorList = BaseErrorList + [
@@ -146,7 +96,8 @@ MakefileErrorList = BaseErrorList + PythonErrorList + RustErrorList + [
     {'regex': re.compile(r'''akefile.*was not found\.'''), 'level': ERROR},
     {'regex': re.compile(r'''Stop\.$'''), 'level': ERROR},
     {'regex': re.compile(r''':\d+: error:'''), 'level': ERROR},
-    {'regex': re.compile(r'''make\[\d+\]: \*\*\* \[.*\] Error \d+'''), 'level': ERROR},
+    {'regex': re.compile(
+        r'''make\[\d+\]: \*\*\* \[.*\] Error \d+'''), 'level': ERROR},
     {'regex': re.compile(r''':\d+: warning:'''), 'level': WARNING},
     {'regex': re.compile(r'''make(?:\[\d+\])?: \*\*\*/'''), 'level': ERROR},
     {'substr': r'''Warning: ''', 'level': WARNING},

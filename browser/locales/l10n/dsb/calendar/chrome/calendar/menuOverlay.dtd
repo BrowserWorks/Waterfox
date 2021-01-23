@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Nowe tšojenje…">
+<!ENTITY event.new.event.accesskey              "t">
+
+<!ENTITY event.new.task                         "Nowy nadawk…">
+<!ENTITY event.new.task.accesskey               "n">
+
+<!ENTITY calendar.import.label                  "Importěrowaś…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Eksportěrowaś…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Wózjawiś…">
+<!ENTITY calendar.publish.accesskey             "z">
+
+<!ENTITY calendar.deletecalendar.label          "Wubrany kalender wulašowaś…">
+<!ENTITY calendar.deletecalendar.accesskey      "l">
+<!ENTITY calendar.unsubscribecalendar.label     "Wubrany kalender wótskazaś…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "s">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Wubrany kalender wótpóraś…">
+<!ENTITY calendar.removecalendar.accesskey      "t">
+
+
+<!ENTITY calendar.menu.customize.label          "Pśiměriś…">
+<!ENTITY calendar.menu.customize.accesskey      "P">
+
+<!ENTITY showUnifinderCmd.label                 "Tšojenja pytaś">
+<!ENTITY showUnifinderCmd.accesskey             "o">
+<!ENTITY showUnifinderCmd.tooltip               "Wobłuk &quot;Tšojenja namakaś&quot; pśešaltowaś">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Nadawki w kalendaru pokazaś">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "N">
+
+<!ENTITY goTodayCmd.label                       "Źinsa">
+<!ENTITY goTodayCmd.accesskey                   "i">
+
+<!ENTITY showCurrentView.label                  "Aktualny naglěd">
+<!ENTITY showCurrentView.accesskey              "A">
+
+<!ENTITY calendar.properties.label              "Kakosći kalendera…">
+<!ENTITY calendar.properties.accesskey          "K">

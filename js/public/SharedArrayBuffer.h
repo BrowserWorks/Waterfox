@@ -58,6 +58,24 @@ extern JS_PUBLIC_API uint8_t* GetSharedArrayBufferData(JSObject* obj,
 extern JS_PUBLIC_API void GetSharedArrayBufferLengthAndData(
     JSObject* obj, uint32_t* length, bool* isSharedMemory, uint8_t** data);
 
+/**
+ * Returns true if there are any live SharedArrayBuffer objects, including those
+ * for wasm memories, associated with the context.  This is conservative,
+ * because it does not run GC.  Some dead objects may not have been collected
+ * yet and thus will be thought live.
+ */
+extern JS_PUBLIC_API bool ContainsSharedArrayBuffer(JSContext* cx);
+
+/**
+ * Return the isShared flag of a ArrayBufferView subtypes, which denotes whether
+ * the underlying buffer is a SharedArrayBuffer.
+ *
+ * |obj| must have passed a JS_IsArrayBufferViewObject test, or somehow
+ * be known that it would pass such a test: it is a ArrayBufferView subtypes or
+ * a wrapper of a ArrayBufferView subtypes, and the unwrapping will succeed.
+ */
+extern JS_PUBLIC_API bool IsArrayBufferViewShared(JSObject* obj);
+
 }  // namespace JS
 
 #endif /* js_SharedArrayBuffer_h */

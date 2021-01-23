@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Veti llogarie">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Të përgjithshme">
+<!ENTITY account.advanced              "Mundësi të Mëtejshme">
+<!ENTITY account.name                  "Emër përdoruesi:">
+<!ENTITY account.password              "Fjalëkalim:">
+<!ENTITY account.alias                 "Alias:">
+<!ENTITY account.newMailNotification   "Njoftomë për Postë të re">
+<!ENTITY account.autojoin              "Kanale me Auto-hyrje:">
+<!ENTITY account.proxySettings.caption "Rregullime Ndërmjetësi:">
+<!ENTITY account.proxySettings.change.label     "Ndryshojini…">
+<!ENTITY account.proxySettings.change.accessKey "N">

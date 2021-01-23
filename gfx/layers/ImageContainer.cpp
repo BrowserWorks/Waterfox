@@ -22,6 +22,7 @@
 #include "mozilla/layers/SharedSurfacesChild.h"  // for SharedSurfacesAnimation
 #include "mozilla/layers/SharedRGBImage.h"
 #include "mozilla/layers/TextureClientRecycleAllocator.h"
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "nsISupportsUtils.h"  // for NS_IF_ADDREF
 #include "YCbCrUtils.h"        // for YCbCr conversions
@@ -40,8 +41,7 @@
 #  include "mozilla/layers/D3D11YCbCrImage.h"
 #endif
 
-namespace mozilla {
-namespace layers {
+namespace mozilla::layers {
 
 using namespace mozilla::gfx;
 using namespace mozilla::ipc;
@@ -103,7 +103,7 @@ ImageContainerListener::ImageContainerListener(ImageContainer* aImageContainer)
     : mLock("mozilla.layers.ImageContainerListener.mLock"),
       mImageContainer(aImageContainer) {}
 
-ImageContainerListener::~ImageContainerListener() {}
+ImageContainerListener::~ImageContainerListener() = default;
 
 void ImageContainerListener::NotifyComposite(
     const ImageCompositeNotification& aNotification) {
@@ -229,6 +229,9 @@ RefPtr<PlanarYCbCrImage> ImageContainer::CreatePlanarYCbCrImage() {
   if (mImageClient && mImageClient->AsImageClientSingle()) {
     return new SharedPlanarYCbCrImage(mImageClient);
   }
+  if (mRecycleAllocator) {
+    return new SharedPlanarYCbCrImage(mRecycleAllocator);
+  }
   return mImageFactory->CreatePlanarYCbCrImage(mScaleHint, mRecycleBin);
 }
 
@@ -294,6 +297,7 @@ void ImageContainer::ClearImagesFromImageBridge() {
 }
 
 void ImageContainer::SetCurrentImages(const nsTArray<NonOwningImage>& aImages) {
+  AUTO_PROFILER_LABEL("ImageContainer::SetCurrentImages", GRAPHICS);
   MOZ_ASSERT(!aImages.IsEmpty());
   RecursiveMutexAutoLock lock(mRecursiveMutex);
   if (mIsAsync) {
@@ -368,7 +372,7 @@ void ImageContainer::GetCurrentImages(nsTArray<OwningImage>* aImages,
                                       uint32_t* aGenerationCounter) {
   RecursiveMutexAutoLock lock(mRecursiveMutex);
 
-  *aImages = mCurrentImages;
+  *aImages = mCurrentImages.Clone();
   if (aGenerationCounter) {
     *aGenerationCounter = mGenerationCounter;
   }
@@ -411,20 +415,52 @@ void ImageContainer::NotifyDropped(uint32_t aDropped) {
   mDroppedImageCount += aDropped;
 }
 
+void ImageContainer::EnsureRecycleAllocatorForRDD(
+    KnowsCompositor* aKnowsCompositor) {
+  MOZ_ASSERT(!mIsAsync);
+  MOZ_ASSERT(!mImageClient);
+  MOZ_ASSERT(XRE_IsRDDProcess());
+
+  if (mRecycleAllocator &&
+      aKnowsCompositor == mRecycleAllocator->GetKnowsCompositor()) {
+    return;
+  }
+
+  bool useRecycleAllocator =
+      StaticPrefs::layers_recycle_allocator_rdd_AtStartup();
+#ifdef XP_MACOSX
+  // Disable RecycleAllocator for RDD on MacOS without WebRender.
+  // Recycling caused rendering artifact on a MacOS PC with OpenGL compositor.
+  if (!gfxVars::UseWebRender()) {
+    useRecycleAllocator = false;
+  }
+#endif
+  if (!useRecycleAllocator) {
+    return;
+  }
+
+  static const uint32_t MAX_POOLED_VIDEO_COUNT = 5;
+
+  mRecycleAllocator =
+      new layers::TextureClientRecycleAllocator(aKnowsCompositor);
+  mRecycleAllocator->SetMaxPoolSize(MAX_POOLED_VIDEO_COUNT);
+}
+
 #ifdef XP_WIN
 D3D11YCbCrRecycleAllocator* ImageContainer::GetD3D11YCbCrRecycleAllocator(
-    KnowsCompositor* aAllocator) {
+    KnowsCompositor* aKnowsCompositor) {
   if (mD3D11YCbCrRecycleAllocator &&
-      aAllocator == mD3D11YCbCrRecycleAllocator->GetAllocator()) {
+      aKnowsCompositor == mD3D11YCbCrRecycleAllocator->GetKnowsCompositor()) {
     return mD3D11YCbCrRecycleAllocator;
   }
 
-  if (!aAllocator->SupportsD3D11() ||
+  if (!aKnowsCompositor->SupportsD3D11() ||
       !gfx::DeviceManagerDx::Get()->GetImageDevice()) {
     return nullptr;
   }
 
-  mD3D11YCbCrRecycleAllocator = new D3D11YCbCrRecycleAllocator(aAllocator);
+  mD3D11YCbCrRecycleAllocator =
+      new D3D11YCbCrRecycleAllocator(aKnowsCompositor);
   return mD3D11YCbCrRecycleAllocator;
 }
 #endif
@@ -453,7 +489,7 @@ nsresult PlanarYCbCrImage::BuildSurfaceDescriptorBuffer(
   aSdBuffer.desc() = YCbCrDescriptor(
       pdata->mYSize, pdata->mYStride, pdata->mCbCrSize, pdata->mCbCrStride,
       yOffset, cbOffset, crOffset, pdata->mStereoMode, pdata->mColorDepth,
-      pdata->mYUVColorSpace,
+      pdata->mYUVColorSpace, pdata->mColorRange,
       /*hasIntermediateBuffer*/ false);
 
   uint8_t* buffer = nullptr;
@@ -764,12 +800,12 @@ SourceSurfaceImage::SourceSurfaceImage(gfx::SourceSurface* aSourceSurface)
 SourceSurfaceImage::~SourceSurfaceImage() = default;
 
 TextureClient* SourceSurfaceImage::GetTextureClient(
-    KnowsCompositor* aForwarder) {
-  if (!aForwarder) {
+    KnowsCompositor* aKnowsCompositor) {
+  if (!aKnowsCompositor) {
     return nullptr;
   }
 
-  auto entry = mTextureClients.LookupForAdd(aForwarder->GetSerial());
+  auto entry = mTextureClients.LookupForAdd(aKnowsCompositor->GetSerial());
   if (entry) {
     return entry.Data();
   }
@@ -780,11 +816,11 @@ TextureClient* SourceSurfaceImage::GetTextureClient(
   if (surface) {
     // gfx::BackendType::NONE means default to content backend
     textureClient = TextureClient::CreateFromSurface(
-        aForwarder, surface, BackendSelector::Content, mTextureFlags,
+        aKnowsCompositor, surface, BackendSelector::Content, mTextureFlags,
         ALLOC_DEFAULT);
   }
   if (textureClient) {
-    textureClient->SyncWithObject(aForwarder->GetSyncObject());
+    textureClient->SyncWithObject(aKnowsCompositor->GetSyncObject());
     entry.OrInsert([&textureClient]() { return textureClient; });
     return textureClient;
   }
@@ -800,5 +836,4 @@ ImageContainer::ProducerID ImageContainer::AllocateProducerID() {
   return ++sProducerID;
 }
 
-}  // namespace layers
-}  // namespace mozilla
+}  // namespace mozilla::layers

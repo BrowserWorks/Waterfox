@@ -56,14 +56,6 @@ interface nsILoadContext : nsISupports
   readonly attribute Element topFrameElement;
 
   /**
-   * If this LoadContext corresponds to a nested remote iframe, we don't have
-   * access to the topFrameElement.  Instead, we must use this id to send
-   * messages. A return value of 0 signifies that this load context is not for
-   * a nested frame.
-   */
-  readonly attribute unsigned long long nestedFrameId;
-
-  /**
    * True if the load context is content (as opposed to chrome).  This is
    * determined based on the type of window the load is performed in, NOT based
    * on any URIs that might be around.
@@ -139,15 +131,6 @@ interface nsILoadContext : nsISupports
    * Set the remote subframes bit of this load context. Exclusively meant to be used internally.
    */
   [noscript] void SetRemoteSubframes(in boolean aUseRemoteSubframes);
-
-  /**
-   * Returns true iff the load is occurring inside an isolated mozbrowser
-   * element. <xul:browser> is not considered to be a mozbrowser element.
-   * <iframe mozbrowser noisolation> does not count as isolated since
-   * isolation is disabled.  Isolation can only be disabled if the
-   * containing document is chrome.
-   */
-  readonly attribute boolean isInIsolatedMozBrowserElement;
 
   /**
    * A dictionary of the non-default origin attributes associated with this

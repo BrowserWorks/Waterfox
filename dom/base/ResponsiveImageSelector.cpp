@@ -11,6 +11,7 @@
 #include "mozilla/TextUtils.h"
 #include "nsIURI.h"
 #include "mozilla/dom/Document.h"
+#include "mozilla/dom/DocumentInlines.h"
 #include "nsContentUtils.h"
 #include "nsPresContext.h"
 
@@ -33,7 +34,6 @@ static bool ParseInteger(const nsAString& aString, int32_t& aInt) {
   return !(parseResult &
            (nsContentUtils::eParseHTMLInteger_Error |
             nsContentUtils::eParseHTMLInteger_DidNotConsumeAllInput |
-            nsContentUtils::eParseHTMLInteger_IsPercent |
             nsContentUtils::eParseHTMLInteger_NonStandard));
 }
 
@@ -105,16 +105,14 @@ ResponsiveImageSelector::ResponsiveImageSelector(nsIContent* aContent)
 ResponsiveImageSelector::ResponsiveImageSelector(dom::Document* aDocument)
     : mOwnerNode(aDocument), mSelectedCandidateIndex(-1) {}
 
-ResponsiveImageSelector::~ResponsiveImageSelector() {}
+ResponsiveImageSelector::~ResponsiveImageSelector() = default;
 
 // http://www.whatwg.org/specs/web-apps/current-work/#processing-the-image-candidates
 bool ResponsiveImageSelector::SetCandidatesFromSourceSet(
     const nsAString& aSrcSet, nsIPrincipal* aTriggeringPrincipal) {
   ClearSelectedCandidate();
 
-  nsCOMPtr<nsIURI> docBaseURI = mOwnerNode ? mOwnerNode->GetBaseURI() : nullptr;
-
-  if (!docBaseURI) {
+  if (!mOwnerNode || !mOwnerNode->GetBaseURI()) {
     MOZ_ASSERT(false, "Should not be parsing SourceSet without a document");
     return false;
   }

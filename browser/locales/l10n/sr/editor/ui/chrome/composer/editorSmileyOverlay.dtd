@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Смајли">
+<!ENTITY insertSmiley.accesskey "С">
+
+<!ENTITY smiley1Cmd.label "Смешкање">
+<!ENTITY smiley1Cmd.accesskey "С">
+<!ENTITY smiley1Cmd.tooltip "Убаците смајлија који се смешка">
+<!ENTITY smiley2Cmd.label "Мрштење">
+<!ENTITY smiley2Cmd.accesskey "М">
+<!ENTITY smiley2Cmd.tooltip "Убаците смајлија који се мршти">
+<!ENTITY smiley3Cmd.label "Намигивање">
+<!ENTITY smiley3Cmd.accesskey "Н">
+<!ENTITY smiley3Cmd.tooltip "Убаците смајлија који намигује">
+<!ENTITY smiley4Cmd.label "Плажење">
+<!ENTITY smiley4Cmd.accesskey "П">
+<!ENTITY smiley4Cmd.tooltip "Убаците смајлија који се плази">
+<!ENTITY smiley5Cmd.label "Смејање">
+<!ENTITY smiley5Cmd.accesskey "е">
+<!ENTITY smiley5Cmd.tooltip "Убаците смајлија који се смеје">
+<!ENTITY smiley6Cmd.label "Постиђеност">
+<!ENTITY smiley6Cmd.accesskey "о">
+<!ENTITY smiley6Cmd.tooltip "Убаците постиђеног смајлија">
+<!ENTITY smiley7Cmd.label "Неодлучност">
+<!ENTITY smiley7Cmd.accesskey "у">
+<!ENTITY smiley7Cmd.tooltip "Убаците неодлучног смајлија">
+<!ENTITY smiley8Cmd.label "Изненађеност">
+<!ENTITY smiley8Cmd.accesskey "з">
+<!ENTITY smiley8Cmd.tooltip "Убаците изненађеног смајлија">
+<!ENTITY smiley9Cmd.label "Пољубац">
+<!ENTITY smiley9Cmd.accesskey "б">
+<!ENTITY smiley9Cmd.tooltip "Убаците смајлија који шаље пољубац">
+<!ENTITY smiley10Cmd.label "Викање">
+<!ENTITY smiley10Cmd.accesskey "В">
+<!ENTITY smiley10Cmd.tooltip "Убаците смајлија који виче">
+<!ENTITY smiley11Cmd.label "Кул">
+<!ENTITY smiley11Cmd.accesskey "К">
+<!ENTITY smiley11Cmd.tooltip "Убаците смајлија који је кул">
+<!ENTITY smiley12Cmd.label "Пароусти">
+<!ENTITY smiley12Cmd.accesskey "т">
+<!ENTITY smiley12Cmd.tooltip "Убаците пароустог смајлија">
+<!ENTITY smiley13Cmd.label "Изланути се">
+<!ENTITY smiley13Cmd.accesskey "т">
+<!ENTITY smiley13Cmd.tooltip "Убаците смајлија који се излануо">
+<!ENTITY smiley14Cmd.label "Невиност">
+<!ENTITY smiley14Cmd.accesskey "и">
+<!ENTITY smiley14Cmd.tooltip "Убаците невиног смајлија">
+<!ENTITY smiley15Cmd.label "Плакање">
+<!ENTITY smiley15Cmd.accesskey "а">
+<!ENTITY smiley15Cmd.tooltip "Убаците смајлија који плаче">
+<!ENTITY smiley16Cmd.label "Ћутање">
+<!ENTITY smiley16Cmd.accesskey "т">
+<!ENTITY smiley16Cmd.tooltip "Убаците смајлија који ћути">
+<!ENTITY SmileButton.label "Убаци смајли">
+<!ENTITY SmileButton.tooltip "Убаците смајлија">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Rozšyrjone editor kakosćow">
+<!ENTITY AttName.label                  "Atribut: ">
+<!ENTITY AttValue.label                 "Gódnota: ">
+<!ENTITY PropertyName.label             "Kakosć: ">
+<!ENTITY currentattributesfor.label     "Aktualne atributy za: ">
+<!ENTITY tree.attributeHeader.label     "Atribut">
+<!ENTITY tree.propertyHeader.label      "Kakosć">
+<!ENTITY tree.valueHeader.label         "Gódnota">
+<!ENTITY tabHTML.label                  "HTML-atributy">
+<!ENTITY tabCSS.label                   "Nutśkowny stil">
+<!ENTITY tabJSE.label                   "JavaScriptowe tšojeńka">
+
+<!ENTITY editAttribute.label    "Klikniśo na zapisk górjejce, aby jogo gódnotu wobźěłał">
+<!ENTITY removeAttribute.label  "Wótwónoźeś">

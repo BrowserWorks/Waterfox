@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountTitle.label "Hesap ayarları">
+<!ENTITY accountSettingsDesc.label "Bu bir özel hesaptır. Bu hesaba ilişkin kimlik bulunamadı.">
+<!ENTITY accountName.label "Hesap adı:">
+<!ENTITY accountName.accesskey "d">
+<!ENTITY messageStorage.label "Posta kayıt">
+<!ENTITY emptyTrashOnExit.label "Çıkışta çöpü boşalt">
+<!ENTITY emptyTrashOnExit.accesskey "k">
+<!ENTITY localPath.label "Dizinler:">
+<!ENTITY localFolderPicker.label "Yerel dizin seç">
+<!ENTITY browseFolder.label "Gözat…">
+<!ENTITY browseFolder.accesskey "a">

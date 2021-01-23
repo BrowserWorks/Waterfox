@@ -5,8 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsWidgetsCID.h"
-#include "nsIComponentRegistrar.h"
-#include "nsICrashReporter.h"
 #include "nsIIdleService.h"
 
 #ifndef TEST_NAME
@@ -34,7 +32,13 @@ class RunNextTest : public mozilla::Runnable {
   }
 };
 
+static const bool kDebugRunNextTest = false;
+
 void run_next_test() {
+  if (kDebugRunNextTest) {
+    printf_stderr("run_next_test()\n");
+    nsTraceRefcnt::WalkTheStack(stderr);
+  }
   nsCOMPtr<nsIRunnable> event = new RunNextTest();
   do_check_success(NS_DispatchToCurrentThread(event));
 }
@@ -43,6 +47,10 @@ int gPendingTests = 0;
 
 void do_test_pending() {
   NS_ASSERTION(NS_IsMainThread(), "Not running on the main thread?");
+  if (kDebugRunNextTest) {
+    printf_stderr("do_test_pending()\n");
+    nsTraceRefcnt::WalkTheStack(stderr);
+  }
   gPendingTests++;
 }
 

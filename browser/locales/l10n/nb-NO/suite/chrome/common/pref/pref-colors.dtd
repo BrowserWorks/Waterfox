@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Farger">
+<!ENTITY color                             "Tekst og bakgrunn">
+<!ENTITY textColor.label                   "Tekst:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Bakgrunn:">
+<!ENTITY backgroundColor.accesskey         "B">
+<!ENTITY useSystemColors.label             "Bruk systemfarger">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Understrek lenker">
+<!ENTITY underlineLinks.accesskey          "U">
+<!ENTITY links                             "Lenker">
+<!ENTITY linkColor.label                   "Ubesøkt:">
+<!ENTITY linkColor.accesskey               "ø">
+<!ENTITY activeLinkColor.label             "Aktiv:">
+<!ENTITY activeLinkColor.accesskey         "k">
+<!ENTITY visitedLinkColor.label            "Besøkt:">
+<!ENTITY visitedLinkColor.accesskey        "e">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Når en nettside har egne farger">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Bruk nettsidens farger">
+<!ENTITY alwaysUseDocumentColors.accesskey "n">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Bruk mine farger">
+<!ENTITY useMyColors.accesskey             "m">
+<!ENTITY automaticColors.label             "Bare ignorer sidefargene når du bruker et høykontrast-tema">
+<!ENTITY automaticColors.accesskey         "B">

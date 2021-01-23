@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "පෝරම ලක්ෂණ">
+
+<!ENTITY Settings.label "සැකසුම්">
+
+<!ENTITY FormName.label "පෝරම නම:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "කාර්යය URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "ක්‍රමය:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "කේතනය:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "ඉලක්කගත රාමුව:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "පෝරමය ඉවත් කරන්න">
+<!ENTITY RemoveForm.accesskey "R">

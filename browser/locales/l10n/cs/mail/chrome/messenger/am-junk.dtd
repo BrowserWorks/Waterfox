@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Nastavení nevyžádané pošty">
+<!ENTITY trainingDescription.label "Je-li povoleno, musíte nejprve aplikaci &brandShortName; naučit identifikovat nevyžádanou poštu pomocí tlačítka Nevyžádaná na nástrojové liště. Je důležité označovat jak nevyžádané, tak vyžádané zprávy. Teprve až poté bude &brandShortName; schopen označovat nevyžádané zprávy automaticky.">
+<!ENTITY level.label "Pro tento účet povolit kontrolu na nevyžádanou poštu">
+<!ENTITY level.accesskey "k">
+
+<!ENTITY move.label "Přesunout příchozí nevyžádané zprávy do: ">
+<!ENTITY move.accesskey "P">
+<!ENTITY junkFolderOn.label "Složka „Nevyžádaná“ na:">
+<!ENTITY junkFolderOn.accesskey "S">
+<!ENTITY otherFolder.label "Další:">
+<!ENTITY otherFolder.accesskey "l">
+<!ENTITY purge1.label "Automaticky smazat zprávy označené jako nevyžádané po">
+<!ENTITY purge1.accesskey "m">
+<!ENTITY purge2.label "dnech">
+
+<!ENTITY whitelistHeader.label "Neoznačovat zprávy jako nevyžádané, pokud je odesílatel mezi: ">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "Je-li povoleno, bude &brandShortName; automaticky považovat zprávy označené tímto externím klasifikátorem za nevyžádané.">
+<!ENTITY ispHeaders.label "Důvěřovat příznaku nevyžádané pošty od: ">
+<!ENTITY ispHeaders.accesskey "D">
+
+<!ENTITY junkClassification.label "Rozpoznání">
+<!ENTITY junkActions.label "Navazující akce">
+
+<!ENTITY globalJunkPrefs.label "Globální nastavení nevyžádané pošty…">
+<!ENTITY globalJunkPrefs.accesskey "G">

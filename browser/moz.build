@@ -6,16 +6,21 @@
 
 CONFIGURE_SUBST_FILES += ['installer/Makefile']
 
-SPHINX_TREES['browser'] = 'docs'
+SPHINX_TREES['/browser'] = 'docs'
 
 with Files('docs/**'):
     SCHEDULES.exclusive = ['docs']
+
+EXTRA_COMPONENTS += [
+    'l10n-registry.manifest',
+]
 
 DIRS += [
     'actors',
     'base',
     'components',
     'fonts',
+    'fxr',
     'locales',
     'modules',
     'themes',
@@ -50,7 +55,6 @@ if CONFIG['MOZ_GPSD']:
 JS_PREFERENCE_PP_FILES += [
     'app/profile/firefox.js',
 ]
-FINAL_TARGET_FILES += ['app/blocklist.xml']
 FINAL_TARGET_FILES.defaults += ['app/permissions']
 
 with Files("**"):
@@ -97,3 +101,6 @@ with Files("installer/**"):
 
 with Files("tools/**"):
     BUG_COMPONENT = ("Firefox", "General")
+
+with Files('l10n-registry.manifest'):
+    BUG_COMPONENT = ('Core', 'Localization')

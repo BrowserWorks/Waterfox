@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Мазмұнының кестесі">
+<!ENTITY buildToc.label      "Құрама кестесін келесіден жасау:">
+<!ENTITY tag.label           "Белгісі:">
+<!ENTITY class.label         "Класы:">
+<!ENTITY header1.label       "Деңгей 1">
+<!ENTITY header2.label       "Деңгей 2">
+<!ENTITY header3.label       "Деңгей 3">
+<!ENTITY header4.label       "Деңгей 4">
+<!ENTITY header5.label       "Деңгей 5">
+<!ENTITY header6.label       "Деңгей 6">
+<!ENTITY makeReadOnly.label  "Құрама кестесін тек оқу үшін қолжетерлік қылу">
+<!ENTITY orderedList.label   "Құрама кестесінің барлық нәрселерін нөмірлеу">

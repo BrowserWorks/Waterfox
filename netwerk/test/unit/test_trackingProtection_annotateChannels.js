@@ -1,3 +1,5 @@
+"use strict";
+
 const { UrlClassifierTestUtils } = ChromeUtils.import(
   "resource://testing-common/UrlClassifierTestUtils.jsm"
 );
@@ -34,9 +36,11 @@ function listener(tracking, priority, throttleable, nextTest) {
   this._nextTest = nextTest;
 }
 listener.prototype = {
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     Assert.equal(
-      request.QueryInterface(Ci.nsIHttpChannel).isTrackingResource(),
+      request
+        .QueryInterface(Ci.nsIClassifiedChannel)
+        .isThirdPartyTrackingResource(),
       this._tracking,
       "tracking flag"
     );
@@ -199,7 +203,7 @@ var tests = [
         false
       );
     }
-    var principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+    var principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
       normalOrigin
     );
     testPriorityMap = [
@@ -259,7 +263,7 @@ var tests = [
         true
       );
     }
-    var principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+    var principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
       normalOrigin
     );
     testPriorityMap = [

@@ -5,8 +5,10 @@
 #include "mozilla/ScopeExit.h"
 
 #include "jsapi.h"
+#include "jspubtd.h"
 
 #include "fuzz-tests/tests.h"
+#include "vm/GlobalObject.h"
 #include "vm/Interpreter.h"
 #include "vm/TypedArrayObject.h"
 
@@ -27,7 +29,8 @@ extern JS::PersistentRootedObject gGlobal;
 extern JSContext* gCx;
 
 static int testWasmInit(int* argc, char*** argv) {
-  if (!wasm::HasSupport(gCx) || !InitWebAssemblyClass(gCx, gCx->global())) {
+  if (!wasm::HasSupport(gCx) ||
+      !GlobalObject::getOrCreateConstructor(gCx, JSProto_WebAssembly)) {
     MOZ_CRASH("Failed to initialize wasm support");
   }
 
@@ -136,16 +139,20 @@ static int testWasmFuzz(const uint8_t* buf, size_t size) {
       // overwritten later on.
       uint8_t optByte = (uint8_t)buf[currentIndex];
 
+      // Note that IonPlatformSupport() and CraneliftPlatformSupport() do not
+      // take into account whether those compilers support particular features
+      // that may have been enabled.
       bool enableWasmBaseline = ((optByte & 0xF0) == (1 << 7));
-      bool enableWasmIon = IonCanCompile() && ((optByte & 0xF0) == (1 << 6));
+      bool enableWasmIon =
+          IonPlatformSupport() && ((optByte & 0xF0) == (1 << 6));
       bool enableWasmCranelift = false;
 #ifdef ENABLE_WASM_CRANELIFT
       enableWasmCranelift =
-          CraneliftCanCompile() && ((optByte & 0xF0) == (1 << 5));
+          CraneliftPlatformSupport() && ((optByte & 0xF0) == (1 << 5));
 #endif
-      bool enableWasmAwaitTier2 = (IonCanCompile()
+      bool enableWasmAwaitTier2 = (IonPlatformSupport()
 #ifdef ENABLE_WASM_CRANELIFT
-                                   || CraneliftCanCompile()
+                                   || CraneliftPlatformSupport()
 #endif
                                        ) &&
                                   ((optByte & 0xF) == (1 << 3));
@@ -155,7 +162,7 @@ static int testWasmFuzz(const uint8_t* buf, size_t size) {
         // more platform specific JIT code. However, on some platforms,
         // e.g. ARM64, we do not have Ion available, so we need to switch
         // to baseline instead.
-        if (IonCanCompile()) {
+        if (IonPlatformSupport()) {
           enableWasmIon = true;
         } else {
           enableWasmBaseline = true;
@@ -413,7 +420,7 @@ static int testWasmFuzz(const uint8_t* buf, size_t size) {
           Rooted<WasmGlobalObject*> global(gCx,
                                            &propObj->as<WasmGlobalObject>());
           if (global->type() != ValType::I64) {
-            lastReturnVal = global->value(gCx);
+            global->value(gCx, &lastReturnVal);
           }
         }
       }

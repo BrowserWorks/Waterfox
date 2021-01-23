@@ -87,7 +87,7 @@ var EnterprisePolicyTesting = {
       "browser.policies.runOncePerModification.",
     ];
     for (let base of runOnceBaseKeys) {
-      for (let key of Services.prefs.getChildList(base, {})) {
+      for (let key of Services.prefs.getChildList(base)) {
         if (Services.prefs.prefHasUserValue(key)) {
           Services.prefs.clearUserPref(key);
         }

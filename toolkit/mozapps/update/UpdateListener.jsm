@@ -19,13 +19,9 @@ ChromeUtils.defineModuleGetter(
 
 const PREF_APP_UPDATE_UNSUPPORTED_URL = "app.update.unsupported.url";
 
-// Setup the hamburger button badges for updates, if enabled.
+// Setup the hamburger button badges for updates.
 var UpdateListener = {
   timeouts: [],
-
-  get enabled() {
-    return Services.prefs.getBoolPref("app.update.doorhanger", false);
-  },
 
   get badgeWaitTime() {
     return Services.prefs.getIntPref("app.update.badgeWaitTime", 4 * 24 * 3600); // 4 days
@@ -292,10 +288,6 @@ var UpdateListener = {
   },
 
   observe(subject, topic, status) {
-    if (!this.enabled) {
-      return;
-    }
-
     let update = subject && subject.QueryInterface(Ci.nsIUpdate);
 
     switch (topic) {

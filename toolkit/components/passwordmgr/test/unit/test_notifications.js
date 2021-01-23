@@ -1,11 +1,11 @@
-/*
+/**
  * Tests notifications dispatched when modifying stored logins.
  */
 
-var expectedNotification;
-var expectedData;
+let expectedNotification;
+let expectedData;
 
-var TestObserver = {
+let TestObserver = {
   QueryInterface: ChromeUtils.generateQI([
     Ci.nsIObserver,
     Ci.nsISupportsWeakReference,
@@ -24,8 +24,8 @@ var TestObserver = {
       case "modifyLogin":
         Assert.ok(subject instanceof Ci.nsIArray);
         Assert.equal(subject.length, 2);
-        var oldLogin = subject.queryElementAt(0, Ci.nsILoginInfo);
-        var newLogin = subject.queryElementAt(1, Ci.nsILoginInfo);
+        let oldLogin = subject.queryElementAt(0, Ci.nsILoginInfo);
+        let newLogin = subject.queryElementAt(1, Ci.nsILoginInfo);
         Assert.ok(expectedData[0].equals(oldLogin)); // nsILoginInfo.equals()
         Assert.ok(expectedData[1].equals(newLogin));
         break;
@@ -52,11 +52,11 @@ var TestObserver = {
 };
 
 add_task(function test_notifications() {
-  try {
-    var testnum = 0;
-    var testdesc = "Setup of nsLoginInfo test-users";
+  let testnum = 0;
+  let testdesc = "Setup of nsLoginInfo test-users";
 
-    var testuser1 = new LoginInfo(
+  try {
+    let testuser1 = new LoginInfo(
       "http://testhost1",
       "",
       null,
@@ -66,7 +66,7 @@ add_task(function test_notifications() {
       "put_pw_here"
     );
 
-    var testuser2 = new LoginInfo(
+    let testuser2 = new LoginInfo(
       "http://testhost2",
       "",
       null,

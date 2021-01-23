@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label "Eiginleikar">
+<!ENTITY propertiesMenu.accesskey "i">
+<!ENTITY propertiesCmd.key "i">
+<!ENTITY abPropertiesMenu.label "Eiginleikar nafnaskrár">
+<!ENTITY abPropertiesMenu.accesskey "i">
+<!ENTITY contactPropertiesMenu.label "Eiginleikar tengiliðs">
+<!ENTITY contactPropertiesMenu.accesskey "i">
+<!ENTITY mailingListPropertiesMenu.label "Eiginleikar póstlista">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY addressbookPicker.label "Nafnaskrá:">
+<!ENTITY addressbookPicker.accesskey "k">
+<!ENTITY searchContacts.label "Leita að tengiliði:">
+<!ENTITY searchContacts.accesskey "n">
+<!ENTITY SearchNameOrEmail.label "Nafn eða tölvupóstfang">
+
+<!ENTITY addtoToFieldMenu.label "Bæta við í Til svæði">
+<!ENTITY addtoToFieldMenu.accesskey "a">
+<!ENTITY addtoCcFieldMenu.label "Bæta við Afrit svæði">
+<!ENTITY addtoCcFieldMenu.accesskey "A">
+<!ENTITY addtoBccFieldMenu.label "Bæta við í Falið afrit svæði">
+<!ENTITY addtoBccFieldMenu.accesskey "B">
+<!ENTITY deleteAddrBookCard.label "Eyða">
+<!ENTITY deleteAddrBookCard.accesskey "E">
+<!ENTITY propertiesContext.label "Eiginleikar">
+<!ENTITY propertiesContext.accesskey "i">
+<!ENTITY abPropertiesContext.label "Eiginleikar">
+<!ENTITY abPropertiesContext.accesskey "i">
+<!ENTITY editContactContext.label "Breyta tengilið">
+<!ENTITY editContactContext.accesskey "e">
+<!ENTITY editMailingListContext.label "Breyta póstlista">
+<!ENTITY editMailingListContext.accesskey "e">
+
+<!ENTITY toButton.label "Bæta við í Til:">
+<!ENTITY toButton.accesskey "a">
+<!ENTITY ccButton.label "Bæta við í Afrit:">
+<!ENTITY ccButton.accesskey "æ">
+<!ENTITY bccButton.label "Bæta við í falið afrit:">
+<!ENTITY bccButton.accesskey "B">

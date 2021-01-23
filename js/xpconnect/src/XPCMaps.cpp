@@ -97,13 +97,8 @@ size_t JSObject2WrappedJSMap::SizeOfWrappedJS(
 /***************************************************************************/
 // implement Native2WrappedNativeMap...
 
-// static
-Native2WrappedNativeMap* Native2WrappedNativeMap::newMap(int length) {
-  return new Native2WrappedNativeMap(length);
-}
-
-Native2WrappedNativeMap::Native2WrappedNativeMap(int length)
-    : mTable(PLDHashTable::StubOps(), sizeof(Entry), length) {}
+Native2WrappedNativeMap::Native2WrappedNativeMap()
+    : mTable(PLDHashTable::StubOps(), sizeof(Entry), XPC_NATIVE_MAP_LENGTH) {}
 
 size_t Native2WrappedNativeMap::SizeOfIncludingThis(
     mozilla::MallocSizeOf mallocSizeOf) const {
@@ -123,13 +118,8 @@ const struct PLDHashTableOps IID2NativeInterfaceMap::Entry::sOps = {
     HashIIDPtrKey, MatchIIDPtrKey, PLDHashTable::MoveEntryStub,
     PLDHashTable::ClearEntryStub};
 
-// static
-IID2NativeInterfaceMap* IID2NativeInterfaceMap::newMap(int length) {
-  return new IID2NativeInterfaceMap(length);
-}
-
-IID2NativeInterfaceMap::IID2NativeInterfaceMap(int length)
-    : mTable(&Entry::sOps, sizeof(Entry), length) {}
+IID2NativeInterfaceMap::IID2NativeInterfaceMap()
+    : mTable(&Entry::sOps, sizeof(Entry), XPC_NATIVE_INTERFACE_MAP_LENGTH) {}
 
 size_t IID2NativeInterfaceMap::SizeOfIncludingThis(
     mozilla::MallocSizeOf mallocSizeOf) const {
@@ -165,13 +155,9 @@ const PLDHashTableOps ClassInfo2NativeSetMap::Entry::sOps = {
     PLDHashTable::HashVoidPtrKeyStub, Match, PLDHashTable::MoveEntryStub, Clear,
     nullptr};
 
-// static
-ClassInfo2NativeSetMap* ClassInfo2NativeSetMap::newMap(int length) {
-  return new ClassInfo2NativeSetMap(length);
-}
-
-ClassInfo2NativeSetMap::ClassInfo2NativeSetMap(int length)
-    : mTable(&ClassInfo2NativeSetMap::Entry::sOps, sizeof(Entry), length) {}
+ClassInfo2NativeSetMap::ClassInfo2NativeSetMap()
+    : mTable(&ClassInfo2NativeSetMap::Entry::sOps, sizeof(Entry),
+             XPC_NATIVE_SET_MAP_LENGTH) {}
 
 size_t ClassInfo2NativeSetMap::ShallowSizeOfIncludingThis(
     mozilla::MallocSizeOf mallocSizeOf) {
@@ -183,14 +169,9 @@ size_t ClassInfo2NativeSetMap::ShallowSizeOfIncludingThis(
 /***************************************************************************/
 // implement ClassInfo2WrappedNativeProtoMap...
 
-// static
-ClassInfo2WrappedNativeProtoMap* ClassInfo2WrappedNativeProtoMap::newMap(
-    int length) {
-  return new ClassInfo2WrappedNativeProtoMap(length);
-}
-
-ClassInfo2WrappedNativeProtoMap::ClassInfo2WrappedNativeProtoMap(int length)
-    : mTable(PLDHashTable::StubOps(), sizeof(Entry), length) {}
+ClassInfo2WrappedNativeProtoMap::ClassInfo2WrappedNativeProtoMap()
+    : mTable(PLDHashTable::StubOps(), sizeof(Entry),
+             XPC_NATIVE_PROTO_MAP_LENGTH) {}
 
 size_t ClassInfo2WrappedNativeProtoMap::SizeOfIncludingThis(
     mozilla::MallocSizeOf mallocSizeOf) const {
@@ -252,13 +233,8 @@ const struct PLDHashTableOps NativeSetMap::Entry::sOps = {
     HashNativeKey, Match, PLDHashTable::MoveEntryStub,
     PLDHashTable::ClearEntryStub};
 
-// static
-NativeSetMap* NativeSetMap::newMap(int length) {
-  return new NativeSetMap(length);
-}
-
-NativeSetMap::NativeSetMap(int length)
-    : mTable(&Entry::sOps, sizeof(Entry), length) {}
+NativeSetMap::NativeSetMap()
+    : mTable(&Entry::sOps, sizeof(Entry), XPC_NATIVE_SET_MAP_LENGTH) {}
 
 size_t NativeSetMap::SizeOfIncludingThis(
     mozilla::MallocSizeOf mallocSizeOf) const {
@@ -274,12 +250,8 @@ size_t NativeSetMap::SizeOfIncludingThis(
 /***************************************************************************/
 // implement XPCWrappedNativeProtoMap...
 
-// static
-XPCWrappedNativeProtoMap* XPCWrappedNativeProtoMap::newMap(int length) {
-  return new XPCWrappedNativeProtoMap(length);
-}
-
-XPCWrappedNativeProtoMap::XPCWrappedNativeProtoMap(int length)
-    : mTable(PLDHashTable::StubOps(), sizeof(PLDHashEntryStub), length) {}
+XPCWrappedNativeProtoMap::XPCWrappedNativeProtoMap()
+    : mTable(PLDHashTable::StubOps(), sizeof(PLDHashEntryStub),
+             XPC_DYING_NATIVE_PROTO_MAP_LENGTH) {}
 
 /***************************************************************************/

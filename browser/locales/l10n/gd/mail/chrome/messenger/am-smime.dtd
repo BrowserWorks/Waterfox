@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Tagh…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Falamhaich">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "Tagh…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "Falamhaich">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Soidhneadh digiteach">
+<!ENTITY signMessage.accesskey "d">
+
+<!-- Strings for the cert picker dialog -->
+
+<!ENTITY certPicker.title "Tagh teisteanas">
+<!ENTITY certPicker.info  "Teisteanas:">
+<!ENTITY certPicker.detailsLabel "Mion-fhiosrachadh an teisteanais a thagh thu:">
+

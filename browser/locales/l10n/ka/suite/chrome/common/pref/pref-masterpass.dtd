@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "მთავარი პაროლები">
+
+<!ENTITY  changepassword.caption                 "მთავარი პაროლის შეცვლა">
+<!ENTITY  changepassword.text                    "თქვენი მთავარი პაროლი იცავს ისეთ მონაცემებს, როგორიცაა პაროლები და სერტიფიკატები.">
+<!ENTITY  changepassword.button                  "პაროლის შეცვლა…">
+<!ENTITY  changepassword.accesskey               "C">
+
+<!ENTITY  resetpassword.caption                  "მთავარი პაროლის განულება">
+<!ENTITY  resetpassword.text                     "მთავარი პაროლის განულების შემთხვევაში, ყველა თქვენი შენახული საიტებისა და ელფოსტის პაროლი, ველების მონაცემები, პირადი სერტიფიკატები და საიდუმლო გასაღებები დაიკარგება.">
+<!ENTITY  resetpassword.button                   "პაროლის განულება">
+<!ENTITY  resetpassword.accesskey                "R">

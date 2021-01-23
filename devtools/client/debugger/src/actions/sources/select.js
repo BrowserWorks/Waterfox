@@ -12,17 +12,18 @@
 import { isOriginalId } from "devtools-source-map";
 
 import { getSourceFromId, getSourceWithContent } from "../../reducers/sources";
-import { getSourcesForTabs } from "../../reducers/tabs";
-import { setOutOfScopeLocations } from "../ast";
+import { tabExists } from "../../reducers/tabs";
 import { setSymbols } from "./symbols";
+import { setInScopeLines } from "../ast";
 import { closeActiveSearch, updateActiveFileSearch } from "../ui";
-import { isFulfilled } from "../../utils/async-value";
 import { togglePrettyPrint } from "./prettyPrint";
 import { addTab, closeTab } from "../tabs";
 import { loadSourceText } from "./loadSourceText";
+import { mapDisplayNames } from "../pause";
+import { setBreakableLines } from ".";
 
 import { prefs } from "../../utils/prefs";
-import { shouldPrettyPrint, isMinified } from "../../utils/source";
+import { isMinified } from "../../utils/source";
 import { createLocation } from "../../utils/location";
 import { mapLocation } from "../../utils/source-maps";
 
@@ -33,21 +34,25 @@ import {
   getActiveSearch,
   getSelectedLocation,
   getSelectedSource,
+  canPrettyPrintSource,
 } from "../../selectors";
 
 import type {
   SourceLocation,
   PartialPosition,
+  SourceId,
   Source,
   Context,
+  URL,
 } from "../../types";
 import type { ThunkArgs } from "../types";
+import type { SourceAction } from "../types/SourceAction";
 
 export const setSelectedLocation = (
   cx: Context,
   source: Source,
   location: SourceLocation
-) => ({
+): SourceAction => ({
   type: "SET_SELECTED_LOCATION",
   cx,
   source,
@@ -56,16 +61,17 @@ export const setSelectedLocation = (
 
 export const setPendingSelectedLocation = (
   cx: Context,
-  url: string,
-  options: Object
-) => ({
+  url: URL,
+  options?: PartialPosition
+): SourceAction => ({
   type: "SET_PENDING_SELECTED_LOCATION",
   cx,
-  url: url,
-  line: options.location ? options.location.line : null,
+  url,
+  line: options?.line,
+  column: options?.column,
 });
 
-export const clearSelectedLocation = (cx: Context) => ({
+export const clearSelectedLocation = (cx: Context): SourceAction => ({
   type: "CLEAR_SELECTED_LOCATION",
   cx,
 });
@@ -83,8 +89,8 @@ export const clearSelectedLocation = (cx: Context) => ({
  */
 export function selectSourceURL(
   cx: Context,
-  url: string,
-  options: PartialPosition = { line: 1 }
+  url: URL,
+  options?: PartialPosition
 ) {
   return async ({ dispatch, getState, sourceMaps }: ThunkArgs) => {
     const source = getSourceByURL(getState(), url);
@@ -104,8 +110,8 @@ export function selectSourceURL(
  */
 export function selectSource(
   cx: Context,
-  sourceId: string,
-  options: PartialPosition = { line: 1 }
+  sourceId: SourceId,
+  options: PartialPosition = {}
 ) {
   return async ({ dispatch }: ThunkArgs) => {
     const location = createLocation({ ...options, sourceId });
@@ -148,48 +154,47 @@ export function selectLocation(
     if (
       keepContext &&
       selectedSource &&
-      isOriginalId(selectedSource.id) != isOriginalId(location.sourceId)
+      selectedSource.isOriginal != isOriginalId(location.sourceId)
     ) {
       location = await mapLocation(getState(), sourceMaps, location);
       source = getSourceFromId(getState(), location.sourceId);
     }
 
-    const tabSources = getSourcesForTabs(getState());
-    if (!tabSources.includes(source)) {
+    if (!tabExists(getState(), source.id)) {
       dispatch(addTab(source));
     }
 
     dispatch(setSelectedLocation(cx, source, location));
 
     await dispatch(loadSourceText({ cx, source }));
+    await dispatch(setBreakableLines(cx, source.id));
+
     const loadedSource = getSource(getState(), source.id);
 
     if (!loadedSource) {
       // If there was a navigation while we were loading the loadedSource
       return;
     }
+
     const sourceWithContent = getSourceWithContent(getState(), source.id);
-    const sourceContent =
-      sourceWithContent.content && isFulfilled(sourceWithContent.content)
-        ? sourceWithContent.content.value
-        : null;
 
     if (
       keepContext &&
       prefs.autoPrettyPrint &&
       !getPrettySource(getState(), loadedSource.id) &&
-      shouldPrettyPrint(
-        loadedSource,
-        sourceContent || { type: "text", value: "", contentType: undefined }
-      ) &&
+      canPrettyPrintSource(getState(), loadedSource.id) &&
       isMinified(sourceWithContent)
     ) {
       await dispatch(togglePrettyPrint(cx, loadedSource.id));
       dispatch(closeTab(cx, loadedSource));
     }
 
-    dispatch(setSymbols({ cx, source: loadedSource }));
-    dispatch(setOutOfScopeLocations(cx));
+    await dispatch(setSymbols({ cx, source: loadedSource }));
+    dispatch(setInScopeLines(cx));
+
+    if (cx.isPaused) {
+      await dispatch(mapDisplayNames(cx));
+    }
 
     // If a new source is selected update the file search results
     const newSource = getSelectedSource(getState());

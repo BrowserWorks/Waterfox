@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ਫਿਲਟਰ ਨਿਯਮ">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "ਫਿਲਟਰ ਨਾਂ:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "ਜੰਕ">
+<!ENTITY notJunk.label "ਜੰਕ ਨਹੀਂ">
+
+<!ENTITY lowestPriorityCmd.label "ਸਭ ਤੋਂ ਘੱਟ">
+<!ENTITY lowPriorityCmd.label "ਘੱਟ">
+<!ENTITY normalPriorityCmd.label "ਸਧਾਰਨ">
+<!ENTITY highPriorityCmd.label "ਵੱਧ">
+<!ENTITY highestPriorityCmd.label "ਸਭ ਤੋਂ ਵੱਧ">
+
+<!ENTITY contextDesc.label "Apply filter when:">
+<!ENTITY contextIncomingMail.label "Getting New Mail:">
+<!ENTITY contextIncomingMail.accesskey "G">
+<!ENTITY contextManual.label "Manually Run">
+<!ENTITY contextManual.accesskey "R">
+<!ENTITY contextBeforeCls.label "Filter before Junk Classification">
+<!ENTITY contextAfterCls.label "Filter after Junk Classification">
+
+<!ENTITY filterActionDesc.label "ਇਹ ਐਕਸ਼ਨ ਕਰੋ:">
+<!ENTITY filterActionDesc.accesskey "P">
+
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "ਸੁਨੇਹਾ ਭੇਜੋ">
+<!ENTITY copyMessage.label "ਸੁਨੇਹਾ ਕਾਪੀ ਕਰੋ">
+<!ENTITY forwardTo.label "ਸੁਨੇਹਾ ਅੱਗੇ ਭੇਜੋ">
+<!ENTITY replyWithTemplate.label "ਟੈਪਲੇਟ ਨਾਲ ਜਵਾਬ">
+<!ENTITY markMessageRead.label "ਪੜ੍ਹਿਆ ਮਾਰਕ ਕਰੋ">
+<!ENTITY markMessageUnread.label "Mark As Unread">
+<!ENTITY markMessageStarred.label "ਤਾਰਾ ਸ਼ਾਮਲ">
+<!ENTITY setPriority.label "ਤਰਜੀਹ ਸੈੱਟ ਕਰੋ">
+<!ENTITY addTag.label "ਸੁਨੇਹਾ ਟੈਗ ਕਰੋ">
+<!ENTITY setJunkScore.label "ਜੰਕ ਹਾਲਤ ਸੈੱਟ ਕਰੋ">
+<!ENTITY deleteMessage.label "ਸੁਨੇਹਾ ਹਟਾਓ">
+<!ENTITY deleteFromPOP.label "POP ਸਰਵਰ ਤੋਂ ਹਟਾਓ">
+<!ENTITY fetchFromPOP.label "POP ਸਰਵਰ ਤੋਂ ਲਵੋ">
+<!ENTITY ignoreThread.label "ਥਰਿੱਡ ਅਣਡਿੱਠਾ">
+<!ENTITY ignoreSubthread.label "ਸਬ-ਥਰਿੱਡ ਅਣਡਿੱਠਾ">
+<!ENTITY watchThread.label "ਥਰਿੱਡ ਨਿਗਰਾਨੀ">
+<!ENTITY stopExecution.label "ਫਿਲਟਰ ਚਲਾਉਣਾ ਰੋਕੋ">
+
+
+<!ENTITY addAction.tooltip "Add a new action">
+<!ENTITY removeAction.tooltip "Remove this action">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the filter action widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">
+

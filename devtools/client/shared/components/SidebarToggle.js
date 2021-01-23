@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -28,6 +26,17 @@ class SidebarToggle extends Component {
       expandPaneTitle: PropTypes.string.isRequired,
       // Click callback
       onClick: PropTypes.func.isRequired,
+      // align toggle button to right
+      alignRight: PropTypes.bool,
+      // if set to true toggle-button rotate 90
+      canVerticalSplit: PropTypes.bool,
+    };
+  }
+
+  static get defaultProps() {
+    return {
+      alignRight: false,
+      canVerticalSplit: true,
     };
   }
 
@@ -59,6 +68,12 @@ class SidebarToggle extends Component {
     const classNames = ["devtools-button", "sidebar-toggle"];
     if (this.state.collapsed) {
       classNames.push("pane-collapsed");
+    }
+    if (this.props.alignRight) {
+      classNames.push("alignRight");
+    }
+    if (!this.props.canVerticalSplit) {
+      classNames.push("disableVerticalBehaviour");
     }
 
     return button({

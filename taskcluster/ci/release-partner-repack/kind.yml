@@ -12,7 +12,7 @@ transforms:
 
 kind-dependencies:
     - build-signing
-    - nightly-l10n-signing
+    - shippable-l10n-signing
 
 job-defaults:
     name: partner-repack
@@ -38,7 +38,7 @@ job-defaults:
         limit-locales:
             by-release-level:
                 staging: true
-                production: true
+                production: false
 
 jobs:
     linux-shippable:

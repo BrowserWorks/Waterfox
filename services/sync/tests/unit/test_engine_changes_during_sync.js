@@ -355,6 +355,16 @@ add_task(async function test_bookmark_change_during_sync() {
   _("Ensure that we track bookmark changes made during a sync.");
 
   enableValidationPrefs();
+  let schedulerProto = Object.getPrototypeOf(Service.scheduler);
+  let syncThresholdDescriptor = Object.getOwnPropertyDescriptor(
+    schedulerProto,
+    "syncThreshold"
+  );
+  Object.defineProperty(Service.scheduler, "syncThreshold", {
+    // Trigger resync if any changes exist, rather than deciding based on the
+    // normal sync threshold.
+    get: () => 0,
+  });
 
   let engine = Service.engineManager.get("bookmarks");
   let server = await serverForEnginesWithKeys({ foo: "password" }, [engine]);
@@ -593,9 +603,27 @@ add_task(async function test_bookmark_change_during_sync() {
         : "bookmarks";
       return p.syncs[0].engines.find(e => e.name == name);
     });
-    ok(!engineData[0].validation, "Should not validate after first sync");
-    ok(engineData[1].validation, "Should validate after second sync");
+    if (bufferedBookmarksEnabled()) {
+      ok(
+        engineData[0].validation,
+        "Buffered engine should validate after first sync"
+      );
+    } else {
+      ok(
+        !engineData[0].validation,
+        "Legacy engine should not validate after first sync"
+      );
+    }
+    ok(
+      engineData[1].validation,
+      "Buffered and legacy engines should validate after second sync"
+    );
   } finally {
+    Object.defineProperty(
+      schedulerProto,
+      "syncThreshold",
+      syncThresholdDescriptor
+    );
     engine._uploadOutgoing = uploadOutgoing;
     await cleanup(engine, server);
   }

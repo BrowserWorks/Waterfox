@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Сөздікке қосу">
+<!ENTITY spellAddToDictionary.accesskey "к">
+<!ENTITY spellUndoAddToDictionary.label "Сөздікке қосуды болдырмау">
+<!ENTITY spellUndoAddToDictionary.accesskey "б">
+<!ENTITY spellCheckToggle.label "Емлені тексеру">
+<!ENTITY spellCheckToggle.accesskey "Е">
+<!ENTITY spellNoSuggestions.label "(болжаулар табылмады)">
+<!ENTITY spellDictionaries.label "Тілдер">
+<!ENTITY spellDictionaries.accesskey "Т">
+
+<!ENTITY searchTextBox.clear.label "Тазарту">
+
+<!ENTITY fillLoginMenu.label          "Логинді толтыру">
+<!ENTITY fillLoginMenu.accesskey      "ы">
+<!ENTITY fillPasswordMenu.label       "Парольді толтыру">
+<!ENTITY fillPasswordMenu.accesskey   "ы">
+<!ENTITY fillUsernameMenu.label       "Пайдаланушы атын толтыру">
+<!ENTITY fillUsernameMenu.accesskey   "ы">
+<!ENTITY noLoginSuggestions.label     "(Логин ұсыныстары жоқ)">
+<!ENTITY viewSavedLogins.label        "Сақталған логиндерді қарау">

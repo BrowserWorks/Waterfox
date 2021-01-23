@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Avaa tiedosto…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Avaa verkko-osoite…">
+<!ENTITY openRemoteCmd.accesskey "v">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Viimeisimmät sivut">
+<!ENTITY fileRecentMenu.accesskey "m">
+<!ENTITY saveCmd.label "Tallenna">
+<!ENTITY saveCmd.accesskey "T">
+<!ENTITY saveAsCmd.label "Tallenna nimellä…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Tallenna ja muuta merkistökoodausta">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Julkaise">
+<!ENTITY publishCmd.accesskey "J">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Julkaise nimellä…">
+<!ENTITY publishAsCmd.accesskey "u">
+<!ENTITY fileRevert.label "Palauta alkutila">
+<!ENTITY fileRevert.accesskey "P">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Sivun julkaisun asetukset…">
+<!ENTITY publishSettings.accesskey "j">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Uusi">
+<!ENTITY newToolbarCmd.tooltip "Luo uusi Composer-sivu">
+<!ENTITY openToolbarCmd.label "Avaa">
+<!ENTITY openToolbarCmd.tooltip "Avaa paikallinen tiedosto">
+<!ENTITY saveToolbarCmd.tooltip "Tallenna tiedosto paikalliselle levylle">
+<!ENTITY publishToolbarCmd.tooltip "Siirrä tiedosto palvelimelle">
+<!ENTITY printToolbarCmd.label "Tulosta">
+<!ENTITY printToolbarCmd.tooltip "Tulosta tämä sivu">

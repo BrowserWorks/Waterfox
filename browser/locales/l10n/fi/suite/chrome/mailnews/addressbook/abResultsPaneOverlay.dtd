@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Osoitekirja">
+<!ENTITY Addrbook.accesskey                    "O">
+<!ENTITY GeneratedName.label                   "Nimi">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Sähköposti">
+<!ENTITY PrimaryEmail.accesskey                "S">
+<!ENTITY Company.label                         "Organisaatio">
+<!ENTITY Company.accesskey                     "r">
+<!ENTITY _PhoneticName.label                   "Muistisääntö">
+<!ENTITY _PhoneticName.accesskey               "u">
+<!ENTITY NickName.label                        "Lempinimi">
+<!ENTITY NickName.accesskey                    "L">
+<!ENTITY SecondEmail.label                     "2. sähköposti">
+<!ENTITY SecondEmail.accesskey                 "2">
+<!ENTITY Department.label                      "Yksikkö">
+<!ENTITY Department.accesskey                  "k">
+<!ENTITY JobTitle.label                        "Ammattinimi">
+<!ENTITY JobTitle.accesskey                    "n">
+<!ENTITY CellularNumber.label                  "Matkapuhelin">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Hakulaite">
+<!ENTITY PagerNumber.accesskey                 "H">
+<!ENTITY FaxNumber.label                       "Faksinumero">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Kotinumero">
+<!ENTITY HomePhone.accesskey                   "K">
+<!ENTITY WorkPhone.label                       "Työnumero">
+<!ENTITY WorkPhone.accesskey                   "T">
+<!ENTITY ScreenName.label                      "Puhuttelunimi">
+<!ENTITY ScreenName.accesskey                  "t">
+<!ENTITY ChatName.label                        "Chat-nimi">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Nouseva järjestys">
+<!ENTITY sortAscending.accesskey               "a">
+<!ENTITY sortDescending.label                  "Laskeva järjestys">
+<!ENTITY sortDescending.accesskey              "L">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Kirjoita sähköpostiviesti osoitteeseen">
+<!ENTITY composeEmail.accesskey                "K">
+<!ENTITY copyAddress.label                     "Kopioi sähköpostiosoite">
+<!ENTITY copyAddress.accesskey                 "K">
+<!ENTITY deleteAddrBookCard.label              "Poista">
+<!ENTITY deleteAddrBookCard.accesskey          "P">
+<!ENTITY newAddrBookCard.label                 "Uusi kortti…">
+<!ENTITY newAddrBookCard.accesskey             "U">
+<!ENTITY newAddrBookMailingList.label          "Uusi postituslista…">
+<!ENTITY newAddrBookMailingList.accesskey      "U">
+<!ENTITY addrBookCardProperties.label          "Ominaisuudet">
+<!ENTITY addrBookCardProperties.accesskey      "m">

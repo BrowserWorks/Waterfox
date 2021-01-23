@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "mozilla/Logging.h"
+#include "mozilla/TextUtils.h"
 #include "mozilla/Sprintf.h"
 
 #include "gfxGDIFontList.h"
@@ -22,8 +23,6 @@
 #include "nsDirectoryServiceUtils.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsAppDirectoryServiceDefs.h"
-#include "nsISimpleEnumerator.h"
-#include "nsIWindowsRegKey.h"
 #include "gfxFontConstants.h"
 #include "GeckoProfiler.h"
 
@@ -563,7 +562,7 @@ nsresult gfxGDIFontList::GetFontSubstitutes() {
     NS_ConvertUTF16toUTF8 substitute(substituteName);
     NS_ConvertUTF16toUTF8 actual(actualFontName);
     if (!actual.IsEmpty() && (ff = mFontFamilies.GetWeak(actual))) {
-      mFontSubstitutes.Put(substitute, ff);
+      mFontSubstitutes.Put(substitute, RefPtr{ff});
     } else {
       mNonExistingFonts.AppendElement(substitute);
     }
@@ -584,7 +583,7 @@ nsresult gfxGDIFontList::GetFontSubstitutes() {
     NS_ConvertUTF16toUTF8 actual(actualFontName);
     ff = mFontFamilies.GetWeak(actual);
     if (ff) {
-      mFontSubstitutes.Put(substitute, ff);
+      mFontSubstitutes.Put(substitute, RefPtr{ff});
     }
   }
   return NS_OK;
@@ -631,14 +630,15 @@ int CALLBACK gfxGDIFontList::EnumFontFamExProc(ENUMLOGFONTEXW* lpelfe,
 
   if (!fontList->mFontFamilies.GetWeak(key)) {
     NS_ConvertUTF16toUTF8 faceName(lf.lfFaceName);
-    RefPtr<GDIFontFamily> family = new GDIFontFamily(faceName);
-    fontList->mFontFamilies.Put(key, family);
+    FontVisibility visibility = FontVisibility::Unknown;  // TODO
+    RefPtr<GDIFontFamily> family = new GDIFontFamily(faceName, visibility);
+    fontList->mFontFamilies.Put(key, RefPtr{family});
 
     // if locale is such that CJK font names are the default coming from
     // GDI, then if a family name is non-ASCII immediately read in other
     // family names.  This assures that MS Gothic, MS Mincho are all found
     // before lookups begin.
-    if (!IsASCII(faceName)) {
+    if (!IsAscii(faceName)) {
       family->ReadOtherFamilyNames(gfxPlatformFontList::PlatformFontList());
     }
 
@@ -1054,8 +1054,9 @@ already_AddRefed<FontInfoData> gfxGDIFontList::CreateFontInfoData() {
   return fi.forget();
 }
 
-gfxFontFamily* gfxGDIFontList::CreateFontFamily(const nsACString& aName) const {
-  return new GDIFontFamily(aName);
+gfxFontFamily* gfxGDIFontList::CreateFontFamily(
+    const nsACString& aName, FontVisibility aVisibility) const {
+  return new GDIFontFamily(aName, aVisibility);
 }
 
 #ifdef MOZ_BUNDLED_FONTS

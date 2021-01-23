@@ -14,13 +14,15 @@ namespace net {
 
 class StunAddrsListener {
  public:
+  virtual void OnMDNSQueryComplete(const nsCString& hostname,
+                                   const Maybe<nsCString>& address) = 0;
   virtual void OnStunAddrsAvailable(const NrIceStunAddrArray& addrs) = 0;
 
   NS_IMETHOD_(MozExternalRefCountType) AddRef();
   NS_IMETHOD_(MozExternalRefCountType) Release();
 
  protected:
-  virtual ~StunAddrsListener() {}
+  virtual ~StunAddrsListener() = default;
 
   ThreadSafeAutoRefCnt mRefCnt;
   NS_DECL_OWNINGTHREAD
@@ -45,7 +47,10 @@ class StunAddrsRequestChild final : public PStunAddrsRequestChild {
   void Cancel();
 
  protected:
-  virtual ~StunAddrsRequestChild() {}
+  virtual ~StunAddrsRequestChild() = default;
+
+  virtual mozilla::ipc::IPCResult RecvOnMDNSQueryComplete(
+      const nsCString& aHostname, const Maybe<nsCString>& aAddress) override;
 
   virtual mozilla::ipc::IPCResult RecvOnStunAddrsAvailable(
       const NrIceStunAddrArray& addrs) override;

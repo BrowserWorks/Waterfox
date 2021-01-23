@@ -6,9 +6,9 @@
 
 #include "OSVRSession.h"
 #include "prenv.h"
-#include "gfxPrefs.h"
 #include "nsString.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/SharedLibrary.h"
 #include "mozilla/gfx/Quaternion.h"
 
@@ -208,8 +208,10 @@ OSVRSession::OSVRSession()
       m_display(nullptr) {}
 OSVRSession::~OSVRSession() { Shutdown(); }
 
-bool OSVRSession::Initialize(mozilla::gfx::VRSystemState& aSystemState) {
-  if (!gfxPrefs::VREnabled() || !gfxPrefs::VROSVREnabled()) {
+bool OSVRSession::Initialize(mozilla::gfx::VRSystemState& aSystemState,
+                             bool aDetectRuntimesOnly) {
+  if (!StaticPrefs::dom_vr_enabled() ||
+      !StaticPrefs::dom_vr_osvr_enabled_AtStartup()) {
     return false;
   }
   if (mOSVRInitialized) {
@@ -219,6 +221,13 @@ bool OSVRSession::Initialize(mozilla::gfx::VRSystemState& aSystemState) {
     return false;
   }
   mRuntimeLoaded = true;
+
+  if (aDetectRuntimesOnly) {
+    aSystemState.displayState.capabilityFlags |=
+        VRDisplayCapabilityFlags::Cap_ImmersiveVR;
+    return false;
+  }
+
   // initialize client context
   InitializeClientContext();
   // try to initialize interface
@@ -345,7 +354,9 @@ bool OSVRSession::InitState(mozilla::gfx::VRSystemState& aSystemState) {
       (int)VRDisplayCapabilityFlags::Cap_Orientation |
       (int)VRDisplayCapabilityFlags::Cap_Position |
       (int)VRDisplayCapabilityFlags::Cap_External |
-      (int)VRDisplayCapabilityFlags::Cap_Present);
+      (int)VRDisplayCapabilityFlags::Cap_Present |
+      (int)VRDisplayCapabilityFlags::Cap_ImmersiveVR);
+  state.blendMode = VRDisplayBlendMode::Opaque;
   state.reportsDroppedFrames = false;
 
   // XXX OSVR display topology allows for more than one viewer

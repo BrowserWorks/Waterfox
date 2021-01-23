@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "פנקס כתובות">
+<!ENTITY Addrbook.accesskey                    "כ">
+<!ENTITY GeneratedName.label                   "שם">
+<!ENTITY GeneratedName.accesskey               "ש">
+<!ENTITY PrimaryEmail.label                    "דוא״ל">
+<!ENTITY PrimaryEmail.accesskey                "ד">
+<!ENTITY Company.label                         "ארגון">
+<!ENTITY Company.accesskey                     "א">
+<!ENTITY _PhoneticName.label                   "שם פונטי">
+<!ENTITY _PhoneticName.accesskey               "פ">
+<!ENTITY NickName.label                        "כינוי">
+<!ENTITY NickName.accesskey                    "נ">
+<!ENTITY SecondEmail.label                     "דוא״ל נוסף">
+<!ENTITY SecondEmail.accesskey                 "ס">
+<!ENTITY Department.label                      "מחלקה">
+<!ENTITY Department.accesskey                  "ח">
+<!ENTITY JobTitle.label                        "כותרת">
+<!ENTITY JobTitle.accesskey                    "ר">
+<!ENTITY CellularNumber.label                  "נייד">
+<!ENTITY CellularNumber.accesskey              "נ">
+<!ENTITY PagerNumber.label                     "איתורית">
+<!ENTITY PagerNumber.accesskey                 "א">
+<!ENTITY FaxNumber.label                       "פקס">
+<!ENTITY FaxNumber.accesskey                   "פ">
+<!ENTITY HomePhone.label                       "טלפון בבית">
+<!ENTITY HomePhone.accesskey                   "ב">
+<!ENTITY WorkPhone.label                       "טלפון בעבודה">
+<!ENTITY WorkPhone.accesskey                   "ע">
+<!ENTITY ChatName.label                        "שם בצ׳אט">
+<!ENTITY ChatName.accesskey                    "צ">
+<!ENTITY sortAscending.label                   "עולה">
+<!ENTITY sortAscending.accesskey               "ע">
+<!ENTITY sortDescending.label                  "יורד">
+<!ENTITY sortDescending.accesskey              "י">

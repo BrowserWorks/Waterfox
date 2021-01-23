@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+
+<!ENTITY pref.locationBar.title                "Barra d'adrezas">
+
+<!ENTITY autoComplete.label                    "Autocompletado">
+<!ENTITY enableAutoComplete.label              "Autocompletar dende o suyo historial de navegación seguntes escribe">
+<!ENTITY enableAutoComplete.accesskey          "A">
+<!ENTITY autoCompleteAutoFill.label            "Precumplimentar automaticament a millor coincidencia">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Amostrar una lista de resultaus coincidents">
+<!ENTITY autoCompleteShowPopup.accesskey       "A">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Fer coincidir solament puestos web que haiga escrito previament">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "F">
+<!ENTITY autoCompleteMatchOnlyURLs.label       "Fer coincidir solament en as adrezas, no en os titols de puestos web">
+<!ENTITY autoCompleteMatchOnlyURLs.accesskey   "n">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Buscar coincidencias">
+<!ENTITY autoCompleteMatch.accesskey           "B">
+<!ENTITY autoCompleteMatchAnywhere             "en qualsiquier parte de l'adreza y o titol">
+<!ENTITY autoCompleteMatchWordsFirst           "en qualsiquier parte, millor a o comienzo de parolas">
+<!ENTITY autoCompleteMatchWords                "Solament en o comienzo de parolas">
+<!ENTITY autoCompleteMatchStart                "Solament a o prencipio de l'adreza y o titol">
+<!ENTITY showInternetSearch.label              "Show default Internet search engine">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "Formatting">
+<!ENTITY domainFormatting.label                "Highlight the effective domain for websites and FTP servers">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Highlight web pages with a high level of connection security">
+<!ENTITY highlightSecure.accesskey             "c">
+
+<!ENTITY unknownLocations.label                "Adrezas desconoixidas">
+<!ENTITY domainGuessing.label                  "Add &quot;www.&quot; and &quot;.com&quot; to the location if a web page is not found">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "Realizar una busca web quan o texto introduciu no sía una adreza web">
+<!ENTITY keywords.accesskey                    "e">

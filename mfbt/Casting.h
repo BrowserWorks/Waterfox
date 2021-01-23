@@ -10,7 +10,6 @@
 #define mozilla_Casting_h
 
 #include "mozilla/Assertions.h"
-#include "mozilla/TypeTraits.h"
 
 #include <cstring>
 #include <limits.h>
@@ -71,8 +70,8 @@ enum FromSignedness { FromIsSigned, FromIsUnsigned };
 
 template <typename From, typename To,
           FromSignedness =
-              IsSigned<From>::value ? FromIsSigned : FromIsUnsigned,
-          ToSignedness = IsSigned<To>::value ? ToIsSigned : ToIsUnsigned>
+              std::is_signed_v<From> ? FromIsSigned : FromIsUnsigned,
+          ToSignedness = std::is_signed_v<To> ? ToIsSigned : ToIsUnsigned>
 struct BoundsCheckImpl;
 
 // Implicit conversions on operands to binary operations make this all a bit
@@ -174,7 +173,7 @@ struct BoundsCheckImpl<From, To, FromIsSigned, ToIsSigned> {
 
 template <typename From, typename To,
           bool TypesAreIntegral =
-              IsIntegral<From>::value&& IsIntegral<To>::value>
+              std::is_integral_v<From>&& std::is_integral_v<To>>
 class BoundsChecker;
 
 template <typename From>

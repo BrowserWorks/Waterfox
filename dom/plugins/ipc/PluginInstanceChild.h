@@ -24,7 +24,7 @@
 #endif
 
 #include "npfunctions.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsTArray.h"
 #include "ChildTimer.h"
 #include "nsRect.h"
@@ -33,10 +33,6 @@
 #include "mozilla/gfx/Types.h"
 
 #include <map>
-
-#ifdef MOZ_WIDGET_GTK
-#  include "gtk2xtbin.h"
-#endif
 
 class gfxASurface;
 
@@ -166,8 +162,8 @@ class PluginInstanceChild : public PPluginInstanceChild {
  public:
   PluginInstanceChild(const NPPluginFuncs* aPluginIface,
                       const nsCString& aMimeType,
-                      const InfallibleTArray<nsCString>& aNames,
-                      const InfallibleTArray<nsCString>& aValues);
+                      const nsTArray<nsCString>& aNames,
+                      const nsTArray<nsCString>& aValues);
 
   virtual ~PluginInstanceChild();
 
@@ -320,8 +316,8 @@ class PluginInstanceChild : public PPluginInstanceChild {
 #endif  // #if defined(OS_WIN)
   const NPPluginFuncs* mPluginIface;
   nsCString mMimeType;
-  InfallibleTArray<nsCString> mNames;
-  InfallibleTArray<nsCString> mValues;
+  nsTArray<nsCString> mNames;
+  nsTArray<nsCString> mValues;
   NPP_t mData;
   NPWindow mWindow;
 #if defined(XP_DARWIN) || defined(XP_WIN)
@@ -369,9 +365,6 @@ class PluginInstanceChild : public PPluginInstanceChild {
 
 #if defined(MOZ_X11) && defined(XP_UNIX) && !defined(XP_MACOSX)
   NPSetWindowCallbackStruct mWsInfo;
-#  ifdef MOZ_WIDGET_GTK
-  XtClient mXtClient;
-#  endif
 #elif defined(OS_WIN)
   HWND mPluginWindowHWND;
   WNDPROC mPluginWndProc;
@@ -387,14 +380,14 @@ class PluginInstanceChild : public PPluginInstanceChild {
 #if defined(OS_WIN)
   nsTArray<FlashThrottleMsg*> mPendingFlashThrottleMsgs;
 #endif
-  nsTArray<nsAutoPtr<ChildTimer> > mTimers;
+  nsTArray<UniquePtr<ChildTimer> > mTimers;
 
   /**
    * During destruction we enumerate all remaining scriptable objects and
    * invalidate/delete them. Enumeration can re-enter, so maintain a
    * hash separate from PluginModuleChild.mObjectMap.
    */
-  nsAutoPtr<nsTHashtable<DeletingObjectEntry> > mDeletingHash;
+  UniquePtr<nsTHashtable<DeletingObjectEntry> > mDeletingHash;
 
 #if defined(MOZ_WIDGET_COCOA)
  private:
@@ -455,7 +448,7 @@ class PluginInstanceChild : public PPluginInstanceChild {
 
   // Paint plugin content rectangle to surface with bg color filling
   void PaintRectToSurface(const nsIntRect& aRect, gfxASurface* aSurface,
-                          const gfx::Color& aColor);
+                          const gfx::DeviceColor& aColor);
 
   // Render plugin content to surface using
   // white/black image alpha extraction algorithm

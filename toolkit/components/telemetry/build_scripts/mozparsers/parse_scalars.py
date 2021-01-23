@@ -2,12 +2,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import io
 import re
+import six
 import yaml
 import atexit
-import shared_telemetry_utils as utils
+from . import shared_telemetry_utils as utils
 
-from shared_telemetry_utils import ParserError
+from .shared_telemetry_utils import ParserError
 atexit.register(ParserError.exit_func)
 
 # The map of containing the allowed scalar types and their mapping to
@@ -99,29 +101,31 @@ class ScalarType:
         # The required and optional fields in a scalar type definition.
         REQUIRED_FIELDS = {
             'bug_numbers': list,  # This contains ints. See LIST_FIELDS_CONTENT.
-            'description': basestring,
-            'expires': basestring,
-            'kind': basestring,
+            'description': six.string_types,
+            'expires': six.string_types,
+            'kind': six.string_types,
             'notification_emails': list,  # This contains strings. See LIST_FIELDS_CONTENT.
             'record_in_processes': list,
+            'products': list,
         }
 
         OPTIONAL_FIELDS = {
-            'release_channel_collection': basestring,
+            'release_channel_collection': six.string_types,
             'keyed': bool,
+            'keys': list,
             'operating_systems': list,
-            'products': list,
             'record_into_store': list,
         }
 
         # The types for the data within the fields that hold lists.
         LIST_FIELDS_CONTENT = {
             'bug_numbers': int,
-            'notification_emails': basestring,
-            'record_in_processes': basestring,
-            'products': basestring,
-            'operating_systems': basestring,
-            'record_into_store': basestring,
+            'notification_emails': six.string_types,
+            'record_in_processes': six.string_types,
+            'products': six.string_types,
+            'keys': six.string_types,
+            'operating_systems': six.string_types,
+            'record_into_store': six.string_types,
         }
 
         # Concatenate the required and optional field definitions.
@@ -174,6 +178,26 @@ class ScalarType:
                             .format(field, self._name, LIST_FIELDS_CONTENT[field].__name__,
                                     BASE_DOC_URL)).handle_later()
 
+        # Check that keys are only added to keyed scalars and that their values are valid
+        MAX_KEY_COUNT = 100
+        MAX_KEY_LENGTH = 72
+        keys = definition.get('keys')
+        if keys is not None:
+            if not definition.get('keyed', False):
+                ParserError(self._name + '- invalid field: ' +
+                            '\n`keys` field only valid for keyed histograms').handle_later()
+
+            if len(keys) > MAX_KEY_COUNT:
+                ParserError(self._name + ' - exceeding key count: ' +
+                            '\n`keys` values count  must not exceed {}'.format(MAX_KEY_COUNT))\
+                            .handle_later()
+
+            invalid = list(filter(lambda k: len(k) > MAX_KEY_LENGTH, keys))
+            if len(invalid) > 0:
+                ParserError(self._name + ' - invalid key value' +
+                            '\n `keys` values are exceeding length {}:'.format(MAX_LENGTH_COUNT) +
+                            ', '.join(invalid)).handle_later()
+
     def validate_values(self, definition):
         """This function checks that the fields have the correct values.
 
@@ -217,6 +241,11 @@ class ScalarType:
             if not utils.is_valid_product(product):
                 ParserError(self._name + ' - unknown value in products: ' + product +
                             '.\nSee: {}'.format(BASE_DOC_URL)).handle_later()
+            if utils.is_geckoview_streaming_product(product):
+                keyed = definition.get('keyed')
+                if keyed:
+                    ParserError('%s - keyed Scalars not supported for product %s' %
+                                (self._name, product)).handle_later()
 
         # Validate the expiration version.
         # Historical versions of Scalars.json may contain expiration versions
@@ -273,6 +302,11 @@ class ScalarType:
         return self._definition['kind']
 
     @property
+    def keys(self):
+        """Get the allowed keys for this scalar or [] if there aren't any'"""
+        return self._definition.get('keys', [])
+
+    @property
     def keyed(self):
         """Boolean indicating whether this is a keyed scalar"""
         return self._definition.get('keyed', False)
@@ -302,7 +336,7 @@ class ScalarType:
     @property
     def products(self):
         """Get the non-empty list of products to record data on"""
-        return self._definition.get('products', ["all"])
+        return self._definition.get('products')
 
     @property
     def products_enum(self):
@@ -363,11 +397,11 @@ def load_scalars(filename, strict_type_checks=True):
     # Parse the scalar definitions from the YAML file.
     scalars = None
     try:
-        with open(filename, 'r') as f:
+        with io.open(filename, 'r', encoding='utf-8') as f:
             scalars = yaml.safe_load(f)
-    except IOError, e:
+    except IOError as e:
         ParserError('Error opening ' + filename + ': ' + e.message).handle_now()
-    except ValueError, e:
+    except ValueError as e:
         ParserError('Error parsing scalars in {}: {}'
                     '.\nSee: {}'.format(filename, e.message, BASE_DOC_URL)).handle_now()
 
@@ -376,7 +410,7 @@ def load_scalars(filename, strict_type_checks=True):
     # Scalars are defined in a fixed two-level hierarchy within the definition file.
     # The first level contains the category name, while the second level contains the
     # probe name (e.g. "category.name: probe: ...").
-    for category_name in scalars:
+    for category_name in sorted(scalars):
         category = scalars[category_name]
 
         # Make sure that the category has at least one probe in it.
@@ -384,7 +418,7 @@ def load_scalars(filename, strict_type_checks=True):
             ParserError('Category "{}" must have at least one probe in it'
                         '.\nSee: {}'.format(category_name, BASE_DOC_URL)).handle_later()
 
-        for probe_name in category:
+        for probe_name in sorted(category):
             # We found a scalar type. Go ahead and parse it.
             scalar_info = category[probe_name]
             scalar_list.append(

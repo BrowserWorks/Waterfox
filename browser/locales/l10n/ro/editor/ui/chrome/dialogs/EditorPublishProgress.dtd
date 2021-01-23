@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "URL-ul site-ului:">
+<!ENTITY docSubdir.label       "Subdirector pagini:">
+<!ENTITY otherSubdir.label     "Subdirector imagini:">
+
+<!ENTITY status.label          "Publicare…">
+<!ENTITY fileList.label        "Starea publicării">
+<!ENTITY succeeded.label       "Reușit">
+<!ENTITY failed.label          "Eșuat">
+
+<!ENTITY keepOpen              "Ține deschisă fereastra după finalizarea publicării.">
+<!ENTITY closeButton.label     "Închide">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kajkosće tłóčatkow">
+
+<!ENTITY Settings.label "Nastajenja">
+
+<!ENTITY ButtonType.label "Typ">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Wotpósłać">
+<!ENTITY reset.value "Wróćo stajić">
+<!ENTITY button.value "Tłóčatko">
+
+<!ENTITY ButtonName.label "Mjeno:">
+<!ENTITY ButtonName.accesskey "M">
+<!ENTITY ButtonValue.label "Hódnota:">
+<!ENTITY ButtonValue.accesskey "H">
+<!ENTITY tabIndex.label "Tab. indeks:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "Znjemóžnjeny">
+<!ENTITY ButtonDisabled.accesskey "Z">
+<!ENTITY AccessKey.label "Přistupna tasta:">
+<!ENTITY AccessKey.accesskey "P">
+
+<!ENTITY RemoveButton.label "Tłóčatko wotstronić">
+<!ENTITY RemoveButton.accesskey "w">

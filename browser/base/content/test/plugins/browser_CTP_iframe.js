@@ -12,7 +12,6 @@ add_task(async function() {
       Ci.nsIPluginTag.STATE_ENABLED,
       "Second Test Plug-in"
     );
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     gBrowser.removeCurrentTab();
     window.focus();
@@ -24,7 +23,6 @@ add_task(async function() {
 
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_CLICKTOPLAY, "Test Plug-in");
 
   await promiseTabLoadEvent(
@@ -34,10 +32,14 @@ add_task(async function() {
 
   // Tests that the overlays are visible and actionable if the plugin is in an iframe.
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     let frame = content.document.getElementById("frame");
     let doc = frame.contentDocument;
     let plugin = doc.getElementById("test");
+    await ContentTaskUtils.waitForCondition(
+      () => plugin.openOrClosedShadowRoot?.getElementById("main"),
+      "Wait for plugin shadow root"
+    );
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
     Assert.ok(
       plugin && overlay.classList.contains("visible"),

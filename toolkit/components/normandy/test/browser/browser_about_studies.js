@@ -5,6 +5,14 @@ ChromeUtils.import("resource://normandy/lib/PreferenceExperiments.jsm", this);
 ChromeUtils.import("resource://normandy/lib/RecipeRunner.jsm", this);
 ChromeUtils.import("resource://normandy-content/AboutPages.jsm", this);
 
+const { NormandyTestUtils } = ChromeUtils.import(
+  "resource://testing-common/NormandyTestUtils.jsm"
+);
+const {
+  addonStudyFactory,
+  preferenceStudyFactory,
+} = NormandyTestUtils.factories;
+
 function withAboutStudies(testFunc) {
   return async (...args) =>
     BrowserTestUtils.withNewTab("about:studies", async browser =>
@@ -14,8 +22,10 @@ function withAboutStudies(testFunc) {
 
 // Test that the code renders at all
 decorate_task(withAboutStudies, async function testAboutStudiesWorks(browser) {
-  const appFound = await ContentTask.spawn(browser, null, () =>
-    content.document.getElementById("app")
+  const appFound = await SpecialPowers.spawn(
+    browser,
+    [],
+    () => !!content.document.getElementById("app")
   );
   ok(appFound, "App element was found");
 });
@@ -27,7 +37,7 @@ decorate_task(
   }),
   withAboutStudies,
   async function testLearnMore(browser) {
-    ContentTask.spawn(browser, null, async () => {
+    SpecialPowers.spawn(browser, [], async () => {
       const doc = content.document;
       await ContentTaskUtils.waitForCondition(() =>
         doc.getElementById("shield-studies-learn-more")
@@ -53,7 +63,7 @@ decorate_task(withAboutStudies, async function testUpdatePreferences(browser) {
   // We have to use gBrowser instead of browser in most spots since we're
   // dealing with a new tab outside of the about:studies tab.
   const tab = await BrowserTestUtils.switchTab(gBrowser, () => {
-    ContentTask.spawn(browser, null, async () => {
+    SpecialPowers.spawn(browser, [], async () => {
       const doc = content.document;
       await ContentTaskUtils.waitForCondition(() =>
         doc.getElementById("shield-studies-update-preferences")
@@ -80,53 +90,58 @@ decorate_task(withAboutStudies, async function testUpdatePreferences(browser) {
 decorate_task(
   AddonStudies.withStudies([
     addonStudyFactory({
-      name: "A Fake Add-on Study",
+      slug: "fake-study-a",
+      userFacingName: "A Fake Add-on Study",
       active: true,
-      description: "A fake description",
+      userFacingDescription: "A fake description",
       studyStartDate: new Date(2018, 0, 4),
     }),
     addonStudyFactory({
-      name: "B Fake Add-on Study",
+      slug: "fake-study-b",
+      userFacingName: "B Fake Add-on Study",
       active: false,
-      description: "B fake description",
+      userFacingDescription: "B fake description",
       studyStartDate: new Date(2018, 0, 2),
     }),
     addonStudyFactory({
-      name: "C Fake Add-on Study",
+      slug: "fake-study-c",
+      userFacingName: "C Fake Add-on Study",
       active: true,
-      description: "C fake description",
+      userFacingDescription: "C fake description",
       studyStartDate: new Date(2018, 0, 1),
     }),
   ]),
   PreferenceExperiments.withMockExperiments([
     preferenceStudyFactory({
-      name: "D Fake Preference Study",
+      slug: "fake-study-d",
+      userFacingName: null,
+      userFacingDescription: null,
       lastSeen: new Date(2018, 0, 3),
       expired: false,
     }),
     preferenceStudyFactory({
-      name: "E Fake Preference Study",
+      slug: "fake-study-e",
+      userFacingName: "E Fake Preference Study",
       lastSeen: new Date(2018, 0, 5),
       expired: true,
     }),
     preferenceStudyFactory({
-      name: "F Fake Preference Study",
+      slug: "fake-study-f",
+      userFacingName: "F Fake Preference Study",
       lastSeen: new Date(2018, 0, 6),
       expired: false,
     }),
   ]),
   withAboutStudies,
   async function testStudyListing(addonStudies, prefStudies, browser) {
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       browser,
-      { addonStudies, prefStudies },
+      [{ addonStudies, prefStudies }],
       async ({ addonStudies, prefStudies }) => {
         const doc = content.document;
 
-        function getStudyRow(docElem, studyName) {
-          return docElem.querySelector(
-            `.study[data-study-name="${studyName}"]`
-          );
+        function getStudyRow(docElem, slug) {
+          return docElem.querySelector(`.study[data-study-slug="${slug}"]`);
         }
 
         await ContentTaskUtils.waitForCondition(
@@ -134,32 +149,32 @@ decorate_task(
         );
         const activeNames = Array.from(
           doc.querySelectorAll(".active-study-list .study")
-        ).map(row => row.dataset.studyName);
+        ).map(row => row.dataset.studySlug);
         const inactiveNames = Array.from(
           doc.querySelectorAll(".inactive-study-list .study")
-        ).map(row => row.dataset.studyName);
+        ).map(row => row.dataset.studySlug);
 
         Assert.deepEqual(
           activeNames,
           [
-            prefStudies[2].name,
-            addonStudies[0].name,
-            prefStudies[0].name,
-            addonStudies[2].name,
+            prefStudies[2].slug,
+            addonStudies[0].slug,
+            prefStudies[0].slug,
+            addonStudies[2].slug,
           ],
           "Active studies are grouped by enabled status, and sorted by date"
         );
         Assert.deepEqual(
           inactiveNames,
-          [prefStudies[1].name, addonStudies[1].name],
+          [prefStudies[1].slug, addonStudies[1].slug],
           "Inactive studies are grouped by enabled status, and sorted by date"
         );
 
-        const activeAddonStudy = getStudyRow(doc, addonStudies[0].name);
+        const activeAddonStudy = getStudyRow(doc, addonStudies[0].slug);
         ok(
           activeAddonStudy
             .querySelector(".study-description")
-            .textContent.includes(addonStudies[0].description),
+            .textContent.includes(addonStudies[0].userFacingDescription),
           "Study descriptions are shown in about:studies."
         );
         is(
@@ -179,7 +194,7 @@ decorate_task(
           "Study icons use the first letter of the study name."
         );
 
-        const inactiveAddonStudy = getStudyRow(doc, addonStudies[1].name);
+        const inactiveAddonStudy = getStudyRow(doc, addonStudies[1].slug);
         is(
           inactiveAddonStudy.querySelector(".study-status").textContent,
           "Complete",
@@ -190,7 +205,7 @@ decorate_task(
           "Inactive studies do not show a remove button"
         );
 
-        const activePrefStudy = getStudyRow(doc, prefStudies[0].name);
+        const activePrefStudy = getStudyRow(doc, prefStudies[0].slug);
         const preferenceName = Object.keys(prefStudies[0].preferences)[0];
         ok(
           activePrefStudy
@@ -207,15 +222,8 @@ decorate_task(
           activePrefStudy.querySelector(".remove-button"),
           "Active studies show a remove button"
         );
-        is(
-          activePrefStudy
-            .querySelector(".study-icon")
-            .textContent.toLowerCase(),
-          "d",
-          "Study icons use the first letter of the study name."
-        );
 
-        const inactivePrefStudy = getStudyRow(doc, prefStudies[1].name);
+        const inactivePrefStudy = getStudyRow(doc, prefStudies[1].slug);
         is(
           inactivePrefStudy.querySelector(".study-status").textContent,
           "Complete",
@@ -228,19 +236,19 @@ decorate_task(
 
         activeAddonStudy.querySelector(".remove-button").click();
         await ContentTaskUtils.waitForCondition(() =>
-          getStudyRow(doc, addonStudies[0].name).matches(".study.disabled")
+          getStudyRow(doc, addonStudies[0].slug).matches(".study.disabled")
         );
         ok(
-          getStudyRow(doc, addonStudies[0].name).matches(".study.disabled"),
+          getStudyRow(doc, addonStudies[0].slug).matches(".study.disabled"),
           "Clicking the remove button updates the UI to show that the study has been disabled."
         );
 
         activePrefStudy.querySelector(".remove-button").click();
         await ContentTaskUtils.waitForCondition(() =>
-          getStudyRow(doc, prefStudies[0].name).matches(".study.disabled")
+          getStudyRow(doc, prefStudies[0].slug).matches(".study.disabled")
         );
         ok(
-          getStudyRow(doc, prefStudies[0].name).matches(".study.disabled"),
+          getStudyRow(doc, prefStudies[0].slug).matches(".study.disabled"),
           "Clicking the remove button updates the UI to show that the study has been disabled."
         );
       }
@@ -253,7 +261,7 @@ decorate_task(
     );
 
     const updatedPrefStudy = await PreferenceExperiments.get(
-      prefStudies[0].name
+      prefStudies[0].slug
     );
     ok(
       updatedPrefStudy.expired,
@@ -267,7 +275,7 @@ decorate_task(
   AddonStudies.withStudies([]),
   withAboutStudies,
   async function testStudyListingNoStudies(studies, browser) {
-    await ContentTask.spawn(browser, null, async () => {
+    await SpecialPowers.spawn(browser, [], async () => {
       const doc = content.document;
       await ContentTaskUtils.waitForCondition(
         () => doc.querySelectorAll(".study-list-info").length
@@ -288,15 +296,17 @@ decorate_task(
   withAboutStudies,
   AddonStudies.withStudies([
     addonStudyFactory({
-      name: "A Fake Add-on Study",
+      userFacingName: "A Fake Add-on Study",
+      slug: "fake-addon-study",
       active: false,
-      description: "A fake description",
+      userFacingDescription: "A fake description",
       studyStartDate: new Date(2018, 0, 4),
     }),
   ]),
   PreferenceExperiments.withMockExperiments([
     preferenceStudyFactory({
-      name: "B Fake Preference Study",
+      slug: "fake-pref-study",
+      userFacingName: "B Fake Preference Study",
       lastSeen: new Date(2018, 0, 5),
       expired: true,
     }),
@@ -309,7 +319,7 @@ decorate_task(
     try {
       RecipeRunner.disable();
 
-      await ContentTask.spawn(browser, null, async () => {
+      await SpecialPowers.spawn(browser, [], async () => {
         const doc = content.document;
         await ContentTaskUtils.waitForCondition(() =>
           doc.querySelector(".info-box-content > span")
@@ -347,7 +357,7 @@ decorate_task(
       "RecipeRunner should be enabled as a Precondition"
     );
 
-    await ContentTask.spawn(browser, null, async () => {
+    await SpecialPowers.spawn(browser, [], async () => {
       const doc = content.document;
       await ContentTaskUtils.waitForCondition(() => {
         const span = doc.querySelector(".info-box-content > span");
@@ -360,5 +370,253 @@ decorate_task(
         "A message is shown when studies are disabled"
       );
     });
+  }
+);
+
+// Test that clicking remove on a study that was disabled by an outside source
+// since the page loaded correctly updates.
+decorate_task(
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      slug: "fake-addon-study",
+      userFacingName: "Fake Add-on Study",
+      active: true,
+      userFacingDescription: "A fake description",
+      studyStartDate: new Date(2018, 0, 4),
+    }),
+  ]),
+  PreferenceExperiments.withMockExperiments([
+    preferenceStudyFactory({
+      slug: "fake-pref-study",
+      userFacingName: "Fake Preference Study",
+      lastSeen: new Date(2018, 0, 3),
+      expired: false,
+    }),
+  ]),
+  withAboutStudies,
+  async function testStudyListing([addonStudy], [prefStudy], browser) {
+    // The content page has already loaded. Disabling the studies here shouldn't
+    // affect it, since it doesn't live-update.
+    await AddonStudies.markAsEnded(addonStudy, "disabled-automatically-test");
+    await PreferenceExperiments.stop(prefStudy.slug, {
+      resetValue: false,
+      reason: "disabled-automatically-test",
+    });
+
+    await SpecialPowers.spawn(
+      browser,
+      [{ addonStudy, prefStudy }],
+      async ({ addonStudy, prefStudy }) => {
+        const doc = content.document;
+
+        function getStudyRow(docElem, slug) {
+          return docElem.querySelector(`.study[data-study-slug="${slug}"]`);
+        }
+
+        await ContentTaskUtils.waitForCondition(
+          () => doc.querySelectorAll(".remove-button").length == 2
+        );
+        let activeNames = Array.from(
+          doc.querySelectorAll(".active-study-list .study")
+        ).map(row => row.dataset.studySlug);
+        let inactiveNames = Array.from(
+          doc.querySelectorAll(".inactive-study-list .study")
+        ).map(row => row.dataset.studySlug);
+
+        Assert.deepEqual(
+          activeNames,
+          [addonStudy.slug, prefStudy.slug],
+          "Both studies should be listed as active, even though they have been disabled outside of the page"
+        );
+        Assert.deepEqual(
+          inactiveNames,
+          [],
+          "No studies should be listed as inactive"
+        );
+
+        const activeAddonStudy = getStudyRow(doc, addonStudy.slug);
+        const activePrefStudy = getStudyRow(doc, prefStudy.slug);
+
+        activeAddonStudy.querySelector(".remove-button").click();
+        await ContentTaskUtils.waitForCondition(() =>
+          getStudyRow(doc, addonStudy.slug).matches(".study.disabled")
+        );
+        ok(
+          getStudyRow(doc, addonStudy.slug).matches(".study.disabled"),
+          "Clicking the remove button updates the UI to show that the study has been disabled."
+        );
+
+        activePrefStudy.querySelector(".remove-button").click();
+        await ContentTaskUtils.waitForCondition(() =>
+          getStudyRow(doc, prefStudy.slug).matches(".study.disabled")
+        );
+        ok(
+          getStudyRow(doc, prefStudy.slug).matches(".study.disabled"),
+          "Clicking the remove button updates the UI to show that the study has been disabled."
+        );
+
+        activeNames = Array.from(
+          doc.querySelectorAll(".active-study-list .study")
+        ).map(row => row.dataset.studySlug);
+
+        Assert.deepEqual(
+          activeNames,
+          [],
+          "No studies should be listed as active"
+        );
+      }
+    );
+  }
+);
+
+// Test that clicking remove on a study updates even about:studies pages
+// that are not currently in focus.
+decorate_task(
+  AddonStudies.withStudies([
+    addonStudyFactory({
+      slug: "fake-addon-study",
+      userFacingName: "Fake Add-on Study",
+      active: true,
+      userFacingDescription: "A fake description",
+      studyStartDate: new Date(2018, 0, 4),
+    }),
+  ]),
+  PreferenceExperiments.withMockExperiments([
+    preferenceStudyFactory({
+      slug: "fake-pref-study",
+      userFacingName: "Fake Preference Study",
+      lastSeen: new Date(2018, 0, 3),
+      expired: false,
+    }),
+  ]),
+  withAboutStudies,
+  async function testOtherTabsUpdated([addonStudy], [prefStudy], browser) {
+    // Ensure that both our studies are active in the current tab.
+    await SpecialPowers.spawn(
+      browser,
+      [{ addonStudy, prefStudy }],
+      async ({ addonStudy, prefStudy }) => {
+        const doc = content.document;
+        await ContentTaskUtils.waitForCondition(
+          () => doc.querySelectorAll(".remove-button").length == 2,
+          "waiting for page to load"
+        );
+        let activeNames = Array.from(
+          doc.querySelectorAll(".active-study-list .study")
+        ).map(row => row.dataset.studySlug);
+        let inactiveNames = Array.from(
+          doc.querySelectorAll(".inactive-study-list .study")
+        ).map(row => row.dataset.studySlug);
+
+        Assert.deepEqual(
+          activeNames,
+          [addonStudy.slug, prefStudy.slug],
+          "Both studies should be listed as active"
+        );
+        Assert.deepEqual(
+          inactiveNames,
+          [],
+          "No studies should be listed as inactive"
+        );
+      }
+    );
+
+    // Open a new about:studies tab.
+    await BrowserTestUtils.withNewTab("about:studies", async browser => {
+      // Delete both studies in this tab; this should pass if previous tests have passed.
+      await SpecialPowers.spawn(
+        browser,
+        [{ addonStudy, prefStudy }],
+        async ({ addonStudy, prefStudy }) => {
+          const doc = content.document;
+
+          function getStudyRow(docElem, slug) {
+            return docElem.querySelector(`.study[data-study-slug="${slug}"]`);
+          }
+
+          await ContentTaskUtils.waitForCondition(
+            () => doc.querySelectorAll(".remove-button").length == 2,
+            "waiting for page to load"
+          );
+          let activeNames = Array.from(
+            doc.querySelectorAll(".active-study-list .study")
+          ).map(row => row.dataset.studySlug);
+          let inactiveNames = Array.from(
+            doc.querySelectorAll(".inactive-study-list .study")
+          ).map(row => row.dataset.studySlug);
+
+          Assert.deepEqual(
+            activeNames,
+            [addonStudy.slug, prefStudy.slug],
+            "Both studies should be listed as active in the new tab"
+          );
+          Assert.deepEqual(
+            inactiveNames,
+            [],
+            "No studies should be listed as inactive in the new tab"
+          );
+
+          const activeAddonStudy = getStudyRow(doc, addonStudy.slug);
+          const activePrefStudy = getStudyRow(doc, prefStudy.slug);
+
+          activeAddonStudy.querySelector(".remove-button").click();
+          await ContentTaskUtils.waitForCondition(() =>
+            getStudyRow(doc, addonStudy.slug).matches(".study.disabled")
+          );
+          ok(
+            getStudyRow(doc, addonStudy.slug).matches(".study.disabled"),
+            "Clicking the remove button updates the UI in the new tab"
+          );
+
+          activePrefStudy.querySelector(".remove-button").click();
+          await ContentTaskUtils.waitForCondition(() =>
+            getStudyRow(doc, prefStudy.slug).matches(".study.disabled")
+          );
+          ok(
+            getStudyRow(doc, prefStudy.slug).matches(".study.disabled"),
+            "Clicking the remove button updates the UI in the new tab"
+          );
+
+          activeNames = Array.from(
+            doc.querySelectorAll(".active-study-list .study")
+          ).map(row => row.dataset.studySlug);
+
+          Assert.deepEqual(
+            activeNames,
+            [],
+            "No studies should be listed as active"
+          );
+        }
+      );
+    });
+
+    // Ensure that the original tab has updated correctly.
+    await SpecialPowers.spawn(
+      browser,
+      [{ addonStudy, prefStudy }],
+      async ({ addonStudy, prefStudy }) => {
+        const doc = content.document;
+        await ContentTaskUtils.waitForCondition(
+          () => doc.querySelectorAll(".inactive-study-list .study").length == 2,
+          "Two studies should load into the inactive list, since they were disabled in a different tab"
+        );
+        let activeNames = Array.from(
+          doc.querySelectorAll(".active-study-list .study")
+        ).map(row => row.dataset.studySlug);
+        let inactiveNames = Array.from(
+          doc.querySelectorAll(".inactive-study-list .study")
+        ).map(row => row.dataset.studySlug);
+        Assert.deepEqual(
+          activeNames,
+          [],
+          "No studies should be listed as active, since they were disabled in a different tab"
+        );
+        Assert.deepEqual(
+          inactiveNames,
+          [addonStudy.slug, prefStudy.slug],
+          "Both studies should be listed as inactive, since they were disabled in a different tab"
+        );
+      }
+    );
   }
 );

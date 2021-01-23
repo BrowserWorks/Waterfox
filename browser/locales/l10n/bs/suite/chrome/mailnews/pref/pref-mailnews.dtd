@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Pošta i novinske grupe">
+<!ENTITY generalSettings.caption          "Opće postavke">
+<!ENTITY confirmMove.label                "Potvrdi prilikom premještanja direktorija u smeće">
+<!ENTITY preserveThreading.label          "Sačuvaj rasprave pri sortiranju poruka">
+<!ENTITY mailBiffOnNewWindow.label        "Provjeri novu poštu samo nakon otvaranja pošte i interesnih grupa">
+
+<!ENTITY defaultMailSettings.description  "Učinite &brandShortName; kao glavnu aplikaciju za:">
+<!ENTITY setDefaultMail.label             "Poštu">
+<!ENTITY setDefaultNews.label             "Vijesti">
+<!ENTITY setDefaultFeed.label             "Kanale">
+
+<!ENTITY useInternalSettings.description  "Koristite &brandShortName; poštu i vijesti pri otvaranju linkova browsera za:">
+<!ENTITY useInternalMail.label            "Pošta (mailto:)">
+<!ENTITY useInternalNews.label            "Vijesti (news:, snews:, nntp:)">
+
+<!ENTITY messengerStartPage.caption       "Početna stranica pošte">
+<!ENTITY enableStartPage.label            "Kad se Pošta pokrene, prikaži početnu stranicu u prostoru za poruke">
+<!ENTITY location.label                   "Lokacija:">
+<!ENTITY useDefault.label                 "Vrati na početne vrijednosti">
+<!ENTITY rememberLastMsg.label            "Zapamti posljednje odabranu poruku">

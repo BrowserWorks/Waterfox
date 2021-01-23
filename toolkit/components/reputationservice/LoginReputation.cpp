@@ -10,11 +10,12 @@
 #include "mozilla/Logging.h"
 #include "mozilla/net/UrlClassifierFeatureFactory.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "nsIURIClassifier.h"
 #include "nsIUrlClassifierFeature.h"
 
 using namespace mozilla;
@@ -297,10 +298,7 @@ LoginReputationService::QueryReputationAsync(
       return NS_ERROR_FAILURE;
     }
 
-    URIParams uri;
-    SerializeURI(documentURI, uri);
-
-    if (!content->SendPLoginReputationConstructor(uri)) {
+    if (!content->SendPLoginReputationConstructor(documentURI)) {
       return NS_ERROR_FAILURE;
     }
   } else {
@@ -335,7 +333,7 @@ LoginReputationService::QueryReputation(
   // mQueryRequests is an array used to maintain the ownership of
   // |QueryRequest|. We ensure that |QueryRequest| is always valid until
   // Finish() is called or LoginReputationService is shutdown.
-  auto* request =
+  auto request =
       mQueryRequests.AppendElement(MakeUnique<QueryRequest>(aQuery, aCallback));
 
   return QueryLoginWhitelist(request->get());

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Thoir air falbh an cunntas is an dàta">
+<!ENTITY removeButton.label           "Thoir air falbh">
+<!ENTITY removeButton.accesskey       "T">
+<!ENTITY removeAccount.label          "Thoir air falbh fiosrachadh a’ chunntais">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Bheir seo air falbh am fiosrachadh aig &brandShortName; mun chunntas seo. Cha bhi buaidh air a’ chunntas fhèin air an fhrithealaiche.">
+<!ENTITY removeData.label             "Thoir air falbh dàta nan teachdaireachdan">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Thoir air falbh dàta nan còmhradh">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Bheir seo air falbh gach teachdaireachd, pasgan is criathrag a tha co-cheangailte ris a’ chunntas seo on diosg ionadail agad. Cha bhi buaidh air cuid dhe na teachdaireachdan a dh’fhaodadh a bhith air an fhrithealaiche. Na dèan seo ma tha thu am beachd an an dàta ionadail a chur ann an tasg-lann no a chleachdadh a-rithist ann an &brandShortName; uaireigin eile.">
+<!ENTITY removeDataServerAccount.desc "Bheir seo air falbh gach teachdaireachd, pasgan is criathrag a tha co-cheangailte ris a’ chunntas seo on diosg ionadail agad.Bidh na teachdaireachdan is pasganan air an fhrithealaiche fhathast.">
+<!ENTITY removeDataChatAccount.desc   "Thoir air falbh gach loga de chòmhraidhean a chaidh a stòradh mu choinneamh a’ chunntais seo air an diosga ionadail agad.">
+<!ENTITY showData.label               "Seall ionad an dàta">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "A’ toirt air falbh an dàta a thagh thu…">
+<!ENTITY progressSuccess              "Chaidh a thoirt air falbh.">
+<!ENTITY progressFailure              "Dh’fhàillig a thoirt air falbh.">

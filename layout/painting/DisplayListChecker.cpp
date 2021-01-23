@@ -6,8 +6,8 @@
 
 #include "DisplayListChecker.h"
 
-#include "gfxPrefs.h"
 #include "nsDisplayList.h"
+#include "mozilla/StaticPrefs_layout.h"
 
 namespace mozilla {
 
@@ -82,7 +82,8 @@ class DisplayListBlueprint {
                        unsigned& aIndex);
 
   std::vector<DisplayItemBlueprint> mItems;
-  const bool mVerifyOrder = gfxPrefs::LayoutVerifyRetainDisplayListOrder();
+  const bool mVerifyOrder =
+      StaticPrefs::layout_display_list_retain_verify_order();
 };
 
 // Object representing one display item, with just enough information to

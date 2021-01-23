@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* list of user agent style sheets that nsLayoutStylesheetCache manages */
+/* list of user agent style sheets that GlobalStyleSheetCache manages */
 
 /*
  * STYLE_SHEET(identifier_, url_, shared_)
@@ -23,6 +23,9 @@
 STYLE_SHEET(ContentEditable, "resource://gre/res/contenteditable.css", true)
 STYLE_SHEET(CounterStyles, "resource://gre-resources/counterstyles.css", true)
 STYLE_SHEET(DesignMode, "resource://gre/res/designmode.css", true)
+#ifdef ANDROID
+STYLE_SHEET(GeckoView, "resource://gre-resources/geckoview.css", true)
+#endif
 STYLE_SHEET(Forms, "resource://gre-resources/forms.css", true)
 STYLE_SHEET(HTML, "resource://gre-resources/html.css", true)
 STYLE_SHEET(MathML, "resource://gre-resources/mathml.css", true)

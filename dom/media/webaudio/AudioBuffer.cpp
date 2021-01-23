@@ -15,6 +15,7 @@
 #include "mozilla/CheckedInt.h"
 #include "mozilla/MemoryReporting.h"
 #include "AudioNodeEngine.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
 namespace dom {
@@ -87,7 +88,7 @@ AudioBufferMemoryTracker* AudioBufferMemoryTracker::GetInstance() {
   return sSingleton;
 }
 
-AudioBufferMemoryTracker::AudioBufferMemoryTracker() {}
+AudioBufferMemoryTracker::AudioBufferMemoryTracker() = default;
 
 void AudioBufferMemoryTracker::Init() { RegisterWeakMemoryReporter(this); }
 
@@ -152,10 +153,21 @@ AudioBuffer::AudioBuffer(nsPIDOMWindowInner* aWindow,
   // AudioProcessingEvent, where channel counts must match parameters passed
   // to createScriptProcessor(), one of which may be zero.
   if (aSampleRate < WebAudioUtils::MinSampleRate ||
-      aSampleRate > WebAudioUtils::MaxSampleRate ||
-      aNumberOfChannels > WebAudioUtils::MaxChannelCount || !aLength ||
-      aLength > INT32_MAX) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+      aSampleRate > WebAudioUtils::MaxSampleRate) {
+    aRv.ThrowNotSupportedError(
+        nsPrintfCString("Sample rate (%g) is out of range", aSampleRate));
+    return;
+  }
+
+  if (aNumberOfChannels > WebAudioUtils::MaxChannelCount) {
+    aRv.ThrowNotSupportedError(nsPrintfCString(
+        "Number of channels (%u) is out of range", aNumberOfChannels));
+    return;
+  }
+
+  if (!aLength || aLength > INT32_MAX) {
+    aRv.ThrowNotSupportedError(
+        nsPrintfCString("Length (%u) is out of range", aLength));
     return;
   }
 
@@ -176,7 +188,7 @@ already_AddRefed<AudioBuffer> AudioBuffer::Constructor(
     const GlobalObject& aGlobal, const AudioBufferOptions& aOptions,
     ErrorResult& aRv) {
   if (!aOptions.mNumberOfChannels) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    aRv.ThrowNotSupportedError("Must have nonzero number of channels");
     return nullptr;
   }
 
@@ -197,7 +209,7 @@ void AudioBuffer::SetSharedChannels(
   for (uint32_t i = 0; i < channelCount; ++i) {
     mSharedChannels.mChannelData[i] = buffer->GetData(i);
   }
-  mSharedChannels.mBuffer = buffer.forget();
+  mSharedChannels.mBuffer = std::move(buffer);
   mSharedChannels.mBufferFormat = AUDIO_FORMAT_FLOAT32;
 }
 
@@ -300,20 +312,30 @@ bool AudioBuffer::RestoreJSChannelData(JSContext* aJSContext) {
 void AudioBuffer::CopyFromChannel(const Float32Array& aDestination,
                                   uint32_t aChannelNumber,
                                   uint32_t aStartInChannel, ErrorResult& aRv) {
+  if (aChannelNumber >= NumberOfChannels()) {
+    aRv.ThrowIndexSizeError(
+        nsPrintfCString("Channel number (%u) is out of range", aChannelNumber));
+    return;
+  }
 
-  if (aChannelNumber >= NumberOfChannels() || aStartInChannel > Length()) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+  if (aStartInChannel > Length()) {
+    // FIXME: this is not in the spec.  See
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1614006
+    aRv.ThrowIndexSizeError(
+        nsPrintfCString("Start index (%u) is out of range", aStartInChannel));
     return;
   }
 
   JS::AutoCheckCannotGC nogc;
-  aDestination.ComputeLengthAndData();
+  aDestination.ComputeState();
   uint32_t count = std::min(Length() - aStartInChannel, aDestination.Length());
   JSObject* channelArray = mJSChannels[aChannelNumber];
   if (channelArray) {
     if (JS_GetTypedArrayLength(channelArray) != Length()) {
       // The array's buffer was detached.
-      aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+      // FIXME: this is not in the spec.  See
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=1614006
+      aRv.ThrowIndexSizeError("Channel's backing buffer is detached");
       return;
     }
 
@@ -340,9 +362,17 @@ void AudioBuffer::CopyToChannel(JSContext* aJSContext,
                                 const Float32Array& aSource,
                                 uint32_t aChannelNumber,
                                 uint32_t aStartInChannel, ErrorResult& aRv) {
+  if (aChannelNumber >= NumberOfChannels()) {
+    aRv.ThrowIndexSizeError(
+        nsPrintfCString("Channel number (%u) is out of range", aChannelNumber));
+    return;
+  }
 
-  if (aChannelNumber >= NumberOfChannels() || aStartInChannel > Length()) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+  if (aStartInChannel > Length()) {
+    // FIXME: this is not in the spec.  See
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1614006
+    aRv.ThrowIndexSizeError(
+        nsPrintfCString("Start index (%u) is out of range", aStartInChannel));
     return;
   }
 
@@ -355,11 +385,13 @@ void AudioBuffer::CopyToChannel(JSContext* aJSContext,
   JSObject* channelArray = mJSChannels[aChannelNumber];
   if (JS_GetTypedArrayLength(channelArray) != Length()) {
     // The array's buffer was detached.
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    // FIXME: this is not in the spec.  See
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1614006
+    aRv.ThrowIndexSizeError("Channel's backing buffer is detached");
     return;
   }
 
-  aSource.ComputeLengthAndData();
+  aSource.ComputeState();
   uint32_t count = std::min(Length() - aStartInChannel, aSource.Length());
   bool isShared = false;
   float* channelData = JS_GetFloat32ArrayData(channelArray, &isShared, nogc);
@@ -373,7 +405,8 @@ void AudioBuffer::GetChannelData(JSContext* aJSContext, uint32_t aChannel,
                                  JS::MutableHandle<JSObject*> aRetval,
                                  ErrorResult& aRv) {
   if (aChannel >= NumberOfChannels()) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError(
+        nsPrintfCString("Channel number (%u) is out of range", aChannel));
     return;
   }
 

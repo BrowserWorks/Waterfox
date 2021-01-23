@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliotek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organisera">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organisera dina bokmärken">
+
+<!ENTITY file.close.label               "Stäng">
+<!ENTITY file.close.accesskey           "S">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vyer">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Byt vy">
+<!ENTITY view.columns.label             "Visa kolumner">
+<!ENTITY view.columns.accesskey         "k">
+<!ENTITY view.sort.label                "Sortera">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Osorterat">
+<!ENTITY view.unsorted.accesskey        "O">
+<!ENTITY view.sortAscending.label       "Ordna A > Ö">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ordna Ö > A">
+<!ENTITY view.sortDescending.accesskey  "Ö">
+
+<!ENTITY importBookmarksFromHTML.label     "Importera bokmärken från HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportera bokmärken till HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importera data från annan webbläsare…">
+<!ENTITY importOtherBrowser.accesskey      "d">
+
+<!ENTITY cmd.backup.label               "Säkerhetskopiera…">
+<!ENTITY cmd.backup.accesskey           "k">
+<!ENTITY cmd.restore2.label             "Återställ">
+<!ENTITY cmd.restore2.accesskey         "Å">
+<!ENTITY cmd.restoreFromFile.label      "Välj fil…">
+<!ENTITY cmd.restoreFromFile.accesskey  "V">
+
+<!ENTITY cmd.deleteDomainData.label     "Rensa för hela denna webbplats">
+<!ENTITY cmd.deleteDomainData.accesskey "R">
+
+<!ENTITY cmd.open.label                  "Öppna">
+<!ENTITY cmd.open.accesskey              "p">
+<!ENTITY cmd.open_window.label           "Öppna i ett nytt fönster">
+<!ENTITY cmd.open_window.accesskey       "f">
+<!ENTITY cmd.open_private_window.label     "Öppna i ett nytt privat fönster">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Öppna i en ny flik">
+<!ENTITY cmd.open_tab.accesskey          "f">
+<!ENTITY cmd.open_all_in_tabs.label      "Öppna alla i flikar">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "a">
+
+<!ENTITY cmd.properties.label      "Egenskaper">
+<!ENTITY cmd.properties.accesskey  "E">
+
+<!ENTITY cmd.sortby_name.label              "Sortera efter namn">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Nytt bokmärke…">
+<!ENTITY cmd.new_bookmark.accesskey        "b">
+<!ENTITY cmd.new_folder.label              "Ny mapp…">
+<!ENTITY cmd.new_folder.accesskey          "m">
+<!ENTITY cmd.context_new_folder.accesskey  "p">
+<!ENTITY cmd.new_separator.label           "Ny avskiljare">
+<!ENTITY cmd.new_separator.accesskey       "a">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Uppdatera aktivt bokmärke">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "U">
+
+<!ENTITY col.name.label          "Namn">
+<!ENTITY col.tags.label          "Etiketter">
+<!ENTITY col.url.label           "Plats">
+<!ENTITY col.mostrecentvisit.label "Senast besökt">
+<!ENTITY col.visitcount.label    "Antal besök">
+<!ENTITY col.description.label   "Beskrivning">
+<!ENTITY col.dateadded.label     "Tillagd">
+<!ENTITY col.lastmodified.label  "Senast ändrad">
+
+<!ENTITY search.placeholder  "Sök">
+
+<!ENTITY cmd.find.key  "ö">
+
+<!ENTITY detailsPane.more.label "Mer">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Mindre">
+<!ENTITY detailsPane.less.accesskey "i">
+<!ENTITY detailsPane.selectAnItemText.description "Markera en post för att visa och redigera dess egenskaper">
+
+<!ENTITY view.label               "Visa">
+<!ENTITY view.accesskey           "a">
+<!ENTITY byDate.label             "Efter datum">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Efter plats">
+<!ENTITY bySite.accesskey         "p">
+<!ENTITY byMostVisited.label      "Efter mest besökta">
+<!ENTITY byMostVisited.accesskey  "b">
+<!ENTITY byLastVisited.label      "Efter senast besökta">
+<!ENTITY byLastVisited.accesskey  "s">
+<!ENTITY byDayAndSite.label       "Efter datum och plats">
+<!ENTITY byDayAndSite.accesskey   "o">

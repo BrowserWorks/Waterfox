@@ -7,18 +7,18 @@
 //! # Liveness consumers
 //!
 //! The primary consumer of the liveness analysis is the SSA coloring pass which goes through each
-//! EBB and assigns a register to the defined values. This algorithm needs to maintain a set of the
-//! currently live values as it is iterating down the instructions in the EBB. It asks the
+//! block and assigns a register to the defined values. This algorithm needs to maintain a set of the
+//! currently live values as it is iterating down the instructions in the block. It asks the
 //! following questions:
 //!
-//! - What is the set of live values at the entry to the EBB?
-//! - When moving past a use of a value, is that value still alive in the EBB, or was that the last
+//! - What is the set of live values at the entry to the block?
+//! - When moving past a use of a value, is that value still alive in the block, or was that the last
 //!   use?
 //! - When moving past a branch, which of the live values are still live below the branch?
 //!
 //! The set of `LiveRange` instances can answer these questions through their `def_local_end` and
-//! `livein_local_end` queries. The coloring algorithm visits EBBs in a topological order of the
-//! dominator tree, so it can compute the set of live values at the beginning of an EBB by starting
+//! `livein_local_end` queries. The coloring algorithm visits blocks in a topological order of the
+//! dominator tree, so it can compute the set of live values at the beginning of a block by starting
 //! from the set of live values at the dominating branch instruction and filtering it with
 //! `livein_local_end`. These sets do not need to be stored in the liveness analysis.
 //!
@@ -43,7 +43,7 @@
 //!
 //! - Quadratic memory use. We need a bit per variable per basic block in the function.
 //! - Dense representation of sparse data. In practice, the majority of SSA values never leave
-//!   their basic block, and those that do span basic blocks rarely span a large number of basic
+//!   their basic block, and those that do spa basic blocks rarely span a large number of basic
 //!   blocks. This makes the data stored in the bitvectors quite sparse.
 //! - Traditionally, the data-flow equations were solved for real program *variables* which does
 //!   not include temporaries used in evaluating expressions. We have an SSA form program which
@@ -141,10 +141,10 @@
 //! - The first time a value is encountered, its live range is constructed as a dead live range
 //!   containing only the defining program point.
 //! - The local interval of the value's live range is extended so it reaches the use. This may
-//!   require creating a new live-in local interval for the EBB.
-//! - If the live range became live-in to the EBB, add the EBB to a work-list.
-//! - While the work-list is non-empty pop a live-in EBB and repeat the two steps above, using each
-//!   of the live-in EBB's CFG predecessor instructions as a 'use'.
+//!   require creating a new live-in local interval for the block.
+//! - If the live range became live-in to the block, add the block to a work-list.
+//! - While the work-list is non-empty pop a live-in block and repeat the two steps above, using each
+//!   of the live-in block's CFG predecessor instructions as a 'use'.
 //!
 //! The effect of this algorithm is to extend the live range of each to reach uses as they are
 //! visited. No data about each value beyond the live range is needed between visiting uses, so
@@ -176,16 +176,16 @@
 //! There is some room for improvement.
 
 use crate::entity::SparseMap;
-use crate::flowgraph::{BasicBlock, ControlFlowGraph};
+use crate::flowgraph::{BlockPredecessor, ControlFlowGraph};
 use crate::ir::dfg::ValueDef;
-use crate::ir::{Ebb, Function, Inst, Layout, ProgramPoint, Value};
+use crate::ir::{Block, Function, Inst, Layout, ProgramPoint, Value};
 use crate::isa::{EncInfo, OperandConstraint, TargetIsa};
 use crate::regalloc::affinity::Affinity;
-use crate::regalloc::liverange::{LiveRange, LiveRangeContext, LiveRangeForest};
+use crate::regalloc::liverange::LiveRange;
 use crate::timing;
+use alloc::vec::Vec;
 use core::mem;
 use core::ops::Index;
-use std::vec::Vec;
 
 /// A set of live ranges, indexed by value number.
 type LiveRangeSet = SparseMap<Value, LiveRange>;
@@ -195,7 +195,7 @@ type LiveRangeSet = SparseMap<Value, LiveRange>;
 fn get_or_create<'a>(
     lrset: &'a mut LiveRangeSet,
     value: Value,
-    isa: &TargetIsa,
+    isa: &dyn TargetIsa,
     func: &Function,
     encinfo: &EncInfo,
 ) -> &'a mut LiveRange {
@@ -223,14 +223,14 @@ fn get_or_create<'a>(
                     })
                     .unwrap_or_default();
             }
-            ValueDef::Param(ebb, num) => {
-                def = ebb.into();
-                if func.layout.entry_block() == Some(ebb) {
+            ValueDef::Param(block, num) => {
+                def = block.into();
+                if func.layout.entry_block() == Some(block) {
                     // The affinity for entry block parameters can be inferred from the function
                     // signature.
                     affinity = Affinity::abi(&func.signature.params[num], isa);
                 } else {
-                    // Give normal EBB parameters a register affinity matching their type.
+                    // Give normal block parameters a register affinity matching their type.
                     let rc = isa.regclass_for_abi_type(func.dfg.value_type(value));
                     affinity = Affinity::Reg(rc.into());
                 }
@@ -241,44 +241,43 @@ fn get_or_create<'a>(
     lrset.get_mut(value).unwrap()
 }
 
-/// Extend the live range for `value` so it reaches `to` which must live in `ebb`.
+/// Extend the live range for `value` so it reaches `to` which must live in `block`.
 fn extend_to_use(
     lr: &mut LiveRange,
-    ebb: Ebb,
+    block: Block,
     to: Inst,
-    worklist: &mut Vec<Ebb>,
+    worklist: &mut Vec<Block>,
     func: &Function,
     cfg: &ControlFlowGraph,
-    forest: &mut LiveRangeForest,
 ) {
     // This is our scratch working space, and we'll leave it empty when we return.
     debug_assert!(worklist.is_empty());
 
-    // Extend the range locally in `ebb`.
+    // Extend the range locally in `block`.
     // If there already was a live interval in that block, we're done.
-    if lr.extend_in_ebb(ebb, to, &func.layout, forest) {
-        worklist.push(ebb);
+    if lr.extend_in_block(block, to, &func.layout) {
+        worklist.push(block);
     }
 
-    // The work list contains those EBBs where we have learned that the value needs to be
+    // The work list contains those blocks where we have learned that the value needs to be
     // live-in.
     //
     // This algorithm becomes a depth-first traversal up the CFG, enumerating all paths through the
-    // CFG from the existing live range to `ebb`.
+    // CFG from the existing live range to `block`.
     //
     // Extend the live range as we go. The live range itself also serves as a visited set since
-    // `extend_in_ebb` will never return true twice for the same EBB.
+    // `extend_in_block` will never return true twice for the same block.
     //
     while let Some(livein) = worklist.pop() {
-        // We've learned that the value needs to be live-in to the `livein` EBB.
+        // We've learned that the value needs to be live-in to the `livein` block.
         // Make sure it is also live at all predecessor branches to `livein`.
-        for BasicBlock {
-            ebb: pred,
+        for BlockPredecessor {
+            block: pred,
             inst: branch,
         } in cfg.pred_iter(livein)
         {
-            if lr.extend_in_ebb(pred, branch, &func.layout, forest) {
-                // This predecessor EBB also became live-in. We need to process it later.
+            if lr.extend_in_block(pred, branch, &func.layout) {
+                // This predecessor block also became live-in. We need to process it later.
                 worklist.push(pred);
             }
         }
@@ -292,13 +291,10 @@ pub struct Liveness {
     /// The live ranges that have been computed so far.
     ranges: LiveRangeSet,
 
-    /// Memory pool for the live ranges.
-    forest: LiveRangeForest,
-
     /// Working space for the `extend_to_use` algorithm.
     /// This vector is always empty, except for inside that function.
     /// It lives here to avoid repeated allocation of scratch memory.
-    worklist: Vec<Ebb>,
+    worklist: Vec<Block>,
 }
 
 impl Liveness {
@@ -309,7 +305,6 @@ impl Liveness {
     pub fn new() -> Self {
         Self {
             ranges: LiveRangeSet::new(),
-            forest: LiveRangeForest::new(),
             worklist: Vec::new(),
         }
     }
@@ -319,15 +314,9 @@ impl Liveness {
         &self.ranges
     }
 
-    /// Get a context needed for working with a `LiveRange`.
-    pub fn context<'a>(&'a self, layout: &'a Layout) -> LiveRangeContext<'a, Layout> {
-        LiveRangeContext::new(layout, &self.forest)
-    }
-
     /// Clear all data structures in this liveness analysis.
     pub fn clear(&mut self) {
         self.ranges.clear();
-        self.forest.clear();
         self.worklist.clear();
     }
 
@@ -353,7 +342,7 @@ impl Liveness {
 
     /// Move the definition of `value` to `def`.
     ///
-    /// The old and new def points must be in the same EBB, and before the end of the live range.
+    /// The old and new def points must be in the same block, and before the end of the live range.
     pub fn move_def_locally<PP>(&mut self, value: Value, def: PP)
     where
         PP: Into<ProgramPoint>,
@@ -364,20 +353,20 @@ impl Liveness {
 
     /// Locally extend the live range for `value` to reach `user`.
     ///
-    /// It is assumed the `value` is already live before `user` in `ebb`.
+    /// It is assumed the `value` is already live before `user` in `block`.
     ///
     /// Returns a mutable reference to the value's affinity in case that also needs to be updated.
     pub fn extend_locally(
         &mut self,
         value: Value,
-        ebb: Ebb,
+        block: Block,
         user: Inst,
         layout: &Layout,
     ) -> &mut Affinity {
-        debug_assert_eq!(Some(ebb), layout.inst_ebb(user));
+        debug_assert_eq!(Some(block), layout.inst_block(user));
         let lr = self.ranges.get_mut(value).expect("Value has no live range");
-        let livein = lr.extend_in_ebb(ebb, user, layout, &mut self.forest);
-        debug_assert!(!livein, "{} should already be live in {}", value, ebb);
+        let livein = lr.extend_in_block(block, user, layout);
+        debug_assert!(!livein, "{} should already be live in {}", value, block);
         &mut lr.affinity
     }
 
@@ -389,7 +378,7 @@ impl Liveness {
 
     /// Compute the live ranges of all SSA values used in `func`.
     /// This clears out any existing analysis stored in this data structure.
-    pub fn compute(&mut self, isa: &TargetIsa, func: &mut Function, cfg: &ControlFlowGraph) {
+    pub fn compute(&mut self, isa: &dyn TargetIsa, func: &mut Function, cfg: &ControlFlowGraph) {
         let _tt = timing::ra_liveness();
         self.ranges.clear();
 
@@ -400,16 +389,15 @@ impl Liveness {
         // The liveness computation needs to visit all uses, but the order doesn't matter.
         // TODO: Perhaps this traversal of the function could be combined with a dead code
         // elimination pass if we visit a post-order of the dominator tree?
-        // TODO: Resolve value aliases while we're visiting instructions?
-        for ebb in func.layout.ebbs() {
-            // Make sure we have created live ranges for dead EBB parameters.
+        for block in func.layout.blocks() {
+            // Make sure we have created live ranges for dead block parameters.
             // TODO: If these parameters are really dead, we could remove them, except for the
             // entry block which must match the function signature.
-            for &arg in func.dfg.ebb_params(ebb) {
+            for &arg in func.dfg.block_params(block) {
                 get_or_create(&mut self.ranges, arg, isa, func, &encinfo);
             }
 
-            for inst in func.layout.ebb_insts(ebb) {
+            for inst in func.layout.block_insts(block) {
                 // Eliminate all value aliases, they would confuse the register allocator.
                 func.dfg.resolve_aliases_in_arguments(inst);
 
@@ -431,19 +419,11 @@ impl Liveness {
                     let lr = get_or_create(&mut self.ranges, arg, isa, func, &encinfo);
 
                     // Extend the live range to reach this use.
-                    extend_to_use(
-                        lr,
-                        ebb,
-                        inst,
-                        &mut self.worklist,
-                        func,
-                        cfg,
-                        &mut self.forest,
-                    );
+                    extend_to_use(lr, block, inst, &mut self.worklist, func, cfg);
 
                     // Apply operand constraint, ignoring any variable arguments after the fixed
                     // operands described by `operand_constraints`. Variable arguments are either
-                    // EBB arguments or call/return ABI arguments.
+                    // block arguments or call/return ABI arguments.
                     if let Some(constraint) = operand_constraints.next() {
                         lr.affinity.merge(constraint, &reginfo);
                     }
@@ -455,11 +435,9 @@ impl Liveness {
 
 impl Index<Value> for Liveness {
     type Output = LiveRange;
-
     fn index(&self, index: Value) -> &LiveRange {
-        match self.ranges.get(index) {
-            Some(lr) => lr,
-            None => panic!("{} has no live range", index),
-        }
+        self.ranges
+            .get(index)
+            .unwrap_or_else(|| panic!("{} has no live range", index))
     }
 }

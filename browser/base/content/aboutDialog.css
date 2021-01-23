@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+@namespace html "http://www.w3.org/1999/xhtml";
 
 #aboutDialog {
   width: 620px;
@@ -13,9 +14,10 @@
 #rightBox {
   background-image: url("chrome://branding/content/about-wordmark.svg");
   background-repeat: no-repeat;
+  background-size: 288px auto;
   /* padding-top creates room for the wordmark */
   padding-top: 38px;
-  margin-top:20px;
+  margin-top: 20px;
 }
 
 #rightBox:-moz-locale-dir(rtl) {
@@ -26,20 +28,20 @@
   padding: 15px 10px 0;
 }
 
+#release {
+  font-weight: bold;
+  font-size: 125%;
+  margin-top: 10px;
+  margin-inline-start: 0;
+}
+
 #version {
   font-weight: bold;
   margin-top: 10px;
-  margin-left: 0;
+  margin-inline-start: 0;
   -moz-user-select: text;
   -moz-user-focus: normal;
   cursor: text;
-}
-
-#version:-moz-locale-dir(rtl) {
-  direction: ltr;
-  text-align: right;
-  margin-left: 5px;
-  margin-right: 0;
 }
 
 #releasenotes {
@@ -49,8 +51,7 @@
 #distribution,
 #distributionId {
   display: none;
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-block: 0;
 }
 
 .text-blurb {
@@ -69,6 +70,13 @@
   width: 16px;
   min-height: 16px;
   margin-inline-end: 3px;
+}
+
+html|img.update-throbber {
+  vertical-align: middle;
+}
+
+image.update-throbber {
   list-style-image: url("chrome://global/skin/icons/loading.png");
 }
 
@@ -80,8 +88,8 @@
 
 description > .text-link,
 description > .text-link:focus {
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
 }
 
 .bottom-link,

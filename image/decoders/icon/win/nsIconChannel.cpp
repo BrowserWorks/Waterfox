@@ -5,18 +5,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/Monitor.h"
 
 #include "nsIconChannel.h"
 #include "nsIIconURI.h"
-#include "nsIServiceManager.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsMimeTypes.h"
 #include "nsMemory.h"
-#include "nsIStringStream.h"
 #include "nsIURL.h"
 #include "nsIPipe.h"
 #include "nsNetCID.h"
@@ -167,12 +166,10 @@ nsIconChannel::nsIconChannel() {}
 
 nsIconChannel::~nsIconChannel() {
   if (mLoadInfo) {
-    NS_ReleaseOnMainThreadSystemGroup("nsIconChannel::mLoadInfo",
-                                      mLoadInfo.forget());
+    NS_ReleaseOnMainThread("nsIconChannel::mLoadInfo", mLoadInfo.forget());
   }
   if (mLoadGroup) {
-    NS_ReleaseOnMainThreadSystemGroup("nsIconChannel::mLoadGroup",
-                                      mLoadGroup.forget());
+    NS_ReleaseOnMainThread("nsIconChannel::mLoadGroup", mLoadGroup.forget());
   }
 }
 
@@ -201,7 +198,16 @@ NS_IMETHODIMP
 nsIconChannel::GetStatus(nsresult* status) { return mPump->GetStatus(status); }
 
 NS_IMETHODIMP
-nsIconChannel::Cancel(nsresult status) { return mPump->Cancel(status); }
+nsIconChannel::Cancel(nsresult status) {
+  mCanceled = true;
+  return mPump->Cancel(status);
+}
+
+NS_IMETHODIMP
+nsIconChannel::GetCanceled(bool* result) {
+  *result = mCanceled;
+  return NS_OK;
+}
 
 NS_IMETHODIMP
 nsIconChannel::Suspend(void) { return mPump->Suspend(); }
@@ -229,6 +235,16 @@ nsIconChannel::GetLoadFlags(uint32_t* aLoadAttributes) {
 NS_IMETHODIMP
 nsIconChannel::SetLoadFlags(uint32_t aLoadAttributes) {
   return mPump->SetLoadFlags(aLoadAttributes);
+}
+
+NS_IMETHODIMP
+nsIconChannel::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+nsIconChannel::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
 }
 
 NS_IMETHODIMP
@@ -346,11 +362,12 @@ nsIconChannel::AsyncOpen(nsIStreamListener* aListener) {
   }
 
   MOZ_ASSERT(
-      !mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
+      mLoadInfo->GetSecurityMode() == 0 ||
           mLoadInfo->GetInitialSecurityCheckDone() ||
           (mLoadInfo->GetSecurityMode() ==
                nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
-           nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
+           mLoadInfo->GetLoadingPrincipal() &&
+           mLoadInfo->GetLoadingPrincipal()->IsSystemPrincipal()),
       "security flags in loadInfo but doContentSecurityCheck() not called");
 
   nsCOMPtr<nsIInputStream> inStream;

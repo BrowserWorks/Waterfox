@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title "Áskrift að dagatali">
+<!ENTITY calendar.subscriptions.dialog.search.label.value "Sýna dagatöl sem innihalda:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label "Leita">
+<!ENTITY calendar.subscriptions.dialog.select.label.value "Veldu dagatal til að gera áskrifandi að:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label "Gerast áskrifandi">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label "Afpanta áskrift">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label "Leita…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label "Engin samsvörun fannst.">

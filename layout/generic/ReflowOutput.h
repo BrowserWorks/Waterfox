@@ -132,8 +132,7 @@ struct nsCollapsingMargin {
  public:
   nsCollapsingMargin() : mMostPos(0), mMostNeg(0) {}
 
-  nsCollapsingMargin(const nsCollapsingMargin& aOther)
-      : mMostPos(aOther.mMostPos), mMostNeg(aOther.mMostNeg) {}
+  nsCollapsingMargin(const nsCollapsingMargin& aOther) = default;
 
   bool operator==(const nsCollapsingMargin& aOther) {
     return mMostPos == aOther.mMostPos && mMostNeg == aOther.mMostNeg;
@@ -143,11 +142,7 @@ struct nsCollapsingMargin {
     return !(*this == aOther);
   }
 
-  nsCollapsingMargin& operator=(const nsCollapsingMargin& aOther) {
-    mMostPos = aOther.mMostPos;
-    mMostNeg = aOther.mMostNeg;
-    return *this;
-  }
+  nsCollapsingMargin& operator=(const nsCollapsingMargin& aOther) = default;
 
   void Include(nscoord aCoord) {
     if (aCoord > mMostPos)
@@ -245,7 +240,7 @@ class ReflowOutput {
   nscoord& Width() { return mWritingMode.IsVertical() ? mBSize : mISize; }
   nscoord& Height() { return mWritingMode.IsVertical() ? mISize : mBSize; }
 
-  nsSize PhysicalSize() {
+  nsSize PhysicalSize() const {
     return Size(mWritingMode).GetPhysicalSize(mWritingMode);
   }
 

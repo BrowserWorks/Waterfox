@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Vastaanottokuittaukset">
+<!ENTITY prefReceipts.caption         "Vastaanottokuittaukset">
+<!ENTITY requestReceipt.label         "Pyydä aina vastaanottokuittausta lähetettäessä viestiä">
+<!ENTITY requestReceipt.accesskey     "P">
+<!ENTITY receiptArrive.label          "Kuittauksen saapuessa:">
+<!ENTITY leaveIt.label                "Jätä se Saapuneet-kansioon">
+<!ENTITY leaveIt.accesskey            "ä">
+<!ENTITY moveToSent.label             "Siirrä se Lähetetyt-kansioon">
+<!ENTITY moveToSent.accesskey         "S">
+<!ENTITY requestMDN.label             "Kun vastaanotan vastaanottokuittauspyynnön:">
+<!ENTITY returnSome.label             "Salli vastaanottokuittaukset tietyille viesteille">
+<!ENTITY returnSome.accesskey         "a">
+<!ENTITY never.label                  "Älä koskaan lähetä vastaanottokuittausta">
+<!ENTITY never.accesskey              "k">
+<!ENTITY notInToCc.label              "Jos en kuulu viestin tai kopion vastaanottajiin:">
+<!ENTITY notInToCc.accesskey          "e">
+<!ENTITY outsideDomain.label          "Jos lähettäjä on verkkoalueeni ulkopuolelta:">
+<!ENTITY outsideDomain.accesskey      "o">
+<!ENTITY otherCases.label             "Muissa tapauksissa:">
+<!ENTITY otherCases.accesskey         "M">
+<!ENTITY askMe.label                  "Kysy">
+<!ENTITY alwaysSend.label             "Lähetä kysymättä">
+<!ENTITY neverSend.label              "Älä lähetä">

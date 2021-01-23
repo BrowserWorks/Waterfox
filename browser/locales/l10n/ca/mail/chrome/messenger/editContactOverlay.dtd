@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Suprimeix">
+<!ENTITY editContactPanelDeleteContact.accesskey "S">
+
+<!ENTITY editContactName.label "Nom:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Adreça electrònica:">
+<!ENTITY editContactEmail.accesskey "e">
+
+<!ENTITY editContactAddressBook.label "Llibreta d'adreces:">
+<!ENTITY editContactAddressBook.accesskey "a">
+
+<!ENTITY editContactPanelDone.label "Fet">
+<!ENTITY editContactPanelDone.accesskey "F">
+
+<!ENTITY contactMoveDisabledWarning.description "No podeu canviar la llibreta d'adreces perquè el contacte és en una llista de correu.">

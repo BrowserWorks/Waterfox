@@ -37,16 +37,17 @@ class ProxyObject : public JSObject {
                   "Proxy reservedSlots must overlay native object slots field");
   }
 
-  static JS::Result<ProxyObject*, JS::OOM&> create(JSContext* cx,
-                                                   const js::Class* clasp,
-                                                   Handle<TaggedProto> proto,
-                                                   js::gc::AllocKind allocKind,
-                                                   js::NewObjectKind newKind);
-
  public:
   static ProxyObject* New(JSContext* cx, const BaseProxyHandler* handler,
                           HandleValue priv, TaggedProto proto_,
-                          const ProxyOptions& options);
+                          const JSClass* clasp);
+
+  static ProxyObject* NewSingleton(JSContext* cx,
+                                   const BaseProxyHandler* handler,
+                                   HandleValue priv, TaggedProto proto_,
+                                   const JSClass* clasp);
+
+  void init(const BaseProxyHandler* handler, HandleValue priv, JSContext* cx);
 
   // Proxies usually store their ProxyValueArray inline in the object.
   // There's one unfortunate exception: when a proxy is swapped with another
@@ -62,6 +63,7 @@ class ProxyObject : public JSObject {
         &reinterpret_cast<detail::ProxyValueArray*>(inlineDataStart())
              ->reservedSlots;
   }
+
   MOZ_MUST_USE bool initExternalValueArrayAfterSwap(JSContext* cx,
                                                     HandleValueVector values);
 
@@ -109,7 +111,7 @@ class ProxyObject : public JSObject {
 
   void setPrivate(const Value& priv);
 
-  static bool isValidProxyClass(const Class* clasp) {
+  static bool isValidProxyClass(const JSClass* clasp) {
     // Since we can take classes from the outside, make sure that they
     // are "sane". They have to quack enough like proxies for us to belive
     // they should be treated as such.
@@ -132,7 +134,7 @@ class ProxyObject : public JSObject {
   void nuke();
 };
 
-inline bool IsProxyClass(const Class* clasp) { return clasp->isProxy(); }
+inline bool IsProxyClass(const JSClass* clasp) { return clasp->isProxy(); }
 
 bool IsDerivedProxyObject(const JSObject* obj,
                           const js::BaseProxyHandler* handler);

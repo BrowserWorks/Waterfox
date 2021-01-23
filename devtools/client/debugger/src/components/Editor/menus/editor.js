@@ -5,17 +5,16 @@
 // @flow
 
 import { bindActionCreators } from "redux";
-import { isOriginalId } from "devtools-source-map";
 
 import { copyToTheClipboard } from "../../../utils/clipboard";
 import {
-  isPretty,
   getRawSourceURL,
   getFilename,
   shouldBlackbox,
 } from "../../../utils/source";
 
 import { downloadFile } from "../../../utils/utils";
+import { features } from "../../../utils/prefs";
 
 import { isFulfilled } from "../../../utils/async-value";
 import actions from "../../../actions";
@@ -29,10 +28,6 @@ import type {
   ThreadContext,
 } from "../../../types";
 
-function isMapped(selectedSource) {
-  return isOriginalId(selectedSource.id) || !!selectedSource.sourceMapURL;
-}
-
 export const continueToHereItem = (
   cx: ThreadContext,
   location: SourceLocation,
@@ -41,7 +36,7 @@ export const continueToHereItem = (
 ) => ({
   accesskey: L10N.getStr("editor.continueToHere.accesskey"),
   disabled: !isPaused,
-  click: () => editorActions.continueToHere(cx, location.line, location.column),
+  click: () => editorActions.continueToHere(cx, location),
   id: "node-menu-continue-to-here",
   label: L10N.getStr("editor.continueToHere.label"),
 });
@@ -51,35 +46,27 @@ export const continueToHereItem = (
 const copyToClipboardItem = (
   selectedContent: SourceContent,
   editorActions: EditorItemActions
-) => {
-  return {
-    id: "node-menu-copy-to-clipboard",
-    label: L10N.getStr("copyToClipboard.label"),
-    accesskey: L10N.getStr("copyToClipboard.accesskey"),
-    disabled: false,
-    click: () =>
-      selectedContent.type === "text" &&
-      copyToTheClipboard(selectedContent.value),
-  };
-};
+) => ({
+  id: "node-menu-copy-to-clipboard",
+  label: L10N.getStr("copyToClipboard.label"),
+  accesskey: L10N.getStr("copyToClipboard.accesskey"),
+  disabled: false,
+  click: () =>
+    selectedContent.type === "text" &&
+    copyToTheClipboard(selectedContent.value),
+});
 
 const copySourceItem = (
   selectedSource: Source,
   selectionText: string,
   editorActions: EditorItemActions
-) => {
-  if (selectedSource.isWasm) {
-    return;
-  }
-
-  return {
-    id: "node-menu-copy-source",
-    label: L10N.getStr("copySource.label"),
-    accesskey: L10N.getStr("copySource.accesskey"),
-    disabled: selectionText.length === 0,
-    click: () => copyToTheClipboard(selectionText),
-  };
-};
+) => ({
+  id: "node-menu-copy-source",
+  label: L10N.getStr("copySource.label"),
+  accesskey: L10N.getStr("copySource.accesskey"),
+  disabled: selectionText.length === 0,
+  click: () => copyToTheClipboard(selectionText),
+});
 
 const copySourceUri2Item = (
   selectedSource: Source,
@@ -96,19 +83,18 @@ const jumpToMappedLocationItem = (
   cx: Context,
   selectedSource: Source,
   location: SourceLocation,
-  hasPrettySource: boolean,
+  hasMappedLocation: boolean,
   editorActions: EditorItemActions
 ) => ({
   id: "node-menu-jump",
   label: L10N.getFormatStr(
     "editor.jumpToMappedLocation1",
-    isOriginalId(selectedSource.id)
+    selectedSource.isOriginal
       ? L10N.getStr("generated")
       : L10N.getStr("original")
   ),
   accesskey: L10N.getStr("editor.jumpToMappedLocation1.accesskey"),
-  disabled:
-    (!isMapped(selectedSource) && !isPretty(selectedSource)) || hasPrettySource,
+  disabled: !hasMappedLocation,
   click: () => editorActions.jumpToMappedLocation(cx, location),
 });
 
@@ -131,9 +117,11 @@ const blackBoxMenuItem = (
 ) => ({
   id: "node-menu-blackbox",
   label: selectedSource.isBlackBoxed
-    ? L10N.getStr("sourceFooter.unblackbox")
-    : L10N.getStr("sourceFooter.blackbox"),
-  accesskey: L10N.getStr("sourceFooter.blackbox.accesskey"),
+    ? L10N.getStr("blackboxContextItem.unblackbox")
+    : L10N.getStr("blackboxContextItem.blackbox"),
+  accesskey: selectedSource.isBlackBoxed
+    ? L10N.getStr("blackboxContextItem.unblackbox.accesskey")
+    : L10N.getStr("blackboxContextItem.blackbox.accesskey"),
   disabled: !shouldBlackbox(selectedSource),
   click: () => editorActions.toggleBlackBox(cx, selectedSource),
 });
@@ -164,54 +152,66 @@ const downloadFileItem = (
   selectedSource: Source,
   selectedContent: SourceContent,
   editorActions: EditorItemActions
-) => {
-  return {
-    id: "node-menu-download-file",
-    label: L10N.getStr("downloadFile.label"),
-    accesskey: L10N.getStr("downloadFile.accesskey"),
-    click: () => downloadFile(selectedContent, getFilename(selectedSource)),
-  };
-};
+) => ({
+  id: "node-menu-download-file",
+  label: L10N.getStr("downloadFile.label"),
+  accesskey: L10N.getStr("downloadFile.accesskey"),
+  click: () => downloadFile(selectedContent, getFilename(selectedSource)),
+});
+
+const inlinePreviewItem = (editorActions: EditorItemActions) => ({
+  id: "node-menu-inline-preview",
+  label: features.inlinePreview
+    ? L10N.getStr("inlinePreview.hide.label")
+    : L10N.getStr("inlinePreview.show.label"),
+  click: () => editorActions.toggleInlinePreview(!features.inlinePreview),
+});
 
 export function editorMenuItems({
   cx,
   editorActions,
-  selectedSourceWithContent,
+  selectedSource,
   location,
   selectionText,
-  hasPrettySource,
+  hasMappedLocation,
   isTextSelected,
   isPaused,
 }: {
   cx: ThreadContext,
   editorActions: EditorItemActions,
-  selectedSourceWithContent: SourceWithContent,
+  selectedSource: SourceWithContent,
   location: SourceLocation,
   selectionText: string,
-  hasPrettySource: boolean,
+  hasMappedLocation: boolean,
   isTextSelected: boolean,
   isPaused: boolean,
 }) {
   const items = [];
-  const { source: selectedSource, content } = selectedSourceWithContent;
+
+  const content =
+    selectedSource.content && isFulfilled(selectedSource.content)
+      ? selectedSource.content.value
+      : null;
 
   items.push(
     jumpToMappedLocationItem(
       cx,
       selectedSource,
       location,
-      hasPrettySource,
+      hasMappedLocation,
       editorActions
     ),
     continueToHereItem(cx, location, isPaused, editorActions),
     { type: "separator" },
-    ...(content && isFulfilled(content)
-      ? [copyToClipboardItem(content.value, editorActions)]
+    ...(content ? [copyToClipboardItem(content, editorActions)] : []),
+    ...(!selectedSource.isWasm
+      ? [
+          copySourceItem(selectedSource, selectionText, editorActions),
+          copySourceUri2Item(selectedSource, editorActions),
+        ]
       : []),
-    copySourceItem(selectedSource, selectionText, editorActions),
-    copySourceUri2Item(selectedSource, editorActions),
-    ...(content && isFulfilled(content)
-      ? [downloadFileItem(selectedSource, content.value, editorActions)]
+    ...(content
+      ? [downloadFileItem(selectedSource, content, editorActions)]
       : []),
     { type: "separator" },
     showSourceMenuItem(cx, selectedSource, editorActions),
@@ -226,6 +226,8 @@ export function editorMenuItems({
     );
   }
 
+  items.push({ type: "separator" }, inlinePreviewItem(editorActions));
+
   return items;
 }
 
@@ -237,6 +239,7 @@ export type EditorItemActions = {
   jumpToMappedLocation: typeof actions.jumpToMappedLocation,
   showSource: typeof actions.showSource,
   toggleBlackBox: typeof actions.toggleBlackBox,
+  toggleInlinePreview: typeof actions.toggleInlinePreview,
 };
 
 export function editorItemActions(dispatch: Function) {
@@ -249,6 +252,7 @@ export function editorItemActions(dispatch: Function) {
       jumpToMappedLocation: actions.jumpToMappedLocation,
       showSource: actions.showSource,
       toggleBlackBox: actions.toggleBlackBox,
+      toggleInlinePreview: actions.toggleInlinePreview,
     },
     dispatch
   );

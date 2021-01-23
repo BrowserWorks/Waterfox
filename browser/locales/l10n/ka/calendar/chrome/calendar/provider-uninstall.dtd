@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "მომწოდებლის ამოშლა">
+<!ENTITY providerUninstall.accept.label                    "შერჩეულია გამოწერის გაუქმება">
+<!ENTITY providerUninstall.accept.accesskey                "უ">
+<!ENTITY providerUninstall.cancel.label                    "დამატების შენარჩუნება">
+<!ENTITY providerUninstall.cancel.accesskey                "დ">
+<!ENTITY providerUninstall.preName.label                   "თქვენ მოითხოვეთ ამოშლა ან ამორთვა:">
+<!ENTITY providerUninstall.postName.label                  "ასეთ შემთხვევაში ქვემოთ მოტანილი კალენდრები ამოირთვება.">
+<!ENTITY providerUninstall.reinstallNote.label             "თუ ხელახლა არ გეგმავთ მომწოდებლის მითითებას, შესაძლოა მოისურვოთ გამოწერის გაუქმება ამ მომწოდებლის კალენდრებზე.">

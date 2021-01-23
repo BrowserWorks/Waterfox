@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Yangi sahifa sozlamalari">
+
+<!ENTITY  authorName.label          "Muallifi:">
+<!ENTITY  authorName.accesskey      "M">
+<!ENTITY  pageColorHeader           "Joriy sahifa ko‘rinishi">
+
+<!ENTITY defaultColors.label        "O‘qigichning standart ranglari (Sahifaga ranglar o‘rnatmang)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Boshqa ranglardan foydalanish">
+<!ENTITY customColors.accesskey     "B">
+
+<!ENTITY normalText.label           "O‘rtacha matn">
+<!ENTITY normalText.accesskey       "O">
+<!ENTITY linkText.label             "Havola matni">
+<!ENTITY linkText.accesskey         "H">
+<!ENTITY activeLinkText.label       "Faol havola matni">
+<!ENTITY activeLinkText.accesskey   "F">
+<!ENTITY visitedLinkText.label      "Kirilgan havola matni">
+<!ENTITY visitedLinkText.accesskey  "K">
+<!ENTITY background.label           "Orqa fon:">
+<!ENTITY background.accesskey       "O">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Orqa fon rasmi:">
+<!ENTITY backgroundImage.accesskey  "r">
+<!ENTITY chooseFile.label           "Faylni tanlash…">
+<!ENTITY chooseFile.accesskey       "t">
+

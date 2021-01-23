@@ -7,11 +7,13 @@
 //! A replacement for `Box<[T]>` that cbindgen can understand.
 
 use malloc_size_of::{MallocShallowSizeOf, MallocSizeOf, MallocSizeOfOps};
+use serde::de::{Deserialize, Deserializer};
+use serde::ser::{Serialize, Serializer};
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 use std::{fmt, iter, mem, slice};
-use to_shmem::{SharedMemoryBuilder, ToShmem};
+use to_shmem::{self, SharedMemoryBuilder, ToShmem};
 
 /// A struct that basically replaces a `Box<[T]>`, but which cbindgen can
 /// understand.
@@ -157,10 +159,10 @@ impl<T: MallocSizeOf + Sized> MallocSizeOf for OwnedSlice<T> {
 }
 
 impl<T: ToShmem + Sized> ToShmem for OwnedSlice<T> {
-    fn to_shmem(&self, builder: &mut SharedMemoryBuilder) -> mem::ManuallyDrop<Self> {
+    fn to_shmem(&self, builder: &mut SharedMemoryBuilder) -> to_shmem::Result<Self> {
         unsafe {
-            let dest = to_shmem::to_shmem_slice(self.iter(), builder);
-            mem::ManuallyDrop::new(Self::from(Box::from_raw(dest)))
+            let dest = to_shmem::to_shmem_slice(self.iter(), builder)?;
+            Ok(mem::ManuallyDrop::new(Self::from(Box::from_raw(dest))))
         }
     }
 }
@@ -169,5 +171,24 @@ impl<T> iter::FromIterator<T> for OwnedSlice<T> {
     #[inline]
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Vec::from_iter(iter).into()
+    }
+}
+
+impl<T: Serialize> Serialize for OwnedSlice<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.deref().serialize(serializer)
+    }
+}
+
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for OwnedSlice<T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let r = Box::<[T]>::deserialize(deserializer)?;
+        Ok(r.into())
     }
 }

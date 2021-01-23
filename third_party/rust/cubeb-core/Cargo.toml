@@ -3,7 +3,7 @@
 # When uploading crates to the registry Cargo will automatically
 # "normalize" Cargo.toml files for maximal compatibility
 # with all versions of Cargo and also rewrite `path` dependencies
-# to registry (e.g. crates.io) dependencies
+# to registry (e.g., crates.io) dependencies
 #
 # If you believe there's an error in this file please file an
 # issue against the rust-lang/cargo repository. If you're
@@ -12,7 +12,7 @@
 
 [package]
 name = "cubeb-core"
-version = "0.5.4"
+version = "0.7.0"
 authors = ["Dan Glastonbury <dglastonbury@mozilla.com>"]
 description = "Common types and definitions for cubeb rust and C bindings. Not intended for direct use.\n"
 homepage = "https://github.com/djg/cubeb-rs"
@@ -21,10 +21,10 @@ categories = ["api-bindings"]
 license = "ISC"
 repository = "https://github.com/djg/cubeb-rs"
 [dependencies.bitflags]
-version = "1.0"
+version = "1.2.0"
 
 [dependencies.cubeb-sys]
-version = "0.5.4"
+version = "0.7.0"
 
 [features]
 gecko-in-tree = ["cubeb-sys/gecko-in-tree"]

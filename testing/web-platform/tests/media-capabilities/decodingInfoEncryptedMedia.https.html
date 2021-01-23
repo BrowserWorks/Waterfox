@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <title>MediaCapabilities.decodingInfo() for encrypted media</title>
+<meta name="timeout" content="long">
 <script src=/resources/testharness.js></script>
 <script src="/resources/testharnessreport.js"></script>
 <script>
@@ -26,6 +27,11 @@ var minimalKeySystemConfiguration = {
   keySystem: 'org.w3.clearkey',
 };
 
+// Config with bogus name not provided by any UA.
+var bogusKeySystemConfiguration = {
+  keySystem: 'bogus',
+};
+
 promise_test(t => {
   return navigator.mediaCapabilities.decodingInfo({
     type: 'file',
@@ -48,7 +54,9 @@ promise_test(t => {
     video: minimalVideoConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      videoRobustness: '',
+      video: {
+        robustness: '',
+      },
     },
   });
 }, "Test that decodingInfo() accepts a key system configuration with video info.");
@@ -59,82 +67,104 @@ promise_test(t => {
     audio: minimalAudioConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      audioRobustness: '',
+      audio : {
+        robustness: '',
+      },
     },
   });
 }, "Test that decodingInfo() accepts a key system configuration with audio info.");
 
 promise_test(t => {
-  return promise_rejects(t, new TypeError(), navigator.mediaCapabilities.decodingInfo({
+  return promise_rejects_js(t, TypeError, navigator.mediaCapabilities.decodingInfo({
     type: 'file',
     audio: minimalAudioConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      videoRobustness: '',
+      video: {
+        robustness: '',
+      },
     },
   }));
 }, "Test that decodingInfo() rejects if robustness and configuration do not match (1).");
 
 promise_test(t => {
-  return promise_rejects(t, new TypeError(), navigator.mediaCapabilities.decodingInfo({
+  return promise_rejects_js(t, TypeError, navigator.mediaCapabilities.decodingInfo({
     type: 'file',
     video: minimalVideoConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      audioRobustness: '',
+      audio : {
+        robustness: '',
+      },
     },
   }));
 }, "Test that decodingInfo() rejects if robustness and configuration do not match (2).");
 
 promise_test(t => {
-  return promise_rejects(t, new TypeError(), navigator.mediaCapabilities.decodingInfo({
+  return promise_rejects_js(t, TypeError, navigator.mediaCapabilities.decodingInfo({
     type: 'file',
     video: minimalVideoConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      audioRobustness: '',
-      videoRobustness: '',
+      audio : {
+        robustness: '',
+      },
+      video: {
+        robustness: '',
+      },
     },
   }));
 }, "Test that decodingInfo() rejects if robustness and configuration do not match (3).");
 
 promise_test(t => {
-  return promise_rejects(t, new TypeError(), navigator.mediaCapabilities.decodingInfo({
+  return promise_rejects_js(t, TypeError, navigator.mediaCapabilities.decodingInfo({
     type: 'file',
     audio: minimalAudioConfiguration,
     video: minimalVideoConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      audioRobustness: '',
-      videoRobustness: '',
+      audio : {
+        robustness: '',
+      },
+      video: {
+        robustness: '',
+      },
       persistentState: "foobar",
     },
   }));
 }, "Test that decodingInfo() rejects if persistentState isn't valid.");
 
 promise_test(t => {
-  return promise_rejects(t, new TypeError(), navigator.mediaCapabilities.decodingInfo({
+  return promise_rejects_js(t, TypeError, navigator.mediaCapabilities.decodingInfo({
     type: 'file',
     audio: minimalAudioConfiguration,
     video: minimalVideoConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      audioRobustness: '',
-      videoRobustness: '',
+      audio : {
+        robustness: '',
+      },
+      video: {
+        robustness: '',
+      },
       distinctiveIdentifier: "foobar",
     },
   }));
 }, "Test that decodingInfo() rejects if distinctiveIdentifier isn't valid.");
 
 promise_test(t => {
-  return promise_rejects(t, new TypeError(), navigator.mediaCapabilities.decodingInfo({
+  return promise_rejects_js(t, TypeError, navigator.mediaCapabilities.decodingInfo({
     type: 'file',
     audio: minimalAudioConfiguration,
     video: minimalVideoConfiguration,
     keySystemConfiguration: {
       keySystem: 'org.w3.clearkey',
-      audioRobustness: '',
-      videoRobustness: '',
+      audio : {
+        robustness: '',
+      },
+      video: {
+        robustness: '',
+      },
       sessionTypes: "foobar",
     },
   }));
@@ -148,8 +178,12 @@ promise_test(t => {
     keySystemConfiguration: {
       keySystem: {},
       initDataType: {},
-      audioRobustness: {},
-      videoRobustness: {},
+      audio : {
+        robustness: '',
+      },
+      video: {
+        robustness: '',
+      },
     },
   });
 }, "Test that decodingInfo() does not reject when properties are set to unexpected values.");
@@ -174,7 +208,9 @@ promise_test(t => {
     video: minimalVideoConfiguration,
     keySystemConfiguration: {
       keySystem: 'foobar',
-      videoRobustness: '',
+      video: {
+        robustness: '',
+      },
     }
   }).then(ability => {
     assert_false(ability.supported);
@@ -202,4 +238,16 @@ promise_test(t => {
   });
 }, "Test that keySystemAccess is only null when not supported if keySystemConfiguration was used.");
 
+promise_test(t => {
+  return navigator.mediaCapabilities.decodingInfo({
+    type: 'file',
+    video: minimalVideoConfiguration,
+    audio: minimalAudioConfiguration,
+    // Supply bogus config to reliably result in a null keySystemAccess.
+    keySystemConfiguration: bogusKeySystemConfiguration,
+  }).then(ability => {
+    assert_equals(ability.keySystemAccess, null);
+    assert_false(ability.supported);
+  });
+}, "Test that supported=false when keySystemConfiguration is unsupported.");
 </script>

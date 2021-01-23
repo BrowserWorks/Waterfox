@@ -23,47 +23,42 @@ class nsImageControlFrame final : public nsImageFrame,
  public:
   explicit nsImageControlFrame(ComputedStyle* aStyle,
                                nsPresContext* aPresContext);
-  ~nsImageControlFrame();
+  ~nsImageControlFrame() final;
 
-  virtual void DestroyFrom(nsIFrame* aDestructRoot,
-                           PostDestroyData& aPostDestroyData) override;
-  virtual void Init(nsIContent* aContent, nsContainerFrame* aParent,
-                    nsIFrame* aPrevInFlow) override;
+  void DestroyFrom(nsIFrame* aDestructRoot, PostDestroyData&) final;
+  void Init(nsIContent* aContent, nsContainerFrame* aParent,
+            nsIFrame* aPrevInFlow) final;
 
   NS_DECL_QUERYFRAME
   NS_DECL_FRAMEARENA_HELPERS(nsImageControlFrame)
 
-  virtual void Reflow(nsPresContext* aPresContext, ReflowOutput& aDesiredSize,
-                      const ReflowInput& aReflowInput,
-                      nsReflowStatus& aStatus) override;
+  void Reflow(nsPresContext*, ReflowOutput&, const ReflowInput&,
+              nsReflowStatus&) final;
 
-  virtual nsresult HandleEvent(nsPresContext* aPresContext,
-                               WidgetGUIEvent* aEvent,
-                               nsEventStatus* aEventStatus) override;
+  nsresult HandleEvent(nsPresContext*, WidgetGUIEvent*, nsEventStatus*) final;
 
 #ifdef ACCESSIBILITY
-  virtual mozilla::a11y::AccType AccessibleType() override;
+  mozilla::a11y::AccType AccessibleType() final;
 #endif
 
 #ifdef DEBUG_FRAME_DUMP
-  virtual nsresult GetFrameName(nsAString& aResult) const override {
+  nsresult GetFrameName(nsAString& aResult) const final {
     return MakeFrameName(NS_LITERAL_STRING("ImageControl"), aResult);
   }
 #endif
 
-  Maybe<Cursor> GetCursor(const nsPoint&) override;
+  Maybe<Cursor> GetCursor(const nsPoint&) final;
 
   // nsIFormContromFrame
-  virtual void SetFocus(bool aOn, bool aRepaint) override;
-  virtual nsresult SetFormProperty(nsAtom* aName,
-                                   const nsAString& aValue) override;
+  void SetFocus(bool aOn, bool aRepaint) final;
+  nsresult SetFormProperty(nsAtom* aName, const nsAString& aValue) final;
 };
 
 nsImageControlFrame::nsImageControlFrame(ComputedStyle* aStyle,
                                          nsPresContext* aPresContext)
     : nsImageFrame(aStyle, aPresContext, kClassID) {}
 
-nsImageControlFrame::~nsImageControlFrame() {}
+nsImageControlFrame::~nsImageControlFrame() = default;
 
 void nsImageControlFrame::DestroyFrom(nsIFrame* aDestructRoot,
                                       PostDestroyData& aPostDestroyData) {
@@ -145,7 +140,8 @@ nsresult nsImageControlFrame::HandleEvent(nsPresContext* aPresContext,
         mContent->GetProperty(nsGkAtoms::imageClickedPoint));
     if (lastClickPoint) {
       // normally lastClickedPoint is not null, as it's allocated in Init()
-      nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, this);
+      nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(
+          aEvent, RelativeTo{this});
       TranslateEventCoords(pt, *lastClickPoint);
     }
   }
@@ -155,7 +151,7 @@ nsresult nsImageControlFrame::HandleEvent(nsPresContext* aPresContext,
 void nsImageControlFrame::SetFocus(bool aOn, bool aRepaint) {}
 
 Maybe<nsIFrame::Cursor> nsImageControlFrame::GetCursor(const nsPoint&) {
-  StyleCursorKind kind = StyleUI()->mCursor;
+  StyleCursorKind kind = StyleUI()->mCursor.keyword;
   if (kind == StyleCursorKind::Auto) {
     kind = StyleCursorKind::Pointer;
   }

@@ -4,11 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef INTERVALS_H
-#define INTERVALS_H
+#ifndef DOM_MEDIA_INTERVALS_H_
+#define DOM_MEDIA_INTERVALS_H_
 
 #include <algorithm>
-#include "mozilla/TypeTraits.h"
+
 #include "nsTArray.h"
 
 // Specialization for nsTArray CopyChooser.
@@ -20,8 +20,9 @@ class IntervalSet;
 }  // namespace mozilla
 
 template <class E>
-struct nsTArray_CopyChooser<mozilla::media::IntervalSet<E>> {
-  typedef nsTArray_CopyWithConstructors<mozilla::media::IntervalSet<E>> Type;
+struct nsTArray_RelocationStrategy<mozilla::media::IntervalSet<E>> {
+  typedef nsTArray_RelocateUsingMoveConstructor<mozilla::media::IntervalSet<E>>
+      Type;
 };
 
 namespace mozilla {
@@ -225,6 +226,12 @@ class Interval {
            (aOther.mStart - aOther.mFuzz <= mEnd + mFuzz);
   }
 
+  // Returns true if the two intervals intersect with this being on the right
+  // of aOther, ignoring fuzz.
+  bool TouchesOnRightStrict(const SelfType& aOther) const {
+    return aOther.mStart <= mStart && mStart <= aOther.mEnd;
+  }
+
   T mStart;
   T mEnd;
   T mFuzz;
@@ -242,10 +249,10 @@ class IntervalSet {
   typedef AutoTArray<ElemType, 4> ContainerType;
   typedef typename ContainerType::index_type IndexType;
 
-  IntervalSet() {}
-  virtual ~IntervalSet() {}
+  IntervalSet() = default;
+  virtual ~IntervalSet() = default;
 
-  IntervalSet(const SelfType& aOther) : mIntervals(aOther.mIntervals) {}
+  IntervalSet(const SelfType& aOther) : mIntervals(aOther.mIntervals.Clone()) {}
 
   IntervalSet(SelfType&& aOther) {
     mIntervals.AppendElements(std::move(aOther.mIntervals));
@@ -272,7 +279,7 @@ class IntervalSet {
   }
 
   SelfType& operator=(const SelfType& aOther) {
-    mIntervals = aOther.mIntervals;
+    mIntervals = aOther.mIntervals.Clone();
     return *this;
   }
 
@@ -300,8 +307,12 @@ class IntervalSet {
   }
 
   SelfType& Add(const SelfType& aIntervals) {
-    mIntervals.AppendElements(aIntervals.mIntervals);
-    Normalize();
+    if (aIntervals.mIntervals.Length() == 1) {
+      Add(aIntervals.mIntervals[0]);
+    } else {
+      mIntervals.AppendElements(aIntervals.mIntervals);
+      Normalize();
+    }
     return *this;
   }
 
@@ -379,12 +390,26 @@ class IntervalSet {
   }
 
   // Excludes an interval from an IntervalSet.
-  // This is done by inverting aInterval within the bounds of mIntervals
-  // and then doing the intersection.
   SelfType& operator-=(const ElemType& aInterval) {
     if (aInterval.IsEmpty() || mIntervals.IsEmpty()) {
       return *this;
     }
+    if (mIntervals.Length() == 1 &&
+        mIntervals[0].TouchesOnRightStrict(aInterval)) {
+      // Fast path when we're removing from the front of a set with a
+      // single interval. This is common for the buffered time ranges
+      // we see on Twitch.
+      if (aInterval.mEnd >= mIntervals[0].mEnd) {
+        mIntervals.RemoveElementAt(0);
+      } else {
+        mIntervals[0].mStart = aInterval.mEnd;
+        mIntervals[0].mFuzz = std::max(mIntervals[0].mFuzz, aInterval.mFuzz);
+      }
+      return *this;
+    }
+
+    // General case performed by inverting aInterval within the bounds of
+    // mIntervals and then doing the intersection.
     T firstEnd = std::max(mIntervals[0].mStart, aInterval.mStart);
     T secondStart = std::min(mIntervals.LastElement().mEnd, aInterval.mEnd);
     ElemType startInterval(mIntervals[0].mStart, firstEnd);
@@ -428,6 +453,11 @@ class IntervalSet {
   SelfType& Intersection(const SelfType& aOther) {
     ContainerType intersection;
 
+    // Ensure the intersection has enough capacity to store the upper bound on
+    // the intersection size. This ensures that we don't spend time reallocating
+    // the storage as we append, at the expense of extra memory.
+    intersection.SetCapacity(std::max(aOther.Length(), mIntervals.Length()));
+
     const ContainerType& other = aOther.mIntervals;
     IndexType i = 0, j = 0;
     for (; i < mIntervals.Length() && j < other.Length();) {
@@ -440,8 +470,7 @@ class IntervalSet {
         j++;
       }
     }
-    mIntervals.Clear();
-    mIntervals.AppendElements(std::move(intersection));
+    mIntervals = std::move(intersection);
     return *this;
   }
 
@@ -486,6 +515,8 @@ class IntervalSet {
   }
 
   IndexType Length() const { return mIntervals.Length(); }
+
+  bool IsEmpty() const { return mIntervals.IsEmpty(); }
 
   T Start(IndexType aIndex) const { return mIntervals[aIndex].mStart; }
 
@@ -605,7 +636,7 @@ class IntervalSet {
     for (auto& interval : mIntervals) {
       interval.SetFuzz(aFuzz);
     }
-    Normalize();
+    MergeOverlappingIntervals();
   }
 
   static const IndexType NoIndex = IndexType(-1);
@@ -649,27 +680,32 @@ class IntervalSet {
 
  private:
   void Normalize() {
-    if (mIntervals.Length() >= 2) {
-      ContainerType normalized;
-
-      mIntervals.Sort(CompareIntervals());
-
-      // This merges the intervals.
-      ElemType current(mIntervals[0]);
-      for (IndexType i = 1; i < mIntervals.Length(); i++) {
-        ElemType& interval = mIntervals[i];
-        if (current.Touches(interval)) {
-          current = current.Span(interval);
-        } else {
-          normalized.AppendElement(std::move(current));
-          current = std::move(interval);
-        }
-      }
-      normalized.AppendElement(std::move(current));
-
-      mIntervals.Clear();
-      mIntervals.AppendElements(std::move(normalized));
+    if (mIntervals.Length() < 2) {
+      return;
     }
+    mIntervals.Sort(CompareIntervals());
+    MergeOverlappingIntervals();
+  }
+
+  void MergeOverlappingIntervals() {
+    if (mIntervals.Length() < 2) {
+      return;
+    }
+
+    // This merges the intervals in place.
+    IndexType read = 0;
+    IndexType write = 0;
+    while (read < mIntervals.Length()) {
+      ElemType current(mIntervals[read]);
+      read++;
+      while (read < mIntervals.Length() && current.Touches(mIntervals[read])) {
+        current = current.Span(mIntervals[read]);
+        read++;
+      }
+      mIntervals[write] = current;
+      write++;
+    }
+    mIntervals.SetLength(write);
   }
 
   struct CompareIntervals {
@@ -703,4 +739,4 @@ IntervalSet<T> Intersection(const IntervalSet<T>& aIntervals1,
 }  // namespace media
 }  // namespace mozilla
 
-#endif  // INTERVALS_H
+#endif  // DOM_MEDIA_INTERVALS_H_

@@ -4,10 +4,12 @@
 "use strict";
 
 /**
- * Tests if "+" is replaces with spaces in the Params panel.
+ * Tests if "+" is replaces with spaces in the headers panel.
  */
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(POST_RAW_URL_WITH_HASH);
+  const { tab, monitor } = await initNetMonitor(POST_RAW_URL_WITH_HASH, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -18,7 +20,7 @@ add_task(async function() {
   await performRequests(monitor, tab, 1);
 
   // Wait until the tab panel summary is displayed
-  wait = waitUntil(
+  const wait = waitUntil(
     () => document.querySelectorAll(".tabpanel-summary-label")[0]
   );
   EventUtils.sendMouseEvent(
@@ -29,18 +31,7 @@ add_task(async function() {
 
   EventUtils.sendMouseEvent(
     { type: "click" },
-    document.querySelector("#params-tab")
-  );
-
-  // The Params panel should render the following:
-  // Query String:
-  // file    foo # bar
-  const keyValue = document.querySelectorAll(".treeTable .treeRow")[1];
-
-  is(
-    keyValue.innerText,
-    "file\tfoo # bar",
-    "'+' in params in correctly decoded."
+    document.querySelector("#request-tab")
   );
 
   return teardown(monitor);

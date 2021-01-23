@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Axtar">
+
+<!ENTITY newPref.namePlaceholder       "Ad">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "Sətir">
+<!ENTITY newPref.valueInteger          "Tam ədəd">
+
+<!ENTITY newPref.stringPlaceholder     "Sətir daxil edin">
+<!ENTITY newPref.numberPlaceholder     "Ədəd daxil edin">
+
+<!ENTITY newPref.toggleButton          "Aç/Qapat">
+<!ENTITY newPref.cancelButton          "Ləğv et">
+
+<!ENTITY contextMenu.copyPrefName      "Adı köçür">
+<!ENTITY contextMenu.copyPrefValue     "Dəyəri köçür">

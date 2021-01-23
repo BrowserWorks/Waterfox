@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Tagh deasachaidhean">
+<!ENTITY conflictWarning.label "Chaidh an duilleag seo atharrachadh le prògram eile ach tha deasachaidhean gun sàbhaladh agad fhèin cuideachd.">
+<!ENTITY conflictResolve.label "Tagh an tionndadh a thèid a chumail:">
+<!ENTITY keepCurrentPageButton.label "Cum deasachaidhean na duilleige làithreach">
+<!ENTITY useOtherPageButton.label "Ath-luchdaich an duilleag làithreach leis na deasachaidhean eile">

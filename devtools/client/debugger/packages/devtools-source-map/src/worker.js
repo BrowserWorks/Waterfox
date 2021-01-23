@@ -15,13 +15,12 @@ const {
   getOriginalSourceText,
   getGeneratedRangesForOriginal,
   getFileGeneratedRange,
-  hasMappedSource,
   clearSourceMaps,
   applySourceMap,
 } = require("./source-map");
 
 const { getOriginalStackFrames } = require("./utils/getOriginalStackFrames");
-const { setAssetRootURL } = require("./utils/wasmAsset");
+const { setAssetRootURL } = require("./utils/assetRoot");
 
 const {
   workerUtils: { workerHandler },
@@ -43,7 +42,6 @@ self.onmessage = workerHandler({
   getOriginalStackFrames,
   getGeneratedRangesForOriginal,
   getFileGeneratedRange,
-  hasMappedSource,
   applySourceMap,
   clearSourceMaps,
 });

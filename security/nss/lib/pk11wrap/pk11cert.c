@@ -245,7 +245,7 @@ pk11_fastCert(PK11SlotInfo *slot, CK_OBJECT_HANDLE certID,
 
     /* Get the cryptoki object from the handle */
     token = PK11Slot_GetNSSToken(slot);
-    if (token->defaultSession) {
+    if (token && token->defaultSession) {
         co = nssCryptokiObject_Create(token, token->defaultSession, certID);
     } else {
         PORT_SetError(SEC_ERROR_NO_TOKEN);
@@ -307,9 +307,15 @@ PK11_MakeCertFromHandle(PK11SlotInfo *slot, CK_OBJECT_HANDLE certID,
     CERTCertificate *cert = NULL;
     CERTCertTrust *trust;
 
+    if (slot == NULL || certID == CK_INVALID_HANDLE) {
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return NULL;
+    }
+
     cert = pk11_fastCert(slot, certID, privateLabel, &nickname);
-    if (cert == NULL)
+    if (cert == NULL) {
         goto loser;
+    }
 
     if (nickname) {
         if (cert->nickname != NULL) {
@@ -404,6 +410,93 @@ PK11_GetCertFromPrivateKey(SECKEYPrivateKey *privKey)
     }
     cert = PK11_MakeCertFromHandle(slot, certID, NULL);
     return (cert);
+}
+
+CK_OBJECT_HANDLE *
+PK11_FindCertHandlesForKeyHandle(PK11SlotInfo *slot, CK_OBJECT_HANDLE keyHandle,
+                                 int *certHandleCountOut)
+{
+    if (!slot || !certHandleCountOut || keyHandle == CK_INVALID_HANDLE) {
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return NULL;
+    }
+
+    PORTCheapArenaPool arena;
+    PORT_InitCheapArena(&arena, DER_DEFAULT_CHUNKSIZE);
+    CK_ATTRIBUTE idTemplate[] = {
+        { CKA_ID, NULL, 0 },
+    };
+    const int idAttrCount = sizeof(idTemplate) / sizeof(idTemplate[0]);
+    CK_RV crv = PK11_GetAttributes(&arena.arena, slot, keyHandle, idTemplate, idAttrCount);
+    if (crv != CKR_OK) {
+        PORT_DestroyCheapArena(&arena);
+        PORT_SetError(PK11_MapError(crv));
+        return NULL;
+    }
+
+    if ((idTemplate[0].ulValueLen == 0) || (idTemplate[0].ulValueLen == -1)) {
+        PORT_DestroyCheapArena(&arena);
+        PORT_SetError(SEC_ERROR_BAD_KEY);
+        return NULL;
+    }
+
+    CK_OBJECT_CLASS searchClass = CKO_CERTIFICATE;
+    CK_ATTRIBUTE searchTemplate[] = {
+        idTemplate[0],
+        { CKA_CLASS, &searchClass, sizeof(searchClass) }
+    };
+    const int searchAttrCount = sizeof(searchTemplate) / sizeof(searchTemplate[0]);
+    CK_OBJECT_HANDLE *ids = pk11_FindObjectsByTemplate(slot, searchTemplate, searchAttrCount, certHandleCountOut);
+
+    PORT_DestroyCheapArena(&arena);
+    return ids;
+}
+
+CERTCertList *
+PK11_GetCertsMatchingPrivateKey(SECKEYPrivateKey *privKey)
+{
+    if (!privKey) {
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return NULL;
+    }
+    CERTCertList *certs = CERT_NewCertList();
+    if (!certs) {
+        PORT_SetError(SEC_ERROR_NO_MEMORY);
+        return NULL;
+    }
+    PK11SlotInfo *slot = privKey->pkcs11Slot;
+    CK_OBJECT_HANDLE handle = privKey->pkcs11ID;
+    CK_OBJECT_HANDLE certID = PK11_MatchItem(slot, handle, CKO_CERTIFICATE);
+    /* If we can't get a matching certID, there are no matching certificates,
+     * which is not an error. */
+    if (certID == CK_INVALID_HANDLE) {
+        return certs;
+    }
+    int certHandleCount = 0;
+    CK_OBJECT_HANDLE *certHandles = PK11_FindCertHandlesForKeyHandle(slot, handle, &certHandleCount);
+    if (!certHandles) {
+        /* If certHandleCount is 0, there are no matching certificates, which is
+         * not an error. */
+        if (certHandleCount == 0) {
+            return certs;
+        }
+        CERT_DestroyCertList(certs);
+        return NULL;
+    }
+    int i;
+    for (i = 0; i < certHandleCount; i++) {
+        CERTCertificate *cert = PK11_MakeCertFromHandle(slot, certHandles[i], NULL);
+        /* If PK11_MakeCertFromHandle fails for one handle, optimistically
+           assume other handles may succeed (i.e. this is best-effort). */
+        if (!cert) {
+            continue;
+        }
+        if (CERT_AddCertToListTail(certs, cert) != SECSuccess) {
+            CERT_DestroyCertificate(cert);
+        }
+    }
+    PORT_Free(certHandles);
+    return certs;
 }
 
 /*
@@ -2497,7 +2590,7 @@ PK11_FindBestKEAMatch(CERTCertificate *server, void *wincx)
         rv = PK11_Authenticate(le->slot, PR_TRUE, wincx);
         if (rv != SECSuccess)
             continue;
-        if (le->slot->session == CK_INVALID_SESSION) {
+        if (le->slot->session == CK_INVALID_HANDLE) {
             continue;
         }
         returnedCert = pk11_GetKEAMate(le->slot, server);

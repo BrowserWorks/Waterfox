@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event "Ny begivenhed…">
+<!ENTITY event.new.event.accesskey "N">
+
+<!ENTITY event.new.task "Ny opgave…">
+<!ENTITY event.new.task.accesskey "y">
+
+<!ENTITY calendar.import.label "Importer…">
+<!ENTITY calendar.import.accesskey "I">
+
+<!ENTITY calendar.export.label "Eksporter…">
+<!ENTITY calendar.export.accesskey "E">
+
+<!ENTITY calendar.publish.label "Udgiv markerede begivenheder…">
+<!ENTITY calendar.publish.accesskey "b">
+
+<!ENTITY calendar.deletecalendar.label "Slet den valgte kalender…">
+<!ENTITY calendar.deletecalendar.accesskey "S">
+<!ENTITY calendar.unsubscribecalendar.label "Stop abonnement på den valgte kalender…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "o">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Fjern den valgte kalender…">
+<!ENTITY calendar.removecalendar.accesskey      "F">
+
+<!ENTITY calendar.menu.customize.label "Tilpas…">
+<!ENTITY calendar.menu.customize.accesskey "T">
+
+<!ENTITY showUnifinderCmd.label "Find begivenheder">
+<!ENTITY showUnifinderCmd.accesskey "F">
+<!ENTITY showUnifinderCmd.tooltip  "Slå søg i begivenheder til eller fra">
+
+<!ENTITY calendar.displaytodos.checkbox.label "Vis opgaver i Kalender">
+<!ENTITY calendar.displaytodos.checkbox.accesskey "V">
+
+<!ENTITY goTodayCmd.label "I dag">
+<!ENTITY goTodayCmd.accesskey "d">
+
+<!ENTITY showCurrentView.label "Aktuel visning">
+<!ENTITY showCurrentView.accesskey "V">
+
+<!ENTITY calendar.properties.label "Kalenderegenskaber…">
+<!ENTITY calendar.properties.accesskey "d">

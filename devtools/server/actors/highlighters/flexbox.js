@@ -4,7 +4,9 @@
 
 "use strict";
 
-const { AutoRefreshHighlighter } = require("./auto-refresh");
+const {
+  AutoRefreshHighlighter,
+} = require("devtools/server/actors/highlighters/auto-refresh");
 const { apply } = require("devtools/shared/layout/dom-matrix-2d");
 const {
   CANVAS_SIZE,
@@ -15,12 +17,12 @@ const {
   getCurrentMatrix,
   updateCanvasElement,
   updateCanvasPosition,
-} = require("./utils/canvas");
+} = require("devtools/server/actors/highlighters/utils/canvas");
 const {
   CanvasFrameAnonymousContentHelper,
   createNode,
   getComputedStyle,
-} = require("./utils/markup");
+} = require("devtools/server/actors/highlighters/utils/markup");
 const {
   getAbsoluteScrollOffsetsForNode,
   getCurrentZoom,
@@ -630,6 +632,7 @@ class FlexboxHighlighter extends AutoRefreshHighlighter {
   /**
    * Clear the whole alignment container along the main axis for each flex item.
    */
+  // eslint-disable-next-line complexity
   renderJustifyContent() {
     if (
       !this.flexData ||
@@ -861,12 +864,15 @@ class FlexboxHighlighter extends AutoRefreshHighlighter {
     this.currentMatrix = currentMatrix;
     this.hasNodeTransformations = hasNodeTransformations;
 
+    if (this.prevColor != this.color) {
+      this.clearCache();
+    }
     this.renderFlexContainer();
     this.renderFlexLines();
     this.renderJustifyContent();
     this.renderFlexItems();
-
     this._showFlexbox();
+    this.prevColor = this.color;
 
     root.setAttribute(
       "style",
@@ -963,6 +969,7 @@ function getRectFromFlexItemValues(item, container) {
  *         The new Flex data object.
  * @return {Boolean} true if the flex data has changed and false otherwise.
  */
+// eslint-disable-next-line complexity
 function compareFlexData(oldFlexData, newFlexData) {
   if (!oldFlexData || !newFlexData) {
     return true;

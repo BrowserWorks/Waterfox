@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "සංරක්ෂණ විකල්ප">
+<!ENTITY archiveGranularityPrefix.label "ලිපි සංරක්ෂණය (archiving) කරන විට, ඒවා තබන්නේ:">
+<!ENTITY archiveFlat.label "තනි ෆෝල්ඩරයක්">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "වාර්ෂික සංරක්ෂිත ෆෝල්ඩර">
+<!ENTITY archiveYearly.accesskey "Y">
+<!ENTITY archiveMonthly.label "මාසික සංරක්ෂිත ෆෝල්ඩර">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "සංරක්ෂිත ලිපි සඳහා පවතින ෆෝල්ඩර ව්‍යුහය එසේම තබන්න">
+<!ENTITY keepFolderStructure.accesskey "K">
+<!ENTITY archiveExample.label "උදාහරණ">
+<!ENTITY archiveFolderName.label "සංරක්ෂිත">
+<!ENTITY inboxFolderName.label "ලදලිපි">

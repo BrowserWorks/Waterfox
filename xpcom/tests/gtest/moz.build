@@ -7,8 +7,8 @@
 UNIFIED_SOURCES += [
     'Helpers.cpp',
     'TestArenaAllocator.cpp',
+    'TestArrayAlgorithm.cpp',
     'TestAtoms.cpp',
-    'TestAutoPtr.cpp',
     'TestAutoRef.cpp',
     'TestAutoRefCnt.cpp',
     'TestBase64.cpp',
@@ -21,6 +21,7 @@ UNIFIED_SOURCES += [
     'TestEscape.cpp',
     'TestEventPriorities.cpp',
     'TestEventTargetQI.cpp',
+    'TestExpirationTracker.cpp',
     'TestFile.cpp',
     'TestGCPostBarriers.cpp',
     'TestID.cpp',
@@ -52,19 +53,14 @@ UNIFIED_SOURCES += [
     'TestTaskQueue.cpp',
     'TestTextFormatter.cpp',
     'TestThreadManager.cpp',
+    'TestThreadMetrics.cpp',
+    'TestThreadPool.cpp',
     'TestThreadPoolListener.cpp',
     'TestThrottledEventQueue.cpp',
     'TestTimeStamp.cpp',
     'TestTokenizer.cpp',
     'TestUTF.cpp',
 ]
-
-if CONFIG['OS_TARGET'] != 'Darwin':
-    UNIFIED_SOURCES += [
-        'TestExpirationTracker.cpp',
-        'TestThreadMetrics.cpp',
-        'TestThreadPool.cpp',
-    ]
 
 if CONFIG['OS_TARGET'] != 'Android':
     UNIFIED_SOURCES += [
@@ -121,12 +117,9 @@ LOCAL_INCLUDES += [
     '../../base',
 ]
 
-GENERATED_FILES = [
-    'dafsa_test_1.inc',
-]
-dafsa_data = GENERATED_FILES['dafsa_test_1.inc']
-dafsa_data.script = '../../ds/tools/make_dafsa.py'
-dafsa_data.inputs = ['dafsa_test_1.dat']
+GeneratedFile('dafsa_test_1.inc',
+              script='../../ds/tools/make_dafsa.py',
+              inputs=['dafsa_test_1.dat'])
 
 TEST_HARNESS_FILES.gtest += [
     'wikipedia/ar.txt',

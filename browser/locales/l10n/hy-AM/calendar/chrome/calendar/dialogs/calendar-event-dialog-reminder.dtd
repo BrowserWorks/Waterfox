@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Ստեղծել հիշեցումներ">
+<!ENTITY reminder.add.label                                "Ավելացնել">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Հեռացնել">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "Հիշեցման մանրամասներ">
+<!ENTITY reminder.action.label                             "Ընտրել հիշեցման գործողություն">
+
+<!ENTITY reminder.action.alert.label                       "Ցուցադրել ազդանշան">
+<!ENTITY reminder.action.email.label                       "Ուղարկել Էլ․ նամակ">
+
+<!ENTITY alarm.units.minutes                               "րոպեներ" >
+<!ENTITY alarm.units.hours                                 "ժամեր" >
+<!ENTITY alarm.units.days                                  "օրեր" >

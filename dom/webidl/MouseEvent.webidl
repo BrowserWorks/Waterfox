@@ -5,17 +5,23 @@
  *
  * For more information on this interface please see
  * http://dev.w3.org/2006/webapi/DOM-Level-3-Events/html/DOM3-Events.html
+ * https://drafts.csswg.org/cssom-view/#extensions-to-the-mouseevent-interface
  *
  * Copyright © 2012 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
  */
 
-[Constructor(DOMString typeArg, optional MouseEventInit mouseEventInitDict)]
+[Exposed=Window]
 interface MouseEvent : UIEvent {
+  constructor(DOMString typeArg,
+              optional MouseEventInit mouseEventInitDict = {});
+
   [NeedsCallerType]
   readonly attribute long           screenX;
   [NeedsCallerType]
   readonly attribute long           screenY;
+  readonly attribute long           pageX;
+  readonly attribute long           pageY;
   readonly attribute long           clientX;
   readonly attribute long           clientY;
   [BinaryName="clientX"]
@@ -109,8 +115,6 @@ partial interface MouseEvent
                         optional EventTarget? relatedTargetArg = null,
                         optional float pressure = 0,
                         optional unsigned short inputSourceArg = 0);
-  [ChromeOnly]
-  readonly attribute boolean hitCluster; // True when touch occurs in a cluster of links
 
 };
 

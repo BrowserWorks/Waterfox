@@ -4,14 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ClearOnShutdown.h"
-#include "nsAutoPtr.h"
 #include "nsJARProtocolHandler.h"
-#include "nsIIOService.h"
 #include "nsCRT.h"
-#include "nsIComponentManager.h"
-#include "nsIServiceManager.h"
 #include "nsJARURI.h"
-#include "nsIURL.h"
 #include "nsJARChannel.h"
 #include "nsString.h"
 #include "nsNetCID.h"
@@ -86,16 +81,6 @@ nsJARProtocolHandler::GetProtocolFlags(uint32_t* result) {
      it is very different from the standard behaviour, so we
      have to say norelative here! */
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsJARProtocolHandler::NewURI(const nsACString& aSpec, const char* aCharset,
-                             nsIURI* aBaseURI, nsIURI** result) {
-  nsCOMPtr<nsIURI> base(aBaseURI);
-  return NS_MutateURI(new nsJARURI::Mutator())
-      .Apply(NS_MutatorMethod(&nsIJARURIMutator::SetSpecBaseCharset,
-                              nsCString(aSpec), base, aCharset))
-      .Finalize(result);
 }
 
 NS_IMETHODIMP

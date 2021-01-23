@@ -10,7 +10,9 @@
 const { Curl, CurlUtils } = require("devtools/client/shared/curl");
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(CURL_UTILS_URL);
+  const { tab, monitor } = await initNetMonitor(CURL_UTILS_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { store, windowRequire, connector } = monitor.panelWin;
@@ -22,18 +24,21 @@ add_task(async function() {
 
   store.dispatch(Actions.batchEnable(false));
 
-  const wait = waitForNetworkEvents(monitor, 5);
-  await ContentTask.spawn(tab.linkedBrowser, SIMPLE_SJS, async function(url) {
+  const wait = waitForNetworkEvents(monitor, 6);
+  await SpecialPowers.spawn(tab.linkedBrowser, [SIMPLE_SJS], async function(
+    url
+  ) {
     content.wrappedJSObject.performRequests(url);
   });
   await wait;
 
   const requests = {
-    get: getSortedRequests(store.getState()).get(0),
-    post: getSortedRequests(store.getState()).get(1),
-    patch: getSortedRequests(store.getState()).get(2),
-    multipart: getSortedRequests(store.getState()).get(3),
-    multipartForm: getSortedRequests(store.getState()).get(4),
+    get: getSortedRequests(store.getState())[0],
+    post: getSortedRequests(store.getState())[1],
+    postJson: getSortedRequests(store.getState())[2],
+    patch: getSortedRequests(store.getState())[3],
+    multipart: getSortedRequests(store.getState())[4],
+    multipartForm: getSortedRequests(store.getState())[5],
   };
 
   let data = await createCurlData(requests.get, getLongString, requestData);
@@ -48,6 +53,9 @@ add_task(async function() {
   data = await createCurlData(requests.patch, getLongString, requestData);
   testWritePostDataTextParams(data);
   testDataArgumentOnGeneratedCommand(data);
+
+  data = await createCurlData(requests.postJson, getLongString, requestData);
+  testDataEscapeOnGeneratedCommand(data);
 
   data = await createCurlData(requests.multipart, getLongString, requestData);
   testIsMultipartRequest(data);
@@ -86,7 +94,7 @@ function testIsMultipartRequest(data) {
 }
 
 function testFindHeader(data) {
-  const headers = data.headers;
+  const { headers } = data;
   const hostName = CurlUtils.findHeader(headers, "Host");
   const requestedWithLowerCased = CurlUtils.findHeader(
     headers,
@@ -108,7 +116,7 @@ function testFindHeader(data) {
 }
 
 function testMultiPartHeaders(data) {
-  const headers = data.headers;
+  const { headers } = data;
   const contentType = CurlUtils.findHeader(headers, "Content-Type");
 
   ok(
@@ -136,6 +144,23 @@ function testDataArgumentOnGeneratedCommand(data) {
   ok(
     curlCommand.includes("--data-raw"),
     "Should return a curl command with --data-raw"
+  );
+}
+
+function testDataEscapeOnGeneratedCommand(data) {
+  const paramsWin = `--data-raw "{""param1"":""value1"",""param2"":""value2""}"`;
+  const paramsPosix = `--data-raw '{"param1":"value1","param2":"value2"}'`;
+
+  let curlCommand = Curl.generateCommand(data, "WINNT");
+  ok(
+    curlCommand.includes(paramsWin),
+    "Should return a curl command with --data-raw escaped for Windows systems"
+  );
+
+  curlCommand = Curl.generateCommand(data, "Linux");
+  ok(
+    curlCommand.includes(paramsPosix),
+    "Should return a curl command with --data-raw escaped for Posix systems"
   );
 }
 

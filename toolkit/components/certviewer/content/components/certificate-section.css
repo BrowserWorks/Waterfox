@@ -1,0 +1,49 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+h1 {
+  text-align: center;
+  font-size: 2.5em;
+  font-weight: lighter;
+}
+
+.certificate-tabs {
+  display: flex;
+  text-align: center;
+}
+
+.info-groups {
+  display: none;
+}
+
+.info-groups.selected {
+  display: contents;
+}
+
+.tab {
+  margin: 0;
+  border-radius: 0;
+  padding: 12px;
+  border: 1px solid var(--in-content-box-border-color);
+  background-color: var(--in-content-box-background);
+  color: var(--in-content-text-color);
+  flex: 1 1 auto;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-size: 1.363rem;
+}
+
+.tab:hover {
+  background-color: var(--in-content-box-background-hover);
+}
+
+.tab.selected {
+  border-bottom: 2px solid var(--in-content-link-color);
+  /* The bottom border is 1px more than before, so we need to
+   * compensate the padding to prevent the text from jumping */
+  padding-bottom: 11px;
+  color: var(--in-content-link-color);
+  text-overflow: unset;
+  overflow: visible;
+}

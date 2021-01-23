@@ -12,14 +12,21 @@ matset!(set11, &[r"[a-z]+$", "foo"], "foo 01234", 1);
 matset!(set12, &[r".*?", "a"], "zzzzzza", 0, 1);
 matset!(set13, &[r".*", "a"], "zzzzzza", 0, 1);
 matset!(set14, &[r".*", "a"], "zzzzzz", 0);
-matset!(set15, &[r"\ba\b"], "hello a bye", 0);
+matset!(set15, &[r"(?-u)\ba\b"], "hello a bye", 0);
 matset!(set16, &["a"], "a", 0);
 matset!(set17, &[".*a"], "a", 0);
 matset!(set18, &["a", "β"], "β", 1);
 
 nomatset!(nset1, &["a", "a"], "b");
 nomatset!(nset2, &["^foo", "bar$"], "bar foo");
-nomatset!(nset3, { let xs: &[&str] = &[]; xs }, "a");
+nomatset!(
+    nset3,
+    {
+        let xs: &[&str] = &[];
+        xs
+    },
+    "a"
+);
 nomatset!(nset4, &[r"^rooted$", r"\.log$"], "notrooted");
 
 // See: https://github.com/rust-lang/regex/issues/187
@@ -29,4 +36,10 @@ fn regression_subsequent_matches() {
     let text = text!("ba");
     assert!(set.matches(text).matched(1));
     assert!(set.matches(text).matched(1));
+}
+
+#[test]
+fn get_set_patterns() {
+    let set = regex_set!(&["a", "b"]);
+    assert_eq!(vec!["a", "b"], set.patterns());
 }

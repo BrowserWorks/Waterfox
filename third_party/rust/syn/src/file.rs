@@ -3,14 +3,14 @@ use super::*;
 ast_struct! {
     /// A complete file of Rust source code.
     ///
-    /// *This type is available if Syn is built with the `"full"` feature.*
+    /// *This type is available only if Syn is built with the `"full"` feature.*
     ///
     /// # Example
     ///
     /// Parse a Rust source file into a `syn::File` and print out a debug
     /// representation of the syntax tree.
     ///
-    /// ```edition2018
+    /// ```
     /// use std::env;
     /// use std::fs::File;
     /// use std::io::Read;
@@ -37,6 +37,8 @@ ast_struct! {
     ///     file.read_to_string(&mut src).expect("Unable to read file");
     ///
     ///     let syntax = syn::parse_file(&src).expect("Unable to parse file");
+    ///
+    ///     // Debug impl is available if Syn is built with "extra-traits" feature.
     ///     println!("{:#?}", syntax);
     /// }
     /// ```
@@ -78,7 +80,7 @@ ast_struct! {
 pub mod parsing {
     use super::*;
 
-    use parse::{Parse, ParseStream, Result};
+    use crate::parse::{Parse, ParseStream, Result};
 
     impl Parse for File {
         fn parse(input: ParseStream) -> Result<Self> {
@@ -100,7 +102,7 @@ pub mod parsing {
 #[cfg(feature = "printing")]
 mod printing {
     use super::*;
-    use attr::FilterAttrs;
+    use crate::attr::FilterAttrs;
     use proc_macro2::TokenStream;
     use quote::{ToTokens, TokenStreamExt};
 

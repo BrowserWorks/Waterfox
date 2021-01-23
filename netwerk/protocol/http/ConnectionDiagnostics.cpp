@@ -9,6 +9,7 @@
 
 #include "nsHttpConnectionMgr.h"
 #include "nsHttpConnection.h"
+#include "HttpConnectionUDP.h"
 #include "Http2Session.h"
 #include "nsHttpHandler.h"
 #include "nsIConsoleService.h"
@@ -155,6 +156,21 @@ void nsHttpConnection::PrintDiagnostics(nsCString& log) {
                    mIdleMonitoring, mHttp1xTransactionCount);
 
   if (mSpdySession) mSpdySession->PrintDiagnostics(log);
+}
+
+void HttpConnectionUDP::PrintDiagnostics(nsCString& log) {
+  log.AppendPrintf("    CanDirectlyActivate = %d\n", CanDirectlyActivate());
+
+  log.AppendPrintf("    dontReuse = %d isReused = %d\n", mDontReuse, mIsReused);
+
+  PRIntervalTime now = PR_IntervalNow();
+  log.AppendPrintf("    time since last read = %ums\n",
+                   PR_IntervalToMilliseconds(now - mLastReadTime));
+
+  log.AppendPrintf("    read/written %" PRId64 "/%" PRId64 "\n",
+                   mTotalBytesRead, mTotalBytesWritten);
+
+  log.AppendPrintf("    rtt = %ums\n", PR_IntervalToMilliseconds(mRtt));
 }
 
 void Http2Session::PrintDiagnostics(nsCString& log) {

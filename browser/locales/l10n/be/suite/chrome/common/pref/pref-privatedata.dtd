@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.privatedata.title "Асабістыя здаткі">
+<!ENTITY clearPrivateData.label "Ачысціць асабістыя здаткі">
+<!ENTITY alwaysClear.label "Заўсёды ачышчаць асабістыя здаткі падчас закрыцця &brandShortName;">
+<!ENTITY alwaysClear.accesskey "ў">
+<!ENTITY askBeforeClear.label "Пытаць мяне, ці ачышчаць асабістыя здаткі">
+<!ENTITY askBeforeClear.accesskey "ц">
+<!ENTITY clearDataSettings.label "Калі я запытваю &brandShortName; ачысціць мае асабістыя здаткі, ён павінны вынішчыць:">
+<!ENTITY clearDataDialog.label "Ачысціць зараз…">
+<!ENTITY clearDataSilent.label "Ачысціць зараз">
+<!ENTITY clearDataDialog.accesskey "з">

@@ -1,0 +1,4 @@
+<!ENTITY options.title "Kehittäjän työkalujen asetukset">
+<!ENTITY options.status.label "Status:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Allow connections from other computers">

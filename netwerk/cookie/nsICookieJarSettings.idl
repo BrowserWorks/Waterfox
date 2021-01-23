@@ -1,0 +1,58 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+ * vim: ft=cpp tw=78 sw=2 et ts=2 sts=2 cin
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIPrincipal;
+
+/**
+ * Cookie jar settings for top-level documents. Please see CookieJarSettings.h
+ * for more details.
+ */
+[builtinclass, uuid(3ec40331-7cf0-4b71-ba2a-2265aab8f6bc)]
+interface nsICookieJarSettings : nsISupports
+{
+  /**
+   * CookieBehavior at the loading of the document. Any other loadInfo
+   * inherits it from its document's loadInfo. If there is not a document
+   * involved, cookieBehavior is reject.
+   */
+  [infallible] readonly attribute unsigned long cookieBehavior;
+
+  /**
+   * First-Party Isolation state at the loading of the document.
+   */
+  [infallible] readonly attribute boolean isFirstPartyIsolated;
+
+  /**
+   * Whether our cookie behavior mandates rejecting third-party contexts.
+   */
+  [infallible] readonly attribute boolean rejectThirdPartyContexts;
+
+  [infallible] readonly attribute boolean limitForeignContexts;
+
+  /**
+   * Whether our cookie behavior mandates partitioning third-party content.
+   */
+  [infallible] attribute boolean partitionForeign;
+
+  /**
+   * Whether the top-level document is on the content blocking allow list.
+   */
+  [infallible] readonly attribute boolean isOnContentBlockingAllowList;
+
+  /**
+   * The domain for the top-level document.
+   */
+  readonly attribute AString firstPartyDomain;
+
+  /**
+   * CookiePermission at the loading of the document for a particular
+   * principal. It returns the same cookiePermission also in case it changes
+   * during the life-time of the top document.
+   */
+  unsigned long cookiePermission(in nsIPrincipal aPrincipal);
+};

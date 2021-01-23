@@ -1,0 +1,131 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+
+<!ENTITY windowTitle.label "Treoraí na gCuntas">
+<!ENTITY accountWizard.size "width: 44em; height: 42em;">
+
+<!-- Entities for Account Type page -->
+
+
+<!ENTITY accountSetupInfo2.label "Chun teachtaireachtaí a fháil, ní mór duit cuntas a chruthú ar dtús.">
+<!ENTITY accountTypeTitle.label "Cruthú Cuntais Nua">
+<!ENTITY accountTypeDesc2.label "Baileoidh an Treoraí seo an fhaisnéis atá riachtanach chun cuntas a chruthú. Mura bhfuil an fhaisnéis iarrtha ar eolas agat, téigh i dteagmháil le do Riarthóir Córais nó le do Sholáthraí Seirbhísí Idirlín.">
+<!ENTITY accountTypeDirections.label "Roghnaigh cineál an chuntais is mian leat a shocrú:">
+<!ENTITY accountTypeMail.label "Cuntas Ríomhphoist">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "Cuntas Grúpa Nuachta">
+<!ENTITY accountTypeNews.accesskey "G">
+
+<!-- Entities for Identity page -->
+
+
+<!ENTITY identityTitle.label "Aitheantas">
+<!ENTITY identityDesc.label "Tá aitheantas ag gach cuntas, .i. an fhaisnéis a ligeann do dhaoine eile tú a aithint nuair a fhaigheann siad teachtaireachtaí uait.">
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+
+<!ENTITY fullnameDesc.label "Cuir isteach an t-ainm a theastaíonn uait a chur sa réimse &quot;Ó&quot; i do chuid teachtaireachtaí amach">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(mar shampla, &quot;Tadhg Ó Ródaí&quot;).">
+<!ENTITY fullnameLabel.label "D'ainm:">
+<!ENTITY fullnameLabel.accesskey "D">
+
+<!ENTITY emailLabel.label "Seoladh Ríomhphoist:">
+<!ENTITY emailLabel.accesskey "e">
+
+<!-- Entities for Incoming Server page -->
+
+
+<!ENTITY incomingTitle.label "Maidir leis an bhFreastalaí Isteach">
+<!ENTITY incomingServerTypeDesc.label "Roghnaigh cineál do fhreastalaí isteach.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Fág teachtaireachtaí ar an bhfreastalaí">
+<!ENTITY leaveMsgsOnSrvr.accesskey "F">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Réamhshocrú:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Cuir isteach ainm do fhreastalaí isteach (mar shampla, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "Freastalaí Ríomhphoist Isteach:">
+<!ENTITY incomingServer.accesskey "s">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Cuir isteach an t-ainm úsáideora isteach a thug do sholáthraí ríomhphoist duit (mar shampla, &quot;tadhgor&quot;).">
+<!ENTITY incomingUsername.label "Ainm Úsáideora:">
+<!ENTITY incomingUsername.accesskey "A">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Cuir isteach ainm do fhreastalaí nuachta (NNTP) (mar shampla, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Freastalaí Nuachta:">
+<!ENTITY newsServerLabel.accesskey "s">
+
+<!-- Entities for Outgoing Server page -->
+
+
+<!ENTITY outgoingTitle.label "Maidir leis an bhFreastalaí Amach">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Cuir isteach ainm do fhreastalaí amach (SMTP) (mar shampla, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Freastalaí Amach:">
+<!ENTITY outgoingServer.accesskey "s">
+<!ENTITY outgoingUsername.description "Cuir isteach an t-ainm úsáideora amach a thug do sholáthraí ríomhphoist duit (is iondúil gurb ionann é seo agus d'ainm úsáideora isteach).">
+<!ENTITY outgoingUsername.label "Ainm Úsáideora Amach:">
+<!ENTITY outgoingUsername.accesskey "A">
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+
+<!ENTITY modifyOutgoing.suffix "Is féidir leat an freastalaí amach a athrú i socruithe an chuntais.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Bainfear úsáid as do fhreastalaí ríomhphoist amach (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Bainfear úsáid as an ainm úsáideora amach (SMTP) atá agat faoi láthair, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Is ionann do fhreastalaí amach (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, agus do fhreastalaí isteach. Úsáidfear d&apos;ainm úsáideora isteach chun é a rochtain.">
+
+<!-- Entities for Account name page -->
+
+
+<!ENTITY accnameTitle.label "Ainm an Chuntais">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Cuir isteach an t-ainm lena ndéanfaidh tú tagairt don chuntas seo (m.sh. &quot;Cuntas Oibre&quot;, &quot;Cuntas Baile&quot; nó &quot;Cuntas Nuachta&quot;).">
+<!ENTITY accnameLabel.label "Ainm an Chuntais:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+
+<!ENTITY completionTitle.label "Comhghairdeas!">
+<!ENTITY completionText.label "Cinntigh go bhfuil an fhaisnéis thíos ceart, le do thoil.">
+<!ENTITY serverTypePrefix.label "Cineál an Fhreastalaí Isteach:">
+<!ENTITY serverNamePrefix.label "Ainm an Fhreastalaí Isteach:">
+<!ENTITY smtpServerNamePrefix.label "Ainm an Fhreastalaí Amach (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Ainm an Fhreastalaí Nuachta (NNTP):">
+<!ENTITY downloadOnLogin.label "Íoslódáil teachtaireachtaí anois">
+<!ENTITY downloadOnLogin.accesskey "l">
+<!ENTITY deferStorageDesc.label "Díthiceáil an ticbhosca seo chun ríomhphost an chuntais seo a stóráil ina chomhadlann féin. Cuntas barrléibhéil a bheidh ann ansin, nó seachas sin is cuid de Bhosca Isteach Uilíoch an chuntais &quot;Fillteáin Logánta&quot; a bheidh ann.">
+<!ENTITY deferStorage.label "Úsáid an Bosca Isteach Uilíoch (stóráil post sna Fillteáin Logánta)">
+<!ENTITY deferStorage.accesskey "U">
+<!ENTITY clickFinish.label "Cliceáil Críochnaigh chun na socruithe seo a shábháil agus scor de Threoraí na gCuntas.">
+<!ENTITY clickFinish.labelMac "Cliceáil Déanta chun na socruithe seo a shábháil agus scor de Threoraí na gCuntas.">

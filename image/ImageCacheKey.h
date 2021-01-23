@@ -59,17 +59,14 @@ class ImageCacheKey final {
   void* ControlledDocument() const { return mControlledDocument; }
 
  private:
-  bool SchemeIs(const char* aScheme);
-
   // For ServiceWorker we need to use the document as
   // token for the key. All those exceptions are handled by this method.
-  static void* GetSpecialCaseDocumentToken(dom::Document* aDocument,
-                                           nsIURI* aURI);
+  static void* GetSpecialCaseDocumentToken(dom::Document* aDocument);
 
-  // For anti-tracking we need to use the top-level document's base domain for
-  // the key. This is handled by this method.
-  static nsCString GetTopLevelBaseDomain(dom::Document* aDocument,
-                                         nsIURI* aURI);
+  // For anti-tracking we need to use an isolation key. It can be the suffix of
+  // the IntrinsicStoragePrincipal (see StoragePrincipalHelper.h) or the
+  // top-level document's base domain. This is handled by this method.
+  static nsCString GetIsolationKey(dom::Document* aDocument, nsIURI* aURI);
 
   void EnsureHash() const;
   void EnsureBlobRef() const;
@@ -79,7 +76,7 @@ class ImageCacheKey final {
   mutable nsCString mBlobRef;
   OriginAttributes mOriginAttributes;
   void* mControlledDocument;
-  nsCString mTopLevelBaseDomain;
+  nsCString mIsolationKey;
   mutable Maybe<PLDHashNumber> mHash;
   bool mIsChrome;
 };

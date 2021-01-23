@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Gnàthaich am bàr-inneal">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Cuir ris no thoir air falbh nithean ’s tu ’gan slaodadh gun bhàr-inneal no fo bharr.">
+<!ENTITY show.label               "Seall:">
+<!ENTITY iconsAndText.label       "Ìomhaigheagan is teacsa">
+<!ENTITY icons.label              "Ìomhaigheagan">
+<!ENTITY text.label               "Teacsa">
+<!ENTITY iconsBesideText.label    "Ìomhaigheagan ri taobh an teacsa">
+<!ENTITY useSmallIcons.label      "Cleachd ìomhaigheagan beaga">
+<!ENTITY restoreDefaultSet.label  "Aisig an seata bunaiteach">
+<!ENTITY saveChanges.label        "Deiseil">
+<!ENTITY undoChanges.label        "Neo-dhèan na h-atharraichean">

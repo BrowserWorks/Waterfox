@@ -1,0 +1,206 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "გვერდის ჩატვირთვის შეცდომა">
+<!ENTITY retry.label "სცადეთ ხელახლა">
+<!ENTITY returnToPreviousPage.label "უკან დაბრუნება">
+<!ENTITY returnToPreviousPage1.label "უკან დაბრუნება (სასურველია)">
+<!ENTITY advanced2.label "დამატებით…">
+<!ENTITY viewCertificate.label "სერტიფიკატის ნახვა">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "გვერდი ვერ მოიძებნა">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>თუ ეს მისამართი სწორია, კიდევ სამი რამ შეგიძლიათ სცადოთ:</strong>
+<ul>
+  <li>ხელახლა გაიმეოროთ მოგვიანებით.</li>
+  <li>შეამოწმოთ ქსელთან კავშირი.</li>
+  <li>თუ კავშირი არის, მაგრამ იყენებთ ქსელის ფარს, გადაამოწმოთ, არის თუ არა &brandShortName; ინტერნეტთან წვდომის ნებართვის მქონე.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>შეამოწმეთ ფაილის სახელი მთავრულების გათვალისწინებით ან სხვა შეცდომებზე.</li> 
+<li>შეამოწმეთ, ხომ არაა ფაილი გადატანილი, გადარქმეული ან წაშლილი.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>ის შესაძლოა წაშლილიყო, გადატანილიყო ან ფაილის უფლებები წვდომას არ უშვებს.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; ვერ ახერხებს ამ გვერდის ჩატვირთვას გაურკვეველი მიზეზით.</p>
+">
+
+<!ENTITY captivePortal.title "ქსელში შესვლა">
+<!ENTITY captivePortal.longDesc2 "
+<p>ინტერნეტთან დასაკავშირებლად, საჭიროა ამ ქსელში შესვლა.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "ქსელში შესასვლელი გვერდის გახსნა">
+
+<!ENTITY malformedURI.pageTitle "არასწორი URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>მოთხოვნილი შიგთავსი არაა ხელმისაწვდომი ადგილობრივად, სადაც მას &brandShortName; დროებით ინახავს.</p><ul><li>უსაფრთხოების მიზნით, &brandShortName; დაუკითხავად არ ითხოვს ხოლმე საიტიდან მნიშვნელოვანი მასალის ხელახლა ჩამოტვირთვას.</li><li>ჩამოტვირთვის ხელმეორედ მოთხოვნისთვის, დააწკაპეთ ღილაკზე „სცადეთ ხელახლა“.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>დააწექით „სცადეთ ხელახლა“ ღილაკს ინტერნეტში გასასვლელად და გვერდის ხელახლა გასახსნელად.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>გთხოვთ, დაუკავშირდეთ ვებსაიტის მფლობელებს და აცნობოთ ამ ხარვეზის შესახებ.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>გთხოვთ, დაუკავშირდეთ საიტის მფლობელებს და აცნობოთ ამ ხარვეზის შესახებ.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>ამ მისამართის გასახსნელად, შესაძლოა სხვა პროგრამის დაყენება იყოს საჭირო.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>გადაამოწმეთ პროქსის პარამეტრები და დარწმუნდით მათ მართებულობაში.</li>
+  <li>დაუკავშირდით ქსელის მმართველს და დარწმუნდით, რომ პროქსი სერვერი 
+    მუშაობს.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>გადაამოწმეთ პროქსის პარამეტრები და დარწმუნდით მათ მართებულობაში.</li>
+  <li>შეამოწმეთ და დარწმუნდით, რომ თქვენი კომპიუტერის ქსელური კავშირი გამართულია.</li>
+  <li>თუ თქვენი ქსელი ან კომპიუტერი ფარით ან პროქსითაა დაცული, გადაამოწმეთ, აქვს თუ არა
+    &brandShortName; პროგრამას ინტერნეტთან წვდომის უფლება.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>ამ ხარვეზს, ზოგჯერ იწვევს ფუნთუშების გამორთვა ან
+    უარყოფა.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>შეამოწმეთ და დარწმუნდით რომ თქვენს სისტემაში პირადი უსაფრთხოების მმართველი
+    დაყენებულია.</li>
+  <li>ამის მიზეზი შესაძლოა სერვერის არასტანდარტული კონფიგურაცია იყოს.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>გვერდის ჩვენება, რომლის ნახვასაც ცდილობთ შეუძლებელია, რადგან მიღებული მონაცემების ნამდვილობის დადასტურება ვერ ხერხდება.</li>
+  <li>გთხოვთ, დაუკავშირდეთ ვებსაიტის მფლობელებს და მოახსენოთ ამ ხარვეზის შესახებ.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName;, აღმოჩენილი მოსალოდნელი საფრთხის გამო, აღარ ჩატვირთავს გვერდს ბმულიდან <span class='hostname'/>. თუ ამ საიტს ეწვევით, შემტევებს შეეძლებათ ხელყონ თქვენი მონაცემები, როგორიცაა პაროლები, ელფოსტის მისამართები ან საკრედიტო ბარათის ნომრები.">
+<!ENTITY certerror.sts.introPara "&brandShortName;, აღმოჩენილი მოსალოდნელი საფრთხის გამო, აღარ ჩატვირთავს გვერდს ბმულიდან <span class='hostname'/>, ვინაიდან საიტი საჭიროებს დაცულ კავშირს.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName;, აღმოჩენილი ხარვეზის გამო, აღარ ჩატვირთავს გვერდს ბმულიდან <span class='hostname'/>. საიტი ან გაუმართავია, ან თქვენი კომპიუტერის საათია გასასწორებელი.">
+<!ENTITY certerror.expiredCert.secondPara2 "როგორც ჩანს, საიტის სერტიფიკატი ვადაგასულია, რის გამოც &brandShortName; ვერ ახერხებს უსაფრთხო კავშირის დამყარებას. თუ ამ საიტს ეწვევით, შემტევებმა შეიძლება ხელყონ თქვენი მონაცემები, როგორიცაა პაროლები, ელფოსტის მისამართები და საკრედიტო ბარათის ნომრები.">
+<!ENTITY certerror.expiredCert.sts.secondPara "როგორც ჩანს, საიტის სერტიფიკატი ვადაგასულია, რის გამოც &brandShortName; ვერ ახერხებს უსაფრთხო კავშირის დამყარებას.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "რისი გაკეთება შეგიძლიათ?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>ხარვეზი, უმეტესად დაკავშირებულია თავად ვებსაიტთან და თქვენ ვერ მოახერხებთ მის გამოსწორებას.</p>
+<p>თუ იყენებთ დაწესებულების ქსელს ან ანტივირუსულ პროგრამას, დასახმარებლად შეგიძლიათ მიმართოთ იქვე არსებულ მხარდაჭერის გუნდს. ასევე, შეგიძლიათ შეატყობინოთ ვებსაიტის მფლობელებს, ამ ხარვეზის შესახებ.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>თქვენს კომპიუტერზე ახლა არის <span id='wrongSystemTime_systemDate2'/>. დარწმუნდით, რომ თქვენი კომპიუტერის სისტემის პარამეტრებში გასწორებულია თარიღი, დრო, სასაათე სარტყელი და შემდეგ ხელახლა გახსენით <span class='hostname'/>.</p>
+<p>თუ თქვენი საათი სწორ დროს აჩვენებს, მაშინ სავარაუდოდ, თავად ვებსაიტია გაუმართავი და თქვენ ვერაფერს იღონებთ ამის გამოსასწორებლად. მხოლოდ ის შეგიძლიათ, რომ შეატყობინოთ საიტის მფლობელებს ამ ხარვეზის შესახებ.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>ეს ხარვეზი უმეტესად დაკავშირებულია თავად ვებსაიტთან და თქვენ ვერ მოახერხებთ მის გამოსწორებას. მხოლოდ ის შეგიძლიათ, რომ შეატყობინოთ საიტის მფლობელებს ამ ხარვეზის შესახებ.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>საიტი დროებით მიუწვდომელი ან გადატვირთულია. სცადეთ ხელახლა, რამდენიმე
+    წამში.</li>
+  <li>თუ სხვა გვერდების ჩატვირთვასაც ვერ ახერხებთ, შეამოწმეთ კომპიუტერის ქსელთან
+    კავშირი.</li>
+  <li>თუ თქვენი ქსელი ან კომპიუტერი ფარით ან პროქსითაა დაცული, გადაამოწმეთ
+    არის თუ არა &brandShortName; ინტერნეტთან წვდომის უფლების მქონე.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ზღუდავს ამ გვერდს, ვინაიდან შეიცავს შიგთავსს, რომელიც მიუღებელია უსაფრთხოების დებულების შესაბამისად.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ზღუდავს ამ გვერდის მოცემული გზით ჩატვირთვას, ვინაიდან მისი დებულება X-Frame-Options კრძალავს ამას.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>გვერდის ჩვენება, რომლის ნახვასაც ცდილობთ, ვერ ხერხდება, მონაცემთა გადაცემისას აღმოჩენილი შეცდომის გამო.</p><ul><li>გთხოვთ, დაუკავშირდეთ საიტის მფლობელებს და აცნობოთ, ამ ხარვეზის შესახებ.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "საფრთხის გაცნობიერება და გაგრძელება">
+
+<!ENTITY errorReporting.automatic2 "აცნობეთ Mozilla-ს მსგავსი შეცდომების შესახებ, რომ დაეხმაროთ მავნე საიტების აღმოჩენასა და მათ შეზღუდვაში">
+<!ENTITY errorReporting.learnMore "ვრცლად…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>გთხოვთ, დაუკავშირდეთ ვებსაიტის მფლობელებს და მოახსენოთ ამ ხარვეზის შესახებ.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "დამატებითი ინფორმაცია: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "ფრთხილად: სახიფათოა">
+<!ENTITY certerror.sts.pagetitle  "ვერ დაუკავშირდა: სავარაუდოდ უსაფრთხოების ხარვეზის გამო">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "საიტს <span class='hostname'></span> გააჩნია უსაფრთხოების დებულება სახელწოდებით HTTP Strict Transport Security (HSTS), რაც ნიშნავს, რომ &brandShortName; მას მხოლოდ უსაფრთხო შეერთებით შეიძლება დაუკავშირდეს. თქვენ ვერ შეძლებთ გამონაკლისის დაშვებას ამ საიტის მოსანახულებლად.">
+<!ENTITY certerror.copyToClipboard.label "ტექსტის ასლის აღება">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> იყენებს უსაფრთხოების ისეთ საშუალებას, რომელიც მოძველებული და დაუცველია. შემტევმა შესაძლოა მარტივად მიიღოს იმ მონაცემებზე წვდომა, რომლებიც დაცულად მიგაჩნიათ. საიტზე შესვლამდე, აუცილებელია მისმა ხელმძღვანელობამ ეს ხარვეზი აღმოფხვრას.</p><p>შეცდომის კოდი: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "გვერდი შეზღუდულია">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> წესით უსაფრთხო საიტი უნდა იყოს, თუმცა დაცული კავშირის დამყარება ვერ ხერხდება. ამას გამომწვევია <span class='mitm-name'/>, რომელიც ან თქვენი კომპიუტერის პროგრამაა, ან თქვენი ქსელის.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "თუ თქვენს ანტივირუსს გააჩნია დაშიფრული კავშირების შემოწმების შესაძლებლობა (უმეტესად აღნიშნავენ დასახელებით „web scanning“ ან „https scanning“), შეგიძლია მისი გამორთვა სცადოთ. თუ ეს არ უშველის, სცადეთ ანტივირუსის სრულად ამოშლა და ხელახლა დაყენება.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "თუ დაწესებულების ქსელით სარგებლობთ, დაუკავშირდით ქსელის მართვის განყოფილებას.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "თუ არ გეცნობათ <span class='mitm-name'/>, შესაძლოა თავდასხმის ქვეშ იყოთ და სჯობს აღარ შეხვიდეთ ამ საიტზე.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "თუ არ გეცნობათ <span class='mitm-name'/>, მაშინ შეიძლება თავდასხმას ჰქონდეს ადგილი და ვერ შეძლებთ საიტთან წვდომას.">
+
+<!ENTITY clockSkewError.longDesc "თქვენი კომპიუტერი მიიჩნევს, რომ არის <span id='wrongSystemTime_systemDate1'/>, რის გამოც &brandShortName; ვერ ახერხებს უსაფრთხოდ დაუკავშირდეს საიტს. იმისთვის რომ მოინახულოთ <span class='hostname'></span>, გაასწორეთ თქვენი კომპიუტერის სისტემის პარამეტრებიდან დრო, თარიღი და სასაათე სარტყელი, შემდეგ კი ხელახლა გახსენით <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "შესაძლოა ამის მიზეზს, თქვენ მიერ მითითებული, ქსელის უსაფრთხოების პარამეტრები წარმოადგენდეს. გსურთ ნაგულისხმევი პარამეტრების აღდგენა?">
+<!ENTITY prefReset.label "ნაგულისხმევი პარამეტრების აღდგენა">
+
+<!ENTITY enableTls10.longDesc "ვებსაიტზე ალბათ არაა მხარდაჭერილი TLS 1.2 ოქმი, უმცირესი ვერსია, რომელსაც იყენებს &brandShortName;. TLS1.0 და TLS 1.1 ოქმების ჩართვით შესაძლოა მოხერხდეს კავშირის დამყარება.">
+<!ENTITY enableTls10.note "TLS 1.0 და TLS 1.1 სამუდამოდ გაითიშება მომავალ გამოშვებაში.">
+<!ENTITY enableTls10.label "ჩაირთოს TLS 1.0 და 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>გვერდი რომლის მონახულებასაც ცდილობთ ვერ გამოჩნდება, ვინაიდან ქსელის ოქმში აღმოჩენილია შეცდომა.</p><ul><li>გთხოვთ, დაუკავშირდეთ საიტის მფლობელებს და აცნობოთ ამ ხარვეზის შესახებ.</li></ul>">

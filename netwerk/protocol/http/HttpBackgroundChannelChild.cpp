@@ -14,6 +14,7 @@
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/IntegerPrintfMacros.h"
+#include "mozilla/net/BackgroundDataBridgeChild.h"
 #include "mozilla/Unused.h"
 #include "nsSocketTransportService2.h"
 
@@ -46,6 +47,21 @@ nsresult HttpBackgroundChannelChild::Init(HttpChannelChild* aChannelChild) {
   return NS_OK;
 }
 
+void HttpBackgroundChannelChild::CreateDataBridge() {
+  MOZ_ASSERT(OnSocketThread());
+  PBackgroundChild* actorChild =
+      BackgroundChild::GetOrCreateSocketActorForCurrentThread();
+  if (NS_WARN_IF(!actorChild)) {
+    return;
+  }
+
+  mDataBridgeChild = new BackgroundDataBridgeChild(this);
+  if (!actorChild->SendPBackgroundDataBridgeConstructor(
+          mDataBridgeChild, mChannelChild->ChannelId())) {
+    mDataBridgeChild = nullptr;
+  }
+}
+
 void HttpBackgroundChannelChild::OnChannelClosed() {
   LOG(("HttpBackgroundChannelChild::OnChannelClosed [this=%p]\n", this));
   MOZ_ASSERT(OnSocketThread());
@@ -55,6 +71,11 @@ void HttpBackgroundChannelChild::OnChannelClosed() {
 
   // Remove pending IPC messages as well.
   mQueuedRunnables.Clear();
+
+  if (mDataBridgeChild) {
+    mDataBridgeChild->Destroy();
+    mDataBridgeChild = nullptr;
+  }
 }
 
 void HttpBackgroundChannelChild::OnStartRequestReceived() {
@@ -94,16 +115,22 @@ bool HttpBackgroundChannelChild::CreateBackgroundChannel() {
     return false;
   }
 
-  // hold extra reference for IPDL
-  RefPtr<HttpBackgroundChannelChild> self = this;
-  Unused << self.forget().take();
-
   mChannelChild->OnBackgroundChildReady(this);
   return true;
 }
 
-bool HttpBackgroundChannelChild::IsWaitingOnStartRequest() {
+bool HttpBackgroundChannelChild::IsWaitingOnStartRequest(
+    bool aDataFromSocketProcess) {
   MOZ_ASSERT(OnSocketThread());
+
+  // When data is from socket process, it is possible that both mStartSent and
+  // mStartReceived are false here. We need to wait until OnStartRequest sent
+  // from parent process.
+  // TODO: We can remove this code when diversion is removed in bug 1604448.
+  if (aDataFromSocketProcess) {
+    return !mStartReceived;
+  }
+
   // Need to wait for OnStartRequest if it is sent by
   // parent process but not received by content process.
   return (mStartSent && !mStartReceived);
@@ -121,25 +148,29 @@ IPCResult HttpBackgroundChannelChild::RecvOnStartRequestSent() {
 
 IPCResult HttpBackgroundChannelChild::RecvOnTransportAndData(
     const nsresult& aChannelStatus, const nsresult& aTransportStatus,
-    const uint64_t& aOffset, const uint32_t& aCount, const nsCString& aData) {
-  LOG(("HttpBackgroundChannelChild::RecvOnTransportAndData [this=%p]\n", this));
+    const uint64_t& aOffset, const uint32_t& aCount, const nsCString& aData,
+    const bool& aDataFromSocketProcess) {
+  LOG(
+      ("HttpBackgroundChannelChild::RecvOnTransportAndData [this=%p, "
+       "aDataFromSocketProcess=%d]\n",
+       this, aDataFromSocketProcess));
   MOZ_ASSERT(OnSocketThread());
 
   if (NS_WARN_IF(!mChannelChild)) {
     return IPC_OK();
   }
 
-  if (IsWaitingOnStartRequest()) {
+  if (IsWaitingOnStartRequest(aDataFromSocketProcess)) {
     LOG(("  > pending until OnStartRequest [offset=%" PRIu64 " count=%" PRIu32
          "]\n",
          aOffset, aCount));
 
     mQueuedRunnables.AppendElement(
         NewRunnableMethod<const nsresult, const nsresult, const uint64_t,
-                          const uint32_t, const nsCString>(
+                          const uint32_t, const nsCString, bool>(
             "HttpBackgroundChannelChild::RecvOnTransportAndData", this,
             &HttpBackgroundChannelChild::RecvOnTransportAndData, aChannelStatus,
-            aTransportStatus, aOffset, aCount, aData));
+            aTransportStatus, aOffset, aCount, aData, aDataFromSocketProcess));
 
     return IPC_OK();
   }
@@ -151,9 +182,10 @@ IPCResult HttpBackgroundChannelChild::RecvOnTransportAndData(
 }
 
 IPCResult HttpBackgroundChannelChild::RecvOnStopRequest(
-    const nsresult& aChannelStatus, const ResourceTimingStruct& aTiming,
+    const nsresult& aChannelStatus, const ResourceTimingStructArgs& aTiming,
     const TimeStamp& aLastActiveTabOptHit,
-    const nsHttpHeaderArray& aResponseTrailers) {
+    const nsHttpHeaderArray& aResponseTrailers,
+    const nsTArray<ConsoleReportCollected>& aConsoleReports) {
   LOG(("HttpBackgroundChannelChild::RecvOnStopRequest [this=%p]\n", this));
   MOZ_ASSERT(gSocketTransportService);
   MOZ_ASSERT(gSocketTransportService->IsOnCurrentThreadInfallible());
@@ -172,74 +204,22 @@ IPCResult HttpBackgroundChannelChild::RecvOnStopRequest(
     LOG(("  > pending until OnStartRequest [status=%" PRIx32 "]\n",
          static_cast<uint32_t>(aChannelStatus)));
 
-    mQueuedRunnables.AppendElement(
-        NewRunnableMethod<const nsresult, const ResourceTimingStruct,
-                          const TimeStamp, const nsHttpHeaderArray>(
-            "HttpBackgroundChannelChild::RecvOnStopRequest", this,
-            &HttpBackgroundChannelChild::RecvOnStopRequest, aChannelStatus,
-            aTiming, aLastActiveTabOptHit, aResponseTrailers));
+    RefPtr<HttpBackgroundChannelChild> self = this;
 
+    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction(
+        "HttpBackgroundChannelChild::RecvOnStopRequest",
+        [self, aChannelStatus, aTiming, aLastActiveTabOptHit, aResponseTrailers,
+         consoleReports = aConsoleReports.Clone()] {
+          self->RecvOnStopRequest(aChannelStatus, aTiming, aLastActiveTabOptHit,
+                                  aResponseTrailers, consoleReports);
+        });
+
+    mQueuedRunnables.AppendElement(task.forget());
     return IPC_OK();
   }
 
   mChannelChild->ProcessOnStopRequest(aChannelStatus, aTiming,
-                                      aResponseTrailers);
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvOnProgress(
-    const int64_t& aProgress, const int64_t& aProgressMax) {
-  LOG(("HttpBackgroundChannelChild::RecvOnProgress [this=%p progress=%" PRId64
-       " max=%" PRId64 "]\n",
-       this, aProgress, aProgressMax));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  if (IsWaitingOnStartRequest()) {
-    LOG(("  > pending until OnStartRequest [progress=%" PRId64 " max=%" PRId64
-         "]\n",
-         aProgress, aProgressMax));
-
-    mQueuedRunnables.AppendElement(
-        NewRunnableMethod<const int64_t, const int64_t>(
-            "HttpBackgroundChannelChild::RecvOnProgress", this,
-            &HttpBackgroundChannelChild::RecvOnProgress, aProgress,
-            aProgressMax));
-
-    return IPC_OK();
-  }
-
-  mChannelChild->ProcessOnProgress(aProgress, aProgressMax);
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvOnStatus(const nsresult& aStatus) {
-  LOG(("HttpBackgroundChannelChild::RecvOnStatus [this=%p status=%" PRIx32
-       "]\n",
-       this, static_cast<uint32_t>(aStatus)));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  if (IsWaitingOnStartRequest()) {
-    LOG(("  > pending until OnStartRequest [status=%" PRIx32 "]\n",
-         static_cast<uint32_t>(aStatus)));
-
-    mQueuedRunnables.AppendElement(NewRunnableMethod<const nsresult>(
-        "HttpBackgroundChannelChild::RecvOnStatus", this,
-        &HttpBackgroundChannelChild::RecvOnStatus, aStatus));
-
-    return IPC_OK();
-  }
-
-  mChannelChild->ProcessOnStatus(aStatus);
+                                      aResponseTrailers, aConsoleReports);
 
   return IPC_OK();
 }
@@ -291,135 +271,6 @@ IPCResult HttpBackgroundChannelChild::RecvDivertMessages() {
   return IPC_OK();
 }
 
-IPCResult
-HttpBackgroundChannelChild::RecvNotifyChannelClassifierProtectionDisabled(
-    const uint32_t& aAcceptedReason) {
-  LOG(
-      ("HttpBackgroundChannelChild::"
-       "RecvNotifyChannelClassifierProtectionDisabled [this=%p "
-       "aAcceptedReason=%" PRIu32 "]\n",
-       this, aAcceptedReason));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  // NotifyChannelClassifierProtectionDisabled has no order dependency to
-  // OnStartRequest. It this be handled as soon as possible
-  mChannelChild->ProcessNotifyChannelClassifierProtectionDisabled(
-      aAcceptedReason);
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvNotifyCookieAllowed() {
-  LOG(("HttpBackgroundChannelChild::RecvNotifyCookieAllowed [this=%p]\n",
-       this));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  mChannelChild->ProcessNotifyCookieAllowed();
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvNotifyCookieBlocked(
-    const uint32_t& aRejectedReason) {
-  LOG(
-      ("HttpBackgroundChannelChild::RecvNotifyCookieBlocked [this=%p "
-       "aRejectedReason=%" PRIu32 "]\n",
-       this, aRejectedReason));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  mChannelChild->ProcessNotifyCookieBlocked(aRejectedReason);
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvNotifyClassificationFlags(
-    const uint32_t& aClassificationFlags, const bool& aIsThirdParty) {
-  LOG(
-      ("HttpBackgroundChannelChild::RecvNotifyClassificationFlags "
-       "classificationFlags=%" PRIu32 ", thirdparty=%d [this=%p]\n",
-       aClassificationFlags, static_cast<int>(aIsThirdParty), this));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  // NotifyClassificationFlags has no order dependency to OnStartRequest.
-  // It this be handled as soon as possible
-  mChannelChild->ProcessNotifyClassificationFlags(aClassificationFlags,
-                                                  aIsThirdParty);
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvNotifyFlashPluginStateChanged(
-    const nsIHttpChannel::FlashPluginState& aState) {
-  LOG(
-      ("HttpBackgroundChannelChild::RecvNotifyFlashPluginStateChanged "
-       "[this=%p]\n",
-       this));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  // NotifyFlashPluginStateChanged has no order dependency to OnStartRequest.
-  // It this be handled as soon as possible
-  mChannelChild->ProcessNotifyFlashPluginStateChanged(aState);
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvSetClassifierMatchedInfo(
-    const ClassifierInfo& info) {
-  LOG(("HttpBackgroundChannelChild::RecvSetClassifierMatchedInfo [this=%p]\n",
-       this));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  // SetClassifierMatchedInfo has no order dependency to OnStartRequest.
-  // It this be handled as soon as possible
-  mChannelChild->ProcessSetClassifierMatchedInfo(info.list(), info.provider(),
-                                                 info.fullhash());
-
-  return IPC_OK();
-}
-
-IPCResult HttpBackgroundChannelChild::RecvSetClassifierMatchedTrackingInfo(
-    const ClassifierInfo& info) {
-  LOG(
-      ("HttpBackgroundChannelChild::RecvSetClassifierMatchedTrackingInfo "
-       "[this=%p]\n",
-       this));
-  MOZ_ASSERT(OnSocketThread());
-
-  if (NS_WARN_IF(!mChannelChild)) {
-    return IPC_OK();
-  }
-
-  // SetClassifierMatchedTrackingInfo has no order dependency to OnStartRequest.
-  // It this be handled as soon as possible
-  mChannelChild->ProcessSetClassifierMatchedTrackingInfo(info.list(),
-                                                         info.fullhash());
-
-  return IPC_OK();
-}
 void HttpBackgroundChannelChild::ActorDestroy(ActorDestroyReason aWhy) {
   LOG(("HttpBackgroundChannelChild::ActorDestroy[this=%p]\n", this));
   // This function might be called during shutdown phase, so OnSocketThread()
@@ -440,7 +291,8 @@ void HttpBackgroundChannelChild::ActorDestroy(ActorDestroyReason aWhy) {
     mQueuedRunnables.AppendElement(NS_NewRunnableFunction(
         "HttpBackgroundChannelChild::ActorDestroy", [self]() {
           MOZ_ASSERT(OnSocketThread());
-          RefPtr<HttpChannelChild> channelChild = self->mChannelChild.forget();
+          RefPtr<HttpChannelChild> channelChild =
+              std::move(self->mChannelChild);
 
           if (channelChild) {
             channelChild->OnBackgroundChildDestroyed(self);
@@ -450,7 +302,7 @@ void HttpBackgroundChannelChild::ActorDestroy(ActorDestroyReason aWhy) {
   }
 
   if (mChannelChild) {
-    RefPtr<HttpChannelChild> channelChild = mChannelChild.forget();
+    RefPtr<HttpChannelChild> channelChild = std::move(mChannelChild);
 
     channelChild->OnBackgroundChildDestroyed(this);
   }

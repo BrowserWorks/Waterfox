@@ -6,24 +6,33 @@
 
 #include "mozilla/layers/APZInputBridge.h"
 
-#include "gfxPrefs.h"                       // for gfxPrefs
 #include "InputData.h"                      // for MouseInput, etc
+#include "InputBlockState.h"                // for InputBlockState
 #include "mozilla/dom/WheelEventBinding.h"  // for WheelEvent constants
 #include "mozilla/EventStateManager.h"      // for EventStateManager
 #include "mozilla/layers/APZThreadUtils.h"  // for AssertOnControllerThread, etc
 #include "mozilla/MouseEvents.h"            // for WidgetMouseEvent
-#include "mozilla/TextEvents.h"             // for WidgetKeyboardEvent
-#include "mozilla/TouchEvents.h"            // for WidgetTouchEvent
-#include "mozilla/WheelHandlingHelper.h"    // for WheelDeltaHorizontalizer,
-                                            //     WheelDeltaAdjustmentStrategy
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/StaticPrefs_general.h"
+#include "mozilla/StaticPrefs_test.h"
+#include "mozilla/TextEvents.h"           // for WidgetKeyboardEvent
+#include "mozilla/TouchEvents.h"          // for WidgetTouchEvent
+#include "mozilla/WheelHandlingHelper.h"  // for WheelDeltaHorizontalizer,
+                                          //     WheelDeltaAdjustmentStrategy
 
 namespace mozilla {
 namespace layers {
 
+APZEventResult::APZEventResult()
+    : mStatus(nsEventStatus_eIgnore),
+      mTargetIsRoot(false),
+      mInputBlockId(InputBlockState::NO_BLOCK_ID),
+      mHitRegionWithApzAwareListeners(false) {}
+
 static bool WillHandleMouseEvent(const WidgetMouseEventBase& aEvent) {
   return aEvent.mMessage == eMouseMove || aEvent.mMessage == eMouseDown ||
          aEvent.mMessage == eMouseUp || aEvent.mMessage == eDragEnd ||
-         (gfxPrefs::TestEventsAsyncEnabled() &&
+         (StaticPrefs::test_events_async_enabled() &&
           aEvent.mMessage == eMouseHitTest);
 }
 
@@ -38,16 +47,10 @@ Maybe<APZWheelAction> APZInputBridge::ActionForWheelEvent(
   return EventStateManager::APZWheelActionFor(aEvent);
 }
 
-nsEventStatus APZInputBridge::ReceiveInputEvent(
-    WidgetInputEvent& aEvent, ScrollableLayerGuid* aOutTargetGuid,
-    uint64_t* aOutInputBlockId) {
+APZEventResult APZInputBridge::ReceiveInputEvent(WidgetInputEvent& aEvent) {
   APZThreadUtils::AssertOnControllerThread();
 
-  // Initialize aOutInputBlockId to a sane value, and then later we overwrite
-  // it if the input event goes into a block.
-  if (aOutInputBlockId) {
-    *aOutInputBlockId = 0;
-  }
+  APZEventResult result;
 
   switch (aEvent.mClass) {
     case eMouseEventClass:
@@ -59,42 +62,29 @@ nsEventStatus APZInputBridge::ReceiveInputEvent(
         UpdateWheelTransaction(mouseEvent.mRefPoint, mouseEvent.mMessage);
       }
 
-      // If zooming is enabled, mark the mouse event as "ignore root
-      // scroll frame". This ensures that the main-thread hit test the
-      // mouse event undergoes (in PositionedEventTargeting.cpp) uses
-      // the IGNORE_ROOT_SCROLL_FRAME flag, which is needed for correct
-      // hit testing in a zoomed-in or zoomed-out state.
-      // FIXME: bug 1525793 -- this may need to handle zooming or not on a
-      // per-document basis.
-      if (gfxPrefs::APZAllowZooming()) {
-        mouseEvent.mIgnoreRootScrollFrame = true;
-      }
-
       if (WillHandleMouseEvent(mouseEvent)) {
         MouseInput input(mouseEvent);
         input.mOrigin =
             ScreenPoint(mouseEvent.mRefPoint.x, mouseEvent.mRefPoint.y);
 
-        nsEventStatus status =
-            ReceiveInputEvent(input, aOutTargetGuid, aOutInputBlockId);
+        result = ReceiveInputEvent(input);
 
         mouseEvent.mRefPoint.x = input.mOrigin.x;
         mouseEvent.mRefPoint.y = input.mOrigin.y;
         mouseEvent.mFlags.mHandledByAPZ = input.mHandledByAPZ;
         mouseEvent.mFocusSequenceNumber = input.mFocusSequenceNumber;
         aEvent.mLayersId = input.mLayersId;
-        return status;
+        return result;
       }
 
-      ProcessUnhandledEvent(&mouseEvent.mRefPoint, aOutTargetGuid,
+      ProcessUnhandledEvent(&mouseEvent.mRefPoint, &result.mTargetGuid,
                             &aEvent.mFocusSequenceNumber, &aEvent.mLayersId);
-      return nsEventStatus_eIgnore;
+      return result;
     }
     case eTouchEventClass: {
       WidgetTouchEvent& touchEvent = *aEvent.AsTouchEvent();
       MultiTouchInput touchInput(touchEvent);
-      nsEventStatus result =
-          ReceiveInputEvent(touchInput, aOutTargetGuid, aOutInputBlockId);
+      result = ReceiveInputEvent(touchInput);
       // touchInput was modified in-place to possibly remove some
       // touch points (if we are overscrolled), and the coordinates were
       // modified using the APZ untransform. We need to copy these changes
@@ -116,13 +106,13 @@ nsEventStatus APZInputBridge::ReceiveInputEvent(
       if (Maybe<APZWheelAction> action = ActionForWheelEvent(&wheelEvent)) {
         ScrollWheelInput::ScrollMode scrollMode =
             ScrollWheelInput::SCROLLMODE_INSTANT;
-        if (gfxPrefs::SmoothScrollEnabled() &&
+        if (StaticPrefs::general_smoothScroll() &&
             ((wheelEvent.mDeltaMode ==
                   dom::WheelEvent_Binding::DOM_DELTA_LINE &&
-              gfxPrefs::WheelSmoothScrollEnabled()) ||
+              StaticPrefs::general_smoothScroll_mouseWheel()) ||
              (wheelEvent.mDeltaMode ==
                   dom::WheelEvent_Binding::DOM_DELTA_PAGE &&
-              gfxPrefs::PageSmoothScrollEnabled()))) {
+              StaticPrefs::general_smoothScroll_pages()))) {
           scrollMode = ScrollWheelInput::SCROLLMODE_SMOOTH;
         }
 
@@ -160,45 +150,45 @@ nsEventStatus APZInputBridge::ReceiveInputEvent(
               &wheelEvent, &input.mUserDeltaMultiplierX,
               &input.mUserDeltaMultiplierY);
 
-          nsEventStatus status =
-              ReceiveInputEvent(input, aOutTargetGuid, aOutInputBlockId);
+          result = ReceiveInputEvent(input);
           wheelEvent.mRefPoint.x = input.mOrigin.x;
           wheelEvent.mRefPoint.y = input.mOrigin.y;
           wheelEvent.mFlags.mHandledByAPZ = input.mHandledByAPZ;
           wheelEvent.mFocusSequenceNumber = input.mFocusSequenceNumber;
           aEvent.mLayersId = input.mLayersId;
 
-          return status;
+          return result;
         }
       }
 
       UpdateWheelTransaction(aEvent.mRefPoint, aEvent.mMessage);
-      ProcessUnhandledEvent(&aEvent.mRefPoint, aOutTargetGuid,
+      ProcessUnhandledEvent(&aEvent.mRefPoint, &result.mTargetGuid,
                             &aEvent.mFocusSequenceNumber, &aEvent.mLayersId);
-      return nsEventStatus_eIgnore;
+      result.mStatus = nsEventStatus_eIgnore;
+      return result;
     }
     case eKeyboardEventClass: {
       WidgetKeyboardEvent& keyboardEvent = *aEvent.AsKeyboardEvent();
 
       KeyboardInput input(keyboardEvent);
 
-      nsEventStatus status =
-          ReceiveInputEvent(input, aOutTargetGuid, aOutInputBlockId);
+      result = ReceiveInputEvent(input);
 
       keyboardEvent.mFlags.mHandledByAPZ = input.mHandledByAPZ;
       keyboardEvent.mFocusSequenceNumber = input.mFocusSequenceNumber;
-      return status;
+      return result;
     }
     default: {
       UpdateWheelTransaction(aEvent.mRefPoint, aEvent.mMessage);
-      ProcessUnhandledEvent(&aEvent.mRefPoint, aOutTargetGuid,
+      ProcessUnhandledEvent(&aEvent.mRefPoint, &result.mTargetGuid,
                             &aEvent.mFocusSequenceNumber, &aEvent.mLayersId);
-      return nsEventStatus_eIgnore;
+      return result;
     }
   }
 
   MOZ_ASSERT_UNREACHABLE("Invalid WidgetInputEvent type.");
-  return nsEventStatus_eConsumeNoDefault;
+  result.mStatus = nsEventStatus_eConsumeNoDefault;
+  return result;
 }
 
 }  // namespace layers

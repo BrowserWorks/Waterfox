@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title "Wyszukiwanie">
+<!ENTITY legendHeader "Domyślna wyszukiwarka">
+<!ENTITY defaultSearchEngine.label "Domyślna wyszukiwarka internetowa:">
+<!ENTITY defaultSearchEngine.accesskey "D">
+
+<!ENTITY engineManager.label "Zarządzaj wyszukiwarkami…">
+
+<!ENTITY searchResults.label "Wyniki wyszukiwania">
+
+<!ENTITY openInTab.label "Otwieraj nowe karty dla wyników wyszukiwania w panelu bocznym">
+<!ENTITY openInTab.accesskey "t">
+<!ENTITY openContextSearchTab.label "Otwieraj nowe karty zamiast okien dla wyników wyszukiwań zainicjowanych za pomocą menu kontekstowego">
+<!ENTITY openContextSearchTab.accesskey "w">
+<!ENTITY openSidebarSearchPanel.label "Otwórz kartę Szukaj w panelu bocznym po uruchomieniu wyszukiwania">
+<!ENTITY openSidebarSearchPanel.accesskey "O">

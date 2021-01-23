@@ -1,4 +1,3 @@
-
 /*
 Copyright (c) 2007, Adobe Systems, Incorporated
 All rights reserved.
@@ -246,21 +245,6 @@ int nr_ice_ctx_set_interface_prioritizer(nr_ice_ctx *ctx, nr_interface_prioritiz
     return(_status);
   }
 
-int nr_ice_ctx_set_turn_tcp_socket_wrapper(nr_ice_ctx *ctx, nr_socket_wrapper_factory *wrapper)
-  {
-    int _status;
-
-    if (ctx->turn_tcp_socket_wrapper) {
-      ABORT(R_ALREADY);
-    }
-
-    ctx->turn_tcp_socket_wrapper = wrapper;
-
-    _status=0;
-   abort:
-    return(_status);
-  }
-
 void nr_ice_ctx_set_socket_factory(nr_ice_ctx *ctx, nr_socket_factory *factory)
   {
     nr_socket_factory_destroy(&ctx->socket_factory);
@@ -420,6 +404,8 @@ int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp)
       }
     }
 
+    ctx->target_for_default_local_address_lookup=0;
+
     STAILQ_INIT(&ctx->streams);
     STAILQ_INIT(&ctx->sockets);
     STAILQ_INIT(&ctx->foundations);
@@ -455,6 +441,8 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
 
     RFREE(ctx->local_addrs);
 
+    RFREE(ctx->target_for_default_local_address_lookup);
+
     for (i = 0; i < ctx->turn_server_ct; i++) {
         RFREE(ctx->turn_servers[i].username);
         r_data_destroy(&ctx->turn_servers[i].password);
@@ -475,7 +463,6 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
 
     nr_resolver_destroy(&ctx->resolver);
     nr_interface_prioritizer_destroy(&ctx->interface_prioritizer);
-    nr_socket_wrapper_factory_destroy(&ctx->turn_tcp_socket_wrapper);
     nr_socket_factory_destroy(&ctx->socket_factory);
 
     RFREE(ctx);
@@ -513,7 +500,6 @@ void nr_ice_gather_finished_cb(NR_SOCKET s, int h, void *cb_arg)
     nr_ice_ctx *ctx;
     nr_ice_media_stream *stream;
     int component_id;
-
 
     assert(cb_arg);
     if (!cb_arg)
@@ -603,34 +589,43 @@ static int nr_ice_ctx_pair_new_trickle_candidates(nr_ice_ctx *ctx, nr_ice_candid
     return(_status);
   }
 
-/* Get the default address by doing a connect to a known public IP address,
-   in this case Google public DNS:
+/* Get the default address by creating a UDP socket, binding it to a wildcard
+   address, and connecting it to the remote IP. Because this is UDP, no packets
+   are sent. This lets us query the local address assigned to the socket by the
+   kernel.
+
+   If the context's remote address is NULL, then the application wasn't loaded
+   over the network, and we can fall back on connecting to a known public
+   address (namely Google's):
 
    IPv4: 8.8.8.8
    IPv6: 2001:4860:4860::8888
-
-   Then we can do getsockname to get the address. No packets get sent
-   since this is UDP. It's just a way to get the address.
 */
 static int nr_ice_get_default_address(nr_ice_ctx *ctx, int ip_version, nr_transport_addr* addrp)
   {
     int r,_status;
-    nr_transport_addr addr;
-    nr_transport_addr remote_addr;
+    nr_transport_addr addr, known_remote_addr;
+    nr_transport_addr *remote_addr=ctx->target_for_default_local_address_lookup;
     nr_socket *sock=0;
 
     switch(ip_version) {
       case NR_IPV4:
         if ((r=nr_str_port_to_transport_addr("0.0.0.0", 0, IPPROTO_UDP, &addr)))
           ABORT(r);
-        if ((r=nr_str_port_to_transport_addr("8.8.8.8", 53, IPPROTO_UDP, &remote_addr)))
-          ABORT(r);
+        if (!remote_addr || nr_transport_addr_is_loopback(remote_addr)) {
+          if ((r=nr_str_port_to_transport_addr("8.8.8.8", 53, IPPROTO_UDP, &known_remote_addr)))
+            ABORT(r);
+          remote_addr=&known_remote_addr;
+        }
         break;
       case NR_IPV6:
         if ((r=nr_str_port_to_transport_addr("::0", 0, IPPROTO_UDP, &addr)))
           ABORT(r);
-        if ((r=nr_str_port_to_transport_addr("2001:4860:4860::8888", 53, IPPROTO_UDP, &remote_addr)))
-          ABORT(r);
+        if (!remote_addr || nr_transport_addr_is_loopback(remote_addr)) {
+          if ((r=nr_str_port_to_transport_addr("2001:4860:4860::8888", 53, IPPROTO_UDP, &known_remote_addr)))
+            ABORT(r);
+          remote_addr=&known_remote_addr;
+        }
         break;
       default:
         assert(0);
@@ -639,7 +634,7 @@ static int nr_ice_get_default_address(nr_ice_ctx *ctx, int ip_version, nr_transp
 
     if ((r=nr_socket_factory_create_socket(ctx->socket_factory, &addr, &sock)))
       ABORT(r);
-    if ((r=nr_socket_connect(sock, &remote_addr)))
+    if ((r=nr_socket_connect(sock, remote_addr)))
       ABORT(r);
     if ((r=nr_socket_getaddr(sock, addrp)))
       ABORT(r);
@@ -686,6 +681,44 @@ static int nr_ice_get_default_local_address(nr_ice_ctx *ctx, int ip_version, nr_
     return(_status);
   }
 
+/* if handed a IPv4 default_local_addr, looks for IPv6 address on same interface
+   if handed a IPv6 default_local_addr, looks for IPv4 address on same interface
+*/
+static int nr_ice_get_assoc_interface_address(nr_local_addr* default_local_addr,
+                                              nr_local_addr* local_addrs, int addr_ct,
+                                              nr_local_addr* assoc_addrp)
+  {
+    int r, _status;
+    int i, ip_version;
+
+    if (!default_local_addr || !local_addrs || !addr_ct) {
+      ABORT(R_BAD_ARGS);
+    }
+
+    /* set _status to R_EOD in case we don't find an associated address */
+    _status = R_EOD;
+
+    /* look for IPv6 if we have IPv4, look for IPv4 if we have IPv6 */
+    ip_version = (NR_IPV4 == default_local_addr->addr.ip_version?NR_IPV6:NR_IPV4);
+
+    for (i=0; i<addr_ct; ++i) {
+      /* if we find the ip_version we're looking for on the matching interface,
+         copy it to assoc_addrp.
+      */
+      if (local_addrs[i].addr.ip_version == ip_version &&
+          !strcmp(local_addrs[i].addr.ifname, default_local_addr->addr.ifname)) {
+        if (r=nr_local_addr_copy(assoc_addrp, &local_addrs[i])) {
+          ABORT(r);
+        }
+        _status = 0;
+        break;
+      }
+    }
+
+  abort:
+    return(_status);
+  }
+
 int nr_ice_set_local_addresses(nr_ice_ctx *ctx,
                                nr_local_addr* stun_addrs, int stun_addr_ct)
   {
@@ -696,10 +729,6 @@ int nr_ice_set_local_addresses(nr_ice_ctx *ctx,
     nr_local_addr default_addrs[2];
     int default_addr_ct = 0;
 
-    if (ctx->local_addrs) {
-      r_log(LOG_ICE,LOG_WARNING,"ICE(%s): local addresses already set, no work to do",ctx->label);
-      ABORT(R_ALREADY);
-    }
     if (!stun_addrs || !stun_addr_ct) {
       r_log(LOG_ICE,LOG_ERR,"ICE(%s): no stun addrs provided",ctx->label);
       ABORT(R_BAD_ARGS);
@@ -740,14 +769,37 @@ int nr_ice_set_local_addresses(nr_ice_ctx *ctx,
           ctx->label,
           (char*)(ctx->flags & NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS?"yes":"no"));
     if ((!addr_ct) || (ctx->flags & NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS)) {
-      /* Get just the default IPv4 and IPv6 addrs */
-      if(!nr_ice_get_default_local_address(ctx, NR_IPV4, local_addrs, addr_ct,
-                                           &default_addrs[default_addr_ct])) {
-        ++default_addr_ct;
-      }
-      if(!nr_ice_get_default_local_address(ctx, NR_IPV6, local_addrs, addr_ct,
-                                           &default_addrs[default_addr_ct])) {
-        ++default_addr_ct;
+      if (ctx->target_for_default_local_address_lookup) {
+        /* Get just the default IPv4 or IPv6 addr */
+        if(!nr_ice_get_default_local_address(
+               ctx, ctx->target_for_default_local_address_lookup->ip_version,
+               local_addrs, addr_ct, &default_addrs[default_addr_ct])) {
+          nr_local_addr *new_addr = &default_addrs[default_addr_ct];
+
+          ++default_addr_ct;
+
+          /* If we have a default target address, check for an associated
+             address on the same interface.  For example, if the default
+             target address is IPv6, this will find an associated IPv4
+             address on the same interface.
+             This makes ICE w/ dual stacks work better - Bug 1609124.
+          */
+          if(!nr_ice_get_assoc_interface_address(
+              new_addr, local_addrs, addr_ct,
+              &default_addrs[default_addr_ct])) {
+            ++default_addr_ct;
+          }
+        }
+      } else {
+        /* Get just the default IPv4 and IPv6 addrs */
+        if(!nr_ice_get_default_local_address(ctx, NR_IPV4, local_addrs, addr_ct,
+                                             &default_addrs[default_addr_ct])) {
+          ++default_addr_ct;
+        }
+        if(!nr_ice_get_default_local_address(ctx, NR_IPV6, local_addrs, addr_ct,
+                                             &default_addrs[default_addr_ct])) {
+          ++default_addr_ct;
+        }
       }
       if (!default_addr_ct) {
         r_log(LOG_ICE,LOG_ERR,"ICE(%s): failed to find default addresses",ctx->label);
@@ -763,7 +815,7 @@ int nr_ice_set_local_addresses(nr_ice_ctx *ctx,
     /* Sort interfaces by preference */
     if(ctx->interface_prioritizer) {
       for(i=0;i<addr_ct;i++){
-        if(r=nr_interface_prioritizer_add_interface(ctx->interface_prioritizer,addrs+i)) {
+        if((r=nr_interface_prioritizer_add_interface(ctx->interface_prioritizer,addrs+i)) && (r!=R_ALREADY)) {
           r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to add interface ",ctx->label);
           ABORT(r);
         }
@@ -775,6 +827,29 @@ int nr_ice_set_local_addresses(nr_ice_ctx *ctx,
     }
 
     if (r=nr_ice_ctx_set_local_addrs(ctx,addrs,addr_ct)) {
+      ABORT(r);
+    }
+
+    _status=0;
+  abort:
+    return(_status);
+  }
+
+int nr_ice_set_target_for_default_local_address_lookup(nr_ice_ctx *ctx, const char *target_ip, UINT2 target_port)
+  {
+    int r,_status;
+
+    if (ctx->target_for_default_local_address_lookup) {
+      RFREE(ctx->target_for_default_local_address_lookup);
+      ctx->target_for_default_local_address_lookup=0;
+    }
+
+    if (!(ctx->target_for_default_local_address_lookup=RCALLOC(sizeof(nr_transport_addr))))
+      ABORT(R_NO_MEMORY);
+
+    if ((r=nr_str_port_to_transport_addr(target_ip, target_port, IPPROTO_UDP, ctx->target_for_default_local_address_lookup))) {
+      RFREE(ctx->target_for_default_local_address_lookup);
+      ctx->target_for_default_local_address_lookup=0;
       ABORT(r);
     }
 
@@ -1010,6 +1085,10 @@ int nr_ice_ctx_hide_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand)
     if (ctx->flags & NR_ICE_CTX_FLAGS_HIDE_HOST_CANDIDATES) {
       if (cand->type == HOST)
         return 1;
+    }
+
+    if (cand->stream->obsolete) {
+      return 1;
     }
 
     return 0;

@@ -10,11 +10,6 @@
   const { Services } = ChromeUtils.import(
     "resource://gre/modules/Services.jsm"
   );
-  ChromeUtils.defineModuleGetter(
-    this,
-    "LoginHelper",
-    "resource://gre/modules/LoginHelper.jsm"
-  );
 
   MozElements.MozAutocompleteRichlistitem = class MozAutocompleteRichlistitem extends MozElements.MozRichlistitem {
     constructor() {
@@ -67,7 +62,7 @@
       }
 
       this.textContent = "";
-      this.appendChild(MozXULElement.parseXULToFragment(this._markup));
+      this.appendChild(this.constructor.fragment);
       this.initializeAttributeInheritance();
 
       this._boundaryCutoff = null;
@@ -82,41 +77,27 @@
         ".ac-site-icon": "src=image,selected,type",
         ".ac-title": "selected",
         ".ac-title-text": "selected",
-        ".ac-tags": "selected",
-        ".ac-tags-text": "selected",
-        ".ac-separator": "selected,actiontype,type",
-        ".ac-url": "selected,actiontype",
+        ".ac-separator": "selected,type",
+        ".ac-url": "selected",
         ".ac-url-text": "selected",
-        ".ac-action": "selected,actiontype",
-        ".ac-action-text": "selected",
       };
     }
 
-    get _markup() {
+    static get markup() {
       return `
-      <image class="ac-type-icon"></image>
-      <image class="ac-site-icon"></image>
+      <image class="ac-type-icon"/>
+      <image class="ac-site-icon"/>
       <hbox class="ac-title" align="center">
         <description class="ac-text-overflow-container">
-          <description class="ac-title-text"></description>
-        </description>
-      </hbox>
-      <hbox class="ac-tags" align="center">
-        <description class="ac-text-overflow-container">
-          <description class="ac-tags-text"></description>
+          <description class="ac-title-text"/>
         </description>
       </hbox>
       <hbox class="ac-separator" align="center">
-        <description class="ac-separator-text" value="—"></description>
+        <description class="ac-separator-text" value="—"/>
       </hbox>
-      <hbox class="ac-url" align="center">
+      <hbox class="ac-url" align="center" aria-hidden="true">
         <description class="ac-text-overflow-container">
-          <description class="ac-url-text"></description>
-        </description>
-      </hbox>
-      <hbox class="ac-action" align="center">
-        <description class="ac-text-overflow-container">
-          <description class="ac-action-text"></description>
+          <description class="ac-url-text"/>
         </description>
       </hbox>
     `;
@@ -130,41 +111,12 @@
       return this.querySelector(".ac-title-text");
     }
 
-    get _tags() {
-      return this.querySelector(".ac-tags");
-    }
-
-    get _tagsText() {
-      return this.querySelector(".ac-tags-text");
-    }
-
     get _separator() {
       return this.querySelector(".ac-separator");
     }
 
     get _urlText() {
       return this.querySelector(".ac-url-text");
-    }
-
-    get _actionText() {
-      return this.querySelector(".ac-action-text");
-    }
-
-    get label() {
-      // This property is a string that is read aloud by screen readers,
-      // so it must not contain anything that should not be user-facing.
-
-      let parts = [this.getAttribute("title"), this.getAttribute("displayurl")];
-      let label = parts.filter(str => str).join(" ");
-
-      // allow consumers that have extended popups to override
-      // the label values for the richlistitems
-      let panel = this.parentNode.parentNode;
-      if (panel.createResultLabel) {
-        return panel.createResultLabel(this, label);
-      }
-
-      return label;
     }
 
     get _stringBundle() {
@@ -190,7 +142,6 @@
       this.removeAttribute("image");
       this.removeAttribute("title");
       this.removeAttribute("text");
-      this.removeAttribute("displayurl");
     }
 
     _onOverflow() {
@@ -268,19 +219,13 @@
       return search.split(/\s+/);
     }
 
-    _setUpDescription(aDescriptionElement, aText, aNoEmphasis) {
+    _setUpDescription(aDescriptionElement, aText) {
       // Get rid of all previous text
       if (!aDescriptionElement) {
         return;
       }
       while (aDescriptionElement.hasChildNodes()) {
         aDescriptionElement.firstChild.remove();
-      }
-
-      // If aNoEmphasis is specified, don't add any emphasis
-      if (aNoEmphasis) {
-        aDescriptionElement.appendChild(document.createTextNode(aText));
-        return;
       }
 
       // Get the indices that separate match and non-match text
@@ -325,58 +270,14 @@
       }
     }
 
-    _setUpTags(tags) {
-      while (this._tagsText.hasChildNodes()) {
-        this._tagsText.firstChild.remove();
-      }
-
-      let anyTagsMatch = false;
-
-      // Include only tags that match the search string.
-      for (let tag of tags) {
-        // Check if the tag matches the search string.
-        let search = this.getAttribute("text");
-        let tokens = this._getSearchTokens(search);
-        let indices = this._getBoundaryIndices(tag, tokens);
-
-        if (
-          indices.length == 2 &&
-          indices[0] == 0 &&
-          indices[1] == tag.length
-        ) {
-          // The tag doesn't match the search string, so don't include it.
-          continue;
-        }
-
-        anyTagsMatch = true;
-
-        let tagSpan = document.createElementNS(
-          "http://www.w3.org/1999/xhtml",
-          "span"
-        );
-        tagSpan.classList.add("ac-tag");
-        this._tagsText.appendChild(tagSpan);
-
-        this._appendDescriptionSpans(indices, tag, tagSpan, this._tagsText);
-      }
-
-      return anyTagsMatch;
-    }
-
     _setUpEmphasisSpan(aSpan, aDescriptionElement) {
       aSpan.classList.add("ac-emphasize-text");
       switch (aDescriptionElement) {
         case this._titleText:
           aSpan.classList.add("ac-emphasize-text-title");
           break;
-        case this._tagsText:
-          aSpan.classList.add("ac-emphasize-text-tag");
-          break;
         case this._urlText:
           aSpan.classList.add("ac-emphasize-text-url");
-          break;
-        case this._actionText:
-          aSpan.classList.add("ac-emphasize-text-action");
           break;
       }
     }
@@ -477,40 +378,20 @@
     }
 
     _unescapeUrl(url) {
-      return Services.textToSubURI.unEscapeURIForUI("UTF-8", url);
+      return Services.textToSubURI.unEscapeURIForUI(url);
     }
 
     _reuseAcItem() {
-      let action = this._parseActionUrl(this.getAttribute("url"));
-      let popup = this.parentNode.parentNode;
+      this.collapsed = false;
 
-      // If the item is a searchengine action, then it should
-      // only be reused if the engine name is the same as the
-      // popup's override engine name, if any.
-      if (
-        !action ||
-        action.type != "searchengine" ||
-        !popup.overrideSearchEngineName ||
-        action.params.engineName == popup.overrideSearchEngineName
-      ) {
-        this.collapsed = false;
-
-        // The popup may have changed size between now and the last
-        // time the item was shown, so always handle over/underflow.
-        let dwu = window.windowUtils;
-        let popupWidth = dwu.getBoundsWithoutFlushing(this.parentNode).width;
-        if (
-          !this._previousPopupWidth ||
-          this._previousPopupWidth != popupWidth
-        ) {
-          this._previousPopupWidth = popupWidth;
-          this.handleOverUnderflow();
-        }
-
-        return true;
+      // The popup may have changed size between now and the last
+      // time the item was shown, so always handle over/underflow.
+      let dwu = window.windowUtils;
+      let popupWidth = dwu.getBoundsWithoutFlushing(this.parentNode).width;
+      if (!this._previousPopupWidth || this._previousPopupWidth != popupWidth) {
+        this._previousPopupWidth = popupWidth;
+        this.handleOverUnderflow();
       }
-
-      return false;
     }
 
     _adjustAcItem() {
@@ -521,176 +402,17 @@
       this.setAttribute("title", title);
       this.setAttribute("text", this.getAttribute("ac-text"));
 
-      let popup = this.parentNode.parentNode;
-      let titleLooksLikeUrl = false;
-      let displayUrl = originalUrl;
-      let emphasiseUrl = true;
-      let trimDisplayUrl = true;
-
       let type = this.getAttribute("originaltype");
       let types = new Set(type.split(/\s+/));
-      let initialTypes = new Set(types);
       // Remove types that should ultimately not be in the `type` string.
-      types.delete("action");
       types.delete("autofill");
-      types.delete("heuristic");
       type = [...types][0] || "";
+      this.setAttribute("type", type);
 
-      let action;
-
-      if (initialTypes.has("autofill") && !initialTypes.has("action")) {
-        // Treat autofills as visiturl actions, unless they are already also
-        // actions.
-        action = {
-          type: "visiturl",
-          params: { url: title },
-        };
-      }
-
-      this.removeAttribute("actiontype");
-      this.classList.remove(
-        "overridable-action",
-        "emptySearchQuery",
-        "aliasOffer"
-      );
-
-      // If the type includes an action, set up the item appropriately.
-      if (initialTypes.has("action") || action) {
-        action = action || this._parseActionUrl(originalUrl);
-        this.setAttribute("actiontype", action.type);
-
-        switch (action.type) {
-          case "switchtab": {
-            this.classList.add("overridable-action");
-            displayUrl = action.params.url;
-            let desc = this._stringBundle.GetStringFromName("switchToTab2");
-            this._setUpDescription(this._actionText, desc, true);
-            break;
-          }
-          case "remotetab": {
-            displayUrl = action.params.url;
-            let desc = action.params.deviceName;
-            this._setUpDescription(this._actionText, desc, true);
-            break;
-          }
-          case "searchengine": {
-            emphasiseUrl = false;
-
-            // The order here is not localizable, we default to appending
-            // "- Search with Engine" to the search string, to be able to
-            // properly generate emphasis pairs. That said, no localization
-            // changed the order while it was possible, so doesn't look like
-            // there's a strong need for that.
-            let {
-              engineName,
-              searchSuggestion,
-              searchQuery,
-              alias,
-            } = action.params;
-
-            // Override the engine name if the popup defines an override.
-            let override = popup.overrideSearchEngineName;
-            if (override && override != engineName) {
-              engineName = override;
-              action.params.engineName = override;
-              let newURL = PlacesUtils.mozActionURI(action.type, action.params);
-              this.setAttribute("url", newURL);
-            }
-
-            let engineStr = this._stringBundle.formatStringFromName(
-              "searchWithEngine",
-              [engineName],
-              1
-            );
-            this._setUpDescription(this._actionText, engineStr, true);
-
-            // Make the title by generating an array of pairs and its
-            // corresponding interpolation string (e.g., "%1$S") to pass to
-            // _generateEmphasisPairs.
-            let pairs;
-            if (searchSuggestion) {
-              // Check if the search query appears in the suggestion.  It may
-              // not.  If it does, then emphasize the query in the suggestion
-              // and otherwise just include the suggestion without emphasis.
-              let idx = searchSuggestion.indexOf(searchQuery);
-              if (idx >= 0) {
-                pairs = [
-                  [searchSuggestion.substring(0, idx), ""],
-                  [searchQuery, "match"],
-                  [searchSuggestion.substring(idx + searchQuery.length), ""],
-                ];
-              } else {
-                pairs = [[searchSuggestion, ""]];
-              }
-            } else if (
-              alias &&
-              !searchQuery.trim() &&
-              !initialTypes.has("heuristic")
-            ) {
-              // For non-heuristic alias results that have an empty query, we
-              // want to show "@engine -- Search with Engine" to make it clear
-              // that the user can search by selecting the result and using
-              // the alias.  Normally we hide the "Search with Engine" part
-              // until the result is selected or moused over, but not here.
-              // Add the aliasOffer class so we can detect this in the CSS.
-              this.classList.add("aliasOffer");
-              pairs = [[alias, ""]];
-            } else {
-              // Add the emptySearchQuery class if the search query is the
-              // empty string.  We use it to hide .ac-separator in CSS.
-              if (!searchQuery.trim()) {
-                this.classList.add("emptySearchQuery");
-              }
-              pairs = [[searchQuery, ""]];
-            }
-            let interpStr = pairs.map((pair, i) => `%${i + 1}$S`).join("");
-            title = this._generateEmphasisPairs(interpStr, pairs);
-
-            // If this is a default search match, we remove the image so we
-            // can style it ourselves with a generic search icon.
-            // We don't do this when matching an aliased search engine,
-            // because the icon helps with recognising which engine will be
-            // used (when using the default engine, we don't need that
-            // recognition).
-            if (!action.params.alias && !initialTypes.has("favicon")) {
-              this.removeAttribute("image");
-            }
-            break;
-          }
-          case "visiturl": {
-            emphasiseUrl = false;
-            displayUrl = action.params.url;
-            titleLooksLikeUrl = true;
-            let visitStr = this._stringBundle.GetStringFromName("visit");
-            this._setUpDescription(this._actionText, visitStr, true);
-            break;
-          }
-          case "extension": {
-            let content = action.params.content;
-            displayUrl = content;
-            trimDisplayUrl = false;
-            this._setUpDescription(this._actionText, content, true);
-            break;
-          }
-        }
-      }
-
-      if (trimDisplayUrl) {
-        let input = popup.input;
-        if (typeof input.trimValue == "function") {
-          displayUrl = input.trimValue(displayUrl);
-        }
-        displayUrl = this._unescapeUrl(displayUrl);
-      }
-      // For performance reasons we may want to limit the displayUrl size.
-      if (popup.textRunsMaxLen && displayUrl) {
-        displayUrl = displayUrl.substr(0, popup.textRunsMaxLen);
-      }
-      this.setAttribute("displayurl", displayUrl);
+      let displayUrl = this._unescapeUrl(originalUrl);
 
       // Show the domain as the title if we don't have a title.
       if (!title) {
-        titleLooksLikeUrl = true;
         try {
           let uri = Services.io.newURI(originalUrl);
           // Not all valid URLs have a domain.
@@ -703,75 +425,12 @@
         }
       }
 
-      this._tags.setAttribute("empty", "true");
-
-      if (type == "tag" || type == "bookmark-tag") {
-        // The title is separated from the tags by \x1F
-        let tags;
-        [title, tags] = title.split("\x1F");
-
-        // Each tag is split by a comma in an undefined order, so sort it
-        let sortedTags = tags.split(/\s*,\s*/).sort((a, b) => {
-          return a.localeCompare(a);
-        });
-
-        let anyTagsMatch = this._setUpTags(sortedTags);
-        if (anyTagsMatch) {
-          this._tags.removeAttribute("empty");
-        }
-        if (type == "bookmark-tag") {
-          type = "bookmark";
-        }
-      } else if (type == "keyword") {
-        // Note that this is a moz-action with action.type == keyword.
-        emphasiseUrl = false;
-        let keywordArg = this.getAttribute("text").replace(/^[^\s]+\s*/, "");
-        if (!keywordArg) {
-          // Treat keyword searches without arguments as visiturl actions.
-          type = "visiturl";
-          this.setAttribute("actiontype", "visiturl");
-          let visitStr = this._stringBundle.GetStringFromName("visit");
-          this._setUpDescription(this._actionText, visitStr, true);
-        } else {
-          let pairs = [[title, ""], [keywordArg, "match"]];
-          let interpStr = this._stringBundle.GetStringFromName(
-            "bookmarkKeywordSearch"
-          );
-          title = this._generateEmphasisPairs(interpStr, pairs);
-          // The action box will be visible since this is a moz-action, but
-          // we want it to appear as if it were not visible, so set its text
-          // to the empty string.
-          this._setUpDescription(this._actionText, "", false);
-        }
-      }
-
-      this.setAttribute("type", type);
-
-      if (titleLooksLikeUrl) {
-        this._titleText.setAttribute("lookslikeurl", "true");
-      } else {
-        this._titleText.removeAttribute("lookslikeurl");
-      }
-
       if (Array.isArray(title)) {
-        // For performance reasons we may want to limit the title size.
-        if (popup.textRunsMaxLen) {
-          title.forEach(t => {
-            // Limit all the even items.
-            for (let i = 0; i < t.length; i += 2) {
-              t[i] = t[i].substr(0, popup.textRunsMaxLen);
-            }
-          });
-        }
         this._setUpEmphasisedSections(this._titleText, title);
       } else {
-        // For performance reasons we may want to limit the title size.
-        if (popup.textRunsMaxLen && title) {
-          title = title.substr(0, popup.textRunsMaxLen);
-        }
-        this._setUpDescription(this._titleText, title, false);
+        this._setUpDescription(this._titleText, title);
       }
-      this._setUpDescription(this._urlText, displayUrl, !emphasiseUrl);
+      this._setUpDescription(this._urlText, displayUrl);
 
       // Removing the max-width may be jarring when the item is visible, but
       // we have no other choice to properly crop the text.
@@ -789,9 +448,7 @@
     _removeMaxWidths() {
       if (this._hasMaxWidths) {
         this._titleText.style.removeProperty("max-width");
-        this._tagsText.style.removeProperty("max-width");
         this._urlText.style.removeProperty("max-width");
-        this._actionText.style.removeProperty("max-width");
         this._hasMaxWidths = false;
       }
     }
@@ -802,14 +459,11 @@
     _handleOverflow() {
       let itemRect = this.parentNode.getBoundingClientRect();
       let titleRect = this._titleText.getBoundingClientRect();
-      let tagsRect = this._tagsText.getBoundingClientRect();
       let separatorRect = this._separator.getBoundingClientRect();
       let urlRect = this._urlText.getBoundingClientRect();
-      let actionRect = this._actionText.getBoundingClientRect();
-      let separatorURLActionWidth =
-        separatorRect.width + Math.max(urlRect.width, actionRect.width);
+      let separatorURLWidth = separatorRect.width + urlRect.width;
 
-      // Total width for the title and URL/action is the width of the item
+      // Total width for the title and URL is the width of the item
       // minus the start of the title text minus a little optional extra padding.
       // This extra padding amount is basically arbitrary but keeps the text
       // from getting too close to the popup's edge.
@@ -826,50 +480,22 @@
         popup.overflowPadding -
         (popup.margins ? popup.margins.end : 0);
 
-      if (this._tags.hasAttribute("empty")) {
-        // The tags box is not displayed in this case.
-        tagsRect.width = 0;
-      }
+      let titleWidth = titleRect.width;
+      if (titleWidth + separatorURLWidth > itemWidth) {
+        // The percentage of the item width allocated to the title.
+        let titlePct = 0.66;
 
-      let titleTagsWidth = titleRect.width + tagsRect.width;
-      if (titleTagsWidth + separatorURLActionWidth > itemWidth) {
-        // Title + tags + URL/action overflows the item width.
-
-        // The percentage of the item width allocated to the title and tags.
-        let titleTagsPct = 0.66;
-
-        let titleTagsAvailable = itemWidth - separatorURLActionWidth;
-        let titleTagsMaxWidth = Math.max(
-          titleTagsAvailable,
-          itemWidth * titleTagsPct
-        );
-        if (titleTagsWidth > titleTagsMaxWidth) {
-          // Title + tags overflows the max title + tags width.
-
-          // The percentage of the title + tags width allocated to the
-          // title.
-          let titlePct = 0.33;
-
-          let titleAvailable = titleTagsMaxWidth - tagsRect.width;
-          let titleMaxWidth = Math.max(
-            titleAvailable,
-            titleTagsMaxWidth * titlePct
-          );
-          let tagsAvailable = titleTagsMaxWidth - titleRect.width;
-          let tagsMaxWidth = Math.max(
-            tagsAvailable,
-            titleTagsMaxWidth * (1 - titlePct)
-          );
+        let titleAvailable = itemWidth - separatorURLWidth;
+        let titleMaxWidth = Math.max(titleAvailable, itemWidth * titlePct);
+        if (titleWidth > titleMaxWidth) {
           this._titleText.style.maxWidth = titleMaxWidth + "px";
-          this._tagsText.style.maxWidth = tagsMaxWidth + "px";
         }
-        let urlActionMaxWidth = Math.max(
-          itemWidth - titleTagsWidth,
-          itemWidth * (1 - titleTagsPct)
+        let urlMaxWidth = Math.max(
+          itemWidth - titleWidth,
+          itemWidth * (1 - titlePct)
         );
-        urlActionMaxWidth -= separatorRect.width;
-        this._urlText.style.maxWidth = urlActionMaxWidth + "px";
-        this._actionText.style.maxWidth = urlActionMaxWidth + "px";
+        urlMaxWidth -= separatorRect.width;
+        this._urlText.style.maxWidth = urlMaxWidth + "px";
         this._hasMaxWidths = true;
       }
     }
@@ -877,36 +503,6 @@
     handleOverUnderflow() {
       this._removeMaxWidths();
       this._handleOverflow();
-    }
-
-    _parseActionUrl(aUrl) {
-      if (!aUrl.startsWith("moz-action:")) {
-        return null;
-      }
-
-      // URL is in the format moz-action:ACTION,PARAMS
-      // Where PARAMS is a JSON encoded object.
-      let [, type, params] = aUrl.match(/^moz-action:([^,]+),(.*)$/);
-
-      let action = {
-        type,
-      };
-
-      try {
-        action.params = JSON.parse(params);
-        for (let key in action.params) {
-          action.params[key] = decodeURIComponent(action.params[key]);
-        }
-      } catch (e) {
-        // If this failed, we assume that params is not a JSON object, and
-        // is instead just a flat string. This may happen for legacy
-        // search components.
-        action.params = {
-          url: params,
-        };
-      }
-
-      return action;
     }
   };
 
@@ -951,40 +547,27 @@
         ".ac-type-icon": "selected,current,type",
         ".ac-site-icon": "src=image,selected,type",
         ".ac-title-text": "selected",
-        ".ac-tags-text": "selected",
-        ".ac-separator": "selected,actiontype,type",
-        ".ac-url": "selected,actiontype",
+        ".ac-separator": "selected,type",
+        ".ac-url": "selected",
         ".ac-url-text": "selected",
-        ".ac-action": "selected,actiontype",
-        ".ac-action-text": "selected",
       };
     }
 
-    get _markup() {
+    static get markup() {
       return `
-      <image class="ac-type-icon"></image>
-      <image class="ac-site-icon"></image>
+      <image class="ac-type-icon"/>
+      <image class="ac-site-icon"/>
       <vbox class="ac-title" align="left">
         <description class="ac-text-overflow-container">
-          <description class="ac-title-text"></description>
+          <description class="ac-title-text"/>
         </description>
       </vbox>
-      <hbox class="ac-tags" align="center">
-        <description class="ac-text-overflow-container">
-          <description class="ac-tags-text"></description>
-        </description>
-      </hbox>
       <hbox class="ac-separator" align="center">
-        <description class="ac-separator-text" value="—"></description>
+        <description class="ac-separator-text" value="—"/>
       </hbox>
       <hbox class="ac-url" align="center">
         <description class="ac-text-overflow-container">
-          <description class="ac-url-text"></description>
-        </description>
-      </hbox>
-      <hbox class="ac-action" align="center">
-        <description class="ac-text-overflow-container">
-          <description class="ac-action-text"></description>
+          <description class="ac-url-text"/>
         </description>
       </hbox>
     `;
@@ -1016,72 +599,68 @@
           return;
         }
 
+        const { LoginHelper } = ChromeUtils.import(
+          "resource://gre/modules/LoginHelper.jsm"
+        );
+
         LoginHelper.openPasswordManager(this.ownerGlobal, {
-          filterString: this._data.hostname,
           entryPoint: "autocomplete",
         });
+        Services.telemetry.recordEvent(
+          "exp_import",
+          "event",
+          "click",
+          "loginsFooter"
+        );
       }
 
       this.addEventListener("click", handleEvent);
     }
-
-    get _data() {
-      return JSON.parse(this.getAttribute("ac-value"));
-    }
-
-    _adjustAcItem() {
-      this._titleText.textContent = this._data.label;
-    }
   }
 
-  class MozAutocompleteRichlistitemLoginWithOrigin extends MozElements.MozRichlistitem {
+  class MozAutocompleteTwoLineRichlistitem extends MozElements.MozRichlistitem {
     connectedCallback() {
       if (this.delayConnectedCallback()) {
         return;
       }
 
       this.textContent = "";
-      this.appendChild(MozXULElement.parseXULToFragment(this._markup));
+      this.appendChild(this.constructor.fragment);
       this.initializeAttributeInheritance();
       this._adjustAcItem();
     }
 
     static get inheritedAttributes() {
       return {
-        ".login-username": "text=ac-value",
+        // getLabelAt:
+        ".line1-label": "text=ac-value",
+        // getCommentAt:
+        ".line2-label": "text=ac-label",
       };
     }
 
-    get _markup() {
+    static get markup() {
       return `
       <div xmlns="http://www.w3.org/1999/xhtml"
            xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-           class="login-wrapper">
+           class="two-line-wrapper">
         <xul:image class="ac-site-icon"></xul:image>
-        <div class="login-text">
-          <div class="login-row login-username"></div>
-          <div class="login-row login-origin"></div>
+        <div class="labels-wrapper">
+          <div class="label-row line1-label"></div>
+          <div class="label-row line2-label"></div>
         </div>
       </div>
     `;
     }
 
     _adjustAcItem() {
-      let outerBoxRect = this.parentNode.getBoundingClientRect();
-
+      const popup = this.parentNode.parentNode;
+      const minWidth = getComputedStyle(popup).minWidth.replace("px", "");
       // Make item fit in popup as XUL box could not constrain
       // item's width
-      this.firstElementChild.style.width = outerBoxRect.width + "px";
-
-      let data = JSON.parse(this.getAttribute("ac-label"));
-      let originElement = this.querySelector(".login-origin");
-      try {
-        let uri = Services.io.newURI(data.loginOrigin);
-        // Fallback to handle file: URIs
-        originElement.textContent = uri.displayHostPort || data.loginOrigin;
-      } catch (ex) {
-        originElement.textContent = data.loginOrigin;
-      }
+      // popup.width is equal to the input field's width from the content process
+      this.firstElementChild.style.width =
+        Math.max(minWidth, popup.width) + "px";
     }
 
     _onOverflow() {}
@@ -1089,6 +668,154 @@
     _onUnderflow() {}
 
     handleOverUnderflow() {}
+  }
+
+  class MozAutocompleteLoginRichlistitem extends MozAutocompleteTwoLineRichlistitem {
+    static get inheritedAttributes() {
+      return {
+        // getLabelAt:
+        ".line1-label": "text=ac-value",
+        // Don't inherit ac-label with getCommentAt since the label is JSON.
+      };
+    }
+
+    _adjustAcItem() {
+      super._adjustAcItem();
+
+      let details = JSON.parse(this.getAttribute("ac-label"));
+      this.querySelector(".line2-label").textContent = details.comment;
+    }
+  }
+
+  class MozAutocompleteGeneratedPasswordRichlistitem extends MozAutocompleteTwoLineRichlistitem {
+    constructor() {
+      super();
+
+      // Line 2 and line 3 both display text with a different line-height than
+      // line 1 but we want the line-height to be the same so we wrap the text
+      // in <span> and only adjust the line-height via font CSS properties on them.
+      this.generatedPasswordText = document.createElement("span");
+
+      this.line3Text = document.createElement("span");
+      this.line3 = document.createElement("div");
+      this.line3.className = "label-row generated-password-autosave";
+      this.line3.append(this.line3Text);
+    }
+
+    get _autoSaveString() {
+      if (!this.__autoSaveString) {
+        let brandShorterName = Services.strings
+          .createBundle("chrome://branding/locale/brand.properties")
+          .GetStringFromName("brandShorterName");
+        this.__autoSaveString = Services.strings
+          .createBundle("chrome://passwordmgr/locale/passwordmgr.properties")
+          .formatStringFromName("generatedPasswordWillBeSaved", [
+            brandShorterName,
+          ]);
+      }
+      return this.__autoSaveString;
+    }
+
+    _adjustAcItem() {
+      let { generatedPassword, willAutoSaveGeneratedPassword } = JSON.parse(
+        this.getAttribute("ac-label")
+      );
+      let line2Label = this.querySelector(".line2-label");
+      line2Label.textContent = "";
+      this.generatedPasswordText.textContent = generatedPassword;
+      line2Label.append(this.generatedPasswordText);
+
+      if (willAutoSaveGeneratedPassword) {
+        this.line3Text.textContent = this._autoSaveString;
+        this.querySelector(".labels-wrapper").append(this.line3);
+      } else {
+        this.line3.remove();
+      }
+
+      super._adjustAcItem();
+    }
+  }
+
+  class MozAutocompleteImportableLoginsRichlistitem extends MozAutocompleteTwoLineRichlistitem {
+    constructor() {
+      super();
+      MozXULElement.insertFTLIfNeeded("toolkit/main-window/autocomplete.ftl");
+
+      ChromeUtils.defineModuleGetter(
+        this,
+        "MigrationUtils",
+        "resource:///modules/MigrationUtils.jsm"
+      );
+
+      this.addEventListener("click", event => {
+        const browserId = this.getAttribute("ac-value");
+
+        // Handle clicks on the info icon to show support article.
+        if (event.target.classList.contains("ac-info-icon")) {
+          window.openTrustedLinkIn(
+            Services.urlFormatter.formatURLPref("app.support.baseURL") +
+              "password-import",
+            "tab",
+            {
+              relatedToCurrent: true,
+            }
+          );
+          Services.telemetry.recordEvent(
+            "exp_import",
+            "event",
+            "info",
+            browserId
+          );
+          return;
+        }
+
+        if (event.button != 0) {
+          return;
+        }
+
+        // Open the migration wizard pre-selecting the appropriate browser.
+        this.MigrationUtils.showMigrationWizard(window, [
+          this.MigrationUtils.MIGRATION_ENTRYPOINT_PASSWORDS,
+          browserId,
+        ]);
+        Services.telemetry.recordEvent(
+          "exp_import",
+          "event",
+          "click",
+          browserId
+        );
+      });
+    }
+
+    static get markup() {
+      return `
+      <div xmlns="http://www.w3.org/1999/xhtml"
+           xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+           class="two-line-wrapper">
+        <xul:image class="ac-site-icon" />
+        <div class="labels-wrapper">
+          <div class="label-row line1-label" data-l10n-name="line1" />
+          <div class="label-row line2-label" data-l10n-name="line2" />
+        </div>
+        <xul:image class="ac-info-icon"
+                   data-l10n-id="autocomplete-import-logins-info" />
+      </div>
+    `;
+    }
+
+    _adjustAcItem() {
+      document.l10n.setAttributes(
+        this.querySelector(".labels-wrapper"),
+        "autocomplete-import-logins",
+        {
+          browser: this.MigrationUtils.getBrowserName(
+            this.getAttribute("ac-value")
+          ),
+          host: this.getAttribute("ac-label").replace(/^www\./, ""),
+        }
+      );
+      super._adjustAcItem();
+    }
   }
 
   customElements.define(
@@ -1116,8 +843,32 @@
   );
 
   customElements.define(
-    "autocomplete-richlistitem-login-with-origin",
-    MozAutocompleteRichlistitemLoginWithOrigin,
+    "autocomplete-two-line-richlistitem",
+    MozAutocompleteTwoLineRichlistitem,
+    {
+      extends: "richlistitem",
+    }
+  );
+
+  customElements.define(
+    "autocomplete-login-richlistitem",
+    MozAutocompleteLoginRichlistitem,
+    {
+      extends: "richlistitem",
+    }
+  );
+
+  customElements.define(
+    "autocomplete-generated-password-richlistitem",
+    MozAutocompleteGeneratedPasswordRichlistitem,
+    {
+      extends: "richlistitem",
+    }
+  );
+
+  customElements.define(
+    "autocomplete-importable-logins-richlistitem",
+    MozAutocompleteImportableLoginsRichlistitem,
     {
       extends: "richlistitem",
     }

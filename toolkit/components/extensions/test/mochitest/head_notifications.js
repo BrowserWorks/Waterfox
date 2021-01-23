@@ -73,7 +73,7 @@ function mockServicesChromeScript() {
 
     createInstance: function(outer, iid) {
       if (outer != null) {
-        throw Cr.NS_ERROR_NO_AGGREGATION;
+        throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
       }
       return this.QueryInterface(iid);
     },
@@ -85,6 +85,17 @@ function mockServicesChromeScript() {
     ALERTS_SERVICE_CONTRACT_ID,
     mockAlertsService
   );
+
+  function clickNotifications(doClose) {
+    // Until we need to close a specific notification, just click them all.
+    for (let [name, notification] of Object.entries(activeNotifications)) {
+      let { listener, cookie } = notification;
+      listener.observe(null, "alertclickcallback", cookie);
+      if (doClose) {
+        mockAlertsService.closeAlert(name);
+      }
+    }
+  }
 
   function closeAllNotifications() {
     for (let alertName of Object.keys(activeNotifications)) {
@@ -100,6 +111,11 @@ function mockServicesChromeScript() {
     registrar.unregisterFactory(MOCK_ALERTS_CID, mockAlertsService);
     sendAsyncMessage("mock-alert-service:unregistered");
   });
+
+  addMessageListener(
+    "mock-alert-service:click-notifications",
+    clickNotifications
+  );
 
   addMessageListener(
     "mock-alert-service:close-notifications",
@@ -130,6 +146,20 @@ const MockAlertsService = {
         this._chromeScript.destroy();
         this._chromeScript = null;
       });
+  },
+  async clickNotifications() {
+    // Most implementations of the nsIAlertsService automatically close upon click.
+    await this._chromeScript.sendAsyncMessage(
+      "mock-alert-service:click-notifications",
+      true
+    );
+  },
+  async clickNotificationsWithoutClose() {
+    // The implementation on macOS does not automatically close the notification.
+    await this._chromeScript.sendAsyncMessage(
+      "mock-alert-service:click-notifications",
+      false
+    );
   },
   async closeNotifications() {
     await this._chromeScript.sendAsyncMessage(

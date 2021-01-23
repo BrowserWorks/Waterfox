@@ -1,103 +1,19 @@
-#include <cstdlib>
-#if defined(_WIN32)
-#include <windows.h>
-#include <codecvt>
-#endif
-
 #include "cert.h"
 #include "certdb.h"
 #include "nspr.h"
 #include "nss.h"
 #include "pk11pub.h"
+#include "secmod.h"
 #include "secerr.h"
 
 #include "nss_scoped_ptrs.h"
+#include "util.h"
 
 #define GTEST_HAS_RTTI 0
 #include "gtest/gtest.h"
+#include <fstream>
 
 namespace nss_test {
-
-// Given a prefix, attempts to create a unique directory that the user can do
-// work in without impacting other tests. For example, if given the prefix
-// "scratch", a directory like "scratch05c17b25" will be created in the current
-// working directory (or the location specified by NSS_GTEST_WORKDIR, if
-// defined).
-// Upon destruction, the implementation will attempt to delete the directory.
-// However, no attempt is made to first remove files in the directory - the
-// user is responsible for this. If the directory is not empty, deleting it will
-// fail.
-// Statistically, it is technically possible to fail to create a unique
-// directory name, but this is extremely unlikely given the expected workload of
-// this implementation.
-class ScopedUniqueDirectory {
- public:
-  explicit ScopedUniqueDirectory(const std::string &prefix);
-
-  // NB: the directory must be empty upon destruction
-  ~ScopedUniqueDirectory() { assert(rmdir(mPath.c_str()) == 0); }
-
-  const std::string &GetPath() { return mPath; }
-  const std::string &GetUTF8Path() { return mUTF8Path; }
-
- private:
-  static const int RETRY_LIMIT = 5;
-  static void GenerateRandomName(/*in/out*/ std::string &prefix);
-  static bool TryMakingDirectory(/*in/out*/ std::string &prefix);
-
-  std::string mPath;
-  std::string mUTF8Path;
-};
-
-ScopedUniqueDirectory::ScopedUniqueDirectory(const std::string &prefix) {
-  std::string path;
-  const char *workingDirectory = PR_GetEnvSecure("NSS_GTEST_WORKDIR");
-  if (workingDirectory) {
-    path.assign(workingDirectory);
-  }
-  path.append(prefix);
-  for (int i = 0; i < RETRY_LIMIT; i++) {
-    std::string pathCopy(path);
-    // TryMakingDirectory will modify its input. If it fails, we want to throw
-    // away the modified result.
-    if (TryMakingDirectory(pathCopy)) {
-      mPath.assign(pathCopy);
-      break;
-    }
-  }
-  assert(mPath.length() > 0);
-#if defined(_WIN32)
-  // sqldb always uses UTF-8 regardless of the current system locale.
-  DWORD len =
-      MultiByteToWideChar(CP_ACP, 0, mPath.data(), mPath.size(), nullptr, 0);
-  std::vector<wchar_t> buf(len, L'\0');
-  MultiByteToWideChar(CP_ACP, 0, mPath.data(), mPath.size(), buf.data(),
-                      buf.size());
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  mUTF8Path = converter.to_bytes(std::wstring(buf.begin(), buf.end()));
-#else
-  mUTF8Path = mPath;
-#endif
-}
-
-void ScopedUniqueDirectory::GenerateRandomName(std::string &prefix) {
-  std::stringstream ss;
-  ss << prefix;
-  // RAND_MAX is at least 32767.
-  ss << std::setfill('0') << std::setw(4) << std::hex << rand() << rand();
-  // This will overwrite the value of prefix. This is a little inefficient, but
-  // at least it makes the code simple.
-  ss >> prefix;
-}
-
-bool ScopedUniqueDirectory::TryMakingDirectory(std::string &prefix) {
-  GenerateRandomName(prefix);
-#if defined(_WIN32)
-  return _mkdir(prefix.c_str()) == 0;
-#else
-  return mkdir(prefix.c_str(), 0777) == 0;
-#endif
-}
 
 class SoftokenTest : public ::testing::Test {
  protected:
@@ -184,6 +100,175 @@ static const CK_ATTRIBUTE attributes[] = {
     {CKA_TRUST_STEP_UP_APPROVED, (void *)&ck_false,
      (PRUint32)sizeof(CK_BBOOL)}};
 
+TEST_F(SoftokenTest, GetInvalidAttribute) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, "password"));
+  ScopedPK11GenericObject obj(PK11_CreateGenericObject(
+      slot.get(), attributes, PR_ARRAY_SIZE(attributes), true));
+  ASSERT_NE(nullptr, obj);
+  SECItem out = {siBuffer, nullptr, 0};
+  SECStatus rv = PK11_ReadRawAttribute(PK11_TypeGeneric, obj.get(),
+                                       CKA_ALLOWED_MECHANISMS, &out);
+  EXPECT_EQ(SECFailure, rv);
+  // CKR_ATTRIBUTE_TYPE_INVALID maps to SEC_ERROR_BAD_DATA.
+  EXPECT_EQ(SEC_ERROR_BAD_DATA, PORT_GetError());
+}
+
+TEST_F(SoftokenTest, GetValidAttributes) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, "password"));
+  ScopedPK11GenericObject obj(PK11_CreateGenericObject(
+      slot.get(), attributes, PR_ARRAY_SIZE(attributes), true));
+  ASSERT_NE(nullptr, obj);
+
+  CK_ATTRIBUTE template_attrs[] = {
+      {CKA_LABEL, NULL, 0},
+      {CKA_CERT_SHA1_HASH, NULL, 0},
+      {CKA_ISSUER, NULL, 0},
+  };
+  SECStatus rv =
+      PK11_ReadRawAttributes(nullptr, PK11_TypeGeneric, obj.get(),
+                             template_attrs, PR_ARRAY_SIZE(template_attrs));
+  EXPECT_EQ(SECSuccess, rv);
+  ASSERT_EQ(attributes[4].ulValueLen, template_attrs[0].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[4].pValue, template_attrs[0].pValue,
+                      template_attrs[0].ulValueLen));
+  ASSERT_EQ(attributes[5].ulValueLen, template_attrs[1].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[5].pValue, template_attrs[1].pValue,
+                      template_attrs[1].ulValueLen));
+  ASSERT_EQ(attributes[7].ulValueLen, template_attrs[2].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[7].pValue, template_attrs[2].pValue,
+                      template_attrs[2].ulValueLen));
+  for (unsigned int i = 0; i < PR_ARRAY_SIZE(template_attrs); i++) {
+    PORT_Free(template_attrs[i].pValue);
+  }
+}
+
+TEST_F(SoftokenTest, GetOnlyInvalidAttributes) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, "password"));
+  ScopedPK11GenericObject obj(PK11_CreateGenericObject(
+      slot.get(), attributes, PR_ARRAY_SIZE(attributes), true));
+  ASSERT_NE(nullptr, obj);
+
+  // Provide buffers of sufficient size, so that token
+  // will write the data. This is annoying, but PK11_GetAttributes
+  // won't allocate in the cases below when a single attribute
+  // is missing. So, just put them all on the stack.
+  unsigned char buf1[100];
+  unsigned char buf2[100];
+  CK_ATTRIBUTE template_attrs[] = {{0xffffffffUL, buf1, sizeof(buf1)},
+                                   {0xfffffffeUL, buf2, sizeof(buf2)}};
+  SECStatus rv =
+      PK11_ReadRawAttributes(nullptr, PK11_TypeGeneric, obj.get(),
+                             template_attrs, PR_ARRAY_SIZE(template_attrs));
+  EXPECT_EQ(SECFailure, rv);
+  EXPECT_EQ(SEC_ERROR_BAD_DATA, PORT_GetError());
+
+  // MSVC rewards -1UL with a C4146 warning...
+  ASSERT_EQ(0UL, template_attrs[0].ulValueLen + 1);
+  ASSERT_EQ(0UL, template_attrs[1].ulValueLen + 1);
+}
+
+TEST_F(SoftokenTest, GetAttributesInvalidInterspersed1) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, "password"));
+  ScopedPK11GenericObject obj(PK11_CreateGenericObject(
+      slot.get(), attributes, PR_ARRAY_SIZE(attributes), true));
+  ASSERT_NE(nullptr, obj);
+
+  unsigned char buf1[100];
+  unsigned char buf2[100];
+  unsigned char buf3[200];
+  CK_ATTRIBUTE template_attrs[] = {{0xffffffff, buf1, sizeof(buf1)},
+                                   {CKA_CERT_SHA1_HASH, buf2, sizeof(buf2)},
+                                   {CKA_ISSUER, buf3, sizeof(buf3)}};
+  SECStatus rv =
+      PK11_ReadRawAttributes(nullptr, PK11_TypeGeneric, obj.get(),
+                             template_attrs, PR_ARRAY_SIZE(template_attrs));
+  EXPECT_EQ(SECFailure, rv);
+  EXPECT_EQ(SEC_ERROR_BAD_DATA, PORT_GetError());
+  ASSERT_EQ(0UL, template_attrs[0].ulValueLen + 1);
+  ASSERT_EQ(attributes[5].ulValueLen, template_attrs[1].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[5].pValue, template_attrs[1].pValue,
+                      template_attrs[1].ulValueLen));
+  ASSERT_EQ(attributes[7].ulValueLen, template_attrs[2].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[7].pValue, template_attrs[2].pValue,
+                      template_attrs[2].ulValueLen));
+}
+
+TEST_F(SoftokenTest, GetAttributesInvalidInterspersed2) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, "password"));
+  ScopedPK11GenericObject obj(PK11_CreateGenericObject(
+      slot.get(), attributes, PR_ARRAY_SIZE(attributes), true));
+  ASSERT_NE(nullptr, obj);
+
+  unsigned char buf1[100];
+  unsigned char buf2[100];
+  unsigned char buf3[100];
+  CK_ATTRIBUTE template_attrs[] = {{CKA_LABEL, buf1, sizeof(buf1)},
+                                   {CKA_CERT_SHA1_HASH, buf2, sizeof(buf2)},
+                                   {0xffffffffUL, buf3, sizeof(buf3)}};
+  SECStatus rv =
+      PK11_ReadRawAttributes(nullptr, PK11_TypeGeneric, obj.get(),
+                             template_attrs, PR_ARRAY_SIZE(template_attrs));
+  EXPECT_EQ(SECFailure, rv);
+  EXPECT_EQ(SEC_ERROR_BAD_DATA, PORT_GetError());
+  ASSERT_EQ(attributes[4].ulValueLen, template_attrs[0].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[4].pValue, template_attrs[0].pValue,
+                      template_attrs[0].ulValueLen));
+  ASSERT_EQ(attributes[5].ulValueLen, template_attrs[1].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[5].pValue, template_attrs[1].pValue,
+                      template_attrs[1].ulValueLen));
+  ASSERT_EQ(0UL, template_attrs[2].ulValueLen + 1);
+}
+
+TEST_F(SoftokenTest, GetAttributesInvalidInterspersed3) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, "password"));
+  ScopedPK11GenericObject obj(PK11_CreateGenericObject(
+      slot.get(), attributes, PR_ARRAY_SIZE(attributes), true));
+  ASSERT_NE(nullptr, obj);
+
+  unsigned char buf1[100];
+  unsigned char buf2[100];
+  unsigned char buf3[100];
+  unsigned char buf4[100];
+  unsigned char buf5[100];
+  unsigned char buf6[200];
+  CK_ATTRIBUTE template_attrs[6] = {{CKA_LABEL, buf1, sizeof(buf1)},
+                                    {0xffffffffUL, buf2, sizeof(buf2)},
+                                    {0xfffffffeUL, buf3, sizeof(buf3)},
+                                    {CKA_CERT_SHA1_HASH, buf4, sizeof(buf4)},
+                                    {0xfffffffdUL, buf5, sizeof(buf5)},
+                                    {CKA_ISSUER, buf6, sizeof(buf6)}};
+  SECStatus rv =
+      PK11_ReadRawAttributes(nullptr, PK11_TypeGeneric, obj.get(),
+                             template_attrs, PR_ARRAY_SIZE(template_attrs));
+  EXPECT_EQ(SECFailure, rv);
+  EXPECT_EQ(SEC_ERROR_BAD_DATA, PORT_GetError());
+
+  ASSERT_EQ(attributes[4].ulValueLen, template_attrs[0].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[4].pValue, template_attrs[0].pValue,
+                      template_attrs[0].ulValueLen));
+  ASSERT_EQ(0UL, template_attrs[1].ulValueLen + 1);
+  ASSERT_EQ(0UL, template_attrs[2].ulValueLen + 1);
+  ASSERT_EQ(attributes[5].ulValueLen, template_attrs[3].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[5].pValue, template_attrs[3].pValue,
+                      template_attrs[3].ulValueLen));
+  ASSERT_EQ(0UL, template_attrs[4].ulValueLen + 1);
+  ASSERT_EQ(attributes[7].ulValueLen, template_attrs[5].ulValueLen);
+  EXPECT_EQ(0, memcmp(attributes[7].pValue, template_attrs[5].pValue,
+                      template_attrs[5].ulValueLen));
+}
+
 TEST_F(SoftokenTest, CreateObjectNonEmptyPassword) {
   ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
   ASSERT_TRUE(slot);
@@ -205,6 +290,27 @@ TEST_F(SoftokenTest, CreateObjectChangePassword) {
   EXPECT_EQ(nullptr, obj);
 }
 
+// The size limit for a password is 500 characters as defined in pkcs11i.h
+TEST_F(SoftokenTest, CreateObjectChangeToBigPassword) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, nullptr));
+  EXPECT_EQ(
+      SECSuccess,
+      PK11_ChangePW(slot.get(), "",
+                    "rUIFIFr2bxKnbJbitsfkyqttpk6vCJzlYMNxcxXcaN37gSZKbLk763X7iR"
+                    "yeVNWZHQ02lSF69HYjzTyPW3318ZD0DBFMMbALZ8ZPZP73CIo5uIQlaowV"
+                    "IbP8eOhRYtGUqoLGlcIFNEYogV8Q3GN58VeBMs0KxrIOvPQ9s8SnYYkqvt"
+                    "zzgntmAvCgvk64x6eQf0okHwegd5wi6m0WVJytEepWXkP9J629FSa5kNT8"
+                    "FvL3jvslkiImzTNuTvl32fQDXXMSc8vVk5Q3mH7trMZM0VDdwHWYERjHbz"
+                    "kGxFgp0VhediHx7p9kkz6H6ac4et9sW4UkTnN7xhYc1Zr17wRSk2heQtcX"
+                    "oZJGwuzhiKm8A8wkuVxms6zO56P4JORIk8oaUW6lyNTLo2kWWnTA"));
+  EXPECT_EQ(SECSuccess, PK11_Logout(slot.get()));
+  ScopedPK11GenericObject obj(PK11_CreateGenericObject(
+      slot.get(), attributes, PR_ARRAY_SIZE(attributes), true));
+  EXPECT_EQ(nullptr, obj);
+}
+
 TEST_F(SoftokenTest, CreateObjectChangeToEmptyPassword) {
   ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
   ASSERT_TRUE(slot);
@@ -219,6 +325,76 @@ TEST_F(SoftokenTest, CreateObjectChangeToEmptyPassword) {
   // Because there's no password we can't logout and the operation should have
   // succeeded.
   EXPECT_NE(nullptr, obj);
+}
+
+// We should be able to read CRLF, LF and CR.
+// During the Initialization of the NSS Database, is called a function to load
+// PKCS11 modules defined in pkcs11.txt. This file is read to get the
+// specifications, parse them and load the modules. Here we are ensuring that
+// the parsing will work correctly, independent of the breaking line format of
+// pkcs11.txt file, which could vary depending where it was created.
+// If the parsing is not well interpreted, the database cannot initialize.
+TEST_F(SoftokenTest, CreateObjectReadBreakLine) {
+  const std::string path = mNSSDBDir.GetPath();
+  const std::string dbname_in = path + "/pkcs11.txt";
+  const std::string dbname_out_cr = path + "/pkcs11_cr.txt";
+  const std::string dbname_out_crlf = path + "/pkcs11_crlf.txt";
+  const std::string dbname_out_lf = path + "/pkcs11_lf.txt";
+
+  std::ifstream in(dbname_in);
+  ASSERT_TRUE(in);
+  std::ofstream out_cr(dbname_out_cr);
+  ASSERT_TRUE(out_cr);
+  std::ofstream out_crlf(dbname_out_crlf);
+  ASSERT_TRUE(out_crlf);
+  std::ofstream out_lf(dbname_out_lf);
+  ASSERT_TRUE(out_lf);
+
+  // Database should be correctly initialized by Setup()
+  ASSERT_TRUE(NSS_IsInitialized());
+  ASSERT_EQ(SECSuccess, NSS_Shutdown());
+
+  // Prepare the file formats with CR, CRLF and LF
+  for (std::string line; getline(in, line);) {
+    out_cr << line << "\r";
+    out_crlf << line << "\r\n";
+    out_lf << line << "\n";
+  }
+  in.close();
+  out_cr.close();
+  out_crlf.close();
+  out_lf.close();
+
+  // Change the pkcs11.txt to CR format.
+  ASSERT_TRUE(!remove(dbname_in.c_str()));
+  ASSERT_TRUE(!rename(dbname_out_cr.c_str(), dbname_in.c_str()));
+
+  // Try to initialize with CR format.
+  std::string nssInitArg("sql:");
+  nssInitArg.append(mNSSDBDir.GetUTF8Path());
+  ASSERT_EQ(SECSuccess, NSS_Initialize(nssInitArg.c_str(), "", "", SECMOD_DB,
+                                       NSS_INIT_NOROOTINIT));
+  ASSERT_TRUE(NSS_IsInitialized());
+  ASSERT_EQ(SECSuccess, NSS_Shutdown());
+
+  // Change the pkcs11.txt to CRLF format.
+  ASSERT_TRUE(!remove(dbname_in.c_str()));
+  ASSERT_TRUE(!rename(dbname_out_crlf.c_str(), dbname_in.c_str()));
+
+  // Try to initialize with CRLF format.
+  ASSERT_EQ(SECSuccess, NSS_Initialize(nssInitArg.c_str(), "", "", SECMOD_DB,
+                                       NSS_INIT_NOROOTINIT));
+  ASSERT_TRUE(NSS_IsInitialized());
+  ASSERT_EQ(SECSuccess, NSS_Shutdown());
+
+  // Change the pkcs11.txt to LF format.
+  ASSERT_TRUE(!remove(dbname_in.c_str()));
+  ASSERT_TRUE(!rename(dbname_out_lf.c_str(), dbname_in.c_str()));
+
+  // Try to initialize with LF format.
+  ASSERT_EQ(SECSuccess, NSS_Initialize(nssInitArg.c_str(), "", "", SECMOD_DB,
+                                       NSS_INIT_NOROOTINIT));
+  ASSERT_TRUE(NSS_IsInitialized());
 }
 
 class SoftokenNonAsciiTest : public SoftokenTest {
@@ -350,6 +526,100 @@ TEST_F(SoftokenNoDBTest, NeedUserInitNoDB) {
   slot = nullptr;
   ASSERT_EQ(SECSuccess, NSS_Shutdown());
 }
+
+#ifndef NSS_FIPS_DISABLED
+
+class SoftokenFipsTest : public SoftokenTest {
+ protected:
+  SoftokenFipsTest() : SoftokenTest("SoftokenFipsTest.d-") {}
+
+  virtual void SetUp() {
+    SoftokenTest::SetUp();
+
+    // Turn on FIPS mode (code borrowed from FipsMode in modutil/pk11.c)
+    char *internal_name;
+    ASSERT_FALSE(PK11_IsFIPS());
+    internal_name = PR_smprintf("%s", SECMOD_GetInternalModule()->commonName);
+    ASSERT_EQ(SECSuccess, SECMOD_DeleteInternalModule(internal_name));
+    PR_smprintf_free(internal_name);
+    ASSERT_TRUE(PK11_IsFIPS());
+  }
+};
+
+const std::vector<std::string> kFipsPasswordCases[] = {
+    // FIPS level1 -> level1 -> level1
+    {"", "", ""},
+    // FIPS level1 -> level1 -> level2
+    {"", "", "strong-_123"},
+    // FIXME: this should work: FIPS level1 -> level2 -> level2
+    // {"", "strong-_123", "strong-_456"},
+    // FIPS level2 -> level2 -> level2
+    {"strong-_123", "strong-_456", "strong-_123"}};
+
+const std::vector<std::string> kFipsPasswordBadCases[] = {
+    // FIPS level1 -> level2 -> level1
+    {"", "strong-_123", ""},
+    // FIPS level2 -> level1 -> level1
+    {"strong-_123", ""},
+    // FIPS level2 -> level2 -> level1
+    {"strong-_123", "strong-_456", ""},
+    // initialize with a weak password
+    {"weak"},
+    // FIPS level1 -> weak password
+    {"", "weak"},
+    // FIPS level2 -> weak password
+    {"strong-_123", "weak"}};
+
+class SoftokenFipsPasswordTest
+    : public SoftokenFipsTest,
+      public ::testing::WithParamInterface<std::vector<std::string>> {};
+
+class SoftokenFipsBadPasswordTest
+    : public SoftokenFipsTest,
+      public ::testing::WithParamInterface<std::vector<std::string>> {};
+
+TEST_P(SoftokenFipsPasswordTest, SetPassword) {
+  const std::vector<std::string> &passwords = GetParam();
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+
+  auto it = passwords.begin();
+  auto prev_it = it;
+  EXPECT_EQ(SECSuccess, PK11_InitPin(slot.get(), nullptr, (*it).c_str()));
+  for (it++; it != passwords.end(); it++, prev_it++) {
+    EXPECT_EQ(SECSuccess,
+              PK11_ChangePW(slot.get(), (*prev_it).c_str(), (*it).c_str()));
+  }
+}
+
+TEST_P(SoftokenFipsBadPasswordTest, SetBadPassword) {
+  const std::vector<std::string> &passwords = GetParam();
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  ASSERT_TRUE(slot);
+
+  auto it = passwords.begin();
+  auto prev_it = it;
+  SECStatus rv = PK11_InitPin(slot.get(), nullptr, (*it).c_str());
+  if (it + 1 == passwords.end())
+    EXPECT_EQ(SECFailure, rv);
+  else
+    EXPECT_EQ(SECSuccess, rv);
+  for (it++; it != passwords.end(); it++, prev_it++) {
+    rv = PK11_ChangePW(slot.get(), (*prev_it).c_str(), (*it).c_str());
+    if (it + 1 == passwords.end())
+      EXPECT_EQ(SECFailure, rv);
+    else
+      EXPECT_EQ(SECSuccess, rv);
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(FipsPasswordCases, SoftokenFipsPasswordTest,
+                        ::testing::ValuesIn(kFipsPasswordCases));
+
+INSTANTIATE_TEST_CASE_P(BadFipsPasswordCases, SoftokenFipsBadPasswordTest,
+                        ::testing::ValuesIn(kFipsPasswordBadCases));
+
+#endif
 
 }  // namespace nss_test
 

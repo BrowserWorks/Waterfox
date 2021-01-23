@@ -31,12 +31,8 @@
 
 #![deny(missing_docs, trivial_numeric_casts, unused_extern_crates)]
 #![warn(unused_import_braces)]
-#![cfg_attr(feature = "std", deny(unstable_features))]
 #![cfg_attr(feature = "clippy", plugin(clippy(conf_file = "../../clippy.toml")))]
-#![cfg_attr(
-    feature = "cargo-clippy",
-    allow(clippy::new_without_default, clippy::new_without_default_derive)
-)]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::new_without_default))]
 #![cfg_attr(
     feature = "cargo-clippy",
     warn(
@@ -51,14 +47,8 @@
     )
 )]
 #![no_std]
-#![cfg_attr(not(feature = "std"), feature(alloc))]
 
-#[cfg(not(feature = "std"))]
-#[macro_use]
-extern crate alloc as std;
-#[cfg(feature = "std")]
-#[macro_use]
-extern crate std;
+extern crate alloc;
 
 // Re-export core so that the macros works with both std and no_std crates
 #[doc(hidden)]
@@ -114,7 +104,7 @@ macro_rules! entity_impl {
     };
 
     // Include basic `Display` impl using the given display prefix.
-    // Display an `Ebb` reference as "ebb12".
+    // Display a `Block` reference as "block12".
     ($entity:ident, $display_prefix:expr) => {
         entity_impl!($entity);
 
@@ -126,7 +116,7 @@ macro_rules! entity_impl {
 
         impl $crate::__core::fmt::Debug for $entity {
             fn fmt(&self, f: &mut $crate::__core::fmt::Formatter) -> $crate::__core::fmt::Result {
-                (self as &$crate::__core::fmt::Display).fmt(f)
+                (self as &dyn $crate::__core::fmt::Display).fmt(f)
             }
         }
     };

@@ -31,6 +31,32 @@ const IS_CONTENT_PROCESS = (function() {
 })();
 
 var TelemetryUtils = {
+  /**
+   * When telemetry is disabled, identifying information (such as client ID)
+   * should be removed. A topic event is emitted with a subject that matches
+   * this constant. When this happens, other systems that store identifying
+   * information about the client should delete that data. Please ask the
+   * Firefox Telemetry Team before relying on this topic.
+   *
+   * Here is an example of listening for that event:
+   *
+   *  const { TelemetryUtils } = ChromeUtils.import("resource://gre/modules/TelemetryUtils.jsm");
+   *
+   *  class YourClass {
+   *    constructor() {
+   *      Services.obs.addObserver(this, TelemetryUtils.TELEMETRY_UPLOAD_DISABLED_TOPIC);
+   *    }
+   *
+   *    observe(subject, topic, data) {
+   *      if (topic == TelemetryUtils.TELEMETRY_UPLOAD_DISABLED_TOPIC) {
+   *        // Telemetry was disabled
+   *        // subject and data are both unused
+   *      }
+   *    }
+   *  }
+   */
+  TELEMETRY_UPLOAD_DISABLED_TOPIC: "telemetry.upload.disabled",
+
   Preferences: Object.freeze({
     // General Preferences
     ArchiveEnabled: "toolkit.telemetry.archive.enabled",
@@ -39,7 +65,6 @@ var TelemetryUtils = {
     FirstRun: "toolkit.telemetry.reportingpolicy.firstRun",
     FirstShutdownPingEnabled: "toolkit.telemetry.firstShutdownPing.enabled",
     HealthPingEnabled: "toolkit.telemetry.healthping.enabled",
-    HybridContentEnabled: "toolkit.telemetry.hybridContent.enabled",
     IPCBatchTimeout: "toolkit.telemetry.ipcBatchTimeout",
     OverrideOfficialCheck: "toolkit.telemetry.send.overrideOfficialCheck",
     OverridePreRelease: "toolkit.telemetry.testing.overridePreRelease",
@@ -266,8 +291,24 @@ var TelemetryUtils = {
    * Set the Telemetry core recording flag for Unified Telemetry.
    */
   setTelemetryRecordingFlags() {
-    Services.telemetry.canRecordBase = false;
-    Services.telemetry.canRecordExtended = false;
+    // Enable extended Telemetry on pre-release channels and disable it
+    // on Release/ESR.
+    let prereleaseChannels = ["nightly", "aurora", "beta"];
+    if (!AppConstants.MOZILLA_OFFICIAL) {
+      // Turn extended telemetry for local developer builds.
+      prereleaseChannels.push("default");
+    }
+    const isPrereleaseChannel = prereleaseChannels.includes(
+      AppConstants.MOZ_UPDATE_CHANNEL
+    );
+    const isReleaseCandidateOnBeta =
+      AppConstants.MOZ_UPDATE_CHANNEL === "release" &&
+      Services.prefs.getCharPref("app.update.channel", null) === "beta";
+    Services.telemetry.canRecordBase = true;
+    Services.telemetry.canRecordExtended =
+      isPrereleaseChannel ||
+      isReleaseCandidateOnBeta ||
+      Services.prefs.getBoolPref(this.Preferences.OverridePreRelease, false);
   },
 
   /**

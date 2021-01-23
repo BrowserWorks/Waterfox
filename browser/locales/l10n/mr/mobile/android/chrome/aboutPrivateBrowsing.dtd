@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "खाजगी रीत्या ब्राउझिंग">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ मागोवा सुरक्षा">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "आपण खाजगी ब्राउजिंग मध्ये नाही आहात.">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; पानाचा काही भाग अडवते जे कदाचित आपल्या ब्राउझिंगचा मागोवा घेऊ शकतात.">
+<!ENTITY privatebrowsingpage.description.privateDetails "आम्ही कुठलाही इतिहास लक्षात नाही ठेवणार, पण डाउनलोड केलेल्या फाइल आणि नवीन वाचनखूणा मात्र आपल्या उपकरणावर साठवल्या जातील.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "खाजगी ब्राउझिंगमध्ये, आम्ही आपला कुठल्याही प्रकारचा ब्राउझिंग इतिहास आणि कुकीज ठेवत नाही. आपण केलेल्या वाचनखूणा आणि डाउनलोड केलेल्या फाइल्स आपल्या उपकरणावर साठवल्या जातील.">
+
+<!ENTITY privatebrowsingpage.link.private "अधिक जाणून घेऊ इच्छिता?">
+<!ENTITY privatebrowsingpage.link.normal "एक नवीन खाजगी टॅब उघडा">

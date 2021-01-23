@@ -1,11 +1,9 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
-const { DebuggerServer } = require("devtools/server/main");
+const { DevToolsServer } = require("devtools/server/devtools-server");
 
 // Bug 1277805: Too slow for debug runs
 requestLongerTimeout(2);
@@ -16,7 +14,7 @@ requestLongerTimeout(2);
  * The fronts need to be destroyed manually to unbind their onPacket handlers.
  *
  * When you initialize a front and call |this.manage|, it adds a client actor
- * pool that the DebuggerClient uses to route packet replies to that actor.
+ * pool that the DevToolsClient uses to route packet replies to that actor.
  *
  * Most (all?) tools create a new front when they are opened.  When the destroy
  * step is skipped and the tool is reopened, a second front is created and also
@@ -26,13 +24,13 @@ requestLongerTimeout(2);
  * request, an error occurs.
  *
  * This problem does not occur with the toolbox for a local tab because the
- * toolbox target creates its own DebuggerClient for the local tab, and the
+ * toolbox target creates its own DevToolsClient for the local tab, and the
  * client is destroyed when the toolbox is closed, which removes the client
  * actor pools, and avoids this issue.
  *
- * In WebIDE, we do not destroy the DebuggerClient on toolbox close because it
- * is still used for other purposes like managing apps, etc. that aren't part of
- * a toolbox.  Thus, the same client gets reused across multiple toolboxes,
+ * In remote debugging, we do not destroy the DevToolsClient on toolbox close
+ * because it can still used for other targets.
+ * Thus, the same client gets reused across multiple toolboxes,
  * which leads to the tools failing if they don't destroy their fronts.
  */
 
@@ -101,7 +99,7 @@ function test() {
     }
 
     gBrowser.removeCurrentTab();
-    DebuggerServer.destroy();
+    DevToolsServer.destroy();
     toggleAllTools(false);
     finish();
   })();

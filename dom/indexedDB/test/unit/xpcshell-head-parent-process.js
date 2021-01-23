@@ -150,6 +150,9 @@ function continueToNextStepSync() {
   testGenerator.next();
 }
 
+// TODO compareKeys is duplicated in ../helpers.js, can we import that here?
+// the same applies to many other functions in this file
+// this duplication should be avoided (bug 1565986)
 function compareKeys(k1, k2) {
   let t = typeof k1;
   if (t != typeof k2) {
@@ -176,6 +179,22 @@ function compareKeys(k1, k2) {
     }
 
     return true;
+  }
+
+  if (k1 instanceof ArrayBuffer) {
+    if (!(k2 instanceof ArrayBuffer)) {
+      return false;
+    }
+
+    function arrayBuffersAreEqual(a, b) {
+      if (a.byteLength != b.byteLength) {
+        return false;
+      }
+      let ui8b = new Uint8Array(b);
+      return new Uint8Array(a).every((val, i) => val === ui8b[i]);
+    }
+
+    return arrayBuffersAreEqual(k1, k2);
   }
 
   return false;
@@ -233,6 +252,13 @@ function setTimeout(fun, timeout) {
   return timer;
 }
 
+function initStorageAndChromeOrigin(persistence) {
+  let principal = Cc["@mozilla.org/systemprincipal;1"].createInstance(
+    Ci.nsIPrincipal
+  );
+  return Services.qms.initStorageAndOrigin(principal, persistence, "idb");
+}
+
 function resetOrClearAllDatabases(callback, clear) {
   if (!SpecialPowers.isMainProcess()) {
     throw new Error("clearAllDatabases not implemented for child processes!");
@@ -265,14 +291,16 @@ function resetOrClearAllDatabases(callback, clear) {
   }
 
   request.callback = callback;
+
+  return request;
 }
 
 function resetAllDatabases(callback) {
-  resetOrClearAllDatabases(callback, false);
+  return resetOrClearAllDatabases(callback, false);
 }
 
 function clearAllDatabases(callback) {
-  resetOrClearAllDatabases(callback, true);
+  return resetOrClearAllDatabases(callback, true);
 }
 
 function installPackagedProfile(packageName) {
@@ -378,19 +406,6 @@ function isWasmSupported() {
   return testingFunctions.wasmIsSupported();
 }
 
-function getWasmBinarySync(text) {
-  let testingFunctions = Cu.getJSTestingFunctions();
-  let binary = testingFunctions.wasmTextToBinary(text);
-  return binary;
-}
-
-function getWasmBinary(text) {
-  let binary = getWasmBinarySync(text);
-  executeSoon(function() {
-    testGenerator.next(binary);
-  });
-}
-
 function getWasmModule(binary) {
   let module = new WebAssembly.Module(binary);
   return module;
@@ -475,16 +490,6 @@ function verifyView(view1, view2) {
   continueToNextStep();
 }
 
-function verifyWasmModule(module1, module2) {
-  // We assume the given modules have no imports and export a single function
-  // named 'run'.
-  var instance1 = new WebAssembly.Instance(module1);
-  var instance2 = new WebAssembly.Instance(module2);
-  is(instance1.exports.run(), instance2.exports.run(), "same run() result");
-
-  continueToNextStep();
-}
-
 function grabFileUsageAndContinueHandler(request) {
   testGenerator.next(request.result.fileUsage);
 }
@@ -512,16 +517,44 @@ function setDataThreshold(threshold) {
   SpecialPowers.setIntPref("dom.indexedDB.dataThreshold", threshold);
 }
 
+function resetDataThreshold() {
+  info("Clearing data threshold pref");
+  SpecialPowers.clearUserPref("dom.indexedDB.dataThreshold");
+}
+
 function setMaxSerializedMsgSize(aSize) {
   info("Setting maximal size of a serialized message to " + aSize);
   SpecialPowers.setIntPref("dom.indexedDB.maxSerializedMsgSize", aSize);
 }
 
-function getPrincipal(url) {
-  let uri = Services.io.newURI(url);
-  return Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
+function enablePreprocessing() {
+  info("Setting preprocessing pref");
+  SpecialPowers.setBoolPref("dom.indexedDB.preprocessing", true);
 }
 
+function resetPreprocessing() {
+  info("Clearing preprocessing pref");
+  SpecialPowers.clearUserPref("dom.indexedDB.preprocessing");
+}
+
+function getPrincipal(url) {
+  let uri = Services.io.newURI(url);
+  return Services.scriptSecurityManager.createContentPrincipal(uri, {});
+}
+
+function requestFinished(request) {
+  return new Promise(function(resolve, reject) {
+    request.callback = function(req) {
+      if (req.resultCode == Cr.NS_OK) {
+        resolve(req.result);
+      } else {
+        reject(req.resultCode);
+      }
+    };
+  });
+}
+
+// TODO: Rename to openDBRequestSucceeded ?
 function expectingSuccess(request) {
   return new Promise(function(resolve, reject) {
     request.onerror = function(event) {
@@ -538,6 +571,7 @@ function expectingSuccess(request) {
   });
 }
 
+// TODO: Rename to openDBRequestUpgradeNeeded ?
 function expectingUpgrade(request) {
   return new Promise(function(resolve, reject) {
     request.onerror = function(event) {
@@ -554,14 +588,14 @@ function expectingUpgrade(request) {
   });
 }
 
-function initChromeOrigin(persistence) {
-  let principal = Cc["@mozilla.org/systemprincipal;1"].createInstance(
-    Ci.nsIPrincipal
-  );
-  return new Promise(function(resolve) {
-    let request = Services.qms.initStoragesForPrincipal(principal, persistence);
-    request.callback = function() {
-      return resolve(request);
+function requestSucceeded(request) {
+  return new Promise(function(resolve, reject) {
+    request.onerror = function(event) {
+      ok(false, "indexedDB error, '" + event.target.error.name + "'");
+      reject(event);
+    };
+    request.onsuccess = function(event) {
+      resolve(event);
     };
   });
 }

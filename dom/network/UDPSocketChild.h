@@ -8,7 +8,6 @@
 #define mozilla_dom_UDPSocketChild_h__
 
 #include "mozilla/net/PUDPSocketChild.h"
-#include "nsIUDPSocketChild.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsCOMPtr.h"
 
@@ -18,6 +17,8 @@
       0x88, 0x85, 0x42, 0x59, 0x79, 0x3d, 0x9c, 0xf0 \
     }                                                \
   }
+
+class nsIUDPSocketInternal;
 
 namespace mozilla {
 namespace dom {
@@ -88,7 +89,7 @@ class UDPSocketChild : public mozilla::net::PUDPSocketChild,
       const UDPAddressInfo& aAddressInfo);
   mozilla::ipc::IPCResult RecvCallbackClosed();
   mozilla::ipc::IPCResult RecvCallbackReceivedData(
-      const UDPAddressInfo& aAddressInfo, InfallibleTArray<uint8_t>&& aData);
+      const UDPAddressInfo& aAddressInfo, nsTArray<uint8_t>&& aData);
   mozilla::ipc::IPCResult RecvCallbackError(const nsCString& aMessage,
                                             const nsCString& aFilename,
                                             const uint32_t& aLineNumber);

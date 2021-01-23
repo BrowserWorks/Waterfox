@@ -8,15 +8,15 @@
 #define builtin_intl_CommonFunctions_h
 
 #include "mozilla/Assertions.h"
-#include "mozilla/TypeTraits.h"
 
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <type_traits>
 
-#include "builtin/intl/ICUStubs.h"
 #include "js/RootingAPI.h"
 #include "js/Vector.h"
+#include "unicode/utypes.h"
 #include "vm/StringType.h"
 
 namespace js {
@@ -61,6 +61,32 @@ static inline bool StringsAreEqual(const char* s1, const char* s2) {
   return !strcmp(s1, s2);
 }
 
+/**
+ * The last-ditch locale is used if none of the available locales satisfies a
+ * request. "en-GB" is used based on the assumptions that English is the most
+ * common second language, that both en-GB and en-US are normally available in
+ * an implementation, and that en-GB is more representative of the English used
+ * in other locales.
+ */
+static inline const char* LastDitchLocale() { return "en-GB"; }
+
+/**
+ * Certain old, commonly-used language tags that lack a script, are expected to
+ * nonetheless imply one. This object maps these old-style tags to modern
+ * equivalents.
+ */
+struct OldStyleLanguageTagMapping {
+  const char* const oldStyle;
+  const char* const modernStyle;
+
+  // Provide a constructor to catch missing initializers in the mappings array.
+  constexpr OldStyleLanguageTagMapping(const char* oldStyle,
+                                       const char* modernStyle)
+      : oldStyle(oldStyle), modernStyle(modernStyle) {}
+};
+
+extern const OldStyleLanguageTagMapping oldStyleLanguageTagMappings[5];
+
 static inline const char* IcuLocale(const char* locale) {
   if (StringsAreEqual(locale, "und")) {
     return "";  // ICU root locale
@@ -73,7 +99,7 @@ extern UniqueChars EncodeLocale(JSContext* cx, JSString* locale);
 
 // Starting with ICU 59, UChar defaults to char16_t.
 static_assert(
-    mozilla::IsSame<UChar, char16_t>::value,
+    std::is_same_v<UChar, char16_t>,
     "SpiderMonkey doesn't support redefining UChar to a different type");
 
 // The inline capacity we use for a Vector<char16_t>.  Use this to ensure that
@@ -81,20 +107,29 @@ static_assert(
 // buffer's entire inline capacity before growing it and heap-allocating.
 constexpr size_t INITIAL_CHAR_BUFFER_SIZE = 32;
 
-template <typename ICUStringFunction, size_t InlineCapacity>
+template <typename ICUStringFunction, typename CharT, size_t InlineCapacity>
 static int32_t CallICU(JSContext* cx, const ICUStringFunction& strFn,
-                       Vector<char16_t, InlineCapacity>& chars) {
+                       Vector<CharT, InlineCapacity>& chars) {
   MOZ_ASSERT(chars.length() >= InlineCapacity);
 
   UErrorCode status = U_ZERO_ERROR;
   int32_t size = strFn(chars.begin(), chars.length(), &status);
   if (status == U_BUFFER_OVERFLOW_ERROR) {
     MOZ_ASSERT(size >= 0);
+
+    // Some ICU functions (e.g. uloc_getDisplayName) return one less character
+    // than the actual minimum size when U_BUFFER_OVERFLOW_ERROR is raised,
+    // resulting in later reporting U_STRING_NOT_TERMINATED_WARNING. So add plus
+    // one here and then assert U_STRING_NOT_TERMINATED_WARNING isn't raised.
+    size++;
+
     if (!chars.resize(size_t(size))) {
       return -1;
     }
     status = U_ZERO_ERROR;
-    strFn(chars.begin(), size, &status);
+    size = strFn(chars.begin(), size, &status);
+
+    MOZ_ASSERT(status != U_STRING_NOT_TERMINATED_WARNING);
   }
   if (U_FAILURE(status)) {
     ReportInternalError(cx);
@@ -118,25 +153,9 @@ static JSString* CallICU(JSContext* cx, const ICUStringFunction& strFn) {
   return NewStringCopyN<CanGC>(cx, chars.begin(), size_t(size));
 }
 
-// CountAvailable and GetAvailable describe the signatures used for ICU API
-// to determine available locales for various functionality.
-using CountAvailable = int32_t (*)();
-using GetAvailable = const char* (*)(int32_t localeIndex);
+void AddICUCellMemory(JSObject* obj, size_t nbytes);
 
-/**
- * Return an object whose own property names are the locales indicated as
- * available by |countAvailable| that provides an overall count, and by
- * |getAvailable| that when called passing a number less than that count,
- * returns the corresponding locale as a borrowed string.  For example:
- *
- *   RootedValue v(cx);
- *   if (!GetAvailableLocales(cx, unum_countAvailable, unum_getAvailable, &v)) {
- *       return false;
- *   }
- */
-extern bool GetAvailableLocales(JSContext* cx, CountAvailable countAvailable,
-                                GetAvailable getAvailable,
-                                JS::MutableHandle<JS::Value> result);
+void RemoveICUCellMemory(JSFreeOp* fop, JSObject* obj, size_t nbytes);
 
 }  // namespace intl
 

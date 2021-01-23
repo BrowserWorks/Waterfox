@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Josh Wolfe. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -102,4 +101,5 @@ assert.throws(TypeError, function() {
     }
   };
 }, '({valueOf: function() {return 0b101n;}}) >>> {valueOf: function() {return 1n;}} throws TypeError');
+
 reportCompare(0, 0);

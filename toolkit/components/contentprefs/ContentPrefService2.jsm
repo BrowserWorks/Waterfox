@@ -139,16 +139,16 @@ ContentPrefService2.prototype = {
       return this._connPromise;
     }
 
-    return (this._connPromise = new Promise(async (resolve, reject) => {
+    return (this._connPromise = (async () => {
       let conn;
       try {
         conn = await this._getConnection();
       } catch (e) {
         this.log("Failed to establish database connection: " + e);
-        reject(e);
+        throw e;
       }
-      resolve(conn);
-    }));
+      return conn;
+    })());
   },
 
   // nsIContentPrefService
@@ -940,7 +940,7 @@ ContentPrefService2.prototype = {
           ? Ci.nsIContentPrefCallback2.COMPLETE_OK
           : Ci.nsIContentPrefCallback2.COMPLETE_ERROR,
         ok,
-        rows && rows.length > 0
+        rows && !!rows.length
       );
     } catch (e) {
       Cu.reportError(e);

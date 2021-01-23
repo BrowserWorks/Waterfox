@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyGetter(this, "PushService", function() {
     return PushService;
   }
 
-  throw Cr.NS_ERROR_NOT_AVAILABLE;
+  throw Components.Exception("", Cr.NS_ERROR_NOT_AVAILABLE);
 });
 
 // Observer notification topics for push messages and subscription status
@@ -69,7 +69,7 @@ PushServiceBase.prototype = {
   subscriptionChangeTopic: OBSERVER_TOPIC_SUBSCRIPTION_CHANGE,
   subscriptionModifiedTopic: OBSERVER_TOPIC_SUBSCRIPTION_MODIFIED,
 
-  _handleReady() {},
+  ensureReady() {},
 
   _addListeners() {
     for (let message of this._messages) {
@@ -82,18 +82,9 @@ PushServiceBase.prototype = {
   },
 
   observe(subject, topic, data) {
-    if (topic === "app-startup") {
-      Services.obs.addObserver(this, "sessionstore-windows-restored", true);
-      return;
-    }
-    if (topic === "sessionstore-windows-restored") {
-      Services.obs.removeObserver(this, "sessionstore-windows-restored");
-      this._handleReady();
-      return;
-    }
     if (topic === "android-push-service") {
       // Load PushService immediately.
-      this._handleReady();
+      this.ensureReady();
     }
   },
 
@@ -234,7 +225,7 @@ Object.assign(PushServiceParent.prototype, {
     if (!this._isValidMessage(message)) {
       return;
     }
-    let { name, principal, target, data } = message;
+    let { name, target, data } = message;
     if (name === "Push:NotificationForOriginShown") {
       this.notificationForOriginShown(data);
       return;
@@ -247,7 +238,7 @@ Object.assign(PushServiceParent.prototype, {
       this.reportDeliveryError(data.messageId, data.reason);
       return;
     }
-    this._handleRequest(name, principal, data)
+    this._handleRequest(name, data.principal, data)
       .then(
         result => {
           target.sendAsyncMessage(this._getResponseName(name, "OK"), {
@@ -265,7 +256,7 @@ Object.assign(PushServiceParent.prototype, {
       .catch(Cu.reportError);
   },
 
-  _handleReady() {
+  ensureReady() {
     this.service.init();
   },
 
@@ -391,42 +382,30 @@ Object.assign(PushServiceContent.prototype, {
 
   subscribeWithKey(scope, principal, key, callback) {
     let requestID = this._addRequest(callback);
-    this._mm.sendAsyncMessage(
-      "Push:Register",
-      {
-        scope,
-        appServerKey: key,
-        requestID,
-      },
-      null,
-      principal
-    );
+    this._mm.sendAsyncMessage("Push:Register", {
+      scope,
+      appServerKey: key,
+      requestID,
+      principal,
+    });
   },
 
   unsubscribe(scope, principal, callback) {
     let requestID = this._addRequest(callback);
-    this._mm.sendAsyncMessage(
-      "Push:Unregister",
-      {
-        scope,
-        requestID,
-      },
-      null,
-      principal
-    );
+    this._mm.sendAsyncMessage("Push:Unregister", {
+      scope,
+      requestID,
+      principal,
+    });
   },
 
   getSubscription(scope, principal, callback) {
     let requestID = this._addRequest(callback);
-    this._mm.sendAsyncMessage(
-      "Push:Registration",
-      {
-        scope,
-        requestID,
-      },
-      null,
-      principal
-    );
+    this._mm.sendAsyncMessage("Push:Registration", {
+      scope,
+      requestID,
+      principal,
+    });
   },
 
   clearForDomain(domain, callback) {

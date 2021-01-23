@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 extern crate base64;
 extern crate chrono;
 #[macro_use]
@@ -5,6 +7,8 @@ extern crate clap;
 #[macro_use]
 extern crate lazy_static;
 extern crate hyper;
+extern crate marionette as marionette_rs;
+extern crate mozdevice;
 extern crate mozprofile;
 extern crate mozrunner;
 extern crate mozversion;
@@ -13,6 +17,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate serde_yaml;
 extern crate uuid;
 extern crate webdriver;
 extern crate zip;
@@ -39,6 +44,7 @@ macro_rules! try_opt {
     }};
 }
 
+mod android;
 mod build;
 mod capabilities;
 mod command;
@@ -203,7 +209,7 @@ fn inner_main(app: &mut App) -> ProgramResult<()> {
             }
 
             let handler = MarionetteHandler::new(settings);
-            let listening = webdriver::server::start(address, handler, &extension_routes()[..])?;
+            let listening = webdriver::server::start(address, handler, extension_routes())?;
             debug!("Listening on {}", listening.socket);
         }
     }
@@ -232,7 +238,7 @@ fn main() {
 }
 
 fn make_app<'a, 'b>() -> App<'a, 'b> {
-    App::new(format!("geckodriver {}", build::BuildInfo))
+    App::new(format!("geckodriver {}", build::build_info()))
         .about("WebDriver implementation for Firefox")
         .arg(
             Arg::with_name("webdriver_host")
@@ -324,7 +330,7 @@ fn print_help(app: &mut App) {
 }
 
 fn print_version() {
-    println!("geckodriver {}", build::BuildInfo);
+    println!("geckodriver {}", build::build_info());
     println!();
     println!("The source code of this program is available from");
     println!("testing/geckodriver in https://hg.mozilla.org/mozilla-central.");

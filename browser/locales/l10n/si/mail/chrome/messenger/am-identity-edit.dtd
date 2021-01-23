@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "මෙම හැඳුනුම සඳහා සැකසුම් කිරීම:">
+
+<!ENTITY settingsTab.label       "සැකසම්">
+<!ENTITY copiesFoldersTab.label "පිටපත් සහ ෆෝල්ඩර">
+<!ENTITY addressingTab.label    "ලිපි ලිවීම සහ ලිපිනයන්">
+

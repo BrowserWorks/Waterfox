@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "ფაილი">
+<!ENTITY fileMenu.accesskey        "ფ">
+<!ENTITY newMenu.label            "ახალი">
+<!ENTITY newMenu.accesskey          "ა">
+
+<!ENTITY editMenu.label          "ჩასწორება">
+<!ENTITY editMenu.accesskey        "ჩ">
+<!ENTITY undoCmd.label            "დაბრუნება">
+<!ENTITY undoCmd.accesskey          "დ">
+<!ENTITY redoCmd.label            "გამეორება">
+<!ENTITY redoCmd.accesskey          "ო">
+<!ENTITY deleteCmd.label          "წაშლა">
+<!ENTITY deleteCmd.accesskey        "წ">
+<!ENTITY preferencesCmd2.label "პარამეტრები">
+<!ENTITY preferencesCmd2.accesskey "პ">
+<!ENTITY preferencesCmdUnix.label       "პარამეტრები">
+<!ENTITY preferencesCmdUnix.accesskey     "რ">
+
+<!ENTITY customizeCmd.label "მორგება">
+<!ENTITY customizeCmd.accesskey "რ">
+
+<!ENTITY viewMenu.label          "ჩვენება">
+<!ENTITY viewMenu.accesskey        "ვ">
+<!ENTITY viewToolbarsMenu.label        "ხელსაწყოთა ზოლები">
+<!ENTITY viewToolbarsMenu.accesskey      "ხ">
+<!ENTITY showTaskbarCmd.label          "მდგომარეობის ზოლი">
+<!ENTITY showTaskbarCmd.accesskey        "ო">
+
+<!ENTITY closeCmd.label      "დახურვა">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "ხ">
+
+<!ENTITY quitApplicationCmd.label  "გასვლა">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "გ">
+
+<!ENTITY quitApplicationCmdUnix.label  "დატოვება">
+<!ENTITY quitApplicationCmdUnix.accesskey  "ტ">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName;-ის დატოვება">
+<!ENTITY quitApplicationCmdMac.accesskey  "ტ">

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -79,7 +79,7 @@ elif psutil.SUNOS:
         'terminal',
         'uids',
     ]
-elif psutil.OSX:
+elif psutil.MACOS:
     names += [
         'cpu_times',
         'create_time',

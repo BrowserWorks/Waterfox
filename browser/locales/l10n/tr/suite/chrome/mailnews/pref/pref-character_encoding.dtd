@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding.title "Karakter Kodlaması">
+<!ENTITY messageDisplay.caption "İleti görüntüleme">
+<!ENTITY viewDefaultCharset.label "Öntanımlı karakter kodlaması:">
+<!ENTITY viewDefaultCharset.accesskey "Ö">
+
+<!ENTITY composingMessages.caption "İleti düzenlemesi">
+<!ENTITY useMIME.label "For messages that contain 8-bit characters, use 'quoted printable' MIME encoding. Leave unchecked to send the messages as is.">
+<!ENTITY useMIME.accesskey "F">
+<!ENTITY sendDefaultCharset.label "Öntanımlı karakter kodlaması:">
+<!ENTITY sendDefaultCharset.accesskey "k">
+<!ENTITY replyInDefaultCharset2.label "When possible, use this default character encoding in replies. (When unchecked, only new messages use this default.)">
+<!ENTITY replyInDefaultCharset2.accesskey "W">

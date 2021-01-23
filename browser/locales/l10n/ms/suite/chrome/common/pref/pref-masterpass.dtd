@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Kata laluan Induk">
+
+<!ENTITY  changepassword.caption                 "Tukar Katalaluan Induk">
+<!ENTITY  changepassword.text                    "Kata laluan induk melindungi maklumat sensitif seperti kata laluan web dan sijil.">
+<!ENTITY  changepassword.button                  "Tukar Kata laluan…">
+<!ENTITY  changepassword.accesskey               "T">
+
+<!ENTITY  resetpassword.caption                  "Set Semula Katalaluan Induk">
+<!ENTITY  resetpassword.text                     "Jika anda mengeset semula kata laluan induk, semua kata laluan web dan e-mel, data borang, sijil peribadi dan kunci peribadi akan hilang.">
+<!ENTITY  resetpassword.button                   "Set Semula Kata Laluan">
+<!ENTITY  resetpassword.accesskey                "S">

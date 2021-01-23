@@ -9,6 +9,7 @@
 #include "mozilla/dom/DecoderDoctorNotificationBinding.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/TimeStamp.h"
 #include "nsContentUtils.h"
 #include "nsGkAtoms.h"
 #include "mozilla/dom/Document.h"
@@ -85,17 +86,21 @@ class DecoderDoctorDocumentWatcher : public nsITimerCallback, public nsINamed {
   dom::Document* mDocument;
 
   struct Diagnostics {
-    Diagnostics(DecoderDoctorDiagnostics&& aDiagnostics, const char* aCallSite)
+    Diagnostics(DecoderDoctorDiagnostics&& aDiagnostics, const char* aCallSite,
+                mozilla::TimeStamp aTimeStamp)
         : mDecoderDoctorDiagnostics(std::move(aDiagnostics)),
-          mCallSite(aCallSite) {}
+          mCallSite(aCallSite),
+          mTimeStamp(aTimeStamp) {}
     Diagnostics(const Diagnostics&) = delete;
     Diagnostics(Diagnostics&& aOther)
         : mDecoderDoctorDiagnostics(
               std::move(aOther.mDecoderDoctorDiagnostics)),
-          mCallSite(std::move(aOther.mCallSite)) {}
+          mCallSite(std::move(aOther.mCallSite)),
+          mTimeStamp(aOther.mTimeStamp) {}
 
     const DecoderDoctorDiagnostics mDecoderDoctorDiagnostics;
     const nsCString mCallSite;
+    const mozilla::TimeStamp mTimeStamp;
   };
   typedef nsTArray<Diagnostics> DiagnosticsSequence;
   DiagnosticsSequence mDiagnosticsSequence;
@@ -164,8 +169,8 @@ void DecoderDoctorDocumentWatcher::RemovePropertyFromDocument() {
       "DecoderDoctorDocumentWatcher[%p, "
       "doc=%p]::RemovePropertyFromDocument()\n",
       watcher, watcher->mDocument);
-  // This will remove the property and call our DestroyPropertyCallback.
-  mDocument->DeleteProperty(nsGkAtoms::decoderDoctor);
+  // This will call our DestroyPropertyCallback.
+  mDocument->RemoveProperty(nsGkAtoms::decoderDoctor);
 }
 
 // Callback for property destructors. |aObject| is the object
@@ -344,7 +349,7 @@ static void DispatchNotification(
 
 static void ReportToConsole(dom::Document* aDocument,
                             const char* aConsoleStringId,
-                            nsTArray<const char16_t*>& aParams) {
+                            const nsTArray<nsString>& aParams) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aDocument);
 
@@ -354,15 +359,14 @@ static void ReportToConsole(dom::Document* aDocument,
       aDocument, aConsoleStringId,
       aParams.IsEmpty() ? "<no params>"
                         : NS_ConvertUTF16toUTF8(aParams[0]).get(),
-      (aParams.Length() < 1 || !aParams[1]) ? "" : ", ",
-      (aParams.Length() < 1 || !aParams[1])
+      (aParams.Length() < 1 || aParams[0].IsEmpty()) ? "" : ", ",
+      (aParams.Length() < 1 || aParams[0].IsEmpty())
           ? ""
-          : NS_ConvertUTF16toUTF8(aParams[1]).get(),
+          : NS_ConvertUTF16toUTF8(aParams[0]).get(),
       aParams.Length() < 2 ? "" : ", ...");
   nsContentUtils::ReportToConsole(
       nsIScriptError::warningFlag, NS_LITERAL_CSTRING("Media"), aDocument,
-      nsContentUtils::eDOM_PROPERTIES, aConsoleStringId,
-      aParams.IsEmpty() ? nullptr : aParams.Elements(), aParams.Length());
+      nsContentUtils::eDOM_PROPERTIES, aConsoleStringId, aParams);
 }
 
 static bool AllowNotification(
@@ -428,24 +432,23 @@ static void ReportAnalysis(
   // Report non-solved issues to console.
   if (!aIsSolved) {
     // Build parameter array needed by console message.
-    AutoTArray<const char16_t*, NotificationAndReportStringId::maxReportParams>
-        params;
+    AutoTArray<nsString, NotificationAndReportStringId::maxReportParams> params;
     for (int i = 0; i < NotificationAndReportStringId::maxReportParams; ++i) {
       if (aNotification.mReportParams[i] == ReportParam::None) {
         break;
       }
       switch (aNotification.mReportParams[i]) {
         case ReportParam::Formats:
-          params.AppendElement(aFormats.Data());
+          params.AppendElement(aFormats);
           break;
         case ReportParam::DecodeIssue:
-          params.AppendElement(decodeIssueDescription.Data());
+          params.AppendElement(decodeIssueDescription);
           break;
         case ReportParam::DocURL:
-          params.AppendElement(NS_ConvertUTF8toUTF16(aDocURL).Data());
+          params.AppendElement(NS_ConvertUTF8toUTF16(aDocURL));
           break;
         case ReportParam::ResourceURL:
-          params.AppendElement(aResourceURL.Data());
+          params.AppendElement(aResourceURL);
           break;
         default:
           MOZ_ASSERT_UNREACHABLE("Bad notification parameter choice");
@@ -761,12 +764,28 @@ void DecoderDoctorDocumentWatcher::AddDiagnostics(
     return;
   }
 
+  const mozilla::TimeStamp now = mozilla::TimeStamp::Now();
+
+  constexpr size_t MaxDiagnostics = 128;
+  constexpr double MaxSeconds = 10.0;
+  while (
+      mDiagnosticsSequence.Length() > MaxDiagnostics ||
+      (!mDiagnosticsSequence.IsEmpty() &&
+       (now - mDiagnosticsSequence[0].mTimeStamp).ToSeconds() > MaxSeconds)) {
+    // Too many, or too old.
+    mDiagnosticsSequence.RemoveElementAt(0);
+    if (mDiagnosticsHandled != 0) {
+      // Make sure Notify picks up the new element added below.
+      --mDiagnosticsHandled;
+    }
+  }
+
   DD_DEBUG(
       "DecoderDoctorDocumentWatcher[%p, "
       "doc=%p]::AddDiagnostics(DecoderDoctorDiagnostics{%s}, call site '%s')",
       this, mDocument, aDiagnostics.GetDescription().Data(), aCallSite);
   mDiagnosticsSequence.AppendElement(
-      Diagnostics(std::move(aDiagnostics), aCallSite));
+      Diagnostics(std::move(aDiagnostics), aCallSite, now));
   EnsureTimerIsStarted();
 }
 
@@ -820,6 +839,15 @@ void DecoderDoctorDiagnostics::StoreFormatDiagnostics(dom::Document* aDocument,
   MOZ_ASSERT(mDiagnosticsType == eUnsaved);
   mDiagnosticsType = eFormatSupportCheck;
 
+  if (NS_WARN_IF(aFormat.Length() > 2048)) {
+    DD_WARN(
+        "DecoderDoctorDiagnostics[%p]::StoreFormatDiagnostics(Document* "
+        "aDocument=%p, format= TOO LONG! '%s', can-play=%d, call site '%s')",
+        aDocument, this, NS_ConvertUTF16toUTF8(aFormat).get(), aCanPlay,
+        aCallSite);
+    return;
+  }
+
   if (NS_WARN_IF(!aDocument)) {
     DD_WARN(
         "DecoderDoctorDiagnostics[%p]::StoreFormatDiagnostics(Document* "
@@ -866,6 +894,16 @@ void DecoderDoctorDiagnostics::StoreMediaKeySystemAccess(
   // Make sure we only store once.
   MOZ_ASSERT(mDiagnosticsType == eUnsaved);
   mDiagnosticsType = eMediaKeySystemAccessRequest;
+
+  if (NS_WARN_IF(aKeySystem.Length() > 2048)) {
+    DD_WARN(
+        "DecoderDoctorDiagnostics[%p]::StoreMediaKeySystemAccess(Document* "
+        "aDocument=%p, keysystem= TOO LONG! '%s', supported=%d, call site "
+        "'%s')",
+        aDocument, this, NS_ConvertUTF16toUTF8(aKeySystem).get(), aIsSupported,
+        aCallSite);
+    return;
+  }
 
   if (NS_WARN_IF(!aDocument)) {
     DD_WARN(
@@ -955,6 +993,24 @@ void DecoderDoctorDiagnostics::StoreDecodeError(dom::Document* aDocument,
   // Make sure we only store once.
   MOZ_ASSERT(mDiagnosticsType == eUnsaved);
   mDiagnosticsType = eDecodeError;
+
+  if (NS_WARN_IF(aError.Message().Length() > 2048)) {
+    DD_WARN(
+        "DecoderDoctorDiagnostics[%p]::StoreDecodeError(Document* "
+        "aDocument=%p, aError= TOO LONG! '%s', aMediaSrc=<provided>, call site "
+        "'%s')",
+        aDocument, this, aError.Description().get(), aCallSite);
+    return;
+  }
+
+  if (NS_WARN_IF(aMediaSrc.Length() > 2048)) {
+    DD_WARN(
+        "DecoderDoctorDiagnostics[%p]::StoreDecodeError(Document* "
+        "aDocument=%p, aError=%s, aMediaSrc= TOO LONG! <provided>, call site "
+        "'%s')",
+        aDocument, this, aError.Description().get(), aCallSite);
+    return;
+  }
 
   if (NS_WARN_IF(!aDocument)) {
     DD_WARN(

@@ -1,0 +1,111 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Qabul qiluvchi">
+<!ENTITY fromField4.label "Jo‘natuvchi">
+<!ENTITY senderField4.label "Jo‘natuvchi">
+
+<!ENTITY organizationField4.label "Tashkilot">
+<!ENTITY replyToField4.label "Javob yozish">
+
+<!ENTITY subjectField4.label "Mavuz">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Yangiliklar guruhi">
+<!ENTITY followupToField4.label "Kuzatib borish">
+<!ENTITY tagsHdr4.label "Teglar">
+<!ENTITY dateField4.label "Sana">
+<!ENTITY userAgentField4.label "Foydalanuvchi xodim">
+<!ENTITY referencesField4.label "Ma’lumotlar">
+<!ENTITY messageIdField4.label "Xabar raqami">
+<!ENTITY inReplyToField4.label "Javob yoziladigan">
+<!ENTITY originalWebsite4.label "Vebsayt">
+
+<!ENTITY hdrArchiveButton1.label "Arxivlash">
+<!ENTITY hdrArchiveButton1.tooltip "Ushbu xabarni arxivlash">
+
+
+<!ENTITY hdrSmartReplyButton1.label "Aqlli javob yozish">
+<!ENTITY hdrReplyButton1.label "Javob qaytarish">
+<!ENTITY hdrReplyButton2.tooltip "Ushbu xabar jo‘natuvchisiga javob yozish">
+<!ENTITY hdrReplyAllButton1.label "Barchasiga javob qaytarish">
+<!ENTITY hdrReplyAllButton1.tooltip "Xabar jo‘natuvchisi va barcha qabul qiluvchilarga javob yozish">
+<!ENTITY hdrReplyListButton1.label "Javob qaytarish ro‘yxati">
+<!ENTITY hdrReplyListButton1.tooltip "Yozishmalar ro‘yxatiga javob qaytarish">
+<!ENTITY hdrFollowupButton1.label "Kuzatib borish">
+<!ENTITY hdrFollowupButton1.tooltip "Ushbu yangiliklar to‘plamiga kuzatib borish uchun xabar yozish">
+<!ENTITY hdrForwardButton1.label "Yo‘naltirish">
+<!ENTITY hdrForwardButton1.tooltip "Ushbu xabarni yo‘naltirish">
+<!ENTITY hdrJunkButton1.label "Spam">
+<!ENTITY hdrJunkButton1.tooltip "Ushbu xabarni spam sifatida belgilash">
+<!ENTITY hdrTrashButton1.label "O‘chirish">
+<!ENTITY hdrTrashButton1.tooltip "Ushbu xabarni o‘chirish">
+
+<!ENTITY hdrViewToolbarShowFull.label "Nishonchalar va matnni ko‘rsatish">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Faqat nishonchalarni ko‘rsatish">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "Faqat matnni ko‘rsatish">
+<!ENTITY hdrViewToolbarShowText.accesskey "m">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Jo‘natuvchiga javob qaytarish doimo ko‘rsatilsin">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "Ko‘proq">
+<!ENTITY otherActionsButton.tooltip "Ko‘proq amallar">
+<!ENTITY otherActionsOpenConversation1.label "Suhbatda ochish">
+<!ENTITY otherActionsOpenConversation1.accesskey "S">
+<!ENTITY otherActionsOpenInNewWindow1.label "Yangi oynada ochish">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "Y">
+<!ENTITY otherActionsOpenInNewTab1.label "Yangi ichki oynada ochish">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "i">
+<!ENTITY markAsReadMenuItem1.label "O‘qilgan deb belgilash">
+<!ENTITY markAsReadMenuItem1.accesskey "O">
+<!ENTITY markAsUnreadMenuItem1.label "O‘qilmagan deb belgilash">
+<!ENTITY markAsUnreadMenuItem1.accesskey "b">
+<!ENTITY saveAsMenuItem1.label "Boshqa formatda saqlash…">
+<!ENTITY saveAsMenuItem1.accesskey "s">
+<!ENTITY viewSourceMenuItem1.label "Manbani ko‘rish">
+<!ENTITY viewSourceMenuItem1.accesskey "k">
+<!ENTITY otherActionsPrint1.label "Chop qilish…">
+<!ENTITY otherActionsPrint1.accesskey "p">
+<!-- Attachment bar context menu items -->
+
+<!ENTITY startExpandedCmd.label    "Boshida biriktirma yon oynasini ko‘rsatish">
+<!ENTITY startExpandedCmd.accesskey    "k">
+<!-- Attachment context menu items -->
+
+<!ENTITY openAttachmentCmd.label    "Ochish">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "Boshqa formatda saqlash…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "s">
+<!ENTITY detachAttachmentCmd.label    "Ajratmoq…">
+<!ENTITY detachAttachmentCmd.accesskey    "A">
+<!ENTITY deleteAttachmentCmd.label    "O‘chirish">
+<!ENTITY deleteAttachmentCmd.accesskey    "O">
+<!ENTITY openAllAttachmentsCmd.label    "Barchasini ochish…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "o">
+<!ENTITY saveAllAttachmentsCmd.label    "Barchasini saqlash…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "s">
+<!ENTITY detachAllAttachmentsCmd.label    "Barchasini ajratish…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "a">
+<!ENTITY deleteAllAttachmentsCmd.label    "Barchasini o‘chirish…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "o">
+
+<!ENTITY openAttachment.tooltip "Biriktirilgan faylni ochish">
+<!-- Attachment toolbar items -->
+
+<!ENTITY saveAttachmentButton1.label       "Saqlash">
+<!ENTITY saveAttachmentButton1.tooltip     "Biriktirilgan faylni saqlash">
+<!ENTITY saveAllAttachmentsButton1.label   "Barchasini saqlash">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Barcha biriktirilgan fayllarni saqlash">
+
+<!ENTITY copyLinkCmd.label        "Havola manzilidan nusxa olish">
+<!ENTITY copyLinkCmd.accesskey    "n">
+
+<!ENTITY CopyMessageId.label "Xabar raqamidan nusxa olish">
+<!ENTITY CopyMessageId.accesskey "n">
+<!ENTITY OpenMessageForMsgId.label "ID raqam uchun xabarni ochish">
+<!ENTITY OpenMessageForMsgId.accesskey "o">
+<!ENTITY OpenBrowserWithMsgId.label "Brauzerni xabar ID raqami bilan ochish">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

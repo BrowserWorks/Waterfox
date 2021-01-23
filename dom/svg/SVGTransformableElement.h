@@ -7,12 +7,12 @@
 #ifndef SVGTransformableElement_h
 #define SVGTransformableElement_h
 
-#include "nsAutoPtr.h"
 #include "SVGAnimatedTransformList.h"
 #include "gfxMatrix.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/SVGElement.h"
 #include "mozilla/gfx/Matrix.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 namespace dom {
@@ -20,7 +20,7 @@ namespace dom {
 class DOMSVGAnimatedTransformList;
 class SVGGraphicsElement;
 class SVGMatrix;
-class SVGIRect;
+class SVGRect;
 struct SVGBoundingBoxOptions;
 
 class SVGTransformableElement : public SVGElement {
@@ -36,8 +36,7 @@ class SVGTransformableElement : public SVGElement {
   SVGElement* GetNearestViewportElement();
   SVGElement* GetFarthestViewportElement();
   MOZ_CAN_RUN_SCRIPT
-  already_AddRefed<SVGIRect> GetBBox(const SVGBoundingBoxOptions& aOptions,
-                                     ErrorResult& rv);
+  already_AddRefed<SVGRect> GetBBox(const SVGBoundingBoxOptions&);
   already_AddRefed<SVGMatrix> GetCTM();
   already_AddRefed<SVGMatrix> GetScreenCTM();
   already_AddRefed<SVGMatrix> GetTransformToElement(
@@ -78,10 +77,10 @@ class SVGTransformableElement : public SVGElement {
       const gfx::Matrix* aAnimateMotionTransform,
       const SVGAnimatedTransformList* aTransforms);
 
-  nsAutoPtr<SVGAnimatedTransformList> mTransforms;
+  UniquePtr<SVGAnimatedTransformList> mTransforms;
 
   // XXX maybe move this to property table, to save space on un-animated elems?
-  nsAutoPtr<gfx::Matrix> mAnimateMotionTransform;
+  UniquePtr<gfx::Matrix> mAnimateMotionTransform;
 };
 
 }  // namespace dom

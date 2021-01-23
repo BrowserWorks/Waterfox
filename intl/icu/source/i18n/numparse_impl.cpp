@@ -39,7 +39,7 @@ NumberParserImpl::createSimpleParser(const Locale& locale, const UnicodeString& 
     LocalPointer<NumberParserImpl> parser(new NumberParserImpl(parseFlags));
     DecimalFormatSymbols symbols(locale, status);
 
-    parser->fLocalMatchers.ignorables = {unisets::DEFAULT_IGNORABLES};
+    parser->fLocalMatchers.ignorables = {parseFlags};
     IgnorablesMatcher& ignorables = parser->fLocalMatchers.ignorables;
 
     DecimalFormatSymbols dfs(locale, status);
@@ -83,23 +83,14 @@ NumberParserImpl::createParserFromProperties(const number::impl::DecimalFormatPr
                                              const DecimalFormatSymbols& symbols, bool parseCurrency,
                                              UErrorCode& status) {
     Locale locale = symbols.getLocale();
-    PropertiesAffixPatternProvider localPAPP;
-    CurrencyPluralInfoAffixProvider localCPIAP;
-    AffixPatternProvider* affixProvider;
-    if (properties.currencyPluralInfo.fPtr.isNull()) {
-        localPAPP.setTo(properties, status);
-        affixProvider = &localPAPP;
-    } else {
-        localCPIAP.setTo(*properties.currencyPluralInfo.fPtr, properties, status);
-        affixProvider = &localCPIAP;
-    }
-    if (affixProvider == nullptr || U_FAILURE(status)) { return nullptr; }
+    AutoAffixPatternProvider affixProvider(properties, status);
+    if (U_FAILURE(status)) { return nullptr; }
     CurrencyUnit currency = resolveCurrency(properties, locale, status);
     CurrencySymbols currencySymbols(currency, locale, symbols, status);
     bool isStrict = properties.parseMode.getOrDefault(PARSE_MODE_STRICT) == PARSE_MODE_STRICT;
     Grouper grouper = Grouper::forProperties(properties);
     int parseFlags = 0;
-    if (affixProvider == nullptr || U_FAILURE(status)) { return nullptr; }
+    if (U_FAILURE(status)) { return nullptr; }
     if (!properties.parseCaseSensitive) {
         parseFlags |= PARSE_FLAG_IGNORE_CASE;
     }
@@ -114,13 +105,14 @@ NumberParserImpl::createParserFromProperties(const number::impl::DecimalFormatPr
         parseFlags |= PARSE_FLAG_STRICT_SEPARATORS;
         parseFlags |= PARSE_FLAG_USE_FULL_AFFIXES;
         parseFlags |= PARSE_FLAG_EXACT_AFFIX;
+        parseFlags |= PARSE_FLAG_STRICT_IGNORABLES;
     } else {
         parseFlags |= PARSE_FLAG_INCLUDE_UNPAIRED_AFFIXES;
     }
     if (grouper.getPrimary() <= 0) {
         parseFlags |= PARSE_FLAG_GROUPING_DISABLED;
     }
-    if (parseCurrency || affixProvider->hasCurrencySign()) {
+    if (parseCurrency || affixProvider.get().hasCurrencySign()) {
         parseFlags |= PARSE_FLAG_MONETARY_SEPARATORS;
     }
     if (!parseCurrency) {
@@ -129,8 +121,7 @@ NumberParserImpl::createParserFromProperties(const number::impl::DecimalFormatPr
 
     LocalPointer<NumberParserImpl> parser(new NumberParserImpl(parseFlags));
 
-    parser->fLocalMatchers.ignorables = {
-            isStrict ? unisets::STRICT_IGNORABLES : unisets::DEFAULT_IGNORABLES};
+    parser->fLocalMatchers.ignorables = {parseFlags};
     IgnorablesMatcher& ignorables = parser->fLocalMatchers.ignorables;
 
     //////////////////////
@@ -143,13 +134,13 @@ NumberParserImpl::createParserFromProperties(const number::impl::DecimalFormatPr
     parser->fLocalMatchers.affixTokenMatcherWarehouse = {&affixSetupData};
     parser->fLocalMatchers.affixMatcherWarehouse = {&parser->fLocalMatchers.affixTokenMatcherWarehouse};
     parser->fLocalMatchers.affixMatcherWarehouse.createAffixMatchers(
-            *affixProvider, *parser, ignorables, parseFlags, status);
+            affixProvider.get(), *parser, ignorables, parseFlags, status);
 
     ////////////////////////
     /// CURRENCY MATCHER ///
     ////////////////////////
 
-    if (parseCurrency || affixProvider->hasCurrencySign()) {
+    if (parseCurrency || affixProvider.get().hasCurrencySign()) {
         parser->addMatcher(parser->fLocalMatchers.currency = {currencySymbols, symbols, parseFlags, status});
     }
 
@@ -159,10 +150,10 @@ NumberParserImpl::createParserFromProperties(const number::impl::DecimalFormatPr
 
     // ICU-TC meeting, April 11, 2018: accept percent/permille only if it is in the pattern,
     // and to maintain regressive behavior, divide by 100 even if no percent sign is present.
-    if (!isStrict && affixProvider->containsSymbolType(AffixPatternType::TYPE_PERCENT, status)) {
+    if (!isStrict && affixProvider.get().containsSymbolType(AffixPatternType::TYPE_PERCENT, status)) {
         parser->addMatcher(parser->fLocalMatchers.percent = {symbols});
     }
-    if (!isStrict && affixProvider->containsSymbolType(AffixPatternType::TYPE_PERMILLE, status)) {
+    if (!isStrict && affixProvider.get().containsSymbolType(AffixPatternType::TYPE_PERMILLE, status)) {
         parser->addMatcher(parser->fLocalMatchers.permille = {symbols});
     }
 

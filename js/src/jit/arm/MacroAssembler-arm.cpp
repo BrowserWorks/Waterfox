@@ -20,6 +20,8 @@
 #include "jit/JitFrames.h"
 #include "jit/MacroAssembler.h"
 #include "jit/MoveEmitter.h"
+#include "util/Memory.h"
+#include "vm/JitActivation.h"  // js::jit::JitActivation
 
 #include "jit/MacroAssembler-inl.h"
 
@@ -2444,6 +2446,11 @@ Assembler::Condition MacroAssemblerARMCompat::testPrimitive(
   return testPrimitive(cond, value.typeReg());
 }
 
+Assembler::Condition MacroAssemblerARMCompat::testGCThing(
+    Assembler::Condition cond, const ValueOperand& value) {
+  return testGCThing(cond, value.typeReg());
+}
+
 // Register-based tests.
 Assembler::Condition MacroAssemblerARMCompat::testInt32(
     Assembler::Condition cond, Register tag) {
@@ -2511,8 +2518,15 @@ Assembler::Condition MacroAssemblerARMCompat::testMagic(
 Assembler::Condition MacroAssemblerARMCompat::testPrimitive(
     Assembler::Condition cond, Register tag) {
   MOZ_ASSERT(cond == Equal || cond == NotEqual);
-  ma_cmp(tag, ImmTag(JSVAL_UPPER_EXCL_TAG_OF_PRIMITIVE_SET));
+  ma_cmp(tag, ImmTag(JS::detail::ValueUpperExclPrimitiveTag));
   return cond == Equal ? Below : AboveOrEqual;
+}
+
+Assembler::Condition MacroAssemblerARMCompat::testGCThing(
+    Assembler::Condition cond, Register tag) {
+  MOZ_ASSERT(cond == Equal || cond == NotEqual);
+  ma_cmp(tag, ImmTag(JS::detail::ValueLowerInclGCThingTag));
+  return cond == Equal ? AboveOrEqual : Below;
 }
 
 Assembler::Condition MacroAssemblerARMCompat::testGCThing(
@@ -2520,7 +2534,7 @@ Assembler::Condition MacroAssemblerARMCompat::testGCThing(
   MOZ_ASSERT(cond == Equal || cond == NotEqual);
   ScratchRegisterScope scratch(asMasm());
   Register tag = extractTag(address, scratch);
-  ma_cmp(tag, ImmTag(JSVAL_LOWER_INCL_TAG_OF_GCTHING_SET));
+  ma_cmp(tag, ImmTag(JS::detail::ValueLowerInclGCThingTag));
   return cond == Equal ? AboveOrEqual : Below;
 }
 
@@ -2625,7 +2639,7 @@ Assembler::Condition MacroAssemblerARMCompat::testDouble(Condition cond,
 Assembler::Condition MacroAssemblerARMCompat::testNumber(Condition cond,
                                                          Register tag) {
   MOZ_ASSERT(cond == Equal || cond == NotEqual);
-  ma_cmp(tag, ImmTag(JSVAL_UPPER_INCL_TAG_OF_NUMBER_SET));
+  ma_cmp(tag, ImmTag(JS::detail::ValueUpperInclNumberTag));
   return cond == Equal ? BelowOrEqual : Above;
 }
 
@@ -2725,7 +2739,7 @@ Assembler::Condition MacroAssemblerARMCompat::testGCThing(
   MOZ_ASSERT(cond == Equal || cond == NotEqual);
   ScratchRegisterScope scratch(asMasm());
   Register tag = extractTag(address, scratch);
-  ma_cmp(tag, ImmTag(JSVAL_LOWER_INCL_TAG_OF_GCTHING_SET));
+  ma_cmp(tag, ImmTag(JS::detail::ValueLowerInclGCThingTag));
   return cond == Equal ? AboveOrEqual : Below;
 }
 
@@ -2797,8 +2811,13 @@ void MacroAssemblerARMCompat::unboxDouble(const ValueOperand& operand,
 void MacroAssemblerARMCompat::unboxDouble(const Address& src,
                                           FloatRegister dest) {
   MOZ_ASSERT(dest.isDouble());
-  ScratchRegisterScope scratch(asMasm());
-  ma_vldr(src, dest, scratch);
+  loadDouble(src, dest);
+}
+
+void MacroAssemblerARMCompat::unboxDouble(const BaseIndex& src,
+                                          FloatRegister dest) {
+  MOZ_ASSERT(dest.isDouble());
+  loadDouble(src, dest);
 }
 
 void MacroAssemblerARMCompat::unboxValue(const ValueOperand& src,
@@ -2814,11 +2833,6 @@ void MacroAssemblerARMCompat::unboxValue(const ValueOperand& src,
   } else {
     unboxNonDouble(src, dest.gpr(), type);
   }
-}
-
-void MacroAssemblerARMCompat::unboxPrivate(const ValueOperand& src,
-                                           Register dest) {
-  ma_mov(src.payloadReg(), dest);
 }
 
 void MacroAssemblerARMCompat::boxDouble(FloatRegister src,
@@ -2907,7 +2921,7 @@ void MacroAssemblerARMCompat::loadInt32OrDouble(Register base, Register index,
                                                 int32_t shift) {
   Label notInt32, end;
 
-  JS_STATIC_ASSERT(NUNBOX32_PAYLOAD_OFFSET == 0);
+  static_assert(NUNBOX32_PAYLOAD_OFFSET == 0);
 
   ScratchRegisterScope scratch(asMasm());
 
@@ -3178,7 +3192,7 @@ void MacroAssemblerARMCompat::storePayload(const Value& val,
   // If NUNBOX32_PAYLOAD_OFFSET is not zero, the memory operand [base + index
   // << shift + imm] cannot be encoded into a single instruction, and cannot
   // be integrated into the as_dtr call.
-  JS_STATIC_ASSERT(NUNBOX32_PAYLOAD_OFFSET == 0);
+  static_assert(NUNBOX32_PAYLOAD_OFFSET == 0);
 
   // If an offset is used, modify the base so that a [base + index << shift]
   // instruction format can be used.
@@ -3205,7 +3219,7 @@ void MacroAssemblerARMCompat::storePayload(Register src,
   // If NUNBOX32_PAYLOAD_OFFSET is not zero, the memory operand [base + index
   // << shift + imm] cannot be encoded into a single instruction, and cannot
   // be integrated into the as_dtr call.
-  JS_STATIC_ASSERT(NUNBOX32_PAYLOAD_OFFSET == 0);
+  static_assert(NUNBOX32_PAYLOAD_OFFSET == 0);
 
   // Save/restore the base if the BaseIndex has an offset, as above.
   if (dest.offset != 0) {
@@ -3355,7 +3369,7 @@ void MacroAssemblerARMCompat::handleFailureWithHandlerTail(
   jump(r0);
 
   // If we found a finally block, this must be a baseline frame. Push two
-  // values expected by JSOP_RETSUB: BooleanValue(true) and the exception.
+  // values expected by JSOp::Retsub: BooleanValue(true) and the exception.
   bind(&finally);
   ValueOperand exception = ValueOperand(r1, r2);
   loadValue(Operand(sp, offsetof(ResumeFromException, exception)), exception);
@@ -3445,8 +3459,7 @@ Assembler::Condition MacroAssemblerARMCompat::testBigIntTruthy(
   ScratchRegisterScope scratch(asMasm());
   SecondScratchRegisterScope scratch2(asMasm());
 
-  ma_dtr(IsLoad, bi, Imm32(BigInt::offsetOfLengthSignAndReservedBits()),
-         scratch, scratch2);
+  ma_dtr(IsLoad, bi, Imm32(BigInt::offsetOfDigitLength()), scratch, scratch2);
   as_cmp(scratch, Imm8(0));
   return truthy ? Assembler::NotEqual : Assembler::Equal;
 }
@@ -3981,15 +3994,6 @@ void MacroAssemblerARMCompat::truncf(FloatRegister input, Register output,
   bind(&fin);
 }
 
-CodeOffsetJump MacroAssemblerARMCompat::jumpWithPatch(RepatchLabel* label) {
-  ARMBuffer::PoolEntry pe;
-  BufferOffset bo = as_BranchPool(0xdeadbeef, label, LabelDoc(), &pe);
-  // Fill in a new CodeOffset with both the load and the pool entry that the
-  // instruction loads from.
-  CodeOffsetJump ret(bo.getOffset(), pe.index());
-  return ret;
-}
-
 void MacroAssemblerARMCompat::profilerEnterFrame(Register framePtr,
                                                  Register scratch) {
   asMasm().loadJSContext(scratch);
@@ -4061,6 +4065,13 @@ void MacroAssembler::PushRegsInMask(LiveRegisterSet set) {
   }
   MOZ_ASSERT(diffG == 0);
 
+  // It's possible that the logic is just fine as it is if the reduced set
+  // maps SIMD pairs to plain doubles and transferMultipleByRuns() stores
+  // and loads doubles.
+#ifdef ENABLE_WASM_SIMD
+#  error "Needs more careful logic if SIMD is enabled"
+#endif
+
   adjustFrame(diffF);
   diffF += transferMultipleByRuns(set.fpus(), IsStore, StackPointer, DB);
   MOZ_ASSERT(diffF == 0);
@@ -4094,6 +4105,11 @@ void MacroAssembler::storeRegsInMask(LiveRegisterSet set, Address dest,
   }
   MOZ_ASSERT(diffG == 0);
 
+  // See above.
+#ifdef ENABLE_WASM_SIMD
+#  error "Needs more careful logic if SIMD is enabled"
+#endif
+
   if (diffF > 0) {
     computeEffectiveAddress(dest, scratch);
     diffF += transferMultipleByRuns(set.fpus(), IsStore, scratch, DB);
@@ -4108,6 +4124,11 @@ void MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set,
   int32_t diffF = set.fpus().getPushSizeInBytes();
   const int32_t reservedG = diffG;
   const int32_t reservedF = diffF;
+
+  // See above.
+#ifdef ENABLE_WASM_SIMD
+#  error "Needs more careful logic if SIMD is enabled"
+#endif
 
   // ARM can load multiple registers at once, but only if we want back all
   // the registers we previously saved to the stack.
@@ -4177,6 +4198,11 @@ void MacroAssembler::Push(FloatRegister reg) {
   VFPRegister r = VFPRegister(reg);
   ma_vpush(VFPRegister(reg));
   adjustFrame(r.size());
+}
+
+void MacroAssembler::PushBoxed(FloatRegister reg) {
+  MOZ_ASSERT(reg.isDouble());
+  Push(reg);
 }
 
 void MacroAssembler::Pop(Register reg) {
@@ -4297,13 +4323,11 @@ void MacroAssembler::patchFarJump(CodeOffset farJump, uint32_t targetOffset) {
   *u32 = (targetOffset - addOffset) - 8;
 }
 
-CodeOffset MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc) {
+CodeOffset MacroAssembler::nopPatchableToCall() {
   AutoForbidPoolsAndNops afp(this,
                              /* max number of instructions in scope = */ 1);
-  CodeOffset offset(currentOffset());
   ma_nop();
-  append(desc, CodeOffset(currentOffset()));
-  return offset;
+  return CodeOffset(currentOffset());
 }
 
 void MacroAssembler::patchNopToCall(uint8_t* call, uint8_t* target) {
@@ -4517,8 +4541,8 @@ void MacroAssembler::moveValue(const ValueOperand& src,
       return;
     }
     // If only one is, copy that source first.
-    mozilla::Swap(s0, s1);
-    mozilla::Swap(d0, d1);
+    std::swap(s0, s1);
+    std::swap(d0, d1);
   }
 
   if (s0 != d0) {
@@ -4568,15 +4592,12 @@ void MacroAssembler::branchValueIsNurseryCell(Condition cond,
                                               const Address& address,
                                               Register temp, Label* label) {
   MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-  Label done, checkAddress;
 
-  Register tag = temp;
-  tag = extractTag(address, tag);
-  branchTestObject(Assembler::Equal, tag, &checkAddress);
-  branchTestString(Assembler::NotEqual, tag,
-                   cond == Assembler::Equal ? &done : label);
+  Label done;
 
-  bind(&checkAddress);
+  branchTestGCThing(Assembler::NotEqual, address,
+                    cond == Assembler::Equal ? &done : label);
+
   loadPtr(ToPayload(address), temp);
   SecondScratchRegisterScope scratch2(*this);
   branchPtrInNurseryChunk(cond, temp, scratch2, label);
@@ -4588,26 +4609,11 @@ void MacroAssembler::branchValueIsNurseryCell(Condition cond,
                                               ValueOperand value, Register temp,
                                               Label* label) {
   MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-  Label done, checkAddress;
 
-  branchTestObject(Assembler::Equal, value.typeReg(), &checkAddress);
-  branchTestString(Assembler::NotEqual, value.typeReg(),
-                   cond == Assembler::Equal ? &done : label);
-
-  bind(&checkAddress);
-  branchPtrInNurseryChunk(cond, value.payloadReg(), temp, label);
-
-  bind(&done);
-}
-
-void MacroAssembler::branchValueIsNurseryObject(Condition cond,
-                                                ValueOperand value,
-                                                Register temp, Label* label) {
-  MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
   Label done;
 
-  branchTestObject(Assembler::NotEqual, value,
-                   cond == Assembler::Equal ? &done : label);
+  branchTestGCThing(Assembler::NotEqual, value,
+                    cond == Assembler::Equal ? &done : label);
   branchPtrInNurseryChunk(cond, value.payloadReg(), temp, label);
 
   bind(&done);
@@ -5741,6 +5747,15 @@ void MacroAssembler::flexibleDivMod32(Register rhs, Register lhsOutput,
   }
 }
 
+CodeOffset MacroAssembler::moveNearAddressWithPatch(Register dest) {
+  return movWithPatch(ImmPtr(nullptr), dest);
+}
+
+void MacroAssembler::patchNearAddressMove(CodeLocationLabel loc,
+                                          CodeLocationLabel target) {
+  PatchDataWithValueCheck(loc, ImmPtr(target.raw()), ImmPtr(nullptr));
+}
+
 // ========================================================================
 // Spectre Mitigations.
 
@@ -5748,6 +5763,36 @@ void MacroAssembler::speculationBarrier() {
   // Spectre mitigation recommended by ARM for cases where csel/cmov cannot be
   // used.
   as_csdb();
+}
+
+void MacroAssembler::floorFloat32ToInt32(FloatRegister src, Register dest,
+                                         Label* fail) {
+  floorf(src, dest, fail);
+}
+
+void MacroAssembler::floorDoubleToInt32(FloatRegister src, Register dest,
+                                        Label* fail) {
+  floor(src, dest, fail);
+}
+
+void MacroAssembler::ceilFloat32ToInt32(FloatRegister src, Register dest,
+                                        Label* fail) {
+  ceilf(src, dest, fail);
+}
+
+void MacroAssembler::ceilDoubleToInt32(FloatRegister src, Register dest,
+                                       Label* fail) {
+  ceil(src, dest, fail);
+}
+
+void MacroAssembler::roundFloat32ToInt32(FloatRegister src, Register dest,
+                                         FloatRegister temp, Label* fail) {
+  roundf(src, dest, fail, temp);
+}
+
+void MacroAssembler::roundDoubleToInt32(FloatRegister src, Register dest,
+                                        FloatRegister temp, Label* fail) {
+  round(src, dest, fail, temp);
 }
 
 //}}} check_macroassembler_style
@@ -5915,7 +5960,7 @@ void MacroAssemblerARM::wasmLoadImpl(const wasm::MemoryAccessDesc& access,
   MOZ_ASSERT(ptr == ptrScratch);
 
   uint32_t offset = access.offset();
-  MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
+  MOZ_ASSERT(offset < wasm::MaxOffsetGuardLimit);
 
   Scalar::Type type = access.type();
 
@@ -5936,7 +5981,7 @@ void MacroAssemblerARM::wasmLoadImpl(const wasm::MemoryAccessDesc& access,
   BufferOffset load;
   if (out64 != Register64::Invalid()) {
     if (type == Scalar::Int64) {
-      MOZ_ASSERT(INT64LOW_OFFSET == 0);
+      static_assert(INT64LOW_OFFSET == 0);
 
       load = ma_dataTransferN(IsLoad, 32, /* signed = */ false, memoryBase, ptr,
                               out64.low);
@@ -5986,7 +6031,7 @@ void MacroAssemblerARM::wasmStoreImpl(const wasm::MemoryAccessDesc& access,
   MOZ_ASSERT(ptr == ptrScratch);
 
   uint32_t offset = access.offset();
-  MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
+  MOZ_ASSERT(offset < wasm::MaxOffsetGuardLimit);
 
   unsigned byteSize = access.byteSize();
   Scalar::Type type = access.type();
@@ -6003,7 +6048,7 @@ void MacroAssemblerARM::wasmStoreImpl(const wasm::MemoryAccessDesc& access,
 
   BufferOffset store;
   if (type == Scalar::Int64) {
-    MOZ_ASSERT(INT64LOW_OFFSET == 0);
+    static_assert(INT64LOW_OFFSET == 0);
 
     store = ma_dataTransferN(IsStore, 32 /* bits */, /* signed */ false,
                              memoryBase, ptr, val64.low);
@@ -6045,9 +6090,10 @@ void MacroAssemblerARM::wasmUnalignedLoadImpl(
     Register tmp2, Register tmp3) {
   MOZ_ASSERT(ptr == ptrScratch);
   MOZ_ASSERT(tmp != ptr);
+  MOZ_ASSERT(!Assembler::SupportsFastUnalignedAccesses());
 
   uint32_t offset = access.offset();
-  MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
+  MOZ_ASSERT(offset < wasm::MaxOffsetGuardLimit);
 
   if (offset) {
     ScratchRegisterScope scratch(asMasm());
@@ -6139,7 +6185,7 @@ void MacroAssemblerARM::wasmUnalignedStoreImpl(
                 valOrTmp != val64.high && valOrTmp != val64.low);
 
   uint32_t offset = access.offset();
-  MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
+  MOZ_ASSERT(offset < wasm::MaxOffsetGuardLimit);
 
   unsigned byteSize = access.byteSize();
   MOZ_ASSERT(byteSize == 8 || byteSize == 4 || byteSize == 2);

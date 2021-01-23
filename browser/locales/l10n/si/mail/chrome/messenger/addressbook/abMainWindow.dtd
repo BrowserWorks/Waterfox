@@ -1,0 +1,184 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "ලිපින පොත">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "ගොනු">
+<!ENTITY fileMenu.accesskey                             "f">
+<!ENTITY newMenu.label                                  "නව">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "ලිපින පොතේ සබඳතාවක්…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "තැපැල් ලැයිස්තුව…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "ලිපින පොතක්…">
+<!ENTITY newAddressBookCmd.accesskey                    "B">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP ඩිරෙක්ටරිය…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "ලිපියක්">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "m">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Mac OS X ලිපින පොත භාවිතා කරන්න">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "වසන්න">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "c">
+<!ENTITY printSetupCmd.label                            "පිටු සකසන්න...">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "සබඳතා මුද්‍රණ පෙර දැක්ම">
+<!ENTITY printPreviewContactCmd.accesskey               "v">
+<!ENTITY printPreviewAddressBook.label                  "ලිපින පොතේ මුද්‍රණ පෙර දැක්ම">
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+<!ENTITY printContactCmd.label                          "සබඳතාව මුද්‍රණය…">
+<!ENTITY printContactCmd.accesskey                      "P">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "ලිපින පොත මුද්‍රණය...">
+<!ENTITY printAddressBook.accesskey                     "A">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "සැකසුම්">
+<!ENTITY editMenu.accesskey                             "e">
+<!ENTITY deleteCmd.label                                "මකන්න">
+<!ENTITY deleteAbCmd.label                              "ලිපින පොත මකන්න">
+<!ENTITY deleteContactCmd.label                         "සබඳතාව මකන්න">
+<!ENTITY deleteContactsCmd.label                        "සබඳතා මකන්න">
+<!ENTITY deleteListCmd.label                            "ලැයිස්තුව මකන්න">
+<!ENTITY deleteListsCmd.label                           "ලැයිස්තු මකන්න">
+<!ENTITY deleteItemsCmd.label                           "අයිතමයන් මකන්න">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "දසුන්">
+<!ENTITY viewMenu.accesskey                             "v">
+<!ENTITY viewToolbarsMenu.label                         "මෙවලම් තීරු">
+<!ENTITY viewToolbarsMenu.accesskey                     "T"> 
+<!ENTITY menubarCmd.label                               "මෙනු තීරුව">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "ලිපින පොත් මෙවලම් තීරුව">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "තත්ත්ව තීරුව">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "රිසිකරණය...">
+<!ENTITY customizeToolbar.accesskey                     "C">
+<!ENTITY layoutMenu.label                               "සැලසුම">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "බහාලුම් සාරාංශ කවුළුව">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                          "සබඳතා සාරාංශ කවුළුව">
+<!ENTITY showContactPane2.accesskey                      "C">
+<!ENTITY menu_ShowNameAs.label                          "නම මෙසේ පෙන්වන්න">
+<!ENTITY menu_ShowNameAs.accesskey                      "n"> 
+<!ENTITY firstLastCmd2.label                             "මුල, අග">
+<!ENTITY firstLastCmd2.accesskey                         "f"> 
+<!ENTITY lastFirstCmd.label                             "අග, මුල">
+<!ENTITY lastFirstCmd.accesskey                         "l">
+<!ENTITY displayNameCmd.label                           "නම පෙන්වීම">
+<!ENTITY displayNameCmd.accesskey                       "d">
+<!ENTITY sortMenu.label                                 "අනුපිළිවෙළ සකසන්න">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "මෙවලම්">
+<!ENTITY tasksMenu.accesskey                            "T">
+<!ENTITY messengerCmd.label                             "ලිපි සහ පුවත්සමූහ">
+<!ENTITY messengerCmd.accesskey                         "m">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "ලිපින සොයන්න...">
+<!ENTITY searchAddressesCmd.accesskey                   "S">
+<!ENTITY importCmd.label                                "ආයාත...">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "නිර්යාත...">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmdUnix.label                       "මනාපයන්">
+<!ENTITY preferencesCmdUnix.accesskey                   "n">
+
+<!-- Address Book Toolbar and Context Menus -->  
+<!ENTITY newContactButton.label                         "නව සබඳතාවක්">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "නව ලැයිස්තුවක්">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY newmsgButton.label                             "නව ලිපියක් ලියන්න">
+<!ENTITY newmsgButton.accesskey                         "W">
+<!ENTITY newIM.label                                    "ක්ෂණික පණිවිඩ">
+<!ENTITY newIM.accesskey                                "I">
+<!ENTITY deleteButton2.label                             "මකන්න">
+<!ENTITY deleteButton2.accesskey                         "D">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "ලිපින පොතට නව සබඳතාවක් එක් කිරීමට">
+<!ENTITY newlistButton.tooltip                          "නව ලැයිස්තුවක් සෑදීමට">
+<!ENTITY newmsgButton.tooltip                           "ලිපියක් යැවීමට">
+<!ENTITY newIM.tooltip                                  "ක්ෂණික පණිවිඩක් හෝ කතාබහ යැවීමට">
+<!ENTITY deleteButton2.tooltip                           "තෝරාගත් අයිතමයන් මකා දැමීමට">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "නම හෝ වි. තැ. ලිපිනය">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "වැඩිමනත් ලිපින සෙවුම්">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Quick Search">
+
+<!-- Results Pane -->
+<!ENTITY GeneratedName.label                            "නම">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "වි. තැ. ලිපිනය">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "චැට් නාමය">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "ආයතනය">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "විකල්ප නාමය">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "අතිරේක වි. තැ. ලිපිනය">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "අංශය">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "තනතුර">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "ජංගම දු.ක.">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "පේජරය">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "ෆැකස්">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "දු.ක.(නිවස)">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "දු.ක.(කාර්යාලය)">
+<!ENTITY WorkPhone.accesskey                            "W">
+<!ENTITY sortAscending.label                            "ආරෝහණ පිළිවෙළට">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "අවරෝහණ පිළිවෙළට">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "ශබ්දානුකූල (Phonetic) නම">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "සබඳතාවය">
+<!ENTITY home.heading                                   "නිවස">
+<!ENTITY other.heading                                  "වෙනත්">
+<!ENTITY chat.heading                                   "චැට්">
+<!ENTITY phone.heading                                  "දුරකතනය">
+<!ENTITY work.heading                                   "කාර්යාලය">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "විස්තරය">
+<!ENTITY addresses.heading                              "ලිපිනයන්">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "සිතියම ලබාගන්න">
+<!ENTITY mapIt.tooltip                                  "මෙම ලිපිනයේ සිතියමක් වෙබ් තුළින් පෙන්වන්න">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label "කවුළුව">
+<!ENTITY minimizeWindow.label "හකුලන්න">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "සියල්ල මතුපිටට ගෙනෙන්න">
+<!ENTITY zoomWindow.label "විශාලනය">

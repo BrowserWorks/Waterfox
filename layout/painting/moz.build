@@ -20,6 +20,7 @@ EXPORTS += [
     'nsDisplayItemTypes.h',
     'nsDisplayItemTypesList.h',
     'nsDisplayList.h',
+    'nsDisplayListArenaTypes.h',
     'nsDisplayListInvalidation.h',
     'nsImageRenderer.h',
     'RetainedDisplayListBuilder.h',
@@ -56,6 +57,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 LOCAL_INCLUDES += [
     '/docshell/base',
     '/dom/base',
+    '/gfx/2d',
     '/layout/base',
     '/layout/generic',
     '/layout/style',
@@ -63,6 +65,8 @@ LOCAL_INCLUDES += [
     '/layout/tables',
     '/layout/xul',
 ]
+
+LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
 
 FINAL_LIBRARY = 'xul'
 

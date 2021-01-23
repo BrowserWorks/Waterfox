@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -30,6 +29,8 @@ async function test() {
     "privacy.resistFingerprinting.reduceTimerPrecision.microseconds",
     2000
   );
+  // Needed for a loadFrameScript(data:) call in helper_codemirror_runner.js
+  await pushPref("security.allow_parent_unrestricted_js_loads", true);
 
   const tab = await addTab(URI);
   runCodeMirrorTest(tab.linkedBrowser);

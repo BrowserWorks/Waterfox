@@ -56,13 +56,6 @@ add_task(async function test_location_timeout_xhr() {
   // should be no result recorded at all.
   checkCountryResultTelemetry(null);
 
-  // should have set the flag indicating we saw a timeout.
-  let histogram = Services.telemetry.getHistogramById(
-    "SEARCH_SERVICE_COUNTRY_TIMEOUT"
-  );
-  let snapshot = histogram.snapshot();
-  deepEqual(snapshot.values, { 0: 0, 1: 1, 2: 0 });
-
   // should not have SEARCH_SERVICE_COUNTRY_FETCH_TIME_MS recorded as our
   // test server is still blocked on our promise.
   verifyProbeSum("SEARCH_SERVICE_COUNTRY_FETCH_TIME_MS", 0);
@@ -75,7 +68,7 @@ add_task(async function test_location_timeout_xhr() {
     SearchTestUtils.promiseSearchNotification("geoip-lookup-xhr-complete").then(
       () => {
         // should have the XHR timeout recorded.
-        checkCountryResultTelemetry(TELEMETRY_RESULT_ENUM.XHRTIMEOUT);
+        checkCountryResultTelemetry(TELEMETRY_RESULT_ENUM.TIMEOUT);
         // still should not have a report of how long the response took as we
         // only record that on success responses.
         verifyProbeSum("SEARCH_SERVICE_COUNTRY_FETCH_TIME_MS", 0);

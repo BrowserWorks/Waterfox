@@ -1,0 +1,292 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Meni wočinić">
+<!ENTITY navbarOverflow.label                "Dalše nastroje…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Rajtark připinyć">
+<!ENTITY  unpinTab.label                     "Rajtark wotpinyć">
+
+<!ENTITY  listAllTabs.label      "Wšě rajtarki nalistować">
+
+<!ENTITY tabCmd.label "Nowy rajtark">
+<!ENTITY openFileCmd.label "Dataju wočinić…">
+<!ENTITY printCmd.label "Ćišćeć…">
+
+<!ENTITY taskManagerCmd.label "Zrjadowak nadawkow">
+
+<!ENTITY menubarCmd.label "Menijowa lajsta">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Nawigacija">
+<!ENTITY personalbarCmd.label "Lajsta zapołožkow">
+<!ENTITY personalbarCmd.accesskey "L">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Zapołožki">
+<!ENTITY bookmarksToolbarItem.label "Zapiski lajsty zapołožkow">
+
+<!ENTITY fullScreenCmd.label "Połna wobrazowka">
+
+
+<!-- } is above this key on many keyboards -->
+
+
+<!ENTITY pictureInPictureHideToggle.label "Přepinanje wobraz-we-wobrazu schować">
+<!ENTITY pictureInPictureHideToggle.accesskey "P">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Nastajenja &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Dalši grat zwjazać…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Pola &brandProductName; přizjewić">
+<!ENTITY fxa.menu.turnOnSync.label "&syncBrand.shortName.label; zmóžnić">
+<!ENTITY fxa.menu.firefoxServices.label "Słužby &brandProductName;">
+<!ENTITY fxa.menu.account.label "Konto">
+<!ENTITY fxa.menu.settings.label "Nastajenja">
+<!ENTITY fxa.menu.accountSettings.label "Kontowe nastajenja">
+<!ENTITY fxa.menu.manageAccount2.label "Konto rjadować">
+<!ENTITY fxa.menu.signOut.label "Wotzjewić…">
+<!ENTITY fxa.menu.setupSync.label "&syncBrand.shortName.label; konfigurować…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Sćelće rajtark hnydom na grat, pola kotrehož sće přizjewjeny.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "je nětko połna wobrazowka">
+<!ENTITY fullscreenWarning.generic.label "Tutón dokument je nětko połna wobrazowka">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Połnu wobrazowku skónčić (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Połnu wobrazowku (esc) skónčić">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ma kontrolu nad wašim pokazowakom. Tłóčće Esc, zo byšće kontrolu wróćo dóstał.">
+<!ENTITY pointerlockWarning.generic.label "Tutón dokument ma kontrolu nad wašim pokazowakom. Tłóčće Esc, zo byšće kontrolu wróćo dóstał.">
+
+<!ENTITY showAllBookmarks2.label "Wšě zapołožki pokazać">
+<!ENTITY recentBookmarks.label "Njedawno jako zapołožka wotpołoženy">
+<!ENTITY bookmarksToolbarChevron.tooltip "Dalše zapołožki pokazać">
+
+<!ENTITY printButton.label            "Ćišćeć">
+<!ENTITY printButton.tooltip          "Tutu stronu ćišćeć">
+
+
+<!ENTITY searchItem.title             "Pytać">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Startowa strona">
+<!ENTITY homeButton.defaultPage.tooltip "Startowa strona &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Zapołožki">
+
+<!ENTITY bookmarksSubview.label             "Zapołožki">
+<!ENTITY bookmarksMenuButton2.label         "Meni zapołožkow">
+<!ENTITY bookmarksMenuButton.other.label    "Druhe zapołožki">
+<!ENTITY bookmarksMenuButton.mobile.label   "Mobilne zapołožki">
+<!ENTITY viewBookmarksSidebar2.label        "Bóčnicu zapołožkow pokazać">
+<!ENTITY hideBookmarksSidebar.label         "Bóčnicu zapołožkow schować">
+<!ENTITY viewBookmarksToolbar.label         "Lajstu zapołožkow pokazać">
+<!ENTITY hideBookmarksToolbar.label         "Lajstu zapołožkow schować">
+<!ENTITY searchBookmarks.label              "Zapołožki pytać">
+<!ENTITY bookmarkingTools.label             "Nastroje za zapołožki">
+<!ENTITY addBookmarksMenu.label             "Symbolowej lajsće meni zapołožkow přidać">
+<!ENTITY removeBookmarksMenu.label          "Meni zapołožkow ze symboloweje lajsty wotstronić">
+
+<!ENTITY historyButton.label            "Historija">
+
+<!ENTITY downloads.label              "Sćehnjenja">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Sćehnjenja">
+<!ENTITY addons.label                 "Přidatki">
+
+<!ENTITY webDeveloperMenu.label       "Webwuwiwar">
+
+<!ENTITY newNavigatorCmd.label        "Nowe wokno">
+<!ENTITY newPrivateWindow.label     "Nowe priwatne wokno">
+
+<!ENTITY editMenu.label         "Wobdźěłać">
+<!ENTITY preferencesCmd2.label       "Nastajenja">
+<!ENTITY preferencesCmdUnix.label       "Nastajenja">
+<!ENTITY logins.label                           "Přizjewjenja a hesła">
+
+<!ENTITY overflowCustomizeToolbar.label       "Symbolowu lajstu přiměrić…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "S">
+
+<!ENTITY historyMenu.label "Historija">
+<!ENTITY historyUndoMenu.label "Runje začinjene rajtarki">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Runje začinjene wokna">
+
+<!ENTITY appMenuHistory.showAll.label "Wšu historiju pokazać">
+<!ENTITY appMenuHistory.clearRecent.label "Aktualnu historiju wuprózdnić…">
+<!ENTITY appMenuHistory.restoreSession.label "Předchadne posedźenje wobnowić">
+<!ENTITY appMenuHistory.viewSidebar.label "Bóčnicu historije pokazać">
+<!ENTITY appMenuHistory.hideSidebar.label "Bóčnicu historije schować">
+<!ENTITY appMenuHistory.recentHistory.label "Najnowša historija">
+<!ENTITY appMenuHelp.label "Pomoc">
+
+<!ENTITY appMenuRemoteTabs.label "Synchronizowane rajtarki">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Žane wočinjene rajtarki">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Wjace pokazać">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Dalše rajtarki z tutoho grata pokazać">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Wšě pokazać">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Wšě rajtarki z tutoho grata pokazać">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Synchronizowanje rajtarkow zapinać, zo by so lisćina rajtarkow z druhich gratow pokazała.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Chceće tu swoje rajtarki z druhich gratow widźeć?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Synchronizowanske nastajenja wočinić">
+<!ENTITY appMenuRemoteTabs.welcome.label "Wobhladajće sej lisćinu rajtarkow ze swojich gratow.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Waše konto dyrbi so wobkrućić.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "So pola &syncBrand.shortName.label; přizjewić…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "&syncBrand.shortName.label; zmóžnić…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Graty zrjadować…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Bóčnicu synchronizowanych rajtarkow pokazać">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Bóčnicu synchronizowanych rajtarkow schować">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Druhi grat zwjazać">
+
+<!ENTITY appMenuRecentHighlights.label "Aktualne wjerški">
+
+<!ENTITY customizeMenu.addToToolbar.label "Symbolowej lajsće přidać">
+<!ENTITY customizeMenu.addToToolbar.accesskey "S">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Přeběžkowemu menijej přidać">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Z přeběžkoweho menija wotpjeć">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "t">
+<!ENTITY customizeMenu.removeFromToolbar.label "Ze symboloweje lajsty wotstronić">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "Z">
+<!ENTITY customizeMenu.addMoreItems.label "Dalše zapiski přidać…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "l">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Wjace">
+
+<!ENTITY contentSearchSubmit.tooltip  "Pytanje startować">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Pytać">
+<!ENTITY searchIcon.tooltip           "Pytać">
+
+<!ENTITY openLinkCmdInTab.accesskey   "r">
+
+<!ENTITY pageAction.copyLink.label    "Wotkaz kopěrować">
+
+<!ENTITY saveToPocketCmd.label        "Stronu pola Pocket składować">
+<!ENTITY pocketMenuitem.label         "Lisćinu Pocket pokazać">
+
+<!ENTITY emailPageCmd.label           "Wotkaz e-mejlować…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Skalować">
+
+<!ENTITY sidebarCloseButton.tooltip     "Bóčnicu začinić">
+
+<!ENTITY quitApplicationCmdWin2.label       "Skónčić">
+<!ENTITY quitApplicationCmdWin2.accesskey   "k">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; skónčić">
+<!ENTITY quitApplicationCmd.label       "Wopušćić">
+<!ENTITY quitApplicationCmd.accesskey   "o">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName;Name; wopušćić">
+
+<!ENTITY allowPopups.accesskey "u">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Nastajenja za blokowanje wuskakowacych woknow wobdźěłać…">
+<!ENTITY editPopupSettings.label "Nastajenja za blokowanje wuskakowacych woknow wobdźěłać…">
+<!ENTITY editPopupSettings.accesskey "o">
+<!ENTITY dontShowMessage.accesskey "n">
+
+<!ENTITY findOnCmd.label     "Na tutej stronje pytać…">
+
+<!ENTITY spellAddDictionaries.label "Słowniki přidać…">
+<!ENTITY spellAddDictionaries.accesskey "S">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Rajtarki wobhladowaka">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Awtomatisce schować">
+
+
+<!ENTITY uiTour.infoPanel.close "Začinić">
+
+<!ENTITY panicButton.thankyou.msg1                "Waša najnowša historija je zhašana.">
+<!ENTITY panicButton.thankyou.msg2                "Wěste přehladowanje!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Wulki dźak!">
+
+<!ENTITY updateAvailable.panelUI.label "Aktualizaciju &brandShorterName; sćahnyć">
+<!ENTITY updateManual.panelUI.label "Nowu kopiju &brandShorterName; sćahnyć">
+<!ENTITY updateUnsupported.panelUI.label "Njemóžeće dalše aktualizacije přewjesć">
+<!ENTITY updateRestart.panelUI.label2 "Startujće znowa, zo byšće &brandShorterName; aktualizował">
+
+<!ENTITY sendToDevice.syncNotReady.label "Graty so synchronizuja…">
+
+<!ENTITY pageAction.shareUrl.label "Dźělić">
+<!ENTITY pageAction.shareMore.label "Wjace…">
+
+<!ENTITY libraryButton.tooltip "Historiju, składowane zapołožki a wjace pokazać">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Funkcije bjezbarjernošće zmóžnjene">

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Robin Templeton. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -31,4 +30,5 @@ assert.throws(RangeError, function() {
 assert.throws(RangeError, function() {
   1n ** -100000000000000000n;
 }, '1n ** -100000000000000000n throws RangeError');
+
 reportCompare(0, 0);

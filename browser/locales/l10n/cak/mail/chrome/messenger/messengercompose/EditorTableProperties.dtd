@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Taq Richinil Kemon Kajtz'ik">
+<!ENTITY applyButton.label                "Tisamajïx">
+<!ENTITY applyButton.accesskey            "s">
+<!ENTITY closeButton.label                "Titz'apïx">
+<!ENTITY tableTab.label                   "Kemoj kajtz'ik">
+<!ENTITY cellTab.label                    "Taq ch'utikajtz'ik">
+<!ENTITY tableRows.label                  "Taq cholaj:">
+<!ENTITY tableRows.accessKey              "c">
+<!ENTITY tableColumns.label               "Taq tem:">
+<!ENTITY tableColumns.accessKey           "t">
+<!ENTITY tableHeight.label                "Raqän:">
+<!ENTITY tableHeight.accessKey            "q">
+<!ENTITY tableWidth.label                 "Ruwa:">
+<!ENTITY tableWidth.accessKey             "w">
+<!ENTITY tableBorderSpacing.label         "Taq Ruchi' chuqa' Rukojol">
+<!ENTITY tableBorderWidth.label           "Ruchi':">
+<!ENTITY tableBorderWidth.accessKey       "c">
+<!ENTITY tableSpacing.label               "Rukojol:">
+<!ENTITY tableSpacing.accessKey           "k">
+<!ENTITY tablePadding.label               "Nojsan:">
+<!ENTITY tablePadding.accessKey           "N">
+<!ENTITY tablePxBetwCells.label           "taq piksel chi kikojol ch'utikajtz'ik">
+<!ENTITY tablePxBetwBrdrCellContent.label "taq piksel chi kikojol ri ruchi' chuqa' ri rupam ch'utikajtz'ik">
+<!ENTITY tableAlignment.label             "Rucholajem Kemon Kajtz'ik:">
+<!ENTITY tableAlignment.accessKey         "K">
+<!ENTITY tableCaption.label               "Ojqan tzij:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "Pa Ruwi' ri Kemon Kajtz'ik">
+<!ENTITY tableCaptionBelow.label          "Chuxe' ri Kemon Kajtz'ik">
+<!ENTITY tableCaptionLeft.label           "Pa Ruxokom ri Kemon Kajtz'ik">
+<!ENTITY tableCaptionRight.label          "Pa rajkiq'a' ri kemon kajtz'ik">
+<!ENTITY tableCaptionNone.label           "Majun">
+<!ENTITY tableInheritColor.label           "(Tiya' q'ij chi titz'etetäj ri rub'onil rupam ri ruxaq)">
+
+<!ENTITY cellSelection.label              "Cha'onïk">
+<!ENTITY cellSelectCell.label             "Ch'utikajtz'ik">
+<!ENTITY cellSelectRow.label              "Cholaj">
+<!ENTITY cellSelectColumn.label           "Tem">
+<!ENTITY cellSelectNext.label             "Jun chik">
+<!ENTITY cellSelectNext.accessKey         "c">
+<!ENTITY cellSelectPrevious.label         "Jun kan">
+<!ENTITY cellSelectPrevious.accessKey     "C">
+<!ENTITY applyBeforeChange.label          "Xkeb'anatäj ri taq jaloj e'oyob'en chuwäch xtijal ri cha'oj.">
+<!ENTITY cellContentAlignment.label       "Rucholajem Rupam">
+<!ENTITY cellHorizontal.label             "Kotz'öl:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "Pa'äl:">
+<!ENTITY cellVertical.accessKey           "P">
+<!ENTITY cellStyle.label                  "Rub'anikil Ch'utikajtz'ik:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "Relik">
+<!ENTITY cellHeader.label                 "Jub'i'aj">
+<!ENTITY cellTextWrap.label               "Rutz'ajik Rucholajem Tzij:">
+<!ENTITY cellTextWrap.accessKey           "R">
+<!ENTITY cellWrap.label                   "Tz'ajïk">
+<!ENTITY cellNoWrap.label                 "Man titz'ajïx">
+<!ENTITY cellAlignTop.label               "Ajsik">
+<!ENTITY cellAlignMiddle.label            "Tob'äl">
+<!ENTITY cellAlignBottom.label            "Chuxe'">
+<!ENTITY cellAlignJustify.label           "Chojtz'aqät">
+<!ENTITY cellInheritColor.label           "(Tiya' q'ij chi titz'et ri rub'onil rupam ri kemon kajtz'ik)">
+<!ENTITY cellUseCheckboxHelp.label        "Ke'okisäx ri taq rukajtz'ik cha'oj richin niya' retal achike taq ichinil xke'okisäx pa ri taq ch'utikajtz'ik echa'on">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Nimilem">
+<!ENTITY pixels.label                     "taq piksel">
+<!ENTITY backgroundColor.label            "Rub'onil Rupam:">
+<!ENTITY backgroundColor.accessKey        "p">
+<!ENTITY AlignLeft.label                  "Xokon">
+<!ENTITY AlignCenter.label                "Pa nik'aj">
+<!ENTITY AlignRight.label                 "Ajkiq'a'">

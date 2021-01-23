@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "Cau'r neges hon">
+
+<!ENTITY checkForUpdates "Gwirio am ddiweddariadau…">
+
+<!ENTITY learnMoreNoEllipsis "Dysgu rhagor">
+
+<!ENTITY defaultButton.label "Iawn!">
+<!ENTITY defaultButton.accesskey "I">
+
+<!ENTITY moreActionsButton.accessibleLabel "Rhagor o weithredoedd">

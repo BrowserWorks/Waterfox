@@ -148,8 +148,10 @@ const ACTION = {
 const EXPIRATION_QUERIES = {
   // Some visits can be expired more often than others, cause they are less
   // useful to the user and can pollute awesomebar results:
-  // 1. urls over 255 chars
-  // 2. redirect sources and downloads
+  // 1. visits to urls over 255 chars
+  // 2. downloads
+  // We never expire redirect targets, because they are currently necessary to
+  // recognize redirect sources (see Bug 468710 for better options).
   // Note: due to the REPLACE option, this should be executed before
   // QUERY_FIND_VISITS_TO_EXPIRE, that has a more complete result.
   QUERY_FIND_EXOTIC_VISITS_TO_EXPIRE: {
@@ -158,6 +160,7 @@ const EXPIRATION_QUERIES = {
           FROM moz_historyvisits v
           JOIN moz_places h ON h.id = v.place_id
           WHERE visit_date < strftime('%s','now','localtime','start of day','-60 days','utc') * 1000000
+          AND visit_type NOT IN (5,6)
           AND ( LENGTH(h.url) > 255 OR v.visit_type = 7 )
           ORDER BY v.visit_date ASC
           LIMIT :limit_visits`,
@@ -254,11 +257,51 @@ const EXPIRATION_QUERIES = {
       ACTION.DEBUG,
   },
 
+  // Expire old favicons for:
+  //  - urls that permanently redirect.
+  //  - urls with ref, when the origin has a root favicon that can be used as
+  //    a fallback.
+  // This deletes pages instead of icons, because icons may be referenced by
+  // multiple pages. The moz_pages_to_icons entries are removed by the table's
+  // FOREIGN KEY, while orphan icons are removed by one of the next queries.
+  QUERY_EXPIRE_OLD_FAVICONS: {
+    sql: `DELETE FROM moz_pages_w_icons WHERE id IN (
+            SELECT DISTINCT page_id FROM moz_icons i
+            JOIN moz_icons_to_pages ON icon_id = i.id
+            JOIN moz_pages_w_icons p ON page_id = p.id
+            JOIN moz_places h ON h.url_hash = page_url_hash
+            JOIN moz_origins o ON o.id = h.origin_id
+            WHERE root = 0
+              AND h.foreign_count = 0
+              AND expire_ms BETWEEN 1 AND strftime('%s','now','localtime','start of day','-180 days','utc') * 1000
+              AND (
+              h.id IN (
+                SELECT v.place_id
+                FROM moz_historyvisits v
+                JOIN moz_historyvisits v_dest on v_dest.from_visit = v.id
+                WHERE v_dest.visit_type = 5
+              )
+              OR (
+                INSTR(page_url, '#') >= 0
+                AND EXISTS(SELECT id FROM moz_icons WHERE root = 1 AND fixed_icon_url_hash = hash(fixup_url(o.host) || '/favicon.ico'))
+              )
+            )
+            LIMIT 100
+          )`,
+    actions:
+      ACTION.SHUTDOWN_DIRTY |
+      ACTION.IDLE_DIRTY |
+      ACTION.IDLE_DAILY |
+      ACTION.DEBUG,
+  },
+
   // Expire orphan pages from the icons database.
   QUERY_EXPIRE_FAVICONS_PAGES: {
     sql: `DELETE FROM moz_pages_w_icons
           WHERE page_url_hash NOT IN (
             SELECT url_hash FROM moz_places
+          ) OR id NOT IN (
+            SELECT DISTINCT page_id FROM moz_icons_to_pages
           )`,
     actions:
       ACTION.TIMED_OVERLIMIT |
@@ -351,7 +394,8 @@ const EXPIRATION_QUERIES = {
   // If p_id is set whole_entry = 1, then we have expired the full page.
   // Either p_id or v_id are always set.
   QUERY_SELECT_NOTIFICATIONS: {
-    sql: `SELECT url, guid, MAX(visit_date) AS visit_date,
+    sql: `/* do not warn (bug no): temp table has no index */
+          SELECT url, guid, MAX(visit_date) AS visit_date,
                  MAX(IFNULL(MIN(p_id, 1), MIN(v_id, 0))) AS whole_entry,
                  MAX(expected_results) AS expected_results,
                  (SELECT MAX(visit_date) FROM expiration_notify
@@ -797,10 +841,12 @@ nsPlacesExpiration.prototype = {
       try {
         db = await PlacesUtils.promiseDBConnection();
         if (db) {
-          let row = (await db.execute(`SELECT * FROM pragma_page_size(),
+          let row = (
+            await db.execute(`SELECT * FROM pragma_page_size(),
                                                 pragma_page_count(),
                                                 pragma_freelist_count(),
-                                                (SELECT count(*) FROM moz_places)`))[0];
+                                                (SELECT count(*) FROM moz_places)`)
+          )[0];
           let pageSize = row.getResultByIndex(0);
           let pageCount = row.getResultByIndex(1);
           let freelistCount = row.getResultByIndex(2);
@@ -916,7 +962,7 @@ nsPlacesExpiration.prototype = {
       }
 
       // Execute statements asynchronously in a transaction.
-      this._db.executeAsync(boundStatements, boundStatements.length, this);
+      this._db.executeAsync(boundStatements, this);
     })().catch(Cu.reportError);
   },
 

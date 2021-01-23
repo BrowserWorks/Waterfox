@@ -5,16 +5,6 @@
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
-<!ENTITY mainWindow.title "&brandFullName;">
-<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
-<!ENTITY mainWindow.titlemodifier "&brandFullName;">
-<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
-<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
-<!-- LOCALIZATION NOTE (mainWindow.titlePrivateBrowsingSuffix): This will be appended to the window's title
-                                                                inside the private browsing mode -->
-<!ENTITY mainWindow.titlePrivateBrowsingSuffix "(Private Browsing)">
-
 <!ENTITY appmenu.tooltip                     "Open menu">
 <!ENTITY navbarOverflow.label                "More tools…">
 
@@ -26,125 +16,54 @@ left edge of the tabstrip. Really we just want the string to express the idea
 that this is a lightweight and reversible action that keeps your tab where you
 can reach it easily. -->
 <!ENTITY  pinTab.label                       "Pin Tab">
-<!-- LOCALIZATION NOTE(pinTab.accesskey, pinSelectedTabs.accesskey,
-unpinTab.accesskey, unpinSelectedTabs.accesskey): These share the
-same accesskey but will never be visible at the same time. -->
-<!ENTITY  pinTab.accesskey                   "P">
 <!ENTITY  unpinTab.label                     "Unpin Tab">
-<!-- LOCALIZATION NOTE(pinTab.accesskey, pinSelectedTabs.accesskey,
-unpinTab.accesskey, unpinSelectedTabs.accesskey): These share the
-same accesskey but will never be visible at the same time. -->
-<!ENTITY  unpinTab.accesskey                 "p">
-<!ENTITY  sendPageToDevice.label             "Send Page to Device">
-<!ENTITY  sendPageToDevice.accesskey         "n">
-<!ENTITY  sendLinkToDevice.label             "Send Link to Device">
-<!ENTITY  sendLinkToDevice.accesskey         "n">
-<!ENTITY  undoCloseTab.label                 "Undo Close Tab">
-<!ENTITY  undoCloseTab.accesskey             "U">
-<!ENTITY  hiddenTabs.label                   "Hidden Tabs">
 
 <!ENTITY  listAllTabs.label      "List all tabs">
-<!-- LOCALIZATION NOTE (allTabsMenu.searchTabs.label): "Search" is a verb, as
-in "Search through tabs". -->
-<!ENTITY  allTabsMenu.searchTabs.label       "Search Tabs">
 
 <!ENTITY tabCmd.label "New Tab">
-<!ENTITY tabCmd.accesskey "T">
-<!ENTITY tabCmd.commandkey "t">
-<!-- LOCALIZATION NOTE (openLocationCmd.label): "Open Location" is only
-displayed on OS X, and only on windows that aren't main browser windows, or
-when there are no windows but Firefox is still running. -->
-<!ENTITY openLocationCmd.label "Open Location…">
 <!ENTITY openFileCmd.label "Open File…">
-<!ENTITY openFileCmd.accesskey "O">
-<!ENTITY openFileCmd.commandkey "o">
-<!ENTITY printSetupCmd.label "Page Setup…">
-<!ENTITY printSetupCmd.accesskey "u">
-<!ENTITY printPreviewCmd.label "Print Preview">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "Print…">
-<!ENTITY printCmd.accesskey "P">
-<!ENTITY printCmd.commandkey "p">
-<!ENTITY importFromAnotherBrowserCmd.label "Import from Another Browser…">
-<!ENTITY importFromAnotherBrowserCmd.accesskey "I">
 
 <!ENTITY taskManagerCmd.label "Task Manager">
 
-<!ENTITY goOfflineCmd.label "Work Offline">
-<!ENTITY goOfflineCmd.accesskey "k">
-
 <!ENTITY menubarCmd.label "Menu Bar">
 <!ENTITY menubarCmd.accesskey "M">
-<!ENTITY navbarCmd.label "Navigation Toolbar">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigation">
 <!ENTITY personalbarCmd.label "Bookmarks Toolbar">
 <!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Bookmarks">
 <!ENTITY bookmarksToolbarItem.label "Bookmarks Toolbar Items">
 
-<!ENTITY pageSourceCmd.label "Page Source">
-<!ENTITY pageSourceCmd.accesskey "o">
-<!ENTITY pageSourceCmd.commandkey "u">
-<!-- LOCALIZATION NOTE (pageSourceCmd.SafariCommandKey should match the
-Option+Command keyboard shortcut letter that Safari and Chrome use for "View
-Source" on macOS. pageSourceCmd.commandkey above is Firefox's official keyboard
-shortcut shown in the GUI. SafariCommandKey is an alias provided for the
-convenience of Safari and Chrome users on macOS. See bug 1398988. -->
-<!ENTITY pageSourceCmd.SafariCommandKey "u">
-
-<!ENTITY pageInfoCmd.label "Page Info">
-<!ENTITY pageInfoCmd.accesskey "I">
-<!ENTITY pageInfoCmd.commandkey "i">
-<!ENTITY ldbCmd.label "Layout Debugger">
-<!ENTITY ldbCmd.accesskey "L">
-<!ENTITY mirrorTabCmd.label "Mirror Tab">
-<!ENTITY mirrorTabCmd.accesskey "m">
-<!-- LOCALIZATION NOTE (enterFullScreenCmd.label, exitFullScreenCmd.label):
-These should match what Safari and other Apple applications use on OS X Lion. -->
-<!ENTITY enterFullScreenCmd.label "Enter Full Screen">
-<!ENTITY enterFullScreenCmd.accesskey "F">
-<!ENTITY exitFullScreenCmd.label "Exit Full Screen">
-<!ENTITY exitFullScreenCmd.accesskey "F">
 <!ENTITY fullScreenCmd.label "Full Screen">
-<!ENTITY fullScreenCmd.accesskey "F">
-<!ENTITY fullScreenCmd.macCommandKey "f">
-<!ENTITY showAllTabsCmd.label "Show All Tabs">
-<!ENTITY showAllTabsCmd.accesskey "A">
-<!ENTITY toggleReaderMode.key "R">
-<!ENTITY toggleReaderMode.win.keycode "VK_F9">
 
-<!ENTITY fxaSignIn.label "Sign in to &syncBrand.shortName.label;">
-<!ENTITY fxaSignedIn.tooltip "Open &syncBrand.shortName.label; preferences">
-<!ENTITY fxaSignInError.label "Reconnect to &syncBrand.shortName.label;">
-<!ENTITY fxaUnverified.label "Verify Your Account">
-
-
-<!ENTITY fullScreenMinimize.tooltip "Minimize">
-<!ENTITY fullScreenRestore.tooltip "Restore">
-<!ENTITY fullScreenClose.tooltip "Close">
-<!ENTITY fullScreenAutohide.label "Hide Toolbars">
-<!ENTITY fullScreenAutohide.accesskey "H">
-<!ENTITY fullScreenExit.label "Exit Full Screen Mode">
-<!ENTITY fullScreenExit.accesskey "F">
-
- <!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
-     for the Firefox Account toolbar signin menu screen. -->
-<!ENTITY fxa.signin.callout.label "Take Waterfox with You">
-<!ENTITY fxa.signin.description.label "Get your bookmarks, history, passwords and other settings on all your devices.">
-<!ENTITY fxa.signin.button.label "Turn on &syncBrand.shortName.label;…">
-
-<!-- LOCALIZATION NOTE (fxa.unverified) Used to define the different labels
-     for the Firefox Account toolbar unverified menu screen. -->
-<!ENTITY fxa.unverified.callout.label "Check Your Email">
-<!ENTITY fxa.unverified.description.label "You’ll need to verify your account before you can sync.">
-<!ENTITY fxa.unverified.button.label "Open &syncBrand.shortName.label; Settings…">
+<!ENTITY pictureInPictureHideToggle.label "Hide Picture-in-Picture Toggle">
+<!ENTITY pictureInPictureHideToggle.accesskey "H">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbart menu screen. The `Signed in as` text is
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
-<!ENTITY fxa.menu.signedInAs.label "Signed in as">
-<!ENTITY fxa.menu.manageAccount.label "Manage Account…">
-<!ENTITY fxa.menu.syncSettings.label "&syncBrand.shortName.label; Settings…">
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; Settings">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Connect Another Device…">
 <!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+<!ENTITY fxa.menu.signin.label "Sign in to &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Turn on &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; Services">
+<!ENTITY fxa.menu.account.label "Account">
+<!ENTITY fxa.menu.settings.label "Settings">
+<!ENTITY fxa.menu.accountSettings.label "Account Settings">
+<!ENTITY fxa.menu.manageAccount2.label "Manage Account">
+<!ENTITY fxa.menu.signOut.label "Sign Out…">
+<!ENTITY fxa.menu.setupSync.label "Set Up &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Send a tab instantly to any device you’re signed in on.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
      fullscreenWarning.afterDomain.label): these two strings are used
@@ -160,14 +79,6 @@ These should match what Safari and other Apple applications use on OS X Lion. --
      is uppercase, while on Mac keyboards it is lowercase -->
 <!ENTITY exitDOMFullscreen.button "Exit Full Screen (Esc)">
 <!ENTITY exitDOMFullscreenMac.button "Exit Full Screen (esc)">
-<!ENTITY leaveDOMFullScreen.label "Exit Full Screen">
-<!ENTITY leaveDOMFullScreen.accesskey "u">
-
-<!-- LOCALIZATION NOTE (pictureInPicture.label, pictureInPicture.accesskey):
-     these two strings are used when right-clicking on a video in the
-     content area when the Picture-in-Picture feature is enabled. -->
-<!ENTITY pictureInPicture.label "Picture-in-Picture">
-<!ENTITY pictureInPicture.accesskey "u">
 
 <!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
      pointerlockWarning.afterDomain.label): these two strings are used
@@ -178,79 +89,12 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY pointerlockWarning.afterDomain.label "has control of your pointer. Press Esc to take back control.">
 <!ENTITY pointerlockWarning.generic.label "This document has control of your pointer. Press Esc to take back control.">
 
-<!ENTITY closeWindow.label "Close Window">
-<!ENTITY closeWindow.accesskey "d">
-
-<!ENTITY bookmarksMenu.label "Bookmarks">
-<!ENTITY bookmarksMenu.accesskey "B">
-<!ENTITY bookmarkThisPageCmd.label "Bookmark This Page">
-<!ENTITY editThisBookmarkCmd.label "Edit This Bookmark">
-<!ENTITY bookmarkThisPageCmd.commandkey "d">
-
-<!ENTITY addCurPagesCmd.label "Bookmark All Tabs…">
 <!ENTITY showAllBookmarks2.label "Show All Bookmarks">
 <!ENTITY recentBookmarks.label "Recently Bookmarked">
-<!ENTITY otherBookmarksCmd.label "Other Bookmarks">
-<!ENTITY mobileBookmarksCmd.label "Mobile Bookmarks">
 <!ENTITY bookmarksToolbarChevron.tooltip "Show more bookmarks">
 
-<!ENTITY backCmd.label                "Back">
-<!ENTITY backCmd.accesskey            "B">
-<!ENTITY backButton.tooltip           "Go back one page">
-<!ENTITY forwardCmd.label             "Forward">
-<!ENTITY forwardCmd.accesskey         "F">
-<!ENTITY forwardButton.tooltip        "Go forward one page">
-<!ENTITY backForwardButtonMenu.tooltip "Right-click or pull down to show history">
-<!ENTITY backForwardButtonMenuMac.tooltip "Pull down to show history">
-<!ENTITY reloadCmd.label              "Reload">
-<!ENTITY reloadCmd.accesskey          "R">
-<!ENTITY stopCmd.label                "Stop">
-<!ENTITY stopCmd.accesskey            "S">
-<!ENTITY stopCmd.macCommandKey        ".">
-<!ENTITY goEndCap.tooltip             "Go to the address in the Location Bar">
 <!ENTITY printButton.label            "Print">
 <!ENTITY printButton.tooltip          "Print this page">
-
-<!ENTITY urlbar.viewSiteInfo.label                      "View site information">
-
-<!ENTITY urlbar.defaultNotificationAnchor.tooltip         "Open message panel">
-<!ENTITY urlbar.geolocationNotificationAnchor.tooltip     "Open location request panel">
-<!ENTITY urlbar.autoplayNotificationAnchor.tooltip        "Open autoplay panel">
-<!ENTITY urlbar.addonsNotificationAnchor.tooltip          "Open add-on installation message panel">
-<!ENTITY urlbar.canvasNotificationAnchor.tooltip          "Manage canvas extraction permission">
-<!ENTITY urlbar.indexedDBNotificationAnchor.tooltip       "Open offline storage message panel">
-<!ENTITY urlbar.passwordNotificationAnchor.tooltip        "Open save password message panel">
-<!ENTITY urlbar.pluginsNotificationAnchor.tooltip         "Manage plug-in use">
-<!ENTITY urlbar.webNotificationAnchor.tooltip             "Change whether you can receive notifications from the site">
-<!ENTITY urlbar.persistentStorageNotificationAnchor.tooltip     "Store data in Persistent Storage">
-<!ENTITY urlbar.remoteControlNotificationAnchor.tooltip   "Browser is under remote control">
-<!ENTITY urlbar.webAuthnAnchor.tooltip                    "Open Web Authentication panel">
-<!ENTITY urlbar.storageAccessAnchor.tooltip               "Open browsing activity permission panel">
-
-<!ENTITY urlbar.webRTCShareDevicesNotificationAnchor.tooltip      "Manage sharing your camera and/or microphone with the site">
-<!ENTITY urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip   "Manage sharing your microphone with the site">
-<!ENTITY urlbar.webRTCShareScreenNotificationAnchor.tooltip       "Manage sharing your windows or screen with the site">
-
-<!ENTITY urlbar.servicesNotificationAnchor.tooltip        "Open install message panel">
-<!ENTITY urlbar.translateNotificationAnchor.tooltip       "Translate this page">
-<!ENTITY urlbar.translatedNotificationAnchor.tooltip      "Manage page translation">
-<!ENTITY urlbar.emeNotificationAnchor.tooltip             "Manage use of DRM software">
-<!ENTITY urlbar.midiNotificationAnchor.tooltip            "Open MIDI panel">
-
-<!ENTITY urlbar.cameraBlocked.tooltip            "You have blocked your camera for this website.">
-<!ENTITY urlbar.microphoneBlocked.tooltip        "You have blocked your microphone for this website.">
-<!ENTITY urlbar.screenBlocked.tooltip            "You have blocked this website from sharing your screen.">
-<!ENTITY urlbar.geolocationBlocked.tooltip       "You have blocked location information for this website.">
-<!ENTITY urlbar.webNotificationsBlocked.tooltip  "You have blocked notifications for this website.">
-<!ENTITY urlbar.persistentStorageBlocked.tooltip "You have blocked persistent storage for this website.">
-<!ENTITY urlbar.popupBlocked.tooltip             "You have blocked pop-ups for this website.">
-<!ENTITY urlbar.autoplayMediaBlocked.tooltip     "You have blocked autoplay media with sound for this website.">
-<!ENTITY urlbar.canvasBlocked.tooltip            "You have blocked canvas data extraction for this website.">
-<!ENTITY urlbar.flashPluginBlocked.tooltip       "You have blocked this website from using the Adobe Flash plugin.">
-<!ENTITY urlbar.midiBlocked.tooltip              "You have blocked MIDI access for this website.">
-<!ENTITY urlbar.installBlocked.tooltip           "You have blocked add-on installation for this website.">
-
-<!ENTITY urlbar.openHistoryPopup.tooltip                "Show history">
 
 <!ENTITY searchItem.title             "Search">
 
@@ -259,7 +103,6 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Home Page">
 
 <!ENTITY bookmarksButton.label          "Bookmarks">
-<!ENTITY bookmarksCmd.commandkey "b">
 
 <!ENTITY bookmarksSubview.label             "Bookmarks">
 <!ENTITY bookmarksMenuButton2.label         "Bookmarks Menu">
@@ -274,105 +117,31 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY addBookmarksMenu.label             "Add Bookmarks Menu to Toolbar">
 <!ENTITY removeBookmarksMenu.label          "Remove Bookmarks Menu from Toolbar">
 
-<!-- LOCALIZATION NOTE (bookmarksGtkCmd.commandkey): This command
-  -  key should not contain the letters A-F, since these are reserved
-  -  shortcut keys on Linux. -->
-<!ENTITY bookmarksGtkCmd.commandkey "o">
-<!ENTITY bookmarksWinCmd.commandkey "i">
-
 <!ENTITY historyButton.label            "History">
-<!ENTITY historySidebarCmd.commandKey   "h">
-
-<!ENTITY toolsMenu.label              "Tools">
-<!ENTITY toolsMenu.accesskey          "T">
-
-<!ENTITY keywordfield.label           "Add a Keyword for this Search…">
-<!ENTITY keywordfield.accesskey       "K">
 
 <!ENTITY downloads.label              "Downloads">
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label       "Downloads">
-<!ENTITY downloads.accesskey          "D">
-<!ENTITY downloads.commandkey         "j">
-<!ENTITY downloadsUnix.commandkey     "y">
 <!ENTITY addons.label                 "Add-ons">
-<!ENTITY addons.accesskey             "A">
-<!ENTITY addons.commandkey            "A">
 
 <!ENTITY webDeveloperMenu.label       "Web Developer">
-<!ENTITY webDeveloperMenu.accesskey   "W">
 
-<!ENTITY inspectContextMenu.label     "Inspect Element">
-<!ENTITY inspectContextMenu.accesskey "Q">
-
-<!ENTITY inspectA11YContextMenu.label     "Inspect Accessibility Properties">
-
-<!ENTITY fileMenu.label         "File">
-<!ENTITY fileMenu.accesskey       "F">
-<!ENTITY newUserContext.label             "New Container Tab">
-<!ENTITY newUserContext.accesskey         "B">
-<!ENTITY manageUserContext.label          "Manage Containers">
-<!ENTITY manageUserContext.accesskey      "O">
 <!ENTITY newNavigatorCmd.label        "New Window">
-<!ENTITY newNavigatorCmd.key        "N">
-<!ENTITY newNavigatorCmd.accesskey      "N">
 <!ENTITY newPrivateWindow.label     "New Private Window">
-<!ENTITY newPrivateWindow.accesskey "W">
 
 <!ENTITY editMenu.label         "Edit">
-<!ENTITY editMenu.accesskey       "E">
-<!ENTITY undoCmd.label            "Undo">
-<!ENTITY undoCmd.key            "Z">
-<!ENTITY undoCmd.accesskey          "U">
-<!ENTITY redoCmd.label            "Redo">
-<!ENTITY redoCmd.key            "Y">
-<!ENTITY redoCmd.accesskey          "R">
-<!ENTITY cutCmd.label           "Cut">
-<!ENTITY cutCmd.key             "X">
-<!ENTITY cutCmd.accesskey         "t">
-<!ENTITY copyCmd.label            "Copy">
-<!ENTITY copyCmd.key            "C">
-<!ENTITY copyCmd.accesskey          "C">
-<!ENTITY pasteCmd.label           "Paste">
-<!ENTITY pasteCmd.key           "V">
-<!ENTITY pasteCmd.accesskey         "P">
-<!ENTITY deleteCmd.label          "Delete">
-<!ENTITY deleteCmd.key            "D">
-<!ENTITY deleteCmd.accesskey        "D">
-<!ENTITY selectAllCmd.label         "Select All">
-<!ENTITY selectAllCmd.key         "A">
-<!ENTITY selectAllCmd.accesskey       "A">
 <!ENTITY preferencesCmd2.label       "Options">
-<!ENTITY preferencesCmd2.accesskey     "O">
 <!ENTITY preferencesCmdUnix.label       "Preferences">
-<!ENTITY preferencesCmdUnix.accesskey     "n">
 <!ENTITY logins.label                           "Logins and Passwords">
 
-<!ENTITY clearRecentHistory.label               "Clear Recent History…">
-
-<!ENTITY privateBrowsingCmd.commandkey          "P">
-
-<!ENTITY viewMenu.label         "View">
-<!ENTITY viewMenu.accesskey       "V">
-<!ENTITY viewToolbarsMenu.label       "Toolbars">
-<!ENTITY viewToolbarsMenu.accesskey     "T">
-<!ENTITY viewSidebarMenu.label "Sidebar">
-<!ENTITY viewSidebarMenu.accesskey "e">
-<!ENTITY viewCustomizeToolbar.label       "Customize…">
-<!ENTITY viewCustomizeToolbar.accesskey     "C">
 <!ENTITY overflowCustomizeToolbar.label       "Customize Toolbar…">
 <!ENTITY overflowCustomizeToolbar.accesskey   "C">
 
 <!ENTITY historyMenu.label "History">
-<!ENTITY historyMenu.accesskey "s">
 <!ENTITY historyUndoMenu.label "Recently Closed Tabs">
 <!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
 <!ENTITY historyUndoWindowMenu.label "Recently Closed Windows">
-<!ENTITY historyRestoreLastSession.label "Restore Previous Session">
-
-<!ENTITY showAllHistoryCmd2.label "Show All History">
-<!ENTITY showAllHistoryCmd.commandkey "H">
 
 <!ENTITY appMenuHistory.showAll.label "Show All History">
 <!ENTITY appMenuHistory.clearRecent.label "Clear Recent History…">
@@ -402,9 +171,10 @@ These should match what Safari and other Apple applications use on OS X Lion. --
      the account. We also show links to download Firefox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Want to see your tabs from other devices here?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Open Sync Preferences">
-<!ENTITY appMenuRemoteTabs.notsignedin.label "Sign in to view a list of tabs from your other devices.">
+<!ENTITY appMenuRemoteTabs.welcome.label "View a list of tabs from your other devices.">
 <!ENTITY appMenuRemoteTabs.unverified.label "Your account needs to be verified.">
-<!ENTITY appMenuRemoteTabs.signin.label "Sign in to Sync">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Turn on &syncBrand.shortName.label;…">
 <!ENTITY appMenuRemoteTabs.managedevices.label "Manage Devices…">
 <!ENTITY appMenuRemoteTabs.sidebar.label "View Synced Tabs Sidebar">
 <!ENTITY appMenuRemoteTabs.hidesidebar.label "Hide Synced Tabs Sidebar">
@@ -415,83 +185,23 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY customizeMenu.addToToolbar.label "Add to Toolbar">
 <!ENTITY customizeMenu.addToToolbar.accesskey "A">
 <!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
-     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     customizeMenu.unpinFromOverflowMenu.label)
      The overflow menu is the menu that appears if you click the chevron (>> button)
      in the location bar. -->
 <!ENTITY customizeMenu.addToOverflowMenu.label "Add to Overflow Menu">
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
-<!-- LOCALIZATION NOTE (customizeMenu.pinToOverflowMenu.accesskey)
-     can appear on the same context menu as menubarCmd and personalbarCmd,
-     so they should have different access keys.  -->
-<!ENTITY customizeMenu.pinToOverflowMenu.label "Pin to Overflow Menu">
-<!ENTITY customizeMenu.pinToOverflowMenu.accesskey "P">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "Unpin from Overflow Menu">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
 <!ENTITY customizeMenu.removeFromToolbar.label "Remove from Toolbar">
 <!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
 <!ENTITY customizeMenu.addMoreItems.label "Add More Items…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "A">
-<!ENTITY customizeMenu.autoHideDownloadsButton.label "Auto-Hide in Toolbar">
-<!ENTITY customizeMenu.autoHideDownloadsButton.accesskey "A">
-<!ENTITY customizeMenu.manageExtension.label "Manage Extension">
-<!ENTITY customizeMenu.manageExtension.accesskey "E">
-<!ENTITY customizeMenu.removeExtension.label "Remove Extension">
-<!ENTITY customizeMenu.removeExtension.accesskey "v">
-<!-- LOCALIZATION NOTE (reportExtension.label) This label is used in the extensions
-     toolbar buttons context menus, a user can use this command to submit to Mozilla
-     an abuse report related to that extension. "Report" is a verb. -->
-<!ENTITY customizeMenu.reportExtension.label "Report Extension">
-<!ENTITY customizeMenu.reportExtension.accesskey "o">
 
 <!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
     app (hamburger) menu. When clicked, it opens a subview that contains
     secondary commands. -->
 <!ENTITY moreMenu.label "More">
 
-<!ENTITY openCmd.commandkey           "l">
-<!ENTITY urlbar.placeholder2          "Search or enter address">
-<!ENTITY urlbar.accesskey             "d">
-<!-- LOCALIZATION NOTE (urlbar.extension.label): Used to indicate that a selected autocomplete entry is provided by an extension. -->
-<!ENTITY urlbar.extension.label       "Extension:">
-<!ENTITY urlbar.switchToTab.label     "Switch to tab:">
-
-<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
-<!ENTITY urlbar.searchSuggestionsNotification.hintPrefix "Tip:">
-<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hint): &#x1F50E; is the magnifier icon emoji, please don't change it. -->
-<!ENTITY urlbar.searchSuggestionsNotification.hint "Get help finding things! Look for the &#x1F50E; next to search suggestions.">
-<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin "Change Options…">
-<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey "C">
-<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix "Change Preferences…">
-<!ENTITY urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey "C">
-
-<!--
-  Comment duplicated from browser-sets.inc:
-
-  Search Command Key Logic works like this:
-
-  Unix: Ctrl+J (0.8, 0.9 support)
-        Ctrl+K (cross platform binding)
-  Mac:  Cmd+K (cross platform binding)
-        Cmd+Opt+F (platform convention)
-  Win:  Ctrl+K (cross platform binding)
-        Ctrl+E (IE compat)
-
-  We support Ctrl+K on all platforms now and advertise it in the menu since it is
-  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
-  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
-  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
-  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
-  for people to switch to Linux.
-
- -->
-<!ENTITY searchFocus.commandkey       "k">
-<!ENTITY searchFocus.commandkey2      "e">
-<!ENTITY searchFocusUnix.commandkey   "j">
-
-<!-- LOCALIZATION NOTE (contentSearchInput.label):
-     This is set as the aria-label attribute for the search input box in the
-     in-content search UI, to be used by screen readers. -->
-<!ENTITY contentSearchInput.label     "Search query">
 <!ENTITY contentSearchSubmit.tooltip  "Submit search">
 
 <!-- LOCALIZATION NOTE (searchInput.placeholder):
@@ -499,250 +209,27 @@ These should match what Safari and other Apple applications use on OS X Lion. --
 <!ENTITY searchInput.placeholder      "Search">
 <!ENTITY searchIcon.tooltip           "Search">
 
-<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
-     These two strings are used to build the header above the list of one-click
-     search providers:  "Search for <used typed keywords> with:" -->
-<!ENTITY searchFor.label              "Search for ">
-<!ENTITY searchWith.label             " with:">
-
-<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
-     This string is used to build the header above the list of one-click search
-     providers when a one off engine has been selected.  The searchAfter text is
-     intentionally left empty for en-US and can be used by other localizations to
-     display a string after the search engine name.  This string will be displayed
-     as:  "Search <selected engine name><searchAfter.label text>" -->
-<!ENTITY search.label                 "Search ">
-<!ENTITY searchAfter.label            "">
-
-<!-- LOCALIZATION NOTE (searchWithHeader.label):
-     The wording of this string should be as close as possible to
-     searchFor.label and searchWith.label. This string will be used instead of
-     them when the user has not typed any keyword. -->
-<!ENTITY searchWithHeader.label       "Search with:">
-<!-- LOCALIZATION NOTE (changeSearchSettings.button):
-     This string won't wrap, so if the translated string is longer,
-     consider translating it as if it said only "Search Settings". -->
-<!ENTITY changeSearchSettings.button  "Change Search Settings">
-<!ENTITY changeSearchSettings.tooltip "Change search settings">
-
-<!ENTITY searchInNewTab.label         "Search in New Tab">
-<!ENTITY searchInNewTab.accesskey     "T">
-<!ENTITY searchSetAsDefault.label     "Set As Default Search Engine">
-<!ENTITY searchSetAsDefault.accesskey "D">
-
-<!ENTITY openLinkCmdInTab.label       "Open Link in New Tab">
 <!ENTITY openLinkCmdInTab.accesskey   "T">
-<!ENTITY openLinkCmd.label            "Open Link in New Window">
-<!ENTITY openLinkCmd.accesskey        "W">
-<!ENTITY openLinkInPrivateWindowCmd.label "Open Link in New Private Window">
-<!ENTITY openLinkInPrivateWindowCmd.accesskey "P">
-<!ENTITY openLinkCmdInCurrent.label     "Open Link">
-<!ENTITY openLinkCmdInCurrent.accesskey "O">
-<!ENTITY openFrameCmdInTab.label      "Open Frame in New Tab">
-<!ENTITY openFrameCmdInTab.accesskey  "T">
-<!ENTITY openFrameCmd.label           "Open Frame in New Window">
-<!ENTITY openFrameCmd.accesskey       "W">
-<!ENTITY openLinkCmdInContainerTab.label "Open Link in New Container Tab">
-<!ENTITY openLinkCmdInContainerTab.accesskey "b">
-<!ENTITY showOnlyThisFrameCmd.label     "Show Only This Frame">
-<!ENTITY showOnlyThisFrameCmd.accesskey "S">
-<!ENTITY reloadCmd.commandkey         "r">
-<!ENTITY reloadFrameCmd.label         "Reload Frame">
-<!ENTITY reloadFrameCmd.accesskey     "R">
-<!ENTITY viewPartialSourceForSelectionCmd.label "View Selection Source">
-<!ENTITY viewPartialSourceCmd.accesskey "e">
-<!ENTITY viewPageSourceCmd.label      "View Page Source">
-<!ENTITY viewPageSourceCmd.accesskey  "V">
-<!ENTITY viewFrameSourceCmd.label     "View Frame Source">
-<!ENTITY viewFrameSourceCmd.accesskey "V">
-<!ENTITY viewPageInfoCmd.label        "View Page Info">
-<!ENTITY viewPageInfoCmd.accesskey    "I">
-<!ENTITY viewFrameInfoCmd.label       "View Frame Info">
-<!ENTITY viewFrameInfoCmd.accesskey   "I">
-<!ENTITY reloadImageCmd.label         "Reload Image">
-<!ENTITY reloadImageCmd.accesskey     "R">
-<!ENTITY viewImageCmd.label           "View Image">
-<!ENTITY viewImageCmd.accesskey       "I">
-<!ENTITY viewImageInfoCmd.label       "View Image Info">
-<!ENTITY viewImageInfoCmd.accesskey   "f">
-<!ENTITY viewImageDescCmd.label       "View Description">
-<!ENTITY viewImageDescCmd.accesskey   "D">
-<!ENTITY viewVideoCmd.label           "View Video">
-<!ENTITY viewVideoCmd.accesskey       "I">
-<!ENTITY viewBGImageCmd.label         "View Background Image">
-<!ENTITY viewBGImageCmd.accesskey     "w">
-<!ENTITY setDesktopBackgroundCmd.label      "Set As Desktop Background…">
-<!ENTITY setDesktopBackgroundCmd.accesskey  "S">
-<!ENTITY bookmarkPageCmd2.label       "Bookmark This Page">
-<!ENTITY bookmarkPageCmd2.accesskey   "m">
-<!ENTITY bookmarkThisLinkCmd.label      "Bookmark This Link">
-<!ENTITY bookmarkThisLinkCmd.accesskey  "L">
-<!ENTITY bookmarkThisFrameCmd.label      "Bookmark This Frame">
-<!ENTITY bookmarkThisFrameCmd.accesskey  "m">
+
 <!ENTITY pageAction.copyLink.label    "Copy Link">
 
 <!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
   "Pocket" is a brand name. -->
-<!ENTITY pocketButton.tooltiptext     "Save to Pocket">
 <!ENTITY saveToPocketCmd.label        "Save Page to Pocket">
-<!ENTITY saveToPocketCmd.accesskey    "k">
-<!ENTITY saveLinkToPocketCmd.label    "Save Link to Pocket">
-<!ENTITY saveLinkToPocketCmd.accesskey "o">
 <!ENTITY pocketMenuitem.label         "View Pocket List">
 
 <!ENTITY emailPageCmd.label           "Email Link…">
-<!ENTITY emailPageCmd.accesskey       "E">
-<!ENTITY savePageCmd.label            "Save Page As…">
-<!ENTITY savePageCmd.accesskey        "A">
-<!-- alternate for content area context menu -->
-<!ENTITY savePageCmd.accesskey2       "P">
-<!ENTITY savePageCmd.commandkey       "s">
-<!ENTITY saveFrameCmd.label           "Save Frame As…">
-<!ENTITY saveFrameCmd.accesskey       "F">
-<!ENTITY printFrameCmd.label          "Print Frame…">
-<!ENTITY printFrameCmd.accesskey      "P">
-<!ENTITY saveLinkCmd.label            "Save Link As…">
-<!ENTITY saveLinkCmd.accesskey        "k">
-<!ENTITY saveImageCmd.label           "Save Image As…">
-<!ENTITY saveImageCmd.accesskey       "v">
-<!ENTITY saveVideoCmd.label           "Save Video As…">
-<!ENTITY saveVideoCmd.accesskey       "v">
-<!ENTITY saveAudioCmd.label           "Save Audio As…">
-<!ENTITY saveAudioCmd.accesskey       "v">
-<!ENTITY emailImageCmd.label          "Email Image…">
-<!ENTITY emailImageCmd.accesskey      "g">
-<!ENTITY emailVideoCmd.label          "Email Video…">
-<!ENTITY emailVideoCmd.accesskey      "a">
-<!ENTITY emailAudioCmd.label          "Email Audio…">
-<!ENTITY emailAudioCmd.accesskey      "a">
-<!ENTITY playPluginCmd.label          "Activate this plugin">
-<!ENTITY playPluginCmd.accesskey      "c">
-<!ENTITY hidePluginCmd.label          "Hide this plugin">
-<!ENTITY hidePluginCmd.accesskey      "H">
-<!ENTITY copyLinkCmd.label            "Copy Link Location">
-<!-- LOCALIZATION NOTE (copyLinkCmd.accesskey): The access keys for "Copy Link
-Location" and "Copy Email Address" should be the same if possible; the two
-context menu items are mutually exclusive. -->
-<!ENTITY copyLinkCmd.accesskey        "a">
-<!ENTITY copyImageCmd.label           "Copy Image Location">
-<!ENTITY copyImageCmd.accesskey       "o">
-<!ENTITY copyImageContentsCmd.label   "Copy Image">
-<!ENTITY copyImageContentsCmd.accesskey  "y">
-<!ENTITY copyVideoURLCmd.label        "Copy Video Location">
-<!ENTITY copyVideoURLCmd.accesskey    "o">
-<!ENTITY copyAudioURLCmd.label        "Copy Audio Location">
-<!ENTITY copyAudioURLCmd.accesskey    "o">
-<!ENTITY copyEmailCmd.label           "Copy Email Address">
-<!-- LOCALIZATION NOTE (copyEmailCmd.accesskey): The access keys for "Copy Link
-Location" and "Copy Email Address" should be the same if possible; the two
-context menu items are mutually exclusive. -->
-<!ENTITY copyEmailCmd.accesskey       "A">
-<!ENTITY thisFrameMenu.label              "This Frame">
-<!ENTITY thisFrameMenu.accesskey          "h">
 
-<!-- Media (video/audio) controls -->
-<!-- LOCALIZATION NOTE: The access keys for "Play" and
-"Pause" are the same because the two context-menu
-items are mutually exclusive. -->
-<!ENTITY mediaPlay.label             "Play">
-<!ENTITY mediaPlay.accesskey         "P">
-<!ENTITY mediaPause.label            "Pause">
-<!ENTITY mediaPause.accesskey        "P">
-<!-- LOCALIZATION NOTE: The access keys for "Mute" and
-"Unmute" are the same because the two context-menu
-items are mutually exclusive. -->
-<!ENTITY mediaMute.label             "Mute">
-<!ENTITY mediaMute.accesskey         "M">
-<!ENTITY mediaUnmute.label           "Unmute">
-<!ENTITY mediaUnmute.accesskey       "m">
-<!ENTITY mediaPlaybackRate2.label     "Play Speed">
-<!ENTITY mediaPlaybackRate2.accesskey "d">
-<!ENTITY mediaPlaybackRate050x2.label "Slow (0.5×)">
-<!ENTITY mediaPlaybackRate050x2.accesskey "S">
-<!ENTITY mediaPlaybackRate100x2.label "Normal">
-<!ENTITY mediaPlaybackRate100x2.accesskey "N">
-<!ENTITY mediaPlaybackRate125x2.label "Fast (1.25×)">
-<!ENTITY mediaPlaybackRate125x2.accesskey "F">
-<!ENTITY mediaPlaybackRate150x2.label "Faster (1.5×)">
-<!ENTITY mediaPlaybackRate150x2.accesskey "a">
-<!-- LOCALIZATION NOTE: "Ludicrous" is a reference to the
-movie "Space Balls" and is meant to say that this speed is very
-fast. -->
-<!ENTITY mediaPlaybackRate200x2.label "Ludicrous (2×)">
-<!ENTITY mediaPlaybackRate200x2.accesskey "L">
-<!ENTITY mediaLoop.label             "Loop">
-<!ENTITY mediaLoop.accesskey         "L">
-<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
-"Hide Controls" are the same because the two context-menu
-items are mutually exclusive. -->
-<!ENTITY mediaShowControls.label     "Show Controls">
-<!ENTITY mediaShowControls.accesskey "C">
-<!ENTITY mediaHideControls.label     "Hide Controls">
-<!ENTITY mediaHideControls.accesskey "C">
-<!ENTITY videoFullScreen.label       "Full Screen">
-<!ENTITY videoFullScreen.accesskey   "F">
-<!ENTITY videoSaveImage.label        "Save Snapshot As…">
-<!ENTITY videoSaveImage.accesskey    "S">
-<!-- LOCALIZATION NOTE: The access keys for "Show Statistics" and
-"Hide Statistics" are the same because the two context-menu
-items are mutually exclusive. -->
-<!ENTITY videoShowStats.label        "Show Statistics">
-<!ENTITY videoShowStats.accesskey    "t">
-<!ENTITY videoHideStats.label        "Hide Statistics">
-<!ENTITY videoHideStats.accesskey    "t">
-
-<!-- LOCALIZATION NOTE :
-fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
-fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
-If shift key is needed with your locale popular keyboard for them,
-you can use these alternative items. Otherwise, their values should be empty.  -->
-
-<!ENTITY fullZoomEnlargeCmd.label       "Zoom In">
-<!ENTITY fullZoomEnlargeCmd.accesskey   "I">
-<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
-<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
-<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
-
-<!ENTITY fullZoomReduceCmd.label        "Zoom Out">
-<!ENTITY fullZoomReduceCmd.accesskey    "O">
-<!ENTITY fullZoomReduceCmd.commandkey   "-">
-<!ENTITY fullZoomReduceCmd.commandkey2  "">
-
-<!ENTITY fullZoomResetCmd.label         "Reset">
-<!ENTITY fullZoomResetCmd.accesskey     "R">
-<!ENTITY fullZoomResetCmd.commandkey    "0">
-<!ENTITY fullZoomResetCmd.commandkey2   "">
-
-<!ENTITY fullZoomToggleCmd.label        "Zoom Text Only">
-<!ENTITY fullZoomToggleCmd.accesskey    "T">
 <!ENTITY fullZoom.label                 "Zoom">
-<!ENTITY fullZoom.accesskey             "Z">
 
 <!ENTITY sidebarCloseButton.tooltip     "Close sidebar">
-<!ENTITY sidebarMenuClose.label         "Close Sidebar">
 
 <!ENTITY quitApplicationCmdWin2.label       "Exit">
 <!ENTITY quitApplicationCmdWin2.accesskey   "x">
 <!ENTITY quitApplicationCmdWin2.tooltip     "Exit &brandShorterName;">
-<!ENTITY goBackCmd.commandKey "[">
-<!ENTITY goForwardCmd.commandKey "]">
 <!ENTITY quitApplicationCmd.label       "Quit">
 <!ENTITY quitApplicationCmd.accesskey   "Q">
 <!ENTITY quitApplicationCmdMac2.label   "Quit &brandShorterName;">
-<!ENTITY quitApplicationCmd.key         "Q">
-
-<!ENTITY closeCmd.label                 "Close">
-<!ENTITY closeCmd.key                   "W">
-<!ENTITY closeCmd.accesskey             "C">
-
-<!ENTITY toggleMuteCmd.key              "M">
-
-<!ENTITY pageStyleMenu.label "Page Style">
-<!ENTITY pageStyleMenu.accesskey "y">
-<!ENTITY pageStyleNoStyle.label "No Style">
-<!ENTITY pageStyleNoStyle.accesskey "n">
-<!ENTITY pageStylePersistentOnly.label "Basic Page Style">
-<!ENTITY pageStylePersistentOnly.accesskey "b">
 
 <!ENTITY allowPopups.accesskey "p">
 <!-- On Windows we use the term "Options" to describe settings, but
@@ -753,168 +240,19 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY editPopupSettings.accesskey "E">
 <!ENTITY dontShowMessage.accesskey "D">
 
-<!ENTITY bidiSwitchPageDirectionItem.label        "Switch Page Direction">
-<!ENTITY bidiSwitchPageDirectionItem.accesskey    "D">
-<!ENTITY bidiSwitchTextDirectionItem.label        "Switch Text Direction">
-<!ENTITY bidiSwitchTextDirectionItem.accesskey    "w">
-<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
-
 <!ENTITY findOnCmd.label     "Find in This Page…">
-<!ENTITY findOnCmd.accesskey "F">
-<!ENTITY findOnCmd.commandkey "f">
-<!ENTITY findAgainCmd.label  "Find Again">
-<!ENTITY findAgainCmd.accesskey "g">
-<!ENTITY findAgainCmd.commandkey "g">
-<!ENTITY findAgainCmd.commandkey2 "VK_F3">
-<!ENTITY findSelectionCmd.commandkey "e">
 
 <!ENTITY spellAddDictionaries.label "Add Dictionaries…">
 <!ENTITY spellAddDictionaries.accesskey "A">
-
-<!-- LOCALIZATION NOTE (editBookmark.panel.width): width of the bookmark panel.
-     Should be large enough to fully display the Done and Cancel/
-     Remove Bookmark buttons. -->
-<!ENTITY editBookmark.panel.width                    "23em">
-<!ENTITY editBookmark.done.label                     "Done">
-<!ENTITY editBookmark.showForNewBookmarks.label       "Show editor when saving">
-<!ENTITY editBookmark.showForNewBookmarks.accesskey   "S">
-
-<!-- LOCALIZATION NOTE (identity.securityView.label)
-     This is the header of the security subview in the Site Identity panel. -->
-<!ENTITY identity.securityView.label "Site Security">
-
-<!ENTITY identity.connection "Connection">
-<!ENTITY identity.connectionSecure "Secure Connection">
-<!ENTITY identity.connectionNotSecure "Connection Is Not Secure">
-<!ENTITY identity.connectionFile "This page is stored on your computer.">
-<!ENTITY identity.connectionVerified2 "You are securely connected to this site, owned by:">
-<!ENTITY identity.connectionInternal "This is a secure &brandShortName; page.">
-<!ENTITY identity.extensionPage "This page is loaded from an extension.">
-<!ENTITY identity.insecureLoginForms2 "Logins entered on this page could be compromised.">
-<!ENTITY identity.customRoot "Connection verified by a certificate issuer that is not recognized by Mozilla.">
-
-<!-- Strings for connection state warnings. -->
-<!ENTITY identity.activeBlocked "&brandShortName; has blocked parts of this page that are not secure.">
-<!ENTITY identity.passiveLoaded "Parts of this page are not secure (such as images).">
-<!ENTITY identity.activeLoaded "You have disabled protection on this page.">
-<!ENTITY identity.weakEncryption "This page uses weak encryption.">
-
-<!-- Strings for connection state warnings in the subview. -->
-<!ENTITY identity.description.insecure "Your connection to this site is not private. Information you submit could be viewed by others (like passwords, messages, credit cards, etc.).">
-<!ENTITY identity.description.insecureLoginForms "The login information you enter on this page is not secure and could be compromised.">
-<!ENTITY identity.description.weakCipher "Your connection to this website uses weak encryption and is not private.">
-<!ENTITY identity.description.weakCipher2 "Other people can view your information or modify the website’s behavior.">
-<!ENTITY identity.description.activeBlocked "&brandShortName; has blocked parts of this page that are not secure.">
-<!ENTITY identity.description.passiveLoaded "Your connection is not private and information you share with the site could be viewed by others.">
-<!ENTITY identity.description.passiveLoaded2 "This website contains content that is not secure (such as images).">
-<!ENTITY identity.description.passiveLoaded3 "Although &brandShortName; has blocked some content, there is still content on the page that is not secure (such as images).">
-<!ENTITY identity.description.activeLoaded "This website contains content that is not secure (such as scripts) and your connection to it is not private.">
-<!ENTITY identity.description.activeLoaded2 "Information you share with this site could be viewed by others (like passwords, messages, credit cards, etc.).">
-<!ENTITY identity.description.customRoot "Mozilla does not recognize this certificate issuer. It may have been added from your operating system or by an administrator.">
-
-<!ENTITY identity.enableMixedContentBlocking.label "Enable protection">
-<!ENTITY identity.enableMixedContentBlocking.accesskey "E">
-<!ENTITY identity.disableMixedContentBlocking.label "Disable protection for now">
-<!ENTITY identity.disableMixedContentBlocking.accesskey "D">
-<!ENTITY identity.learnMore "Learn More">
-
-<!ENTITY identity.removeCertException.label "Remove Exception">
-<!ENTITY identity.removeCertException.accesskey "R">
-
-<!ENTITY identity.moreInfoLinkText2 "More Information">
-
-<!ENTITY identity.clearSiteData "Clear Cookies and Site Data…">
-
-<!ENTITY identity.permissions "Permissions">
-<!ENTITY identity.permissionsEmpty "You have not granted this site any special permissions.">
-<!ENTITY identity.permissionsReloadHint "You may need to reload the page for changes to apply.">
-<!ENTITY identity.permissionsPreferences.tooltip "Open Permissions Preferences">
-<!ENTITY identity.contentBlockingPreferences.tooltip "Open Content Blocking Preferences">
-
 
 <!-- Name for the tabs toolbar as spoken by screen readers.
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label "Browser tabs">
 
-<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
-<!ENTITY syncTabsMenu3.label     "Synced Tabs">
-
-<!ENTITY syncedTabs.sidebar.label              "Synced Tabs">
-
 <!ENTITY syncBrand.shortName.label    "Sync">
-
-<!ENTITY syncSignIn.label             "Sign In To &syncBrand.shortName.label;…">
-<!ENTITY syncSignIn.accesskey         "Y">
-<!ENTITY syncSyncNowItem.label        "Sync Now">
-<!ENTITY syncSyncNowItemSyncing.label "Syncing…">
-<!ENTITY syncSyncNowItem.accesskey    "S">
-<!ENTITY syncReAuthItem.label         "Reconnect to &syncBrand.shortName.label;…">
-<!ENTITY syncReAuthItem.accesskey     "R">
-<!ENTITY syncToolbarButton.label      "Sync">
 
 <!ENTITY customizeMode.autoHideDownloadsButton.label "Auto-hide">
 
-<!ENTITY getUserMedia.selectCamera.label "Camera to share:">
-<!ENTITY getUserMedia.selectCamera.accesskey "C">
-<!ENTITY getUserMedia.selectMicrophone.label "Microphone to share:">
-<!ENTITY getUserMedia.selectMicrophone.accesskey "M">
-<!ENTITY getUserMedia.audioCapture.label "Audio from the tab will be shared.">
-<!ENTITY getUserMedia.allWindowsShared.message "All visible windows on your screen will be shared.">
-
-<!ENTITY contentBlocking.title "Content Blocking">
-<!ENTITY contentBlocking.detected "Blockable content detected on this site.">
-<!ENTITY contentBlocking.notDetected "No blockable content detected on this page.">
-
-<!ENTITY contentBlocking.trackingProtection3.label "Trackers">
-
-<!ENTITY contentBlocking.manageSettings.label "Manage Content Blocking">
-<!ENTITY contentBlocking.manageSettings.accesskey "M">
-
-<!ENTITY contentBlocking.trackersView.label "Trackers">
-<!ENTITY contentBlocking.trackersView.strictInfo.label "To block all trackers, set content blocking to “Strict”.">
-
-<!ENTITY contentBlocking.cookies.label "Cookies">
-<!ENTITY contentBlocking.cookiesView.label "Cookies and Site Data">
-
-<!ENTITY contentBlocking.cryptominers.label "Cryptominers">
-<!ENTITY contentBlocking.cryptominersView.label "Cryptominers">
-
-<!ENTITY contentBlocking.fingerprinters.label "Fingerprinters">
-<!ENTITY contentBlocking.fingerprintersView.label "Fingerprinters">
-
-<!ENTITY contentBlocking.openBreakageReportView2.label "Report a problem">
-<!ENTITY contentBlocking.breakageReportView.label "Report Problems">
-<!ENTITY contentBlocking.breakageReportView2.description "Content blocking can cause problems with some websites. When you report problems, you’ll help make &brandShortName; better for everyone. (This will send a URL as well as information about your browser settings to Mozilla.)">
-<!ENTITY contentBlocking.breakageReportView.learnMore "Learn More">
-<!ENTITY contentBlocking.breakageReportView.collection.url.label "URL">
-<!ENTITY contentBlocking.breakageReportView.collection.comments.label "What problems did you have? (Optional)">
-<!ENTITY contentBlocking.breakageReportView.sendReport.label "Send Report">
-<!ENTITY contentBlocking.breakageReportView.cancel.label "Cancel">
-
-<!-- LOCALIZATION NOTE (trackingProtection.unblock5.label, trackingProtection.unblock5.accesskey):
-     The associated button with this label and accesskey is only shown when opening the control
-     center while looking at a site with trackers in NON-private browsing mode. -->
-<!ENTITY trackingProtection.unblock5.label "Turn off Blocking for This Site">
-<!ENTITY trackingProtection.unblock5.accesskey "T">
-<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate6.label, trackingProtection.unblockPrivate6.accesskey):
-     The associated button with this label and accesskey is only shown when opening the control
-     center while looking at a site with trackers in PRIVATE browsing mode. -->
-<!ENTITY trackingProtection.unblockPrivate5.label "Turn off Blocking Temporarily">
-<!ENTITY trackingProtection.unblockPrivate5.accesskey "T">
-<!ENTITY trackingProtection.block6.label "Turn on Blocking for This Site">
-<!ENTITY trackingProtection.block6.accesskey "T">
-<!ENTITY trackingProtection.reload2.label "Reload Page">
-<!ENTITY trackingProtection.reload2.accesskey "R">
-
-<!ENTITY pluginNotification.showAll.label "Show All">
-<!ENTITY pluginNotification.showAll.accesskey "S">
-
-<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
-     width of the plugin popup notification that can appear if a plugin has been
-     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
-     and pluginActivateAlways.label strings above on a single line. This must be
-     a CSS length value. -->
-<!ENTITY pluginNotification.width "28em">
 
 <!ENTITY uiTour.infoPanel.close "Close">
 
@@ -922,37 +260,10 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY panicButton.thankyou.msg2                "Safe browsing!">
 <!ENTITY panicButton.thankyou.buttonlabel         "Thanks!">
 
-<!ENTITY emeLearnMoreContextMenu.label            "Learn more about DRM…">
-<!ENTITY emeLearnMoreContextMenu.accesskey        "D">
-
 <!ENTITY updateAvailable.panelUI.label "Download &brandShorterName; update">
 <!ENTITY updateManual.panelUI.label "Download a fresh copy of &brandShorterName;">
 <!ENTITY updateUnsupported.panelUI.label "You cannot perform further updates">
 <!ENTITY updateRestart.panelUI.label2 "Restart to update &brandShorterName;">
-
-<!ENTITY newTabControlled.header.message "Your New Tab has changed.">
-<!ENTITY newTabControlled.keepButton.label "Keep Changes">
-<!ENTITY newTabControlled.keepButton.accesskey "K">
-<!ENTITY newTabControlled.disableButton.label "Disable Extension">
-<!ENTITY newTabControlled.disableButton.accesskey "D">
-
-<!ENTITY homepageControlled.message "An extension has changed what you see as your home page. You can restore your settings if you do not want this change.">
-<!ENTITY homepageControlled.header.message "Your home page has changed.">
-<!ENTITY homepageControlled.keepButton.label "Keep Changes">
-<!ENTITY homepageControlled.keepButton.accesskey "K">
-<!ENTITY homepageControlled.disableButton.label "Disable Extension">
-<!ENTITY homepageControlled.disableButton.accesskey "D">
-
-<!ENTITY tabHideControlled.header.message "Access Your Hidden Tabs">
-<!ENTITY tabHideControlled.keepButton.label "Keep Tabs Hidden">
-<!ENTITY tabHideControlled.keepButton.accesskey "K">
-<!ENTITY tabHideControlled.disableButton.label "Disable Extension">
-<!ENTITY tabHideControlled.disableButton.accesskey "D">
-
-<!ENTITY pageActionButton.tooltip "Page actions">
-<!ENTITY pageAction.addToUrlbar.label "Add to Address Bar">
-<!ENTITY pageAction.removeFromUrlbar.label "Remove from Address Bar">
-<!ENTITY pageAction.manageExtension.label "Manage Extension…">
 
 <!ENTITY sendToDevice.syncNotReady.label "Syncing Devices…">
 
@@ -968,3 +279,5 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY accessibilityIndicator.tooltip "Accessibility Features Enabled">
 
 <!ENTITY restartMenu.label "Restart">
+
+<!ENTITY statusText.label "Status Text">

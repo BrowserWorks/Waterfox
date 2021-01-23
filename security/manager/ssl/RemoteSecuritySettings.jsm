@@ -9,6 +9,9 @@ const { RemoteSettings } = ChromeUtils.import(
   "resource://services-settings/remote-settings.js"
 );
 
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -26,6 +29,8 @@ const INTERMEDIATES_COLLECTION_PREF =
   "security.remote_settings.intermediates.collection";
 const INTERMEDIATES_DL_PER_POLL_PREF =
   "security.remote_settings.intermediates.downloads_per_poll";
+const INTERMEDIATES_DL_PARALLEL_REQUESTS =
+  "security.remote_settings.intermediates.parallel_downloads";
 const INTERMEDIATES_ENABLED_PREF =
   "security.remote_settings.intermediates.enabled";
 const INTERMEDIATES_SIGNER_PREF =
@@ -40,22 +45,31 @@ const INTERMEDIATES_PRELOADED_TELEMETRY =
 const INTERMEDIATES_UPDATE_MS_TELEMETRY =
   "INTERMEDIATE_PRELOADING_UPDATE_TIME_MS";
 
+const ONECRL_BUCKET_PREF = "services.settings.security.onecrl.bucket";
+const ONECRL_COLLECTION_PREF = "services.settings.security.onecrl.collection";
+const ONECRL_SIGNER_PREF = "services.settings.security.onecrl.signer";
+const ONECRL_CHECKED_PREF = "services.settings.security.onecrl.checked";
+
+const PINNING_ENABLED_PREF = "services.blocklist.pinning.enabled";
+const PINNING_BUCKET_PREF = "services.blocklist.pinning.bucket";
+const PINNING_COLLECTION_PREF = "services.blocklist.pinning.collection";
+const PINNING_CHECKED_SECONDS_PREF = "services.blocklist.pinning.checked";
+const PINNING_SIGNER_PREF = "services.blocklist.pinning.signer";
+
+const CRLITE_FILTERS_BUCKET_PREF =
+  "security.remote_settings.crlite_filters.bucket";
+const CRLITE_FILTERS_CHECKED_SECONDS_PREF =
+  "security.remote_settings.crlite_filters.checked";
+const CRLITE_FILTERS_COLLECTION_PREF =
+  "security.remote_settings.crlite_filters.collection";
+const CRLITE_FILTERS_ENABLED_PREF =
+  "security.remote_settings.crlite_filters.enabled";
+const CRLITE_FILTERS_SIGNER_PREF =
+  "security.remote_settings.crlite_filters.signer";
+
 XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 
 XPCOMUtils.defineLazyGetter(this, "gTextDecoder", () => new TextDecoder());
-
-XPCOMUtils.defineLazyGetter(this, "baseAttachmentsURL", async () => {
-  const server = Services.prefs.getCharPref("services.settings.server");
-  const serverInfo = await (await fetch(`${server}/`, {
-    credentials: "omit",
-  })).json();
-  const {
-    capabilities: {
-      attachments: { base_url },
-    },
-  } = serverInfo;
-  return base_url;
-});
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
   let { ConsoleAPI } = ChromeUtils.import("resource://gre/modules/Console.jsm");
@@ -67,32 +81,6 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
     maxLogLevelPref: LOGLEVEL_PREF,
   });
 });
-
-function hexify(data) {
-  return Array.from(data, (c, i) =>
-    data
-      .charCodeAt(i)
-      .toString(16)
-      .padStart(2, "0")
-  ).join("");
-}
-
-// Hash a UTF-8 string into a hex string with SHA256
-function getHash(str) {
-  // return the two-digit hexadecimal code for a byte
-  let hasher = Cc["@mozilla.org/security/hash;1"].createInstance(
-    Ci.nsICryptoHash
-  );
-  hasher.init(Ci.nsICryptoHash.SHA256);
-  let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(
-    Ci.nsIStringInputStream
-  );
-  stringStream.data = str;
-  hasher.updateFromStream(stringStream, -1);
-
-  // convert the binary hash data to a hex string.
-  return hexify(hasher.finish(false));
-}
 
 // Converts a JS string to an array of bytes consisting of the char code at each
 // index in the string.
@@ -112,6 +100,17 @@ function bytesToString(bytes) {
   return String.fromCharCode.apply(null, bytes);
 }
 
+class CRLiteState {
+  constructor(subject, spkiHash, state) {
+    this.subject = subject;
+    this.spkiHash = spkiHash;
+    this.state = state;
+  }
+}
+CRLiteState.prototype.QueryInterface = ChromeUtils.generateQI([
+  Ci.nsICRLiteState,
+]);
+
 class CertInfo {
   constructor(cert, subject) {
     this.cert = cert;
@@ -121,7 +120,235 @@ class CertInfo {
 }
 CertInfo.prototype.QueryInterface = ChromeUtils.generateQI([Ci.nsICertInfo]);
 
-this.RemoteSecuritySettings = class RemoteSecuritySettings {
+class RevocationState {
+  constructor(state) {
+    this.state = state;
+  }
+}
+
+class IssuerAndSerialRevocationState extends RevocationState {
+  constructor(issuer, serial, state) {
+    super(state);
+    this.issuer = issuer;
+    this.serial = serial;
+  }
+}
+IssuerAndSerialRevocationState.prototype.QueryInterface = ChromeUtils.generateQI(
+  [Ci.nsIIssuerAndSerialRevocationState]
+);
+
+class SubjectAndPubKeyRevocationState extends RevocationState {
+  constructor(subject, pubKey, state) {
+    super(state);
+    this.subject = subject;
+    this.pubKey = pubKey;
+  }
+}
+SubjectAndPubKeyRevocationState.prototype.QueryInterface = ChromeUtils.generateQI(
+  [Ci.nsISubjectAndPubKeyRevocationState]
+);
+
+function setRevocations(certStorage, revocations) {
+  return new Promise(resolve =>
+    certStorage.setRevocations(revocations, resolve)
+  );
+}
+
+/**
+ * Revoke the appropriate certificates based on the records from the blocklist.
+ *
+ * @param {Object} data   Current records in the local db.
+ */
+const updateCertBlocklist = AppConstants.MOZ_NEW_CERT_STORAGE
+  ? async function({ data: { current, created, updated, deleted } }) {
+      const certList = Cc["@mozilla.org/security/certstorage;1"].getService(
+        Ci.nsICertStorage
+      );
+      let items = [];
+
+      // See if we have prior revocation data (this can happen when we can't open
+      // the database and we have to re-create it (see bug 1546361)).
+      let hasPriorRevocationData = await new Promise(resolve => {
+        certList.hasPriorData(
+          Ci.nsICertStorage.DATA_TYPE_REVOCATION,
+          (rv, hasPriorData) => {
+            if (rv == Cr.NS_OK) {
+              resolve(hasPriorData);
+            } else {
+              // If calling hasPriorData failed, assume we need to reload
+              // everything (even though it's unlikely doing so will succeed).
+              resolve(false);
+            }
+          }
+        );
+      });
+
+      // If we don't have prior data, make it so we re-load everything.
+      if (!hasPriorRevocationData) {
+        deleted = [];
+        updated = [];
+        created = current;
+      }
+
+      for (let item of deleted) {
+        if (item.issuerName && item.serialNumber) {
+          items.push(
+            new IssuerAndSerialRevocationState(
+              item.issuerName,
+              item.serialNumber,
+              Ci.nsICertStorage.STATE_UNSET
+            )
+          );
+        } else if (item.subject && item.pubKeyHash) {
+          items.push(
+            new SubjectAndPubKeyRevocationState(
+              item.subject,
+              item.pubKeyHash,
+              Ci.nsICertStorage.STATE_UNSET
+            )
+          );
+        }
+      }
+
+      const toAdd = created.concat(updated.map(u => u.new));
+
+      for (let item of toAdd) {
+        if (item.issuerName && item.serialNumber) {
+          items.push(
+            new IssuerAndSerialRevocationState(
+              item.issuerName,
+              item.serialNumber,
+              Ci.nsICertStorage.STATE_ENFORCE
+            )
+          );
+        } else if (item.subject && item.pubKeyHash) {
+          items.push(
+            new SubjectAndPubKeyRevocationState(
+              item.subject,
+              item.pubKeyHash,
+              Ci.nsICertStorage.STATE_ENFORCE
+            )
+          );
+        }
+      }
+
+      try {
+        await setRevocations(certList, items);
+      } catch (e) {
+        Cu.reportError(e);
+      }
+    }
+  : async function({ data: { current: records } }) {
+      const certList = Cc["@mozilla.org/security/certblocklist;1"].getService(
+        Ci.nsICertBlocklist
+      );
+      for (let item of records) {
+        try {
+          if (item.issuerName && item.serialNumber) {
+            certList.revokeCertByIssuerAndSerial(
+              item.issuerName,
+              item.serialNumber
+            );
+          } else if (item.subject && item.pubKeyHash) {
+            certList.revokeCertBySubjectAndPubKey(
+              item.subject,
+              item.pubKeyHash
+            );
+          }
+        } catch (e) {
+          // Prevent errors relating to individual blocklist entries from causing sync to fail.
+          Cu.reportError(e);
+        }
+      }
+      certList.saveEntries();
+    };
+
+/**
+ * Modify the appropriate security pins based on records from the remote
+ * collection.
+ *
+ * @param {Object} data   Current records in the local db.
+ */
+async function updatePinningList({ data: { current: records } }) {
+  if (!Services.prefs.getBoolPref(PINNING_ENABLED_PREF)) {
+    return;
+  }
+
+  const siteSecurityService = Cc["@mozilla.org/ssservice;1"].getService(
+    Ci.nsISiteSecurityService
+  );
+
+  // clear the current preload list
+  siteSecurityService.clearPreloads();
+
+  // write each KeyPin entry to the preload list
+  for (let item of records) {
+    try {
+      const { pinType, versions } = item;
+      if (versions.includes(Services.appinfo.version) && pinType == "STSPin") {
+        siteSecurityService.setHSTSPreload(
+          item.hostName,
+          item.includeSubdomains,
+          item.expires
+        );
+      }
+    } catch (e) {
+      // Prevent errors relating to individual preload entries from causing sync to fail.
+      Cu.reportError(e);
+    }
+  }
+}
+
+var RemoteSecuritySettings = {
+  /**
+   * Initialize the clients (cheap instantiation) and setup their sync event.
+   * This static method is called from BrowserGlue.jsm soon after startup.
+   *
+   * @returns {Object} intantiated clients for security remote settings.
+   */
+  init() {
+    const OneCRLBlocklistClient = RemoteSettings(
+      Services.prefs.getCharPref(ONECRL_COLLECTION_PREF),
+      {
+        bucketNamePref: ONECRL_BUCKET_PREF,
+        lastCheckTimePref: ONECRL_CHECKED_PREF,
+        signerName: Services.prefs.getCharPref(ONECRL_SIGNER_PREF),
+      }
+    );
+    OneCRLBlocklistClient.on("sync", updateCertBlocklist);
+
+    const PinningBlocklistClient = RemoteSettings(
+      Services.prefs.getCharPref(PINNING_COLLECTION_PREF),
+      {
+        bucketNamePref: PINNING_BUCKET_PREF,
+        lastCheckTimePref: PINNING_CHECKED_SECONDS_PREF,
+        signerName: Services.prefs.getCharPref(PINNING_SIGNER_PREF),
+      }
+    );
+    PinningBlocklistClient.on("sync", updatePinningList);
+
+    let IntermediatePreloadsClient;
+    let CRLiteFiltersClient;
+    if (AppConstants.MOZ_NEW_CERT_STORAGE) {
+      IntermediatePreloadsClient = new IntermediatePreloads();
+      CRLiteFiltersClient = new CRLiteFilters();
+    }
+
+    this.OneCRLBlocklistClient = OneCRLBlocklistClient;
+    this.PinningBlocklistClient = PinningBlocklistClient;
+    this.IntermediatePreloadsClient = IntermediatePreloadsClient;
+    this.CRLiteFiltersClient = CRLiteFiltersClient;
+
+    return {
+      OneCRLBlocklistClient,
+      PinningBlocklistClient,
+      IntermediatePreloadsClient,
+      CRLiteFiltersClient,
+    };
+  },
+};
+
+class IntermediatePreloads {
   constructor() {
     this.client = RemoteSettings(
       Services.prefs.getCharPref(INTERMEDIATES_COLLECTION_PREF),
@@ -143,9 +370,6 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
   }
 
   async updatePreloadedIntermediates() {
-    // Bug 1429800: once the CertStateService has the correct interface, also
-    // store the whitelist status and crlite enrollment status
-
     if (!Services.prefs.getBoolPref(INTERMEDIATES_ENABLED_PREF, true)) {
       log.debug("Intermediate Preloading is disabled");
       Services.obs.notifyObservers(
@@ -160,6 +384,10 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
     const maxDownloadsPerRun = Services.prefs.getIntPref(
       INTERMEDIATES_DL_PER_POLL_PREF,
       100
+    );
+    const parallelDownloads = Services.prefs.getIntPref(
+      INTERMEDIATES_DL_PARALLEL_REQUESTS,
+      8
     );
 
     // Bug 1519256: Move this to a separate method that's on a separate timer
@@ -185,28 +413,69 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
         }
       );
     });
-    const col = await this.client.openCollection();
     // If we don't have prior data, make it so we re-load everything.
     if (!hasPriorCertData) {
-      let toUpdate = await this.client.get();
-      let promises = [];
-      toUpdate.forEach(record => {
-        record.cert_import_complete = false;
-        promises.push(col.update(record));
-      });
-      await Promise.all(promises);
+      let current;
+      try {
+        current = await this.client.db.list();
+      } catch (err) {
+        log.warn(`Unable to list intermediate preloading collection: ${err}`);
+        // Re-purpose the "failedToFetch" category to indicate listing the collection failed.
+        Services.telemetry
+          .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
+          .add("failedToFetch");
+        return;
+      }
+      const toReset = current.filter(record => record.cert_import_complete);
+      try {
+        await this.client.db.importBulk(
+          toReset.map(r => ({ ...r, cert_import_complete: false }))
+        );
+      } catch (err) {
+        log.warn(`Unable to update intermediate preloading collection: ${err}`);
+        // Re-purpose the "unexpectedLength" category to indicate updating the collection failed.
+        Services.telemetry
+          .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
+          .add("unexpectedLength");
+        return;
+      }
     }
-    const current = await this.client.get();
+    let current;
+    try {
+      current = await this.client.db.list();
+    } catch (err) {
+      log.warn(`Unable to list intermediate preloading collection: ${err}`);
+      // Re-purpose the "failedToFetch" category to indicate listing the collection failed.
+      Services.telemetry
+        .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
+        .add("failedToFetch");
+      return;
+    }
     const waiting = current.filter(record => !record.cert_import_complete);
 
     log.debug(`There are ${waiting.length} intermediates awaiting download.`);
+    if (waiting.length == 0) {
+      // Nothing to do.
+      Services.obs.notifyObservers(
+        null,
+        "remote-security-settings:intermediates-updated",
+        "success"
+      );
+      return;
+    }
 
     TelemetryStopwatch.start(INTERMEDIATES_UPDATE_MS_TELEMETRY);
 
     let toDownload = waiting.slice(0, maxDownloadsPerRun);
-    let recordsCertsAndSubjects = await Promise.all(
-      toDownload.map(record => this.maybeDownloadAttachment(record))
-    );
+    let recordsCertsAndSubjects = [];
+    for (let i = 0; i < toDownload.length; i += parallelDownloads) {
+      const chunk = toDownload.slice(i, i + parallelDownloads);
+      const downloaded = await Promise.all(
+        chunk.map(record => this.maybeDownloadAttachment(record))
+      );
+      recordsCertsAndSubjects = recordsCertsAndSubjects.concat(downloaded);
+    }
+
     let certInfos = [];
     let recordsToUpdate = [];
     for (let { record, cert, subject } of recordsCertsAndSubjects) {
@@ -225,13 +494,30 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
         .add("failedToUpdateDB");
       return;
     }
-    await Promise.all(
-      recordsToUpdate.map(record => {
-        record.cert_import_complete = true;
-        return col.update(record);
-      })
-    );
-    const finalCurrent = await this.client.get();
+    try {
+      await this.client.db.importBulk(
+        recordsToUpdate.map(r => ({ ...r, cert_import_complete: true }))
+      );
+    } catch (err) {
+      log.warn(`Unable to update intermediate preloading collection: ${err}`);
+      // Re-purpose the "unexpectedLength" category to indicate updating the collection failed.
+      Services.telemetry
+        .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
+        .add("unexpectedLength");
+      return;
+    }
+
+    let finalCurrent;
+    try {
+      finalCurrent = await this.client.db.list();
+    } catch (err) {
+      log.warn(`Unable to list intermediate preloading collection: ${err}`);
+      // Re-purpose the "failedToFetch" category to indicate listing the collection failed.
+      Services.telemetry
+        .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
+        .add("failedToFetch");
+      return;
+    }
     const finalWaiting = finalCurrent.filter(
       record => !record.cert_import_complete
     );
@@ -269,11 +555,7 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
   }
 
   // This method returns a promise to RemoteSettingsClient.maybeSync method.
-  async onSync(event) {
-    const {
-      data: { deleted },
-    } = event;
-
+  async onSync({ data: { current, created, updated, deleted } }) {
     if (!Services.prefs.getBoolPref(INTERMEDIATES_ENABLED_PREF, true)) {
       log.debug("Intermediate Preloading is disabled");
       return;
@@ -281,40 +563,49 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
 
     log.debug(`Removing ${deleted.length} Intermediate certificates`);
     await this.removeCerts(deleted);
-  }
-
-  /**
-   * Downloads the attachment data of the given record. Does not retry,
-   * leaving that to the caller.
-   * @param  {AttachmentRecord} record The data to obtain
-   * @return {Promise}          resolves to a Uint8Array on success
-   */
-  async _downloadAttachmentBytes(record) {
-    const {
-      attachment: { location },
-    } = record;
-    const remoteFilePath = (await baseAttachmentsURL) + location;
-    const headers = new Headers();
-    headers.set("Accept-Encoding", "gzip");
-
-    return fetch(remoteFilePath, {
-      headers,
-      credentials: "omit",
-    })
-      .then(resp => {
-        log.debug(`Download fetch completed: ${resp.ok} ${resp.status}`);
-        if (!resp.ok) {
-          Cu.reportError(`Failed to fetch ${remoteFilePath}: ${resp.status}`);
-
-          Services.telemetry
-            .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
-            .add("failedToFetch");
-
-          return Promise.reject();
+    let certStorage = Cc["@mozilla.org/security/certstorage;1"].getService(
+      Ci.nsICertStorage
+    );
+    let hasPriorCRLiteData = await new Promise(resolve => {
+      certStorage.hasPriorData(
+        Ci.nsICertStorage.DATA_TYPE_CRLITE,
+        (rv, hasPriorData) => {
+          if (rv == Cr.NS_OK) {
+            resolve(hasPriorData);
+          } else {
+            resolve(false);
+          }
         }
-        return resp.arrayBuffer();
-      })
-      .then(buffer => new Uint8Array(buffer));
+      );
+    });
+    if (!hasPriorCRLiteData) {
+      deleted = [];
+      updated = [];
+      created = current;
+    }
+    const toAdd = created.concat(updated.map(u => u.new));
+    let entries = [];
+    for (let entry of deleted) {
+      entries.push(
+        new CRLiteState(
+          entry.subjectDN,
+          entry.pubKeyHash,
+          Ci.nsICertStorage.STATE_UNSET
+        )
+      );
+    }
+    for (let entry of toAdd) {
+      entries.push(
+        new CRLiteState(
+          entry.subjectDN,
+          entry.pubKeyHash,
+          entry.crlite_enrolled
+            ? Ci.nsICertStorage.STATE_ENFORCE
+            : Ci.nsICertStorage.STATE_UNSET
+        )
+      );
+    }
+    await new Promise(resolve => certStorage.setCRLiteState(entries, resolve));
   }
 
   /**
@@ -330,63 +621,29 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
    *                            name of the same.
    */
   async maybeDownloadAttachment(record) {
-    const {
-      attachment: { hash, size },
-    } = record;
     let result = { record, cert: null, subject: null };
 
-    let attachmentData;
+    let dataAsString = null;
     try {
-      attachmentData = await this._downloadAttachmentBytes(record);
+      let buffer = await this.client.attachments.downloadAsBytes(record, {
+        retries: 0,
+      });
+      dataAsString = gTextDecoder.decode(new Uint8Array(buffer));
     } catch (err) {
-      Cu.reportError(`Failed to download attachment: ${err}`);
-      Services.telemetry
-        .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
-        .add("failedToDownloadMisc");
-      return result;
-    }
-
-    if (!attachmentData || attachmentData.length == 0) {
       // Bug 1519273 - Log telemetry for these rejections
-      log.debug(`Empty attachment. Hash=${hash}`);
-
-      Services.telemetry
-        .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
-        .add("emptyAttachment");
-
+      if (err.name == "BadContentError") {
+        log.debug(`Bad attachment content.`);
+        Services.telemetry
+          .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
+          .add("unexpectedHash");
+      } else {
+        Cu.reportError(`Failed to download attachment: ${err}`);
+        Services.telemetry
+          .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
+          .add("failedToDownloadMisc");
+      }
       return result;
     }
-
-    // check the length
-    if (attachmentData.length !== size) {
-      log.debug(
-        `Unexpected attachment length. Hash=${hash} Lengths ${
-          attachmentData.length
-        } != ${size}`
-      );
-
-      Services.telemetry
-        .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
-        .add("unexpectedLength");
-
-      return result;
-    }
-
-    // check the hash
-    let dataAsString = gTextDecoder.decode(attachmentData);
-    let calculatedHash = getHash(dataAsString);
-    if (calculatedHash !== hash) {
-      log.warn(
-        `Invalid hash. CalculatedHash=${calculatedHash}, Hash=${hash}, data=${dataAsString}`
-      );
-
-      Services.telemetry
-        .getHistogramById(INTERMEDIATES_ERRORS_TELEMETRY)
-        .add("unexpectedHash");
-
-      return result;
-    }
-    log.debug(`downloaded cert with hash=${hash}, size=${size}`);
 
     let certBase64;
     let subjectBase64;
@@ -426,7 +683,7 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
     let certStorage = Cc["@mozilla.org/security/certstorage;1"].getService(
       Ci.nsICertStorage
     );
-    let hashes = recordsToRemove.map(record => record.pubKeyHash);
+    let hashes = recordsToRemove.map(record => record.derHash);
     let result = await new Promise(resolve => {
       certStorage.removeCertsByHashes(hashes, resolve);
     }).catch(err => err);
@@ -437,4 +694,116 @@ this.RemoteSecuritySettings = class RemoteSecuritySettings {
         .add("failedToRemove");
     }
   }
-};
+}
+
+// Helper function to compare filters. One filter is "less than" another filter (i.e. it sorts
+// earlier) if its timestamp is farther in the past than the other.
+function compareFilters(filterA, filterB) {
+  return filterA.effectiveTimestamp - filterB.effectiveTimestamp;
+}
+
+class CRLiteFilters {
+  constructor() {
+    this.client = RemoteSettings(
+      Services.prefs.getCharPref(CRLITE_FILTERS_COLLECTION_PREF),
+      {
+        bucketNamePref: CRLITE_FILTERS_BUCKET_PREF,
+        lastCheckTimePref: CRLITE_FILTERS_CHECKED_SECONDS_PREF,
+        signerName: Services.prefs.getCharPref(CRLITE_FILTERS_SIGNER_PREF),
+      }
+    );
+
+    Services.obs.addObserver(
+      this.onObservePollEnd.bind(this),
+      "remote-settings:changes-poll-end"
+    );
+  }
+
+  async onObservePollEnd(subject, topic, data) {
+    if (!Services.prefs.getBoolPref(CRLITE_FILTERS_ENABLED_PREF, true)) {
+      log.debug("CRLite filter downloading is disabled");
+      Services.obs.notifyObservers(
+        null,
+        "remote-security-settings:crlite-filters-downloaded",
+        "disabled"
+      );
+      return;
+    }
+    let current = await this.client.db.list();
+    let fullFilters = current.filter(filter => !filter.incremental);
+    if (fullFilters.length < 1) {
+      log.debug("no full CRLite filters to download?");
+      Services.obs.notifyObservers(
+        null,
+        "remote-security-settings:crlite-filters-downloaded",
+        "unavailable"
+      );
+      return;
+    }
+    fullFilters.sort(compareFilters);
+    log.debug(fullFilters);
+    let fullFilter = fullFilters.pop(); // the most recent filter sorts last
+    let incrementalFilters = current.filter(
+      filter =>
+        // Return incremental filters that are more recent than (i.e. sort later than) the full
+        // filter.
+        filter.incremental && compareFilters(filter, fullFilter) > 0
+    );
+    incrementalFilters.sort(compareFilters);
+    // Map of id to filter where that filter's parent has the given id.
+    let parentIdMap = {};
+    for (let filter of incrementalFilters) {
+      if (filter.parent in parentIdMap) {
+        log.debug(`filter with parent id ${filter.parent} already seen?`);
+      } else {
+        parentIdMap[filter.parent] = filter;
+      }
+    }
+    let filtersToDownload = [];
+    let nextFilter = fullFilter;
+    while (nextFilter) {
+      filtersToDownload.push(nextFilter);
+      nextFilter = parentIdMap[nextFilter.id];
+    }
+    let filtersDownloaded = [];
+    const certList = Cc["@mozilla.org/security/certstorage;1"].getService(
+      Ci.nsICertStorage
+    );
+    for (let filter of filtersToDownload) {
+      try {
+        // If we've already downloaded this, the backend should just grab it from its cache.
+        let localURI = await this.client.attachments.download(filter);
+        let buffer = await (await fetch(localURI)).arrayBuffer();
+        let bytes = new Uint8Array(buffer);
+        log.debug(`Downloaded ${filter.details.name}: ${bytes.length} bytes`);
+        filtersDownloaded.push(filter.details.name);
+        if (!filter.incremental) {
+          let timestamp = Math.floor(filter.effectiveTimestamp / 1000);
+          log.debug(`setting CRLite filter timestamp to ${timestamp}`);
+          await new Promise(resolve => {
+            certList.setFullCRLiteFilter(bytes, timestamp, rv => {
+              log.debug(`setFullCRLiteFilter: ${rv}`);
+              resolve();
+            });
+          });
+        } else {
+          log.debug("adding incremental update");
+          await new Promise(resolve => {
+            certList.addCRLiteStash(bytes, rv => {
+              log.debug(`addCRLiteStash: ${rv}`);
+              resolve();
+            });
+          });
+        }
+      } catch (e) {
+        log.debug(e);
+        Cu.reportError("failed to download CRLite filter", e);
+      }
+    }
+    Services.obs.notifyObservers(
+      null,
+      "remote-security-settings:crlite-filters-downloaded",
+      `finished;${filtersDownloaded.join(",")}`
+    );
+  }
+}

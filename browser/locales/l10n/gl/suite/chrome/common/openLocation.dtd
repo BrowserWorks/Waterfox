@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Introduza o enderezo da páxina web (URL) ou especifique o ficheiro local que desexa abrir:">  
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "e">
+<!ENTITY chooseFile.label "Escoller ficheiro…">
+<!ENTITY chooseFile.accesskey "c">
+<!ENTITY newPrivate.label "Nova xanela privada ">
+<!ENTITY newWindow.label "Nova xanela do navegador">
+<!ENTITY newTab.label "Nova lapela do navegador">
+<!ENTITY currentTab.label "Lapela actual do navegador">
+<!ENTITY editNewWindow.label "Nova xanela de Composer">
+<!ENTITY open.label "Abrir">
+<!ENTITY caption.label "Abrir o enderezo web">
+<!ENTITY openWhere.label "Abrir en:">
+<!ENTITY openWhere.accesskey "A">

@@ -14,7 +14,8 @@
             android:allowBackup="true"
             android:label="@string/app_name"
             android:supportsRtl="true"
-            android:usesCleartextTraffic="true">
+            android:usesCleartextTraffic="true"
+            android:icon="@drawable/logo">
         <uses-library android:name="android.test.runner"
                       android:required="false"/>
 
@@ -49,6 +50,11 @@
                 android:label="GeckoView Example"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar"
                 android:windowSoftInputMode="stateUnspecified|adjustResize">
+        </activity>
+        <activity
+                android:name=".SettingsActivity"
+                android:label="Settings"
+                android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
 
         <service

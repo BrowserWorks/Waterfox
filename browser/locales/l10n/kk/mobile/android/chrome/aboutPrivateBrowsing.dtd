@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Жекелік шолу">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Бақылаудан қорғаныс">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Сіз жекелік шолу режимінде емессіз">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; сіздің желідегі әрекеттеріңізді бақылай алатын парақ бөліктерін блоктайды.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Біз тарихыңызды сақтамаймын боламыз, бірақ, жүктеліп алынған файлдар және жасалған бетбелгілер құрылғыңызда сақталады.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "Жекелік шолу режимінде тарих не cookies сақталмайтын болады. Жасалған бетбелгілер және жүктеліп алынған файлдар құрылғыңызда сақталады.">
+
+<!ENTITY privatebrowsingpage.link.private "Көбірек білгіңіз келе ме?">
+<!ENTITY privatebrowsingpage.link.normal "Жаңа жекелік терезесінде ашу">

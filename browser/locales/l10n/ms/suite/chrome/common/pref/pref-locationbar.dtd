@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Bar Lokasi">
+
+<!ENTITY autoComplete.label                    "Auto-lengkap">
+<!ENTITY autoCompleteMatchHistory.label        "Cadangan laman web dalam Sejarah secara automatik">
+<!ENTITY autoCompleteMatchHistory.accesskey    "C">
+<!ENTITY autoCompleteMatchBookmarks.label      "Cadangan laman web dalam Tandabuku secara automatik">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "T">
+<!ENTITY autoCompleteAutoFill.label            "Padanan pra-isi terbaik secara automatik">
+<!ENTITY autoCompleteAutoFill.accesskey        "r">
+<!ENTITY autoCompleteShowPopup.label           "Papar senarai padanan carian">
+<!ENTITY autoCompleteShowPopup.accesskey       "P">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Hanya padanan laman web yang telah anda taip sebelum ini">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "p">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Padan">
+<!ENTITY autoCompleteMatch.accesskey           "P">
+<!ENTITY autoCompleteMatchAnywhere             "Apa-apa sahaja dalam lokasi atau tajuk">
+<!ENTITY autoCompleteMatchWordsFirst           "Apa-apa sahaja tetapi lebih suka perkataan tambahan">
+<!ENTITY autoCompleteMatchWords                "Hanya perkataan tambahan">
+<!ENTITY autoCompleteMatchStart                "Hanya pada permulaan lokasi atau tajuk">
+<!ENTITY showInternetSearch.label              "Papar enjin carian Internet piawai">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "Format">
+<!ENTITY domainFormatting.label                "Serlahkan domain yang efektif untuk laman web dan pelayan FTP">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Serlahkan halaman web dengan tahap keselamatan sambungan yang tinggi">
+<!ENTITY highlightSecure.accesskey             "t">
+
+<!ENTITY unknownLocations.label                "Lokasi tidak diketahui">
+<!ENTITY domainGuessing.label                  "Tambah &quot;www.&quot; dan &quot;.com&quot; dalam lokasi jika halaman web tidak ditemui">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "Laksanakan carian web apabila teks yang dimasukkan bukan lokasi web">
+<!ENTITY keywords.accesskey                    "L">

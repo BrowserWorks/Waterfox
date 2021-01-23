@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Llwytho i Lawr a Chydweddu Negeseuon">
+<!ENTITY MsgSelect.label "Eitemau ar Gyfer Defnydd All-lein">
+<!ENTITY MsgSyncDesc.label "Os ydych eisoes wedi dewis ffolderi e-bost neu grwpiau newyddion ar gyfer defnydd all-lein, mae modd i chi eu llwytho neu cydweddu nhw nawr. Yn lle hynny, defnyddiwch y botwm &quot;Dewis&quot; i ddewis ffolderi e-bost neu grwpiau newyddion ar gyfer defnydd all-lein.">
+<!ENTITY MsgSyncDirections.label "Llwytho i lawr a/neu gydweddu'r canlynol:">
+<!ENTITY syncTypeMail.label "Negeseuon e-bost">
+<!ENTITY syncTypeMail.accesskey "e">
+<!ENTITY syncTypeNews.label "Negeseuon grŵp newyddion">
+<!ENTITY syncTypeNews.accesskey "g">
+<!ENTITY sendMessage.label "Anfon negeseuon sydd heb eu Hanfon">
+<!ENTITY sendMessage.accesskey "A">
+<!ENTITY workOffline.label "Gweithio all-lein pan fydd y llwytho i lawr/cydweddiad wedi gorffen">
+<!ENTITY workOffline.accesskey "G">
+<!ENTITY selectButton.label "Dewis…">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "Dewiswch y ffolderi e-bost a grwpiau newyddion ar gyfer defnydd all-lein.">
+<!ENTITY MsgSelectInd.label "Llwytho i Lawr">
+<!ENTITY MsgSelectItems.label "Ffolderi a Grwpiau Newyddion">

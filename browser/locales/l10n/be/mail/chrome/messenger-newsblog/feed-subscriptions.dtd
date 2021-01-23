@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Падпіскі на жывільнік">
+<!ENTITY learnMore.label             "Даведайцеся больш пра стужкі навін">
+
+<!ENTITY feedTitle.label             "Загаловак:">
+<!ENTITY feedTitle.accesskey         "г">
+
+<!ENTITY feedLocation.label          "URL жывільніка:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Увядзіце сапраўдны url канала">
+<!ENTITY locationValidate.label      "Праверыць">
+<!ENTITY validateText.label          "Правяраць і атрымліваць спраўны URL.">
+
+<!ENTITY feedFolder.label            "Захоўваць артыкулы ў:">
+<!ENTITY feedFolder.accesskey        "З">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Правяраць, ці існуюць новыя артыкулы, кожныя ">
+<!ENTITY biffStart.accesskey         "а">
+<!ENTITY biffMinutes.label           "хвілін">
+<!ENTITY biffMinutes.accesskey       "і">
+<!ENTITY biffDays.label              "дзён">
+<!ENTITY biffDays.accesskey          "д">
+<!ENTITY recommendedUnits.label      "Выдавец рэкамендуе:">
+
+<!ENTITY quickMode.label             "Паказваць зводку артыкула замест сцягвання сеціўнай старонкі">
+<!ENTITY quickMode.accesskey         "в">
+
+<!ENTITY autotagEnable.label         "Самастварэнне мецінаў з назваў &lt;category&gt; жывільніка">
+<!ENTITY autotagEnable.accesskey     "С">
+<!ENTITY autotagUsePrefix.label      "Прыстаўка мецінаў:">
+<!ENTITY autotagUsePrefix.accesskey  "П">
+<!ENTITY autoTagPrefix.placeholder   "Увядзіце прыстаўку для мецінаў">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Дадаць">
+<!ENTITY button.addFeed.accesskey    "Д">
+<!ENTITY button.verifyFeed.label     "Праверыць">
+<!ENTITY button.verifyFeed.accesskey "П">
+<!ENTITY button.updateFeed.label     "Абнавіць">
+<!ENTITY button.updateFeed.accesskey "А">
+<!ENTITY button.removeFeed.label     "Выдаліць">
+<!ENTITY button.removeFeed.accesskey "В">
+<!ENTITY button.importOPML.label     "Імпартаваць">
+<!ENTITY button.importOPML.accesskey "І">
+<!ENTITY button.exportOPML.label     "Экспартаваць">
+<!ENTITY button.exportOPML.accesskey "Э">
+<!ENTITY button.exportOPML.tooltip   "Экспарт жывільнікаў у папках; ctrl-пстрык або ctrl-увод экспартуюць жывільнікі як спіс">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Зачыніць">

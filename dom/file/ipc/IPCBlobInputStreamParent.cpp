@@ -58,6 +58,16 @@ already_AddRefed<IPCBlobInputStreamParent> IPCBlobInputStreamParent::Create(
   return nullptr;
 }
 
+template already_AddRefed<IPCBlobInputStreamParent>
+IPCBlobInputStreamParent::Create<mozilla::ipc::PBackgroundParent>(
+    nsIInputStream*, uint64_t, uint64_t, nsresult*,
+    mozilla::ipc::PBackgroundParent*);
+
+template already_AddRefed<IPCBlobInputStreamParent>
+IPCBlobInputStreamParent::Create<ContentParent>(nsIInputStream*, uint64_t,
+                                                uint64_t, nsresult*,
+                                                ContentParent*);
+
 IPCBlobInputStreamParent::IPCBlobInputStreamParent(const nsID& aID,
                                                    uint64_t aSize,
                                                    ContentParent* aManager)
@@ -200,13 +210,7 @@ mozilla::ipc::IPCResult IPCBlobInputStreamParent::Recv__delete__() {
 
 bool IPCBlobInputStreamParent::HasValidStream() const {
   auto storage = IPCBlobInputStreamStorage::Get().unwrapOr(nullptr);
-  if (!storage) {
-    return false;
-  }
-
-  nsCOMPtr<nsIInputStream> stream;
-  storage->GetStream(mID, 0, mSize, getter_AddRefs(stream));
-  return !!stream;
+  return storage ? storage->HasStream(mID) : false;
 }
 
 }  // namespace dom

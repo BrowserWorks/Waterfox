@@ -14,8 +14,6 @@
 #include "nsCOMArray.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsTArray.h"
-#include "nsAutoPtr.h"
-#include "nsICacheInfoChannel.h"
 #include "mozilla/dom/Document.h"
 #include "nsIIncrementalStreamLoader.h"
 #include "nsURIHashKey.h"
@@ -23,11 +21,11 @@
 #include "mozilla/dom/ScriptLoadRequest.h"
 #include "mozilla/dom/SRIMetadata.h"
 #include "mozilla/dom/SRICheck.h"
-#include "mozilla/Maybe.h"
+#include "mozilla/MaybeOneOf.h"
 #include "mozilla/MozPromise.h"
-#include "mozilla/net/ReferrerPolicy.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/Utf8.h"  // mozilla::Utf8Unit
 #include "mozilla/Vector.h"
+#include "ScriptKind.h"
 
 class nsIURI;
 
@@ -181,17 +179,22 @@ class ScriptLoader final : public nsISupports {
   }
 
   /**
-   * Convert the given buffer to a UTF-16 string.
+   * Convert the given buffer to a UTF-16 string.  If the buffer begins with a
+   * BOM, it is interpreted as that encoding; otherwise the first of |aChannel|,
+   * |aHintCharset|, or |aDocument| that provides a recognized encoding is used,
+   * or Windows-1252 if none of them do.
+   *
+   * Encoding errors in the buffer are converted to replacement characters, so
+   * allocation failure is the only way this function can fail.
+   *
    * @param aChannel     Channel corresponding to the data. May be null.
    * @param aData        The data to convert
    * @param aLength      Length of the data
-   * @param aHintCharset Hint for the character set (e.g., from a charset
-   *                     attribute). May be the empty string.
-   * @param aDocument    Document which the data is loaded for. Must not be
-   *                     null.
-   * @param aBufOut      [out] char16_t array allocated by ConvertToUTF16 and
-   *                     containing data converted to unicode.  Caller must
-   *                     js_free() this data when no longer needed.
+   * @param aHintCharset Character set hint (e.g., from a charset attribute).
+   * @param aDocument    Document which the data is loaded for. May be null.
+   * @param aBufOut      [out] fresh char16_t array containing data converted to
+   *                     Unicode.  Caller must js_free() this data when finished
+   *                     with it.
    * @param aLengthOut   [out] Length of array returned in aBufOut in number
    *                     of char16_t code units.
    */
@@ -215,6 +218,31 @@ class ScriptLoader final : public nsISupports {
     }
     return rv;
   };
+
+  /**
+   * Convert the given buffer to a UTF-8 string.  If the buffer begins with a
+   * BOM, it is interpreted as that encoding; otherwise the first of |aChannel|,
+   * |aHintCharset|, or |aDocument| that provides a recognized encoding is used,
+   * or Windows-1252 if none of them do.
+   *
+   * Encoding errors in the buffer are converted to replacement characters, so
+   * allocation failure is the only way this function can fail.
+   *
+   * @param aChannel     Channel corresponding to the data. May be null.
+   * @param aData        The data to convert
+   * @param aLength      Length of the data
+   * @param aHintCharset Character set hint (e.g., from a charset attribute).
+   * @param aDocument    Document which the data is loaded for. May be null.
+   * @param aBufOut      [out] fresh Utf8Unit array containing data converted to
+   *                     Unicode.  Caller must js_free() this data when finished
+   *                     with it.
+   * @param aLengthOut   [out] Length of array returned in aBufOut in UTF-8 code
+   *                     units (i.e. in bytes).
+   */
+  static nsresult ConvertToUTF8(nsIChannel* aChannel, const uint8_t* aData,
+                                uint32_t aLength, const nsAString& aHintCharset,
+                                Document* aDocument, Utf8Unit*& aBufOut,
+                                size_t& aLengthOut);
 
   /**
    * Handle the completion of a stream.  This is called by the
@@ -243,16 +271,16 @@ class ScriptLoader final : public nsISupports {
    */
   void BeginDeferringScripts() {
     mDeferEnabled = true;
-    if (mDocumentParsingDone) {
+    if (mDeferCheckpointReached) {
       // We already completed a parse and were just waiting for some async
       // scripts to load (and were already blocking the load event waiting for
       // that to happen), when document.open() happened and now we're doing a
       // new parse.  We shouldn't block the load event again, but _should_ reset
-      // mDocumentParsingDone to false.  It'll get set to true again when the
-      // ParsingComplete call that corresponds to this BeginDeferringScripts
-      // call happens (on document.close()), since we just set mDeferEnabled to
-      // true.
-      mDocumentParsingDone = false;
+      // mDeferCheckpointReached to false.  It'll get set to true again when the
+      // DeferCheckpointReached call that corresponds to this
+      // BeginDeferringScripts call happens (on document.close()), since we just
+      // set mDeferEnabled to true.
+      mDeferCheckpointReached = false;
     } else {
       if (mDocument) {
         mDocument->BlockOnload();
@@ -262,14 +290,24 @@ class ScriptLoader final : public nsISupports {
 
   /**
    * Notifies the script loader that parsing is done.  If aTerminated is true,
-   * this will drop any pending scripts that haven't run yet.  Otherwise, it
-   * will stops deferring scripts and immediately processes the
+   * this will drop any pending scripts that haven't run yet, otherwise it will
+   * do nothing.
+   */
+  void ParsingComplete(bool aTerminated);
+
+  /**
+   * Notifies the script loader that the checkpoint to begin execution of defer
+   * scripts has been reached. This is either the end of of the document parse
+   * or the end of loading of parser-inserted stylesheets, whatever happens
+   * last.
+   *
+   * Otherwise, it will stop deferring scripts and immediately processes the
    * mDeferredRequests queue.
    *
    * WARNING: This function will synchronously execute content scripts, so be
    * prepared that the world might change around you.
    */
-  void ParsingComplete(bool aTerminated);
+  void DeferCheckpointReached();
 
   /**
    * Returns the number of pending scripts, deferred or not.
@@ -293,7 +331,8 @@ class ScriptLoader final : public nsISupports {
                           const nsAString& aType, const nsAString& aCrossOrigin,
                           const nsAString& aIntegrity, bool aScriptFromHead,
                           bool aAsync, bool aDefer, bool aNoModule,
-                          const mozilla::net::ReferrerPolicy aReferrerPolicy);
+                          bool aLinkPreload,
+                          const ReferrerPolicy aReferrerPolicy);
 
   /**
    * Process a request that was deferred so that the script could be compiled
@@ -302,7 +341,10 @@ class ScriptLoader final : public nsISupports {
   nsresult ProcessOffThreadRequest(ScriptLoadRequest* aRequest);
 
   bool AddPendingChildLoader(ScriptLoader* aChild) {
-    return mPendingChildLoaders.AppendElement(aChild) != nullptr;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier. Else, change the return type to void.
+    mPendingChildLoaders.AppendElement(aChild);
+    return true;
   }
 
   mozilla::dom::DocGroup* GetDocGroup() const {
@@ -358,11 +400,12 @@ class ScriptLoader final : public nsISupports {
 
   void EnsureModuleHooksInitialized();
 
-  ScriptLoadRequest* CreateLoadRequest(
-      ScriptKind aKind, nsIURI* aURI, nsIScriptElement* aElement,
-      nsIPrincipal* aTriggeringPrincipal, mozilla::CORSMode aCORSMode,
-      const SRIMetadata& aIntegrity,
-      mozilla::net::ReferrerPolicy aReferrerPolicy);
+  ScriptLoadRequest* CreateLoadRequest(ScriptKind aKind, nsIURI* aURI,
+                                       nsIScriptElement* aElement,
+                                       nsIPrincipal* aTriggeringPrincipal,
+                                       mozilla::CORSMode aCORSMode,
+                                       const SRIMetadata& aIntegrity,
+                                       ReferrerPolicy aReferrerPolicy);
 
   /**
    * Unblocks the creator parser of the parser-blocking scripts.
@@ -381,7 +424,8 @@ class ScriptLoader final : public nsISupports {
   bool ProcessInlineScript(nsIScriptElement* aElement, ScriptKind aScriptKind);
 
   ScriptLoadRequest* LookupPreloadRequest(nsIScriptElement* aElement,
-                                          ScriptKind aScriptKind);
+                                          ScriptKind aScriptKind,
+                                          const SRIMetadata& aSRIMetadata);
 
   void GetSRIMetadata(const nsAString& aIntegrityAttr,
                       SRIMetadata* aMetadataOut);
@@ -390,7 +434,7 @@ class ScriptLoader final : public nsISupports {
    * Given a script element, get the referrer policy should be applied to load
    * requests.
    */
-  mozilla::net::ReferrerPolicy GetReferrerPolicy(nsIScriptElement* aElement);
+  ReferrerPolicy GetReferrerPolicy(nsIScriptElement* aElement);
 
   /**
    * Helper function to check the content policy for a given request.
@@ -398,6 +442,15 @@ class ScriptLoader final : public nsISupports {
   static nsresult CheckContentPolicy(Document* aDocument, nsISupports* aContext,
                                      const nsAString& aType,
                                      ScriptLoadRequest* aRequest);
+
+  /**
+   * Helper function to determine whether an about: page loads a chrome: URI.
+   * Please note that this function only returns true if:
+   *   * the about: page uses a ContentPrincipal with scheme about:
+   *   * the about: page is not linkable from content
+   *     (e.g. the function will return false for about:blank or about:srcdoc)
+   */
+  static bool IsAboutPageLoadingChromeURI(ScriptLoadRequest* aRequest);
 
   /**
    * Start a load for aRequest's URI.
@@ -504,8 +557,14 @@ class ScriptLoader final : public nsISupports {
 
   void MaybeMoveToLoadedList(ScriptLoadRequest* aRequest);
 
-  mozilla::Maybe<JS::SourceText<char16_t>> GetScriptSource(
-      JSContext* aCx, ScriptLoadRequest* aRequest);
+  using MaybeSourceText =
+      mozilla::MaybeOneOf<JS::SourceText<char16_t>, JS::SourceText<Utf8Unit>>;
+
+  // Get source text.  On success |aMaybeSource| will contain either UTF-8 or
+  // UTF-16 source; on failure it will remain in its initial state.
+  MOZ_MUST_USE nsresult GetScriptSource(JSContext* aCx,
+                                        ScriptLoadRequest* aRequest,
+                                        MaybeSourceText* aMaybeSource);
 
   void SetModuleFetchStarted(ModuleLoadRequest* aRequest);
   void SetModuleFetchFinishedAndResumeWaitingRequests(
@@ -589,7 +648,7 @@ class ScriptLoader final : public nsISupports {
   uint32_t mNumberOfProcessors;
   bool mEnabled;
   bool mDeferEnabled;
-  bool mDocumentParsingDone;
+  bool mDeferCheckpointReached;
   bool mBlockingDOMContentLoaded;
   bool mLoadEventFired;
   bool mGiveUpEncoding;

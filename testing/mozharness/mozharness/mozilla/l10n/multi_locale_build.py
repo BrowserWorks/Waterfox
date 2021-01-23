@@ -12,11 +12,11 @@ This should be a mostly generic multilocale build script.
 import os
 import sys
 
-sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
-
 from mozharness.base.errors import MakefileErrorList
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.l10n.locales import LocalesMixin
+
+sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
 
 # MultiLocaleBuild {{{1
@@ -61,14 +61,6 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
          "type": "string",
          "help": "Override the tags set for all repos"
          }
-    ], [
-        ["--l10n-dir"],
-        {"action": "store",
-         "dest": "l10n_dir",
-         "type": "string",
-         "default": "l10n",
-         "help": "Specify the l10n dir name"
-         }
     ]]
 
     def __init__(self, require_config_file=True):
@@ -83,13 +75,12 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
 
     def _run_mach_command(self, args):
         dirs = self.query_abs_dirs()
-        topsrcdir = os.path.join(dirs['abs_work_dir'], 'src')
 
         mach = [sys.executable, 'mach']
 
         return_code = self.run_command(
             command=mach + ['--log-no-times'] + args,
-            cwd=topsrcdir,
+            cwd=dirs['abs_src_dir'],
         )
 
         if return_code:
@@ -98,7 +89,7 @@ class MultiLocaleBuild(LocalesMixin, MercurialScript):
 
     def package_multi(self):
         dirs = self.query_abs_dirs()
-        objdir = dirs['abs_objdir']
+        objdir = dirs['abs_obj_dir']
 
         # This will error on non-0 exit code.
         locales = list(sorted(self.query_locales()))

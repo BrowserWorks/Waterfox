@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "संदेश फिल्टर">
+<!ENTITY nameColumn.label "फिल्टर नाम">
+<!ENTITY activeColumn.label "सक्रिय">
+<!ENTITY newButton.label "नया...">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "संपादित करें...">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "मिटायें">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderUpButton.label "ऊंपर जायें">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "नीचे जांये">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY filterHeader.label "सक्रिय फिल्टर नीचे दिखाये क्रम में स्वतः चलते हैं.">
+<!ENTITY filtersForPrefix.label "इसके लिये फिल्टर:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "फिल्टर लॉग">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "अब चलायें">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "रोकें">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "इसपर चयनित फिल्टर चलायें:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "मदद">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 

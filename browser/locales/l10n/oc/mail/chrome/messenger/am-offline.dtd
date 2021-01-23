@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Per estalviar d'espaci de disc, telecargar pas :">
+<!ENTITY offlineNotDownload.label "Los messatges que la talha depassa">
+<!ENTITY offlineNotDownload.accesskey "t">
+<!ENTITY kb.label "ko">
+<!ENTITY daysOld.label "jorns">
+<!ENTITY message.label "mai recents">
+<!ENTITY nntpNotDownloadRead.label "Los messatges legits">
+<!ENTITY nntpNotDownloadRead.accesskey "L">
+<!ENTITY nntpDownloadMsg.label "Los messatges qu'an mai de">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Per ganhar d'espaci de disc, los messatges ancians pòdon èsser suprimits definitivament.">
+<!ENTITY retentionCleanupImap.label "Per ganhar d'espaci de disc, los messatges ancians pòdon èsser suprimits definitivament, las còpias localas e los originals sul servidor distant.">
+<!ENTITY retentionCleanupPop.label "Per ganhar d'espaci de disc, los messatges ancians pòdon èsser suprimits definitivament, inclús sul servidor distant.">
+<!ENTITY retentionKeepMsg.label "Suprimir los messatges qu'an mai de">
+<!ENTITY retentionKeepMsg.accesskey "S">
+<!ENTITY retentionKeepAll.label "Suprimir pas cap de messatge">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionApplyToFlagged.label "Conservar totjorn los messatges seguits">
+<!ENTITY retentionApplyToFlagged.accesskey "c">
+<!ENTITY offlineSelectNntp.label "Seleccion gropes per utilizacion fòra linha…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "Avançat…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "A">
+<!ENTITY syncGroupTitle.label "Sincronizacion dels messatges">
+<!ENTITY diskspaceGroupTitle.label "Espaci de disc ">
+

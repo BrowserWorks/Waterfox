@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Restaurar sessão">
+<!ENTITY restorepage.pagetitle      "Deseja restaurar a sessão?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "A sessão anterior do &brandShortName; travou. Desculpe-nos o inconveniente. Você pode restaurar as abas e janelas da sessão anterior ou iniciar uma nova sessão caso elas não sejam mais necessárias.">
+<!ENTITY restorepage.remedies       "Se &brandShortName; travar repetidamente:">
+<!ENTITY restorepage.dueToChrome    "Tente desativar quaisquer extensões adicionadas recentemente no Gerenciador de complementos.">
+<!ENTITY restorepage.dueToContent   "Tente restaurar sua sessão sem quaisquer páginas que suspeite que possam causar o problema:">
+
+<!ENTITY restorepage.restoreButton  "Restaurar sessão anterior">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "Iniciar nova sessão">
+<!ENTITY restorepage.cancel.access  "s">
+
+<!ENTITY restorepage.restoreHeader  "Restaurar">
+<!ENTITY restorepage.listHeader     "Janelas e abas">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Janela &#037;S">

@@ -13,10 +13,8 @@
 
 using namespace mozilla;
 
-class nsThreadSafeAutoRefCntRunner final : public nsIRunnable {
+class nsThreadSafeAutoRefCntRunner final : public Runnable {
  public:
-  NS_DECL_THREADSAFE_ISUPPORTS
-
   NS_IMETHOD Run() final {
     for (int i = 0; i < 10000; i++) {
       if (++sRefCnt == 1) {
@@ -33,11 +31,11 @@ class nsThreadSafeAutoRefCntRunner final : public nsIRunnable {
   static Atomic<uint32_t, Relaxed> sIncToOne;
   static Atomic<uint32_t, Relaxed> sDecToZero;
 
- private:
-  ~nsThreadSafeAutoRefCntRunner() {}
-};
+  nsThreadSafeAutoRefCntRunner() : Runnable("nsThreadSafeAutoRefCntRunner") {}
 
-NS_IMPL_ISUPPORTS(nsThreadSafeAutoRefCntRunner, nsIRunnable)
+ private:
+  ~nsThreadSafeAutoRefCntRunner() = default;
+};
 
 ThreadSafeAutoRefCnt nsThreadSafeAutoRefCntRunner::sRefCnt;
 Atomic<uint32_t, Relaxed> nsThreadSafeAutoRefCntRunner::sIncToOne(0);
@@ -52,8 +50,9 @@ TEST(AutoRefCnt, ThreadSafeAutoRefCntBalance)
   static const size_t kThreadCount = 4;
   nsCOMPtr<nsIThread> threads[kThreadCount];
   for (size_t i = 0; i < kThreadCount; i++) {
-    nsresult rv = NS_NewThread(getter_AddRefs(threads[i]),
-                               new nsThreadSafeAutoRefCntRunner);
+    nsresult rv =
+        NS_NewNamedThread("AutoRefCnt Test", getter_AddRefs(threads[i]),
+                          new nsThreadSafeAutoRefCntRunner);
     EXPECT_TRUE(NS_SUCCEEDED(rv));
   }
   for (size_t i = 0; i < kThreadCount; i++) {

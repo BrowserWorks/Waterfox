@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Tocante al corréu puxarra o non deseáu">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "&brandShortName; deteuta automáticamente los mensaxes entrantes que paecen ser corréu non deseáu (o &quot;spam&quot;). Los mensaxes que &brandShortName; identifica d'esti mou, van amosar l'iconu d'una llaparada">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label "Al entamu, tienes d'enseña-y a &brandShortName; a identificar el corréu non deseáu usando'l botón Puxarra de la barra de ferramientes pa conseñar o desconseñar mensaxes como corréu non deseáu.">
+<!ENTITY info3.label "Una vegada que &brandShortName; identifique correutamente'l corréu non deseáu, pues usar los controles correspondientes pa treslladar automáticamente esta triba de corréu entrante a la carpeta de corréu non deseáu.">
+<!ENTITY info4.label "Pa más información, calca n'Ayuda.">

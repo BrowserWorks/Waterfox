@@ -7,6 +7,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 import copy
 import logging
 
+import six
+
 from .transform import loader as transform_loader
 from ..util.yaml import load_yaml
 
@@ -38,7 +40,7 @@ def loader(kind, path, config, params, loaded_tasks):
     test_descriptions = {t.pop('name'): t for t in tests}
 
     # generate all tests for all test platforms
-    for test_platform_name, test_platform in test_platforms.iteritems():
+    for test_platform_name, test_platform in six.iteritems(test_platforms):
         for test_name in test_platform['test-names']:
             test = copy.deepcopy(test_descriptions[test_name])
             test['build-platform'] = test_platform['build-platform']
@@ -49,10 +51,9 @@ def loader(kind, path, config, params, loaded_tasks):
 
             test['build-attributes'] = test_platform['build-attributes']
             test['test-name'] = test_name
-            if test_platform.get('nightly'):
-                test.setdefault('attributes', {})['nightly'] = True
             if test_platform.get('shippable'):
                 test.setdefault('attributes', {})['shippable'] = True
+                test['attributes']['shipping_product'] = test_platform['shipping_product']
 
             logger.debug("Generating tasks for test {} on platform {}".format(
                 test_name, test['test-platform']))
@@ -83,7 +84,7 @@ def get_test_platforms(test_platforms_cfg, builds_by_platform, signed_builds_by_
     based on the available build platforms.  Returns a dictionary mapping
     test platform to {test-set, build-platform, build-label}."""
     test_platforms = {}
-    for test_platform, cfg in test_platforms_cfg.iteritems():
+    for test_platform, cfg in six.iteritems(test_platforms_cfg):
         build_platform = cfg['build-platform']
         if build_platform not in builds_by_platform:
             logger.warning(
@@ -96,12 +97,11 @@ def get_test_platforms(test_platforms_cfg, builds_by_platform, signed_builds_by_
             'build-attributes': builds_by_platform[build_platform].attributes,
         }
 
-        if builds_by_platform[build_platform].attributes.get('nightly'):
-            test_platforms[test_platform]['nightly'] = \
-                builds_by_platform[build_platform].attributes['nightly']
         if builds_by_platform[build_platform].attributes.get('shippable'):
             test_platforms[test_platform]['shippable'] = \
                 builds_by_platform[build_platform].attributes['shippable']
+            test_platforms[test_platform]['shipping_product'] = \
+                builds_by_platform[build_platform].attributes['shipping_product']
 
         test_platforms[test_platform].update(cfg)
 
@@ -119,7 +119,7 @@ def expand_tests(test_sets_cfg, test_platforms):
     `test-names` key for each test platform, containing a set of test
     names."""
     rv = {}
-    for test_platform, cfg in test_platforms.iteritems():
+    for test_platform, cfg in six.iteritems(test_platforms):
         test_sets = cfg['test-sets']
         if not set(test_sets) <= set(test_sets_cfg):
             raise Exception(

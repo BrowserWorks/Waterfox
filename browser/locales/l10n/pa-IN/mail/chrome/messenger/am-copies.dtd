@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "ਕਾਪੀ ਅਤੇ ਫੋਲਡਰ">
+<!ENTITY sendingPrefix.label "ਜਦੋਂ ਸੁਨੇਹੇ ਭੇਜੇ ਜਾਣ ਤਾਂ ਆਟੋਮੈਟਿਕ ਹੀ: ">
+<!ENTITY fccMailFolder.label "ਇੱਕ ਕਾਪੀ ਰੱਖੋ:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "ਜਵਾਬ ਨੂੰ ਸੁਨੇਹੇ ਦੇ ਫੋਲਡਰ ਵਿੱਚ ਰੱਖੋ, ਜਿਸ ਦਾ ਜਵਾਬ ਦਿੱਤਾ ਗਿਆ ਹੈ">
+<!ENTITY fccReplyFollowsParent.accesskey "c">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc these email addresses:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separate addresses with commas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "ਇਹ ਈਮੇਲ ਐਡਰੈੱਸ Bcc ਵਿੱਚ ਰੱਖੋ:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Separate addresses with commas">
+<!ENTITY saveMessageDlg.label "ਜਦੋਂ ਸੁਨੇਹੇ ਸੰਭਾਲੇ ਜਾ ਰਹੇ ਹੋਣ ਤਾਂ ਪੁਸ਼ਟੀ ਡਾਈਲਾਗ ਵੇਖੋ">
+<!ENTITY saveMessageDlg.accesskey "w">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;ਭੇਜੇ&quot;ਫੋਲਡਰ ਉੱਤੇ:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "ਹੋਰ:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Message Archives">
+<!ENTITY keepArchives.label "ਸੁਨੇਹਾ ਅਕਾਇਵ ਵਿੱਚ ਰੱਖੋ:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "Archive options…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesFolderOn.label "&quot;ਅਕਾਇਵ&quot; ਫੋਲਡਰ ਉੱਤੇ:">
+<!ENTITY archivesFolderOn.accesskey "D">
+<!ENTITY archiveInOtherFolder.label "ਹੋਰ:">
+<!ENTITY archiveInOtherFolder.accesskey "t">
+<!ENTITY specialFolders.label "Drafts and Templates">
+
+
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;ਡਰਾਫਟ&quot; ਫੋਲਡਰ ਉੱਤੇ:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "ਹੋਰ:">
+<!ENTITY draftInOtherFolder.accesskey "O">
+
+<!ENTITY keepTemplates.label "Keep message templates in:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;ਟੈਪਲੇਟ&quot; ਫੋਲਡਰ ਉੱਤੇ:">
+<!ENTITY templatesFolderOn.accesskey "n">
+<!ENTITY templateInOtherFolder.label "ਹੋਰ:">
+<!ENTITY templateInOtherFolder.accesskey "h">

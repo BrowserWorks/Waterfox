@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Configura els recordatoris">
+<!ENTITY reminder.add.label                                "Afegeix">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Suprimeix">
+<!ENTITY reminder.remove.accesskey                         "S">
+
+<!ENTITY reminder.reminderDetails.label                    "Detalls del recordatori">
+<!ENTITY reminder.action.label                             "Seleccioneu una acció de recordatori">
+
+<!ENTITY reminder.action.alert.label                       "Mostra una alerta">
+<!ENTITY reminder.action.email.label                       "Envia un correu electrònic">
+
+<!ENTITY alarm.units.minutes                               "minuts" >
+<!ENTITY alarm.units.hours                                 "hores" >
+<!ENTITY alarm.units.days                                  "dies" >

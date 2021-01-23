@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filterstaaflêer">
+<!ENTITY viewLogInfo.text "Die filterstaaflêer teken aan watter filters vir hierdie rekening gebruik is. Merk die blokkie hieronder om boekstawing te aktiveer.">
+<!ENTITY clearLog.label "Maak staaflêer leeg">
+<!ENTITY clearLog.accesskey "M">
+<!ENTITY enableLog.label "Aktiveer die filterstaaflêer">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Sluit">
+<!ENTITY closeLog.accesskey "u">

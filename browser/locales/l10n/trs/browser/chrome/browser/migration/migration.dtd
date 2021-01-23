@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ganukuo' ga'an">
+
+<!ENTITY importFrom.label               "Ganukuo' markador, riña gaché nu', da'ngà huìi ni a'ngò si dato:">
+<!ENTITY importFromUnix.label           "Ganukuo', preferensia, markador, riña gaché nu', da'ngà huìi ni a'ngò si dato:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromNothing.label        "Nitaj si gahuin">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Nū nari' ma nej programa nikaj markador, riña gaché nu' nej si da'ngà huìi.">
+
+<!ENTITY importSource.title             "Ganukuo' konfigurasiôn ni nej dato">
+<!ENTITY importItems.title              "Nej sa ganukuo'">
+<!ENTITY importItems.label              "Ganahui nej sa hui ruat ganukuajt:">
+
+<!ENTITY migrating.title                "'Ngà anukuaj ma...">
+<!ENTITY migrating.label                "Nej na huin sa 'ngà ganukuaj ma...">
+
+<!ENTITY selectProfile.title            "Nagui Perfil">
+<!ENTITY selectProfile.label            "Ga'ue ganukuo' nej sa ma ñuna:">
+
+<!ENTITY done.title                     "'Ngà gisij ganukuaj ma">
+<!ENTITY done.label                     "Hue'ê chre ganukuaj ma:">
+
+<!ENTITY closeSourceBrowser.label       "Gi'iaj suntuj u ni gini'iaj si 'ngà arán navegador na hìaj ni gachin ga'anjt ne'ñaan.">

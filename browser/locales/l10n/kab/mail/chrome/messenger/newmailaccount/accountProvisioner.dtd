@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ansuf yis-ek ɣeṛ &brandShortName;">
+<!ENTITY header2.label "Tebɣiḍ tansa imayl tamaynut?">
+<!ENTITY other.languages "Nesken-d kan isaǧǧawen yettmuddun tansiwin di temnaṭ-inek. Sit dagi akke ad waliḍ akk isaǧǧawen.">
+<!ENTITY error.line1 "Suref-aɣ, ur d-nufi ara isumar n tansiwin imayl.">
+<!ENTITY error.line2 "Tzemreḍ ad tɛerḍeḍ ad d-nadiḍ meffer ismawen neɣ awal nniḍen akken ad tafeḍ imaylen.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Daɣen tzemreḍ ad tɛerḍeḍ yiwen si ">
+<!ENTITY error.suggest.middle "amiḍan nniḍen imayl n baṭel">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Azul ">
+<!ENTITY success.title.after ", tezemreḍ ad tesqedceḍ tansiwin-agi n yimayl: ">
+<!ENTITY success.tip "(Tzemreḍ ad d-nadiḍ meffer ismawen neɣ awal nniḍen akken ad tafeḍ imaylen)">
+<!ENTITY partnership.description "Deg umɛiwen akked deqs n isaǧǧăwen, &brandShortName;  yezmer ak-d-imudd amiḍan n tirawt amaynut. Ččaṛ kan isem-inek amenzu d wis sin, neɣ awalen tebɣiḍ, deg urtan daw-a akken ad tebduḍ.">
+<!ENTITY existing.header "Ɣur-k yakan tansa imayl i tebɣiḍ ad tesqedceḍ?">
+<!ENTITY tinyheader.title "Ɣur-k tansa?">
+<!ENTITY tinyheader.existing "Zgel ay-agi u seqdec imayl-inu yellan">
+<!ENTITY content.close "Ahat ad sewleɣ amiḍan-iw ticki.">
+<!ENTITY successful.title "Ayuz!">
+<!ENTITY successful.successMessage "Tebaduḍ akken iwata amiḍan-inek.">
+<!ENTITY successful.write "Aru kra n imaylen">
+<!ENTITY successful.write.desc "Eǧǧ imdukal-ik akked twacult-inek ɣef tensa-inek tamaynut.<br/>Ɛef aya i terniḍ amiḍan-inek neɣ ala?">
+<!ENTITY successful.customize "Sugen &brandShortName; s kra n izegrar yelhan">
+<!ENTITY successful.customize.desc "Llan wagimen n izegrara ad k-yeǧǧen ad terreḍ &brandShortName;  d udmawan akken ad yerr ɣer ayen tettraǧud.">
+<!ENTITY successful.attach "Seddu azmul udmawan deg imayl inu">
+<!ENTITY successful.attach.desc "Tzemreḍ ad tessedduḍ abdar neɣ kra n telqut nniḍen ɣef yiman-ik ɣer tagara n yal izen ara tazneḍ.">
+<!ENTITY successful.close "Mdel asfaylu-agi.">
+<!ENTITY input.namePlaceholder "Isem akke meffer isem-ik">
+<!ENTITY input.search "Nadi">
+<!ENTITY search_engine.title "Sagen amsedday-inek n unadi">
+<!ENTITY search_engine.message "Asaǧǧaw-inek n tirawt yezmer ak-d-imudd daɣen tazmert n unadi n web.">
+<!ENTITY search_engine.button "Fak">

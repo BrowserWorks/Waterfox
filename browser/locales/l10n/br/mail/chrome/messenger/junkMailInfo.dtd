@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "A-zivout ar posteloù lastez">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "Dinoiñ a ra &brandShortName; emgefreek ar posteloù o vont tre a hañval bezañ posteloù lastez (anvet spam ivez). Un arlun lastez a vo skrammet e-kichen ar postel gant &brandShortName;.">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Da gentañ e rankit lakaat &brandShortName; da bleustriñ war hennadiñ ar posteloù lastez dre arverañ an afell war barrenn ar spamoù da verkañ ar posteloù evel lastez pe get.">
+<!ENTITY info3.label   "Ur wech ma vez hennadet ar posteloù lastez en un doare dereat gant &brandShortName; e vez arveret gwiriadurioù ar posteloù lastez emgefreek a-benn kas ar posteloù o vont tre er gest.">
+<!ENTITY info4.label   "Evit gouzout hiroc'h, klikañ war Skoazell.">

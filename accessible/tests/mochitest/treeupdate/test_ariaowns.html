@@ -193,8 +193,7 @@
 
     function removeEl() {
       this.eventSeq = [
-        new invokerChecker(EVENT_HIDE, getNode, "t1_checkbox"),
-        new invokerChecker(EVENT_SHOW, getNode, "t1_checkbox"),
+        new invokerChecker(EVENT_HIDE, getNode("t1_subdiv")),
         new invokerChecker(EVENT_REORDER, getNode("t1_container")),
       ];
 
@@ -597,7 +596,7 @@
       this.invoke = () => {
         // trigger a tree update.
         let doc = getNode("t9_container").contentDocument;
-        doc.body.appendChild(document.createElement("p"));
+        doc.body.appendChild(doc.createElement("p"));
       };
 
       this.finalCheck = () => {

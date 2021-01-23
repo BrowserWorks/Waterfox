@@ -36,11 +36,11 @@ const { ProcessActorList } = require("devtools/server/actors/process");
  * - sends all navigator:browser window documents a Debugger:Shutdown event
  *   when it exits.
  *
- * * @param aConnection DebuggerServerConnection
+ * * @param aConnection DevToolsServerConnection
  *        The conection to the client.
  */
 exports.createRootActor = function createRootActor(aConnection) {
-  let parameters = {
+  const parameters = {
     tabList: new MobileTabList(aConnection),
     addonList: new BrowserAddonList(aConnection),
     workerList: new WorkerTargetActorList(aConnection, {}),
@@ -64,7 +64,7 @@ exports.createRootActor = function createRootActor(aConnection) {
  * (See the documentation for RootActor for the definition of the "live
  * list" interface.)
  *
- * @param aConnection DebuggerServerConnection
+ * @param aConnection DevToolsServerConnection
  *     The connection in which this list's tab actors may participate.
  *
  * @see BrowserTabList for more a extensive description of how tab list objects
@@ -79,9 +79,9 @@ MobileTabList.prototype = Object.create(BrowserTabList.prototype);
 MobileTabList.prototype.constructor = MobileTabList;
 
 MobileTabList.prototype._getSelectedBrowser = function(aWindow) {
-  return aWindow.BrowserApp.selectedBrowser;
+  return aWindow.browser;
 };
 
 MobileTabList.prototype._getChildren = function(aWindow) {
-  return aWindow.BrowserApp.tabs.map(tab => tab.browser);
+  return [aWindow.browser];
 };

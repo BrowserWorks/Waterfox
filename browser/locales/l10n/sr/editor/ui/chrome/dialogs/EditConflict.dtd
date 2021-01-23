@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Изаберите измене уређивања">
+<!ENTITY conflictWarning.label "Ову страницу је изменио други програм али и ви имате несачуване измене унутар састављача.">
+<!ENTITY conflictResolve.label "Изаберите коју верзију желите да сачувате:">
+<!ENTITY keepCurrentPageButton.label "Сачувај тренутне измене на страници">
+<!ENTITY useOtherPageButton.label "Замени тренутну страницу са другим изменама">

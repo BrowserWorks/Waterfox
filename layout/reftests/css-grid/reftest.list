@@ -30,12 +30,13 @@ fuzzy(0-180,0-3) == grid-abspos-items-002.html grid-abspos-items-002-ref.html # 
 == grid-abspos-items-013.html grid-abspos-items-013-ref.html
 == grid-abspos-items-014.html grid-abspos-items-014-ref.html
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == grid-abspos-items-015.html grid-abspos-items-015-ref.html # Bug 1392106
+random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == grid-abspos-items-016.html grid-abspos-items-015-ref.html # Bug 1392106
 == grid-order-abspos-items-001.html grid-order-abspos-items-001-ref.html
 == grid-order-placement-auto-001.html grid-order-placement-auto-001-ref.html
 fuzzy-if(skiaContent,0-1,0-200) == grid-order-placement-definite-001.html grid-order-placement-definite-001-ref.html
-skip-if(Android) == grid-placement-definite-implicit-001.html grid-placement-definite-implicit-001-ref.html
+== grid-placement-definite-implicit-001.html grid-placement-definite-implicit-001-ref.html
 == grid-placement-definite-implicit-002.html grid-placement-definite-implicit-002-ref.html
-fuzzy-if(skiaContent,0-64,0-1) skip-if(Android||/^Windows\x20NT\x2010\.0/.test(http.oscpu)) == grid-placement-auto-implicit-001.html grid-placement-auto-implicit-001-ref.html # win10: bug 1507154
+fuzzy-if(skiaContent,0-64,0-1) skip-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)) == grid-placement-auto-implicit-001.html grid-placement-auto-implicit-001-ref.html # win10: bug 1507154
 == grid-placement-abspos-implicit-001.html grid-placement-abspos-implicit-001-ref.html
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == rtl-grid-placement-definite-001.html rtl-grid-placement-definite-001-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == rtl-grid-placement-auto-row-sparse-001.html rtl-grid-placement-auto-row-sparse-001-ref.html # Bug 1392106
@@ -69,17 +70,17 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == grid-min-content-min-siz
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == grid-min-content-min-sizing-transferred-size-002.html grid-min-content-min-sizing-transferred-size-002-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == grid-min-content-min-sizing-transferred-size-003.html grid-min-content-min-sizing-transferred-size-003-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == grid-min-content-min-sizing-transferred-size-004.html grid-min-content-min-sizing-transferred-size-004-ref.html # Bug 1392106
-skip-if(Android) == grid-auto-min-sizing-percent-001.html grid-auto-min-sizing-percent-001-ref.html # bug 1305716
+== grid-auto-min-sizing-percent-001.html grid-auto-min-sizing-percent-001-ref.html
 == grid-track-intrinsic-sizing-001.html grid-track-intrinsic-sizing-001-ref.html
-== grid-track-intrinsic-sizing-002.html grid-track-intrinsic-sizing-002-ref.html
-== grid-track-intrinsic-sizing-003.html grid-track-intrinsic-sizing-003-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-75) == grid-track-intrinsic-sizing-002.html grid-track-intrinsic-sizing-002-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-75) == grid-track-intrinsic-sizing-003.html grid-track-intrinsic-sizing-003-ref.html
 == grid-track-intrinsic-sizing-004.html grid-track-intrinsic-sizing-004-ref.html
 == grid-track-percent-sizing-001.html grid-track-percent-sizing-001-ref.html
 == grid-track-fit-content-sizing-001.html grid-track-fit-content-sizing-001-ref.html
 == grid-track-fit-content-sizing-002.html grid-track-fit-content-sizing-002-ref.html
 == grid-max-sizing-flex-001.html grid-max-sizing-flex-001-ref.html
-== grid-max-sizing-flex-002.html grid-max-sizing-flex-002-ref.html
-== grid-max-sizing-flex-003.html grid-max-sizing-flex-003-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-10) == grid-max-sizing-flex-002.html grid-max-sizing-flex-002-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-10) == grid-max-sizing-flex-003.html grid-max-sizing-flex-003-ref.html
 == grid-max-sizing-flex-004.html grid-max-sizing-flex-004-ref.html
 == grid-max-sizing-flex-005.html grid-max-sizing-flex-005-ref.html
 == grid-max-sizing-flex-006.html grid-max-sizing-flex-006-ref.html
@@ -121,7 +122,7 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == grid-item-auto-min-size-
 == grid-item-overflow-stretch-005.html grid-item-overflow-stretch-005-ref.html
 == grid-item-overflow-stretch-006.html grid-item-overflow-stretch-006-ref.html
 == grid-item-canvas-001.html grid-item-canvas-001-ref.html
-skip-if(Android) == grid-item-button-001.html grid-item-button-001-ref.html
+== grid-item-button-001.html grid-item-button-001-ref.html
 == grid-item-table-stretch-001.html grid-item-table-stretch-001-ref.html
 fails-if(Android) == grid-item-table-stretch-002.html grid-item-table-stretch-002-ref.html # Bug 1527734
 == grid-item-table-stretch-003.html grid-item-table-stretch-003-ref.html
@@ -130,31 +131,24 @@ fails-if(Android) == grid-item-table-stretch-002.html grid-item-table-stretch-00
 skip-if(Android) == grid-item-video-stretch-001.html grid-item-video-stretch-001-ref.html # Huh, Android doesn't have webm support?
 skip-if(Android) == grid-item-video-stretch-002.html grid-item-video-stretch-002-ref.html # Huh, Android doesn't have webm support?
 == grid-item-input-stretch-001.html grid-item-input-stretch-001-ref.html
-== grid-item-self-baseline-001.html grid-item-self-baseline-001-ref.html
-random-if(http.oscpu!="Linux\u0020i686") == grid-item-content-baseline-001.html grid-item-content-baseline-001-ref.html # depends on exact Ahem baseline font metrics which seems to differ between platforms: bug 1310792
-random-if(http.oscpu!="Linux\u0020i686") == grid-item-content-baseline-002.html grid-item-content-baseline-002-ref.html # ditto
-random-if(http.oscpu!="Linux\u0020i686") == grid-item-mixed-baseline-001.html grid-item-mixed-baseline-001-ref.html # ditto
-random-if(http.oscpu!="Linux\u0020i686") == grid-item-mixed-baseline-002.html grid-item-mixed-baseline-002-ref.html # ditto
-random-if(http.oscpu!="Linux\u0020i686") == grid-item-mixed-baseline-003.html grid-item-mixed-baseline-003-ref.html # ditto
-skip-if(!gtkWidget) skip-if(verify) == grid-item-mixed-baseline-004.html grid-item-mixed-baseline-004-ref.html # ditto.
 == grid-align-content-001.html grid-align-content-001-ref.html
 == grid-justify-content-001.html grid-justify-content-001-ref.html
-skip-if(Android&&isDebugBuild) == grid-justify-content-002.html grid-justify-content-002-ref.html # Bug 1245884 - slow
-skip-if(Android&&isDebugBuild) == grid-justify-content-003.html grid-justify-content-003-ref.html # Bug 1245884 - slow
+== grid-justify-content-002.html grid-justify-content-002-ref.html
+== grid-justify-content-003.html grid-justify-content-003-ref.html
 skip-if(!gtkWidget) == grid-container-baselines-001.html grid-container-baselines-001-ref.html
 skip-if(!gtkWidget) == grid-container-baselines-002.html grid-container-baselines-002-ref.html
 skip-if(!gtkWidget) == grid-container-baselines-003.html grid-container-baselines-003-ref.html
 == grid-container-baselines-004.html grid-container-baselines-004-ref.html
 == grid-container-synthesized-baseline-001.html grid-container-synthesized-baseline-001-ref.html
-skip-if(Android&&isDebugBuild) == grid-column-gap-001.html grid-column-gap-001-ref.html # Bug 1245884 - slow
+== grid-column-gap-001.html grid-column-gap-001-ref.html
 == grid-column-gap-002.html grid-column-gap-002-ref.html
-== grid-column-gap-003.html grid-column-gap-003-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-column-gap-003.html grid-column-gap-003-ref.html
 == grid-column-gap-004.html grid-column-gap-004-ref.html
 == grid-row-gap-001.html grid-row-gap-001-ref.html
 == grid-percent-grid-gap-001.html grid-percent-grid-gap-001-ref.html
-skip-if(Android&&isDebugBuild) == grid-row-gap-002.html grid-row-gap-002-ref.html # Bug 1245884 - slow
-skip-if(Android&&isDebugBuild) == grid-row-gap-003.html grid-row-gap-003-ref.html # Bug 1245884 - slow
-skip-if(Android&&isDebugBuild) == grid-row-gap-004.html grid-row-gap-004-ref.html # Bug 1245884 - slow
+== grid-row-gap-002.html grid-row-gap-002-ref.html
+== grid-row-gap-003.html grid-row-gap-003-ref.html
+== grid-row-gap-004.html grid-row-gap-004-ref.html
 == grid-row-gap-005.html grid-row-gap-005-ref.html
 == grid-container-overflow-001.html grid-container-overflow-001-ref.html
 == grid-item-margin-left-auto-001.html grid-item-margin-left-auto-001-ref.html
@@ -179,7 +173,8 @@ skip-if(Android&&isDebugBuild) == grid-row-gap-004.html grid-row-gap-004-ref.htm
 == grid-repeat-auto-fill-fit-005.html grid-repeat-auto-fill-fit-005-ref.html
 == grid-repeat-auto-fill-fit-006.html grid-repeat-auto-fill-fit-006-ref.html
 == grid-repeat-auto-fill-fit-007.html grid-repeat-auto-fill-fit-007-ref.html
-== grid-repeat-auto-fill-fit-008.html grid-repeat-auto-fill-fit-008-ref.html
+test-pref(layout.css.serialize-grid-implicit-tracks,true) == grid-repeat-auto-fill-fit-008.html grid-repeat-auto-fill-fit-008-ref.html
+test-pref(layout.css.serialize-grid-implicit-tracks,false) == grid-repeat-auto-fill-fit-008.html?no-implicit grid-repeat-auto-fill-fit-008-ref.html
 == grid-repeat-auto-fill-fit-009.html grid-repeat-auto-fill-fit-009-ref.html
 == grid-repeat-auto-fill-fit-010.html grid-repeat-auto-fill-fit-010-ref.html
 == grid-repeat-auto-fill-fit-011.html grid-repeat-auto-fill-fit-010-ref.html
@@ -202,17 +197,17 @@ skip-if(Android&&isDebugBuild) == grid-row-gap-004.html grid-row-gap-004-ref.htm
 == grid-fragmentation-014.html grid-fragmentation-014-ref.html
 asserts(0-10) == grid-fragmentation-015.html grid-fragmentation-015-ref.html # bug 1144852 (due to vertical writing-mode)
 == grid-fragmentation-016.html grid-fragmentation-016-ref.html
-== grid-fragmentation-017.html grid-fragmentation-017-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-017.html grid-fragmentation-017-ref.html
 == grid-fragmentation-018.html grid-fragmentation-018-ref.html
 == grid-fragmentation-019.html grid-fragmentation-019-ref.html
 == grid-fragmentation-020.html grid-fragmentation-020-ref.html
 == grid-fragmentation-021.html grid-fragmentation-021-ref.html
 == grid-fragmentation-022.html grid-fragmentation-007-ref.html
 == grid-fragmentation-023.html grid-fragmentation-023-ref.html
-== grid-fragmentation-024.html grid-fragmentation-024-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-024.html grid-fragmentation-024-ref.html
 == grid-fragmentation-025.html grid-fragmentation-025-ref.html
 == grid-fragmentation-026.html grid-fragmentation-026-ref.html
-== grid-fragmentation-027.html grid-fragmentation-025-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-027.html grid-fragmentation-025-ref.html
 == grid-fragmentation-028.html grid-fragmentation-028-ref.html
 == grid-fragmentation-029.html grid-fragmentation-029-ref.html
 == grid-fragmentation-030.html grid-fragmentation-030-ref.html
@@ -233,11 +228,11 @@ asserts(0-10) == grid-fragmentation-015.html grid-fragmentation-015-ref.html # b
 == grid-fragmentation-dyn5-007.html grid-fragmentation-007-ref.html
 == grid-fragmentation-dyn5-008.html grid-fragmentation-008-ref.html
 == grid-fragmentation-dyn3-009.html grid-fragmentation-009-ref.html
-== grid-fragmentation-dyn4-015.html grid-fragmentation-015-ref.html
-== grid-fragmentation-dyn1-015.html grid-fragmentation-015-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn4-015.html grid-fragmentation-015-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn1-015.html grid-fragmentation-015-ref.html
 == grid-fragmentation-dyn1-016.html grid-fragmentation-016-ref.html
 == grid-fragmentation-dyn5-016.html grid-fragmentation-016-ref.html
-== grid-fragmentation-dyn3-017.html grid-fragmentation-017-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn3-017.html grid-fragmentation-017-ref.html
 == grid-fragmentation-dyn2-018.html grid-fragmentation-018-ref.html
 == grid-fragmentation-dyn1-019.html grid-fragmentation-019-ref.html
 == grid-fragmentation-dyn2-019.html grid-fragmentation-019-ref.html
@@ -257,18 +252,18 @@ fuzzy-if(webrender&&gtkWidget,0-1,0-4) == grid-fragmentation-dyn5-021.html grid-
 == grid-fragmentation-dyn3-023.html grid-fragmentation-023-ref.html
 == grid-fragmentation-dyn4-023.html grid-fragmentation-023-ref.html
 == grid-fragmentation-dyn5-023.html grid-fragmentation-023-ref.html
-== grid-fragmentation-dyn1-024.html grid-fragmentation-024-ref.html
-== grid-fragmentation-dyn2-025.html grid-fragmentation-025-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn1-024.html grid-fragmentation-024-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn2-025.html grid-fragmentation-025-ref.html
 == grid-fragmentation-dyn1-026.html grid-fragmentation-026-ref.html
 == grid-fragmentation-dyn2-026.html grid-fragmentation-026-ref.html
 == grid-fragmentation-dyn3-026.html grid-fragmentation-026-ref.html
 == grid-fragmentation-dyn4-026.html grid-fragmentation-026-ref.html
 == grid-fragmentation-dyn5-026.html grid-fragmentation-026-ref.html
-== grid-fragmentation-dyn1-027.html grid-fragmentation-025-ref.html
-== grid-fragmentation-dyn2-027.html grid-fragmentation-025-ref.html
-== grid-fragmentation-dyn3-027.html grid-fragmentation-025-ref.html
-== grid-fragmentation-dyn4-027.html grid-fragmentation-025-ref.html
-== grid-fragmentation-dyn5-027.html grid-fragmentation-025-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn1-027.html grid-fragmentation-025-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn2-027.html grid-fragmentation-025-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn3-027.html grid-fragmentation-025-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn4-027.html grid-fragmentation-025-ref.html
+fuzzy-if(webrender&&winWidget,0-1,0-5) == grid-fragmentation-dyn5-027.html grid-fragmentation-025-ref.html
 == grid-fragmentation-dyn1-028.html grid-fragmentation-028-ref.html
 == grid-fragmentation-dyn2-028.html grid-fragmentation-028-ref.html
 == grid-fragmentation-dyn3-028.html grid-fragmentation-028-ref.html

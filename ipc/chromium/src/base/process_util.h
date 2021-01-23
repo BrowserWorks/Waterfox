@@ -15,10 +15,6 @@
 #if defined(OS_WIN)
 #  include <windows.h>
 #  include <tlhelp32.h>
-#  include <io.h>
-#  ifndef STDOUT_FILENO
-#    define STDOUT_FILENO 1
-#  endif
 #elif defined(OS_LINUX) || defined(__GLIBC__)
 #  include <dirent.h>
 #  include <limits.h>
@@ -31,17 +27,24 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-#ifndef OS_WIN
-#  include <unistd.h>
-#endif
 
 #include "base/command_line.h"
 #include "base/process.h"
 
 #include "mozilla/UniquePtr.h"
 #include "mozilla/ipc/EnvironmentMap.h"
+
+#if defined(MOZ_ENABLE_FORKSERVER)
+#  include "nsString.h"
+#  include "mozilla/Tuple.h"
+#  include "mozilla/ipc/FileDescriptorShuffle.h"
+
+namespace mozilla {
+namespace ipc {
+class FileDescriptor;
+}
+}  // namespace mozilla
+#endif
 
 #if defined(OS_MACOSX)
 struct kinfo_proc;
@@ -115,6 +118,10 @@ struct LaunchOptions {
   file_handle_mapping_vector fds_to_remap;
 #endif
 
+#if defined(MOZ_ENABLE_FORKSERVER)
+  bool use_forkserver = false;
+#endif
+
 #if defined(OS_LINUX)
   struct ForkDelegate {
     virtual ~ForkDelegate() {}
@@ -165,6 +172,55 @@ typedef mozilla::UniquePtr<char*[], FreeEnvVarsArray> EnvironmentArray;
 EnvironmentArray BuildEnvironmentArray(const environment_map& env_vars_to_set);
 #endif
 
+#if defined(MOZ_ENABLE_FORKSERVER)
+/**
+ * Create and initialize a new process as a content process.
+ *
+ * This class is used only by the fork server.
+ * To create a new content process, two steps are
+ *  - calling |ForkProcess()| to create a new process, and
+ *  - calling |InitAppProcess()| in the new process, the child
+ *    process, to initialize it for running WEB content later.
+ *
+ * The fork server can clean up it's resources in-between the first
+ * and second step, that is why two steps.
+ */
+class AppProcessBuilder {
+ public:
+  AppProcessBuilder();
+  // This function will fork a new process for use as a
+  // content processes.
+  bool ForkProcess(const std::vector<std::string>& argv,
+                   const LaunchOptions& options, ProcessHandle* process_handle);
+  // This function will be called in the child process to initializes
+  // the environment of the content process.  It should be called
+  // after the message loop of the main thread, to make sure the fork
+  // server is destroyed properly in the child process.
+  //
+  // The message loop may allocate resources like file descriptors.
+  // If this function is called before the end of the loop, the
+  // reosurces may be destroyed while the loop is still alive.
+  void InitAppProcess(int* argcp, char*** argvp);
+
+ private:
+  void ReplaceArguments(int* argcp, char*** argvp);
+
+  mozilla::ipc::FileDescriptorShuffle shuffle_;
+  std::vector<std::string> argv_;
+};
+
+void InitForkServerProcess();
+
+/**
+ * Make a FD not being closed when create a new content process.
+ *
+ * AppProcessBuilder would close most unrelated FDs for new content
+ * processes.  You may want to reserve some of FDs to keep using them
+ * in content processes.
+ */
+void RegisterForkServerNoCloseFD(int aFd);
+#endif
+
 // Executes the application specified by cl. This function delegates to one
 // of the above two platform-specific functions.
 bool LaunchApp(const CommandLine& cl, const LaunchOptions&,
@@ -191,39 +247,30 @@ namespace mozilla {
 
 class EnvironmentLog {
  public:
-  explicit EnvironmentLog(const char* varname) {
-    const char* e = getenv(varname);
-    if (e && *e) {
-      fname_ = e;
-    }
-  }
+  template <size_t N>
+  explicit EnvironmentLog(const char (&varname)[N])
+      : EnvironmentLog(varname, N) {}
 
   ~EnvironmentLog() {}
 
-  void print(const char* format, ...) {
-    if (!fname_.size()) return;
-
-    FILE* f;
-    if (fname_.compare("-") == 0) {
-      f = fdopen(dup(STDOUT_FILENO), "a");
-    } else {
-      f = fopen(fname_.c_str(), "a");
-    }
-
-    if (!f) return;
-
-    va_list a;
-    va_start(a, format);
-    vfprintf(f, format, a);
-    va_end(a);
-    fclose(f);
-  }
+  void print(const char* format, ...);
 
  private:
+  explicit EnvironmentLog(const char* varname, size_t len);
+
+#if defined(OS_WIN)
+  std::wstring fname_;
+#else
   std::string fname_;
+#endif
 
   DISALLOW_EVIL_CONSTRUCTORS(EnvironmentLog);
 };
+
+#if defined(MOZ_ENABLE_FORKSERVER)
+typedef Tuple<nsCString, nsCString> EnvVar;
+typedef Tuple<mozilla::ipc::FileDescriptor, int> FdMapping;
+#endif
 
 }  // namespace mozilla
 

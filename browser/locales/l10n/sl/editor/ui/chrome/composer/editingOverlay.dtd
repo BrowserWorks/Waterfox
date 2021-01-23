@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Odpri datoteko …">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Odpri spletni naslov …">
+<!ENTITY openRemoteCmd.accesskey "l">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Nedavne strani">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Shrani">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Shrani kot …">
+<!ENTITY saveAsCmd.accesskey "h">
+<!ENTITY saveAsChangeEncodingCmd2.label "Shrani in spremeni kodiranje besedila">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Objavi">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Objavi kot …">
+<!ENTITY publishAsCmd.accesskey "k">
+<!ENTITY fileRevert.label "Povrni">
+<!ENTITY fileRevert.accesskey "P">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Nastavitve strani za objavo …">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Novo">
+<!ENTITY newToolbarCmd.tooltip "Ustvari novo stran Sestavljalnika">
+<!ENTITY openToolbarCmd.label "Odpri">
+<!ENTITY openToolbarCmd.tooltip "Odpri krajevno datoteko">
+<!ENTITY saveToolbarCmd.tooltip "Shrani datoteko na krajevno mesto">
+<!ENTITY publishToolbarCmd.tooltip "Prenesi datoteko na oddaljeno mesto">
+<!ENTITY printToolbarCmd.label "Natisni">
+<!ENTITY printToolbarCmd.tooltip "Natisni to stran">

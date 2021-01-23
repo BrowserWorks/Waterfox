@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*
- */
-
 #ifndef nsDocLoader_h__
 #define nsDocLoader_h__
 
@@ -26,10 +23,17 @@
 #include "nsISupportsPriority.h"
 #include "nsCOMPtr.h"
 #include "PLDHashTable.h"
-#include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
 
 #include "mozilla/LinkedList.h"
+#include "mozilla/UniquePtr.h"
+
+namespace mozilla {
+namespace dom {
+class BrowserBridgeChild;
+class BrowsingContext;
+}  // namespace dom
+}  // namespace mozilla
 
 /****************************************************************************
  * nsDocLoader implementation...
@@ -51,11 +55,15 @@ class nsDocLoader : public nsIDocumentLoader,
                     public nsIChannelEventSink,
                     public nsISupportsPriority {
  public:
+  using BrowserBridgeChild = mozilla::dom::BrowserBridgeChild;
+
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_THIS_DOCLOADER_IMPL_CID)
 
   nsDocLoader();
 
-  virtual MOZ_MUST_USE nsresult Init();
+  [[nodiscard]] virtual nsresult Init();
+  [[nodiscard]] nsresult InitWithBrowsingContext(
+      mozilla::dom::BrowsingContext* aBrowsingContext);
 
   static already_AddRefed<nsDocLoader> GetAsDocLoader(nsISupports* aSupports);
   // Needed to deal with ambiguous inheritance from nsISupports...
@@ -64,8 +72,8 @@ class nsDocLoader : public nsIDocumentLoader,
   }
 
   // Add aDocLoader as a child to the docloader service.
-  static MOZ_MUST_USE nsresult
-  AddDocLoaderAsChildOfRoot(nsDocLoader* aDocLoader);
+  [[nodiscard]] static nsresult AddDocLoaderAsChildOfRoot(
+      nsDocLoader* aDocLoader);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsDocLoader, nsIDocumentLoader)
@@ -81,16 +89,17 @@ class nsDocLoader : public nsIDocumentLoader,
 
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSICHANNELEVENTSINK
-  NS_DECL_NSISUPPORTSPRIORITY
+  NS_DECL_NSISUPPORTSPRIORITY;  // semicolon for clang-format bug 1629756
 
   // Implementation specific methods...
 
   // Remove aChild from our childlist.  This nulls out the child's mParent
   // pointer.
-  MOZ_MUST_USE nsresult RemoveChildLoader(nsDocLoader* aChild);
+  [[nodiscard]] nsresult RemoveChildLoader(nsDocLoader* aChild);
+
   // Add aChild to our child list.  This will set aChild's mParent pointer to
   // |this|.
-  MOZ_MUST_USE nsresult AddChildLoader(nsDocLoader* aChild);
+  [[nodiscard]] nsresult AddChildLoader(nsDocLoader* aChild);
   nsDocLoader* GetParent() const { return mParent; }
 
   struct nsListenerInfo {
@@ -112,23 +121,51 @@ class nsDocLoader : public nsIDocumentLoader,
    * changed. State flags are in nsIWebProgressListener.idl
    */
   void OnSecurityChange(nsISupports* aContext, uint32_t aState);
-  /**
-   * Fired when a content blocking event occurs during the time
-   * when a document is alive.  This interface should be called
-   * by Gecko to notify nsIWebProgressListeners that there is a
-   * new content blocking event.  Content blocking events are in
-   * nsIWebProgressListeners.idl.
-   */
-  void OnContentBlockingEvent(nsISupports* aContext, uint32_t aEvent);
 
   void SetDocumentOpenedButNotLoaded() { mDocumentOpenedButNotLoaded = true; }
+
+  bool TreatAsBackgroundLoad();
+
+  void SetFakeOnLoadDispatched() { mHasFakeOnLoadDispatched = true; };
+
+  bool HasFakeOnLoadDispatched() { return mHasFakeOnLoadDispatched; };
+
+  void ResetToFirstLoad() {
+    mHasFakeOnLoadDispatched = false;
+    mIsReadyToHandlePostMessage = false;
+    mTreatAsBackgroundLoad = false;
+  };
+
+  // Inform a parent docloader that a BrowserBridgeChild has been created for
+  // an OOP sub-document.
+  // (This is the OOP counterpart to ChildEnteringOnload below.)
+  void OOPChildLoadStarted(BrowserBridgeChild* aChild) {
+    MOZ_DIAGNOSTIC_ASSERT(!mOOPChildrenLoading.Contains(aChild));
+    mOOPChildrenLoading.AppendElement(aChild);
+  }
+
+  // Inform a parent docloader that the BrowserBridgeChild for one of its
+  // OOP sub-documents is done calling its onload handler.
+  // (This is the OOP counterpart to ChildDoneWithOnload below.)
+  void OOPChildLoadDone(BrowserBridgeChild* aChild) {
+    // aChild will not be in the list if nsDocLoader::Stop() was called, since
+    // that clears mOOPChildrenLoading.  It also dispatches the 'load' event,
+    // so we don't need to call DocLoaderIsEmpty in that case.
+    if (mOOPChildrenLoading.RemoveElement(aChild)) {
+      DocLoaderIsEmpty(true);
+    }
+  }
+
+  uint32_t ChildCount() const { return mChildList.Length(); }
 
  protected:
   virtual ~nsDocLoader();
 
-  virtual MOZ_MUST_USE nsresult SetDocLoaderParent(nsDocLoader* aLoader);
+  [[nodiscard]] virtual nsresult SetDocLoaderParent(nsDocLoader* aLoader);
 
   bool IsBusy();
+
+  void SetBackgroundLoadIframe();
 
   void Destroy();
   virtual void DestroyChildren();
@@ -168,8 +205,9 @@ class nsDocLoader : public nsIDocumentLoader,
   void FireOnLocationChange(nsIWebProgress* aWebProgress, nsIRequest* aRequest,
                             nsIURI* aUri, uint32_t aFlags);
 
-  MOZ_MUST_USE bool RefreshAttempted(nsIWebProgress* aWebProgress, nsIURI* aURI,
-                                     int32_t aDelay, bool aSameURI);
+  [[nodiscard]] bool RefreshAttempted(nsIWebProgress* aWebProgress,
+                                      nsIURI* aURI, int32_t aDelay,
+                                      bool aSameURI);
 
   // this function is overridden by the docshell, it is provided so that we
   // can pass more information about redirect state (the normal OnStateChange
@@ -187,9 +225,11 @@ class nsDocLoader : public nsIDocumentLoader,
   void doStopURLLoad(nsIRequest* request, nsresult aStatus);
   void doStopDocumentLoad(nsIRequest* request, nsresult aStatus);
 
+  void NotifyDoneWithOnload(nsDocLoader* aParent);
+
   // Inform a parent docloader that aChild is about to call its onload
   // handler.
-  MOZ_MUST_USE bool ChildEnteringOnload(nsIDocumentLoader* aChild) {
+  [[nodiscard]] bool ChildEnteringOnload(nsIDocumentLoader* aChild) {
     // It's ok if we're already in the list -- we'll just be in there twice
     // and then the RemoveObject calls from ChildDoneWithOnload will remove
     // us.
@@ -203,6 +243,13 @@ class nsDocLoader : public nsIDocumentLoader,
     DocLoaderIsEmpty(true);
   }
 
+  // DocLoaderIsEmpty should be called whenever the docloader may be empty.
+  // This method is idempotent and does nothing if the docloader is not in
+  // fact empty.  This method _does_ make sure that layout is flushed if our
+  // loadgroup has no active requests before checking for "real" emptiness if
+  // aFlushLayout is true.
+  void DocLoaderIsEmpty(bool aFlushLayout);
+
  protected:
   struct nsStatusInfo : public mozilla::LinkedListElement<nsStatusInfo> {
     nsString mStatusMessage;
@@ -214,7 +261,7 @@ class nsDocLoader : public nsIDocumentLoader,
         : mStatusCode(NS_ERROR_NOT_INITIALIZED), mRequest(aRequest) {
       MOZ_COUNT_CTOR(nsStatusInfo);
     }
-    ~nsStatusInfo() { MOZ_COUNT_DTOR(nsStatusInfo); }
+    MOZ_COUNTED_DTOR(nsStatusInfo)
   };
 
   struct nsRequestInfo : public PLDHashEntryHdr {
@@ -227,7 +274,7 @@ class nsDocLoader : public nsIDocumentLoader,
       MOZ_COUNT_CTOR(nsRequestInfo);
     }
 
-    ~nsRequestInfo() { MOZ_COUNT_DTOR(nsRequestInfo); }
+    MOZ_COUNTED_DTOR(nsRequestInfo)
 
     nsIRequest* Request() {
       return static_cast<nsIRequest*>(const_cast<void*>(mKey));
@@ -238,7 +285,7 @@ class nsDocLoader : public nsIDocumentLoader,
     int64_t mMaxProgress;
     bool mUploading;
 
-    nsAutoPtr<nsStatusInfo> mLastStatus;
+    mozilla::UniquePtr<nsStatusInfo> mLastStatus;
   };
 
   static void RequestInfoHashInitEntry(PLDHashEntryHdr* entry, const void* key);
@@ -297,7 +344,12 @@ class nsDocLoader : public nsIDocumentLoader,
      flushing. */
   bool mIsFlushingLayout;
 
+  bool mTreatAsBackgroundLoad;
+
  private:
+  bool mHasFakeOnLoadDispatched;
+
+  bool mIsReadyToHandlePostMessage;
   /**
    * This flag indicates that the loader is waiting for completion of
    * a document.open-triggered "document load".  This is set when
@@ -315,12 +367,9 @@ class nsDocLoader : public nsIDocumentLoader,
   // loadgroup) unless this is empty.
   nsCOMArray<nsIDocumentLoader> mChildrenInOnload;
 
-  // DocLoaderIsEmpty should be called whenever the docloader may be empty.
-  // This method is idempotent and does nothing if the docloader is not in
-  // fact empty.  This method _does_ make sure that layout is flushed if our
-  // loadgroup has no active requests before checking for "real" emptiness if
-  // aFlushLayout is true.
-  void DocLoaderIsEmpty(bool aFlushLayout);
+  // The OOP counterpart to mChildrenInOnload.
+  // Not holding strong refs here since we don't actually use the BBCs.
+  nsTArray<const BrowserBridgeChild*> mOOPChildrenLoading;
 
   int64_t GetMaxTotalProgress();
 
@@ -346,5 +395,9 @@ class nsDocLoader : public nsIDocumentLoader,
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsDocLoader, NS_THIS_DOCLOADER_IMPL_CID)
+
+static inline nsISupports* ToSupports(nsDocLoader* aDocLoader) {
+  return static_cast<nsIDocumentLoader*>(aDocLoader);
+}
 
 #endif /* nsDocLoader_h__ */

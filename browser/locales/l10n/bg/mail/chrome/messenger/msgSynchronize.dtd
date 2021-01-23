@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Изтегляне и синхронизиране на писма">
+<!ENTITY MsgSelect.label "Позиции за употреба без връзка">
+<!ENTITY MsgSyncDesc.label "Ако вече имате избрани пощенски папки или форуми за употреба без връзка, можете да ги изтеглите и/или синхронизирате сега. В противен случай, използвайте бутона &quot;Избор&quot; за да изберете пощенски папки и форуми за употреба без връзка.">
+<!ENTITY MsgSyncDirections.label "Изтегляне и/или синхронизиране на:">
+<!ENTITY syncTypeMail.label "Писма">
+<!ENTITY syncTypeMail.accesskey "П">
+<!ENTITY syncTypeNews.label "Съобщения">
+<!ENTITY syncTypeNews.accesskey "С">
+<!ENTITY sendMessage.label "Изпращане на неизпратените писма">
+<!ENTITY sendMessage.accesskey "И">
+<!ENTITY workOffline.label "Работа без връзка след като изтеглянето и/или синхронизирането приключи">
+<!ENTITY workOffline.accesskey "Р">
+<!ENTITY selectButton.label "Избор…">
+<!ENTITY selectButton.accesskey "б">
+<!ENTITY MsgSelectDesc.label "Изберете пощенски папки и дискусионни групи за употреба без връзка.">
+<!ENTITY MsgSelectInd.label "Изтегляне">
+<!ENTITY MsgSelectItems.label "Папки и дискусионни групи">

@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /**
  * Checks if a given string is an email or phone number or neither
  * @param {string} val The user input
@@ -5,7 +9,7 @@
  * @returns {"email"|"phone"|""} The type of the input
  */
 export function isEmailOrPhoneNumber(val, content) {
-  const {locale} = content;
+  const { locale } = content;
   // http://emailregex.com/
   const email_re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   const check_email = email_re.test(val);

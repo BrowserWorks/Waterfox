@@ -24,6 +24,7 @@ const {
   ERRNO_INVALID_AUTH_NONCE,
   ERRNO_INVALID_AUTH_TIMESTAMP,
   ERRNO_INVALID_AUTH_TOKEN,
+  FX_OAUTH_CLIENT_ID,
   log,
 } = ChromeUtils.import("resource://gre/modules/FxAccountsCommon.js");
 const { Credentials } = ChromeUtils.import(
@@ -48,7 +49,7 @@ var FxAccountsClient = function(host = Services.prefs.getCharPref(HOST_PREF)) {
   this.backoffError = null;
 };
 
-this.FxAccountsClient.prototype = {
+FxAccountsClient.prototype = {
   /**
    * Return client clock offset, in milliseconds, as determined by hawk client.
    * Provided because callers should not have to know about hawk
@@ -235,6 +236,71 @@ this.FxAccountsClient.prototype = {
   },
 
   /**
+   * List all the clients connected to the authenticated user's account,
+   * including devices, OAuth clients, and web sessions.
+   *
+   * @param sessionTokenHex
+   *        The session token encoded in hex
+   * @return Promise
+   */
+  async attachedClients(sessionTokenHex) {
+    const credentials = await deriveHawkCredentials(
+      sessionTokenHex,
+      "sessionToken"
+    );
+    return this._request("/account/attached_clients", "GET", credentials);
+  },
+
+  /**
+   * Retrieves an OAuth authorization code.
+   *
+   * @param String sessionTokenHex
+   *        The session token encoded in hex
+   * @param {Object} options
+   * @param options.client_id
+   * @param options.state
+   * @param options.scope
+   * @param options.access_type
+   * @param options.code_challenge_method
+   * @param options.code_challenge
+   * @param [options.keys_jwe]
+   * @returns {Promise<Object>} Object containing `code` and `state`.
+   */
+  async oauthAuthorize(sessionTokenHex, options) {
+    const credentials = await deriveHawkCredentials(
+      sessionTokenHex,
+      "sessionToken"
+    );
+    const body = {
+      client_id: options.client_id,
+      response_type: "code",
+      state: options.state,
+      scope: options.scope,
+      access_type: options.access_type,
+      code_challenge: options.code_challenge,
+      code_challenge_method: options.code_challenge_method,
+    };
+    if (options.keys_jwe) {
+      body.keys_jwe = options.keys_jwe;
+    }
+    return this._request("/oauth/authorization", "POST", credentials, body);
+  },
+
+  /**
+   * Destroy an OAuth access token or refresh token.
+   *
+   * @param String clientId
+   * @param String token The token to be revoked.
+   */
+  async oauthDestroy(clientId, token) {
+    const body = {
+      client_id: clientId,
+      token,
+    };
+    return this._request("/oauth/destroy", "POST", null, body);
+  },
+
+  /**
    * Query for the information required to derive
    * scoped encryption keys requested by the specified OAuth client.
    *
@@ -393,16 +459,59 @@ this.FxAccountsClient.prototype = {
   async signCertificate(sessionTokenHex, serializedPublicKey, lifetime) {
     let creds = await deriveHawkCredentials(sessionTokenHex, "sessionToken");
 
+    // The FxA server has various special-case behaviours for sync clients.
+    // As a terrible hack, check whether sync is enabled and adjust the
+    // `service` parameter appropriately. This can go away once we stop using
+    // BrowserID for OAuth requests, after which sync will be the only user
+    // of these signed certs.
+    let service = FX_OAUTH_CLIENT_ID;
+    if (Services.prefs.prefHasUserValue("services.sync.username")) {
+      service = "sync";
+    }
+
     let body = { publicKey: serializedPublicKey, duration: lifetime };
     return Promise.resolve()
-      .then(_ => this._request("/certificate/sign", "POST", creds, body))
+      .then(_ =>
+        this._request(
+          `/certificate/sign?service=${service}`,
+          "POST",
+          creds,
+          body
+        )
+      )
       .then(
         resp => resp.cert,
         err => {
-          log.error("HAWK.signCertificate error: " + JSON.stringify(err));
+          log.error("HAWK.signCertificate error", err);
           throw err;
         }
       );
+  },
+
+  /**
+   * Obtain an OAuth access token by authenticating using a session token.
+   *
+   * @param {String} sessionTokenHex
+   *        The session token encoded in hex
+   * @param {String} clientId
+   * @param {String} scope
+   *        List of space-separated scopes.
+   * @param {Number} ttl
+   *        Token time to live.
+   * @return {Promise<Object>} Object containing an `access_token`.
+   */
+  async accessTokenWithSessionToken(sessionTokenHex, clientId, scope, ttl) {
+    const credentials = await deriveHawkCredentials(
+      sessionTokenHex,
+      "sessionToken"
+    );
+    const body = {
+      client_id: clientId,
+      grant_type: "fxa-credentials",
+      scope,
+      ttl,
+    };
+    return this._request("/oauth/token", "POST", credentials, body);
   },
 
   /**
@@ -445,7 +554,7 @@ this.FxAccountsClient.prototype = {
         return result.exists;
       },
       error => {
-        log.error("accountStatus failed with: " + error);
+        log.error("accountStatus failed", error);
         return Promise.reject(error);
       }
     );
@@ -708,9 +817,7 @@ this.FxAccountsClient.prototype = {
         jsonPayload
       );
     } catch (error) {
-      log.error(
-        "error " + method + "ing " + path + ": " + JSON.stringify(error)
-      );
+      log.error(`error ${method}ing ${path}`, error);
       if (error.retryAfter) {
         log.debug("Received backoff response; caching error as flag.");
         this.backoffError = error;

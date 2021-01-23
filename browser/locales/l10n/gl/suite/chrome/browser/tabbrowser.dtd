@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Sen título)">
+<!ENTITY  newTab.label           "Nova lapela">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Pechar lapela">
+<!ENTITY  closeTab.accesskey         "c">
+<!ENTITY  closeOtherTabs.label   "Pechar as outras lapelas">
+<!ENTITY  closeOtherTabs.accesskey         "o">
+<!ENTITY  reloadAllTabs.label    "Recargar todas as lapelas">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "Recargar lapela">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "Marcar este grupo de lapelas">
+<!ENTITY  bookmarkGroup.accesskey  "g">
+<!ENTITY  closeTabButton.tooltip   "Pechar lapela actual">
+<!ENTITY  newTabButton.tooltip   "Abrir unha nova lapela">
+<!ENTITY  listAllTabs.tooltip    "Listar todas as lapelas">
+<!ENTITY  undoCloseTab.label    "Anular o peche da lapela">
+<!ENTITY  undoCloseTab.accesskey  "u">
