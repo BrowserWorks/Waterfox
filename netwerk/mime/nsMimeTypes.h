@@ -23,6 +23,7 @@
 #define APPLICATION_APPLEFILE "application/applefile"
 #define APPLICATION_BINHEX "application/mac-binhex40"
 #define APPLICATION_MACBINARY "application/x-macbinary"
+#define APPLICATION_CHROME_EXTENSION "application/x-chrome-extension"
 #define APPLICATION_COMPRESS "application/x-compress"
 #define APPLICATION_COMPRESS2 "application/compress"
 #define APPLICATION_FORTEZZA_CKL "application/x-fortezza-ckl"

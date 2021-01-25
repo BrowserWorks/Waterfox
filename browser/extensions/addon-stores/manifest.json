@@ -1,0 +1,35 @@
+{
+	"manifest_version": 2,
+	"name": "Addon Stores Compatability",
+	"description": "Enables the adding of extensions from the Chrome and Opera extension stores to Waterfox.",
+	"version": "1.0",
+	"browser_specific_settings": {
+		  "gecko": {
+			"id": "addon-stores@waterfox.net"
+		  }
+	},
+	"content_scripts": [
+		{
+			"matches":[
+				"http://chrome.google.com/webstore/*",
+				"https://chrome.google.com/webstore/*"
+			],
+			"js":[
+				"cws.js"
+			]
+		},
+		{
+			"matches":[
+				"http://addons.opera.com/*",
+				"https://addons.opera.com/*"
+			],
+			"js":[
+				"ows.js"
+			]
+		}
+	],
+	"permissions": [
+		"storage", "webNavigation", "webRequest", "webRequestBlocking",
+		"<all_urls>", "cookies", "tabs", "notifications", "downloads"
+	]
+}
