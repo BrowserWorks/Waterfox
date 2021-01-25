@@ -19,7 +19,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   StoreHandler: "resource://gre/modules/amStoreHandler.jsm"
 });
 
-
 function amContentHandler() {}
 
 amContentHandler.prototype = {
@@ -38,6 +37,12 @@ amContentHandler.prototype = {
     let { loadInfo } = aRequest;
     const { triggeringPrincipal } = loadInfo;
     if (aMimetype == "application/x-chrome-extension") {
+      let confirmInstall = Services.prompt.confirm(
+        null,
+        "Web Extension Install Request",
+        "This website is attempting to install a web extension. If you trust this website please click \"OK\", else click \"Cancel\".",
+        );
+      if (!confirmInstall) {return;} //don't want to install if permission not given
       // Define tmp paths
       let xpiPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", "extension.xpi");
       let manifestPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", "new_manifest.json");
