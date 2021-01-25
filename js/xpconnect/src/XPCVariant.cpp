@@ -56,11 +56,10 @@ XPCTraceableVariant::~XPCTraceableVariant()
     Value val = GetJSValPreserveColor();
 
     MOZ_ASSERT(val.isGCThing() || val.isNull(), "Must be traceable or unlinked");
-    bool unroot = val.isGCThing();
 
     mData.Cleanup();
 
-    if (unroot) {
+    if (!val.isNull())
         RemoveFromRootSet();
 }
 
