@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "Addon Stores Compatability",
-	"description": "Enables the adding of extenions from the Chrome and Opera extension stores to Waterfox.",
+	"description": "Enables the adding of extensions from the Chrome and Opera extension stores to Waterfox.",
 	"version": "1.0",
 	"browser_specific_settings": {
 		  "gecko": {

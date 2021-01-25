@@ -201,10 +201,10 @@ const AVAILABLE_UA_OVERRIDES = [
     },
   },
   {
-    id: "bug1577518",
+    id: "OWS",
     platform: "desktop",
-    domain: "att.tv",
-    bug: "1577518",
+    domain: "opera.com",
+    bug: "0000000",
     config: {
       matches: ["*://addons.opera.com/*"],
       uaTransformer: originalUA => {
