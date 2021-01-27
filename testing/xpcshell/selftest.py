@@ -11,6 +11,7 @@ import os
 import pprint
 import re
 import shutil
+import six
 import sys
 import tempfile
 import unittest
