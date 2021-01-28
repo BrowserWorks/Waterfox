@@ -1329,7 +1329,7 @@ bool MediaTrackGraphImpl::UpdateMainThreadState() {
   MOZ_ASSERT(OnGraphThread());
   if (mForceShutDownReceived) {
     for (MediaTrack* track : AllTracks()) {
-      track->NotifyForcedShutdown();
+      track->OnGraphThreadDone();
     }
   }
   {
@@ -2024,13 +2024,16 @@ void MediaTrack::Destroy() {
   class Message : public ControlMessage {
    public:
     explicit Message(MediaTrack* aTrack) : ControlMessage(aTrack) {}
-    void Run() override {
+    void RunDuringShutdown() override {
       mTrack->RemoveAllResourcesAndListenersImpl();
       auto graph = mTrack->GraphImpl();
       mTrack->DestroyImpl();
       graph->RemoveTrackGraphThread(mTrack);
     }
-    void RunDuringShutdown() override { Run(); }
+    void Run() override {
+      mTrack->OnGraphThreadDone();
+      RunDuringShutdown();
+    }
   };
   // Keep a reference to the graph, since Message might RunDuringShutdown()
   // synchronously and make GraphImpl() invalid.

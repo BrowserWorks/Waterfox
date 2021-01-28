@@ -1,0 +1,8 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+
+FINAL_TARGET_FILES.features['addon-stores@waterfox.net'] += [
+	  'cws.js',
+	  'manifest.json',
+	  'ows.js'
+	]

@@ -62,6 +62,7 @@ EXTRA_JS_MODULES += [
     'AddonManager.jsm',
     'amContentHandler.jsm',
     'amInstallTrigger.jsm',
+    'amStoreHandler.jsm',
     'amWebAPI.jsm',
     'Blocklist.jsm',
     'LightweightThemeManager.jsm',

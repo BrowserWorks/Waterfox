@@ -204,9 +204,6 @@ BingTranslator.prototype = {
        results = response.map((result) => {
          return result["translations"][0]["text"];
        });
-       Services.console.logStringMessage(
-            "Result " + results
-           );
      } catch (e) {
        return false;
      }
