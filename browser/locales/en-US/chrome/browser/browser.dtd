@@ -279,3 +279,5 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY accessibilityIndicator.tooltip "Accessibility Features Enabled">
 
 <!ENTITY restartMenu.label "Restart">
+
+<!ENTITY statusText.label "Status Text">

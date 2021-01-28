@@ -6415,12 +6415,12 @@ var StatusPanel = {
 
     if (val) {
       this._labelElement.value = val;
-      document.querySelector('.status-info').textContent = val;
+      document.querySelector('#status-info #status-info-text').value = val;
       this.panel.removeAttribute("inactive");
       MousePosTracker.addListener(this);
     } else {
       this.panel.setAttribute("inactive", "true");
-      document.querySelector('.status-info').textContent = "";
+      document.querySelector('#status-info #status-info-text').value = "";
       MousePosTracker.removeListener(this);
     }
 

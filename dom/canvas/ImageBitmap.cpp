@@ -870,7 +870,7 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
     nsIGlobalObject* aGlobal, ImageData& aImageData,
     const Maybe<IntRect>& aCropRect, ErrorResult& aRv) {
   // Copy data into SourceSurface.
-  dom::Uint8ClampedArray array;
+  RootedSpiderMonkeyInterface<Uint8ClampedArray> array(RootingCx());
   DebugOnly<bool> inited = array.Init(aImageData.GetDataObject());
   MOZ_ASSERT(inited);
 
@@ -894,13 +894,26 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
 
   // Create and Crop the raw data into a layers::Image
   RefPtr<layers::Image> data;
+
+  // If the data could move during a GC, copy it out into a local buffer that
+  // lives until a CreateImageFromRawData lower in the stack copies it.
+  // Reassure the static analysis that we know what we're doing.
+  size_t maxInline = JS_MaxMovableTypedArraySize();
+  uint8_t inlineDataBuffer[maxInline];
+  uint8_t* fixedData = array.FixedData(inlineDataBuffer, maxInline);
+
+  // Lie to the hazard analysis and say that we're done with everything that
+  // `array` was using (safe because the data buffer is fixed, and the holding
+  // JSObject is being kept alive elsewhere.)
+  array.Reset();
+
   if (NS_IsMainThread()) {
-    data = CreateImageFromRawData(imageSize, imageStride, FORMAT, array.Data(),
-                                  dataLength, aCropRect);
+    data = CreateImageFromRawData(imageSize, imageStride, FORMAT,
+                                  fixedData, dataLength, aCropRect);
   } else {
     RefPtr<CreateImageFromRawDataInMainThreadSyncTask> task =
         new CreateImageFromRawDataInMainThreadSyncTask(
-            array.Data(), dataLength, imageStride, FORMAT, imageSize, aCropRect,
+            fixedData, dataLength, imageStride, FORMAT, imageSize, aCropRect,
             getter_AddRefs(data));
     task->Dispatch(Canceling, aRv);
   }
@@ -910,7 +923,7 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
     return nullptr;
   }
 
-  // Create an ImageBimtap.
+  // Create an ImageBitmap.
   RefPtr<ImageBitmap> ret =
       new ImageBitmap(aGlobal, data, false /* write-only */, alphaType);
 

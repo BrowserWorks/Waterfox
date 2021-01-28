@@ -1604,6 +1604,11 @@ sctp_process_cookie_existing(struct mbuf *m, int iphlen, int offset,
 	struct sctp_association *asoc;
 	struct sctp_init_chunk *init_cp, init_buf;
 	struct sctp_init_ack_chunk *initack_cp, initack_buf;
+	struct sctp_asconf_addr *aparam, *naparam;
+	struct sctp_asconf_ack *aack, *naack;
+	struct sctp_tmit_chunk *chk, *nchk;
+	struct sctp_stream_reset_list *strrst, *nstrrst;
+	struct sctp_queued_to_read *sq, *nsq;
 	struct sctp_nets *net;
 	struct mbuf *op_err;
 	struct timeval old;
@@ -1891,7 +1896,9 @@ sctp_process_cookie_existing(struct mbuf *m, int iphlen, int offset,
 					 NULL);
 		}
 		asoc->my_rwnd = ntohl(initack_cp->init.a_rwnd);
-		asoc->pre_open_streams = ntohs(initack_cp->init.num_outbound_streams);
+		if (asoc->pre_open_streams < asoc->streamoutcnt) {
+			asoc->pre_open_streams = asoc->streamoutcnt;
+		}
 
 		if (ntohl(init_cp->init.initiate_tag) != asoc->peer_vtag) {
 			/* Ok the peer probably discarded our
@@ -1901,7 +1908,6 @@ sctp_process_cookie_existing(struct mbuf *m, int iphlen, int offset,
 			 * kick us so it COULD still take a timeout
 			 * to move these.. but it can't hurt to mark them.
 			 */
-			struct sctp_tmit_chunk *chk;
 		        TAILQ_FOREACH(chk, &stcb->asoc.sent_queue, sctp_next) {
 				if (chk->sent < SCTP_DATAGRAM_RESEND) {
 					chk->sent = SCTP_DATAGRAM_RESEND;
@@ -2046,8 +2052,9 @@ sctp_process_cookie_existing(struct mbuf *m, int iphlen, int offset,
 			/* move to OPEN state, if not in SHUTDOWN_SENT */
 			SCTP_SET_STATE(asoc, SCTP_STATE_OPEN);
 		}
-		asoc->pre_open_streams =
-			ntohs(initack_cp->init.num_outbound_streams);
+		if (asoc->pre_open_streams < asoc->streamoutcnt) {
+			asoc->pre_open_streams = asoc->streamoutcnt;
+		}
 		asoc->init_seq_number = ntohl(initack_cp->init.initial_tsn);
 		asoc->sending_seq = asoc->asconf_seq_out = asoc->str_reset_seq_out = asoc->init_seq_number;
 		asoc->asconf_seq_out_acked = asoc->asconf_seq_out - 1;
@@ -2094,6 +2101,58 @@ sctp_process_cookie_existing(struct mbuf *m, int iphlen, int offset,
 			stcb->asoc.strmout[i].next_mid_unordered = 0;
 			stcb->asoc.strmout[i].last_msg_incomplete = 0;
 		}
+		TAILQ_FOREACH_SAFE(strrst, &asoc->resetHead, next_resp, nstrrst) {
+			TAILQ_REMOVE(&asoc->resetHead, strrst, next_resp);
+			SCTP_FREE(strrst, SCTP_M_STRESET);
+		}
+		TAILQ_FOREACH_SAFE(sq, &asoc->pending_reply_queue, next, nsq) {
+			TAILQ_REMOVE(&asoc->pending_reply_queue, sq, next);
+			if (sq->data) {
+				sctp_m_freem(sq->data);
+				sq->data = NULL;
+			}
+			sctp_free_remote_addr(sq->whoFrom);
+			sq->whoFrom = NULL;
+			sq->stcb = NULL;
+			sctp_free_a_readq(stcb, sq);
+		}
+		TAILQ_FOREACH_SAFE(chk, &asoc->control_send_queue, sctp_next, nchk) {
+			TAILQ_REMOVE(&asoc->control_send_queue, chk, sctp_next);
+			if (chk->data) {
+				sctp_m_freem(chk->data);
+				chk->data = NULL;
+			}
+			if (chk->holds_key_ref)
+				sctp_auth_key_release(stcb, chk->auth_keyid, SCTP_SO_LOCKED);
+			sctp_free_remote_addr(chk->whoTo);
+			SCTP_ZONE_FREE(SCTP_BASE_INFO(ipi_zone_chunk), chk);
+			SCTP_DECR_CHK_COUNT();
+		}
+		TAILQ_FOREACH_SAFE(chk, &asoc->asconf_send_queue, sctp_next, nchk) {
+			TAILQ_REMOVE(&asoc->asconf_send_queue, chk, sctp_next);
+			if (chk->data) {
+				sctp_m_freem(chk->data);
+				chk->data = NULL;
+			}
+			if (chk->holds_key_ref)
+				sctp_auth_key_release(stcb, chk->auth_keyid, SCTP_SO_LOCKED);
+			sctp_free_remote_addr(chk->whoTo);
+			SCTP_ZONE_FREE(SCTP_BASE_INFO(ipi_zone_chunk), chk);
+			SCTP_DECR_CHK_COUNT();
+		}
+		TAILQ_FOREACH_SAFE(aparam, &asoc->asconf_queue, next, naparam) {
+			TAILQ_REMOVE(&asoc->asconf_queue, aparam, next);
+			SCTP_FREE(aparam,SCTP_M_ASC_ADDR);
+		}
+		TAILQ_FOREACH_SAFE(aack, &asoc->asconf_ack_sent, next, naack) {
+			TAILQ_REMOVE(&asoc->asconf_ack_sent, aack, next);
+			if (aack->data != NULL) {
+				sctp_m_freem(aack->data);
+			}
+			SCTP_ZONE_FREE(SCTP_BASE_INFO(ipi_zone_asconf_ack), aack);
+		}
+
+
 		/* process the INIT-ACK info (my info) */
 		asoc->my_vtag = ntohl(initack_cp->init.initiate_tag);
 		asoc->my_rwnd = ntohl(initack_cp->init.a_rwnd);
@@ -2270,10 +2329,6 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 		                       vrf_id, port);
 		return (NULL);
 	}
-	/* get the correct sctp_nets */
-	if (netp)
-		*netp = sctp_findnet(stcb, init_src);
-
 	asoc = &stcb->asoc;
 	/* get scope variables out of cookie */
 	asoc->scope.ipv4_local_scope = cookie->ipv4_scope;
@@ -2320,7 +2375,6 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 	/* process the INIT-ACK info (my info) */
 	asoc->my_vtag = ntohl(initack_cp->init.initiate_tag);
 	asoc->my_rwnd = ntohl(initack_cp->init.a_rwnd);
-	asoc->pre_open_streams = ntohs(initack_cp->init.num_outbound_streams);
 	asoc->init_seq_number = ntohl(initack_cp->init.initial_tsn);
 	asoc->sending_seq = asoc->asconf_seq_out = asoc->str_reset_seq_out = asoc->init_seq_number;
 	asoc->asconf_seq_out_acked = asoc->asconf_seq_out - 1;
@@ -2330,10 +2384,7 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 	asoc->advanced_peer_ack_point = asoc->last_acked_seq;
 
 	/* process the INIT info (peer's info) */
-	if (netp)
-		retval = sctp_process_init(init_cp, stcb);
-	else
-		retval = 0;
+	retval = sctp_process_init(init_cp, stcb);
 	if (retval < 0) {
 #if defined(__APPLE__) || defined(SCTP_SO_LOCK_TESTING)
 		atomic_add_int(&stcb->asoc.refcnt, 1);
@@ -2517,19 +2568,21 @@ sctp_process_cookie_new(struct mbuf *m, int iphlen, int offset,
 		 */
 		;
 	}
-	/* since we did not send a HB make sure we don't double things */
-	if ((netp) && (*netp))
-		(*netp)->hb_responded = 1;
-
 	if (stcb->asoc.sctp_autoclose_ticks &&
 	    sctp_is_feature_on(inp, SCTP_PCB_FLAGS_AUTOCLOSE)) {
 		sctp_timer_start(SCTP_TIMER_TYPE_AUTOCLOSE, inp, stcb, NULL);
 	}
 	(void)SCTP_GETTIME_TIMEVAL(&stcb->asoc.time_entered);
-	if ((netp != NULL) && (*netp != NULL)) {
+	*netp = sctp_findnet(stcb, init_src);
+	if (*netp != NULL) {
 		struct timeval old;
 
-		/* calculate the RTT and set the encaps port */
+		/*
+		 * Since we did not send a HB, make sure we don't double
+		 * things.
+		 */
+		(*netp)->hb_responded = 1;
+		/* Calculate the RTT. */
 		old.tv_sec = cookie->time_entered.tv_sec;
 		old.tv_usec = cookie->time_entered.tv_usec;
 		(*netp)->RTO = sctp_calculate_rto(stcb, asoc, *netp,

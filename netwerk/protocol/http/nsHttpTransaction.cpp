@@ -766,7 +766,10 @@ nsresult nsHttpTransaction::ReadSegments(nsAHttpSegmentReader* reader,
 
   if (!mConnected && !m0RTTInProgress) {
     mConnected = true;
-    mConnection->GetSecurityInfo(getter_AddRefs(mSecurityInfo));
+    nsCOMPtr<nsISupports> info;
+    mConnection->GetSecurityInfo(getter_AddRefs(info));
+    MutexAutoLock lock(mLock);
+    mSecurityInfo = std::move(info);
   }
 
   mDeferredSendProgress = false;
@@ -1005,7 +1008,10 @@ bool nsHttpTransaction::ProxyConnectFailed() { return mProxyConnectFailed; }
 
 bool nsHttpTransaction::DataAlreadySent() { return false; }
 
-nsISupports* nsHttpTransaction::SecurityInfo() { return mSecurityInfo; }
+already_AddRefed<nsISupports> nsHttpTransaction::SecurityInfo() {
+  MutexAutoLock lock(mLock);
+  return do_AddRef(mSecurityInfo);
+}
 
 bool nsHttpTransaction::HasStickyConnection() const {
   return mCaps & NS_HTTP_STICKY_CONNECTION;
@@ -1386,7 +1392,11 @@ nsresult nsHttpTransaction::Restart() {
   if (seekable) seekable->Seek(nsISeekableStream::NS_SEEK_SET, 0);
 
   // clear old connection state...
-  mSecurityInfo = nullptr;
+  {
+    MutexAutoLock lock(mLock);
+    mSecurityInfo = nullptr;
+  }
+
   if (mConnection) {
     if (!mReuseOnRestart) {
       mConnection->DontReuse();
@@ -2445,7 +2455,10 @@ nsresult nsHttpTransaction::Finish0RTT(bool aRestart,
   } else if (!mConnected) {
     // this is code that was skipped in ::ReadSegments while in 0RTT
     mConnected = true;
-    mConnection->GetSecurityInfo(getter_AddRefs(mSecurityInfo));
+    nsCOMPtr<nsISupports> info;
+    mConnection->GetSecurityInfo(getter_AddRefs(info));
+    MutexAutoLock lock(mLock);
+    mSecurityInfo = std::move(info);
   }
   return NS_OK;
 }
@@ -2466,7 +2479,10 @@ nsresult nsHttpTransaction::RestartOnFastOpenError() {
   nsCOMPtr<nsISeekableStream> seekable = do_QueryInterface(mRequestStream);
   if (seekable) seekable->Seek(nsISeekableStream::NS_SEEK_SET, 0);
   // clear old connection state...
-  mSecurityInfo = nullptr;
+  {
+    MutexAutoLock lock(mLock);
+    mSecurityInfo = nullptr;
+  }
 
   if (!mConnInfo->GetRoutedHost().IsEmpty()) {
     MutexAutoLock lock(*nsHttp::GetLock());
@@ -2568,12 +2584,10 @@ void nsHttpTransaction::OnProxyConnectComplete(int32_t aResponseCode) {
   LOG(("nsHttpTransaction::OnProxyConnectComplete %p aResponseCode=%d", this,
        aResponseCode));
 
-  MutexAutoLock lock(mLock);
   mProxyConnectResponseCode = aResponseCode;
 }
 
 int32_t nsHttpTransaction::GetProxyConnectResponseCode() {
-  MutexAutoLock lock(mLock);
   return mProxyConnectResponseCode;
 }
 
