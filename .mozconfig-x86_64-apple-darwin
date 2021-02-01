@@ -1,10 +1,10 @@
 MOZ_FETCHES_DIR=$HOME/toolmac11
 
-export CBINDGEN="$MOZ_FETCHES_DIR/cbindgen/cbindgen"
+# export CBINDGEN="$MOZ_FETCHES_DIR/cbindgen/cbindgen"
 
 CROSS_SYSROOT=$MOZ_FETCHES_DIR/MacOSX10.13.sdk
 CROSS_PRIVATE_FRAMEWORKS=$CROSS_SYSROOT/System/Library/PrivateFrameworks
-FLAGS="-target x86_64-apple-darwin -B -isysroot $CROSS_SYSROOT"
+FLAGS="-target x86_64-apple-darwin -B $MOZ_FETCHES_DIR/cctools/bin -isysroot $CROSS_SYSROOT"
 
 export BINDGEN_CFLAGS="$FLAGS"
 export CC="$MOZ_FETCHES_DIR/clang/bin/clang $FLAGS"
@@ -18,7 +18,9 @@ export HOST_CFLAGS="-g"
 export HOST_CPP="$MOZ_FETCHES_DIR/clang/bin/clang -E"
 export HOST_CXX="$MOZ_FETCHES_DIR/clang/bin/clang++"
 export HOST_CXXFLAGS="-g"
+export HOST_LD="$MOZ_FETCHES_DIR/clang/bin/lld"
 export HOST_LDFLAGS="-g"
+export LD="$MOZ_FETCHES_DIR/clang/bin/lld"
 export LDFLAGS="-Wl,-syslibroot,$CROSS_SYSROOT -Wl,-dead_strip"
 export LLVMCONFIG=$MOZ_FETCHES_DIR/clang/bin/llvm-config
 export MKFSHFS=$MOZ_FETCHES_DIR/hfsplus-tools/newfs_hfs
@@ -28,7 +30,7 @@ export MACOS_PRIVATE_FRAMEWORKS_DIR=$CROSS_PRIVATE_FRAMEWORKS
 
 export CROSS_COMPILE=1
 
-mk_add_options "export PATH=$MOZ_FETCHES_DIR/llvm-dsymutil/bin:$PATH"
+mk_add_options "export PATH=$MOZ_FETCHES_DIR/cctools/bin:$MOZ_FETCHES_DIR/binutils/bin:$MOZ_FETCHES_DIR/llvm-dsymutil/bin:$PATH"
 mk_add_options "export REAL_DSYMUTIL=$MOZ_FETCHES_DIR/llvm-dsymutil/bin/dsymutil"
 mk_add_options "export LD_LIBRARY_PATH=$MOZ_FETCHES_DIR/clang/lib"
 
