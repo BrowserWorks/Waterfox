@@ -28,6 +28,8 @@ RUN apt-get install -y \
     yasm \
     wget
 
+RUN curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+
 # mach kept failing to run this so its commented out in /home/ubuntu/python/mozboot/mozboot/base.py
 RUN apt-get install -y \
     autoconf2.13 \
