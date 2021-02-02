@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <ostream>
 
 #include "mozilla/Assertions.h"
@@ -381,18 +382,18 @@ struct BaseRect {
     width = XMost() - aX;
     x = aX;
   }
-  void SetRightEdge(T aXMost) { 
+  void SetRightEdge(T aXMost) {
     MOZ_ASSERT(aXMost >= x);
-    width = aXMost - x; 
+    width = aXMost - x;
   }
   void SetTopEdge(T aY) {
     MOZ_ASSERT(aY <= YMost());
     height = YMost() - aY;
     y = aY;
   }
-  void SetBottomEdge(T aYMost) { 
+  void SetBottomEdge(T aYMost) {
     MOZ_ASSERT(aYMost >= y);
-    height = aYMost - y; 
+    height = aYMost - y;
   }
   void Swap() {
     std::swap(x, y);
