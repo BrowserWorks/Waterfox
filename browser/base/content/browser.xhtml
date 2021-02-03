@@ -1460,14 +1460,14 @@
         <label id="status-info-text" flex="1" crop="end" value=""/>
       </toolbaritem>
       <toolbaritem class="chromeclass-toolbar-additional toolbaritem-combined-buttons" id="page-zoom-controls" cui-areatype="toolbar" removable="false">
-        <button disabled="true" tabindex="-1" data-l10n-id="config-reset" data-l10n-attrs="label" class="button-toolbar button-textonly" id="zoomresetsb" oncommand="FullZoom.reset(); resetZoomStatus();"></button>
+        <toolbarbutton disabled="true" tabindex="-1" data-l10n-id="config-reset" data-l10n-attrs="label" class="button-toolbar button-textonly" id="zoomresetsb" oncommand="FullZoom.reset(); resetZoomStatus();"></toolbarbutton>
         <toolbarbutton id="zoomoutsb" class="toolbarbutton-1 toolbarbutton-combined" command="cmd_fullZoomReduce"></toolbarbutton>
         <separator id="afterZoomOut"></separator>
         <html:input id="zoom-range-status" type="range" min="0.3" max="3" step="0.1" onchange="setZoom(this);" value=""></html:input>
         <span id="zoom-percent-status" onclick="toggleEditZoom(this, true);"></span>
         <separator id="beforeZoomIn"></separator>
         <toolbarbutton id="zoominsb" class="toolbarbutton-1 toolbarbutton-combined" command="cmd_fullZoomEnlarge"></toolbarbutton>
-        <toolbarbutton id="fullscreensb" class="toolbarbutton-1 chromeclass-toolbar-additional button-textonly statusbarbtn" onclick="BrowserFullScreen();"></toolbarbutton>
+        <toolbarbutton id="fullscreensb" class="toolbarbutton-1 chromeclass-toolbar-additional statusbarbtn" onclick="BrowserFullScreen();"></toolbarbutton>
       </toolbaritem>
     </toolbar>
   </vbox>

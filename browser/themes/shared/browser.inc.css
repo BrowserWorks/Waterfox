@@ -679,16 +679,19 @@ menupopup::part(drop-indicator) {
 
 .button-textonly {
     -moz-appearance: none;
-    color: var(--lwt-text-color);
 }
 
 .button-textonly:hover {
-    color: inherit !important;
+  color: inherit !important;
 }
 
 #page-zoom-controls #zoomresetsb.button-textonly[disabled="true"] {
-    opacity: 0.5;
-    color: inherit !important;
+  opacity: 0.5;
+  color: inherit !important;
+}
+
+.button-textonly .toolbarbutton-text {
+  display: initial !important;
 }
 
 .statusbarbtn {
