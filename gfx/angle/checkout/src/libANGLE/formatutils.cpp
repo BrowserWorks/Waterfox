@@ -1094,13 +1094,23 @@ ErrorOrResult<GLuint> InternalFormat::computeDepthPitch(GLsizei height,
                                                         GLint imageHeight,
                                                         GLuint rowPitch)
 {
-    GLuint rows =
-        (imageHeight > 0 ? static_cast<GLuint>(imageHeight) : static_cast<GLuint>(height));
+    CheckedNumeric<GLuint> pixelsHeight(imageHeight > 0 ? static_cast<GLuint>(imageHeight)
+                                                        : static_cast<GLuint>(height));
+
+    CheckedNumeric<GLuint> rowCount;
+    if (compressed)
+    {
+        CheckedNumeric<GLuint> checkedBlockHeight(compressedBlockHeight);
+        rowCount = (pixelsHeight + checkedBlockHeight - 1u) / checkedBlockHeight;
+    }
+    else
+    {
+        rowCount = pixelsHeight;
+    }
+
     CheckedNumeric<GLuint> checkedRowPitch(rowPitch);
 
-    auto depthPitch = checkedRowPitch * rows;
-    ANGLE_TRY_CHECKED_MATH(depthPitch);
-    return depthPitch.ValueOrDie();
+    return CheckedMathResult(checkedRowPitch * rowCount);
 }
 
 ErrorOrResult<GLuint> InternalFormat::computeDepthPitch(GLsizei width,
