@@ -1136,7 +1136,7 @@ bool InternalFormat::computeDepthPitch(GLsizei height,
 
     CheckedNumeric<GLuint> checkedRowPitch(rowPitch);
 
-    return CheckedMathResult(checkedRowPitch * rowCount);
+    return CheckedMathResult(checkedRowPitch * rowCount, resultOut);
 }
 
 bool InternalFormat::computeDepthPitch(GLenum formatType,
