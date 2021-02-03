@@ -1454,12 +1454,12 @@
 
   <vbox id="browser-bottombox" layer="true">
     <!-- gNotificationBox will be added here lazily. -->
-    <toolbar class="toolbar-statusbar" customizable="true" id="status-bar" fullscreentoolbar="true" mode="icons">
-      <toolbaritem id="status-info">
+    <toolbar class="toolbar-statusbar browser-toolbar" customizable="true" id="status-bar" fullscreentoolbar="true" mode="icons">
+      <toolbaritem id="status-info" cui-areatype="toolbar">
         <label id="status-info-customize" flex="1" crop="end" value="&statusText.label;"/>
         <label id="status-info-text" flex="1" crop="end" value=""/>
       </toolbaritem>
-      <toolbaritem class="chromeclass-toolbar-additional toolbaritem-combined-buttons" id="page-zoom-controls">
+      <toolbaritem class="chromeclass-toolbar-additional toolbaritem-combined-buttons" id="page-zoom-controls" cui-areatype="toolbar">
         <button disabled="true" tabindex="-1" data-l10n-id="config-reset" data-l10n-attrs="label" class="button-toolbar button-textonly" id="zoomresetsb" oncommand="FullZoom.reset(); resetZoomStatus();"></button>
         <toolbarbutton id="zoomoutsb" class="toolbarbutton-1 toolbarbutton-combined" command="cmd_fullZoomReduce"></toolbarbutton>
         <separator id="afterZoomOut"></separator>

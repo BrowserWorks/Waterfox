@@ -624,8 +624,6 @@ menupopup::part(drop-indicator) {
 .toolbar-statusbar {
   box-shadow: var(--lwt-text-color);
   fill: var(--lwt-text-color);
-  height: 22px;
-  border-top: 1px solid rgba(38,38,38,.15);
   font-size: 12px;
   position: relative;
   z-index: 1;
