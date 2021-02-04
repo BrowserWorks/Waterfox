@@ -681,6 +681,14 @@ menupopup::part(drop-indicator) {
     -moz-appearance: none;
 }
 
+.button-textonly .toolbarbutton-icon {
+  display: none !important;
+}
+
+.button-textonly .toolbarbutton-text {
+  background-color: unset !important;
+}
+
 .button-textonly:hover {
   color: inherit !important;
 }
@@ -780,6 +788,11 @@ menupopup::part(drop-indicator) {
 
 input#zoom-percent-status {
   -moz-appearance: textfield;
+}
+
+:root:-moz-lwtheme input#zoom-percent-status {
+  background: var(--lwt-toolbar-field-background-color);
+  color: var(--lwt-toolbar-field-color);
 }
 
 #wrapper-status-info {
