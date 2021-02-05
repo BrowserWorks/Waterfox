@@ -19,7 +19,6 @@
 #include "nsSocketTransportService2.h"
 #include "nsStringStream.h"
 #include "mozilla/net/DocumentChannelChild.h"
-#include "nsIViewSourceChannel.h"
 
 namespace mozilla {
 namespace extensions {
@@ -158,19 +157,7 @@ void StreamFilterParent::Init(nsIChannel* aChannel) {
   mChannel = aChannel;
 
   nsCOMPtr<nsITraceableChannel> traceable = do_QueryInterface(aChannel);
-  if (MOZ_UNLIKELY(!traceable)) {
-    // nsViewSourceChannel is not nsITraceableChannel, but wraps one. Unwrap it.
-    nsCOMPtr<nsIViewSourceChannel> vsc = do_QueryInterface(aChannel);
-    if (vsc) {
-      traceable = do_QueryObject(vsc->GetInnerChannel());
-      // OnStartRequest etc. is passed the unwrapped channel, so update mChannel
-      // to prevent OnStartRequest from mistaking it for a redirect, which would
-      // close the filter.
-      mChannel = do_QueryObject(traceable);
-    }
-    // TODO bug 1683403: Replace assertion; Close StreamFilter instead.
-    MOZ_RELEASE_ASSERT(traceable);
-  }
+  MOZ_RELEASE_ASSERT(traceable);
 
   nsresult rv = traceable->SetNewListener(this, getter_AddRefs(mOrigListener));
   MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
