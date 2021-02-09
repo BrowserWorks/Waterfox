@@ -706,6 +706,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SessionStartup: "resource:///modules/sessionstore/SessionStartup.jsm",
   SessionStore: "resource:///modules/sessionstore/SessionStore.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
+  StoreHandler: "resource://gre/modules/amStoreHandler.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
   TabUnloader: "resource:///modules/TabUnloader.jsm",
   TRRRacer: "resource:///modules/TRRPerformance.jsm",
@@ -2520,6 +2521,14 @@ BrowserGlue.prototype = {
             });
           }
         },
+      },
+      // flush extension tmp dir
+      {
+        task: () => {
+          StoreHandler.flushTmp(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp")
+            );
+        }
       },
 
       // Marionette needs to be initialized as very last step

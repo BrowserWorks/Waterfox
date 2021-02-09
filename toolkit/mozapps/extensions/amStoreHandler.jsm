@@ -39,6 +39,42 @@ var EXPORTED_SYMBOLS = ["StoreHandler"];
 var StoreHandler = {
 
     /**
+     * Remove dir if it exists
+     * @param dir string absolute path to directory to remove
+     */
+    flushTmp(dir) {
+        try {
+            const nsiDir = this.getNsiFile(dir);
+            if (nsiDir.exists()) {
+                // remove all files
+                nsiDir.remove(true);
+            }
+        } catch (e) {
+            Services.console.logStringMessage(e + " unable to flush tmp dir")
+        }
+
+    },
+
+    /**
+     * Return exentension UUID, set and return if not already set
+     */
+    getUUID: function __getUUID() {
+        if (!this._extensionUUID) {
+            this._setUUID();
+        };
+        return this._extensionUUID;
+    },
+
+    /**
+     * Set extension UUID
+     */
+    _setUUID: function __setUUID() {
+        let uuid = uuidGenerator.generateUUID();
+        let uuidString = uuid.toString().slice(1, -1);
+        this._extensionUUID = uuidString;
+    },
+
+    /**
      * Open a channel to be used to fetch a resource
      * @param options Object to create channel
      *        example:
@@ -61,34 +97,40 @@ var StoreHandler = {
      * Attempt to install a crx extension
      * @param channel nsiChannel from download uri
      * @param xpiPath string path to tmp extension file
-     * @param manifestPath string path to tmp manifest.json
      * @param nsiFileXpi nsiFile tmp xpi file
      * @param nsiManifest nsiFile tmp manifest.json
      */
-    attemptInstall(channel, xpiPath, manifestPath, nsiFileXpi, nsiManifest) {
-        Services.console.logStringMessage("opens fs");
-        NetUtil.asyncFetch(channel, function(aInputStream, aResult) {
+    attemptInstall(channel, xpiPath, nsiFileXpi, nsiManifest) {
+        NetUtil.asyncFetch(channel, (aInputStream, aResult) => {
             // Check that we had success.
             if (!Components.isSuccessCode(aResult)) {
                 Services.console.logStringMessage("Fetching resource failed");
+                // delete any tmp files
+                this._cleanup(nsiFileXpi);
                 return false;
             };
             // write nsiInputStream to nsiOutputStream
             // this was originally in a separate function but had error
             // passing input stream between funcs
             let aOutputStream = FileUtils.openAtomicFileOutputStream(nsiFileXpi);
-            NetUtil.asyncCopy(aInputStream, aOutputStream, async function(aResult) {
+            NetUtil.asyncCopy(aInputStream, aOutputStream, async (aResult) => {
                 // Check that we had success.
                 if (!Components.isSuccessCode(aResult)) {
                     Services.console.logStringMessage("Writing to tmp failed");
+                    // delete any tmp files
+                    this._cleanup(nsiFileXpi);
                     return false;
                 };
-                await StoreHandler.removeChromeHeaders(xpiPath);
-                let manifest = StoreHandler.amendManifest(nsiFileXpi);
-                StoreHandler.writeTmpManifest(nsiManifest, manifest);
-                StoreHandler.replaceManifestInXpi(nsiFileXpi, nsiManifest);
-                await StoreHandler.installXpi(nsiFileXpi);
-                StoreHandler.cleanup(xpiPath, manifestPath);
+                try {
+                    await this._removeChromeHeaders(xpiPath);
+                    let manifest = this._amendManifest(nsiFileXpi);
+                    this._writeTmpManifest(nsiManifest, manifest);
+                    this._replaceManifestInXpi(nsiFileXpi, nsiManifest);
+                    await this._installXpi(nsiFileXpi);
+                } catch(e) {
+                    // delete any tmp files
+                    this._cleanup(nsiFileXpi);
+                };
             });
         });
     },
@@ -97,7 +139,7 @@ var StoreHandler = {
      * Remove Chrome headers from crx addon
      * @param path string path to downloaded extension file
      */
-    async removeChromeHeaders(path) {
+    _removeChromeHeaders: async function __removeChromeHeaders(path) {
         try {
             // read using OS.File to enable data manipulation
             let arrayBuffer = await OS.File.read(path);
@@ -109,11 +151,13 @@ var StoreHandler = {
                     break;
                 }
             };
+            if (i == 1500) {
+                Services.console.logStringMessage("Magic not found");
+            };
             // remove Chrome ext headers
             let zipBuffer = arrayBuffer.slice(i);
-            Services.console.logStringMessage(zipBuffer);
             // overwite .zip with headers removed as ZipReader only compatible with nsiFile type, not Uint8Array
-            let writeFile = await OS.File.writeAtomic(path, zipBuffer);
+            await OS.File.writeAtomic(path, zipBuffer);
             return true;
         } catch(e) {
             Services.console.logStringMessage("Error removing Chrome headers");
@@ -125,7 +169,7 @@ var StoreHandler = {
      * Add id and remove update_url from manifest
      * @param file nsiFile tmp extension file
      */
-    amendManifest(file) {
+    _amendManifest: function __amendManifest(file) {
         try {
             // unzip nsiFile object
             let zr = new ZipReader(file);
@@ -133,17 +177,14 @@ var StoreHandler = {
             let manifest = "";
             if (zr.hasEntry(entryPointer)) {
                 let entry = zr.getEntry(entryPointer);
-                Services.console.logStringMessage("entryPointer: " + entryPointer);
                 let inputStream = zr.getInputStream(entryPointer);
                 let rsi = new ReusableStreamInstance(inputStream);
                 let fileContents = rsi.read(entry.realSize);
                 manifest = JSON.parse(fileContents);
                 // determine potential incompatibilties here, return installation error if found
-                let uuid = uuidGenerator.generateUUID();
-                let uuidString = uuid.toString().slice(1, -1);
                 manifest.applications = {
                     gecko: {
-                        id: uuidString + "@waterfox-unsigned"
+                        id: this.getUUID() + "@waterfox-unsigned"
                     }
                 };
                 delete manifest.update_url;
@@ -163,7 +204,7 @@ var StoreHandler = {
      * @param file nsiFile tmp manifest.json
      * @param manifest string JSON string of amended manifest
      */
-    writeTmpManifest(file, manifest) {
+    _writeTmpManifest: function __writeTmpManifest(file, manifest) {
         let manifestOutputStream = FileUtils.openAtomicFileOutputStream(file);
         manifestOutputStream.write(manifest, manifest.length);
     },
@@ -173,7 +214,7 @@ var StoreHandler = {
      * @param xpiFile nsiFile tmp extension file
      * @param manifestFile nsiFile tmp manifest.json
      */
-    replaceManifestInXpi(xpiFile, manifestFile) {
+    _replaceManifestInXpi: function __replaceManifestInXpi(xpiFile, manifestFile) {
         try {
             let pr = {PR_RDONLY: 0x01, PR_WRONLY: 0x02, PR_RDWR: 0x04, PR_CREATE_FILE: 0x08, PR_APPEND: 0x10, PR_TRUNCATE: 0x20, PR_SYNC: 0x40, PR_EXCL: 0x80};
             zw.open(xpiFile, pr.PR_RDWR);
@@ -190,7 +231,7 @@ var StoreHandler = {
      * Silently install extension
      * @param xpiFile nsiFile tmp extension file to install
      */
-    async installXpi(xpiFile) {
+    _installXpi: async function __installXpi(xpiFile) {
         let install = await AddonManager.getInstallForFile(xpiFile)
         await install.install(); //installs silently
             // let win = Services.wm.getMostRecentWindow("navigator:browser");
@@ -206,11 +247,10 @@ var StoreHandler = {
 
     /**
      * Remove tmp files
-     * @param zipPath nsiFile tmp extension file
-     * @param manifestPath nsiFile tmp manifest.json
+     * @param zipFile nsiFile tmp extension file
      */
-    cleanup(zipPath, manifestPath) {
-        OS.File.remove(zipPath);
-        OS.File.remove(manifestPath);
+    _cleanup: function __cleanup(zipFile) {
+        let parent = zipFile.parent;
+        parent.remove(true);
     }
 }
