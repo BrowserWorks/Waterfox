@@ -1625,7 +1625,7 @@ Function GetLatestReleasedVersion
 
   InetBgDL::Get /RESET /END
   InetBgDL::Get "" \
-                "$PLwaterfox.netrefox_versions.json" \
+                "" \
                 /CONNECTTIMEOUT 120 /RECEIVETIMEOUT 120 /END
 
   ; Wait for the response, but only give it half a second since this is on the

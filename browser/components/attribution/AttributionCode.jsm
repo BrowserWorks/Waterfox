@@ -37,6 +37,7 @@ const ATTR_CODE_KEYS = [
   "mtm_group",
   "mtm_source",
   "mtm_cid",
+  "msclkid",
 ];
 
 let gCachedAttrData = null;
