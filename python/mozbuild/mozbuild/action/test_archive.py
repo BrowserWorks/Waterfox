@@ -376,6 +376,12 @@ ARCHIVE_FILES = {
         },
         {
             'source': buildconfig.topsrcdir,
+            'base': 'third_party/python/virtualenv',
+            'dest': 'mozharness/third_party/python/virtualenv',
+            'pattern': '**',
+        },
+        {
+            'source': buildconfig.topsrcdir,
             'base': 'testing/mozbase/manifestparser',
             'pattern': 'manifestparser/**',
             'dest': 'mozharness',
@@ -574,6 +580,7 @@ ARCHIVE_FILES = {
                 'dns-packet/**',
                 'remotexpcshelltests.py',
                 'runxpcshelltests.py',
+                'selftest.py',
                 'xpcshellcommandline.py',
             ],
             'dest': 'xpcshell',

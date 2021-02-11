@@ -28,8 +28,8 @@ class VendorPython(MozbuildObject):
         if with_windows_wheel and len(packages) != 1:
             raise Exception('--with-windows-wheel is only supported for a single package!')
 
-        self._activate_virtualenv()
-        pip_compile = os.path.join(self.virtualenv_manager.bin_path, 'pip-compile')
+        self.activate_virtualenv()
+        pip_compile = os.path.join(self.virtualenv_manager.bin_path, "pip-compile")
         if not os.path.exists(pip_compile):
             path = os.path.normpath(os.path.join(
                 self.topsrcdir, 'third_party', 'python', 'pip-tools'))

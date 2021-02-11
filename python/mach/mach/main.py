@@ -30,9 +30,6 @@ from .base import (
     FailedCommandError,
 )
 from .config import ConfigSettings
-from .decorators import (
-    CommandProvider,
-)
 from .dispatcher import CommandAction
 from .logging import LoggingManager
 from .registrar import Registrar
@@ -162,7 +159,6 @@ class ContextWrapper(object):
         setattr(object.__getattribute__(self, '_context'), key, value)
 
 
-@CommandProvider
 class Mach(object):
     """Main mach driver type.
 
@@ -470,9 +466,9 @@ To see more help for a specific command, run:
             self.load_settings(args.settings_file)
 
         try:
-            return Registrar._run_command_handler(handler, context=context,
-                                                  debug_command=args.debug_command,
-                                                  **vars(args.command_args))
+            return Registrar._run_command_handler(
+                handler, context, debug_command=args.debug_command,
+                **vars(args.command_args))
         except KeyboardInterrupt as ki:
             raise ki
         except FailedCommandError as e:

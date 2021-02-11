@@ -45,6 +45,11 @@ class VirtualenvManager(object):
         Each manager is associated with a source directory, a path where you
         want the virtualenv to be created, and a handle to write output to.
         """
+        # __PYVENV_LAUNCHER__ confuses pip, telling it to use the system
+        # python interpreter rather than the local virtual environment interpreter.
+        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1607470
+        os.environ.pop('__PYVENV_LAUNCHER__', None)
+
         assert os.path.isabs(
             manifest_path), "manifest_path must be an absolute path: %s" % (manifest_path)
         self.topsrcdir = topsrcdir
@@ -178,9 +183,6 @@ class VirtualenvManager(object):
         This should be the main API used from this class as it is the
         highest-level.
         """
-        # __PYVENV_LAUNCHER__ confuses pip about the python interpreter
-        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1607470
-        os.environ.pop('__PYVENV_LAUNCHER__', None)
         if self.up_to_date(python):
             return self.virtualenv_root
         return self.build(python)
@@ -424,7 +426,10 @@ class VirtualenvManager(object):
                 distutils.sysconfig.get_config_var('MACOSX_DEPLOYMENT_TARGET')
 
             if sysconfig_target is not None:
-                os.environ['MACOSX_DEPLOYMENT_TARGET'] = sysconfig_target
+                # MACOSX_DEPLOYMENT_TARGET is usually a string (e.g.: "10.14.6"), but
+                # in some cases it is an int (e.g.: 11). Since environment variables
+                # must all be str, explicitly convert it.
+                os.environ["MACOSX_DEPLOYMENT_TARGET"] = str(sysconfig_target)
 
             old_env_variables = {}
             for k in IGNORE_ENV_VARIABLES:
@@ -438,7 +443,7 @@ class VirtualenvManager(object):
                 handle_package(package)
 
             sitecustomize = os.path.join(
-                os.path.dirname(os.__file__), 'sitecustomize.py')
+                os.path.dirname(python_lib), 'sitecustomize.py')
             with open(sitecustomize, 'w') as f:
                 f.write(
                     '# Importing mach_bootstrap has the side effect of\n'
@@ -497,9 +502,6 @@ class VirtualenvManager(object):
         else:
             thismodule = __file__
 
-        # __PYVENV_LAUNCHER__ confuses pip about the python interpreter
-        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1635481
-        os.environ.pop('__PYVENV_LAUNCHER__', None)
         args = [self.python_path, thismodule, 'populate', self.topsrcdir,
                 self.topobjdir, self.virtualenv_root, self.manifest_path]
 
@@ -631,6 +633,13 @@ class VirtualenvManager(object):
         # when wrapping with run-task on automation) fails.
         # Unsetting it doesn't really matter for what pipenv does.
         env.pop('LC_CTYPE', None)
+
+        # Avoid click RuntimeError under python 3 on linux: http://click.pocoo.org/python3/
+        if PY3 and sys.platform == 'linux':
+            env.update(ensure_subprocess_env({
+                'LC_ALL': 'C.UTF-8',
+                'LANG': 'C.UTF-8'
+            }))
 
         if python is not None:
             env.update(ensure_subprocess_env({

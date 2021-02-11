@@ -65,8 +65,8 @@ class TryConfig(object):
 @CommandProvider
 class TrySelect(MachCommandBase):
 
-    def __init__(self, context):
-        super(TrySelect, self).__init__(context)
+    def __init__(self, *args, **kwargs):
+        super(TrySelect, self).__init__(*args, **kwargs)
         from tryselect import push
         push.MAX_HISTORY = self._mach_context.settings['try']['maxhistory']
         self.subcommand = self._mach_context.handler.subcommand
@@ -204,7 +204,7 @@ class TrySelect(MachCommandBase):
 
         sub = self.subcommand or self._mach_context.settings['try']['default']
         return self._mach_context.commands.dispatch(
-            'try', subcommand=sub, context=self._mach_context, argv=argv, **kwargs)
+            'try', self._mach_context, subcommand=sub, argv=argv, **kwargs)
 
     @SubCommand('try',
                 'fuzzy',
@@ -320,7 +320,7 @@ class TrySelect(MachCommandBase):
         has been made, pressing the 'Push' button will automatically push the
         selection to try.
         """
-        self._activate_virtualenv()
+        self.activate_virtualenv()
         path = os.path.join('tools', 'tryselect', 'selectors', 'chooser', 'requirements.txt')
         self.virtualenv_manager.install_pip_requirements(path, quiet=True)
 
