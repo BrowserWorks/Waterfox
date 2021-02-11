@@ -56,7 +56,7 @@ var StoreHandler = {
     },
 
     /**
-     * Return exentension UUID, set and return if not already set
+     * Return extension UUID, set and return if not already set
      */
     getUUID: function __getUUID() {
         if (!this._extensionUUID) {
@@ -72,6 +72,16 @@ var StoreHandler = {
         let uuid = uuidGenerator.generateUUID();
         let uuidString = uuid.toString().slice(1, -1);
         this._extensionUUID = uuidString;
+    },
+
+    /**
+     * Reset extension UUID
+     */
+    _resetUUID: function __resetUUID() {
+        return new Promise(resolve => {
+            this._extensionUUID = undefined;
+            resolve();
+        })
     },
 
     /**
@@ -127,8 +137,11 @@ var StoreHandler = {
                     this._writeTmpManifest(nsiManifest, manifest);
                     this._replaceManifestInXpi(nsiFileXpi, nsiManifest);
                     await this._installXpi(nsiFileXpi);
+                    this._cleanup(nsiFileXpi);
+                    this._resetUUID();
                 } catch(e) {
                     // delete any tmp files
+                    Services.console.logStringMessage(e + " issue installing extension");
                     this._cleanup(nsiFileXpi);
                 };
             });
@@ -189,6 +202,7 @@ var StoreHandler = {
                 };
                 delete manifest.update_url;
                 manifest = JSON.stringify(manifest);
+                Services.console.logStringMessage(manifest);
             }
             // close zipReader
             zr.close();
