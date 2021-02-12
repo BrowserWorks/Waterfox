@@ -1221,14 +1221,15 @@ function updateZoomStatus() {
   }
 }
 
-function toggleStatusBar() {
-  windowRoot.ownerGlobal.document.querySelector(":root").setAttribute("sbMode", Services.prefs.getIntPref("browser.statusbar.mode"));
-}
-
 function showBtnRange() {
   if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
     windowRoot.ownerGlobal.document.querySelector(":root").setAttribute("sbRangeBtn", Services.prefs.getBoolPref("browser.statusbar.showbtn"));
   }
+}
+
+function toggleStatusBar() {
+  windowRoot.ownerGlobal.document.querySelector(":root").setAttribute("sbMode", Services.prefs.getIntPref("browser.statusbar.mode"));
+  showBtnRange();
 }
 
 function moveTabBar()

@@ -43,6 +43,10 @@
 
 #navigator-toolbox {
   -moz-appearance: none;
+}
+
+#navigator-toolbox,
+#browser-bottombox {
   --tabs-border-color: rgba(0,0,0,.3);
 }
 
@@ -137,10 +141,12 @@
 /* Always draw a border on Yosemite to ensure the border is well-defined there
  * (the default border is too light). */
 @media (-moz-mac-yosemite-theme) {
-  #navigator-toolbox:not(:-moz-lwtheme) {
+  #navigator-toolbox:not(:-moz-lwtheme),
+  #browser-bottombox:not(:-moz-lwtheme) {
     --tabs-border-color: rgba(0,0,0,.2);
   }
-  #navigator-toolbox:not(:-moz-lwtheme):-moz-window-inactive {
+  #navigator-toolbox:not(:-moz-lwtheme):-moz-window-inactive,
+  #browser-bottombox:not(:-moz-lwtheme):-moz-window-inactive {
     --tabs-border-color: rgba(0,0,0,.05);
   }
 

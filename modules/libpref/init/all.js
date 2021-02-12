@@ -4307,7 +4307,7 @@ pref("browser.safebrowsing.allowOverride", true);
 #endif
 
 // Download protection
-pref("browser.safebrowsing.downloads.enabled", true);
+pref("browser.safebrowsing.downloads.enabled", false);
 pref("browser.safebrowsing.downloads.remote.enabled", true);
 pref("browser.safebrowsing.downloads.remote.timeout_ms", 15000);
 pref("browser.safebrowsing.downloads.remote.url", "https://sb-ssl.google.com/safebrowsing/clientreport/download?key=%GOOGLE_SAFEBROWSING_API_KEY%");

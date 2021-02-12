@@ -6,19 +6,15 @@ from __future__ import absolute_import, unicode_literals
 
 import argparse
 import collections
-import inspect
-import sys
 
 from .base import MachError
 from .registrar import Registrar
+from mozbuild.base import MachCommandBase
 
 
 class _MachCommand(object):
-    """Container for mach command metadata.
+    """Container for mach command metadata."""
 
-    Mach commands contain lots of attributes. This class exists to capture them
-    in a sane way so tuples, etc aren't used instead.
-    """
     __slots__ = (
         # Content from decorator arguments to define the command.
         'name',
@@ -29,6 +25,7 @@ class _MachCommand(object):
         '_parser',
         'arguments',
         'argument_group_names',
+        'virtualenv_name',
 
         # By default, subcommands will be sorted. If this is set to
         # 'declaration', they will be left in declaration order.
@@ -40,11 +37,6 @@ class _MachCommand(object):
         # an instance of the class. Mach will instantiate a new instance of
         # the class if the command is executed.
         'cls',
-
-        # Whether the __init__ method of the class should receive a mach
-        # context instance. This should only affect the mach driver and how
-        # it instantiates classes.
-        'pass_context',
 
         # The name of the method providing the command. In other words, this
         # is the str name of the attribute on the class type corresponding to
@@ -62,7 +54,7 @@ class _MachCommand(object):
 
     def __init__(self, name=None, subcommand=None, category=None,
                  description=None, conditions=None, parser=None,
-                 order=None):
+                 order=None, virtualenv_name=None):
         self.name = name
         self.subcommand = subcommand
         self.category = category
@@ -71,10 +63,10 @@ class _MachCommand(object):
         self._parser = parser
         self.arguments = []
         self.argument_group_names = []
+        self.virtualenv_name = virtualenv_name
         self.order = order
 
         self.cls = None
-        self.pass_context = None
         self.method = None
         self.subcommand_handlers = {}
         self.decl_order = None
@@ -117,21 +109,10 @@ def CommandProvider(cls):
     # attributes on the function types. We just scan over all functions in the
     # class looking for the side-effects of the method decorators.
 
-    # Tell mach driver whether to pass context argument to __init__.
-    pass_context = False
-
-    isfunc = inspect.ismethod if sys.version_info < (3, 0) else inspect.isfunction
-    if isfunc(cls.__init__):
-        spec = inspect.getargspec(cls.__init__)
-
-        if len(spec.args) > 2:
-            msg = 'Mach @CommandProvider class %s implemented incorrectly. ' + \
-                  '__init__() must take 1 or 2 arguments. From %s'
-            msg = msg % (cls.__name__, inspect.getsourcefile(cls))
-            raise MachError(msg)
-
-        if len(spec.args) == 2:
-            pass_context = True
+    if not issubclass(cls, MachCommandBase):
+        raise MachError(
+            'Mach command provider class %s must be a subclass of '
+            'mozbuild.base.MachComandBase' % cls.__name__)
 
     seen_commands = set()
 
@@ -170,7 +151,6 @@ def CommandProvider(cls):
 
         command.cls = cls
         command.method = method
-        command.pass_context = pass_context
 
         Registrar.register_command_handler(command)
 
@@ -191,7 +171,6 @@ def CommandProvider(cls):
 
         command.cls = cls
         command.method = method
-        command.pass_context = pass_context
         parent = Registrar.command_handlers[command.name]
 
         if command.subcommand in parent.subcommand_handlers:
