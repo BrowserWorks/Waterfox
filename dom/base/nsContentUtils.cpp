@@ -9696,10 +9696,6 @@ ShouldEscape(nsIContent* aParent)
     nsGkAtoms::style, nsGkAtoms::script, nsGkAtoms::xmp,
     nsGkAtoms::iframe, nsGkAtoms::noembed, nsGkAtoms::noframes,
     nsGkAtoms::plaintext,
-    // Per the current spec noscript should be escaped in case
-    // scripts are disabled or if document doesn't have
-    // browsing context. However the latter seems to be a spec bug
-    // and Gecko hasn't traditionally done the former.
     nsGkAtoms::noscript
   };
   static mozilla::BloomFilter<12, nsIAtom> sFilter;
@@ -9715,6 +9711,10 @@ ShouldEscape(nsIContent* aParent)
   if (sFilter.mightContain(tag)) {
     for (auto& nonEscapingElement : nonEscapingElements) {
       if (tag == nonEscapingElement) {
+        if (MOZ_UNLIKELY(tag == nsGkAtoms::noscript) &&
+            MOZ_UNLIKELY(!aParent->OwnerDoc()->IsScriptEnabled())) {
+          return true;
+        }
         return false;
       }
     }
