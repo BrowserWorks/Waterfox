@@ -57,6 +57,7 @@ class nsHtml5StateSnapshot;
 class nsHtml5Portability
 {
   public:
+    static int32_t checkedAdd(int32_t a, int32_t b);
     static nsIAtom* newLocalNameFromBuffer(char16_t* buf, int32_t offset, int32_t length, nsHtml5AtomTable* interner);
     static nsHtml5String newStringFromBuffer(char16_t* buf,
                                              int32_t offset,

@@ -741,7 +741,7 @@ void
 nsHtml5MetaScanner::addToBuffer(int32_t c)
 {
   if (strBufLen == strBuf.length) {
-    jArray<char16_t,int32_t> newBuf = jArray<char16_t,int32_t>::newJArray(strBuf.length + (strBuf.length << 1));
+    jArray<char16_t,int32_t> newBuf = jArray<char16_t,int32_t>::newJArray(nsHtml5Portability::checkedAdd(strBuf.length, (strBuf.length << 1)));
     nsHtml5ArrayCopy::arraycopy(strBuf, newBuf, strBuf.length);
     strBuf = newBuf;
   }
