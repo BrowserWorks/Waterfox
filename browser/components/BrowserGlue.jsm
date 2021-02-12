@@ -2522,11 +2522,14 @@ BrowserGlue.prototype = {
           }
         },
       },
-      // flush extension tmp dir
+      // flush extension tmp and staged dir
       {
         task: () => {
-          StoreHandler.flushTmp(
+          StoreHandler.flushDir(
             OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp")
+            );
+          StoreHandler.flushDir(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "staged")
             );
         }
       },
