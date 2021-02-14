@@ -2059,7 +2059,7 @@ nsLayoutUtils::GetNearestScrollableFrameForDirection(nsIFrame* aFrame,
   for (nsIFrame* f = aFrame; f; f = nsLayoutUtils::GetCrossDocParentFrame(f)) {
     nsIScrollableFrame* scrollableFrame = do_QueryFrame(f);
     if (scrollableFrame) {
-      ScrollbarStyles ss = scrollableFrame->GetScrollbarStyles();
+      ScrollStyles ss = scrollableFrame->GetScrollStyles();
       uint32_t directions = scrollableFrame->GetPerceivedScrollingDirections();
       if (aDirection == eVertical ?
           (ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN &&
@@ -2086,7 +2086,7 @@ nsLayoutUtils::GetNearestScrollableFrame(nsIFrame* aFrame, uint32_t aFlags)
           return scrollableFrame;
         }
       } else {
-        ScrollbarStyles ss = scrollableFrame->GetScrollbarStyles();
+        ScrollStyles ss = scrollableFrame->GetScrollStyles();
         if ((aFlags & SCROLLABLE_INCLUDE_HIDDEN) ||
             ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN ||
             ss.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN) {
@@ -8345,11 +8345,11 @@ nsLayoutUtils::CalculateScrollableRectForFrame(nsIScrollableFrame* aScrollableFr
     contentBounds = aScrollableFrame->GetScrollRange();
 
     nsPoint scrollPosition = aScrollableFrame->GetScrollPosition();
-    if (aScrollableFrame->GetScrollbarStyles().mVertical == NS_STYLE_OVERFLOW_HIDDEN) {
+    if (aScrollableFrame->GetScrollStyles().mVertical == NS_STYLE_OVERFLOW_HIDDEN) {
       contentBounds.y = scrollPosition.y;
       contentBounds.height = 0;
     }
-    if (aScrollableFrame->GetScrollbarStyles().mHorizontal == NS_STYLE_OVERFLOW_HIDDEN) {
+    if (aScrollableFrame->GetScrollStyles().mHorizontal == NS_STYLE_OVERFLOW_HIDDEN) {
       contentBounds.x = scrollPosition.x;
       contentBounds.width = 0;
     }

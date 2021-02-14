@@ -210,7 +210,7 @@ namespace mozilla {
 struct MOZ_STACK_CLASS ScrollReflowInput {
   const ReflowInput& mReflowInput;
   nsBoxLayoutState mBoxState;
-  ScrollbarStyles mStyles;
+  ScrollStyles mStyles;
   nsMargin mComputedBorder;
 
   // === Filled in by ReflowScrolledFrame ===
@@ -236,7 +236,7 @@ struct MOZ_STACK_CLASS ScrollReflowInput {
     // mBoxState is just used for scrollbars so we don't need to
     // worry about the reflow depth here
     mBoxState(aState.mFrame->PresContext(), aState.mRenderingContext, 0),
-    mStyles(aFrame->GetScrollbarStyles()) {
+    mStyles(aFrame->GetScrollStyles()) {
   }
 };
 
@@ -791,7 +791,7 @@ nsHTMLScrollFrame::PlaceScrollArea(ScrollReflowInput& aState,
 nscoord
 nsHTMLScrollFrame::GetIntrinsicVScrollbarWidth(gfxContext *aRenderingContext)
 {
-  ScrollbarStyles ss = GetScrollbarStyles();
+  ScrollStyles ss = GetScrollStyles();
   if (ss.mVertical != NS_STYLE_OVERFLOW_SCROLL || !mHelper.mVScrollbarBox)
     return 0;
 
@@ -1142,7 +1142,7 @@ nsHTMLScrollFrame::AccessibleType()
   // Create an accessible regardless of focusable state because the state can be
   // changed during frame life cycle without any notifications to accessibility.
   if (mContent->IsRootOfNativeAnonymousSubtree() ||
-      GetScrollbarStyles().IsHiddenInBothDirections()) {
+      GetScrollStyles().IsHiddenInBothDirections()) {
     return a11y::eNoType;
   }
 
@@ -1317,7 +1317,7 @@ ScrollFrameHelper::WantAsyncScroll() const
     return true;
   }
 
-  ScrollbarStyles styles = GetScrollbarStylesFromFrame();
+  ScrollStyles styles = GetScrollStylesFromFrame();
   nscoord oneDevPixel = GetScrolledFrame()->PresContext()->AppUnitsPerDevPixel();
   nsRect scrollRange = GetScrollRange();
   bool isVScrollable = (scrollRange.height >= oneDevPixel) &&
@@ -1566,7 +1566,7 @@ nsXULScrollFrame::GetXULPrefSize(nsBoxLayoutState& aState)
 
   nsSize pref = mHelper.mScrolledFrame->GetXULPrefSize(aState);
 
-  ScrollbarStyles styles = GetScrollbarStyles();
+  ScrollStyles styles = GetScrollStyles();
 
   // scrolled frames don't have their own margins
 
@@ -1599,7 +1599,7 @@ nsXULScrollFrame::GetXULMinSize(nsBoxLayoutState& aState)
 
   nsSize min = mHelper.mScrolledFrame->GetXULMinSizeForScrollArea(aState);
 
-  ScrollbarStyles styles = GetScrollbarStyles();
+  ScrollStyles styles = GetScrollStyles();
 
   if (mHelper.mVScrollbarBox &&
       styles.mVertical == NS_STYLE_OVERFLOW_SCROLL) {
@@ -2482,7 +2482,7 @@ bool ScrollFrameHelper::IsAlwaysActive() const
 
   // If we're overflow:hidden, then start as inactive until
   // we get scrolled manually.
-  ScrollbarStyles styles = GetScrollbarStylesFromFrame();
+  ScrollStyles styles = GetScrollStylesFromFrame();
   return (styles.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN &&
           styles.mVertical != NS_STYLE_OVERFLOW_HIDDEN);
 }
@@ -3865,21 +3865,21 @@ static void HandleScrollPref(nsIScrollable *aScrollable, int32_t aOrientation,
   }
 }
 
-ScrollbarStyles
-ScrollFrameHelper::GetScrollbarStylesFromFrame() const
+ScrollStyles
+ScrollFrameHelper::GetScrollStylesFromFrame() const
 {
   nsPresContext* presContext = mOuter->PresContext();
   if (!presContext->IsDynamic() &&
       !(mIsRoot && presContext->HasPaginatedScrolling())) {
-    return ScrollbarStyles(NS_STYLE_OVERFLOW_HIDDEN, NS_STYLE_OVERFLOW_HIDDEN);
+    return ScrollStyles(NS_STYLE_OVERFLOW_HIDDEN, NS_STYLE_OVERFLOW_HIDDEN);
   }
 
   if (!mIsRoot) {
     const nsStyleDisplay* disp = mOuter->StyleDisplay();
-    return ScrollbarStyles(disp);
+    return ScrollStyles(disp);
   }
 
-  ScrollbarStyles result = presContext->GetViewportScrollbarStylesOverride();
+  ScrollStyles result = presContext->GetViewportScrollStylesOverride();
   nsCOMPtr<nsISupports> container = presContext->GetContainerWeak();
   nsCOMPtr<nsIScrollable> scrollable = do_QueryInterface(container);
   if (scrollable) {
@@ -4048,7 +4048,7 @@ ScrollFrameHelper::ScrollBy(nsIntPoint aDelta,
   nsPoint newPos = mDestination + nsPoint(aDelta.x*deltaMultiplier.width, aDelta.y*deltaMultiplier.height);
 
   if (aSnap == nsIScrollableFrame::ENABLE_SNAP) {
-    ScrollbarStyles styles = GetScrollbarStylesFromFrame();
+    ScrollStyles styles = GetScrollStylesFromFrame();
     if (styles.mScrollSnapTypeY != NS_STYLE_SCROLL_SNAP_TYPE_NONE ||
         styles.mScrollSnapTypeX != NS_STYLE_SCROLL_SNAP_TYPE_NONE) {
       nscoord appUnitsPerDevPixel = mOuter->PresContext()->AppUnitsPerDevPixel();
@@ -4459,7 +4459,7 @@ ScrollFrameHelper::CreateAnonymousContent(
   bool canHaveHorizontal;
   bool canHaveVertical;
   if (!mIsRoot) {
-    ScrollbarStyles styles = scrollable->GetScrollbarStyles();
+    ScrollStyles styles = scrollable->GetScrollStyles();
     canHaveHorizontal = styles.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN;
     canHaveVertical = styles.mVertical != NS_STYLE_OVERFLOW_HIDDEN;
     if (!canHaveHorizontal && !canHaveVertical && !isResizable) {
@@ -5140,7 +5140,7 @@ nsXULScrollFrame::XULLayout(nsBoxLayoutState& aState)
    (if we're the viewport and we added or removed a scrollbar).
    **************/
 
-  ScrollbarStyles styles = GetScrollbarStyles();
+  ScrollStyles styles = GetScrollStyles();
 
   // Look at our style do we always have vertical or horizontal scrollbars?
   if (styles.mHorizontal == NS_STYLE_OVERFLOW_SCROLL)
@@ -5469,7 +5469,7 @@ bool
 ScrollFrameHelper::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
 {
   nsIScrollableFrame* sf = do_QueryFrame(mOuter);
-  ScrollbarStyles ss = sf->GetScrollbarStyles();
+  ScrollStyles ss = sf->GetScrollStyles();
 
   // Reflow when the change in overflow leads to one of our scrollbars
   // changing or might require repositioning the scrolled content due to
@@ -6192,7 +6192,7 @@ ComputeScrollSnapInfo(const ScrollFrameHelper& aScrollFrame)
 {
   ScrollSnapInfo result;
 
-  ScrollbarStyles styles = aScrollFrame.GetScrollbarStylesFromFrame();
+  ScrollStyles styles = aScrollFrame.GetScrollStylesFromFrame();
 
   if (styles.mScrollSnapTypeY == NS_STYLE_SCROLL_SNAP_TYPE_NONE &&
       styles.mScrollSnapTypeX == NS_STYLE_SCROLL_SNAP_TYPE_NONE) {

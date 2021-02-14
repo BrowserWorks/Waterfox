@@ -491,7 +491,7 @@ static nsSize CalcViewportUnitsScale(nsPresContext* aPresContext)
   nsIScrollableFrame* scrollFrame =
     aPresContext->PresShell()->GetRootScrollFrameAsScrollable();
   if (scrollFrame) {
-    ScrollbarStyles styles(scrollFrame->GetScrollbarStyles());
+    ScrollStyles styles(scrollFrame->GetScrollStyles());
 
     if (styles.mHorizontal == NS_STYLE_OVERFLOW_SCROLL ||
         styles.mVertical == NS_STYLE_OVERFLOW_SCROLL) {
