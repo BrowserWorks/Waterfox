@@ -1092,7 +1092,7 @@ ErrorOrResult<GLuint> InternalFormat::computeRowPitch(GLsizei width,
 
 ErrorOrResult<GLuint> InternalFormat::computeDepthPitch(GLsizei height,
                                                         GLint imageHeight,
-                                                        GLuint rowPitch)
+                                                        GLuint rowPitch) const
 {
     CheckedNumeric<GLuint> pixelsHeight(imageHeight > 0 ? static_cast<GLuint>(imageHeight)
                                                         : static_cast<GLuint>(height));
