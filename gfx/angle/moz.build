@@ -1,0 +1,5 @@
+DIRS += [ 'targets/translator' ]
+
+# Only build libEGL/libGLESv2 on Windows
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    DIRS += [ 'targets/libEGL', 'targets/libGLESv2' ]
