@@ -707,6 +707,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SessionStartup: "resource:///modules/sessionstore/SessionStartup.jsm",
   SessionStore: "resource:///modules/sessionstore/SessionStore.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
+  StoreHandler: "resource://gre/modules/amStoreHandler.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
   TabUnloader: "resource:///modules/TabUnloader.jsm",
   TRRRacer: "resource:///modules/TRRPerformance.jsm",
@@ -2524,6 +2525,18 @@ BrowserGlue.prototype = {
           }
         },
       },
+      // flush extension tmp and staged dir
+      {
+        task: () => {
+          StoreHandler.flushDir(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp")
+          );
+          StoreHandler.flushDir(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "staged")
+          );
+        }
+      },
+      // clear updated prefs
       {
         task: () => {
           AttributionCode.deleteFileAsync();
