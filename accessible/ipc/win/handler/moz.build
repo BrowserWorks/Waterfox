@@ -44,6 +44,8 @@ OS_LIBS += [
 
 RCINCLUDE = 'AccessibleHandler.rc'
 
+LDFLAGS += ['-FORCE:MULTIPLE']
+
 # Since we are defining our own COM entry points (DllRegisterServer et al),
 # but we still want to be able to delegate some work to the generated code,
 # we add the prefix "Proxy" to all of the generated counterparts.

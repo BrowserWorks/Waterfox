@@ -93,3 +93,4 @@ RCINCLUDE = 'IA2Marshal.rc'
 # which clang-cl complains about.  MSVC doesn't, so turn this warning off.
 if CONFIG['CLANG_CL']:
     CXXFLAGS += ['-Wno-extra-tokens']
+    LDFLAGS += ['-FORCE:MULTIPLE']

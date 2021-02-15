@@ -67,6 +67,9 @@ if CONFIG['_MSC_VER']:
     SOURCES += [
         'dummy_funcs.c'
     ]
+	
+if CONFIG['CLANG_CL']:
+    LDFLAGS += ['-FORCE:MULTIPLE']
 
 SYMBOLS_FILE = 'avcodec.symbols'
 NoVisibilityFlags()
