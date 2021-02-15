@@ -607,6 +607,10 @@ TokenStream::TokenBuf::findEOLMax(size_t start, size_t max)
         if (n >= max)
             break;
         n++;
+
+        // This stops at U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR in
+        // string and template literals.  These code points do affect line and
+        // column coordinates, even as they encode their literal values.
         if (TokenBuf::isRawEOLChar(*p++))
             break;
     }
@@ -2173,18 +2177,30 @@ TokenStream::getStringOrTemplateToken(int untilChar, Token** tp)
                 }
                 break;
             }
-        } else if (TokenBuf::isRawEOLChar(c)) {
+        } else if (c == '\r' || c == '\n') {
             if (!parsingTemplate) {
+                // String literals don't allow ASCII line breaks.
                 ungetCharIgnoreEOL(c);
                 error(JSMSG_UNTERMINATED_STRING);
                 return false;
             }
+
             if (c == '\r') {
                 c = '\n';
                 if (userbuf.peekRawChar() == '\n')
+                    // Treat CRLF as a single line break.
                     skipCharsIgnoreEOL(1);
             }
 
+            if (!updateLineInfoForEOL())
+                return false;
+
+            updateFlagsForEOL();
+        } else if (c == unicode::LINE_SEPARATOR || c == unicode::PARA_SEPARATOR) {
+            // U+2028 LINE SEPARATOR and U+2029 PARAGRAPH SEPARATOR encode
+            // their literal values in template literals and (as of fairly
+            // recently) string literals, but they still count as line
+            // terminators when computing line/column coordinates.
             if (!updateLineInfoForEOL())
                 return false;
 
