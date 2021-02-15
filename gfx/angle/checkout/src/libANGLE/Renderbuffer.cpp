@@ -66,7 +66,7 @@ void RenderbufferState::update(GLsizei width,
 
 // Renderbuffer implementation.
 Renderbuffer::Renderbuffer(rx::GLImplFactory *implFactory, GLuint id)
-    : egl::ImageSibling(id),
+    : RefCountObject(id),
       mState(),
       mImplementation(implFactory->createRenderbuffer(mState)),
       mLabel()
@@ -109,7 +109,7 @@ Error Renderbuffer::setStorage(const Context *context,
 
     mState.update(static_cast<GLsizei>(width), static_cast<GLsizei>(height), Format(internalformat),
                   0, InitState::MayNeedInit);
-    onStateChange(context, angle::SubjectMessage::STATE_CHANGE);
+    onStorageChange(context);
 
     return NoError();
 }
@@ -126,7 +126,7 @@ Error Renderbuffer::setStorageMultisample(const Context *context,
 
     mState.update(static_cast<GLsizei>(width), static_cast<GLsizei>(height), Format(internalformat),
                   static_cast<GLsizei>(samples), InitState::MayNeedInit);
-    onStateChange(context, angle::SubjectMessage::STATE_CHANGE);
+    onStorageChange(context);
 
     return NoError();
 }
@@ -140,7 +140,7 @@ Error Renderbuffer::setStorageEGLImageTarget(const Context *context, egl::Image 
 
     mState.update(static_cast<GLsizei>(image->getWidth()), static_cast<GLsizei>(image->getHeight()),
                   Format(image->getFormat()), 0, image->sourceInitState());
-    onStateChange(context, angle::SubjectMessage::STATE_CHANGE);
+    onStorageChange(context);
 
     return NoError();
 }
@@ -221,8 +221,8 @@ Extents Renderbuffer::getAttachmentSize(const gl::ImageIndex & /*imageIndex*/) c
     return Extents(mState.mWidth, mState.mHeight, 1);
 }
 
-const Format &Renderbuffer::getAttachmentFormat(GLenum /*binding*/,
-                                                const ImageIndex & /*imageIndex*/) const
+Format Renderbuffer::getAttachmentFormat(GLenum /*binding*/,
+                                         const ImageIndex & /*imageIndex*/) const
 {
     return getFormat();
 }

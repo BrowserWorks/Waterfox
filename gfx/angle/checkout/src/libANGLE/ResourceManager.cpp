@@ -161,10 +161,9 @@ void ShaderProgramManager::reset(const Context *context)
 
 GLuint ShaderProgramManager::createShader(rx::GLImplFactory *factory,
                                           const gl::Limitations &rendererLimitations,
-                                          GLenum type)
+                                          ShaderType type)
 {
-    ASSERT(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER || type == GL_COMPUTE_SHADER ||
-           type == GL_GEOMETRY_SHADER_EXT);
+    ASSERT(type != ShaderType::InvalidEnum);
     GLuint handle    = mHandleAllocator.allocate();
     mShaders.assign(handle, new Shader(this, factory, rendererLimitations, type, handle));
     return handle;
@@ -223,9 +222,11 @@ void ShaderProgramManager::deleteObject(const Context *context,
 // TextureManager Implementation.
 
 // static
-Texture *TextureManager::AllocateNewObject(rx::GLImplFactory *factory, GLuint handle, GLenum target)
+Texture *TextureManager::AllocateNewObject(rx::GLImplFactory *factory,
+                                           GLuint handle,
+                                           TextureType type)
 {
-    Texture *texture = new Texture(factory, handle, target);
+    Texture *texture = new Texture(factory, handle, type);
     texture->addRef();
     return texture;
 }
@@ -423,12 +424,8 @@ Framebuffer *FramebufferManager::AllocateNewObject(rx::GLImplFactory *factory,
 // static
 void FramebufferManager::DeleteObject(const Context *context, Framebuffer *framebuffer)
 {
-    // Default framebuffer are owned by their respective Surface
-    if (framebuffer->id() != 0)
-    {
-        framebuffer->onDestroy(context);
-        delete framebuffer;
-    }
+    framebuffer->onDestroy(context);
+    delete framebuffer;
 }
 
 GLuint FramebufferManager::createFramebuffer()
@@ -447,13 +444,13 @@ void FramebufferManager::setDefaultFramebuffer(Framebuffer *framebuffer)
     mObjectMap.assign(0, framebuffer);
 }
 
-void FramebufferManager::invalidateFramebufferComplenessCache() const
+void FramebufferManager::invalidateFramebufferComplenessCache(const Context *context) const
 {
     for (const auto &framebuffer : mObjectMap)
     {
         if (framebuffer.second)
         {
-            framebuffer.second->invalidateCompletenessCache();
+            framebuffer.second->invalidateCompletenessCache(context);
         }
     }
 }

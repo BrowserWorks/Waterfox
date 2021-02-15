@@ -11,11 +11,11 @@
 #ifndef LIBANGLE_BUFFER_H_
 #define LIBANGLE_BUFFER_H_
 
+#include "common/PackedEnums.h"
 #include "common/angleutils.h"
 #include "libANGLE/Debug.h"
 #include "libANGLE/Error.h"
 #include "libANGLE/IndexRangeCache.h"
-#include "libANGLE/PackedGLEnums.h"
 #include "libANGLE/RefCountObject.h"
 
 namespace rx
@@ -59,6 +59,9 @@ class BufferState final : angle::NonCopyable
     void *mMapPointer;
     GLint64 mMapOffset;
     GLint64 mMapLength;
+    int mBindingCount;
+    int mTransformFeedbackIndexedBindingCount;
+    int mTransformFeedbackGenericBindingCount;
 };
 
 class Buffer final : public RefCountObject, public LabeledObject
@@ -90,8 +93,9 @@ class Buffer final : public RefCountObject, public LabeledObject
     Error mapRange(const Context *context, GLintptr offset, GLsizeiptr length, GLbitfield access);
     Error unmap(const Context *context, GLboolean *result);
 
-    void onTransformFeedback();
-    void onPixelUnpack();
+    // These are called when another operation changes Buffer data.
+    void onTransformFeedback(const Context *context);
+    void onPixelPack(const Context *context);
 
     Error getIndexRange(const gl::Context *context,
                         GLenum type,
@@ -110,6 +114,11 @@ class Buffer final : public RefCountObject, public LabeledObject
     GLint64 getSize() const { return mState.mSize; }
 
     rx::BufferImpl *getImplementation() const { return mImpl; }
+
+    bool isBound() const;
+    bool isBoundForTransformFeedbackAndOtherUse() const;
+    void onTFBindingChanged(const Context *context, bool bound, bool indexed);
+    void onNonTFBindingChanged(const Context *context, int incr) { mState.mBindingCount += incr; }
 
   private:
     BufferState mState;

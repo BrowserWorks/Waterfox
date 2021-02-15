@@ -26,7 +26,6 @@ std::unique_ptr<std::string> EmplaceErrorString(std::string &&message)
 
 namespace gl
 {
-
 Error::Error(GLenum errorCode, std::string &&message)
     : mCode(errorCode), mID(errorCode), mMessage(EmplaceErrorString(std::move(message)))
 {
@@ -70,7 +69,7 @@ bool Error::operator!=(const Error &other) const
 
 std::ostream &operator<<(std::ostream &os, const Error &err)
 {
-    return gl::FmtHexShort(os, err.getCode());
+    return gl::FmtHex(os, err.getCode());
 }
 
 }  // namespace gl
@@ -104,7 +103,23 @@ const std::string &Error::getMessage() const
 
 std::ostream &operator<<(std::ostream &os, const Error &err)
 {
-    return gl::FmtHexShort(os, err.getCode());
+    return gl::FmtHex(os, err.getCode());
 }
 
 }  // namespace egl
+
+// angle::Result Implementation.
+namespace angle
+{
+Result::operator gl::Error() const
+{
+    if (mStop)
+    {
+        return gl::Error(GL_INTERNAL_ERROR_ANGLEX);
+    }
+    else
+    {
+        return gl::NoError();
+    }
+}
+}  // namespace angle

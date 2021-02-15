@@ -20,7 +20,7 @@ namespace rx
 class SwapChain11;
 class Renderer11;
 
-class RenderTarget11 : public RenderTargetD3D, public angle::Subject
+class RenderTarget11 : public RenderTargetD3D
 {
   public:
     RenderTarget11(const d3d11::Format &formatSet);
@@ -29,12 +29,10 @@ class RenderTarget11 : public RenderTargetD3D, public angle::Subject
     virtual const TextureHelper11 &getTexture() const                  = 0;
     virtual const d3d11::RenderTargetView &getRenderTargetView() const = 0;
     virtual const d3d11::DepthStencilView &getDepthStencilView() const = 0;
-    virtual const d3d11::SharedSRV &getShaderResourceView() const      = 0;
-    virtual const d3d11::SharedSRV &getBlitShaderResourceView() const  = 0;
+    virtual const d3d11::SharedSRV &getShaderResourceView(const gl::Context *context) const     = 0;
+    virtual const d3d11::SharedSRV &getBlitShaderResourceView(const gl::Context *context) const = 0;
 
     virtual unsigned int getSubresourceIndex() const = 0;
-
-    void signalDirty(const gl::Context *context) override;
 
     const d3d11::Format &getFormatSet() const { return mFormatSet; }
 
@@ -76,8 +74,8 @@ class TextureRenderTarget11 : public RenderTarget11
     const TextureHelper11 &getTexture() const override;
     const d3d11::RenderTargetView &getRenderTargetView() const override;
     const d3d11::DepthStencilView &getDepthStencilView() const override;
-    const d3d11::SharedSRV &getShaderResourceView() const override;
-    const d3d11::SharedSRV &getBlitShaderResourceView() const override;
+    const d3d11::SharedSRV &getShaderResourceView(const gl::Context *context) const override;
+    const d3d11::SharedSRV &getBlitShaderResourceView(const gl::Context *context) const override;
 
     unsigned int getSubresourceIndex() const override;
 
@@ -114,8 +112,8 @@ class SurfaceRenderTarget11 : public RenderTarget11
     const TextureHelper11 &getTexture() const override;
     const d3d11::RenderTargetView &getRenderTargetView() const override;
     const d3d11::DepthStencilView &getDepthStencilView() const override;
-    const d3d11::SharedSRV &getShaderResourceView() const override;
-    const d3d11::SharedSRV &getBlitShaderResourceView() const override;
+    const d3d11::SharedSRV &getShaderResourceView(const gl::Context *context) const override;
+    const d3d11::SharedSRV &getBlitShaderResourceView(const gl::Context *context) const override;
 
     unsigned int getSubresourceIndex() const override;
 

@@ -70,8 +70,9 @@ gl::Error RenderbufferD3D::setStorageMultisample(const gl::Context *context,
     }
 
     RenderTargetD3D *newRT = nullptr;
-    ANGLE_TRY(mRenderer->createRenderTarget(static_cast<int>(width), static_cast<int>(height),
-                                            creationFormat, static_cast<GLsizei>(samples), &newRT));
+    ANGLE_TRY(mRenderer->createRenderTarget(context, static_cast<int>(width),
+                                            static_cast<int>(height), creationFormat,
+                                            static_cast<GLsizei>(samples), &newRT));
 
     deleteRenderTarget(context);
     mImage        = nullptr;
@@ -112,9 +113,9 @@ gl::Error RenderbufferD3D::getAttachmentRenderTarget(const gl::Context *context,
 
 void RenderbufferD3D::deleteRenderTarget(const gl::Context *context)
 {
+    onStateChange(context, angle::SubjectMessage::DEPENDENT_DIRTY_BITS);
     if (mRenderTarget)
     {
-        mRenderTarget->signalDirty(context);
         SafeDelete(mRenderTarget);
     }
 }
@@ -124,7 +125,7 @@ gl::Error RenderbufferD3D::initializeContents(const gl::Context *context,
 {
     RenderTargetD3D *renderTarget = nullptr;
     ANGLE_TRY(getRenderTarget(context, &renderTarget));
-    return mRenderer->initRenderTarget(renderTarget);
+    return mRenderer->initRenderTarget(context, renderTarget);
 }
 
 }  // namespace rx

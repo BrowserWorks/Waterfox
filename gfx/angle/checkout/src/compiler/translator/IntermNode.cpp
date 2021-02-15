@@ -202,6 +202,61 @@ void TIntermExpression::setTypePreservePrecision(const TType &t)
         return true;                                     \
     }
 
+size_t TIntermSymbol::getChildCount() const
+{
+    return 0;
+}
+
+TIntermNode *TIntermSymbol::getChildNode(size_t index) const
+{
+    UNREACHABLE();
+    return nullptr;
+}
+
+size_t TIntermConstantUnion::getChildCount() const
+{
+    return 0;
+}
+
+TIntermNode *TIntermConstantUnion::getChildNode(size_t index) const
+{
+    UNREACHABLE();
+    return nullptr;
+}
+
+size_t TIntermLoop::getChildCount() const
+{
+    return (mInit ? 1 : 0) + (mCond ? 1 : 0) + (mExpr ? 1 : 0) + (mBody ? 1 : 0);
+}
+
+TIntermNode *TIntermLoop::getChildNode(size_t index) const
+{
+    TIntermNode *children[4];
+    unsigned int childIndex = 0;
+    if (mInit)
+    {
+        children[childIndex] = mInit;
+        ++childIndex;
+    }
+    if (mCond)
+    {
+        children[childIndex] = mCond;
+        ++childIndex;
+    }
+    if (mExpr)
+    {
+        children[childIndex] = mExpr;
+        ++childIndex;
+    }
+    if (mBody)
+    {
+        children[childIndex] = mBody;
+        ++childIndex;
+    }
+    ASSERT(index < childIndex);
+    return children[index];
+}
+
 bool TIntermLoop::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
     ASSERT(original != nullptr);  // This risks replacing multiple children.
@@ -212,10 +267,34 @@ bool TIntermLoop::replaceChildNode(TIntermNode *original, TIntermNode *replaceme
     return false;
 }
 
+size_t TIntermBranch::getChildCount() const
+{
+    return (mExpression ? 1 : 0);
+}
+
+TIntermNode *TIntermBranch::getChildNode(size_t index) const
+{
+    ASSERT(mExpression);
+    ASSERT(index == 0);
+    return mExpression;
+}
+
 bool TIntermBranch::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
     REPLACE_IF_IS(mExpression, TIntermTyped, original, replacement);
     return false;
+}
+
+size_t TIntermSwizzle::getChildCount() const
+{
+    return 1;
+}
+
+TIntermNode *TIntermSwizzle::getChildNode(size_t index) const
+{
+    ASSERT(mOperand);
+    ASSERT(index == 0);
+    return mOperand;
 }
 
 bool TIntermSwizzle::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
@@ -225,11 +304,38 @@ bool TIntermSwizzle::replaceChildNode(TIntermNode *original, TIntermNode *replac
     return false;
 }
 
+size_t TIntermBinary::getChildCount() const
+{
+    return 2;
+}
+
+TIntermNode *TIntermBinary::getChildNode(size_t index) const
+{
+    ASSERT(index < 2);
+    if (index == 0)
+    {
+        return mLeft;
+    }
+    return mRight;
+}
+
 bool TIntermBinary::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
     REPLACE_IF_IS(mLeft, TIntermTyped, original, replacement);
     REPLACE_IF_IS(mRight, TIntermTyped, original, replacement);
     return false;
+}
+
+size_t TIntermUnary::getChildCount() const
+{
+    return 1;
+}
+
+TIntermNode *TIntermUnary::getChildNode(size_t index) const
+{
+    ASSERT(mOperand);
+    ASSERT(index == 0);
+    return mOperand;
 }
 
 bool TIntermUnary::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
@@ -239,10 +345,37 @@ bool TIntermUnary::replaceChildNode(TIntermNode *original, TIntermNode *replacem
     return false;
 }
 
+size_t TIntermInvariantDeclaration::getChildCount() const
+{
+    return 1;
+}
+
+TIntermNode *TIntermInvariantDeclaration::getChildNode(size_t index) const
+{
+    ASSERT(mSymbol);
+    ASSERT(index == 0);
+    return mSymbol;
+}
+
 bool TIntermInvariantDeclaration::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
     REPLACE_IF_IS(mSymbol, TIntermSymbol, original, replacement);
     return false;
+}
+
+size_t TIntermFunctionDefinition::getChildCount() const
+{
+    return 2;
+}
+
+TIntermNode *TIntermFunctionDefinition::getChildNode(size_t index) const
+{
+    ASSERT(index < 2);
+    if (index == 0)
+    {
+        return mPrototype;
+    }
+    return mBody;
 }
 
 bool TIntermFunctionDefinition::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
@@ -252,9 +385,29 @@ bool TIntermFunctionDefinition::replaceChildNode(TIntermNode *original, TIntermN
     return false;
 }
 
+size_t TIntermAggregate::getChildCount() const
+{
+    return mArguments.size();
+}
+
+TIntermNode *TIntermAggregate::getChildNode(size_t index) const
+{
+    return mArguments[index];
+}
+
 bool TIntermAggregate::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
     return replaceChildNodeInternal(original, replacement);
+}
+
+size_t TIntermBlock::getChildCount() const
+{
+    return mStatements.size();
+}
+
+TIntermNode *TIntermBlock::getChildNode(size_t index) const
+{
+    return mStatements[index];
 }
 
 bool TIntermBlock::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
@@ -262,9 +415,30 @@ bool TIntermBlock::replaceChildNode(TIntermNode *original, TIntermNode *replacem
     return replaceChildNodeInternal(original, replacement);
 }
 
+size_t TIntermFunctionPrototype::getChildCount() const
+{
+    return 0;
+}
+
+TIntermNode *TIntermFunctionPrototype::getChildNode(size_t index) const
+{
+    UNREACHABLE();
+    return nullptr;
+}
+
 bool TIntermFunctionPrototype::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
-    return replaceChildNodeInternal(original, replacement);
+    return false;
+}
+
+size_t TIntermDeclaration::getChildCount() const
+{
+    return mDeclarators.size();
+}
+
+TIntermNode *TIntermDeclaration::getChildNode(size_t index) const
+{
+    return mDeclarators[index];
 }
 
 bool TIntermDeclaration::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
@@ -689,12 +863,6 @@ void TIntermBlock::appendStatement(TIntermNode *statement)
     }
 }
 
-void TIntermFunctionPrototype::appendParameter(TIntermSymbol *parameter)
-{
-    ASSERT(parameter != nullptr);
-    mParameters.push_back(parameter);
-}
-
 void TIntermDeclaration::appendDeclarator(TIntermTyped *declarator)
 {
     ASSERT(declarator != nullptr);
@@ -706,12 +874,49 @@ void TIntermDeclaration::appendDeclarator(TIntermTyped *declarator)
     mDeclarators.push_back(declarator);
 }
 
+size_t TIntermTernary::getChildCount() const
+{
+    return 3;
+}
+
+TIntermNode *TIntermTernary::getChildNode(size_t index) const
+{
+    ASSERT(index < 3);
+    if (index == 0)
+    {
+        return mCondition;
+    }
+    if (index == 1)
+    {
+        return mTrueExpression;
+    }
+    return mFalseExpression;
+}
+
 bool TIntermTernary::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
     REPLACE_IF_IS(mCondition, TIntermTyped, original, replacement);
     REPLACE_IF_IS(mTrueExpression, TIntermTyped, original, replacement);
     REPLACE_IF_IS(mFalseExpression, TIntermTyped, original, replacement);
     return false;
+}
+
+size_t TIntermIfElse::getChildCount() const
+{
+    return 1 + (mTrueBlock ? 1 : 0) + (mFalseBlock ? 1 : 0);
+}
+
+TIntermNode *TIntermIfElse::getChildNode(size_t index) const
+{
+    if (index == 0)
+    {
+        return mCondition;
+    }
+    if (mTrueBlock && index == 1)
+    {
+        return mTrueBlock;
+    }
+    return mFalseBlock;
 }
 
 bool TIntermIfElse::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
@@ -722,12 +927,39 @@ bool TIntermIfElse::replaceChildNode(TIntermNode *original, TIntermNode *replace
     return false;
 }
 
+size_t TIntermSwitch::getChildCount() const
+{
+    return 2;
+}
+
+TIntermNode *TIntermSwitch::getChildNode(size_t index) const
+{
+    ASSERT(index < 2);
+    if (index == 0)
+    {
+        return mInit;
+    }
+    return mStatementList;
+}
+
 bool TIntermSwitch::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
 {
     REPLACE_IF_IS(mInit, TIntermTyped, original, replacement);
     REPLACE_IF_IS(mStatementList, TIntermBlock, original, replacement);
     ASSERT(mStatementList);
     return false;
+}
+
+size_t TIntermCase::getChildCount() const
+{
+    return (mCondition ? 1 : 0);
+}
+
+TIntermNode *TIntermCase::getChildNode(size_t index) const
+{
+    ASSERT(index == 0);
+    ASSERT(mCondition);
+    return mCondition;
 }
 
 bool TIntermCase::replaceChildNode(TIntermNode *original, TIntermNode *replacement)
@@ -801,6 +1033,7 @@ TIntermSwizzle::TIntermSwizzle(const TIntermSwizzle &node) : TIntermExpression(n
     ASSERT(operandCopy != nullptr);
     mOperand = operandCopy;
     mSwizzleOffsets = node.mSwizzleOffsets;
+    mHasFoldedDuplicateOffsets = node.mHasFoldedDuplicateOffsets;
 }
 
 TIntermBinary::TIntermBinary(const TIntermBinary &node)
@@ -814,7 +1047,9 @@ TIntermBinary::TIntermBinary(const TIntermBinary &node)
 }
 
 TIntermUnary::TIntermUnary(const TIntermUnary &node)
-    : TIntermOperator(node), mUseEmulatedFunction(node.mUseEmulatedFunction)
+    : TIntermOperator(node),
+      mUseEmulatedFunction(node.mUseEmulatedFunction),
+      mFunction(node.mFunction)
 {
     TIntermTyped *operandCopy = node.mOperand->deepCopy();
     ASSERT(operandCopy != nullptr);
@@ -1047,21 +1282,26 @@ void TIntermUnary::promote()
 TIntermSwizzle::TIntermSwizzle(TIntermTyped *operand, const TVector<int> &swizzleOffsets)
     : TIntermExpression(TType(EbtFloat, EbpUndefined)),
       mOperand(operand),
-      mSwizzleOffsets(swizzleOffsets)
+      mSwizzleOffsets(swizzleOffsets),
+      mHasFoldedDuplicateOffsets(false)
 {
+    ASSERT(mOperand);
     ASSERT(mSwizzleOffsets.size() <= 4);
     promote();
 }
 
-TIntermUnary::TIntermUnary(TOperator op, TIntermTyped *operand)
-    : TIntermOperator(op), mOperand(operand), mUseEmulatedFunction(false)
+TIntermUnary::TIntermUnary(TOperator op, TIntermTyped *operand, const TFunction *function)
+    : TIntermOperator(op), mOperand(operand), mUseEmulatedFunction(false), mFunction(function)
 {
+    ASSERT(mOperand);
     promote();
 }
 
 TIntermBinary::TIntermBinary(TOperator op, TIntermTyped *left, TIntermTyped *right)
     : TIntermOperator(op), mLeft(left), mRight(right), mAddIndexClamp(false)
 {
+    ASSERT(mLeft);
+    ASSERT(mRight);
     promote();
 }
 
@@ -1089,6 +1329,9 @@ TIntermTernary::TIntermTernary(TIntermTyped *cond,
       mTrueExpression(trueExpression),
       mFalseExpression(falseExpression)
 {
+    ASSERT(mCondition);
+    ASSERT(mTrueExpression);
+    ASSERT(mFalseExpression);
     getTypePointer()->setQualifier(
         TIntermTernary::DetermineQualifier(cond, trueExpression, falseExpression));
 }
@@ -1112,6 +1355,7 @@ TIntermLoop::TIntermLoop(TLoopType type,
 TIntermIfElse::TIntermIfElse(TIntermTyped *cond, TIntermBlock *trueB, TIntermBlock *falseB)
     : TIntermNode(), mCondition(cond), mTrueBlock(trueB), mFalseBlock(falseB)
 {
+    ASSERT(mCondition);
     // Prune empty false blocks so that there won't be unnecessary operations done on it.
     if (mFalseBlock && mFalseBlock->getSequence()->empty())
     {
@@ -1122,6 +1366,7 @@ TIntermIfElse::TIntermIfElse(TIntermTyped *cond, TIntermBlock *trueB, TIntermBlo
 TIntermSwitch::TIntermSwitch(TIntermTyped *init, TIntermBlock *statementList)
     : TIntermNode(), mInit(init), mStatementList(statementList)
 {
+    ASSERT(mInit);
     ASSERT(mStatementList);
 }
 
@@ -1173,6 +1418,10 @@ void TIntermSwizzle::promote()
 
 bool TIntermSwizzle::hasDuplicateOffsets() const
 {
+    if (mHasFoldedDuplicateOffsets)
+    {
+        return true;
+    }
     int offsetCount[4] = {0u, 0u, 0u, 0u};
     for (const auto offset : mSwizzleOffsets)
     {
@@ -1183,6 +1432,11 @@ bool TIntermSwizzle::hasDuplicateOffsets() const
         }
     }
     return false;
+}
+
+void TIntermSwizzle::setHasFoldedDuplicateOffsets(bool hasFoldedDuplicateOffsets)
+{
+    mHasFoldedDuplicateOffsets = hasFoldedDuplicateOffsets;
 }
 
 bool TIntermSwizzle::offsetsMatch(int offset) const
@@ -1478,6 +1732,24 @@ const TConstantUnion *TIntermConstantUnion::FoldIndexing(const TType &type,
 
 TIntermTyped *TIntermSwizzle::fold(TDiagnostics * /* diagnostics */)
 {
+    TIntermSwizzle *operandSwizzle = mOperand->getAsSwizzleNode();
+    if (operandSwizzle)
+    {
+        // We need to fold the two swizzles into one, so that repeated swizzling can't cause stack
+        // overflow in ParseContext::checkCanBeLValue().
+        bool hadDuplicateOffsets = operandSwizzle->hasDuplicateOffsets();
+        TVector<int> foldedOffsets;
+        for (int offset : mSwizzleOffsets)
+        {
+            // Offset should already be validated.
+            ASSERT(static_cast<size_t>(offset) < operandSwizzle->mSwizzleOffsets.size());
+            foldedOffsets.push_back(operandSwizzle->mSwizzleOffsets[offset]);
+        }
+        operandSwizzle->mSwizzleOffsets = foldedOffsets;
+        operandSwizzle->setType(getType());
+        operandSwizzle->setHasFoldedDuplicateOffsets(hadDuplicateOffsets);
+        return operandSwizzle;
+    }
     TIntermConstantUnion *operandConstant = mOperand->getAsConstantUnion();
     if (operandConstant == nullptr)
     {
@@ -1616,6 +1888,17 @@ const TConstantUnion *TIntermBinary::getConstantValue() const
     return constIndexingResult;
 }
 
+const ImmutableString &TIntermBinary::getIndexStructFieldName() const
+{
+    ASSERT(mOp == EOpIndexDirectStruct);
+
+    const TType &lhsType        = mLeft->getType();
+    const TStructure *structure = lhsType.getStruct();
+    const int index             = mRight->getAsConstantUnion()->getIConst(0);
+
+    return structure->fields()[index]->name();
+}
+
 TIntermTyped *TIntermUnary::fold(TDiagnostics *diagnostics)
 {
     TConstantUnion *constArray = nullptr;
@@ -1686,6 +1969,32 @@ TIntermTyped *TIntermAggregate::fold(TDiagnostics *diagnostics)
         if (mType.canReplaceWithConstantUnion())
         {
             constArray = getConstantValue();
+            if (constArray && mType.getBasicType() == EbtUInt)
+            {
+                // Check if we converted a negative float to uint and issue a warning in that case.
+                size_t sizeRemaining = mType.getObjectSize();
+                for (TIntermNode *arg : mArguments)
+                {
+                    TIntermTyped *typedArg = arg->getAsTyped();
+                    if (typedArg->getBasicType() == EbtFloat)
+                    {
+                        const TConstantUnion *argValue = typedArg->getConstantValue();
+                        size_t castSize =
+                            std::min(typedArg->getType().getObjectSize(), sizeRemaining);
+                        for (size_t i = 0; i < castSize; ++i)
+                        {
+                            if (argValue[i].getFConst() < 0.0f)
+                            {
+                                // ESSL 3.00.6 section 5.4.1.
+                                diagnostics->warning(
+                                    mLine, "casting a negative float to uint is undefined",
+                                    mType.getBuiltInTypeNameString());
+                            }
+                        }
+                    }
+                    sizeRemaining -= typedArg->getType().getObjectSize();
+                }
+            }
         }
     }
     else if (CanFoldAggregateBuiltInOp(mOp))
@@ -1875,11 +2184,11 @@ const TConstantUnion *TIntermConstantUnion::FoldBinary(TOperator op,
                                 if (lhs < 0 || divisor < 0)
                                 {
                                     // ESSL 3.00.6 section 5.9: Results of modulus are undefined
-                                    // when
-                                    // either one of the operands is negative.
+                                    // when either one of the operands is negative.
                                     diagnostics->warning(line,
                                                          "Negative modulus operator operand "
-                                                         "encountered during constant folding",
+                                                         "encountered during constant folding. "
+                                                         "Results are undefined.",
                                                          "%");
                                     resultArray[i].setIConst(0);
                                 }
@@ -3430,4 +3739,23 @@ TConstantUnion *TIntermConstantUnion::FoldAggregateBuiltIn(TIntermAggregate *agg
     return resultArray;
 }
 
+// TIntermPreprocessorDirective implementation.
+TIntermPreprocessorDirective::TIntermPreprocessorDirective(PreprocessorDirective directive,
+                                                           ImmutableString command)
+    : mDirective(directive), mCommand(std::move(command))
+{
+}
+
+TIntermPreprocessorDirective::~TIntermPreprocessorDirective() = default;
+
+size_t TIntermPreprocessorDirective::getChildCount() const
+{
+    return 0;
+}
+
+TIntermNode *TIntermPreprocessorDirective::getChildNode(size_t index) const
+{
+    UNREACHABLE();
+    return nullptr;
+}
 }  // namespace sh

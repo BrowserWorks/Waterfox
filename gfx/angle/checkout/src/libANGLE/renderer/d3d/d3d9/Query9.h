@@ -18,17 +18,17 @@ class Renderer9;
 class Query9 : public QueryImpl
 {
   public:
-    Query9(Renderer9 *renderer, GLenum type);
+    Query9(Renderer9 *renderer, gl::QueryType type);
     ~Query9() override;
 
-    gl::Error begin() override;
-    gl::Error end() override;
-    gl::Error queryCounter() override;
-    gl::Error getResult(GLint *params) override;
-    gl::Error getResult(GLuint *params) override;
-    gl::Error getResult(GLint64 *params) override;
-    gl::Error getResult(GLuint64 *params) override;
-    gl::Error isResultAvailable(bool *available) override;
+    gl::Error begin(const gl::Context *context) override;
+    gl::Error end(const gl::Context *context) override;
+    gl::Error queryCounter(const gl::Context *context) override;
+    gl::Error getResult(const gl::Context *context, GLint *params) override;
+    gl::Error getResult(const gl::Context *context, GLuint *params) override;
+    gl::Error getResult(const gl::Context *context, GLint64 *params) override;
+    gl::Error getResult(const gl::Context *context, GLuint64 *params) override;
+    gl::Error isResultAvailable(const gl::Context *context, bool *available) override;
 
   private:
     gl::Error testQuery();
@@ -36,6 +36,7 @@ class Query9 : public QueryImpl
     template <typename T>
     gl::Error getResultBase(T *params);
 
+    unsigned int mGetDataAttemptCount;
     GLuint64 mResult;
     bool mQueryFinished;
 

@@ -23,11 +23,12 @@ void GL_APIENTRY BeginQuery(GLenum target, GLuint id)
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::BeginQuery>(target, id);
+        QueryType targetPacked = FromGLenum<QueryType>(target);
+        context->gatherParams<EntryPoint::BeginQuery>(targetPacked, id);
 
-        if (context->skipValidation() || ValidateBeginQuery(context, target, id))
+        if (context->skipValidation() || ValidateBeginQuery(context, targetPacked, id))
         {
-            context->beginQuery(target, id);
+            context->beginQuery(targetPacked, id);
         }
     }
 }
@@ -39,11 +40,13 @@ void GL_APIENTRY BeginTransformFeedback(GLenum primitiveMode)
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::BeginTransformFeedback>(primitiveMode);
+        PrimitiveMode primitiveModePacked = FromGLenum<PrimitiveMode>(primitiveMode);
+        context->gatherParams<EntryPoint::BeginTransformFeedback>(primitiveModePacked);
 
-        if (context->skipValidation() || ValidateBeginTransformFeedback(context, primitiveMode))
+        if (context->skipValidation() ||
+            ValidateBeginTransformFeedback(context, primitiveModePacked))
         {
-            context->beginTransformFeedback(primitiveMode);
+            context->beginTransformFeedback(primitiveModePacked);
         }
     }
 }
@@ -277,14 +280,15 @@ void GL_APIENTRY CompressedTexImage3D(GLenum target,
     Context *context = GetValidGlobalContext();
     if (context)
     {
+        TextureType targetPacked = FromGLenum<TextureType>(target);
         context->gatherParams<EntryPoint::CompressedTexImage3D>(
-            target, level, internalformat, width, height, depth, border, imageSize, data);
+            targetPacked, level, internalformat, width, height, depth, border, imageSize, data);
 
         if (context->skipValidation() ||
-            ValidateCompressedTexImage3D(context, target, level, internalformat, width, height,
-                                         depth, border, imageSize, data))
+            ValidateCompressedTexImage3D(context, targetPacked, level, internalformat, width,
+                                         height, depth, border, imageSize, data))
         {
-            context->compressedTexImage3D(target, level, internalformat, width, height, depth,
+            context->compressedTexImage3D(targetPacked, level, internalformat, width, height, depth,
                                           border, imageSize, data);
         }
     }
@@ -311,15 +315,16 @@ void GL_APIENTRY CompressedTexSubImage3D(GLenum target,
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::CompressedTexSubImage3D>(target, level, xoffset, yoffset,
-                                                                   zoffset, width, height, depth,
-                                                                   format, imageSize, data);
+        TextureType targetPacked = FromGLenum<TextureType>(target);
+        context->gatherParams<EntryPoint::CompressedTexSubImage3D>(targetPacked, level, xoffset,
+                                                                   yoffset, zoffset, width, height,
+                                                                   depth, format, imageSize, data);
 
         if (context->skipValidation() ||
-            ValidateCompressedTexSubImage3D(context, target, level, xoffset, yoffset, zoffset,
+            ValidateCompressedTexSubImage3D(context, targetPacked, level, xoffset, yoffset, zoffset,
                                             width, height, depth, format, imageSize, data))
         {
-            context->compressedTexSubImage3D(target, level, xoffset, yoffset, zoffset, width,
+            context->compressedTexSubImage3D(targetPacked, level, xoffset, yoffset, zoffset, width,
                                              height, depth, format, imageSize, data);
         }
     }
@@ -372,14 +377,15 @@ void GL_APIENTRY CopyTexSubImage3D(GLenum target,
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::CopyTexSubImage3D>(target, level, xoffset, yoffset,
+        TextureType targetPacked = FromGLenum<TextureType>(target);
+        context->gatherParams<EntryPoint::CopyTexSubImage3D>(targetPacked, level, xoffset, yoffset,
                                                              zoffset, x, y, width, height);
 
         if (context->skipValidation() ||
-            ValidateCopyTexSubImage3D(context, target, level, xoffset, yoffset, zoffset, x, y,
+            ValidateCopyTexSubImage3D(context, targetPacked, level, xoffset, yoffset, zoffset, x, y,
                                       width, height))
         {
-            context->copyTexSubImage3D(target, level, xoffset, yoffset, zoffset, x, y, width,
+            context->copyTexSubImage3D(targetPacked, level, xoffset, yoffset, zoffset, x, y, width,
                                        height);
         }
     }
@@ -473,12 +479,14 @@ void GL_APIENTRY DrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GL
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::DrawArraysInstanced>(mode, first, count, instancecount);
+        PrimitiveMode modePacked = FromGLenum<PrimitiveMode>(mode);
+        context->gatherParams<EntryPoint::DrawArraysInstanced>(modePacked, first, count,
+                                                               instancecount);
 
         if (context->skipValidation() ||
-            ValidateDrawArraysInstanced(context, mode, first, count, instancecount))
+            ValidateDrawArraysInstanced(context, modePacked, first, count, instancecount))
         {
-            context->drawArraysInstanced(mode, first, count, instancecount);
+            context->drawArraysInstanced(modePacked, first, count, instancecount);
         }
     }
 }
@@ -513,13 +521,14 @@ void GL_APIENTRY DrawElementsInstanced(GLenum mode,
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::DrawElementsInstanced>(mode, count, type, indices,
+        PrimitiveMode modePacked = FromGLenum<PrimitiveMode>(mode);
+        context->gatherParams<EntryPoint::DrawElementsInstanced>(modePacked, count, type, indices,
                                                                  instancecount);
 
         if (context->skipValidation() ||
-            ValidateDrawElementsInstanced(context, mode, count, type, indices, instancecount))
+            ValidateDrawElementsInstanced(context, modePacked, count, type, indices, instancecount))
         {
-            context->drawElementsInstanced(mode, count, type, indices, instancecount);
+            context->drawElementsInstanced(modePacked, count, type, indices, instancecount);
         }
     }
 }
@@ -539,13 +548,14 @@ void GL_APIENTRY DrawRangeElements(GLenum mode,
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::DrawRangeElements>(mode, start, end, count, type,
+        PrimitiveMode modePacked = FromGLenum<PrimitiveMode>(mode);
+        context->gatherParams<EntryPoint::DrawRangeElements>(modePacked, start, end, count, type,
                                                              indices);
 
         if (context->skipValidation() ||
-            ValidateDrawRangeElements(context, mode, start, end, count, type, indices))
+            ValidateDrawRangeElements(context, modePacked, start, end, count, type, indices))
         {
-            context->drawRangeElements(mode, start, end, count, type, indices);
+            context->drawRangeElements(modePacked, start, end, count, type, indices);
         }
     }
 }
@@ -557,11 +567,12 @@ void GL_APIENTRY EndQuery(GLenum target)
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::EndQuery>(target);
+        QueryType targetPacked = FromGLenum<QueryType>(target);
+        context->gatherParams<EntryPoint::EndQuery>(targetPacked);
 
-        if (context->skipValidation() || ValidateEndQuery(context, target))
+        if (context->skipValidation() || ValidateEndQuery(context, targetPacked))
         {
-            context->endQuery(target);
+            context->endQuery(targetPacked);
         }
     }
 }
@@ -960,11 +971,12 @@ void GL_APIENTRY GetQueryiv(GLenum target, GLenum pname, GLint *params)
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::GetQueryiv>(target, pname, params);
+        QueryType targetPacked = FromGLenum<QueryType>(target);
+        context->gatherParams<EntryPoint::GetQueryiv>(targetPacked, pname, params);
 
-        if (context->skipValidation() || ValidateGetQueryiv(context, target, pname, params))
+        if (context->skipValidation() || ValidateGetQueryiv(context, targetPacked, pname, params))
         {
-            context->getQueryiv(target, pname, params);
+            context->getQueryiv(targetPacked, pname, params);
         }
     }
 }
@@ -1533,15 +1545,16 @@ void GL_APIENTRY TexImage3D(GLenum target,
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::TexImage3D>(target, level, internalformat, width, height,
-                                                      depth, border, format, type, pixels);
+        TextureType targetPacked = FromGLenum<TextureType>(target);
+        context->gatherParams<EntryPoint::TexImage3D>(targetPacked, level, internalformat, width,
+                                                      height, depth, border, format, type, pixels);
 
         if (context->skipValidation() ||
-            ValidateTexImage3D(context, target, level, internalformat, width, height, depth, border,
-                               format, type, pixels))
+            ValidateTexImage3D(context, targetPacked, level, internalformat, width, height, depth,
+                               border, format, type, pixels))
         {
-            context->texImage3D(target, level, internalformat, width, height, depth, border, format,
-                                type, pixels);
+            context->texImage3D(targetPacked, level, internalformat, width, height, depth, border,
+                                format, type, pixels);
         }
     }
 }
@@ -1557,13 +1570,14 @@ TexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::TexStorage2D>(target, levels, internalformat, width,
+        TextureType targetPacked = FromGLenum<TextureType>(target);
+        context->gatherParams<EntryPoint::TexStorage2D>(targetPacked, levels, internalformat, width,
                                                         height);
 
         if (context->skipValidation() ||
-            ValidateTexStorage2D(context, target, levels, internalformat, width, height))
+            ValidateTexStorage2D(context, targetPacked, levels, internalformat, width, height))
         {
-            context->texStorage2D(target, levels, internalformat, width, height);
+            context->texStorage2D(targetPacked, levels, internalformat, width, height);
         }
     }
 }
@@ -1583,13 +1597,14 @@ void GL_APIENTRY TexStorage3D(GLenum target,
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::TexStorage3D>(target, levels, internalformat, width,
+        TextureType targetPacked = FromGLenum<TextureType>(target);
+        context->gatherParams<EntryPoint::TexStorage3D>(targetPacked, levels, internalformat, width,
                                                         height, depth);
 
-        if (context->skipValidation() ||
-            ValidateTexStorage3D(context, target, levels, internalformat, width, height, depth))
+        if (context->skipValidation() || ValidateTexStorage3D(context, targetPacked, levels,
+                                                              internalformat, width, height, depth))
         {
-            context->texStorage3D(target, levels, internalformat, width, height, depth);
+            context->texStorage3D(targetPacked, levels, internalformat, width, height, depth);
         }
     }
 }
@@ -1615,15 +1630,17 @@ void GL_APIENTRY TexSubImage3D(GLenum target,
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        context->gatherParams<EntryPoint::TexSubImage3D>(
-            target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+        TextureType targetPacked = FromGLenum<TextureType>(target);
+        context->gatherParams<EntryPoint::TexSubImage3D>(targetPacked, level, xoffset, yoffset,
+                                                         zoffset, width, height, depth, format,
+                                                         type, pixels);
 
         if (context->skipValidation() ||
-            ValidateTexSubImage3D(context, target, level, xoffset, yoffset, zoffset, width, height,
-                                  depth, format, type, pixels))
+            ValidateTexSubImage3D(context, targetPacked, level, xoffset, yoffset, zoffset, width,
+                                  height, depth, format, type, pixels))
         {
-            context->texSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth,
-                                   format, type, pixels);
+            context->texSubImage3D(targetPacked, level, xoffset, yoffset, zoffset, width, height,
+                                   depth, format, type, pixels);
         }
     }
 }

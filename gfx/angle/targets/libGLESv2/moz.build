@@ -20,7 +20,7 @@ DEFINES['LIBANGLE_IMPLEMENTATION'] = True
 DEFINES['LIBGLESV2_IMPLEMENTATION'] = True
 DEFINES['NOMINMAX'] = True
 #DEFINES['NO_TCMALLOC'] = True
-DEFINES['NTDDI_VERSION'] = '0x0A000000'
+DEFINES['NTDDI_VERSION'] = '0x0A000002'
 #DEFINES['PSAPI_VERSION'] = '1'
 #DEFINES['SAFE_BROWSING_CSD'] = True
 #DEFINES['SAFE_BROWSING_DB_LOCAL'] = True
@@ -29,6 +29,7 @@ DEFINES['UNICODE'] = True
 #DEFINES['V8_DEPRECATION_WARNINGS'] = True
 #DEFINES['WIN32'] = True
 #DEFINES['WIN32_LEAN_AND_MEAN'] = True
+#DEFINES['WINAPI_FAMILY'] = 'WINAPI_FAMILY_DESKTOP_APP'
 #DEFINES['WINVER'] = '0x0A00'
 #DEFINES['WTF_USE_DYNAMIC_ANNOTATIONS'] = '1'
 DEFINES['_ATL_NO_OPENGL'] = True
@@ -43,17 +44,14 @@ DEFINES['_UNICODE'] = True
 #DEFINES['_WIN32_WINNT'] = '0x0A00'
 #DEFINES['_WINDOWS'] = True
 #DEFINES['__STD_C'] = True
-#DEFINES['constexpr14'] = 'constexpr'
 
 LOCAL_INCLUDES += [
-    '../../checkout/',
     '../../checkout/include/',
-    '../../checkout/out/gen/',
     '../../checkout/out/gen/angle/',
     '../../checkout/src/',
     '../../checkout/src/common/third_party/base/',
 ]
-#
+
 #CXXFLAGS += [
 #    '/bigobj',
 #    '/d2FastFail',
@@ -114,12 +112,11 @@ SOURCES += [
     '../../checkout/src/libGLESv2/entry_points_egl_ext.cpp',
     '../../checkout/src/libGLESv2/entry_points_gles_1_0_autogen.cpp',
     '../../checkout/src/libGLESv2/entry_points_gles_2_0_autogen.cpp',
-    '../../checkout/src/libGLESv2/entry_points_gles_2_0_ext.cpp',
     '../../checkout/src/libGLESv2/entry_points_gles_3_0_autogen.cpp',
     '../../checkout/src/libGLESv2/entry_points_gles_3_1_autogen.cpp',
     '../../checkout/src/libGLESv2/entry_points_gles_ext_autogen.cpp',
     '../../checkout/src/libGLESv2/global_state.cpp',
-    '../../checkout/src/libGLESv2/libGLESv2.cpp',
+    '../../checkout/src/libGLESv2/libGLESv2_autogen.cpp',
     '../../checkout/src/libGLESv2/proc_table_autogen.cpp',
 ]
 
@@ -159,10 +156,10 @@ OS_LIBS += [
     'winspool',
     'ws2_32',
 ]
-#
+
 #LDFLAGS += [
 #    '/DEBUG',
-#    '/DYNAMICBASE:NO',
+#    '/DYNAMICBASE',
 #    '/fastfail',
 #    '/FIXED:NO',
 #    '/ignore:4199',
@@ -173,7 +170,7 @@ OS_LIBS += [
 #    '/SUBSYSTEM:CONSOLE,5.02',
 #    '/WX',
 #]
-DEFFILE = SRCDIR + '/../../checkout/src/libGLESv2/libGLESv2.def'
-RCFILE = '../../checkout/src/libGLESv2/libGLESv2.rc'
 
+DEFFILE = SRCDIR + '/../../checkout/src/libGLESv2/libGLESv2_autogen.def'
+RCFILE = '../../checkout/src/libGLESv2/libGLESv2.rc'
 GeckoSharedLibrary('libGLESv2', linkage=None)

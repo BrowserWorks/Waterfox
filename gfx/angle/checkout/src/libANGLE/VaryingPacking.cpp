@@ -292,10 +292,13 @@ bool VaryingPacking::collectAndPackUserVaryings(gl::InfoLog &infoLog,
         const sh::Varying *output = ref.second.fragment;
 
         // Only pack statically used varyings that have a matched input or output, plus special
-        // builtins.
+        // builtins. Note that we pack all statically used user-defined varyings even if they are
+        // not active. GLES specs are a bit vague on whether it's allowed to only pack active
+        // varyings, though GLES 3.1 spec section 11.1.2.1 says that "device-dependent
+        // optimizations" may be used to make vertex shader outputs fit.
         if ((input && output && output->staticUse) ||
-            (input && input->isBuiltIn() && input->staticUse) ||
-            (output && output->isBuiltIn() && output->staticUse))
+            (input && input->isBuiltIn() && input->active) ||
+            (output && output->isBuiltIn() && output->active))
         {
             const sh::Varying *varying = output ? output : input;
 
@@ -315,26 +318,27 @@ bool VaryingPacking::collectAndPackUserVaryings(gl::InfoLog &infoLog,
                     for (const auto &field : varying->fields)
                     {
                         ASSERT(!field.isStruct() && !field.isArray());
-                        mPackedVaryings.push_back(
-                            PackedVarying(field, interpolation, varying->name));
+                        mPackedVaryings.emplace_back(field, interpolation, varying->name);
                         uniqueFullNames.insert(mPackedVaryings.back().fullName());
                     }
                 }
                 else
                 {
-                    mPackedVaryings.push_back(PackedVarying(*varying, interpolation));
+                    mPackedVaryings.emplace_back(*varying, interpolation);
                     uniqueFullNames.insert(mPackedVaryings.back().fullName());
                 }
                 continue;
             }
         }
 
-        // Keep Transform FB varyings in the merged list always.
+        // If the varying is not used in the VS, we know it is inactive.
         if (!input)
         {
+            mInactiveVaryingNames.push_back(ref.first);
             continue;
         }
 
+        // Keep Transform FB varyings in the merged list always.
         for (const std::string &tfVarying : tfVaryings)
         {
             std::vector<unsigned int> subscripts;
@@ -381,17 +385,21 @@ bool VaryingPacking::collectAndPackUserVaryings(gl::InfoLog &infoLog,
                 }
             }
         }
+
+        if (uniqueFullNames.count(ref.first) == 0)
+        {
+            mInactiveVaryingNames.push_back(ref.first);
+        }
     }
 
     std::sort(mPackedVaryings.begin(), mPackedVaryings.end(), ComparePackedVarying);
 
-    return packUserVaryings(infoLog, mPackedVaryings, tfVaryings);
+    return packUserVaryings(infoLog, mPackedVaryings);
 }
 
 // See comment on packVarying.
 bool VaryingPacking::packUserVaryings(gl::InfoLog &infoLog,
-                                      const std::vector<PackedVarying> &packedVaryings,
-                                      const std::vector<std::string> &transformFeedbackVaryings)
+                                      const std::vector<PackedVarying> &packedVaryings)
 {
 
     // "Variables are packed into the registers one at a time so that they each occupy a contiguous
@@ -416,14 +424,11 @@ bool VaryingPacking::packUserVaryings(gl::InfoLog &infoLog,
     // Sort the packed register list
     std::sort(mRegisterList.begin(), mRegisterList.end());
 
-    // Assign semantic indices
-    for (unsigned int semanticIndex = 0;
-         semanticIndex < static_cast<unsigned int>(mRegisterList.size()); ++semanticIndex)
-    {
-        mRegisterList[semanticIndex].semanticIndex = semanticIndex;
-    }
-
     return true;
 }
 
+const std::vector<std::string> &VaryingPacking::getInactiveVaryingNames() const
+{
+    return mInactiveVaryingNames;
+}
 }  // namespace rx

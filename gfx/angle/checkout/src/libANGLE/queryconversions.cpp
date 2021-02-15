@@ -10,8 +10,8 @@
 
 #include <vector>
 
-#include "libANGLE/Context.h"
 #include "common/utilities.h"
+#include "libANGLE/Context.h"
 
 namespace gl
 {
@@ -31,14 +31,23 @@ QueryT CastFromStateValueToInt(GLenum pname, NativeT value)
 
     if (nativeType == GL_FLOAT)
     {
-        // RGBA color values and DepthRangeF values are converted to integer using Equation 2.4 from Table 4.5
-        if (pname == GL_DEPTH_RANGE || pname == GL_COLOR_CLEAR_VALUE || pname == GL_DEPTH_CLEAR_VALUE || pname == GL_BLEND_COLOR)
+        // RGBA color values and DepthRangeF values are converted to integer using Equation 2.4 from
+        // Table 4.5
+        switch (pname)
         {
-            return clampCast<QueryT>(ExpandFloatToInteger(static_cast<GLfloat>(value)));
-        }
-        else
-        {
-            return clampCast<QueryT>(std::round(value));
+            case GL_DEPTH_RANGE:
+            case GL_COLOR_CLEAR_VALUE:
+            case GL_DEPTH_CLEAR_VALUE:
+            case GL_BLEND_COLOR:
+            // GLES1 emulation:
+            // Also, several GLES1.x values need to be converted to integer with
+            // ExpandFloatToInteger rather than rounding. See GLES 1.1 spec 6.1.2 "Data
+            // Conversions".
+            case GL_ALPHA_TEST_REF:
+            case GL_CURRENT_COLOR:
+                return clampCast<QueryT>(ExpandFloatToInteger(static_cast<GLfloat>(value)));
+            default:
+                return clampCast<QueryT>(std::round(value));
         }
     }
 
@@ -80,6 +89,8 @@ template GLfloat CastFromGLintStateValue<GLfloat, GLenum>(GLenum pname, GLenum v
 template GLint CastFromGLintStateValue<GLint, GLenum>(GLenum pname, GLenum value);
 template GLint64 CastFromGLintStateValue<GLint64, GLenum>(GLenum pname, GLenum value);
 template GLuint CastFromGLintStateValue<GLuint, GLenum>(GLenum pname, GLenum value);
+template GLfloat CastFromGLintStateValue<GLfloat, GLint>(GLenum pname, GLint value);
+template GLint CastFromGLintStateValue<GLint, GLint>(GLenum pname, GLint value);
 template GLfloat CastFromGLintStateValue<GLfloat, bool>(GLenum pname, bool value);
 template GLuint CastFromGLintStateValue<GLuint, bool>(GLenum pname, bool value);
 template GLint CastFromGLintStateValue<GLint, bool>(GLenum pname, bool value);
@@ -151,8 +162,11 @@ template GLuint CastQueryValueTo<GLuint, GLint>(GLenum pname, GLint value);
 template GLuint CastQueryValueTo<GLuint, GLfloat>(GLenum pname, GLfloat value);
 
 template <typename QueryT>
-void CastStateValues(Context *context, GLenum nativeType, GLenum pname,
-                     unsigned int numParams, QueryT *outParams)
+void CastStateValues(Context *context,
+                     GLenum nativeType,
+                     GLenum pname,
+                     unsigned int numParams,
+                     QueryT *outParams)
 {
     if (nativeType == GL_INT)
     {
@@ -171,7 +185,8 @@ void CastStateValues(Context *context, GLenum nativeType, GLenum pname,
 
         for (unsigned int i = 0; i < numParams; ++i)
         {
-            outParams[i] = (boolParams[i] == GL_FALSE ? static_cast<QueryT>(0) : static_cast<QueryT>(1));
+            outParams[i] =
+                (boolParams[i] == GL_FALSE ? static_cast<QueryT>(0) : static_cast<QueryT>(1));
         }
     }
     else if (nativeType == GL_FLOAT)
@@ -194,7 +209,8 @@ void CastStateValues(Context *context, GLenum nativeType, GLenum pname,
             outParams[i] = CastFromStateValue<QueryT>(pname, int64Params[i]);
         }
     }
-    else UNREACHABLE();
+    else
+        UNREACHABLE();
 }
 
 // Explicit template instantiation (how we export template functions in different files)

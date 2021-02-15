@@ -11,6 +11,7 @@
 #define LIBANGLE_COMPILER_H_
 
 #include "GLSLANG/ShaderLang.h"
+#include "common/PackedEnums.h"
 #include "libANGLE/Error.h"
 #include "libANGLE/RefCountObject.h"
 
@@ -29,9 +30,9 @@ class Compiler final : public RefCountObjectNoID
   public:
     Compiler(rx::GLImplFactory *implFactory, const ContextState &data);
 
-    ShHandle getCompilerHandle(GLenum type);
+    ShHandle getCompilerHandle(ShaderType shaderType);
     ShShaderOutput getShaderOutputType() const { return mOutputType; }
-    const std::string &getBuiltinResourcesString(GLenum type);
+    const std::string &getBuiltinResourcesString(ShaderType type);
 
   private:
     ~Compiler() override;
@@ -40,12 +41,9 @@ class Compiler final : public RefCountObjectNoID
     ShShaderOutput mOutputType;
     ShBuiltInResources mResources;
 
-    ShHandle mFragmentCompiler;
-    ShHandle mVertexCompiler;
-    ShHandle mComputeCompiler;
-    ShHandle mGeometryCompiler;
+    ShaderMap<ShHandle> mShaderCompilers;
 };
 
 }  // namespace gl
 
-#endif // LIBANGLE_COMPILER_H_
+#endif  // LIBANGLE_COMPILER_H_

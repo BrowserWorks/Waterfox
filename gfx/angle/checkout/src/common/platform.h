@@ -84,7 +84,7 @@
 #   undef far
 #endif
 
-#if defined(_MSC_VER) && !defined(_M_ARM)
+#if defined(_MSC_VER) && !defined(_M_ARM) && !defined(_M_ARM64)
 #include <intrin.h>
 #define ANGLE_USE_SSE
 #elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
@@ -100,5 +100,16 @@
 // The MemoryBarrier function name collides with a macro under Windows
 // We will undef the macro so that the function name does not get replaced
 #undef MemoryBarrier
+
+// Macro for hinting that an expression is likely to be true/false.
+#if !defined(ANGLE_LIKELY) || !defined(ANGLE_UNLIKELY)
+#if defined(__GNUC__) || defined(__clang__)
+#define ANGLE_LIKELY(x) __builtin_expect(!!(x), 1)
+#define ANGLE_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define ANGLE_LIKELY(x) (x)
+#define ANGLE_UNLIKELY(x) (x)
+#endif  // defined(__GNUC__) || defined(__clang__)
+#endif  // !defined(ANGLE_LIKELY) || !defined(ANGLE_UNLIKELY)
 
 #endif // COMMON_PLATFORM_H_
