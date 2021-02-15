@@ -100,4 +100,5 @@ FINAL_TARGET_FILES.features += [
     'langpack-xh@waterfox.xpi',
     'langpack-zh-CN@waterfox.xpi',
     'langpack-zh-TW@waterfox.xpi',
+    'zakius@polly.xpi',
 ]
