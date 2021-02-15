@@ -9636,6 +9636,13 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
     loadInfo->SetHasValidUserGestureActivation(true);
   }
 
+  // if this is an iframe load then store if it's the inital frame src load
+  if (nsContentUtils::InternalContentPolicyTypeToExternal(contentPolicyType) ==
+      nsIContentPolicy::TYPE_SUBDOCUMENT) {
+    loadInfo->SetOriginalFrameSrcLoad(
+        aLoadState->HasLoadFlags(INTERNAL_LOAD_FLAGS_ORIGINAL_FRAME_SRC));
+  }
+
   /* Get the cache Key from SH */
   uint32_t cacheKey = 0;
   if (mLSHE) {
