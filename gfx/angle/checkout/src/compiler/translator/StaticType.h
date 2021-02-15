@@ -25,62 +25,62 @@ namespace Helpers
 // Generation and static allocation of type mangled name values.
 //
 
-// Size of the maximum possible constexpr-generated mangled name.
+// Size of the constexpr-generated mangled name.
 // If this value is too small, the compiler will produce errors.
-static constexpr size_t kStaticMangledNameMaxLength = 10;
+static constexpr size_t kStaticMangledNameLength = 2;
 
 // Type which holds the mangled names for constexpr-generated TTypes.
 // This simple struct is needed so that a char array can be returned by value.
 struct StaticMangledName
 {
     // If this array is too small, the compiler will produce errors.
-    char name[kStaticMangledNameMaxLength + 1] = {};
+    char name[kStaticMangledNameLength + 1] = {};
 };
 
 // Generates a mangled name for a TType given its parameters.
-static constexpr14 StaticMangledName BuildStaticMangledName(TBasicType basicType,
-                                                     TPrecision precision,
-                                                     TQualifier qualifier,
-                                                     unsigned char primarySize,
-                                                     unsigned char secondarySize)
+constexpr StaticMangledName BuildStaticMangledName(TBasicType basicType,
+                                                   TPrecision precision,
+                                                   TQualifier qualifier,
+                                                   unsigned char primarySize,
+                                                   unsigned char secondarySize)
 {
     StaticMangledName name = {};
-    // When this function is executed constexpr (should be always),
-    // name.name[at] is guaranteed by the compiler to never go out of bounds.
-    size_t at = 0;
-
-    bool isMatrix = primarySize > 1 && secondarySize > 1;
-    bool isVector = primarySize > 1 && secondarySize == 1;
-
-    if (isMatrix)
-    {
-        name.name[at++] = 'm';
-    }
-    else if (isVector)
-    {
-        name.name[at++] = 'v';
-    }
-
-    {
-        const char *basicMangledName = GetBasicMangledName(basicType);
-        for (size_t i = 0; basicMangledName[i] != '\0'; ++i)
-        {
-            name.name[at++] = basicMangledName[i];
-        }
-    }
-
-    name.name[at++] = '0' + primarySize;
-    if (isMatrix)
-    {
-        name.name[at++] = 'x';
-        name.name[at++] = '0' + secondarySize;
-    }
-
-    name.name[at++] = ';';
-
-    name.name[at] = '\0';
+    name.name[0]           = TType::GetSizeMangledName(primarySize, secondarySize);
+    name.name[1]           = GetBasicMangledName(basicType);
+    name.name[2]           = '\0';
     return name;
 }
+
+// This "variable" contains the mangled names for every constexpr-generated TType.
+// If kMangledNameInstance<B, P, Q, PS, SS> is used anywhere (specifally
+// in kInstance, below), this is where the appropriate type will be stored.
+template <TBasicType basicType,
+          TPrecision precision,
+          TQualifier qualifier,
+          unsigned char primarySize,
+          unsigned char secondarySize>
+static constexpr StaticMangledName kMangledNameInstance =
+    BuildStaticMangledName(basicType, precision, qualifier, primarySize, secondarySize);
+
+//
+// Generation and static allocation of TType values.
+//
+
+// This "variable" contains every constexpr-generated TType.
+// If kInstance<B, P, Q, PS, SS> is used anywhere (specifally
+// in Get, below), this is where the appropriate type will be stored.
+template <TBasicType basicType,
+          TPrecision precision,
+          TQualifier qualifier,
+          unsigned char primarySize,
+          unsigned char secondarySize>
+static constexpr TType kInstance =
+    TType(basicType,
+          precision,
+          qualifier,
+          primarySize,
+          secondarySize,
+          kMangledNameInstance<basicType, precision, qualifier, primarySize, secondarySize>.name);
 
 }  // namespace Helpers
 
@@ -93,23 +93,11 @@ template <TBasicType basicType,
           TQualifier qualifier,
           unsigned char primarySize,
           unsigned char secondarySize>
-constexpr14 const TType *Get()
+constexpr const TType *Get()
 {
     static_assert(1 <= primarySize && primarySize <= 4, "primarySize out of bounds");
     static_assert(1 <= secondarySize && secondarySize <= 4, "secondarySize out of bounds");
-
-    static constexpr14 const auto kMangledNameInstance =
-        Helpers::BuildStaticMangledName(basicType, precision, qualifier, primarySize, secondarySize);
-
-    static constexpr14 const TType kInstance =
-        TType(basicType,
-              precision,
-              qualifier,
-              primarySize,
-              secondarySize,
-              kMangledNameInstance.name);
-
-    return &kInstance;
+    return &Helpers::kInstance<basicType, precision, qualifier, primarySize, secondarySize>;
 }
 
 //
@@ -117,7 +105,7 @@ constexpr14 const TType *Get()
 //
 
 template <TBasicType basicType, unsigned char primarySize = 1, unsigned char secondarySize = 1>
-constexpr14 const TType *GetBasic()
+constexpr const TType *GetBasic()
 {
     return Get<basicType, EbpUndefined, EvqGlobal, primarySize, secondarySize>();
 }
@@ -141,7 +129,7 @@ template <TBasicType basicType,
           TPrecision precision,
           TQualifier qualifier,
           unsigned char secondarySize>
-constexpr14 const TType *GetForVecMatHelper(unsigned char primarySize)
+constexpr const TType *GetForVecMatHelper(unsigned char primarySize)
 {
     static_assert(basicType == EbtFloat || basicType == EbtInt || basicType == EbtUInt ||
                       basicType == EbtBool,
@@ -167,7 +155,7 @@ constexpr14 const TType *GetForVecMatHelper(unsigned char primarySize)
 template <TBasicType basicType,
           TPrecision precision = EbpUndefined,
           TQualifier qualifier = EvqGlobal>
-constexpr14 const TType *GetForVecMat(unsigned char primarySize, unsigned char secondarySize = 1)
+constexpr const TType *GetForVecMat(unsigned char primarySize, unsigned char secondarySize = 1)
 {
     static_assert(basicType == EbtFloat || basicType == EbtInt || basicType == EbtUInt ||
                       basicType == EbtBool,
@@ -189,7 +177,7 @@ constexpr14 const TType *GetForVecMat(unsigned char primarySize, unsigned char s
 }
 
 template <TBasicType basicType, TPrecision precision = EbpUndefined>
-constexpr14 const TType *GetForVec(TQualifier qualifier, unsigned char size)
+constexpr const TType *GetForVec(TQualifier qualifier, unsigned char size)
 {
     switch (qualifier)
     {
@@ -202,12 +190,6 @@ constexpr14 const TType *GetForVec(TQualifier qualifier, unsigned char size)
             return GetBasic<EbtVoid>();
     }
 }
-
-const TType *GetForFloatImage(TBasicType basicType);
-
-const TType *GetForIntImage(TBasicType basicType);
-
-const TType *GetForUintImage(TBasicType basicType);
 
 }  // namespace StaticType
 

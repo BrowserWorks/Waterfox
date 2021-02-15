@@ -1,0 +1,29 @@
+commit b46b71ba277b13a7b72075766676a9698a665efd
+Author: Jeff Gilbert <jgilbert@mozilla.com>
+Date:   Tue Sep 18 17:03:59 2018 -0700
+
+    Remove unused include global_state.h from validationEGL.cpp.
+    
+    Bug: angleproject:2825
+    Change-Id: I34a7c520d31cf0a9321d5599046159ef9bf58be5
+
+Cherries picked
+================================================================================
+Merge base from: origin/chromium/3538
+
+commit 05c729f336efb544e224444c2485a412bd3a66b3
+Author: Jamie Madill <jmadill@chromium.org>
+Date:   Fri Sep 7 17:43:32 2018 -0400
+
+    Pass unpack buffer as explicit parameter to texSubImage.
+    
+    This allows us to override it in the incomplete texture init. Any
+    back-end that used incomplete textures was vulnerable to a bug where
+    the unpack buffer would be used to initialize the incomplete texture.
+    
+    Cherry-picked to the chromium/3538 branch cleanly.
+    
+    Bug: chromium:880906
+    Change-Id: Iead2a8c57674e8962915902d6d5896f44fe8ca88
+    Reviewed-on: https://chromium-review.googlesource.com/1227033
+    Reviewed-by: Jamie Madill <jmadill@chromium.org>

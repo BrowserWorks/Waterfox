@@ -9,6 +9,7 @@
 #ifndef LIBANGLE_QUERY_H_
 #define LIBANGLE_QUERY_H_
 
+#include "common/PackedEnums.h"
 #include "libANGLE/Debug.h"
 #include "libANGLE/Error.h"
 #include "libANGLE/RefCountObject.h"
@@ -35,16 +36,16 @@ class Query final : public RefCountObject, public LabeledObject
     void setLabel(const std::string &label) override;
     const std::string &getLabel() const override;
 
-    Error begin();
-    Error end();
-    Error queryCounter();
-    Error getResult(GLint *params);
-    Error getResult(GLuint *params);
-    Error getResult(GLint64 *params);
-    Error getResult(GLuint64 *params);
-    Error isResultAvailable(bool *available);
+    Error begin(const Context *context);
+    Error end(const Context *context);
+    Error queryCounter(const Context *context);
+    Error getResult(const Context *context, GLint *params);
+    Error getResult(const Context *context, GLuint *params);
+    Error getResult(const Context *context, GLint64 *params);
+    Error getResult(const Context *context, GLuint64 *params);
+    Error isResultAvailable(const Context *context, bool *available);
 
-    GLenum getType() const;
+    QueryType getType() const;
 
     rx::QueryImpl *getImplementation();
     const rx::QueryImpl *getImplementation() const;
@@ -54,7 +55,6 @@ class Query final : public RefCountObject, public LabeledObject
 
     std::string mLabel;
 };
-
 }
 
-#endif   // LIBANGLE_QUERY_H_
+#endif  // LIBANGLE_QUERY_H_

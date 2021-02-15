@@ -16,19 +16,19 @@
 #include "compiler/translator/Compiler.h"
 #include "compiler/translator/FlagStd140Structs.h"
 #include "compiler/translator/ImmutableString.h"
-#include "compiler/translator/IntermTraverse.h"
+#include "compiler/translator/tree_util/IntermTraverse.h"
 
 class BuiltInFunctionEmulator;
 
 namespace sh
 {
+class ImageFunctionHLSL;
+class ResourcesHLSL;
 class StructureHLSL;
 class TextureFunctionHLSL;
 class TSymbolTable;
 class TVariable;
-class ImageFunctionHLSL;
 class UnfoldShortCircuit;
-class UniformHLSL;
 
 struct TReferencedBlock : angle::NonCopyable
 {
@@ -53,6 +53,7 @@ class OutputHLSL : public TIntermTraverser
                int numRenderTargets,
                const std::vector<Uniform> &uniforms,
                ShCompileOptions compileOptions,
+               sh::WorkGroupSize workGroupSize,
                TSymbolTable *symbolTable,
                PerformanceDiagnostics *perfDiagnostics);
 
@@ -72,6 +73,8 @@ class OutputHLSL : public TIntermTraverser
     }
 
   protected:
+    void writeReferencedAttributes(TInfoSinkBase &out) const;
+    void writeReferencedVaryings(TInfoSinkBase &out) const;
     void header(TInfoSinkBase &out,
                 const std::vector<MappedStruct> &std140Structs,
                 const BuiltInFunctionEmulator *builtInFunctionEmulator) const;
@@ -84,7 +87,6 @@ class OutputHLSL : public TIntermTraverser
 
     // Visit AST nodes and output their code to the body stream
     void visitSymbol(TIntermSymbol *) override;
-    void visitRaw(TIntermRaw *) override;
     void visitConstantUnion(TIntermConstantUnion *) override;
     bool visitSwizzle(Visit visit, TIntermSwizzle *node) override;
     bool visitBinary(Visit visit, TIntermBinary *) override;
@@ -93,7 +95,7 @@ class OutputHLSL : public TIntermTraverser
     bool visitIfElse(Visit visit, TIntermIfElse *) override;
     bool visitSwitch(Visit visit, TIntermSwitch *) override;
     bool visitCase(Visit visit, TIntermCase *) override;
-    bool visitFunctionPrototype(Visit visit, TIntermFunctionPrototype *node) override;
+    void visitFunctionPrototype(TIntermFunctionPrototype *node) override;
     bool visitFunctionDefinition(Visit visit, TIntermFunctionDefinition *node) override;
     bool visitAggregate(Visit visit, TIntermAggregate *) override;
     bool visitBlock(Visit visit, TIntermBlock *node) override;
@@ -112,7 +114,7 @@ class OutputHLSL : public TIntermTraverser
                        const char *inString,
                        const char *postString);
     void outputLineDirective(TInfoSinkBase &out, int line);
-    void writeParameter(const TIntermSymbol *symbol, TInfoSinkBase &out);
+    void writeParameter(const TVariable *param, TInfoSinkBase &out);
 
     void outputConstructor(TInfoSinkBase &out, Visit visit, TIntermAggregate *node);
     const TConstantUnion *writeConstantUnion(TInfoSinkBase &out,
@@ -145,6 +147,9 @@ class OutputHLSL : public TIntermTraverser
     // Ensures if the type is a struct, the struct is defined
     void ensureStructDefined(const TType &type);
 
+    bool shaderNeedsGenerateOutput() const;
+    const char *generateOutputCall() const;
+
     sh::GLenum mShaderType;
     int mShaderVersion;
     const TExtensionBehavior &mExtensionBehavior;
@@ -153,6 +158,7 @@ class OutputHLSL : public TIntermTraverser
     ShCompileOptions mCompileOptions;
 
     bool mInsideFunction;
+    bool mInsideMain;
 
     // Output streams
     TInfoSinkBase mHeader;
@@ -174,7 +180,7 @@ class OutputHLSL : public TIntermTraverser
     ReferencedVariables mReferencedOutputVariables;
 
     StructureHLSL *mStructureHLSL;
-    UniformHLSL *mUniformHLSL;
+    ResourcesHLSL *mResourcesHLSL;
     TextureFunctionHLSL *mTextureFunctionHLSL;
     ImageFunctionHLSL *mImageFunctionHLSL;
 
@@ -248,6 +254,8 @@ class OutputHLSL : public TIntermTraverser
     // parameter with the other N parameters of the function. This is used to work around that
     // arrays can't be return values in HLSL.
     std::vector<ArrayHelperFunction> mArrayConstructIntoFunctions;
+
+    sh::WorkGroupSize mWorkGroupSize;
 
     PerformanceDiagnostics *mPerfDiagnostics;
 

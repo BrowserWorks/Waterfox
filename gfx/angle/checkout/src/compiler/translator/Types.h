@@ -31,9 +31,10 @@ class TField : angle::NonCopyable
 {
   public:
     POOL_ALLOCATOR_NEW_DELETE();
-    TField(TType *type, const ImmutableString &name, const TSourceLoc &line)
-        : mType(type), mName(name), mLine(line)
+    TField(TType *type, const ImmutableString &name, const TSourceLoc &line, SymbolType symbolType)
+        : mType(type), mName(name), mLine(line), mSymbolType(symbolType)
     {
+        ASSERT(mSymbolType != SymbolType::Empty);
     }
 
     // TODO(alokp): We should only return const type.
@@ -42,11 +43,13 @@ class TField : angle::NonCopyable
     const TType *type() const { return mType; }
     const ImmutableString &name() const { return mName; }
     const TSourceLoc &line() const { return mLine; }
+    SymbolType symbolType() const { return mSymbolType; }
 
   private:
     TType *mType;
     const ImmutableString mName;
     const TSourceLoc mLine;
+    const SymbolType mSymbolType;
 };
 
 typedef TVector<TField *> TFieldList;
@@ -97,7 +100,7 @@ class TType
           unsigned char ps = 1,
           unsigned char ss = 1);
     explicit TType(const TPublicType &p);
-    explicit TType(const TStructure *userDef);
+    TType(const TStructure *userDef, bool isStructSpecifier);
     TType(const TInterfaceBlock *interfaceBlockIn,
           TQualifier qualifierIn,
           TLayoutQualifier layoutQualifierIn);
@@ -191,9 +194,10 @@ class TType
     const TVector<unsigned int> *getArraySizes() const { return mArraySizes; }
     unsigned int getArraySizeProduct() const;
     bool isUnsizedArray() const;
-    unsigned int getOutermostArraySize() const {
-         ASSERT(isArray());
-         return mArraySizes->back();
+    unsigned int getOutermostArraySize() const
+    {
+        ASSERT(isArray());
+        return mArraySizes->back();
     }
     void makeArray(unsigned int s);
 
@@ -229,6 +233,15 @@ class TType
 
     const TStructure *getStruct() const { return mStructure; }
 
+    static constexpr char GetSizeMangledName(unsigned char primarySize, unsigned char secondarySize)
+    {
+        unsigned int sizeKey = (secondarySize - 1u) * 4u + primarySize - 1u;
+        if (sizeKey < 10u)
+        {
+            return static_cast<char>('0' + sizeKey);
+        }
+        return static_cast<char>('A' + sizeKey - 10);
+    }
     const char *getMangledName() const;
 
     bool sameNonArrayType(const TType &right) const;
@@ -278,8 +291,6 @@ class TType
 
     const char *getBuiltInTypeNameString() const;
 
-    TString getCompleteString() const;
-
     // If this type is a struct, returns the deepest struct nesting of
     // any field in the struct. For example:
     //   struct nesting1 {
@@ -319,7 +330,7 @@ class TType
     // Initializes all lazily-initialized members.
     void realize();
 
-    bool isRealized() const;
+    bool isSampler() const { return IsSampler(type); }
 
   private:
     void invalidateMangledName();

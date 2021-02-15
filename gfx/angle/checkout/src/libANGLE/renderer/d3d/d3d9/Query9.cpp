@@ -14,8 +14,9 @@
 
 namespace rx
 {
-Query9::Query9(Renderer9 *renderer, GLenum type)
+Query9::Query9(Renderer9 *renderer, gl::QueryType type)
     : QueryImpl(type),
+      mGetDataAttemptCount(0),
       mResult(GL_FALSE),
       mQueryFinished(false),
       mRenderer(renderer),
@@ -28,7 +29,7 @@ Query9::~Query9()
     SafeRelease(mQuery);
 }
 
-gl::Error Query9::begin()
+gl::Error Query9::begin(const gl::Context *context)
 {
     D3DQUERYTYPE d3dQueryType = gl_d3d9::ConvertQueryType(getType());
     if (mQuery == nullptr)
@@ -53,7 +54,7 @@ gl::Error Query9::begin()
     return gl::NoError();
 }
 
-gl::Error Query9::end()
+gl::Error Query9::end(const gl::Context *context)
 {
     ASSERT(mQuery);
 
@@ -70,7 +71,7 @@ gl::Error Query9::end()
     return gl::NoError();
 }
 
-gl::Error Query9::queryCounter()
+gl::Error Query9::queryCounter(const gl::Context *context)
 {
     UNIMPLEMENTED();
     return gl::InternalError() << "Unimplemented";
@@ -98,27 +99,27 @@ gl::Error Query9::getResultBase(T *params)
     return gl::NoError();
 }
 
-gl::Error Query9::getResult(GLint *params)
+gl::Error Query9::getResult(const gl::Context *context, GLint *params)
 {
     return getResultBase(params);
 }
 
-gl::Error Query9::getResult(GLuint *params)
+gl::Error Query9::getResult(const gl::Context *context, GLuint *params)
 {
     return getResultBase(params);
 }
 
-gl::Error Query9::getResult(GLint64 *params)
+gl::Error Query9::getResult(const gl::Context *context, GLint64 *params)
 {
     return getResultBase(params);
 }
 
-gl::Error Query9::getResult(GLuint64 *params)
+gl::Error Query9::getResult(const gl::Context *context, GLuint64 *params)
 {
     return getResultBase(params);
 }
 
-gl::Error Query9::isResultAvailable(bool *available)
+gl::Error Query9::isResultAvailable(const gl::Context *context, bool *available)
 {
     gl::Error error = testQuery();
     if (error.isError())
@@ -140,8 +141,8 @@ gl::Error Query9::testQuery()
         HRESULT result = S_OK;
         switch (getType())
         {
-            case GL_ANY_SAMPLES_PASSED_EXT:
-            case GL_ANY_SAMPLES_PASSED_CONSERVATIVE_EXT:
+            case gl::QueryType::AnySamples:
+            case gl::QueryType::AnySamplesConservative:
             {
                 DWORD numPixels = 0;
                 result = mQuery->GetData(&numPixels, sizeof(numPixels), D3DGETDATA_FLUSH);
@@ -153,7 +154,7 @@ gl::Error Query9::testQuery()
                 break;
             }
 
-            case GL_COMMANDS_COMPLETED_CHROMIUM:
+            case gl::QueryType::CommandsCompleted:
             {
                 BOOL completed = FALSE;
                 result = mQuery->GetData(&completed, sizeof(completed), D3DGETDATA_FLUSH);
@@ -170,15 +171,22 @@ gl::Error Query9::testQuery()
                 break;
         }
 
-        if (d3d9::isDeviceLostError(result))
+        if (!mQueryFinished)
         {
-            mRenderer->notifyDeviceLost();
-            return gl::OutOfMemory() << "Failed to test get query result, device is lost.";
-        }
-        else if (mRenderer->testDeviceLost())
-        {
-            mRenderer->notifyDeviceLost();
-            return gl::OutOfMemory() << "Failed to test get query result, device is lost.";
+            if (d3d9::isDeviceLostError(result))
+            {
+                mRenderer->notifyDeviceLost();
+                return gl::OutOfMemory() << "Failed to test get query result, device is lost.";
+            }
+
+            mGetDataAttemptCount++;
+            bool checkDeviceLost =
+                (mGetDataAttemptCount % kPollingD3DDeviceLostCheckFrequency) == 0;
+            if (checkDeviceLost && mRenderer->testDeviceLost())
+            {
+                mRenderer->notifyDeviceLost();
+                return gl::OutOfMemory() << "Failed to test get query result, device is lost.";
+            }
         }
     }
 

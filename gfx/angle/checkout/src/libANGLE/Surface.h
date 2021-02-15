@@ -13,8 +13,10 @@
 
 #include <EGL/egl.h>
 
+#include "common/PackedEnums.h"
 #include "common/angleutils.h"
 #include "libANGLE/AttributeMap.h"
+#include "libANGLE/Debug.h"
 #include "libANGLE/Error.h"
 #include "libANGLE/FramebufferAttachment.h"
 #include "libANGLE/RefCountObject.h"
@@ -23,6 +25,7 @@
 
 namespace gl
 {
+class Context;
 class Framebuffer;
 class Texture;
 }
@@ -41,15 +44,18 @@ struct SurfaceState final : private angle::NonCopyable
 {
     SurfaceState(const egl::Config *configIn, const AttributeMap &attributesIn);
 
-    gl::Framebuffer *defaultFramebuffer;
+    EGLLabelKHR label;
     const egl::Config *config;
     AttributeMap attributes;
 };
 
-class Surface : public gl::FramebufferAttachmentObject
+class Surface : public LabeledObject, public gl::FramebufferAttachmentObject
 {
   public:
     rx::SurfaceImpl *getImplementation() const { return mImplementation; }
+
+    void setLabel(EGLLabelKHR label) override;
+    EGLLabelKHR getLabel() const override;
 
     EGLint getType() const;
 
@@ -61,6 +67,7 @@ class Surface : public gl::FramebufferAttachmentObject
                         EGLint y,
                         EGLint width,
                         EGLint height);
+    Error setPresentationTime(EGLnsecsANDROID time);
     Error querySurfacePointerANGLE(EGLint attribute, void **value);
     Error bindTexImage(const gl::Context *context, gl::Texture *texture, EGLint buffer);
     Error releaseTexImage(const gl::Context *context, EGLint buffer);
@@ -77,6 +84,11 @@ class Surface : public gl::FramebufferAttachmentObject
     void setMultisampleResolve(EGLenum resolve);
     void setSwapBehavior(EGLenum behavior);
 
+    void setFixedWidth(EGLint width);
+    void setFixedHeight(EGLint height);
+
+    gl::Framebuffer *createDefaultFramebuffer(const gl::Context *context);
+
     const Config *getConfig() const;
 
     // width and height can change with client window resizing
@@ -85,7 +97,7 @@ class Surface : public gl::FramebufferAttachmentObject
     EGLint getPixelAspectRatio() const;
     EGLenum getRenderBuffer() const;
     EGLenum getSwapBehavior() const;
-    EGLenum getTextureFormat() const;
+    TextureFormat getTextureFormat() const;
     EGLenum getTextureTarget() const;
     bool getLargestPbuffer() const;
     EGLenum getGLColorspace() const;
@@ -97,15 +109,13 @@ class Surface : public gl::FramebufferAttachmentObject
     EGLint getVerticalResolution() const;
     EGLenum getMultisampleResolve() const;
 
-    gl::Texture *getBoundTexture() const { return mTexture.get(); }
-    gl::Framebuffer *getDefaultFramebuffer() { return mState.defaultFramebuffer; }
+    gl::Texture *getBoundTexture() const { return mTexture; }
 
     EGLint isFixedSize() const;
 
     // FramebufferAttachmentObject implementation
     gl::Extents getAttachmentSize(const gl::ImageIndex &imageIndex) const override;
-    const gl::Format &getAttachmentFormat(GLenum binding,
-                                          const gl::ImageIndex &imageIndex) const override;
+    gl::Format getAttachmentFormat(GLenum binding, const gl::ImageIndex &imageIndex) const override;
     GLsizei getAttachmentSamples(const gl::ImageIndex &imageIndex) const override;
 
     void onAttach(const gl::Context *context) override {}
@@ -139,11 +149,11 @@ class Surface : public gl::FramebufferAttachmentObject
 
     // ANGLE-only method, used internally
     friend class gl::Texture;
-    void releaseTexImageFromTexture(const gl::Context *context);
+    Error releaseTexImageFromTexture(const gl::Context *context);
 
     SurfaceState mState;
     rx::SurfaceImpl *mImplementation;
-    int mCurrentCount;
+    int mRefCount;
     bool mDestroyed;
 
     EGLint mType;
@@ -170,16 +180,18 @@ class Surface : public gl::FramebufferAttachmentObject
 
     bool mRobustResourceInitialization;
 
-    EGLenum mTextureFormat;
+    TextureFormat mTextureFormat;
     EGLenum mTextureTarget;
 
-    EGLint mPixelAspectRatio;      // Display aspect ratio
-    EGLenum mRenderBuffer;         // Render buffer
-    EGLenum mSwapBehavior;         // Buffer swap behavior
+    EGLint mPixelAspectRatio;  // Display aspect ratio
+    EGLenum mRenderBuffer;     // Render buffer
+    EGLenum mSwapBehavior;     // Buffer swap behavior
 
     EGLint mOrientation;
 
-    gl::BindingPointer<gl::Texture> mTexture;
+    // We don't use a binding pointer here. We don't ever want to own an orphaned texture. If a
+    // Texture is deleted the Surface is unbound in onDestroy.
+    gl::Texture *mTexture;
 
     gl::Format mColorFormat;
     gl::Format mDSFormat;
@@ -188,6 +200,7 @@ class Surface : public gl::FramebufferAttachmentObject
     Error destroyImpl(const Display *display);
 
     void postSwap(const gl::Context *context);
+    Error releaseRef(const Display *display);
 
     gl::InitState mInitState;
 };
@@ -245,4 +258,4 @@ using SurfacePointer = angle::UniqueObjectPointerBase<Surface, SurfaceDeleter>;
 
 }  // namespace egl
 
-#endif   // LIBANGLE_SURFACE_H_
+#endif  // LIBANGLE_SURFACE_H_

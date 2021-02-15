@@ -11,7 +11,7 @@
 
 #include "compiler/translator/HashNames.h"
 #include "compiler/translator/InfoSink.h"
-#include "compiler/translator/IntermTraverse.h"
+#include "compiler/translator/tree_util/IntermTraverse.h"
 
 namespace sh
 {
@@ -42,9 +42,9 @@ class TOutputGLSLBase : public TIntermTraverser
     void writeTriplet(Visit visit, const char *preStr, const char *inStr, const char *postStr);
     virtual void writeLayoutQualifier(TIntermTyped *variable);
     void writeInvariantQualifier(const TType &type);
-    void writeVariableType(const TType &type);
+    void writeVariableType(const TType &type, const TSymbol *symbol);
     virtual bool writeVariablePrecision(TPrecision precision) = 0;
-    void writeFunctionParameters(const TIntermSequence &args);
+    void writeFunctionParameters(const TFunction *func);
     const TConstantUnion *writeConstantUnion(const TType &type, const TConstantUnion *pConstUnion);
     void writeConstructorTriplet(Visit visit, const TType &type);
     ImmutableString getTypeName(const TType &type);
@@ -58,7 +58,7 @@ class TOutputGLSLBase : public TIntermTraverser
     bool visitIfElse(Visit visit, TIntermIfElse *node) override;
     bool visitSwitch(Visit visit, TIntermSwitch *node) override;
     bool visitCase(Visit visit, TIntermCase *node) override;
-    bool visitFunctionPrototype(Visit visit, TIntermFunctionPrototype *node) override;
+    void visitFunctionPrototype(TIntermFunctionPrototype *node) override;
     bool visitFunctionDefinition(Visit visit, TIntermFunctionDefinition *node) override;
     bool visitAggregate(Visit visit, TIntermAggregate *node) override;
     bool visitBlock(Visit visit, TIntermBlock *node) override;
@@ -66,26 +66,28 @@ class TOutputGLSLBase : public TIntermTraverser
     bool visitDeclaration(Visit visit, TIntermDeclaration *node) override;
     bool visitLoop(Visit visit, TIntermLoop *node) override;
     bool visitBranch(Visit visit, TIntermBranch *node) override;
+    void visitPreprocessorDirective(TIntermPreprocessorDirective *node) override;
 
     void visitCodeBlock(TIntermBlock *node);
 
-    ImmutableString hashFieldName(const TSymbol *containingStruct,
-                                  const ImmutableString &fieldName);
+    ImmutableString hashFieldName(const TField *field);
     // Same as hashName(), but without hashing "main".
     ImmutableString hashFunctionNameIfNeeded(const TFunction *func);
     // Used to translate function names for differences between ESSL and GLSL
     virtual ImmutableString translateTextureFunction(const ImmutableString &name) { return name; }
 
-  private:
-    bool structDeclared(const TStructure *structure) const;
     void declareStruct(const TStructure *structure);
+    virtual void writeQualifier(TQualifier qualifier, const TSymbol *symbol);
+    bool structDeclared(const TStructure *structure) const;
+
+  private:
 
     void declareInterfaceBlockLayout(const TInterfaceBlock *interfaceBlock);
     void declareInterfaceBlock(const TInterfaceBlock *interfaceBlock);
 
     void writeBuiltInFunctionTriplet(Visit visit, TOperator op, bool useEmulatedFunction);
 
-    const char *mapQualifierToString(TQualifier qialifier);
+    const char *mapQualifierToString(TQualifier qualifier);
 
     TInfoSinkBase &mObjSink;
     bool mDeclaringVariable;

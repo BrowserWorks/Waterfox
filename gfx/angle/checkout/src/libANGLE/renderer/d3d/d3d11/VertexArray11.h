@@ -13,35 +13,33 @@
 #include "libANGLE/renderer/VertexArrayImpl.h"
 #include "libANGLE/renderer/d3d/d3d11/Renderer11.h"
 #include "libANGLE/renderer/d3d/d3d11/renderer11_utils.h"
-#include "libANGLE/signal_utils.h"
 
 namespace rx
 {
 class Renderer11;
 
-class VertexArray11 : public VertexArrayImpl, public angle::ObserverInterface
+class VertexArray11 : public VertexArrayImpl
 {
   public:
     VertexArray11(const gl::VertexArrayState &data);
     ~VertexArray11() override;
     void destroy(const gl::Context *context) override;
 
-    void syncState(const gl::Context *context,
-                   const gl::VertexArray::DirtyBits &dirtyBits) override;
-    // This will flush any pending attrib updates and then check the dynamic attribs mask.
+    // Does not apply any state updates - these are done in syncStateForDraw which as access to
+    // the DrawCallParams before a draw.
+    gl::Error syncState(const gl::Context *context,
+                        const gl::VertexArray::DirtyBits &dirtyBits,
+                        const gl::VertexArray::DirtyAttribBitsArray &attribBits,
+                        const gl::VertexArray::DirtyBindingBitsArray &bindingBits) override;
+
+    // Applied buffer pointers are updated here.
+    angle::Result syncStateForDraw(const gl::Context *context,
+                                   const gl::DrawCallParams &drawCallParams);
+
+    // This will check the dynamic attribs mask.
     bool hasActiveDynamicAttrib(const gl::Context *context);
-    gl::Error updateDirtyAndDynamicAttribs(const gl::Context *context,
-                                           VertexDataManager *vertexDataManager,
-                                           const DrawCallVertexParams &vertexParams);
-    void clearDirtyAndPromoteDynamicAttribs(const gl::Context *context,
-                                            const DrawCallVertexParams &vertexParams);
 
     const std::vector<TranslatedAttribute> &getTranslatedAttribs() const;
-
-    // Observer implementation
-    void onSubjectStateChange(const gl::Context *context,
-                              angle::SubjectIndex index,
-                              angle::SubjectMessage message) override;
 
     Serial getCurrentStateSerial() const { return mCurrentStateSerial; }
 
@@ -49,20 +47,26 @@ class VertexArray11 : public VertexArrayImpl, public angle::ObserverInterface
     // is adjusted.
     void markAllAttributeDivisorsForAdjustment(int numViews);
 
-    bool flushAttribUpdates(const gl::Context *context);
-
-    // Returns true if the element array buffer needs to be translated.
-    bool updateElementArrayStorage(const gl::Context *context,
-                                   GLenum elementType,
-                                   GLenum destElementType,
-                                   const void *indices);
-
-    TranslatedIndexData *getCachedIndexInfo();
-    void setCachedIndexInfoValid();
+    const TranslatedIndexData &getCachedIndexInfo() const;
+    void updateCachedIndexInfo(const TranslatedIndexData &indexInfo);
     bool isCachedIndexInfoValid() const;
 
+    GLenum getCachedDestinationIndexType() const;
+
   private:
-    void updateVertexAttribStorage(const gl::Context *context, size_t attribIndex);
+    void updateVertexAttribStorage(const gl::Context *context,
+                                   StateManager11 *stateManager,
+                                   size_t attribIndex);
+    angle::Result updateDirtyAttribs(const gl::Context *context,
+                                     const gl::AttributesMask &activeDirtyAttribs);
+    angle::Result updateDynamicAttribs(const gl::Context *context,
+                                       VertexDataManager *vertexDataManager,
+                                       const gl::DrawCallParams &drawCallParams,
+                                       const gl::AttributesMask &activeDynamicAttribs);
+
+    angle::Result updateElementArrayStorage(const gl::Context *context,
+                                            const gl::DrawCallParams &drawCallParams,
+                                            bool restartEnabled);
 
     std::vector<VertexStorageType> mAttributeStorageTypes;
     std::vector<TranslatedAttribute> mTranslatedAttribs;
@@ -70,18 +74,8 @@ class VertexArray11 : public VertexArrayImpl, public angle::ObserverInterface
     // The mask of attributes marked as dynamic.
     gl::AttributesMask mDynamicAttribsMask;
 
-    // A mask of attributes that need to be re-evaluated.
-    gl::AttributesMask mAttribsToUpdate;
-
     // A set of attributes we know are dirty, and need to be re-translated.
     gl::AttributesMask mAttribsToTranslate;
-
-    // We need to keep a safe pointer to the Buffer so we can attach the correct dirty callbacks.
-    std::vector<gl::BindingPointer<gl::Buffer>> mCurrentArrayBuffers;
-    gl::BindingPointer<gl::Buffer> mCurrentElementArrayBuffer;
-
-    std::vector<angle::ObserverBinding> mOnArrayBufferDataDirty;
-    angle::ObserverBinding mOnElementArrayBufferDataDirty;
 
     Serial mCurrentStateSerial;
 
@@ -89,11 +83,12 @@ class VertexArray11 : public VertexArrayImpl, public angle::ObserverInterface
     int mAppliedNumViewsToDivisor;
 
     // If the index buffer needs re-streaming.
-    GLenum mLastElementType;
-    unsigned int mLastDrawElementsOffset;
+    Optional<GLenum> mLastDrawElementsType;
+    Optional<const void *> mLastDrawElementsIndices;
+    Optional<bool> mLastPrimitiveRestartEnabled;
     IndexStorageType mCurrentElementArrayStorage;
-    TranslatedIndexData mCachedIndexInfo;
-    bool mCachedIndexInfoValid;
+    Optional<TranslatedIndexData> mCachedIndexInfo;
+    GLenum mCachedDestinationIndexType;
 };
 
 }  // namespace rx
