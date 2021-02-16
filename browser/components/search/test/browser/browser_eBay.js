@@ -14,7 +14,7 @@ add_task(async function test() {
   ok(engine, "eBay");
 
   let base =
-    "https://rover.ebay.com/rover/1/711-53200-19255-0/1?ff3=4&toolid=20004&campid=5338192028&customid=&mpre=https://www.ebay.com/sch/foo";
+    "https://www.ebay.com/sch/?toolid=20004&campid=5338192028&mkevt=1&mkcid=1&mkrid=711-53200-19255-0&kw=foo";
   let url;
 
   // Test search URLs (including purposes).
@@ -33,13 +33,8 @@ add_task(async function test() {
         {
           type: "text/html",
           method: "GET",
-          template: "https://rover.ebay.com/rover/1/711-53200-19255-0/1",
+          template: "https://www.ebay.com/sch/",
           params: [
-            {
-              name: "ff3",
-              value: "4",
-              purpose: undefined,
-            },
             {
               name: "toolid",
               value: "20004",
@@ -51,13 +46,23 @@ add_task(async function test() {
               purpose: undefined,
             },
             {
-              name: "customid",
-              value: "",
+              name: "mkevt",
+              value: "1",
               purpose: undefined,
             },
             {
-              name: "mpre",
-              value: "https://www.ebay.com/sch/{searchTerms}",
+              name: "mkcid",
+              value: "1",
+              purpose: undefined,
+            },
+            {
+              name: "mkrid",
+              value: "711-53200-19255-0",
+              purpose: undefined,
+            },
+            {
+              name: "kw",
+              value: "{searchTerms}",
               purpose: undefined,
             },
           ],

@@ -648,6 +648,8 @@ nsViewSourceChannel::SetBaseURI(nsIURI* aBaseURI) {
   return NS_OK;
 }
 
+nsIChannel* nsViewSourceChannel::GetInnerChannel() { return mChannel; }
+
 NS_IMETHODIMP
 nsViewSourceChannel::GetProtocolVersion(nsACString& aProtocolVersion) {
   return NS_ERROR_NOT_IMPLEMENTED;
