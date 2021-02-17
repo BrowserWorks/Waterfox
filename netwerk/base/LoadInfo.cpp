@@ -826,7 +826,7 @@ LoadInfo::LoadInfo(
     bool aBrowserUpgradeInsecureRequests,
     bool aBrowserWouldUpgradeInsecureRequests, bool aForceAllowDataURI,
     bool aAllowInsecureRedirectToDataURI, bool aBypassCORSChecks,
-    bool aSkipContentPolicyCheckForWebRequest,
+    bool aSkipContentPolicyCheckForWebRequest, bool aOriginalFrameSrcLoad,
     bool aForceInheritPrincipalDropped, uint64_t aInnerWindowID,
     uint64_t aOuterWindowID, uint64_t aParentOuterWindowID,
     uint64_t aTopOuterWindowID, uint64_t aFrameOuterWindowID,
@@ -876,7 +876,7 @@ LoadInfo::LoadInfo(
       mBypassCORSChecks(aBypassCORSChecks),
       mSkipContentPolicyCheckForWebRequest(
           aSkipContentPolicyCheckForWebRequest),
-      mOriginalFrameSrcLoad(false),
+      mOriginalFrameSrcLoad(aOriginalFrameSrcLoad),
       mForceInheritPrincipalDropped(aForceInheritPrincipalDropped),
       mInnerWindowID(aInnerWindowID),
       mOuterWindowID(aOuterWindowID),

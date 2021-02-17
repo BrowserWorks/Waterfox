@@ -172,12 +172,31 @@ bool subjectToCSP(nsIURI* aURI, nsContentPolicyType aContentType) {
   nsCOMPtr<nsIContentSecurityPolicy> csp = aLoadInfo->GetCsp();
 
   if (csp) {
+    // Generally aOriginalURI denotes the URI before a redirect and hence
+    // will always be a nullptr here. Only exception are frame navigations
+    // which we want to treat as a redirect for the purpose of CSP reporting
+    // and in particular the `blocked-uri` in the CSP report where we want
+    // to report the prePath information.
+    nsCOMPtr<nsIURI> originalURI = nullptr;
+    nsContentPolicyType extType =
+        nsContentUtils::InternalContentPolicyTypeToExternal(contentType);
+    if (extType == nsIContentPolicy::TYPE_SUBDOCUMENT &&
+        !aLoadInfo->GetOriginalFrameSrcLoad() &&
+        mozilla::StaticPrefs::
+            security_csp_truncate_blocked_uri_for_frame_navigations()) {
+      nsAutoCString prePathStr;
+      nsresult rv = aContentLocation->GetPrePath(prePathStr);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = NS_NewURI(getter_AddRefs(originalURI), prePathStr);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+
     // obtain the enforcement decision
-    rv = csp->ShouldLoad(contentType, cspEventListener, aContentLocation,
-                         aMimeTypeGuess,
-                         nullptr,  // no redirect, aOriginal URL is null.
-                         aLoadInfo->GetSendCSPViolationEvents(), cspNonce,
-                         parserCreatedScript, aDecision);
+    rv = csp->ShouldLoad(
+        contentType, cspEventListener, aContentLocation, aMimeTypeGuess,
+        originalURI,  // no redirect, unless it's a frame navigation.
+        aLoadInfo->GetSendCSPViolationEvents(), cspNonce,
+        parserCreatedScript, aDecision);
 
     if (NS_CP_REJECTED(*aDecision)) {
       NS_SetRequestBlockingReason(
