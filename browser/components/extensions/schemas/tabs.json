@@ -496,8 +496,6 @@
       },
       {
         "name": "getSelected",
-        "deprecated": "Please use $(ref:tabs.query) <code>{active: true}</code>.",
-        "unsupported": true,
         "type": "function",
         "description": "Gets the tab that is selected in the specified window.",
         "async": "callback",
@@ -513,15 +511,19 @@
             "type": "function",
             "name": "callback",
             "parameters": [
-              {"name": "tab", "$ref": "Tab"}
+              {
+                "name": "result",
+                "type": "array",
+                "items": {
+                  "$ref": "Tab"
+                }
+              }
             ]
           }
         ]
       },
       {
         "name": "getAllInWindow",
-        "deprecated": "Please use $(ref:tabs.query) <code>{windowId: windowId}</code>.",
-        "unsupported": true,
         "type": "function",
         "description": "Gets details about all tabs in the specified window.",
         "async": "callback",
@@ -533,13 +535,19 @@
             "optional": true,
             "description": "Defaults to the $(topic:current-window)[current window]."
             },
-          {
-            "type": "function",
-            "name": "callback",
-            "parameters": [
-              {"name": "tabs", "type": "array", "items": { "$ref": "Tab" } }
-            ]
-          }
+            {
+              "type": "function",
+              "name": "callback",
+              "parameters": [
+                {
+                  "name": "result",
+                  "type": "array",
+                  "items": {
+                    "$ref": "Tab"
+                  }
+                }
+              ]
+            }
         ]
       },
       {
