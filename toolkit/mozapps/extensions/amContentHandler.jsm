@@ -50,10 +50,8 @@ amContentHandler.prototype = {
       // Define nsiFiles
       let nsiFileXpi = StoreHandler.getNsiFile(xpiPath);
       let nsiManifest = StoreHandler.getNsiFile(manifestPath);
-      // get channel
-      let channel = StoreHandler.getChannel({uri: uri.spec, loadUsingSystemPrincipal: true});
       // attempt install, wrapped async functions
-      StoreHandler.attemptInstall(channel, xpiPath, nsiFileXpi, nsiManifest);
+      StoreHandler.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest);
       return; // don't want any of the rest of the ContentHandler to execute
     } else if (aMimetype != XPI_CONTENT_TYPE) {
       throw Components.Exception("", Cr.NS_ERROR_WONT_HANDLE_CONTENT);

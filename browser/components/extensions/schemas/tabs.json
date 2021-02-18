@@ -511,13 +511,7 @@
             "type": "function",
             "name": "callback",
             "parameters": [
-              {
-                "name": "result",
-                "type": "array",
-                "items": {
-                  "$ref": "Tab"
-                }
-              }
+              {"name": "tab", "$ref": "Tab"}
             ]
           }
         ]
@@ -539,13 +533,7 @@
               "type": "function",
               "name": "callback",
               "parameters": [
-                {
-                  "name": "result",
-                  "type": "array",
-                  "items": {
-                    "$ref": "Tab"
-                  }
-                }
+                {"name": "tabs", "type": "array", "items": { "$ref": "Tab" } }
               ]
             }
         ]
