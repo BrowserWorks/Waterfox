@@ -685,18 +685,19 @@ SetUserAccessServiceDACL(SC_HANDLE hService, PACL &pNewAcl,
     return GetLastError();
   }
 
-  PSID sid;
+  PSID sidBuiltinUsers;
   DWORD SIDSize = SECURITY_MAX_SID_SIZE;
-  sid = LocalAlloc(LMEM_FIXED, SIDSize);
-  if (!sid) {
+  sidBuiltinUsers = LocalAlloc(LMEM_FIXED, SIDSize);
+  if (!sidBuiltinUsers) {
     LOG_WARN(("Could not allocate SID memory.  (%d)", GetLastError()));
     return GetLastError();
   }
+  UniqueSidPtr uniqueSidBuiltinUsers(sidBuiltinUsers);
 
-  if (!CreateWellKnownSid(WinBuiltinUsersSid, nullptr, sid, &SIDSize)) {
+  if (!CreateWellKnownSid(WinBuiltinUsersSid, nullptr, sidBuiltinUsers,
+                          &SIDSize)) {
     DWORD lastError = GetLastError();
-    LOG_WARN(("Could not create well known SID.  (%d)", lastError));
-    LocalFree(sid);
+    LOG_WARN(("Could not create BI\\Users SID.  (%d)", lastError));
     return lastError;
   }
 
@@ -715,17 +716,30 @@ SetUserAccessServiceDACL(SC_HANDLE hService, PACL &pNewAcl,
               GetLastError()));
     wcsncpy(accountName, L"Users", UNLEN);
   }
+  UniqueSidPtr uniqueSidInteractive(sidInteractive);
 
-  // We already have the group name so we can get rid of the SID
-  FreeSid(sid);
-  sid = nullptr;
+  if (!CreateWellKnownSid(WinInteractiveSid, nullptr, sidInteractive,
+                          &SIDSize)) {
+    DWORD lastError = GetLastError();
+    LOG_WARN(("Could not create Interactive SID.  (%d)", lastError));
+    return lastError;
+  }
 
-  // Build the ACE, BuildExplicitAccessWithName cannot fail so it is not logged.
-  EXPLICIT_ACCESS ea;
-  BuildExplicitAccessWithNameW(&ea, accountName,
-                              SERVICE_START | SERVICE_STOP | GENERIC_READ,
-                              SET_ACCESS, NO_INHERITANCE);
-  DWORD lastError = SetEntriesInAclW(1, (PEXPLICIT_ACCESS)&ea, pacl, &pNewAcl);
+  const size_t eaCount = 2;
+  EXPLICIT_ACCESS ea[eaCount];
+  ZeroMemory(ea, sizeof(ea));
+  ea[0].grfAccessMode = REVOKE_ACCESS;
+  ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+  ea[0].Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+  ea[0].Trustee.ptstrName = static_cast<LPWSTR>(sidBuiltinUsers);
+  ea[1].grfAccessPermissions = SERVICE_START | SERVICE_STOP | GENERIC_READ;
+  ea[1].grfAccessMode = SET_ACCESS;
+  ea[1].grfInheritance = NO_INHERITANCE;
+  ea[1].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+  ea[1].Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+  ea[1].Trustee.ptstrName = static_cast<LPWSTR>(sidInteractive);
+
+  DWORD lastError = SetEntriesInAclW(eaCount, ea, pacl, &pNewAcl);
   if (ERROR_SUCCESS != lastError) {
     LOG_WARN(("Could not set entries in ACL.  (%d)", lastError));
     return lastError;
