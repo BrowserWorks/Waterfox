@@ -95,16 +95,6 @@ var StoreHandler = {
     },
 
     /**
-     * Open a channel to be used to fetch a resource
-     * @param options Object to create channel
-     *        example:
-     *        {uri: uri.spec, loadUsingSystemPrincipal: true}
-     */
-    getChannel(options) {
-        return NetUtil.newChannel(options);
-    },
-
-    /**
      * Get an nsiFile object from a given path
      * @param path string path to file
      */
@@ -115,17 +105,18 @@ var StoreHandler = {
 
     /**
      * Attempt to install a crx extension
-     * @param channel nsiChannel from download uri
+     * @param uri object uri of request
      * @param xpiPath string path to tmp extension file
      * @param nsiFileXpi nsiFile tmp xpi file
      * @param nsiManifest nsiFile tmp manifest.json
+     * @param retry bool is this a retry attempt or not
      */
-    attemptInstall(channel, xpiPath, nsiFileXpi, nsiManifest) {
+    attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest, retry=false) {
+        let channel = NetUtil.newChannel({uri: uri.spec, loadUsingSystemPrincipal: true});
         NetUtil.asyncFetch(channel, (aInputStream, aResult) => {
             // Check that we had success.
             if (!Components.isSuccessCode(aResult)) {
-                // delete any tmp files
-                this._cleanup(nsiFileXpi);
+                if (retry == false) {this.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest, true);return false;}
                 this._installFailedMsg("Fetching resource failed");
                 return false;
             };
@@ -184,6 +175,7 @@ var StoreHandler = {
             };
             if (i == 3000) {
                 Services.console.logStringMessage("Magic not found");
+                return false;
             };
             // remove Chrome ext headers
             let zipBuffer = arrayBuffer.slice(i);
@@ -207,7 +199,8 @@ var StoreHandler = {
             let manifest = this._parseManifest(zr);
             // only manifest version 2 currently supported
             if (manifest.manifest_version != 2) {
-                Services.console.logStringMessage("Manifest version not supported, must be manifest_version: 2");
+                this._installFailedMsg("Manifest version not supported, must be manifest_version: 2");
+                return false;
             }
             // ensure locale properties set correctly
             manifest = this._localeCheck(manifest, zr);
@@ -282,14 +275,16 @@ var StoreHandler = {
                 "contentSettings",
                 "contextMenus",
                 "debugger",
-                "pageCapture"
+                "pageCapture",
+                "tabCapture"
                 ],
             "options_page":"",
             "permissions":
                 ["background",
                 "contentSettings",
                 "debugger",
-                "pageCapture"
+                "pageCapture",
+                "tabCapture"
                 ],
             "version_name":""
         }
@@ -315,7 +310,7 @@ var StoreHandler = {
                 arr[1].forEach((value) => {
                     if (unsupported[arr[0]].includes(value)) {permissionArr.push(value);}
                 })
-                if (permissionArr > 0) {
+                if (permissionArr.length > 0) {
                     unsupportedInManifest.push(permissionArr.join(","));
                 }
             } else if (Object.keys(unsupported).includes(arr[0]) &&
@@ -347,19 +342,19 @@ var StoreHandler = {
     },
 
     /**
-     * 
+     * Ensure manifest compliance based on extension contents
      * @param manifest
      * @param zr
      */
     _localeCheck: function __localeCheck(manifest, zr) {
-        let entryPointer = "_locales";
+        let entryPointer = "_locales/";
         if (zr.hasEntry(entryPointer)) {
             if (!manifest.default_locale) {
-                zr.hasEntry("en") ? manifest.default_locale = "en" : manifest.default_locale = "en-US";
+                zr.hasEntry("_locales/en/") ? manifest.default_locale = "en" : manifest.default_locale = "en-US";
             }
         } else {
             if (manifest.default_locale) {
-                delete manifest.defalt_locale;
+                delete manifest.default_locale;
             }
         }
         return manifest;
