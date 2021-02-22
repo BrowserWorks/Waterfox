@@ -175,6 +175,7 @@ var StoreHandler = {
             };
             if (i == 3000) {
                 Services.console.logStringMessage("Magic not found");
+                return false;
             };
             // remove Chrome ext headers
             let zipBuffer = arrayBuffer.slice(i);
@@ -341,19 +342,19 @@ var StoreHandler = {
     },
 
     /**
-     * 
+     * Ensure manifest compliance based on extension contents
      * @param manifest
      * @param zr
      */
     _localeCheck: function __localeCheck(manifest, zr) {
-        let entryPointer = "_locales";
+        let entryPointer = "_locales/";
         if (zr.hasEntry(entryPointer)) {
             if (!manifest.default_locale) {
-                zr.hasEntry("en") ? manifest.default_locale = "en" : manifest.default_locale = "en-US";
+                zr.hasEntry("_locales/en/") ? manifest.default_locale = "en" : manifest.default_locale = "en-US";
             }
         } else {
             if (manifest.default_locale) {
-                delete manifest.defalt_locale;
+                delete manifest.default_locale;
             }
         }
         return manifest;
