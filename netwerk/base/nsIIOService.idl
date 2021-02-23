@@ -65,6 +65,15 @@ interface nsIIOService : nsISupports
      */
     nsIURI newFileURI(in nsIFile aFile);
 
+     /**
+     * Converts an internal URI (e.g. one that has a username and password in
+     * it) into one which we can expose to the user, for example on the URL bar.
+     *
+     * @param  aURI The URI to be converted.
+     * @return nsIURI The converted, exposable URI.
+     */
+    nsIURI createExposableURI(in nsIURI aURI);
+
     /**
      * Creates a channel for a given URI.
      *
@@ -137,7 +146,7 @@ interface nsIIOService : nsISupports
      * Returns true if networking is in "offline" mode. When in offline mode, 
      * attempts to access the network will fail (although this does not 
      * necessarily correlate with whether there is actually a network 
-     * available -- that's hard to detect without causing the dialer to 
+     * available -- that's hard to detect without causing the dialer to
      * come up).
      *
      * Changing this fires observer notifications ... see below.
