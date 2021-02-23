@@ -838,6 +838,8 @@ SearchService.prototype = {
   },
 
   _listJSONURL: `${EXT_SEARCH_PREFIX}list.json`,
+  // use alt list.json - list-dist.json if found
+  _listJSONURL: (distroID) ? EXT_SEARCH_PREFIX + "list-dist.json":distroID,
 
   get _sortedEngines() {
     if (!this.__sortedEngines) {
