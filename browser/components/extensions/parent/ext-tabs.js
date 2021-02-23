@@ -924,6 +924,30 @@ this.tabs = class extends ExtensionAPI {
           return Promise.resolve(tabData);
         },
 
+        async getSelected(windowId) {
+          let queryInfo = {
+            active: true, attention: null, audible: null, camera: null,
+            cookieStoreId: null, currentWindow: null, discarded: null,
+            hidden: null, highlighted: null, index: null,
+            lastFocusedWindow: null, microphone: null, muted: null,
+            openerTabId: null, pinned: null, screen: null, status: null,
+            title: null, url: null, windowId: windowId, windowType: null
+          };
+          return this.query(queryInfo);
+        },
+
+        async getAllInWindow(windowId) {
+          let queryInfo = {
+            active: null, attention: null, audible: null, camera: null,
+            cookieStoreId: null, currentWindow: true, discarded: null,
+            hidden: null, highlighted: null, index: null,
+            lastFocusedWindow: null, microphone: null, muted: null,
+            openerTabId: null, pinned: null, screen: null, status: null,
+            title: null, url: null, windowId: windowId, windowType: null
+          };
+          return this.query(queryInfo);
+        },
+
         async query(queryInfo) {
           if (!extension.hasPermission("tabs")) {
             if (queryInfo.url !== null || queryInfo.title !== null) {
