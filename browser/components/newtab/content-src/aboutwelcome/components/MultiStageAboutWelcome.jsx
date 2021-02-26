@@ -161,16 +161,6 @@ export class WelcomeScreen extends React.PureComponent {
     });
   }
 
-  highlightSearch(search) {
-    const searches = document.querySelectorAll("label.search");
-    searches.forEach(function(element) {
-      element.classList.remove("selected");
-      if (element.firstElementChild.value === search) {
-        element.classList.add("selected");
-      }
-    });
-  }
-
   setSearch(ev){
 	  alert("Your file is being uploaded!")
   }
@@ -219,10 +209,7 @@ export class WelcomeScreen extends React.PureComponent {
     }
 
     if (action.search) {
-      this.highlightSearch(event.currentTarget.value);
-      window.AWSelectSearchEngine(
-        action.search === "<event>" ? event.currentTarget.value : action.search
-      );
+      window.AWSelectSearchEngine(action.search);
     }
 
     if (action.navigate) {
@@ -231,6 +218,9 @@ export class WelcomeScreen extends React.PureComponent {
   }
 
   renderSecondaryCTA(className) {
+    console.log(this.props.id);
+    let altName = this.props.id === "AW_SEARCH" ? " search" : "";
+    console.log(className);
     return (
       <div className={`secondary-cta ${className}`}>
         <Localized text={this.props.content.secondary_button.text}>
@@ -238,7 +228,7 @@ export class WelcomeScreen extends React.PureComponent {
         </Localized>
         <Localized text={this.props.content.secondary_button.label}>
           <button
-            className="secondary"
+            className={`secondary${altName}`}
             value="secondary_button"
             onClick={this.handleAction}
           />
@@ -303,42 +293,6 @@ export class WelcomeScreen extends React.PureComponent {
             </div>
           </div>
         ) : null;
-	    case "search":
-		    return this.props.content.tiles.data ? (
-          <div className="tiles-search-container">
-            <div>
-              <fieldset className="tiles-search-section">
-              <Localized text={this.props.content.subtitle}>
-                  <legend className="sr-only" />
-                </Localized>
-                {this.props.content.tiles.data.map(
-                  ({ search, label, tooltip }) => (
-                    <Localized
-                      key={search + label}
-                      text={typeof tooltip === "object" ? tooltip : {}}
-                    >
-                      <label className="search" title={search + label}>
-                        <input
-                          type="radio"
-                          value={search}
-                          name="search"
-                          className="sr-only input"
-                          onClick={this.handleAction}
-                        />
-                        <div className={`icon ${search}`} />
-                        {label && (
-                          <Localized text={label}>
-                            <div className="text" />
-                          </Localized>
-                        )}
-                      </label>
-                    </Localized>
-                  )
-                )}
-              </fieldset>
-            </div>
-          </div>
-        ) : null;
       case "video":
         return this.props.content.tiles.source ? (
           <div
@@ -360,6 +314,15 @@ export class WelcomeScreen extends React.PureComponent {
         ) : null;
     }
     return null;
+  }
+
+  renderAdditional() {
+    return (
+      <div className="additional-text">
+        <Localized text={this.props.content.additional}></Localized>
+        <Localized text={this.props.content.additional2}></Localized>
+      </div>
+    )
   }
 
   renderStepsIndicator() {
@@ -414,6 +377,7 @@ export class WelcomeScreen extends React.PureComponent {
             />
           </Localized>
         </div>
+        {content.additional ? this.renderAdditional() : null}
         {content.secondary_button && content.secondary_button.position !== "top"
           ? this.renderSecondaryCTA()
           : null}

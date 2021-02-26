@@ -119,33 +119,12 @@ onboarding-multistage-theme-tooltip-colorful =
   .aria-label = { onboarding-multistage-theme-tooltip-colorful.title }
 
 
-onboarding-multistage-search-header = Choose a default <span data-l10n-name="zap">search engine</span>
-onboarding-multistage-search-subtitle = Set your default.
-onboarding-multistage-search-primary-button-label = Set default search
-onboarding-multistage-search-secondary-button-label = Not now
-
-onboarding-multistage-search-label-bing = Bing
-onboarding-multistage-search-label-startpage = Startpage
-
-## Please make sure to split the content of the title attribute into lines whose
-## width corresponds to about 40 Latin characters, to ensure that the tooltip
-## doesn't become too long. Line breaks will be preserved when displaying the
-## tooltip.
-
-# Tooltip displayed on hover of Bing
-onboarding-multistage-search-tooltip-bing =
-  .title =
-    Use Bing as default search
-    engine.
-  .aria-label = { onboarding-multistage-search-tooltip-bing.title }
-
-# Tooltip displayed on hover of Startpage
-onboarding-multistage-search-tooltip-startpage =
-  .title =
-    Use Startpage as default search
-    engine.
-  .aria-label = { onboarding-multistage-search-tooltip-startpage.title }
-
+onboarding-multistage-search-header = Add privacy to your default <span data-l10n-name="zap">search</span>
+onboarding-multistage-search-subtitle = For the most private browsing experience, we recommend setting Waterfox's default search to Startpage, a privacy-first search engine.
+onboarding-multistage-search-additional = Clicking the above will change the browser's default and homepage search boxes from Bing to Startpage.com.
+onboarding-multistage-search-additional2 = This selection can be adjusted in the Settings menu.
+onboarding-multistage-search-primary-button-label = Set Search to Startpage
+onboarding-multistage-search-secondary-button-label = Continue with Bing
 
 ## Welcome full page string
 

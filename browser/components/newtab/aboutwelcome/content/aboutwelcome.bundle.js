@@ -434,17 +434,6 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     });
   }
 
-  highlightSearch(search) {
-    const searches = document.querySelectorAll("label.search");
-    searches.forEach(function (element) {
-      element.classList.remove("selected");
-
-      if (element.firstElementChild.value === search) {
-        element.classList.add("selected");
-      }
-    });
-  }
-
   setSearch(ev) {
     alert("Your file is being uploaded!");
   }
@@ -491,8 +480,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     }
 
     if (action.search) {
-      this.highlightSearch(event.currentTarget.value);
-      window.AWSelectSearchEngine(action.search === "<event>" ? event.currentTarget.value : action.search);
+      window.AWSelectSearchEngine(action.search);
     }
 
     if (action.navigate) {
@@ -501,6 +489,9 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
   }
 
   renderSecondaryCTA(className) {
+    console.log(this.props.id);
+    let altName = this.props.id === "AW_SEARCH" ? " search" : "";
+    console.log(className);
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
       className: `secondary-cta ${className}`
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
@@ -508,7 +499,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", null)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
       text: this.props.content.secondary_button.label
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
-      className: "secondary",
+      className: `secondary${altName}`,
       value: "secondary_button",
       onClick: this.handleAction
     })));
@@ -613,39 +604,6 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
           className: "text"
         })))))))) : null;
 
-      case "search":
-        return this.props.content.tiles.data ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: "tiles-search-container"
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("fieldset", {
-          className: "tiles-search-section"
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
-          text: this.props.content.subtitle
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("legend", {
-          className: "sr-only"
-        })), this.props.content.tiles.data.map(({
-          search,
-          label,
-          tooltip
-        }) => react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
-          key: search + label,
-          text: typeof tooltip === "object" ? tooltip : {}
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", {
-          className: "search",
-          title: search + label
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
-          type: "radio",
-          value: search,
-          name: "search",
-          className: "sr-only input",
-          onClick: this.handleAction
-        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: `icon ${search}`
-        }), label && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
-          text: label
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: "text"
-        })))))))) : null;
-
       case "video":
         return this.props.content.tiles.source ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           className: `tiles-media-section ${this.props.content.tiles.media_type}`
@@ -661,6 +619,16 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     }
 
     return null;
+  }
+
+  renderAdditional() {
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: "additional-text"
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+      text: this.props.content.additional
+    }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+      text: this.props.content.additional2
+    }));
   }
 
   renderStepsIndicator() {
@@ -713,7 +681,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
       className: "primary",
       value: "primary_button",
       onClick: this.handleAction
-    }))), content.secondary_button && content.secondary_button.position !== "top" ? this.renderSecondaryCTA() : null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
+    }))), content.additional ? this.renderAdditional() : null, content.secondary_button && content.secondary_button.position !== "top" ? this.renderSecondaryCTA() : null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
       className: content.tiles && content.tiles.type === "topsites" && topSites && topSites.showImportable ? "steps has-disclaimer" : "steps",
       "data-l10n-id": "onboarding-welcome-steps-indicator",
       "data-l10n-args": `{"current": ${parseInt(this.props.order, 10) + 1}, "total": ${this.props.totalNumberOfScreens}}`
@@ -1061,59 +1029,44 @@ const DEFAULT_WELCOME_CONTENT = {
         }
       }
     }
-  }, // {
-  //   id: "AW_SEARCH",
-  //   order: 3,
-  //   content: {
-  //     zap: true,
-  // 		    title: "Set your Search",
-  //     subtitle: "Select your default search engine from the options below.",
-  //     tiles: {
-  //       type: "search",
-  //       action: {
-  //         search: "<event>",
-  //       },
-  //       data: [
-  //         {
-  //           search: "bing",
-  //           label: {
-  //             string_id: "onboarding-multistage-search-label-bing",
-  //           },
-  //           tooltip: {
-  //             string_id: "onboarding-multistage-search-tooltip-bing",
-  //           },
-  //         },
-  //         {
-  //           search: "startpage",
-  //           label: { string_id: "onboarding-multistage-search-label-startpage" },
-  //           tooltip: {
-  //             string_id: "onboarding-multistage-search-tooltip-startpage",
-  //           },
-  //         },
-  //       ],
-  //     },
-  //     primary_button: {
-  //       label: {
-  //         string_id: "onboarding-multistage-search-primary-button-label",
-  //       },
-  //       action: {
-  //         navigate: true,
-  //       },
-  //     },
-  //     secondary_button: {
-  //       label: {
-  //         string_id: "onboarding-multistage-search-secondary-button-label",
-  //       },
-  //       action: {
-  //         search: "bing",
-  //         navigate: true,
-  //       },
-  //     },
-  //   },
-  // },
-  {
-    id: "AW_DEFAULT",
+  }, {
+    id: "AW_SEARCH",
     order: 3,
+    content: {
+      zap: true,
+      title: {
+        string_id: "onboarding-multistage-search-header"
+      },
+      subtitle: {
+        string_id: "onboarding-multistage-search-subtitle"
+      },
+      additional: {
+        string_id: "onboarding-multistage-search-additional"
+      },
+      additional2: {
+        string_id: "onboarding-multistage-search-additional2"
+      },
+      primary_button: {
+        label: {
+          string_id: "onboarding-multistage-search-primary-button-label"
+        },
+        action: {
+          search: "startpage",
+          navigate: true
+        }
+      },
+      secondary_button: {
+        label: {
+          string_id: "onboarding-multistage-search-secondary-button-label"
+        },
+        action: {
+          navigate: true
+        }
+      }
+    }
+  }, {
+    id: "AW_DEFAULT",
+    order: 4,
     content: {
       zap: true,
       title: "Best as Default",
@@ -1136,7 +1089,7 @@ const DEFAULT_WELCOME_CONTENT = {
     }
   }, {
     id: "AW_PRIVACY",
-    order: 4,
+    order: 5,
     content: {
       title: "Automatic Privacy",
       subtitle: "Waterfox automatically blocks trackers and malware, and keeps companies from secretly following you around. When you see the shield while browsing, Waterfox is protecting you.",
