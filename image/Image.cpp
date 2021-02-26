@@ -187,7 +187,7 @@ ImgDrawResult ImageResource::GetImageContainerImpl(
       // Lack of a container is handled below.
       container = RefPtr<layers::ImageContainer>(entry->mContainer);
       break;
-    } else if (!entry->mContainer) {
+    } else if (entry->mContainer.IsDead()) {
       // Stop tracking if our weak pointer to the image container was freed.
       mImageContainers.RemoveElementAt(i);
     }

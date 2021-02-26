@@ -106,7 +106,7 @@ class MozbuildObject(ProcessExecutionMixin):
     """
 
     def __init__(self, topsrcdir, settings, log_manager, topobjdir=None,
-                 mozconfig=MozconfigLoader.AUTODETECT):
+                 mozconfig=MozconfigLoader.AUTODETECT, virtualenv_name=None):
         """Create a new Mozbuild object instance.
 
         Instances are bound to a source directory, a ConfigSettings instance,
@@ -123,6 +123,8 @@ class MozbuildObject(ProcessExecutionMixin):
         self._topobjdir = mozpath.normsep(topobjdir) if topobjdir else topobjdir
         self._mozconfig = mozconfig
         self._config_environment = None
+        self._virtualenv_name = virtualenv_name or (
+            'init_py3' if six.PY3 else 'init')
         self._virtualenv_manager = None
 
     @classmethod
@@ -275,13 +277,10 @@ class MozbuildObject(ProcessExecutionMixin):
         from .virtualenv import VirtualenvManager
 
         if self._virtualenv_manager is None:
-            name = "init"
-            if six.PY3:
-                name += "_py3"
             self._virtualenv_manager = VirtualenvManager(
                 self.topsrcdir,
                 self.topobjdir,
-                os.path.join(self.topobjdir, '_virtualenvs', name),
+                os.path.join(self.topobjdir, '_virtualenvs', self._virtualenv_name),
                 sys.stdout,
                 os.path.join(self.topsrcdir, 'build', 'virtualenv_packages.txt')
                 )
@@ -836,7 +835,7 @@ class MozbuildObject(ProcessExecutionMixin):
         return cls(self.topsrcdir, self.settings, self.log_manager,
                    topobjdir=self.topobjdir)
 
-    def _activate_virtualenv(self):
+    def activate_virtualenv(self):
         self.virtualenv_manager.ensure()
         self.virtualenv_manager.activate()
 
@@ -844,7 +843,7 @@ class MozbuildObject(ProcessExecutionMixin):
         self.log_manager.terminal_handler.setLevel(logging.INFO if not verbose else logging.DEBUG)
 
     def ensure_pipenv(self):
-        self._activate_virtualenv()
+        self.activate_virtualenv()
         pipenv = os.path.join(self.virtualenv_manager.bin_path, 'pipenv')
         if not os.path.exists(pipenv):
             for package in ['certifi', 'pipenv', 'six', 'virtualenv', 'virtualenv-clone']:
@@ -863,7 +862,7 @@ class MozbuildObject(ProcessExecutionMixin):
         try:
             import zstandard  # noqa: F401
         except (ImportError, AttributeError):
-            self._activate_virtualenv()
+            self.activate_virtualenv()
             self.virtualenv_manager.install_pip_package('zstandard>=0.9.0,<=0.13.0')
 
 
@@ -874,7 +873,7 @@ class MachCommandBase(MozbuildObject):
     without having to change everything that inherits from it.
     """
 
-    def __init__(self, context):
+    def __init__(self, context, virtualenv_name=None):
         # Attempt to discover topobjdir through environment detection, as it is
         # more reliable than mozconfig when cwd is inside an objdir.
         topsrcdir = context.topdir
@@ -915,8 +914,10 @@ class MachCommandBase(MozbuildObject):
             print(e)
             sys.exit(1)
 
-        MozbuildObject.__init__(self, topsrcdir, context.settings,
-                                context.log_manager, topobjdir=topobjdir)
+        MozbuildObject.__init__(
+            self, topsrcdir, context.settings,
+            context.log_manager, topobjdir=topobjdir,
+            virtualenv_name=virtualenv_name)
 
         self._mach_context = context
 
@@ -937,7 +938,11 @@ class MachCommandBase(MozbuildObject):
         # Always keep a log of the last command, but don't do that for mach
         # invokations from scripts (especially not the ones done by the build
         # system itself).
-        if (os.isatty(sys.stdout.fileno()) and
+        try:
+            fileno = getattr(sys.stdout, 'fileno', lambda: None)()
+        except io.UnsupportedOperation:
+            fileno = None
+        if (fileno and os.isatty(fileno) and
                 not getattr(self, 'NO_AUTO_LOG', False)):
             self._ensure_state_subdir_exists('.')
             logfile = self._get_state_filename('last_log.json')

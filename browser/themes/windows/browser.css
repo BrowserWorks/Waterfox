@@ -27,7 +27,8 @@
   --chrome-content-separator-color: ThreeDShadow;
 }
 
-#navigator-toolbox {
+#navigator-toolbox,
+#browser-bottombox {
   --tabs-border-color: threedshadow;
 }
 
@@ -48,7 +49,8 @@
     --chrome-content-separator-color: #e1e1e2;
   }
 
-  #navigator-toolbox {
+  #navigator-toolbox,
+  #browser-bottombox {
     --tabs-border-color: rgba(0,0,0,.3);
   }
 
@@ -71,7 +73,8 @@
   --arrowpanel-dimmed-even-further: rgba(249,249,250,.2);
 }
 
-#navigator-toolbox:-moz-lwtheme {
+#navigator-toolbox:-moz-lwtheme,
+#browser-bottombox:-moz-lwtheme {
   --tabs-border-color: rgba(0,0,0,.3);
 }
 
@@ -145,7 +148,8 @@
  */
 @media (-moz-os-version: windows-win7) {
   @media (-moz-windows-default-theme) {
-    #navigator-toolbox:not(:-moz-lwtheme) {
+    #navigator-toolbox:not(:-moz-lwtheme),
+    #browser-bottombox:not(:-moz-lwtheme) {
       --tabs-border-color: @glassShadowColor@;
     }
 
