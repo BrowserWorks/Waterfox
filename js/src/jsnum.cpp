@@ -83,12 +83,16 @@ ComputeAccurateDecimalInteger(JSContext* cx, const CharT* start, const CharT* en
     if (!cstr)
         return false;
 
+    size_t j = 0;
     for (size_t i = 0; i < length; i++) {
         char c = char(start[i]);
+        if (c == '_') {
+          continue;
+        }
         MOZ_ASSERT(('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'));
-        cstr[i] = c;
+        cstr[j++] = c;
     }
-    cstr[length] = 0;
+    cstr[j] = 0;
 
     if (!EnsureDtoaState(cx))
         return false;
@@ -126,8 +130,14 @@ class BinaryDigitReader
         if (digitMask == 0) {
             if (start == end)
                 return -1;
-
             int c = *start++;
+            if (c == '_') {
+                // Skip over one _ and one _ only.
+                if (start == end)
+                    return -1;
+                c = *start++;
+            }
+
             MOZ_ASSERT(('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'));
             if ('0' <= c && c <= '9')
                 digit = c - '0';
@@ -224,7 +234,8 @@ js::ParseDecimalNumber(const mozilla::Range<const char16_t> chars);
 template <typename CharT>
 bool
 js::GetPrefixInteger(JSContext* cx, const CharT* start, const CharT* end, int base,
-                     const CharT** endp, double* dp)
+                     PrefixIntegerSeparatorHandling separatorHandling, const CharT** endp,
+                     double* dp)
 {
     MOZ_ASSERT(start <= end);
     MOZ_ASSERT(2 <= base && base <= 36);
@@ -240,6 +251,8 @@ js::GetPrefixInteger(JSContext* cx, const CharT* start, const CharT* end, int ba
             digit = c - 'a' + 10;
         else if ('A' <= c && c <= 'Z')
             digit = c - 'A' + 10;
+        else if (c == '_' && separatorHandling == PrefixIntegerSeparatorHandling::SkipUnderscore)
+            continue;
         else
             break;
         if (digit >= base)
@@ -257,7 +270,7 @@ js::GetPrefixInteger(JSContext* cx, const CharT* start, const CharT* end, int ba
     /*
      * Otherwise compute the correct integer from the prefix of valid digits
      * if we're computing for base ten or a power of two.  Don't worry about
-     * other bases; see 15.1.2.2 step 13.
+     * other bases; see ES2018, 18.2.5 `parseInt(string, radix)`, step 13.
      */
     if (base == 10)
         return ComputeAccurateDecimalInteger(cx, start, s, dp);
@@ -270,11 +283,13 @@ js::GetPrefixInteger(JSContext* cx, const CharT* start, const CharT* end, int ba
 
 template bool
 js::GetPrefixInteger(JSContext* cx, const char16_t* start, const char16_t* end, int base,
-                     const char16_t** endp, double* dp);
+                     PrefixIntegerSeparatorHandling separatorHandling, const char16_t** endp,
+                     double* dp);
 
 template bool
-js::GetPrefixInteger(JSContext* cx, const Latin1Char* start, const Latin1Char* end,
-                     int base, const Latin1Char** endp, double* dp);
+js::GetPrefixInteger(JSContext* cx, const Latin1Char* start, const Latin1Char* end, int base,
+                     PrefixIntegerSeparatorHandling separatorHandling, const Latin1Char** endp,
+                     double* dp);
 
 bool
 js::GetDecimalInteger(JSContext* cx, const char16_t* start, const char16_t* end, double* dp)
@@ -285,6 +300,8 @@ js::GetDecimalInteger(JSContext* cx, const char16_t* start, const char16_t* end,
     double d = 0.0;
     for (; s < end; s++) {
         char16_t c = *s;
+        if (c == '_')
+            continue;
         MOZ_ASSERT('0' <= c && c <= '9');
         int digit = c - '0';
         d = d * 10 + digit;
@@ -298,6 +315,42 @@ js::GetDecimalInteger(JSContext* cx, const char16_t* start, const char16_t* end,
 
     // Otherwise compute the correct integer from the prefix of valid digits.
     return ComputeAccurateDecimalInteger(cx, start, s, dp);
+}
+
+bool
+js::GetDecimalNonInteger(JSContext* cx, const char16_t* start, const char16_t* end, double* dp)
+{
+    MOZ_ASSERT(start <= end);
+
+    size_t length = end - start;
+    Vector<char, 32> chars(cx);
+    if (!chars.growByUninitialized(length + 1)) {
+        return false;
+    }
+
+    const char16_t* s = start;
+    size_t i = 0;
+    for (; s < end; s++) {
+        char16_t c = *s;
+        if (c == '_') {
+            continue;
+        }
+        MOZ_ASSERT(('0' <= c && c <= '9') || c == '.' || c == 'e' || c == 'E' || c == '+' ||
+                   c == '-');
+        chars[i++] = char(c);
+    }
+    chars[i] = 0;
+
+    if (!EnsureDtoaState(cx)) {
+        return false;
+    }
+
+    char* ep;
+    int err; // unused
+    *dp = js_strtod_harder(cx->dtoaState, chars.begin(), &ep, &err);
+    MOZ_ASSERT(ep >= chars.begin());
+
+    return true;
 }
 
 static bool
@@ -370,7 +423,7 @@ ParseIntImpl(JSContext* cx, const CharT* chars, size_t length, bool stripPrefix,
     /* Steps 11-15. */
     const CharT* actualEnd;
     double d;
-    if (!GetPrefixInteger(cx, s, end, radix, &actualEnd, &d))
+    if (!GetPrefixInteger(cx, s, end, radix, PrefixIntegerSeparatorHandling::None, &actualEnd, &d))
         return false;
 
     if (s == actualEnd)
@@ -1535,7 +1588,7 @@ CharsToNumber(JSContext* cx, const CharT* chars, size_t length, double* result)
              */
             const CharT* endptr;
             double d;
-            if (!GetPrefixInteger(cx, bp + 2, end, radix, &endptr, &d) ||
+            if (!GetPrefixInteger(cx, bp + 2, end, radix, PrefixIntegerSeparatorHandling::None, &endptr, &d) ||
                 endptr == bp + 2 ||
                 SkipSpace(endptr, end) != end)
             {
