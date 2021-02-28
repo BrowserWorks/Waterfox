@@ -326,6 +326,13 @@ public:
     const nsINode* aPossibleDescendant, const nsINode* aPossibleAncestor);
 
   /**
+   * Similar to above, but does special case only ShadowRoot,
+   * not HTMLTemplateElement.
+   */
+  static bool ContentIsShadowIncludingDescendantOf(
+    const nsINode* aPossibleDescendant, const nsINode* aPossibleAncestor);
+
+  /**
    * Similar to ContentIsDescendantOf except it crosses document boundaries,
    * this function uses ancestor/descendant relations in the composed document
    * (see shadow DOM spec).
@@ -342,6 +349,13 @@ public:
   static bool
   ContentIsFlattenedTreeDescendantOf(const nsINode* aPossibleDescendant,
                                      const nsINode* aPossibleAncestor);
+
+  /**
+   * Retarget an object A against an object B
+   * @see https://dom.spec.whatwg.org/#retarget
+   */
+  static nsINode*
+  Retarget(nsINode* aTargetA, nsINode* aTargetB);
 
   /*
    * This method fills the |aArray| with all ancestor nodes of |aNode|
