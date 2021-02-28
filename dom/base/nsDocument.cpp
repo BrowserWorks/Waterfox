@@ -6232,12 +6232,6 @@ nsIDocument::ImportNode(nsINode& aNode, bool aDeep, ErrorResult& rv) const
       break;
     }
     case nsIDOMNode::DOCUMENT_FRAGMENT_NODE:
-    {
-      if (ShadowRoot::FromNode(imported)) {
-        break;
-      }
-      MOZ_FALLTHROUGH;
-    }
     case nsIDOMNode::ATTRIBUTE_NODE:
     case nsIDOMNode::ELEMENT_NODE:
     case nsIDOMNode::PROCESSING_INSTRUCTION_NODE:
