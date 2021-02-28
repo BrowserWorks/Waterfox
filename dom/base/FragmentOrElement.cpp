@@ -776,14 +776,6 @@ FragmentOrElement::nsDOMSlots::Traverse(nsCycleCollectionTraversalCallback &cb)
     mExtendedSlots->mCustomElementData->Traverse(cb);
   }
 
-  for (auto iter = mExtendedSlots->mRegisteredIntersectionObservers.Iter();
-       !iter.Done(); iter.Next()) {
-    DOMIntersectionObserver* observer = iter.Key();
-    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb,
-                                       "mExtendedSlots->mRegisteredIntersectionObservers[i]");
-    cb.NoteXPCOMChild(observer);
-  }
-
   NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mExtendedSlots->mFrameLoaderOrOpener");
   cb.NoteXPCOMChild(mExtendedSlots->mFrameLoaderOrOpener);
 }
@@ -815,7 +807,6 @@ FragmentOrElement::nsDOMSlots::Unlink()
     mExtendedSlots->mCustomElementData->Unlink();
     mExtendedSlots->mCustomElementData = nullptr;
   }
-  mExtendedSlots->mRegisteredIntersectionObservers.Clear();
   nsCOMPtr<nsIFrameLoader> frameLoader =
     do_QueryInterface(mExtendedSlots->mFrameLoaderOrOpener);
   if (frameLoader) {
@@ -1607,6 +1598,11 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
   // which is dispatched in UnbindFromTree.
 
   if (tmp->HasProperties()) {
+    if (tmp->IsElement()) {
+      Element* elem = tmp->AsElement();
+      elem->UnlinkIntersectionObservers();
+    }
+
     if (tmp->IsHTMLElement() || tmp->IsSVGElement()) {
       nsIAtom*** props = Element::HTMLSVGPropertiesToTraverseAndUnlink();
       for (uint32_t i = 0; props[i]; ++i) {
@@ -1661,14 +1657,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
   {
     nsDOMSlots *slots = tmp->GetExistingDOMSlots();
     if (slots) {
-      if (slots->mExtendedSlots && tmp->IsElement()) {
-        Element* elem = tmp->AsElement();
-        for (auto iter = slots->mExtendedSlots->mRegisteredIntersectionObservers.Iter();
-             !iter.Done(); iter.Next()) {
-          DOMIntersectionObserver* observer = iter.Key();
-          observer->UnlinkTarget(*elem);
-        }
-      }
       slots->Unlink();
     }
   }
@@ -2189,6 +2177,19 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
 #endif
 
   if (tmp->HasProperties()) {
+    if (tmp->IsElement()) {
+      Element* elem = tmp->AsElement();
+      IntersectionObserverList* observers =
+        static_cast<IntersectionObserverList*>(
+          elem->GetProperty(nsGkAtoms::intersectionobserverlist)
+        );
+      if (observers) {
+        for (auto iter = observers->Iter(); !iter.Done(); iter.Next()) {
+          DOMIntersectionObserver* observer = iter.Key();
+          cb.NoteXPCOMChild(observer);
+        }
+      }
+    }
     if (tmp->IsHTMLElement() || tmp->IsSVGElement()) {
       nsIAtom*** props = Element::HTMLSVGPropertiesToTraverseAndUnlink();
       for (uint32_t i = 0; props[i]; ++i) {
