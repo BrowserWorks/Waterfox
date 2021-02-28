@@ -4193,6 +4193,20 @@ enum nsPreviousIntersectionThreshold {
   eNonIntersecting = -1
 };
 
+static void
+IntersectionObserverPropertyDtor(void* aObject, nsIAtom* aPropertyName,
+                                 void* aPropertyValue, void* aData)
+{
+  Element* element = static_cast<Element*>(aObject);
+  IntersectionObserverList* observers =
+    static_cast<IntersectionObserverList*>(aPropertyValue);
+  for (auto iter = observers->Iter(); !iter.Done(); iter.Next()) {
+    DOMIntersectionObserver* observer = iter.Key();
+    observer->UnlinkTarget(*element);
+  }
+  delete observers;
+}
+
 void
 Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
@@ -4205,7 +4219,7 @@ Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
     observers = new IntersectionObserverList();
     observers->Put(aObserver, eUninitialized);
     SetProperty(nsGkAtoms::intersectionobserverlist, observers,
-                nsINode::DeleteProperty<IntersectionObserverList>);
+                IntersectionObserverPropertyDtor, true);
     return;
   }
 
