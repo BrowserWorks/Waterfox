@@ -260,8 +260,6 @@ NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& 
   RefPtr<mozilla::dom::NodeInfo> nodeInfo = aNodeInfo;
 
   nsIAtom *name = nodeInfo->NameAtom();
-  RefPtr<nsIAtom> tagAtom = nodeInfo->NameAtom();
-  RefPtr<nsIAtom> typeAtom = aIs ? NS_Atomize(*aIs) : tagAtom;
 
   NS_ASSERTION(nodeInfo->NamespaceEquals(kNameSpaceID_XHTML),
                "Trying to HTML elements that don't have the XHTML namespace");
@@ -270,7 +268,14 @@ NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& 
 
   bool isCustomElementName = (tag == eHTMLTag_userdefined &&
                               nsContentUtils::IsCustomElementName(name));
+
+  RefPtr<nsIAtom> tagAtom = nodeInfo->NameAtom();
+  RefPtr<nsIAtom> typeAtom;
   bool isCustomElement = isCustomElementName || aIs;
+  if (isCustomElement) {
+    typeAtom = isCustomElementName ? tagAtom : NS_Atomize(*aIs);
+  }
+
   MOZ_ASSERT_IF(aDefinition, isCustomElement);
 
   // https://dom.spec.whatwg.org/#concept-create-element
