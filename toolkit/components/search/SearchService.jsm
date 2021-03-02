@@ -837,7 +837,9 @@ SearchService.prototype = {
     return val;
   },
 
-  _listJSONURL: SearchUtils.distroID ? EXT_SEARCH_PREFIX + "list-dist.json" : `${EXT_SEARCH_PREFIX}list.json`,
+  _listJSONURL: `${EXT_SEARCH_PREFIX}list.json`,
+  // Temporarily disable the below as it affects existing partner builds.
+  // _listJSONURL: SearchUtils.distroID ? EXT_SEARCH_PREFIX + "list-dist.json" : `${EXT_SEARCH_PREFIX}list.json`,
 
   get _sortedEngines() {
     if (!this.__sortedEngines) {
