@@ -1145,7 +1145,11 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
             // point to a node in Shadow DOM.
             aVisitor.mEvent->mTarget = aVisitor.mTargetInKnownToBeHandledScope;
             return NS_OK;
-          } else {
+          } else if (targetInKnownToBeHandledScope) {
+            // Note, if targetInKnownToBeHandledScope is null,
+            // mTargetInKnownToBeHandledScope could be Window object in content
+            // page and we're in chrome document in the same process.
+
             // Step 11.6
             aVisitor.mRetargetedRelatedTarget = retargetedRelatedTarget;
           }
