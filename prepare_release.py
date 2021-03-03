@@ -112,11 +112,10 @@ def main():
     update_xml = """<?xml version="1.0"?>
 <updates>
     <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">
-        <patch type="complete" URL="https://waterfox.s3-us-west-2.amazonaws.com/testfiles/waterfox-BROWSER_VERSION.en-US.PLATFORM64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>
+        <patch type="complete" URL="https://cdn.waterfox.net/releases/PLATFORM64/update/waterfox-BROWSER_VERSION.en-US.PLATFORM64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>
     </update>
 </updates>
 """
-    test = 'https://cdn.waterfox.net/releases/PLATFORM64/update/waterfox-BROWSER_VERSION.en-US.PLATFORM64.complete.xz.mar'
     # parse args
     objdir = parse_args()
     os.chdir(os.path.join(objdir, 'dist'))
