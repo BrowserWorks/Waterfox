@@ -1,4 +1,4 @@
-if test `uname -m` = x86_64; then
+if test $(uname -m) = x86_64; then
     if test -d "$HOME/.mozbuild/clang/bin"; then
         export CC=$HOME/.mozbuild/clang/bin/clang
         export CXX=$HOME/.mozbuild/clang/bin/clang++
@@ -10,7 +10,7 @@ if test `uname -m` = x86_64; then
         export NASM=$HOME/.mozbuild/nasm/nasm
     fi
     ac_add_options --target=x86_64-pc-linux-gnu
-elif test `uname -m` = ppc64le; then
+elif test $(uname -m) = ppc64le; then
     export CC=gcc
     export CXX=g++
     ac_add_options --enable-optimize="-O2 -mcpu=power9"
@@ -19,7 +19,7 @@ fi
 ac_add_options --enable-pulseaudio
 ac_add_options --enable-alsa
 
-X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
+X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN) * 3 / 2))
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 
 ac_add_options --disable-debug
@@ -38,7 +38,7 @@ ac_add_options --enable-updater
 ac_add_options --with-branding=browser/branding/waterfox
 
 if test -f "$HOME/.mozbuild/sccache/sccache"; then
-	ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
+    ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
 fi
 
 export MOZ_INCLUDE_SOURCE_INFO=1
