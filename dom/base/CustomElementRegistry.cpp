@@ -17,6 +17,57 @@
 namespace mozilla {
 namespace dom {
 
+//-----------------------------------------------------
+// CustomElementUpgradeReaction
+
+class CustomElementUpgradeReaction final : public CustomElementReaction
+{
+public:
+  explicit CustomElementUpgradeReaction(CustomElementDefinition* aDefinition)
+    : mDefinition(aDefinition)
+  {
+#if DEBUG
+    mIsUpgradeReaction = true;
+#endif
+  }
+
+private:
+  virtual void Invoke(Element* aElement, ErrorResult& aRv) override
+  {
+    CustomElementRegistry::Upgrade(aElement, mDefinition, aRv);
+  }
+
+  CustomElementDefinition* mDefinition;
+};
+
+//-----------------------------------------------------
+// CustomElementCallbackReaction
+
+class CustomElementCallbackReaction final : public CustomElementReaction
+{
+  public:
+    explicit CustomElementCallbackReaction(UniquePtr<CustomElementCallback> aCustomElementCallback)
+      : mCustomElementCallback(Move(aCustomElementCallback))
+    {
+    }
+
+    virtual void Traverse(nsCycleCollectionTraversalCallback& aCb) const override
+    {
+      mCustomElementCallback->Traverse(aCb);
+    }
+
+  private:
+    virtual void Invoke(Element* aElement, ErrorResult& aRv) override
+    {
+      mCustomElementCallback->Call();
+    }
+
+    UniquePtr<CustomElementCallback> mCustomElementCallback;
+};
+
+//-----------------------------------------------------
+// CustomElementCallback
+
 void
 CustomElementCallback::Call()
 {
@@ -87,6 +138,7 @@ CustomElementConstructor::Construct(const char* aExecutionReason,
 
   return element.forget();
 }
+
 //-----------------------------------------------------
 // CustomElementData
 
@@ -1220,25 +1272,6 @@ CustomElementDefinition::CustomElementDefinition(nsIAtom* aType,
     mObservedAttributes(Move(aObservedAttributes)),
     mCallbacks(aCallbacks)
 {
-}
-
-
-//-----------------------------------------------------
-// CustomElementUpgradeReaction
-
-/* virtual */ void
-CustomElementUpgradeReaction::Invoke(Element* aElement, ErrorResult& aRv)
-{
-  CustomElementRegistry::Upgrade(aElement, mDefinition, aRv);
-}
-
-//-----------------------------------------------------
-// CustomElementCallbackReaction
-
-/* virtual */ void
-CustomElementCallbackReaction::Invoke(Element* aElement, ErrorResult& aRv)
-{
-  mCustomElementCallback->Call();
 }
 
 } // namespace dom
