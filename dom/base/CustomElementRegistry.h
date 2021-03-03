@@ -151,9 +151,7 @@ struct CustomElementDefinition
                           nsIAtom* aLocalName,
                           Function* aConstructor,
                           nsCOMArray<nsIAtom>&& aObservedAttributes,
-                          JS::Handle<JSObject*> aPrototype,
-                          mozilla::dom::LifecycleCallbacks* aCallbacks,
-                          uint32_t aDocOrder);
+                          mozilla::dom::LifecycleCallbacks* aCallbacks);
 
   // The type (name) for this custom element, for <button is="x-foo"> or <x-foo>
   // this would be x-foo.
@@ -168,17 +166,11 @@ struct CustomElementDefinition
   // The list of attributes that this custom element observes.
   nsCOMArray<nsIAtom> mObservedAttributes;
 
-  // The prototype to use for new custom elements of this type.
-  JS::Heap<JSObject *> mPrototype;
-
   // The lifecycle callbacks to call for this custom element.
   UniquePtr<mozilla::dom::LifecycleCallbacks> mCallbacks;
 
   // A construction stack. Use nullptr to represent an "already constructed marker".
   nsTArray<RefPtr<nsGenericHTMLElement>> mConstructionStack;
-
-  // The document custom element order.
-  uint32_t mDocOrder;
 
   bool IsCustomBuiltIn()
   {

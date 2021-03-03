@@ -197,12 +197,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(CustomElementRegistry)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(CustomElementRegistry)
-  for (auto iter = tmp->mCustomDefinitions.Iter(); !iter.Done(); iter.Next()) {
-    aCallbacks.Trace(&iter.UserData()->mPrototype,
-                     "mCustomDefinitions prototype",
-                     aClosure);
-  }
-
   for (ConstructorMap::Enum iter(tmp->mConstructors); !iter.empty(); iter.popFront()) {
     aCallbacks.Trace(&iter.front().mutableKey(),
                      "mConstructors key",
@@ -683,7 +677,7 @@ CustomElementRegistry::Define(const nsAString& aName,
     return;
   }
 
-  JS::Rooted<JSObject*> constructorPrototype(cx);
+  JS::Rooted<JS::Value> constructorPrototype(cx);
   nsAutoPtr<LifecycleCallbacks> callbacksHolder(new LifecycleCallbacks());
   nsCOMArray<nsIAtom> observedAttributes;
   { // Set mIsCustomDefinitionRunning.
@@ -697,11 +691,10 @@ CustomElementRegistry::Define(const nsAString& aName,
        * 10.1. Let prototype be Get(constructor, "prototype"). Rethrow any exceptions.
        */
       JSAutoCompartment ac(cx, constructor);
-      JS::Rooted<JS::Value> prototypev(cx);
       // The .prototype on the constructor passed could be an "expando" of a
       // wrapper. So we should get it from wrapper instead of the underlying
       // object.
-      if (!JS_GetProperty(cx, constructor, "prototype", &prototypev)) {
+      if (!JS_GetProperty(cx, constructor, "prototype", &constructorPrototype)) {
         aRv.StealExceptionFromJSContext(cx);
         return;
       }
@@ -709,15 +702,14 @@ CustomElementRegistry::Define(const nsAString& aName,
       /**
        * 10.2. If Type(prototype) is not Object, then throw a TypeError exception.
        */
-      if (!prototypev.isObject()) {
+      if (!constructorPrototype.isObject()) {
         aRv.ThrowTypeError<MSG_NOT_OBJECT>(NS_LITERAL_STRING("constructor.prototype"));
         return;
       }
-
-      constructorPrototype = &prototypev.toObject();
     } // Leave constructor's compartment.
 
-    JS::Rooted<JSObject*> constructorProtoUnwrapped(cx, js::CheckedUnwrap(constructorPrototype));
+    JS::Rooted<JSObject*> constructorProtoUnwrapped(
+      cx, js::CheckedUnwrap(&constructorPrototype.toObject()));
     if (!constructorProtoUnwrapped) {
       // If the caller's compartment does not have permission to access the
       // unwrapped prototype then throw.
@@ -840,9 +832,7 @@ CustomElementRegistry::Define(const nsAString& aName,
                                 localNameAtom,
                                 &aFunctionConstructor,
                                 Move(observedAttributes),
-                                constructorPrototype,
-                                callbacks,
-                                0 /* TODO dependent on HTML imports. Bug 877072 */);
+                                callbacks);
 
   CustomElementDefinition* def = definition.get();
   mCustomDefinitions.Put(nameAtom, definition.forget());
@@ -1181,7 +1171,6 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(CustomElementDefinition)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(CustomElementDefinition)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mConstructor)
-  tmp->mPrototype = nullptr;
   tmp->mCallbacks = nullptr;
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
@@ -1214,7 +1203,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(CustomElementDefinition)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(CustomElementDefinition)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mPrototype)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(CustomElementDefinition, AddRef)
@@ -1225,16 +1213,12 @@ CustomElementDefinition::CustomElementDefinition(nsIAtom* aType,
                                                  nsIAtom* aLocalName,
                                                  Function* aConstructor,
                                                  nsCOMArray<nsIAtom>&& aObservedAttributes,
-                                                 JS::Handle<JSObject*> aPrototype,
-                                                 LifecycleCallbacks* aCallbacks,
-                                                 uint32_t aDocOrder)
+                                                 LifecycleCallbacks* aCallbacks)
   : mType(aType),
     mLocalName(aLocalName),
     mConstructor(new CustomElementConstructor(aConstructor)),
     mObservedAttributes(Move(aObservedAttributes)),
-    mPrototype(aPrototype),
-    mCallbacks(aCallbacks),
-    mDocOrder(aDocOrder)
+    mCallbacks(aCallbacks)
 {
 }
 
