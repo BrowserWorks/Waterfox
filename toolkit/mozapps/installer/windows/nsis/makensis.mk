@@ -26,7 +26,7 @@ TOOLKIT_NSIS_FILES = \
 	locale-rtl.nlf \
 	locales.nsi \
 	overrides.nsh \
-	replaceInFile.nsh \
+	ReplaceInFile.nsh \
 	setup.ico \
 	StrRep.nsh \
 	$(NULL)
