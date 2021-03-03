@@ -1,0 +1,330 @@
+/* Additional styling for Floe theme for Waterfox G3
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: 'INVERTED' TAB SHAPE :::::: */
+
+/* The CSS code below applies when the tab bar position is set to 'Top under address bar' or 'Bottom' to vertically invert the tabs background shape */
+
+/* ::: Tab background ::: */
+
+/* Prevents an unwanted gap of 1px to display between the right end tab's curved edge and the 'middle background' */
+:root:not([tabBarPosition="topAboveAB"]) .tabbrowser-tab:not([pinned]) > .tab-stack > .tab-background > spacer {
+ -moz-margin-start: -1px !important;
+}
+
+:root:not([tabBarPosition="topAboveAB"]) .tabbrowser-tab > .tab-stack {
+  margin-top: -2px !important;
+}
+
+/* For pinned tabs when tab bar is in 'overflow' mode */
+:root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack {
+  margin-top: -1px !important;
+}
+
+:root:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) {
+  margin-bottom: 4px;
+}
+
+/* Hovered tab 'middle background' (does not apply to selected tab) */
+:root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) > spacer {
+  background-image: linear-gradient(to bottom, transparent 1px, rgb(233,233,236) 1px, rgb(233,233,236)) !important;
+}
+
+/* Hovered pinned tab 'middle background' position when the tab bar is in 'overflow' mode (does not apply to selected tab) */
+:root:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+  margin-bottom: 1px !important;
+}
+
+:root:not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) > spacer {
+  background-image: linear-gradient(to bottom, transparent 0px, rgb(233,233,236) 0px, rgb(233,233,236)) !important;
+}
+
+:root[uidensity="compact"]:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+  margin-bottom: 3px !important;
+}
+
+:root[uidensity="compact"]:not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+  margin-bottom: 2px !important;
+}
+
+@media (-moz-mac-yosemite-theme) {
+
+  :root[inFullscreen]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-background {
+    margin-bottom: 2px !important;
+  }	
+
+  :root[inFullscreen]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+    margin-bottom: 3px !important;
+  }
+  
+  :root:not([tabBarPosition="topAboveAB"]):not([tabsintitlebar]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+    margin-bottom: 1px !important;
+  }
+  
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]):not([tabsintitlebar]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+    margin-bottom: 3px !important;
+  }
+  
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]):not([tabsintitlebar]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-background[selected=true] {
+    margin-bottom: 2px !important;
+  }
+  
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]):not([tabsintitlebar]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack {
+    margin-top: -2px !important;
+  }
+  
+  :root[uidensity="compact"]:not([inFullscreen]):not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+    margin-bottom: 3px !important;
+  }
+  
+  :root[uidensity="compact"]:not([inFullscreen]):not([tabBarPosition="topAboveAB"]):not([tabsintitlebar]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+    margin-bottom: 3px !important;
+  }
+  
+  :root[uidensity="compact"][inFullscreen]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-background {
+	  margin-bottom: 0px !important;
+  }
+  
+  :root[uidensity="compact"]:not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+    margin-bottom: 4px !important;
+  }
+  
+  :root[uidensity="compact"][inFullscreen]:not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+    margin-bottom: 3px !important;
+  }
+
+}
+
+:root[uidensity="compact"]:not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) > spacer {
+  background-image: linear-gradient(to bottom, transparent 1px, rgb(233,233,236) 1px, rgb(233,233,236)) !important;
+}
+
+@media (-moz-mac-yosemite-theme) {
+
+  :root[uidensity="compact"]:not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) > spacer {
+    background-image: linear-gradient(to bottom, transparent 0px, rgb(233,233,236) 0px, rgb(233,233,236)) !important;
+  }
+
+}
+
+:root[uidensity="compact"]:not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+  margin-top: 0px !important;
+}
+
+/* Applies when the tab bar is in 'overflow' mode + 'title bar' checked and ui densitiy set to 'Normal' or 'Compact' */
+:root:not([uidensity="touch"]):not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] {
+  margin-top: 1px !important;
+}
+
+/* Vertical position adjustment for the selected tab 'middle background' */
+:root:not([tabBarPosition="topAboveAB"]) .tab-background[selected="true"] > spacer {
+  background-image: linear-gradient(to bottom, transparent 5px, rgb(255,255,255) 5px, rgb(255,255,255)) !important;
+}
+
+/* Pinned selected tab when the tab bar is in 'overflow' mode */
+:root:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] .tab-background[selected="true"] > spacer {
+  background-image: linear-gradient(to bottom, transparent 4px, rgb(255,255,255) 4px, rgb(255,255,255)) !important;
+}
+
+/* Pinned selected tab when the tab bar is in 'overflow' mode and ui density set to 'Normal' */
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] .tab-background[selected="true"] > spacer {
+  background-image: linear-gradient(to bottom, transparent 2px, rgb(255,255,255) 2px, rgb(255,255,255)) !important;
+}
+
+/* Vertical position adjustment for the tab's curvy edges */
+:root:not([tabBarPosition="topAboveAB"]) .tab-background::before,
+:root:not([tabBarPosition="topAboveAB"]) .tab-background::after {
+  background-position: 0px bottom !important;  
+}
+
+/* Visual vertical 'flip' of the tab's curvy background without using additional graphics */
+:root:not([tabBarPosition="topAboveAB"]) #tabs-newtab-button,
+:root:not([tabBarPosition="topAboveAB"]) .tab-background {
+  transform: rotate(180deg);  
+}
+
+/* Position adjustments for the 'new tab' button */
+:root:not([tabBarPosition="topAboveAB"]) #tabs-newtab-button {
+  margin-top: -2px !important;
+}
+:root:not([tabBarPosition="topAboveAB"]) #tabs-newtab-button.toolbarbutton-1 {
+  margin-bottom: 1px !important;
+}
+
+/* Top margin adjustment for pinned tabs when the tab bar is in 'overflow' mode */
+:root:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] .tab-background {
+  margin-top: 0px !important;
+}
+
+/* Prevents the top of the pinned tabs to display above the navigation bar when the tab bar is in 'overflow' mode */
+:root:not([tabBarPosition="topAboveAB"]) #nav-bar:not([tabs-hidden="true"]) {
+  z-index: 3;
+  position: relative;
+}
+
+
+/* ::: UI density 'Touch' ::: */
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabbrowser-arrowscrollbox:not([overflowing="true"]) .tabbrowser-tab[first-visible-tab="true"] {
+  -moz-margin-start: 31px !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[movingtab][positionpinnedtabs] .tabbrowser-tab .tab-background,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] .tab-background {
+  -moz-margin-end: -19px !important;
+  -moz-margin-start: -21px !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabs-newtab-button {
+  margin-top: 0px !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabs-newtab-button.toolbarbutton-1 {
+  width: calc(46px + 39px) !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) > spacer,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]):not([tabsintitlebar]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab:not([pinned]):hover > .tab-stack > .tab-background:not([selected=true]) > spacer {
+  background-image: linear-gradient(to bottom, transparent 1px, rgb(233,233,236) 1px, rgb(233,233,236)) !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab:not([pinned]):hover > .tab-stack > .tab-background:not([selected=true]) > spacer {
+  background-image: linear-gradient(to bottom, transparent 2px, rgb(233,233,236) 2px, rgb(233,233,236)) !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab:not([pinned]) .tab-background[selected="true"] > spacer {
+  background-image: linear-gradient(to bottom, transparent 6px, rgb(255,255,255) 6px, rgb(255,255,255)) !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) .tab-background[selected="true"] > spacer,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]) > spacer {
+  margin-top: 0px !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabbrowser-arrowscrollbox:not([overflowing="true"]) .tab-background[selected="true"] > spacer,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]) #tabbrowser-arrowscrollbox:not([overflowing="true"]) .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]) > spacer {
+  margin-top: 1px !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]:hover > .tab-stack > .tab-background:not([selected=true]) {
+  margin-bottom: 4px !important;
+}
+
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"]):not([tabsintitlebar]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-background[selected=true] {
+  margin-top: 1px !important;
+}
+
+
+/* ::: Tab content ::: */
+
+/* Visually improves the vertical alignment of the tab's content. */
+:root:not([tabBarPosition="topAboveAB"]) .tab-throbber,
+:root:not([tabBarPosition="topAboveAB"]) .tab-icon-pending,
+:root:not([tabBarPosition="topAboveAB"]) .tab-icon-image,
+:root:not([tabBarPosition="topAboveAB"]) .tab-sharing-icon-overlay,
+:root:not([tabBarPosition="topAboveAB"]) .tab-icon-sound,
+:root:not([tabBarPosition="topAboveAB"]) .tab-close-button,
+:root:not([tabBarPosition="topAboveAB"]) .tab-label-container {
+  margin-top: -4px !important;
+}
+
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-throbber,
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-pending,
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-image,
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-sharing-icon-overlay,
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-sound,
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-close-button,
+:root:not([uidensity="compact"]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-label-container {
+  margin-top: -2px !important;
+}
+  
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-throbber,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-pending,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-image,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-sharing-icon-overlay,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-sound,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-close-button,
+:root[uidensity="touch"]:not([tabBarPosition="topAboveAB"])[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-label-container {
+  margin-top: -4px !important;
+}
+
+@media (-moz-mac-yosemite-theme) {
+
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-throbber,
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-pending,
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-image,
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-sharing-icon-overlay,
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-sound,
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-close-button,
+  :root:not([uidensity="compact"]):not([inFullscreen]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-label-container {
+    margin-top: -2px !important;
+  }
+
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]) #browser-bottombox #TabsToolbar #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-throbber,
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]) #browser-bottombox #TabsToolbar #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-pending,
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]) #browser-bottombox #TabsToolbar #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-image,
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]) #browser-bottombox #TabsToolbar #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-sharing-icon-overlay,
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]) #browser-bottombox #TabsToolbar #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-icon-sound,
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]) #browser-bottombox #TabsToolbar #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-close-button,
+  :root:not([uidensity="compact"])[inFullscreen]:not([tabBarPosition="topAboveAB"]) #browser-bottombox #TabsToolbar #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned] > .tab-stack > .tab-content > .tab-label-container {
+    margin-top: -4px !important;
+  }
+	
+}
+
+
+/* ::: Tab separators ::: */
+
+/* Visually improves the vertical alignment with the tab's content */
+:root:not([tabBarPosition="topAboveAB"]) .tabbrowser-tab::after,
+:root:not([tabBarPosition="topAboveAB"]) .tabbrowser-tab::before {
+  margin-top: 4px !important;
+  margin-bottom: 11px !important;
+}
+
+:root:not([uidensity="touch"]):not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]::after,
+:root:not([uidensity="touch"]):not([tabsintitlebar]):not([tabBarPosition="topAboveAB"]) #tabbrowser-tabs[positionpinnedtabs] .tabbrowser-tab[pinned]::before {
+  margin-top: 3px !important;
+  margin-bottom: 12px !important;
+}
+
+
+/* :::::: STATUS BAR :::::: */
+
+:root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar {
+  background-color: var(--wfx-gray-50) !important;
+}
+
+:root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar .toolbarbutton-1:not([disabled="true"]):active > .toolbarbutton-icon,
+:root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar .toolbarbutton-1:not([disabled="true"]):hover > .toolbarbutton-icon,
+:root[tabBarPosition="bottom"] #browser-bottombox #zoomresetsb:not([disabled="true"]):active > .toolbarbutton-text,
+:root[tabBarPosition="bottom"] #browser-bottombox #zoomresetsb:not([disabled="true"]):hover > .toolbarbutton-text {
+  background-color: var(--wfx-gray-60) !important;
+}
+
+:root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar #zoomresetsb:not([disabled="true"]):hover:active > .toolbarbutton-text,
+:root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar .toolbarbutton-1:not([disabled="true"]):hover:active > .toolbarbutton-icon,
+:root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar .toolbarbutton-1:not([disabled="true"]):hover:active > .toolbarbutton-icon {
+  background-color: var(--wfx-gray-50) !important;
+  color: var(--wfx-lt-primary-color) !important;
+  fill: currentColor !important;
+}
+
+.toolbarbutton-1#zoomresetsb:not([disabled="true"]):hover:active {
+  background-color: transparent !important;
+}
+
+@media (-moz-gtk-csd-available) {
+
+  .toolbarbutton-1#fullscreensb:not([disabled="true"]):active {
+    background-color: transparent !important;
+    fill: var(--wfx-content-color) !important;
+  }
+  
+  :root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar .button-textonly:not([disabled="true"]):active,
+  :root[tabBarPosition="bottom"] #browser-bottombox .toolbar-statusbar .button-textonly:not([disabled="true"]):hover:active {
+    background-color: var(--wfx-gray-60) !important;
+  }
+  
+}

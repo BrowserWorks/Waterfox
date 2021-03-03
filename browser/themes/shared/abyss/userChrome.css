@@ -1,7 +1,8 @@
-/* Additional styling for Abyss theme for Waterfox Current
+/* Additional styling for Abyss theme for Waterfox G3
 /* Author: Stefano Rosselli
 */
 
+@import url("chrome://browser/skin/abyss/invertedTabShape.css"); /* <-- added for WFX G3.1.1+ */
 
 /* :::::: VARIABLES :::::: */
 
@@ -22,12 +23,12 @@
     --wfx-pbm-primary-color: rgb(156,115,186);
     --wfx-pbm-primary-color-a10: rgba(156,115,186,.1);
     --wfx-pbm-primary-color-a15: rgba(156,115,186,.15);
-	--wfx-pbm-primary-color-a20: rgba(156,115,186,.2);
+	   --wfx-pbm-primary-color-a20: rgba(156,115,186,.2);
     --wfx-pbm-primary-color-hover: rgb(136,85,171);
     --wfx-pbm-primary-color-active: rgb(117,54,159);
   
     /* Secondary color */
-	--wfx-purple-navy-20: rgb(77,84,119);
+	   --wfx-purple-navy-20: rgb(77,84,119);
     --wfx-purple-navy-30: rgb(66,72,102);
     --wfx-purple-navy-40: rgb(55,60,86);
     --wfx-purple-navy-50: rgb(44,48,70);
@@ -50,7 +51,7 @@
     
     /* Border radius*/
     --wfx-border-radius: 3px;
-	--wfx-panel-border-radius: 6px;
+	   --wfx-panel-border-radius: 6px;
     --wfx-large-radius: 1000px;
   
     /* Border/separator/outline */
@@ -62,7 +63,7 @@
     --wfx-btn-bg-color: var(--wfx-purple-navy-50);
     --wfx-btn-hover-color: var(--wfx-purple-navy-40);
     --wfx-btn-lighter-hover-color: var(--wfx-purple-navy-30);
-	--wfx-btn-ripple-color: var(--wfx-dt-primary-color-a15);
+	   --wfx-btn-ripple-color: var(--wfx-dt-primary-color-a15);
 
     --theme-arrowpanel-background: var(--wfx-arrowpanel-bg-color) !important;
     --theme-arrowpanel-border-color: var(--wfx-purple-navy-80) !important;
@@ -70,15 +71,15 @@
     --theme-arrowpanel-color: var(--wfx-content-color) !important;
     --theme-arrowpanel-dimmed: var(--wfx-purple-navy-40) !important;
     --theme-body-color: var(--wfx-content-color) !important;
-	--theme-icon-color: var(--wfx-content-color) !important;
+	   --theme-icon-color: var(--wfx-content-color) !important;
     --theme-icon-dimmed-color: var(--wfx-content-color) !important;
     --theme-tab-toolbar-background: var(--wfx-purple-navy-80) !important;
     --theme-splitter-color: var(--wfx-separator-color) !important;
     --theme-toolbar-separator: var(--wfx-separator-color) !important;
     --theme-toolbar-color: var(--wfx-content-color) !important;
-	--theme-toolbarbutton-color: var(--theme-toolbar-color) !important;
-	--theme-toolbarbutton-checked-color: rgb(255,255,255) !important;
-	--theme-toolbarbutton-checked-hover-color: var(--theme-toolbarbutton-checked-color) !important;
+	   --theme-toolbarbutton-color: var(--theme-toolbar-color) !important;
+	   --theme-toolbarbutton-checked-color: rgb(255,255,255) !important;
+	   --theme-toolbarbutton-checked-hover-color: var(--theme-toolbarbutton-checked-color) !important;
     --theme-toolbarbutton-hover-background: var(--wfx-btn-hover-color) !important;
     --theme-toolbarbutton-checked-background: var(--wfx-dt-primary-color-hover) !important;
     --theme-toolbarbutton-checked-hover-background: var(--theme-toolbarbutton-checked-background) !important;
@@ -88,10 +89,12 @@
     --wfx-dt-primary-color: var(--wfx-pbm-primary-color) !important;
     --wfx-dt-primary-color-a10: var(--wfx-pbm-primary-color-a10) !important;
     --wfx-dt-primary-color-a15: var(--wfx-pbm-primary-color-a15) !important;
+    --wfx-dt-primary-color-a20: var(--wfx-pbm-primary-color-a20) !important; /* <-- added for WFX G3.1.1+ */
+    --wfx-dt-primary-color-a30: var(--wfx-pbm-primary-color-a30) !important; /* <-- added for WFX G3.1.1+ */
     --wfx-dt-primary-color-hover: var(--wfx-pbm-primary-color-hover) !important;
     --wfx-dt-primary-color-active: var(--wfx-pbm-primary-color-active) !important;
     --toolbarbutton-icon-fill-attention: var(--wfx-pbm-primary-color) !important;
-	--wfx-btn-ripple-color: var(--wfx-pbm-primary-color-a20) !important;
+	   --wfx-btn-ripple-color: var(--wfx-pbm-primary-color-a20) !important;
   }
   
   notification[type="info"]:-moz-lwtheme-brighttext {
@@ -116,9 +119,9 @@
 /* :::::: SCROLLBARS (for Windows and Linux) :::::: */
 
 @media  (-moz-os-version: windows-win7),
-        (-moz-os-version: windows-win8),
-        (-moz-os-version: windows-win10),
-        (-moz-gtk-csd-available) {
+          (-moz-os-version: windows-win8),
+          (-moz-os-version: windows-win10),
+          (-moz-gtk-csd-available) {
 
   * {
     scrollbar-width: thin;
@@ -194,6 +197,21 @@ toolbar .toolbarbutton-1:not([disabled="true"]):-moz-any([open], [checked], :hov
 #PopupAutoComplete > richlistbox > richlistitem[originaltype="loginWithOrigin"] > .two-line-wrapper > .ac-site-icon,
 #PopupAutoComplete > richlistbox > richlistitem[originaltype="login"] > .ac-site-icon {
   fill: currentColor !important;
+}
+
+/* Added for WFX G3.1.1+ */
+/* Prevents the new tab button to display above the last visible tab */
+:root:not([tabBarPosition="topAboveAB"]) #tabbrowser-arrowscrollbox:not([overflowing="true"]) .tabbrowser-tab[last-visible-tab="true"]:not([pinned]) {
+  position: relative;
+  z-index: 1 !important;
+}
+
+/* Added for WFX G3.1.1+ */
+/* Prevents, when the tab bar is positioned at the bottom, the new tab button to display above the last visible tab.
+It also prevents a hovered tab to display above the tab that precedes it */
+:root:not([tabBarPosition="topAboveAB"]) #browser-bottombox arrowscrollbox {
+  position: relative;
+  z-index: 1 !important;
 }
 
 
@@ -284,8 +302,8 @@ panel#editBookmarkPanel button.expander-up {
 			
   #editBMPanel_newFolderBox {
     background-color: transparent !important;
-	border-color: transparent !important;
-	padding: 4px 0px;
+	   border-color: transparent !important;
+	   padding: 4px 0px;
   }
 
 }
@@ -452,7 +470,7 @@ panel#editBookmarkPanel button.expander-up {
   }
 
   #editBMPanel_tagsSelectorRow > richlistbox > richlistitem {
-	border: 0px !important;
+	   border: 0px !important;
   }
   
 }
@@ -463,9 +481,10 @@ panel#editBookmarkPanel button.expander-up {
 
 @-moz-document  url("chrome://browser/content/aboutDialog.xhtml"),
 				url("chrome://browser/content/migration/migration.xhtml"),
-                url("chrome://browser/content/pageinfo/pageInfo.xhtml"),
+    url("chrome://browser/content/pageinfo/pageInfo.xhtml"),
 				url("chrome://browser/content/places/bookmarkProperties.xhtml"),
 				url("chrome://browser/content/places/places.xhtml"),
+				url("chrome://browser/content/preferences/dialogs/siteDataRemoveSelected.xhtml"), /* <-- added for WFX G3.1.1+ */
 				url("chrome://browser/content/setDesktopBackground.xhtml"),
 				url("chrome://global/content/commonDialog.xhtml"),
 				url("chrome://global/content/printPageSetup.xhtml"),
@@ -618,7 +637,7 @@ panel#editBookmarkPanel button.expander-up {
   font: message-box;
   font-size: 14px;
   font-weight: normal;
-  color: var(--wfx-content-color);
+  color: rgba(249,249,255,.7);
   margin: 0 10px;
   box-sizing: content-box;
   border-radius: var(--wfx-border-radius);
@@ -653,34 +672,34 @@ panel#editBookmarkPanel button.expander-up {
 @-moz-document	url("chrome://global/content/printPageSetup.xhtml") {
 
   tabs {
-	border-top: 1px solid var(--wfx-separator-color) !important; 
+    border-top: 1px solid var(--wfx-separator-color) !important; 
   }
   
   tabpanels {
-	-moz-appearance: none !important;
-	background-color: var(--wfx-in-content-page-bg-color) !important;
+    -moz-appearance: none !important;
+    background-color: var(--wfx-in-content-page-bg-color) !important;
     color: var(--wfx-content-color) !important;
-	border-top: 1px solid var(--wfx-separator-color) !important;
+    border-top: 1px solid var(--wfx-separator-color) !important;
   }
   
   fieldset {
     border: 1px solid var(--wfx-separator-color) !important;
-	border-radius: var(--wfx-panel-border-radius);
+    border-radius: var(--wfx-panel-border-radius);
   }
   
   legend {
-	color: var(--wfx-dt-primary-color) !important;
+    color: var(--wfx-dt-primary-color) !important;
   }
   
   .portrait-page,
   .landscape-page {
-	-moz-context-properties: fill;
-	fill: currentColor;
+    -moz-context-properties: fill;
+    fill: currentColor;
   }
   
   .portrait-page[selected="true"],
   .landscape-page[selected="true"] {
-	color: var(--wfx-dt-primary-color) !important;
+    color: var(--wfx-dt-primary-color) !important;
   }
   
   .portrait-page {
@@ -693,18 +712,18 @@ panel#editBookmarkPanel button.expander-up {
   
   .groupbox-body input,
   input#scalingInput {
-	-moz-appearance: none !important;
-	background-color: var(--wfx-purple-navy-90);
-	color: var(--wfx-content-color);
+	   -moz-appearance: none !important;
+	   background-color: var(--wfx-purple-navy-90);
+	   color: var(--wfx-content-color);
     border-radius: var(--wfx-large-radius);
     border: 0 !important;
     padding: 4px 8px;
-	outline: none !important;
+	   outline: none !important;
   }
   
   .groupbox-body input:focus,
   input#scalingInput:focus {
-	box-shadow: 0 0 0 2px var(--wfx-dt-primary-color) inset !important;
+    box-shadow: 0 0 0 2px var(--wfx-dt-primary-color) inset !important;
   }
   
   
@@ -722,16 +741,18 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   tab:not([visuallyselected="true"]):hover {
-	background-color: var(--wfx-purple-navy-40);
+    background-color: var(--wfx-purple-navy-40);
     color: rgb(255,255,255) !important;
   }
   
   tab[visuallyselected="true"] {
     color: var(--wfx-dt-primary-color) !important;
-	box-shadow: 0 -2px var(--wfx-dt-primary-color)inset;
+	   box-shadow: 0 -2px var(--wfx-dt-primary-color)inset;
   }
 			
 }
+
+
 
 /* :::::: MENULIST :::::: */
 
@@ -765,6 +786,35 @@ panel#editBookmarkPanel button.expander-up {
   
 }
 
+/* Added for WFX G3.1.1+ */
+#identity-popup-popup-menulist {
+  -moz-appearance: none !important;
+  background-color: var(--wfx-btn-hover-color);
+  border-radius: var(--wfx-border-radius);
+  color: var(--wfx-content-color) !important;
+  padding: 6px;
+}
+
+/* Added for WFX G3.1.1+ */
+#identity-popup-popup-menulist:hover {
+  background-color: var(--wfx-btn-lighter-hover-color);
+  color: rgb(255,255,255) !important;
+}
+
+/* Added for WFX G3.1.1+ */
+#identity-popup-popup-menulist:active,
+#identity-popup-popup-menulist:hover:active {
+  background-color: var(--wfx-btn-hover-color);
+}
+
+/* Added for WFX G3.1.1+ */
+  #identity-popup-popup-menulist:not([disabled="true"]):focus {
+  outline-offset: 0px;
+  outline: 3px solid var(--wfx-dt-primary-color) !important;
+  -moz-outline-radius: 6px !important;
+}
+
+
 
 /* :::::: CHECKBOXES / RADIO  :::::: */
 
@@ -794,7 +844,7 @@ panel#editBookmarkPanel button.expander-up {
     background-color: var(--wfx-purple-navy-50) !important;
     border: 1px solid var(--wfx-dimmed-content-color) !important;
     border-radius: 1px;
-	filter: invert(0) !important;
+    filter: invert(0) !important;
   }
   
   .checkbox-check {
@@ -856,7 +906,7 @@ panel#editBookmarkPanel button.expander-up {
     -moz-context-properties: fill;
     fill: var(--wfx-dt-primary-color);
     background-image: url("chrome://browser/skin/abyss/img/radio.svg") !important;
-	background-size: 13px auto !important;
+	   background-size: 13px auto !important;
     background-repeat: no-repeat;
     background-position: center center;
   }
@@ -939,6 +989,133 @@ panel#editBookmarkPanel button.expander-up {
 
 
 
+/* :::::: STATUS BAR :::::: */ /* <-- added section for WFX G3.1.1+ */
+
+#browser-bottombox .toolbar-statusbar {
+  color: var(--wfx-content-color) !important;
+}
+
+#browser-bottombox .toolbar-statusbar toolbarpaletteitem[place="toolbar"][id^="wrapper-customizableui-special-spring"],
+#browser-bottombox .toolbar-statusbar toolbarspring {
+  padding: 0px 5px;
+  min-height: 20px !important;
+}
+
+
+/* ::: Range input ::: */
+
+#browser-bottombox .toolbar-statusbar input[type="range"] {
+  -moz-appearance: none !important;
+  background-color: transparent;
+  outline: none !important;
+}
+
+#browser-bottombox .toolbar-statusbar input[type="range"]::-moz-range-track,
+#browser-bottombox .toolbar-statusbar input[type="range"]::-moz-range-progress {
+  height: 3px !important;
+}
+
+#browser-bottombox .toolbar-statusbar input[type="range"]::-moz-range-track {
+  background-color: rgba(178,178,187,.25);
+}
+
+#browser-bottombox .toolbar-statusbar input[type="range"]::-moz-range-progress {
+  background-color: rgb(178,178,187);
+  transition: background-color .15s ease-in;
+}
+
+#browser-bottombox .toolbar-statusbar input[type="range"]:active::-moz-range-progress {
+  background-color: var(--wfx-dt-primary-color);
+}
+
+#browser-bottombox .toolbar-statusbar input[type="range"]::-moz-range-progress,
+#browser-bottombox .toolbar-statusbar input[type="range"]::-moz-range-track {
+  border-radius: var(--wfx-large-radius);
+}
+
+#browser-bottombox .toolbar-statusbar input[type="range"]::-moz-range-thumb {
+  background-color: rgb(178,178,187);
+  border: 0px;
+  transition: .15s ease-in;
+}
+
+#browser-bottombox .toolbar-statusbar input[type="range"]:active::-moz-range-thumb {
+  background-color: var(--wfx-dt-primary-color);
+  box-shadow: 0 0 0 4px var(--wfx-dt-primary-color-a30);
+}
+
+
+/* ::: Buttons ::: */
+
+#browser-bottombox .toolbar-statusbar .toolbarbutton-1 > .toolbarbutton-icon {
+  width: calc(2 * var(--toolbarbutton-inner-padding) + 14px) !important;
+  height: calc(2 * var(--toolbarbutton-inner-padding) + 14px) !important;
+}
+
+#browser-bottombox .toolbar-statusbar .toolbarbutton-1 > .toolbarbutton-icon {
+  padding: 4px !important;
+}
+
+@media (-moz-mac-yosemite-theme) {
+
+  /* Vertically aligns the button's text with the 'range' input */
+  #page-zoom-controls #zoomresetsb .toolbarbutton-text {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+}
+
+.button-textonly {
+  border-radius: var(--wfx-border-radius) !important;
+  color: var(--wfx-content-color) !important;
+}
+
+.button-textonly:not([disabled="true"]):hover {
+  background-color: var(--wfx-btn-hover-color) !important;
+}
+
+.button-textonly:not([disabled="true"]):active,
+.button-textonly:not([disabled="true"]):hover:active {
+  background-color: var(--wfx-purple-navy-90) !important;
+  color: var(--wfx-dt-primary-color) !important;
+}
+
+#page-zoom-controls #zoom-percent-status {
+  border-radius: var(--wfx-large-radius) !important;
+  -moz-margin-end: 4px !important;
+}
+
+#page-zoom-controls #zoom-percent-status:focus {
+  background: var(--wfx-purple-navy-90) !important;
+  box-shadow: 0 0 0 2px var(--wfx-dt-primary-color);
+}
+
+
+
+/* :::::: NAV BAR ::::: */ /* <-- added section for WFX G3.1.1+ */
+
+/* Fixes missing Waterfox icon when the menu button is set to 'Waterfox icon' and in 'badged' state */
+#PanelUI-menu-button[badge-status="update-available"],
+#PanelUI-menu-button[badge-status="update-manual"],
+#PanelUI-menu-button[badge-status="update-restart"] {
+    list-style-image: url("chrome://branding/content/icon16.png") !important;
+}
+
+/* Uses higher resolution Waterfox icon when the screen resolution is high and the menu button is set to 'Waterfox icon' */
+@media (min-resolution: 1.1dppx) {
+
+  #PanelUI-menu-button.browser,
+	 #PanelUI-menu-button[badge-status="update-available"],
+  #PanelUI-menu-button[badge-status="update-manual"],
+  #PanelUI-menu-button[badge-status="update-restart"] {
+    list-style-image: url("chrome://branding/content/icon32.png") !important;
+  }
+  
+}
+
+
+
 /* :::::: DEVTOOLS :::::: */
 
 @-moz-document url-prefix("chrome://") {
@@ -963,7 +1140,7 @@ panel#editBookmarkPanel button.expander-up {
   }
 
   .tooltip-container[type="doorhanger"] > .tooltip-panel {
-	border-radius: var(--wfx-panel-border-radius) !important; 
+    border-radius: var(--wfx-panel-border-radius) !important; 
   }
   
 }
@@ -1015,7 +1192,7 @@ panel#editBookmarkPanel button.expander-up {
   }
 
   .tooltip-container[type="doorhanger"] > .tooltip-panel {
-	border-radius: var(--wfx-panel-border-radius) !important; 
+    border-radius: var(--wfx-panel-border-radius) !important; 
   }
   
   .tooltip-container[type="doorhanger"] .menuitem > button.command:is([role="menuitem"], [role="menuitemcheckbox"], [role="link"]):hover {
@@ -1033,9 +1210,9 @@ panel#editBookmarkPanel button.expander-up {
   .devtools-dropdown-button,
   .devtools-dropdown-button[aria-expanded="true"]:not(:empty):not(:disabled):not(.checked),
   .devtools-dropdown-button:not(:empty):not(:disabled):not(.checked):hover {
-	background-image: url("chrome://devtools/skin/images/select-arrow.svg") !important;
+    background-image: url("chrome://devtools/skin/images/select-arrow.svg") !important;
     background-position: right 5px center !important;
-	background-repeat: no-repeat !important;
+    background-repeat: no-repeat !important;
     padding-inline: 6px 16px !important;
   }
 
@@ -1058,13 +1235,13 @@ panel#editBookmarkPanel button.expander-up {
 
   #editBMPanel_tagsSelectorExpander.expander-up,
   #editBMPanel_tagsSelectorExpander.expander-down {
-	filter: invert(0) !important;
+    filter: invert(0) !important;
   }
   
   .expander-up > .button-box,
   .expander-down > .button-box {
-	-moz-context-properties: fill, fill-opacity;
-	fill: currentColor !important;
+    -moz-context-properties: fill, fill-opacity;
+    fill: currentColor !important;
     -moz-appearance: none !important;
   }
   
@@ -1088,7 +1265,7 @@ panel#editBookmarkPanel button.expander-up {
     fill-opacity: 1 !important;
     min-width: 27px !important;
     min-height: 22px !important;
-	transform: none !important;
+    transform: none !important;
   }
   
   panel .expander-up,
@@ -1121,7 +1298,7 @@ panel#editBookmarkPanel button.expander-up {
   
   .expander-up > .button-box > .button-icon,
   .expander-down > .button-box > .button-icon {
-    margin: /*1px*/ 0 0;
+    margin: 0 0;
   }
   
   .expander-up > .button-box > .button-text,
@@ -1154,12 +1331,12 @@ panel#editBookmarkPanel button.expander-up {
   dialog {
 	-moz-appearance: none !important;
     background-color: var(--wfx-in-content-page-bg-color) !important;
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
   
   dialog #iconContainer {
-	-moz-context-properties: fill, fill-opacity;
-	fill: currentColor;
+    -moz-context-properties: fill, fill-opacity;
+    fill: currentColor;
   }
 	
 }
@@ -1180,8 +1357,8 @@ panel#editBookmarkPanel button.expander-up {
     background-color: var(--wfx-purple-navy-80) !important;
     border-radius: var(--wfx-large-radius) !important;
     outline: none !important;
-	padding: 4px;
-	padding-inline: 8px 8px;
+    padding: 4px;
+    padding-inline: 8px 8px;
   }
   
   input:focus {
@@ -1196,9 +1373,9 @@ panel#editBookmarkPanel button.expander-up {
 @-moz-document	url("chrome://browser/content/setDesktopBackground.xhtml") {
   
   dialog#SetDesktopBackgroundDialog {
-	-moz-appearance: none !important;
+    -moz-appearance: none !important;
     background-color: var(--wfx-in-content-page-bg-color) !important;
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
   
   canvas#screen {
@@ -1213,9 +1390,9 @@ panel#editBookmarkPanel button.expander-up {
   
   #monitor-base {
     list-style-image: url("chrome://browser/skin/abyss/img/monitor-base.svg") !important;
-	height: 32px;
-	margin-top: 6px;
-	margin-bottom: 20px;
+    height: 32px;
+    margin-top: 6px;
+    margin-bottom: 20px;
   }
   
 }
@@ -1224,9 +1401,9 @@ panel#editBookmarkPanel button.expander-up {
 @-moz-document url("chrome://global/content/printPageSetup.xhtml") {
 	
   dialog#printPageSetupDialog {
-	-moz-appearance: none !important;
+    -moz-appearance: none !important;
     background-color: var(--wfx-in-content-page-bg-color) !important;
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
 	
 }
@@ -1239,27 +1416,30 @@ panel#editBookmarkPanel button.expander-up {
   dialog {
     -moz-appearance: none !important;
   }
-	
+  
+  dialog#exceptiondialog,
   dialog#loaddevice,
   dialog#set_password {
     background-color: var(--wfx-in-content-page-bg-color) !important;
-	color: var(--wfx-content-color) !important;
+	   color: var(--wfx-content-color) !important;
   }
   
+  dialog#exceptiondialog input,
   dialog#loaddevice input,
   dialog#set_password input  {
-	-moz-appearance: none !important;
+	   -moz-appearance: none !important;
     background-color: var(--wfx-purple-navy-90);
-	color: var(--wfx-content-color);
-	border: 0;
-	border-radius: var(--wfx-large-radius);
-	padding: 4px 8px;
-	outline: 0px !important;
+	   color: var(--wfx-content-color);
+	   border: 0;
+	   border-radius: var(--wfx-large-radius);
+	   padding: 4px 8px;
+	   outline: 0px !important;
   }
   
+  dialog#exceptiondialog input:focus,
   dialog#loaddevice input:focus,
   dialog#set_password input:focus {
-	box-shadow: 0 0 0 2px var(--wfx-dt-primary-color);
+	   box-shadow: 0 0 0 2px var(--wfx-dt-primary-color);
   }
 	
 }
@@ -1294,9 +1474,9 @@ panel#editBookmarkPanel button.expander-up {
 @-moz-document url("chrome://pippki/content/editcacert.xhtml") {
 
   dialog#editCaCert {
-	-moz-appearance: none !important;
+    -moz-appearance: none !important;
     background-color: var(--wfx-in-content-page-bg-color) !important;
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
 	
 }
@@ -1311,7 +1491,7 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   wizard {
-	padding: 0 !important;
+    padding: 0 !important;
   }
   
   .wizard-header,
@@ -1320,15 +1500,15 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   .wizard-header-box-1 {
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
 
   .wizard-header {
     border-bottom: 1px solid var(--wfx-border-color) !important;
     background-color: var(--wfx-purple-navy-60) !important;
     color: var(--wfx-content-color) !important;
-	padding-top: 4px;
-	padding-bottom: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
 
   .wizard-header-label {
@@ -1354,14 +1534,10 @@ panel#editBookmarkPanel button.expander-up {
   #aboutDialog {
     -moz-appearance: none !important;
     background-color: var(--wfx-purple-navy-60) !important;
-    /*color: var(--wfx-content-color) !important;*/
   }
 
   #aboutDialogContainer {
     background: linear-gradient(-45deg, var(--wfx-purple-navy-90), var(--wfx-purple-navy-60), var(--wfx-dt-primary-color)) !important;
-    /*background-size: 400% 400% !important;
-    animation: gradient 15s ease infinite !important;
-    color: var(--wfx-content-color) !important;*/
   }
 
   #aboutDialogContainer .text-link {
@@ -1375,11 +1551,6 @@ panel#editBookmarkPanel button.expander-up {
 
   #userAgent {
     background-color:transparent !important;
-    /*color: var(--wfx-content-color) !important;*/
-  }
-
-  #updateDeck > hbox > label:not([class=”text-link”]) {
-    /*color: var(--wfx-content-color) !important;*/
   }
 
   .trademark-label{
@@ -1401,7 +1572,7 @@ panel#editBookmarkPanel button.expander-up {
   }
 
   #leftBox {
-	background-image: url("chrome://branding/content/about-logo@2x.png") !important;
+    background-image: url("chrome://branding/content/about-logo@2x.png") !important;
     background-color: transparent !important;
   }
 
@@ -1410,7 +1581,6 @@ panel#editBookmarkPanel button.expander-up {
 
   #clientBox {
     background-color: transparent !important;
-    /*color: var(--wfx-content-color) !important;*/
   }
 
 }
@@ -1442,7 +1612,7 @@ panel#editBookmarkPanel button.expander-up {
     color: var(--wfx-content-color) !important;
     border-bottom: 1px solid var(--wfx-purple-navy-90) !important;
     padding: 1px 3px 0px !important;
-	min-height: 32px !important;
+    min-height: 32px !important;
   }
 
   #placesMenu > menu > image {
@@ -1452,9 +1622,9 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   #placesMenu > menu > .menubar-text {
-	-moz-context-properties: fill;
-	fill: currentColor;
-	padding-inline-end: 14px !important;
+    -moz-context-properties: fill;
+    fill: currentColor;
+    padding-inline-end: 14px !important;
     background: url("chrome://browser/skin/abyss/img/arrow-dropdown-12.svg") right center no-repeat !important;
   }
 
@@ -1463,8 +1633,8 @@ panel#editBookmarkPanel button.expander-up {
     -moz-appearance: none !important;
     color: var(--wfx-content-color) !important;
     border-radius: var(--wfx-border-radius) !important;
-	border-color: transparent !important;
-	fill: currentColor !important;
+    border-color: transparent !important;
+    fill: currentColor !important;
   }
 
   #placesToolbar > toolbarbutton:not([disabled="true"]):hover,
@@ -1627,9 +1797,9 @@ panel#editBookmarkPanel button.expander-up {
   richlistbox#downloadsRichListBox richlistitem[selected="true"] {
     background-color: var(--wfx-purple-navy-90) !important;
     color: var(--wfx-dt-primary-color) !important;
-	outline: 0 !important;
-	border-radius: 0 !important;
-	background-image: none !important;
+    outline: 0 !important;
+    border-radius: 0 !important;
+    background-image: none !important;
   }
 
   richlistbox#downloadsRichListBox:focus > richlistitem[selected="true"] {
@@ -1753,11 +1923,11 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   #viewGroup > radio > .radio-label-box {
-	outline: 0 !important;
+	   outline: 0 !important;
   }
   
   .radio-label-box .radio-icon {
-	margin-inline-end: 0 !important;
+	   margin-inline-end: 0 !important;
   }
 
   #generalTab,
@@ -1849,6 +2019,59 @@ panel#editBookmarkPanel button.expander-up {
 }
 
 
+/* ::: Site data ::: */ /* <-- added section for WFX G3.1.1+ */
+
+@-moz-document  url("chrome://browser/content/preferences/dialogs/siteDataRemoveSelected.xhtml") {
+	
+  #SiteDataRemoveSelectedDialog {
+	   -moz-appearance: none !important;
+    background-color: var(--wfx-purple-navy-70) !important;
+	   color: var(--wfx-content-color) !important;
+ }
+ 
+ .question-icon {
+   -moz-context-properties: fill;
+   fill: currentColor;
+ }
+ 
+ 
+ /* Tree */
+ 
+   richlistbox#removalList {
+    -moz-appearance: none !important;
+    background-color: var(--wfx-tree-bg-color) !important;
+    color: var(--wfx-content-color) !important;
+	   border: 1px solid var(--wfx-separator-color) !important;
+  }
+  
+  richlistbox#removalList richlistitem {
+	   -moz-appearance: none !important;
+    background-color: transparent !important;
+	   background-image: none !important;
+    color: var(--wfx-content-color) !important;
+	   border-radius: 0 !important;
+	   border: 0 !important;
+	   outline: 0 !important;
+  }
+  
+  richlistbox#removalList richlistitem:not([selected="true"]):hover {
+    background-color: var(--wfx-purple-navy-50) !important;
+    color: rgb(255,255,255) !important;
+  }
+
+  richlistbox#removalList richlistitem[selected="true"] {
+    background-color: var(--wfx-purple-navy-90) !important;
+    color: var(--wfx-dt-primary-color) !important;
+  }
+
+  richlistbox#removalList:focus > richlistitem[selected="true"] {
+    background-color: var(--wfx-dt-primary-color-a15) !important;
+    color: var(--wfx-dt-primary-color) !important;
+  }
+	
+}
+
+
 
 /* :::::: OS-SPECIFIC :::::: */
 
@@ -1885,7 +2108,7 @@ panel#editBookmarkPanel button.expander-up {
 
   dropmarker {
     -moz-appearance: none !important;
-	-moz-context-properties: fill;
+    -moz-context-properties: fill;
     fill: currentColor;
     list-style-image: url("chrome://browser/skin/abyss/img/arrow-dropdown-12.svg") !important;
     display: inline-block !important;
@@ -1938,20 +2161,20 @@ panel#editBookmarkPanel button.expander-up {
 @media (-moz-os-version: windows-win7) {
   
   :root[tabsintitlebar] menubar#main-menubar {
-	margin-bottom: 2px !important;
+    margin-bottom: 2px !important;
   }
   
   #main-window[sizemode="normal"] #navigator-toolbox,
   #main-window[sizemode="normal"] #navigator-toolbox:-moz-window-inactive {
     background-image: none !important;
-	box-shadow: 0 1px var(--wfx-separator-color) inset !important;
-	border-top: 0 !important;
+    box-shadow: 0 1px var(--wfx-separator-color) inset !important;
+    border-top: 0 !important;
   }
   
   #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox,
   #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-window-inactive {
-	box-shadow: 0 1px var(--wfx-separator-color) inset !important;
-	border-top: 0 !important;
+    box-shadow: 0 1px var(--wfx-separator-color) inset !important;
+    border-top: 0 !important;
   }
   
   :root[tabsintitlebar][sizemode="maximized"] {
@@ -2030,54 +2253,54 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   :root[tabsintitlebar] .titlebar-min {
-	background: url("chrome://browser/skin/abyss/img/window-controls/minimize.svg") no-repeat center center, linear-gradient(rgba(105,110,185,.1) 10%, rgba(11,12,27,.75) 60%) !important;
-	background-color: var(--wfx-purple-navy-60) !important;
+    background: url("chrome://browser/skin/abyss/img/window-controls/minimize.svg") no-repeat center center, linear-gradient(rgba(105,110,185,.1) 10%, rgba(11,12,27,.75) 60%) !important;
+    background-color: var(--wfx-purple-navy-60) !important;
   }
   
   :root[tabsintitlebar] .titlebar-max {
-	background: url("chrome://browser/skin/abyss/img/window-controls/maximize.svg") no-repeat center center, linear-gradient(rgba(105,110,185,.1) 10%, rgba(11,12,27,.75) 60%) !important;
-  	background-color: var(--wfx-purple-navy-60) !important;
+    background: url("chrome://browser/skin/abyss/img/window-controls/maximize.svg") no-repeat center center, linear-gradient(rgba(105,110,185,.1) 10%, rgba(11,12,27,.75) 60%) !important;
+    background-color: var(--wfx-purple-navy-60) !important;
   }
 
   :root[tabsintitlebar] .titlebar-restore {
-	background: url("chrome://browser/skin/abyss/img/window-controls/restore.svg") no-repeat center center,  linear-gradient(rgba(105,110,185,.1) 10%, rgba(11,12,27,.75) 60%) !important;
-  	background-color: var(--wfx-purple-navy-60) !important;
+    background: url("chrome://browser/skin/abyss/img/window-controls/restore.svg") no-repeat center center,  linear-gradient(rgba(105,110,185,.1) 10%, rgba(11,12,27,.75) 60%) !important;
+    background-color: var(--wfx-purple-navy-60) !important;
   }
   
   :root[tabsintitlebar] .titlebar-close {
     background: url("chrome://browser/skin/abyss/img/window-controls/close.svg") no-repeat center center, linear-gradient(rgba(105,110,185,.1) 10%, rgba(11,12,27,.75) 60%) !important;
-  	background-color: var(--wfx-purple-navy-60) !important;
+    background-color: var(--wfx-purple-navy-60) !important;
   }
   
   :root[tabsintitlebar] .titlebar-min:hover {
-	background: url("chrome://browser/skin/abyss/img/window-controls/minimize.svg") no-repeat center center, linear-gradient(rgba(175,180,255,.15) 10%, rgb(44,48,70) 60%) !important;
-	background-color: var(--wfx-purple-navy-50) !important;
+    background: url("chrome://browser/skin/abyss/img/window-controls/minimize.svg") no-repeat center center, linear-gradient(rgba(175,180,255,.15) 10%, rgb(44,48,70) 60%) !important;
+    background-color: var(--wfx-purple-navy-50) !important;
   }
   
   :root[tabsintitlebar] .titlebar-max:hover {
-	background: url("chrome://browser/skin/abyss/img/window-controls/maximize.svg") no-repeat center center, linear-gradient(rgba(175,180,255,.15) 10%, rgb(44,48,70) 60%) !important;
-  	background-color: var(--wfx-purple-navy-50) !important;
+    background: url("chrome://browser/skin/abyss/img/window-controls/maximize.svg") no-repeat center center, linear-gradient(rgba(175,180,255,.15) 10%, rgb(44,48,70) 60%) !important;
+    background-color: var(--wfx-purple-navy-50) !important;
   }
 
   :root[tabsintitlebar] .titlebar-restore:hover {
-	background: url("chrome://browser/skin/abyss/img/window-controls/restore.svg") no-repeat center center,  linear-gradient(rgba(175,180,255,.15) 10%, rgb(44,48,70) 60%) !important;
-  	background-color: var(--wfx-purple-navy-50) !important;
+    background: url("chrome://browser/skin/abyss/img/window-controls/restore.svg") no-repeat center center,  linear-gradient(rgba(175,180,255,.15) 10%, rgb(44,48,70) 60%) !important;
+    background-color: var(--wfx-purple-navy-50) !important;
   }
   
   :root[tabsintitlebar] .titlebar-close:hover {
     background: url("chrome://browser/skin/abyss/img/window-controls/close.svg") no-repeat center center, linear-gradient(rgb(255,100,85) 10%, rgb(250,50,35) 60%) !important;
-	fill: var(--wfx-purple-navy-90) !important;
-	stroke: var(--wfx-purple-navy-90) !important;
+    fill: var(--wfx-purple-navy-90) !important;
+    stroke: var(--wfx-purple-navy-90) !important;
   }
   
   :root[tabsintitlebar] .titlebar-close:-moz-locale-dir(ltr),
   :root[tabsintitlebar] .titlebar-min:-moz-locale-dir(rtl)  {
-	border-radius: 0 0 4px 0;
+    border-radius: 0 0 4px 0;
   }
   
   :root[tabsintitlebar] .titlebar-close:-moz-locale-dir(rtl),
   :root[tabsintitlebar] .titlebar-min:-moz-locale-dir(ltr)  {
-	border-radius: 0 0 0 4px;
+    border-radius: 0 0 0 4px;
   }
 
   :root[uidensity="compact"] toolbarseparator {
@@ -2087,11 +2310,11 @@ panel#editBookmarkPanel button.expander-up {
   
   dropmarker {
     margin-top: 0px !important;
-	margin-bottom: -2px !important;
+    margin-bottom: -2px !important;
   }
   
   panel#editBookmarkPanel menulist {
-	padding: 6px;
+    padding: 6px;
   }
   
   /* Win7 Classic theme */
@@ -2112,37 +2335,37 @@ panel#editBookmarkPanel button.expander-up {
       border-top: 0;
     }
 	  
-	#main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox,
+    #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox,
     #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-window-inactive	{
       background-image: linear-gradient(to bottom, ThreeDLightShadow 0, ThreeDLightShadow 1px, ThreeDHighlight 1px, ThreeDHighlight 2px, ActiveBorder 2px, ActiveBorder 4px, transparent 4px) !important;
       box-shadow: none !important;
-	}
+    }
 	  
     treecol[hideheader="true"],
     treecolpicker.treecol-image	{
-	  border: 0 !important;
+      border: 0 !important;
     }
 	
-	menu[disabled="true"],
-	menubar > menu[disabled="true"][_moz-menuactive="true"],
-	menuitem[disabled="true"],
-	button[disabled="true"],
+    menu[disabled="true"],
+    menubar > menu[disabled="true"][_moz-menuactive="true"],
+    menuitem[disabled="true"],
+    button[disabled="true"],
     toolbarbutton[disabled="true"] {
       text-shadow: none !important;
     }
 	
-	#placesView > splitter {
+    #placesView > splitter {
       min-width: 0 !important;
-	  border-inline-start: 0 !important;
+      border-inline-start: 0 !important;
     }
 	
-	#label-box[id] {
+    #label-box[id] {
       background-color: transparent !important;
       color: inherit !important;
     }
 	
-	panel#editBookmarkPanel button.expander-down,
-	panel#editBookmarkPanel button.expander-up {
+    panel#editBookmarkPanel button.expander-down,
+    panel#editBookmarkPanel button.expander-up {
       padding: 8px !important;
     }
 	
@@ -2163,14 +2386,14 @@ panel#editBookmarkPanel button.expander-up {
             background-image: linear-gradient(rgba(105,110,185,.1) 10%,
 									          rgba(11,12,27,.75) 60%) !important;
             margin-top: 1px !important;
-			margin-bottom: -2px !important;
+            margin-bottom: -2px !important;
             border-radius: 0 0 4px 4px;
             box-shadow: 0 0 0 1px rgba(135,140,215,.1),
 			            1px 0 0 0 rgba(135,140,215,.1),
 			            0 1px 0 0 rgba(135,140,215,.1);
             border: 1px solid rgb(4,6,20);
             border-top: 0;
-	  }
+      }
 	  
     }
   }  
@@ -2190,16 +2413,16 @@ panel#editBookmarkPanel button.expander-up {
         border-inline: 1px solid transparent !important;
       }
 	  
-	  #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox::after {
+      #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox::after {
         content: "";
         display: -moz-box;
-		height: 1px !important;
-		background-color: transparent !important;
-		box-shadow: 0 -1px var(--wfx-border-color) inset !important;
-		border-bottom: 0 !important;
+        height: 1px !important;
+        background-color: transparent !important;
+        box-shadow: 0 -1px var(--wfx-border-color) inset !important;
+        border-bottom: 0 !important;
       }
 	  
-	  #main-window[tabsintitlebar][sizemode="normal"] #browser-border-start,
+      #main-window[tabsintitlebar][sizemode="normal"] #browser-border-start,
       #main-window[tabsintitlebar][sizemode="normal"] #browser-border-end {
         display: -moz-box;
         background-color: transparent !important;
@@ -2213,17 +2436,17 @@ panel#editBookmarkPanel button.expander-up {
       }
 
       :root[tabsintitlebar][sizemode="normal"] #TabsToolbar {
-		background-color: var(--wfx-purple-navy-80) !important;
-		padding-inline-start: 0px !important;
+        background-color: var(--wfx-purple-navy-80) !important;
+        padding-inline-start: 0px !important;
       }
 	  
       :root[tabsintitlebar][sizemode="normal"] #TabsToolbar:-moz-window-inactive {
-		background-color: var(--wfx-purple-navy-70) !important;
+        background-color: var(--wfx-purple-navy-70) !important;
       }
 
       :root[tabsintitlebar][sizemode="normal"] #toolbar-menubar[autohide="true"]:not([inactive="true"]) + #TabsToolbar {
-	    background-image: none !important;
-	    background-color: var(--wfx-purple-navy-80) !important;
+        background-image: none !important;
+        background-color: var(--wfx-purple-navy-80) !important;
       }
 
       :root[tabsintitlebar][sizemode="normal"] #toolbar-menubar:not([autohide="true"]) > #menubar-items,
@@ -2258,11 +2481,11 @@ panel#editBookmarkPanel button.expander-up {
     }
   
     :root[tabsintitlebar][sizemode="normal"] .titlebar-buttonbox {
-	  -moz-margin-end: -6px !important;
+      -moz-margin-end: -6px !important;
     }
   
     :root[tabsintitlebar][sizemode="maximized"] .titlebar-buttonbox {
-	  -moz-margin-end: -1px !important;
+      -moz-margin-end: -1px !important;
     }
 	
     :root[tabsintitlebar] .titlebar-min {
@@ -2320,15 +2543,15 @@ panel#editBookmarkPanel button.expander-up {
     }
   
     :root[tabsintitlebar] .titlebar-min:hover {
-	  background-color: rgb(44,48,70) !important;
+      background-color: rgb(44,48,70) !important;
     }
   
     :root[tabsintitlebar] .titlebar-max:hover {
-	  background-color: rgb(44,48,70) !important;
+      background-color: rgb(44,48,70) !important;
     }
 
     :root[tabsintitlebar] .titlebar-restore:hover {
-	  background-color: rgb(44,48,70) !important;
+      background-color: rgb(44,48,70) !important;
     }
   
     :root[tabsintitlebar] .titlebar-close:hover {
@@ -2340,17 +2563,16 @@ panel#editBookmarkPanel button.expander-up {
       margin-bottom: 3px !important;
     }
 	
-	dropmarker {
+    dropmarker {
       margin-top: 0px !important;
-	  margin-bottom: -2px !important;
+      margin-bottom: -2px !important;
     }
 	
-	panel#editBookmarkPanel menulist {
-	  padding: 6px;
+    panel#editBookmarkPanel menulist {
+      padding: 6px;
     }
 	
   }
-	
 }
 
 
@@ -2363,12 +2585,12 @@ panel#editBookmarkPanel button.expander-up {
     -moz-appearance: -moz-window-titlebar !important;
   }
 
+  /* Edited for WFX G3.1.1+ */
   :root[tabsintitlebar][sizemode="normal"]:not([inFullscreen]) #TabsToolbar,
   :root[tabsintitlebar][sizemode="maximized"] #TabsToolbar,
   :root[tabsintitlebar] #toolbar-menubar {
-    appearance: none !important;
+    -moz-appearance: none !important;
     background: var(--wfx-purple-navy-80) !important;
-    border-radius: 4px 4px 0 0 !important;
   }
   
   :root[tabsintitlebar][sizemode="normal"]:not([inFullscreen]) #toolbar-menubar[autohide="true"]:not([inactive="true"]) + #TabsToolbar,
@@ -2398,7 +2620,7 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   .sidebar-splitter {
-    appearance: none;
+    -moz-appearance: none;
     width: 6px !important;
     background-color: var(--wfx-purple-navy-80) !important;
     border: 0 !important;
@@ -2418,7 +2640,7 @@ panel#editBookmarkPanel button.expander-up {
   }
   
   panel#editBookmarkPanel menulist {
-	padding: 6px;
+    padding: 6px;
   }
 
   :root[uidensity="compact"] toolbarseparator {
@@ -2426,9 +2648,25 @@ panel#editBookmarkPanel button.expander-up {
     margin-bottom: 3px !important;
   }
 
+  /* Edited for WFX G3.1.1+ */
   #main-menubar > menu {
     padding: 2px 4px !important;
+    color: var(--wfx-content-color) !important;
+    text-shadow: none !important;
     background-color: transparent !important;
+  }
+  
+  /* Added for WFX G3.1.1+ */
+  #main-menubar > menu[_moz-menuactive="true"]:not([disabled="true"]) {
+    color: rgb(255,255,255) !important;
+    background-color: var(--wfx-purple-navy-40) !important;
+  }
+  
+  /* Added for WFX G3.1.1+ */
+  #main-menubar > menu[_moz-menuactive="true"][open="true"]:not([disabled="true"]):hover,
+  #main-menubar > menu[_moz-menuactive="true"][open="true"]:not([disabled="true"]) {
+    color: var(--wfx-dt-primary-color) !important;
+    background-color: var(--wfx-dt-primary-color-a10) !important;
   }
   
 }
@@ -2439,18 +2677,18 @@ panel#editBookmarkPanel button.expander-up {
 @media (-moz-mac-yosemite-theme) {
   
   richlistbox#editBMPanel_tagsSelector > richlistitem > label {
-	margin-block: 2px !important;
+    margin-block: 2px !important;
   }
   
   dropmarker {
     -moz-appearance: none !important;
-	display: inline-block !important;
-	-moz-context-properties: fill;
-	fill: currentColor;
-	list-style-image: url("chrome://browser/skin/abyss/img/arrow-dropdown-12.svg") !important;
-	width: 12px !important;
-	padding-inline-end: 0 !important;
-	padding-top: 3px;
+    display: inline-block !important;
+    -moz-context-properties: fill;
+    fill: currentColor;
+    list-style-image: url("chrome://browser/skin/abyss/img/arrow-dropdown-12.svg") !important;
+    width: 12px !important;
+    padding-inline-end: 0 !important;
+    padding-top: 3px;
   }
   
   
@@ -2491,7 +2729,7 @@ panel#editBookmarkPanel button.expander-up {
   
   /* Handle space before the first pinned tab when the tabs bar is in 'overflow' mode */  
   #main-window[tabsintitlebar] #tabbrowser-tabs[positionpinnedtabs] {
-	   -moz-margin-start: 0px !important;
+	   -moz-margin-start: 15px !important; /* <-- edited for WFX G3.1.1+ */
   }
   
   /* Handle space before the first pinned tab when the main window is in fullscreen mode */
@@ -2532,6 +2770,34 @@ panel#editBookmarkPanel button.expander-up {
   /* Give the titlebar the same color as the navigation bar when the tabs are positionned under the address bar or at bottom */
   :root[inFullscreen]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar {
     background-color: var(--wfx-purple-navy-60) !important;
+  }
+  
+  
+  /* Added for WFX G3.1.1+ */
+
+  /* Title bar */
+  
+  /* Removes title bar in fullscreen mode in order to display more page content when tabs are displayed under the address bar */
+  :root[inFullscreen]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar {
+    display: none !important;
+  }
+  
+  
+  /* Window controls */
+  
+  /* Brings back window controls in windowed mode */
+  :root:not([inFullscreen])[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar {
+    visibility: visible !important;
+  }
+  :root:not([inFullscreen])[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #titlebar {
+    padding-top: 8px;
+    margin-bottom: -25px;
+  }
+  :root:not([inFullscreen])[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #nav-bar:-moz-locale-dir(ltr) {
+    -moz-padding-start: 90px !important;
+  }
+  :root:not([inFullscreen])[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #nav-bar:-moz-locale-dir(rtl) {
+    -moz-padding-start: 90px !important;
   }
   
 }
