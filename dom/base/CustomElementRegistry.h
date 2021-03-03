@@ -488,6 +488,8 @@ public:
            JS::MutableHandle<JS::Value> aRetVal);
 
   already_AddRefed<Promise> WhenDefined(const nsAString& aName, ErrorResult& aRv);
+
+  void Upgrade(nsINode& aRoot);
 };
 
 class MOZ_RAII AutoCEReaction final {
