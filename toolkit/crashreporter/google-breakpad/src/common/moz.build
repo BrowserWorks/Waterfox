@@ -69,7 +69,7 @@ Library('breakpad_common_s')
 COMPILE_FLAGS['BASE_INCLUDES'] = []
 
 # We allow warnings for third-party code that can be updated from upstream.
-ALLOW_COMPILER_WARNINGS = True
+AllowCompilerWarnings()
 
 FINAL_LIBRARY = 'xul'
 
