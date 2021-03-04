@@ -50,6 +50,9 @@ private:
                                 nsIIDNService    *aIDN,
                                 nsACString       &aACE);
 
+    // Locks the mutex and returns an addreffed resolver. May return null.
+    already_AddRefed<nsHostResolver> GetResolverLocked();
+
     RefPtr<nsHostResolver>  mResolver;
     nsCOMPtr<nsIIDNService>   mIDN;
 
