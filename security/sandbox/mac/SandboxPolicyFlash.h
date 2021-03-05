@@ -132,6 +132,7 @@ static const char SandboxPolicyFlash[] = R"SANDBOX_LITERAL(
           "hw.physicalcpu_max"
           "hw.logicalcpu_max"
           "hw.machine"
+          "hw.memsize"
           "hw.model"
           "hw.ncpu"
           "hw.optional.avx1_0"

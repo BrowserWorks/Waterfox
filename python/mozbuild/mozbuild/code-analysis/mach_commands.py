@@ -241,7 +241,7 @@ class StaticAnalysis(MachCommandBase):
         )
 
         self._set_log_level(verbose)
-        self._activate_virtualenv()
+        self.activate_virtualenv()
         self.log_manager.enable_unstructured()
 
         rc = self._get_clang_tools(verbose=verbose)
@@ -348,7 +348,7 @@ class StaticAnalysis(MachCommandBase):
     def check_coverity(self, source=[], output=None, coverity_output_path=None,
                        outgoing=False, full_build=False, verbose=False):
         self._set_log_level(verbose)
-        self._activate_virtualenv()
+        self.activate_virtualenv()
         self.log_manager.enable_unstructured()
 
         if 'MOZ_AUTOMATION' not in os.environ:
@@ -811,7 +811,7 @@ class StaticAnalysis(MachCommandBase):
                    task='compileWithGeckoBinariesDebugSources',
                    skip_export=False, outgoing=False, output=None):
         self._set_log_level(verbose)
-        self._activate_virtualenv()
+        self.activate_virtualenv()
         self.log_manager.enable_unstructured()
 
         if self.substs['MOZ_BUILD_APP'] != 'mobile/android':
@@ -1076,7 +1076,7 @@ class StaticAnalysis(MachCommandBase):
         # checker in particulat and thus 'force_download' becomes 'False' since we want to
         # do this on a local trusted clang-tidy package.
         self._set_log_level(verbose)
-        self._activate_virtualenv()
+        self.activate_virtualenv()
         self._dump_results = dump_results
 
         force_download = not self._dump_results
@@ -1856,7 +1856,7 @@ class StaticAnalysis(MachCommandBase):
     def _get_config_environment(self):
         ran_configure = False
         config = None
-        builder = Build(self._mach_context)
+        builder = Build(self._mach_context, None)
 
         try:
             config = self.config_environment
@@ -1906,7 +1906,7 @@ class StaticAnalysis(MachCommandBase):
         if config:
             print('Looks like a clang compilation database has not been '
                   'created yet, creating it now...')
-            builder = Build(self._mach_context)
+            builder = Build(self._mach_context, None)
             rc = builder.build_backend(['CompileDB'], verbose=verbose)
             if rc != 0:
                 return rc
@@ -1917,7 +1917,7 @@ class StaticAnalysis(MachCommandBase):
         def on_line(line):
             self.log(logging.INFO, 'build_output', {'line': line}, '{line}')
 
-        builder = Build(self._mach_context)
+        builder = Build(self._mach_context, None)
         # First install what we can through install manifests.
         rc = builder._run_make(directory=self.topobjdir, target='pre-export',
                                line_handler=None, silent=not verbose)

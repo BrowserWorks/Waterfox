@@ -664,6 +664,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
   AppMenuNotifications: "resource://gre/modules/AppMenuNotifications.jsm",
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
+  AttributionCode: "resource:///modules/AttributionCode.jsm",
   Blocklist: "resource://gre/modules/Blocklist.jsm",
   BookmarkHTMLUtils: "resource://gre/modules/BookmarkHTMLUtils.jsm",
   BookmarkJSONUtils: "resource://gre/modules/BookmarkJSONUtils.jsm",
@@ -706,6 +707,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SessionStartup: "resource:///modules/sessionstore/SessionStartup.jsm",
   SessionStore: "resource:///modules/sessionstore/SessionStore.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
+  StoreHandler: "resource://gre/modules/amStoreHandler.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
   TabUnloader: "resource:///modules/TabUnloader.jsm",
   TRRRacer: "resource:///modules/TRRPerformance.jsm",
@@ -1204,7 +1206,9 @@ BrowserGlue.prototype = {
     );
     if (AppConstants.platform == "win") {
       JawsScreenReaderVersionCheck.init();
-    }
+    };
+    // update startup pages with attribution data
+    this._setAttributionData();
   },
 
   // cleanup (called on application shutdown)
@@ -2521,6 +2525,30 @@ BrowserGlue.prototype = {
           }
         },
       },
+      // flush extension tmp and staged dir
+      {
+        task: () => {
+          StoreHandler.flushDir(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp")
+          );
+          StoreHandler.flushDir(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "staged")
+          );
+        }
+      },
+      // clear updated prefs
+      {
+        task: () => {
+          AttributionCode.deleteFileAsync();
+          // reset prefs
+          Services.prefs.clearUserPref(
+            "startup.homepage_welcome_url.additional"
+          );
+          Services.prefs.clearUserPref(
+            "startup.homepage_override_url"
+          );
+        }
+      },
 
       // Marionette needs to be initialized as very last step
       {
@@ -3775,6 +3803,36 @@ BrowserGlue.prototype = {
 
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
+  },
+
+  _setAttributionData: async function BG__setAttributionData() {
+    // kick off async process to set attribution code preference
+    try {
+      let attrData = await AttributionCode.getAttrDataAsync();
+      let attributionStr = "";
+      for (const [key, value] of Object.entries(attrData)) {
+        // only add to postSigningData if this hasn't been called previously
+        attributionStr += `&${key}=${value}`
+      };
+      // add install param
+      if (attributionStr != "") {
+        attributionStr += "&status=install"
+      };
+      let additionalPage = Services.urlFormatter.formatURLPref(
+        "startup.homepage_welcome_url.additional"
+      );
+      Services.prefs.setCharPref(
+        "startup.homepage_welcome_url.additional",
+        additionalPage + attributionStr
+      );
+      let overridePage = Services.urlFormatter.formatURLPref(
+        "startup.homepage_override_url"
+      );
+      Services.prefs.setCharPref(
+        "startup.homepage_override_url",
+        overridePage + attributionStr
+      );
+    } catch (ex) {Services.console.logStringMessage(ex + "error setting attr data")}
   },
 
   _maybeShowDefaultBrowserPrompt() {

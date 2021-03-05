@@ -33,6 +33,11 @@ const ATTR_CODE_KEYS = [
   "experiment",
   "variation",
   "ua",
+  "gclid",
+  "mtm_group",
+  "mtm_source",
+  "mtm_cid",
+  "msclkid",
 ];
 
 let gCachedAttrData = null;
@@ -43,8 +48,9 @@ let gCachedAttrData = null;
 function getAttributionFile() {
   let file = Services.dirsvc.get("LocalAppData", Ci.nsIFile);
   // appinfo does not exist in xpcshell, so we need defaults.
-  file.append(Services.appinfo.vendor || "mozilla");
-  file.append(AppConstants.MOZ_APP_NAME);
+  file.append("Waterfox");
+  // file.append(Services.appinfo.vendor || "mozilla");
+  // file.append(AppConstants.MOZ_APP_NAME);
   file.append("postSigningData");
   return file;
 }

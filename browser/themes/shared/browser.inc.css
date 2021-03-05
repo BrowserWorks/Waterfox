@@ -624,8 +624,6 @@ menupopup::part(drop-indicator) {
 .toolbar-statusbar {
   box-shadow: var(--lwt-text-color);
   fill: var(--lwt-text-color);
-  height: 22px;
-  border-top: 1px solid rgba(38,38,38,.15);
   font-size: 12px;
   position: relative;
   z-index: 1;
@@ -681,16 +679,27 @@ menupopup::part(drop-indicator) {
 
 .button-textonly {
     -moz-appearance: none;
-    color: var(--lwt-text-color);
+}
+
+.button-textonly .toolbarbutton-icon {
+  display: none !important;
+}
+
+.button-textonly .toolbarbutton-text {
+  background-color: unset !important;
 }
 
 .button-textonly:hover {
-    color: inherit !important;
+  color: inherit !important;
 }
 
 #page-zoom-controls #zoomresetsb.button-textonly[disabled="true"] {
-    opacity: 0.5;
-    color: inherit !important;
+  opacity: 0.5;
+  color: inherit !important;
+}
+
+.button-textonly .toolbarbutton-text {
+  display: initial !important;
 }
 
 .statusbarbtn {
@@ -709,7 +718,7 @@ menupopup::part(drop-indicator) {
   list-style-image: url(chrome://browser/skin/fullscreen.svg);
 }
 
-#browser-bottombox #TabsToolbar {
+:root:-moz-lwtheme #browser-bottombox #TabsToolbar {
   background: var(--lwt-accent-color);
 }
 
@@ -779,6 +788,11 @@ menupopup::part(drop-indicator) {
 
 input#zoom-percent-status {
   -moz-appearance: textfield;
+}
+
+:root:-moz-lwtheme input#zoom-percent-status {
+  background: var(--lwt-toolbar-field-background-color);
+  color: var(--lwt-toolbar-field-color);
 }
 
 #wrapper-status-info {

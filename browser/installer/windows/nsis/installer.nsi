@@ -86,9 +86,8 @@ Var PostSigningData
 !include defines.nsi
 !include common.nsh
 !include locales.nsi
-!include replaceInFile.nsh
+!include ReplaceInFile.nsh
 !include StrRep.nsh
-; !include GetTime.nsh
 
 VIAddVersionKey "FileDescription" "${BrandShortName} Installer"
 VIAddVersionKey "OriginalFilename" "setup.exe"
@@ -126,7 +125,7 @@ VIAddVersionKey "OriginalFilename" "setup.exe"
 !insertmacro UpdateShortcutAppModelIDs
 !insertmacro UnloadUAC
 !insertmacro WriteRegStr2
-!insertmacro WriteRegDWORD2
+!insertmacro WriteRegDWORMM
 
 ; This needs to be inserted after InitHashAppModelId because it uses
 ; $AppUserModelID and the compiler can't handle using variables lexically before
@@ -341,27 +340,43 @@ Section "-Application" APP_IDX
   ${CopyFilesFromDir} "$EXEDIR\core" "$INSTDIR" \
                       "$(ERROR_CREATE_DIRECTORY_PREFIX)" \
                       "$(ERROR_CREATE_DIRECTORY_SUFFIX)"
-					  
-  Var /GLOBAL D1
-  Var /GLOBAL D2
-  Var /GLOBAL D3
-  Var /GLOBAL D4
-  Var /GLOBAL D5
-  Var /GLOBAL D6
-  Var /GLOBAL D7
 
   ${If} ${FileExists} "$INSTDIR\distribution\distribution.ini"
-    ${GetTime} "" "LS" $D1  $D2 $D3 $D4 $D5 $D6 $D7
-    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "%DATE%" "$D1$D2$D3"
+    Var DD
+    Var MM
+    Var YYYY
+    Var WKDY
+    Var HH
+    Var min
+    Var SS
+    ${GetTime} "" "LS" $DD  $MM $YYYY $WKDY $HH $min $SS
+
+    StrCpy $OLD_STR '%DATE%'
+    StrCpy $FST_OCC all
+    StrCpy $NR_OCC all
+    StrCpy $REPLACEMENT_STR '$DD$MM$YYYY'
+    StrCpy $FILE_TO_MODIFIED '$INSTDIR\distribution\distribution.ini'
+    !insertmacro ReplaceInFile $OLD_STR $FST_OCC $NR_OCC $REPLACEMENT_STR $FILE_TO_MODIFIED
 
     ${GetParameters} $5
     ${GetOptions} $5 "/WFID=" $6
-    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL1" "$6"
-    !insertmacro _ReplaceInFile "$INSTDIR\distribution\searchplugins\common\bing.xml" "VAL1" "$6"
+    StrCpy $OLD_STR 'VAL1'
+    StrCpy $FST_OCC all
+    StrCpy $NR_OCC all
+    StrCpy $REPLACEMENT_STR '$6'
+    StrCpy $FILE_TO_MODIFIED '$INSTDIR\distribution\distribution.ini'
+    !insertmacro ReplaceInFile $OLD_STR $FST_OCC $NR_OCC $REPLACEMENT_STR $FILE_TO_MODIFIED
+    StrCpy $FILE_TO_MODIFIED '$INSTDIR\distribution\searchplugins\common\bing.xml'
+    !insertmacro ReplaceInFile $OLD_STR $FST_OCC $NR_OCC $REPLACEMENT_STR $FILE_TO_MODIFIED
 
     ${GetParameters} $7
     ${GetOptions} $7 "/PARTNERID=" $9
-    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL2" "$9"
+    StrCpy $OLD_STR 'VAL2'
+    StrCpy $FST_OCC all
+    StrCpy $NR_OCC all
+    StrCpy $REPLACEMENT_STR '$9'
+    StrCpy $FILE_TO_MODIFIED '$INSTDIR\distribution\distribution.ini'
+    !insertmacro ReplaceInFile $OLD_STR $FST_OCC $NR_OCC $REPLACEMENT_STR $FILE_TO_MODIFIED
   ${EndIf}
 
   ; Register DLLs
@@ -1061,7 +1076,7 @@ Function SendPing
 
   ; Create a GUID to use as the unique document ID.
   System::Call "rpcrt4::UuidCreate(g . r0)i"
-  ; StringFromGUID2 (which is what System::Call uses internally to stringify
+  ; StringFromGUIMM (which is what System::Call uses internally to stringify
   ; GUIDs) includes braces in its output, and we don't want those.
   StrCpy $0 $0 -1 1
 

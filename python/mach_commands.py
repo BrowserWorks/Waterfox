@@ -11,6 +11,8 @@ import sys
 import tempfile
 from multiprocessing import cpu_count
 
+import six
+
 from concurrent.futures import (
     ThreadPoolExecutor,
     as_completed,
@@ -25,7 +27,6 @@ from manifestparser import filters as mpf
 from mozbuild.base import (
     MachCommandBase,
 )
-from mozbuild.virtualenv import VirtualenvManager
 
 from mach.decorators import (
     CommandArgument,
@@ -63,7 +64,7 @@ class MachCommands(MachCommandBase):
             python_path = sys.executable
             append_env[b'PYTHONPATH'] = os.pathsep.join(sys.path)
         else:
-            self._activate_virtualenv()
+            self.activate_virtualenv()
             python_path = self.virtualenv_manager.python_path
 
         if exec_file:
@@ -90,17 +91,12 @@ class MachCommands(MachCommandBase):
                                 python_unbuffered=False,  # Leave input buffered.
                                 append_env=append_env)
 
-    @Command('python-test', category='testing',
-             description='Run Python unit tests with an appropriate test runner.')
+    @Command('python-test', category='testing', virtualenv_name='python-test',
+             description='Run Python unit tests with pytest.')
     @CommandArgument('-v', '--verbose',
                      default=False,
                      action='store_true',
                      help='Verbose output.')
-    @CommandArgument('--python',
-                     default='2.7',
-                     help='Version of Python for Pipenv to use. When given a '
-                          'Python version, Pipenv will automatically scan your '
-                          'system for a Python that matches that given version.')
     @CommandArgument('-j', '--jobs',
                      default=None,
                      type=int,
@@ -124,7 +120,11 @@ class MachCommands(MachCommandBase):
                            'passed as it is to pytest'))
     def python_test(self, *args, **kwargs):
         try:
-            tempdir = os.environ[b'PYTHON_TEST_TMP'] = str(tempfile.mkdtemp(suffix='-python-test'))
+            tempdir = str(tempfile.mkdtemp(suffix='-python-test'))
+            if six.PY2:
+                os.environ[b'PYTHON_TEST_TMP'] = tempdir
+            else:
+                os.environ['PYTHON_TEST_TMP'] = tempdir
             return self.run_python_tests(*args, **kwargs)
         finally:
             import mozfile
@@ -136,12 +136,11 @@ class MachCommands(MachCommandBase):
                          subsuite=None,
                          verbose=False,
                          jobs=None,
-                         python=None,
                          exitfirst=False,
                          extra=None,
                          **kwargs):
-        self._activate_test_virtualenvs(python)
 
+        self.activate_virtualenv()
         if test_objects is None:
             from moztest.resolve import TestResolver
             resolver = self._spawn(TestResolver)
@@ -232,38 +231,6 @@ class MachCommands(MachCommandBase):
                  'Return code from mach python-test: {return_code}')
         return return_code
 
-    def _activate_test_virtualenvs(self, python):
-        """Make sure the test suite virtualenvs are set up and activated.
-
-        Args:
-            python: Optional python version string we want to run the suite with.
-                See the `--python` argument to the `mach python-test` command.
-        """
-        from mozbuild.pythonutil import find_python3_executable
-
-        default_manager = self.virtualenv_manager
-
-        # Grab the default virtualenv properties before we activate other virtualenvs.
-        python = python or default_manager.python_path
-        py3_root = default_manager.virtualenv_root + '_py3'
-
-        self.activate_pipenv(pipfile=None, populate=True, python=python)
-
-        # The current process might be running under Python 2 and the Python 3
-        # virtualenv will not be set up by mach bootstrap. To avoid problems in tests
-        # that implicitly depend on the Python 3 virtualenv we ensure the Python 3
-        # virtualenv is up to date before the tests start.
-        python3, version = find_python3_executable(min_version='3.5.0')
-
-        py3_manager = VirtualenvManager(
-            default_manager.topsrcdir,
-            default_manager.topobjdir,
-            py3_root,
-            default_manager.log_handle,
-            default_manager.manifest_path,
-        )
-        py3_manager.ensure(python3)
-
     def _run_python_test(self, test):
         from mozprocess import ProcessHandler
 
@@ -282,6 +249,7 @@ class MachCommands(MachCommandBase):
         file_displayed_test = []  # used as boolean
 
         def _line_handler(line):
+            line = six.ensure_str(line)
             if not file_displayed_test:
                 output = ('Ran' in line or 'collected' in line or
                           line.startswith('TEST-'))
@@ -289,8 +257,8 @@ class MachCommands(MachCommandBase):
                     file_displayed_test.append(True)
 
             # Hack to make sure treeherder highlights pytest failures
-            if b'FAILED' in line.rsplit(b' ', 1)[-1]:
-                line = line.replace(b'FAILED', b'TEST-UNEXPECTED-FAIL')
+            if 'FAILED' in line.rsplit(' ', 1)[-1]:
+                line = line.replace('FAILED', 'TEST-UNEXPECTED-FAIL')
 
             _log(line)
 
@@ -298,12 +266,18 @@ class MachCommands(MachCommandBase):
         python = self.virtualenv_manager.python_path
         cmd = [python, test['path']]
         env = os.environ.copy()
-        env[b'PYTHONDONTWRITEBYTECODE'] = b'1'
+        if six.PY2:
+            env[b'PYTHONDONTWRITEBYTECODE'] = b'1'
+        else:
+            env['PYTHONDONTWRITEBYTECODE'] = '1'
 
         # Homebrew on OS X will change Python's sys.executable to a custom value
         # which messes with mach's virtualenv handling code. Override Homebrew's
         # changes with the correct sys.executable value.
-        env[b'PYTHONEXECUTABLE'] = python.encode('utf-8')
+        if six.PY2:
+            env[b'PYTHONEXECUTABLE'] = python.encode('utf-8')
+        else:
+            env['PYTHONEXECUTABLE'] = python
 
         proc = ProcessHandler(cmd, env=env, processOutputLine=_line_handler, storeOutput=False)
         proc.run()

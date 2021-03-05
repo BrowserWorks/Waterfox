@@ -44,15 +44,14 @@ amContentHandler.prototype = {
         );
       if (!confirmInstall) {return;} //don't want to install if permission not given
       // Define tmp paths
-      let xpiPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", "extension.xpi");
-      let manifestPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", "new_manifest.json");
+      let uuidString = StoreHandler.getUUID().slice(1,-1);
+      let xpiPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", uuidString, "extension.xpi");
+      let manifestPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", uuidString, "new_manifest.json");
       // Define nsiFiles
       let nsiFileXpi = StoreHandler.getNsiFile(xpiPath);
       let nsiManifest = StoreHandler.getNsiFile(manifestPath);
-      // get channel
-      let channel = StoreHandler.getChannel({uri: uri.spec, loadUsingSystemPrincipal: true});
-      // attempt install
-      StoreHandler.attemptInstall(channel, xpiPath, manifestPath, nsiFileXpi, nsiManifest);
+      // attempt install, wrapped async functions
+      StoreHandler.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest);
       return; // don't want any of the rest of the ContentHandler to execute
     } else if (aMimetype != XPI_CONTENT_TYPE) {
       throw Components.Exception("", Cr.NS_ERROR_WONT_HANDLE_CONTENT);

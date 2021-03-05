@@ -103,12 +103,23 @@ ChromeUtils.defineModuleGetter(
   "setTimeout",
   "resource://gre/modules/Timer.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "StoreHandler",
+  "resource://gre/modules/amStoreHandler.jsm"
+);
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
   "aomStartup",
   "@mozilla.org/addons/addon-manager-startup;1",
   "amIAddonManagerStartup"
+);
+
+const ZipReader = Components.Constructor(
+  "@mozilla.org/libjar/zip-reader;1",
+  "nsIZipReader",
+  "open"
 );
 
 const {

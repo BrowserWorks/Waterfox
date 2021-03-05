@@ -258,16 +258,6 @@ stage-extensions: make-stage-dir
 	@$(foreach ext,$(TEST_EXTENSIONS), cp -RL $(DIST)/xpi-stage/$(ext) $(PKG_STAGE)/extensions;)
 
 
-check::
-	$(eval cores=$(shell $(PYTHON3) -c 'import multiprocessing; print(multiprocessing.cpu_count())'))
-	@echo "Starting 'mach python-test' with -j$(cores)"
-	@$(topsrcdir)/mach --log-no-times python-test -j$(cores) --subsuite default
-	@echo "Finished 'mach python-test' successfully"
-	@echo "Starting 'mach python-test' with --python $(PYTHON3) -j$(cores)"
-	@$(topsrcdir)/mach --log-no-times python-test --python python3 -j$(cores) --subsuite default
-	@echo "Finished 'mach python-test' with py3 successfully"
-
-
 .PHONY: \
   reftest \
   crashtest \
