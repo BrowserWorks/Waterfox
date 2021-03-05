@@ -406,9 +406,19 @@ pref("media.libavcodec.allow-obsolete", false);
 pref("media.ffvpx.enabled", true);
 #endif
 #ifdef MOZ_AV1
+#if defined(XP_WIN) && !defined(_ARM64_)
 pref("media.av1.enabled", true);
-// Use libdav1d instead of libaom
+pref("media.av1.use-dav1d", true);
+#elif defined(XP_MACOSX)
+pref("media.av1.enabled", true);
+pref("media.av1.use-dav1d", true);
+#elif defined(XP_UNIX) && !defined(MOZ_WIDGET_ANDROID)
+pref("media.av1.enabled", true);
+pref("media.av1.use-dav1d", true);
+#else
+pref("media.av1.enabled", false);
 pref("media.av1.use-dav1d", false);
+#endif
 #endif
 #if defined(MOZ_FFMPEG) || defined(MOZ_FFVPX)
 pref("media.ffmpeg.low-latency.enabled", false);
