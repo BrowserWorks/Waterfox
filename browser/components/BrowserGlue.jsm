@@ -1861,11 +1861,12 @@ BrowserGlue.prototype = {
       this._setPrefExpectationsAndUpdate
     );
   },
-  
+
   // Set up a listener to add/remove userStyles
   // based on if the theme is active
   _monitorTheme() {
   	const PREF = "extensions.activeThemeID";
+    const PREF2 = "browser.theme.auto";
   	const ID1 = "abyss@waterfox.net";
   	const ID2 = "floe@waterfox.net";
   	const sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
@@ -1895,8 +1896,25 @@ BrowserGlue.prototype = {
   			sss.unregisterSheet(floeChrome, sss.USER_SHEET);
   			sss.unregisterSheet(floeContent, sss.USER_SHEET);
   		}
-  	};
+  	}
+    const _changeThemeMode = async(e) => {
+      if (Services.prefs.getBoolPref(PREF2) &&
+      ((Services.prefs.getCharPref(PREF) == ID1) || (Services.prefs.getCharPref(PREF) == ID2))) {
+        // if theme is abyss and OS in dark mode, don't change to floe when theme box checked
+        if (e.matches || themeQuery.matches) {
+          let theme = await AddonManager.getAddonByID(ID1);
+          await theme.enable()
+        } else {
+          let theme = await AddonManager.getAddonByID(ID2);
+          await theme.enable()
+        }
+      }
+    }
+    const win = BrowserWindowTracker.getTopWindow();
+    var themeQuery = win.matchMedia("(-moz-system-dark-theme)");
+    themeQuery.addListener(_changeThemeMode);
   	Services.prefs.addObserver(PREF, _checkThemePref);
+    Services.prefs.addObserver(PREF2, _changeThemeMode);
   	_checkThemePref();
   },
 
@@ -2280,7 +2298,7 @@ BrowserGlue.prototype = {
       LATE_TASKS_IDLE_TIME_SEC
     );
 
-	this._monitorTheme();
+	  this._monitorTheme();
     this._monitorScreenshotsPref();
     this._monitorWebcompatReporterPref();
     this._monitorHTTPSOnlyPref();
