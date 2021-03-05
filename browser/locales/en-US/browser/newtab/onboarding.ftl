@@ -75,6 +75,7 @@ onboarding-multistage-theme-header = Choose a <span data-l10n-name="zap">look</s
 onboarding-multistage-theme-subtitle = Personalize { -brand-short-name } with a theme.
 onboarding-multistage-theme-primary-button-label = Save Theme
 onboarding-multistage-theme-secondary-button-label = Not now
+onboarding-multistage-theme-checkbox-label = Automatically switch theme based on operating system preference
 
 # Automatic theme uses operating system color settings
 onboarding-multistage-theme-label-automatic = Automatic
