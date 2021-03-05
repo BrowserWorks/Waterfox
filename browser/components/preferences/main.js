@@ -101,6 +101,9 @@ Preferences.addAll([
   { id: "browser.privatebrowsing.autostart", type: "bool" },
   { id: "browser.sessionstore.warnOnQuit", type: "bool" },
 
+  // Theme
+  { id: "browser.theme.auto", type: "bool" },
+
   // Restart Menu Item
   { id: "browser.restart_menu.purgecache", type: "bool" },
   { id: "browser.restart_menu.requireconfirm", type: "bool" },
@@ -655,6 +658,14 @@ var gMainPane = {
         distroField.value = distroAbout;
         distroField.hidden = false;
       }
+    }
+
+    let themeId = Services.prefs.getCharPref("extensions.activeThemeID");
+    if (themeId == "abyss@waterfox.net" || themeId == "floe@waterfox.net") {
+      let checkbox = document.getElementById("browser.theme.auto");
+      let label = document.getElementById("theme-label");
+      checkbox.hidden = false;
+      label.hidden = false;
     }
 
     if (AppConstants.MOZ_UPDATER) {

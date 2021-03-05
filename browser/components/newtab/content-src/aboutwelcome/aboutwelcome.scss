@@ -733,6 +733,17 @@ body {
     }
   }
 
+  .checkbox {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    font-size: 14px;
+
+    &.theme-auto {
+      padding-top: 4px;
+    }
+  }
+
   .steps {
     display: flex;
     flex-direction: row;

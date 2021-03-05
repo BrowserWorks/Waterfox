@@ -376,6 +376,9 @@ const MultiStageAboutWelcome = props => {
 class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureComponent {
   constructor(props) {
     super(props);
+    this.state = {
+      themeAuto: false
+    };
     this.handleAction = this.handleAction.bind(this);
   }
 
@@ -450,14 +453,15 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     let {
       props
     } = this;
-    let targetContent = props.content[event.currentTarget.value] || props.content.tiles;
+    let value = event.currentTarget.type === "checkbox" ? event.currentTarget.type : event.currentTarget.value;
+    let targetContent = props.content[value] || props.content.tiles;
 
     if (!(targetContent && targetContent.action)) {
       return;
     } // Send telemetry before waiting on actions
 
 
-    _lib_aboutwelcome_utils__WEBPACK_IMPORTED_MODULE_3__["AboutWelcomeUtils"].sendActionTelemetry(props.messageId, event.currentTarget.value);
+    _lib_aboutwelcome_utils__WEBPACK_IMPORTED_MODULE_3__["AboutWelcomeUtils"].sendActionTelemetry(props.messageId, value);
     let {
       action
     } = targetContent;
@@ -475,10 +479,16 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
 
 
     if (action.theme) {
-      this.highlightTheme(event.currentTarget.value);
-      window.AWSelectTheme(action.theme === "<event>" ? event.currentTarget.value : action.theme);
-    } // A special tiles.action.search value indicates we should use the event's value vs provided value.
+      this.highlightTheme(value);
+      window.AWSelectTheme(action.theme === "<event>" ? value : action.theme);
+    }
 
+    if (action.themeAuto) {
+      window.AWSetThemeAuto(event.currentTarget.checked);
+      this.setState({
+        [event.currentTarget.name]: event.currentTarget.checked
+      });
+    }
 
     if (action.search) {
       this.highlightSearch(event.currentTarget.value);
@@ -502,6 +512,19 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
       value: "secondary_button",
       onClick: this.handleAction
     })));
+  }
+
+  renderCheckbox(className) {
+    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      className: `checkbox ${className}`
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("label", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+      name: "themeAuto",
+      type: "checkbox",
+      checked: this.state.themeAuto,
+      onChange: this.handleAction
+    }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+      text: this.props.content.checkbox.label
+    }))));
   }
 
   renderTiles() {
@@ -684,7 +707,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
       text: content.title
     }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
       text: content.subtitle
-    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", null))), content.tiles ? this.renderTiles() : null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", null))), content.tiles ? this.renderTiles() : null, content.checkbox ? this.renderCheckbox("theme-auto") : null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
       text: content.primary_button ? content.primary_button.label : null
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
       className: "primary",
@@ -1026,6 +1049,15 @@ const DEFAULT_WELCOME_CONTENT = {
         action: {
           theme: "floe",
           navigate: true
+        }
+      },
+      checkbox: {
+        label: {
+          string_id: "onboarding-multistage-theme-checkbox-label"
+        },
+        action: {
+          themeAuto: "<event>",
+          navigate: false
         }
       }
     }

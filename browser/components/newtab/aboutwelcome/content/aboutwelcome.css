@@ -580,6 +580,13 @@ body {
     .multistageContainer .secondary-cta span {
       color: var(--grey-subtitle-1);
       margin: 0 4px; }
+  .multistageContainer .checkbox {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    font-size: 14px; }
+    .multistageContainer .checkbox.theme-auto {
+      padding-top: 4px; }
   .multistageContainer .steps {
     display: flex;
     flex-direction: row;

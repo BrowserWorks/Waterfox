@@ -159,6 +159,9 @@ startup-restore-previous-session =
 startup-restore-warn-on-quit =
     .label = Warn you when quitting the browser
 
+theme-auto-change =
+    .label = Automatically switch theme based on operating system preference
+
 restart-paneluibtn =
     .label = Show restart button in PanelUI
 
@@ -1360,6 +1363,8 @@ choose-download-folder-title = Choose Download Folder:
 #   $service-name (String) - Name of a cloud storage provider like Dropbox, Google Drive, etc...
 save-files-to-cloud-storage =
     .label = Save files to { $service-name }
+
+theme-header = Theme
 
 restart-header = Restart Menu Item
 
