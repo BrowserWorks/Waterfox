@@ -168,6 +168,15 @@ export const DEFAULT_WELCOME_CONTENT = {
             navigate: true,
           },
         },
+        checkbox: {
+          label: {
+            string_id: "onboarding-multistage-theme-checkbox-label"
+          },
+          action: {
+            themeAuto: "<event>",
+            navigate: false,
+          },
+        },
       },
     },
     // {

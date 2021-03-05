@@ -95,6 +95,11 @@ const DEFAULT_SEARCH_ENGINES = {
   STARTPAGE: "Startpage"
 };
 
+async function setThemeAuto(value) {
+  Services.prefs.setBoolPref("browser.theme.auto", value);
+  return;
+}
+
 async function setDefaultEngine(engine_name) {
   try {
     const engine = Services.search.getEngineByName(engine_name);
@@ -225,6 +230,8 @@ class AboutWelcomeParent extends JSWindowActorParent {
             }
           })
         );
+      case "AWPage:SET_THEME_AUTO":
+        return setThemeAuto(data);
       case "AWPage:SELECT_SEARCH_ENGINE":
         return setDefaultEngine(DEFAULT_SEARCH_ENGINES[data]);
       default:

@@ -118,6 +118,9 @@ export const MultiStageAboutWelcome = props => {
 export class WelcomeScreen extends React.PureComponent {
   constructor(props) {
     super(props);
+    this.state = {
+      themeAuto: false
+    };
     this.handleAction = this.handleAction.bind(this);
   }
 
@@ -174,9 +177,9 @@ export class WelcomeScreen extends React.PureComponent {
 
   async handleAction(event) {
     let { props } = this;
-
+    let value = event.currentTarget.type === "checkbox" ? event.currentTarget.type : event.currentTarget.value;
     let targetContent =
-      props.content[event.currentTarget.value] || props.content.tiles;
+      props.content[value] || props.content.tiles;
     if (!(targetContent && targetContent.action)) {
       return;
     }
@@ -184,7 +187,7 @@ export class WelcomeScreen extends React.PureComponent {
     // Send telemetry before waiting on actions
     AboutWelcomeUtils.sendActionTelemetry(
       props.messageId,
-      event.currentTarget.value
+      value
     );
 
     let { action } = targetContent;
@@ -202,13 +205,19 @@ export class WelcomeScreen extends React.PureComponent {
 
     // A special tiles.action.theme value indicates we should use the event's value vs provided value.
     if (action.theme) {
-      this.highlightTheme(event.currentTarget.value);
+      this.highlightTheme(value);
       window.AWSelectTheme(
-        action.theme === "<event>" ? event.currentTarget.value : action.theme
+        action.theme === "<event>" ? value : action.theme
       );
     }
 
-    // A special tiles.action.search value indicates we should use the event's value vs provided value.
+    if (action.themeAuto) {
+      window.AWSetThemeAuto(event.currentTarget.checked);
+      this.setState({
+        [event.currentTarget.name]: event.currentTarget.checked
+      });
+    }
+
     if (action.search) {
       this.highlightSearch(event.currentTarget.value);
       window.AWSelectSearchEngine(
@@ -234,6 +243,22 @@ export class WelcomeScreen extends React.PureComponent {
             onClick={this.handleAction}
           />
         </Localized>
+      </div>
+    );
+  }
+
+  renderCheckbox(className) {
+    return (
+      <div className={`checkbox ${className}`}>
+        <form>
+          <label>
+            <input
+              name="themeAuto" type="checkbox"
+              checked={this.state.themeAuto}
+              onChange={this.handleAction} />
+            <Localized text={this.props.content.checkbox.label}/>
+          </label>
+        </form>
       </div>
     );
   }
@@ -377,6 +402,7 @@ export class WelcomeScreen extends React.PureComponent {
           </Localized>
         </div>
         {content.tiles ? this.renderTiles() : null}
+        {content.checkbox ? this.renderCheckbox("theme-auto") : null}
         <div>
           <Localized
             text={content.primary_button ? content.primary_button.label : null}
