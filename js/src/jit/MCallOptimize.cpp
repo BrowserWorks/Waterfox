@@ -209,6 +209,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineRegExpTester(callInfo);
       case InlinableNative::IsRegExpObject:
         return inlineIsRegExpObject(callInfo);
+      case InlinableNative::IntrinsicIsPossiblyWrappedRegExpObject:
+        return inlineIsPossiblyWrappedRegExpObject(callInfo);
       case InlinableNative::RegExpPrototypeOptimizable:
         return inlineRegExpPrototypeOptimizable(callInfo);
       case InlinableNative::RegExpInstanceOptimizable:
@@ -1907,6 +1909,45 @@ IonBuilder::inlineStrCharAt(CallInfo& callInfo)
     MFromCharCode* string = MFromCharCode::New(alloc(), charCode);
     current->add(string);
     current->push(string);
+    return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningResult
+IonBuilder::inlineIsPossiblyWrappedRegExpObject(CallInfo& callInfo)
+{
+    MOZ_ASSERT(!callInfo.constructing());
+    MOZ_ASSERT(callInfo.argc() == 1);
+
+    if (callInfo.getArg(0)->type() != MIRType::Object)
+        return InliningStatus_NotInlined;
+    if (getInlineReturnType() != MIRType::Boolean)
+        return InliningStatus_NotInlined;
+
+    MDefinition* arg = callInfo.getArg(0);
+    if (arg->type() != MIRType::Object) {
+        return InliningStatus_NotInlined;
+    }
+
+    TemporaryTypeSet* types = arg->resultTypeSet();
+    if (!types) {
+        return InliningStatus_NotInlined;
+    }
+
+    // Don't inline if the argument might be a wrapper.
+    if (types->forAllClasses(constraints(), IsProxyClass) != 
+        TemporaryTypeSet::ForAllResult::ALL_FALSE) {
+        return InliningStatus_NotInlined;
+    }
+
+    if (const Class* clasp = types->getKnownClass(constraints())) {
+        pushConstant(BooleanValue(clasp == &RegExpObject::class_));
+    } else {
+        MHasClass* hasClass = MHasClass::New(alloc(), arg, &RegExpObject::class_);
+        current->add(hasClass);
+        current->push(hasClass);
+    }
+
+    callInfo.setImplicitlyUsedUnchecked();
     return InliningStatus_Inlined;
 }
 

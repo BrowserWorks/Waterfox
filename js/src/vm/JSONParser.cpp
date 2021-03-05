@@ -289,8 +289,10 @@ JSONParser<CharT>::readNumber()
 
         double d;
         const CharT* dummy;
-        if (!GetPrefixInteger(cx, digitStart.get(), current.get(), 10, &dummy, &d))
+        if (!GetPrefixInteger(cx, digitStart.get(), current.get(), 10, 
+                              PrefixIntegerSeparatorHandling::None, &dummy, &d)) {
             return token(OOM);
+        }
         MOZ_ASSERT(current == dummy);
         return numberToken(negative ? -d : d);
     }

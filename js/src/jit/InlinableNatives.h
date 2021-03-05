@@ -76,6 +76,7 @@
     _(RegExpSearcher)               \
     _(RegExpTester)                 \
     _(IsRegExpObject)               \
+    _(IntrinsicIsPossiblyWrappedRegExpObject)\
     _(RegExpPrototypeOptimizable)   \
     _(RegExpInstanceOptimizable)    \
     _(GetFirstDollarIndex)          \

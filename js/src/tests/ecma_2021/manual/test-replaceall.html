@@ -1,0 +1,63 @@
+<html><head>
+<script>
+function passfail(test) {
+if (test) {
+  document.writeln('<span style="color:#008000;">PASS</span>');
+} else {
+  document.writeln('<span style="color:#BF0000;">FAIL</span>');
+}
+}
+</script>
+</head>
+<body>
+Replace "a" with "b":
+<script>
+var input='1a234abcd';
+var match='a';
+var expected='1b234bbcd';
+passfail(input.replaceAll(match,'b') === expected);
+</script><br>
+Replace "a" with "aa":
+<script>
+var input='aabbccdd';
+var match='a';
+var expected='aaaabbccdd';
+passfail(input.replaceAll(match,'aa') === expected);
+</script><br>
+Replace "" with "b":
+<script>
+var input='aaaa';
+var match='';
+var expected='babababab';
+passfail(input.replaceAll(match,'b') === expected);
+</script><br>
+Replace "old" with special pattern "new (was: $&)":
+<script>
+var input='This is the old thing of the old time.';
+var match='old';
+var expected='This is the new (was: old) thing of the new (was: old) time.';
+passfail(input.replaceAll(match,'new (was: $&)') === expected);
+</script><br>
+Replace "/[0-9]/g" with "b":
+<script>
+var input='1a234abcd';
+var match=/[0-9]/g;
+var expected='babbbabcd';
+passfail(input.replaceAll(match,'b') === expected);
+</script><br>
+Replace "/[0-9]/" with "b" (Throws):
+<script>
+var input='1a234abcd';
+var match=/[0-9]/;
+var expected='1a234abcd';
+try {
+  test=input.replaceAll(match,'b');
+  passfail(false);
+} catch(e) {
+  passfail(true);
+  document.writeln('('+e+')');
+}
+</script><br>
+</body>
+</html>
+

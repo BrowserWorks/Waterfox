@@ -491,6 +491,10 @@ StringToLowerCase(JSContext* cx, HandleLinearString string);
 extern JSString*
 StringToUpperCase(JSContext* cx, HandleLinearString string);
 
+JSString*
+str_replaceAll_string_raw(JSContext* cx, HandleString string, HandleString pattern,
+                       HandleString replacement);
+
 extern bool
 StringConstructor(JSContext* cx, unsigned argc, Value* vp);
 

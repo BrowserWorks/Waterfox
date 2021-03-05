@@ -144,30 +144,50 @@ template <typename CharT>
 extern double
 ParseDecimalNumber(const mozilla::Range<const CharT> chars);
 
+/* Separator handling for integers. Either skip underscores for numerical
+ * separators (ES2021) or not
+ */
+enum class PrefixIntegerSeparatorHandling : bool {
+    None, SkipUnderscore
+};
+
 /*
  * Compute the positive integer of the given base described immediately at the
- * start of the range [start, end) -- no whitespace-skipping, no magical
+ * start of the range [start, end] -- no whitespace-skipping, no magical
  * leading-"0" octal or leading-"0x" hex behavior, no "+"/"-" parsing, just
  * reading the digits of the integer.  Return the index one past the end of the
  * digits of the integer in *endp, and return the integer itself in *dp.  If
  * base is 10 or a power of two the returned integer is the closest possible
  * double; otherwise extremely large integers may be slightly inaccurate.
  *
- * If [start, end) does not begin with a number with the specified base,
- * *dp == 0 and *endp == start upon return.
+ * The |separatorHandling| controls whether or not numeric separators can be
+ * part of an integer string. If the option is enabled, all individual '_'
+ * characters in the string are ignored.
+ *
+ * If [start, end] does not begin with a number with the specified base,
+ * then upon return *dp == 0 and *endp == start.
  */
 template <typename CharT>
 extern MOZ_MUST_USE bool
 GetPrefixInteger(JSContext* cx, const CharT* start, const CharT* end, int base,
-                 const CharT** endp, double* dp);
+                 PrefixIntegerSeparatorHandling separatorHandling, const CharT** endp,
+                 double* dp);
 
 /*
- * This is like GetPrefixInteger, but only deals with base 10, and doesn't have
- * and |endp| outparam.  It should only be used when the characters are known to
- * only contain digits.
+ * This is like GetPrefixInteger, but only deals with base 10, always ignores
+ * '_', and doesn't have an |endp| outparam.  It should only be used when the
+ * characters are known to only contain digits and '_'.
  */
 extern MOZ_MUST_USE bool
 GetDecimalInteger(JSContext* cx, const char16_t* start, const char16_t* end, double* dp);
+
+/*
+ * This is like GetDecimalInteger, but also allows non-integer numbers. It
+ * should only be used when the characters are known to only contain digits,
+ * '.', 'e' or 'E', '+' or '-', and '_'.
+ */
+extern MOZ_MUST_USE bool
+GetDecimalNonInteger(JSContext* cx, const char16_t* start, const char16_t* end, double* dp);
 
 extern MOZ_MUST_USE bool
 StringToNumber(JSContext* cx, JSString* str, double* result);

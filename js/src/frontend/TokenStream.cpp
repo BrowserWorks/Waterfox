@@ -1503,21 +1503,45 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
     // Look for a decimal number.
     //
     if (c1kind == Dec) {
+        MOZ_ASSERT(JS7_ISDEC(c));
         tp = newToken(-1);
         numStart = userbuf.addressOfNextRawChar() - 1;
-
-      decimal:
         decimalPoint = NoDecimal;
         hasExp = false;
-        while (JS7_ISDEC(c))
+        do {
             c = getCharIgnoreEOL();
+            if (JS7_ISDEC(c))
+                continue;
+            if (c != '_')
+                break;
+            c = getCharIgnoreEOL();
+            if (!JS7_ISDEC(c)) {
+                ungetCharIgnoreEOL(c);
+                reportError(JSMSG_MISSING_DIGIT_AFTER_SEPARATOR);
+                goto error;
+            }
+        } while (true);
 
+      decimal_rest:
         if (c == '.') {
             decimalPoint = HasDecimal;
-          decimal_dot:
-            do {
-                c = getCharIgnoreEOL();
-            } while (JS7_ISDEC(c));
+            c = getCharIgnoreEOL();
+            if (JS7_ISDEC(c)) {
+              decimal_dot:
+                do {
+                    c = getCharIgnoreEOL();
+                    if (JS7_ISDEC(c))
+                        continue;
+                    if (c != '_')
+                        break;
+                    c = getCharIgnoreEOL();
+                    if (!JS7_ISDEC(c)) {
+                        ungetCharIgnoreEOL(c);
+                        reportError(JSMSG_MISSING_DIGIT_AFTER_SEPARATOR);
+                        goto error;
+                    }
+                } while (true);
+            }
         }
         if (c == 'e' || c == 'E') {
             hasExp = true;
@@ -1531,7 +1555,17 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
             }
             do {
                 c = getCharIgnoreEOL();
-            } while (JS7_ISDEC(c));
+                if (JS7_ISDEC(c))
+                    continue;
+                if (c != '_')
+                    break;
+                c = getCharIgnoreEOL();
+                if (!JS7_ISDEC(c)) {
+                    ungetCharIgnoreEOL(c);
+                    reportError(JSMSG_MISSING_DIGIT_AFTER_SEPARATOR);
+                    goto error;
+                }
+            } while (true);
         }
         ungetCharIgnoreEOL(c);
 
@@ -1560,8 +1594,7 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
             if (!GetDecimalInteger(cx, numStart, userbuf.addressOfNextRawChar(), &dval))
                 goto error;
         } else {
-            const CharT* dummy;
-            if (!js_strtod(cx, numStart, userbuf.addressOfNextRawChar(), &dummy, &dval))
+            if (!GetDecimalNonInteger(cx, numStart, userbuf.addressOfNextRawChar(), &dval))
                 goto error;
         }
         tp->type = TOK_NUMBER;
@@ -1604,8 +1637,19 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
                 goto error;
             }
             numStart = userbuf.addressOfNextRawChar() - 1;  // one past the '0x'
-            while (JS7_ISHEX(c))
+            do {
                 c = getCharIgnoreEOL();
+                if (JS7_ISHEX(c))
+                    continue;
+                if (c != '_')
+                    break;
+                c = getCharIgnoreEOL();
+                if (!JS7_ISHEX(c)) {
+                    ungetCharIgnoreEOL(c);
+                    reportError(JSMSG_MISSING_DIGIT_AFTER_SEPARATOR);
+                    goto error;
+                }
+            } while (true);
         } else if (c == 'b' || c == 'B') {
             radix = 2;
             c = getCharIgnoreEOL();
@@ -1615,8 +1659,19 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
                 goto error;
             }
             numStart = userbuf.addressOfNextRawChar() - 1;  // one past the '0b'
-            while (c == '0' || c == '1')
+            do {
                 c = getCharIgnoreEOL();
+                if (c == '0' || c == '1')
+                    continue;
+                if (c != '_')
+                    break;
+                c = getCharIgnoreEOL();
+                if (c != '0' && c != '1') {
+                    ungetCharIgnoreEOL(c);
+                    reportError(JSMSG_MISSING_DIGIT_AFTER_SEPARATOR);
+                    goto error;
+                }
+            } while (true);
         } else if (c == 'o' || c == 'O') {
             radix = 8;
             c = getCharIgnoreEOL();
@@ -1626,33 +1681,50 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
                 goto error;
             }
             numStart = userbuf.addressOfNextRawChar() - 1;  // one past the '0o'
-            while ('0' <= c && c <= '7')
+            do {
                 c = getCharIgnoreEOL();
+                if ('0' <= c && c <= '7')
+                    continue;
+                if (c != '_')
+                    break;
+                c = getCharIgnoreEOL();
+                if (c < '0' || c > '7') {
+                    ungetCharIgnoreEOL(c);
+                    reportError(JSMSG_MISSING_DIGIT_AFTER_SEPARATOR);
+                    goto error;
+                }
+            } while (true);
         } else if (JS7_ISDEC(c)) {
+            // Octal integer literals are not permitted in strict mode.
+            // Maybe one day we can get rid of this base-8 madness for good.
+            if (!reportStrictModeError(JSMSG_DEPRECATED_OCTAL))
+                goto error;
+
             radix = 8;
             numStart = userbuf.addressOfNextRawChar() - 1;  // one past the '0'
+            bool nonOctalDecimalIntegerLiteral = false;
             while (JS7_ISDEC(c)) {
-                // Octal integer literals are not permitted in strict mode code.
-                if (!reportStrictModeError(JSMSG_DEPRECATED_OCTAL))
-                    goto error;
-
-                // Outside strict mode, we permit 08 and 09 as decimal numbers,
-                // which makes our behaviour a superset of the ECMA numeric
-                // grammar. We might not always be so permissive, so we warn
-                // about it.
-                if (c >= '8') {
-                    if (!warning(JSMSG_BAD_OCTAL, c == '8' ? "08" : "09"))
-                        goto error;
-
-                    // Use the decimal scanner for the rest of the number.
-                    goto decimal;
-                }
+                if (c >= '8')
+                    nonOctalDecimalIntegerLiteral = true;
                 c = getCharIgnoreEOL();
+            }
+
+            if (c == '_') {
+                reportError(JSMSG_INVALID_NUMERIC_SEPARATOR);
+                goto error;
+            }
+            if (nonOctalDecimalIntegerLiteral) {
+                // Use the decimal scanner for the rest of the number.
+                decimalPoint = NoDecimal;
+                hasExp = false;
+                goto decimal_rest;
             }
         } else {
             // '0' not followed by 'x', 'X' or a digit;  scan as a decimal number.
             numStart = userbuf.addressOfNextRawChar() - 1;
-            goto decimal;
+            decimalPoint = NoDecimal;
+            hasExp = false;
+            goto decimal_rest;
         }
         ungetCharIgnoreEOL(c);
 
@@ -1675,8 +1747,11 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
 
         double dval;
         const char16_t* dummy;
-        if (!GetPrefixInteger(cx, numStart, userbuf.addressOfNextRawChar(), radix, &dummy, &dval))
+        if (!GetPrefixInteger(cx, numStart, userbuf.addressOfNextRawChar(), radix,
+                              PrefixIntegerSeparatorHandling::SkipUnderscore, &dummy, &dval))
+        {
             goto error;
+        }
         tp->type = TOK_NUMBER;
         tp->setNumber(dval, NoDecimal);
         goto out;
