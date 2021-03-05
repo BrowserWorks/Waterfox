@@ -17,7 +17,7 @@
 %define HAVE_SSE4_1 1
 %define HAVE_AVX 1
 %define HAVE_AVX2 1
-%define HAVE_AVX512 1
+%define HAVE_AVX512 0
 %define HAVE_VSX 0
 %define HAVE_MMI 0
 %define HAVE_VPX_PORTS 1
