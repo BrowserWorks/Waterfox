@@ -7,9 +7,8 @@
 #include "DAV1DDecoder.h"
 
 #undef LOG
-#define LOG(arg, ...)                                                  \
-  DDMOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, "::%s: " arg, __func__, \
-            ##__VA_ARGS__)
+#define LOG(arg, ...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, ("DAV1DDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define LOG_RESULT(code, message, ...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, ("DAV1DDecoder::%s: %s (code %d) " message, __func__, aom_codec_err_to_string(code), (int)code, ##__VA_ARGS__))
 
 namespace mozilla {
 

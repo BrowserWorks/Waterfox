@@ -11,13 +11,10 @@
 
 namespace mozilla {
 
-DDLoggedTypeDeclNameAndBase(DAV1DDecoder, MediaDataDecoder);
-
 typedef nsRefPtrHashtable<nsPtrHashKey<const uint8_t>, MediaRawData>
     MediaRawDataHashtable;
 
-class DAV1DDecoder : public MediaDataDecoder,
-                     public DecoderDoctorLifeLogger<DAV1DDecoder> {
+class DAV1DDecoder : public MediaDataDecoder {
  public:
   explicit DAV1DDecoder(const CreateDecoderParams& aParams);
 
@@ -26,8 +23,8 @@ class DAV1DDecoder : public MediaDataDecoder,
   RefPtr<DecodePromise> Drain() override;
   RefPtr<FlushPromise> Flush() override;
   RefPtr<ShutdownPromise> Shutdown() override;
-  nsCString GetDescriptionName() const override {
-    return NS_LITERAL_CSTRING("av1 libdav1d video decoder");
+  const char* GetDescriptionName() const override {
+    return "av1 libdav1d video decoder";
   }
 
   void ReleaseDataBuffer(const uint8_t* buf);
