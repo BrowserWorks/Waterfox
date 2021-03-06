@@ -15,7 +15,7 @@
 
 #include "aom/aom_decoder.h"
 #include "aom/aomdx.h"
-#include "av1/common/onyxc_int.h"
+#include "av1/common/av1_common_int.h"
 #include "av1/decoder/accounting.h"
 #include "av1/decoder/inspection.h"
 #include "common/tools_common.h"
@@ -162,7 +162,7 @@ bool AV1Decoder::setInspectionCallback() {
 
 void AV1Decoder::inspect(void *pbi, void *data) {
   AV1Decoder *decoder = (AV1Decoder *)data;
-  ifd_inspect(&decoder->frame_data, pbi);
+  ifd_inspect(&decoder->frame_data, pbi, 0);
 }
 
 #define MIN_ZOOM (1)
@@ -528,8 +528,8 @@ AnalyzerFrame::AnalyzerFrame(const bool bit_accounting)
   wxMenuBar *mb = new wxMenuBar();
 
   fileMenu = new wxMenu();
-  fileMenu->Append(wxID_OPEN, _("&Open...\tCtrl-O"), _("Open daala file"));
-  fileMenu->Append(wxID_CLOSE, _("&Close\tCtrl-W"), _("Close daala file"));
+  fileMenu->Append(wxID_OPEN, _("&Open...\tCtrl-O"), _("Open AV1 file"));
+  fileMenu->Append(wxID_CLOSE, _("&Close\tCtrl-W"), _("Close AV1 file"));
   fileMenu->Enable(wxID_CLOSE, false);
   fileMenu->Append(wxID_EXIT, _("E&xit\tCtrl-Q"), _("Quit this program"));
   mb->Append(fileMenu, _("&File"));

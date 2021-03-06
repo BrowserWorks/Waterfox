@@ -11,6 +11,7 @@
 
 #include <cstdlib>
 #include <new>
+#include <tuple>
 
 #include "config/aom_config.h"
 #include "config/aom_dsp_rtcd.h"
@@ -34,13 +35,13 @@ typedef void (*comp_mask_pred_func)(uint8_t *comp_pred, const uint8_t *pred,
                                     int ref_stride, const uint8_t *mask,
                                     int mask_stride, int invert_mask);
 
-#if HAVE_SSSE3 || HAVE_AV2
+#if HAVE_SSSE3 || HAVE_SSE2 || HAVE_AV2
 const BLOCK_SIZE kValidBlockSize[] = {
   BLOCK_8X8,   BLOCK_8X16, BLOCK_8X32,  BLOCK_16X8,  BLOCK_16X16,
   BLOCK_16X32, BLOCK_32X8, BLOCK_32X16, BLOCK_32X32,
 };
 #endif
-typedef ::testing::tuple<comp_mask_pred_func, BLOCK_SIZE> CompMaskPredParam;
+typedef std::tuple<comp_mask_pred_func, BLOCK_SIZE> CompMaskPredParam;
 
 class AV1CompMaskVarianceTest
     : public ::testing::TestWithParam<CompMaskPredParam> {
@@ -105,8 +106,7 @@ void AV1CompMaskVarianceTest::RunCheckOutput(comp_mask_pred_func test_impl,
                                              BLOCK_SIZE bsize, int inv) {
   const int w = block_size_wide[bsize];
   const int h = block_size_high[bsize];
-
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
   for (int wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
     const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, 1, bsize);
 
@@ -123,8 +123,7 @@ void AV1CompMaskVarianceTest::RunSpeedTest(comp_mask_pred_func test_impl,
                                            BLOCK_SIZE bsize) {
   const int w = block_size_wide[bsize];
   const int h = block_size_high[bsize];
-
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
   int wedge_index = wedge_types / 2;
   const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, 1, bsize);
   const int num_loops = 1000000000 / (w + h);
@@ -158,14 +157,14 @@ TEST_P(AV1CompMaskVarianceTest, DISABLED_Speed) {
 }
 
 #if HAVE_SSSE3
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSSE3, AV1CompMaskVarianceTest,
     ::testing::Combine(::testing::Values(&aom_comp_mask_pred_ssse3),
                        ::testing::ValuesIn(kValidBlockSize)));
 #endif
 
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, AV1CompMaskVarianceTest,
     ::testing::Combine(::testing::Values(&aom_comp_mask_pred_avx2),
                        ::testing::ValuesIn(kValidBlockSize)));
@@ -189,9 +188,10 @@ void AV1CompMaskUpVarianceTest::RunCheckOutput(comp_mask_pred_func test_impl,
                                                BLOCK_SIZE bsize, int inv) {
   const int w = block_size_wide[bsize];
   const int h = block_size_high[bsize];
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
   int subpel_search;
-  for (subpel_search = 1; subpel_search <= 2; ++subpel_search) {
+  for (subpel_search = USE_4_TAPS; subpel_search <= USE_8_TAPS;
+       ++subpel_search) {
     // loop through subx and suby
     for (int sub = 0; sub < 8 * 8; ++sub) {
       int subx = sub & 0x7;
@@ -223,15 +223,14 @@ void AV1CompMaskUpVarianceTest::RunSpeedTest(comp_mask_pred_func test_impl,
   const int h = block_size_high[bsize];
   const int subx = havSub ? 3 : 0;
   const int suby = havSub ? 4 : 0;
-
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
   int wedge_index = wedge_types / 2;
   const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, 1, bsize);
 
   const int num_loops = 1000000000 / (w + h);
   comp_mask_pred_func funcs[2] = { &aom_comp_mask_pred_c, test_impl };
   double elapsed_time[2] = { 0 };
-  int subpel_search = 2;  // set to 1 to test 4-tap filter.
+  int subpel_search = USE_8_TAPS;  // set to USE_4_TAPS to test 4-tap filter.
   for (int i = 0; i < 2; ++i) {
     aom_usec_timer timer;
     aom_usec_timer_start(&timer);
@@ -261,14 +260,14 @@ TEST_P(AV1CompMaskUpVarianceTest, DISABLED_Speed) {
 }
 
 #if HAVE_SSSE3
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSSE3, AV1CompMaskUpVarianceTest,
     ::testing::Combine(::testing::Values(&aom_comp_mask_pred_ssse3),
                        ::testing::ValuesIn(kValidBlockSize)));
 #endif
 
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, AV1CompMaskUpVarianceTest,
     ::testing::Combine(::testing::Values(&aom_comp_mask_pred_avx2),
                        ::testing::ValuesIn(kValidBlockSize)));
@@ -276,13 +275,14 @@ INSTANTIATE_TEST_CASE_P(
 
 #endif  // ifndef aom_comp_mask_pred
 
+#if CONFIG_AV1_HIGHBITDEPTH
 typedef void (*highbd_comp_mask_pred_func)(uint8_t *comp_pred8,
                                            const uint8_t *pred8, int width,
                                            int height, const uint8_t *ref8,
                                            int ref_stride, const uint8_t *mask,
                                            int mask_stride, int invert_mask);
 
-typedef ::testing::tuple<highbd_comp_mask_pred_func, BLOCK_SIZE, int>
+typedef std::tuple<highbd_comp_mask_pred_func, BLOCK_SIZE, int>
     HighbdCompMaskPredParam;
 
 class AV1HighbdCompMaskVarianceTest
@@ -346,11 +346,9 @@ void AV1HighbdCompMaskVarianceTest::TearDown() {
 void AV1HighbdCompMaskVarianceTest::RunCheckOutput(
     highbd_comp_mask_pred_func test_impl, BLOCK_SIZE bsize, int inv) {
   int bd_ = GET_PARAM(2);
-
   const int w = block_size_wide[bsize];
   const int h = block_size_high[bsize];
-
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
 
   for (int i = 0; i < MAX_SB_SQUARE; ++i) {
     pred_[i] = rnd_.Rand16() & ((1 << bd_) - 1);
@@ -380,8 +378,7 @@ void AV1HighbdCompMaskVarianceTest::RunSpeedTest(
 
   const int w = block_size_wide[bsize];
   const int h = block_size_high[bsize];
-
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
   int wedge_index = wedge_types / 2;
 
   for (int i = 0; i < MAX_SB_SQUARE; ++i) {
@@ -425,7 +422,7 @@ TEST_P(AV1HighbdCompMaskVarianceTest, DISABLED_Speed) {
 }
 
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, AV1HighbdCompMaskVarianceTest,
     ::testing::Combine(::testing::Values(&aom_highbd_comp_mask_pred_avx2),
                        ::testing::ValuesIn(kValidBlockSize),
@@ -433,7 +430,7 @@ INSTANTIATE_TEST_CASE_P(
 #endif
 
 #if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE2, AV1HighbdCompMaskVarianceTest,
     ::testing::Combine(::testing::Values(&aom_highbd_comp_mask_pred_sse2),
                        ::testing::ValuesIn(kValidBlockSize),
@@ -458,10 +455,11 @@ AV1HighbdCompMaskUpVarianceTest::~AV1HighbdCompMaskUpVarianceTest() { ; }
 
 void AV1HighbdCompMaskUpVarianceTest::RunCheckOutput(
     highbd_comp_mask_pred_func test_impl, BLOCK_SIZE bsize, int inv) {
+  (void)test_impl;
   int bd_ = GET_PARAM(2);
   const int w = block_size_wide[bsize];
   const int h = block_size_high[bsize];
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
 
   for (int i = 0; i < MAX_SB_SQUARE; ++i) {
     pred_[i] = rnd_.Rand16() & ((1 << bd_) - 1);
@@ -480,19 +478,24 @@ void AV1HighbdCompMaskUpVarianceTest::RunCheckOutput(
         const uint8_t *mask =
             av1_get_contiguous_soft_mask(wedge_index, 1, bsize);
 
-        aom_highbd_comp_mask_pred = aom_highbd_comp_mask_pred_c;  // ref
-        aom_highbd_comp_mask_upsampled_pred(
-            NULL, NULL, 0, 0, NULL, CONVERT_TO_BYTEPTR(comp_pred1_),
-            CONVERT_TO_BYTEPTR(pred_), w, h, subx, suby,
-            CONVERT_TO_BYTEPTR(ref_), MAX_SB_SIZE, mask, w, inv, bd_,
-            subpel_search);
+        // ref
+        aom_highbd_upsampled_pred_c(
+            NULL, NULL, 0, 0, NULL, CONVERT_TO_BYTEPTR(comp_pred1_), w, h, subx,
+            suby, CONVERT_TO_BYTEPTR(ref_), MAX_SB_SIZE, bd_, subpel_search);
 
-        aom_highbd_comp_mask_pred = test_impl;  // test
-        aom_highbd_comp_mask_upsampled_pred(
-            NULL, NULL, 0, 0, NULL, CONVERT_TO_BYTEPTR(comp_pred2_),
-            CONVERT_TO_BYTEPTR(pred_), w, h, subx, suby,
-            CONVERT_TO_BYTEPTR(ref_), MAX_SB_SIZE, mask, w, inv, bd_,
-            subpel_search);
+        aom_highbd_comp_mask_pred_c(
+            CONVERT_TO_BYTEPTR(comp_pred1_), CONVERT_TO_BYTEPTR(pred_), w, h,
+            CONVERT_TO_BYTEPTR(comp_pred1_), w, mask, w, inv);
+
+        // test
+        aom_highbd_upsampled_pred(
+            NULL, NULL, 0, 0, NULL, CONVERT_TO_BYTEPTR(comp_pred2_), w, h, subx,
+            suby, CONVERT_TO_BYTEPTR(ref_), MAX_SB_SIZE, bd_, subpel_search);
+
+        aom_highbd_comp_mask_pred(
+            CONVERT_TO_BYTEPTR(comp_pred2_), CONVERT_TO_BYTEPTR(pred_), w, h,
+            CONVERT_TO_BYTEPTR(comp_pred2_), w, mask, w, inv);
+
         ASSERT_EQ(CheckResult(w, h), true)
             << " wedge " << wedge_index << " inv " << inv << "sub (" << subx
             << "," << suby << ")";
@@ -508,8 +511,7 @@ void AV1HighbdCompMaskUpVarianceTest::RunSpeedTest(
   const int h = block_size_high[bsize];
   const int subx = havSub ? 3 : 0;
   const int suby = havSub ? 4 : 0;
-
-  int wedge_types = (1 << get_wedge_bits_lookup(bsize));
+  const int wedge_types = get_wedge_types_lookup(bsize);
   int wedge_index = wedge_types / 2;
   const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, 1, bsize);
 
@@ -555,7 +557,7 @@ TEST_P(AV1HighbdCompMaskUpVarianceTest, DISABLED_Speed) {
 }
 
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, AV1HighbdCompMaskUpVarianceTest,
     ::testing::Combine(::testing::Values(&aom_highbd_comp_mask_pred_avx2),
                        ::testing::ValuesIn(kValidBlockSize),
@@ -563,7 +565,7 @@ INSTANTIATE_TEST_CASE_P(
 #endif
 
 #if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE2, AV1HighbdCompMaskUpVarianceTest,
     ::testing::Combine(::testing::Values(&aom_highbd_comp_mask_pred_sse2),
                        ::testing::ValuesIn(kValidBlockSize),
@@ -571,4 +573,5 @@ INSTANTIATE_TEST_CASE_P(
 #endif
 
 #endif  // ifndef aom_highbd_comp_mask_pred
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 }  // namespace AV1CompMaskVariance

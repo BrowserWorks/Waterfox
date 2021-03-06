@@ -166,7 +166,7 @@ OBMC_SUBPIX_VAR(64, 16)
 ////////////////////////////////////////////////////////////////////////////////
 // High bit-depth
 ////////////////////////////////////////////////////////////////////////////////
-
+#if CONFIG_AV1_HIGHBITDEPTH
 static INLINE void hbd_obmc_variance_w4(
     const uint8_t *pre8, const int pre_stride, const int32_t *wsrc,
     const int32_t *mask, uint64_t *const sse, int64_t *const sum, const int h) {
@@ -378,3 +378,4 @@ HBD_OBMCVARWXH(8, 32)
 HBD_OBMCVARWXH(32, 8)
 HBD_OBMCVARWXH(16, 64)
 HBD_OBMCVARWXH(64, 16)
+#endif  // CONFIG_AV1_HIGHBITDEPTH

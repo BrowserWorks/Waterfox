@@ -133,6 +133,7 @@ class AV1IntraPredTest
   IntraPredFunc<FuncType> params_;
 };
 
+#if CONFIG_AV1_HIGHBITDEPTH
 class HighbdIntraPredTest : public AV1IntraPredTest<HighbdIntraPred, uint16_t> {
  protected:
   void Predict() {
@@ -142,6 +143,7 @@ class HighbdIntraPredTest : public AV1IntraPredTest<HighbdIntraPred, uint16_t> {
         params_.pred_fn(dst_, stride_, above_row_, left_col_, bit_depth));
   }
 };
+#endif
 
 class LowbdIntraPredTest : public AV1IntraPredTest<IntraPred, uint8_t> {
  protected:
@@ -152,6 +154,7 @@ class LowbdIntraPredTest : public AV1IntraPredTest<IntraPred, uint8_t> {
   }
 };
 
+#if CONFIG_AV1_HIGHBITDEPTH
 // Suppress an unitialized warning. Once there are implementations to test then
 // this can be restored.
 TEST_P(HighbdIntraPredTest, Bitexact) {
@@ -164,6 +167,7 @@ TEST_P(HighbdIntraPredTest, Bitexact) {
   av1_zero(above_data);
   RunTest(left_col, above_data, dst, ref_dst);
 }
+#endif
 
 // Same issue as above but for arm.
 #if !HAVE_NEON
@@ -179,6 +183,7 @@ TEST_P(LowbdIntraPredTest, Bitexact) {
 }
 #endif  // !HAVE_NEON
 
+#if CONFIG_AV1_HIGHBITDEPTH
 // -----------------------------------------------------------------------------
 // High Bit Depth Tests
 #define highbd_entry(type, width, height, opt, bd)                          \
@@ -196,9 +201,9 @@ TEST_P(LowbdIntraPredTest, Bitexact) {
       highbd_entry(type, 16, 32, opt, bd),                                    \
       highbd_entry(type, 32, 16, opt, bd), highbd_entry(type, 32, 32, opt, bd)
 #endif
-
-  // ---------------------------------------------------------------------------
-  // Low Bit Depth Tests
+#endif  // CONFIG_AV1_HIGHBITDEPTH
+// ---------------------------------------------------------------------------
+// Low Bit Depth Tests
 
 #define lowbd_entry(type, width, height, opt)                                  \
   IntraPredFunc<IntraPred>(&aom_##type##_predictor_##width##x##height##_##opt, \
@@ -219,8 +224,8 @@ const IntraPredFunc<IntraPred> LowbdIntraPredTestVector[] = {
   lowbd_intrapred(v, sse2),       lowbd_intrapred(h, sse2),
 };
 
-INSTANTIATE_TEST_CASE_P(SSE2, LowbdIntraPredTest,
-                        ::testing::ValuesIn(LowbdIntraPredTestVector));
+INSTANTIATE_TEST_SUITE_P(SSE2, LowbdIntraPredTest,
+                         ::testing::ValuesIn(LowbdIntraPredTestVector));
 
 #endif  // HAVE_SSE2
 
@@ -230,8 +235,8 @@ const IntraPredFunc<IntraPred> LowbdIntraPredTestVectorSsse3[] = {
   lowbd_intrapred(smooth, ssse3),
 };
 
-INSTANTIATE_TEST_CASE_P(SSSE3, LowbdIntraPredTest,
-                        ::testing::ValuesIn(LowbdIntraPredTestVectorSsse3));
+INSTANTIATE_TEST_SUITE_P(SSSE3, LowbdIntraPredTest,
+                         ::testing::ValuesIn(LowbdIntraPredTestVectorSsse3));
 
 #endif  // HAVE_SSSE3
 
@@ -247,11 +252,12 @@ const IntraPredFunc<IntraPred> LowbdIntraPredTestVectorAvx2[] = {
   lowbd_entry(paeth, 32, 16, avx2),   lowbd_entry(paeth, 32, 32, avx2),
 };
 
-INSTANTIATE_TEST_CASE_P(AVX2, LowbdIntraPredTest,
-                        ::testing::ValuesIn(LowbdIntraPredTestVectorAvx2));
+INSTANTIATE_TEST_SUITE_P(AVX2, LowbdIntraPredTest,
+                         ::testing::ValuesIn(LowbdIntraPredTestVectorAvx2));
 
 #endif  // HAVE_AVX2
 
+#if CONFIG_AV1_HIGHBITDEPTH
 #if HAVE_NEON
 const IntraPredFunc<HighbdIntraPred> HighbdIntraPredTestVectorNeon[] = {
   highbd_entry(dc, 4, 4, neon, 8),   highbd_entry(dc, 8, 8, neon, 8),
@@ -259,8 +265,9 @@ const IntraPredFunc<HighbdIntraPred> HighbdIntraPredTestVectorNeon[] = {
   highbd_entry(dc, 64, 64, neon, 8),
 };
 
-INSTANTIATE_TEST_CASE_P(NEON, HighbdIntraPredTest,
-                        ::testing::ValuesIn(HighbdIntraPredTestVectorNeon));
+INSTANTIATE_TEST_SUITE_P(NEON, HighbdIntraPredTest,
+                         ::testing::ValuesIn(HighbdIntraPredTestVectorNeon));
 
 #endif  // HAVE_NEON
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 }  // namespace

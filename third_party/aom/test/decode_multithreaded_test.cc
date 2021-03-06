@@ -76,7 +76,7 @@ class AV1DecodeMultiThreadedTest
 
   virtual void PreEncodeFrameHook(libaom_test::VideoSource *video,
                                   libaom_test::Encoder *encoder) {
-    if (video->frame() == 1) {
+    if (video->frame() == 0) {
       encoder->Control(AV1E_SET_TILE_COLUMNS, n_tile_cols_);
       encoder->Control(AV1E_SET_TILE_ROWS, n_tile_rows_);
       encoder->Control(AV1E_SET_NUM_TG, n_tile_groups_);

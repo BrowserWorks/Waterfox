@@ -15,6 +15,9 @@
 #include "aom/aom_codec.h"
 #include "aom/aom_integer.h"
 
+#include "aom_ports/mem.h"
+
+#include "av1/common/av1_common_int.h"
 #include "av1/common/blockd.h"
 
 #ifdef __cplusplus
@@ -24,56 +27,32 @@ extern "C" {
 // Bits Per MB at different Q (Multiplied by 512)
 #define BPER_MB_NORMBITS 9
 
-#define CUSTOMIZED_GF 1
+// Use this macro to turn on/off use of alt-refs in one-pass mode.
+#define USE_ALTREF_FOR_ONE_PASS 1
 
-#if CONFIG_FIX_GF_LENGTH
-#define FIXED_GF_LENGTH 16
+// Threshold used to define if a KF group is static (e.g. a slide show).
+// Essentially, this means that no frame in the group has more than 1% of MBs
+// that are not marked as coded with 0,0 motion in the first pass.
+#define STATIC_KF_GROUP_THRESH 99
+#define STATIC_KF_GROUP_FLOAT_THRESH 0.99
+
+// The maximum duration of a GF group that is static (e.g. a slide show).
+#define MAX_STATIC_GF_GROUP_LENGTH 250
+
+// Minimum and maximum height for the new pyramid structure.
+// (Old structure supports height = 1, but does NOT support height = 4).
+#define MIN_PYRAMID_LVL 0
 #define MAX_PYRAMID_LVL 4
-// We allow a frame to have at most two left/right descendants before changing
-// them into to a subtree, i.e., we allow the following structure:
-/*                    OUT_OF_ORDER_FRAME
-                     / /              \ \
-(two left children) F F                F F (two right children) */
-// Therefore the max gf size supported by 4 layer structure is
-// 1 (KEY/OVERLAY) + 1 + 2 + 4 + 16 (two children on both side of their parent)
-#define MAX_PYRAMID_SIZE 24
-#define USE_SYMM_MULTI_LAYER 1
-#define REDUCE_LAST_ALT_BOOST 1
-#define REDUCE_LAST_GF_LENGTH 1
-#define MULTI_LVL_BOOST_VBR_CQ 1
-#else
-#define USE_SYMM_MULTI_LAYER 0
-#define REDUCE_LAST_ALT_BOOST 0
-#define REDUCE_LAST_GF_LENGTH 0
-#define MULTI_LVL_BOOST_VBR_CQ 0
-#endif
-
-#if USE_SYMM_MULTI_LAYER
-#define USE_MANUAL_GF4_STRUCT 0
-#endif
 
 #define MIN_GF_INTERVAL 4
-#define MAX_GF_INTERVAL 16
+#define MAX_GF_INTERVAL 32
 #define FIXED_GF_INTERVAL 8  // Used in some testing modes only
+#define MAX_GF_LENGTH_LAP 16
 
-typedef enum {
-  INTER_NORMAL = 0,
-  INTER_LOW = 1,
-  INTER_HIGH = 2,
-  GF_ARF_LOW = 3,
-  GF_ARF_STD = 4,
-  KF_STD = 5,
-  RATE_FACTOR_LEVELS = 6
-} RATE_FACTOR_LEVEL;
+#define MAX_NUM_GF_INTERVALS 15
 
-static const double rate_factor_deltas[RATE_FACTOR_LEVELS] = {
-  1.00,  // INTER_NORMAL
-  0.80,  // INTER_LOW
-  1.50,  // INTER_HIGH
-  1.25,  // GF_ARF_LOW
-  2.00,  // GF_ARF_STD
-  2.00,  // KF_STD
-};
+#define MAX_ARF_LAYERS 6
+// #define STRICT_RC
 
 typedef struct {
   int resize_width;
@@ -81,11 +60,34 @@ typedef struct {
   uint8_t superres_denom;
 } size_params_type;
 
+enum {
+  INTER_NORMAL,
+  GF_ARF_LOW,
+  GF_ARF_STD,
+  KF_STD,
+  RATE_FACTOR_LEVELS
+} UENUM1BYTE(RATE_FACTOR_LEVEL);
+
+enum {
+  KF_UPDATE,
+  LF_UPDATE,
+  GF_UPDATE,
+  ARF_UPDATE,
+  OVERLAY_UPDATE,
+  INTNL_OVERLAY_UPDATE,  // Internal Overlay Frame
+  INTNL_ARF_UPDATE,      // Internal Altref Frame
+  FRAME_UPDATE_TYPES
+} UENUM1BYTE(FRAME_UPDATE_TYPE);
+
 typedef struct {
   // Rate targetting variables
   int base_frame_target;  // A baseline frame target before adjustment
                           // for previous under or over shoot.
   int this_frame_target;  // Actual frame target after rc adjustment.
+
+  // gop bit budget
+  int64_t gf_group_bits;
+
   int projected_frame_size;
   int sb64_target_rate;
   int last_q[FRAME_TYPES];  // Separate values for Intra/Inter
@@ -93,13 +95,20 @@ typedef struct {
   int last_kf_qindex;       // Q index of the last key frame coded.
 
   int gfu_boost;
-  int last_boost;
   int kf_boost;
 
   double rate_correction_factors[RATE_FACTOR_LEVELS];
 
   int frames_since_golden;
   int frames_till_gf_update_due;
+
+  // number of determined gf group length left
+  int intervals_till_gf_calculate_due;
+  // stores gf group length intervals
+  int gf_intervals[MAX_NUM_GF_INTERVALS];
+  // the current index in gf_intervals
+  int cur_gf_index;
+
   int min_gf_interval;
   int max_gf_interval;
   int static_scene_max_gf_interval;
@@ -114,19 +123,10 @@ typedef struct {
   int is_src_frame_alt_ref;
   int sframe_due;
 
-  // Length of the bi-predictive frame group interval
-  int bipred_group_interval;
-
-  // NOTE: Different types of frames may have different bits allocated
-  //       accordingly, aiming to achieve the overall optimal RD performance.
-  int is_bwd_ref_frame;
-  int is_last_bipred_frame;
-  int is_bipred_frame;
-  int is_src_frame_ext_arf;
-
   int avg_frame_bandwidth;  // Average frame size target for clip
   int min_frame_bandwidth;  // Minimum allocation used for any frame
   int max_frame_bandwidth;  // Maximum burst rate allowed for a frame.
+  int prev_avg_frame_bandwidth;
 
   int ni_av_qi;
   int ni_tot_qi;
@@ -171,11 +171,21 @@ typedef struct {
   int q_1_frame;
   int q_2_frame;
 
-  // Auto frame-scaling variables.
-  int rf_level_maxq[RATE_FACTOR_LEVELS];
   float_t arf_boost_factor;
   // Q index used for ALT frame
   int arf_q;
+  int active_worst_quality;
+  int active_best_quality[MAX_ARF_LAYERS + 1];
+  int base_layer_qp;
+
+  // Total number of stats used only for kf_boost calculation.
+  int num_stats_used_for_kf_boost;
+  // Total number of stats used only for gfu_boost calculation.
+  int num_stats_used_for_gfu_boost;
+  // Total number of stats required by gfu_boost calculation.
+  int num_stats_required_for_gfu_boost;
+  int next_is_fwd_key;
+  int enable_scenecut_detection;
 } RATE_CONTROL;
 
 struct AV1_COMP;
@@ -195,13 +205,11 @@ int av1_rc_get_default_min_gf_interval(int width, int height, double framerate);
 // Note av1_rc_get_default_max_gf_interval() requires the min_gf_interval to
 // be passed in to ensure that the max_gf_interval returned is at least as bis
 // as that.
-int av1_rc_get_default_max_gf_interval(double framerate, int min_frame_rate);
+int av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval);
 
 // Generally at the high level, the following flow is expected
 // to be enforced for rate control:
 // First call per frame, one of:
-//   av1_rc_get_one_pass_vbr_params()
-//   av1_rc_get_one_pass_cbr_params()
 //   av1_rc_get_first_pass_params()
 //   av1_rc_get_second_pass_params()
 // depending on the usage to set the rate control encode parameters desired.
@@ -220,8 +228,7 @@ int av1_rc_get_default_max_gf_interval(double framerate, int min_frame_rate);
 
 // Functions to set parameters for encoding before the actual
 // encode_frame_to_data_rate() function.
-void av1_rc_get_one_pass_vbr_params(struct AV1_COMP *cpi);
-void av1_rc_get_one_pass_cbr_params(struct AV1_COMP *cpi);
+struct EncodeFrameParams;
 
 // Post encode update of the rate control parameters based
 // on bytes used
@@ -245,7 +252,8 @@ void av1_rc_compute_frame_size_bounds(const struct AV1_COMP *cpi,
                                       int *frame_over_shoot_limit);
 
 // Picks q and q bounds given the target for bits
-int av1_rc_pick_q_and_bounds(struct AV1_COMP *cpi, int width, int height,
+int av1_rc_pick_q_and_bounds(const struct AV1_COMP *cpi, RATE_CONTROL *rc,
+                             int width, int height, int gf_index,
                              int *bottom_index, int *top_index);
 
 // Estimates q to achieve a target bits per frame
@@ -261,10 +269,14 @@ int av1_rc_bits_per_mb(FRAME_TYPE frame_type, int qindex,
 int av1_rc_clamp_iframe_target_size(const struct AV1_COMP *const cpi,
                                     int target);
 int av1_rc_clamp_pframe_target_size(const struct AV1_COMP *const cpi,
-                                    int target);
-// Utility to set frame_target into the RATE_CONTROL structure
-// This function is called only from the av1_rc_get_..._params() functions.
-void av1_rc_set_frame_target(struct AV1_COMP *cpi, int target);
+                                    int target, uint8_t frame_update_type);
+
+// Find q_index corresponding to desired_q, within [best_qindex, worst_qindex].
+// To be precise, 'q_index' is the smallest integer, for which the corresponding
+// q >= desired_q.
+// If no such q index is found, returns 'worst_qindex'.
+int av1_find_qindex(double desired_q, aom_bit_depth_t bit_depth,
+                    int best_qindex, int worst_qindex);
 
 // Computes a q delta (in "q index" terms) to get from a starting q value
 // to a target q value
@@ -277,7 +289,7 @@ int av1_compute_qdelta_by_rate(const RATE_CONTROL *rc, FRAME_TYPE frame_type,
                                int qindex, double rate_target_ratio,
                                aom_bit_depth_t bit_depth);
 
-int av1_frame_type_qdelta(const struct AV1_COMP *cpi, int rf_level, int q);
+int av1_frame_type_qdelta(const struct AV1_COMP *cpi, int q);
 
 void av1_rc_update_framerate(struct AV1_COMP *cpi, int width, int height);
 
@@ -287,6 +299,23 @@ void av1_rc_set_gf_interval_range(const struct AV1_COMP *const cpi,
 void av1_set_target_rate(struct AV1_COMP *cpi, int width, int height);
 
 int av1_resize_one_pass_cbr(struct AV1_COMP *cpi);
+
+void av1_rc_set_frame_target(struct AV1_COMP *cpi, int target, int width,
+                             int height);
+
+int av1_calc_pframe_target_size_one_pass_vbr(
+    const struct AV1_COMP *const cpi, FRAME_UPDATE_TYPE frame_update_type);
+
+int av1_calc_iframe_target_size_one_pass_vbr(const struct AV1_COMP *const cpi);
+
+int av1_calc_pframe_target_size_one_pass_cbr(
+    const struct AV1_COMP *cpi, FRAME_UPDATE_TYPE frame_update_type);
+
+int av1_calc_iframe_target_size_one_pass_cbr(const struct AV1_COMP *cpi);
+
+void av1_get_one_pass_rt_params(struct AV1_COMP *cpi,
+                                struct EncodeFrameParams *const frame_params,
+                                unsigned int frame_flags);
 
 #ifdef __cplusplus
 }  // extern "C"

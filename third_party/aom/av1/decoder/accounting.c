@@ -17,7 +17,7 @@
 #include "aom/aom_integer.h"
 #include "av1/decoder/accounting.h"
 
-static int aom_accounting_hash(const char *str) {
+static int accounting_hash(const char *str) {
   uint32_t val;
   const unsigned char *ustr;
   val = 0;
@@ -34,7 +34,7 @@ int aom_accounting_dictionary_lookup(Accounting *accounting, const char *str) {
   size_t len;
   AccountingDictionary *dictionary;
   dictionary = &accounting->syms.dictionary;
-  hash = aom_accounting_hash(str);
+  hash = accounting_hash(str);
   while (accounting->hash_dictionary[hash] != -1) {
     if (strcmp(dictionary->strs[accounting->hash_dictionary[hash]], str) == 0) {
       return accounting->hash_dictionary[hash];

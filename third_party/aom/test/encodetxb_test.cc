@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <tuple>
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
@@ -20,8 +21,8 @@
 
 #include "aom_ports/aom_timer.h"
 #include "aom_ports/mem.h"
+#include "av1/common/av1_common_int.h"
 #include "av1/common/idct.h"
-#include "av1/common/onyxc_int.h"
 #include "av1/common/scan.h"
 #include "av1/common/txb_common.h"
 #include "test/acm_random.h"
@@ -138,7 +139,7 @@ class EncodeTxbTest : public ::testing::TestWithParam<GetNzMapContextsFunc> {
     for (int c = 0; c < eob; ++c) {
       levels_[get_padded_idx(scan[c], bwl)] =
           static_cast<uint8_t>(clamp(rnd_.Rand8(), 0, INT8_MAX));
-      coeff_contexts_[scan[c]] = rnd_.Rand16() >> 1;
+      coeff_contexts_[scan[c]] = static_cast<int8_t>(rnd_.Rand16() >> 1);
     }
 
     memcpy(coeff_contexts_ref_, coeff_contexts_,
@@ -177,15 +178,15 @@ TEST_P(EncodeTxbTest, DISABLED_SpeedTestGetNzMapContexts) {
 }
 
 #if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(SSE2, EncodeTxbTest,
-                        ::testing::Values(av1_get_nz_map_contexts_sse2));
+INSTANTIATE_TEST_SUITE_P(SSE2, EncodeTxbTest,
+                         ::testing::Values(av1_get_nz_map_contexts_sse2));
 #endif
 
 typedef void (*av1_txb_init_levels_func)(const tran_low_t *const coeff,
                                          const int width, const int height,
                                          uint8_t *const levels);
 
-typedef ::testing::tuple<av1_txb_init_levels_func, int> TxbInitLevelParam;
+typedef std::tuple<av1_txb_init_levels_func, int> TxbInitLevelParam;
 
 class EncodeTxbInitLevelTest
     : public ::testing::TestWithParam<TxbInitLevelParam> {
@@ -248,13 +249,13 @@ TEST_P(EncodeTxbInitLevelTest, DISABLED_Speed) {
 }
 
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&av1_txb_init_levels_sse4_1),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 #endif
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));

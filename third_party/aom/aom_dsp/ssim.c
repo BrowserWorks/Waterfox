@@ -49,6 +49,7 @@ void aom_ssim_parms_8x8_c(const uint8_t *s, int sp, const uint8_t *r, int rp,
   }
 }
 
+#if CONFIG_AV1_HIGHBITDEPTH
 void aom_highbd_ssim_parms_8x8_c(const uint16_t *s, int sp, const uint16_t *r,
                                  int rp, uint32_t *sum_s, uint32_t *sum_r,
                                  uint32_t *sum_sq_s, uint32_t *sum_sq_r,
@@ -64,6 +65,7 @@ void aom_highbd_ssim_parms_8x8_c(const uint16_t *s, int sp, const uint16_t *r,
     }
   }
 }
+#endif
 
 static const int64_t cc1 = 26634;        // (64^2*(.01*255)^2
 static const int64_t cc2 = 239708;       // (64^2*(.03*255)^2

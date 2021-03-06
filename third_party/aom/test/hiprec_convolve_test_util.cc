@@ -13,38 +13,55 @@
 
 #include "av1/common/restoration.h"
 
-using ::testing::make_tuple;
-using ::testing::tuple;
+using std::make_tuple;
+using std::tuple;
 
 namespace libaom_test {
 
 // Generate a random pair of filter kernels, using the ranges
 // of possible values from the loop-restoration experiment
 static void generate_kernels(ACMRandom *rnd, InterpKernel hkernel,
-                             InterpKernel vkernel) {
-  hkernel[0] = hkernel[6] =
-      WIENER_FILT_TAP0_MINV +
-      rnd->PseudoUniform(WIENER_FILT_TAP0_MAXV + 1 - WIENER_FILT_TAP0_MINV);
-  hkernel[1] = hkernel[5] =
-      WIENER_FILT_TAP1_MINV +
-      rnd->PseudoUniform(WIENER_FILT_TAP1_MAXV + 1 - WIENER_FILT_TAP1_MINV);
-  hkernel[2] = hkernel[4] =
-      WIENER_FILT_TAP2_MINV +
-      rnd->PseudoUniform(WIENER_FILT_TAP2_MAXV + 1 - WIENER_FILT_TAP2_MINV);
-  hkernel[3] = -(hkernel[0] + hkernel[1] + hkernel[2]);
-  hkernel[7] = 0;
+                             InterpKernel vkernel, int kernel_type = 2) {
+  if (kernel_type == 0) {
+    // Low possible values for filter coefficients
+    hkernel[0] = hkernel[6] = vkernel[0] = vkernel[6] = WIENER_FILT_TAP0_MINV;
+    hkernel[1] = hkernel[5] = vkernel[1] = vkernel[5] = WIENER_FILT_TAP1_MINV;
+    hkernel[2] = hkernel[4] = vkernel[2] = vkernel[4] = WIENER_FILT_TAP2_MINV;
+    hkernel[3] = vkernel[3] = -2 * (hkernel[0] + hkernel[1] + hkernel[2]);
+    hkernel[7] = vkernel[7] = 0;
+  } else if (kernel_type == 1) {
+    // Max possible values for filter coefficients
+    hkernel[0] = hkernel[6] = vkernel[0] = vkernel[6] = WIENER_FILT_TAP0_MAXV;
+    hkernel[1] = hkernel[5] = vkernel[1] = vkernel[5] = WIENER_FILT_TAP1_MAXV;
+    hkernel[2] = hkernel[4] = vkernel[2] = vkernel[4] = WIENER_FILT_TAP2_MAXV;
+    hkernel[3] = vkernel[3] = -2 * (hkernel[0] + hkernel[1] + hkernel[2]);
+    hkernel[7] = vkernel[7] = 0;
+  } else {
+    // Randomly generated values for filter coefficients
+    hkernel[0] = hkernel[6] =
+        WIENER_FILT_TAP0_MINV +
+        rnd->PseudoUniform(WIENER_FILT_TAP0_MAXV + 1 - WIENER_FILT_TAP0_MINV);
+    hkernel[1] = hkernel[5] =
+        WIENER_FILT_TAP1_MINV +
+        rnd->PseudoUniform(WIENER_FILT_TAP1_MAXV + 1 - WIENER_FILT_TAP1_MINV);
+    hkernel[2] = hkernel[4] =
+        WIENER_FILT_TAP2_MINV +
+        rnd->PseudoUniform(WIENER_FILT_TAP2_MAXV + 1 - WIENER_FILT_TAP2_MINV);
+    hkernel[3] = -2 * (hkernel[0] + hkernel[1] + hkernel[2]);
+    hkernel[7] = 0;
 
-  vkernel[0] = vkernel[6] =
-      WIENER_FILT_TAP0_MINV +
-      rnd->PseudoUniform(WIENER_FILT_TAP0_MAXV + 1 - WIENER_FILT_TAP0_MINV);
-  vkernel[1] = vkernel[5] =
-      WIENER_FILT_TAP1_MINV +
-      rnd->PseudoUniform(WIENER_FILT_TAP1_MAXV + 1 - WIENER_FILT_TAP1_MINV);
-  vkernel[2] = vkernel[4] =
-      WIENER_FILT_TAP2_MINV +
-      rnd->PseudoUniform(WIENER_FILT_TAP2_MAXV + 1 - WIENER_FILT_TAP2_MINV);
-  vkernel[3] = -(vkernel[0] + vkernel[1] + vkernel[2]);
-  vkernel[7] = 0;
+    vkernel[0] = vkernel[6] =
+        WIENER_FILT_TAP0_MINV +
+        rnd->PseudoUniform(WIENER_FILT_TAP0_MAXV + 2 - WIENER_FILT_TAP0_MINV);
+    vkernel[1] = vkernel[5] =
+        WIENER_FILT_TAP1_MINV +
+        rnd->PseudoUniform(WIENER_FILT_TAP1_MAXV + 2 - WIENER_FILT_TAP1_MINV);
+    vkernel[2] = vkernel[4] =
+        WIENER_FILT_TAP2_MINV +
+        rnd->PseudoUniform(WIENER_FILT_TAP2_MAXV + 2 - WIENER_FILT_TAP2_MINV);
+    vkernel[3] = -2 * (vkernel[0] + vkernel[1] + vkernel[2]);
+    vkernel[7] = 0;
+  }
 }
 
 namespace AV1HiprecConvolve {
@@ -74,7 +91,7 @@ void AV1HiprecConvolveTest::RunCheckOutput(hiprec_convolve_func test_impl) {
   const int w = 128, h = 128;
   const int out_w = GET_PARAM(0), out_h = GET_PARAM(1);
   const int num_iters = GET_PARAM(2);
-  int i, j;
+  int i, j, k, m;
   const ConvolveParams conv_params = get_conv_params_wiener(8);
 
   uint8_t *input_ = new uint8_t[h * w];
@@ -91,25 +108,25 @@ void AV1HiprecConvolveTest::RunCheckOutput(hiprec_convolve_func test_impl) {
   DECLARE_ALIGNED(16, InterpKernel, hkernel);
   DECLARE_ALIGNED(16, InterpKernel, vkernel);
 
-  generate_kernels(&rnd_, hkernel, vkernel);
+  for (int kernel_type = 0; kernel_type < 3; kernel_type++) {
+    generate_kernels(&rnd_, hkernel, vkernel, kernel_type);
+    for (i = 0; i < num_iters; ++i) {
+      for (k = 0; k < h; ++k)
+        for (m = 0; m < w; ++m) input[k * w + m] = rnd_.Rand8();
+      // Choose random locations within the source block
+      int offset_r = 3 + rnd_.PseudoUniform(h - out_h - 7);
+      int offset_c = 3 + rnd_.PseudoUniform(w - out_w - 7);
+      av1_wiener_convolve_add_src_c(input + offset_r * w + offset_c, w, output,
+                                    out_w, hkernel, 16, vkernel, 16, out_w,
+                                    out_h, &conv_params);
+      test_impl(input + offset_r * w + offset_c, w, output2, out_w, hkernel, 16,
+                vkernel, 16, out_w, out_h, &conv_params);
 
-  for (i = 0; i < h; ++i)
-    for (j = 0; j < w; ++j) input[i * w + j] = rnd_.Rand8();
-
-  for (i = 0; i < num_iters; ++i) {
-    // Choose random locations within the source block
-    int offset_r = 3 + rnd_.PseudoUniform(h - out_h - 7);
-    int offset_c = 3 + rnd_.PseudoUniform(w - out_w - 7);
-    av1_wiener_convolve_add_src_c(input + offset_r * w + offset_c, w, output,
-                                  out_w, hkernel, 16, vkernel, 16, out_w, out_h,
-                                  &conv_params);
-    test_impl(input + offset_r * w + offset_c, w, output2, out_w, hkernel, 16,
-              vkernel, 16, out_w, out_h, &conv_params);
-
-    for (j = 0; j < out_w * out_h; ++j)
-      ASSERT_EQ(output[j], output2[j])
-          << "Pixel mismatch at index " << j << " = (" << (j % out_w) << ", "
-          << (j / out_w) << ") on iteration " << i;
+      for (j = 0; j < out_w * out_h; ++j)
+        ASSERT_EQ(output[j], output2[j])
+            << "Pixel mismatch at index " << j << " = (" << (j % out_w) << ", "
+            << (j / out_w) << ") on iteration " << i;
+    }
   }
   delete[] input_;
   delete[] output;
@@ -183,6 +200,7 @@ void AV1HiprecConvolveTest::RunSpeedTest(hiprec_convolve_func test_impl) {
 }
 }  // namespace AV1HiprecConvolve
 
+#if CONFIG_AV1_HIGHBITDEPTH
 namespace AV1HighbdHiprecConvolve {
 
 ::testing::internal::ParamGenerator<HighbdHiprecConvolveParam> BuildParams(
@@ -228,29 +246,29 @@ void AV1HighbdHiprecConvolveTest::RunCheckOutput(
   DECLARE_ALIGNED(16, InterpKernel, hkernel);
   DECLARE_ALIGNED(16, InterpKernel, vkernel);
 
-  generate_kernels(&rnd_, hkernel, vkernel);
-
   for (i = 0; i < h; ++i)
     for (j = 0; j < w; ++j) input[i * w + j] = rnd_.Rand16() & ((1 << bd) - 1);
 
   uint8_t *input_ptr = CONVERT_TO_BYTEPTR(input);
   uint8_t *output_ptr = CONVERT_TO_BYTEPTR(output);
   uint8_t *output2_ptr = CONVERT_TO_BYTEPTR(output2);
+  for (int kernel_type = 0; kernel_type < 3; kernel_type++) {
+    generate_kernels(&rnd_, hkernel, vkernel, kernel_type);
+    for (i = 0; i < num_iters; ++i) {
+      // Choose random locations within the source block
+      int offset_r = 3 + rnd_.PseudoUniform(h - out_h - 7);
+      int offset_c = 3 + rnd_.PseudoUniform(w - out_w - 7);
+      av1_highbd_wiener_convolve_add_src_c(
+          input_ptr + offset_r * w + offset_c, w, output_ptr, out_w, hkernel,
+          16, vkernel, 16, out_w, out_h, &conv_params, bd);
+      test_impl(input_ptr + offset_r * w + offset_c, w, output2_ptr, out_w,
+                hkernel, 16, vkernel, 16, out_w, out_h, &conv_params, bd);
 
-  for (i = 0; i < num_iters; ++i) {
-    // Choose random locations within the source block
-    int offset_r = 3 + rnd_.PseudoUniform(h - out_h - 7);
-    int offset_c = 3 + rnd_.PseudoUniform(w - out_w - 7);
-    av1_highbd_wiener_convolve_add_src_c(
-        input_ptr + offset_r * w + offset_c, w, output_ptr, out_w, hkernel, 16,
-        vkernel, 16, out_w, out_h, &conv_params, bd);
-    test_impl(input_ptr + offset_r * w + offset_c, w, output2_ptr, out_w,
-              hkernel, 16, vkernel, 16, out_w, out_h, &conv_params, bd);
-
-    for (j = 0; j < out_w * out_h; ++j)
-      ASSERT_EQ(output[j], output2[j])
-          << "Pixel mismatch at index " << j << " = (" << (j % out_w) << ", "
-          << (j / out_w) << ") on iteration " << i;
+      for (j = 0; j < out_w * out_h; ++j)
+        ASSERT_EQ(output[j], output2[j])
+            << "Pixel mismatch at index " << j << " = (" << (j % out_w) << ", "
+            << (j / out_w) << ") on iteration " << i;
+    }
   }
   delete[] input;
   delete[] output;
@@ -328,4 +346,5 @@ void AV1HighbdHiprecConvolveTest::RunSpeedTest(
   delete[] output2;
 }
 }  // namespace AV1HighbdHiprecConvolve
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 }  // namespace libaom_test

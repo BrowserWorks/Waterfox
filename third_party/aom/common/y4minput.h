@@ -57,8 +57,14 @@ struct y4m_input {
   unsigned int bit_depth;
 };
 
+/**
+ * Open the input file, treating it as Y4M. y4m_input is filled in after
+ * reading it. Note that chroma-sample-position should only be set for 420
+ * input, and the input chroma is shifted if necessary. The code does not
+ * support the conversion from co-located to vertical.
+ */
 int y4m_input_open(y4m_input *_y4m, FILE *_fin, char *_skip, int _nskip,
-                   int only_420);
+                   aom_chroma_sample_position_t csp, int only_420);
 void y4m_input_close(y4m_input *_y4m);
 int y4m_input_fetch_frame(y4m_input *_y4m, FILE *_fin, aom_image_t *img);
 

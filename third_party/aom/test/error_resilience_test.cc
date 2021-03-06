@@ -145,6 +145,27 @@ class ErrorResilienceTestLarge
     }
   }
 
+  virtual void FramePktHook(const aom_codec_cx_pkt_t *pkt) {
+    // Check that the encode frame flags are correctly reflected
+    // in the output frame flags.
+    const int encode_flags = pkt->data.frame.flags >> 16;
+    if ((encode_flags & (AOM_EFLAG_NO_UPD_LAST | AOM_EFLAG_NO_UPD_GF |
+                         AOM_EFLAG_NO_UPD_ARF)) ==
+        (AOM_EFLAG_NO_UPD_LAST | AOM_EFLAG_NO_UPD_GF | AOM_EFLAG_NO_UPD_ARF)) {
+      ASSERT_EQ(pkt->data.frame.flags & AOM_FRAME_IS_DROPPABLE,
+                static_cast<aom_codec_frame_flags_t>(AOM_FRAME_IS_DROPPABLE));
+    }
+    if (encode_flags & AOM_EFLAG_SET_S_FRAME) {
+      ASSERT_EQ(pkt->data.frame.flags & AOM_FRAME_IS_SWITCH,
+                static_cast<aom_codec_frame_flags_t>(AOM_FRAME_IS_SWITCH));
+    }
+    if (encode_flags & AOM_EFLAG_ERROR_RESILIENT) {
+      ASSERT_EQ(
+          pkt->data.frame.flags & AOM_FRAME_IS_ERROR_RESILIENT,
+          static_cast<aom_codec_frame_flags_t>(AOM_FRAME_IS_ERROR_RESILIENT));
+    }
+  }
+
   double GetAveragePsnr() const {
     if (nframes_) return psnr_ / nframes_;
     return 0.0;
@@ -342,7 +363,7 @@ TEST_P(ErrorResilienceTestLarge, DropFramesWithoutRecovery) {
 
   // Set an arbitrary set of error frames same as droppable frames.
   unsigned int num_droppable_frames = 3;
-  unsigned int droppable_frame_list[] = { 5, 10, 13 };
+  unsigned int droppable_frame_list[] = { 5, 11, 13 };
   SetDroppableFrames(num_droppable_frames, droppable_frame_list);
   SetErrorFrames(num_droppable_frames, droppable_frame_list);
   ASSERT_NO_FATAL_FAILURE(RunLoop(&video));

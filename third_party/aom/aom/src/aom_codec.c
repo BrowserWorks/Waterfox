@@ -89,7 +89,7 @@ aom_codec_caps_t aom_codec_get_caps(aom_codec_iface_t *iface) {
   return (iface) ? iface->caps : 0;
 }
 
-aom_codec_err_t aom_codec_control_(aom_codec_ctx_t *ctx, int ctrl_id, ...) {
+aom_codec_err_t aom_codec_control(aom_codec_ctx_t *ctx, int ctrl_id, ...) {
   aom_codec_err_t res;
 
   if (!ctx || !ctrl_id)

@@ -15,7 +15,7 @@
 #include "common/y4menc.h"
 
 // Returns the Y4M name associated with the monochrome colorspace.
-const char *monochrome_colorspace(unsigned int bit_depth) {
+static const char *monochrome_colorspace(unsigned int bit_depth) {
   switch (bit_depth) {
     case 8: return "Cmono";
     case 9: return "Cmono9";
@@ -30,12 +30,15 @@ const char *monochrome_colorspace(unsigned int bit_depth) {
 // image format.
 const char *colorspace8(aom_chroma_sample_position_t csp, aom_img_fmt_t fmt) {
   switch (fmt) {
-    case AOM_IMG_FMT_444A: return "C444alpha";
     case AOM_IMG_FMT_I444: return "C444";
     case AOM_IMG_FMT_I422: return "C422";
     default:
       if (csp == AOM_CSP_VERTICAL) {
         return "C420mpeg2 XYSCSS=420MPEG2";
+      } else if (csp == AOM_CSP_COLOCATED) {
+        // Note that Y4M does not have a dedicated header for colocated chroma,
+        // and that FFMPEG interprets C420 as C420jpeg.
+        return "C420";
       } else {
         return "C420jpeg";
       }
@@ -43,8 +46,9 @@ const char *colorspace8(aom_chroma_sample_position_t csp, aom_img_fmt_t fmt) {
 }
 
 // Return the Y4M name of the colorspace, given the bit depth and image format.
-const char *colorspace(unsigned int bit_depth, aom_chroma_sample_position_t csp,
-                       aom_img_fmt_t fmt) {
+static const char *colorspace(unsigned int bit_depth,
+                              aom_chroma_sample_position_t csp,
+                              aom_img_fmt_t fmt) {
   switch (bit_depth) {
     case 8: return colorspace8(csp, fmt);
     case 9:

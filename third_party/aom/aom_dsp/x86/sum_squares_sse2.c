@@ -201,3 +201,166 @@ uint64_t aom_sum_squares_i16_sse2(const int16_t *src, uint32_t n) {
     return aom_sum_squares_i16_c(src, n);
   }
 }
+
+// Accumulate sum of 16-bit elements in the vector
+static AOM_INLINE int32_t mm_accumulate_epi16(__m128i vec_a) {
+  __m128i vtmp = _mm_srli_si128(vec_a, 8);
+  vec_a = _mm_add_epi16(vec_a, vtmp);
+  vtmp = _mm_srli_si128(vec_a, 4);
+  vec_a = _mm_add_epi16(vec_a, vtmp);
+  vtmp = _mm_srli_si128(vec_a, 2);
+  vec_a = _mm_add_epi16(vec_a, vtmp);
+  return _mm_extract_epi16(vec_a, 0);
+}
+
+// Accumulate sum of 32-bit elements in the vector
+static AOM_INLINE int32_t mm_accumulate_epi32(__m128i vec_a) {
+  __m128i vtmp = _mm_srli_si128(vec_a, 8);
+  vec_a = _mm_add_epi32(vec_a, vtmp);
+  vtmp = _mm_srli_si128(vec_a, 4);
+  vec_a = _mm_add_epi32(vec_a, vtmp);
+  return _mm_cvtsi128_si32(vec_a);
+}
+
+uint64_t aom_var_2d_u8_sse2(uint8_t *src, int src_stride, int width,
+                            int height) {
+  uint8_t *srcp;
+  uint64_t s = 0, ss = 0;
+  __m128i vzero = _mm_setzero_si128();
+  __m128i v_acc_sum = vzero;
+  __m128i v_acc_sqs = vzero;
+  int i, j;
+
+  // Process 16 elements in a row
+  for (i = 0; i < width - 15; i += 16) {
+    srcp = src + i;
+    // Process 8 columns at a time
+    for (j = 0; j < height - 7; j += 8) {
+      __m128i vsrc[8];
+      for (int k = 0; k < 8; k++) {
+        vsrc[k] = _mm_loadu_si128((__m128i *)srcp);
+        srcp += src_stride;
+      }
+      for (int k = 0; k < 8; k++) {
+        __m128i vsrc0 = _mm_unpacklo_epi8(vsrc[k], vzero);
+        __m128i vsrc1 = _mm_unpackhi_epi8(vsrc[k], vzero);
+        v_acc_sum = _mm_add_epi16(v_acc_sum, vsrc0);
+        v_acc_sum = _mm_add_epi16(v_acc_sum, vsrc1);
+
+        __m128i vsqs0 = _mm_madd_epi16(vsrc0, vsrc0);
+        __m128i vsqs1 = _mm_madd_epi16(vsrc1, vsrc1);
+        v_acc_sqs = _mm_add_epi32(v_acc_sqs, vsqs0);
+        v_acc_sqs = _mm_add_epi32(v_acc_sqs, vsqs1);
+      }
+
+      // Update total sum and clear the vectors
+      s += mm_accumulate_epi16(v_acc_sum);
+      ss += mm_accumulate_epi32(v_acc_sqs);
+      v_acc_sum = vzero;
+      v_acc_sqs = vzero;
+    }
+
+    // Process remaining rows (height not a multiple of 8)
+    for (; j < height; j++) {
+      __m128i vsrc = _mm_loadu_si128((__m128i *)srcp);
+      __m128i vsrc0 = _mm_unpacklo_epi8(vsrc, vzero);
+      __m128i vsrc1 = _mm_unpackhi_epi8(vsrc, vzero);
+      v_acc_sum = _mm_add_epi16(v_acc_sum, vsrc0);
+      v_acc_sum = _mm_add_epi16(v_acc_sum, vsrc1);
+
+      __m128i vsqs0 = _mm_madd_epi16(vsrc0, vsrc0);
+      __m128i vsqs1 = _mm_madd_epi16(vsrc1, vsrc1);
+      v_acc_sqs = _mm_add_epi32(v_acc_sqs, vsqs0);
+      v_acc_sqs = _mm_add_epi32(v_acc_sqs, vsqs1);
+
+      srcp += src_stride;
+    }
+
+    // Update total sum and clear the vectors
+    s += mm_accumulate_epi16(v_acc_sum);
+    ss += mm_accumulate_epi32(v_acc_sqs);
+    v_acc_sum = vzero;
+    v_acc_sqs = vzero;
+  }
+
+  // Process the remaining area using C
+  srcp = src;
+  for (int k = 0; k < height; k++) {
+    for (int m = i; m < width; m++) {
+      uint8_t val = srcp[m];
+      s += val;
+      ss += val * val;
+    }
+    srcp += src_stride;
+  }
+  return (ss - s * s / (width * height));
+}
+
+uint64_t aom_var_2d_u16_sse2(uint8_t *src, int src_stride, int width,
+                             int height) {
+  uint16_t *srcp1 = CONVERT_TO_SHORTPTR(src), *srcp;
+  uint64_t s = 0, ss = 0;
+  __m128i vzero = _mm_setzero_si128();
+  __m128i v_acc_sum = vzero;
+  __m128i v_acc_sqs = vzero;
+  int i, j;
+
+  // Process 8 elements in a row
+  for (i = 0; i < width - 8; i += 8) {
+    srcp = srcp1 + i;
+    // Process 8 columns at a time
+    for (j = 0; j < height - 8; j += 8) {
+      __m128i vsrc[8];
+      for (int k = 0; k < 8; k++) {
+        vsrc[k] = _mm_loadu_si128((__m128i *)srcp);
+        srcp += src_stride;
+      }
+      for (int k = 0; k < 8; k++) {
+        __m128i vsrc0 = _mm_unpacklo_epi16(vsrc[k], vzero);
+        __m128i vsrc1 = _mm_unpackhi_epi16(vsrc[k], vzero);
+        v_acc_sum = _mm_add_epi32(vsrc0, v_acc_sum);
+        v_acc_sum = _mm_add_epi32(vsrc1, v_acc_sum);
+
+        __m128i vsqs0 = _mm_madd_epi16(vsrc[k], vsrc[k]);
+        v_acc_sqs = _mm_add_epi32(v_acc_sqs, vsqs0);
+      }
+
+      // Update total sum and clear the vectors
+      s += mm_accumulate_epi32(v_acc_sum);
+      ss += mm_accumulate_epi32(v_acc_sqs);
+      v_acc_sum = vzero;
+      v_acc_sqs = vzero;
+    }
+
+    // Process remaining rows (height not a multiple of 8)
+    for (; j < height; j++) {
+      __m128i vsrc = _mm_loadu_si128((__m128i *)srcp);
+      __m128i vsrc0 = _mm_unpacklo_epi16(vsrc, vzero);
+      __m128i vsrc1 = _mm_unpackhi_epi16(vsrc, vzero);
+      v_acc_sum = _mm_add_epi32(vsrc0, v_acc_sum);
+      v_acc_sum = _mm_add_epi32(vsrc1, v_acc_sum);
+
+      __m128i vsqs0 = _mm_madd_epi16(vsrc, vsrc);
+      v_acc_sqs = _mm_add_epi32(v_acc_sqs, vsqs0);
+      srcp += src_stride;
+    }
+
+    // Update total sum and clear the vectors
+    s += mm_accumulate_epi32(v_acc_sum);
+    ss += mm_accumulate_epi32(v_acc_sqs);
+    v_acc_sum = vzero;
+    v_acc_sqs = vzero;
+  }
+
+  // Process the remaining area using C
+  srcp = srcp1;
+  for (int k = 0; k < height; k++) {
+    for (int m = i; m < width; m++) {
+      uint16_t val = srcp[m];
+      s += val;
+      ss += val * val;
+    }
+    srcp += src_stride;
+  }
+  return (ss - s * s / (width * height));
+}

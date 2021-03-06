@@ -114,45 +114,33 @@ SECTION .text
       cglobal highbd_sub_pixel_avg_variance%1xh, 7, 7, 13, src, src_stride, \
                                         x_offset, y_offset, \
                                         dst, dst_stride, \
-                                        sec, sec_stride, height, sse, \
-                                        g_bilin_filter, g_pw_8
+                                        sec, sec_stride, height, sse
       %define block_height dword heightm
       %define sec_str sec_stridemp
-
-      ; Store bilin_filter and pw_8 location in stack
-      %if GET_GOT_DEFINED == 1
-        GET_GOT eax
-        add esp, 4                ; restore esp
-      %endif
-
-      lea ecx, [GLOBAL(bilin_filter_m)]
-      mov g_bilin_filterm, ecx
-
-      lea ecx, [GLOBAL(pw_8)]
-      mov g_pw_8m, ecx
-
-      LOAD_IF_USED 0, 1         ; load eax, ecx back
     %else
       cglobal highbd_sub_pixel_variance%1xh, 7, 7, 13, src, src_stride, \
                                     x_offset, y_offset, \
-                                    dst, dst_stride, height, sse, \
-                                    g_bilin_filter, g_pw_8
+                                    dst, dst_stride, height, sse
       %define block_height heightd
-
-      ; Store bilin_filter and pw_8 location in stack
-      %if GET_GOT_DEFINED == 1
-        GET_GOT eax
-        add esp, 4                ; restore esp
-      %endif
-
-      lea ecx, [GLOBAL(bilin_filter_m)]
-      mov g_bilin_filterm, ecx
-
-      lea ecx, [GLOBAL(pw_8)]
-      mov g_pw_8m, ecx
-
-      LOAD_IF_USED 0, 1         ; load eax, ecx back
     %endif
+
+    ; reuse argument stack space
+    %define g_bilin_filterm x_offsetm
+    %define g_pw_8m y_offsetm
+
+    ; Store bilin_filter and pw_8 location in stack
+    %if GET_GOT_DEFINED == 1
+      GET_GOT eax
+      add esp, 4                ; restore esp
+    %endif
+
+    lea ecx, [GLOBAL(bilin_filter_m)]
+    mov g_bilin_filterm, ecx
+
+    lea ecx, [GLOBAL(pw_8)]
+    mov g_pw_8m, ecx
+
+    LOAD_IF_USED 0, 1         ; load eax, ecx back
   %else
     %if %2 == 1 ; avg
       cglobal highbd_sub_pixel_avg_variance%1xh, 7, 7, 13, src, src_stride, \

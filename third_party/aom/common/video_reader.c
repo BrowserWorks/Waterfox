@@ -121,3 +121,7 @@ FILE *aom_video_reader_get_file(AvxVideoReader *reader) {
 const AvxVideoInfo *aom_video_reader_get_info(AvxVideoReader *reader) {
   return &reader->info;
 }
+
+void aom_video_reader_set_fourcc(AvxVideoReader *reader, uint32_t fourcc) {
+  reader->info.codec_fourcc = fourcc;
+}

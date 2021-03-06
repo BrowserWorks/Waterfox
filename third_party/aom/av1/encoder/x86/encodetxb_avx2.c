@@ -16,7 +16,7 @@
 
 #include "aom/aom_integer.h"
 #include "aom_dsp/x86/mem_sse2.h"
-#include "av1/common/onyxc_int.h"
+#include "av1/common/av1_common_int.h"
 #include "av1/common/txb_common.h"
 #include "aom_dsp/x86/synonyms.h"
 #include "aom_dsp/x86/synonyms_avx2.h"
@@ -25,14 +25,6 @@ void av1_txb_init_levels_avx2(const tran_low_t *const coeff, const int width,
                               const int height, uint8_t *const levels) {
   const int stride = width + TX_PAD_HOR;
   const __m256i y_zeros = _mm256_setzero_si256();
-
-  const int32_t pre_len = sizeof(*levels) * TX_PAD_TOP * stride;
-  uint8_t *pre_buf = levels - TX_PAD_TOP * stride;
-  uint8_t *pre_buf_end = pre_buf + pre_len;
-  do {
-    yy_storeu_256(pre_buf, y_zeros);
-    pre_buf += 32;
-  } while (pre_buf < pre_buf_end);
 
   const int32_t bottom_len = sizeof(*levels) * (TX_PAD_BOTTOM * stride);
   uint8_t *bottom_buf_end = levels + (height + TX_PAD_BOTTOM) * stride;

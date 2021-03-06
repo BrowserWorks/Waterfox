@@ -1,3 +1,49 @@
+2021-02-09 v2.0.2
+  This release includes several bug fixes.
+
+  - Bug fixes:
+    Issue 2643: Modify the assertion in temporal filter intrinsics.
+
+    Issue 2648: Fix unit test ThreadTestLarge.EncoderResultTest/49
+    assertion failure.
+
+    Issue 2869: Add -Wimplicit-function-declaration as C flag only.
+
+    Issue 2878: Avoid memset in the av1_filter_intra_predictor module
+    functions.
+
+    Issue 2903: Fix a typo bug in apply_temporal_filter_planewise.
+
+    Call av1_setup_frame_size() when dropping a frame in the
+    encode_frame_to_data_rate() function in av1/encoder/encoder.c.
+
+2020-11-25 v2.0.1
+  This release includes two bug fixes.
+
+  - Bug fixes:
+    Issue 2723: Fix crash in chroma_check() when generating a monochrome
+    encoded stream in real-time mode.
+
+    Issue 2833: Fix crash on some input when reduced still picture header is
+    used in real-time mode and speed >=7.
+
+2020-05-07 v2.0.0 "Applejack"
+  First official release of libaom.
+  This release includes new real-time mode and SVC support.
+
+  - Upgrading:
+    AOM_SET_POSTPROC, AOM_CODEC_CAP_POSTPROC and AOM_CODEC_USE_POSTPROC are
+    removed.
+
+    AOM_SET_DBG_* is removed.
+
+    Multi-resolution encoding is removed.
+
+    put_frame and put_slice callbacks are removed.
+
+  - Enhancements:
+    Full-sweep document update for codec controls.
+
 2018-06-28 v1.0.0
   AOMedia Codec Workgroup Approved version 1.0
 

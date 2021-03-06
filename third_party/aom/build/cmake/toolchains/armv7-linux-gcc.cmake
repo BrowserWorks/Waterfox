@@ -28,16 +28,13 @@ endif()
 set(CMAKE_C_COMPILER ${CROSS}gcc)
 set(CMAKE_CXX_COMPILER ${CROSS}g++)
 set(AS_EXECUTABLE ${CROSS}as)
-set(CMAKE_C_COMPILER_ARG1
-    "-march=armv7-a -mfpu=neon ${AOM_EXTRA_TOOLCHAIN_FLAGS}")
-set(CMAKE_CXX_COMPILER_ARG1
-    "-march=armv7-a -mfpu=neon ${AOM_EXTRA_TOOLCHAIN_FLAGS}")
+set(CMAKE_C_COMPILER_ARG1 "-march=armv7-a ${AOM_EXTRA_TOOLCHAIN_FLAGS}")
+set(CMAKE_CXX_COMPILER_ARG1 "-march=armv7-a ${AOM_EXTRA_TOOLCHAIN_FLAGS}")
 set(AOM_AS_FLAGS --defsym ARCHITECTURE=7 -march=armv7-a -mfpu=neon
-    ${AOM_EXTRA_TOOLCHAIN_FLAGS})
+                 ${AOM_EXTRA_TOOLCHAIN_FLAGS})
 set(CMAKE_SYSTEM_PROCESSOR "armv7")
 
-# No intrinsics flag required for armv7-linux-gcc.
-set(AOM_NEON_INTRIN_FLAG "")
+set(AOM_NEON_INTRIN_FLAG "-mfpu=neon")
 
 # No runtime cpu detect for armv7-linux-gcc.
-set(CONFIG_RUNTIME_CPU_DETECT 0 CACHE NUMBER "")
+set(CONFIG_RUNTIME_CPU_DETECT 0 CACHE STRING "")

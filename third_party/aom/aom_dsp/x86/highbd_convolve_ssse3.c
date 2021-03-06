@@ -20,14 +20,14 @@ void av1_highbd_convolve_y_sr_ssse3(const uint16_t *src, int src_stride,
                                     uint16_t *dst, int dst_stride, int w, int h,
                                     const InterpFilterParams *filter_params_x,
                                     const InterpFilterParams *filter_params_y,
-                                    const int subpel_x_q4,
-                                    const int subpel_y_q4,
+                                    const int subpel_x_qn,
+                                    const int subpel_y_qn,
                                     ConvolveParams *conv_params, int bd) {
   int i, j;
   const int fo_vert = filter_params_y->taps / 2 - 1;
   const uint16_t *const src_ptr = src - fo_vert * src_stride;
   (void)filter_params_x;
-  (void)subpel_x_q4;
+  (void)subpel_x_qn;
   (void)conv_params;
 
   assert(conv_params->round_0 <= FILTER_BITS);
@@ -44,7 +44,7 @@ void av1_highbd_convolve_y_sr_ssse3(const uint16_t *src, int src_stride,
       _mm_set1_epi16(bd == 10 ? 1023 : (bd == 12 ? 4095 : 255));
   const __m128i zero = _mm_setzero_si128();
 
-  prepare_coeffs(filter_params_y, subpel_y_q4, coeffs_y);
+  prepare_coeffs(filter_params_y, subpel_y_qn, coeffs_y);
 
   for (j = 0; j < w; j += 8) {
     const uint16_t *data = &src_ptr[j];
@@ -168,13 +168,13 @@ void av1_highbd_convolve_x_sr_ssse3(const uint16_t *src, int src_stride,
                                     uint16_t *dst, int dst_stride, int w, int h,
                                     const InterpFilterParams *filter_params_x,
                                     const InterpFilterParams *filter_params_y,
-                                    const int subpel_x_q4,
-                                    const int subpel_y_q4,
+                                    const int subpel_x_qn,
+                                    const int subpel_y_qn,
                                     ConvolveParams *conv_params, int bd) {
   int i, j;
   const int fo_horiz = filter_params_x->taps / 2 - 1;
   const uint16_t *const src_ptr = src - fo_horiz;
-  (void)subpel_y_q4;
+  (void)subpel_y_qn;
   (void)filter_params_y;
 
   // Check that, even with 12-bit input, the intermediate values will fit
@@ -195,7 +195,7 @@ void av1_highbd_convolve_x_sr_ssse3(const uint16_t *src, int src_stride,
       _mm_set1_epi16(bd == 10 ? 1023 : (bd == 12 ? 4095 : 255));
   const __m128i zero = _mm_setzero_si128();
 
-  prepare_coeffs(filter_params_x, subpel_x_q4, coeffs_x);
+  prepare_coeffs(filter_params_x, subpel_x_qn, coeffs_x);
 
   for (j = 0; j < w; j += 8) {
     /* Horizontal filter */

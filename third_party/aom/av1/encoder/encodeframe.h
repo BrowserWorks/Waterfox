@@ -20,7 +20,9 @@
 extern "C" {
 #endif
 
-#define DELTAQ_MODULATION 1  // 0: variance based, 1: wavelet AC energy based
+#define DELTA_Q_PERCEPTUAL_MODULATION \
+  1  // 0: variance based
+     // 1: wavelet AC energy based
 
 struct macroblock;
 struct yv12_buffer_config;
@@ -29,7 +31,7 @@ struct ThreadData;
 
 void av1_setup_src_planes(struct macroblock *x,
                           const struct yv12_buffer_config *src, int mi_row,
-                          int mi_col, const int num_planes);
+                          int mi_col, const int num_planes, BLOCK_SIZE bsize);
 
 void av1_encode_frame(struct AV1_COMP *cpi);
 

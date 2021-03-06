@@ -14,7 +14,7 @@
 
 #include "aom/aom_integer.h"
 #include "aom_dsp/x86/mem_sse2.h"
-#include "av1/common/onyxc_int.h"
+#include "av1/common/av1_common_int.h"
 #include "av1/common/txb_common.h"
 
 static INLINE void load_levels_4x4x5_sse2(const uint8_t *const src,

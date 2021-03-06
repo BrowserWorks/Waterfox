@@ -131,8 +131,8 @@ function(require_c_flag c_flag update_c_flags)
   message("Checking C compiler flag support for: " ${c_flag})
   check_c_compiler_flag("${c_flag}" HAVE_C_FLAG)
   if(NOT HAVE_C_FLAG)
-    message(FATAL_ERROR
-              "${PROJECT_NAME} requires support for C flag: ${c_flag}.")
+    message(
+      FATAL_ERROR "${PROJECT_NAME} requires support for C flag: ${c_flag}.")
   endif()
 
   if(NOT "${AOM_EXE_LINKER_FLAGS}" STREQUAL "")
@@ -167,8 +167,8 @@ function(require_cxx_flag cxx_flag update_cxx_flags)
   message("Checking C compiler flag support for: " ${cxx_flag})
   check_cxx_compiler_flag("${cxx_flag}" HAVE_CXX_FLAG)
   if(NOT HAVE_CXX_FLAG)
-    message(FATAL_ERROR
-              "${PROJECT_NAME} requires support for C flag: ${cxx_flag}.")
+    message(
+      FATAL_ERROR "${PROJECT_NAME} requires support for C flag: ${cxx_flag}.")
   endif()
 
   if(NOT "${AOM_EXE_LINKER_FLAGS}" STREQUAL "")

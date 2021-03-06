@@ -10,10 +10,11 @@
  */
 
 #include "config/aom_dsp_rtcd.h"
+#include "config/av1_rtcd.h"
 
 #include "av1/common/av1_txfm.h"
 
-// av1_cospi_arr[i][j] = (int)round(cos(M_PI*j/128) * (1<<(cos_bit_min+i)));
+// av1_cospi_arr[i][j] = (int)round(cos(PI*j/128) * (1<<(cos_bit_min+i)));
 const int32_t av1_cospi_arr_data[7][64] = {
   { 1024, 1024, 1023, 1021, 1019, 1016, 1013, 1009, 1004, 999, 993, 987, 980,
     972,  964,  955,  946,  936,  926,  915,  903,  891,  878, 865, 851, 837,

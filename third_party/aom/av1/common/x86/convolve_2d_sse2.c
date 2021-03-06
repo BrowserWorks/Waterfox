@@ -22,7 +22,7 @@ void av1_convolve_2d_sr_sse2(const uint8_t *src, int src_stride, uint8_t *dst,
                              int dst_stride, int w, int h,
                              const InterpFilterParams *filter_params_x,
                              const InterpFilterParams *filter_params_y,
-                             const int subpel_x_q4, const int subpel_y_q4,
+                             const int subpel_x_qn, const int subpel_y_qn,
                              ConvolveParams *conv_params) {
   const int bd = 8;
 
@@ -45,7 +45,7 @@ void av1_convolve_2d_sr_sse2(const uint8_t *src, int src_stride, uint8_t *dst,
   /* Horizontal filter */
   {
     const int16_t *x_filter = av1_get_interp_filter_subpel_kernel(
-        filter_params_x, subpel_x_q4 & SUBPEL_MASK);
+        filter_params_x, subpel_x_qn & SUBPEL_MASK);
     const __m128i coeffs_x = _mm_loadu_si128((__m128i *)x_filter);
 
     // coeffs 0 1 0 1 2 3 2 3
@@ -111,7 +111,7 @@ void av1_convolve_2d_sr_sse2(const uint8_t *src, int src_stride, uint8_t *dst,
   /* Vertical filter */
   {
     const int16_t *y_filter = av1_get_interp_filter_subpel_kernel(
-        filter_params_y, subpel_y_q4 & SUBPEL_MASK);
+        filter_params_y, subpel_y_qn & SUBPEL_MASK);
     const __m128i coeffs_y = _mm_loadu_si128((__m128i *)y_filter);
 
     // coeffs 0 1 0 1 2 3 2 3
@@ -205,7 +205,7 @@ void av1_convolve_2d_sr_sse2(const uint8_t *src, int src_stride, uint8_t *dst,
         __m128i *const p = (__m128i *)&dst[i * dst_stride + j];
 
         if (w == 2) {
-          *(uint16_t *)p = _mm_cvtsi128_si32(res);
+          *(uint16_t *)p = (uint16_t)_mm_cvtsi128_si32(res);
         } else if (w == 4) {
           *(uint32_t *)p = _mm_cvtsi128_si32(res);
         } else {
@@ -240,12 +240,12 @@ void av1_convolve_2d_copy_sr_sse2(const uint8_t *src, int src_stride,
                                   uint8_t *dst, int dst_stride, int w, int h,
                                   const InterpFilterParams *filter_params_x,
                                   const InterpFilterParams *filter_params_y,
-                                  const int subpel_x_q4, const int subpel_y_q4,
+                                  const int subpel_x_qn, const int subpel_y_qn,
                                   ConvolveParams *conv_params) {
   (void)filter_params_x;
   (void)filter_params_y;
-  (void)subpel_x_q4;
-  (void)subpel_y_q4;
+  (void)subpel_x_qn;
+  (void)subpel_y_qn;
   (void)conv_params;
 
   if (w >= 16) {
@@ -255,20 +255,20 @@ void av1_convolve_2d_copy_sr_sse2(const uint8_t *src, int src_stride,
 
   if (w == 2) {
     do {
-      memcpy(dst, src, 2 * sizeof(*src));
+      memmove(dst, src, 2 * sizeof(*src));
       src += src_stride;
       dst += dst_stride;
-      memcpy(dst, src, 2 * sizeof(*src));
+      memmove(dst, src, 2 * sizeof(*src));
       src += src_stride;
       dst += dst_stride;
       h -= 2;
     } while (h);
   } else if (w == 4) {
     do {
-      memcpy(dst, src, 4 * sizeof(*src));
+      memmove(dst, src, 4 * sizeof(*src));
       src += src_stride;
       dst += dst_stride;
-      memcpy(dst, src, 4 * sizeof(*src));
+      memmove(dst, src, 4 * sizeof(*src));
       src += src_stride;
       dst += dst_stride;
       h -= 2;
@@ -354,24 +354,23 @@ void av1_convolve_2d_copy_sr_sse2(const uint8_t *src, int src_stride,
   }
 }
 
-void av1_jnt_convolve_2d_copy_sse2(const uint8_t *src, int src_stride,
-                                   uint8_t *dst0, int dst_stride0, int w, int h,
-                                   const InterpFilterParams *filter_params_x,
-                                   const InterpFilterParams *filter_params_y,
-                                   const int subpel_x_q4, const int subpel_y_q4,
-                                   ConvolveParams *conv_params) {
+void av1_dist_wtd_convolve_2d_copy_sse2(
+    const uint8_t *src, int src_stride, uint8_t *dst0, int dst_stride0, int w,
+    int h, const InterpFilterParams *filter_params_x,
+    const InterpFilterParams *filter_params_y, const int subpel_x_qn,
+    const int subpel_y_qn, ConvolveParams *conv_params) {
   const int bd = 8;
   CONV_BUF_TYPE *dst = conv_params->dst;
   int dst_stride = conv_params->dst_stride;
   (void)filter_params_x;
   (void)filter_params_y;
-  (void)subpel_x_q4;
-  (void)subpel_y_q4;
+  (void)subpel_x_qn;
+  (void)subpel_y_qn;
 
   const int bits =
       FILTER_BITS * 2 - conv_params->round_1 - conv_params->round_0;
   const int do_average = conv_params->do_average;
-  const int use_jnt_comp_avg = conv_params->use_jnt_comp_avg;
+  const int use_dist_wtd_comp_avg = conv_params->use_dist_wtd_comp_avg;
   const __m128i zero = _mm_setzero_si128();
   const __m128i left_shift = _mm_cvtsi32_si128(bits);
   int i, j;
@@ -411,14 +410,14 @@ void av1_jnt_convolve_2d_copy_sse2(const uint8_t *src, int src_stride,
           const __m128i data_ref_0_hi =
               _mm_loadu_si128((__m128i *)(&dst[j + 8]));
 
-          const __m128i comp_avg_res_lo =
-              comp_avg(&data_ref_0_lo, &res_unsigned_lo, &wt, use_jnt_comp_avg);
+          const __m128i comp_avg_res_lo = comp_avg(
+              &data_ref_0_lo, &res_unsigned_lo, &wt, use_dist_wtd_comp_avg);
 
           const __m128i round_result_lo = convolve_rounding(
               &comp_avg_res_lo, &offset_const, &rounding_const, rounding_shift);
 
-          const __m128i comp_avg_res_hi =
-              comp_avg(&data_ref_0_hi, &res_unsigned_hi, &wt, use_jnt_comp_avg);
+          const __m128i comp_avg_res_hi = comp_avg(
+              &data_ref_0_hi, &res_unsigned_hi, &wt, use_dist_wtd_comp_avg);
 
           const __m128i round_result_hi = convolve_rounding(
               &comp_avg_res_hi, &offset_const, &rounding_const, rounding_shift);
@@ -449,7 +448,7 @@ void av1_jnt_convolve_2d_copy_sse2(const uint8_t *src, int src_stride,
           const __m128i data_ref_0 = _mm_loadu_si128((__m128i *)(&dst[j]));
 
           const __m128i comp_avg_res =
-              comp_avg(&data_ref_0, &res_unsigned, &wt, use_jnt_comp_avg);
+              comp_avg(&data_ref_0, &res_unsigned, &wt, use_dist_wtd_comp_avg);
 
           const __m128i round_result = convolve_rounding(
               &comp_avg_res, &offset_const, &rounding_const, rounding_shift);

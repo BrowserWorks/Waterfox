@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
   }
   fpout = fopen(fout, "wb");
   if (fpout == NULL) {
+    fclose(fpin);
     printf("Can't open file %s to write\n", fout);
     usage();
     return 1;

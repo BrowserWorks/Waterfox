@@ -14,6 +14,7 @@
 
 #include "aom/aom_image.h"
 #include "aom/aom_integer.h"
+#include "aom/internal/aom_image_internal.h"
 #include "aom_mem/aom_mem.h"
 
 static INLINE unsigned int align_image_dimension(unsigned int d,
@@ -29,8 +30,12 @@ static INLINE unsigned int align_image_dimension(unsigned int d,
 static aom_image_t *img_alloc_helper(
     aom_image_t *img, aom_img_fmt_t fmt, unsigned int d_w, unsigned int d_h,
     unsigned int buf_align, unsigned int stride_align, unsigned int size_align,
-    unsigned char *img_data, unsigned int border) {
-  unsigned int h, w, s, xcs, ycs, bps;
+    unsigned int border, unsigned char *img_data,
+    aom_alloc_img_data_cb_fn_t alloc_cb, void *cb_priv) {
+  /* NOTE: In this function, bit_depth is either 8 or 16 (if
+   * AOM_IMG_FMT_HIGHBITDEPTH is set), never 10 or 12.
+   */
+  unsigned int h, w, s, xcs, ycs, bps, bit_depth;
   unsigned int stride_in_bytes;
 
   /* Treat align==0 like align==1 */
@@ -57,13 +62,16 @@ static aom_image_t *img_alloc_helper(
     case AOM_IMG_FMT_YV12:
     case AOM_IMG_FMT_AOMI420:
     case AOM_IMG_FMT_AOMYV12: bps = 12; break;
-    case AOM_IMG_FMT_I422:
+    case AOM_IMG_FMT_I422: bps = 16; break;
     case AOM_IMG_FMT_I444: bps = 24; break;
+    case AOM_IMG_FMT_YV1216:
     case AOM_IMG_FMT_I42016: bps = 24; break;
-    case AOM_IMG_FMT_I42216:
+    case AOM_IMG_FMT_I42216: bps = 32; break;
     case AOM_IMG_FMT_I44416: bps = 48; break;
     default: bps = 16; break;
   }
+
+  bit_depth = (fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? 16 : 8;
 
   /* Get chroma shift values for this format */
   switch (fmt) {
@@ -73,6 +81,7 @@ static aom_image_t *img_alloc_helper(
     case AOM_IMG_FMT_AOMYV12:
     case AOM_IMG_FMT_I422:
     case AOM_IMG_FMT_I42016:
+    case AOM_IMG_FMT_YV1216:
     case AOM_IMG_FMT_I42216: xcs = 1; break;
     default: xcs = 0; break;
   }
@@ -82,6 +91,7 @@ static aom_image_t *img_alloc_helper(
     case AOM_IMG_FMT_YV12:
     case AOM_IMG_FMT_AOMI420:
     case AOM_IMG_FMT_AOMYV12:
+    case AOM_IMG_FMT_YV1216:
     case AOM_IMG_FMT_I42016: ycs = 1; break;
     default: ycs = 0; break;
   }
@@ -90,9 +100,9 @@ static aom_image_t *img_alloc_helper(
   w = align_image_dimension(d_w, xcs, size_align);
   h = align_image_dimension(d_h, ycs, size_align);
 
-  s = (fmt & AOM_IMG_FMT_PLANAR) ? w : bps * w / 8;
+  s = (fmt & AOM_IMG_FMT_PLANAR) ? w : bps * w / bit_depth;
   s = (s + 2 * border + stride_align - 1) & ~(stride_align - 1);
-  stride_in_bytes = (fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? s * 2 : s;
+  stride_in_bytes = s * bit_depth / 8;
 
   /* Allocate the new image */
   if (!img) {
@@ -110,19 +120,29 @@ static aom_image_t *img_alloc_helper(
   if (!img_data) {
     const uint64_t alloc_size =
         (fmt & AOM_IMG_FMT_PLANAR)
-            ? (uint64_t)(h + 2 * border) * stride_in_bytes * bps / 8
+            ? (uint64_t)(h + 2 * border) * stride_in_bytes * bps / bit_depth
             : (uint64_t)(h + 2 * border) * stride_in_bytes;
 
     if (alloc_size != (size_t)alloc_size) goto fail;
 
-    img->img_data = (uint8_t *)aom_memalign(buf_align, (size_t)alloc_size);
-    img->img_data_owner = 1;
+    if (alloc_cb) {
+      const size_t padded_alloc_size = (size_t)alloc_size + buf_align - 1;
+      img->img_data = (uint8_t *)alloc_cb(cb_priv, padded_alloc_size);
+      if (img->img_data) {
+        img->img_data = (uint8_t *)aom_align_addr(img->img_data, buf_align);
+      }
+      img->img_data_owner = 0;
+    } else {
+      img->img_data = (uint8_t *)aom_memalign(buf_align, (size_t)alloc_size);
+      img->img_data_owner = 1;
+    }
+    img->sz = (size_t)alloc_size;
   }
 
   if (!img->img_data) goto fail;
 
   img->fmt = fmt;
-  img->bit_depth = (fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? 16 : 8;
+  img->bit_depth = bit_depth;
   // aligned width and aligned height
   img->w = w;
   img->h = h;
@@ -131,11 +151,13 @@ static aom_image_t *img_alloc_helper(
   img->bps = bps;
 
   /* Calculate strides */
-  img->stride[AOM_PLANE_Y] = img->stride[AOM_PLANE_ALPHA] = stride_in_bytes;
+  img->stride[AOM_PLANE_Y] = stride_in_bytes;
   img->stride[AOM_PLANE_U] = img->stride[AOM_PLANE_V] = stride_in_bytes >> xcs;
 
-  /* Default viewport to entire image */
-  if (!aom_img_set_rect(img, 0, 0, d_w, d_h, border)) return img;
+  /* Default viewport to entire image. (This aom_img_set_rect call always
+   * succeeds.) */
+  aom_img_set_rect(img, 0, 0, d_w, d_h, border);
+  return img;
 
 fail:
   aom_img_free(img);
@@ -145,15 +167,26 @@ fail:
 aom_image_t *aom_img_alloc(aom_image_t *img, aom_img_fmt_t fmt,
                            unsigned int d_w, unsigned int d_h,
                            unsigned int align) {
-  return img_alloc_helper(img, fmt, d_w, d_h, align, align, 1, NULL, 0);
+  return img_alloc_helper(img, fmt, d_w, d_h, align, align, 1, 0, NULL, NULL,
+                          NULL);
+}
+
+aom_image_t *aom_img_alloc_with_cb(aom_image_t *img, aom_img_fmt_t fmt,
+                                   unsigned int d_w, unsigned int d_h,
+                                   unsigned int align,
+                                   aom_alloc_img_data_cb_fn_t alloc_cb,
+                                   void *cb_priv) {
+  return img_alloc_helper(img, fmt, d_w, d_h, align, align, 1, 0, NULL,
+                          alloc_cb, cb_priv);
 }
 
 aom_image_t *aom_img_wrap(aom_image_t *img, aom_img_fmt_t fmt, unsigned int d_w,
                           unsigned int d_h, unsigned int stride_align,
                           unsigned char *img_data) {
-  /* By setting buf_align = 1, we don't change buffer alignment in this
-   * function. */
-  return img_alloc_helper(img, fmt, d_w, d_h, 1, stride_align, 1, img_data, 0);
+  /* Set buf_align = 1. It is ignored by img_alloc_helper because img_data is
+   * not NULL. */
+  return img_alloc_helper(img, fmt, d_w, d_h, 1, stride_align, 1, 0, img_data,
+                          NULL, NULL);
 }
 
 aom_image_t *aom_img_alloc_with_border(aom_image_t *img, aom_img_fmt_t fmt,
@@ -161,8 +194,8 @@ aom_image_t *aom_img_alloc_with_border(aom_image_t *img, aom_img_fmt_t fmt,
                                        unsigned int align,
                                        unsigned int size_align,
                                        unsigned int border) {
-  return img_alloc_helper(img, fmt, d_w, d_h, align, align, size_align, NULL,
-                          border);
+  return img_alloc_helper(img, fmt, d_w, d_h, align, align, size_align, border,
+                          NULL, NULL, NULL);
 }
 
 int aom_img_set_rect(aom_image_t *img, unsigned int x, unsigned int y,
@@ -184,12 +217,6 @@ int aom_img_set_rect(aom_image_t *img, unsigned int x, unsigned int y,
       const int bytes_per_sample =
           (img->fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? 2 : 1;
       data = img->img_data;
-
-      if (img->fmt & AOM_IMG_FMT_HAS_ALPHA) {
-        img->planes[AOM_PLANE_ALPHA] =
-            data + x * bytes_per_sample + y * img->stride[AOM_PLANE_ALPHA];
-        data += (img->h + 2 * border) * img->stride[AOM_PLANE_ALPHA];
-      }
 
       img->planes[AOM_PLANE_Y] =
           data + x * bytes_per_sample + y * img->stride[AOM_PLANE_Y];
@@ -236,14 +263,11 @@ void aom_img_flip(aom_image_t *img) {
   img->planes[AOM_PLANE_V] += (signed)((img->d_h >> img->y_chroma_shift) - 1) *
                               img->stride[AOM_PLANE_V];
   img->stride[AOM_PLANE_V] = -img->stride[AOM_PLANE_V];
-
-  img->planes[AOM_PLANE_ALPHA] +=
-      (signed)(img->d_h - 1) * img->stride[AOM_PLANE_ALPHA];
-  img->stride[AOM_PLANE_ALPHA] = -img->stride[AOM_PLANE_ALPHA];
 }
 
 void aom_img_free(aom_image_t *img) {
   if (img) {
+    aom_img_remove_metadata(img);
     if (img->img_data && img->img_data_owner) aom_free(img->img_data);
 
     if (img->self_allocd) free(img);
@@ -262,4 +286,110 @@ int aom_img_plane_height(const aom_image_t *img, int plane) {
     return (img->d_h + 1) >> img->y_chroma_shift;
   else
     return img->d_h;
+}
+
+aom_metadata_t *aom_img_metadata_alloc(
+    uint32_t type, const uint8_t *data, size_t sz,
+    aom_metadata_insert_flags_t insert_flag) {
+  if (!data || sz == 0) return NULL;
+  aom_metadata_t *metadata = (aom_metadata_t *)malloc(sizeof(aom_metadata_t));
+  if (!metadata) return NULL;
+  metadata->type = type;
+  metadata->payload = (uint8_t *)malloc(sz);
+  if (!metadata->payload) {
+    free(metadata);
+    return NULL;
+  }
+  memcpy(metadata->payload, data, sz);
+  metadata->sz = sz;
+  metadata->insert_flag = insert_flag;
+  return metadata;
+}
+
+void aom_img_metadata_free(aom_metadata_t *metadata) {
+  if (metadata) {
+    if (metadata->payload) free(metadata->payload);
+    free(metadata);
+  }
+}
+
+aom_metadata_array_t *aom_img_metadata_array_alloc(size_t sz) {
+  aom_metadata_array_t *arr =
+      (aom_metadata_array_t *)calloc(1, sizeof(aom_metadata_array_t));
+  if (!arr) return NULL;
+  if (sz > 0) {
+    arr->metadata_array =
+        (aom_metadata_t **)calloc(sz, sizeof(aom_metadata_t *));
+    if (!arr->metadata_array) {
+      aom_img_metadata_array_free(arr);
+      return NULL;
+    }
+    arr->sz = sz;
+  }
+  return arr;
+}
+
+void aom_img_metadata_array_free(aom_metadata_array_t *arr) {
+  if (arr) {
+    if (arr->metadata_array) {
+      for (size_t i = 0; i < arr->sz; i++) {
+        aom_img_metadata_free(arr->metadata_array[i]);
+      }
+      free(arr->metadata_array);
+    }
+    free(arr);
+  }
+}
+
+int aom_img_add_metadata(aom_image_t *img, uint32_t type, const uint8_t *data,
+                         size_t sz, aom_metadata_insert_flags_t insert_flag) {
+  if (!img) return -1;
+  if (!img->metadata) {
+    img->metadata = aom_img_metadata_array_alloc(0);
+    if (!img->metadata) return -1;
+  }
+  aom_metadata_t *metadata =
+      aom_img_metadata_alloc(type, data, sz, insert_flag);
+  if (!metadata) goto fail;
+  if (!img->metadata->metadata_array) {
+    img->metadata->metadata_array =
+        (aom_metadata_t **)calloc(1, sizeof(metadata));
+    if (!img->metadata->metadata_array || img->metadata->sz != 0) {
+      aom_img_metadata_free(metadata);
+      goto fail;
+    }
+  } else {
+    img->metadata->metadata_array =
+        (aom_metadata_t **)realloc(img->metadata->metadata_array,
+                                   (img->metadata->sz + 1) * sizeof(metadata));
+  }
+  img->metadata->metadata_array[img->metadata->sz] = metadata;
+  img->metadata->sz++;
+  return 0;
+fail:
+  aom_img_metadata_array_free(img->metadata);
+  img->metadata = NULL;
+  return -1;
+}
+
+void aom_img_remove_metadata(aom_image_t *img) {
+  if (img && img->metadata) {
+    aom_img_metadata_array_free(img->metadata);
+    img->metadata = NULL;
+  }
+}
+
+const aom_metadata_t *aom_img_get_metadata(const aom_image_t *img,
+                                           size_t index) {
+  if (!img) return NULL;
+  const aom_metadata_array_t *array = img->metadata;
+  if (array && index < array->sz) {
+    return array->metadata_array[index];
+  }
+  return NULL;
+}
+
+size_t aom_img_num_metadata(const aom_image_t *img) {
+  if (!img || !img->metadata) return 0;
+  return img->metadata->sz;
 }

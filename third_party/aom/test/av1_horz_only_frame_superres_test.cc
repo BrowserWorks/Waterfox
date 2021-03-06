@@ -9,6 +9,7 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
+#include <tuple>
 #include <vector>
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
@@ -30,9 +31,9 @@ const int kPerfIters = 1000;
 const int kVPad = 32;
 const int kHPad = 32;
 
-using ::testing::make_tuple;
-using ::testing::tuple;
 using libaom_test::ACMRandom;
+using std::make_tuple;
+using std::tuple;
 
 template <typename Pixel>
 class TestImage {
@@ -297,9 +298,10 @@ class LowBDConvolveHorizRSTest
 TEST_P(LowBDConvolveHorizRSTest, Correctness) { CorrectnessTest(); }
 TEST_P(LowBDConvolveHorizRSTest, DISABLED_Speed) { SpeedTest(); }
 
-INSTANTIATE_TEST_CASE_P(SSE4_1, LowBDConvolveHorizRSTest,
-                        ::testing::Values(av1_convolve_horiz_rs_sse4_1));
+INSTANTIATE_TEST_SUITE_P(SSE4_1, LowBDConvolveHorizRSTest,
+                         ::testing::Values(av1_convolve_horiz_rs_sse4_1));
 
+#if CONFIG_AV1_HIGHBITDEPTH
 typedef void (*HighBDConvolveHorizRsFunc)(const uint16_t *src, int src_stride,
                                           uint16_t *dst, int dst_stride, int w,
                                           int h, const int16_t *x_filters,
@@ -354,9 +356,10 @@ const int kBDs[] = { 8, 10, 12 };
 TEST_P(HighBDConvolveHorizRSTest, Correctness) { CorrectnessTest(); }
 TEST_P(HighBDConvolveHorizRSTest, DISABLED_Speed) { SpeedTest(); }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, HighBDConvolveHorizRSTest,
     ::testing::Combine(::testing::Values(av1_highbd_convolve_horiz_rs_sse4_1),
                        ::testing::ValuesIn(kBDs)));
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 
 }  // namespace

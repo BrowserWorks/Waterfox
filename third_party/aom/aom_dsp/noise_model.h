@@ -158,10 +158,10 @@ int aom_flat_block_finder_run(const aom_flat_block_finder_t *block_finder,
                               int stride, uint8_t *flat_blocks);
 
 // The noise shape indicates the allowed coefficients in the AR model.
-typedef enum {
+enum {
   AOM_NOISE_SHAPE_DIAMOND = 0,
   AOM_NOISE_SHAPE_SQUARE = 1
-} aom_noise_shape;
+} UENUM1BYTE(aom_noise_shape);
 
 // The parameters of the noise model include the shape type, lag, the
 // bit depth of the input images provided, and whether the input images
@@ -202,13 +202,13 @@ typedef struct {
 } aom_noise_model_t;
 
 /*!\brief Result of a noise model update. */
-typedef enum {
+enum {
   AOM_NOISE_STATUS_OK = 0,
   AOM_NOISE_STATUS_INVALID_ARGUMENT,
   AOM_NOISE_STATUS_INSUFFICIENT_FLAT_BLOCKS,
   AOM_NOISE_STATUS_DIFFERENT_NOISE_TYPE,
   AOM_NOISE_STATUS_INTERNAL_ERROR,
-} aom_noise_status_t;
+} UENUM1BYTE(aom_noise_status_t);
 
 /*!\brief Initializes a noise model with the given parameters.
  *

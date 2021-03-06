@@ -212,10 +212,10 @@ void av1_upsample_intra_edge_sse4_1(uint8_t *p, int sz) {
     { -1, 9, 9, -1, -1, 9, 9, -1, -1, 9, 9, -1, -1, 9, 9, -1 }
   };
 
-  DECLARE_ALIGNED(16, static const int8_t, v_const[2][16]) = {
-    { 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6 },
-    { 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10 }
-  };
+  DECLARE_ALIGNED(
+      16, static const int8_t,
+      v_const[2][16]) = { { 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6 },
+                          { 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10 } };
 
   // Extend first/last samples (upper-left p[-1], last p[sz-1])
   // to support 4-tap filter

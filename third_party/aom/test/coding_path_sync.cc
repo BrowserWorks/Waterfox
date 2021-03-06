@@ -15,11 +15,12 @@
 
 #include "config/aom_config.h"
 
-#include "aom_ports/mem.h"  // ROUND_POWER_OF_TWO
 #include "aom/aomcx.h"
 #include "aom/aomdx.h"
 #include "aom/aom_encoder.h"
 #include "aom/aom_decoder.h"
+
+#define NELEMENTS(x) static_cast<int>(sizeof(x) / sizeof(x[0]))
 
 using libaom_test::ACMRandom;
 namespace {

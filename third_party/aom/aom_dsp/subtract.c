@@ -32,6 +32,7 @@ void aom_subtract_block_c(int rows, int cols, int16_t *diff,
   }
 }
 
+#if CONFIG_AV1_HIGHBITDEPTH
 void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff,
                                  ptrdiff_t diff_stride, const uint8_t *src8,
                                  ptrdiff_t src_stride, const uint8_t *pred8,
@@ -51,3 +52,4 @@ void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff,
     src += src_stride;
   }
 }
+#endif

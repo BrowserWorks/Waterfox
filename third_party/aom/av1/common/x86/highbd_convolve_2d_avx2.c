@@ -24,8 +24,8 @@ void av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int src_stride,
                                     uint16_t *dst, int dst_stride, int w, int h,
                                     const InterpFilterParams *filter_params_x,
                                     const InterpFilterParams *filter_params_y,
-                                    const int subpel_x_q4,
-                                    const int subpel_y_q4,
+                                    const int subpel_x_qn,
+                                    const int subpel_y_qn,
                                     ConvolveParams *conv_params, int bd) {
   DECLARE_ALIGNED(32, int16_t, im_block[(MAX_SB_SIZE + MAX_FILTER_TAP) * 8]);
   int im_h = h + filter_params_y->taps - 1;
@@ -58,8 +58,8 @@ void av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int src_stride,
       _mm256_set1_epi16(bd == 10 ? 1023 : (bd == 12 ? 4095 : 255));
   const __m256i zero = _mm256_setzero_si256();
 
-  prepare_coeffs(filter_params_x, subpel_x_q4, coeffs_x);
-  prepare_coeffs(filter_params_y, subpel_y_q4, coeffs_y);
+  prepare_coeffs(filter_params_x, subpel_x_qn, coeffs_x);
+  prepare_coeffs(filter_params_y, subpel_y_qn, coeffs_y);
 
   for (j = 0; j < w; j += 8) {
     /* Horizontal filter */
@@ -222,12 +222,12 @@ static INLINE void copy_128(const uint16_t *src, uint16_t *dst) {
 void av1_highbd_convolve_2d_copy_sr_avx2(
     const uint16_t *src, int src_stride, uint16_t *dst, int dst_stride, int w,
     int h, const InterpFilterParams *filter_params_x,
-    const InterpFilterParams *filter_params_y, const int subpel_x_q4,
-    const int subpel_y_q4, ConvolveParams *conv_params, int bd) {
+    const InterpFilterParams *filter_params_y, const int subpel_x_qn,
+    const int subpel_y_qn, ConvolveParams *conv_params, int bd) {
   (void)filter_params_x;
   (void)filter_params_y;
-  (void)subpel_x_q4;
-  (void)subpel_y_q4;
+  (void)subpel_x_qn;
+  (void)subpel_y_qn;
   (void)conv_params;
   (void)bd;
 
@@ -238,10 +238,10 @@ void av1_highbd_convolve_2d_copy_sr_avx2(
 
   if (w == 2) {
     do {
-      memcpy(dst, src, 2 * sizeof(*src));
+      memmove(dst, src, 2 * sizeof(*src));
       src += src_stride;
       dst += dst_stride;
-      memcpy(dst, src, 2 * sizeof(*src));
+      memmove(dst, src, 2 * sizeof(*src));
       src += src_stride;
       dst += dst_stride;
       h -= 2;

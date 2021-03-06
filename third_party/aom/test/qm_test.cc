@@ -33,7 +33,7 @@ class QMTest
 
   virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
                                   ::libaom_test::Encoder *encoder) {
-    if (video->frame() == 1) {
+    if (video->frame() == 0) {
       encoder->Control(AOME_SET_CPUUSED, set_cpu_used_);
       encoder->Control(AV1E_SET_ENABLE_QM, 1);
       encoder->Control(AV1E_SET_QM_MIN, qm_min_);

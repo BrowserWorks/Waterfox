@@ -22,6 +22,8 @@
 extern "C" {
 #endif
 
+// Border for Loop restoration buffer
+#define AOM_RESTORATION_FRAME_BORDER 32
 #define CLIP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 #define RINT(x) ((x) < 0 ? (int)((x)-0.5) : (int)((x) + 0.5))
 
@@ -120,6 +122,7 @@ extern "C" {
 // If WIENER_WIN_CHROMA == WIENER_WIN - 2, that implies 5x5 filters are used for
 // chroma. To use 7x7 for chroma set WIENER_WIN_CHROMA to WIENER_WIN.
 #define WIENER_WIN_CHROMA (WIENER_WIN - 2)
+#define WIENER_WIN_REDUCED (WIENER_WIN - 2)
 #define WIENER_WIN2_CHROMA ((WIENER_WIN_CHROMA) * (WIENER_WIN_CHROMA))
 
 #define WIENER_FILT_PREC_BITS 7
@@ -275,18 +278,18 @@ typedef struct AV1LrStruct {
   YV12_BUFFER_CONFIG *dst;
 } AV1LrStruct;
 
-extern const sgr_params_type sgr_params[SGRPROJ_PARAMS];
+extern const sgr_params_type av1_sgr_params[SGRPROJ_PARAMS];
 extern int sgrproj_mtable[SGRPROJ_PARAMS][2];
-extern const int32_t x_by_xplus1[256];
-extern const int32_t one_by_x[MAX_NELEM];
+extern const int32_t av1_x_by_xplus1[256];
+extern const int32_t av1_one_by_x[MAX_NELEM];
 
 void av1_alloc_restoration_struct(struct AV1Common *cm, RestorationInfo *rsi,
                                   int is_uv);
 void av1_free_restoration_struct(RestorationInfo *rst_info);
 
-void extend_frame(uint8_t *data, int width, int height, int stride,
-                  int border_horz, int border_vert, int highbd);
-void decode_xq(const int *xqd, int *xq, const sgr_params_type *params);
+void av1_extend_frame(uint8_t *data, int width, int height, int stride,
+                      int border_horz, int border_vert, int highbd);
+void av1_decode_xq(const int *xqd, int *xq, const sgr_params_type *params);
 
 // Filter a single loop restoration unit.
 //

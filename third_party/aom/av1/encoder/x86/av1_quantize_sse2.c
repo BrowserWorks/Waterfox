@@ -91,7 +91,7 @@ static INLINE void quantize(const int16_t *iscan_ptr,
                                      _mm_cmpeq_epi16(qcoeff0, *thr0));
   const __m128i mask1 = _mm_or_si128(_mm_cmpgt_epi16(qcoeff1, *thr1),
                                      _mm_cmpeq_epi16(qcoeff1, *thr1));
-  const int16_t nzflag = _mm_movemask_epi8(mask0) | _mm_movemask_epi8(mask1);
+  const int nzflag = _mm_movemask_epi8(mask0) | _mm_movemask_epi8(mask1);
 
   if (nzflag) {
     qcoeff0 = _mm_adds_epi16(qcoeff0, *round0);

@@ -67,13 +67,13 @@ class Decoder {
 
   void Control(int ctrl_id, const void *arg) {
     InitOnce();
-    const aom_codec_err_t res = aom_codec_control_(&decoder_, ctrl_id, arg);
+    const aom_codec_err_t res = aom_codec_control(&decoder_, ctrl_id, arg);
     ASSERT_EQ(AOM_CODEC_OK, res) << DecodeError();
   }
 
   void Control(int ctrl_id, int arg, aom_codec_err_t expected_value) {
     InitOnce();
-    const aom_codec_err_t res = aom_codec_control_(&decoder_, ctrl_id, arg);
+    const aom_codec_err_t res = aom_codec_control(&decoder_, ctrl_id, arg);
     ASSERT_EQ(expected_value, res) << DecodeError();
   }
 

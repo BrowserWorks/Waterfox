@@ -20,14 +20,15 @@
 
 namespace {
 class AVxEncoderThreadTest
-    : public ::libaom_test::CodecTestWith4Params<libaom_test::TestMode, int,
-                                                 int, int>,
+    : public ::libaom_test::CodecTestWith5Params<libaom_test::TestMode, int,
+                                                 int, int, int>,
       public ::libaom_test::EncoderTest {
  protected:
   AVxEncoderThreadTest()
       : EncoderTest(GET_PARAM(0)), encoder_initialized_(false),
         encoding_mode_(GET_PARAM(1)), set_cpu_used_(GET_PARAM(2)),
-        tile_cols_(GET_PARAM(3)), tile_rows_(GET_PARAM(4)) {
+        tile_cols_(GET_PARAM(3)), tile_rows_(GET_PARAM(4)),
+        row_mt_(GET_PARAM(5)) {
     init_flags_ = AOM_CODEC_USE_PSNR;
     aom_codec_dec_cfg_t cfg = aom_codec_dec_cfg_t();
     cfg.w = 1280;
@@ -119,87 +120,87 @@ class AVxEncoderThreadTest
         "niklas_640_480_30.yuv", AOM_IMG_FMT_I420, 640, 480, 30, 1, 15, 21);
     cfg_.rc_target_bitrate = 1000;
 
-    // Encode using single thread.
-    row_mt_ = 0;
-    cfg_.g_threads = 1;
-    init_flags_ = AOM_CODEC_USE_PSNR;
-    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
-    std::vector<size_t> single_thr_size_enc;
-    std::vector<std::string> single_thr_md5_enc;
-    std::vector<std::string> single_thr_md5_dec;
-    single_thr_size_enc = size_enc_;
-    single_thr_md5_enc = md5_enc_;
-    single_thr_md5_dec = md5_dec_;
-    size_enc_.clear();
-    md5_enc_.clear();
-    md5_dec_.clear();
+    if (row_mt_ == 0) {
+      // Encode using single thread.
+      cfg_.g_threads = 1;
+      init_flags_ = AOM_CODEC_USE_PSNR;
+      ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+      std::vector<size_t> single_thr_size_enc;
+      std::vector<std::string> single_thr_md5_enc;
+      std::vector<std::string> single_thr_md5_dec;
+      single_thr_size_enc = size_enc_;
+      single_thr_md5_enc = md5_enc_;
+      single_thr_md5_dec = md5_dec_;
+      size_enc_.clear();
+      md5_enc_.clear();
+      md5_dec_.clear();
 
-    // Encode using multiple threads.
-    cfg_.g_threads = 4;
-    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
-    std::vector<size_t> multi_thr_size_enc;
-    std::vector<std::string> multi_thr_md5_enc;
-    std::vector<std::string> multi_thr_md5_dec;
-    multi_thr_size_enc = size_enc_;
-    multi_thr_md5_enc = md5_enc_;
-    multi_thr_md5_dec = md5_dec_;
-    size_enc_.clear();
-    md5_enc_.clear();
-    md5_dec_.clear();
+      // Encode using multiple threads.
+      cfg_.g_threads = 4;
+      ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+      std::vector<size_t> multi_thr_size_enc;
+      std::vector<std::string> multi_thr_md5_enc;
+      std::vector<std::string> multi_thr_md5_dec;
+      multi_thr_size_enc = size_enc_;
+      multi_thr_md5_enc = md5_enc_;
+      multi_thr_md5_dec = md5_dec_;
+      size_enc_.clear();
+      md5_enc_.clear();
+      md5_dec_.clear();
 
-    // Check that the vectors are equal.
-    ASSERT_EQ(single_thr_size_enc, multi_thr_size_enc);
-    ASSERT_EQ(single_thr_md5_enc, multi_thr_md5_enc);
-    ASSERT_EQ(single_thr_md5_dec, multi_thr_md5_dec);
+      // Check that the vectors are equal.
+      ASSERT_EQ(single_thr_size_enc, multi_thr_size_enc);
+      ASSERT_EQ(single_thr_md5_enc, multi_thr_md5_enc);
+      ASSERT_EQ(single_thr_md5_dec, multi_thr_md5_dec);
+    } else if (row_mt_ == 1) {
+      // Encode using multiple threads row-mt enabled.
+      cfg_.g_threads = 2;
+      ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+      std::vector<size_t> multi_thr2_row_mt_size_enc;
+      std::vector<std::string> multi_thr2_row_mt_md5_enc;
+      std::vector<std::string> multi_thr2_row_mt_md5_dec;
+      multi_thr2_row_mt_size_enc = size_enc_;
+      multi_thr2_row_mt_md5_enc = md5_enc_;
+      multi_thr2_row_mt_md5_dec = md5_dec_;
+      size_enc_.clear();
+      md5_enc_.clear();
+      md5_dec_.clear();
 
-    // Encode using multiple threads row-mt enabled.
-    row_mt_ = 1;
-    cfg_.g_threads = 2;
-    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
-    std::vector<size_t> multi_thr2_row_mt_size_enc;
-    std::vector<std::string> multi_thr2_row_mt_md5_enc;
-    std::vector<std::string> multi_thr2_row_mt_md5_dec;
-    multi_thr2_row_mt_size_enc = size_enc_;
-    multi_thr2_row_mt_md5_enc = md5_enc_;
-    multi_thr2_row_mt_md5_dec = md5_dec_;
-    size_enc_.clear();
-    md5_enc_.clear();
-    md5_dec_.clear();
+      // Disable threads=3 test for now to reduce the time so that the nightly
+      // test would not time out.
+      // cfg_.g_threads = 3;
+      // ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+      // std::vector<size_t> multi_thr3_row_mt_size_enc;
+      // std::vector<std::string> multi_thr3_row_mt_md5_enc;
+      // std::vector<std::string> multi_thr3_row_mt_md5_dec;
+      // multi_thr3_row_mt_size_enc = size_enc_;
+      // multi_thr3_row_mt_md5_enc = md5_enc_;
+      // multi_thr3_row_mt_md5_dec = md5_dec_;
+      // size_enc_.clear();
+      // md5_enc_.clear();
+      // md5_dec_.clear();
+      // Check that the vectors are equal.
+      // ASSERT_EQ(multi_thr3_row_mt_size_enc, multi_thr2_row_mt_size_enc);
+      // ASSERT_EQ(multi_thr3_row_mt_md5_enc, multi_thr2_row_mt_md5_enc);
+      // ASSERT_EQ(multi_thr3_row_mt_md5_dec, multi_thr2_row_mt_md5_dec);
 
-    // Disable threads=3 test for now to reduce the time so that the nightly
-    // test would not time out.
-    // cfg_.g_threads = 3;
-    // ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
-    // std::vector<size_t> multi_thr3_row_mt_size_enc;
-    // std::vector<std::string> multi_thr3_row_mt_md5_enc;
-    // std::vector<std::string> multi_thr3_row_mt_md5_dec;
-    // multi_thr3_row_mt_size_enc = size_enc_;
-    // multi_thr3_row_mt_md5_enc = md5_enc_;
-    // multi_thr3_row_mt_md5_dec = md5_dec_;
-    // size_enc_.clear();
-    // md5_enc_.clear();
-    // md5_dec_.clear();
-    // Check that the vectors are equal.
-    // ASSERT_EQ(multi_thr3_row_mt_size_enc, multi_thr2_row_mt_size_enc);
-    // ASSERT_EQ(multi_thr3_row_mt_md5_enc, multi_thr2_row_mt_md5_enc);
-    // ASSERT_EQ(multi_thr3_row_mt_md5_dec, multi_thr2_row_mt_md5_dec);
+      cfg_.g_threads = 4;
+      ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+      std::vector<size_t> multi_thr4_row_mt_size_enc;
+      std::vector<std::string> multi_thr4_row_mt_md5_enc;
+      std::vector<std::string> multi_thr4_row_mt_md5_dec;
+      multi_thr4_row_mt_size_enc = size_enc_;
+      multi_thr4_row_mt_md5_enc = md5_enc_;
+      multi_thr4_row_mt_md5_dec = md5_dec_;
+      size_enc_.clear();
+      md5_enc_.clear();
+      md5_dec_.clear();
 
-    cfg_.g_threads = 4;
-    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
-    std::vector<size_t> multi_thr4_row_mt_size_enc;
-    std::vector<std::string> multi_thr4_row_mt_md5_enc;
-    std::vector<std::string> multi_thr4_row_mt_md5_dec;
-    multi_thr4_row_mt_size_enc = size_enc_;
-    multi_thr4_row_mt_md5_enc = md5_enc_;
-    multi_thr4_row_mt_md5_dec = md5_dec_;
-    size_enc_.clear();
-    md5_enc_.clear();
-    md5_dec_.clear();
-
-    // Check that the vectors are equal.
-    ASSERT_EQ(multi_thr4_row_mt_size_enc, multi_thr2_row_mt_size_enc);
-    ASSERT_EQ(multi_thr4_row_mt_md5_enc, multi_thr2_row_mt_md5_enc);
-    ASSERT_EQ(multi_thr4_row_mt_md5_dec, multi_thr2_row_mt_md5_dec);
+      // Check that the vectors are equal.
+      ASSERT_EQ(multi_thr4_row_mt_size_enc, multi_thr2_row_mt_size_enc);
+      ASSERT_EQ(multi_thr4_row_mt_md5_enc, multi_thr2_row_mt_md5_enc);
+      ASSERT_EQ(multi_thr4_row_mt_md5_dec, multi_thr2_row_mt_md5_dec);
+    }
   }
 
   bool encoder_initialized_;
@@ -233,14 +234,15 @@ TEST_P(AVxEncoderThreadTestLarge, EncoderResultTest) {
 AV1_INSTANTIATE_TEST_CASE(AVxEncoderThreadTest,
                           ::testing::Values(::libaom_test::kTwoPassGood),
                           ::testing::Range(2, 4), ::testing::Values(0, 2),
-                          ::testing::Values(0, 1));
+                          ::testing::Values(0, 1), ::testing::Values(0, 1));
 
 // Test cpu_used 0 and 1.
 AV1_INSTANTIATE_TEST_CASE(AVxEncoderThreadTestLarge,
                           ::testing::Values(::libaom_test::kTwoPassGood,
                                             ::libaom_test::kOnePassGood),
                           ::testing::Range(0, 2), ::testing::Values(0, 1, 2, 6),
-                          ::testing::Values(0, 1, 2, 6));
+                          ::testing::Values(0, 1, 2, 6),
+                          ::testing::Values(0, 1));
 
 class AVxEncoderThreadLSTest : public AVxEncoderThreadTest {
   virtual void SetTileSize(libaom_test::Encoder *encoder) {
@@ -269,5 +271,5 @@ AV1_INSTANTIATE_TEST_CASE(AVxEncoderThreadLSTestLarge,
                           ::testing::Values(::libaom_test::kTwoPassGood,
                                             ::libaom_test::kOnePassGood),
                           ::testing::Range(0, 4), ::testing::Values(0, 6),
-                          ::testing::Values(0, 6));
+                          ::testing::Values(0, 6), ::testing::Values(0, 1));
 }  // namespace

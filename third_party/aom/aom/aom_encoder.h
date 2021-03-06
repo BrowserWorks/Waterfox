@@ -41,7 +41,7 @@ extern "C" {
  * fields to structures
  */
 #define AOM_ENCODER_ABI_VERSION \
-  (5 + AOM_CODEC_ABI_VERSION) /**<\hideinitializer*/
+  (8 + AOM_CODEC_ABI_VERSION) /**<\hideinitializer*/
 
 /*! \brief Encoder capabilities bitfield
  *
@@ -74,16 +74,9 @@ extern "C" {
  * This structure is able to hold a reference to any fixed size buffer.
  */
 typedef struct aom_fixed_buf {
-  void *buf;       /**< Pointer to the data */
+  void *buf;       /**< Pointer to the data. Does NOT own the data! */
   size_t sz;       /**< Length of the buffer, in chars */
 } aom_fixed_buf_t; /**< alias for struct aom_fixed_buf */
-
-/*!\brief Time Stamp Type
- *
- * An integer, which when multiplied by the stream's time base, provides
- * the absolute time of a sample.
- */
-typedef int64_t aom_codec_pts_t;
 
 /*!\brief Compressed Frame Flags
  *
@@ -97,10 +90,14 @@ typedef uint32_t aom_codec_frame_flags_t;
 /*!\brief frame can be dropped without affecting the stream (no future frame
  * depends on this one) */
 #define AOM_FRAME_IS_DROPPABLE 0x2
-/*!\brief frame should be decoded but will not be shown */
-#define AOM_FRAME_IS_INVISIBLE 0x4
-/*!\brief this is a fragment of the encoded frame */
-#define AOM_FRAME_IS_FRAGMENT 0x8
+/*!\brief this is an INTRA_ONLY frame */
+#define AOM_FRAME_IS_INTRAONLY 0x10
+/*!\brief this is an S-frame */
+#define AOM_FRAME_IS_SWITCH 0x20
+/*!\brief this is an error-resilient frame */
+#define AOM_FRAME_IS_ERROR_RESILIENT 0x40
+/*!\brief this is a key-frame dependent recovery-point frame */
+#define AOM_FRAME_IS_DELAYED_RANDOM_ACCESS_POINT 0x80
 
 /*!\brief Error Resilient flags
  *
@@ -204,6 +201,154 @@ enum aom_kf_mode {
   AOM_KF_AUTO,        /**< Encoder determines optimal placement automatically */
   AOM_KF_DISABLED = 0 /**< Encoder does not place keyframes. */
 };
+
+/*!\brief Encoder Config Options
+ *
+ * This type allows to enumerate and control flags defined for encoder control
+ * via config file at runtime.
+ */
+typedef struct cfg_options {
+  /*!\brief Indicate init by cfg file
+   * 0 or 1
+   */
+  unsigned int init_by_cfg_file;
+  /*!\brief Superblock size
+   * 0, 64 or 128
+   */
+  unsigned int super_block_size;
+  /*!\brief max partition size
+   * 8, 16, 32, 64, 128
+   */
+  unsigned int max_partition_size;
+  /*!\brief min partition size
+   * 8, 16, 32, 64, 128
+   */
+  unsigned int min_partition_size;
+  /*!\brief disable AB Shape partition type
+   *
+   */
+  unsigned int disable_ab_partition_type;
+  /*!\brief disable rectangular partition type
+   *
+   */
+  unsigned int disable_rect_partition_type;
+  /*!\brief disable 1:4/4:1 partition type
+   *
+   */
+  unsigned int disable_1to4_partition_type;
+  /*!\brief disable flip and identity transform type
+   *
+   */
+  unsigned int disable_flip_idtx;
+  /*!\brief disable CDEF filter
+   *
+   */
+  unsigned int disable_cdef;
+  /*!\brief disable Loop Restoration Filter
+   *
+   */
+  unsigned int disable_lr;
+  /*!\brief disable OBMC
+   *
+   */
+  unsigned int disable_obmc;
+  /*!\brief disable Warped Motion
+   *
+   */
+  unsigned int disable_warp_motion;
+  /*!\brief disable global motion
+   *
+   */
+  unsigned int disable_global_motion;
+  /*!\brief disable dist weighted compound
+   *
+   */
+  unsigned int disable_dist_wtd_comp;
+  /*!\brief disable diff weighted compound
+   *
+   */
+  unsigned int disable_diff_wtd_comp;
+  /*!\brief disable inter/intra compound
+   *
+   */
+  unsigned int disable_inter_intra_comp;
+  /*!\brief disable masked compound
+   *
+   */
+  unsigned int disable_masked_comp;
+  /*!\brief disable one sided compound
+   *
+   */
+  unsigned int disable_one_sided_comp;
+  /*!\brief disable Palette
+   *
+   */
+  unsigned int disable_palette;
+  /*!\brief disable Intra Block Copy
+   *
+   */
+  unsigned int disable_intrabc;
+  /*!\brief disable chroma from luma
+   *
+   */
+  unsigned int disable_cfl;
+  /*!\brief disable intra smooth mode
+   *
+   */
+  unsigned int disable_smooth_intra;
+  /*!\brief disable filter intra
+   *
+   */
+  unsigned int disable_filter_intra;
+  /*!\brief disable dual filter
+   *
+   */
+  unsigned int disable_dual_filter;
+  /*!\brief disable intra angle delta
+   *
+   */
+  unsigned int disable_intra_angle_delta;
+  /*!\brief disable intra edge filter
+   *
+   */
+  unsigned int disable_intra_edge_filter;
+  /*!\brief disable 64x64 transform
+   *
+   */
+  unsigned int disable_tx_64x64;
+  /*!\brief disable smooth inter/intra
+   *
+   */
+  unsigned int disable_smooth_inter_intra;
+  /*!\brief disable inter/inter wedge comp
+   *
+   */
+  unsigned int disable_inter_inter_wedge;
+  /*!\brief disable inter/intra wedge comp
+   *
+   */
+  unsigned int disable_inter_intra_wedge;
+  /*!\brief disable paeth intra
+   *
+   */
+  unsigned int disable_paeth_intra;
+  /*!\brief disable trellis quantization
+   *
+   */
+  unsigned int disable_trellis_quant;
+  /*!\brief disable ref frame MV
+   *
+   */
+  unsigned int disable_ref_frame_mv;
+  /*!\brief use reduced reference frame set
+   *
+   */
+  unsigned int reduced_reference_set;
+  /*!\brief use reduced transform type set
+   *
+   */
+  unsigned int reduced_tx_type_set;
+} cfg_options_t;
 
 /*!\brief Encoded Frame Flags
  *
@@ -402,8 +547,7 @@ typedef struct aom_codec_enc_cfg {
    * upscaling after the encode/decode process. Taking control of upscaling and
    * using restoration filters should allow it to outperform normal resizing.
    *
-   * Mode 0 is SUPERRES_NONE, mode 1 is SUPERRES_FIXED, mode 2 is
-   * SUPERRES_RANDOM and mode 3 is SUPERRES_QTHRESH.
+   * Valid values are 0 to 4 as defined in enum SUPERRES_MODE.
    */
   unsigned int rc_superres_mode;
 
@@ -721,10 +865,46 @@ typedef struct aom_codec_enc_cfg {
    */
   int tile_heights[MAX_TILE_HEIGHTS];
 
+  /*!\brief Whether encoder should use fixed QP offsets.
+   *
+   * If a value of 1 is provided, encoder will use fixed QP offsets for frames
+   * at different levels of the pyramid.
+   * - If 'fixed_qp_offsets' is also provided, encoder will use the given
+   * offsets
+   * - If not, encoder will select the fixed offsets based on the cq-level
+   *   provided.
+   * If a value of 0 is provided and fixed_qp_offset are not provided, encoder
+   * will NOT use fixed QP offsets.
+   * Note: This option is only relevant for --end-usage=q.
+   */
+  unsigned int use_fixed_qp_offsets;
+
+/*!\brief Number of fixed QP offsets
+ *
+ * This defines the number of elements in the fixed_qp_offsets array.
+ */
+#define FIXED_QP_OFFSET_COUNT 5
+
+  /*!\brief Array of fixed QP offsets
+   *
+   * This array specifies fixed QP offsets (range: 0 to 63) for frames at
+   * different levels of the pyramid. It is a comma-separated list of 5 values:
+   * - QP offset for keyframe
+   * - QP offset for ALTREF frame
+   * - QP offset for 1st level internal ARF
+   * - QP offset for 2nd level internal ARF
+   * - QP offset for 3rd level internal ARF
+   * Notes:
+   * - QP offset for leaf level frames is not explicitly specified. These frames
+   *   use the worst quality allowed (--cq-level).
+   * - This option is only relevant for --end-usage=q.
+   */
+  int fixed_qp_offsets[FIXED_QP_OFFSET_COUNT];
+
   /*!\brief Options defined per config file
    *
    */
-  cfg_options_t cfg;
+  cfg_options_t encoder_cfg;
 } aom_codec_enc_cfg_t; /**< alias for struct aom_codec_enc_cfg */
 
 /*!\brief Initialize an encoder instance
@@ -761,41 +941,9 @@ aom_codec_err_t aom_codec_enc_init_ver(aom_codec_ctx_t *ctx,
 #define aom_codec_enc_init(ctx, iface, cfg, flags) \
   aom_codec_enc_init_ver(ctx, iface, cfg, flags, AOM_ENCODER_ABI_VERSION)
 
-/*!\brief Initialize multi-encoder instance
+/*!\brief Get the default configuration for a usage.
  *
- * Initializes multi-encoder context using the given interface.
- * Applications should call the aom_codec_enc_init_multi convenience macro
- * instead of this function directly, to ensure that the ABI version number
- * parameter is properly initialized.
- *
- * \param[in]    ctx     Pointer to this instance's context.
- * \param[in]    iface   Pointer to the algorithm interface to use.
- * \param[in]    cfg     Configuration to use, if known.
- * \param[in]    num_enc Total number of encoders.
- * \param[in]    flags   Bitfield of AOM_CODEC_USE_* flags
- * \param[in]    dsf     Pointer to down-sampling factors.
- * \param[in]    ver     ABI version number. Must be set to
- *                       AOM_ENCODER_ABI_VERSION
- * \retval #AOM_CODEC_OK
- *     The decoder algorithm initialized.
- * \retval #AOM_CODEC_MEM_ERROR
- *     Memory allocation failed.
- */
-aom_codec_err_t aom_codec_enc_init_multi_ver(
-    aom_codec_ctx_t *ctx, aom_codec_iface_t *iface, aom_codec_enc_cfg_t *cfg,
-    int num_enc, aom_codec_flags_t flags, aom_rational_t *dsf, int ver);
-
-/*!\brief Convenience macro for aom_codec_enc_init_multi_ver()
- *
- * Ensures the ABI version parameter is properly set.
- */
-#define aom_codec_enc_init_multi(ctx, iface, cfg, num_enc, flags, dsf) \
-  aom_codec_enc_init_multi_ver(ctx, iface, cfg, num_enc, flags, dsf,   \
-                               AOM_ENCODER_ABI_VERSION)
-
-/*!\brief Get a default configuration
- *
- * Initializes a encoder configuration structure with default values. Supports
+ * Initializes an encoder configuration structure with default values. Supports
  * the notion of "usages" so that an algorithm may offer different default
  * settings depending on the user's intended goal. This function \ref SHOULD
  * be called by all applications to initialize the configuration structure
@@ -803,7 +951,9 @@ aom_codec_err_t aom_codec_enc_init_multi_ver(
  *
  * \param[in]    iface     Pointer to the algorithm interface to use.
  * \param[out]   cfg       Configuration buffer to populate.
- * \param[in]    reserved  Must set to 0.
+ * \param[in]    usage     Algorithm specific usage value. For AV1, must be
+ *                         set to AOM_USAGE_GOOD_QUALITY (0) or
+ *                         AOM_USAGE_REALTIME (1).
  *
  * \retval #AOM_CODEC_OK
  *     The configuration was populated.
@@ -814,7 +964,7 @@ aom_codec_err_t aom_codec_enc_init_multi_ver(
  */
 aom_codec_err_t aom_codec_enc_config_default(aom_codec_iface_t *iface,
                                              aom_codec_enc_cfg_t *cfg,
-                                             unsigned int reserved);
+                                             unsigned int usage);
 
 /*!\brief Set or change configuration
  *
@@ -857,6 +1007,11 @@ aom_codec_err_t aom_codec_enc_config_set(aom_codec_ctx_t *ctx,
  *     must be freed via call to free().
  */
 aom_fixed_buf_t *aom_codec_get_global_headers(aom_codec_ctx_t *ctx);
+
+/*!\brief usage parameter analogous to AV1 GOOD QUALITY mode. */
+#define AOM_USAGE_GOOD_QUALITY (0)
+/*!\brief usage parameter analogous to AV1 REALTIME mode. */
+#define AOM_USAGE_REALTIME (1)
 
 /*!\brief Encode a frame
  *

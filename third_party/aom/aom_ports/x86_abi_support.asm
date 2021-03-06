@@ -122,6 +122,13 @@
 ;    http://www.tortall.net/projects/yasm/ticket/236
 ;
 %ifdef CHROMIUM
+  %ifdef __NASM_VER__
+    %if __NASM_VERSION_ID__ < 0x020e0000 ; 2.14
+      ; nasm < 2.14 does not support :private_extern directive
+      %fatal Must use nasm 2.14 or newer
+    %endif
+  %endif
+
   %ifidn   __OUTPUT_FORMAT__,elf32
     %define PRIVATE :hidden
   %elifidn __OUTPUT_FORMAT__,elf64

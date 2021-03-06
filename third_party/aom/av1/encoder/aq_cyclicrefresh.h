@@ -27,9 +27,50 @@ extern "C" {
 // Maximum rate target ratio for setting segment delta-qp.
 #define CR_MAX_RATE_TARGET_RATIO 4.0
 
+struct CYCLIC_REFRESH {
+  // Percentage of blocks per frame that are targeted as candidates
+  // for cyclic refresh.
+  int percent_refresh;
+  // Maximum q-delta as percentage of base q.
+  int max_qdelta_perc;
+  // Superblock starting index for cycling through the frame.
+  int sb_index;
+  // Controls how long block will need to wait to be refreshed again, in
+  // excess of the cycle time, i.e., in the case of all zero motion, block
+  // will be refreshed every (100/percent_refresh + time_for_refresh) frames.
+  int time_for_refresh;
+  // Target number of (4x4) blocks that are set for delta-q.
+  int target_num_seg_blocks;
+  // Actual number of (4x4) blocks that were applied delta-q.
+  int actual_num_seg1_blocks;
+  int actual_num_seg2_blocks;
+  // RD mult. parameters for segment 1.
+  int rdmult;
+  // Cyclic refresh map.
+  int8_t *map;
+  // Map of the last q a block was coded at.
+  uint8_t *last_coded_q_map;
+  // Thresholds applied to the projected rate/distortion of the coding block,
+  // when deciding whether block should be refreshed.
+  int64_t thresh_rate_sb;
+  int64_t thresh_dist_sb;
+  // Threshold applied to the motion vector (in units of 1/8 pel) of the
+  // coding block, when deciding whether block should be refreshed.
+  int16_t motion_thresh;
+  // Rate target ratio to set q delta.
+  double rate_ratio_qdelta;
+  // Boost factor for rate target ratio, for segment CR_SEGMENT_ID_BOOST2.
+  int rate_boost_fac;
+  double low_content_avg;
+  int qindex_delta[3];
+  double weight_segment;
+  int apply_cyclic_refresh;
+  int cnt_zeromv;
+  double avg_frame_low_motion;
+};
+
 struct AV1_COMP;
 
-struct CYCLIC_REFRESH;
 typedef struct CYCLIC_REFRESH CYCLIC_REFRESH;
 
 CYCLIC_REFRESH *av1_cyclic_refresh_alloc(int mi_rows, int mi_cols);
@@ -54,18 +95,11 @@ void av1_cyclic_refresh_update_segment(const struct AV1_COMP *cpi,
                                        int mi_col, BLOCK_SIZE bsize,
                                        int64_t rate, int64_t dist, int skip);
 
-// Update the segmentation map, and related quantities: cyclic refresh map,
-// refresh sb_index, and target number of blocks to be refreshed.
-void av1_cyclic_refresh_update__map(struct AV1_COMP *const cpi);
-
-// Update the actual number of blocks that were applied the segment delta q.
+// Update the some stats after encode frame is done.
 void av1_cyclic_refresh_postencode(struct AV1_COMP *const cpi);
 
 // Set golden frame update interval, for 1 pass CBR mode.
 void av1_cyclic_refresh_set_golden_update(struct AV1_COMP *const cpi);
-
-// Check if we should not update golden reference, based on past refresh stats.
-void av1_cyclic_refresh_check_golden_update(struct AV1_COMP *const cpi);
 
 // Set/update global/frame level refresh parameters.
 void av1_cyclic_refresh_update_parameters(struct AV1_COMP *const cpi);

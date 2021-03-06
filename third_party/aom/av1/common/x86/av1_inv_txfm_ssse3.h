@@ -72,13 +72,13 @@ static INLINE void round_shift_16bit_ssse3(__m128i *in, int size, int bit) {
 }
 
 // 1D itx types
-typedef enum ATTRIBUTE_PACKED {
+enum {
   IDCT_1D,
   IADST_1D,
   IFLIPADST_1D = IADST_1D,
   IIDENTITY_1D,
   ITX_TYPES_1D,
-} ITX_TYPE_1D;
+} UENUM1BYTE(ITX_TYPE_1D);
 
 static const ITX_TYPE_1D vitx_1d_tab[TX_TYPES] = {
   IDCT_1D,      IADST_1D,     IDCT_1D,      IADST_1D,

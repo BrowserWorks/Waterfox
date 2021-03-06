@@ -20,7 +20,7 @@
 #include "aom_ports/aom_timer.h"
 
 // Macros
-#define GET_PARAM(k) ::testing::get<k>(GetParam())
+#define GET_PARAM(k) std::get<k>(GetParam())
 
 inline double compute_psnr(const aom_image_t *img1, const aom_image_t *img2) {
   assert((img1->fmt == img2->fmt) && (img1->d_w == img2->d_w) &&

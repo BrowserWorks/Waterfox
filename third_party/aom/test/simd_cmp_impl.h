@@ -469,11 +469,8 @@ typedef struct {
   fptr simd;
 } mapping;
 
-#define MAP(name)                                \
-  {                                              \
-    #name, reinterpret_cast < fptr > (c_##name), \
-        reinterpret_cast < fptr > (name)         \
-  }
+#define MAP(name) \
+  { #name, reinterpret_cast < fptr>(c_##name), reinterpret_cast < fptr>(name) }
 
 const mapping m[] = { MAP(v64_sad_u8),
                       MAP(v64_ssd_u8),
@@ -1478,8 +1475,8 @@ int CompareSimd3Args(fptr store, fptr load1, fptr load2, fptr load3, fptr simd,
       (CArg1(*const)(const void *))c_load1;
   CArg2 (*const my_c_load2)(const void *) =
       (CArg2(*const)(const void *))c_load2;
-  CArg2 (*const my_c_load3)(const void *) =
-      (CArg2(*const)(const void *))c_load3;
+  CArg3 (*const my_c_load3)(const void *) =
+      (CArg3(*const)(const void *))c_load3;
   CRet (*const my_c_simd)(CArg1, CArg2, CArg3) =
       (CRet(*const)(CArg1, CArg2, CArg3))c_simd;
 
@@ -1734,8 +1731,9 @@ void TestSimd1Arg(uint32_t iterations, uint32_t mask, uint32_t maskwidth,
   }
 
   EXPECT_EQ(0, error) << "Error: mismatch for " << name << "("
-                      << Print(s, sizeof(s)) << ") -> " << Print(d, sizeof(d))
-                      << " (simd), " << Print(ref_d, sizeof(ref_d)) << " (ref)";
+                      << Print(s, sizeof(CArg)) << ") -> "
+                      << Print(d, sizeof(CRet)) << " (simd), "
+                      << Print(ref_d, sizeof(CRet)) << " (ref)";
 }
 
 template <typename CRet, typename CArg1, typename CArg2>
@@ -1990,9 +1988,10 @@ void TestSimd2Args(uint32_t iterations, uint32_t mask, uint32_t maskwidth,
   }
 
   EXPECT_EQ(0, error) << "Error: mismatch for " << name << "("
-                      << Print(s1, sizeof(s1)) << ", " << Print(s2, sizeof(s2))
-                      << ") -> " << Print(d, sizeof(d)) << " (simd), "
-                      << Print(ref_d, sizeof(ref_d)) << " (ref)";
+                      << Print(s1, sizeof(CArg1)) << ", "
+                      << Print(s2, sizeof(CArg2)) << ") -> "
+                      << Print(d, sizeof(CRet)) << " (simd), "
+                      << Print(ref_d, sizeof(CRet)) << " (ref)";
 }
 
 template <typename CRet, typename CArg1, typename CArg2, typename CArg3>
@@ -2066,10 +2065,11 @@ void TestSimd3Args(uint32_t iterations, uint32_t mask, uint32_t maskwidth,
   }
 
   EXPECT_EQ(0, error) << "Error: mismatch for " << name << "("
-                      << Print(s1, sizeof(s1)) << ", " << Print(s2, sizeof(s2))
-                      << ", " << Print(s3, sizeof(s3)) << ") -> "
-                      << Print(d, sizeof(d)) << " (simd), "
-                      << Print(ref_d, sizeof(ref_d)) << " (ref)";
+                      << Print(s1, sizeof(CArg1)) << ", "
+                      << Print(s2, sizeof(CArg2)) << ", "
+                      << Print(s3, sizeof(CArg3)) << ") -> "
+                      << Print(d, sizeof(CRet)) << " (simd), "
+                      << Print(ref_d, sizeof(CRet)) << " (ref)";
 }
 
 // Instantiations to make the functions callable from another files

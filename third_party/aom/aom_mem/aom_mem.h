@@ -38,6 +38,10 @@ void *aom_calloc(size_t num, size_t size);
 void aom_free(void *memblk);
 void *aom_memset16(void *dest, int val, size_t length);
 
+/*returns an addr aligned to the byte boundary specified by align*/
+#define aom_align_addr(addr, align) \
+  (void *)(((uintptr_t)(addr) + ((align)-1)) & ~(uintptr_t)((align)-1))
+
 #include <string.h>
 
 #ifdef AOM_MEM_PLTFRM

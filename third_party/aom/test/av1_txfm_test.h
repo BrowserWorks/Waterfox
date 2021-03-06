@@ -29,14 +29,14 @@
 #include "av1/common/enums.h"
 
 namespace libaom_test {
-typedef enum {
+enum {
   TYPE_DCT = 0,
   TYPE_ADST,
   TYPE_IDTX,
   TYPE_IDCT,
   TYPE_IADST,
   TYPE_LAST
-} TYPE_TXFM;
+} UENUM1BYTE(TYPE_TXFM);
 
 int get_txfm1d_size(TX_SIZE tx_size);
 

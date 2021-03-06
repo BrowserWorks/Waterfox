@@ -20,111 +20,123 @@ set(AOM_DOXYGEN_CONFIG_TEMPLATE "libs.doxy_template")
 set(AOM_DOXYGEN_OUTPUT_DIR "${AOM_CONFIG_DIR}/dox")
 set(AOM_DOXYGEN_SECTIONS "av1")
 
-set(AOM_DOXYGEN_SOURCES
-    "${AOM_ROOT}/aom/aom.h"
-    "${AOM_ROOT}/aom/aom_codec.h"
-    "${AOM_ROOT}/aom/aom_decoder.h"
-    "${AOM_ROOT}/aom/aom_encoder.h"
-    "${AOM_ROOT}/aom/aom_frame_buffer.h"
-    "${AOM_ROOT}/aom/aom_image.h"
-    "${AOM_ROOT}/aom/aom_integer.h"
-    "${AOM_ROOT}/keywords.dox"
-    "${AOM_ROOT}/mainpage.dox"
-    "${AOM_ROOT}/usage.dox")
+set(AOM_DOXYGEN_SOURCES "${AOM_ROOT}/aom/aom.h" "${AOM_ROOT}/aom/aom_codec.h"
+                        "${AOM_ROOT}/aom/aom_decoder.h"
+                        "${AOM_ROOT}/aom/aom_encoder.h"
+                        "${AOM_ROOT}/aom/aom_frame_buffer.h"
+                        "${AOM_ROOT}/aom/aom_image.h"
+                        "${AOM_ROOT}/aom/aom_integer.h"
+                        "${AOM_ROOT}/keywords.dox" "${AOM_ROOT}/mainpage.dox"
+                        "${AOM_ROOT}/usage.dox")
 
 if(CONFIG_AV1_DECODER)
   set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-      "${AOM_ROOT}/apps/aomdec.c" "${AOM_ROOT}/examples/decode_to_md5.c"
-      "${AOM_ROOT}/examples/decode_with_drops.c"
-      "${AOM_ROOT}/examples/simple_decoder.c")
+                                  "${AOM_ROOT}/apps/aomdec.c"
+                                  "${AOM_ROOT}/examples/decode_to_md5.c"
+                                  "${AOM_ROOT}/examples/decode_with_drops.c"
+                                  "${AOM_ROOT}/examples/simple_decoder.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Full featured decoder." "Frame by frame MD5 checksum."
-      "Drops frames while decoding." "Simplified decoder loop.")
+                                       "Full featured decoder."
+                                       "Frame by frame MD5 checksum."
+                                       "Drops frames while decoding."
+                                       "Simplified decoder loop.")
 
   set(AOM_DOXYGEN_SECTIONS ${AOM_DOXYGEN_SECTIONS} "av1_decoder decoder")
 
   set(AOM_DOXYGEN_SOURCES ${AOM_DOXYGEN_SOURCES} "${AOM_ROOT}/aom/aomdx.h"
-      "${AOM_ROOT}/usage_dx.dox")
+                          "${AOM_ROOT}/usage_dx.dox")
 
   if(CONFIG_ANALYZER)
     set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-        "${AOM_ROOT}/examples/analyzer.cc")
+                                    "${AOM_ROOT}/examples/analyzer.cc")
 
     set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-        "Bitstream analyzer.")
+                                         "Bitstream analyzer.")
   endif()
 
   if(CONFIG_INSPECTION)
     set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-        "${AOM_ROOT}/examples/inspect.c")
+                                    "${AOM_ROOT}/examples/inspect.c")
 
     set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-        "Bitstream inspector.")
+                                         "Bitstream inspector.")
   endif()
 endif()
 
 if(CONFIG_AV1_ENCODER)
   set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-      "${AOM_ROOT}/apps/aomenc.c" "${AOM_ROOT}/examples/lossless_encoder.c"
-      "${AOM_ROOT}/examples/set_maps.c" "${AOM_ROOT}/examples/simple_encoder.c"
-      "${AOM_ROOT}/examples/twopass_encoder.c")
+                                  "${AOM_ROOT}/apps/aomenc.c"
+                                  "${AOM_ROOT}/examples/lossless_encoder.c"
+                                  "${AOM_ROOT}/examples/set_maps.c"
+                                  "${AOM_ROOT}/examples/simple_encoder.c"
+                                  "${AOM_ROOT}/examples/twopass_encoder.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Full featured encoder." "Simplified lossless encoder."
-      "Set active and ROI maps." "Simplified encoder loop."
-      "Two-pass encoder loop.")
+                                       "Full featured encoder."
+                                       "Simplified lossless encoder."
+                                       "Set active and ROI maps."
+                                       "Simplified encoder loop."
+                                       "Two-pass encoder loop.")
 
   set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-      "${AOM_ROOT}/examples/scalable_encoder.c")
+                                  "${AOM_ROOT}/examples/scalable_encoder.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Scalable encoder loop.")
+                                       "Scalable encoder loop.")
+
+  set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
+                                  "${AOM_ROOT}/examples/svc_encoder_rtc.c")
+
+  set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
+                                       "Layered encoder for RTC.")
 
   set(AOM_DOXYGEN_SECTIONS ${AOM_DOXYGEN_SECTIONS} "av1_encoder encoder")
 
   set(AOM_DOXYGEN_SOURCES ${AOM_DOXYGEN_SOURCES} "${AOM_ROOT}/aom/aomcx.h"
-      "${AOM_ROOT}/usage_cx.dox")
+                          "${AOM_ROOT}/usage_cx.dox")
 endif()
 
 if(CONFIG_AV1_DECODER AND CONFIG_AV1_ENCODER)
   set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-      "${AOM_ROOT}/examples/aom_cx_set_ref.c")
+                                  "${AOM_ROOT}/examples/aom_cx_set_ref.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Set encoder reference frame.")
+                                       "Set encoder reference frame.")
 endif()
 
 if(CONFIG_AV1_ENCODER)
   set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-      "${AOM_ROOT}/examples/lightfield_encoder.c")
+                                  "${AOM_ROOT}/examples/lightfield_encoder.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Lightfield encoder example.")
+                                       "Lightfield encoder example.")
 endif()
 
 if(CONFIG_AV1_DECODER)
-  set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
+  set(AOM_DOXYGEN_EXAMPLE_SOURCES
+      ${AOM_DOXYGEN_EXAMPLE_SOURCES}
       "${AOM_ROOT}/examples/lightfield_tile_list_decoder.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Lightfield tile list decoder example.")
+                                       "Lightfield tile list decoder example.")
 endif()
 
 if(CONFIG_AV1_DECODER)
   set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
-      "${AOM_ROOT}/examples/lightfield_decoder.c")
+                                  "${AOM_ROOT}/examples/lightfield_decoder.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Lightfield decoder example.")
+                                       "Lightfield decoder example.")
 endif()
 
 if(CONFIG_AV1_DECODER AND CONFIG_AV1_ENCODER)
-  set(AOM_DOXYGEN_EXAMPLE_SOURCES ${AOM_DOXYGEN_EXAMPLE_SOURCES}
+  set(AOM_DOXYGEN_EXAMPLE_SOURCES
+      ${AOM_DOXYGEN_EXAMPLE_SOURCES}
       "${AOM_ROOT}/examples/lightfield_bitstream_parsing.c")
 
   set(AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS ${AOM_DOXYGEN_EXAMPLE_DESCRIPTIONS}
-      "Lightfield bitstream parsing example.")
+                                       "Lightfield bitstream parsing example.")
 endif()
 
 # Iterates over list named by $list_name and appends each item to $AOM_DOXYFILE
@@ -169,25 +181,19 @@ function(setup_documentation_targets)
 
   # Generate samples.dox, an index page that refers to the example_basename.dox
   # files that were just created.
-  set(
-    samples_header
-    "
+  set(samples_header "
 /*!\\page samples Sample Code
 This SDK includes a number of sample applications. Each sample documents a
 feature of the SDK in both prose and the associated C code. The following
 samples are included:
-"
-    )
+")
 
-  set(
-    utils_desc
-    "
+  set(utils_desc "
 In addition, the SDK contains a number of utilities. Since these utilities are
 built upon the concepts described in the sample code listed above, they are not
 documented in pieces like the samples are. Their source is included here for
 reference. The following utilities are included:
-"
-    )
+")
 
   # Write the description for the samples section.
   set(samples_dox "${AOM_CONFIG_DIR}/samples.dox")
@@ -230,11 +236,11 @@ reference. The following utilities are included:
   file(READ "${AOM_ROOT}/${AOM_DOXYGEN_CONFIG_TEMPLATE}" doxygen_template_data)
   file(APPEND "${AOM_DOXYFILE}" ${doxygen_template_data})
   file(APPEND "${AOM_DOXYFILE}"
-              "EXAMPLE_PATH += ${AOM_ROOT} ${AOM_ROOT}/examples\n")
+       "EXAMPLE_PATH += ${AOM_ROOT} ${AOM_ROOT}/examples\n")
   file(APPEND "${AOM_DOXYFILE}"
-              "INCLUDE_PATH += ${AOM_CONFIG_DIR} ${AOM_ROOT}\n")
+       "INCLUDE_PATH += ${AOM_CONFIG_DIR} ${AOM_ROOT}\n")
   file(APPEND "${AOM_DOXYFILE}"
-              "STRIP_FROM_PATH += ${AOM_ROOT} ${AOM_CONFIG_DIR}\n")
+       "STRIP_FROM_PATH += ${AOM_ROOT} ${AOM_CONFIG_DIR}\n")
   write_cmake_list_to_doxygen_config_var("INPUT" "AOM_DOXYGEN_SOURCES")
   write_cmake_list_to_doxygen_config_var("ENABLED_SECTIONS"
                                          "AOM_DOXYGEN_SECTIONS")

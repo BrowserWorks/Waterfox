@@ -12,6 +12,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <tuple>
 #include <vector>
 
 #include "config/av1_rtcd.h"
@@ -23,16 +24,16 @@
 #include "av1/encoder/hybrid_fwd_txfm.h"
 
 using libaom_test::ACMRandom;
-using libaom_test::TYPE_TXFM;
 using libaom_test::bd;
 using libaom_test::compute_avg_abs_error;
 using libaom_test::input_base;
+using libaom_test::TYPE_TXFM;
 
 using std::vector;
 
 namespace {
 // tx_type_, tx_size_, max_error_, max_avg_error_
-typedef ::testing::tuple<TX_TYPE, TX_SIZE, double, double> AV1FwdTxfm2dParam;
+typedef std::tuple<TX_TYPE, TX_SIZE, double, double> AV1FwdTxfm2dParam;
 
 class AV1FwdTxfm2d : public ::testing::TestWithParam<AV1FwdTxfm2dParam> {
  public:
@@ -196,8 +197,8 @@ vector<AV1FwdTxfm2dParam> GetTxfm2dParamList() {
   return param_list;
 }
 
-INSTANTIATE_TEST_CASE_P(C, AV1FwdTxfm2d,
-                        ::testing::ValuesIn(GetTxfm2dParamList()));
+INSTANTIATE_TEST_SUITE_P(C, AV1FwdTxfm2d,
+                         ::testing::ValuesIn(GetTxfm2dParamList()));
 
 TEST_P(AV1FwdTxfm2d, RunFwdAccuracyCheck) { RunFwdAccuracyCheck(); }
 
@@ -288,14 +289,78 @@ void AV1FwdTxfm2dMatchTest(TX_SIZE tx_size, lowbd_fwd_txfm_func target_func) {
   }
 }
 
-typedef ::testing::tuple<TX_SIZE, lowbd_fwd_txfm_func> LbdFwdTxfm2dParam;
+void AV1FwdTxfm2dSpeedTest(TX_SIZE tx_size, lowbd_fwd_txfm_func target_func) {
+  TxfmParam param;
+  memset(&param, 0, sizeof(param));
+  const int rows = tx_size_high[tx_size];
+  const int cols = tx_size_wide[tx_size];
+  const int num_loops = 1000000 / (rows * cols);
+
+  for (int i = 0; i < 2; ++i) {
+    const int bd = 8;
+    for (int tx_type = 0; tx_type < TX_TYPES; ++tx_type) {
+      if (libaom_test::IsTxSizeTypeValid(
+              tx_size, static_cast<TX_TYPE>(tx_type)) == false) {
+        continue;
+      }
+
+      FwdTxfm2dFunc ref_func = libaom_test::fwd_txfm_func_ls[tx_size];
+      if (ref_func != NULL) {
+        DECLARE_ALIGNED(32, int16_t, input[64 * 64]) = { 0 };
+        DECLARE_ALIGNED(32, int32_t, output[64 * 64]);
+        DECLARE_ALIGNED(32, int32_t, ref_output[64 * 64]);
+        int input_stride = 64;
+        ACMRandom rnd(ACMRandom::DeterministicSeed());
+
+        for (int r = 0; r < rows; ++r) {
+          for (int c = 0; c < cols; ++c) {
+            input[r * input_stride + c] = rnd.Rand16() % (1 << bd);
+          }
+        }
+
+        param.tx_type = (TX_TYPE)tx_type;
+        param.tx_size = (TX_SIZE)tx_size;
+        param.tx_set_type = EXT_TX_SET_ALL16;
+        param.bd = bd;
+
+        aom_usec_timer ref_timer, test_timer;
+
+        aom_usec_timer_start(&ref_timer);
+        for (int i = 0; i < num_loops; ++i) {
+          ref_func(input, ref_output, input_stride, (TX_TYPE)tx_type, bd);
+        }
+        aom_usec_timer_mark(&ref_timer);
+        const int elapsed_time_c =
+            static_cast<int>(aom_usec_timer_elapsed(&ref_timer));
+
+        aom_usec_timer_start(&test_timer);
+        for (int i = 0; i < num_loops; ++i) {
+          target_func(input, output, input_stride, &param);
+        }
+        aom_usec_timer_mark(&test_timer);
+        const int elapsed_time_simd =
+            static_cast<int>(aom_usec_timer_elapsed(&test_timer));
+
+        printf(
+            "txfm_size[%d] \t txfm_type[%d] \t c_time=%d \t simd_time=%d \t "
+            "gain=%d \n",
+            tx_size, tx_type, elapsed_time_c, elapsed_time_simd,
+            (elapsed_time_c / elapsed_time_simd));
+      }
+    }
+  }
+}
+
+typedef std::tuple<TX_SIZE, lowbd_fwd_txfm_func> LbdFwdTxfm2dParam;
 
 class AV1FwdTxfm2dTest : public ::testing::TestWithParam<LbdFwdTxfm2dParam> {};
 
 TEST_P(AV1FwdTxfm2dTest, match) {
   AV1FwdTxfm2dMatchTest(GET_PARAM(0), GET_PARAM(1));
 }
-
+TEST_P(AV1FwdTxfm2dTest, DISABLED_Speed) {
+  AV1FwdTxfm2dSpeedTest(GET_PARAM(0), GET_PARAM(1));
+}
 using ::testing::Combine;
 using ::testing::Values;
 using ::testing::ValuesIn;
@@ -323,9 +388,9 @@ static TX_SIZE fwd_txfm_for_sse2[] = {
   TX_64X16,
 };
 
-INSTANTIATE_TEST_CASE_P(SSE2, AV1FwdTxfm2dTest,
-                        Combine(ValuesIn(fwd_txfm_for_sse2),
-                                Values(av1_lowbd_fwd_txfm_sse2)));
+INSTANTIATE_TEST_SUITE_P(SSE2, AV1FwdTxfm2dTest,
+                         Combine(ValuesIn(fwd_txfm_for_sse2),
+                                 Values(av1_lowbd_fwd_txfm_sse2)));
 #endif  // HAVE_SSE2
 
 #if HAVE_SSE4_1
@@ -336,9 +401,9 @@ static TX_SIZE fwd_txfm_for_sse41[] = {
   TX_64X32,
 };
 
-INSTANTIATE_TEST_CASE_P(SSE4_1, AV1FwdTxfm2dTest,
-                        Combine(ValuesIn(fwd_txfm_for_sse41),
-                                Values(av1_lowbd_fwd_txfm_sse4_1)));
+INSTANTIATE_TEST_SUITE_P(SSE4_1, AV1FwdTxfm2dTest,
+                         Combine(ValuesIn(fwd_txfm_for_sse41),
+                                 Values(av1_lowbd_fwd_txfm_sse4_1)));
 #endif  // HAVE_SSE4_1
 
 #if HAVE_AVX2
@@ -348,9 +413,9 @@ static TX_SIZE fwd_txfm_for_avx2[] = {
   TX_16X4, TX_8X32, TX_32X8,  TX_16X64, TX_64X16,
 };
 
-INSTANTIATE_TEST_CASE_P(AVX2, AV1FwdTxfm2dTest,
-                        Combine(ValuesIn(fwd_txfm_for_avx2),
-                                Values(av1_lowbd_fwd_txfm_avx2)));
+INSTANTIATE_TEST_SUITE_P(AVX2, AV1FwdTxfm2dTest,
+                         Combine(ValuesIn(fwd_txfm_for_avx2),
+                                 Values(av1_lowbd_fwd_txfm_avx2)));
 #endif  // HAVE_AVX2
 
 typedef void (*Highbd_fwd_txfm_func)(const int16_t *src_diff, tran_low_t *coeff,
@@ -479,7 +544,7 @@ void AV1HighbdFwdTxfm2dSpeedTest(TX_SIZE tx_size,
   }
 }
 
-typedef ::testing::tuple<TX_SIZE, Highbd_fwd_txfm_func> HighbdFwdTxfm2dParam;
+typedef std::tuple<TX_SIZE, Highbd_fwd_txfm_func> HighbdFwdTxfm2dParam;
 
 class AV1HighbdFwdTxfm2dTest
     : public ::testing::TestWithParam<HighbdFwdTxfm2dParam> {};
@@ -503,9 +568,16 @@ static TX_SIZE Highbd_fwd_txfm_for_sse4_1[] = {
   TX_16X4, TX_8X32, TX_32X8,  TX_16X64, TX_64X16,
 };
 
-INSTANTIATE_TEST_CASE_P(SSE4_1, AV1HighbdFwdTxfm2dTest,
-                        Combine(ValuesIn(Highbd_fwd_txfm_for_sse4_1),
-                                Values(av1_highbd_fwd_txfm)));
+INSTANTIATE_TEST_SUITE_P(SSE4_1, AV1HighbdFwdTxfm2dTest,
+                         Combine(ValuesIn(Highbd_fwd_txfm_for_sse4_1),
+                                 Values(av1_highbd_fwd_txfm)));
 #endif  // HAVE_SSE4_1
+#if HAVE_AVX2
+static TX_SIZE Highbd_fwd_txfm_for_avx2[] = { TX_8X8,   TX_16X16, TX_32X32,
+                                              TX_64X64, TX_8X16,  TX_16X8 };
 
+INSTANTIATE_TEST_SUITE_P(AVX2, AV1HighbdFwdTxfm2dTest,
+                         Combine(ValuesIn(Highbd_fwd_txfm_for_avx2),
+                                 Values(av1_highbd_fwd_txfm)));
+#endif  // HAVE_AVX2
 }  // namespace

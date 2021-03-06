@@ -149,6 +149,11 @@ const AvxInterface *get_aom_encoder_by_name(const char *name) {
 
   return NULL;
 }
+
+// large scale tile encoding
+static const AvxInterface aom_lst_encoder = { "av1", LST_FOURCC,
+                                              &aom_codec_av1_cx };
+const AvxInterface *get_aom_lst_encoder(void) { return &aom_lst_encoder; }
 #endif  // CONFIG_AV1_ENCODER
 
 #if CONFIG_AV1_DECODER
@@ -283,6 +288,7 @@ static void lowbd_img_upshift(aom_image_t *dst, const aom_image_t *src,
     fatal("Unsupported image conversion");
   }
   switch (src->fmt) {
+    case AOM_IMG_FMT_YV12:
     case AOM_IMG_FMT_I420:
     case AOM_IMG_FMT_I422:
     case AOM_IMG_FMT_I444: break;
@@ -421,5 +427,82 @@ void aom_img_downshift(aom_image_t *dst, const aom_image_t *src,
     highbd_img_downshift(dst, src, down_shift);
   } else {
     lowbd_img_downshift(dst, src, down_shift);
+  }
+}
+
+static int img_shifted_realloc_required(const aom_image_t *img,
+                                        const aom_image_t *shifted,
+                                        aom_img_fmt_t required_fmt) {
+  return img->d_w != shifted->d_w || img->d_h != shifted->d_h ||
+         required_fmt != shifted->fmt;
+}
+
+void aom_shift_img(unsigned int output_bit_depth, aom_image_t **img_ptr,
+                   aom_image_t **img_shifted_ptr) {
+  aom_image_t *img = *img_ptr;
+  aom_image_t *img_shifted = *img_shifted_ptr;
+
+  const aom_img_fmt_t shifted_fmt = output_bit_depth == 8
+                                        ? img->fmt & ~AOM_IMG_FMT_HIGHBITDEPTH
+                                        : img->fmt | AOM_IMG_FMT_HIGHBITDEPTH;
+
+  if (shifted_fmt != img->fmt || output_bit_depth != img->bit_depth) {
+    if (img_shifted &&
+        img_shifted_realloc_required(img, img_shifted, shifted_fmt)) {
+      aom_img_free(img_shifted);
+      img_shifted = NULL;
+    }
+    if (img_shifted) {
+      img_shifted->monochrome = img->monochrome;
+    }
+    if (!img_shifted) {
+      img_shifted = aom_img_alloc(NULL, shifted_fmt, img->d_w, img->d_h, 16);
+      img_shifted->bit_depth = output_bit_depth;
+      img_shifted->monochrome = img->monochrome;
+      img_shifted->csp = img->csp;
+    }
+    if (output_bit_depth > img->bit_depth) {
+      aom_img_upshift(img_shifted, img, output_bit_depth - img->bit_depth);
+    } else {
+      aom_img_downshift(img_shifted, img, img->bit_depth - output_bit_depth);
+    }
+    *img_shifted_ptr = img_shifted;
+    *img_ptr = img_shifted;
+  }
+}
+
+// Related to I420, NV12 format has one luma "luminance" plane Y and one plane
+// with U and V values interleaved.
+void aom_img_write_nv12(const aom_image_t *img, FILE *file) {
+  // Y plane
+  const unsigned char *buf = img->planes[0];
+  int stride = img->stride[0];
+  int w = aom_img_plane_width(img, 0) *
+          ((img->fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? 2 : 1);
+  int h = aom_img_plane_height(img, 0);
+  int x, y;
+
+  for (y = 0; y < h; ++y) {
+    fwrite(buf, 1, w, file);
+    buf += stride;
+  }
+
+  // Interleaved U and V plane
+  const unsigned char *ubuf = img->planes[1];
+  const unsigned char *vbuf = img->planes[2];
+  const size_t size = (img->fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? 2 : 1;
+  stride = img->stride[1];
+  w = aom_img_plane_width(img, 1);
+  h = aom_img_plane_height(img, 1);
+
+  for (y = 0; y < h; ++y) {
+    for (x = 0; x < w; ++x) {
+      fwrite(ubuf, size, 1, file);
+      fwrite(vbuf, size, 1, file);
+      ubuf += size;
+      vbuf += size;
+    }
+    ubuf += (stride - w * size);
+    vbuf += (stride - w * size);
   }
 }
