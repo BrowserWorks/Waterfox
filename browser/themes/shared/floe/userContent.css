@@ -1,4 +1,4 @@
-/* Additional styling for Floe theme for Waterfox Current
+/* Additional styling for Floe theme for Waterfox G3
 /* Author: Stefano Rosselli
 */
 
@@ -69,7 +69,6 @@
   --wfx-in-content-page-bg-color: var(--wfx-gray-30);
   --wfx-arrowpanel-bg-color: var(--wfx-gray-05);
   --wfx-tree-bg-color: var(--wfx-gray-05);
-  --wfx-tree-row-bg-odd-color: rgba(250,250,253,.5);
   
   /* Border radius */
   --wfx-border-radius: 3px;
@@ -170,7 +169,7 @@
   
   --neutralLight: rgb(60,60,60) !important;
   --prefs-table-border: 1px solid var(--wfx-separator-color) !important;
-  --shadow-30: 0 15px 30px rgba(0,0,0,.75) !important;
+  --shadow-30: 0 15px 30px rgba(0,0,0,.3) !important;
   --preference-unselected-color: var(--wfx-dimmed-content-color) !important;
   --gear-icon-fill: var(--wfx-content-color) !important;
   
@@ -274,6 +273,71 @@
 }
 
 
+@-moz-document url-prefix("about:preferences") {
+
+  menulist {
+    padding: 4px 8px !important; /* <-- adjusts dropdown arrow vertical alignment - added for WFX G3.1.1+ */
+  }
+
+}
+
+@-moz-document url-prefix("chrome://browser/content/preferences/dialogs/") {
+
+  menulist {
+    padding: 5px 8px !important; /* <-- adjusts dropdown arrow vertical alignment in preferences dialogs - added for WFX G3.1.1+ */
+  }
+
+}
+
+
+/* Added for WFX G3.1.1+ */
+/* Replaces 'Firefox Nightly' logo by WFX logo in 'about:debugging' */
+@-moz-document url-prefix("about:debugging") {
+  
+  /* Hides Firefox Nightly logo in the main heading and sidebar navigation */
+  h1.main-heading.runtime-info img[src="chrome://devtools/skin/images/aboutdebugging-firefox-nightly.svg"],
+  .sidebar-fixed-item__container img[src="chrome://devtools/skin/images/aboutdebugging-firefox-logo.svg"] {
+    visibility: hidden !important;
+  }
+
+  a[href="#/runtime/this-firefox"] .sidebar-fixed-item__container {
+    -moz-context-properties: fill;
+    fill: currentColor !important;
+    background-position: center left !important;
+    background-repeat: no-repeat !important;
+    background-size: 24px auto !important;
+  }
+
+  a[href="#/runtime/this-firefox"] .sidebar-fixed-item__container {
+    background-image: url("img/monochromatic-logomark.svg") !important;
+  }
+  
+  h1.main-heading.runtime-info {
+    background-image: url("chrome://branding/content/icon128.png") !important;
+    background-position: center left !important;
+    background-repeat: no-repeat !important;
+    background-size: 64px auto !important;
+  }
+
+}
+
+
+/* Added for WFX G3.1.1+ */
+@-moz-document url-prefix("about:welcome") {
+
+  .multistageContainer button.secondary:hover,
+  .multistageContainer .tiles-container.info:hover {
+    background-color: transparent !important;
+  }
+  
+  .multistageContainer button.secondary,
+  .multistageContainer button.secondary:hover {
+    color: var(--wfx-lt-primary-color) !important;
+  }
+  
+}
+
+
 @-moz-document url-prefix("chrome://browser/content/preferences/dialogs/"),
 			   url("chrome://mozapps/content/update/history.xhtml") {
 
@@ -282,8 +346,8 @@
   }
 
   separator.groove:not([orient="vertical"]) {
-	border-top: 1px solid var(--wfx-separator-color) !important;
-	border-bottom: 0 !important;
+    border-top: 1px solid var(--wfx-separator-color) !important;
+    border-bottom: 0 !important;
   }
   
   richlistitem[selected="true"] {
@@ -300,10 +364,11 @@
   }
 
   tab {
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
+  
   tab:hover {
-	color: var(--wfx-purple-navy-90) !important;
+    color: var(--wfx-purple-navy-90) !important;
   }
   
   tab[selected] {
@@ -368,7 +433,7 @@
 
   .field-label,
   .meta-info {
-	color: var(--wfx-deemphasized-text-color) !important;
+    color: var(--wfx-deemphasized-text-color) !important;
   }
   
 }
@@ -453,7 +518,7 @@
     border: 0;
     box-shadow: none;
     padding: 6px;
-	font-size: inherit !important;
+    font-size: inherit !important;
   }
   
   button:not(:-moz-any([role="menuitem"],[role="menuitemcheckbox"],[role="link"])) {
@@ -478,7 +543,7 @@
   /*html|*/button.primary:enabled:hover,
   /*xul|*/button.primary:not([disabled="true"]):hover {
     background-color: var(--wfx-lt-primary-color-hover) !important;
-	color: rgb(255,255,255) !important;
+    color: rgb(255,255,255) !important;
   }
   
   /*html|*/button[autofocus]:enabled:focus,
@@ -497,7 +562,7 @@
   /*xul|*/button.primary:not([disabled="true"]):active,
   /*xul|*/button.primary:not([disabled="true"]):active:hover {
     background-color: var(--wfx-lt-primary-color-active) !important;
-	color: rgb(255,255,255) !important;
+    color: rgb(255,255,255) !important;
   }
   
   button[role="menuitem"] {
@@ -571,13 +636,13 @@
   
   button.start-button:not([disabled="true"]):hover {
     background-color: var(--wfx-lt-primary-color-hover) !important;
-	color: rgb(255,255,255) !important;
+    color: rgb(255,255,255) !important;
   }
   
   button.start-button:active,
   button.start-button:hover:active {
     background-color: var(--wfx-lt-primary-color-active) !important;
-	color: rgb(255,255,255) !important;
+    color: rgb(255,255,255) !important;
   }
 
   button.start-button:focus {
@@ -602,10 +667,10 @@
   
   .showPrivate .wordmark,
   .search-wrapper .logo-and-wordmark .wordmark {
-	background-image: url('chrome://browser/skin/floe/img/about-wordmark.svg') !important;
+    background-image: url('chrome://browser/skin/floe/img/about-wordmark.svg') !important;
     -moz-context-properties: fill !important;
-	fill: var(--wfx-content-color) !important;
-	opacity: .5 !important;
+    fill: var(--wfx-content-color) !important;
+    opacity: .5 !important;
   }
 
   .icon.icon-settings:active,
@@ -677,15 +742,6 @@
     color: var(--wfx-content-color);
   }
     
-  /*.contentSearchSuggestionTable .contentSearchOneOffsTable {
-    background-color: green !important;
-    border-top: solid 1px var(--newtab-border-secondary-color);
-  }
-    
-  .contentSearchSuggestionTable .contentSearchSearchWithHeaderSearchText {
-    color: var(--newtab-text-primary-color);
-  }*/
-    
   .contentSearchSuggestionTable .contentSearchSuggestionsContainer {
     background-color: var(--wfx-arrowpanel-bg-color) !important;
   }
@@ -699,14 +755,6 @@
     background: var(--wfx-gray-50) !important;
     color: var(--wfx-lt-primary-color) !important;
   }
-      
-  /*.contentSearchSuggestionTable .contentSearchSuggestionRow.selected .historyIcon {
-  fill: var(--newtab-icon-secondary-color);
-  }
-      
-  .contentSearchSuggestionTable .contentSearchOneOffsTable .contentSearchSuggestionsContainer {
-    background-color: var(--newtab-search-dropdown-header-color);
-  }*/
   
   .contentSearchSuggestionTable .contentSearchOneOffItem {
     border-radius: 0px !important;
@@ -777,7 +825,7 @@
 
   .compact-cards .card-outer .card-context {
     clip-path: none !important;
-	background-color: var(--wfx-gray-10) !important;
+    background-color: var(--wfx-gray-10) !important;
     box-shadow: 0 5px 8px rgba(0, 0, 0,.25) !important;
   }
   
@@ -985,9 +1033,9 @@
   /* ::: 'About downloads' ::: */
   
   richlistbox#downloadsRichListBox > richlistitem {
-	outline: 0px !important;
-	border-radius: 0px !important;
-	background-image: none !important;
+    outline: 0px !important;
+    border-radius: 0px !important;
+    background-image: none !important;
   }
 
   richlistitem.download[selected="true"] {
@@ -1128,10 +1176,6 @@
     background-color: rgb(224,191,0) !important;
     color: rgb(62,40,0) !important;
   }
-  
-  .addon-description {
-    color: var(--wfx-dimmed-content-color) !important;
-  }
 
   .list:focus > .addon[selected] {
     box-shadow: var(--card-shadow-focus) !important;
@@ -1144,6 +1188,12 @@
   .addon-view[notification],
   .addon-view[pending] {
     background-image: none !important;
+  }
+  
+  addon-details,
+  .addon-description,
+  .addon-detail-row.addon-detail-help-row {
+    color: rgba(11,12,27,.5) !important;
   }
 
   .detail-row,
@@ -1229,8 +1279,8 @@
   addon-card input[type="checkbox"].toggle-button::before {
     background: var(--wfx-gray-05) !important;
     outline: 2px solid var(--wfx-gray-05) !important;
-	-moz-outline-radius: var(--wfx-large-radius) !important;
-	outline-offset: -1px !important;
+    -moz-outline-radius: var(--wfx-large-radius) !important;
+    outline-offset: -1px !important;
   }
 
 
@@ -1276,7 +1326,7 @@
     -moz-context-properties: fill;
     fill: var(--wfx-lt-primary-color);
     background-image: url("chrome://browser/skin/floe/img/radio.svg") !important;
-	background-size: 13px auto !important;
+    background-size: 13px auto !important;
     background-repeat: no-repeat;
     background-position: center center;
   }
@@ -1316,9 +1366,9 @@
   input[type="password"][readOnly]:focus,
   input[type="text"][readOnly]:focus,
   input[type="url"][readOnly]:focus   {
-	background-color: transparent !important;
-	box-shadow: none !important;
-	border-color: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
   }
 
   .modal input[type="text"],
@@ -1593,7 +1643,7 @@
   .dark .narrate-dropdown > .dropdown-popup button.option:hover,
   .dark .narrate-dropdown > .dropdown-popup button.select-toggle:hover {
     background-color: rgb(61,61,61) !important;
-	color: rgb(255,255,255) !important;
+    color: rgb(255,255,255) !important;
   }
   
   .dark .narrate-dropdown > .dropdown-popup button.option:focus {
@@ -1706,19 +1756,6 @@
 
 .controlBar > .button:enabled:hover:active {
   fill: var(--wfx-lt-primary-color-active) !important;
-}
-
-
-
-/* :::::: ABOUT LOGO :::::: */
-
-@-moz-document url("about:logo") {
-
-  chrome://browser/skin/floe/img.transparent {
-    border-radius: 10px !important;
-    box-shadow: 0 15px 30px var(--wfx-gray-90) !important;
-  }
-  
 }
 
 
@@ -2092,16 +2129,16 @@ button.devtools-tab {
   }
   
   #protection-settings {
-	color: var(--wfx-lt-primary-color) !important;
-	fill: currentColor !important;
+    color: var(--wfx-lt-primary-color) !important;
+    fill: currentColor !important;
   }
   
   #protection-settings:hover {
-	color: var(--wfx-lt-primary-color-hover) !important;
+    color: var(--wfx-lt-primary-color-hover) !important;
   }
   
   #protection-settings:active {
-	color: var(--wfx-lt-primary-color-active) !important;
+    color: var(--wfx-lt-primary-color-active) !important;
   }
   
 }
@@ -2142,12 +2179,23 @@ button.devtools-tab {
 
 /* :::::: MISCELLANEOUS :::::: */
 
+/* Added for WFX G3.1.1+ */
+@-moz-document  url("about:url-classifier") {
+	
+    select#search-listtype {
+	    padding: 4px 16px !important;
+      -moz-padding-start: 4px !important;
+      background-position: right 8px center !important;
+    }
+    
+}
+
 @-moz-document  url("about:robots") {
 	
     html,
     body:not(:-moz-any(.sepia,.dark)) {
-	  background: var(--wfx-purple-navy-70) !important;
-	  color: rgba(249,249,255,.7) !important;
+	    background: var(--wfx-purple-navy-70) !important;
+	    color: rgba(249,249,255,.7) !important;
     }
 }
 
@@ -2188,12 +2236,6 @@ treecolpicker:hover {
 .content-blocking-category.selected {
   border: 1px solid var(--wfx-lt-primary-color) !important;
   background-color: var(--wfx-lt-primary-color-a15) !important;
-}
-
-.fxaSyncIllustration {
-  -moz-context-properties: fill;
-  fill: var(--wfx-lt-primary-color);
-  list-style-image: url("chrome://browser/skin/floe/img/sync-devices-lt.svg") !important;
 }
 
 .no-results-image {
@@ -2246,23 +2288,23 @@ button#tabsToggle.show-tabs:not([disabled="true"]):hover {
 /* ::: Windows ::: */
 
 @media  (-moz-os-version: windows-win7) {
-	
+
   @media (-moz-windows-classic) {
     
-	label[disabled="true"],
-	button[disabled="true"],
-	checkbox[disabled="true"],
+    label[disabled="true"],
+    button[disabled="true"],
+    checkbox[disabled="true"],
     toolbarbutton[disabled="true"]	{
       text-shadow: none !important;
     }
 	
-	checkbox[checked] > .checkbox-check,
-	.radio-check[selected] {
+    checkbox[checked] > .checkbox-check,
+    .radio-check[selected] {
       fill: var(--wfx-lt-primary-color) !important;
       background-color: var(--wfx-btn-bg-color) !important;
     }
 	
-	#label-box[id] {
+    #label-box[id] {
       background-color: transparent !important;
       color: inherit !important;
     }

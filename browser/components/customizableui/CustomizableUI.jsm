@@ -249,6 +249,10 @@ var CustomizableUIInternal = {
       CustomizableUI.AREA_STATUSBAR,
       {
         type: CustomizableUI.TYPE_TOOLBAR,
+        defaultPlacements: [
+          "status-info",
+          "page-zoom-controls",
+        ],
         defaultCollapsed: false,
       },
       true
@@ -310,6 +314,7 @@ var CustomizableUIInternal = {
       CustomizableUI.AREA_NAVBAR,
       CustomizableUI.AREA_BOOKMARKS,
       CustomizableUI.AREA_TABSTRIP,
+      CustomizableUI.AREA_STATUSBAR,
     ]);
     if (AppConstants.platform != "macosx") {
       toolbars.add(CustomizableUI.AREA_MENUBAR);

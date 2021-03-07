@@ -93,11 +93,6 @@
   background-color: transparent !important;
 }
 
-/* Remove blue animation on tab on page load complete */
-.tab-loading-burst {
-  display: none !important;
-}
-
 .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-icon-image:not([selected="true"]):not([multiselected]) {
   opacity: .9;
   filter: grayscale(1);
@@ -150,7 +145,7 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
   border: none !important;
 }
 
-/* Remove separators on tabs hover */
+/* Removes separators on tabs hover */
 .tabbrowser-tab:hover::before,
 .tabbrowser-tab:hover::after,
 .tabbrowser-tab[beforehovered]::after,
@@ -201,7 +196,7 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
   margin: 0 !important;
 }
 
-/* overlap the tab curves */
+/* Overlap the tab curves */
 .tab-background {
   -moz-margin-end: -15px !important;
   -moz-margin-start: -15px !important;
@@ -212,7 +207,7 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
   -moz-margin-start: -20px !important;
 }
 
-/* Remove blue animation on tab on page load complete */
+/* Removes blue animation on tab on page load complete */
 .tab-loading-burst {
   display: none !important;
 }
@@ -430,19 +425,26 @@ toolbox:hover .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-ico
 
 #toolbar-menubar[brighttext] > #menubar-items > #main-menubar > menu[_moz-menuactive="true"],
 toolbar[brighttext] .titlebar-button:not(.titlebar-close):hover {
-  background-color: var(--wfx-purple-navy-40);
+  background-color: var(--wfx-purple-navy-40) !important;
   color: rgb(255,255,255) !important;
 }
 
 #toolbar-menubar[brighttext] > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open]:hover,
 #toolbar-menubar[brighttext] > #menubar-items > #main-menubar > menu[_moz-menuactive="true"][open] {
-  background-color: var(--wfx-purple-navy-90);
+  background-color: var(--wfx-purple-navy-90) !important;
   color: var(--wfx-dt-primary-color) !important;
 }
 
 panel#editBookmarkPanel[side="top"]::part(arrow),
 panel#editBookmarkPanel[side="bottom"]::part(arrow) {
   margin-inline: 14px;
+}
+
+/* Added for WFX G3.1.1+ */
+#confirmation-hint {
+  --arrowpanel-background: var(--wfx-dt-primary-color);
+  --arrowpanel-border-color: var(--wfx-dt-primary-color);
+  --arrowpanel-color: rgb(255,255,255);
 }
 
 .tabbrowser-tab:not([visuallyselected="true"]):not([multiselected]),
@@ -462,6 +464,12 @@ panel#editBookmarkPanel[side="bottom"]::part(arrow) {
   border-left: 2px dotted var(--wfx-separator-color) !important;
   margin-top: 8px !important;
   margin-bottom: 7px !important;
+}
+
+/* Fixes dragged pinned tab position when the tab bar is in 'overflow' mode */
+#tabbrowser-tabs[positionpinnedtabs][movingtab] .tabbrowser-tab[visuallyselected="true"][pinned]::after,
+#tabbrowser-tabs[positionpinnedtabs][movingtab] .tabbrowser-tab[visuallyselected="true"][pinned]::before {
+  display: none !important;
 }
 
 .tabbrowser-tab[beforeselected-visible="true"]::after,
@@ -504,7 +512,7 @@ panel#editBookmarkPanel[side="bottom"]::part(arrow) {
 }
 
 .tab-label-container {
-/* added to bring rounded corners to the tab label box shadow when in focused state */
+/* Added to bring rounded corners to the tab label box shadow when in focused state */
   border-radius: 2px;
 }
 
@@ -537,20 +545,14 @@ panel#editBookmarkPanel[side="bottom"]::part(arrow) {
   background-size: auto 18px;
 }
 
-#PersonalToolbar {
-  box-shadow: 0 1px var(--wfx-separator-color);
-}
-
 #browser-bottombox {
   box-shadow: 0 -1px var(--wfx-border-color);
+  position: relative; /* <-- added for WFX G3.1.1+ */
+  z-index: 0; /* <-- added for WFX G3.1.1+ */
 }
 
 #browser-bottombox #PersonalToolbar {
-  padding: 1px 6px 2px;
-}
-
-#browser-bottombox #TabsToolbar {
-  box-shadow: 0 -1px var(--wfx-separator-color);
+  padding: 2px 6px; /* <-- edited for WFX G3.1.1+ */
 }
 
 #PersonalToolbar:last-child,
@@ -558,6 +560,7 @@ panel#editBookmarkPanel[side="bottom"]::part(arrow) {
 #browser-bottombox .toolbar-statusbar:first-child {
   box-shadow: none;
 }
+
 
 
 /* :::::: SEPARATORS :::::: */
@@ -589,6 +592,7 @@ toolbarseparator {
 #PlacesToolbarItems > toolbarseparator::before {
   border: 0 !important;
 }
+
 
 
 /* :::::: TEXTBOXES :::::: */
@@ -786,8 +790,13 @@ toolbar .toolbarbutton-1:not([disabled="true"]):-moz-any([open], [checked], :hov
   border: 0 !important;
 }
 
-:root:not([customizing]) #back-button[disabled="true"] {
-  fill-opacity: .5;
+/* Edited for WFX G3.1.1+ */
+:root:not([customizing]) #back-button[disabled="true"],
+:root:not([customizing]) #forward-button[disabled="true"],
+:root:not([customizing]):-moz-window-inactive #back-button[id][disabled="true"],
+:root:not([customizing]):-moz-window-inactive #forward-button[disabled="true"] {
+  fill-opacity: 1;
+  opacity: .4 !important;
 }
 
 :root:not([uidensity="compact"]) #back-button > .toolbarbutton-icon[class] {
@@ -942,6 +951,12 @@ toolbar .toolbarbutton-1:not([disabled="true"]):-moz-any([open], [checked], :hov
   background-color: var(--wfx-purple-navy-70) !important;
 }
 
+/* Added for WFX G3.1.1+ */
+#TabsToolbar .toolbarbutton-1:not(#tabs-newtab-button):not(:-moz-any([disabled="true"],:hover:active)):active > .toolbarbutton-icon,
+#TabsToolbar .toolbarbutton-1:not(#tabs-newtab-button):not(:-moz-any([disabled="true"],:hover:active)):active > stack {
+  background-color: var(--wfx-btn-hover-color) !important;
+}
+
 #urlbar .urlbar-icon {
   height: 30px;
 }
@@ -959,7 +974,7 @@ toolbar .toolbarbutton-1:not([disabled="true"]):-moz-any([open], [checked], :hov
 }
 
 #urlbar[breakout-extend="true"] .urlbar-icon {
-  border-radius: var(--wfx-border-radius);
+  border-radius: 0px; /* <-- edited for WFX G3.1.1+ */
 }
 
 :not(.urlbar-icon-wrapper) > .urlbar-icon:not([disabled])[open],
@@ -1064,13 +1079,11 @@ menupopup::part(drop-indicator) {
 
 #PanelUI-menu-button[badge-status] > .toolbarbutton-badge-stack > .toolbarbutton-badge,
 #PanelUI-menu-button[badge-status] > .toolbarbutton-badge-stack > .toolbarbutton-badge:-moz-window-inactive {
-  /*background: var(--wfx-green-color) url(chrome://browser/skin/update-badge.svg) no-repeat center;*/
   box-shadow: 0 2px 4px rgba(0,0,0,.5) !important;
 }
 
 #PanelUI-menu-button[badge-status="addon-alert"] > .toolbarbutton-badge-stack > .toolbarbutton-badge,
 #PanelUI-menu-button[badge-status="fxa-needs-authentication"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
-  /*background: url(chrome://browser/skin/warning.svg) center / contain no-repeat transparent;*/
   box-shadow: none !important;
 }
 
@@ -1137,9 +1150,48 @@ menupopup::part(drop-indicator) {
 }
 
 #urlbar[breakout][breakout-extend] > #urlbar-background {
-  border-radius: 20px;
+  border-radius: 15px; /* <-- edited for WFX G3.1.1+ */
   border: 1px solid var(--wfx-dt-primary-color) !important;
   box-shadow: 0 0 0 1px var(--wfx-dt-primary-color) !important;
+}
+
+/* Removes url bar "magnifying" effect in focus state - added for WFX G3.1.1+ */
+#urlbar[breakout][breakout-extend] {
+  top: 3px !important;
+  left: 0 !important;
+  width: 100% !important;
+}
+:root[uidensity="touch"] #urlbar[breakout][breakout-extend] {
+  padding-top: 1px !important;
+}
+#urlbar[breakout][breakout-extend] > #urlbar-input-container {
+  height: 30px !important;
+  padding-block: 0px !important;
+  padding-inline: 0px !important;
+}
+:root[uidensity="compact"] #urlbar[breakout][breakout-extend] > #urlbar-input-container {
+  height: 26px !important;
+}
+:root #urlbar[breakout][breakout-extend] > #urlbar-background {
+  border-radius: 15px !important;
+}
+:root[uidensity="compact"] #urlbar[breakout][breakout-extend] > #urlbar-background {
+  border-radius: 13px !important;
+}
+:root[uidensity="touch"] #urlbar[breakout][breakout-extend] > #urlbar-background {
+  border-radius: 16px !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #urlbar[breakout][breakout-extend][breakout-extend-animate] > #urlbar-background {
+    animation-duration: 0ms !important;
+  }
+}
+/* Removes url bar "magnifying" effect in focus state - end */
+
+/* Added for WFX G3.1.1+ */
+#nav-bar #search-container .search-go-button,
+#urlbar[breakout][breakout-extend] #urlbar-go-button {
+  border-radius: var(--wfx-large-radius) !important
 }
 
 #urlbar .search-one-offs:not([hidden]) {
@@ -1155,16 +1207,12 @@ menupopup::part(drop-indicator) {
   border-radius: var(--wfx-border-radius) !important;
 }
 
-#identity-box[pageproxystate="valid"].chromeUI > #identity-icon, /* <-- for v78 */
+#identity-box[pageproxystate="valid"].chromeUI > #identity-icon,
 #urlbar[pageproxystate="valid"] > #identity-box.chromeUI > #identity-icon {
   list-style-image: url(placeholder.svg);
   -moz-context-properties: fill, fill-opacity;
   fill: currentColor;
 }
-
-/*#identity-box[pageproxystate="valid"][open="true"].chromeUI > #identity-icon-label {
-  opacity: 1;
-}*/
 
 #urlbar-results {
   background: var(--wfx-purple-navy-80) !important;
@@ -1250,7 +1298,7 @@ menupopup::part(drop-indicator) {
 #urlbar[breakout][breakout-extend] #star-button:hover:active:not(.no-hover),
 #urlbar[breakout][breakout-extend] #tracking-protection-icon-container:hover:not(.no-hover),
 #urlbar[breakout][breakout-extend] #tracking-protection-icon-container:hover:active:not(.no-hover) {
-  border-radius: var(--wfx-border-radius);
+  border-radius: 0; /* <-- edited for WFX G3.1.1+ */
 }
 
 #urlbar[breakout][breakout-extend] #star-button-box:hover:not(.no-hover),
@@ -1266,9 +1314,9 @@ menupopup::part(drop-indicator) {
 #urlbar-label-box,
 #identity-box[pageproxystate="valid"].chromeUI:-moz-any(:active, :hover:active),
 #urlbar-label-box:-moz-any(:active, :hover:active) {
-    border-inline-end: 1px solid var(--urlbar-separator-color) !important;
-    border-image: linear-gradient(transparent 15%, var(--urlbar-separator-color) 15%, var(--urlbar-separator-color) 85%, transparent 85%) !important;
-    border-image-slice: 1 !important;
+  border-inline-end: 1px solid var(--urlbar-separator-color) !important;
+  border-image: linear-gradient(transparent 15%, var(--urlbar-separator-color) 15%, var(--urlbar-separator-color) 85%, transparent 85%) !important;
+  border-image-slice: 1 !important;
 }
 
 #identity-box:hover:not(.no-hover):not([open=true]) {
@@ -1562,7 +1610,6 @@ menuitem.subviewbutton:not(:-moz-any([disabled], :active))[_moz-menuactive],
 
 .toolbar-statusbar {
   border-top: 0 !important;
-  box-shadow: 0 -1px var(--wfx-separator-color);
 }
 
 

@@ -308,6 +308,10 @@ extern "C" const char* __tsan_default_suppressions() {
          "thread:mozilla::layers::ImageBridgeChild\n"
          "race:mozilla::layers::ImageBridgeChild::ShutDown\n"
 
+         // Bug 1616120
+         "race:nsSocketTransport::OnInputClosed\n"
+         "race:nsSocketTransport::OpenInputStream\n"
+
          // Benign races in third-party code
          //
          // SIMD Initialization in libjpeg, potentially runs

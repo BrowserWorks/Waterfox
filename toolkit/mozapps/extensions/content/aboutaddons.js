@@ -86,12 +86,20 @@ const EXTENSION_ICON_URL =
   "chrome://mozapps/skin/extensions/extensionGeneric.svg";
 const BUILTIN_THEME_PREVIEWS = new Map([
   [
+    "abyss@waterfox.net",
+    "chrome://mozapps/content/extensions/waterfox-abyss-preview.svg",
+  ],
+  [
     "default-theme@mozilla.org",
     "chrome://mozapps/content/extensions/default-theme.svg",
   ],
   [
-    "abyss@waterfox.net",
-    "chrome://mozapps/content/extensions/waterfox-abyss-preview.svg",
+    "firefox-compact-light@mozilla.org",
+    "chrome://mozapps/content/extensions/firefox-compact-light.svg",
+  ],
+  [
+    "firefox-compact-dark@mozilla.org",
+    "chrome://mozapps/content/extensions/firefox-compact-dark.svg",
   ],
   [
     "floe@waterfox.net",
@@ -544,7 +552,6 @@ class DiscoAddonWrapper {
 
     this.dailyUsers = details.addon.average_daily_users;
 
-    this.editorialHeading = details.heading_text;
     this.editorialDescription = details.description_text;
     this.iconURL = details.addon.icon_url;
     this.amoListingUrl = details.addon.url;
@@ -3394,10 +3401,6 @@ class RecommendedAddonCard extends HTMLElement {
     // the add-on's original description that would normally appear on a card.
     card.querySelector(".disco-description-main").textContent =
       addon.editorialDescription;
-    if (addon.editorialHeading) {
-      card.querySelector(".disco-description-intro").textContent =
-        addon.editorialHeading;
-    }
 
     let hasStats = false;
     if (addon.averageRating) {

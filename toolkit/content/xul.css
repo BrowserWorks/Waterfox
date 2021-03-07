@@ -201,9 +201,17 @@ toolbar[type="menubar"] {
 %endif
 
 %ifdef MOZ_WIDGET_GTK
-*|*:root[shellshowingmenubar="true"]
+*|*:root[shellshowingmenubar="true"][tabBarPosition="topAboveAB"]
 toolbar[type="menubar"]:not([customizing="true"]) {
   display: none !important;
+}
+*|*:root[shellshowingmenubar="true"]:not([tabBarPosition="topAboveAB"])
+toolbar[type="menubar"]:not([customizing="true"]) #menubar-items {
+  display: none !important;
+}
+*|*:root[shellshowingmenubar="true"][tabBarPosition="topAboveAB"]
+#toolbar-menubar[autohide="true"]:not([inactive]) + #TabsToolbar > .titlebar-buttonbox-container {
+  visibility: visible !important;
 }
 %endif
 

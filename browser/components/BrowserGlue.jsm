@@ -664,6 +664,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
   AppMenuNotifications: "resource://gre/modules/AppMenuNotifications.jsm",
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
+  AttributionCode: "resource:///modules/AttributionCode.jsm",
   Blocklist: "resource://gre/modules/Blocklist.jsm",
   BookmarkHTMLUtils: "resource://gre/modules/BookmarkHTMLUtils.jsm",
   BookmarkJSONUtils: "resource://gre/modules/BookmarkJSONUtils.jsm",
@@ -706,6 +707,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SessionStartup: "resource:///modules/sessionstore/SessionStartup.jsm",
   SessionStore: "resource:///modules/sessionstore/SessionStore.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
+  StoreHandler: "resource://gre/modules/amStoreHandler.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
   TabUnloader: "resource:///modules/TabUnloader.jsm",
   TRRRacer: "resource:///modules/TRRPerformance.jsm",
@@ -1204,7 +1206,9 @@ BrowserGlue.prototype = {
     );
     if (AppConstants.platform == "win") {
       JawsScreenReaderVersionCheck.init();
-    }
+    };
+    // update startup pages with attribution data
+    this._setAttributionData();
   },
 
   // cleanup (called on application shutdown)
@@ -1857,11 +1861,12 @@ BrowserGlue.prototype = {
       this._setPrefExpectationsAndUpdate
     );
   },
-  
+
   // Set up a listener to add/remove userStyles
   // based on if the theme is active
   _monitorTheme() {
   	const PREF = "extensions.activeThemeID";
+    const PREF2 = "browser.theme.auto";
   	const ID1 = "abyss@waterfox.net";
   	const ID2 = "floe@waterfox.net";
   	const sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
@@ -1891,8 +1896,25 @@ BrowserGlue.prototype = {
   			sss.unregisterSheet(floeChrome, sss.USER_SHEET);
   			sss.unregisterSheet(floeContent, sss.USER_SHEET);
   		}
-  	};
+  	}
+    const _changeThemeMode = async(e) => {
+      if (Services.prefs.getBoolPref(PREF2) &&
+      ((Services.prefs.getCharPref(PREF) == ID1) || (Services.prefs.getCharPref(PREF) == ID2))) {
+        // if theme is abyss and OS in dark mode, don't change to floe when theme box checked
+        if (e.matches || themeQuery.matches) {
+          let theme = await AddonManager.getAddonByID(ID1);
+          await theme.enable()
+        } else {
+          let theme = await AddonManager.getAddonByID(ID2);
+          await theme.enable()
+        }
+      }
+    }
+    const win = BrowserWindowTracker.getTopWindow();
+    var themeQuery = win.matchMedia("(-moz-system-dark-theme)");
+    themeQuery.addListener(_changeThemeMode);
   	Services.prefs.addObserver(PREF, _checkThemePref);
+    Services.prefs.addObserver(PREF2, _changeThemeMode);
   	_checkThemePref();
   },
 
@@ -2276,7 +2298,7 @@ BrowserGlue.prototype = {
       LATE_TASKS_IDLE_TIME_SEC
     );
 
-	this._monitorTheme();
+	  this._monitorTheme();
     this._monitorScreenshotsPref();
     this._monitorWebcompatReporterPref();
     this._monitorHTTPSOnlyPref();
@@ -2520,6 +2542,30 @@ BrowserGlue.prototype = {
             });
           }
         },
+      },
+      // flush extension tmp and staged dir
+      {
+        task: () => {
+          StoreHandler.flushDir(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp")
+          );
+          StoreHandler.flushDir(
+            OS.Path.join(OS.Constants.Path.profileDir, "extensions", "staged")
+          );
+        }
+      },
+      // clear updated prefs
+      {
+        task: () => {
+          AttributionCode.deleteFileAsync();
+          // reset prefs
+          Services.prefs.clearUserPref(
+            "startup.homepage_welcome_url.additional"
+          );
+          Services.prefs.clearUserPref(
+            "startup.homepage_override_url"
+          );
+        }
       },
 
       // Marionette needs to be initialized as very last step
@@ -3775,6 +3821,36 @@ BrowserGlue.prototype = {
 
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
+  },
+
+  _setAttributionData: async function BG__setAttributionData() {
+    // kick off async process to set attribution code preference
+    try {
+      let attrData = await AttributionCode.getAttrDataAsync();
+      let attributionStr = "";
+      for (const [key, value] of Object.entries(attrData)) {
+        // only add to postSigningData if this hasn't been called previously
+        attributionStr += `&${key}=${value}`
+      };
+      // add install param
+      if (attributionStr != "") {
+        attributionStr += "&status=install"
+      };
+      let additionalPage = Services.urlFormatter.formatURLPref(
+        "startup.homepage_welcome_url.additional"
+      );
+      Services.prefs.setCharPref(
+        "startup.homepage_welcome_url.additional",
+        additionalPage + attributionStr
+      );
+      let overridePage = Services.urlFormatter.formatURLPref(
+        "startup.homepage_override_url"
+      );
+      Services.prefs.setCharPref(
+        "startup.homepage_override_url",
+        overridePage + attributionStr
+      );
+    } catch (ex) {Services.console.logStringMessage(ex + "error setting attr data")}
   },
 
   _maybeShowDefaultBrowserPrompt() {

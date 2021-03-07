@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,7 +110,7 @@ def walkDirectory(directory):
     is the full path to the file. The second in each pair is
     the path to the file relative to the directory itself."""
     paths = []
-    for path, dirs, files in os.walk(directory):
+    for path, _dirs, files in os.walk(directory):
         for f in files:
             fullPath = os.path.join(path, f)
             internalPath = re.sub(r'^/', '', fullPath.replace(directory, ''))
@@ -125,7 +125,7 @@ def addManifestEntry(filename, hashes, contents, entries):
     of manifest entries."""
     entry = 'Name: %s\n' % filename
     for (hashFunc, name) in hashes:
-        base64hash = b64encode(hashFunc(contents).digest())
+        base64hash = b64encode(hashFunc(contents).digest()).decode("ascii")
         entry += '%s-Digest: %s\n' % (name, base64hash)
     entries.append(entry)
 
@@ -213,6 +213,7 @@ def signZip(appDirectory, outputFile, issuerName, rootName, manifestHashes,
         if len(coseAlgorithms) > 0:
             coseManifest = '\n'.join(mfEntries)
             outZip.writestr('META-INF/cose.manifest', coseManifest)
+            coseManifest = six.ensure_binary(coseManifest)
             addManifestEntry('META-INF/cose.manifest', manifestHashes,
                              coseManifest, mfEntries)
             intermediates = []
@@ -222,9 +223,10 @@ def signZip(appDirectory, outputFile, issuerName, rootName, manifestHashes,
                 intermediate = getCert(coseIssuerName, 'default', rootName, False)
                 intermediate = intermediate.toDER()
                 intermediates.append(intermediate)
-            signatures = map(lambda coseAlgorithm:
-                             coseAlgorithmToSignatureParams(coseAlgorithm, coseIssuerName),
-                             coseAlgorithms)
+            signatures = [
+                coseAlgorithmToSignatureParams(coseAlgorithm, coseIssuerName)
+                for coseAlgorithm in coseAlgorithms
+            ]
             coseSignatureBytes = coseSig(coseManifest, intermediates, signatures)
             outZip.writestr('META-INF/cose.sig', coseSignatureBytes)
             addManifestEntry('META-INF/cose.sig', manifestHashes,
@@ -234,8 +236,8 @@ def signZip(appDirectory, outputFile, issuerName, rootName, manifestHashes,
             mfContents = '\n'.join(mfEntries)
             sfContents = 'Signature-Version: 1.0\n'
             for (hashFunc, name) in signatureHashes:
-                base64hash = b64encode(
-                    hashFunc(six.ensure_binary(mfContents)).digest())
+                hashed = hashFunc(six.ensure_binary(mfContents)).digest()
+                base64hash = b64encode(hashed).decode("ascii")
                 sfContents += '%s-Digest-Manifest: %s\n' % (name, base64hash)
 
             cmsSpecification = ''
@@ -327,7 +329,7 @@ def main(outputFile, appPath, *args):
     if len(parsed.signature_hash) == 0:
         parsed.signature_hash.append('sha256')
     signZip(appPath, outputFile, parsed.issuer, parsed.root,
-            map(hashNameToFunctionAndIdentifier, parsed.manifest_hash),
-            map(hashNameToFunctionAndIdentifier, parsed.signature_hash),
+            [hashNameToFunctionAndIdentifier(h) for h in parsed.manifest_hash],
+            [hashNameToFunctionAndIdentifier(h) for h in parsed.signature_hash],
             parsed.pkcs7_hash, parsed.cose_sign, parsed.empty_signerInfos,
             int(parsed.pad_headers))

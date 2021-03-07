@@ -201,6 +201,21 @@ const AVAILABLE_UA_OVERRIDES = [
     },
   },
   {
+    id: "OWS",
+    platform: "desktop",
+    domain: "opera.com",
+    bug: "0000000",
+    config: {
+      matches: ["*://addons.opera.com/*"],
+      uaTransformer: originalUA => {
+        return (
+          UAHelpers.getPrefix(originalUA) +
+          " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36 OPR/73.0.3856.284"
+        );
+      },
+    },
+  },
+  {
     /*
      * Bug 1570108 - steamcommunity.com - UA override for steamcommunity.com
      * WebCompat issue #34171 - https://webcompat.com/issues/34171

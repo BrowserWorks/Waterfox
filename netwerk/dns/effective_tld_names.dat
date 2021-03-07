@@ -4594,15 +4594,17 @@ gob.mx
 edu.mx
 net.mx
 
-// my : http://www.mynic.net.my/
+// my : http://www.mynic.my/
+// Available strings: https://mynic.my/resources/domains/buying-a-domain/
 my
+biz.my
 com.my
-net.my
-org.my
-gov.my
 edu.my
+gov.my
 mil.my
 name.my
+net.my
+org.my
 
 // mz : http://www.uem.mz/
 // Submitted by registry <antonio@uem.mz>
@@ -6805,6 +6807,9 @@ yt
 // xn--90ae ("bg", Bulgarian) : BG
 бг
 
+// xn--mgbcpq6gpa1a ("albahrain", Arabic) : BH
+البحرين
+
 // xn--90ais ("bel", Belarusian/Russian Cyrillic) : BY
 // Operated by .by registry
 бел
@@ -6937,6 +6942,9 @@ yt
 // xn--80ao21a ("Kaz", Kazakh) : KZ
 қаз
 
+// xn--q7ce6a ("Lao", Lao) : LA
+ລາວ
+
 // xn--fzc2c9e2c ("Lanka", Sinhalese-Sinhala) : LK
 // https://nic.lk
 ලංකා
@@ -7062,7 +7070,13 @@ yt
 xxx
 
 // ye : http://www.y.net.ye/services/domain_name.htm
-*.ye
+ye
+com.ye
+edu.ye
+gov.ye
+net.ye
+mil.ye
+org.ye
 
 // za : https://www.zadna.org.za/content/page/domain-information/
 ac.za
@@ -7111,7 +7125,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-12-21T16:35:44Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2021-02-20T20:31:36Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -7629,9 +7643,6 @@ casa
 // case : 2015-09-03 CNH Industrial N.V.
 case
 
-// caseih : 2015-09-03 CNH Industrial N.V.
-caseih
-
 // cash : 2014-03-06 Binky Moon, LLC
 cash
 
@@ -7668,7 +7679,7 @@ cern
 // cfa : 2014-08-28 CFA Institute
 cfa
 
-// cfd : 2014-12-11 DotCFD Registry Limited
+// cfd : 2014-12-11 ShortDot SA
 cfd
 
 // chanel : 2015-04-09 Chanel International B.V.
@@ -9125,9 +9136,6 @@ neustar
 
 // new : 2014-01-30 Charleston Road Registry Inc.
 new
-
-// newholland : 2015-09-03 CNH Industrial N.V.
-newholland
 
 // news : 2014-12-18 Dog Beach, LLC
 news
@@ -10716,6 +10724,10 @@ us-west-2.elasticbeanstalk.com
 *.elb.amazonaws.com
 *.elb.amazonaws.com.cn
 
+// Amazon Global Accelerator : https://aws.amazon.com/global-accelerator/
+// Submitted by Daniel Massaguer <psl-maintainers@amazon.com>
+awsglobalaccelerator.com
+
 // Amazon S3 : https://aws.amazon.com/s3/
 // Submitted by Luke Wells <psl-maintainers@amazon.com>
 s3.amazonaws.com
@@ -10785,6 +10797,11 @@ tele.amune.org
 // Apigee : https://apigee.com/
 // Submitted by Apigee Security Team <security@apigee.com>
 apigee.io
+
+// Appspace : https://www.appspace.com
+// Submitted by Appspace Security Team <security@appspace.com>
+appspacehosted.com
+appspaceusercontent.com
 
 // Aptible : https://www.aptible.com/
 // Submitted by Thomas Orozco <thomas@aptible.com>
@@ -10989,6 +11006,10 @@ cleverapps.io
 // Clic2000 : https://clic2000.fr
 // Submitted by Mathilde Blanchemanche <mathilde@clic2000.fr>
 clic2000.net
+
+// ClickRising : https://clickrising.com/
+// Submitted by Umut Gumeli <infrastructure-publicsuffixlist@clickrising.com>
+clickrising.net
 
 // Cloud66 : https://www.cloud66.com/
 // Submitted by Khash Sajadi <khash@cloud66.com>
@@ -11642,6 +11663,10 @@ tr.eu.org
 uk.eu.org
 us.eu.org
 
+// Eurobyte : https://eurobyte.ru
+// Submitted by Evgeniy Subbotin <e.subbotin@eurobyte.ru>
+eurodir.ru
+
 // Evennode : http://www.evennode.com/
 // Submitted by Michal Kralik <support@evennode.com>
 eu-1.evennode.com
@@ -11752,6 +11777,7 @@ u.channelsdvr.net
 
 // Fastly Inc. : http://www.fastly.com/
 // Submitted by Fastly Security <security@fastly.com>
+edgecompute.app
 fastly-terrarium.com
 fastlylb.net
 map.fastlylb.net
@@ -11842,6 +11868,10 @@ freeboxos.fr
 // freedesktop.org : https://www.freedesktop.org
 // Submitted by Daniel Stone <daniel@fooishbar.org>
 freedesktop.org
+
+// freemyip.com : https://freemyip.com
+// Submitted by Cadence <contact@freemyip.com>
+freemyip.com
 
 // FunkFeuer - Verein zur Förderung freier Netze : https://www.funkfeuer.at
 // Submitted by Daniel A. Maierhofer <vorstand@funkfeuer.at>
@@ -12318,6 +12348,11 @@ knightpoint.systems
 // Submitted by DisposaBoy <security@oya.to>
 oya.to
 
+// Katholieke Universiteit Leuven: https://www.kuleuven.be
+// Submitted by Abuse KU Leuven <abuse@kuleuven.be>
+kuleuven.cloud
+ezproxy.kuleuven.be
+
 // .KRD : http://nic.krd/data/krd/Registration%20Policy.pdf
 co.krd
 edu.krd
@@ -12448,7 +12483,9 @@ mcpe.me
 
 // McHost : https://mchost.ru
 // Submitted by Evgeniy Subbotin <e.subbotin@mchost.ru>
+mcdir.me
 mcdir.ru
+mcpre.ru
 vps.mcdir.ru
 
 // Memset hosting : https://www.memset.com
@@ -12513,8 +12550,11 @@ pp.ru
 // Submitted by Paul Cammish <kelduum@mythic-beasts.com>
 hostedpi.com
 customer.mythic-beasts.com
+caracal.mythic-beasts.com
+fentiger.mythic-beasts.com
 lynx.mythic-beasts.com
 ocelot.mythic-beasts.com
+oncilla.mythic-beasts.com
 onza.mythic-beasts.com
 sphinx.mythic-beasts.com
 vs.mythic-beasts.com
@@ -12568,6 +12608,15 @@ nh-serv.co.uk
 // NFSN, Inc. : https://www.NearlyFreeSpeech.NET/
 // Submitted by Jeff Wheelhouse <support@nearlyfreespeech.net>
 nfshost.com
+
+// Northflank Ltd. : https://northflank.com/
+// Submitted by Marco Suter <marco@northflank.com>
+*.northflank.app
+*.code.run
+
+// Noticeable : https://noticeable.io
+// Submitted by Laurent Pellegrino <security@noticeable.io>
+noticeable.news
 
 // Now-DNS : https://now-dns.com
 // Submitted by Steve Russell <steve@now-dns.com>
@@ -12808,6 +12857,11 @@ skygearapp.com
 // OutSystems
 // Submitted by Duarte Santos <domain-admin@outsystemscloud.com>
 outsystemscloud.com
+
+// OVHcloud: https://ovhcloud.com
+// Submitted by Vincent Cassé <vincent.casse@ovhcloud.com>
+*.webpaas.ovh.net
+*.hosting.ovh.net
 
 // OwnProvider GmbH: http://www.ownprovider.com
 // Submitted by Jan Moennich <jan.moennich@ownprovider.com>
@@ -13122,6 +13176,10 @@ beta.bounty-full.com
 // Submitted by Aral Balkan <aral@small-tech.org>
 small-web.org
 
+// Snowplow Analytics : https://snowplowanalytics.com/
+// Submitted by Ian Streeter <ian@snowplowanalytics.com>
+try-snowplow.com
+
 // Stackhero : https://www.stackhero.io
 // Submitted by Adrien Gillon <adrien+public-suffix-list@stackhero.io>
 stackhero-network.com
@@ -13169,11 +13227,6 @@ user.srcf.net
 // Sub 6 Limited: http://www.sub6.com
 // Submitted by Dan Miller <dm@sub6.com>
 temp-dns.com
-
-// Swisscom Application Cloud: https://developer.swisscom.com
-// Submitted by Matthias.Winzeler <matthias.winzeler@swisscom.com>
-applicationcloud.io
-scapp.io
 
 // Symfony, SAS : https://symfony.com/
 // Submitted by Fabien Potencier <fabien@symfony.com>
@@ -13242,6 +13295,11 @@ cust.testing.thingdust.io
 arvo.network
 azimuth.network
 tlon.network
+
+// Tor Project, Inc. : https://torproject.org
+// Submitted by Antoine Beaupré <anarcat@torproject.org
+torproject.net
+pages.torproject.net
 
 // TownNews.com : http://www.townnews.com
 // Submitted by Dustin Ward <dward@townnews.com>

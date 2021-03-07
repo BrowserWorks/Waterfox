@@ -1,4 +1,4 @@
-/* Additional styling for Abyss theme for Waterfox Current
+/* Additional styling for Abyss theme for Waterfox G3
 /* Author: Stefano Rosselli
 */
 
@@ -227,7 +227,7 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: /*rgb(110,114,131)*/ rgba(170,171,173,.75) transparent !important;
+    scrollbar-color: rgba(170,171,173,.75) transparent !important;
   }
 
 }
@@ -239,11 +239,11 @@
 @-moz-document  url-prefix("chrome://pippki/content/") {
 
   tab {
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
   
   tab:hover {
-	color: rgb(255,255,255) !important;
+    color: rgb(255,255,255) !important;
   }
 	
   tab[selected] {
@@ -269,6 +269,71 @@
 }
 
 
+@-moz-document url-prefix("about:preferences") {
+
+  menulist {
+    padding: 4px 8px !important; /* <-- adjusts the dropdown arrow vertical alignment - added for G3.1.1+ */
+  }
+
+}
+
+@-moz-document url-prefix("chrome://browser/content/preferences/dialogs/") {
+
+  menulist {
+    padding: 5px 8px !important; /* <-- adjusts the dropdown arrow vertical alignment in preferences dialogs - added for G3.1.1+ */
+  }
+
+}
+
+
+/* Added for WFX G3.1.1+ */
+/* Replaces 'Firefox Nightly' logo by WFX logo in 'about:debugging' */
+@-moz-document url-prefix("about:debugging") {
+
+  /* Hides Firefox Nightly logo in the main heading and sidebar navigation */
+  h1.main-heading.runtime-info img[src="chrome://devtools/skin/images/aboutdebugging-firefox-nightly.svg"],
+  .sidebar-fixed-item__container img[src="chrome://devtools/skin/images/aboutdebugging-firefox-logo.svg"] {
+    visibility: hidden !important;
+  }
+
+  a[href="#/runtime/this-firefox"] .sidebar-fixed-item__container {
+    -moz-context-properties: fill;
+    fill: currentColor !important;
+    background-position: center left !important;
+    background-repeat: no-repeat !important;
+    background-size: 24px auto !important;
+  }
+
+  a[href="#/runtime/this-firefox"] .sidebar-fixed-item__container {
+    background-image: url("img/monochromatic-logomark.svg") !important;
+  }
+  
+  h1.main-heading.runtime-info {
+    background-image: url("chrome://branding/content/icon128.png") !important;
+    background-position: center left !important;
+    background-repeat: no-repeat !important;
+    background-size: 64px auto !important;
+  }
+
+}
+
+
+/* Added for WFX G3.1.1+ */
+@-moz-document url-prefix("about:welcome") {
+
+  .multistageContainer button.secondary:hover,
+  .multistageContainer .tiles-container.info:hover {
+    background-color: transparent !important;
+  }
+  
+  .multistageContainer button.secondary,
+  .multistageContainer button.secondary:hover {
+    color: var(--wfx-dt-primary-color) !important;
+  }
+  
+}
+
+
 @-moz-document url-prefix("chrome://browser/content/preferences/dialogs/"),
 			   url("chrome://mozapps/content/update/history.xhtml") {
 
@@ -277,8 +342,8 @@
   }
 
   separator.groove:not([orient="vertical"]) {
-	border-top: 1px solid var(--wfx-separator-color) !important;
-	border-bottom: 0 !important;
+    border-top: 1px solid var(--wfx-separator-color) !important;
+    border-bottom: 0 !important;
   }
   
   richlistitem[selected="true"] {
@@ -295,11 +360,11 @@
   }
 
   tab {
-	color: var(--wfx-content-color) !important;
+    color: var(--wfx-content-color) !important;
   }
   
   tab:hover {
-	color: rgb(255,255,255) !important;
+    color: rgb(255,255,255) !important;
   }
   
   tab[selected] {
@@ -365,7 +430,7 @@
 
   .field-label,
   .meta-info {
-	color: var(--wfx-deemphasized-text-color) !important;
+    color: var(--wfx-deemphasized-text-color) !important;
   }
   
 }
@@ -450,7 +515,7 @@
     border: 0;
     box-shadow: none;
     padding: 6px;
-	font-size: inherit !important;
+    font-size: inherit !important;
   }
   
   button:not(:-moz-any([role="menuitem"],[role="menuitemcheckbox"],[role="link"])) {
@@ -588,10 +653,10 @@
   
   .showPrivate .wordmark,
   .search-wrapper .logo-and-wordmark .wordmark {
-	background-image: url('chrome://browser/skin/abyss/img/about-wordmark.svg') !important;
+    background-image: url('chrome://browser/skin/abyss/img/about-wordmark.svg') !important;
     -moz-context-properties: fill !important;
-	fill: var(--wfx-content-color) !important;
-	opacity: .25 !important;
+    fill: var(--wfx-content-color) !important;
+    opacity: .25 !important;
   }
 
   .icon.icon-settings:active,
@@ -663,15 +728,6 @@
     color: var(--wfx-content-color);
   }
     
-  /*.contentSearchSuggestionTable .contentSearchOneOffsTable {
-    background-color: green !important;
-    border-top: solid 1px var(--newtab-border-secondary-color);
-  }
-    
-  .contentSearchSuggestionTable .contentSearchSearchWithHeaderSearchText {
-    color: var(--newtab-text-primary-color);
-  }*/
-    
   .contentSearchSuggestionTable .contentSearchSuggestionsContainer {
     background-color: var(--wfx-arrowpanel-bg-color) !important;
   }
@@ -685,14 +741,6 @@
     background: var(--wfx-purple-navy-90) !important;
     color: var(--wfx-dt-primary-color) !important;
   }
-      
-  /*.contentSearchSuggestionTable .contentSearchSuggestionRow.selected .historyIcon {
-  fill: var(--newtab-icon-secondary-color);
-  }
-      
-  .contentSearchSuggestionTable .contentSearchOneOffsTable .contentSearchSuggestionsContainer {
-    background-color: var(--newtab-search-dropdown-header-color);
-  }*/
   
   .contentSearchSuggestionTable .contentSearchOneOffItem {
     border-radius: 0px !important;
@@ -759,7 +807,7 @@
 
   .compact-cards .card-outer .card-context {
     clip-path: none !important;
-	background-color: var(--wfx-purple-navy-60) !important;
+    background-color: var(--wfx-purple-navy-60) !important;
     box-shadow: 0 5px 8px rgb(0, 0, 0) !important;
   }
   
@@ -967,9 +1015,9 @@
   /* ::: 'About downloads' ::: */
   
   richlistbox#downloadsRichListBox > richlistitem {
-	outline: 0px !important;
-	border-radius: 0px !important;
-	background-image: none !important;
+    outline: 0px !important;
+    border-radius: 0px !important;
+    background-image: none !important;
   }
 
   richlistitem.download[selected="true"] {
@@ -1207,8 +1255,8 @@
   addon-card input[type="checkbox"].toggle-button::before {
     background: var(--wfx-purple-navy-80) !important;
     outline: 2px solid var(--wfx-purple-navy-80) !important;
-	-moz-outline-radius: var(--wfx-large-radius) !important;
-	outline-offset: -1px !important;
+    -moz-outline-radius: var(--wfx-large-radius) !important;
+    outline-offset: -1px !important;
   }
 
 
@@ -1254,7 +1302,7 @@
     -moz-context-properties: fill;
     fill: var(--wfx-dt-primary-color);
     background-image: url("chrome://browser/skin/abyss/img/radio.svg") !important;
-	background-size: 13px auto !important;
+    background-size: 13px auto !important;
     background-repeat: no-repeat;
     background-position: center center;
   }
@@ -1294,9 +1342,9 @@
   input[type="password"][readOnly]:focus,
   input[type="text"][readOnly]:focus,
   input[type="url"][readOnly]:focus   {
-	background-color: transparent !important;
-	box-shadow: none !important;
-	border-color: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
   }
 
   .modal input[type="text"],
@@ -1631,19 +1679,6 @@
 
 .controlBar > .button:enabled:hover:active {
   fill: var(--wfx-dt-primary-color-active) !important;
-}
-
-
-
-/* :::::: ABOUT LOGO :::::: */
-
-@-moz-document url("about:logo") {
-
-  chrome://browser/skin/abyss/img.transparent {
-    border-radius: 10px !important;
-    box-shadow: 0 15px 30px var(--wfx-purple-navy-90) !important;
-  }
-  
 }
 
 
@@ -1990,16 +2025,16 @@ button.devtools-tab {
   }
   
   #protection-settings {
-	color: var(--wfx-dt-primary-color) !important;
-	fill: currentColor !important;
+    color: var(--wfx-dt-primary-color) !important;
+    fill: currentColor !important;
   }
   
   #protection-settings:hover {
-	color: var(--wfx-dt-primary-color-hover) !important;
+    color: var(--wfx-dt-primary-color-hover) !important;
   }
   
   #protection-settings:active {
-	color: var(--wfx-dt-primary-color-active) !important;
+    color: var(--wfx-dt-primary-color-active) !important;
   }
   
 }
@@ -2040,12 +2075,23 @@ button.devtools-tab {
 
 /* :::::: MISCELLANEOUS :::::: */
 
+/* Added for WFX G3.1.1+ */
+@-moz-document  url("about:url-classifier") {
+	
+    select#search-listtype {
+	    padding: 4px 16px !important;
+      -moz-padding-start: 4px !important;
+      background-position: right 8px center !important;
+    }
+    
+}
+
 @-moz-document  url("about:robots") {
 	
     html,
     body:not(:-moz-any(.sepia,.dark)) {
-	  background: var(--wfx-purple-navy-70) !important;
-	  color: rgba(249,249,255,.7) !important;
+      background: var(--wfx-purple-navy-70) !important;
+      color: rgba(249,249,255,.7) !important;
     }
 }
 
@@ -2074,12 +2120,6 @@ panel-list {
 .content-blocking-category.selected {
   border: 1px solid var(--wfx-dt-primary-color) !important;
   background-color: var(--wfx-dt-primary-color-a15) !important;
-}
-
-.fxaSyncIllustration {
-  -moz-context-properties: fill;
-  fill: var(--wfx-dt-primary-color);
-  list-style-image: url("chrome://browser/skin/abyss/img/sync-devices.svg") !important;
 }
 
 .no-results-image {
@@ -2134,21 +2174,21 @@ button#tabsToggle.show-tabs:not([disabled="true"]):hover {
 @media  (-moz-os-version: windows-win7) {
 	
   @media (-moz-windows-classic) {
-    
-	label[disabled="true"],
-	button[disabled="true"],
-	checkbox[disabled="true"],
+
+    label[disabled="true"],
+    button[disabled="true"],
+    checkbox[disabled="true"],
     toolbarbutton[disabled="true"]	{
       text-shadow: none !important;
     }
 	
-	checkbox[checked] > .checkbox-check,
-	.radio-check[selected] {
+    checkbox[checked] > .checkbox-check,
+    .radio-check[selected] {
       fill: var(--wfx-dt-primary-color) !important;
       background-color: var(--wfx-btn-bg-color) !important;
     }
 	
-	#label-box[id] {
+    #label-box[id] {
       background-color: transparent !important;
       color: inherit !important;
     }

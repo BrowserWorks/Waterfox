@@ -7,7 +7,17 @@
 const XPI_CONTENT_TYPE = "application/x-xpinstall";
 const MSG_INSTALL_ADDON = "WebInstallerInstallAddonFromWebpage";
 
+var { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
+XPCOMUtils.defineLazyModuleGetters(this, {
+  AddonManager: "resource://gre/modules/AddonManager.jsm",
+  FileUtils: "resource://gre/modules/FileUtils.jsm",
+  OS: "resource://gre/modules/osfile.jsm",
+  NetUtil: "resource://gre/modules/NetUtil.jsm",
+  StoreHandler: "resource://gre/modules/amStoreHandler.jsm"
+});
 
 function amContentHandler() {}
 
@@ -22,21 +32,35 @@ amContentHandler.prototype = {
    * @param  aRequest
    *         The nsIRequest dealing with the content
    */
-  handleContent(aMimetype, aContext, aRequest) {
-    if (aMimetype != XPI_CONTENT_TYPE) {
+  async handleContent(aMimetype, aContext, aRequest) {
+    let uri = aRequest.URI;
+    let { loadInfo } = aRequest;
+    const { triggeringPrincipal } = loadInfo;
+    if (aMimetype == "application/x-chrome-extension") {
+      let confirmInstall = Services.prompt.confirm(
+        null,
+        "Web Extension Install Request",
+        "This website is attempting to install a web extension. If you trust this website please click \"OK\", else click \"Cancel\".",
+        );
+      if (!confirmInstall) {return;} //don't want to install if permission not given
+      // Define tmp paths
+      let uuidString = StoreHandler.getUUID().slice(1,-1);
+      let xpiPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", uuidString, "extension.xpi");
+      let manifestPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", uuidString, "new_manifest.json");
+      // Define nsiFiles
+      let nsiFileXpi = StoreHandler.getNsiFile(xpiPath);
+      let nsiManifest = StoreHandler.getNsiFile(manifestPath);
+      // attempt install, wrapped async functions
+      StoreHandler.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest);
+      return; // don't want any of the rest of the ContentHandler to execute
+    } else if (aMimetype != XPI_CONTENT_TYPE) {
       throw Components.Exception("", Cr.NS_ERROR_WONT_HANDLE_CONTENT);
     }
-
     if (!(aRequest instanceof Ci.nsIChannel)) {
       throw Components.Exception("", Cr.NS_ERROR_WONT_HANDLE_CONTENT);
     }
-
-    let uri = aRequest.URI;
-
     aRequest.cancel(Cr.NS_BINDING_ABORTED);
 
-    let { loadInfo } = aRequest;
-    const { triggeringPrincipal } = loadInfo;
     let browsingContext = loadInfo.targetBrowsingContext;
 
     let sourceHost;

@@ -225,10 +225,7 @@ function remoteSettingsFunction() {
 
     let pollResult;
     try {
-      pollResult = await Utils.fetchLatestChanges(Utils.SERVER_URL, {
-        expectedTimestamp,
-        lastEtag,
-      });
+      return null;
     } catch (e) {
       // Report polling error to Uptake Telemetry.
       let reportStatus;
