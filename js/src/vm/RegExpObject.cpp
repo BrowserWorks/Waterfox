@@ -626,10 +626,14 @@ RegExpShared::compileIfNecessary(JSContext* cx,
     // We start by interpreting regexps, then compile them once they are
     // sufficiently hot. For very long input strings, we tier up eagerly.
     codeKind = RegExpShared::CodeKind::Bytecode;
-    if (IsNativeRegExpEnabled(cx) &&
-        (re->markedForTierUp(cx) || input->length() > 1000)) {
+    if (re->markedForTierUp(cx) || input->length() > 1000) {
       codeKind = RegExpShared::CodeKind::Jitcode;
     }
+  }
+
+  // Fall back to bytecode if native codegen is not available.
+  if (!IsNativeRegExpEnabled(cx) && codeKind == RegExpShared::CodeKind::Jitcode) {
+    codeKind = RegExpShared::CodeKind::Bytecode;
   }
 
   bool needsCompile = false;
@@ -694,27 +698,36 @@ RegExpShared::execute(JSContext* cx,
         RegExpRunStatus result = irregexp::Execute(cx, re, input, start, matches);
 
         if (result == RegExpRunStatus_Error) {
-            /* Execute can return RegExpRunStatus_Error:
-             *
-             *  1. If the native stack overflowed
-             *  2. If the backtrack stack overflowed
-             *  3. If an interrupt was requested during execution.
-             *
-             * In the first two cases, we want to throw an error. In the
-             * third case, we want to handle the interrupt and try again.
-             * We cap the number of times we will retry.
-             */
-            if (cx->hasPendingInterrupt()) {
-                if (!CheckForInterrupt(cx)) {
-                    return RegExpRunStatus_Error;
-                }
-                if (interruptRetries++ < maxInterruptRetries) {
-                    continue;
-                }
+          /* Execute can return RegExpRunStatus_Error:
+           *
+           *  1. If the native stack overflowed
+           *  2. If the backtrack stack overflowed
+           *  3. If an interrupt was requested during execution.
+           *
+           * In the first two cases, we want to throw an error. In the
+           * third case, we want to handle the interrupt and try again.
+           * We cap the number of times we will retry.
+           */
+          if (cx->hasPendingInterrupt()) {
+            if (!CheckForInterrupt(cx)) {
+              return RegExpRunStatus_Error;
             }
-            // If we have run out of retries, this regexp takes too long to execute.
-            ReportOverRecursed(cx);
-            return RegExpRunStatus_Error;
+            if (interruptRetries++ < maxInterruptRetries) {
+              // The initial execution may have been interpreted, or the
+              // interrupt may have triggered a GC that discarded jitcode.
+              // To maximize the chance of succeeding before being
+              // interrupted again, we want to ensure we are compiled.
+              if (!compileIfNecessary(cx, re, input,
+                                      RegExpShared::CodeKind::Jitcode)) {
+                return RegExpRunStatus_Error;
+              }
+              continue;
+            }
+          }
+          // If we have run out of retries, this regexp takes too long to
+          // execute.
+          ReportOverRecursed(cx);
+          return RegExpRunStatus_Error;
         }
 
         MOZ_ASSERT(result == RegExpRunStatus_Success ||
