@@ -17,19 +17,6 @@ using namespace mozilla;
 NS_IMPL_ISUPPORTS(nsMacAttributionService, nsIMacAttributionService)
 
 NS_IMETHODIMP
-nsMacAttributionService::GetReferrerUrl(const nsACString& aFilePath,
-                                        nsAString& aReferrer) {
-  const nsCString& flat = PromiseFlatCString(aFilePath);
-  CFStringRef filePath = ::CFStringCreateWithCString(
-      kCFAllocatorDefault, flat.get(), kCFStringEncodingUTF8);
-
-  CocoaFileUtils::CopyQuarantineReferrerUrl(filePath, aReferrer);
-
-  ::CFRelease(filePath);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsMacAttributionService::SetReferrerUrl(const nsACString& aFilePath,
                                         const nsACString& aReferrerUrl,
                                         const bool aCreate) {
@@ -56,7 +43,9 @@ nsMacAttributionService::SetReferrerUrl(const nsACString& aFilePath,
 
   ::CFRelease(filePath);
   ::CFRelease(referrer);
-  ::CFRelease(referrerURL);
+  if (referrerURL) {
+    ::CFRelease(referrerURL);
+  }
 
   return NS_OK;
 }
