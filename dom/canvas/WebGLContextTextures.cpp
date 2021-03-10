@@ -205,6 +205,16 @@ void WebGLContext::TexImage(GLenum imageTarget, uint32_t level,
   const WebGLContext::FuncScope funcScope(
       *this, bool(respecFormat) ? "texImage" : "texSubImage");
 
+  const bool isUploadFromPbo = bool(src.mPboOffset);
+  const bool isPboBound = bool(mBoundPixelUnpackBuffer);
+  if (isUploadFromPbo != isPboBound) {
+    GenerateError(LOCAL_GL_INVALID_OPERATION,
+                  "Tex upload from %s but PIXEL_UNPACK_BUFFER %s bound.",
+                  isUploadFromPbo ? "PBO" : "non-PBO",
+                  isPboBound ? "was" : "was not");
+    return;
+  }
+
   if (respecFormat) {
     offset = {0, 0, 0};
   }
