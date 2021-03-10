@@ -96,6 +96,8 @@ struct DefaultJitOptions
     mozilla::Maybe<uint32_t> forcedDefaultIonSmallFunctionWarmUpThreshold;
     mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;
 
+    bool spectreValueMasking;
+
     DefaultJitOptions();
     bool isSmallFunction(JSScript* script) const;
     void setEagerCompilation();

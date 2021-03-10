@@ -1320,6 +1320,9 @@ class MacroAssembler : public MacroAssemblerSpecific
         DEFINED_ON(arm, arm64, x86_shared);
 
   public:
+    inline void cmpPtrMovePtr(Condition cond, Register lhs, Register rhs,
+                            Register src, Register dest)
+      DEFINED_ON(x64);
     // ========================================================================
     // Canonicalization primitives.
     inline void canonicalizeDouble(FloatRegister reg);

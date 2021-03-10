@@ -115,6 +115,13 @@ CodeGeneratorX86::visitBoxFloatingPoint(LBoxFloatingPoint* box)
     const ValueOperand out = ToOutValue(box);
 
     masm.moveValue(TypedOrValueRegister(box->type(), in), out);
+
+    if (JitOptions.spectreValueMasking) {
+    Register scratch = ToRegister(box->spectreTemp());
+    masm.move32(Imm32(JSVAL_TAG_CLEAR), scratch);
+    masm.cmp32Move32(Assembler::Below, scratch, out.typeReg(), scratch,
+                     out.typeReg());
+  }
 }
 
 void

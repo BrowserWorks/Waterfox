@@ -231,7 +231,8 @@ DefaultJitOptions::DefaultJitOptions()
         if (!forcedRegisterAllocator.isSome())
             Warn(forcedRegisterAllocatorEnv, env);
     }
-
+    
+    SET_DEFAULT(spectreValueMasking, true);
     // Test whether Atomics are allowed in asm.js code.
     SET_DEFAULT(asmJSAtomicsEnable, false);
 

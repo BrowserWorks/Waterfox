@@ -498,7 +498,10 @@ class BaseAssemblerX64 : public BaseAssembler
     }
 
     // Various move ops:
-
+    void cmovCCq_rr(Condition cond, RegisterID src, RegisterID dst) {
+        spew("cmov%s     %s, %s", CCName(cond), GPReg64Name(src), GPReg64Name(dst));
+        m_formatter.twoByteOp64(cmovccOpcode(cond), src, dst);
+    }
     void cmovzq_rr(RegisterID src, RegisterID dst)
     {
         spew("cmovz     %s, %s", GPReg16Name(src), GPReg32Name(dst));

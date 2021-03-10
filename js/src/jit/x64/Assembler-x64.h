@@ -455,7 +455,10 @@ class Assembler : public AssemblerX86Shared
     void movq(Register src, Register dest) {
         masm.movq_rr(src.encoding(), dest.encoding());
     }
-
+    void cmovCCq(Condition cond, Register src, Register dest) {
+      X86Encoding::Condition cc = static_cast<X86Encoding::Condition>(cond);
+      masm.cmovCCq_rr(cc, src.encoding(), dest.encoding());
+    }
     void cmovzq(const Operand& src, Register dest) {
         switch (src.kind()) {
           case Operand::REG:

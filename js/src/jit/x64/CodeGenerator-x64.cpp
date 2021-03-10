@@ -86,6 +86,13 @@ CodeGeneratorX64::visitBox(LBox* box)
     ValueOperand result = GetValueOutput(box);
 
     masm.moveValue(TypedOrValueRegister(box->type(), ToAnyRegister(in)), result);
+    
+    if (JitOptions.spectreValueMasking && IsFloatingPointType(box->type())) {
+        ScratchRegisterScope scratch(masm);
+        masm.movePtr(ImmWord(JSVAL_SHIFTED_TAG_MAX_DOUBLE), scratch);
+        masm.cmpPtrMovePtr(Assembler::Below, scratch, result.valueReg(), scratch,
+                        result.valueReg());
+    }
 }
 
 void
