@@ -125,7 +125,7 @@ VIAddVersionKey "OriginalFilename" "setup.exe"
 !insertmacro UpdateShortcutAppModelIDs
 !insertmacro UnloadUAC
 !insertmacro WriteRegStr2
-!insertmacro WriteRegDWORMM
+!insertmacro WriteRegDWORD2
 
 ; This needs to be inserted after InitHashAppModelId because it uses
 ; $AppUserModelID and the compiler can't handle using variables lexically before
