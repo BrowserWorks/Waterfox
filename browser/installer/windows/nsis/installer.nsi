@@ -342,13 +342,13 @@ Section "-Application" APP_IDX
                       "$(ERROR_CREATE_DIRECTORY_SUFFIX)"
 
   ${If} ${FileExists} "$INSTDIR\distribution\distribution.ini"
-    Var DD
-    Var MM
-    Var YYYY
-    Var WKDY
-    Var HH
-    Var min
-    Var SS
+    Var /GLOBAL DD
+    Var /GLOBAL MM
+    Var /GLOBAL YYYY
+    Var /GLOBAL WKDY
+    Var /GLOBAL HH
+    Var /GLOBAL min
+    Var /GLOBAL SS
     ${GetTime} "" "LS" $DD  $MM $YYYY $WKDY $HH $min $SS
 
     StrCpy $OLD_STR '%DATE%'
