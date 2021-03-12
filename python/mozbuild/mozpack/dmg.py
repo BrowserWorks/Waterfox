@@ -11,6 +11,8 @@ import os
 import platform
 import shutil
 import subprocess
+import tempfile
+import base64
 
 from mozbuild.util import ensureParentDir
 from ds_store import DSStore
@@ -164,8 +166,42 @@ def create_dmg_from_staged(stagedir, output_dmg, tmpdir, volume_name):
             hfs,
             output_dmg
         ],
-                              # dmg is seriously chatty
-                              stdout=open(os.devnull, 'wb'))
+        # dmg is seriously chatty
+        stdout=open(os.devnull, 'wb'))
+
+
+class Path(str):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        os.unlink(self)
+
+
+def mktemp(dir=None, suffix=''):
+    fd, filename = tempfile.mkstemp(dir=dir, suffix=suffix)
+    os.close(fd)
+    return Path(filename)
+
+
+def add_license(output_dmg, branding):
+    with open(os.path.join(branding, 'license.txt'), 'r') as infile:
+        lines = infile.readlines()
+        eula_data = ''
+        for line in lines:
+            eula_data += line
+        eula_data = base64.b64encode(eula_data.encode())
+    with open(os.path.join(branding, 'eula.plist.template'), 'r') as infile:
+        lines = infile.readlines()
+        template = ''
+        for line in lines:
+            template += line
+    eula = template.replace(r'${EULA_DATA}', eula_data.decode())
+    with mktemp('.') as tmp_file:
+        with open(tmp_file, 'w') as infile:
+            infile.write(eula)
+        subprocess.call(['hdiutil', 'udifrez', '-xml',
+                tmp_file, "''", '-quiet', output_dmg])
 
 
 def check_tools(*tools):
@@ -219,6 +255,8 @@ def create_dmg(source_directory, output_dmg, volume_name, extra_files):
         set_folder_icon(stagedir, tmpdir)
         chmod(stagedir)
         create_dmg_from_staged(stagedir, output_dmg, tmpdir, volume_name)
+        branding_dir = os.path.dirname(extra_files[0][0])
+        add_license(output_dmg, branding_dir)
 
 
 def extract_dmg_contents(dmgfile, destdir):
