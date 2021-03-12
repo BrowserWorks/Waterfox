@@ -1985,7 +1985,11 @@ var Policies = {
       }
       if ("SkipOnboarding") {
         setAndLockPref("trailhead.firstrun.branches", "nofirstrun-empty");
-        setAndLockPref("browser.aboutwelcome.enabled", false);
+        setDefaultPref(
+          "browser.aboutwelcome.enabled",
+          !param.SkipOnboarding,
+          locked
+        );
       }
     },
   },
