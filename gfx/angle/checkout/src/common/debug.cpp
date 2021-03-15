@@ -21,7 +21,7 @@
 #    include <android/log.h>
 #endif
 
-#if defined(ANGLE_PLATFORM_APPLE)
+#if defined(ANGLE_PLATFORM_APPLE) && defined(__MAC_10_12)
 #    include <os/log.h>
 #endif
 
@@ -252,7 +252,7 @@ void Trace(LogSeverity severity, const char *message)
         }
         __android_log_print(android_priority, "ANGLE", "%s: %s\n", LogSeverityName(severity),
                             str.c_str());
-#elif defined(ANGLE_PLATFORM_APPLE)
+#elif defined(ANGLE_PLATFORM_APPLE) && defined(__MAC_10_12)
         if (__builtin_available(macOS 10.12, iOS 10.0, *))
         {
             os_log_type_t apple_log_type = OS_LOG_TYPE_DEFAULT;
