@@ -89,7 +89,7 @@ var StoreHandler = {
     _installFailedMsg: function __installFailedMsg(msg="Encountered an error during extension installation") {
         Services.prompt.alert(
             null,
-            "Extension Install Failure",
+            "🤒 Extension Install Failure",
             msg
           )
     },
@@ -117,7 +117,7 @@ var StoreHandler = {
             // Check that we had success.
             if (!Components.isSuccessCode(aResult)) {
                 if (retry == false) {this.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest, true);return false;}
-                this._installFailedMsg("Fetching resource failed");
+                this._installFailedMsg("The add-on could not be downloaded because of a connection failure.");
                 return false;
             };
             // write nsiInputStream to nsiOutputStream
@@ -129,7 +129,7 @@ var StoreHandler = {
                 if (!Components.isSuccessCode(aResult)) {
                     // delete any tmp files
                     this._cleanup(nsiFileXpi);
-                    this._installFailedMsg("Writing to tmp failed");
+                    this._installFailedMsg("This add-on could not be installed because of a filesystem error.");
                     return false;
                 };
                 try {
@@ -138,8 +138,9 @@ var StoreHandler = {
                     if (manifest instanceof Array) {
                         this._cleanup(nsiFileXpi);
                         this._installFailedMsg(
-                            "This addon requires use of the following unsupported APIs: " + manifest.join(",")
-                            )
+                            "This add-on could not be installed because not all of its features are supported."
+                            );
+                        Services.console.logStringMessage('CRX: Unsupported APIs: ' + manifest.join(","))
                         return false;
                     }
                     this._writeTmpManifest(nsiManifest, manifest);
@@ -150,7 +151,8 @@ var StoreHandler = {
                 } catch(e) {
                     // delete any tmp files
                     this._cleanup(nsiFileXpi);
-                    this._installFailedMsg("Issue installing extension :" + e);
+                    this._installFailedMsg("There was an issue while attempting to install the add-on.");
+                    Services.console.logStringMessage('CRX: Error installing add-on: ' + e)
                     return false;
                 };
             });
@@ -174,7 +176,7 @@ var StoreHandler = {
                 }
             };
             if (i == 3000) {
-                Services.console.logStringMessage("Magic not found");
+                Services.console.logStringMessage("CRX: Magic not found");
                 return false;
             };
             // remove Chrome ext headers
@@ -183,7 +185,7 @@ var StoreHandler = {
             await OS.File.writeAtomic(path, zipBuffer);
             return true;
         } catch(e) {
-            Services.console.logStringMessage("Error removing Chrome headers");
+            Services.console.logStringMessage("CRX: Error removing Chrome headers");
             return false;
         }
     },
@@ -221,7 +223,7 @@ var StoreHandler = {
             zr.close();
             return manifest;
         } catch(e) {
-            Services.console.logStringMessage("Error updating manifest: " + e);
+            Services.console.logStringMessage("CRX: Error updating manifest: " + e);
             return false;
         }
     },
@@ -387,7 +389,7 @@ var StoreHandler = {
             zw.addEntryFile("manifest.json", Ci.nsIZipWriter.COMPRESSION_NONE, manifestFile, false);
             zw.close();
         } catch(e) {
-            Services.console.logStringMessage("Error replacing manifest")
+            Services.console.logStringMessage("CRX: Error replacing manifest")
             return false;
         }
     },
