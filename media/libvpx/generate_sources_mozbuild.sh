@@ -78,6 +78,10 @@ function convert_srcs_to_project_files {
   # Remove vpx_config.c.
   source_list=$(echo "$source_list" | grep -v 'vpx_config\.c')
 
+  # Remove include-only asm files (no object code emitted)
+  source_list=$(echo "$source_list" | grep -v 'x86_abi_support\.asm')
+  source_list=$(echo "$source_list" | grep -v 'config\.asm')
+
   # The actual ARM files end in .asm. We have rules to translate them to .S
   source_list=$(echo "$source_list" | sed s/\.asm\.s$/.asm/)
 
@@ -193,6 +197,7 @@ cd $TEMP_DIR
 echo "Generate config files."
 all_platforms="--enable-external-build --disable-examples --disable-install-docs --disable-unit-tests"
 all_platforms="${all_platforms} --enable-multi-res-encoding --size-limit=8192x4608 --enable-pic"
+all_platforms="${all_platforms} --disable-avx512"
 x86_platforms="--enable-postproc --enable-vp9-postproc --as=yasm"
 arm_platforms="--enable-runtime-cpu-detect --enable-realtime-only"
 

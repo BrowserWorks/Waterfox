@@ -29,7 +29,7 @@
 
 static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t,
                                  int plane, int calc_rate, int allow_update_cdf,
-                                 FRAME_COUNTS *counts) {
+                                 FRAME_COUNTS *counts, MapCdf map_pb_cdf) {
   const uint8_t *const color_map = param->color_map;
   MapCdf map_cdf = param->map_cdf;
   ColorCost color_cost = param->color_cost;
@@ -55,7 +55,7 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t,
         this_rate += (*color_cost)[palette_size_idx][color_ctx][color_new_idx];
       } else {
         (*t)->token = color_new_idx;
-        (*t)->color_map_cdf = map_cdf[palette_size_idx][color_ctx];
+        (*t)->color_map_cdf = map_pb_cdf[palette_size_idx][color_ctx];
         ++(*t);
         if (allow_update_cdf)
           update_cdf(map_cdf[palette_size_idx][color_ctx], color_new_idx, n);
@@ -107,7 +107,10 @@ int av1_cost_color_map(const MACROBLOCK *const x, int plane, BLOCK_SIZE bsize,
   assert(plane == 0 || plane == 1);
   Av1ColorMapParam color_map_params;
   get_color_map_params(x, plane, bsize, tx_size, type, &color_map_params);
-  return cost_and_tokenize_map(&color_map_params, NULL, plane, 1, 0, NULL);
+  MapCdf map_pb_cdf = plane ? x->tile_pb_ctx->palette_uv_color_index_cdf
+                            : x->tile_pb_ctx->palette_y_color_index_cdf;
+  return cost_and_tokenize_map(&color_map_params, NULL, plane, 1, 0, NULL,
+                               map_pb_cdf);
 }
 
 void av1_tokenize_color_map(const MACROBLOCK *const x, int plane,
@@ -121,13 +124,15 @@ void av1_tokenize_color_map(const MACROBLOCK *const x, int plane,
   (*t)->token = color_map_params.color_map[0];
   (*t)->color_map_cdf = NULL;
   ++(*t);
+  MapCdf map_pb_cdf = plane ? x->tile_pb_ctx->palette_uv_color_index_cdf
+                            : x->tile_pb_ctx->palette_y_color_index_cdf;
   cost_and_tokenize_map(&color_map_params, t, plane, 0, allow_update_cdf,
-                        counts);
+                        counts, map_pb_cdf);
 }
 
-void tokenize_vartx(ThreadData *td, TOKENEXTRA **t, RUN_TYPE dry_run,
-                    TX_SIZE tx_size, BLOCK_SIZE plane_bsize, int blk_row,
-                    int blk_col, int block, int plane, void *arg) {
+static void tokenize_vartx(ThreadData *td, TX_SIZE tx_size,
+                           BLOCK_SIZE plane_bsize, int blk_row, int blk_col,
+                           int block, int plane, void *arg) {
   MACROBLOCK *const x = &td->mb;
   MACROBLOCKD *const xd = &x->e_mbd;
   MB_MODE_INFO *const mbmi = xd->mi[0];
@@ -146,16 +151,9 @@ void tokenize_vartx(ThreadData *td, TOKENEXTRA **t, RUN_TYPE dry_run,
   if (tx_size == plane_tx_size || plane) {
     plane_bsize = get_plane_block_size(mbmi->sb_type, pd->subsampling_x,
                                        pd->subsampling_y);
-    if (!dry_run) {
-      av1_update_and_record_txb_context(plane, block, blk_row, blk_col,
-                                        plane_bsize, tx_size, arg);
-    } else if (dry_run == DRY_RUN_NORMAL) {
-      av1_update_txb_context_b(plane, block, blk_row, blk_col, plane_bsize,
-                               tx_size, arg);
-    } else {
-      printf("DRY_RUN_COSTCOEFFS is not supported yet\n");
-      assert(0);
-    }
+    av1_update_and_record_txb_context(plane, block, blk_row, blk_col,
+                                      plane_bsize, tx_size, arg);
+
   } else {
     // Half the block size in transform block unit.
     const TX_SIZE sub_txs = sub_tx_size_map[tx_size];
@@ -172,72 +170,68 @@ void tokenize_vartx(ThreadData *td, TOKENEXTRA **t, RUN_TYPE dry_run,
 
         if (offsetr >= max_blocks_high || offsetc >= max_blocks_wide) continue;
 
-        tokenize_vartx(td, t, dry_run, sub_txs, plane_bsize, offsetr, offsetc,
-                       block, plane, arg);
+        tokenize_vartx(td, sub_txs, plane_bsize, offsetr, offsetc, block, plane,
+                       arg);
         block += step;
       }
     }
   }
 }
 
-void av1_tokenize_sb_vartx(const AV1_COMP *cpi, ThreadData *td, TOKENEXTRA **t,
-                           RUN_TYPE dry_run, int mi_row, int mi_col,
-                           BLOCK_SIZE bsize, int *rate,
+void av1_tokenize_sb_vartx(const AV1_COMP *cpi, ThreadData *td,
+                           RUN_TYPE dry_run, BLOCK_SIZE bsize, int *rate,
                            uint8_t allow_update_cdf) {
+  assert(bsize < BLOCK_SIZES_ALL);
   const AV1_COMMON *const cm = &cpi->common;
-  const int num_planes = av1_num_planes(cm);
   MACROBLOCK *const x = &td->mb;
   MACROBLOCKD *const xd = &x->e_mbd;
+  const int mi_row = xd->mi_row;
+  const int mi_col = xd->mi_col;
+  if (mi_row >= cm->mi_params.mi_rows || mi_col >= cm->mi_params.mi_cols)
+    return;
+
+  const int num_planes = av1_num_planes(cm);
   MB_MODE_INFO *const mbmi = xd->mi[0];
-  (void)t;
-  struct tokenize_b_args arg = { cpi, td, t, 0, allow_update_cdf };
-  if (mi_row >= cm->mi_rows || mi_col >= cm->mi_cols) return;
+  struct tokenize_b_args arg = { cpi, td, 0, allow_update_cdf, dry_run };
 
   if (mbmi->skip) {
-    av1_reset_skip_context(xd, mi_row, mi_col, bsize, num_planes);
+    av1_reset_entropy_context(xd, bsize, num_planes);
     return;
   }
 
   for (int plane = 0; plane < num_planes; ++plane) {
-    if (!is_chroma_reference(mi_row, mi_col, bsize,
-                             xd->plane[plane].subsampling_x,
-                             xd->plane[plane].subsampling_y)) {
-      continue;
-    }
+    if (plane && !xd->is_chroma_ref) break;
     const struct macroblockd_plane *const pd = &xd->plane[plane];
-    const BLOCK_SIZE bsizec =
-        scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
-    const BLOCK_SIZE plane_bsize =
-        get_plane_block_size(bsizec, pd->subsampling_x, pd->subsampling_y);
-    const int mi_width = block_size_wide[plane_bsize] >> tx_size_wide_log2[0];
-    const int mi_height = block_size_high[plane_bsize] >> tx_size_high_log2[0];
+    const int ss_x = pd->subsampling_x;
+    const int ss_y = pd->subsampling_y;
+    const BLOCK_SIZE plane_bsize = get_plane_block_size(bsize, ss_x, ss_y);
+    assert(plane_bsize < BLOCK_SIZES_ALL);
+    const int mi_width = mi_size_wide[plane_bsize];
+    const int mi_height = mi_size_high[plane_bsize];
     const TX_SIZE max_tx_size = get_vartx_max_txsize(xd, plane_bsize, plane);
     const BLOCK_SIZE txb_size = txsize_to_bsize[max_tx_size];
-    int bw = block_size_wide[txb_size] >> tx_size_wide_log2[0];
-    int bh = block_size_high[txb_size] >> tx_size_high_log2[0];
-    int idx, idy;
+    const int bw = mi_size_wide[txb_size];
+    const int bh = mi_size_high[txb_size];
     int block = 0;
-    int step = tx_size_wide_unit[max_tx_size] * tx_size_high_unit[max_tx_size];
+    const int step =
+        tx_size_wide_unit[max_tx_size] * tx_size_high_unit[max_tx_size];
 
     const BLOCK_SIZE max_unit_bsize =
-        get_plane_block_size(BLOCK_64X64, pd->subsampling_x, pd->subsampling_y);
-    int mu_blocks_wide =
-        block_size_wide[max_unit_bsize] >> tx_size_wide_log2[0];
-    int mu_blocks_high =
-        block_size_high[max_unit_bsize] >> tx_size_high_log2[0];
+        get_plane_block_size(BLOCK_64X64, ss_x, ss_y);
+    int mu_blocks_wide = mi_size_wide[max_unit_bsize];
+    int mu_blocks_high = mi_size_high[max_unit_bsize];
 
     mu_blocks_wide = AOMMIN(mi_width, mu_blocks_wide);
     mu_blocks_high = AOMMIN(mi_height, mu_blocks_high);
 
-    for (idy = 0; idy < mi_height; idy += mu_blocks_high) {
-      for (idx = 0; idx < mi_width; idx += mu_blocks_wide) {
-        int blk_row, blk_col;
+    for (int idy = 0; idy < mi_height; idy += mu_blocks_high) {
+      for (int idx = 0; idx < mi_width; idx += mu_blocks_wide) {
         const int unit_height = AOMMIN(mu_blocks_high + idy, mi_height);
         const int unit_width = AOMMIN(mu_blocks_wide + idx, mi_width);
-        for (blk_row = idy; blk_row < unit_height; blk_row += bh) {
-          for (blk_col = idx; blk_col < unit_width; blk_col += bw) {
-            tokenize_vartx(td, t, dry_run, max_tx_size, plane_bsize, blk_row,
-                           blk_col, block, plane, &arg);
+        for (int blk_row = idy; blk_row < unit_height; blk_row += bh) {
+          for (int blk_col = idx; blk_col < unit_width; blk_col += bw) {
+            tokenize_vartx(td, max_tx_size, plane_bsize, blk_row, blk_col,
+                           block, plane, &arg);
             block += step;
           }
         }

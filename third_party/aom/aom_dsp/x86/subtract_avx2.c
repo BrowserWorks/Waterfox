@@ -26,7 +26,7 @@ static INLINE void subtract32_avx2(int16_t *diff_ptr, const uint8_t *src_ptr,
   _mm256_store_si256((__m256i *)(diff_ptr + 16), d_1);
 }
 
-static INLINE void aom_subtract_block_16xn_avx2(
+static INLINE void subtract_block_16xn_avx2(
     int rows, int16_t *diff_ptr, ptrdiff_t diff_stride, const uint8_t *src_ptr,
     ptrdiff_t src_stride, const uint8_t *pred_ptr, ptrdiff_t pred_stride) {
   for (int32_t j = 0; j < rows; ++j) {
@@ -42,7 +42,7 @@ static INLINE void aom_subtract_block_16xn_avx2(
   }
 }
 
-static INLINE void aom_subtract_block_32xn_avx2(
+static INLINE void subtract_block_32xn_avx2(
     int rows, int16_t *diff_ptr, ptrdiff_t diff_stride, const uint8_t *src_ptr,
     ptrdiff_t src_stride, const uint8_t *pred_ptr, ptrdiff_t pred_stride) {
   for (int32_t j = 0; j < rows; ++j) {
@@ -53,7 +53,7 @@ static INLINE void aom_subtract_block_32xn_avx2(
   }
 }
 
-static INLINE void aom_subtract_block_64xn_avx2(
+static INLINE void subtract_block_64xn_avx2(
     int rows, int16_t *diff_ptr, ptrdiff_t diff_stride, const uint8_t *src_ptr,
     ptrdiff_t src_stride, const uint8_t *pred_ptr, ptrdiff_t pred_stride) {
   for (int32_t j = 0; j < rows; ++j) {
@@ -65,7 +65,7 @@ static INLINE void aom_subtract_block_64xn_avx2(
   }
 }
 
-static INLINE void aom_subtract_block_128xn_avx2(
+static INLINE void subtract_block_128xn_avx2(
     int rows, int16_t *diff_ptr, ptrdiff_t diff_stride, const uint8_t *src_ptr,
     ptrdiff_t src_stride, const uint8_t *pred_ptr, ptrdiff_t pred_stride) {
   for (int32_t j = 0; j < rows; ++j) {
@@ -85,20 +85,20 @@ void aom_subtract_block_avx2(int rows, int cols, int16_t *diff_ptr,
                              ptrdiff_t pred_stride) {
   switch (cols) {
     case 16:
-      aom_subtract_block_16xn_avx2(rows, diff_ptr, diff_stride, src_ptr,
-                                   src_stride, pred_ptr, pred_stride);
+      subtract_block_16xn_avx2(rows, diff_ptr, diff_stride, src_ptr, src_stride,
+                               pred_ptr, pred_stride);
       break;
     case 32:
-      aom_subtract_block_32xn_avx2(rows, diff_ptr, diff_stride, src_ptr,
-                                   src_stride, pred_ptr, pred_stride);
+      subtract_block_32xn_avx2(rows, diff_ptr, diff_stride, src_ptr, src_stride,
+                               pred_ptr, pred_stride);
       break;
     case 64:
-      aom_subtract_block_64xn_avx2(rows, diff_ptr, diff_stride, src_ptr,
-                                   src_stride, pred_ptr, pred_stride);
+      subtract_block_64xn_avx2(rows, diff_ptr, diff_stride, src_ptr, src_stride,
+                               pred_ptr, pred_stride);
       break;
     case 128:
-      aom_subtract_block_128xn_avx2(rows, diff_ptr, diff_stride, src_ptr,
-                                    src_stride, pred_ptr, pred_stride);
+      subtract_block_128xn_avx2(rows, diff_ptr, diff_stride, src_ptr,
+                                src_stride, pred_ptr, pred_stride);
       break;
     default:
       aom_subtract_block_sse2(rows, cols, diff_ptr, diff_stride, src_ptr,

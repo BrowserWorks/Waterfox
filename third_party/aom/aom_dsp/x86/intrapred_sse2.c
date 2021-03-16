@@ -10,7 +10,7 @@
  */
 
 #include <emmintrin.h>
-
+#include "aom_dsp/x86/intrapred_x86.h"
 #include "config/aom_dsp_rtcd.h"
 
 static INLINE void dc_store_4xh(uint32_t dc, int height, uint8_t *dst,
@@ -75,25 +75,6 @@ static INLINE __m128i dc_sum_8(const uint8_t *ref) {
   return _mm_sad_epu8(x, zero);
 }
 
-static INLINE __m128i dc_sum_16(const uint8_t *ref) {
-  __m128i x = _mm_load_si128((__m128i const *)ref);
-  const __m128i zero = _mm_setzero_si128();
-  x = _mm_sad_epu8(x, zero);
-  const __m128i high = _mm_unpackhi_epi64(x, x);
-  return _mm_add_epi16(x, high);
-}
-
-static INLINE __m128i dc_sum_32(const uint8_t *ref) {
-  __m128i x0 = _mm_load_si128((__m128i const *)ref);
-  __m128i x1 = _mm_load_si128((__m128i const *)(ref + 16));
-  const __m128i zero = _mm_setzero_si128();
-  x0 = _mm_sad_epu8(x0, zero);
-  x1 = _mm_sad_epu8(x1, zero);
-  x0 = _mm_add_epi16(x0, x1);
-  const __m128i high = _mm_unpackhi_epi64(x0, x0);
-  return _mm_add_epi16(x0, high);
-}
-
 static INLINE __m128i dc_sum_64(const uint8_t *ref) {
   __m128i x0 = _mm_load_si128((__m128i const *)ref);
   __m128i x1 = _mm_load_si128((__m128i const *)(ref + 16));
@@ -142,7 +123,7 @@ void aom_dc_predictor_4x8_sse2(uint8_t *dst, ptrdiff_t stride,
 
 void aom_dc_predictor_4x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                 const uint8_t *above, const uint8_t *left) {
-  const __m128i sum_left = dc_sum_16(left);
+  const __m128i sum_left = dc_sum_16_sse2(left);
   __m128i sum_above = dc_sum_4(above);
   sum_above = _mm_add_epi16(sum_left, sum_above);
 
@@ -171,7 +152,7 @@ void aom_dc_predictor_8x4_sse2(uint8_t *dst, ptrdiff_t stride,
 
 void aom_dc_predictor_8x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                 const uint8_t *above, const uint8_t *left) {
-  const __m128i sum_left = dc_sum_16(left);
+  const __m128i sum_left = dc_sum_16_sse2(left);
   __m128i sum_above = dc_sum_8(above);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
@@ -184,7 +165,7 @@ void aom_dc_predictor_8x16_sse2(uint8_t *dst, ptrdiff_t stride,
 
 void aom_dc_predictor_8x32_sse2(uint8_t *dst, ptrdiff_t stride,
                                 const uint8_t *above, const uint8_t *left) {
-  const __m128i sum_left = dc_sum_32(left);
+  const __m128i sum_left = dc_sum_32_sse2(left);
   __m128i sum_above = dc_sum_8(above);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
@@ -198,7 +179,7 @@ void aom_dc_predictor_8x32_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_predictor_16x4_sse2(uint8_t *dst, ptrdiff_t stride,
                                 const uint8_t *above, const uint8_t *left) {
   const __m128i sum_left = dc_sum_4(left);
-  __m128i sum_above = dc_sum_16(above);
+  __m128i sum_above = dc_sum_16_sse2(above);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
   uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -211,7 +192,7 @@ void aom_dc_predictor_16x4_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_predictor_16x8_sse2(uint8_t *dst, ptrdiff_t stride,
                                 const uint8_t *above, const uint8_t *left) {
   const __m128i sum_left = dc_sum_8(left);
-  __m128i sum_above = dc_sum_16(above);
+  __m128i sum_above = dc_sum_16_sse2(above);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
   uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -223,8 +204,8 @@ void aom_dc_predictor_16x8_sse2(uint8_t *dst, ptrdiff_t stride,
 
 void aom_dc_predictor_16x32_sse2(uint8_t *dst, ptrdiff_t stride,
                                  const uint8_t *above, const uint8_t *left) {
-  const __m128i sum_left = dc_sum_32(left);
-  __m128i sum_above = dc_sum_16(above);
+  const __m128i sum_left = dc_sum_32_sse2(left);
+  __m128i sum_above = dc_sum_16_sse2(above);
   sum_above = _mm_add_epi16(sum_left, sum_above);
 
   uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -237,7 +218,7 @@ void aom_dc_predictor_16x32_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_predictor_16x64_sse2(uint8_t *dst, ptrdiff_t stride,
                                  const uint8_t *above, const uint8_t *left) {
   const __m128i sum_left = dc_sum_64(left);
-  __m128i sum_above = dc_sum_16(above);
+  __m128i sum_above = dc_sum_16_sse2(above);
   sum_above = _mm_add_epi16(sum_left, sum_above);
 
   uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -249,7 +230,7 @@ void aom_dc_predictor_16x64_sse2(uint8_t *dst, ptrdiff_t stride,
 
 void aom_dc_predictor_32x8_sse2(uint8_t *dst, ptrdiff_t stride,
                                 const uint8_t *above, const uint8_t *left) {
-  __m128i sum_above = dc_sum_32(above);
+  __m128i sum_above = dc_sum_32_sse2(above);
   const __m128i sum_left = dc_sum_8(left);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
@@ -262,8 +243,8 @@ void aom_dc_predictor_32x8_sse2(uint8_t *dst, ptrdiff_t stride,
 
 void aom_dc_predictor_32x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                  const uint8_t *above, const uint8_t *left) {
-  __m128i sum_above = dc_sum_32(above);
-  const __m128i sum_left = dc_sum_16(left);
+  __m128i sum_above = dc_sum_32_sse2(above);
+  const __m128i sum_left = dc_sum_16_sse2(left);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
   uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -275,7 +256,7 @@ void aom_dc_predictor_32x16_sse2(uint8_t *dst, ptrdiff_t stride,
 
 void aom_dc_predictor_32x64_sse2(uint8_t *dst, ptrdiff_t stride,
                                  const uint8_t *above, const uint8_t *left) {
-  __m128i sum_above = dc_sum_32(above);
+  __m128i sum_above = dc_sum_32_sse2(above);
   const __m128i sum_left = dc_sum_64(left);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
@@ -302,7 +283,7 @@ void aom_dc_predictor_64x64_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_predictor_64x32_sse2(uint8_t *dst, ptrdiff_t stride,
                                  const uint8_t *above, const uint8_t *left) {
   __m128i sum_above = dc_sum_64(above);
-  const __m128i sum_left = dc_sum_32(left);
+  const __m128i sum_left = dc_sum_32_sse2(left);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
   uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -315,7 +296,7 @@ void aom_dc_predictor_64x32_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_predictor_64x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                  const uint8_t *above, const uint8_t *left) {
   __m128i sum_above = dc_sum_64(above);
-  const __m128i sum_left = dc_sum_16(left);
+  const __m128i sum_left = dc_sum_16_sse2(left);
   sum_above = _mm_add_epi16(sum_above, sum_left);
 
   uint32_t sum = _mm_cvtsi128_si32(sum_above);
@@ -395,7 +376,7 @@ void aom_dc_top_predictor_8x32_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_top_predictor_16x4_sse2(uint8_t *dst, ptrdiff_t stride,
                                     const uint8_t *above, const uint8_t *left) {
   (void)left;
-  __m128i sum_above = dc_sum_16(above);
+  __m128i sum_above = dc_sum_16_sse2(above);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_above = _mm_add_epi16(sum_above, eight);
   sum_above = _mm_srai_epi16(sum_above, 4);
@@ -408,7 +389,7 @@ void aom_dc_top_predictor_16x4_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_top_predictor_16x8_sse2(uint8_t *dst, ptrdiff_t stride,
                                     const uint8_t *above, const uint8_t *left) {
   (void)left;
-  __m128i sum_above = dc_sum_16(above);
+  __m128i sum_above = dc_sum_16_sse2(above);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_above = _mm_add_epi16(sum_above, eight);
   sum_above = _mm_srai_epi16(sum_above, 4);
@@ -422,7 +403,7 @@ void aom_dc_top_predictor_16x32_sse2(uint8_t *dst, ptrdiff_t stride,
                                      const uint8_t *above,
                                      const uint8_t *left) {
   (void)left;
-  __m128i sum_above = dc_sum_16(above);
+  __m128i sum_above = dc_sum_16_sse2(above);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_above = _mm_add_epi16(sum_above, eight);
   sum_above = _mm_srai_epi16(sum_above, 4);
@@ -436,7 +417,7 @@ void aom_dc_top_predictor_16x64_sse2(uint8_t *dst, ptrdiff_t stride,
                                      const uint8_t *above,
                                      const uint8_t *left) {
   (void)left;
-  __m128i sum_above = dc_sum_16(above);
+  __m128i sum_above = dc_sum_16_sse2(above);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_above = _mm_add_epi16(sum_above, eight);
   sum_above = _mm_srai_epi16(sum_above, 4);
@@ -449,7 +430,7 @@ void aom_dc_top_predictor_16x64_sse2(uint8_t *dst, ptrdiff_t stride,
 void aom_dc_top_predictor_32x8_sse2(uint8_t *dst, ptrdiff_t stride,
                                     const uint8_t *above, const uint8_t *left) {
   (void)left;
-  __m128i sum_above = dc_sum_32(above);
+  __m128i sum_above = dc_sum_32_sse2(above);
   const __m128i sixteen = _mm_set1_epi16((uint16_t)16);
   sum_above = _mm_add_epi16(sum_above, sixteen);
   sum_above = _mm_srai_epi16(sum_above, 5);
@@ -463,7 +444,7 @@ void aom_dc_top_predictor_32x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                      const uint8_t *above,
                                      const uint8_t *left) {
   (void)left;
-  __m128i sum_above = dc_sum_32(above);
+  __m128i sum_above = dc_sum_32_sse2(above);
   const __m128i sixteen = _mm_set1_epi16((uint16_t)16);
   sum_above = _mm_add_epi16(sum_above, sixteen);
   sum_above = _mm_srai_epi16(sum_above, 5);
@@ -477,7 +458,7 @@ void aom_dc_top_predictor_32x64_sse2(uint8_t *dst, ptrdiff_t stride,
                                      const uint8_t *above,
                                      const uint8_t *left) {
   (void)left;
-  __m128i sum_above = dc_sum_32(above);
+  __m128i sum_above = dc_sum_32_sse2(above);
   const __m128i sixteen = _mm_set1_epi16((uint16_t)16);
   sum_above = _mm_add_epi16(sum_above, sixteen);
   sum_above = _mm_srai_epi16(sum_above, 5);
@@ -550,7 +531,7 @@ void aom_dc_left_predictor_4x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                      const uint8_t *above,
                                      const uint8_t *left) {
   (void)above;
-  __m128i sum_left = dc_sum_16(left);
+  __m128i sum_left = dc_sum_16_sse2(left);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_left = _mm_add_epi16(sum_left, eight);
   sum_left = _mm_srai_epi16(sum_left, 4);
@@ -577,7 +558,7 @@ void aom_dc_left_predictor_8x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                      const uint8_t *above,
                                      const uint8_t *left) {
   (void)above;
-  __m128i sum_left = dc_sum_16(left);
+  __m128i sum_left = dc_sum_16_sse2(left);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_left = _mm_add_epi16(sum_left, eight);
   sum_left = _mm_srai_epi16(sum_left, 4);
@@ -590,7 +571,7 @@ void aom_dc_left_predictor_8x32_sse2(uint8_t *dst, ptrdiff_t stride,
                                      const uint8_t *above,
                                      const uint8_t *left) {
   (void)above;
-  __m128i sum_left = dc_sum_32(left);
+  __m128i sum_left = dc_sum_32_sse2(left);
   const __m128i sixteen = _mm_set1_epi16((uint16_t)16);
   sum_left = _mm_add_epi16(sum_left, sixteen);
   sum_left = _mm_srai_epi16(sum_left, 5);
@@ -631,7 +612,7 @@ void aom_dc_left_predictor_16x32_sse2(uint8_t *dst, ptrdiff_t stride,
                                       const uint8_t *above,
                                       const uint8_t *left) {
   (void)above;
-  __m128i sum_left = dc_sum_32(left);
+  __m128i sum_left = dc_sum_32_sse2(left);
   const __m128i sixteen = _mm_set1_epi16((uint16_t)16);
   sum_left = _mm_add_epi16(sum_left, sixteen);
   sum_left = _mm_srai_epi16(sum_left, 5);
@@ -673,7 +654,7 @@ void aom_dc_left_predictor_32x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                       const uint8_t *above,
                                       const uint8_t *left) {
   (void)above;
-  __m128i sum_left = dc_sum_16(left);
+  __m128i sum_left = dc_sum_16_sse2(left);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_left = _mm_add_epi16(sum_left, eight);
   sum_left = _mm_srai_epi16(sum_left, 4);
@@ -715,7 +696,7 @@ void aom_dc_left_predictor_64x32_sse2(uint8_t *dst, ptrdiff_t stride,
                                       const uint8_t *above,
                                       const uint8_t *left) {
   (void)above;
-  __m128i sum_left = dc_sum_32(left);
+  __m128i sum_left = dc_sum_32_sse2(left);
   const __m128i sixteen = _mm_set1_epi16((uint16_t)16);
   sum_left = _mm_add_epi16(sum_left, sixteen);
   sum_left = _mm_srai_epi16(sum_left, 5);
@@ -729,7 +710,7 @@ void aom_dc_left_predictor_64x16_sse2(uint8_t *dst, ptrdiff_t stride,
                                       const uint8_t *above,
                                       const uint8_t *left) {
   (void)above;
-  __m128i sum_left = dc_sum_16(left);
+  __m128i sum_left = dc_sum_16_sse2(left);
   const __m128i eight = _mm_set1_epi16((uint16_t)8);
   sum_left = _mm_add_epi16(sum_left, eight);
   sum_left = _mm_srai_epi16(sum_left, 4);

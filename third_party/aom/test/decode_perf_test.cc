@@ -10,6 +10,7 @@
  */
 
 #include <string>
+#include <tuple>
 
 #include "config/aom_version.h"
 
@@ -24,7 +25,7 @@
 #include "test/util.h"
 #include "test/webm_video_source.h"
 
-using ::testing::make_tuple;
+using std::make_tuple;
 
 namespace {
 
@@ -37,7 +38,7 @@ const char kNewEncodeOutputFile[] = "new_encode.ivf";
 /*
  DecodePerfTest takes a tuple of filename + number of threads to decode with
  */
-typedef ::testing::tuple<const char *, unsigned> DecodePerfParam;
+typedef std::tuple<const char *, unsigned> DecodePerfParam;
 
 // TODO(jimbankoski): Add actual test vectors here when available.
 // const DecodePerfParam kAV1DecodePerfVectors[] = {};
@@ -91,7 +92,7 @@ TEST_P(DecodePerfTest, PerfTest) {
 }
 
 // TODO(jimbankoski): Enabled when we have actual AV1 Decode vectors.
-// INSTANTIATE_TEST_CASE_P(AV1, DecodePerfTest,
+// INSTANTIATE_TEST_SUITE_P(AV1, DecodePerfTest,
 //                        ::testing::ValuesIn(kAV1DecodePerfVectors));
 
 class AV1NewEncodeDecodePerfTest
@@ -122,7 +123,7 @@ class AV1NewEncodeDecodePerfTest
 
   virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
                                   ::libaom_test::Encoder *encoder) {
-    if (video->frame() == 1) {
+    if (video->frame() == 0) {
       encoder->Control(AOME_SET_CPUUSED, speed_);
       encoder->Control(AV1E_SET_FRAME_PARALLEL_DECODING, 1);
       encoder->Control(AV1E_SET_TILE_COLUMNS, 2);

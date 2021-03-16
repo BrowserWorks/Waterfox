@@ -50,7 +50,8 @@ class AltRefForcedKeyTestLarge
 
   virtual void FramePktHook(const aom_codec_cx_pkt_t *pkt) {
     if (frame_num_ == forced_kf_frame_num_) {
-      ASSERT_TRUE(!!(pkt->data.frame.flags & AOM_FRAME_IS_KEY))
+      ASSERT_EQ(pkt->data.frame.flags & AOM_FRAME_IS_KEY,
+                static_cast<aom_codec_frame_flags_t>(AOM_FRAME_IS_KEY))
           << "Frame #" << frame_num_ << " isn't a keyframe!";
     }
     ++frame_num_;

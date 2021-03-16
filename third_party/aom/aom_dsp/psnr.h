@@ -35,6 +35,12 @@ typedef struct {
  * \param[in]    sse           Sum of squared errors
  */
 double aom_sse_to_psnr(double samples, double peak, double sse);
+uint64_t aom_get_y_var(const YV12_BUFFER_CONFIG *a, int hstart, int width,
+                       int vstart, int height);
+uint64_t aom_get_u_var(const YV12_BUFFER_CONFIG *a, int hstart, int width,
+                       int vstart, int height);
+uint64_t aom_get_v_var(const YV12_BUFFER_CONFIG *a, int hstart, int width,
+                       int vstart, int height);
 int64_t aom_get_y_sse_part(const YV12_BUFFER_CONFIG *a,
                            const YV12_BUFFER_CONFIG *b, int hstart, int width,
                            int vstart, int height);
@@ -49,6 +55,13 @@ int64_t aom_get_v_sse_part(const YV12_BUFFER_CONFIG *a,
 int64_t aom_get_v_sse(const YV12_BUFFER_CONFIG *a, const YV12_BUFFER_CONFIG *b);
 int64_t aom_get_sse_plane(const YV12_BUFFER_CONFIG *a,
                           const YV12_BUFFER_CONFIG *b, int plane, int highbd);
+#if CONFIG_AV1_HIGHBITDEPTH
+uint64_t aom_highbd_get_y_var(const YV12_BUFFER_CONFIG *a, int hstart,
+                              int width, int vstart, int height);
+uint64_t aom_highbd_get_u_var(const YV12_BUFFER_CONFIG *a, int hstart,
+                              int width, int vstart, int height);
+uint64_t aom_highbd_get_v_var(const YV12_BUFFER_CONFIG *a, int hstart,
+                              int width, int vstart, int height);
 int64_t aom_highbd_get_y_sse_part(const YV12_BUFFER_CONFIG *a,
                                   const YV12_BUFFER_CONFIG *b, int hstart,
                                   int width, int vstart, int height);
@@ -67,6 +80,7 @@ int64_t aom_highbd_get_v_sse(const YV12_BUFFER_CONFIG *a,
 void aom_calc_highbd_psnr(const YV12_BUFFER_CONFIG *a,
                           const YV12_BUFFER_CONFIG *b, PSNR_STATS *psnr,
                           unsigned int bit_depth, unsigned int in_bit_depth);
+#endif
 void aom_calc_psnr(const YV12_BUFFER_CONFIG *a, const YV12_BUFFER_CONFIG *b,
                    PSNR_STATS *psnr);
 

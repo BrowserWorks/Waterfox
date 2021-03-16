@@ -18,13 +18,17 @@ static int frame_idx_w = 0;
 
 static int frame_idx_r = 0;
 
-void bitstream_queue_set_frame_write(int frame_idx) { frame_idx_w = frame_idx; }
+void aom_bitstream_queue_set_frame_write(int frame_idx) {
+  frame_idx_w = frame_idx;
+}
 
-int bitstream_queue_get_frame_write(void) { return frame_idx_w; }
+int aom_bitstream_queue_get_frame_writee(void) { return frame_idx_w; }
 
-void bitstream_queue_set_frame_read(int frame_idx) { frame_idx_r = frame_idx; }
+void aom_bitstream_queue_set_frame_read(int frame_idx) {
+  frame_idx_r = frame_idx;
+}
 
-int bitstream_queue_get_frame_read(void) { return frame_idx_r; }
+int aom_bitstream_queue_get_frame_read(void) { return frame_idx_r; }
 
 #if CONFIG_BITSTREAM_DEBUG
 #define QUEUE_MAX_SIZE 2000000

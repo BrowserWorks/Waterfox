@@ -99,7 +99,7 @@ SIMD_INLINE void v64_store_unaligned(void *p, v64 a) {
        : (b))
 #endif
 
-SIMD_INLINE v64 v64_zero() { return _mm_setzero_si128(); }
+SIMD_INLINE v64 v64_zero(void) { return _mm_setzero_si128(); }
 
 SIMD_INLINE v64 v64_dup_8(uint8_t x) { return _mm_set1_epi8(x); }
 
@@ -319,7 +319,7 @@ SIMD_INLINE int64_t v64_hadd_s16(v64 a) {
 
 typedef v64 sad64_internal;
 
-SIMD_INLINE sad64_internal v64_sad_u8_init() { return _mm_setzero_si128(); }
+SIMD_INLINE sad64_internal v64_sad_u8_init(void) { return _mm_setzero_si128(); }
 
 /* Implementation dependent return value.  Result must be finalised with
    v64_sad_u8_sum().
@@ -332,7 +332,7 @@ SIMD_INLINE uint32_t v64_sad_u8_sum(sad64_internal s) { return v64_low_u32(s); }
 
 typedef v64 ssd64_internal;
 
-SIMD_INLINE ssd64_internal v64_ssd_u8_init() { return _mm_setzero_si128(); }
+SIMD_INLINE ssd64_internal v64_ssd_u8_init(void) { return _mm_setzero_si128(); }
 
 /* Implementation dependent return value.  Result must be finalised with
  * v64_ssd_u8_sum(). */
@@ -438,7 +438,7 @@ SIMD_INLINE v64 v64_shl_8(v64 a, unsigned int c) {
 }
 
 SIMD_INLINE v64 v64_shr_u8(v64 a, unsigned int c) {
-  return _mm_and_si128(_mm_set1_epi8(0xff >> c),
+  return _mm_and_si128(_mm_set1_epi8((char)(0xff >> c)),
                        _mm_srl_epi16(a, _mm_cvtsi32_si128(c)));
 }
 

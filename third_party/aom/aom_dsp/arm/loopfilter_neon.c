@@ -785,16 +785,15 @@ void aom_lpf_vertical_4_neon(uint8_t *src, int stride, const uint8_t *blimit,
                              const uint8_t *limit, const uint8_t *thresh) {
   uint32x2x2_t p1q0_p0q1, p1q1_p0q0, p1p0_q1q0;
   uint32x2_t pq_rev;
-  uint8x8_t UNINITIALIZED_IS_SAFE(p1p0), q0q1, p0q0, p1q1;
+  uint8x8_t UNINITIALIZED_IS_SAFE(p1p0), UNINITIALIZED_IS_SAFE(q0q1);
+  uint8x8_t p0q0, p1q1;
 
   // row0: p1 p0 | q0 q1
   // row1: p1 p0 | q0 q1
   // row2: p1 p0 | q0 q1
   // row3: p1 p0 | q0 q1
-  load_u8_4x1(src - 2, &p1p0, 0);
-  load_u8_4x1((src - 2) + 1 * stride, &p1p0, 1);
-  load_u8_4x1((src - 2) + 2 * stride, &q0q1, 0);
-  load_u8_4x1((src - 2) + 3 * stride, &q0q1, 1);
+  load_unaligned_u8_4x4(src - 2, stride, (uint32x2_t *)&p1p0,
+                        (uint32x2_t *)&q0q1);
 
   transpose_u8_4x4(&p1p0, &q0q1);
 
@@ -815,10 +814,10 @@ void aom_lpf_vertical_4_neon(uint8_t *src, int stride, const uint8_t *blimit,
 
   transpose_u8_4x4(&p1p0, &q0q1);
 
-  store_u8_4x1(src - 2, p1p0, 0);
-  store_u8_4x1((src - 2) + 1 * stride, q0q1, 0);
-  store_u8_4x1((src - 2) + 2 * stride, p1p0, 1);
-  store_u8_4x1((src - 2) + 3 * stride, q0q1, 1);
+  store_unaligned_u8_4x1(src - 2, p1p0, 0);
+  store_unaligned_u8_4x1((src - 2) + 1 * stride, q0q1, 0);
+  store_unaligned_u8_4x1((src - 2) + 2 * stride, p1p0, 1);
+  store_unaligned_u8_4x1((src - 2) + 3 * stride, q0q1, 1);
 }
 
 void aom_lpf_horizontal_14_neon(uint8_t *src, int stride, const uint8_t *blimit,

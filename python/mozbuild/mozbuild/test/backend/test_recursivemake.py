@@ -316,9 +316,6 @@ class TestRecursiveMakeBackend(BackendTester):
         lines = [l.strip() for l in open(backend_path, 'rt').readlines()[2:]]
 
         expected = {
-            'ALLOW_COMPILER_WARNINGS': [
-                'ALLOW_COMPILER_WARNINGS := 1',
-            ],
             'RCFILE': [
                 'RCFILE := foo.rc',
             ],
@@ -330,28 +327,6 @@ class TestRecursiveMakeBackend(BackendTester):
             ],
             'DEFFILE': [
                 'DEFFILE := baz.def',
-            ],
-            'MOZBUILD_CFLAGS': [
-                'MOZBUILD_CFLAGS += -fno-exceptions',
-                'MOZBUILD_CFLAGS += -w',
-            ],
-            'MOZBUILD_CXXFLAGS': [
-                'MOZBUILD_CXXFLAGS += -fcxx-exceptions',
-                "MOZBUILD_CXXFLAGS += '-option with spaces'",
-            ],
-            'MOZBUILD_LDFLAGS': [
-                "MOZBUILD_LDFLAGS += '-ld flag with spaces'",
-                'MOZBUILD_LDFLAGS += -x',
-                'MOZBUILD_LDFLAGS += -DELAYLOAD:foo.dll',
-                'MOZBUILD_LDFLAGS += -DELAYLOAD:bar.dll',
-            ],
-            'MOZBUILD_HOST_CFLAGS': [
-                'MOZBUILD_HOST_CFLAGS += -funroll-loops',
-                'MOZBUILD_HOST_CFLAGS += -wall',
-            ],
-            'MOZBUILD_HOST_CXXFLAGS': [
-                'MOZBUILD_HOST_CXXFLAGS += -funroll-loops-harder',
-                'MOZBUILD_HOST_CXXFLAGS += -wall-day-everyday',
             ],
             'WIN32_EXE_LDFLAGS': [
                 'WIN32_EXE_LDFLAGS += -subsystem:console',
@@ -703,19 +678,6 @@ class TestRecursiveMakeBackend(BackendTester):
         expected = ['DEFINES += -DFOO \'-DBAZ="ab\'\\\'\'cd"\' -UQUX -DBAR=7 -DVALUE=xyz']
         self.assertEqual(defines, expected)
 
-    def test_host_defines(self):
-        """Test that HOST_DEFINES are written to backend.mk correctly."""
-        env = self._consume('host-defines', RecursiveMakeBackend)
-
-        backend_path = mozpath.join(env.topobjdir, 'backend.mk')
-        lines = [l.strip() for l in open(backend_path, 'rt').readlines()[2:]]
-
-        var = 'HOST_DEFINES'
-        defines = [val for val in lines if val.startswith(var)]
-
-        expected = ['HOST_DEFINES += -DFOO \'-DBAZ="ab\'\\\'\'cd"\' -UQUX -DBAR=7 -DVALUE=xyz']
-        self.assertEqual(defines, expected)
-
     def test_local_includes(self):
         """Test that LOCAL_INCLUDES are written to backend.mk correctly."""
         env = self._consume('local_includes', RecursiveMakeBackend)
@@ -892,6 +854,54 @@ class TestRecursiveMakeBackend(BackendTester):
                 'bar baz\n',
                 '@bar@\n',
             ])
+
+    def test_prog_lib_c_only(self):
+        """Test that C-only binary artifacts are marked as such."""
+        env = self._consume('prog-lib-c-only', RecursiveMakeBackend)
+
+        # PROGRAM C-onlyness.
+        with open(os.path.join(env.topobjdir, 'c-program', 'backend.mk'), 'rb') as fh:
+            lines = fh.readlines()
+            lines = [line.rstrip() for line in lines]
+
+            self.assertIn('PROG_IS_C_ONLY_c_test_program := 1', lines)
+
+        with open(os.path.join(env.topobjdir, 'cxx-program', 'backend.mk'), 'rb') as fh:
+            lines = fh.readlines()
+            lines = [line.rstrip() for line in lines]
+
+            # Test for only the absence of the variable, not the precise
+            # form of the variable assignment.
+            for line in lines:
+                self.assertNotIn('PROG_IS_C_ONLY_cxx_test_program', line)
+
+        # SIMPLE_PROGRAMS C-onlyness.
+        with open(os.path.join(env.topobjdir, 'c-simple-programs', 'backend.mk'), 'rb') as fh:
+            lines = fh.readlines()
+            lines = [line.rstrip() for line in lines]
+
+            self.assertIn('PROG_IS_C_ONLY_c_simple_program := 1', lines)
+
+        with open(os.path.join(env.topobjdir, 'cxx-simple-programs', 'backend.mk'), 'rb') as fh:
+            lines = fh.readlines()
+            lines = [line.rstrip() for line in lines]
+
+            for line in lines:
+                self.assertNotIn('PROG_IS_C_ONLY_cxx_simple_program', line)
+
+        # Libraries C-onlyness.
+        with open(os.path.join(env.topobjdir, 'c-library', 'backend.mk'), 'rb') as fh:
+            lines = fh.readlines()
+            lines = [line.rstrip() for line in lines]
+
+            self.assertIn('LIB_IS_C_ONLY := 1', lines)
+
+        with open(os.path.join(env.topobjdir, 'cxx-library', 'backend.mk'), 'rb') as fh:
+            lines = fh.readlines()
+            lines = [line.rstrip() for line in lines]
+
+            for line in lines:
+                self.assertNotIn('LIB_IS_C_ONLY', line)
 
     def test_jar_manifests(self):
         env = self._consume('jar-manifests', RecursiveMakeBackend)

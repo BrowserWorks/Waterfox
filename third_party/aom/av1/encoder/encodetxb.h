@@ -14,8 +14,8 @@
 
 #include "config/aom_config.h"
 
+#include "av1/common/av1_common_int.h"
 #include "av1/common/blockd.h"
-#include "av1/common/onyxc_int.h"
 #include "av1/common/txb_common.h"
 #include "av1/encoder/block.h"
 #include "av1/encoder/encoder.h"
@@ -23,6 +23,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define TXB_SKIP_CTX_MASK 15
+#define DC_SIGN_CTX_SHIFT 4
+#define DC_SIGN_CTX_MASK 3
 
 typedef struct TxbInfo {
   tran_low_t *qcoeff;
@@ -42,44 +46,54 @@ typedef struct TxbInfo {
   const SCAN_ORDER *scan_order;
   TXB_CTX *txb_ctx;
   int64_t rdmult;
-  const LV_MAP_CTX_TABLE *coeff_ctx_table;
   const qm_val_t *iqmatrix;
   int tx_type_cost;
 } TxbInfo;
 
 void av1_alloc_txb_buf(AV1_COMP *cpi);
 void av1_free_txb_buf(AV1_COMP *cpi);
-int av1_cost_coeffs_txb(const AV1_COMMON *const cm, const MACROBLOCK *x,
-                        const int plane, const int block, const TX_SIZE tx_size,
-                        const TX_TYPE tx_type, const TXB_CTX *const txb_ctx);
-void av1_write_coeffs_txb(const AV1_COMMON *const cm, MACROBLOCKD *xd,
+int av1_cost_coeffs_txb(const MACROBLOCK *x, const int plane, const int block,
+                        const TX_SIZE tx_size, const TX_TYPE tx_type,
+                        const TXB_CTX *const txb_ctx, int reduced_tx_set_used);
+int av1_cost_coeffs_txb_laplacian(const MACROBLOCK *x, const int plane,
+                                  const int block, const TX_SIZE tx_size,
+                                  const TX_TYPE tx_type,
+                                  const TXB_CTX *const txb_ctx,
+                                  const int reduced_tx_set_used,
+                                  const int adjust_eob);
+int av1_cost_coeffs_txb_estimate(const MACROBLOCK *x, const int plane,
+                                 const int block, const TX_SIZE tx_size,
+                                 const TX_TYPE tx_type);
+void av1_write_coeffs_txb(const AV1_COMMON *const cm, MACROBLOCK *const x,
                           aom_writer *w, int blk_row, int blk_col, int plane,
-                          TX_SIZE tx_size, const tran_low_t *tcoeff,
-                          uint16_t eob, TXB_CTX *txb_ctx);
-void av1_write_coeffs_mb(const AV1_COMMON *const cm, MACROBLOCK *x, int mi_row,
-                         int mi_col, aom_writer *w, BLOCK_SIZE bsize);
+                          int block, TX_SIZE tx_size);
+void av1_write_coeffs_mb(const AV1_COMMON *const cm, MACROBLOCK *x,
+                         aom_writer *w, BLOCK_SIZE bsize);
 int av1_get_txb_entropy_context(const tran_low_t *qcoeff,
                                 const SCAN_ORDER *scan_order, int eob);
 void av1_update_txb_context(const AV1_COMP *cpi, ThreadData *td,
-                            RUN_TYPE dry_run, BLOCK_SIZE bsize, int *rate,
-                            int mi_row, int mi_col, uint8_t allow_update_cdf);
-
-void av1_update_txb_context_b(int plane, int block, int blk_row, int blk_col,
-                              BLOCK_SIZE plane_bsize, TX_SIZE tx_size,
-                              void *arg);
-
+                            RUN_TYPE dry_run, BLOCK_SIZE bsize,
+                            uint8_t allow_update_cdf);
 void av1_update_and_record_txb_context(int plane, int block, int blk_row,
                                        int blk_col, BLOCK_SIZE plane_bsize,
                                        TX_SIZE tx_size, void *arg);
-
-void av1_set_coeff_buffer(const AV1_COMP *const cpi, MACROBLOCK *const x,
-                          int mi_row, int mi_col);
-
+#if CONFIG_HTB_TRELLIS
 void hbt_destroy();
+#endif  // CONFIG_HTB_TRELLIS
 int av1_optimize_txb_new(const struct AV1_COMP *cpi, MACROBLOCK *x, int plane,
                          int block, TX_SIZE tx_size, TX_TYPE tx_type,
                          const TXB_CTX *const txb_ctx, int *rate_cost,
-                         int sharpness);
+                         int sharpness, int fast_mode);
+
+CB_COEFF_BUFFER *av1_get_cb_coeff_buffer(const struct AV1_COMP *cpi, int mi_row,
+                                         int mi_col);
+
+// These numbers are empirically obtained.
+static const int plane_rd_mult[REF_TYPES][PLANE_TYPES] = {
+  { 17, 13 },
+  { 16, 10 },
+};
+
 #ifdef __cplusplus
 }
 #endif

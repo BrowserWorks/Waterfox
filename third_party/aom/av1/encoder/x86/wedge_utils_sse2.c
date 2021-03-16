@@ -97,8 +97,8 @@ uint64_t av1_wedge_sse_from_residuals_sse2(const int16_t *r1, const int16_t *d,
 /**
  * See av1_wedge_sign_from_residuals_c
  */
-int av1_wedge_sign_from_residuals_sse2(const int16_t *ds, const uint8_t *m,
-                                       int N, int64_t limit) {
+int8_t av1_wedge_sign_from_residuals_sse2(const int16_t *ds, const uint8_t *m,
+                                          int N, int64_t limit) {
   int64_t acc;
 
   __m128i v_sign_d;
@@ -193,8 +193,8 @@ static INLINE __m128i negm_epi16(__m128i v_v_w, __m128i v_mask_w) {
  */
 void av1_wedge_compute_delta_squares_sse2(int16_t *d, const int16_t *a,
                                           const int16_t *b, int N) {
-  const __m128i v_neg_w =
-      _mm_set_epi16(0xffff, 0, 0xffff, 0, 0xffff, 0, 0xffff, 0);
+  const __m128i v_neg_w = _mm_set_epi16((short)0xffff, 0, (short)0xffff, 0,
+                                        (short)0xffff, 0, (short)0xffff, 0);
 
   assert(N % 64 == 0);
 

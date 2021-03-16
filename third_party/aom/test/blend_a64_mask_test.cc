@@ -86,6 +86,7 @@ class BlendA64MaskTest : public FunctionEquivalenceTest<BlendA64Func> {
     w_ = block_size_wide[block_size];
     h_ = block_size_high[block_size];
     run_times = run_times > 1 ? run_times / w_ : 1;
+    ASSERT_GT(run_times, 0);
     subx_ = subx;
     suby_ = suby;
 
@@ -245,16 +246,16 @@ TEST_P(BlendA64MaskTest8B, DISABLED_Speed) {
   }
 }
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(SSE4_1, BlendA64MaskTest8B,
-                        ::testing::Values(TestFuncs(
-                            aom_blend_a64_mask_c, aom_blend_a64_mask_sse4_1)));
-#endif  // HAVE_AVX2
+INSTANTIATE_TEST_SUITE_P(SSE4_1, BlendA64MaskTest8B,
+                         ::testing::Values(TestFuncs(
+                             aom_blend_a64_mask_c, aom_blend_a64_mask_sse4_1)));
+#endif  // HAVE_SSE4_1
 
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(AVX2, BlendA64MaskTest8B,
-                        ::testing::Values(TestFuncs(aom_blend_a64_mask_sse4_1,
-                                                    aom_blend_a64_mask_avx2)));
-#endif  // HAVE_SSE4_1
+INSTANTIATE_TEST_SUITE_P(AVX2, BlendA64MaskTest8B,
+                         ::testing::Values(TestFuncs(aom_blend_a64_mask_sse4_1,
+                                                     aom_blend_a64_mask_avx2)));
+#endif  // HAVE_AVX2
 
 //////////////////////////////////////////////////////////////////////////////
 // 8 bit _d16 version
@@ -341,21 +342,21 @@ TEST_P(BlendA64MaskTest8B_d16, ExtremeValues) {
 }
 
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, BlendA64MaskTest8B_d16,
     ::testing::Values(TestFuncs_d16(aom_lowbd_blend_a64_d16_mask_c,
                                     aom_lowbd_blend_a64_d16_mask_sse4_1)));
 #endif  // HAVE_SSE4_1
 
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, BlendA64MaskTest8B_d16,
     ::testing::Values(TestFuncs_d16(aom_lowbd_blend_a64_d16_mask_c,
                                     aom_lowbd_blend_a64_d16_mask_avx2)));
 #endif  // HAVE_AVX2
 
 #if HAVE_NEON
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NEON, BlendA64MaskTest8B_d16,
     ::testing::Values(TestFuncs_d16(aom_lowbd_blend_a64_d16_mask_c,
                                     aom_lowbd_blend_a64_d16_mask_neon)));
@@ -364,7 +365,7 @@ INSTANTIATE_TEST_CASE_P(
 //////////////////////////////////////////////////////////////////////////////
 // High bit-depth version
 //////////////////////////////////////////////////////////////////////////////
-
+#if CONFIG_AV1_HIGHBITDEPTH
 typedef void (*FHBD)(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
                      uint32_t src0_stride, const uint8_t *src1,
                      uint32_t src1_stride, const uint8_t *mask,
@@ -456,7 +457,7 @@ TEST_P(BlendA64MaskTestHBD, ExtremeValues) {
 }
 
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, BlendA64MaskTestHBD,
     ::testing::Values(TestFuncsHBD(aom_highbd_blend_a64_mask_c,
                                    aom_highbd_blend_a64_mask_sse4_1)));
@@ -482,6 +483,7 @@ class BlendA64MaskTestHBD_d16
   static const int kSrcMaxBitsMaskHBD = (1 << 16) - 1;
 
   void Execute(const uint16_t *p_src0, const uint16_t *p_src1, int run_times) {
+    ASSERT_GT(run_times, 0) << "Cannot run 0 iterations of the test.";
     ConvolveParams conv_params;
     conv_params.round_0 = (bit_depth_ == 12) ? ROUND0_BITS + 2 : ROUND0_BITS;
     conv_params.round_1 = COMPOUND_ROUND1_BITS;
@@ -566,18 +568,53 @@ TEST_P(BlendA64MaskTestHBD_d16, DISABLED_SaturatedValues) {
     }
   }
 }
+TEST_P(BlendA64MaskTestHBD_d16, DISABLED_Speed) {
+  const int kRunTimes = 10000000;
+  for (int bsize = 0; bsize < BLOCK_SIZES_ALL; ++bsize) {
+    for (bit_depth_ = 8; bit_depth_ <= 12; bit_depth_ += 2) {
+      for (int i = 0; i < kBufSize; ++i) {
+        dst_ref_[i] = rng_.Rand12() % (1 << bit_depth_);
+        dst_tst_[i] = rng_.Rand12() % (1 << bit_depth_);
 
-INSTANTIATE_TEST_CASE_P(
+        src0_[i] = rng_.Rand16();
+        src1_[i] = rng_.Rand16();
+      }
+
+      for (int i = 0; i < kMaxMaskSize; ++i)
+        mask_[i] = rng_(AOM_BLEND_A64_MAX_ALPHA + 1);
+
+      RunOneTest(bsize, 1, 1, kRunTimes);
+      RunOneTest(bsize, 0, 0, kRunTimes);
+    }
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(
     C, BlendA64MaskTestHBD_d16,
     ::testing::Values(TestFuncsHBD_d16(aom_highbd_blend_a64_d16_mask_c, NULL)));
+
+#if HAVE_SSE4_1
+INSTANTIATE_TEST_SUITE_P(
+    SSE4_1, BlendA64MaskTestHBD_d16,
+    ::testing::Values(TestFuncsHBD_d16(aom_highbd_blend_a64_d16_mask_c,
+                                       aom_highbd_blend_a64_d16_mask_sse4_1)));
+#endif  // HAVE_SSE4_1
+
+#if HAVE_AVX2
+INSTANTIATE_TEST_SUITE_P(
+    AVX2, BlendA64MaskTestHBD_d16,
+    ::testing::Values(TestFuncsHBD_d16(aom_highbd_blend_a64_d16_mask_c,
+                                       aom_highbd_blend_a64_d16_mask_avx2)));
+#endif  // HAVE_AVX2
 
 // TODO(slavarnway): Enable the following in the avx2 commit. (56501)
 #if 0
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, BlendA64MaskTestHBD,
     ::testing::Values(TestFuncsHBD(aom_highbd_blend_a64_mask_c,
                                    aom_highbd_blend_a64_mask_avx2)));
 #endif  // HAVE_AVX2
 #endif
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 }  // namespace

@@ -16,6 +16,7 @@
 
 #include "aom/aom_codec.h"
 #include "aom/aom_integer.h"
+#include "aom_ports/mem.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,17 +64,6 @@ extern "C" {
 #define FRAME_OFFSET_BITS 5
 #define MAX_FRAME_DISTANCE ((1 << FRAME_OFFSET_BITS) - 1)
 
-#define REF_FRAMES_LOG2 3
-#define REF_FRAMES (1 << REF_FRAMES_LOG2)
-
-// 4 scratch frames for the new frames to support a maximum of 4 cores decoding
-// in parallel, 3 for scaled references on the encoder.
-// TODO(hkuang): Add ondemand frame buffers instead of hardcoding the number
-// of framebuffers.
-// TODO(jkoleszar): These 3 extra references could probably come from the
-// normal reference pool.
-#define FRAME_BUFFERS (REF_FRAMES + 7)
-
 // 4 frame filter levels: y plane vertical, y plane horizontal,
 // u plane, and v plane
 #define FRAME_LF_COUNT 4
@@ -83,11 +73,6 @@ extern "C" {
 #define DIST_PRECISION_BITS 4
 #define DIST_PRECISION (1 << DIST_PRECISION_BITS)  // 16
 
-// TODO(chengchen): Temporal flag serve as experimental flag for WIP
-// bitmask construction.
-// Shall be removed when bitmask code is completely checkedin
-#define LOOP_FILTER_BITMASK 0
-
 #define PROFILE_BITS 3
 // The following three profiles are currently defined.
 // Profile 0.  8-bit and 10-bit 4:2:0 and 4:0:0 only.
@@ -95,21 +80,12 @@ extern "C" {
 // Profile 2.  8-bit and 10-bit 4:2:2
 //            12-bit  4:0:0, 4:2:2 and 4:4:4
 // Since we have three bits for the profiles, it can be extended later.
-typedef enum BITSTREAM_PROFILE {
+enum {
   PROFILE_0,
   PROFILE_1,
   PROFILE_2,
   MAX_PROFILES,
-} BITSTREAM_PROFILE;
-
-#define LEVEL_MAJOR_BITS 3
-#define LEVEL_MINOR_BITS 2
-#define LEVEL_BITS (LEVEL_MAJOR_BITS + LEVEL_MINOR_BITS)
-
-#define LEVEL_MAJOR_MIN 2
-#define LEVEL_MAJOR_MAX ((1 << LEVEL_MAJOR_BITS) - 1 + LEVEL_MAJOR_MIN)
-#define LEVEL_MINOR_MIN 0
-#define LEVEL_MINOR_MAX ((1 << LEVEL_MINOR_BITS) - 1)
+} SENUM1BYTE(BITSTREAM_PROFILE);
 
 #define OP_POINTS_CNT_MINUS_1_BITS 5
 #define OP_POINTS_IDC_BITS 12
@@ -149,7 +125,28 @@ typedef enum ATTRIBUTE_PACKED {
 // 4X4, 8X8, 16X16, 32X32, 64X64, 128X128
 #define SQR_BLOCK_SIZES 6
 
-typedef enum ATTRIBUTE_PACKED {
+//  Partition types.  R: Recursive
+//
+//  NONE          HORZ          VERT          SPLIT
+//  +-------+     +-------+     +---+---+     +---+---+
+//  |       |     |       |     |   |   |     | R | R |
+//  |       |     +-------+     |   |   |     +---+---+
+//  |       |     |       |     |   |   |     | R | R |
+//  +-------+     +-------+     +---+---+     +---+---+
+//
+//  HORZ_A        HORZ_B        VERT_A        VERT_B
+//  +---+---+     +-------+     +---+---+     +---+---+
+//  |   |   |     |       |     |   |   |     |   |   |
+//  +---+---+     +---+---+     +---+   |     |   +---+
+//  |       |     |   |   |     |   |   |     |   |   |
+//  +-------+     +---+---+     +---+---+     +---+---+
+//
+//  HORZ_4        VERT_4
+//  +-----+       +-+-+-+
+//  +-----+       | | | |
+//  +-----+       | | | |
+//  +-----+       +-+-+-+
+enum {
   PARTITION_NONE,
   PARTITION_HORZ,
   PARTITION_VERT,
@@ -163,7 +160,7 @@ typedef enum ATTRIBUTE_PACKED {
   EXT_PARTITION_TYPES,
   PARTITION_TYPES = PARTITION_SPLIT + 1,
   PARTITION_INVALID = 255
-} PARTITION_TYPE;
+} UENUM1BYTE(PARTITION_TYPE);
 
 typedef char PARTITION_CONTEXT;
 #define PARTITION_PLOFFSET 4  // number of probability models per block size
@@ -171,12 +168,7 @@ typedef char PARTITION_CONTEXT;
 #define PARTITION_CONTEXTS (PARTITION_BLOCK_SIZES * PARTITION_PLOFFSET)
 
 // block transform size
-#if defined(_MSC_VER)
-typedef uint8_t TX_SIZE;
-enum ATTRIBUTE_PACKED {
-#else
-typedef enum ATTRIBUTE_PACKED {
-#endif
+enum {
   TX_4X4,             // 4x4 transform
   TX_8X8,             // 8x8 transform
   TX_16X16,           // 16x16 transform
@@ -200,11 +192,7 @@ typedef enum ATTRIBUTE_PACKED {
   TX_SIZES = TX_4X8,  // Does NOT include rectangular transforms
   TX_SIZES_LARGEST = TX_64X64,
   TX_INVALID = 255  // Invalid transform size
-#if defined(_MSC_VER)
-};
-#else
-} TX_SIZE;
-#endif
+} UENUM1BYTE(TX_SIZE);
 
 #define TX_SIZE_LUMA_MIN (TX_4X4)
 /* We don't need to code a transform size unless the allowed size is at least
@@ -226,7 +214,7 @@ typedef enum ATTRIBUTE_PACKED {
 #define TX_PAD_HOR 4
 // Pad 6 extra rows (2 on top and 4 on bottom) to remove vertical availability
 // check.
-#define TX_PAD_TOP 2
+#define TX_PAD_TOP 0
 #define TX_PAD_BOTTOM 4
 #define TX_PAD_VER (TX_PAD_TOP + TX_PAD_BOTTOM)
 // Pad 16 extra bytes to avoid reading overflow in SIMD optimization.
@@ -238,43 +226,44 @@ typedef enum ATTRIBUTE_PACKED {
 #define MAX_TX_BLOCKS_IN_MAX_SB (1 << MAX_TX_BLOCKS_IN_MAX_SB_LOG2)
 
 // frame transform mode
-typedef enum ATTRIBUTE_PACKED {
+enum {
   ONLY_4X4,         // use only 4x4 transform
   TX_MODE_LARGEST,  // transform size is the largest possible for pu size
   TX_MODE_SELECT,   // transform specified for each block
   TX_MODES,
-} TX_MODE;
+} UENUM1BYTE(TX_MODE);
 
 // 1D tx types
-typedef enum ATTRIBUTE_PACKED {
+enum {
   DCT_1D,
   ADST_1D,
   FLIPADST_1D,
   IDTX_1D,
   TX_TYPES_1D,
-} TX_TYPE_1D;
+} UENUM1BYTE(TX_TYPE_1D);
 
-typedef enum ATTRIBUTE_PACKED {
-  DCT_DCT,    // DCT  in both horizontal and vertical
-  ADST_DCT,   // ADST in vertical, DCT in horizontal
-  DCT_ADST,   // DCT  in vertical, ADST in horizontal
-  ADST_ADST,  // ADST in both directions
-  FLIPADST_DCT,
-  DCT_FLIPADST,
-  FLIPADST_FLIPADST,
-  ADST_FLIPADST,
-  FLIPADST_ADST,
-  IDTX,
-  V_DCT,
-  H_DCT,
-  V_ADST,
-  H_ADST,
-  V_FLIPADST,
-  H_FLIPADST,
+enum {
+  DCT_DCT,            // DCT in both horizontal and vertical
+  ADST_DCT,           // ADST in vertical, DCT in horizontal
+  DCT_ADST,           // DCT in vertical, ADST in horizontal
+  ADST_ADST,          // ADST in both directions
+  FLIPADST_DCT,       // FLIPADST in vertical, DCT in horizontal
+  DCT_FLIPADST,       // DCT in vertical, FLIPADST in horizontal
+  FLIPADST_FLIPADST,  // FLIPADST in both directions
+  ADST_FLIPADST,      // ADST in vertical, FLIPADST in horizontal
+  FLIPADST_ADST,      // FLIPADST in vertical, ADST in horizontal
+  IDTX,               // Identity in both directions
+  V_DCT,              // DCT in vertical, identity in horizontal
+  H_DCT,              // Identity in vertical, DCT in horizontal
+  V_ADST,             // ADST in vertical, identity in horizontal
+  H_ADST,             // Identity in vertical, ADST in horizontal
+  V_FLIPADST,         // FLIPADST in vertical, identity in horizontal
+  H_FLIPADST,         // Identity in vertical, FLIPADST in horizontal
   TX_TYPES,
-} TX_TYPE;
+  DCT_ADST_TX_MASK = 0x000F,  // Either DCT or ADST in each direction
+} UENUM1BYTE(TX_TYPE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   REG_REG,
   REG_SMOOTH,
   REG_SHARP,
@@ -284,9 +273,9 @@ typedef enum ATTRIBUTE_PACKED {
   SHARP_REG,
   SHARP_SMOOTH,
   SHARP_SHARP,
-} DUAL_FILTER_TYPE;
+} UENUM1BYTE(DUAL_FILTER_TYPE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   // DCT only
   EXT_TX_SET_DCTONLY,
   // DCT + Identity only
@@ -300,15 +289,13 @@ typedef enum ATTRIBUTE_PACKED {
   // Discrete Trig transforms w/ flip (9) + Identity (1) + 1D Hor/Ver (6)
   EXT_TX_SET_ALL16,
   EXT_TX_SET_TYPES
-} TxSetType;
-
-#define IS_2D_TRANSFORM(tx_type) (tx_type < IDTX)
+} UENUM1BYTE(TxSetType);
 
 #define EXT_TX_SIZES 4       // number of sizes that use extended transforms
 #define EXT_TX_SETS_INTER 4  // Sets of transform selections for INTER
 #define EXT_TX_SETS_INTRA 3  // Sets of transform selections for INTRA
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   AOM_LAST_FLAG = 1 << 0,
   AOM_LAST2_FLAG = 1 << 1,
   AOM_LAST3_FLAG = 1 << 2,
@@ -317,19 +304,15 @@ typedef enum ATTRIBUTE_PACKED {
   AOM_ALT2_FLAG = 1 << 5,
   AOM_ALT_FLAG = 1 << 6,
   AOM_REFFRAME_ALL = (1 << 7) - 1
-} AOM_REFFRAME;
+} UENUM1BYTE(AOM_REFFRAME);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   UNIDIR_COMP_REFERENCE,
   BIDIR_COMP_REFERENCE,
   COMP_REFERENCE_TYPES,
-} COMP_REFERENCE_TYPE;
+} UENUM1BYTE(COMP_REFERENCE_TYPE);
 
-typedef enum ATTRIBUTE_PACKED {
-  PLANE_TYPE_Y,
-  PLANE_TYPE_UV,
-  PLANE_TYPES
-} PLANE_TYPE;
+enum { PLANE_TYPE_Y, PLANE_TYPE_UV, PLANE_TYPES } UENUM1BYTE(PLANE_TYPE);
 
 #define CFL_ALPHABET_SIZE_LOG2 4
 #define CFL_ALPHABET_SIZE (1 << CFL_ALPHABET_SIZE_LOG2)
@@ -337,24 +320,20 @@ typedef enum ATTRIBUTE_PACKED {
 #define CFL_IDX_U(idx) (idx >> CFL_ALPHABET_SIZE_LOG2)
 #define CFL_IDX_V(idx) (idx & (CFL_ALPHABET_SIZE - 1))
 
-typedef enum ATTRIBUTE_PACKED {
-  CFL_PRED_U,
-  CFL_PRED_V,
-  CFL_PRED_PLANES
-} CFL_PRED_TYPE;
+enum { CFL_PRED_U, CFL_PRED_V, CFL_PRED_PLANES } UENUM1BYTE(CFL_PRED_TYPE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   CFL_SIGN_ZERO,
   CFL_SIGN_NEG,
   CFL_SIGN_POS,
   CFL_SIGNS
-} CFL_SIGN_TYPE;
+} UENUM1BYTE(CFL_SIGN_TYPE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   CFL_DISALLOWED,
   CFL_ALLOWED,
   CFL_ALLOWED_TYPES
-} CFL_ALLOWED_TYPE;
+} UENUM1BYTE(CFL_ALLOWED_TYPE);
 
 // CFL_SIGN_ZERO,CFL_SIGN_ZERO is invalid
 #define CFL_JOINT_SIGNS (CFL_SIGNS * CFL_SIGNS - 1)
@@ -371,12 +350,12 @@ typedef enum ATTRIBUTE_PACKED {
 #define CFL_CONTEXT_V(js) \
   (CFL_SIGN_V(js) * CFL_SIGNS + CFL_SIGN_U(js) - CFL_SIGNS)
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   PALETTE_MAP,
   COLOR_MAP_TYPES,
-} COLOR_MAP_TYPE;
+} UENUM1BYTE(COLOR_MAP_TYPE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   TWO_COLORS,
   THREE_COLORS,
   FOUR_COLORS,
@@ -385,9 +364,9 @@ typedef enum ATTRIBUTE_PACKED {
   SEVEN_COLORS,
   EIGHT_COLORS,
   PALETTE_SIZES
-} PALETTE_SIZE;
+} UENUM1BYTE(PALETTE_SIZE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   PALETTE_COLOR_ONE,
   PALETTE_COLOR_TWO,
   PALETTE_COLOR_THREE,
@@ -397,11 +376,11 @@ typedef enum ATTRIBUTE_PACKED {
   PALETTE_COLOR_SEVEN,
   PALETTE_COLOR_EIGHT,
   PALETTE_COLORS
-} PALETTE_COLOR;
+} UENUM1BYTE(PALETTE_COLOR);
 
 // Note: All directional predictors must be between V_PRED and D67_PRED (both
 // inclusive).
-typedef enum ATTRIBUTE_PACKED {
+enum {
   DC_PRED,        // Average of above and left pixels
   V_PRED,         // Vertical
   H_PRED,         // Horizontal
@@ -431,6 +410,8 @@ typedef enum ATTRIBUTE_PACKED {
   MB_MODE_COUNT,
   INTRA_MODE_START = DC_PRED,
   INTRA_MODE_END = NEARESTMV,
+  DIR_MODE_START = V_PRED,
+  DIR_MODE_END = D67_PRED + 1,
   INTRA_MODE_NUM = INTRA_MODE_END - INTRA_MODE_START,
   SINGLE_INTER_MODE_START = NEARESTMV,
   SINGLE_INTER_MODE_END = NEAREST_NEARESTMV,
@@ -442,11 +423,11 @@ typedef enum ATTRIBUTE_PACKED {
   INTER_MODE_END = MB_MODE_COUNT,
   INTRA_MODES = PAETH_PRED + 1,  // PAETH_PRED has to be the last intra mode.
   INTRA_INVALID = MB_MODE_COUNT  // For uv_mode in inter blocks
-} PREDICTION_MODE;
+} UENUM1BYTE(PREDICTION_MODE);
 
 // TODO(ltrudeau) Do we really want to pack this?
 // TODO(ltrudeau) Do we match with PREDICTION_MODE?
-typedef enum ATTRIBUTE_PACKED {
+enum {
   UV_DC_PRED,        // Average of above and left pixels
   UV_V_PRED,         // Vertical
   UV_H_PRED,         // Horizontal
@@ -463,38 +444,71 @@ typedef enum ATTRIBUTE_PACKED {
   UV_CFL_PRED,       // Chroma-from-Luma
   UV_INTRA_MODES,
   UV_MODE_INVALID,  // For uv_mode in inter blocks
-} UV_PREDICTION_MODE;
+} UENUM1BYTE(UV_PREDICTION_MODE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   SIMPLE_TRANSLATION,
   OBMC_CAUSAL,    // 2-sided OBMC
   WARPED_CAUSAL,  // 2-sided WARPED
   MOTION_MODES
-} MOTION_MODE;
+} UENUM1BYTE(MOTION_MODE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   II_DC_PRED,
   II_V_PRED,
   II_H_PRED,
   II_SMOOTH_PRED,
   INTERINTRA_MODES
-} INTERINTRA_MODE;
+} UENUM1BYTE(INTERINTRA_MODE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   COMPOUND_AVERAGE,
+  COMPOUND_DISTWTD,
   COMPOUND_WEDGE,
   COMPOUND_DIFFWTD,
   COMPOUND_TYPES,
-} COMPOUND_TYPE;
+  MASKED_COMPOUND_TYPES = 2,
+} UENUM1BYTE(COMPOUND_TYPE);
 
-typedef enum ATTRIBUTE_PACKED {
+enum {
   FILTER_DC_PRED,
   FILTER_V_PRED,
   FILTER_H_PRED,
   FILTER_D157_PRED,
   FILTER_PAETH_PRED,
   FILTER_INTRA_MODES,
-} FILTER_INTRA_MODE;
+} UENUM1BYTE(FILTER_INTRA_MODE);
+
+enum {
+  SEQ_LEVEL_2_0,
+  SEQ_LEVEL_2_1,
+  SEQ_LEVEL_2_2,
+  SEQ_LEVEL_2_3,
+  SEQ_LEVEL_3_0,
+  SEQ_LEVEL_3_1,
+  SEQ_LEVEL_3_2,
+  SEQ_LEVEL_3_3,
+  SEQ_LEVEL_4_0,
+  SEQ_LEVEL_4_1,
+  SEQ_LEVEL_4_2,
+  SEQ_LEVEL_4_3,
+  SEQ_LEVEL_5_0,
+  SEQ_LEVEL_5_1,
+  SEQ_LEVEL_5_2,
+  SEQ_LEVEL_5_3,
+  SEQ_LEVEL_6_0,
+  SEQ_LEVEL_6_1,
+  SEQ_LEVEL_6_2,
+  SEQ_LEVEL_6_3,
+  SEQ_LEVEL_7_0,
+  SEQ_LEVEL_7_1,
+  SEQ_LEVEL_7_2,
+  SEQ_LEVEL_7_3,
+  SEQ_LEVELS,
+  SEQ_LEVEL_MAX = 31
+} UENUM1BYTE(AV1_LEVEL);
+
+#define LEVEL_BITS 5
 
 #define DIRECTIONAL_MODES 8
 #define MAX_ANGLE_DELTA 3
@@ -529,7 +543,9 @@ typedef enum ATTRIBUTE_PACKED {
 
 #define DELTA_Q_SMALL 3
 #define DELTA_Q_PROBS (DELTA_Q_SMALL)
-#define DEFAULT_DELTA_Q_RES 4
+#define DEFAULT_DELTA_Q_RES_PERCEPTUAL 4
+#define DEFAULT_DELTA_Q_RES_OBJECTIVE 4
+
 #define DELTA_LF_SMALL 3
 #define DELTA_LF_PROBS (DELTA_LF_SMALL)
 #define DEFAULT_DELTA_LF_RES 2
@@ -538,6 +554,7 @@ typedef enum ATTRIBUTE_PACKED {
 #define MAX_MV_REF_CANDIDATES 2
 
 #define MAX_REF_MV_STACK_SIZE 8
+#define USABLE_REF_MV_STACK_SIZE 4
 #define REF_CAT_LEVEL 640
 
 #define INTRA_INTER_CONTEXTS 4
@@ -550,28 +567,47 @@ typedef enum ATTRIBUTE_PACKED {
 #define TXFM_PARTITION_CONTEXTS ((TX_SIZES - TX_8X8) * 6 - 3)
 typedef uint8_t TXFM_CONTEXT;
 
-#define NONE_FRAME -1
-#define INTRA_FRAME 0
-#define LAST_FRAME 1
-#define LAST2_FRAME 2
-#define LAST3_FRAME 3
-#define GOLDEN_FRAME 4
-#define BWDREF_FRAME 5
-#define ALTREF2_FRAME 6
-#define ALTREF_FRAME 7
-#define EXTREF_FRAME REF_FRAMES
-#define LAST_REF_FRAMES (LAST3_FRAME - LAST_FRAME + 1)
+// An enum for single reference types (and some derived values).
+enum {
+  NONE_FRAME = -1,
+  INTRA_FRAME,
+  LAST_FRAME,
+  LAST2_FRAME,
+  LAST3_FRAME,
+  GOLDEN_FRAME,
+  BWDREF_FRAME,
+  ALTREF2_FRAME,
+  ALTREF_FRAME,
+  REF_FRAMES,
 
-#define INTER_REFS_PER_FRAME (ALTREF_FRAME - LAST_FRAME + 1)
+  // Extra/scratch reference frame. It may be:
+  // - used to update the ALTREF2_FRAME ref (see lshift_bwd_ref_frames()), or
+  // - updated from ALTREF2_FRAME ref (see rshift_bwd_ref_frames()).
+  EXTREF_FRAME = REF_FRAMES,
 
-#define FWD_REFS (GOLDEN_FRAME - LAST_FRAME + 1)
+  // Number of inter (non-intra) reference types.
+  INTER_REFS_PER_FRAME = ALTREF_FRAME - LAST_FRAME + 1,
+
+  // Number of forward (aka past) reference types.
+  FWD_REFS = GOLDEN_FRAME - LAST_FRAME + 1,
+
+  // Number of backward (aka future) reference types.
+  BWD_REFS = ALTREF_FRAME - BWDREF_FRAME + 1,
+
+  SINGLE_REFS = FWD_REFS + BWD_REFS,
+};
+
+#define REF_FRAMES_LOG2 3
+
+// REF_FRAMES for the cm->ref_frame_map array, 1 scratch frame for the new
+// frame in cm->cur_frame, INTER_REFS_PER_FRAME for scaled references on the
+// encoder in the cpi->scaled_ref_buf array.
+#define FRAME_BUFFERS (REF_FRAMES + 1 + INTER_REFS_PER_FRAME)
+
 #define FWD_RF_OFFSET(ref) (ref - LAST_FRAME)
-#define BWD_REFS (ALTREF_FRAME - BWDREF_FRAME + 1)
 #define BWD_RF_OFFSET(ref) (ref - BWDREF_FRAME)
 
-#define SINGLE_REFS (FWD_REFS + BWD_REFS)
-
-typedef enum ATTRIBUTE_PACKED {
+enum {
   LAST_LAST2_FRAMES,      // { LAST_FRAME, LAST2_FRAME }
   LAST_LAST3_FRAMES,      // { LAST_FRAME, LAST3_FRAME }
   LAST_GOLDEN_FRAMES,     // { LAST_FRAME, GOLDEN_FRAME }
@@ -585,7 +621,7 @@ typedef enum ATTRIBUTE_PACKED {
   // NOTE: UNIDIR_COMP_REFS is the number of uni-directional reference pairs
   //       that are explicitly signaled.
   UNIDIR_COMP_REFS = BWDREF_ALTREF_FRAMES + 1,
-} UNIDIR_COMP_REF;
+} UENUM1BYTE(UNIDIR_COMP_REF);
 
 #define TOTAL_COMP_REFS (FWD_REFS * BWD_REFS + TOTAL_UNIDIR_COMP_REFS)
 
@@ -596,14 +632,37 @@ typedef enum ATTRIBUTE_PACKED {
 //       possible to have a reference pair not listed for explicit signaling.
 #define MODE_CTX_REF_FRAMES (REF_FRAMES + TOTAL_COMP_REFS)
 
-typedef enum ATTRIBUTE_PACKED {
+// Note: It includes single and compound references. So, it can take values from
+// NONE_FRAME to (MODE_CTX_REF_FRAMES - 1). Hence, it is not defined as an enum.
+typedef int8_t MV_REFERENCE_FRAME;
+
+enum {
   RESTORE_NONE,
   RESTORE_WIENER,
   RESTORE_SGRPROJ,
   RESTORE_SWITCHABLE,
   RESTORE_SWITCHABLE_TYPES = RESTORE_SWITCHABLE,
   RESTORE_TYPES = 4,
-} RestorationType;
+} UENUM1BYTE(RestorationType);
+
+// Picture prediction structures (0-12 are predefined) in scalability metadata.
+enum {
+  SCALABILITY_L1T2 = 0,
+  SCALABILITY_L1T3 = 1,
+  SCALABILITY_L2T1 = 2,
+  SCALABILITY_L2T2 = 3,
+  SCALABILITY_L2T3 = 4,
+  SCALABILITY_S2T1 = 5,
+  SCALABILITY_S2T2 = 6,
+  SCALABILITY_S2T3 = 7,
+  SCALABILITY_L2T1h = 8,
+  SCALABILITY_L2T2h = 9,
+  SCALABILITY_L2T3h = 10,
+  SCALABILITY_S2T1h = 11,
+  SCALABILITY_S2T2h = 12,
+  SCALABILITY_S2T3h = 13,
+  SCALABILITY_SS = 14
+} UENUM1BYTE(SCALABILITY_STRUCTURES);
 
 #define SUPERRES_SCALE_BITS 3
 #define SUPERRES_SCALE_DENOMINATOR_MIN (SCALE_NUMERATOR + 1)

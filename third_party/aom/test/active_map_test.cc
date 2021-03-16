@@ -37,7 +37,7 @@ class ActiveMapTest
 
   virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
                                   ::libaom_test::Encoder *encoder) {
-    if (video->frame() == 1) {
+    if (video->frame() == 0) {
       encoder->Control(AOME_SET_CPUUSED, cpu_used_);
     } else if (video->frame() == 3) {
       aom_active_map_t map = aom_active_map_t();

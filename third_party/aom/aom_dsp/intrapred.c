@@ -239,23 +239,23 @@ static INLINE int divide_using_multiply_shift(int num, int shift1,
   return interm * multiplier >> shift2;
 }
 
-  // The constants (multiplier and shifts) for a given block size are obtained
-  // as follows:
-  // - Let sum_w_h =  block width + block height.
-  // - Shift 'sum_w_h' right until we reach an odd number. Let the number of
-  // shifts for that block size be called 'shift1' (see the parameter in
-  // dc_predictor_rect() function), and let the odd number be 'd'. [d has only 2
-  // possible values: d = 3 for a 1:2 rect block and d = 5 for a 1:4 rect
-  // block].
-  // - Find multipliers for (i) dividing by 3, and (ii) dividing by 5,
-  // using the "Algorithm 1" in:
-  // http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1467632
-  // by ensuring that m + n = 16 (in that algorithm). This ensures that our 2nd
-  // shift will be 16, regardless of the block size.
+// The constants (multiplier and shifts) for a given block size are obtained
+// as follows:
+// - Let sum_w_h =  block width + block height.
+// - Shift 'sum_w_h' right until we reach an odd number. Let the number of
+// shifts for that block size be called 'shift1' (see the parameter in
+// dc_predictor_rect() function), and let the odd number be 'd'. [d has only 2
+// possible values: d = 3 for a 1:2 rect block and d = 5 for a 1:4 rect
+// block].
+// - Find multipliers for (i) dividing by 3, and (ii) dividing by 5,
+// using the "Algorithm 1" in:
+// http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1467632
+// by ensuring that m + n = 16 (in that algorithm). This ensures that our 2nd
+// shift will be 16, regardless of the block size.
 
-  // Note: For low bitdepth, assembly code may be optimized by using smaller
-  // constants for smaller block sizes, where the range of the 'sum' is
-  // restricted to fewer bits.
+// Note: For low bitdepth, assembly code may be optimized by using smaller
+// constants for smaller block sizes, where the range of the 'sum' is
+// restricted to fewer bits.
 
 #define DC_MULTIPLIER_1X2 0x5556
 #define DC_MULTIPLIER_1X4 0x3334

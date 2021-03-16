@@ -20,46 +20,45 @@ include("${AOM_ROOT}/build/cmake/util.cmake")
 # in this file.
 #
 
-set_aom_detect_var(INLINE "" STRING "Sets INLINE value for current target.")
+set_aom_detect_var(INLINE "" "Sets INLINE value for current target.")
 
 # CPUs.
-set_aom_detect_var(ARCH_ARM 0 NUMBER "Enables ARM architecture.")
-set_aom_detect_var(ARCH_MIPS 0 NUMBER "Enables MIPS architecture.")
-set_aom_detect_var(ARCH_PPC 0 NUMBER "Enables PPC architecture.")
-set_aom_detect_var(ARCH_X86 0 NUMBER "Enables X86 architecture.")
-set_aom_detect_var(ARCH_X86_64 0 NUMBER "Enables X86_64 architecture.")
+set_aom_detect_var(ARCH_ARM 0 "Enables ARM architecture.")
+set_aom_detect_var(ARCH_MIPS 0 "Enables MIPS architecture.")
+set_aom_detect_var(ARCH_PPC 0 "Enables PPC architecture.")
+set_aom_detect_var(ARCH_X86 0 "Enables X86 architecture.")
+set_aom_detect_var(ARCH_X86_64 0 "Enables X86_64 architecture.")
 
 # ARM feature flags.
-set_aom_detect_var(HAVE_NEON 0 NUMBER "Enables NEON intrinsics optimizations.")
+set_aom_detect_var(HAVE_NEON 0 "Enables NEON intrinsics optimizations.")
 
 # MIPS feature flags.
-set_aom_detect_var(HAVE_DSPR2 0 NUMBER "Enables DSPR2 optimizations.")
-set_aom_detect_var(HAVE_MIPS32 0 NUMBER "Enables MIPS32 optimizations.")
-set_aom_detect_var(HAVE_MIPS64 0 NUMBER "Enables MIPS64 optimizations. ")
-set_aom_detect_var(HAVE_MSA 0 NUMBER "Enables MSA optimizations.")
+set_aom_detect_var(HAVE_DSPR2 0 "Enables DSPR2 optimizations.")
+set_aom_detect_var(HAVE_MIPS32 0 "Enables MIPS32 optimizations.")
+set_aom_detect_var(HAVE_MIPS64 0 "Enables MIPS64 optimizations. ")
+set_aom_detect_var(HAVE_MSA 0 "Enables MSA optimizations.")
 
 # PPC feature flags.
-set_aom_detect_var(HAVE_VSX 0 NUMBER "Enables VSX optimizations.")
+set_aom_detect_var(HAVE_VSX 0 "Enables VSX optimizations.")
 
 # x86/x86_64 feature flags.
-set_aom_detect_var(HAVE_AVX 0 NUMBER "Enables AVX optimizations.")
-set_aom_detect_var(HAVE_AVX2 0 NUMBER "Enables AVX2 optimizations.")
-set_aom_detect_var(HAVE_MMX 0 NUMBER "Enables MMX optimizations. ")
-set_aom_detect_var(HAVE_SSE 0 NUMBER "Enables SSE optimizations.")
-set_aom_detect_var(HAVE_SSE2 0 NUMBER "Enables SSE2 optimizations.")
-set_aom_detect_var(HAVE_SSE3 0 NUMBER "Enables SSE3 optimizations.")
-set_aom_detect_var(HAVE_SSE4_1 0 NUMBER "Enables SSE 4.1 optimizations.")
-set_aom_detect_var(HAVE_SSE4_2 0 NUMBER "Enables SSE 4.2 optimizations.")
-set_aom_detect_var(HAVE_SSSE3 0 NUMBER "Enables SSSE3 optimizations.")
+set_aom_detect_var(HAVE_AVX 0 "Enables AVX optimizations.")
+set_aom_detect_var(HAVE_AVX2 0 "Enables AVX2 optimizations.")
+set_aom_detect_var(HAVE_MMX 0 "Enables MMX optimizations. ")
+set_aom_detect_var(HAVE_SSE 0 "Enables SSE optimizations.")
+set_aom_detect_var(HAVE_SSE2 0 "Enables SSE2 optimizations.")
+set_aom_detect_var(HAVE_SSE3 0 "Enables SSE3 optimizations.")
+set_aom_detect_var(HAVE_SSE4_1 0 "Enables SSE 4.1 optimizations.")
+set_aom_detect_var(HAVE_SSE4_2 0 "Enables SSE 4.2 optimizations.")
+set_aom_detect_var(HAVE_SSSE3 0 "Enables SSSE3 optimizations.")
 
 # Flags describing the build environment.
-set_aom_detect_var(HAVE_FEXCEPT 0 NUMBER
+set_aom_detect_var(HAVE_FEXCEPT 0
                    "Internal flag, GNU fenv.h present for target.")
-set_aom_detect_var(HAVE_PTHREAD_H 0 NUMBER
-                   "Internal flag, target pthread support.")
-set_aom_detect_var(HAVE_UNISTD_H 0 NUMBER
+set_aom_detect_var(HAVE_PTHREAD_H 0 "Internal flag, target pthread support.")
+set_aom_detect_var(HAVE_UNISTD_H 0
                    "Internal flag, unistd.h present for target.")
-set_aom_detect_var(HAVE_WXWIDGETS 0 NUMBER "WxWidgets present.")
+set_aom_detect_var(HAVE_WXWIDGETS 0 "WxWidgets present.")
 
 #
 # Variables in this section can be set from the CMake command line or from
@@ -67,77 +66,75 @@ set_aom_detect_var(HAVE_WXWIDGETS 0 NUMBER "WxWidgets present.")
 #
 
 # Build configuration flags.
-set_aom_config_var(AOM_RTCD_FLAGS "" STRING
+set_aom_config_var(AOM_RTCD_FLAGS ""
                    "Arguments to pass to rtcd.pl. Separate with ';'")
-set_aom_config_var(CONFIG_AV1_DECODER 1 NUMBER "Enable AV1 decoder.")
-set_aom_config_var(CONFIG_AV1_ENCODER 1 NUMBER "Enable AV1 encoder.")
-set_aom_config_var(CONFIG_BIG_ENDIAN 0 NUMBER "Internal flag.")
-set_aom_config_var(CONFIG_GCC 0 NUMBER "Building with GCC (detect).")
-set_aom_config_var(CONFIG_GCOV 0 NUMBER "Enable gcov support.")
-set_aom_config_var(CONFIG_GPROF 0 NUMBER "Enable gprof support.")
-set_aom_config_var(CONFIG_LIBYUV 1 NUMBER
-                   "Enables libyuv scaling/conversion support.")
+set_aom_config_var(CONFIG_AV1_DECODER 1 "Enable AV1 decoder.")
+set_aom_config_var(CONFIG_AV1_ENCODER 1 "Enable AV1 encoder.")
+set_aom_config_var(CONFIG_BIG_ENDIAN 0 "Internal flag.")
+set_aom_config_var(CONFIG_GCC 0 "Building with GCC (detect).")
+set_aom_config_var(CONFIG_GCOV 0 "Enable gcov support.")
+set_aom_config_var(CONFIG_GPROF 0 "Enable gprof support.")
+set_aom_config_var(CONFIG_LIBYUV 1 "Enables libyuv scaling/conversion support.")
 
-set_aom_config_var(CONFIG_MULTITHREAD 1 NUMBER "Multithread support.")
-set_aom_config_var(CONFIG_OS_SUPPORT 0 NUMBER "Internal flag.")
-set_aom_config_var(CONFIG_PIC 0 NUMBER "Build with PIC enabled.")
-set_aom_config_var(CONFIG_RUNTIME_CPU_DETECT 1 NUMBER
-                   "Runtime CPU detection support.")
-set_aom_config_var(CONFIG_SHARED 0 NUMBER "Build shared libs.")
-set_aom_config_var(CONFIG_STATIC 1 NUMBER "Build static libs.")
-set_aom_config_var(CONFIG_WEBM_IO 1 NUMBER "Enables WebM support.")
+set_aom_config_var(CONFIG_MULTITHREAD 1 "Multithread support.")
+set_aom_config_var(CONFIG_OS_SUPPORT 0 "Internal flag.")
+set_aom_config_var(CONFIG_PIC 0 "Build with PIC enabled.")
+set_aom_config_var(CONFIG_RUNTIME_CPU_DETECT 1 "Runtime CPU detection support.")
+set_aom_config_var(CONFIG_SHARED 0 "Build shared libs.")
+set_aom_config_var(CONFIG_WEBM_IO 1 "Enables WebM support.")
 
 # Debugging flags.
-set_aom_config_var(CONFIG_BITSTREAM_DEBUG 0 NUMBER "Bitstream debugging flag.")
-set_aom_config_var(CONFIG_DEBUG 0 NUMBER "Debug build flag.")
-set_aom_config_var(CONFIG_MISMATCH_DEBUG 0 NUMBER "Mismatch debugging flag.")
+set_aom_config_var(CONFIG_BITSTREAM_DEBUG 0 "Bitstream debugging flag.")
+set_aom_config_var(CONFIG_DEBUG 0 "Debug build flag.")
+set_aom_config_var(CONFIG_MISMATCH_DEBUG 0 "Mismatch debugging flag.")
 
 # AV1 feature flags.
-set_aom_config_var(CONFIG_ACCOUNTING 0 NUMBER "Enables bit accounting.")
-set_aom_config_var(CONFIG_ANALYZER 0 NUMBER "Enables bit stream analyzer.")
-set_aom_config_var(CONFIG_COEFFICIENT_RANGE_CHECKING 0 NUMBER
+set_aom_config_var(CONFIG_ACCOUNTING 0 "Enables bit accounting.")
+set_aom_config_var(CONFIG_ANALYZER 0 "Enables bit stream analyzer.")
+set_aom_config_var(CONFIG_COEFFICIENT_RANGE_CHECKING 0
                    "Coefficient range check.")
-set_aom_config_var(CONFIG_DENOISE 1 NUMBER
+set_aom_config_var(CONFIG_DENOISE 1
                    "Denoise/noise modeling support in encoder.")
-set_aom_config_var(CONFIG_FILEOPTIONS 1 NUMBER
-                   "Enables encoder config file support.")
-set_aom_config_var(CONFIG_FIX_GF_LENGTH 1 NUMBER
-                   "Fix the GF length if possible")
-set_aom_config_var(CONFIG_INSPECTION 0 NUMBER "Enables bitstream inspection.")
-set_aom_config_var(CONFIG_INTERNAL_STATS 0 NUMBER
-                   "Enables internal encoder stats.")
-set_aom_config_var(CONFIG_LOWBITDEPTH 0 NUMBER
-                   "Enables 8-bit optimized pipeline.")
-set_aom_config_var(CONFIG_MAX_DECODE_PROFILE 2 NUMBER
+set_aom_config_var(CONFIG_INSPECTION 0 "Enables bitstream inspection.")
+set_aom_config_var(CONFIG_INTERNAL_STATS 0 "Enables internal encoder stats.")
+set_aom_config_var(FORCE_HIGHBITDEPTH_DECODING 0
+                   "Force high bitdepth decoding pipeline on 8-bit input.")
+mark_as_advanced(FORCE_HIGHBITDEPTH_DECODING)
+set_aom_config_var(CONFIG_MAX_DECODE_PROFILE 2
                    "Max profile to support decoding.")
-set_aom_config_var(CONFIG_NORMAL_TILE_MODE 0 NUMBER
-                   "Only enables normal tile mode.")
-set_aom_config_var(
-  CONFIG_REDUCED_ENCODER_BORDER 0 NUMBER
-  "Enable reduced border extention for encoder. \
-                    Disables superres and resize support."
-  )
-set_aom_config_var(CONFIG_SIZE_LIMIT 0 NUMBER "Limit max decode width/height.")
-set_aom_config_var(CONFIG_SPATIAL_RESAMPLING 1 NUMBER "Spatial resampling.")
-set_aom_config_var(DECODE_HEIGHT_LIMIT 0 NUMBER "Set limit for decode height.")
-set_aom_config_var(DECODE_WIDTH_LIMIT 0 NUMBER "Set limit for decode width.")
-set_aom_config_var(CONFIG_GLOBAL_MOTION_SEARCH 1 NUMBER
-                   "Global motion search flag.")
+set_aom_config_var(CONFIG_NORMAL_TILE_MODE 0 "Only enables normal tile mode.")
+set_aom_config_var(CONFIG_SIZE_LIMIT 0 "Limit max decode width/height.")
+set_aom_config_var(CONFIG_SPATIAL_RESAMPLING 1 "Spatial resampling.")
+set_aom_config_var(DECODE_HEIGHT_LIMIT 0 "Set limit for decode height.")
+set_aom_config_var(DECODE_WIDTH_LIMIT 0 "Set limit for decode width.")
+set_aom_config_var(CONFIG_TUNE_VMAF 0 "Enable encoding tuning for VMAF.")
 
 # AV1 experiment flags.
-set_aom_config_var(CONFIG_COLLECT_INTER_MODE_RD_STATS 1 NUMBER
-                   "AV1 experiment flag.")
-set_aom_config_var(CONFIG_COLLECT_RD_STATS 0 NUMBER "AV1 experiment flag.")
-set_aom_config_var(CONFIG_DIST_8X8 0 NUMBER "AV1 experiment flag.")
-set_aom_config_var(CONFIG_ENTROPY_STATS 0 NUMBER "AV1 experiment flag.")
-set_aom_config_var(CONFIG_FP_MB_STATS 0 NUMBER "AV1 experiment flag.")
-set_aom_config_var(CONFIG_INTER_STATS_ONLY 0 NUMBER "AV1 experiment flag.")
-set_aom_config_var(CONFIG_RD_DEBUG 0 NUMBER "AV1 experiment flag.")
-set_aom_config_var(CONFIG_2PASS_PARTITION_SEARCH_LVL 1 NUMBER
-                   "AV1 experiment flag.")
-set_aom_config_var(CONFIG_SHARP_SETTINGS 0 NUMBER
-                   "Use sharper encoding settings")
-
+set_aom_config_var(CONFIG_SPEED_STATS 0 "AV1 experiment flag.")
+set_aom_config_var(CONFIG_COLLECT_RD_STATS 0 "AV1 experiment flag.")
+set_aom_config_var(CONFIG_DIST_8X8 0 "AV1 experiment flag.")
+set_aom_config_var(CONFIG_ENTROPY_STATS 0 "AV1 experiment flag.")
+set_aom_config_var(CONFIG_INTER_STATS_ONLY 0 "AV1 experiment flag.")
+set_aom_config_var(CONFIG_RD_DEBUG 0 "AV1 experiment flag.")
+set_aom_config_var(CONFIG_SHARP_SETTINGS 0 "AV1 experiment flag.")
+set_aom_config_var(CONFIG_DISABLE_FULL_PIXEL_SPLIT_8X8 1
+                   "Disable full_pixel_motion_search_based_split on BLOCK_8X8.")
+set_aom_config_var(CONFIG_COLLECT_PARTITION_STATS 0
+                   "Collect stats on partition decisions.")
+set_aom_config_var(CONFIG_COLLECT_COMPONENT_TIMING 0
+                   "Collect encoding component timing information.")
+set_aom_config_var(CONFIG_LPF_MASK 0
+                   "Enable the use loop filter bitmasks for optimizations.")
+set_aom_config_var(CONFIG_HTB_TRELLIS 0
+                   "Enable the use of hash table for trellis optimizations.")
+set_aom_config_var(CONFIG_REALTIME_ONLY 0
+                   "Build for RTC-only to reduce binary size.")
+set_aom_config_var(CONFIG_AV1_HIGHBITDEPTH 1
+                   "Build with high bitdepth support.")
+set_aom_config_var(CONFIG_NN_V2 0 "Fully-connected neural nets ver.2.")
+set_aom_config_var(CONFIG_SUPERRES_IN_RECODE 1
+                   "Enable encoding both full-res and superres in recode loop"
+                   "when SUPERRES_AUTO mode is used.")
 #
 # Variables in this section control optional features of the build system.
 #
@@ -176,10 +173,10 @@ set_aom_option_var(ENABLE_VSX "Enables VSX optimizations on PowerPC targets."
                    ON)
 
 # x86/x86_64 assembly/intrinsics flags.
-set_aom_option_var(ENABLE_MMX
-                   "Enables MMX optimizations on x86/x86_64 targets." ON)
-set_aom_option_var(ENABLE_SSE
-                   "Enables SSE optimizations on x86/x86_64 targets." ON)
+set_aom_option_var(ENABLE_MMX "Enables MMX optimizations on x86/x86_64 targets."
+                   ON)
+set_aom_option_var(ENABLE_SSE "Enables SSE optimizations on x86/x86_64 targets."
+                   ON)
 set_aom_option_var(ENABLE_SSE2
                    "Enables SSE2 optimizations on x86/x86_64 targets." ON)
 set_aom_option_var(ENABLE_SSE3
@@ -190,7 +187,7 @@ set_aom_option_var(ENABLE_SSE4_1
                    "Enables SSE4_1 optimizations on x86/x86_64 targets." ON)
 set_aom_option_var(ENABLE_SSE4_2
                    "Enables SSE4_2 optimizations on x86/x86_64 targets." ON)
-set_aom_option_var(ENABLE_AVX
-                   "Enables AVX optimizations on x86/x86_64 targets." ON)
+set_aom_option_var(ENABLE_AVX "Enables AVX optimizations on x86/x86_64 targets."
+                   ON)
 set_aom_option_var(ENABLE_AVX2
                    "Enables AVX2 optimizations on x86/x86_64 targets." ON)

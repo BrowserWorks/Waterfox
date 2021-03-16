@@ -9,6 +9,7 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
+#include <tuple>
 #include <vector>
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
@@ -32,9 +33,9 @@ const int kHPad = 32;
 const int kXStepQn = 16;
 const int kYStepQn = 20;
 
-using ::testing::make_tuple;
-using ::testing::tuple;
 using libaom_test::ACMRandom;
+using std::make_tuple;
+using std::tuple;
 
 enum NTaps { EIGHT_TAP, TEN_TAP, TWELVE_TAP };
 int NTapsToInt(NTaps ntaps) { return 8 + static_cast<int>(ntaps) * 2; }
@@ -269,8 +270,8 @@ class ConvolveScaleTestBase : public ::testing::Test {
 
  protected:
   void SetParams(const BaseParams &params, int bd) {
-    width_ = ::testing::get<0>(params.dims);
-    height_ = ::testing::get<1>(params.dims);
+    width_ = std::get<0>(params.dims);
+    height_ = std::get<1>(params.dims);
     ntaps_x_ = params.ntaps_x;
     ntaps_y_ = params.ntaps_y;
     bd_ = bd;
@@ -286,13 +287,13 @@ class ConvolveScaleTestBase : public ::testing::Test {
   }
 
   void SetConvParamOffset(int i, int j, int is_compound, int do_average,
-                          int use_jnt_comp_avg) {
+                          int use_dist_wtd_comp_avg) {
     if (i == -1 && j == -1) {
-      convolve_params_.use_jnt_comp_avg = use_jnt_comp_avg;
+      convolve_params_.use_dist_wtd_comp_avg = use_dist_wtd_comp_avg;
       convolve_params_.is_compound = is_compound;
       convolve_params_.do_average = do_average;
     } else {
-      convolve_params_.use_jnt_comp_avg = use_jnt_comp_avg;
+      convolve_params_.use_dist_wtd_comp_avg = use_dist_wtd_comp_avg;
       convolve_params_.fwd_offset = quant_dist_lookup_table[i][j][0];
       convolve_params_.bck_offset = quant_dist_lookup_table[i][j][1];
       convolve_params_.is_compound = is_compound;
@@ -312,12 +313,12 @@ class ConvolveScaleTestBase : public ::testing::Test {
 
       is_compound = 1;
       for (int do_average = 0; do_average < 2; do_average++) {
-        for (int use_jnt_comp_avg = 0; use_jnt_comp_avg < 2;
-             use_jnt_comp_avg++) {
+        for (int use_dist_wtd_comp_avg = 0; use_dist_wtd_comp_avg < 2;
+             use_dist_wtd_comp_avg++) {
           for (int j = 0; j < 2; ++j) {
             for (int k = 0; k < 4; ++k) {
               SetConvParamOffset(j, k, is_compound, do_average,
-                                 use_jnt_comp_avg);
+                                 use_dist_wtd_comp_avg);
               Prep(&rnd);
               RunOne(true);
               RunOne(false);
@@ -454,13 +455,14 @@ const NTaps kNTaps[] = { EIGHT_TAP };
 TEST_P(LowBDConvolveScaleTest, Check) { Run(); }
 TEST_P(LowBDConvolveScaleTest, DISABLED_Speed) { SpeedTest(); }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, LowBDConvolveScaleTest,
     ::testing::Combine(::testing::Values(av1_convolve_2d_scale_sse4_1),
                        ::testing::ValuesIn(kBlockDim),
                        ::testing::ValuesIn(kNTaps), ::testing::ValuesIn(kNTaps),
                        ::testing::Bool()));
 
+#if CONFIG_AV1_HIGHBITDEPTH
 typedef void (*HighbdConvolveFunc)(const uint16_t *src, int src_stride,
                                    uint16_t *dst, int dst_stride, int w, int h,
                                    const InterpFilterParams *filter_params_x,
@@ -520,10 +522,11 @@ const int kBDs[] = { 8, 10, 12 };
 TEST_P(HighBDConvolveScaleTest, Check) { Run(); }
 TEST_P(HighBDConvolveScaleTest, DISABLED_Speed) { SpeedTest(); }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, HighBDConvolveScaleTest,
     ::testing::Combine(::testing::Values(av1_highbd_convolve_2d_scale_sse4_1),
                        ::testing::ValuesIn(kBlockDim),
                        ::testing::ValuesIn(kNTaps), ::testing::ValuesIn(kNTaps),
                        ::testing::Bool(), ::testing::ValuesIn(kBDs)));
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 }  // namespace

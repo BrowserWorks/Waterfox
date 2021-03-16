@@ -35,11 +35,10 @@ endfunction()
 # $opt_name is used to name the target. $target_to_update is made dependent upon
 # the created target.
 #
-# Note: the libaom target is always updated because OBJECT libraries have rules
-# that disallow the direct addition of .o files to them as dependencies. Static
-# libraries do not have this limitation.
-function(add_intrinsics_object_library flag opt_name target_to_update sources
-         dependent_target)
+# Note: this function always updates the aom, and aom_static targets because
+# OBJECT libraries have rules that disallow the direct addition of .o files to
+# them as dependencies. Static and shared libraries do not have this limitation.
+function(add_intrinsics_object_library flag opt_name target_to_update sources)
   if("${${sources}}" STREQUAL "")
     return()
   endif()
@@ -50,12 +49,29 @@ function(add_intrinsics_object_library flag opt_name target_to_update sources
     get_msvc_intrinsic_flag(${flag} "flag")
   endif()
 
+  if("${flag}" STREQUAL "-mavx2")
+    unset(FLAG_SUPPORTED)
+    check_c_compiler_flag("-mno-avx256-split-unaligned-load" FLAG_SUPPORTED)
+    if(${FLAG_SUPPORTED})
+      set(flag "${flag} -mno-avx256-split-unaligned-load")
+    endif()
+
+    unset(FLAG_SUPPORTED)
+    check_c_compiler_flag("-mno-avx256-split-unaligned-store" FLAG_SUPPORTED)
+    if(${FLAG_SUPPORTED})
+      set(flag "${flag} -mno-avx256-split-unaligned-store")
+    endif()
+  endif()
+
   if(flag)
     separate_arguments(flag)
     target_compile_options(${target_name} PUBLIC ${flag})
   endif()
 
-  target_sources(${dependent_target} PRIVATE $<TARGET_OBJECTS:${target_name}>)
+  target_sources(aom PRIVATE $<TARGET_OBJECTS:${target_name}>)
+  if(BUILD_SHARED_LIBS)
+    target_sources(aom_static PRIVATE $<TARGET_OBJECTS:${target_name}>)
+  endif()
 
   # Add the new lib target to the global list of aom library targets.
   list(APPEND AOM_LIB_TARGETS ${target_name})
@@ -83,28 +99,24 @@ function(get_asm_obj_format out_format)
   if("${AOM_TARGET_CPU}" STREQUAL "x86_64")
     if("${AOM_TARGET_SYSTEM}" STREQUAL "Darwin")
       set(objformat "macho64")
-    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "Linux")
-      set(objformat "elf64")
-    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "MSYS" OR "${AOM_TARGET_SYSTEM}"
-           STREQUAL "Windows")
+    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "MSYS"
+           OR "${AOM_TARGET_SYSTEM}" STREQUAL "Windows")
       set(objformat "win64")
     else()
-      message(FATAL_ERROR "Unknown obj format: ${AOM_TARGET_SYSTEM}")
+      set(objformat "elf64")
     endif()
   elseif("${AOM_TARGET_CPU}" STREQUAL "x86")
     if("${AOM_TARGET_SYSTEM}" STREQUAL "Darwin")
       set(objformat "macho32")
-    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "Linux")
-      set(objformat "elf32")
-    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "MSYS" OR "${AOM_TARGET_SYSTEM}"
-           STREQUAL "Windows")
+    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "MSYS"
+           OR "${AOM_TARGET_SYSTEM}" STREQUAL "Windows")
       set(objformat "win32")
     else()
-      message(FATAL_ERROR "Unknown obj format: ${AOM_TARGET_SYSTEM}")
+      set(objformat "elf32")
     endif()
   else()
-    message(FATAL_ERROR
-              "Unknown obj format: ${AOM_TARGET_CPU}-${AOM_TARGET_SYSTEM}")
+    message(
+      FATAL_ERROR "Unknown obj format: ${AOM_TARGET_CPU}-${AOM_TARGET_SYSTEM}")
   endif()
 
   set(${out_format} ${objformat} PARENT_SCOPE)
@@ -112,10 +124,10 @@ endfunction()
 
 # Adds library target named $lib_name for ASM files in variable named by
 # $asm_sources. Builds an output directory path from $lib_name. Links $lib_name
-# into $dependent_target. Generates a dummy C file with a dummy function to
-# ensure that all cmake generators can determine the linker language, and that
-# build tools don't complain that an object exposes no symbols.
-function(add_asm_library lib_name asm_sources dependent_target)
+# into the aom library target(s). Generates a dummy C file with a dummy function
+# to ensure that all cmake generators can determine the linker language, and
+# that build tools don't complain that an object exposes no symbols.
+function(add_asm_library lib_name asm_sources)
   if("${${asm_sources}}" STREQUAL "")
     return()
   endif()
@@ -138,8 +150,12 @@ function(add_asm_library lib_name asm_sources dependent_target)
                                "${asm_object}" "${asm_source}"
                        DEPENDS "${asm_source}"
                        COMMENT "Building ASM object ${asm_object}"
-                       WORKING_DIRECTORY "${AOM_CONFIG_DIR}" VERBATIM)
+                       WORKING_DIRECTORY "${AOM_CONFIG_DIR}"
+                       VERBATIM)
     target_sources(aom PRIVATE "${asm_object}")
+    if(BUILD_SHARED_LIBS)
+      target_sources(aom_static PRIVATE "${asm_object}")
+    endif()
   endforeach()
 
   # The above created a target containing only ASM sources. Cmake needs help
@@ -161,32 +177,44 @@ function(test_nasm)
   execute_process(COMMAND ${AS_EXECUTABLE} -hf OUTPUT_VARIABLE nasm_helptext)
 
   if(NOT "${nasm_helptext}" MATCHES "-Ox")
-    message(FATAL_ERROR
-              "Unsupported nasm: multipass optimization not supported.")
+    message(
+      FATAL_ERROR "Unsupported nasm: multipass optimization not supported.")
   endif()
 
   if("${AOM_TARGET_CPU}" STREQUAL "x86")
     if("${AOM_TARGET_SYSTEM}" STREQUAL "Darwin")
       if(NOT "${nasm_helptext}" MATCHES "macho32")
-        message(FATAL_ERROR
-                  "Unsupported nasm: macho32 object format not supported.")
+        message(
+          FATAL_ERROR "Unsupported nasm: macho32 object format not supported.")
       endif()
-    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "Linux")
+    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "MSYS"
+           OR "${AOM_TARGET_SYSTEM}" STREQUAL "Windows")
+      if(NOT "${nasm_helptext}" MATCHES "win32")
+        message(
+          FATAL_ERROR "Unsupported nasm: win32 object format not supported.")
+      endif()
+    else()
       if(NOT "${nasm_helptext}" MATCHES "elf32")
-        message(FATAL_ERROR
-                  "Unsupported nasm: elf32 object format not supported.")
+        message(
+          FATAL_ERROR "Unsupported nasm: elf32 object format not supported.")
       endif()
     endif()
   else()
     if("${AOM_TARGET_SYSTEM}" STREQUAL "Darwin")
       if(NOT "${nasm_helptext}" MATCHES "macho64")
-        message(FATAL_ERROR
-                  "Unsupported nasm: macho64 object format not supported.")
+        message(
+          FATAL_ERROR "Unsupported nasm: macho64 object format not supported.")
       endif()
-    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "Linux")
+    elseif("${AOM_TARGET_SYSTEM}" STREQUAL "MSYS"
+           OR "${AOM_TARGET_SYSTEM}" STREQUAL "Windows")
+      if(NOT "${nasm_helptext}" MATCHES "win64")
+        message(
+          FATAL_ERROR "Unsupported nasm: win64 object format not supported.")
+      endif()
+    else()
       if(NOT "${nasm_helptext}" MATCHES "elf64")
-        message(FATAL_ERROR
-                  "Unsupported nasm: elf64 object format not supported.")
+        message(
+          FATAL_ERROR "Unsupported nasm: elf64 object format not supported.")
       endif()
     endif()
   endif()
@@ -197,16 +225,16 @@ endfunction()
 # include file, $source is the C source file, and $symbol is used for the symbol
 # argument passed to rtcd.pl.
 function(add_rtcd_build_step config output source symbol)
-  add_custom_command(OUTPUT ${output}
-                     COMMAND ${PERL_EXECUTABLE} ARGS
-                             "${AOM_ROOT}/build/cmake/rtcd.pl"
-                             --arch=${AOM_TARGET_CPU}
-                             --sym=${symbol} ${AOM_RTCD_FLAGS}
-                             --config=${AOM_CONFIG_DIR}/config/aom_config.h
-                             ${config} > ${output}
-                     DEPENDS ${config}
-                     COMMENT "Generating ${output}"
-                     WORKING_DIRECTORY ${AOM_CONFIG_DIR} VERBATIM)
+  add_custom_command(
+    OUTPUT ${output}
+    COMMAND ${PERL_EXECUTABLE} ARGS "${AOM_ROOT}/build/cmake/rtcd.pl"
+            --arch=${AOM_TARGET_CPU}
+            --sym=${symbol} ${AOM_RTCD_FLAGS}
+            --config=${AOM_CONFIG_DIR}/config/aom_config.h ${config} > ${output}
+    DEPENDS ${config}
+    COMMENT "Generating ${output}"
+    WORKING_DIRECTORY ${AOM_CONFIG_DIR}
+    VERBATIM)
   set_property(SOURCE ${source} PROPERTY OBJECT_DEPENDS ${output})
   set_property(SOURCE ${output} PROPERTY GENERATED)
 endfunction()

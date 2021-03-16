@@ -73,7 +73,7 @@ SIMD_INLINE void v256_store_aligned(void *p, v256 a) {
   v128_store_aligned((uint8_t *)p + 16, a.val[1]);
 }
 
-SIMD_INLINE v256 v256_zero() {
+SIMD_INLINE v256 v256_zero(void) {
   return v256_from_v128(v128_zero(), v128_zero());
 }
 
@@ -117,7 +117,7 @@ typedef struct {
   sad128_internal val[2];
 } sad256_internal;
 
-SIMD_INLINE sad256_internal v256_sad_u8_init() {
+SIMD_INLINE sad256_internal v256_sad_u8_init(void) {
   sad256_internal t;
   t.val[1] = v128_sad_u8_init();
   t.val[0] = v128_sad_u8_init();
@@ -142,7 +142,7 @@ typedef struct {
   ssd128_internal val[2];
 } ssd256_internal;
 
-SIMD_INLINE ssd256_internal v256_ssd_u8_init() {
+SIMD_INLINE ssd256_internal v256_ssd_u8_init(void) {
   ssd256_internal t;
   t.val[1] = v128_ssd_u8_init();
   t.val[0] = v128_ssd_u8_init();
@@ -780,13 +780,16 @@ SIMD_INLINE v256 v256_shr_s64(v256 a, const unsigned int c) {
                   (n) > 16 ? v128_shl_n_byte(a.val[0], (n)-16) : a.val[0], \
                   v128_zero()))
 
-#define v256_shr_n_byte(a, n)                                              \
-  ((n) < 16 ? v256_from_v128(v128_shr_n_byte(a.val[1], n),                 \
-                             v128_or(v128_shr_n_byte(a.val[0], n),         \
-                                     v128_shl_n_byte(a.val[1], 16 - (n)))) \
-            : v256_from_v128(                                              \
-                  v128_zero(),                                             \
-                  (n) > 16 ? v128_shr_n_byte(a.val[1], (n)-16) : a.val[1]))
+#define v256_shr_n_byte(a, n)                                                \
+  (n == 0                                                                    \
+       ? a                                                                   \
+       : ((n) < 16                                                           \
+              ? v256_from_v128(v128_shr_n_byte(a.val[1], n),                 \
+                               v128_or(v128_shr_n_byte(a.val[0], n),         \
+                                       v128_shl_n_byte(a.val[1], 16 - (n)))) \
+              : v256_from_v128(                                              \
+                    v128_zero(),                                             \
+                    (n) > 16 ? v128_shr_n_byte(a.val[1], (n)-16) : a.val[1])))
 
 #define v256_align(a, b, c) \
   ((c) ? v256_or(v256_shr_n_byte(b, c), v256_shl_n_byte(a, 32 - (c))) : b)
@@ -823,7 +826,7 @@ typedef struct {
   sad128_internal_u16 val[2];
 } sad256_internal_u16;
 
-SIMD_INLINE sad256_internal_u16 v256_sad_u16_init() {
+SIMD_INLINE sad256_internal_u16 v256_sad_u16_init(void) {
   sad256_internal_u16 t;
   t.val[1] = v128_sad_u16_init();
   t.val[0] = v128_sad_u16_init();
@@ -849,7 +852,7 @@ typedef struct {
   ssd128_internal_s16 val[2];
 } ssd256_internal_s16;
 
-SIMD_INLINE ssd256_internal_s16 v256_ssd_s16_init() {
+SIMD_INLINE ssd256_internal_s16 v256_ssd_s16_init(void) {
   ssd256_internal_s16 t;
   t.val[1] = v128_ssd_s16_init();
   t.val[0] = v128_ssd_s16_init();

@@ -15,9 +15,9 @@
 
 #include "av1/common/warped_motion.h"
 
-static const uint8_t warp_highbd_arrange_bytes[16] = {
-  0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
-};
+static const uint8_t warp_highbd_arrange_bytes[16] = { 0,  2,  4,  6, 8, 10,
+                                                       12, 14, 1,  3, 5, 7,
+                                                       9,  11, 13, 15 };
 
 static const uint8_t highbd_shuffle_alpha0_mask0[16] = {
   0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3
@@ -25,24 +25,28 @@ static const uint8_t highbd_shuffle_alpha0_mask0[16] = {
 static const uint8_t highbd_shuffle_alpha0_mask1[16] = {
   4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 6, 7
 };
-static const uint8_t highbd_shuffle_alpha0_mask2[16] = {
-  8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10, 11
-};
-static const uint8_t highbd_shuffle_alpha0_mask3[16] = {
-  12, 13, 14, 15, 12, 13, 14, 15, 12, 13, 14, 15, 12, 13, 14, 15
-};
+static const uint8_t highbd_shuffle_alpha0_mask2[16] = { 8,  9,  10, 11, 8,  9,
+                                                         10, 11, 8,  9,  10, 11,
+                                                         8,  9,  10, 11 };
+static const uint8_t highbd_shuffle_alpha0_mask3[16] = { 12, 13, 14, 15, 12, 13,
+                                                         14, 15, 12, 13, 14, 15,
+                                                         12, 13, 14, 15 };
 
 static INLINE void highbd_prepare_horizontal_filter_coeff(int alpha, int sx,
                                                           __m128i *coeff) {
   // Filter even-index pixels
-  const __m128i tmp_0 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 0 * alpha) >> WARPEDDIFF_PREC_BITS)));
-  const __m128i tmp_2 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 2 * alpha) >> WARPEDDIFF_PREC_BITS)));
-  const __m128i tmp_4 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 4 * alpha) >> WARPEDDIFF_PREC_BITS)));
-  const __m128i tmp_6 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 6 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_0 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 0 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_2 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 2 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_4 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 4 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_6 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 6 * alpha) >> WARPEDDIFF_PREC_BITS)));
 
   // coeffs 0 1 0 1 2 3 2 3 for pixels 0, 2
   const __m128i tmp_8 = _mm_unpacklo_epi32(tmp_0, tmp_2);
@@ -63,14 +67,18 @@ static INLINE void highbd_prepare_horizontal_filter_coeff(int alpha, int sx,
   coeff[6] = _mm_unpackhi_epi64(tmp_12, tmp_14);
 
   // Filter odd-index pixels
-  const __m128i tmp_1 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 1 * alpha) >> WARPEDDIFF_PREC_BITS)));
-  const __m128i tmp_3 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 3 * alpha) >> WARPEDDIFF_PREC_BITS)));
-  const __m128i tmp_5 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 5 * alpha) >> WARPEDDIFF_PREC_BITS)));
-  const __m128i tmp_7 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + ((sx + 7 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_1 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 1 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_3 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 3 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_5 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 5 * alpha) >> WARPEDDIFF_PREC_BITS)));
+  const __m128i tmp_7 =
+      _mm_loadu_si128((__m128i *)(av1_warped_filter +
+                                  ((sx + 7 * alpha) >> WARPEDDIFF_PREC_BITS)));
 
   const __m128i tmp_9 = _mm_unpacklo_epi32(tmp_1, tmp_3);
   const __m128i tmp_11 = _mm_unpacklo_epi32(tmp_5, tmp_7);
@@ -87,7 +95,7 @@ static INLINE void highbd_prepare_horizontal_filter_coeff_alpha0(
     int sx, __m128i *coeff) {
   // Filter coeff
   const __m128i tmp_0 = _mm_loadu_si128(
-      (__m128i *)(warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
+      (__m128i *)(av1_warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
 
   coeff[0] = _mm_shuffle_epi8(
       tmp_0, _mm_loadu_si128((__m128i *)highbd_shuffle_alpha0_mask0));
@@ -454,16 +462,16 @@ void av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref,
 
         // Filter even-index pixels
         const __m128i tmp_0 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 0 * gamma) >> WARPEDDIFF_PREC_BITS)));
         const __m128i tmp_2 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 2 * gamma) >> WARPEDDIFF_PREC_BITS)));
         const __m128i tmp_4 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 4 * gamma) >> WARPEDDIFF_PREC_BITS)));
         const __m128i tmp_6 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 6 * gamma) >> WARPEDDIFF_PREC_BITS)));
 
         const __m128i tmp_8 = _mm_unpacklo_epi32(tmp_0, tmp_2);
@@ -491,16 +499,16 @@ void av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref,
         const __m128i src_7 = _mm_unpackhi_epi16(src[6], src[7]);
 
         const __m128i tmp_1 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 1 * gamma) >> WARPEDDIFF_PREC_BITS)));
         const __m128i tmp_3 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 3 * gamma) >> WARPEDDIFF_PREC_BITS)));
         const __m128i tmp_5 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 5 * gamma) >> WARPEDDIFF_PREC_BITS)));
         const __m128i tmp_7 = _mm_loadu_si128(
-            (__m128i *)(warped_filter +
+            (__m128i *)(av1_warped_filter +
                         ((sy + 7 * gamma) >> WARPEDDIFF_PREC_BITS)));
 
         const __m128i tmp_9 = _mm_unpacklo_epi32(tmp_1, tmp_3);
@@ -537,7 +545,7 @@ void av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref,
             __m128i *const dst16 = (__m128i *)&pred[(i + k + 4) * p_stride + j];
             __m128i p_32 = _mm_cvtepu16_epi32(_mm_loadl_epi64(p));
 
-            if (conv_params->use_jnt_comp_avg) {
+            if (conv_params->use_dist_wtd_comp_avg) {
               res_lo = _mm_add_epi32(_mm_mullo_epi32(p_32, wt0),
                                      _mm_mullo_epi32(res_lo, wt1));
               res_lo = _mm_srai_epi32(res_lo, DIST_PRECISION_BITS);
@@ -570,7 +578,7 @@ void av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref,
                   (__m128i *)&pred[(i + k + 4) * p_stride + j + 4];
               __m128i p4_32 = _mm_cvtepu16_epi32(_mm_loadl_epi64(p4));
 
-              if (conv_params->use_jnt_comp_avg) {
+              if (conv_params->use_dist_wtd_comp_avg) {
                 res_hi = _mm_add_epi32(_mm_mullo_epi32(p4_32, wt0),
                                        _mm_mullo_epi32(res_hi, wt1));
                 res_hi = _mm_srai_epi32(res_hi, DIST_PRECISION_BITS);

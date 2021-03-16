@@ -45,7 +45,7 @@ SIMD_INLINE v128 v128_load_aligned(const void *p) {
 
 SIMD_INLINE v128 v128_load_unaligned(const void *p) {
 #if defined(__SSSE3__)
-  return (__m128i)_mm_lddqu_si128((__m128i *)p);
+  return _mm_lddqu_si128((__m128i *)p);
 #else
   return _mm_loadu_si128((__m128i *)p);
 #endif
@@ -89,7 +89,8 @@ SIMD_INLINE v128 v128_dup_32(uint32_t x) { return _mm_set1_epi32(x); }
 
 SIMD_INLINE v128 v128_dup_64(uint64_t x) {
   // _mm_set_pi64x and _mm_cvtsi64x_si64 missing in some compilers
-  return _mm_set_epi32(x >> 32, (uint32_t)x, x >> 32, (uint32_t)x);
+  return _mm_set_epi32((uint32_t)(x >> 32), (uint32_t)x, (uint32_t)(x >> 32),
+                       (uint32_t)x);
 }
 
 SIMD_INLINE v128 v128_add_8(v128 a, v128 b) { return _mm_add_epi8(a, b); }
@@ -538,7 +539,7 @@ SIMD_INLINE v128 v128_shl_8(v128 a, unsigned int c) {
 }
 
 SIMD_INLINE v128 v128_shr_u8(v128 a, unsigned int c) {
-  return _mm_and_si128(_mm_set1_epi8(0xff >> c),
+  return _mm_and_si128(_mm_set1_epi8((char)(0xff >> c)),
                        _mm_srl_epi16(a, _mm_cvtsi32_si128(c)));
 }
 

@@ -114,7 +114,7 @@ typedef struct {
   const char *debug_file;
 } noise_model_args_t;
 
-void parse_args(noise_model_args_t *noise_args, int *argc, char **argv) {
+static void parse_args(noise_model_args_t *noise_args, int *argc, char **argv) {
   struct arg arg;
   static const arg_def_t *main_args[] = { &help,
                                           &input_arg,
@@ -180,6 +180,7 @@ static void print_variance_y(FILE *debug_file, aom_image_t *raw,
   aom_image_t renoised;
   grain->apply_grain = 1;
   grain->random_seed = 7391;
+  grain->bit_depth = raw->bit_depth;
   aom_img_alloc(&renoised, raw->fmt, raw->w, raw->h, 1);
 
   if (av1_add_film_grain(grain, denoised, &renoised)) {
@@ -313,7 +314,7 @@ int main(int argc, char *argv[]) {
                      info.frame_height, 1)) {
     die("Failed to allocate image.");
   }
-  infile = fopen(args.input, "r");
+  infile = fopen(args.input, "rb");
   if (!infile) {
     die("Failed to open input file:", args.input);
   }

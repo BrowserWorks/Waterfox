@@ -20,7 +20,8 @@
 namespace {
 
 class AqSegmentTest
-    : public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int>,
+    : public ::libaom_test::CodecTestWith3Params<libaom_test::TestMode, int,
+                                                 int>,
       public ::libaom_test::EncoderTest {
  protected:
   AqSegmentTest() : EncoderTest(GET_PARAM(0)) {}
@@ -35,7 +36,7 @@ class AqSegmentTest
 
   virtual void PreEncodeFrameHook(::libaom_test::VideoSource *video,
                                   ::libaom_test::Encoder *encoder) {
-    if (video->frame() == 1) {
+    if (video->frame() == 0) {
       encoder->Control(AOME_SET_CPUUSED, set_cpu_used_);
       encoder->Control(AV1E_SET_AQ_MODE, aq_mode_);
       encoder->Control(AV1E_SET_DELTAQ_MODE, deltaq_mode_);
@@ -65,25 +66,13 @@ class AqSegmentTest
   int deltaq_mode_;
 };
 
-// Validate that this AQ segmentation mode (AQ=1, variance_ap)
-// encodes and decodes without a mismatch.
-TEST_P(AqSegmentTest, TestNoMisMatchAQ1) { DoTest(1); }
-
-// Validate that this AQ segmentation mode (AQ=2, complexity_aq)
-// encodes and decodes without a mismatch.
-TEST_P(AqSegmentTest, TestNoMisMatchAQ2) { DoTest(2); }
-
-// Validate that this AQ segmentation mode (AQ=3, cyclic_refresh_aq)
-// encodes and decodes without a mismatch.
-TEST_P(AqSegmentTest, TestNoMisMatchAQ3) { DoTest(3); }
+// Validate that this AQ segmentation mode (1-variance_aq, 2-complexity_aq,
+// 3-cyclic_refresh_aq) encodes and decodes without a mismatch.
+TEST_P(AqSegmentTest, TestNoMisMatch) { DoTest(GET_PARAM(3)); }
 
 class AqSegmentTestLarge : public AqSegmentTest {};
 
-TEST_P(AqSegmentTestLarge, TestNoMisMatchAQ1) { DoTest(1); }
-
-TEST_P(AqSegmentTestLarge, TestNoMisMatchAQ2) { DoTest(2); }
-
-TEST_P(AqSegmentTestLarge, TestNoMisMatchAQ3) { DoTest(3); }
+TEST_P(AqSegmentTestLarge, TestNoMisMatch) { DoTest(GET_PARAM(3)); }
 
 // Validate that this delta q mode
 // encodes and decodes without a mismatch.
@@ -100,9 +89,9 @@ TEST_P(AqSegmentTest, TestNoMisMatchExtDeltaQ) {
 AV1_INSTANTIATE_TEST_CASE(AqSegmentTest,
                           ::testing::Values(::libaom_test::kRealTime,
                                             ::libaom_test::kOnePassGood),
-                          ::testing::Range(5, 9));
+                          ::testing::Range(5, 9), ::testing::Range(0, 4));
 AV1_INSTANTIATE_TEST_CASE(AqSegmentTestLarge,
                           ::testing::Values(::libaom_test::kRealTime,
                                             ::libaom_test::kOnePassGood),
-                          ::testing::Range(3, 5));
+                          ::testing::Range(3, 5), ::testing::Range(0, 4));
 }  // namespace

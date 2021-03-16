@@ -141,9 +141,7 @@ static int encode_frame(aom_codec_ctx_t *ecodec, aom_image_t *img,
     if (pkt->kind == AOM_CODEC_CX_FRAME_PKT) {
       const int keyframe = (pkt->data.frame.flags & AOM_FRAME_IS_KEY) != 0;
 
-      if (!(pkt->data.frame.flags & AOM_FRAME_IS_FRAGMENT)) {
-        *frame_out += 1;
-      }
+      ++*frame_out;
 
       if (!aom_video_writer_write_frame(writer, pkt->data.frame.buf,
                                         pkt->data.frame.sz,
@@ -264,7 +262,7 @@ int main(int argc, char **argv) {
     die("Failed to allocate image.");
   }
 
-  if (!CONFIG_LOWBITDEPTH) ref_fmt |= AOM_IMG_FMT_HIGHBITDEPTH;
+  if (FORCE_HIGHBITDEPTH_DECODING) ref_fmt |= AOM_IMG_FMT_HIGHBITDEPTH;
   // Allocate memory with the border so that it can be used as a reference.
   if (!aom_img_alloc_with_border(&ext_ref, ref_fmt, info.frame_width,
                                  info.frame_height, 32, 8,
@@ -285,7 +283,7 @@ int main(int argc, char **argv) {
   cfg.g_lag_in_frames = 3;
   cfg.g_bit_depth = AOM_BITS_8;
 
-  flags |= (cfg.g_bit_depth > AOM_BITS_8 || !CONFIG_LOWBITDEPTH)
+  flags |= (cfg.g_bit_depth > AOM_BITS_8 || FORCE_HIGHBITDEPTH_DECODING)
                ? AOM_CODEC_USE_HIGHBITDEPTH
                : 0;
 
@@ -313,7 +311,7 @@ int main(int argc, char **argv) {
     if (limit && frame_in >= limit) break;
     aom_image_t *frame_to_encode;
 
-    if (!CONFIG_LOWBITDEPTH) {
+    if (FORCE_HIGHBITDEPTH_DECODING) {
       // Need to allocate larger buffer to use hbd internal.
       int input_shift = 0;
       if (!allocated_raw_shift) {

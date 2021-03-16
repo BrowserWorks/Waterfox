@@ -773,6 +773,14 @@ bool Track::Write(IMkvWriter* writer) const {
   if (!type_ || !codec_id_)
     return false;
 
+  // AV1 tracks require a CodecPrivate. See
+  // https://github.com/Matroska-Org/matroska-specification/blob/av1-mappin/codec/av1.md
+  // TODO(tomfinegan): Update the above link to the AV1 Matroska mappings to
+  // point to a stable version once it is finalized, or our own WebM mappings
+  // page on webmproject.org should we decide to release them.
+  if (!strcmp(codec_id_, Tracks::kAv1CodecId) && !codec_private_)
+    return false;
+
   // |size| may be bigger than what is written out in this function because
   // derived classes may write out more data in the Track element.
   const uint64_t payload_size = PayloadSize();
@@ -1027,19 +1035,16 @@ bool MasteringMetadata::Write(IMkvWriter* writer) const {
       !WriteEbmlElement(writer, libwebm::kMkvLuminanceMin, luminance_min_)) {
     return false;
   }
-  if (r_ &&
-      !r_->Write(writer, libwebm::kMkvPrimaryRChromaticityX,
-                 libwebm::kMkvPrimaryRChromaticityY)) {
+  if (r_ && !r_->Write(writer, libwebm::kMkvPrimaryRChromaticityX,
+                       libwebm::kMkvPrimaryRChromaticityY)) {
     return false;
   }
-  if (g_ &&
-      !g_->Write(writer, libwebm::kMkvPrimaryGChromaticityX,
-                 libwebm::kMkvPrimaryGChromaticityY)) {
+  if (g_ && !g_->Write(writer, libwebm::kMkvPrimaryGChromaticityX,
+                       libwebm::kMkvPrimaryGChromaticityY)) {
     return false;
   }
-  if (b_ &&
-      !b_->Write(writer, libwebm::kMkvPrimaryBChromaticityX,
-                 libwebm::kMkvPrimaryBChromaticityY)) {
+  if (b_ && !b_->Write(writer, libwebm::kMkvPrimaryBChromaticityX,
+                       libwebm::kMkvPrimaryBChromaticityY)) {
     return false;
   }
   if (white_point_ &&
@@ -1421,6 +1426,7 @@ VideoTrack::VideoTrack(unsigned int* seed)
       stereo_mode_(0),
       alpha_mode_(0),
       width_(0),
+      colour_space_(NULL),
       colour_(NULL),
       projection_(NULL) {}
 
@@ -1518,6 +1524,10 @@ bool VideoTrack::Write(IMkvWriter* writer) const {
                           static_cast<uint64>(alpha_mode_)))
       return false;
   }
+  if (colour_space_) {
+    if (!WriteEbmlElement(writer, libwebm::kMkvColourSpace, colour_space_))
+      return false;
+  }
   if (frame_rate_ > 0.0) {
     if (!WriteEbmlElement(writer, libwebm::kMkvFrameRate,
                           static_cast<float>(frame_rate_))) {
@@ -1540,6 +1550,22 @@ bool VideoTrack::Write(IMkvWriter* writer) const {
   }
 
   return true;
+}
+
+void VideoTrack::set_colour_space(const char* colour_space) {
+  if (colour_space) {
+    delete[] colour_space_;
+
+    const size_t length = strlen(colour_space) + 1;
+    colour_space_ = new (std::nothrow) char[length];  // NOLINT
+    if (colour_space_) {
+#ifdef _MSC_VER
+      strcpy_s(colour_space_, length, colour_space);
+#else
+      strcpy(colour_space_, colour_space);
+#endif
+    }
+  }
 }
 
 bool VideoTrack::SetColour(const Colour& colour) {
@@ -1625,6 +1651,8 @@ uint64_t VideoTrack::VideoPayloadSize() const {
   if (frame_rate_ > 0.0)
     size += EbmlElementSize(libwebm::kMkvFrameRate,
                             static_cast<float>(frame_rate_));
+  if (colour_space_)
+    size += EbmlElementSize(libwebm::kMkvColourSpace, colour_space_);
   if (colour_)
     size += colour_->ColourSize();
   if (projection_)
@@ -1702,10 +1730,9 @@ bool AudioTrack::Write(IMkvWriter* writer) const {
 
 const char Tracks::kOpusCodecId[] = "A_OPUS";
 const char Tracks::kVorbisCodecId[] = "A_VORBIS";
+const char Tracks::kAv1CodecId[] = "V_AV1";
 const char Tracks::kVp8CodecId[] = "V_VP8";
 const char Tracks::kVp9CodecId[] = "V_VP9";
-const char Tracks::kVp10CodecId[] = "V_VP10";
-const char Tracks::kAV1CodecId[] = "V_AV1";
 const char Tracks::kWebVttCaptionsId[] = "D_WEBVTT/CAPTIONS";
 const char Tracks::kWebVttDescriptionsId[] = "D_WEBVTT/DESCRIPTIONS";
 const char Tracks::kWebVttMetadataId[] = "D_WEBVTT/METADATA";
@@ -4161,15 +4188,15 @@ bool Segment::WriteFramesLessThan(uint64_t timestamp) {
 }
 
 bool Segment::DocTypeIsWebm() const {
-  const int kNumCodecIds = 10;
+  const int kNumCodecIds = 9;
 
   // TODO(vigneshv): Tweak .clang-format.
   const char* kWebmCodecIds[kNumCodecIds] = {
       Tracks::kOpusCodecId,          Tracks::kVorbisCodecId,
-      Tracks::kVp8CodecId,           Tracks::kVp9CodecId,
-      Tracks::kVp10CodecId,          Tracks::kAV1CodecId,
-      Tracks::kWebVttCaptionsId,     Tracks::kWebVttDescriptionsId,
-      Tracks::kWebVttMetadataId,     Tracks::kWebVttSubtitlesId};
+      Tracks::kAv1CodecId,           Tracks::kVp8CodecId,
+      Tracks::kVp9CodecId,           Tracks::kWebVttCaptionsId,
+      Tracks::kWebVttDescriptionsId, Tracks::kWebVttMetadataId,
+      Tracks::kWebVttSubtitlesId};
 
   const int num_tracks = static_cast<int>(tracks_.track_entries_size());
   for (int track_index = 0; track_index < num_tracks; ++track_index) {

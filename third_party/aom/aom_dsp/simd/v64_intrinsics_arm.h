@@ -71,7 +71,11 @@ SIMD_INLINE void u32_store_unaligned(void *p, uint32_t a) {
 #elif defined(__CC_ARM)
   *(__packed uint32_t *)p) = a;
 #elif defined(__GNUC__)
-  *((__attribute((packed)) uint32_t *)p) = a;
+  struct Unaligned32Struct {
+    uint32_t value;
+    uint8_t dummy;  // To make the size non-power-of-two.
+  } __attribute__((__packed__));
+  ((struct Unaligned32Struct *)p)->value = a;
 #else
   vst1_lane_u32((uint32_t *)p, vreinterpret_u32_s64((uint64x1_t)(uint64_t)a),
                 0);
@@ -107,7 +111,7 @@ SIMD_INLINE v64 v64_align(v64 a, v64 b, unsigned int c) {
 #endif
 }
 
-SIMD_INLINE v64 v64_zero() { return vreinterpret_s64_u8(vdup_n_u8(0)); }
+SIMD_INLINE v64 v64_zero(void) { return vreinterpret_s64_u8(vdup_n_u8(0)); }
 
 SIMD_INLINE v64 v64_dup_8(uint8_t x) {
   return vreinterpret_s64_u8(vdup_n_u8(x));
@@ -158,7 +162,7 @@ SIMD_INLINE int64_t v64_hadd_s16(v64 a) {
 
 typedef uint16x8_t sad64_internal;
 
-SIMD_INLINE sad64_internal v64_sad_u8_init() { return vdupq_n_u16(0); }
+SIMD_INLINE sad64_internal v64_sad_u8_init(void) { return vdupq_n_u16(0); }
 
 // Implementation dependent return value. Result must be finalised with
 // v64_sad_u8_sum().
@@ -177,7 +181,7 @@ SIMD_INLINE uint32_t v64_sad_u8_sum(sad64_internal s) {
 
 typedef uint32x4_t ssd64_internal;
 
-SIMD_INLINE ssd64_internal v64_ssd_u8_init() { return vdupq_n_u32(0); }
+SIMD_INLINE ssd64_internal v64_ssd_u8_init(void) { return vdupq_n_u32(0); }
 
 // Implementation dependent return value. Result must be finalised with
 // v64_ssd_u8_sum().
@@ -604,39 +608,39 @@ SIMD_INLINE v64 v64_shr_n_byte(v64 a, unsigned int c) {
 }
 
 SIMD_INLINE v64 v64_shl_n_8(v64 a, unsigned int c) {
-  return vreinterpret_s64_u8(vshl_n_u8(vreinterpret_u8_s64(a), c));
+  return c ? vreinterpret_s64_u8(vshl_n_u8(vreinterpret_u8_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shr_n_u8(v64 a, unsigned int c) {
-  return vreinterpret_s64_u8(vshr_n_u8(vreinterpret_u8_s64(a), c));
+  return c ? vreinterpret_s64_u8(vshr_n_u8(vreinterpret_u8_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shr_n_s8(v64 a, unsigned int c) {
-  return vreinterpret_s64_s8(vshr_n_s8(vreinterpret_s8_s64(a), c));
+  return c ? vreinterpret_s64_s8(vshr_n_s8(vreinterpret_s8_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shl_n_16(v64 a, unsigned int c) {
-  return vreinterpret_s64_u16(vshl_n_u16(vreinterpret_u16_s64(a), c));
+  return c ? vreinterpret_s64_u16(vshl_n_u16(vreinterpret_u16_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shr_n_u16(v64 a, unsigned int c) {
-  return vreinterpret_s64_u16(vshr_n_u16(vreinterpret_u16_s64(a), c));
+  return c ? vreinterpret_s64_u16(vshr_n_u16(vreinterpret_u16_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shr_n_s16(v64 a, unsigned int c) {
-  return vreinterpret_s64_s16(vshr_n_s16(vreinterpret_s16_s64(a), c));
+  return c ? vreinterpret_s64_s16(vshr_n_s16(vreinterpret_s16_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shl_n_32(v64 a, unsigned int c) {
-  return vreinterpret_s64_u32(vshl_n_u32(vreinterpret_u32_s64(a), c));
+  return c ? vreinterpret_s64_u32(vshl_n_u32(vreinterpret_u32_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shr_n_u32(v64 a, unsigned int c) {
-  return vreinterpret_s64_u32(vshr_n_u32(vreinterpret_u32_s64(a), c));
+  return c ? vreinterpret_s64_u32(vshr_n_u32(vreinterpret_u32_s64(a), c)) : a;
 }
 
 SIMD_INLINE v64 v64_shr_n_s32(v64 a, unsigned int c) {
-  return vreinterpret_s64_s32(vshr_n_s32(vreinterpret_s32_s64(a), c));
+  return c ? vreinterpret_s64_s32(vshr_n_s32(vreinterpret_s32_s64(a), c)) : a;
 }
 
 #else

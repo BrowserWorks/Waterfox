@@ -121,8 +121,8 @@ TEST_P(Y4mVideoSourceTest, SourceTest) {
   Md5Check(t.md5raw);
 }
 
-INSTANTIATE_TEST_CASE_P(C, Y4mVideoSourceTest,
-                        ::testing::ValuesIn(kY4mTestVectors));
+INSTANTIATE_TEST_SUITE_P(C, Y4mVideoSourceTest,
+                         ::testing::ValuesIn(kY4mTestVectors));
 
 class Y4mVideoWriteTest : public Y4mVideoSourceTest {
  protected:
@@ -175,6 +175,6 @@ TEST_P(Y4mVideoWriteTest, WriteTest) {
   Md5Check(t.md5raw);
 }
 
-INSTANTIATE_TEST_CASE_P(C, Y4mVideoWriteTest,
-                        ::testing::ValuesIn(kY4mTestVectors));
+INSTANTIATE_TEST_SUITE_P(C, Y4mVideoWriteTest,
+                         ::testing::ValuesIn(kY4mTestVectors));
 }  // namespace

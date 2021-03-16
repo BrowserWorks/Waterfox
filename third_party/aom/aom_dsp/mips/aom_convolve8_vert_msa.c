@@ -313,7 +313,6 @@ static void common_vt_2t_4x4_msa(const uint8_t *src, int32_t src_stride,
   filt0 = (v16u8)__msa_splati_h(filt, 0);
 
   LD_SB5(src, src_stride, src0, src1, src2, src3, src4);
-  src += (5 * src_stride);
 
   ILVR_B4_SB(src1, src0, src2, src1, src3, src2, src4, src3, src10_r, src21_r,
              src32_r, src43_r);
@@ -341,7 +340,6 @@ static void common_vt_2t_4x8_msa(const uint8_t *src, int32_t src_stride,
   src += (8 * src_stride);
 
   src8 = LD_SB(src);
-  src += src_stride;
 
   ILVR_B4_SB(src1, src0, src2, src1, src3, src2, src4, src3, src10_r, src21_r,
              src32_r, src43_r);

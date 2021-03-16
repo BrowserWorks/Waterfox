@@ -31,6 +31,10 @@ extern "C" {
   (ROUND_POWER_OF_TWO(((int64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + \
    ((D) * (1 << RDDIV_BITS)))
 
+#define RDCOST_NEG_R(RM, R, D) \
+  (((D) * (1 << RDDIV_BITS)) - \
+   ROUND_POWER_OF_TWO(((int64_t)(R)) * (RM), AV1_PROB_COST_SHIFT))
+
 #define RDCOST_DBL(RM, R, D)                                       \
   (((((double)(R)) * (RM)) / (double)(1 << AV1_PROB_COST_SHIFT)) + \
    ((double)(D) * (1 << RDDIV_BITS)))
@@ -40,242 +44,28 @@ extern "C" {
 #define MV_COST_WEIGHT 108
 #define MV_COST_WEIGHT_SUB 120
 
-#define RD_THRESH_MAX_FACT 64
-#define RD_THRESH_INC 1
+// The fractional part of rd_thresh factor is stored with 5 bits. The maximum
+// factor that we allow is two, which is stored as 2 ** (5+1) = 64
+#define RD_THRESH_FAC_FRAC_BITS (5)
+#define RD_THRESH_FAC_FRAC_VAL (1 << (RD_THRESH_FAC_FRAC_BITS))
+#define RD_THRESH_MAX_FACT ((RD_THRESH_FAC_FRAC_VAL) << 1)
+#define RD_THRESH_LOG_DEC_FACTOR (4)
+#define RD_THRESH_INC (1)
 
 // Factor to weigh the rate for switchable interp filters.
 #define SWITCHABLE_INTERP_RATE_FACTOR 1
 
-// This enumerator type needs to be kept aligned with the mode order in
-// const MODE_DEFINITION av1_mode_order[MAX_MODES] used in the rd code.
-typedef enum {
-  THR_NEARESTMV,
-  THR_NEARESTL2,
-  THR_NEARESTL3,
-  THR_NEARESTB,
-  THR_NEARESTA2,
-  THR_NEARESTA,
-  THR_NEARESTG,
-
-  THR_NEWMV,
-  THR_NEWL2,
-  THR_NEWL3,
-  THR_NEWB,
-  THR_NEWA2,
-  THR_NEWA,
-  THR_NEWG,
-
-  THR_NEARMV,
-  THR_NEARL2,
-  THR_NEARL3,
-  THR_NEARB,
-  THR_NEARA2,
-  THR_NEARA,
-  THR_NEARG,
-
-  THR_GLOBALMV,
-  THR_GLOBALL2,
-  THR_GLOBALL3,
-  THR_GLOBALB,
-  THR_GLOBALA2,
-  THR_GLOBALA,
-  THR_GLOBALG,
-
-  THR_COMP_NEAREST_NEARESTLA,
-  THR_COMP_NEAREST_NEARESTL2A,
-  THR_COMP_NEAREST_NEARESTL3A,
-  THR_COMP_NEAREST_NEARESTGA,
-  THR_COMP_NEAREST_NEARESTLB,
-  THR_COMP_NEAREST_NEARESTL2B,
-  THR_COMP_NEAREST_NEARESTL3B,
-  THR_COMP_NEAREST_NEARESTGB,
-  THR_COMP_NEAREST_NEARESTLA2,
-  THR_COMP_NEAREST_NEARESTL2A2,
-  THR_COMP_NEAREST_NEARESTL3A2,
-  THR_COMP_NEAREST_NEARESTGA2,
-  THR_COMP_NEAREST_NEARESTLL2,
-  THR_COMP_NEAREST_NEARESTLL3,
-  THR_COMP_NEAREST_NEARESTLG,
-  THR_COMP_NEAREST_NEARESTBA,
-
-  THR_COMP_NEAR_NEARLA,
-  THR_COMP_NEW_NEARESTLA,
-  THR_COMP_NEAREST_NEWLA,
-  THR_COMP_NEW_NEARLA,
-  THR_COMP_NEAR_NEWLA,
-  THR_COMP_NEW_NEWLA,
-  THR_COMP_GLOBAL_GLOBALLA,
-
-  THR_COMP_NEAR_NEARL2A,
-  THR_COMP_NEW_NEARESTL2A,
-  THR_COMP_NEAREST_NEWL2A,
-  THR_COMP_NEW_NEARL2A,
-  THR_COMP_NEAR_NEWL2A,
-  THR_COMP_NEW_NEWL2A,
-  THR_COMP_GLOBAL_GLOBALL2A,
-
-  THR_COMP_NEAR_NEARL3A,
-  THR_COMP_NEW_NEARESTL3A,
-  THR_COMP_NEAREST_NEWL3A,
-  THR_COMP_NEW_NEARL3A,
-  THR_COMP_NEAR_NEWL3A,
-  THR_COMP_NEW_NEWL3A,
-  THR_COMP_GLOBAL_GLOBALL3A,
-
-  THR_COMP_NEAR_NEARGA,
-  THR_COMP_NEW_NEARESTGA,
-  THR_COMP_NEAREST_NEWGA,
-  THR_COMP_NEW_NEARGA,
-  THR_COMP_NEAR_NEWGA,
-  THR_COMP_NEW_NEWGA,
-  THR_COMP_GLOBAL_GLOBALGA,
-
-  THR_COMP_NEAR_NEARLB,
-  THR_COMP_NEW_NEARESTLB,
-  THR_COMP_NEAREST_NEWLB,
-  THR_COMP_NEW_NEARLB,
-  THR_COMP_NEAR_NEWLB,
-  THR_COMP_NEW_NEWLB,
-  THR_COMP_GLOBAL_GLOBALLB,
-
-  THR_COMP_NEAR_NEARL2B,
-  THR_COMP_NEW_NEARESTL2B,
-  THR_COMP_NEAREST_NEWL2B,
-  THR_COMP_NEW_NEARL2B,
-  THR_COMP_NEAR_NEWL2B,
-  THR_COMP_NEW_NEWL2B,
-  THR_COMP_GLOBAL_GLOBALL2B,
-
-  THR_COMP_NEAR_NEARL3B,
-  THR_COMP_NEW_NEARESTL3B,
-  THR_COMP_NEAREST_NEWL3B,
-  THR_COMP_NEW_NEARL3B,
-  THR_COMP_NEAR_NEWL3B,
-  THR_COMP_NEW_NEWL3B,
-  THR_COMP_GLOBAL_GLOBALL3B,
-
-  THR_COMP_NEAR_NEARGB,
-  THR_COMP_NEW_NEARESTGB,
-  THR_COMP_NEAREST_NEWGB,
-  THR_COMP_NEW_NEARGB,
-  THR_COMP_NEAR_NEWGB,
-  THR_COMP_NEW_NEWGB,
-  THR_COMP_GLOBAL_GLOBALGB,
-
-  THR_COMP_NEAR_NEARLA2,
-  THR_COMP_NEW_NEARESTLA2,
-  THR_COMP_NEAREST_NEWLA2,
-  THR_COMP_NEW_NEARLA2,
-  THR_COMP_NEAR_NEWLA2,
-  THR_COMP_NEW_NEWLA2,
-  THR_COMP_GLOBAL_GLOBALLA2,
-
-  THR_COMP_NEAR_NEARL2A2,
-  THR_COMP_NEW_NEARESTL2A2,
-  THR_COMP_NEAREST_NEWL2A2,
-  THR_COMP_NEW_NEARL2A2,
-  THR_COMP_NEAR_NEWL2A2,
-  THR_COMP_NEW_NEWL2A2,
-  THR_COMP_GLOBAL_GLOBALL2A2,
-
-  THR_COMP_NEAR_NEARL3A2,
-  THR_COMP_NEW_NEARESTL3A2,
-  THR_COMP_NEAREST_NEWL3A2,
-  THR_COMP_NEW_NEARL3A2,
-  THR_COMP_NEAR_NEWL3A2,
-  THR_COMP_NEW_NEWL3A2,
-  THR_COMP_GLOBAL_GLOBALL3A2,
-
-  THR_COMP_NEAR_NEARGA2,
-  THR_COMP_NEW_NEARESTGA2,
-  THR_COMP_NEAREST_NEWGA2,
-  THR_COMP_NEW_NEARGA2,
-  THR_COMP_NEAR_NEWGA2,
-  THR_COMP_NEW_NEWGA2,
-  THR_COMP_GLOBAL_GLOBALGA2,
-
-  THR_COMP_NEAR_NEARLL2,
-  THR_COMP_NEW_NEARESTLL2,
-  THR_COMP_NEAREST_NEWLL2,
-  THR_COMP_NEW_NEARLL2,
-  THR_COMP_NEAR_NEWLL2,
-  THR_COMP_NEW_NEWLL2,
-  THR_COMP_GLOBAL_GLOBALLL2,
-
-  THR_COMP_NEAR_NEARLL3,
-  THR_COMP_NEW_NEARESTLL3,
-  THR_COMP_NEAREST_NEWLL3,
-  THR_COMP_NEW_NEARLL3,
-  THR_COMP_NEAR_NEWLL3,
-  THR_COMP_NEW_NEWLL3,
-  THR_COMP_GLOBAL_GLOBALLL3,
-
-  THR_COMP_NEAR_NEARLG,
-  THR_COMP_NEW_NEARESTLG,
-  THR_COMP_NEAREST_NEWLG,
-  THR_COMP_NEW_NEARLG,
-  THR_COMP_NEAR_NEWLG,
-  THR_COMP_NEW_NEWLG,
-  THR_COMP_GLOBAL_GLOBALLG,
-
-  THR_COMP_NEAR_NEARBA,
-  THR_COMP_NEW_NEARESTBA,
-  THR_COMP_NEAREST_NEWBA,
-  THR_COMP_NEW_NEARBA,
-  THR_COMP_NEAR_NEWBA,
-  THR_COMP_NEW_NEWBA,
-  THR_COMP_GLOBAL_GLOBALBA,
-
-  THR_DC,
-  THR_PAETH,
-  THR_SMOOTH,
-  THR_SMOOTH_V,
-  THR_SMOOTH_H,
-  THR_H_PRED,
-  THR_V_PRED,
-  THR_D135_PRED,
-  THR_D203_PRED,
-  THR_D157_PRED,
-  THR_D67_PRED,
-  THR_D113_PRED,
-  THR_D45_PRED,
-
-  MAX_MODES,
-
-  LAST_SINGLE_REF_MODES = THR_GLOBALG,
-  MAX_SINGLE_REF_MODES = LAST_SINGLE_REF_MODES + 1,
-  LAST_COMP_REF_MODES = THR_COMP_GLOBAL_GLOBALBA,
-  MAX_COMP_REF_MODES = LAST_COMP_REF_MODES + 1
-} THR_MODES;
-
-typedef enum {
-  THR_LAST,
-  THR_LAST2,
-  THR_LAST3,
-  THR_BWDR,
-  THR_ALTR2,
-  THR_GOLD,
-  THR_ALTR,
-
-  THR_COMP_LA,
-  THR_COMP_L2A,
-  THR_COMP_L3A,
-  THR_COMP_GA,
-
-  THR_COMP_LB,
-  THR_COMP_L2B,
-  THR_COMP_L3B,
-  THR_COMP_GB,
-
-  THR_COMP_LA2,
-  THR_COMP_L2A2,
-  THR_COMP_L3A2,
-  THR_COMP_GA2,
-
-  THR_INTRA,
-
-  MAX_REFS
-} THR_MODES_SUB8X8;
+enum {
+  // Default initialization when we are not using winner mode framework. e.g.
+  // intrabc
+  DEFAULT_EVAL = 0,
+  // Initialization for selecting winner mode
+  MODE_EVAL,
+  // Initialization for winner mode evaluation
+  WINNER_MODE_EVAL,
+  // All mode evaluation types
+  MODE_EVAL_TYPES,
+} UENUM1BYTE(MODE_EVAL_TYPE);
 
 typedef struct RD_OPT {
   // Thresh_mult is used to set a threshold for the rd score. A higher value
@@ -283,14 +73,28 @@ typedef struct RD_OPT {
   // is used in combination with the current block size, and thresh_freq_fact
   // to pick a threshold.
   int thresh_mult[MAX_MODES];
-  int thresh_mult_sub8x8[MAX_REFS];
 
   int threshes[MAX_SEGMENTS][BLOCK_SIZES_ALL][MAX_MODES];
 
-  int64_t prediction_type_threshes[REF_FRAMES][REFERENCE_MODES];
-
   int RDMULT;
+
+  double r0, arf_r0;
+  double mc_saved_base, mc_count_base;
 } RD_OPT;
+
+typedef struct {
+  // Cost of transmitting the actual motion vector.
+  // mv_component[0][i] is the cost of motion vector with horizontal component
+  // (mv_row) equal to i - MV_MAX.
+  // mv_component[1][i] is the cost of motion vector with vertical component
+  // (mv_col) equal to i - MV_MAX.
+  int mv_component[2][MV_VALS];
+
+  // joint_mv[i] is the cost of transmitting joint mv(MV_JOINT_TYPE) of
+  // type i.
+  // TODO(huisu@google.com): we can update dv_joint_cost per SB.
+  int joint_mv[MV_JOINTS];
+} IntraBCMVCosts;
 
 static INLINE void av1_init_rd_stats(RD_STATS *rd_stats) {
 #if CONFIG_RD_DEBUG
@@ -302,8 +106,6 @@ static INLINE void av1_init_rd_stats(RD_STATS *rd_stats) {
   rd_stats->sse = 0;
   rd_stats->skip = 1;
   rd_stats->zero_rate = 0;
-  rd_stats->invalid_rate = 0;
-  rd_stats->ref_rdcost = INT64_MAX;
 #if CONFIG_RD_DEBUG
   // This may run into problems when monochrome video is
   // encoded, as there will only be 1 plane
@@ -329,8 +131,6 @@ static INLINE void av1_invalid_rd_stats(RD_STATS *rd_stats) {
   rd_stats->sse = INT64_MAX;
   rd_stats->skip = 0;
   rd_stats->zero_rate = 0;
-  rd_stats->invalid_rate = 1;
-  rd_stats->ref_rdcost = INT64_MAX;
 #if CONFIG_RD_DEBUG
   // This may run into problems when monochrome video is
   // encoded, as there will only be 1 plane
@@ -340,7 +140,7 @@ static INLINE void av1_invalid_rd_stats(RD_STATS *rd_stats) {
       int r, c;
       for (r = 0; r < TXB_COEFF_COST_MAP_SIZE; ++r)
         for (c = 0; c < TXB_COEFF_COST_MAP_SIZE; ++c)
-          rd_stats->txb_coeff_cost_map[plane][r][c] = INT_MAX;
+          rd_stats->txb_coeff_cost_map[plane][r][c] = INT16_MAX;
     }
   }
 #endif
@@ -348,20 +148,18 @@ static INLINE void av1_invalid_rd_stats(RD_STATS *rd_stats) {
 
 static INLINE void av1_merge_rd_stats(RD_STATS *rd_stats_dst,
                                       const RD_STATS *rd_stats_src) {
-#if CONFIG_RD_DEBUG
-  int plane;
-#endif
-  rd_stats_dst->rate += rd_stats_src->rate;
+  assert(rd_stats_dst->rate != INT_MAX && rd_stats_src->rate != INT_MAX);
+  rd_stats_dst->rate = (int)AOMMIN(
+      ((int64_t)rd_stats_dst->rate + (int64_t)rd_stats_src->rate), INT_MAX);
   if (!rd_stats_dst->zero_rate)
     rd_stats_dst->zero_rate = rd_stats_src->zero_rate;
   rd_stats_dst->dist += rd_stats_src->dist;
   rd_stats_dst->sse += rd_stats_src->sse;
   rd_stats_dst->skip &= rd_stats_src->skip;
-  rd_stats_dst->invalid_rate &= rd_stats_src->invalid_rate;
 #if CONFIG_RD_DEBUG
   // This may run into problems when monochrome video is
   // encoded, as there will only be 1 plane
-  for (plane = 0; plane < MAX_MB_PLANE; ++plane) {
+  for (int plane = 0; plane < MAX_MB_PLANE; ++plane) {
     rd_stats_dst->txb_coeff_cost[plane] += rd_stats_src->txb_coeff_cost[plane];
     {
       // TODO(angiebird): optimize this part
@@ -379,10 +177,55 @@ static INLINE void av1_merge_rd_stats(RD_STATS *rd_stats_dst,
 #endif
 }
 
+static INLINE void av1_accumulate_rd_stats(RD_STATS *rd_stats, int64_t dist,
+                                           int rate, int skip, int64_t sse,
+                                           int zero_rate) {
+  assert(rd_stats->rate != INT_MAX && rate != INT_MAX);
+  rd_stats->rate += rate;
+  if (!rd_stats->zero_rate) rd_stats->zero_rate = zero_rate;
+  rd_stats->dist += dist;
+  rd_stats->skip &= skip;
+  rd_stats->sse += sse;
+}
+
+static INLINE int64_t av1_calculate_rd_cost(int mult, int rate, int64_t dist) {
+  assert(mult >= 0);
+  if (rate >= 0) {
+    return RDCOST(mult, rate, dist);
+  }
+  return RDCOST_NEG_R(mult, -rate, dist);
+}
+
+static INLINE void av1_rd_cost_update(int mult, RD_STATS *rd_cost) {
+  if (rd_cost->rate < INT_MAX && rd_cost->dist < INT64_MAX &&
+      rd_cost->rdcost < INT64_MAX) {
+    rd_cost->rdcost = av1_calculate_rd_cost(mult, rd_cost->rate, rd_cost->dist);
+  } else {
+    av1_invalid_rd_stats(rd_cost);
+  }
+}
+
+static INLINE void av1_rd_stats_subtraction(int mult,
+                                            const RD_STATS *const left,
+                                            const RD_STATS *const right,
+                                            RD_STATS *result) {
+  if (left->rate == INT_MAX || right->rate == INT_MAX ||
+      left->dist == INT64_MAX || right->dist == INT64_MAX ||
+      left->rdcost == INT64_MAX || right->rdcost == INT64_MAX) {
+    av1_invalid_rd_stats(result);
+  } else {
+    result->rate = left->rate - right->rate;
+    result->dist = left->dist - right->dist;
+    result->rdcost = av1_calculate_rd_cost(mult, result->rate, result->dist);
+  }
+}
+
 struct TileInfo;
 struct TileDataEnc;
 struct AV1_COMP;
 struct macroblock;
+
+int av1_compute_rd_mult_based_on_qindex(const struct AV1_COMP *cpi, int qindex);
 
 int av1_compute_rd_mult(const struct AV1_COMP *cpi, int qindex);
 
@@ -394,18 +237,13 @@ void av1_initialize_me_consts(const struct AV1_COMP *cpi, MACROBLOCK *x,
 void av1_model_rd_from_var_lapndz(int64_t var, unsigned int n,
                                   unsigned int qstep, int *rate, int64_t *dist);
 
-void av1_model_rd_curvfit(double xqr, double *rate_f, double *distbysse_f);
-void av1_model_rd_surffit(double xm, double yl, double *rate_f,
-                          double *distbysse_f);
+void av1_model_rd_curvfit(BLOCK_SIZE bsize, double sse_norm, double xqr,
+                          double *rate_f, double *distbysse_f);
+void av1_model_rd_surffit(BLOCK_SIZE bsize, double sse_norm, double xm,
+                          double yl, double *rate_f, double *distbysse_f);
 
-int av1_get_switchable_rate(const AV1_COMMON *const cm, MACROBLOCK *x,
-                            const MACROBLOCKD *xd);
-
-int av1_raster_block_offset(BLOCK_SIZE plane_bsize, int raster_block,
-                            int stride);
-
-int16_t *av1_raster_block_offset_int16(BLOCK_SIZE plane_bsize, int raster_block,
-                                       int16_t *base);
+int av1_get_switchable_rate(const MACROBLOCK *x, const MACROBLOCKD *xd,
+                            InterpFilter interp_filter);
 
 YV12_BUFFER_CONFIG *av1_get_scaled_ref_frame(const struct AV1_COMP *cpi,
                                              int ref_frame);
@@ -414,18 +252,24 @@ void av1_init_me_luts(void);
 
 void av1_set_mvcost(MACROBLOCK *x, int ref, int ref_mv_idx);
 
-void av1_get_entropy_contexts(BLOCK_SIZE bsize,
+void av1_get_entropy_contexts(BLOCK_SIZE plane_bsize,
                               const struct macroblockd_plane *pd,
                               ENTROPY_CONTEXT t_above[MAX_MIB_SIZE],
                               ENTROPY_CONTEXT t_left[MAX_MIB_SIZE]);
 
 void av1_set_rd_speed_thresholds(struct AV1_COMP *cpi);
 
-void av1_set_rd_speed_thresholds_sub8x8(struct AV1_COMP *cpi);
-
 void av1_update_rd_thresh_fact(const AV1_COMMON *const cm,
-                               int (*fact)[MAX_MODES], int rd_thresh, int bsize,
-                               int best_mode_index);
+                               int (*fact)[MAX_MODES], int rd_thresh,
+                               BLOCK_SIZE bsize, THR_MODES best_mode_index);
+
+static INLINE void reset_thresh_freq_fact(MACROBLOCK *const x) {
+  for (int i = 0; i < BLOCK_SIZES_ALL; ++i) {
+    for (int j = 0; j < MAX_MODES; ++j) {
+      x->thresh_freq_fact[i][j] = RD_THRESH_FAC_FRAC_VAL;
+    }
+  }
+}
 
 static INLINE int rd_less_than_thresh(int64_t best_rd, int thresh,
                                       int thresh_fact) {
@@ -441,9 +285,64 @@ static INLINE void set_error_per_bit(MACROBLOCK *x, int rdmult) {
   x->errorperbit += (x->errorperbit == 0);
 }
 
+// Get the threshold for R-D optimization of coefficients depending upon mode
+// decision/winner mode processing
+static INLINE uint32_t get_rd_opt_coeff_thresh(
+    const uint32_t *const coeff_opt_dist_threshold,
+    int enable_winner_mode_for_coeff_opt, int is_winner_mode) {
+  // Default initialization of threshold
+  uint32_t coeff_opt_thresh = coeff_opt_dist_threshold[DEFAULT_EVAL];
+  // TODO(any): Experiment with coeff_opt_dist_threshold values when
+  // enable_winner_mode_for_coeff_opt is ON
+  // TODO(any): Skip the winner mode processing for blocks with lower residual
+  // energy as R-D optimization of coefficients would have been enabled during
+  // mode decision
+  if (enable_winner_mode_for_coeff_opt) {
+    // Use conservative threshold during mode decision and perform R-D
+    // optimization of coeffs always for winner modes
+    if (is_winner_mode)
+      coeff_opt_thresh = coeff_opt_dist_threshold[WINNER_MODE_EVAL];
+    else
+      coeff_opt_thresh = coeff_opt_dist_threshold[MODE_EVAL];
+  }
+  return coeff_opt_thresh;
+}
+
+// Used to reset the state of tx/mb rd hash information
+static INLINE void reset_hash_records(MACROBLOCK *const x,
+                                      int use_inter_txb_hash) {
+  int32_t record_idx;
+
+  // Reset the state for use_inter_txb_hash
+  if (use_inter_txb_hash) {
+    for (record_idx = 0;
+         record_idx < ((MAX_MIB_SIZE >> 1) * (MAX_MIB_SIZE >> 1)); record_idx++)
+      x->txb_rd_record_8X8[record_idx].num =
+          x->txb_rd_record_8X8[record_idx].index_start = 0;
+    for (record_idx = 0;
+         record_idx < ((MAX_MIB_SIZE >> 2) * (MAX_MIB_SIZE >> 2)); record_idx++)
+      x->txb_rd_record_16X16[record_idx].num =
+          x->txb_rd_record_16X16[record_idx].index_start = 0;
+    for (record_idx = 0;
+         record_idx < ((MAX_MIB_SIZE >> 3) * (MAX_MIB_SIZE >> 3)); record_idx++)
+      x->txb_rd_record_32X32[record_idx].num =
+          x->txb_rd_record_32X32[record_idx].index_start = 0;
+    for (record_idx = 0;
+         record_idx < ((MAX_MIB_SIZE >> 4) * (MAX_MIB_SIZE >> 4)); record_idx++)
+      x->txb_rd_record_64X64[record_idx].num =
+          x->txb_rd_record_64X64[record_idx].index_start = 0;
+  }
+
+  // Reset the state for use_intra_txb_hash
+  x->txb_rd_record_intra.num = x->txb_rd_record_intra.index_start = 0;
+
+  // Reset the state for use_mb_rd_hash
+  x->mb_rd_record.num = x->mb_rd_record.index_start = 0;
+}
+
 void av1_setup_pred_block(const MACROBLOCKD *xd,
                           struct buf_2d dst[MAX_MB_PLANE],
-                          const YV12_BUFFER_CONFIG *src, int mi_row, int mi_col,
+                          const YV12_BUFFER_CONFIG *src,
                           const struct scale_factors *scale,
                           const struct scale_factors *scale_uv,
                           const int num_planes);
@@ -456,6 +355,13 @@ void av1_fill_mode_rates(AV1_COMMON *const cm, MACROBLOCK *x,
 
 void av1_fill_coeff_costs(MACROBLOCK *x, FRAME_CONTEXT *fc,
                           const int num_planes);
+
+void av1_fill_mv_costs(const FRAME_CONTEXT *fc, int integer_mv, int usehp,
+                       MACROBLOCK *x);
+
+int av1_get_adaptive_rdmult(const struct AV1_COMP *cpi, double beta);
+
+int av1_get_deltaq_offset(const struct AV1_COMP *cpi, int qindex, double beta);
 
 #ifdef __cplusplus
 }  // extern "C"

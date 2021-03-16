@@ -13,6 +13,7 @@
 
 #include <arm_neon.h>
 #include <string.h>
+#include "aom_dsp/aom_dsp_common.h"
 
 static INLINE void store_row2_u8_8x8(uint8_t *s, int p, const uint8x8_t s0,
                                      const uint8x8_t s1) {
@@ -315,6 +316,26 @@ static INLINE void load_s16_8x4(const int16_t *s, ptrdiff_t p,
   *s3 = vld1q_s16(s);
 }
 
+// Load 4 sets of 4 bytes when alignment is not guaranteed.
+static INLINE uint8x16_t load_unaligned_u8q(const uint8_t *buf, int stride) {
+  uint32_t a;
+  uint32x4_t a_u32 = vdupq_n_u32(0);
+  if (stride == 4) return vld1q_u8(buf);
+  memcpy(&a, buf, 4);
+  buf += stride;
+  a_u32 = vsetq_lane_u32(a, a_u32, 0);
+  memcpy(&a, buf, 4);
+  buf += stride;
+  a_u32 = vsetq_lane_u32(a, a_u32, 1);
+  memcpy(&a, buf, 4);
+  buf += stride;
+  a_u32 = vsetq_lane_u32(a, a_u32, 2);
+  memcpy(&a, buf, 4);
+  buf += stride;
+  a_u32 = vsetq_lane_u32(a, a_u32, 3);
+  return vreinterpretq_u8_u32(a_u32);
+}
+
 static INLINE void load_unaligned_u8_4x8(const uint8_t *buf, int stride,
                                          uint32x2_t *tu0, uint32x2_t *tu1,
                                          uint32x2_t *tu2, uint32x2_t *tu3) {
@@ -382,6 +403,15 @@ static INLINE void load_unaligned_u8_4x2(const uint8_t *buf, int stride,
   buf += stride;
   *tu0 = vset_lane_u32(a, *tu0, 1);
 }
+
+/* These intrinsics require immediate values, so we must use #defines
+   to enforce that. */
+#define store_unaligned_u8_4x1(dst, src, lane)         \
+  do {                                                 \
+    uint32_t a;                                        \
+    a = vget_lane_u32(vreinterpret_u32_u8(src), lane); \
+    memcpy(dst, &a, 4);                                \
+  } while (0)
 
 static INLINE void load_unaligned_u8_2x2(const uint8_t *buf, int stride,
                                          uint16x4_t *tu0) {
@@ -489,6 +519,21 @@ static INLINE void store_u32_4x4(uint32_t *s, int32_t p, uint32x4_t s1,
   vst1q_u32(s, s3);
   s += p;
   vst1q_u32(s, s4);
+}
+
+static INLINE int16x8_t load_tran_low_to_s16q(const tran_low_t *buf) {
+  const int32x4_t v0 = vld1q_s32(buf);
+  const int32x4_t v1 = vld1q_s32(buf + 4);
+  const int16x4_t s0 = vmovn_s32(v0);
+  const int16x4_t s1 = vmovn_s32(v1);
+  return vcombine_s16(s0, s1);
+}
+
+static INLINE void store_s16q_to_tran_low(tran_low_t *buf, const int16x8_t a) {
+  const int32x4_t v0 = vmovl_s16(vget_low_s16(a));
+  const int32x4_t v1 = vmovl_s16(vget_high_s16(a));
+  vst1q_s32(buf, v0);
+  vst1q_s32(buf + 4, v1);
 }
 
 #endif  // AOM_AV1_COMMON_ARM_MEM_NEON_H_

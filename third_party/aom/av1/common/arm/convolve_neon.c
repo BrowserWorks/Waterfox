@@ -195,12 +195,12 @@ void av1_convolve_x_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
                             int dst_stride, int w, int h,
                             const InterpFilterParams *filter_params_x,
                             const InterpFilterParams *filter_params_y,
-                            const int subpel_x_q4, const int subpel_y_q4,
+                            const int subpel_x_qn, const int subpel_y_qn,
                             ConvolveParams *conv_params) {
   const uint8_t horiz_offset = filter_params_x->taps / 2 - 1;
   const int8_t bits = FILTER_BITS - conv_params->round_0;
 
-  (void)subpel_y_q4;
+  (void)subpel_y_qn;
   (void)conv_params;
   (void)filter_params_y;
 
@@ -214,7 +214,7 @@ void av1_convolve_x_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
          ((conv_params->round_0 + conv_params->round_1) == 2 * FILTER_BITS));
 
   const int16_t *x_filter = av1_get_interp_filter_subpel_kernel(
-      filter_params_x, subpel_x_q4 & SUBPEL_MASK);
+      filter_params_x, subpel_x_qn & SUBPEL_MASK);
 
   const int16x8_t shift_round_0 = vdupq_n_s16(-conv_params->round_0);
   const int16x8_t shift_by_bits = vdupq_n_s16(-bits);
@@ -603,14 +603,14 @@ void av1_convolve_y_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
                             int dst_stride, int w, int h,
                             const InterpFilterParams *filter_params_x,
                             const InterpFilterParams *filter_params_y,
-                            const int subpel_x_q4, const int subpel_y_q4,
+                            const int subpel_x_qn, const int subpel_y_qn,
                             ConvolveParams *conv_params) {
   const int vert_offset = filter_params_y->taps / 2 - 1;
 
   src -= vert_offset * src_stride;
 
   (void)filter_params_x;
-  (void)subpel_x_q4;
+  (void)subpel_x_qn;
   (void)conv_params;
 
   assert(conv_params->round_0 <= FILTER_BITS);
@@ -618,7 +618,7 @@ void av1_convolve_y_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
          ((conv_params->round_0 + conv_params->round_1) == (2 * FILTER_BITS)));
 
   const int16_t *y_filter = av1_get_interp_filter_subpel_kernel(
-      filter_params_y, subpel_y_q4 & SUBPEL_MASK);
+      filter_params_y, subpel_y_qn & SUBPEL_MASK);
 
   if (w <= 4) {
     uint8x8_t d01;
@@ -844,17 +844,110 @@ void av1_convolve_y_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
   }
 }
 
+// Horizontal filtering for convolve_2d_sr for width multiple of 8
+// Processes one row at a time
+static INLINE void horiz_filter_w8_single_row(
+    const uint8_t *src_ptr, int src_stride, int16_t *dst_ptr,
+    const int dst_stride, int width, int height, const int16_t *x_filter,
+    const int16x8_t horiz_const, const int16x8_t shift_round_0) {
+  int16x8_t s0, s1, s2, s3, s4, s5, s6, s7;
+  do {
+    uint8x8_t t0 = vld1_u8(src_ptr);
+    s0 = vreinterpretq_s16_u16(vmovl_u8(t0));  // a0 a1 a2 a3 a4 a5 a6 a7
+
+    int width_tmp = width;
+    const uint8_t *s = src_ptr + 8;
+    int16_t *dst_tmp = dst_ptr;
+
+    __builtin_prefetch(dst_ptr);
+
+    do {
+      t0 = vld1_u8(s);  // a8 a9 a10 a11 a12 a13 a14 a15
+      s7 = vreinterpretq_s16_u16(vmovl_u8(t0));
+      int16x8_t sum = s0;
+      s0 = s7;
+
+      s1 = vextq_s16(sum, s7, 1);  // a1 a2 a3 a4 a5 a6 a7 a8
+      s2 = vextq_s16(sum, s7, 2);  // a2 a3 a4 a5 a6 a7 a8 a9
+      s3 = vextq_s16(sum, s7, 3);  // a3 a4 a5 a6 a7 a8 a9 a10
+      s4 = vextq_s16(sum, s7, 4);  // a4 a5 a6 a7 a8 a9 a10 a11
+      s5 = vextq_s16(sum, s7, 5);  // a5 a6 a7 a8 a9 a10 a11 a12
+      s6 = vextq_s16(sum, s7, 6);  // a6 a7 a8 a9 a10 a11 a12 a13
+      s7 = vextq_s16(sum, s7, 7);  // a7 a8 a9 a10 a11 a12 a13 a14
+
+      int16x8_t res0 = convolve8_8x8_s16(sum, s1, s2, s3, s4, s5, s6, s7,
+                                         x_filter, horiz_const, shift_round_0);
+
+      vst1q_s16(dst_tmp, res0);
+
+      s += 8;
+      dst_tmp += 8;
+      width_tmp -= 8;
+    } while (width_tmp > 0);
+    src_ptr += src_stride;
+    dst_ptr += dst_stride;
+    height--;
+  } while (height > 0);
+}
+
+// Horizontal filtering for convolve_2d_sr for width <= 4
+// Processes one row at a time
+static INLINE void horiz_filter_w4_single_row(
+    const uint8_t *src_ptr, int src_stride, int16_t *dst_ptr,
+    const int dst_stride, int width, int height, const int16_t *x_filter,
+    const int16x4_t horiz_const, const int16x4_t shift_round_0) {
+  int16x4_t s0, s1, s2, s3, s4, s5, s6, s7;
+  do {
+    const uint8_t *s = src_ptr;
+
+    __builtin_prefetch(s);
+
+    uint8x8_t t0 = vld1_u8(s);  // a0 a1 a2 a3 a4 a5 a6 a7
+    int16x8_t tt0 = vreinterpretq_s16_u16(vmovl_u8(t0));
+    s0 = vget_low_s16(tt0);
+    s4 = vget_high_s16(tt0);
+
+    __builtin_prefetch(dst_ptr);
+    s += 8;
+
+    t0 = vld1_u8(s);  // a8 a9 a10 a11 a12 a13 a14 a15
+    s7 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t0)));
+
+    s1 = vext_s16(s0, s4, 1);  // a1 a2 a3 a4
+    s2 = vext_s16(s0, s4, 2);  // a2 a3 a4 a5
+    s3 = vext_s16(s0, s4, 3);  // a3 a4 a5 a6
+    s5 = vext_s16(s4, s7, 1);  // a5 a6 a7 a8
+    s6 = vext_s16(s4, s7, 2);  // a6 a7 a8 a9
+    s7 = vext_s16(s4, s7, 3);  // a7 a8 a9 a10
+
+    int16x4_t d0 = convolve8_4x4_s16(s0, s1, s2, s3, s4, s5, s6, s7, x_filter,
+                                     horiz_const, shift_round_0);
+
+    if (width == 4) {
+      vst1_s16(dst_ptr, d0);
+      dst_ptr += dst_stride;
+    } else if (width == 2) {
+      vst1_lane_u32((uint32_t *)dst_ptr, vreinterpret_u32_s16(d0), 0);
+      dst_ptr += dst_stride;
+    }
+
+    src_ptr += src_stride;
+    height--;
+  } while (height > 0);
+}
+
 void av1_convolve_2d_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
                              int dst_stride, int w, int h,
                              const InterpFilterParams *filter_params_x,
                              const InterpFilterParams *filter_params_y,
-                             const int subpel_x_q4, const int subpel_y_q4,
+                             const int subpel_x_qn, const int subpel_y_qn,
                              ConvolveParams *conv_params) {
   int im_dst_stride;
   int width, height;
-  uint8x8_t t0;
 #if defined(__aarch64__)
+  uint8x8_t t0;
   uint8x8_t t1, t2, t3, t4, t5, t6, t7;
+  const uint8_t *s;
 #endif
 
   DECLARE_ALIGNED(16, int16_t,
@@ -867,7 +960,7 @@ void av1_convolve_2d_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
   const int horiz_offset = filter_params_x->taps / 2 - 1;
 
   const uint8_t *src_ptr = src - vert_offset * src_stride - horiz_offset;
-  const uint8_t *s;
+
   int16_t *dst_ptr;
 
   dst_ptr = im_block;
@@ -880,7 +973,7 @@ void av1_convolve_2d_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
   const int16x8_t vec_round_bits = vdupq_n_s16(-round_bits);
   const int offset_bits = bd + 2 * FILTER_BITS - conv_params->round_0;
   const int16_t *x_filter = av1_get_interp_filter_subpel_kernel(
-      filter_params_x, subpel_x_q4 & SUBPEL_MASK);
+      filter_params_x, subpel_x_qn & SUBPEL_MASK);
 
   int16_t x_filter_tmp[8];
   int16x8_t filter_x_coef = vld1q_s16(x_filter);
@@ -893,18 +986,14 @@ void av1_convolve_2d_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
   assert(conv_params->round_0 > 0);
 
   if (w <= 4) {
-    int16x4_t s0, s1, s2, s3, s4, s5, s6, s7, d0;
-#if defined(__aarch64__)
-    int16x4_t s8, s9, s10, d1, d2, d3;
-#endif
-
     const int16x4_t horiz_const = vdup_n_s16((1 << (bd + FILTER_BITS - 2)));
     const int16x4_t shift_round_0 = vdup_n_s16(-(conv_params->round_0 - 1));
 
-    do {
-      s = src_ptr;
-
 #if defined(__aarch64__)
+    int16x4_t s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, d0, d1, d2, d3;
+    do {
+      assert(height >= 4);
+      s = src_ptr;
       __builtin_prefetch(s + 0 * src_stride);
       __builtin_prefetch(s + 1 * src_stride);
       __builtin_prefetch(s + 2 * src_stride);
@@ -963,57 +1052,30 @@ void av1_convolve_2d_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
       src_ptr += 4 * src_stride;
       dst_ptr += 4 * im_dst_stride;
       height -= 4;
+    } while (height >= 4);
+
+    if (height) {
+      assert(height < 4);
+      horiz_filter_w4_single_row(src_ptr, src_stride, dst_ptr, im_dst_stride, w,
+                                 height, x_filter_tmp, horiz_const,
+                                 shift_round_0);
+    }
 #else
-      int16x8_t tt0;
-
-      __builtin_prefetch(s);
-
-      t0 = vld1_u8(s);  // a0 a1 a2 a3 a4 a5 a6 a7
-      tt0 = vreinterpretq_s16_u16(vmovl_u8(t0));
-      s0 = vget_low_s16(tt0);
-      s4 = vget_high_s16(tt0);
-
-      __builtin_prefetch(dst_ptr);
-      s += 8;
-
-      t0 = vld1_u8(s);  // a8 a9 a10 a11 a12 a13 a14 a15
-      s7 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t0)));
-
-      s1 = vext_s16(s0, s4, 1);  // a1 a2 a3 a4
-      s2 = vext_s16(s0, s4, 2);  // a2 a3 a4 a5
-      s3 = vext_s16(s0, s4, 3);  // a3 a4 a5 a6
-      s5 = vext_s16(s4, s7, 1);  // a5 a6 a7 a8
-      s6 = vext_s16(s4, s7, 2);  // a6 a7 a8 a9
-      s7 = vext_s16(s4, s7, 3);  // a7 a8 a9 a10
-
-      d0 = convolve8_4x4_s16(s0, s1, s2, s3, s4, s5, s6, s7, x_filter_tmp,
-                             horiz_const, shift_round_0);
-
-      if (w == 4) {
-        vst1_s16(dst_ptr, d0);
-        dst_ptr += im_dst_stride;
-      } else if (w == 2) {
-        vst1_lane_u32((uint32_t *)dst_ptr, vreinterpret_u32_s16(d0), 0);
-        dst_ptr += im_dst_stride;
-      }
-
-      src_ptr += src_stride;
-      height -= 1;
+    horiz_filter_w4_single_row(src_ptr, src_stride, dst_ptr, im_dst_stride, w,
+                               height, x_filter_tmp, horiz_const,
+                               shift_round_0);
 #endif
-    } while (height > 0);
+
   } else {
-    int16_t *d_tmp;
-    int16x8_t s0, s1, s2, s3, s4, s5, s6, s7, res0;
-#if defined(__aarch64__)
-    int16x8_t s8, s9, s10, res1, res2, res3, res4, res5, res6, res7;
-    int16x8_t s11, s12, s13, s14;
-#endif
-
     const int16x8_t horiz_const = vdupq_n_s16((1 << (bd + FILTER_BITS - 2)));
     const int16x8_t shift_round_0 = vdupq_n_s16(-(conv_params->round_0 - 1));
 
 #if defined(__aarch64__)
+    int16_t *d_tmp;
+    int16x8_t s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14;
+    int16x8_t res0, res1, res2, res3, res4, res5, res6, res7;
     do {
+      assert(height >= 8);
       __builtin_prefetch(src_ptr + 0 * src_stride);
       __builtin_prefetch(src_ptr + 1 * src_stride);
       __builtin_prefetch(src_ptr + 2 * src_stride);
@@ -1099,45 +1161,121 @@ void av1_convolve_2d_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
       src_ptr += 8 * src_stride;
       dst_ptr += 8 * im_dst_stride;
       height -= 8;
-    } while (height > 0);
-#else
-    do {
-      t0 = vld1_u8(src_ptr);
-      s0 = vreinterpretq_s16_u16(vmovl_u8(t0));  // a0 a1 a2 a3 a4 a5 a6 a7
+    } while (height >= 8);
 
-      width = w;
-      s = src_ptr + 8;
+    if (height >= 4) {
+      assert(height < 8);
+      int16x4_t reg0, reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8, reg9,
+          reg10, reg11, reg12, reg13, reg14;
+      int16x4_t d0, d1, d2, d3, d4, d5, d6, d7;
+      int16x8_t out0, out1, out2, out3;
+
+      __builtin_prefetch(src_ptr + 0 * src_stride);
+      __builtin_prefetch(src_ptr + 1 * src_stride);
+      __builtin_prefetch(src_ptr + 2 * src_stride);
+      __builtin_prefetch(src_ptr + 3 * src_stride);
+
+      load_u8_8x4(src_ptr, src_stride, &t0, &t1, &t2, &t3);
+      transpose_u8_8x4(&t0, &t1, &t2, &t3);
+
+      reg0 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t0)));
+      reg1 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t1)));
+      reg2 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t2)));
+      reg3 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t3)));
+      reg4 = vget_high_s16(vreinterpretq_s16_u16(vmovl_u8(t0)));
+      reg5 = vget_high_s16(vreinterpretq_s16_u16(vmovl_u8(t1)));
+      reg6 = vget_high_s16(vreinterpretq_s16_u16(vmovl_u8(t2)));
+
+      __builtin_prefetch(dst_ptr + 0 * dst_stride);
+      __builtin_prefetch(dst_ptr + 1 * dst_stride);
+      __builtin_prefetch(dst_ptr + 2 * dst_stride);
+      __builtin_prefetch(dst_ptr + 3 * dst_stride);
+
+      s = src_ptr + 7;
       d_tmp = dst_ptr;
-
-      __builtin_prefetch(dst_ptr);
+      width = w;
 
       do {
-        t0 = vld1_u8(s);  // a8 a9 a10 a11 a12 a13 a14 a15
-        s7 = vreinterpretq_s16_u16(vmovl_u8(t0));
-        int16x8_t sum = s0;
-        s0 = s7;
+        load_u8_8x4(s, src_stride, &t0, &t1, &t2, &t3);
+        transpose_u8_8x4(&t0, &t1, &t2, &t3);
 
-        s1 = vextq_s16(sum, s7, 1);  // a1 a2 a3 a4 a5 a6 a7 a8
-        s2 = vextq_s16(sum, s7, 2);  // a2 a3 a4 a5 a6 a7 a8 a9
-        s3 = vextq_s16(sum, s7, 3);  // a3 a4 a5 a6 a7 a8 a9 a10
-        s4 = vextq_s16(sum, s7, 4);  // a4 a5 a6 a7 a8 a9 a10 a11
-        s5 = vextq_s16(sum, s7, 5);  // a5 a6 a7 a8 a9 a10 a11 a12
-        s6 = vextq_s16(sum, s7, 6);  // a6 a7 a8 a9 a10 a11 a12 a13
-        s7 = vextq_s16(sum, s7, 7);  // a7 a8 a9 a10 a11 a12 a13 a14
+        reg7 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t0)));
+        reg8 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t1)));
+        reg9 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t2)));
+        reg10 = vget_low_s16(vreinterpretq_s16_u16(vmovl_u8(t3)));
+        reg11 = vget_high_s16(vreinterpretq_s16_u16(vmovl_u8(t0)));
+        reg12 = vget_high_s16(vreinterpretq_s16_u16(vmovl_u8(t1)));
+        reg13 = vget_high_s16(vreinterpretq_s16_u16(vmovl_u8(t2)));
+        reg14 = vget_high_s16(vreinterpretq_s16_u16(vmovl_u8(t3)));
 
-        res0 = convolve8_8x8_s16(sum, s1, s2, s3, s4, s5, s6, s7, x_filter_tmp,
-                                 horiz_const, shift_round_0);
+        d0 = convolve8_4x4(reg0, reg1, reg2, reg3, reg4, reg5, reg6, reg7,
+                           x_filter_tmp);
 
-        vst1q_s16(d_tmp, res0);
+        d1 = convolve8_4x4(reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8,
+                           x_filter_tmp);
 
+        d2 = convolve8_4x4(reg2, reg3, reg4, reg5, reg6, reg7, reg8, reg9,
+                           x_filter_tmp);
+
+        d3 = convolve8_4x4(reg3, reg4, reg5, reg6, reg7, reg8, reg9, reg10,
+                           x_filter_tmp);
+
+        d4 = convolve8_4x4(reg4, reg5, reg6, reg7, reg8, reg9, reg10, reg11,
+                           x_filter_tmp);
+
+        d5 = convolve8_4x4(reg5, reg6, reg7, reg8, reg9, reg10, reg11, reg12,
+                           x_filter_tmp);
+
+        d6 = convolve8_4x4(reg6, reg7, reg8, reg9, reg10, reg11, reg12, reg13,
+                           x_filter_tmp);
+
+        d7 = convolve8_4x4(reg7, reg8, reg9, reg10, reg11, reg12, reg13, reg14,
+                           x_filter_tmp);
+
+        transpose_s16_4x8(&d0, &d1, &d2, &d3, &d4, &d5, &d6, &d7, &out0, &out1,
+                          &out2, &out3);
+
+        out0 = vaddq_s16(out0, horiz_const);
+        out0 = vqrshlq_s16(out0, shift_round_0);
+
+        out1 = vaddq_s16(out1, horiz_const);
+        out1 = vqrshlq_s16(out1, shift_round_0);
+
+        out2 = vaddq_s16(out2, horiz_const);
+        out2 = vqrshlq_s16(out2, shift_round_0);
+
+        out3 = vaddq_s16(out3, horiz_const);
+        out3 = vqrshlq_s16(out3, shift_round_0);
+
+        store_s16_8x4(d_tmp, im_dst_stride, out0, out1, out2, out3);
+
+        reg0 = reg8;
+        reg1 = reg9;
+        reg2 = reg10;
+        reg3 = reg11;
+        reg4 = reg12;
+        reg5 = reg13;
+        reg6 = reg14;
         s += 8;
         d_tmp += 8;
         width -= 8;
       } while (width > 0);
-      src_ptr += src_stride;
-      dst_ptr += im_dst_stride;
-      height -= 1;
-    } while (height > 0);
+      src_ptr += 4 * src_stride;
+      dst_ptr += 4 * im_dst_stride;
+      height -= 4;
+    }
+
+    if (height) {
+      assert(height < 4);
+      horiz_filter_w8_single_row(src_ptr, src_stride, dst_ptr, im_stride, w,
+                                 height, x_filter_tmp, horiz_const,
+                                 shift_round_0);
+    }
+#else
+
+    horiz_filter_w8_single_row(src_ptr, src_stride, dst_ptr, im_stride, w,
+                               height, x_filter_tmp, horiz_const,
+                               shift_round_0);
 #endif
   }
 
@@ -1149,7 +1287,7 @@ void av1_convolve_2d_sr_neon(const uint8_t *src, int src_stride, uint8_t *dst,
     const int32_t sub_const = (1 << (offset_bits - conv_params->round_1)) +
                               (1 << (offset_bits - conv_params->round_1 - 1));
     const int16_t *y_filter = av1_get_interp_filter_subpel_kernel(
-        filter_params_y, subpel_y_q4 & SUBPEL_MASK);
+        filter_params_y, subpel_y_qn & SUBPEL_MASK);
 
     const int32x4_t round_shift_vec = vdupq_n_s32(-(conv_params->round_1));
     const int32x4_t offset_const = vdupq_n_s32(1 << offset_bits);
@@ -1409,12 +1547,12 @@ void av1_convolve_2d_copy_sr_neon(const uint8_t *src, int src_stride,
                                   uint8_t *dst, int dst_stride, int w, int h,
                                   const InterpFilterParams *filter_params_x,
                                   const InterpFilterParams *filter_params_y,
-                                  const int subpel_x_q4, const int subpel_y_q4,
+                                  const int subpel_x_qn, const int subpel_y_qn,
                                   ConvolveParams *conv_params) {
   (void)filter_params_x;
   (void)filter_params_y;
-  (void)subpel_x_q4;
-  (void)subpel_y_q4;
+  (void)subpel_x_qn;
+  (void)subpel_y_qn;
   (void)conv_params;
 
   const uint8_t *src1;

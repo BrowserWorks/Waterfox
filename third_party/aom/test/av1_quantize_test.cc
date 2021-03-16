@@ -73,7 +73,7 @@ class AV1QuantizeTest : public ::testing::TestWithParam<QuantizeFuncParams> {
     const SCAN_ORDER scanOrder = av1_default_scan_orders[txSize];
     for (int i = 0; i < numTests; i++) {
       int err_count = 0;
-      ref_eob = eob = -1;
+      ref_eob = eob = UINT16_MAX;
       for (int j = 0; j < count; j++) {
         coeff_ptr[j] = rnd(coeffRange);
       }
@@ -83,7 +83,7 @@ class AV1QuantizeTest : public ::testing::TestWithParam<QuantizeFuncParams> {
         quant_shift_ptr[j] = rnd.Rand16();
         // int16_t positive
         dequant_ptr[j] = abs(rnd(dequantRange));
-        quant_ptr[j] = (1 << 16) / dequant_ptr[j];
+        quant_ptr[j] = static_cast<int16_t>((1 << 16) / dequant_ptr[j]);
         round_ptr[j] = (abs(rnd(roundFactorRange)) * dequant_ptr[j]) >> 7;
       }
       for (int j = 2; j < 8; ++j) {
@@ -145,7 +145,7 @@ class AV1QuantizeTest : public ::testing::TestWithParam<QuantizeFuncParams> {
     const SCAN_ORDER scanOrder = av1_default_scan_orders[txSize];
 
     for (int i = 0; i < numTests; i++) {
-      ref_eob = eob = -1;
+      ref_eob = eob = UINT16_MAX;
       for (int j = 0; j < count; j++) {
         coeff_ptr[j] = 0;
       }
@@ -218,7 +218,7 @@ const QuantizeFuncParams qfps[4] = {
                      1024),
 };
 
-INSTANTIATE_TEST_CASE_P(SSE4_1, AV1QuantizeTest, ::testing::ValuesIn(qfps));
+INSTANTIATE_TEST_SUITE_P(SSE4_1, AV1QuantizeTest, ::testing::ValuesIn(qfps));
 #endif  // HAVE_SSE4_1
 
 #if HAVE_AVX2
@@ -233,7 +233,7 @@ const QuantizeFuncParams qfps_avx2[4] = {
                      1024),
 };
 
-INSTANTIATE_TEST_CASE_P(AVX2, AV1QuantizeTest, ::testing::ValuesIn(qfps_avx2));
+INSTANTIATE_TEST_SUITE_P(AVX2, AV1QuantizeTest, ::testing::ValuesIn(qfps_avx2));
 #endif  // HAVE_AVX2
 
 }  // namespace

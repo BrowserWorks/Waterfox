@@ -5,7 +5,7 @@
 
 #define Compare(X, Y) ((X)>=(Y))
 
-xy* nonmax_suppression(const xy* corners, const int* scores, int num_corners, int* ret_num_nonmax)
+xy* aom_nonmax_suppression(const xy* corners, const int* scores, int num_corners, int* ret_num_nonmax)
 {
   int num_nonmax=0;
   int last_row;

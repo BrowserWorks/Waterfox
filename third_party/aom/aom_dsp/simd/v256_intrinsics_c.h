@@ -149,9 +149,16 @@ SIMD_INLINE uint64_t c_v256_hadd_u8(c_v256 a) {
   return c_v128_hadd_u8(a.v128[1]) + c_v128_hadd_u8(a.v128[0]);
 }
 
-typedef uint32_t c_sad256_internal;
+typedef struct {
+  uint32_t val;
+  int count;
+} c_sad256_internal;
 
-SIMD_INLINE c_sad256_internal c_v256_sad_u8_init() { return 0; }
+SIMD_INLINE c_sad256_internal c_v256_sad_u8_init(void) {
+  c_sad256_internal t;
+  t.val = t.count = 0;
+  return t;
+}
 
 /* Implementation dependent return value.  Result must be finalised with
    v256_sad_u8_sum().
@@ -160,11 +167,17 @@ SIMD_INLINE c_sad256_internal c_v256_sad_u8(c_sad256_internal s, c_v256 a,
                                             c_v256 b) {
   int c;
   for (c = 0; c < 32; c++)
-    s += a.u8[c] > b.u8[c] ? a.u8[c] - b.u8[c] : b.u8[c] - a.u8[c];
+    s.val += a.u8[c] > b.u8[c] ? a.u8[c] - b.u8[c] : b.u8[c] - a.u8[c];
+  s.count++;
+  if (SIMD_CHECK && s.count > 32) {
+    fprintf(stderr,
+            "Error: sad called 32 times returning an undefined result\n");
+    abort();
+  }
   return s;
 }
 
-SIMD_INLINE uint32_t c_v256_sad_u8_sum(c_sad256_internal s) { return s; }
+SIMD_INLINE uint32_t c_v256_sad_u8_sum(c_sad256_internal s) { return s.val; }
 
 typedef uint32_t c_ssd256_internal;
 
@@ -746,6 +759,7 @@ SIMD_INLINE c_v256 c_v256_cmpeq_32(c_v256 a, c_v256 b) {
 }
 
 SIMD_INLINE c_v256 c_v256_shl_n_byte(c_v256 a, unsigned int n) {
+  if (n == 0) return a;
   if (n < 16)
     return c_v256_from_v128(c_v128_or(c_v128_shl_n_byte(a.v128[1], n),
                                       c_v128_shr_n_byte(a.v128[0], 16 - n)),
@@ -758,6 +772,7 @@ SIMD_INLINE c_v256 c_v256_shl_n_byte(c_v256 a, unsigned int n) {
 }
 
 SIMD_INLINE c_v256 c_v256_shr_n_byte(c_v256 a, unsigned int n) {
+  if (n == 0) return a;
   if (n < 16)
     return c_v256_from_v128(c_v128_shr_n_byte(a.v128[1], n),
                             c_v128_or(c_v128_shr_n_byte(a.v128[0], n),

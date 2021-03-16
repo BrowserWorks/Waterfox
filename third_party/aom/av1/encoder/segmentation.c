@@ -49,25 +49,25 @@ static void count_segs(const AV1_COMMON *cm, MACROBLOCKD *xd,
                        unsigned (*temporal_predictor_count)[2],
                        unsigned *t_unpred_seg_counts, int bw, int bh,
                        int mi_row, int mi_col) {
-  int segment_id;
-
-  if (mi_row >= cm->mi_rows || mi_col >= cm->mi_cols) return;
+  const CommonModeInfoParams *const mi_params = &cm->mi_params;
+  if (mi_row >= mi_params->mi_rows || mi_col >= mi_params->mi_cols) return;
 
   xd->mi = mi;
-  segment_id = xd->mi[0]->segment_id;
-
-  set_mi_row_col(xd, tile, mi_row, bh, mi_col, bw, cm->mi_rows, cm->mi_cols);
+  set_mi_row_col(xd, tile, mi_row, bh, mi_col, bw, mi_params->mi_rows,
+                 mi_params->mi_cols);
 
   // Count the number of hits on each segment with no prediction
+  const int segment_id = xd->mi[0]->segment_id;
   no_pred_segcounts[segment_id]++;
 
   // Temporal prediction not allowed on key frames
-  if (cm->frame_type != KEY_FRAME) {
+  if (cm->current_frame.frame_type != KEY_FRAME) {
     const BLOCK_SIZE bsize = xd->mi[0]->sb_type;
     // Test to see if the segment id matches the predicted value.
     const int pred_segment_id =
         cm->last_frame_seg_map
-            ? get_segment_id(cm, cm->last_frame_seg_map, bsize, mi_row, mi_col)
+            ? get_segment_id(mi_params, cm->last_frame_seg_map, bsize, mi_row,
+                             mi_col)
             : 0;
     const int pred_flag = pred_segment_id == segment_id;
     const int pred_context = av1_get_pred_context_seg_id(xd);
@@ -88,12 +88,13 @@ static void count_segs_sb(const AV1_COMMON *cm, MACROBLOCKD *xd,
                           unsigned (*temporal_predictor_count)[2],
                           unsigned *t_unpred_seg_counts, int mi_row, int mi_col,
                           BLOCK_SIZE bsize) {
-  const int mis = cm->mi_stride;
+  const CommonModeInfoParams *const mi_params = &cm->mi_params;
+  const int mis = mi_params->mi_stride;
   const int bs = mi_size_wide[bsize], hbs = bs / 2;
   PARTITION_TYPE partition;
   const int qbs = bs / 4;
 
-  if (mi_row >= cm->mi_rows || mi_col >= cm->mi_cols) return;
+  if (mi_row >= mi_params->mi_rows || mi_col >= mi_params->mi_cols) return;
 
 #define CSEGS(cs_bw, cs_bh, cs_rowoff, cs_coloff)                              \
   count_segs(cm, xd, tile, mi + mis * (cs_rowoff) + (cs_coloff),               \
@@ -138,19 +139,20 @@ static void count_segs_sb(const AV1_COMMON *cm, MACROBLOCKD *xd,
       CSEGS(bs, qbs, 0, 0);
       CSEGS(bs, qbs, qbs, 0);
       CSEGS(bs, qbs, 2 * qbs, 0);
-      if (mi_row + 3 * qbs < cm->mi_rows) CSEGS(bs, qbs, 3 * qbs, 0);
+      if (mi_row + 3 * qbs < mi_params->mi_rows) CSEGS(bs, qbs, 3 * qbs, 0);
       break;
 
     case PARTITION_VERT_4:
       CSEGS(qbs, bs, 0, 0);
       CSEGS(qbs, bs, 0, qbs);
       CSEGS(qbs, bs, 0, 2 * qbs);
-      if (mi_col + 3 * qbs < cm->mi_cols) CSEGS(qbs, bs, 0, 3 * qbs);
+      if (mi_col + 3 * qbs < mi_params->mi_cols) CSEGS(qbs, bs, 0, 3 * qbs);
       break;
 
     case PARTITION_SPLIT: {
       const BLOCK_SIZE subsize = get_partition_subsize(bsize, PARTITION_SPLIT);
       int n;
+      assert(subsize < BLOCK_SIZES_ALL);
 
       for (n = 0; n < 4; n++) {
         const int mi_dc = hbs * (n & 1);
@@ -177,26 +179,31 @@ void av1_choose_segmap_coding_method(AV1_COMMON *cm, MACROBLOCKD *xd) {
   unsigned no_pred_segcounts[MAX_SEGMENTS] = { 0 };
   unsigned t_unpred_seg_counts[MAX_SEGMENTS] = { 0 };
   (void)xd;
-
+  int scale_up = cm->prev_frame && (cm->width > cm->prev_frame->width ||
+                                    cm->height > cm->prev_frame->height);
   // First of all generate stats regarding how well the last segment map
   // predicts this one
-  for (tile_row = 0; tile_row < cm->tile_rows; tile_row++) {
-    TileInfo tile_info;
-    av1_tile_set_row(&tile_info, cm, tile_row);
-    for (tile_col = 0; tile_col < cm->tile_cols; tile_col++) {
-      MB_MODE_INFO **mi_ptr;
-      av1_tile_set_col(&tile_info, cm, tile_col);
-      mi_ptr = cm->mi_grid_visible + tile_info.mi_row_start * cm->mi_stride +
-               tile_info.mi_col_start;
-      for (mi_row = tile_info.mi_row_start; mi_row < tile_info.mi_row_end;
-           mi_row += cm->seq_params.mib_size,
-          mi_ptr += cm->seq_params.mib_size * cm->mi_stride) {
-        MB_MODE_INFO **mi = mi_ptr;
-        for (mi_col = tile_info.mi_col_start; mi_col < tile_info.mi_col_end;
-             mi_col += cm->seq_params.mib_size, mi += cm->seq_params.mib_size) {
-          count_segs_sb(cm, xd, &tile_info, mi, no_pred_segcounts,
-                        temporal_predictor_count, t_unpred_seg_counts, mi_row,
-                        mi_col, cm->seq_params.sb_size);
+  if (!scale_up) {
+    for (tile_row = 0; tile_row < cm->tiles.rows; tile_row++) {
+      TileInfo tile_info;
+      av1_tile_set_row(&tile_info, cm, tile_row);
+      for (tile_col = 0; tile_col < cm->tiles.cols; tile_col++) {
+        MB_MODE_INFO **mi_ptr;
+        av1_tile_set_col(&tile_info, cm, tile_col);
+        mi_ptr = cm->mi_params.mi_grid_base +
+                 tile_info.mi_row_start * cm->mi_params.mi_stride +
+                 tile_info.mi_col_start;
+        for (mi_row = tile_info.mi_row_start; mi_row < tile_info.mi_row_end;
+             mi_row += cm->seq_params.mib_size,
+            mi_ptr += cm->seq_params.mib_size * cm->mi_params.mi_stride) {
+          MB_MODE_INFO **mi = mi_ptr;
+          for (mi_col = tile_info.mi_col_start; mi_col < tile_info.mi_col_end;
+               mi_col += cm->seq_params.mib_size,
+              mi += cm->seq_params.mib_size) {
+            count_segs_sb(cm, xd, &tile_info, mi, no_pred_segcounts,
+                          temporal_predictor_count, t_unpred_seg_counts, mi_row,
+                          mi_col, cm->seq_params.sb_size);
+          }
         }
       }
     }
@@ -209,7 +216,7 @@ void av1_choose_segmap_coding_method(AV1_COMMON *cm, MACROBLOCKD *xd) {
     no_pred_cost += no_pred_segcounts[i] * seg_id_cost[i];
 
   // Frames without past dependency cannot use temporal prediction
-  if (cm->primary_ref_frame != PRIMARY_REF_NONE) {
+  if (cm->features.primary_ref_frame != PRIMARY_REF_NONE) {
     int pred_flag_cost[SEG_TEMPORAL_PRED_CTXS][2];
     for (int i = 0; i < SEG_TEMPORAL_PRED_CTXS; ++i)
       av1_cost_tokens_from_cdf(pred_flag_cost[i], segp->pred_cdf[i], NULL);
@@ -226,7 +233,7 @@ void av1_choose_segmap_coding_method(AV1_COMMON *cm, MACROBLOCKD *xd) {
 
   // Now choose which coding method to use.
   if (t_pred_cost < no_pred_cost) {
-    assert(!cm->error_resilient_mode);
+    assert(!cm->features.error_resilient_mode);
     seg->temporal_update = 1;
   } else {
     seg->temporal_update = 0;

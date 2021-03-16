@@ -12,6 +12,7 @@
 #include <climits>
 #include <vector>
 #include "aom_dsp/aom_dsp_common.h"
+#include "common/tools_common.h"
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "test/codec_factory.h"
 #include "test/encode_test_driver.h"
@@ -47,7 +48,7 @@ static void write_ivf_file_header(const aom_codec_enc_cfg_t *const cfg,
   header[3] = 'F';
   mem_put_le16(header + 4, 0);                    /* version */
   mem_put_le16(header + 6, 32);                   /* headersize */
-  mem_put_le32(header + 8, 0x30395056);           /* fourcc (av1) */
+  mem_put_le32(header + 8, AV1_FOURCC);           /* fourcc (av1) */
   mem_put_le16(header + 12, cfg->g_w);            /* width */
   mem_put_le16(header + 14, cfg->g_h);            /* height */
   mem_put_le32(header + 16, cfg->g_timebase.den); /* rate */
@@ -297,7 +298,7 @@ class ResizeInternalTestLarge : public ResizeTest {
 
   virtual void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) {
     if (frame0_psnr_ == 0.) frame0_psnr_ = pkt->data.psnr.psnr[0];
-    EXPECT_NEAR(pkt->data.psnr.psnr[0], frame0_psnr_, 2.5);
+    EXPECT_NEAR(pkt->data.psnr.psnr[0], frame0_psnr_, 3.0);
   }
 
 #if WRITE_COMPRESSED_STREAM
@@ -374,6 +375,7 @@ class ResizeRealtimeTest
     if (video->frame() == 0) {
       encoder->Control(AV1E_SET_AQ_MODE, 3);
       encoder->Control(AOME_SET_CPUUSED, set_cpu_used_);
+      encoder->Control(AV1E_SET_FRAME_PARALLEL_DECODING, 1);
     }
 
     if (change_bitrate_ && video->frame() == 120) {
@@ -616,12 +618,12 @@ TEST_P(ResizeCspTest, DISABLED_TestResizeCspWorks) {
 TEST_P(ResizeCspTest, TestResizeCspWorks) {
 #endif
   const aom_img_fmt_t image_formats[] = { AOM_IMG_FMT_I420, AOM_IMG_FMT_I444 };
-  for (size_t i = 0; i < GTEST_ARRAY_SIZE_(image_formats); ++i) {
-    ResizingCspVideoSource video(image_formats[i]);
+  for (const aom_img_fmt_t &img_format : image_formats) {
+    ResizingCspVideoSource video(img_format);
     init_flags_ = AOM_CODEC_USE_PSNR;
     cfg_.rc_min_quantizer = cfg_.rc_max_quantizer = 48;
     cfg_.g_lag_in_frames = 0;
-    cfg_.g_profile = (image_formats[i] == AOM_IMG_FMT_I420) ? 0 : 1;
+    cfg_.g_profile = (img_format == AOM_IMG_FMT_I420) ? 0 : 1;
     ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
 
     // Check we decoded the same number of frames as we attempted to encode

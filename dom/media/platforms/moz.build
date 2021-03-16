@@ -48,6 +48,9 @@ if CONFIG['MOZ_WMF']:
 
 if CONFIG['MOZ_FFVPX'] or CONFIG['MOZ_FFMPEG']:
     # common code to either FFmpeg or FFVPX
+    EXPORTS += [
+        'ffmpeg/FFmpegRDFTTypes.h',
+    ]
     UNIFIED_SOURCES += [
         'ffmpeg/FFmpegLibWrapper.cpp',
     ]
@@ -65,9 +68,11 @@ if CONFIG['MOZ_FFMPEG']:
 if CONFIG['MOZ_AV1']:
     EXPORTS += [
         'agnostic/AOMDecoder.h',
+        'agnostic/DAV1DDecoder.h',
     ]
     UNIFIED_SOURCES += [
         'agnostic/AOMDecoder.cpp',
+        'agnostic/DAV1DDecoder.cpp',
     ]
 
 if CONFIG['MOZ_APPLEMEDIA']:

@@ -131,6 +131,7 @@ static void cfl_luma_subsampling_444_lbd_neon(const uint8_t *input,
   } while ((pred_buf_q3 += CFL_BUF_LINE) < end);
 }
 
+#if CONFIG_AV1_HIGHBITDEPTH
 #ifndef __aarch64__
 uint16x8_t vpaddq_u16(uint16x8_t a, uint16x8_t b) {
   return vcombine_u16(vpadd_u16(vget_low_u16(a), vget_high_u16(a)),
@@ -247,6 +248,7 @@ static void cfl_luma_subsampling_444_hbd_neon(const uint16_t *input,
     input += input_stride;
   } while ((pred_buf_q3 += CFL_BUF_LINE) < end);
 }
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 
 CFL_GET_SUBSAMPLE_FUNCTION(neon)
 
@@ -511,6 +513,7 @@ static INLINE void cfl_predict_lbd_neon(const int16_t *pred_buf_q3,
 
 CFL_PREDICT_FN(neon, lbd)
 
+#if CONFIG_AV1_HIGHBITDEPTH
 static INLINE uint16x4_t clamp_s16(int16x4_t a, int16x4_t max) {
   return vreinterpret_u16_s16(vmax_s16(vmin_s16(a, max), vdup_n_s16(0)));
 }
@@ -582,3 +585,4 @@ static INLINE void cfl_predict_hbd_neon(const int16_t *pred_buf_q3,
 }
 
 CFL_PREDICT_FN(neon, hbd)
+#endif  // CONFIG_AV1_HIGHBITDEPTH

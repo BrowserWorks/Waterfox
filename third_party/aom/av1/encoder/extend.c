@@ -103,18 +103,14 @@ static void highbd_copy_and_extend_plane(const uint8_t *src8, int src_pitch,
 void av1_copy_and_extend_frame(const YV12_BUFFER_CONFIG *src,
                                YV12_BUFFER_CONFIG *dst) {
   // Extend src frame in buffer
-  // Altref filtering assumes 16 pixel extension
-  const int et_y = 16;
-  const int el_y = 16;
-  // Motion estimation may use src block variance with the block size up
-  // to 64x64, so the right and bottom need to be extended to 64 multiple
-  // or up to 16, whichever is greater.
+  const int et_y = dst->border;
+  const int el_y = dst->border;
   const int er_y =
-      AOMMAX(src->y_width + 16, ALIGN_POWER_OF_TWO(src->y_width, 6)) -
+      AOMMAX(src->y_width + dst->border, ALIGN_POWER_OF_TWO(src->y_width, 6)) -
       src->y_crop_width;
-  const int eb_y =
-      AOMMAX(src->y_height + 16, ALIGN_POWER_OF_TWO(src->y_height, 6)) -
-      src->y_crop_height;
+  const int eb_y = AOMMAX(src->y_height + dst->border,
+                          ALIGN_POWER_OF_TWO(src->y_height, 6)) -
+                   src->y_crop_height;
   const int uv_width_subsampling = (src->uv_width != src->y_width);
   const int uv_height_subsampling = (src->uv_height != src->y_height);
   const int et_uv = et_y >> uv_height_subsampling;
@@ -126,63 +122,30 @@ void av1_copy_and_extend_frame(const YV12_BUFFER_CONFIG *src,
     highbd_copy_and_extend_plane(src->y_buffer, src->y_stride, dst->y_buffer,
                                  dst->y_stride, src->y_crop_width,
                                  src->y_crop_height, et_y, el_y, eb_y, er_y);
-
-    highbd_copy_and_extend_plane(
-        src->u_buffer, src->uv_stride, dst->u_buffer, dst->uv_stride,
-        src->uv_crop_width, src->uv_crop_height, et_uv, el_uv, eb_uv, er_uv);
-
-    highbd_copy_and_extend_plane(
-        src->v_buffer, src->uv_stride, dst->v_buffer, dst->uv_stride,
-        src->uv_crop_width, src->uv_crop_height, et_uv, el_uv, eb_uv, er_uv);
+    if (src->u_buffer) {
+      highbd_copy_and_extend_plane(
+          src->u_buffer, src->uv_stride, dst->u_buffer, dst->uv_stride,
+          src->uv_crop_width, src->uv_crop_height, et_uv, el_uv, eb_uv, er_uv);
+    }
+    if (src->v_buffer) {
+      highbd_copy_and_extend_plane(
+          src->v_buffer, src->uv_stride, dst->v_buffer, dst->uv_stride,
+          src->uv_crop_width, src->uv_crop_height, et_uv, el_uv, eb_uv, er_uv);
+    }
     return;
   }
 
   copy_and_extend_plane(src->y_buffer, src->y_stride, dst->y_buffer,
                         dst->y_stride, src->y_crop_width, src->y_crop_height,
                         et_y, el_y, eb_y, er_y);
-
-  copy_and_extend_plane(src->u_buffer, src->uv_stride, dst->u_buffer,
-                        dst->uv_stride, src->uv_crop_width, src->uv_crop_height,
-                        et_uv, el_uv, eb_uv, er_uv);
-
-  copy_and_extend_plane(src->v_buffer, src->uv_stride, dst->v_buffer,
-                        dst->uv_stride, src->uv_crop_width, src->uv_crop_height,
-                        et_uv, el_uv, eb_uv, er_uv);
-}
-
-void av1_copy_and_extend_frame_with_rect(const YV12_BUFFER_CONFIG *src,
-                                         YV12_BUFFER_CONFIG *dst, int srcy,
-                                         int srcx, int srch, int srcw) {
-  // If the side is not touching the bounder then don't extend.
-  const int et_y = srcy ? 0 : dst->border;
-  const int el_y = srcx ? 0 : dst->border;
-  const int eb_y = srcy + srch != src->y_height
-                       ? 0
-                       : dst->border + dst->y_height - src->y_height;
-  const int er_y = srcx + srcw != src->y_width
-                       ? 0
-                       : dst->border + dst->y_width - src->y_width;
-  const int src_y_offset = srcy * src->y_stride + srcx;
-  const int dst_y_offset = srcy * dst->y_stride + srcx;
-
-  const int et_uv = ROUND_POWER_OF_TWO(et_y, 1);
-  const int el_uv = ROUND_POWER_OF_TWO(el_y, 1);
-  const int eb_uv = ROUND_POWER_OF_TWO(eb_y, 1);
-  const int er_uv = ROUND_POWER_OF_TWO(er_y, 1);
-  const int src_uv_offset = ((srcy * src->uv_stride) >> 1) + (srcx >> 1);
-  const int dst_uv_offset = ((srcy * dst->uv_stride) >> 1) + (srcx >> 1);
-  const int srch_uv = ROUND_POWER_OF_TWO(srch, 1);
-  const int srcw_uv = ROUND_POWER_OF_TWO(srcw, 1);
-
-  copy_and_extend_plane(src->y_buffer + src_y_offset, src->y_stride,
-                        dst->y_buffer + dst_y_offset, dst->y_stride, srcw, srch,
-                        et_y, el_y, eb_y, er_y);
-
-  copy_and_extend_plane(src->u_buffer + src_uv_offset, src->uv_stride,
-                        dst->u_buffer + dst_uv_offset, dst->uv_stride, srcw_uv,
-                        srch_uv, et_uv, el_uv, eb_uv, er_uv);
-
-  copy_and_extend_plane(src->v_buffer + src_uv_offset, src->uv_stride,
-                        dst->v_buffer + dst_uv_offset, dst->uv_stride, srcw_uv,
-                        srch_uv, et_uv, el_uv, eb_uv, er_uv);
+  if (src->u_buffer) {
+    copy_and_extend_plane(src->u_buffer, src->uv_stride, dst->u_buffer,
+                          dst->uv_stride, src->uv_crop_width,
+                          src->uv_crop_height, et_uv, el_uv, eb_uv, er_uv);
+  }
+  if (src->v_buffer) {
+    copy_and_extend_plane(src->v_buffer, src->uv_stride, dst->v_buffer,
+                          dst->uv_stride, src->uv_crop_width,
+                          src->uv_crop_height, et_uv, el_uv, eb_uv, er_uv);
+  }
 }

@@ -1,5 +1,5 @@
 URL: https://github.com/google/googletest
-Version: 1.8.0
+Version: 1.10.x
 License: BSD
 License File: LICENSE
 
@@ -12,15 +12,6 @@ failures, various options for running the tests, and XML test report
 generation.
 
 Local Modifications:
-- Remove everything but:
-  googletest-release-1.8.0/googletest/
-    cmake/
-    include/
-    src/
-    CHANGES
-    CMakelists.txt
-    CONTRIBUTORS
-    LICENSE
-    README.md
-- Suppress unsigned overflow instrumentation in the LCG
-  https://github.com/google/googletest/pull/1066
+- Replace everything in:
+  third_party/googletest/src/googletest/src/
+  third_party/googletest/src/googletest/include/

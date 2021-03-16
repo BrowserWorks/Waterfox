@@ -13,12 +13,12 @@
 #include "test/av1_txfm_test.h"
 
 using libaom_test::ACMRandom;
+using libaom_test::input_base;
+using libaom_test::reference_hybrid_1d;
 using libaom_test::TYPE_ADST;
 using libaom_test::TYPE_DCT;
 using libaom_test::TYPE_IDTX;
 using libaom_test::TYPE_TXFM;
-using libaom_test::input_base;
-using libaom_test::reference_hybrid_1d;
 
 namespace {
 const int txfm_type_num = 3;
@@ -30,11 +30,11 @@ const int txfm_size_num = 5;
 const int txfm_size_ls[] = { 4, 8, 16, 32, 64 };
 
 const TxfmFunc fwd_txfm_func_ls[][txfm_type_num] = {
-  { av1_fdct4_new, av1_fadst4_new, av1_fidentity4_c },
-  { av1_fdct8_new, av1_fadst8_new, av1_fidentity8_c },
-  { av1_fdct16_new, av1_fadst16_new, av1_fidentity16_c },
-  { av1_fdct32_new, NULL, av1_fidentity32_c },
-  { av1_fdct64_new, NULL, NULL },
+  { av1_fdct4, av1_fadst4, av1_fidentity4_c },
+  { av1_fdct8, av1_fadst8, av1_fidentity8_c },
+  { av1_fdct16, av1_fadst16, av1_fidentity16_c },
+  { av1_fdct32, NULL, av1_fidentity32_c },
+  { av1_fdct64, NULL, NULL },
 };
 
 // the maximum stage number of fwd/inv 1d dct/adst txfm is 12
@@ -56,7 +56,7 @@ TEST(av1_fwd_txfm1d, av1_cospi_arr_data) {
   for (int i = 0; i < 7; i++) {
     for (int j = 0; j < 64; j++) {
       EXPECT_EQ(av1_cospi_arr_data[i][j],
-                (int32_t)round(cos(M_PI * j / 128) * (1 << (cos_bit_min + i))));
+                (int32_t)round(cos(PI * j / 128) * (1 << (cos_bit_min + i))));
     }
   }
 }

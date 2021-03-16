@@ -26,7 +26,4 @@ set(CMAKE_AR ${CROSS}ar CACHE FILEPATH Archiver)
 set(CMAKE_RANLIB ${CROSS}ranlib CACHE FILEPATH Indexer)
 
 # No runtime cpu detect for armv7-mingw-gcc.
-set(CONFIG_RUNTIME_CPU_DETECT 0 CACHE NUMBER "")
-
-# Disable the use of the gtest's CMake support.
-set(AOM_DISABLE_GTEST_CMAKE 1)
+set(CONFIG_RUNTIME_CPU_DETECT 0 CACHE STRING "")

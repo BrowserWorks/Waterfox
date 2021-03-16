@@ -11,8 +11,11 @@
 
 #include "common/webmenc.h"
 
+#include <stdio.h>
+
 #include <string>
 
+#include "common/av1_config.h"
 #include "third_party/libwebm/mkvmuxer/mkvmuxer.h"
 #include "third_party/libwebm/mkvmuxer/mkvmuxerutil.h"
 #include "third_party/libwebm/mkvmuxer/mkvwriter.h"
@@ -22,17 +25,33 @@ const uint64_t kDebugTrackUid = 0xDEADBEEF;
 const int kVideoTrackNumber = 1;
 }  // namespace
 
-void write_webm_file_header(struct WebmOutputContext *webm_ctx,
-                            const aom_codec_enc_cfg_t *cfg,
-                            stereo_format_t stereo_fmt, unsigned int fourcc,
-                            const struct AvxRational *par) {
+int write_webm_file_header(struct WebmOutputContext *webm_ctx,
+                           aom_codec_ctx_t *encoder_ctx,
+                           const aom_codec_enc_cfg_t *cfg,
+                           stereo_format_t stereo_fmt, unsigned int fourcc,
+                           const struct AvxRational *par) {
   mkvmuxer::MkvWriter *const writer = new mkvmuxer::MkvWriter(webm_ctx->stream);
   mkvmuxer::Segment *const segment = new mkvmuxer::Segment();
-  segment->Init(writer);
+  if (!writer || !segment) {
+    fprintf(stderr, "webmenc> mkvmuxer objects alloc failed, out of memory?\n");
+    return -1;
+  }
+
+  bool ok = segment->Init(writer);
+  if (!ok) {
+    fprintf(stderr, "webmenc> mkvmuxer Init failed.\n");
+    return -1;
+  }
+
   segment->set_mode(mkvmuxer::Segment::kFile);
   segment->OutputCues(true);
 
   mkvmuxer::SegmentInfo *const info = segment->GetSegmentInfo();
+  if (!info) {
+    fprintf(stderr, "webmenc> Cannot retrieve Segment Info.\n");
+    return -1;
+  }
+
   const uint64_t kTimecodeScale = 1000000;
   info->set_timecode_scale(kTimecodeScale);
   std::string version = "aomenc";
@@ -46,13 +65,48 @@ void write_webm_file_header(struct WebmOutputContext *webm_ctx,
                              static_cast<int>(cfg->g_h), kVideoTrackNumber);
   mkvmuxer::VideoTrack *const video_track = static_cast<mkvmuxer::VideoTrack *>(
       segment->GetTrackByNumber(video_track_id));
-  video_track->SetStereoMode(stereo_fmt);
-  const char *codec_id;
-  switch (fourcc) {
-    case AV1_FOURCC: codec_id = "V_AV1"; break;
-    default: codec_id = "V_AV1"; break;
+
+  if (!video_track) {
+    fprintf(stderr, "webmenc> Video track creation failed.\n");
+    return -1;
   }
-  video_track->set_codec_id(codec_id);
+
+  ok = false;
+  aom_fixed_buf_t *obu_sequence_header =
+      aom_codec_get_global_headers(encoder_ctx);
+  if (obu_sequence_header) {
+    Av1Config av1_config;
+    if (get_av1config_from_obu(
+            reinterpret_cast<const uint8_t *>(obu_sequence_header->buf),
+            obu_sequence_header->sz, false, &av1_config) == 0) {
+      uint8_t av1_config_buffer[4] = { 0 };
+      size_t bytes_written = 0;
+      if (write_av1config(&av1_config, sizeof(av1_config_buffer),
+                          &bytes_written, av1_config_buffer) == 0) {
+        ok = video_track->SetCodecPrivate(av1_config_buffer,
+                                          sizeof(av1_config_buffer));
+      }
+    }
+    free(obu_sequence_header->buf);
+    free(obu_sequence_header);
+  }
+  if (!ok) {
+    fprintf(stderr, "webmenc> Unable to set AV1 config.\n");
+    return -1;
+  }
+
+  ok = video_track->SetStereoMode(stereo_fmt);
+  if (!ok) {
+    fprintf(stderr, "webmenc> Unable to set stereo mode.\n");
+    return -1;
+  }
+
+  if (fourcc != AV1_FOURCC) {
+    fprintf(stderr, "webmenc> Unsupported codec (unknown 4 CC).\n");
+    return -1;
+  }
+  video_track->set_codec_id("V_AV1");
+
   if (par->numerator > 1 || par->denominator > 1) {
     // TODO(fgalligan): Add support of DisplayUnit, Display Aspect Ratio type
     // to WebM format.
@@ -61,16 +115,24 @@ void write_webm_file_header(struct WebmOutputContext *webm_ctx,
     video_track->set_display_width(display_width);
     video_track->set_display_height(cfg->g_h);
   }
+
   if (webm_ctx->debug) {
     video_track->set_uid(kDebugTrackUid);
   }
+
   webm_ctx->writer = writer;
   webm_ctx->segment = segment;
+
+  return 0;
 }
 
-void write_webm_block(struct WebmOutputContext *webm_ctx,
-                      const aom_codec_enc_cfg_t *cfg,
-                      const aom_codec_cx_pkt_t *pkt) {
+int write_webm_block(struct WebmOutputContext *webm_ctx,
+                     const aom_codec_enc_cfg_t *cfg,
+                     const aom_codec_cx_pkt_t *pkt) {
+  if (!webm_ctx->segment) {
+    fprintf(stderr, "webmenc> segment is NULL.\n");
+    return -1;
+  }
   mkvmuxer::Segment *const segment =
       reinterpret_cast<mkvmuxer::Segment *>(webm_ctx->segment);
   int64_t pts_ns = pkt->data.frame.pts * 1000000000ll * cfg->g_timebase.num /
@@ -78,19 +140,34 @@ void write_webm_block(struct WebmOutputContext *webm_ctx,
   if (pts_ns <= webm_ctx->last_pts_ns) pts_ns = webm_ctx->last_pts_ns + 1000000;
   webm_ctx->last_pts_ns = pts_ns;
 
-  segment->AddFrame(static_cast<uint8_t *>(pkt->data.frame.buf),
-                    pkt->data.frame.sz, kVideoTrackNumber, pts_ns,
-                    pkt->data.frame.flags & AOM_FRAME_IS_KEY);
+  if (!segment->AddFrame(static_cast<uint8_t *>(pkt->data.frame.buf),
+                         pkt->data.frame.sz, kVideoTrackNumber, pts_ns,
+                         pkt->data.frame.flags & AOM_FRAME_IS_KEY)) {
+    fprintf(stderr, "webmenc> AddFrame failed.\n");
+    return -1;
+  }
+  return 0;
 }
 
-void write_webm_file_footer(struct WebmOutputContext *webm_ctx) {
+int write_webm_file_footer(struct WebmOutputContext *webm_ctx) {
+  if (!webm_ctx->writer || !webm_ctx->segment) {
+    fprintf(stderr, "webmenc> segment or writer NULL.\n");
+    return -1;
+  }
   mkvmuxer::MkvWriter *const writer =
       reinterpret_cast<mkvmuxer::MkvWriter *>(webm_ctx->writer);
   mkvmuxer::Segment *const segment =
       reinterpret_cast<mkvmuxer::Segment *>(webm_ctx->segment);
-  segment->Finalize();
+  const bool ok = segment->Finalize();
   delete segment;
   delete writer;
   webm_ctx->writer = NULL;
   webm_ctx->segment = NULL;
+
+  if (!ok) {
+    fprintf(stderr, "webmenc> Segment::Finalize failed.\n");
+    return -1;
+  }
+
+  return 0;
 }

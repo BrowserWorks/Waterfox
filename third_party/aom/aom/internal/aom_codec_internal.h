@@ -59,10 +59,9 @@ extern "C" {
  * types, removing or reassigning enums, adding/removing/rearranging
  * fields to structures
  */
-#define AOM_CODEC_INTERNAL_ABI_VERSION (5) /**<\hideinitializer*/
+#define AOM_CODEC_INTERNAL_ABI_VERSION (7) /**<\hideinitializer*/
 
 typedef struct aom_codec_alg_priv aom_codec_alg_priv_t;
-typedef struct aom_codec_priv_enc_mr_cfg aom_codec_priv_enc_mr_cfg_t;
 
 /*!\brief init function pointer prototype
  *
@@ -77,8 +76,7 @@ typedef struct aom_codec_priv_enc_mr_cfg aom_codec_priv_enc_mr_cfg_t;
  * \retval #AOM_CODEC_MEM_ERROR
  *     Memory operation failed.
  */
-typedef aom_codec_err_t (*aom_codec_init_fn_t)(
-    aom_codec_ctx_t *ctx, aom_codec_priv_enc_mr_cfg_t *data);
+typedef aom_codec_err_t (*aom_codec_init_fn_t)(aom_codec_ctx_t *ctx);
 
 /*!\brief destroy function pointer prototype
  *
@@ -138,7 +136,7 @@ typedef aom_codec_err_t (*aom_codec_get_si_fn_t)(aom_codec_alg_priv_t *ctx,
  * function, so plugins implementing this interface may trust the input
  * parameters to be properly initialized. However,  this interface does not
  * provide type safety for the exchanged data or assign meanings to the
- * control codes. Those details should be specified in the algorithm's
+ * control IDs. Those details should be specified in the algorithm's
  * header file. In particular, the ctrl_id parameter is guaranteed to exist
  * in the algorithm's control mapping table, and the data parameter may be NULL.
  *
@@ -171,17 +169,12 @@ typedef const struct aom_codec_ctrl_fn_map {
 
 /*!\brief decode data function pointer prototype
  *
- * Processes a buffer of coded data. If the processing results in a new
- * decoded frame becoming available, #AOM_CODEC_CB_PUT_SLICE and
- * #AOM_CODEC_CB_PUT_FRAME events are generated as appropriate. This
- * function is called by the generic aom_codec_decode() wrapper function,
- * so plugins implementing this interface may trust the input parameters
- * to be properly initialized.
+ * Processes a buffer of coded data. This function is called by the generic
+ * aom_codec_decode() wrapper function, so plugins implementing this interface
+ * may trust the input parameters to be properly initialized.
  *
  * \param[in] ctx          Pointer to this instance's context
- * \param[in] data         Pointer to this block of new coded data. If
- *                         NULL, a #AOM_CODEC_CB_PUT_FRAME event is posted
- *                         for the previously decoded frame.
+ * \param[in] data         Pointer to this block of new coded data.
  * \param[in] data_sz      Size of the coded data, in bytes.
  *
  * \return Returns #AOM_CODEC_OK if the coded data was processed completely
@@ -259,24 +252,6 @@ typedef aom_fixed_buf_t *(*aom_codec_get_global_headers_fn_t)(
 typedef aom_image_t *(*aom_codec_get_preview_frame_fn_t)(
     aom_codec_alg_priv_t *ctx);
 
-typedef aom_codec_err_t (*aom_codec_enc_mr_get_mem_loc_fn_t)(
-    const aom_codec_enc_cfg_t *cfg, void **mem_loc);
-
-/*!\brief usage configuration mapping
- *
- * This structure stores the mapping between usage identifiers and
- * configuration structures. Each algorithm provides a list of these
- * mappings. This list is searched by the aom_codec_enc_config_default()
- * wrapper function to determine which config to return. The special value
- * {-1, {0}} is used to indicate end-of-list, and must be present. At least
- * one mapping must be present, in addition to the end-of-list.
- *
- */
-typedef const struct aom_codec_enc_cfg_map {
-  int usage;
-  aom_codec_enc_cfg_t cfg;
-} aom_codec_enc_cfg_map_t;
-
 /*!\brief Decoder algorithm interface interface
  *
  * All decoders \ref MUST expose a variable of this type.
@@ -297,10 +272,9 @@ struct aom_codec_iface {
     aom_codec_set_fb_fn_t set_fb_fn; /**< \copydoc ::aom_codec_set_fb_fn_t */
   } dec;
   struct aom_codec_enc_iface {
-    int cfg_map_count;
-    aom_codec_enc_cfg_map_t
-        *cfg_maps;                /**< \copydoc ::aom_codec_enc_cfg_map_t */
-    aom_codec_encode_fn_t encode; /**< \copydoc ::aom_codec_encode_fn_t */
+    int cfg_count;
+    const aom_codec_enc_cfg_t *cfgs; /**< \copydoc ::aom_codec_enc_cfg_t */
+    aom_codec_encode_fn_t encode;    /**< \copydoc ::aom_codec_encode_fn_t */
     aom_codec_get_cx_data_fn_t
         get_cx_data; /**< \copydoc ::aom_codec_get_cx_data_fn_t */
     aom_codec_enc_config_set_fn_t
@@ -309,19 +283,8 @@ struct aom_codec_iface {
         get_glob_hdrs; /**< \copydoc ::aom_codec_get_global_headers_fn_t */
     aom_codec_get_preview_frame_fn_t
         get_preview; /**< \copydoc ::aom_codec_get_preview_frame_fn_t */
-    aom_codec_enc_mr_get_mem_loc_fn_t
-        mr_get_mem_loc; /**< \copydoc ::aom_codec_enc_mr_get_mem_loc_fn_t */
   } enc;
 };
-
-/*!\brief Callback function pointer / user data pair storage */
-typedef struct aom_codec_priv_cb_pair {
-  union {
-    aom_codec_put_frame_cb_fn_t put_frame;
-    aom_codec_put_slice_cb_fn_t put_slice;
-  } u;
-  void *user_priv;
-} aom_codec_priv_cb_pair_t;
 
 /*!\brief Instance private storage
  *
@@ -335,37 +298,14 @@ struct aom_codec_priv {
   const char *err_detail;
   aom_codec_flags_t init_flags;
   struct {
-    aom_codec_priv_cb_pair_t put_frame_cb;
-    aom_codec_priv_cb_pair_t put_slice_cb;
-  } dec;
-  struct {
     aom_fixed_buf_t cx_data_dst_buf;
     unsigned int cx_data_pad_before;
     unsigned int cx_data_pad_after;
     aom_codec_cx_pkt_t cx_data_pkt;
-    unsigned int total_encoders;
   } enc;
 };
 
-/*
- * Multi-resolution encoding internal configuration
- */
-struct aom_codec_priv_enc_mr_cfg {
-  unsigned int mr_total_resolutions;
-  unsigned int mr_encoder_id;
-  struct aom_rational mr_down_sampling_factor;
-  void *mr_low_res_mode_info;
-};
-
-#undef AOM_CTRL_USE_TYPE
-#define AOM_CTRL_USE_TYPE(id, typ) \
-  static AOM_INLINE typ id##__value(va_list args) { return va_arg(args, typ); }
-
-#undef AOM_CTRL_USE_TYPE_DEPRECATED
-#define AOM_CTRL_USE_TYPE_DEPRECATED(id, typ) \
-  static AOM_INLINE typ id##__value(va_list args) { return va_arg(args, typ); }
-
-#define CAST(id, arg) id##__value(arg)
+#define CAST(id, arg) va_arg((arg), aom_codec_control_type_##id)
 
 /* CODEC_INTERFACE convenience macro
  *

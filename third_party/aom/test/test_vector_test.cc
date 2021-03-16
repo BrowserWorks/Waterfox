@@ -11,8 +11,10 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <set>
 #include <string>
+#include <tuple>
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "common/tools_common.h"
 #include "config/aom_config.h"
@@ -32,7 +34,7 @@ const int kThreads = 0;
 const int kFileName = 1;
 const int kRowMT = 2;
 
-typedef ::testing::tuple<int, const char *, int> DecodeParam;
+typedef std::tuple<int, const char *, int> DecodeParam;
 
 class TestVectorTest : public ::libaom_test::DecoderTest,
                        public ::libaom_test::CodecTestWithParam<DecodeParam> {
@@ -67,7 +69,7 @@ class TestVectorTest : public ::libaom_test::DecoderTest,
     expected_md5[32] = '\0';
 
     ::libaom_test::MD5 md5_res;
-#if !CONFIG_LOWBITDEPTH
+#if FORCE_HIGHBITDEPTH_DECODING
     const aom_img_fmt_t shifted_fmt =
         (aom_img_fmt)(img.fmt & ~AOM_IMG_FMT_HIGHBITDEPTH);
     if (img.bit_depth == 8 && shifted_fmt != img.fmt) {
@@ -81,7 +83,7 @@ class TestVectorTest : public ::libaom_test::DecoderTest,
     } else {
 #endif
       md5_res.Add(&img);
-#if !CONFIG_LOWBITDEPTH
+#if FORCE_HIGHBITDEPTH_DECODING
     }
 #endif
 
@@ -103,20 +105,20 @@ class TestVectorTest : public ::libaom_test::DecoderTest,
 // the test failed.
 TEST_P(TestVectorTest, MD5Match) {
   const DecodeParam input = GET_PARAM(1);
-  const std::string filename = ::testing::get<kFileName>(input);
+  const std::string filename = std::get<kFileName>(input);
   aom_codec_flags_t flags = 0;
   aom_codec_dec_cfg_t cfg = aom_codec_dec_cfg_t();
   char str[256];
 
-  cfg.threads = ::testing::get<kThreads>(input);
-  row_mt_ = ::testing::get<kRowMT>(input);
+  cfg.threads = std::get<kThreads>(input);
+  row_mt_ = std::get<kRowMT>(input);
 
   snprintf(str, sizeof(str) / sizeof(str[0]) - 1, "file: %s threads: %d",
            filename.c_str(), cfg.threads);
   SCOPED_TRACE(str);
 
   // Open compressed video file.
-  testing::internal::scoped_ptr<libaom_test::CompressedVideoSource> video;
+  std::unique_ptr<libaom_test::CompressedVideoSource> video;
   if (filename.substr(filename.length() - 3, 3) == "ivf") {
     video.reset(new libaom_test::IVFVideoSource(filename));
   } else if (filename.substr(filename.length() - 4, 4) == "webm" ||
@@ -137,7 +139,7 @@ TEST_P(TestVectorTest, MD5Match) {
   OpenMD5File(md5_filename);
 
   // Set decode config and flags.
-  cfg.allow_lowbitdepth = CONFIG_LOWBITDEPTH;
+  cfg.allow_lowbitdepth = !FORCE_HIGHBITDEPTH_DECODING;
   set_cfg(cfg);
   set_flags(flags);
 
@@ -155,7 +157,7 @@ AV1_INSTANTIATE_TEST_CASE(
                        ::testing::Values(0)));
 
 // Test AV1 decode in with different numbers of threads.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AV1MultiThreaded, TestVectorTest,
     ::testing::Combine(
         ::testing::Values(
