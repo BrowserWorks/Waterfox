@@ -298,19 +298,6 @@ nsNodeUtils::LastRelease(nsINode* aNode)
                                               NodeWillBeDestroyed, (aNode));
     }
 
-    if (aNode->IsElement()) {
-      Element* elem = aNode->AsElement();
-      FragmentOrElement::nsDOMSlots* domSlots =
-        static_cast<FragmentOrElement::nsDOMSlots*>(slots);
-      if (domSlots->mExtendedSlots) {
-        for (auto iter = domSlots->mExtendedSlots->mRegisteredIntersectionObservers.Iter();
-             !iter.Done(); iter.Next()) {
-          DOMIntersectionObserver* observer = iter.Key();
-          observer->UnlinkTarget(*elem);
-        }
-      }
-    }
-
     delete slots;
     aNode->mSlots = nullptr;
   }
@@ -492,7 +479,13 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
         cloneElem->GetAttr(kNameSpaceID_None, nsGkAtoms::is, extension);
       }
 
-      if (data || !extension.IsEmpty()) {
+      if ((data && data->GetCustomElementType() == tagAtom) ||
+          !extension.IsEmpty()) {
+        // The typeAtom can be determined by extension, because we only need to
+        // consider two cases: 1) Original node is a autonomous custom element
+        // which has CustomElementData. 2) Original node is a built-in custom
+        // element or normal element, but it has `is` attribute when it is being
+        // cloned.
         RefPtr<nsIAtom> typeAtom = extension.IsEmpty() ? tagAtom : NS_Atomize(extension);
         cloneElem->SetCustomElementData(new CustomElementData(typeAtom));
 

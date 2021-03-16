@@ -32,6 +32,26 @@ class ShadowRoot final : public DocumentFragment,
                          public nsStubMutationObserver
 {
 public:
+  static ShadowRoot* FromNode(nsINode* aNode)
+  {
+    return aNode->IsShadowRoot() ? static_cast<ShadowRoot*>(aNode) : nullptr;
+  }
+
+  static const ShadowRoot* FromNode(const nsINode* aNode)
+  {
+    return aNode->IsShadowRoot() ? static_cast<const ShadowRoot*>(aNode) : nullptr;
+  }
+
+  static ShadowRoot* FromNodeOrNull(nsINode* aNode)
+  {
+    return aNode ? FromNode(aNode) : nullptr;
+  }
+
+  static const ShadowRoot* FromNodeOrNull(const nsINode* aNode)
+  {
+    return aNode ? FromNode(aNode) : nullptr;
+  }
+
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ShadowRoot,
                                            DocumentFragment)
   NS_DECL_ISUPPORTS_INHERITED
@@ -59,8 +79,6 @@ public:
   // [deprecated] Shadow DOM v0
   void InsertSheet(StyleSheet* aSheet, nsIContent* aLinkingContent);
   void RemoveSheet(StyleSheet* aSheet);
-  bool ApplyAuthorStyles();
-  void SetApplyAuthorStyles(bool aApplyAuthorStyles);
   StyleSheetList* StyleSheets()
   {
     return &DocumentOrShadowRoot::EnsureDOMStyleSheets();
@@ -111,8 +129,6 @@ public:
   void SetAssociatedBinding(nsXBLBinding* aBinding) { mAssociatedBinding = aBinding; }
 
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
-
-  static ShadowRoot* FromNode(nsINode* aNode);
 
   void AddToIdTable(Element* aElement, nsIAtom* aId);
   void RemoveFromIdTable(Element* aElement, nsIAtom* aId);

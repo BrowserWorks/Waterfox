@@ -1750,10 +1750,12 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     if (!hadParent) {
       uint32_t editableDescendantChange = EditableInclusiveDescendantCount(this);
       if (editableDescendantChange != 0) {
-      // If we are binding a subtree root to the document, we need to update
-      // the editable descendant count of all the ancestors.
+        // If we are binding a subtree root to the document, we need to update
+        // the editable descendant count of all the ancestors.
+        // But we don't cross Shadow DOM boundary.
+        // (The expected behavior with Shadow DOM is unclear)
         nsIContent* parent = GetParent();
-        while (parent) {
+        while (parent && parent->IsElement()) {
           parent->ChangeEditableDescendantCount(editableDescendantChange);
           parent = parent->GetParent();
         }
@@ -2607,7 +2609,7 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
   // Copy aParsedValue for later use since it will be lost when we call
   // SetAndSwapMappedAttr below
   nsAttrValue valueForAfterSetAttr;
-  if (aCallAfterSetAttr) {
+  if (aCallAfterSetAttr || GetCustomElementData()) {
     valueForAfterSetAttr.SetTo(aParsedValue);
   }
 
@@ -4188,22 +4190,42 @@ Element::ClearDataset()
   slots->mDataset = nullptr;
 }
 
-nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>*
-Element::RegisteredIntersectionObservers()
-{
-  nsExtendedDOMSlots* slots = ExtendedDOMSlots();
-  return &slots->mRegisteredIntersectionObservers;
-}
-
 enum nsPreviousIntersectionThreshold {
   eUninitialized = -2,
   eNonIntersecting = -1
 };
 
+static void
+IntersectionObserverPropertyDtor(void* aObject, nsIAtom* aPropertyName,
+                                 void* aPropertyValue, void* aData)
+{
+  Element* element = static_cast<Element*>(aObject);
+  IntersectionObserverList* observers =
+    static_cast<IntersectionObserverList*>(aPropertyValue);
+  for (auto iter = observers->Iter(); !iter.Done(); iter.Next()) {
+    DOMIntersectionObserver* observer = iter.Key();
+    observer->UnlinkTarget(*element);
+  }
+  delete observers;
+}
+
 void
 Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  RegisteredIntersectionObservers()->LookupForAdd(aObserver).OrInsert([]() {
+  IntersectionObserverList* observers =
+    static_cast<IntersectionObserverList*>(
+      GetProperty(nsGkAtoms::intersectionobserverlist)
+    );
+
+  if (!observers) {
+    observers = new IntersectionObserverList();
+    observers->Put(aObserver, eUninitialized);
+    SetProperty(nsGkAtoms::intersectionobserverlist, observers,
+                IntersectionObserverPropertyDtor, true);
+    return;
+  }
+
+  observers->LookupForAdd(aObserver).OrInsert([]() {
     // Value can be:
     //   -2:   Makes sure next calculated threshold always differs, leading to a
     //         notification task being scheduled.
@@ -4216,14 +4238,44 @@ Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 void
 Element::UnregisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  RegisteredIntersectionObservers()->Remove(aObserver);
+  IntersectionObserverList* observers =
+    static_cast<IntersectionObserverList*>(
+      GetProperty(nsGkAtoms::intersectionobserverlist)
+    );
+  if (observers) {
+    observers->Remove(aObserver);
+  }
+}
+
+void
+Element::UnlinkIntersectionObservers()
+{
+  IntersectionObserverList* observers =
+    static_cast<IntersectionObserverList*>(
+      GetProperty(nsGkAtoms::intersectionobserverlist)
+    );
+  if (!observers) {
+    return;
+  }
+  for (auto iter = observers->Iter(); !iter.Done(); iter.Next()) {
+    DOMIntersectionObserver* observer = iter.Key();
+    observer->UnlinkTarget(*this);
+  }
+  observers->Clear();
 }
 
 bool
 Element::UpdateIntersectionObservation(DOMIntersectionObserver* aObserver, int32_t aThreshold)
 {
+  IntersectionObserverList* observers =
+    static_cast<IntersectionObserverList*>(
+      GetProperty(nsGkAtoms::intersectionobserverlist)
+    );
+  if (!observers) {
+    return false;
+  }
   bool updated = false;
-  if (auto entry = RegisteredIntersectionObservers()->Lookup(aObserver)) {
+  if (auto entry = observers->Lookup(aObserver)) {
     updated = entry.Data() != aThreshold;
     entry.Data() = aThreshold;
   }
@@ -4247,6 +4299,15 @@ Element::SetCustomElementData(CustomElementData* aData)
 {
   nsExtendedDOMSlots *slots = ExtendedDOMSlots();
   MOZ_ASSERT(!slots->mCustomElementData, "Custom element data may not be changed once set.");
+  #if DEBUG
+    nsAtom* name = NodeInfo()->NameAtom();
+    nsAtom* type = aData->GetCustomElementType();
+    if (nsContentUtils::IsCustomElementName(name)) {
+      MOZ_ASSERT(type == name);
+    } else {
+      MOZ_ASSERT(type != name);
+    }
+  #endif
   slots->mCustomElementData = aData;
 }
 

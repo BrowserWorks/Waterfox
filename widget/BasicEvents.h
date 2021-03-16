@@ -550,6 +550,28 @@ public:
     MOZ_COUNT_CTOR(WidgetEvent);
     *this = aOther;
   }
+  WidgetEvent& operator=(const WidgetEvent& aOther) = default;
+
+  WidgetEvent(WidgetEvent&& aOther)
+    : WidgetEventTime(Move(aOther))
+    , mClass(aOther.mClass)
+    , mMessage(aOther.mMessage)
+    , mRefPoint(Move(aOther.mRefPoint))
+    , mLastRefPoint(Move(aOther.mLastRefPoint))
+    , mFocusSequenceNumber(aOther.mFocusSequenceNumber)
+    , mFlags(Move(aOther.mFlags))
+    , mSpecifiedEventType(Move(aOther.mSpecifiedEventType))
+    , mSpecifiedEventTypeString(Move(aOther.mSpecifiedEventTypeString))
+    , mTarget(Move(aOther.mTarget))
+    , mCurrentTarget(Move(aOther.mCurrentTarget))
+    , mOriginalTarget(Move(aOther.mOriginalTarget))
+    , mRelatedTarget(Move(aOther.mRelatedTarget))
+    , mOriginalRelatedTarget(Move(aOther.mOriginalRelatedTarget))
+    , mPath(Move(aOther.mPath))
+  {
+    MOZ_COUNT_CTOR(WidgetEvent);
+  }
+  WidgetEvent& operator=(WidgetEvent&& aOther) = default;
 
   virtual WidgetEvent* Duplicate() const
   {
@@ -594,6 +616,7 @@ public:
 
   /// The possible related target
   nsCOMPtr<dom::EventTarget> mRelatedTarget;
+  nsCOMPtr<dom::EventTarget> mOriginalRelatedTarget;
 
   nsTArray<EventTargetChainItem>* mPath;
 
@@ -616,6 +639,8 @@ public:
     mCurrentTarget = aCopyTargets ? aEvent.mCurrentTarget : nullptr;
     mOriginalTarget = aCopyTargets ? aEvent.mOriginalTarget : nullptr;
     mRelatedTarget = aCopyTargets ? aEvent.mRelatedTarget : nullptr;
+    mOriginalRelatedTarget =
+      aCopyTargets ? aEvent.mOriginalRelatedTarget : nullptr;
   }
 
   /**

@@ -707,14 +707,6 @@ public:
                                    nsIAtom* aAttrName,
                                    const nsAString& aAttrValue) const override;
 
-  virtual Element* ElementFromPointHelper(float aX, float aY,
-                                          bool aIgnoreRootScrollFrame,
-                                          bool aFlushLayout) override;
-
-  virtual void ElementsFromPointHelper(float aX, float aY,
-                                       uint32_t aFlags,
-                                       nsTArray<RefPtr<mozilla::dom::Element>>& aElements) override;
-
   virtual nsresult NodesFromRectHelper(float aX, float aY,
                                                    float aTopSize, float aRightSize,
                                                    float aBottomSize, float aLeftSize,
@@ -898,8 +890,6 @@ public:
   //
   already_AddRefed<nsSimpleContentList> BlockedTrackingNodes() const;
 
-  static bool IsUnprefixedFullscreenEnabled(JSContext* aCx, JSObject* aObject);
-
   // Do the "fullscreen element ready check" from the fullscreen spec.
   // It returns true if the given element is allowed to go into fullscreen.
   bool FullscreenElementReadyCheck(Element* aElement, bool aWasCallerChrome);
@@ -923,11 +913,10 @@ public:
   void FullScreenStackPop();
 
   // Returns the top element from the full-screen stack.
-  Element* FullScreenStackTop();
+  Element* FullScreenStackTop() override;
 
   // DOM-exposed fullscreen API
   bool FullscreenEnabled(mozilla::dom::CallerType aCallerType) override;
-  Element* GetFullscreenElement() override;
 
   void RequestPointerLock(Element* aElement,
                           mozilla::dom::CallerType aCallerType) override;
@@ -1249,16 +1238,6 @@ private:
   void DoUnblockOnload();
 
   nsresult InitCSP(nsIChannel* aChannel);
-
-  /**
-   * Find the (non-anonymous) content in this document for aFrame. It will
-   * be aFrame's content node if that content is in this document and not
-   * anonymous. Otherwise, when aFrame is in a subdocument, we use the frame
-   * element containing the subdocument containing aFrame, and/or find the
-   * nearest non-anonymous ancestor in this document.
-   * Returns null if there is no such element.
-   */
-  nsIContent* GetContentInThisDocument(nsIFrame* aFrame) const;
 
   // Just like EnableStyleSheetsForSet, but doesn't check whether
   // aSheetSet is null and allows the caller to control whether to set

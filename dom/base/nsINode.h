@@ -700,6 +700,14 @@ public:
     return IsMathMLElement() && IsNodeInternal(aFirst, aArgs...);
   }
 
+  bool IsShadowRoot() const
+  {
+    const bool isShadowRoot = IsInShadowTree() && !GetParentNode();
+    MOZ_ASSERT_IF(isShadowRoot,
+                  NodeType() == nsIDOMNode::DOCUMENT_FRAGMENT_NODE);
+    return isShadowRoot;
+  }
+
   /**
    * Insert a content node at a particular index.  This method handles calling
    * BindToTree on the child appropriately.
@@ -936,6 +944,12 @@ public:
   {
     return mParent;
   }
+
+  /**
+   * This is similar to above, but in case 'this' is ShadowRoot, we return its
+   * host element.
+   */
+  nsINode* GetParentOrHostNode() const;
 
   /**
    * Returns the node that is the parent of this node in the flattened

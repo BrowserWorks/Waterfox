@@ -11,6 +11,7 @@ interface CustomElementRegistry {
   any get(DOMString name);
   [Throws]
   Promise<void> whenDefined(DOMString name);
+  [CEReactions] void upgrade(Node root);
 };
 
 dictionary ElementDefinitionOptions {

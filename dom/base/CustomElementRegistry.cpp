@@ -17,6 +17,57 @@
 namespace mozilla {
 namespace dom {
 
+//-----------------------------------------------------
+// CustomElementUpgradeReaction
+
+class CustomElementUpgradeReaction final : public CustomElementReaction
+{
+public:
+  explicit CustomElementUpgradeReaction(CustomElementDefinition* aDefinition)
+    : mDefinition(aDefinition)
+  {
+#if DEBUG
+    mIsUpgradeReaction = true;
+#endif
+  }
+
+private:
+  virtual void Invoke(Element* aElement, ErrorResult& aRv) override
+  {
+    CustomElementRegistry::Upgrade(aElement, mDefinition, aRv);
+  }
+
+  CustomElementDefinition* mDefinition;
+};
+
+//-----------------------------------------------------
+// CustomElementCallbackReaction
+
+class CustomElementCallbackReaction final : public CustomElementReaction
+{
+  public:
+    explicit CustomElementCallbackReaction(UniquePtr<CustomElementCallback> aCustomElementCallback)
+      : mCustomElementCallback(Move(aCustomElementCallback))
+    {
+    }
+
+    virtual void Traverse(nsCycleCollectionTraversalCallback& aCb) const override
+    {
+      mCustomElementCallback->Traverse(aCb);
+    }
+
+  private:
+    virtual void Invoke(Element* aElement, ErrorResult& aRv) override
+    {
+      mCustomElementCallback->Call();
+    }
+
+    UniquePtr<CustomElementCallback> mCustomElementCallback;
+};
+
+//-----------------------------------------------------
+// CustomElementCallback
+
 void
 CustomElementCallback::Call()
 {
@@ -87,6 +138,7 @@ CustomElementConstructor::Construct(const char* aExecutionReason,
 
   return element.forget();
 }
+
 //-----------------------------------------------------
 // CustomElementData
 
@@ -197,12 +249,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(CustomElementRegistry)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(CustomElementRegistry)
-  for (auto iter = tmp->mCustomDefinitions.Iter(); !iter.Done(); iter.Next()) {
-    aCallbacks.Trace(&iter.UserData()->mPrototype,
-                     "mCustomDefinitions prototype",
-                     aClosure);
-  }
-
   for (ConstructorMap::Enum iter(tmp->mConstructors); !iter.empty(); iter.popFront()) {
     aCallbacks.Trace(&iter.front().mutableKey(),
                      "mConstructors key",
@@ -267,6 +313,12 @@ CustomElementRegistry::LookupCustomElementDefinition(JSContext* aCx,
 void
 CustomElementRegistry::RegisterUnresolvedElement(Element* aElement, nsIAtom* aTypeName)
 {
+  // We don't have a use-case for a Custom Element inside NAC, and continuing
+  // here causes performance issues for NAC + XBL anonymous content.
+  if (aElement->IsInNativeAnonymousSubtree()) {
+    return;
+  }
+
   mozilla::dom::NodeInfo* info = aElement->NodeInfo();
 
   // Candidate may be a custom element through extension,
@@ -408,6 +460,94 @@ CustomElementRegistry::EnqueueLifecycleCallback(nsIDocument::ElementCallbackType
   reactionsStack->EnqueueCallbackReaction(aCustomElement, Move(callback));
 }
 
+namespace {
+
+class CandidateFinder
+{
+public:
+  CandidateFinder(nsTArray<nsWeakPtr>&& aCandidates, nsIDocument* aDoc);
+  nsTArray<nsCOMPtr<Element>> OrderedCandidates();
+
+private:
+  bool Traverse(Element* aRoot, nsTArray<nsCOMPtr<Element>>& aOrderedElements);
+
+  nsCOMPtr<nsIDocument> mDoc;
+  nsInterfaceHashtable<nsPtrHashKey<Element>, Element> mCandidates;
+};
+
+CandidateFinder::CandidateFinder(nsTArray<nsWeakPtr>&& aCandidates,
+                                 nsIDocument* aDoc)
+  : mDoc(aDoc)
+  , mCandidates(aCandidates.Length())
+{
+  MOZ_ASSERT(mDoc);
+  for (auto& candidate : aCandidates) {
+    nsCOMPtr<Element> elem = do_QueryReferent(candidate);
+    if (!elem) {
+      continue;
+    }
+
+    Element* key = elem.get();
+    mCandidates.Put(key, elem.forget());
+  }
+}
+
+nsTArray<nsCOMPtr<Element>>
+CandidateFinder::OrderedCandidates()
+{
+  if (mCandidates.Count() == 1) {
+    // Fast path for one candidate.
+    for (auto iter = mCandidates.Iter(); !iter.Done(); iter.Next()) {
+      nsTArray<nsCOMPtr<Element>> rval({ Move(iter.Data()) });
+      iter.Remove();
+      return rval;
+    }
+  }
+
+  nsTArray<nsCOMPtr<Element>> orderedElements(mCandidates.Count());
+  for (Element* child = mDoc->GetFirstElementChild(); child; child = child->GetNextElementSibling()) {
+    if (!Traverse(child->AsElement(), orderedElements)) {
+      break;
+    }
+  }
+
+  return orderedElements;
+}
+
+bool
+CandidateFinder::Traverse(Element* aRoot, nsTArray<nsCOMPtr<Element>>& aOrderedElements)
+{
+  nsCOMPtr<Element> elem;
+  if (mCandidates.Remove(aRoot, getter_AddRefs(elem))) {
+    aOrderedElements.AppendElement(Move(elem));
+    if (mCandidates.Count() == 0) {
+      return false;
+    }
+  }
+
+  if (ShadowRoot* root = aRoot->GetShadowRoot()) {
+    // First iterate the children of the shadow root if aRoot is a shadow host.
+    for (Element* child = root->GetFirstElementChild(); child;
+         child = child->GetNextElementSibling()) {
+      if (!Traverse(child, aOrderedElements)) {
+        return false;
+      }
+    }
+  }
+
+  // Iterate the explicit children of aRoot.
+  for (Element* child = aRoot->GetFirstElementChild(); child;
+       child = child->GetNextElementSibling()) {
+    if (!Traverse(child, aOrderedElements)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+}
+
 void
 CustomElementRegistry::UpgradeCandidates(nsIAtom* aKey,
                                          CustomElementDefinition* aDefinition,
@@ -419,18 +559,14 @@ CustomElementRegistry::UpgradeCandidates(nsIAtom* aKey,
     return;
   }
 
-  // TODO: Bug 1326028 - Upgrade custom element in shadow-including tree order
   nsAutoPtr<nsTArray<nsWeakPtr>> candidates;
   if (mCandidatesMap.Remove(aKey, &candidates)) {
     MOZ_ASSERT(candidates);
     CustomElementReactionsStack* reactionsStack =
       docGroup->CustomElementReactionsStack();
-    for (size_t i = 0; i < candidates->Length(); ++i) {
-      nsCOMPtr<Element> elem = do_QueryReferent(candidates->ElementAt(i));
-      if (!elem) {
-        continue;
-      }
 
+    CandidateFinder finder(Move(*candidates), mWindow->GetExtantDoc());
+    for (auto& elem : finder.OrderedCandidates()) {
       reactionsStack->EnqueueUpgradeReaction(elem, aDefinition);
     }
   }
@@ -599,7 +735,7 @@ CustomElementRegistry::Define(const nsAString& aName,
     return;
   }
 
-  JS::Rooted<JSObject*> constructorPrototype(cx);
+  JS::Rooted<JS::Value> constructorPrototype(cx);
   nsAutoPtr<LifecycleCallbacks> callbacksHolder(new LifecycleCallbacks());
   nsCOMArray<nsIAtom> observedAttributes;
   { // Set mIsCustomDefinitionRunning.
@@ -613,11 +749,10 @@ CustomElementRegistry::Define(const nsAString& aName,
        * 10.1. Let prototype be Get(constructor, "prototype"). Rethrow any exceptions.
        */
       JSAutoCompartment ac(cx, constructor);
-      JS::Rooted<JS::Value> prototypev(cx);
       // The .prototype on the constructor passed could be an "expando" of a
       // wrapper. So we should get it from wrapper instead of the underlying
       // object.
-      if (!JS_GetProperty(cx, constructor, "prototype", &prototypev)) {
+      if (!JS_GetProperty(cx, constructor, "prototype", &constructorPrototype)) {
         aRv.StealExceptionFromJSContext(cx);
         return;
       }
@@ -625,15 +760,14 @@ CustomElementRegistry::Define(const nsAString& aName,
       /**
        * 10.2. If Type(prototype) is not Object, then throw a TypeError exception.
        */
-      if (!prototypev.isObject()) {
+      if (!constructorPrototype.isObject()) {
         aRv.ThrowTypeError<MSG_NOT_OBJECT>(NS_LITERAL_STRING("constructor.prototype"));
         return;
       }
-
-      constructorPrototype = &prototypev.toObject();
     } // Leave constructor's compartment.
 
-    JS::Rooted<JSObject*> constructorProtoUnwrapped(cx, js::CheckedUnwrap(constructorPrototype));
+    JS::Rooted<JSObject*> constructorProtoUnwrapped(
+      cx, js::CheckedUnwrap(&constructorPrototype.toObject()));
     if (!constructorProtoUnwrapped) {
       // If the caller's compartment does not have permission to access the
       // unwrapped prototype then throw.
@@ -756,9 +890,7 @@ CustomElementRegistry::Define(const nsAString& aName,
                                 localNameAtom,
                                 &aFunctionConstructor,
                                 Move(observedAttributes),
-                                constructorPrototype,
-                                callbacks,
-                                0 /* TODO dependent on HTML imports. Bug 877072 */);
+                                callbacks);
 
   CustomElementDefinition* def = definition.get();
   mCustomDefinitions.Put(nameAtom, definition.forget());
@@ -785,6 +917,45 @@ CustomElementRegistry::Define(const nsAString& aName,
     promise->MaybeResolveWithUndefined();
   }
 
+}
+
+static void
+TryUpgrade(nsINode& aNode)
+{
+  Element* element = aNode.IsElement() ? aNode.AsElement() : nullptr;
+  if (element) {
+    CustomElementData* ceData = element->GetCustomElementData();
+    if (ceData) {
+      NodeInfo* nodeInfo = element->NodeInfo();
+      nsIAtom* typeAtom = ceData->GetCustomElementType();
+      CustomElementDefinition* definition =
+        nsContentUtils::LookupCustomElementDefinition(nodeInfo->GetDocument(),
+                                                      nodeInfo->NameAtom(),
+                                                      nodeInfo->NamespaceID(),
+                                                      typeAtom);
+      if (definition) {
+        nsContentUtils::EnqueueUpgradeReaction(element, definition);
+      }
+    }
+
+    if (ShadowRoot* root = element->GetShadowRoot()) {
+      for (Element* child = root->GetFirstElementChild(); child;
+           child = child->GetNextElementSibling()) {
+        TryUpgrade(*child);
+      }
+    }
+  }
+
+  for (Element* child = aNode.GetFirstElementChild(); child;
+       child = child->GetNextElementSibling()) {
+    TryUpgrade(*child);
+  }
+}
+
+void
+CustomElementRegistry::Upgrade(nsINode& aRoot)
+{
+  TryUpgrade(aRoot);
 }
 
 void
@@ -1097,7 +1268,6 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(CustomElementDefinition)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(CustomElementDefinition)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mConstructor)
-  tmp->mPrototype = nullptr;
   tmp->mCallbacks = nullptr;
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
@@ -1130,7 +1300,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(CustomElementDefinition)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(CustomElementDefinition)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mPrototype)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(CustomElementDefinition, AddRef)
@@ -1141,36 +1310,13 @@ CustomElementDefinition::CustomElementDefinition(nsIAtom* aType,
                                                  nsIAtom* aLocalName,
                                                  Function* aConstructor,
                                                  nsCOMArray<nsIAtom>&& aObservedAttributes,
-                                                 JS::Handle<JSObject*> aPrototype,
-                                                 LifecycleCallbacks* aCallbacks,
-                                                 uint32_t aDocOrder)
+                                                 LifecycleCallbacks* aCallbacks)
   : mType(aType),
     mLocalName(aLocalName),
     mConstructor(new CustomElementConstructor(aConstructor)),
     mObservedAttributes(Move(aObservedAttributes)),
-    mPrototype(aPrototype),
-    mCallbacks(aCallbacks),
-    mDocOrder(aDocOrder)
+    mCallbacks(aCallbacks)
 {
-}
-
-
-//-----------------------------------------------------
-// CustomElementUpgradeReaction
-
-/* virtual */ void
-CustomElementUpgradeReaction::Invoke(Element* aElement, ErrorResult& aRv)
-{
-  CustomElementRegistry::Upgrade(aElement, mDefinition, aRv);
-}
-
-//-----------------------------------------------------
-// CustomElementCallbackReaction
-
-/* virtual */ void
-CustomElementCallbackReaction::Invoke(Element* aElement, ErrorResult& aRv)
-{
-  mCustomElementCallback->Call();
 }
 
 } // namespace dom
