@@ -6,10 +6,42 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
     AddonManager: "resource://gre/modules/AddonManager.jsm",
+    BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
     FileUtils: "resource://gre/modules/FileUtils.jsm",
     OS: "resource://gre/modules/osfile.jsm",
     NetUtil: "resource://gre/modules/NetUtil.jsm"
 });
+
+XPCOMUtils.defineLazyGetter(this, "PopupNotifications", () => {
+    // eslint-disable-next-line no-shadow
+    let { PopupNotifications } = ChromeUtils.import(
+      "resource://gre/modules/PopupNotifications.jsm"
+    );
+    try {
+      const win = BrowserWindowTracker.getTopWindow();
+      const gBrowser = win.gBrowser;
+      const document = win.document;
+      const gURLBar = win.gURLBar;
+      let shouldSuppress = () => {
+        return (
+          win.windowState == win.STATE_MINIMIZED ||
+          (gURLBar.getAttribute("pageproxystate") != "valid" &&
+            gURLBar.focused) ||
+          gBrowser?.selectedBrowser.hasAttribute("tabmodalChromePromptShowing") ||
+          gBrowser?.selectedBrowser.hasAttribute("tabDialogShowing")
+        );
+      };
+      return new PopupNotifications(
+        gBrowser,
+        document.getElementById("notification-popup"),
+        document.getElementById("notification-popup-box"),
+        { shouldSuppress }
+      );
+    } catch (ex) {
+      Cu.reportError(ex);
+      return null;
+    }
+  });
 
 const ZipReader = Components.Constructor(
     "@mozilla.org/libjar/zip-reader;1",
@@ -87,11 +119,27 @@ var StoreHandler = {
      * @param msg string message to display
      */
     _installFailedMsg: function __installFailedMsg(msg="Encountered an error during extension installation") {
-        Services.prompt.alert(
+        const anchorID = "addons-notification-icon";
+        const win = BrowserWindowTracker.getTopWindow();
+        const browser = win.gBrowser.selectedBrowser;
+        let action = {
+            label: "OK",
+            accessKey: "failed_accessKey",
+            callback: () => {},
+          };
+        var options = {
+            persistent: true,
+            hideClose: true,
+          };
+        PopupNotifications.show(
+            browser,
+            "addon-install-failed",
+            msg,
+            anchorID,
+            action,
             null,
-            "🤒 Extension Install Failure",
-            msg
-          )
+            options
+          );
     },
 
     /**
@@ -146,7 +194,7 @@ var StoreHandler = {
                     this._writeTmpManifest(nsiManifest, manifest);
                     this._replaceManifestInXpi(nsiFileXpi, nsiManifest);
                     await this._installXpi(nsiFileXpi);
-                    this._cleanup(nsiFileXpi);
+                    // this._cleanup(nsiFileXpi);
                     this._resetUUID();
                 } catch(e) {
                     // delete any tmp files
@@ -399,17 +447,15 @@ var StoreHandler = {
      * @param xpiFile nsiFile tmp extension file to install
      */
     _installXpi: async function __installXpi(xpiFile) {
-        let install = await AddonManager.getInstallForFile(xpiFile)
-        await install.install(); //installs silently
-            // let win = Services.wm.getMostRecentWindow("navigator:browser");
-            // let browser = win.gBrowser;
-            // let systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-            // AddonManager.installAddonFromWebpage(
-            //     "application/x-xpinstall",
-            //     browser,
-            //     systemPrincipal,
-            //     install
-            // );
+        let install = await AddonManager.getInstallForFile(xpiFile);
+        const win = BrowserWindowTracker.getTopWindow();
+        const browser = win.gBrowser.selectedBrowser;
+        const document = win.document;
+        await AddonManager.installAddonFromAOM(
+            browser,
+            document.documentURI,
+            install
+          );
     },
 
     /**
