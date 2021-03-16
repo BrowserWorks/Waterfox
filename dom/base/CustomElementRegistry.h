@@ -151,9 +151,7 @@ struct CustomElementDefinition
                           nsIAtom* aLocalName,
                           Function* aConstructor,
                           nsCOMArray<nsIAtom>&& aObservedAttributes,
-                          JS::Handle<JSObject*> aPrototype,
-                          mozilla::dom::LifecycleCallbacks* aCallbacks,
-                          uint32_t aDocOrder);
+                          mozilla::dom::LifecycleCallbacks* aCallbacks);
 
   // The type (name) for this custom element, for <button is="x-foo"> or <x-foo>
   // this would be x-foo.
@@ -168,17 +166,11 @@ struct CustomElementDefinition
   // The list of attributes that this custom element observes.
   nsCOMArray<nsIAtom> mObservedAttributes;
 
-  // The prototype to use for new custom elements of this type.
-  JS::Heap<JSObject *> mPrototype;
-
   // The lifecycle callbacks to call for this custom element.
   UniquePtr<mozilla::dom::LifecycleCallbacks> mCallbacks;
 
   // A construction stack. Use nullptr to represent an "already constructed marker".
   nsTArray<RefPtr<nsGenericHTMLElement>> mConstructionStack;
-
-  // The document custom element order.
-  uint32_t mDocOrder;
 
   bool IsCustomBuiltIn()
   {
@@ -216,41 +208,6 @@ public:
 protected:
   bool mIsUpgradeReaction = false;
 #endif
-};
-
-class CustomElementUpgradeReaction final : public CustomElementReaction
-{
-public:
-  explicit CustomElementUpgradeReaction(CustomElementDefinition* aDefinition)
-    : mDefinition(aDefinition)
-  {
-#if DEBUG
-    mIsUpgradeReaction = true;
-#endif
-  }
-
-private:
-   virtual void Invoke(Element* aElement, ErrorResult& aRv) override;
-
-   CustomElementDefinition* mDefinition;
-};
-
-class CustomElementCallbackReaction final : public CustomElementReaction
-{
-  public:
-    explicit CustomElementCallbackReaction(UniquePtr<CustomElementCallback> aCustomElementCallback)
-      : mCustomElementCallback(Move(aCustomElementCallback))
-    {
-    }
-
-    virtual void Traverse(nsCycleCollectionTraversalCallback& aCb) const override
-    {
-      mCustomElementCallback->Traverse(aCb);
-    }
-
-  private:
-    virtual void Invoke(Element* aElement, ErrorResult& aRv) override;
-    UniquePtr<CustomElementCallback> mCustomElementCallback;
 };
 
 // https://html.spec.whatwg.org/multipage/scripting.html#custom-element-reactions-stack
@@ -531,6 +488,8 @@ public:
            JS::MutableHandle<JS::Value> aRetVal);
 
   already_AddRefed<Promise> WhenDefined(const nsAString& aName, ErrorResult& aRv);
+
+  void Upgrade(nsINode& aRoot);
 };
 
 class MOZ_RAII AutoCEReaction final {

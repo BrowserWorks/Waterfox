@@ -100,18 +100,6 @@ ShadowRoot::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return mozilla::dom::ShadowRootBinding::Wrap(aCx, this, aGivenProto);
 }
 
-ShadowRoot*
-ShadowRoot::FromNode(nsINode* aNode)
-{
-  if (aNode->IsInShadowTree() && !aNode->GetParentNode()) {
-    MOZ_ASSERT(aNode->NodeType() == nsIDOMNode::DOCUMENT_FRAGMENT_NODE,
-               "ShadowRoot is a document fragment.");
-    return static_cast<ShadowRoot*>(aNode);
-  }
-
-  return nullptr;
-}
-
 void
 ShadowRoot::AddSlot(HTMLSlotElement* aSlot)
 {
@@ -312,6 +300,8 @@ ShadowRoot::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = true;
   aVisitor.mRootOfClosedTree = IsClosed();
+  // Inform that we're about to exit the current scope.
+  aVisitor.mRelatedTargetRetargetedInCurrentScope = false;
 
   // https://dom.spec.whatwg.org/#ref-for-get-the-parent%E2%91%A6
   if (!aVisitor.mEvent->mFlags.mComposed) {
@@ -334,12 +324,10 @@ ShadowRoot::GetEventTargetParent(EventChainPreVisitor& aVisitor)
   nsIContent* shadowHost = GetHost();
   aVisitor.SetParentTarget(shadowHost, false);
 
-  if (aVisitor.mOriginalTargetIsInAnon) {
-    nsCOMPtr<nsIContent> content(do_QueryInterface(aVisitor.mEvent->mTarget));
-    if (content && content->GetBindingParent() == shadowHost) {
-      aVisitor.mEventTargetAtParent = shadowHost;
-    }
- }
+  nsCOMPtr<nsIContent> content(do_QueryInterface(aVisitor.mEvent->mTarget));
+  if (content && content->GetBindingParent() == shadowHost) {
+    aVisitor.mEventTargetAtParent = shadowHost;
+  }
 
   return NS_OK;
 }
@@ -488,25 +476,6 @@ ShadowRoot::Host()
   return host->AsElement();
 }
 
-bool
-ShadowRoot::ApplyAuthorStyles()
-{
-  return mProtoBinding->InheritsStyle();
-}
-
-void
-ShadowRoot::SetApplyAuthorStyles(bool aApplyAuthorStyles)
-{
-  mProtoBinding->SetInheritsStyle(aApplyAuthorStyles);
-
-  nsIPresShell* shell = OwnerDoc()->GetShell();
-  if (shell) {
-    OwnerDoc()->BeginUpdate(UPDATE_STYLE);
-    shell->RecordShadowStyleChange(this);
-    OwnerDoc()->EndUpdate(UPDATE_STYLE);
-  }
-}
-
 void
 ShadowRoot::AttributeChanged(nsIDocument* aDocument,
                              Element* aElement,
@@ -624,5 +593,5 @@ ShadowRoot::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
                   bool aPreallocateChildren) const
 {
   *aResult = nullptr;
-  return NS_ERROR_DOM_DATA_CLONE_ERR;
+  return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
 }

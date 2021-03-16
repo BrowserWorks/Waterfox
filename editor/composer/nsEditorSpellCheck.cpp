@@ -712,7 +712,7 @@ nsEditorSpellCheck::UpdateCurrentDictionary(nsIEditorSpellCheckCallback* aCallba
   RefPtr<DictionaryFetcher> fetcher =
     new DictionaryFetcher(this, aCallback, mDictionaryFetcherGroup);
   rootContent->GetLang(fetcher->mRootContentLang);
-  nsCOMPtr<nsIDocument> doc = rootContent->GetUncomposedDoc();
+  nsCOMPtr<nsIDocument> doc = rootContent->GetComposedDoc();
   NS_ENSURE_STATE(doc);
   doc->GetContentLanguage(fetcher->mRootDocContentLang);
 

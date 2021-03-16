@@ -776,14 +776,6 @@ FragmentOrElement::nsDOMSlots::Traverse(nsCycleCollectionTraversalCallback &cb)
     mExtendedSlots->mCustomElementData->Traverse(cb);
   }
 
-  for (auto iter = mExtendedSlots->mRegisteredIntersectionObservers.Iter();
-       !iter.Done(); iter.Next()) {
-    DOMIntersectionObserver* observer = iter.Key();
-    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb,
-                                       "mExtendedSlots->mRegisteredIntersectionObservers[i]");
-    cb.NoteXPCOMChild(observer);
-  }
-
   NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mExtendedSlots->mFrameLoaderOrOpener");
   cb.NoteXPCOMChild(mExtendedSlots->mFrameLoaderOrOpener);
 }
@@ -815,7 +807,6 @@ FragmentOrElement::nsDOMSlots::Unlink()
     mExtendedSlots->mCustomElementData->Unlink();
     mExtendedSlots->mCustomElementData = nullptr;
   }
-  mExtendedSlots->mRegisteredIntersectionObservers.Clear();
   nsCOMPtr<nsIFrameLoader> frameLoader =
     do_QueryInterface(mExtendedSlots->mFrameLoaderOrOpener);
   if (frameLoader) {
@@ -908,6 +899,22 @@ FindChromeAccessOnlySubtreeOwner(nsIContent* aContent)
   return aContent;
 }
 
+already_AddRefed<nsINode>
+FindChromeAccessOnlySubtreeOwner(EventTarget* aTarget)
+{
+  nsCOMPtr<nsINode> node = do_QueryInterface(aTarget);
+  if (!node || !node->ChromeOnlyAccess()) {
+    return node.forget();
+  }
+
+  if (!node->IsContent()) {
+    return nullptr;
+  }
+
+  node = FindChromeAccessOnlySubtreeOwner(node->AsContent());
+  return node.forget();
+}
+
 nsresult
 nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
@@ -928,23 +935,11 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
       // chrome access only subtree or if we are about to propagate out of
       // a shadow root to a shadow root host.
       ((this == aVisitor.mEvent->mOriginalTarget &&
-        !ChromeOnlyAccess()) || isAnonForEvents || GetShadowRoot())) {
+        !ChromeOnlyAccess()) || isAnonForEvents)) {
      nsCOMPtr<nsIContent> relatedTarget =
        do_QueryInterface(aVisitor.mEvent->AsMouseEvent()->mRelatedTarget);
     if (relatedTarget &&
         relatedTarget->OwnerDoc() == OwnerDoc()) {
-
-      // In the web components case, we may need to stop propagation of events
-      // at shadow root host.
-      if (GetShadowRoot()) {
-        nsIContent* adjustedTarget =
-          Event::GetShadowRelatedTarget(this, relatedTarget);
-        if (this == adjustedTarget) {
-          aVisitor.SetParentTarget(nullptr, false);
-          aVisitor.mCanHandle = false;
-          return NS_OK;
-        }
-      }
 
       // If current target is anonymous for events or we know that related
       // target is descendant of an element which is anonymous for events,
@@ -1061,6 +1056,113 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
   } else {
     aVisitor.SetParentTarget(GetComposedDoc(), false);
   }
+
+  if (!ChromeOnlyAccess() && !aVisitor.mRelatedTargetRetargetedInCurrentScope) {
+    // We don't support Shadow DOM in native anonymous content yet.
+    aVisitor.mRelatedTargetRetargetedInCurrentScope = true;
+    if (aVisitor.mEvent->mOriginalRelatedTarget) {
+      // https://dom.spec.whatwg.org/#concept-event-dispatch
+      // Step 3.
+      // "Let relatedTarget be the result of retargeting event's relatedTarget
+      //  against target if event's relatedTarget is non-null, and null
+      //  otherwise."
+      //
+      // This is a bit complicated because the event might be from native
+      // anonymous content, but we need to deal with non-native anonymous
+      // content there.
+      bool initialTarget = this == aVisitor.mEvent->mOriginalTarget;
+      nsCOMPtr<nsINode> originalTargetAsNode;
+      // Use of mOriginalTargetIsInAnon is an optimization here.
+      if (!initialTarget && aVisitor.mOriginalTargetIsInAnon) {
+        originalTargetAsNode =
+          FindChromeAccessOnlySubtreeOwner(aVisitor.mEvent->mOriginalTarget);
+        initialTarget = originalTargetAsNode == this;
+      }
+      if (initialTarget) {
+        nsCOMPtr<nsINode> relatedTargetAsNode =
+          FindChromeAccessOnlySubtreeOwner(aVisitor.mEvent->mOriginalRelatedTarget);
+        if (!originalTargetAsNode) {
+          originalTargetAsNode =
+            do_QueryInterface(aVisitor.mEvent->mOriginalTarget);
+        }
+
+        if (relatedTargetAsNode && originalTargetAsNode) {
+          nsINode* retargetedRelatedTarget =
+            nsContentUtils::Retarget(relatedTargetAsNode, originalTargetAsNode);
+          if (originalTargetAsNode == retargetedRelatedTarget &&
+              retargetedRelatedTarget != relatedTargetAsNode) {
+            // Step 4.
+            // "If target is relatedTarget and target is not event's
+            //  relatedTarget, then return true."
+            aVisitor.IgnoreCurrentTarget();
+            // Old code relies on mTarget to point to the first element which
+            // was not added to the event target chain because of mCanHandle
+            // being false, but in Shadow DOM case mTarget really should
+            // point to a node in Shadow DOM.
+            aVisitor.mEvent->mTarget = aVisitor.mTargetInKnownToBeHandledScope;
+            return NS_OK;
+          }
+
+          // Part of step 5. Retargeting target has happened already higher
+          // up in this method.
+          // "Append to an event path with event, target, targetOverride,
+          //  relatedTarget, and false."
+          aVisitor.mRetargetedRelatedTarget = retargetedRelatedTarget;
+        }
+      } else {
+        nsCOMPtr<nsINode> relatedTargetAsNode =
+          FindChromeAccessOnlySubtreeOwner(aVisitor.mEvent->mOriginalRelatedTarget);
+        if (relatedTargetAsNode) {
+          // Step 11.3.
+          // "Let relatedTarget be the result of retargeting event's
+          // relatedTarget against parent if event's relatedTarget is non-null,
+          // and null otherwise.".
+          nsINode* retargetedRelatedTarget =
+            nsContentUtils::Retarget(relatedTargetAsNode, this);
+          nsCOMPtr<nsINode> targetInKnownToBeHandledScope =
+            FindChromeAccessOnlySubtreeOwner(aVisitor.mTargetInKnownToBeHandledScope);
+          // If aVisitor.mTargetInKnownToBeHandledScope wasn't nsINode,
+          // targetInKnownToBeHandledScope will be null. This may happen when
+          // dispatching event to Window object in a content page and
+          // propagating the event to a chrome Element.
+          if (targetInKnownToBeHandledScope &&
+              nsContentUtils::ContentIsShadowIncludingDescendantOf(
+                this, targetInKnownToBeHandledScope->SubtreeRoot())) {
+            // Part of step 11.4.
+            // "If target's root is a shadow-including inclusive ancestor of
+            //  parent, then"
+            // "...Append to an event path with event, parent, null, relatedTarget,
+            // "   and slot-in-closed-tree."
+            aVisitor.mRetargetedRelatedTarget = retargetedRelatedTarget;
+          } else if (this == retargetedRelatedTarget) {
+            // Step 11.5
+            // "Otherwise, if parent and relatedTarget are identical, then set
+            //  parent to null."
+            aVisitor.IgnoreCurrentTarget();
+            // Old code relies on mTarget to point to the first element which
+            // was not added to the event target chain because of mCanHandle
+            // being false, but in Shadow DOM case mTarget really should
+            // point to a node in Shadow DOM.
+            aVisitor.mEvent->mTarget = aVisitor.mTargetInKnownToBeHandledScope;
+            return NS_OK;
+          } else if (targetInKnownToBeHandledScope) {
+            // Note, if targetInKnownToBeHandledScope is null,
+            // mTargetInKnownToBeHandledScope could be Window object in content
+            // page and we're in chrome document in the same process.
+
+            // Step 11.6
+            aVisitor.mRetargetedRelatedTarget = retargetedRelatedTarget;
+          }
+        }
+      }
+    }
+  }
+
+  if (slot) {
+    // Inform that we're about to exit the current scope.
+    aVisitor.mRelatedTargetRetargetedInCurrentScope = false;
+  }
+
   return NS_OK;
 }
 
@@ -1500,6 +1602,11 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
   // which is dispatched in UnbindFromTree.
 
   if (tmp->HasProperties()) {
+    if (tmp->IsElement()) {
+      Element* elem = tmp->AsElement();
+      elem->UnlinkIntersectionObservers();
+    }
+
     if (tmp->IsHTMLElement() || tmp->IsSVGElement()) {
       nsIAtom*** props = Element::HTMLSVGPropertiesToTraverseAndUnlink();
       for (uint32_t i = 0; props[i]; ++i) {
@@ -1554,14 +1661,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
   {
     nsDOMSlots *slots = tmp->GetExistingDOMSlots();
     if (slots) {
-      if (slots->mExtendedSlots && tmp->IsElement()) {
-        Element* elem = tmp->AsElement();
-        for (auto iter = slots->mExtendedSlots->mRegisteredIntersectionObservers.Iter();
-             !iter.Done(); iter.Next()) {
-          DOMIntersectionObserver* observer = iter.Key();
-          observer->UnlinkTarget(*elem);
-        }
-      }
       slots->Unlink();
     }
   }
@@ -2046,7 +2145,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
     }
 
     nsAutoCString orphan;
-    if (!tmp->IsInUncomposedDoc() &&
+    if (!tmp->IsInComposedDoc() &&
         // Ignore xbl:content, which is never in the document and hence always
         // appears to be orphaned.
         !tmp->NodeInfo()->Equals(nsGkAtoms::content, kNameSpaceID_XBL)) {
@@ -2082,6 +2181,19 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
 #endif
 
   if (tmp->HasProperties()) {
+    if (tmp->IsElement()) {
+      Element* elem = tmp->AsElement();
+      IntersectionObserverList* observers =
+        static_cast<IntersectionObserverList*>(
+          elem->GetProperty(nsGkAtoms::intersectionobserverlist)
+        );
+      if (observers) {
+        for (auto iter = observers->Iter(); !iter.Done(); iter.Next()) {
+          DOMIntersectionObserver* observer = iter.Key();
+          cb.NoteXPCOMChild(observer);
+        }
+      }
+    }
     if (tmp->IsHTMLElement() || tmp->IsSVGElement()) {
       nsIAtom*** props = Element::HTMLSVGPropertiesToTraverseAndUnlink();
       for (uint32_t i = 0; props[i]; ++i) {

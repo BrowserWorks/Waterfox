@@ -12,18 +12,17 @@
 interface DocumentOrShadowRoot {
   // Not implemented yet: bug 1430308.
   // Selection? getSelection();
-  // Not implemented yet: bug 1430301.
-  // Element? elementFromPoint (float x, float y);
-  // Not implemented yet: bug 1430301.
-  // sequence<Element> elementsFromPoint (float x, float y);
+  Element? elementFromPoint (float x, float y);
+  sequence<Element> elementsFromPoint (float x, float y);
   // Not implemented yet: bug 1430307.
   // CaretPosition? caretPositionFromPoint (float x, float y);
 
   readonly attribute Element? activeElement;
   readonly attribute StyleSheetList styleSheets;
 
-  // Not implemented yet: bug 1430303.
-  // readonly attribute Element? pointerLockElement;
-  // Not implemented yet: bug 1430305.
-  // readonly attribute Element? fullscreenElement;
+  readonly attribute Element? pointerLockElement;
+  [LenientSetter, Func="nsIDocument::IsUnprefixedFullscreenEnabled"]
+  readonly attribute Element? fullscreenElement;
+  [BinaryName="fullscreenElement"]
+  readonly attribute Element? mozFullScreenElement;
 };
