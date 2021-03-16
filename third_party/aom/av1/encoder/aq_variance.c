@@ -44,6 +44,7 @@ static const int segment_id[ENERGY_SPAN] = { 0, 1, 1, 2, 3, 4 };
 
 void av1_vaq_frame_setup(AV1_COMP *cpi) {
   AV1_COMMON *cm = &cpi->common;
+  const int base_qindex = cm->quant_params.base_qindex;
   struct segmentation *seg = &cm->seg;
   int i;
 
@@ -57,13 +58,13 @@ void av1_vaq_frame_setup(AV1_COMP *cpi) {
   avg_ratio = rate_ratio[avg_energy];
 
   if (resolution_change) {
-    memset(cpi->segmentation_map, 0, cm->mi_rows * cm->mi_cols);
+    memset(cpi->enc_seg.map, 0, cm->mi_params.mi_rows * cm->mi_params.mi_cols);
     av1_clearall_segfeatures(seg);
     aom_clear_system_state();
     av1_disable_segmentation(seg);
     return;
   }
-  if (frame_is_intra_only(cm) || cm->error_resilient_mode ||
+  if (frame_is_intra_only(cm) || cm->features.error_resilient_mode ||
       cpi->refresh_alt_ref_frame ||
       (cpi->refresh_golden_frame && !cpi->rc.is_src_frame_alt_ref)) {
     cpi->vaq_refresh = 1;
@@ -77,15 +78,15 @@ void av1_vaq_frame_setup(AV1_COMP *cpi) {
       // Set up avg segment id to be 1.0 and adjust the other segments around
       // it.
       int qindex_delta = av1_compute_qdelta_by_rate(
-          &cpi->rc, cm->frame_type, cm->base_qindex, rate_ratio[i] / avg_ratio,
-          cm->seq_params.bit_depth);
+          &cpi->rc, cm->current_frame.frame_type, base_qindex,
+          rate_ratio[i] / avg_ratio, cm->seq_params.bit_depth);
 
       // We don't allow qindex 0 in a segment if the base value is not 0.
       // Q index 0 (lossless) implies 4x4 encoding only and in AQ mode a segment
       // Q delta is sometimes applied without going back around the rd loop.
       // This could lead to an illegal combination of partition size and q.
-      if ((cm->base_qindex != 0) && ((cm->base_qindex + qindex_delta) == 0)) {
-        qindex_delta = -cm->base_qindex + 1;
+      if ((base_qindex != 0) && ((base_qindex + qindex_delta) == 0)) {
+        qindex_delta = -base_qindex + 1;
       }
 
       av1_set_segdata(seg, i, SEG_LVL_ALT_Q, qindex_delta);
@@ -121,7 +122,7 @@ int av1_log_block_var(const AV1_COMP *cpi, MACROBLOCK *x, BLOCK_SIZE bs) {
 
   for (i = 0; i < bh; i += 4) {
     for (j = 0; j < bw; j += 4) {
-      if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
+      if (is_cur_buf_hbd(xd)) {
         var +=
             log(1.0 + cpi->fn_ptr[BLOCK_4X4].vf(
                           x->plane[0].src.buf + i * x->plane[0].src.stride + j,
@@ -147,13 +148,13 @@ int av1_log_block_var(const AV1_COMP *cpi, MACROBLOCK *x, BLOCK_SIZE bs) {
 
 #define DEFAULT_E_MIDPOINT 10.0
 
-unsigned int haar_ac_energy(MACROBLOCK *x, BLOCK_SIZE bs) {
+static unsigned int haar_ac_energy(MACROBLOCK *x, BLOCK_SIZE bs) {
   MACROBLOCKD *xd = &x->e_mbd;
   int stride = x->plane[0].src.stride;
   uint8_t *buf = x->plane[0].src.buf;
   const int bw = MI_SIZE * mi_size_wide[bs];
   const int bh = MI_SIZE * mi_size_high[bs];
-  int hbd = xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH;
+  const int hbd = is_cur_buf_hbd(xd);
 
   int var = 0;
   for (int r = 0; r < bh; r += 8)
@@ -174,29 +175,31 @@ int av1_block_wavelet_energy_level(const AV1_COMP *cpi, MACROBLOCK *x,
                                    BLOCK_SIZE bs) {
   double energy, energy_midpoint;
   aom_clear_system_state();
-  energy_midpoint = (cpi->oxcf.pass == 2) ? cpi->twopass.frame_avg_haar_energy
-                                          : DEFAULT_E_MIDPOINT;
+  energy_midpoint = (is_stat_consumption_stage_twopass(cpi))
+                        ? cpi->twopass.frame_avg_haar_energy
+                        : DEFAULT_E_MIDPOINT;
   energy = av1_log_block_wavelet_energy(x, bs) - energy_midpoint;
   return clamp((int)round(energy), ENERGY_MIN, ENERGY_MAX);
 }
 
-int av1_compute_deltaq_from_energy_level(const AV1_COMP *const cpi,
-                                         int block_var_level) {
+int av1_compute_q_from_energy_level_deltaq_mode(const AV1_COMP *const cpi,
+                                                int block_var_level) {
   int rate_level;
   const AV1_COMMON *const cm = &cpi->common;
 
-  if (DELTAQ_MODULATION == 1) {
+  if (DELTA_Q_PERCEPTUAL_MODULATION == 1) {
     ENERGY_IN_BOUNDS(block_var_level);
     rate_level = SEGMENT_ID(block_var_level);
   } else {
     rate_level = block_var_level;
   }
+  const int base_qindex = cm->quant_params.base_qindex;
   int qindex_delta = av1_compute_qdelta_by_rate(
-      &cpi->rc, cm->frame_type, cm->base_qindex, deltaq_rate_ratio[rate_level],
-      cm->seq_params.bit_depth);
+      &cpi->rc, cm->current_frame.frame_type, base_qindex,
+      deltaq_rate_ratio[rate_level], cm->seq_params.bit_depth);
 
-  if ((cm->base_qindex != 0) && ((cm->base_qindex + qindex_delta) == 0)) {
-    qindex_delta = -cm->base_qindex + 1;
+  if ((base_qindex != 0) && ((base_qindex + qindex_delta) == 0)) {
+    qindex_delta = -base_qindex + 1;
   }
-  return qindex_delta;
+  return base_qindex + qindex_delta;
 }

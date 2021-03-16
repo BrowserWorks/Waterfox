@@ -9,6 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
+#include <memory>
+
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
 #include "test/codec_factory.h"
@@ -185,7 +187,7 @@ TEST_P(ArfFreqTestLarge, MinArfFreqTest) {
   init_flags_ = AOM_CODEC_USE_PSNR;
   if (cfg_.g_bit_depth > 8) init_flags_ |= AOM_CODEC_USE_HIGHBITDEPTH;
 
-  testing::internal::scoped_ptr<libaom_test::VideoSource> video;
+  std::unique_ptr<libaom_test::VideoSource> video;
   if (is_extension_y4m(test_video_param_.filename)) {
     video.reset(new libaom_test::Y4mVideoSource(test_video_param_.filename, 0,
                                                 kFrames));
@@ -212,7 +214,7 @@ TEST_P(ArfFreqTestLarge, MinArfFreqTest) {
 // BWDREF_FRAME is also a non-show frame, and the minimum run between two
 // consecutive BWDREF_FRAME's may vary between 1 and any arbitrary positive
 // number as long as it does not exceed the gf_group interval.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DISABLED_AV1, ArfFreqTestLarge,
     ::testing::Combine(
         ::testing::Values(

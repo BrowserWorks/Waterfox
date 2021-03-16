@@ -297,9 +297,135 @@ class InitializedDefines(ContextDerivedValue, OrderedDict):
             self.update(value)
 
 
-class CompileFlags(ContextDerivedValue, dict):
+class BaseCompileFlags(ContextDerivedValue, dict):
+    def __init__(self, context):
+        self._context = context
+        self._known_keys = set(k for k, v, _ in self.flag_variables)
+
+        # Providing defaults here doesn't play well with multiple templates
+        # modifying COMPILE_FLAGS from the same moz.build, because the merge
+        # done after the template runs can't tell which values coming from
+        # a template were set and which were provided as defaults.
+        template_name = getattr(context, 'template', None)
+        if template_name in (None, 'Gyp'):
+            dict.__init__(self, ((k, v if v is None else TypedList(unicode)(v))
+                                 for k, v, _ in self.flag_variables))
+        else:
+            dict.__init__(self)
+
+
+class HostCompileFlags(BaseCompileFlags):
+    def __init__(self, context):
+        self._context = context
+
+        self.flag_variables = (
+            ('HOST_CXXFLAGS', context.config.substs.get('HOST_CXXFLAGS'),
+             ('HOST_CXXFLAGS',)),
+            ('HOST_CFLAGS', context.config.substs.get('HOST_CFLAGS'),
+             ('HOST_CFLAGS',)),
+            ('HOST_OPTIMIZE', self._optimize_flags(),
+             ('HOST_CFLAGS', 'HOST_CXXFLAGS')),
+            ('RTL', None, ('HOST_CFLAGS',)),
+            ('HOST_DEFINES', None, ('HOST_CFLAGS', 'HOST_CXXFLAGS')),
+            ('MOZBUILD_HOST_CFLAGS', [], ('HOST_CFLAGS',)),
+            ('MOZBUILD_HOST_CXXFLAGS', [], ('HOST_CXXFLAGS',)),
+        )
+        BaseCompileFlags.__init__(self, context)
+
+    def _optimize_flags(self):
+        optimize_flags = []
+        if self._context.config.substs.get('CROSS_COMPILE'):
+            optimize_flags += self._context.config.substs.get('HOST_OPTIMIZE_FLAGS')
+        elif self._context.config.substs.get('MOZ_OPTIMIZE'):
+            optimize_flags += self._context.config.substs.get('MOZ_OPTIMIZE_FLAGS')
+        return optimize_flags
+
+
+class AsmFlags(BaseCompileFlags):
+    def __init__(self, context):
+        self._context = context
+        self.flag_variables = (
+            ('OS', context.config.substs.get('ASFLAGS'), ('ASFLAGS',)),
+            ('DEBUG', self._debug_flags(), ('ASFLAGS',)),
+            ('MOZBUILD', None, ('ASFLAGS',)),
+        )
+        BaseCompileFlags.__init__(self, context)
+
+    def _debug_flags(self):
+        debug_flags = []
+        if (self._context.config.substs.get('MOZ_DEBUG') or
+            self._context.config.substs.get('MOZ_DEBUG_SYMBOLS')):
+            if self._context.get('USE_NASM') or (self._context.get('USE_YASM') and self._context.config.substs.get('NASM')):
+                if (self._context.config.substs.get('OS_ARCH') == 'WINNT' and
+                    not self._context.config.substs.get('GNU_CC')):
+                    debug_flags += ['-F', 'cv8']
+                elif self._context.config.substs.get('OS_ARCH') != 'Darwin':
+                    debug_flags += ['-F', 'dwarf']
+            elif self._context.get('USE_YASM'):
+                if (self._context.config.substs.get('OS_ARCH') == 'WINNT' and
+                    not self._context.config.substs.get('GNU_CC')):
+                    debug_flags += ['-g', 'cv8']
+                elif self._context.config.substs.get('OS_ARCH') != 'Darwin':
+                    debug_flags += ['-g', 'dwarf2']
+            else:
+                debug_flags += self._context.config.substs.get('MOZ_DEBUG_FLAGS', '').split()
+        return debug_flags
+
+
+class LinkFlags(BaseCompileFlags):
+    def __init__(self, context):
+        self._context = context
+
+        self.flag_variables = (
+            ('OS', self._os_ldflags(), ('LDFLAGS',)),
+            ('LINKER', context.config.substs.get('LINKER_LDFLAGS'),
+             ('LDFLAGS',)),
+            ('DEFFILE', None, ('LDFLAGS',)),
+            ('MOZBUILD', None, ('LDFLAGS',)),
+            ('FIX_LINK_PATHS', context.config.substs.get('MOZ_FIX_LINK_PATHS'),
+             ('LDFLAGS',)),
+            ('OPTIMIZE', (context.config.substs.get('MOZ_OPTIMIZE_LDFLAGS', []) if
+                          context.config.substs.get('MOZ_OPTIMIZE') else []),
+             ('LDFLAGS',)),
+        )
+        BaseCompileFlags.__init__(self, context)
+
+    def _os_ldflags(self):
+        flags = self._context.config.substs.get('OS_LDFLAGS', [])[:]
+
+        if (self._context.config.substs.get('MOZ_DEBUG') or
+            self._context.config.substs.get('MOZ_DEBUG_SYMBOLS')):
+            flags += self._context.config.substs.get('MOZ_DEBUG_LDFLAGS', [])
+
+        # TODO: This is pretty convoluted, and isn't really a per-context thing,
+        # configure would be a better place to aggregate these.
+        if all([self._context.config.substs.get('OS_ARCH') == 'WINNT',
+                not self._context.config.substs.get('GNU_CC'),
+                not self._context.config.substs.get('MOZ_DEBUG')]):
+
+            # MOZ_DEBUG_SYMBOLS generates debug symbols in separate PDB files.
+            # Used for generating an optimized build with debugging symbols.
+            # Used in the Windows nightlies to generate symbols for crash reporting.
+            if self._context.config.substs.get('MOZ_DEBUG_SYMBOLS'):
+                flags.append('-DEBUG')
+
+
+            if self._context.config.substs.get('MOZ_DMD'):
+                # On Windows Opt DMD builds we actually override everything
+                # from OS_LDFLAGS. Bug 1413728 is on file to figure out whether
+                # this is necessary.
+                flags = ['-DEBUG']
+
+            if self._context.config.substs.get('MOZ_OPTIMIZE'):
+                flags.append('-OPT:REF,ICF')
+
+        return flags
+
+
+class CompileFlags(BaseCompileFlags):
     def __init__(self, context):
         main_src_dir = mozpath.dirname(context.main_path)
+        self._context = context
 
         self.flag_variables = (
             ('STL', context.config.substs.get('STL_FLAGS'), ('CXXFLAGS',)),
@@ -316,19 +442,70 @@ class CompileFlags(ContextDerivedValue, dict):
                 'NSPR_CFLAGS', 'NSS_CFLAGS', 'MOZ_JPEG_CFLAGS', 'MOZ_PNG_CFLAGS',
                 'MOZ_ZLIB_CFLAGS', 'MOZ_PIXMAN_CFLAGS')))),
              ('CXXFLAGS', 'CFLAGS')),
+            ('DSO', context.config.substs.get('DSO_CFLAGS'),
+             ('CXXFLAGS', 'CFLAGS')),
+            ('DSO_PIC', context.config.substs.get('DSO_PIC_CFLAGS'),
+             ('CXXFLAGS', 'CFLAGS')),
+            ('RTL', None, ('CXXFLAGS', 'CFLAGS')),
+            ('OS_COMPILE_CFLAGS', context.config.substs.get('OS_COMPILE_CFLAGS'),
+             ('CFLAGS',)),
+            ('OS_COMPILE_CXXFLAGS', context.config.substs.get('OS_COMPILE_CXXFLAGS'),
+             ('CXXFLAGS',)),
+            ('OS_CPPFLAGS', context.config.substs.get('OS_CPPFLAGS'),
+             ('CXXFLAGS', 'CFLAGS', 'CXX_LDFLAGS', 'C_LDFLAGS')),
+            ('OS_CFLAGS', context.config.substs.get('OS_CFLAGS'),
+             ('CFLAGS', 'C_LDFLAGS')),
+            ('OS_CXXFLAGS', context.config.substs.get('OS_CXXFLAGS'),
+             ('CXXFLAGS', 'CXX_LDFLAGS')),
+            ('DEBUG', self._debug_flags(),
+             ('CFLAGS', 'CXXFLAGS', 'CXX_LDFLAGS', 'C_LDFLAGS')),
+            ('CLANG_PLUGIN', context.config.substs.get('CLANG_PLUGIN_FLAGS'),
+             ('CFLAGS', 'CXXFLAGS', 'CXX_LDFLAGS', 'C_LDFLAGS')),
+            ('OPTIMIZE', self._optimize_flags(),
+             ('CFLAGS', 'CXXFLAGS', 'CXX_LDFLAGS', 'C_LDFLAGS')),
+            ('FRAMEPTR', context.config.substs.get('MOZ_FRAMEPTR_FLAGS'),
+             ('CFLAGS', 'CXXFLAGS', 'CXX_LDFLAGS', 'C_LDFLAGS')),
+            ('WARNINGS_AS_ERRORS', self._warnings_as_errors(),
+             ('CXXFLAGS', 'CFLAGS', 'CXX_LDFLAGS', 'C_LDFLAGS')),
+            ('MOZBUILD_CFLAGS', None, ('CFLAGS',)),
+            ('MOZBUILD_CXXFLAGS', None, ('CXXFLAGS',)),
         )
-        self._known_keys = set(k for k, v, _ in self.flag_variables)
 
-        # Providing defaults here doesn't play well with multiple templates
-        # modifying COMPILE_FLAGS from the same moz.build, because the merge
-        # done after the template runs can't tell which values coming from
-        # a template were set and which were provided as defaults.
-        template_name = getattr(context, 'template', None)
-        if template_name in (None, 'Gyp'):
-            dict.__init__(self, ((k, v if v is None else TypedList(unicode)(v))
-                                 for k, v, _ in self.flag_variables))
-        else:
-            dict.__init__(self)
+        BaseCompileFlags.__init__(self, context)
+
+    def _debug_flags(self):
+        if (self._context.config.substs.get('MOZ_DEBUG') or
+            self._context.config.substs.get('MOZ_DEBUG_SYMBOLS')):
+            return self._context.config.substs.get('MOZ_DEBUG_FLAGS', '').split()
+        return []
+
+    def _warnings_as_errors(self):
+        warnings_as_errors = self._context.config.substs.get('WARNINGS_AS_ERRORS')
+        if self._context.config.substs.get('MOZ_PGO'):
+            # Don't use warnings-as-errors in Windows PGO builds because it is suspected of
+            # causing problems in that situation. (See bug 437002.)
+            if self._context.config.substs['OS_ARCH'] == 'WINNT':
+                warnings_as_errors = None
+
+        if self._context.config.substs.get('CC_TYPE') == 'clang-cl':
+            # Don't use warnings-as-errors in clang-cl because it warns about many more
+            # things than MSVC does.
+            warnings_as_errors = None
+
+        if warnings_as_errors:
+            return [warnings_as_errors]
+
+    def _optimize_flags(self):
+        if not self._context.config.substs.get('MOZ_OPTIMIZE'):
+            return []
+        optimize_flags = None
+        if self._context.config.substs.get('MOZ_PGO'):
+            optimize_flags = self._context.config.substs.get('MOZ_PGO_OPTIMIZE_FLAGS')
+        if not optimize_flags:
+            # If MOZ_PGO_OPTIMIZE_FLAGS is empty we fall back to MOZ_OPTIMIZE_FLAGS.
+            # Presently this occurs on Windows.
+            optimize_flags = self._context.config.substs.get('MOZ_OPTIMIZE_FLAGS')
+        return optimize_flags
 
     def __setitem__(self, key, value):
         if key not in self._known_keys:
@@ -337,7 +514,7 @@ class CompileFlags(ContextDerivedValue, dict):
         if key in self and self[key] is None:
             raise ValueError('`%s` may not be set in COMPILE_FLAGS from moz.build, this '
                              'value is resolved from the emitter.' % key)
-        if not (isinstance(value, list) and all(isinstance(v, unicode) for v in value)):
+        if not (isinstance(value, list) and all(isinstance(v, basestring) for v in value)):
             raise ValueError('A list of strings must be provided as a value for a '
                              'compile flags category.')
         dict.__setitem__(self, key, value)
@@ -916,15 +1093,6 @@ SUBCONTEXTS = {cls.__name__: cls for cls in SUBCONTEXTS}
 #   (storage_type, input_types, docs)
 
 VARIABLES = {
-    'ALLOW_COMPILER_WARNINGS': (bool, bool,
-        """Whether to allow compiler warnings (i.e. *not* treat them as
-        errors).
-
-        This is commonplace (almost mandatory, in fact) in directories
-        containing third-party code that we regularly update from upstream and
-        thus do not control, but is otherwise discouraged.
-        """),
-
     # Variables controlling reading of other frontend files.
     'ANDROID_GENERATED_RESFILES': (StrictOrderingOnAppendList, list,
         """Android resource files generated as part of the build.
@@ -1744,6 +1912,16 @@ VARIABLES = {
         directly.
         """),
 
+    'LINK_FLAGS': (LinkFlags, dict,
+        """Recipe for linker flags for this context. Not to be manipulated
+        directly.
+        """),
+
+    'ASM_FLAGS': (AsmFlags, dict,
+        """Recipe for linker flags for this context. Not to be manipulated
+        directly.
+        """),
+
     'CFLAGS': (List, list,
         """Flags passed to the C compiler for all of the C source files
            declared in this directory.
@@ -1760,6 +1938,11 @@ VARIABLES = {
            Note that the ordering of flags matters here; these flags will be
            added to the compiler's command line in the same order as they
            appear in the moz.build file.
+        """),
+
+    'HOST_COMPILE_FLAGS': (HostCompileFlags, dict,
+        """Recipe for host compile flags for this context. Not to be manipulated
+        directly.
         """),
 
     'HOST_DEFINES': (InitializedDefines, dict,
@@ -1863,6 +2046,17 @@ VARIABLES = {
     'NO_COMPONENTS_MANIFEST': (bool, bool,
         """Do not create a binary-component manifest entry for the
         corresponding XPCOMBinaryComponent.
+        """),
+
+    'USE_NASM': (bool, bool,
+        """Use the nasm assembler to assemble assembly files from SOURCES.
+
+        By default, the build will use the toolchain assembler, $(AS), to
+        assemble source files in assembly language (.s or .asm files). Setting
+        this value to ``True`` will cause it to use nasm instead.
+
+        If nasm is not available on this system, or does not support the
+        current target architecture, an error will be raised.
         """),
 
     'USE_YASM': (bool, bool,
@@ -2189,10 +2383,20 @@ SPECIAL_VARIABLES = {
         This variable may go away once the transition away from Makefiles is
         complete.
         """),
+
 }
 
 # Deprecation hints.
 DEPRECATION_HINTS = {
+
+    'ASM_FLAGS': '''
+        Please use
+
+            ASFLAGS
+
+        instead of manipulating ASM_FLAGS directly.
+        ''',
+
     'CPP_UNIT_TESTS': '''
         Please use'
 
@@ -2281,6 +2485,16 @@ DEPRECATION_HINTS = {
         instead of
 
             SIMPLE_PROGRAMS += ['foo', 'bar']"
+        ''',
+
+    'ALLOW_COMPILER_WARNINGS': '''
+        Please use
+
+            AllowCompilerWarnings()
+
+        instead of
+
+            ALLOW_COMPILER_WARNINGS = True
         ''',
 
     'FORCE_SHARED_LIB': '''

@@ -19,7 +19,6 @@
 #define AOM_INLINE __inline
 #else
 #define AOM_FORCE_INLINE __inline__ __attribute__((always_inline))
-// TODO(jbb): Allow a way to force inline off for older compilers.
 #define AOM_INLINE inline
 #endif
 
@@ -71,8 +70,6 @@ typedef size_t uintptr_t;
 #if !defined(INT32_MIN)
 #define INT32_MIN (-2147483647 - 1)
 #endif
-
-#define NELEMENTS(x) (int)(sizeof(x) / sizeof(x[0]))
 
 #if defined(__cplusplus)
 extern "C" {

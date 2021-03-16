@@ -8,7 +8,7 @@
 # (see Bug 1336429) we can use the gn build files directly
 # rather than building things here.
 
-ALLOW_COMPILER_WARNINGS = True
+AllowCompilerWarnings()
 
 DEFINES['GTEST_RELATIVE_PATH'] = True
 DEFINES['WEBRTC_APM_DEBUG_DUMP'] = True

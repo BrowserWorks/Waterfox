@@ -26,7 +26,6 @@
 extern "C" {
 #endif
 
-// TODO(negge): Rename this aom_prob once we remove vpxbool.
 typedef uint16_t aom_cdf_prob;
 
 #define CDF_SIZE(x) ((x) + 1)
@@ -641,7 +640,7 @@ static INLINE uint8_t get_prob(unsigned int num, unsigned int den) {
   }
 }
 
-static INLINE void update_cdf(aom_cdf_prob *cdf, int val, int nsymbs) {
+static INLINE void update_cdf(aom_cdf_prob *cdf, int8_t val, int nsymbs) {
   int rate;
   int i, tmp;
 

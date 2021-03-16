@@ -10,6 +10,7 @@
  */
 
 #include <cstdio>
+#include <ostream>
 #include <string>
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
@@ -23,10 +24,20 @@ namespace {
 struct DecodeParam {
   int threads;
   const char *filename;
+  const char *res_filename;  // If NULL, the result filename is
+                             // filename + ".res".
 };
 
+// Constructs result file name.
+std::string GetResFilename(const DecodeParam &param) {
+  if (param.res_filename != NULL) return param.res_filename;
+  const std::string filename = param.filename;
+  return filename + ".res";
+}
+
 std::ostream &operator<<(std::ostream &os, const DecodeParam &dp) {
-  return os << "threads: " << dp.threads << " file: " << dp.filename;
+  return os << "threads: " << dp.threads << " file: " << dp.filename
+            << " result file: " << GetResFilename(dp);
 }
 
 class InvalidFileTest : public ::libaom_test::DecoderTest,
@@ -42,6 +53,11 @@ class InvalidFileTest : public ::libaom_test::DecoderTest,
     res_file_ = libaom_test::OpenTestDataFile(res_file_name);
     ASSERT_TRUE(res_file_ != NULL)
         << "Result file open failed. Filename: " << res_file_name;
+  }
+
+  virtual void DecompressedFrameHook(const aom_image_t &img,
+                                     const unsigned int /*frame_number*/) {
+    EXPECT_NE(img.fb_priv, nullptr);
   }
 
   virtual bool HandleDecodeResult(
@@ -85,16 +101,16 @@ class InvalidFileTest : public ::libaom_test::DecoderTest,
 
   void RunTest() {
     const DecodeParam input = GET_PARAM(1);
-    aom_codec_dec_cfg_t cfg = { 0, 0, 0, CONFIG_LOWBITDEPTH, { 1 } };
+    aom_codec_dec_cfg_t cfg = { 0, 0, 0, !FORCE_HIGHBITDEPTH_DECODING };
     cfg.threads = input.threads;
     const std::string filename = input.filename;
     libaom_test::IVFVideoSource decode_video(filename);
     decode_video.Init();
 
-    // Construct result file name. The file holds a list of expected integer
-    // results, one for each decoded frame.  Any result that doesn't match
-    // the files list will cause a test failure.
-    const std::string res_filename = filename + ".res";
+    // The result file holds a list of expected integer results, one for each
+    // decoded frame.  Any result that doesn't match the file's list will
+    // cause a test failure.
+    const std::string res_filename = GetResFilename(input);
     OpenResFile(res_filename);
 
     ASSERT_NO_FATAL_FAILURE(RunLoop(&decode_video, cfg));
@@ -106,14 +122,35 @@ class InvalidFileTest : public ::libaom_test::DecoderTest,
 
 TEST_P(InvalidFileTest, ReturnCode) { RunTest(); }
 
+// If res_filename (the third field) is NULL, then the result filename is
+// filename + ".res" by default. Set res_filename to a string if the result
+// filename differs from the default.
 const DecodeParam kAV1InvalidFileTests[] = {
-  { 1, "invalid-bug-1814.ivf" },
-  { 4, "invalid-oss-fuzz-9463.ivf" },
-  { 1, "invalid-oss-fuzz-9482.ivf" },
-  { 1, "invalid-oss-fuzz-9720.ivf" },
-  { 1, "invalid-oss-fuzz-10061.ivf" },
-  { 1, "invalid-oss-fuzz-10117-mc-buf-use-highbd.ivf" },
-  { 1, "invalid-oss-fuzz-10227.ivf" },
+  // { threads, filename, res_filename }
+  { 1, "invalid-bug-1814.ivf", NULL },
+  { 1, "invalid-chromium-906381.ivf", NULL },
+  { 1, "invalid-google-142530197.ivf", NULL },
+  { 1, "invalid-google-142530197-1.ivf", NULL },
+  { 4, "invalid-oss-fuzz-9463.ivf", "invalid-oss-fuzz-9463.ivf.res.2" },
+  { 1, "invalid-oss-fuzz-9720.ivf", NULL },
+  { 1, "invalid-oss-fuzz-10389.ivf", "invalid-oss-fuzz-10389.ivf.res.2" },
+  { 1, "invalid-oss-fuzz-11523.ivf", "invalid-oss-fuzz-11523.ivf.res.2" },
+  { 4, "invalid-oss-fuzz-15363.ivf", NULL },
+  { 1, "invalid-oss-fuzz-16437.ivf", NULL },
+#if CONFIG_AV1_HIGHBITDEPTH
+  // These test vectors contain 10-bit or 12-bit video.
+  { 1, "invalid-oss-fuzz-9288.ivf", NULL },
+  { 1, "invalid-oss-fuzz-9482.ivf", NULL },
+  { 1, "invalid-oss-fuzz-10061.ivf", NULL },
+  { 1, "invalid-oss-fuzz-10117-mc-buf-use-highbd.ivf", NULL },
+  { 1, "invalid-oss-fuzz-10227.ivf", NULL },
+  { 4, "invalid-oss-fuzz-10555.ivf", NULL },
+  { 1, "invalid-oss-fuzz-10705.ivf", NULL },
+  { 1, "invalid-oss-fuzz-10723.ivf", "invalid-oss-fuzz-10723.ivf.res.2" },
+  { 1, "invalid-oss-fuzz-10779.ivf", NULL },
+  { 1, "invalid-oss-fuzz-11477.ivf", NULL },
+  { 1, "invalid-oss-fuzz-11479.ivf", "invalid-oss-fuzz-11479.ivf.res.2" },
+#endif
 };
 
 AV1_INSTANTIATE_TEST_CASE(InvalidFileTest,

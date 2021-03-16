@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 #include "aom/aom_integer.h"
-#include "av1/common/onyxc_int.h"
+#include "av1/common/av1_common_int.h"
 #include "av1/common/txb_common.h"
 
 const int8_t av1_coeff_band_4x4[16] = { 0, 1, 2,  3,  4,  5,  6,  7,
@@ -453,23 +453,6 @@ const int8_t *av1_nz_map_ctx_offset[19] = {
   av1_nz_map_ctx_offset_64x32,  // TX_64x16
 };
 
-void av1_init_lv_map(AV1_COMMON *cm) {
-  LV_MAP_CTX_TABLE *coeff_ctx_table = &cm->coeff_ctx_table;
-  for (int row = 0; row < 2; ++row) {
-    for (int col = 0; col < 2; ++col) {
-      for (int sig_mag = 0; sig_mag < 3; ++sig_mag) {
-        for (int count = 0; count < BASE_CONTEXT_POSITION_NUM + 1; ++count) {
-          if (row == 0 && col == 0 && count > 5) continue;
-          if ((row == 0 || col == 0) && count > 8) continue;
-
-          coeff_ctx_table->base_ctx_table[row][col][sig_mag][count] =
-              get_base_ctx_from_count_mag(row, col, count, sig_mag);
-        }
-      }
-    }
-  }
-}
-
-const int16_t k_eob_group_start[12] = { 0,  1,  2,  3,   5,   9,
-                                        17, 33, 65, 129, 257, 513 };
-const int16_t k_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+const int16_t av1_eob_group_start[12] = { 0,  1,  2,  3,   5,   9,
+                                          17, 33, 65, 129, 257, 513 };
+const int16_t av1_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };

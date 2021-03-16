@@ -18,6 +18,7 @@
 #include "aom/aom_codec.h"
 #include "aom/aom_image.h"
 #include "aom/aom_integer.h"
+#include "aom_ports/mem.h"
 #include "aom_ports/msvc.h"
 
 #if CONFIG_AV1_ENCODER
@@ -77,6 +78,16 @@ enum VideoFileType {
   FILE_TYPE_WEBM
 };
 
+// Used in lightfield example.
+enum {
+  YUV1D,  // 1D tile output for conformance test.
+  YUV,    // Tile output in YUV format.
+  NV12,   // Tile output in NV12 format.
+} UENUM1BYTE(OUTPUT_FORMAT);
+
+// The fourcc for large_scale_tile encoding is "LSTC".
+#define LST_FOURCC 0x4354534c
+
 struct FileTypeDetectionBuffer {
   char buf[4];
   size_t buf_read;
@@ -133,19 +144,103 @@ void usage_exit(void) AOM_NO_RETURN;
 
 int read_yuv_frame(struct AvxInputContext *input_ctx, aom_image_t *yuv_frame);
 
+///////////////////////////////////////////////////////////////////////////////
+// A description of the interfaces used to access the AOM codecs
+///////////////////////////////////////////////////////////////////////////////
+//
+// There are three levels of interfaces used to access the AOM codec: the
+// AVXInterface, the aom_codec_iface, and the aom_codec_ctx. Each of these
+// is described in detail here.
+//
+//
+// 1. AVXInterface
+//    (Related files: common/tools_common.c,  common/tools_common.h)
+//
+// The high-level interface to the AVx encoders / decoders. Each AvxInterface
+// contains the name of the codec (e.g., "av1"), the four character code
+// associated with it, and a function pointer to the actual interface (see the
+// documentation on aom_codec_iface_t for more info). This API
+// is meant for lookup / iteration over all known codecs.
+//
+// For the encoder, call get_aom_encoder_by_name(...) if you know the name
+// (e.g., "av1"); to iterate over all known encoders, use
+// get_aom_encoder_count() and get_aom_encoder_by_index(i). To get the
+// encoder specifically for large scale tile encoding, use
+// get_aom_lst_encoder().
+//
+// For the decoder, similar functions are available. There is also a
+// get_aom_decoder_by_fourcc(fourcc) to get the decoder based on the four
+// character codes.
+//
+// The main purpose of the AVXInterface is to get a reference to the
+// aom_codec_interface_t, pointed to by its codec_interface variable.
+//
+//
+// 2. aom_codec_iface_t
+//    (Related files: aom/aom_codec.h, aom/src/aom_codec.c,
+//    aom/internal/aom_codec_internal.h, av1/av1_cx_iface.c,
+//    av1/av1_dx_iface.c)
+//
+// Used to initialize the codec context, which contains the configuration for
+// for modifying the encoder/decoder during run-time. See the documentation of
+// aom/aom_codec.h for more details. For the most part, users will call the
+// helper functions listed there, such as aom_codec_iface_name,
+// aom_codec_get_caps, etc., to interact with it.
+//
+// The main purpose of the aom_codec_iface_t is to provide a way to generate
+// a default codec config, find out what capabilities the implementation has,
+// and create an aom_codec_ctx_t (which is actually used to interact with the
+// codec).
+//
+// Note that the implementations of the aom_codec_iface_t are located in
+// av1/av1_cx_iface.c and av1/av1_dx_iface.c
+//
+//
+// 3. aom_codec_ctx_t
+//  (Related files: aom/aom_codec.h, av1/av1_cx_iface.c, av1/av1_dx_iface.c,
+//   aom/aomcx.h, aom/aomdx.h, aom/src/aom_encoder.c, aom/src/aom_decoder.c)
+//
+// The actual interface between user code and the codec. It stores the name
+// of the codec, a pointer back to the aom_codec_iface_t that initialized it,
+// initialization flags, a config for either encoder or the decoder, and a
+// pointer to internal data.
+//
+// The codec is configured / queried through calls to aom_codec_control,
+// which takes a control code (listed in aomcx.h and aomdx.h) and a parameter.
+// In the case of "getter" control codes, the parameter is modified to have
+// the requested value; in the case of "setter" control codes, the codec's
+// configuration is changed based on the parameter. Note that a aom_codec_err_t
+// is returned, which indicates if the operation was successful or not.
+//
+// Note that for the encoder, the aom_codec_alg_priv_t points to the
+// the aom_codec_alg_priv structure in av1/av1_cx_iface.c, and for the decoder,
+// the struct in av1/av1_dx_iface.c. Variables such as AV1_COMP cpi are stored
+// here and also used in the core algorithm.
+//
+// At the end, aom_codec_destroy should be called for each initialized
+// aom_codec_ctx_t.
+
 typedef struct AvxInterface {
   const char *const name;
   const uint32_t fourcc;
+  // Pointer to a function of zero arguments that returns an aom_codec_iface_t
+  // pointer. E.g.:
+  //   aom_codec_iface_t *codec = interface->codec_interface();
   aom_codec_iface_t *(*const codec_interface)();
 } AvxInterface;
 
 int get_aom_encoder_count(void);
+// Lookup the interface by index -- it must be the case that
+// i < get_aom_encoder_count()
 const AvxInterface *get_aom_encoder_by_index(int i);
+// Lookup the interface by name -- returns NULL if no match.
 const AvxInterface *get_aom_encoder_by_name(const char *name);
+const AvxInterface *get_aom_lst_encoder(void);
 
 int get_aom_decoder_count(void);
 const AvxInterface *get_aom_decoder_by_index(int i);
 const AvxInterface *get_aom_decoder_by_name(const char *name);
+// Lookup the interface by the fourcc -- returns NULL if no match.
 const AvxInterface *get_aom_decoder_by_fourcc(uint32_t fourcc);
 
 void aom_img_write(const aom_image_t *img, FILE *file);
@@ -155,7 +250,12 @@ double sse_to_psnr(double samples, double peak, double mse);
 void aom_img_upshift(aom_image_t *dst, const aom_image_t *src, int input_shift);
 void aom_img_downshift(aom_image_t *dst, const aom_image_t *src,
                        int down_shift);
+void aom_shift_img(unsigned int output_bit_depth, aom_image_t **img_ptr,
+                   aom_image_t **img_shifted_ptr);
 void aom_img_truncate_16_to_8(aom_image_t *dst, const aom_image_t *src);
+
+// Output in NV12 format.
+void aom_img_write_nv12(const aom_image_t *img, FILE *file);
 
 #ifdef __cplusplus
 } /* extern "C" */

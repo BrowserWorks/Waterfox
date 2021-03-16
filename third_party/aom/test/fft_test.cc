@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <complex>
+#include <ostream>
 #include <vector>
 
 #include "aom_dsp/fft_common.h"
@@ -133,16 +134,16 @@ TEST_P(FFT2DTest, Benchmark) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(C, FFT2DTest,
-                        ::testing::Values(FFTTestArg(2, aom_fft2x2_float_c),
-                                          FFTTestArg(4, aom_fft4x4_float_c),
-                                          FFTTestArg(8, aom_fft8x8_float_c),
-                                          FFTTestArg(16, aom_fft16x16_float_c),
-                                          FFTTestArg(32,
-                                                     aom_fft32x32_float_c)));
+INSTANTIATE_TEST_SUITE_P(C, FFT2DTest,
+                         ::testing::Values(FFTTestArg(2, aom_fft2x2_float_c),
+                                           FFTTestArg(4, aom_fft4x4_float_c),
+                                           FFTTestArg(8, aom_fft8x8_float_c),
+                                           FFTTestArg(16, aom_fft16x16_float_c),
+                                           FFTTestArg(32,
+                                                      aom_fft32x32_float_c)));
 #if ARCH_X86 || ARCH_X86_64
 #if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE2, FFT2DTest,
     ::testing::Values(FFTTestArg(4, aom_fft4x4_float_sse2),
                       FFTTestArg(8, aom_fft8x8_float_sse2),
@@ -150,7 +151,7 @@ INSTANTIATE_TEST_CASE_P(
                       FFTTestArg(32, aom_fft32x32_float_sse2)));
 #endif  // HAVE_SSE2
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, FFT2DTest,
     ::testing::Values(FFTTestArg(8, aom_fft8x8_float_avx2),
                       FFTTestArg(16, aom_fft16x16_float_avx2),
@@ -227,7 +228,7 @@ TEST_P(IFFT2DTest, Benchmark) {
     input_[i % (n * n)] = 0;
   }
 }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     C, IFFT2DTest,
     ::testing::Values(IFFTTestArg(2, aom_ifft2x2_float_c),
                       IFFTTestArg(4, aom_ifft4x4_float_c),
@@ -236,7 +237,7 @@ INSTANTIATE_TEST_CASE_P(
                       IFFTTestArg(32, aom_ifft32x32_float_c)));
 #if ARCH_X86 || ARCH_X86_64
 #if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE2, IFFT2DTest,
     ::testing::Values(IFFTTestArg(4, aom_ifft4x4_float_sse2),
                       IFFTTestArg(8, aom_ifft8x8_float_sse2),
@@ -245,7 +246,7 @@ INSTANTIATE_TEST_CASE_P(
 #endif  // HAVE_SSE2
 
 #if HAVE_AVX2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AVX2, IFFT2DTest,
     ::testing::Values(IFFTTestArg(8, aom_ifft8x8_float_avx2),
                       IFFTTestArg(16, aom_ifft16x16_float_avx2),

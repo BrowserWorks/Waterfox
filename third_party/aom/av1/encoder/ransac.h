@@ -18,18 +18,14 @@
 #include <memory.h>
 
 #include "av1/common/warped_motion.h"
+#include "av1/encoder/global_motion.h"
 
 typedef int (*RansacFunc)(int *matched_points, int npoints,
-                          int *num_inliers_by_motion, double *params_by_motion,
-                          int num_motions);
-
-/* Each of these functions fits a motion model from a set of
-   corresponding points in 2 frames using RANSAC. */
-int ransac_affine(int *matched_points, int npoints, int *num_inliers_by_motion,
-                  double *params_by_motion, int num_motions);
-int ransac_rotzoom(int *matched_points, int npoints, int *num_inliers_by_motion,
-                   double *params_by_motion, int num_motions);
-int ransac_translation(int *matched_points, int npoints,
-                       int *num_inliers_by_motion, double *params_by_motion,
-                       int num_motions);
+                          int *num_inliers_by_motion,
+                          MotionModel *params_by_motion, int num_motions);
+typedef int (*RansacFuncDouble)(double *matched_points, int npoints,
+                                int *num_inliers_by_motion,
+                                MotionModel *params_by_motion, int num_motions);
+RansacFunc av1_get_ransac_type(TransformationType type);
+RansacFuncDouble av1_get_ransac_double_prec_type(TransformationType type);
 #endif  // AOM_AV1_ENCODER_RANSAC_H_

@@ -11,6 +11,37 @@ option(env='MOZ_PGO', help='Build with profile guided optimizations')
 set_config('MOZ_PGO', depends('MOZ_PGO')(lambda x: bool(x)))
 add_old_configure_assignment('MOZ_PGO', depends('MOZ_PGO')(lambda x: bool(x)))
 
+# Code optimization
+# ==============================================================
+
+js_option('--enable-optimize',
+          nargs='?',
+          default=True,
+          help='Enable optimizations via compiler flags')
+
+
+@depends('--enable-optimize')
+def moz_optimize(option):
+    flags = None
+
+    if len(option):
+        val = '2'
+        flags = option[0]
+    elif option:
+        val = '1'
+    else:
+        val = None
+
+    return namespace(
+        optimize=val,
+        flags=flags,
+    )
+
+
+set_config('MOZ_OPTIMIZE', moz_optimize.optimize)
+add_old_configure_assignment('MOZ_OPTIMIZE', moz_optimize.optimize)
+add_old_configure_assignment('MOZ_CONFIGURE_OPTIMIZE_FLAGS', moz_optimize.flags)
+
 # yasm detection
 # ==============================================================
 yasm = check_prog('YASM', ['yasm'], allow_missing=True)
@@ -47,28 +78,86 @@ add_old_configure_assignment('_YASM_MINOR_VERSION',
 def yasm_asflags(yasm, target):
     if yasm:
         asflags = {
-            ('OSX', 'x86'): '-f macho32',
-            ('OSX', 'x86_64'): '-f macho64',
-            ('WINNT', 'x86'): '-f win32',
-            ('WINNT', 'x86_64'): '-f x64',
+            ('OSX', 'x86'): ['-f', 'macho32'],
+            ('OSX', 'x86_64'): ['-f', 'macho64'],
+            ('WINNT', 'x86'): ['-f', 'win32'],
+            ('WINNT', 'x86_64'): ['-f', 'x64'],
         }.get((target.os, target.cpu), None)
         if asflags is None:
             # We're assuming every x86 platform we support that's
             # not Windows or Mac is ELF.
             if target.cpu == 'x86':
-                asflags = '-f elf32'
+                asflags = ['-f', 'elf32']
             elif target.cpu == 'x86_64':
-                asflags = '-f elf64'
+                asflags = ['-f', 'elf64']
         if asflags:
-            asflags += ' -rnasm -pnasm'
+            asflags += ['-rnasm', '-pnasm']
         return asflags
 
 set_config('YASM_ASFLAGS', yasm_asflags)
 
-@depends(yasm_asflags)
-def have_yasm(value):
+# nasm detection
+# ==============================================================
+nasm = check_prog('NASM', ['nasm'], allow_missing=True)
+
+
+@depends_if(nasm)
+@checking('nasm version')
+def nasm_version(nasm):
+    version = check_cmd_output(
+        nasm, '-v',
+        onerror=lambda: die('Failed to get nasm version.')
+    ).splitlines()[0].split()[2]
+    return Version(version)
+
+
+@depends_if(nasm_version)
+def nasm_major_version(nasm_version):
+    return str(nasm_version.major)
+
+
+@depends_if(nasm_version)
+def nasm_minor_version(nasm_version):
+    return str(nasm_version.minor)
+
+
+set_config('NASM_MAJOR_VERSION', nasm_major_version)
+set_config('NASM_MINOR_VERSION', nasm_minor_version)
+
+
+@depends(nasm, target)
+def nasm_asflags(nasm, target):
+    if nasm:
+        asflags = {
+            ('OSX', 'x86'): ['-f', 'macho32'],
+            ('OSX', 'x86_64'): ['-f', 'macho64'],
+            ('WINNT', 'x86'): ['-f', 'win32'],
+            ('WINNT', 'x86_64'): ['-f', 'win64'],
+        }.get((target.os, target.cpu), None)
+        if asflags is None:
+            # We're assuming every x86 platform we support that's
+            # not Windows or Mac is ELF.
+            if target.cpu == 'x86':
+                asflags = ['-f', 'elf32']
+            elif target.cpu == 'x86_64':
+                asflags = ['-f', 'elf64']
+        return asflags
+
+
+set_config('NASM_ASFLAGS', nasm_asflags)
+
+@depends(nasm_asflags)
+def have_nasm(value):
     if value:
         return True
+
+
+@depends(nasm_asflags, yasm_asflags)
+def have_yasm(nasm_asflags, yasm_asflags):
+    if nasm_asflags or yasm_asflags:
+        return True
+
+set_config('HAVE_NASM', have_nasm)
 
 set_config('HAVE_YASM', have_yasm)
 # Until the YASM variable is not necessary in old-configure.
@@ -1099,8 +1188,74 @@ def developer_options(value):
 add_old_configure_assignment('DEVELOPER_OPTIONS', developer_options)
 set_config('DEVELOPER_OPTIONS', developer_options)
 
+# Rust compiler flags
+# ==============================================================
+
+js_option(env='RUSTC_OPT_LEVEL',
+          nargs=1,
+          help='Rust compiler optimization level (-C opt-level=%s)')
+
+# --enable-release kicks in full optimizations.
+imply_option('RUSTC_OPT_LEVEL', '2', when='--enable-release')
+
+
+@depends('RUSTC_OPT_LEVEL', debug_rust, '--enable-debug-symbols',
+         moz_optimize)
+def rust_compiler_flags(opt_level_option, debug_rust, debug_symbols,
+                        moz_optimize):
+    optimize = moz_optimize.optimize
+
+    # Cargo currently supports only two interesting profiles for building:
+    # development and release. Those map (roughly) to --enable-debug and
+    # --disable-debug in Gecko, respectively.
+    #
+    # But we'd also like to support an additional axis of control for
+    # optimization level. Since Cargo only supports 2 profiles, we're in
+    # a bit of a bind.
+    #
+    # Code here derives various compiler options given other configure options.
+    # The options defined here effectively override defaults specified in
+    # Cargo.toml files.
+
+    opt_level = None
+    debug_assertions = None
+    debug_info = None
+
+    if opt_level_option.origin != 'default':
+        opt_level = opt_level_option[0]
+    else:
+        opt_level = '1' if optimize else '0'
+
+    # opt-level=0 implies -C debug-assertions, which may not be desired
+    # unless Rust debugging is enabled.
+    if opt_level == '0' and not debug_rust:
+        debug_assertions = False
+
+    if debug_symbols:
+        debug_info = '2'
+
+    opts = []
+
+    if opt_level is not None:
+        opts.append('opt-level=%s' % opt_level)
+    if debug_assertions is not None:
+        opts.append('debug-assertions=%s' %
+                     ('yes' if debug_assertions else 'no'))
+    if debug_info is not None:
+        opts.append('debuginfo=%s' % debug_info)
+
+    flags = []
+    for opt in opts:
+        flags.extend(['-C', opt])
+
+    return flags
+
+
+set_config('MOZ_RUST_DEFAULT_FLAGS', rust_compiler_flags)
+
 # Linker detection
 # ==============================================================
+
 
 @depends(target)
 def build_not_win_mac(target):
@@ -1113,13 +1268,13 @@ option('--enable-gold',
        help='Enable GNU Gold Linker when it is not already the default',
        when=build_not_win_mac)
 
+imply_option('--enable-linker',
+             depends_if('--enable-gold', when=build_not_win_mac)(lambda x: 'gold'),
+             when=build_not_win_mac)
 
-@depends('--enable-gold', c_compiler, developer_options, check_build_environment, when=build_not_win_mac)
-@checking('for ld', lambda x: x.KIND)
 @imports('os')
 @imports('shutil')
-def enable_gold(enable_gold_option, c_compiler, developer_options, build_env):
-    linker = None
+def enable_gnu_linker(enable_gold_option, c_compiler, developer_options, build_env, linker_name):
     # Used to check the kind of linker
     version_check = ['-Wl,--version']
     cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
@@ -1154,7 +1309,7 @@ def enable_gold(enable_gold_option, c_compiler, developer_options, build_env):
             # The -B trick didn't work, removing the directory
             shutil.rmtree(targetDir)
 
-    if enable_gold_option or developer_options:
+    if (enable_gold_option or developer_options) and linker_name != 'bfd':
         result = resolve_gold()
 
         if result:
@@ -1185,5 +1340,38 @@ def enable_gold(enable_gold_option, c_compiler, developer_options, build_env):
         KIND='other'
     )
 
-set_config('LD_IS_BFD', depends(enable_gold.KIND)(lambda x: x == 'bfd' or None))
-set_config('LINKER_LDFLAGS', enable_gold.LINKER_FLAG)
+js_option('--enable-linker', nargs=1,
+          choices=('bfd', 'gold', 'lld', 'other'),
+          help='Select the linker',
+          when=build_not_win_mac)
+
+@depends('--enable-linker', c_compiler, developer_options, check_build_environment, when=build_not_win_mac)
+@checking('for linker', lambda x: x.KIND)
+def select_linker(linker, c_compiler, developer_options, build_env):
+    linker = linker[0] if linker else 'other'
+    if linker in ('gold', 'bfd', 'other'):
+        return enable_gnu_linker(linker == 'gold', c_compiler, developer_options, build_env, linker)
+    if linker == 'lld':
+        version_check = ['-Wl,--version']
+        cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
+        lld = "-fuse-ld=" + linker
+        cmd = cmd_base + [lld] + version_check
+        if 'LLD' in check_cmd_output(*cmd).decode('utf-8'):
+            return namespace(
+                KIND='lld',
+                LINKER_FLAG=lld,
+            )
+        else:
+            die("Could not use lld as linker")
+
+
+set_config('LD_IS_BFD', depends(select_linker.KIND)
+           (lambda x: x == 'bfd' or None))
+set_config('LINKER_LDFLAGS', select_linker.LINKER_FLAG)
+
+
+js_option('--enable-clang-plugin', env='ENABLE_CLANG_PLUGIN',
+          help="Enable building with the mozilla clang plugin")
+
+add_old_configure_assignment('ENABLE_CLANG_PLUGIN',
+                             depends_if('--enable-clang-plugin')(lambda _: True))

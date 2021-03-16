@@ -11,62 +11,70 @@
 
 #include "test/comp_avg_pred_test.h"
 
-using ::testing::make_tuple;
-using ::testing::tuple;
 using libaom_test::ACMRandom;
-using libaom_test::AV1JNTCOMPAVG::AV1HighBDJNTCOMPAVGTest;
-using libaom_test::AV1JNTCOMPAVG::AV1HighBDJNTCOMPAVGUPSAMPLEDTest;
-using libaom_test::AV1JNTCOMPAVG::AV1JNTCOMPAVGTest;
-using libaom_test::AV1JNTCOMPAVG::AV1JNTCOMPAVGUPSAMPLEDTest;
+using libaom_test::AV1DISTWTDCOMPAVG::AV1DISTWTDCOMPAVGTest;
+using libaom_test::AV1DISTWTDCOMPAVG::AV1DISTWTDCOMPAVGUPSAMPLEDTest;
+#if CONFIG_AV1_HIGHBITDEPTH
+using libaom_test::AV1DISTWTDCOMPAVG::AV1HighBDDISTWTDCOMPAVGTest;
+using libaom_test::AV1DISTWTDCOMPAVG::AV1HighBDDISTWTDCOMPAVGUPSAMPLEDTest;
+#endif
+using std::make_tuple;
+using std::tuple;
 
 namespace {
 
-TEST_P(AV1JNTCOMPAVGTest, DISABLED_Speed) { RunSpeedTest(GET_PARAM(0)); }
+TEST_P(AV1DISTWTDCOMPAVGTest, DISABLED_Speed) { RunSpeedTest(GET_PARAM(0)); }
 
-TEST_P(AV1JNTCOMPAVGTest, CheckOutput) { RunCheckOutput(GET_PARAM(0)); }
+TEST_P(AV1DISTWTDCOMPAVGTest, CheckOutput) { RunCheckOutput(GET_PARAM(0)); }
 
 #if HAVE_SSSE3
-INSTANTIATE_TEST_CASE_P(
-    SSSE3, AV1JNTCOMPAVGTest,
-    libaom_test::AV1JNTCOMPAVG::BuildParams(aom_jnt_comp_avg_pred_ssse3));
+INSTANTIATE_TEST_SUITE_P(SSSE3, AV1DISTWTDCOMPAVGTest,
+                         libaom_test::AV1DISTWTDCOMPAVG::BuildParams(
+                             aom_dist_wtd_comp_avg_pred_ssse3));
 #endif
 
-TEST_P(AV1JNTCOMPAVGUPSAMPLEDTest, DISABLED_Speed) {
+TEST_P(AV1DISTWTDCOMPAVGUPSAMPLEDTest, DISABLED_Speed) {
   RunSpeedTest(GET_PARAM(0));
 }
 
-TEST_P(AV1JNTCOMPAVGUPSAMPLEDTest, CheckOutput) {
+TEST_P(AV1DISTWTDCOMPAVGUPSAMPLEDTest, CheckOutput) {
   RunCheckOutput(GET_PARAM(0));
 }
 
 #if HAVE_SSSE3
-INSTANTIATE_TEST_CASE_P(SSSE3, AV1JNTCOMPAVGUPSAMPLEDTest,
-                        libaom_test::AV1JNTCOMPAVG::BuildParams(
-                            aom_jnt_comp_avg_upsampled_pred_ssse3));
+INSTANTIATE_TEST_SUITE_P(SSSE3, AV1DISTWTDCOMPAVGUPSAMPLEDTest,
+                         libaom_test::AV1DISTWTDCOMPAVG::BuildParams(
+                             aom_dist_wtd_comp_avg_upsampled_pred_ssse3));
 #endif
 
-TEST_P(AV1HighBDJNTCOMPAVGTest, DISABLED_Speed) { RunSpeedTest(GET_PARAM(1)); }
-
-TEST_P(AV1HighBDJNTCOMPAVGTest, CheckOutput) { RunCheckOutput(GET_PARAM(1)); }
-
-#if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(SSE2, AV1HighBDJNTCOMPAVGTest,
-                        libaom_test::AV1JNTCOMPAVG::BuildParams(
-                            aom_highbd_jnt_comp_avg_pred_sse2, 1));
-#endif
-
-TEST_P(AV1HighBDJNTCOMPAVGUPSAMPLEDTest, DISABLED_Speed) {
+#if CONFIG_AV1_HIGHBITDEPTH
+TEST_P(AV1HighBDDISTWTDCOMPAVGTest, DISABLED_Speed) {
   RunSpeedTest(GET_PARAM(1));
 }
 
-TEST_P(AV1HighBDJNTCOMPAVGUPSAMPLEDTest, CheckOutput) {
+TEST_P(AV1HighBDDISTWTDCOMPAVGTest, CheckOutput) {
   RunCheckOutput(GET_PARAM(1));
 }
 
 #if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(SSE2, AV1HighBDJNTCOMPAVGUPSAMPLEDTest,
-                        libaom_test::AV1JNTCOMPAVG::BuildParams(
-                            aom_highbd_jnt_comp_avg_upsampled_pred_sse2));
+INSTANTIATE_TEST_SUITE_P(SSE2, AV1HighBDDISTWTDCOMPAVGTest,
+                         libaom_test::AV1DISTWTDCOMPAVG::BuildParams(
+                             aom_highbd_dist_wtd_comp_avg_pred_sse2, 1));
 #endif
+
+TEST_P(AV1HighBDDISTWTDCOMPAVGUPSAMPLEDTest, DISABLED_Speed) {
+  RunSpeedTest(GET_PARAM(1));
+}
+
+TEST_P(AV1HighBDDISTWTDCOMPAVGUPSAMPLEDTest, CheckOutput) {
+  RunCheckOutput(GET_PARAM(1));
+}
+
+#if HAVE_SSE2
+INSTANTIATE_TEST_SUITE_P(SSE2, AV1HighBDDISTWTDCOMPAVGUPSAMPLEDTest,
+                         libaom_test::AV1DISTWTDCOMPAVG::BuildParams(
+                             aom_highbd_dist_wtd_comp_avg_upsampled_pred_sse2));
+#endif
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 
 }  // namespace

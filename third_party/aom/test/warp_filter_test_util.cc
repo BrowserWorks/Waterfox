@@ -11,8 +11,8 @@
 #include "aom_ports/aom_timer.h"
 #include "test/warp_filter_test_util.h"
 
-using ::testing::make_tuple;
-using ::testing::tuple;
+using std::make_tuple;
+using std::tuple;
 
 namespace libaom_test {
 
@@ -55,8 +55,9 @@ void generate_warped_model(libaom_test::ACMRandom *rnd, int32_t *mat,
       if (is_beta_zero == 1) mat[3] = 0;
       if (is_gamma_zero == 1) mat[4] = 0;
       if (is_delta_zero == 1)
-        mat[5] = (((int64_t)mat[3] * mat[4] + (mat[2] / 2)) / mat[2]) +
-                 (1 << WARPEDMODEL_PREC_BITS);
+        mat[5] = static_cast<int32_t>(
+            ((static_cast<int64_t>(mat[3]) * mat[4] + (mat[2] / 2)) / mat[2]) +
+            (1 << WARPEDMODEL_PREC_BITS));
     }
 
     // Calculate the derived parameters and check that they are suitable
@@ -65,12 +66,14 @@ void generate_warped_model(libaom_test::ACMRandom *rnd, int32_t *mat,
 
     *alpha = clamp(mat[2] - (1 << WARPEDMODEL_PREC_BITS), INT16_MIN, INT16_MAX);
     *beta = clamp(mat[3], INT16_MIN, INT16_MAX);
-    *gamma = clamp(((int64_t)mat[4] * (1 << WARPEDMODEL_PREC_BITS)) / mat[2],
-                   INT16_MIN, INT16_MAX);
-    *delta =
-        clamp(mat[5] - (((int64_t)mat[3] * mat[4] + (mat[2] / 2)) / mat[2]) -
-                  (1 << WARPEDMODEL_PREC_BITS),
-              INT16_MIN, INT16_MAX);
+    *gamma = static_cast<int16_t>(clamp64(
+        (static_cast<int64_t>(mat[4]) * (1 << WARPEDMODEL_PREC_BITS)) / mat[2],
+        INT16_MIN, INT16_MAX));
+    *delta = static_cast<int16_t>(clamp64(
+        mat[5] -
+            ((static_cast<int64_t>(mat[3]) * mat[4] + (mat[2] / 2)) / mat[2]) -
+            (1 << WARPEDMODEL_PREC_BITS),
+        INT16_MIN, INT16_MAX));
 
     if ((4 * abs(*alpha) + 7 * abs(*beta) >= (1 << WARPEDMODEL_PREC_BITS)) ||
         (4 * abs(*gamma) + 4 * abs(*delta) >= (1 << WARPEDMODEL_PREC_BITS)))
@@ -113,8 +116,7 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
   const int border = 16;
   const int stride = w + 2 * border;
   WarpTestParam params = GET_PARAM(0);
-  const int out_w = ::testing::get<0>(params),
-            out_h = ::testing::get<1>(params);
+  const int out_w = std::get<0>(params), out_h = std::get<1>(params);
   const int is_alpha_zero = GET_PARAM(1);
   const int is_beta_zero = GET_PARAM(2);
   const int is_gamma_zero = GET_PARAM(3);
@@ -149,7 +151,7 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
   int do_average = 0;
 
   conv_params = get_conv_params_no_round(do_average, 0, dsta, out_w, 1, bd);
-  conv_params.use_jnt_comp_avg = 0;
+  conv_params.use_dist_wtd_comp_avg = 0;
 
   const int num_loops = 1000000000 / (out_w + out_h);
   aom_usec_timer timer;
@@ -177,9 +179,8 @@ void AV1WarpFilterTest::RunCheckOutput(warp_affine_func test_impl) {
   const int is_beta_zero = GET_PARAM(2);
   const int is_gamma_zero = GET_PARAM(3);
   const int is_delta_zero = GET_PARAM(4);
-  const int out_w = ::testing::get<0>(params),
-            out_h = ::testing::get<1>(params);
-  const int num_iters = ::testing::get<2>(params);
+  const int out_w = std::get<0>(params), out_h = std::get<1>(params);
+  const int num_iters = std::get<2>(params);
   int i, j, sub_x, sub_y;
   const int bd = 8;
 
@@ -222,9 +223,9 @@ void AV1WarpFilterTest::RunCheckOutput(warp_affine_func test_impl) {
                 conv_params = get_conv_params(0, 0, bd);
               }
               if (jj >= 4) {
-                conv_params.use_jnt_comp_avg = 0;
+                conv_params.use_dist_wtd_comp_avg = 0;
               } else {
-                conv_params.use_jnt_comp_avg = 1;
+                conv_params.use_dist_wtd_comp_avg = 1;
                 conv_params.fwd_offset = quant_dist_lookup_table[ii][jj][0];
                 conv_params.bck_offset = quant_dist_lookup_table[ii][jj][1];
               }
@@ -236,9 +237,9 @@ void AV1WarpFilterTest::RunCheckOutput(warp_affine_func test_impl) {
                     get_conv_params_no_round(do_average, 0, dstb, out_w, 1, bd);
               }
               if (jj >= 4) {
-                conv_params.use_jnt_comp_avg = 0;
+                conv_params.use_dist_wtd_comp_avg = 0;
               } else {
-                conv_params.use_jnt_comp_avg = 1;
+                conv_params.use_dist_wtd_comp_avg = 1;
                 conv_params.fwd_offset = quant_dist_lookup_table[ii][jj][0];
                 conv_params.bck_offset = quant_dist_lookup_table[ii][jj][1];
               }
@@ -276,6 +277,7 @@ void AV1WarpFilterTest::RunCheckOutput(warp_affine_func test_impl) {
 }
 }  // namespace AV1WarpFilter
 
+#if CONFIG_AV1_HIGHBITDEPTH
 namespace AV1HighbdWarpFilter {
 ::testing::internal::ParamGenerator<HighbdWarpTestParams> BuildParams(
     highbd_warp_affine_func filter) {
@@ -310,8 +312,8 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
   const int is_beta_zero = GET_PARAM(2);
   const int is_gamma_zero = GET_PARAM(3);
   const int is_delta_zero = GET_PARAM(4);
-  const int out_w = ::testing::get<0>(param), out_h = ::testing::get<1>(param);
-  const int bd = ::testing::get<3>(param);
+  const int out_w = std::get<0>(param), out_h = std::get<1>(param);
+  const int bd = std::get<3>(param);
   const int mask = (1 << bd) - 1;
   int sub_x, sub_y;
 
@@ -342,7 +344,7 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
   sub_x = 0;
   sub_y = 0;
   int do_average = 0;
-  conv_params.use_jnt_comp_avg = 0;
+  conv_params.use_dist_wtd_comp_avg = 0;
   conv_params = get_conv_params_no_round(do_average, 0, dsta, out_w, 1, bd);
 
   const int num_loops = 1000000000 / (out_w + out_h);
@@ -373,9 +375,9 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
   const int is_beta_zero = GET_PARAM(2);
   const int is_gamma_zero = GET_PARAM(3);
   const int is_delta_zero = GET_PARAM(4);
-  const int out_w = ::testing::get<0>(param), out_h = ::testing::get<1>(param);
-  const int bd = ::testing::get<3>(param);
-  const int num_iters = ::testing::get<2>(param);
+  const int out_w = std::get<0>(param), out_h = std::get<1>(param);
+  const int bd = std::get<3>(param);
+  const int num_iters = std::get<2>(param);
   const int mask = (1 << bd) - 1;
   int i, j, sub_x, sub_y;
 
@@ -419,9 +421,9 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
                 conv_params = get_conv_params(0, 0, bd);
               }
               if (jj >= 4) {
-                conv_params.use_jnt_comp_avg = 0;
+                conv_params.use_dist_wtd_comp_avg = 0;
               } else {
-                conv_params.use_jnt_comp_avg = 1;
+                conv_params.use_dist_wtd_comp_avg = 1;
                 conv_params.fwd_offset = quant_dist_lookup_table[ii][jj][0];
                 conv_params.bck_offset = quant_dist_lookup_table[ii][jj][1];
               }
@@ -436,9 +438,9 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
                     get_conv_params_no_round(do_average, 0, dstb, out_w, 1, bd);
               }
               if (jj >= 4) {
-                conv_params.use_jnt_comp_avg = 0;
+                conv_params.use_dist_wtd_comp_avg = 0;
               } else {
-                conv_params.use_jnt_comp_avg = 1;
+                conv_params.use_dist_wtd_comp_avg = 1;
                 conv_params.fwd_offset = quant_dist_lookup_table[ii][jj][0];
                 conv_params.bck_offset = quant_dist_lookup_table[ii][jj][1];
               }
@@ -477,4 +479,5 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
   delete[] dstb;
 }
 }  // namespace AV1HighbdWarpFilter
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 }  // namespace libaom_test

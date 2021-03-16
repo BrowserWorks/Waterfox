@@ -11,6 +11,7 @@
 
 #include <cstdlib>
 #include <new>
+#include <tuple>
 
 #include "config/aom_config.h"
 #include "config/av1_rtcd.h"
@@ -24,9 +25,9 @@
 namespace {
 
 typedef uint32_t (*get_crc32c_value_func)(void *calculator, uint8_t *p,
-                                          int length);
+                                          size_t length);
 
-typedef ::testing::tuple<get_crc32c_value_func, int> HashParam;
+typedef std::tuple<get_crc32c_value_func, int> HashParam;
 
 class AV1Crc32cHashTest : public ::testing::TestWithParam<HashParam> {
  public:
@@ -45,7 +46,7 @@ class AV1Crc32cHashTest : public ::testing::TestWithParam<HashParam> {
   CRC32C calc_;
   uint8_t *buffer_;
   int bsize_;
-  int length_;
+  size_t length_;
 };
 
 AV1Crc32cHashTest::~AV1Crc32cHashTest() { ; }
@@ -58,7 +59,7 @@ void AV1Crc32cHashTest::SetUp() {
   length_ = bsize_ * bsize_ * sizeof(uint16_t);
   buffer_ = new uint8_t[length_];
   ASSERT_TRUE(buffer_ != NULL);
-  for (int i = 0; i < length_; ++i) {
+  for (size_t i = 0; i < length_; ++i) {
     buffer_[i] = rnd_.Rand8();
   }
 }
@@ -118,13 +119,13 @@ TEST_P(AV1Crc32cHashTest, DISABLED_Speed) { RunSpeedTest(GET_PARAM(0)); }
 
 const int kValidBlockSize[] = { 64, 32, 8, 4 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     C, AV1Crc32cHashTest,
     ::testing::Combine(::testing::Values(&av1_get_crc32c_value_c),
                        ::testing::ValuesIn(kValidBlockSize)));
 
 #if HAVE_SSE4_2
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_2, AV1Crc32cHashTest,
     ::testing::Combine(::testing::Values(&av1_get_crc32c_value_sse4_2),
                        ::testing::ValuesIn(kValidBlockSize)));

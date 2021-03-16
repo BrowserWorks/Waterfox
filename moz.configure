@@ -111,8 +111,14 @@ js_option('--enable-debug',
           help='Enable building with developer debug info '
                '(using the given compiler flags).')
 
-add_old_configure_assignment('MOZ_DEBUG',
-                             depends('--enable-debug')(lambda v: bool(v)))
+@depends('--enable-debug')
+def moz_debug(debug):
+    if debug:
+        return bool(debug)
+
+set_config('MOZ_DEBUG', moz_debug)
+set_define('MOZ_DEBUG', moz_debug)
+add_old_configure_assignment('MOZ_DEBUG', moz_debug)
 
 js_option('--enable-rust-debug',
           help='Build Rust code with debug assertions turned on.')
@@ -278,6 +284,22 @@ def build_gtest(pgo, build_project, target, automation, enabled):
         return True
 
 set_config('LINK_GTEST_DURING_COMPILE', build_gtest)
+
+# clang-plugin location
+# ==============================================================
+@depends(library_name_info, check_build_environment, when='--enable-clang-plugin')
+def clang_plugin_path(library_name_info, build_env):
+    topobjdir = build_env.topobjdir
+    if topobjdir.endswith('/js/src'):
+        topobjdir = topobjdir[:-7]
+    return os.path.abspath(
+        os.path.join(topobjdir, 'build', 'clang-plugin',
+                     '%sclang-plugin%s' % (library_name_info.dll.prefix,
+                                           library_name_info.dll.suffix))
+    )
+
+add_old_configure_assignment('CLANG_PLUGIN', clang_plugin_path)
+
 
 # Awk detection
 # ==============================================================

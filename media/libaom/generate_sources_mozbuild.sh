@@ -58,7 +58,7 @@ function gen_rtcd_header {
 
 echo "Generating config files."
 cd $BASE_DIR
-python generate_sources_mozbuild.py
+python2 generate_sources_mozbuild.py
 
 # Copy aom_version.h once. The file is the same for all platforms.
 cp aom_version.h $BASE_DIR/$LIBAOM_CONFIG_DIR

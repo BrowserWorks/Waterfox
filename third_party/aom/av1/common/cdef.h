@@ -20,8 +20,8 @@
 
 #include "aom/aom_integer.h"
 #include "aom_ports/mem.h"
+#include "av1/common/av1_common_int.h"
 #include "av1/common/cdef_block.h"
-#include "av1/common/onyxc_int.h"
 
 static INLINE int sign(int i) { return i < 0 ? -1 : 1; }
 
@@ -37,13 +37,14 @@ static INLINE int constrain(int diff, int threshold, int damping) {
 extern "C" {
 #endif
 
-int sb_all_skip(const AV1_COMMON *const cm, int mi_row, int mi_col);
-int sb_compute_cdef_list(const AV1_COMMON *const cm, int mi_row, int mi_col,
-                         cdef_list *dlist, BLOCK_SIZE bsize);
+int av1_cdef_compute_sb_list(const CommonModeInfoParams *const mi_params,
+                             int mi_row, int mi_col, cdef_list *dlist,
+                             BLOCK_SIZE bsize);
 void av1_cdef_frame(YV12_BUFFER_CONFIG *frame, AV1_COMMON *cm, MACROBLOCKD *xd);
 
 void av1_cdef_search(YV12_BUFFER_CONFIG *frame, const YV12_BUFFER_CONFIG *ref,
-                     AV1_COMMON *cm, MACROBLOCKD *xd, int fast);
+                     AV1_COMMON *cm, MACROBLOCKD *xd, int pick_method,
+                     int rdmult);
 
 #ifdef __cplusplus
 }  // extern "C"

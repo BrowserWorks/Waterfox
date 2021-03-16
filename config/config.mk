@@ -132,62 +132,6 @@ TOUCH ?= touch
 
 PYTHON_PATH = $(PYTHON) $(topsrcdir)/config/pythonpath.py
 
-# determine debug-related options
-_DEBUG_ASFLAGS :=
-_DEBUG_CFLAGS :=
-_DEBUG_LDFLAGS :=
-
-ifneq (,$(MOZ_DEBUG)$(MOZ_DEBUG_SYMBOLS))
-  ifeq ($(AS),$(YASM))
-    ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_)
-      _DEBUG_ASFLAGS += -g cv8
-    else
-      ifneq ($(OS_ARCH),Darwin)
-        _DEBUG_ASFLAGS += -g dwarf2
-      endif
-    endif
-  else
-    _DEBUG_ASFLAGS += $(MOZ_DEBUG_FLAGS)
-  endif
-  _DEBUG_CFLAGS += $(MOZ_DEBUG_FLAGS)
-  _DEBUG_LDFLAGS += $(MOZ_DEBUG_LDFLAGS)
-endif
-
-ASFLAGS += $(_DEBUG_ASFLAGS)
-OS_CFLAGS += $(_DEBUG_CFLAGS)
-OS_CXXFLAGS += $(_DEBUG_CFLAGS)
-OS_LDFLAGS += $(_DEBUG_LDFLAGS)
-
-# XXX: What does this? Bug 482434 filed for better explanation.
-ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_)
-ifndef MOZ_DEBUG
-
-# MOZ_DEBUG_SYMBOLS generates debug symbols in separate PDB files.
-# Used for generating an optimized build with debugging symbols.
-# Used in the Windows nightlies to generate symbols for crash reporting.
-ifdef MOZ_DEBUG_SYMBOLS
-ifdef HAVE_64BIT_BUILD
-OS_LDFLAGS += -DEBUG -OPT:REF,ICF
-else
-OS_LDFLAGS += -DEBUG -OPT:REF
-endif
-endif
-
-#
-# Handle DMD in optimized builds.
-#
-ifdef MOZ_DMD
-ifdef HAVE_64BIT_BUILD
-OS_LDFLAGS = -DEBUG -OPT:REF,ICF
-else
-OS_LDFLAGS = -DEBUG -OPT:REF
-endif
-endif # MOZ_DMD
-
-endif # MOZ_DEBUG
-
-endif # WINNT && !GNU_CC
-
 #
 # Build using PIC by default
 #
@@ -207,26 +151,21 @@ endif
 # Enable profile-based feedback
 ifneq (1,$(NO_PROFILE_GUIDED_OPTIMIZE))
 ifdef MOZ_PROFILE_GENERATE
-OS_CFLAGS += $(if $(filter $(notdir $<),$(notdir $(NO_PROFILE_GUIDED_OPTIMIZE))),,$(PROFILE_GEN_CFLAGS))
-OS_CXXFLAGS += $(if $(filter $(notdir $<),$(notdir $(NO_PROFILE_GUIDED_OPTIMIZE))),,$(PROFILE_GEN_CFLAGS))
-OS_LDFLAGS += $(PROFILE_GEN_LDFLAGS)
+PGO_CFLAGS += $(if $(filter $(notdir $<),$(notdir $(NO_PROFILE_GUIDED_OPTIMIZE))),,$(PROFILE_GEN_CFLAGS))
+PGO_LDFLAGS += $(PROFILE_GEN_LDFLAGS)
 ifeq (WINNT,$(OS_ARCH))
 AR_FLAGS += -LTCG
 endif
 endif # MOZ_PROFILE_GENERATE
 
 ifdef MOZ_PROFILE_USE
-OS_CFLAGS += $(if $(filter $(notdir $<),$(notdir $(NO_PROFILE_GUIDED_OPTIMIZE))),,$(PROFILE_USE_CFLAGS))
-OS_CXXFLAGS += $(if $(filter $(notdir $<),$(notdir $(NO_PROFILE_GUIDED_OPTIMIZE))),,$(PROFILE_USE_CFLAGS))
-OS_LDFLAGS += $(PROFILE_USE_LDFLAGS)
+PGO_CFLAGS += $(if $(filter $(notdir $<),$(notdir $(NO_PROFILE_GUIDED_OPTIMIZE))),,$(PROFILE_USE_CFLAGS))
+PGO_LDFLAGS += $(PROFILE_USE_LDFLAGS)
 ifeq (WINNT,$(OS_ARCH))
 AR_FLAGS += -LTCG
 endif
 endif # MOZ_PROFILE_USE
 endif # NO_PROFILE_GUIDED_OPTIMIZE
-
-# linker
-OS_LDFLAGS += $(LINKER_LDFLAGS)
 
 MAKE_JARS_FLAGS = \
 	-t $(topsrcdir) \
@@ -259,75 +198,16 @@ INCLUDES = \
 
 include $(MOZILLA_DIR)/config/static-checking-config.mk
 
-CFLAGS		= $(OS_CPPFLAGS) $(OS_CFLAGS)
-CXXFLAGS	= $(OS_CPPFLAGS) $(OS_CXXFLAGS)
-LDFLAGS		= $(OS_LDFLAGS) $(MOZBUILD_LDFLAGS) $(MOZ_FIX_LINK_PATHS)
+LDFLAGS		= $(COMPUTED_LDFLAGS) $(PGO_LDFLAGS) $(MK_LDFLAGS)
 
-ifdef MOZ_OPTIMIZE
-ifeq (1,$(MOZ_OPTIMIZE))
-ifneq (,$(if $(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE),$(MOZ_PGO_OPTIMIZE_FLAGS)))
-CFLAGS		+= $(MOZ_PGO_OPTIMIZE_FLAGS)
-CXXFLAGS	+= $(MOZ_PGO_OPTIMIZE_FLAGS)
-else
-CFLAGS		+= $(MOZ_OPTIMIZE_FLAGS)
-CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
-endif # neq (,$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
-else
-CFLAGS		+= $(MOZ_OPTIMIZE_FLAGS)
-CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
-endif # MOZ_OPTIMIZE == 1
-LDFLAGS		+= $(MOZ_OPTIMIZE_LDFLAGS)
-endif # MOZ_OPTIMIZE
-
-HOST_CFLAGS	+= $(_DEPEND_CFLAGS)
-HOST_CXXFLAGS	+= $(_DEPEND_CFLAGS)
-ifdef CROSS_COMPILE
-HOST_CFLAGS	+= $(HOST_OPTIMIZE_FLAGS)
-HOST_CXXFLAGS	+= $(HOST_OPTIMIZE_FLAGS)
-else
-ifdef MOZ_OPTIMIZE
-HOST_CFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
-HOST_CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
-endif # MOZ_OPTIMIZE
-endif # CROSS_COMPILE
-
-CFLAGS += $(MOZ_FRAMEPTR_FLAGS)
-CXXFLAGS += $(MOZ_FRAMEPTR_FLAGS)
-
-# Check for ALLOW_COMPILER_WARNINGS (shorthand for Makefiles to request that we
-# *don't* use the warnings-as-errors compile flags)
-
-# Don't use warnings-as-errors in Windows PGO builds because it is suspected of
-# causing problems in that situation. (See bug 437002.)
-ifeq (WINNT_1,$(OS_ARCH)_$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
-ALLOW_COMPILER_WARNINGS=1
-endif # WINNT && (MOS_PROFILE_GENERATE ^ MOZ_PROFILE_USE)
-
-# Don't use warnings-as-errors in clang-cl because it warns about many more
-# things than MSVC does.
-ifdef CLANG_CL
-ALLOW_COMPILER_WARNINGS=1
-endif # CLANG_CL
-
-# Use warnings-as-errors if ALLOW_COMPILER_WARNINGS is not set to 1 (which
-# includes the case where it's undefined).
-ifneq (1,$(ALLOW_COMPILER_WARNINGS))
-CXXFLAGS += $(WARNINGS_AS_ERRORS)
-CFLAGS   += $(WARNINGS_AS_ERRORS)
-endif # ALLOW_COMPILER_WARNINGS
-
-COMPILE_CFLAGS	= $(COMPUTED_CFLAGS) $(DSO_CFLAGS) $(DSO_PIC_CFLAGS) $(RTL_FLAGS) $(OS_COMPILE_CFLAGS) $(_DEPEND_CFLAGS) $(CFLAGS) $(MOZBUILD_CFLAGS)
-COMPILE_CXXFLAGS = $(COMPUTED_CXXFLAGS) $(DSO_CFLAGS) $(DSO_PIC_CFLAGS) $(RTL_FLAGS) $(OS_COMPILE_CXXFLAGS) $(_DEPEND_CFLAGS) $(CXXFLAGS) $(MOZBUILD_CXXFLAGS)
+COMPILE_CFLAGS	= $(COMPUTED_CFLAGS) $(PGO_CFLAGS) $(_DEPEND_CFLAGS) $(MK_COMPILE_DEFINES)
+COMPILE_CXXFLAGS = $(COMPUTED_CXXFLAGS) $(PGO_CFLAGS) $(_DEPEND_CFLAGS) $(MK_COMPILE_DEFINES)
 COMPILE_CMFLAGS = $(OS_COMPILE_CMFLAGS) $(MOZBUILD_CMFLAGS)
 COMPILE_CMMFLAGS = $(OS_COMPILE_CMMFLAGS) $(MOZBUILD_CMMFLAGS)
-ASFLAGS += $(MOZBUILD_ASFLAGS)
+ASFLAGS = $(COMPUTED_ASFLAGS)
 
-ifndef CROSS_COMPILE
-HOST_CFLAGS += $(RTL_FLAGS)
-endif
-
-HOST_CFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CFLAGS)
-HOST_CXXFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CXXFLAGS)
+HOST_CFLAGS = $(COMPUTED_HOST_CFLAGS) $(_DEPEND_CFLAGS)
+HOST_CXXFLAGS = $(COMPUTED_HOST_CXXFLAGS) $(_DEPEND_CFLAGS)
 
 # We only add color flags if neither the flag to disable color
 # (e.g. "-fno-color-diagnostics" nor a flag to control color

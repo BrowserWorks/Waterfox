@@ -12,6 +12,8 @@
 #ifndef AOM_TEST_AV1_CONVOLVE_2D_TEST_UTIL_H_
 #define AOM_TEST_AV1_CONVOLVE_2D_TEST_UTIL_H_
 
+#include <tuple>
+
 #include "config/av1_rtcd.h"
 #include "config/aom_dsp_rtcd.h"
 
@@ -30,11 +32,10 @@ typedef void (*convolve_2d_func)(const uint8_t *src, int src_stride,
                                  uint8_t *dst, int dst_stride, int w, int h,
                                  const InterpFilterParams *filter_params_x,
                                  const InterpFilterParams *filter_params_y,
-                                 const int subpel_x_q4, const int subpel_y_q4,
+                                 const int subpel_x_qn, const int subpel_y_qn,
                                  ConvolveParams *conv_params);
 
-typedef ::testing::tuple<convolve_2d_func, int, int, BLOCK_SIZE>
-    Convolve2DParam;
+typedef std::tuple<convolve_2d_func, int, int, BLOCK_SIZE> Convolve2DParam;
 
 ::testing::internal::ParamGenerator<Convolve2DParam> BuildParams(
     convolve_2d_func filter, int subx_exist, int suby_exist);
@@ -68,14 +69,15 @@ class AV1JntConvolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
 };
 }  // namespace AV1Convolve2D
 
+#if CONFIG_AV1_HIGHBITDEPTH
 namespace AV1HighbdConvolve2D {
 typedef void (*highbd_convolve_2d_func)(
     const uint16_t *src, int src_stride, uint16_t *dst, int dst_stride, int w,
     int h, const InterpFilterParams *filter_params_x,
-    const InterpFilterParams *filter_params_y, const int subpel_x_q4,
-    const int subpel_y_q4, ConvolveParams *conv_params, int bd);
+    const InterpFilterParams *filter_params_y, const int subpel_x_qn,
+    const int subpel_y_qn, ConvolveParams *conv_params, int bd);
 
-typedef ::testing::tuple<int, highbd_convolve_2d_func, int, int, BLOCK_SIZE>
+typedef std::tuple<int, highbd_convolve_2d_func, int, int, BLOCK_SIZE>
     HighbdConvolve2DParam;
 
 ::testing::internal::ParamGenerator<HighbdConvolve2DParam> BuildParams(
@@ -111,6 +113,7 @@ class AV1HighbdJntConvolve2DTest
   libaom_test::ACMRandom rnd_;
 };
 }  // namespace AV1HighbdConvolve2D
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 
 }  // namespace libaom_test
 

@@ -18,7 +18,7 @@
 
 using libaom_test::ACMRandom;
 
-TEST(Daala, TestDIVUuptoMAX) {
+TEST(DivuSmallTest, TestDIVUuptoMAX) {
   for (int d = 1; d <= OD_DIVU_DMAX; d++) {
     for (uint32_t x = 1; x <= 1000000; x++) {
       GTEST_ASSERT_EQ(x / d, OD_DIVU_SMALL(x, d))
@@ -28,7 +28,7 @@ TEST(Daala, TestDIVUuptoMAX) {
   }
 }
 
-TEST(Daala, TestDIVUrandI31) {
+TEST(DivuSmallTest, TestDIVUrandI31) {
   ACMRandom rnd(ACMRandom::DeterministicSeed());
   for (int d = 1; d < OD_DIVU_DMAX; d++) {
     for (int i = 0; i < 1000000; i++) {

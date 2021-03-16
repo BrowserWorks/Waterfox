@@ -54,7 +54,7 @@ void *aom_memalign(size_t align, size_t size) {
 #endif
   void *const addr = malloc(aligned_size);
   if (addr) {
-    x = align_addr((unsigned char *)addr + ADDRESS_STORAGE_SIZE, align);
+    x = aom_align_addr((unsigned char *)addr + ADDRESS_STORAGE_SIZE, align);
     SetActualMallocAddress(x, addr);
   }
   return x;

@@ -79,7 +79,7 @@ else:
     LOCAL_INCLUDES += [ '/media/libvpx/config/generic/' ]
 
 # We allow warnings for third-party code that can be updated from upstream.
-ALLOW_COMPILER_WARNINGS = True
+AllowCompilerWarnings()
 
 FINAL_LIBRARY = 'gkmedias'
 
@@ -130,8 +130,8 @@ if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
 
 ASFLAGS += CONFIG['VPX_ASFLAGS']
 ASFLAGS += [
-    '-I.',
-    '-I%s/media/libvpx/libvpx' % TOPSRCDIR,
+    '-I./',
+    '-I%s/media/libvpx/libvpx/' % TOPSRCDIR,
 ]
 
 LOCAL_INCLUDES += [

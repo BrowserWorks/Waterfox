@@ -71,6 +71,13 @@ if CONFIG['_MSC_VER']:
 if CONFIG['CLANG_CL']:
     LDFLAGS += ['-FORCE:MULTIPLE']
 
+if CONFIG['MOZ_LIBAV_FFT']:
+    SOURCES += [
+        'avfft.c',
+        'fft_float.c',
+        'rdft.c',
+    ]
+
 SYMBOLS_FILE = 'avcodec.symbols'
 NoVisibilityFlags()
 

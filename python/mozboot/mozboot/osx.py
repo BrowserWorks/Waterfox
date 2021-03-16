@@ -326,6 +326,7 @@ class OSXBootstrapper(BaseBootstrapper):
         # TODO: Figure out what not to install for artifact mode
         packages = [
             'llvm',
+            'nasm',
             'yasm',
         ]
         self._ensure_homebrew_packages(packages)
@@ -388,6 +389,7 @@ class OSXBootstrapper(BaseBootstrapper):
     def ensure_macports_browser_packages(self, artifact_mode=False):
         # TODO: Figure out what not to install for artifact mode
         packages = [
+            'nasm',
             'yasm',
             'llvm-8.0',
             'clang-8.0',

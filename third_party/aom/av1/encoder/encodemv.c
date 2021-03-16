@@ -20,22 +20,58 @@
 #include "aom_dsp/aom_dsp_common.h"
 #include "aom_ports/bitops.h"
 
-static INLINE int mv_class_base(MV_CLASS_TYPE c) {
-  return c ? CLASS0_SIZE << (c + 2) : 0;
+static void update_mv_component_stats(int comp, nmv_component *mvcomp,
+                                      MvSubpelPrecision precision) {
+  assert(comp != 0);
+  int offset;
+  const int sign = comp < 0;
+  const int mag = sign ? -comp : comp;
+  const int mv_class = av1_get_mv_class(mag - 1, &offset);
+  const int d = offset >> 3;         // int mv data
+  const int fr = (offset >> 1) & 3;  // fractional mv data
+  const int hp = offset & 1;         // high precision mv data
+
+  // Sign
+  update_cdf(mvcomp->sign_cdf, sign, 2);
+
+  // Class
+  update_cdf(mvcomp->classes_cdf, mv_class, MV_CLASSES);
+
+  // Integer bits
+  if (mv_class == MV_CLASS_0) {
+    update_cdf(mvcomp->class0_cdf, d, CLASS0_SIZE);
+  } else {
+    const int n = mv_class + CLASS0_BITS - 1;  // number of bits
+    for (int i = 0; i < n; ++i)
+      update_cdf(mvcomp->bits_cdf[i], (d >> i) & 1, 2);
+  }
+  // Fractional bits
+  if (precision > MV_SUBPEL_NONE) {
+    aom_cdf_prob *fp_cdf =
+        mv_class == MV_CLASS_0 ? mvcomp->class0_fp_cdf[d] : mvcomp->fp_cdf;
+    update_cdf(fp_cdf, fr, MV_FP_SIZE);
+  }
+
+  // High precision bit
+  if (precision > MV_SUBPEL_LOW_PRECISION) {
+    aom_cdf_prob *hp_cdf =
+        mv_class == MV_CLASS_0 ? mvcomp->class0_hp_cdf : mvcomp->hp_cdf;
+    update_cdf(hp_cdf, hp, 2);
+  }
 }
 
-// If n != 0, returns the floor of log base 2 of n. If n == 0, returns 0.
-static INLINE uint8_t log_in_base_2(unsigned int n) {
-  // get_msb() is only valid when n != 0.
-  return n == 0 ? 0 : get_msb(n);
-}
+void av1_update_mv_stats(const MV *mv, const MV *ref, nmv_context *mvctx,
+                         MvSubpelPrecision precision) {
+  const MV diff = { mv->row - ref->row, mv->col - ref->col };
+  const MV_JOINT_TYPE j = av1_get_mv_joint(&diff);
 
-static INLINE MV_CLASS_TYPE get_mv_class(int z, int *offset) {
-  const MV_CLASS_TYPE c = (z >= CLASS0_SIZE * 4096)
-                              ? MV_CLASS_10
-                              : (MV_CLASS_TYPE)log_in_base_2(z >> 3);
-  if (offset) *offset = z - mv_class_base(c);
-  return c;
+  update_cdf(mvctx->joints_cdf, j, MV_JOINTS);
+
+  if (mv_joint_vertical(j))
+    update_mv_component_stats(diff.row, &mvctx->comps[0], precision);
+
+  if (mv_joint_horizontal(j))
+    update_mv_component_stats(diff.col, &mvctx->comps[1], precision);
 }
 
 static void encode_mv_component(aom_writer *w, int comp, nmv_component *mvcomp,
@@ -44,7 +80,7 @@ static void encode_mv_component(aom_writer *w, int comp, nmv_component *mvcomp,
   int offset;
   const int sign = comp < 0;
   const int mag = sign ? -comp : comp;
-  const int mv_class = get_mv_class(mag - 1, &offset);
+  const int mv_class = av1_get_mv_class(mag - 1, &offset);
   const int d = offset >> 3;         // int mv data
   const int fr = (offset >> 1) & 3;  // fractional mv data
   const int hp = offset & 1;         // high precision mv data
@@ -107,7 +143,7 @@ static void build_nmv_component_cost_table(int *mvcost,
   for (v = 1; v <= MV_MAX; ++v) {
     int z, c, o, d, e, f, cost = 0;
     z = v - 1;
-    c = get_mv_class(z, &o);
+    c = av1_get_mv_class(z, &o);
     cost += class_cost[c];
     d = (o >> 3);     /* int mv data */
     f = (o >> 1) & 3; /* fractional pel mv data */
@@ -141,7 +177,9 @@ void av1_encode_mv(AV1_COMP *cpi, aom_writer *w, const MV *mv, const MV *ref,
                    nmv_context *mvctx, int usehp) {
   const MV diff = { mv->row - ref->row, mv->col - ref->col };
   const MV_JOINT_TYPE j = av1_get_mv_joint(&diff);
-  if (cpi->common.cur_frame_force_integer_mv) {
+  // If the mv_diff is zero, then we should have used near or nearest instead.
+  assert(j != MV_JOINT_ZERO);
+  if (cpi->common.features.cur_frame_force_integer_mv) {
     usehp = MV_SUBPEL_NONE;
   }
   aom_write_symbol(w, j, mvctx->joints_cdf, MV_JOINTS);
@@ -153,9 +191,10 @@ void av1_encode_mv(AV1_COMP *cpi, aom_writer *w, const MV *mv, const MV *ref,
 
   // If auto_mv_step_size is enabled then keep track of the largest
   // motion vector component used.
-  if (cpi->sf.mv.auto_mv_step_size) {
-    unsigned int maxv = AOMMAX(abs(mv->row), abs(mv->col)) >> 3;
-    cpi->max_mv_magnitude = AOMMAX(maxv, cpi->max_mv_magnitude);
+  if (cpi->sf.mv_sf.auto_mv_step_size) {
+    int maxv = AOMMAX(abs(mv->row), abs(mv->col)) >> 3;
+    cpi->mv_search_params.max_mv_magnitude =
+        AOMMAX(maxv, cpi->mv_search_params.max_mv_magnitude);
   }
 }
 
@@ -192,25 +231,17 @@ int_mv av1_get_ref_mv_from_stack(int ref_idx,
   const int8_t ref_frame_type = av1_ref_frame_type(ref_frame);
   const CANDIDATE_MV *curr_ref_mv_stack =
       mbmi_ext->ref_mv_stack[ref_frame_type];
-  int_mv ref_mv;
-  ref_mv.as_int = INVALID_MV;
 
   if (ref_frame[1] > INTRA_FRAME) {
-    if (ref_idx == 0) {
-      ref_mv = curr_ref_mv_stack[ref_mv_idx].this_mv;
-    } else {
-      assert(ref_idx == 1);
-      ref_mv = curr_ref_mv_stack[ref_mv_idx].comp_mv;
-    }
-  } else {
-    assert(ref_idx == 0);
-    if (ref_mv_idx < mbmi_ext->ref_mv_count[ref_frame_type]) {
-      ref_mv = curr_ref_mv_stack[ref_mv_idx].this_mv;
-    } else {
-      ref_mv = mbmi_ext->global_mvs[ref_frame_type];
-    }
+    assert(ref_idx == 0 || ref_idx == 1);
+    return ref_idx ? curr_ref_mv_stack[ref_mv_idx].comp_mv
+                   : curr_ref_mv_stack[ref_mv_idx].this_mv;
   }
-  return ref_mv;
+
+  assert(ref_idx == 0);
+  return ref_mv_idx < mbmi_ext->ref_mv_count[ref_frame_type]
+             ? curr_ref_mv_stack[ref_mv_idx].this_mv
+             : mbmi_ext->global_mvs[ref_frame_type];
 }
 
 int_mv av1_get_ref_mv(const MACROBLOCK *x, int ref_idx) {

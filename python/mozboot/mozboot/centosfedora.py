@@ -38,6 +38,7 @@ class CentOSFedoraBootstrapper(StyloInstall, BaseBootstrapper):
             'libstdc++-static',
             'libXt-devel',
             'mesa-libGL-devel',
+            'nasm',
             'pulseaudio-libs-devel',
             'wireless-tools-devel',
             'yasm',

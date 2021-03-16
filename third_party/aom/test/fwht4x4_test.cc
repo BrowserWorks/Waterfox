@@ -12,7 +12,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tuple>
 
+#include "aom_dsp/aom_dsp_common.h"
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
 #include "config/av1_rtcd.h"
@@ -35,7 +37,7 @@ typedef void (*IdctFunc)(const tran_low_t *in, uint8_t *out, int stride);
 
 using libaom_test::FhtFunc;
 
-typedef ::testing::tuple<FdctFunc, IdctFunc, TX_TYPE, aom_bit_depth_t, int>
+typedef std::tuple<FdctFunc, IdctFunc, TX_TYPE, aom_bit_depth_t, int>
     Dct4x4Param;
 
 void fwht4x4_ref(const int16_t *in, tran_low_t *out, int stride,
@@ -51,7 +53,7 @@ void iwht4x4_12(const tran_low_t *in, uint8_t *out, int stride) {
   av1_highbd_iwht4x4_16_add_c(in, out, stride, 12);
 }
 
-class Trans4x4WHT : public libaom_test::TransformTestBase,
+class Trans4x4WHT : public libaom_test::TransformTestBase<tran_low_t>,
                     public ::testing::TestWithParam<Dct4x4Param> {
  public:
   virtual ~Trans4x4WHT() {}
@@ -87,9 +89,9 @@ TEST_P(Trans4x4WHT, CoeffCheck) { RunCoeffCheck(); }
 TEST_P(Trans4x4WHT, MemCheck) { RunMemCheck(); }
 
 TEST_P(Trans4x4WHT, InvAccuracyCheck) { RunInvAccuracyCheck(0); }
-using ::testing::make_tuple;
+using std::make_tuple;
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     C, Trans4x4WHT,
     ::testing::Values(make_tuple(&av1_highbd_fwht4x4_c, &iwht4x4_10, DCT_DCT,
                                  AOM_BITS_10, 16),

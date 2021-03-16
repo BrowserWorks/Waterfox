@@ -179,6 +179,15 @@ CONFIGS = defaultdict(lambda: {
             'OS_TARGET': 'Darwin',
         },
     },
+    'prog-lib-c-only': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'LIB_SUFFIX': '.a',
+            'BIN_SUFFIX': '',
+        },
+    }
 })
 
 

@@ -12,8 +12,10 @@
 #ifndef AOM_AV1_COMMON_TXB_COMMON_H_
 #define AOM_AV1_COMMON_TXB_COMMON_H_
 
-extern const int16_t k_eob_group_start[12];
-extern const int16_t k_eob_offset_bits[12];
+#include "av1/common/av1_common_int.h"
+
+extern const int16_t av1_eob_group_start[12];
+extern const int16_t av1_eob_offset_bits[12];
 
 extern const int8_t av1_coeff_band_4x4[16];
 
@@ -157,6 +159,19 @@ static INLINE int get_br_ctx_2d(const uint8_t *const levels,
   return mag + 14;
 }
 
+static AOM_FORCE_INLINE int get_br_ctx_eob(const int c,  // raster order
+                                           const int bwl,
+                                           const TX_CLASS tx_class) {
+  const int row = c >> bwl;
+  const int col = c - (row << bwl);
+  if (c == 0) return 0;
+  if ((tx_class == TX_CLASS_2D && row < 2 && col < 2) ||
+      (tx_class == TX_CLASS_HORIZ && col == 0) ||
+      (tx_class == TX_CLASS_VERT && row == 0))
+    return 7;
+  return 14;
+}
+
 static AOM_FORCE_INLINE int get_br_ctx(const uint8_t *const levels,
                                        const int c,  // raster order
                                        const int bwl, const TX_CLASS tx_class) {
@@ -270,12 +285,10 @@ static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(
       const int row = coeff_idx >> bwl;
       const int col = coeff_idx - (row << bwl);
       return ctx + nz_map_ctx_offset_1d[col];
-      break;
     }
     case TX_CLASS_VERT: {
       const int row = coeff_idx >> bwl;
       return ctx + nz_map_ctx_offset_1d[row];
-      break;
     }
     default: break;
   }
@@ -373,7 +386,9 @@ static INLINE void get_txb_ctx(const BLOCK_SIZE plane_bsize,
     if (plane_bsize == txsize_to_bsize[tx_size]) {
       txb_ctx->txb_skip_ctx = 0;
     } else {
-      // This is the algorithm to generate table skip_contexts[min][max].
+      // This is the algorithm to generate table skip_contexts[top][left].
+      //    const int max = AOMMIN(top | left, 4);
+      //    const int min = AOMMIN(AOMMIN(top, left), 4);
       //    if (!max)
       //      txb_skip_ctx = 1;
       //    else if (!min)
@@ -385,10 +400,15 @@ static INLINE void get_txb_ctx(const BLOCK_SIZE plane_bsize,
       //    else
       //      txb_skip_ctx = 6;
       static const uint8_t skip_contexts[5][5] = { { 1, 2, 2, 2, 3 },
-                                                   { 1, 4, 4, 4, 5 },
-                                                   { 1, 4, 4, 4, 5 },
-                                                   { 1, 4, 4, 4, 5 },
-                                                   { 1, 4, 4, 4, 6 } };
+                                                   { 2, 4, 4, 4, 5 },
+                                                   { 2, 4, 4, 4, 5 },
+                                                   { 2, 4, 4, 4, 5 },
+                                                   { 3, 5, 5, 5, 6 } };
+      // For top and left, we only care about which of the following three
+      // categories they belong to: { 0 }, { 1, 2, 3 }, or { 4, 5, ... }. The
+      // spec calculates top and left with the Max() function. We can calculate
+      // an approximate max with bitwise OR because the real max and the
+      // approximate max belong to the same category.
       int top = 0;
       int left = 0;
 
@@ -397,16 +417,16 @@ static INLINE void get_txb_ctx(const BLOCK_SIZE plane_bsize,
         top |= a[k];
       } while (++k < txb_w_unit);
       top &= COEFF_CONTEXT_MASK;
+      top = AOMMIN(top, 4);
 
       k = 0;
       do {
         left |= l[k];
       } while (++k < txb_h_unit);
       left &= COEFF_CONTEXT_MASK;
-      const int max = AOMMIN(top | left, 4);
-      const int min = AOMMIN(AOMMIN(top, left), 4);
+      left = AOMMIN(left, 4);
 
-      txb_ctx->txb_skip_ctx = skip_contexts[min][max];
+      txb_ctx->txb_skip_ctx = skip_contexts[top][left];
     }
   } else {
     const int ctx_base = get_entropy_context(tx_size, a, l);
@@ -418,7 +438,5 @@ static INLINE void get_txb_ctx(const BLOCK_SIZE plane_bsize,
   }
 #undef MAX_TX_SIZE_UNIT
 }
-
-void av1_init_lv_map(AV1_COMMON *cm);
 
 #endif  // AOM_AV1_COMMON_TXB_COMMON_H_

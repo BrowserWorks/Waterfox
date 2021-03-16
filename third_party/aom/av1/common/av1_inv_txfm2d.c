@@ -113,14 +113,14 @@ void av1_highbd_iwht4x4_1_add_c(const tran_low_t *in, uint8_t *dest8,
 
 static INLINE TxfmFunc inv_txfm_type_to_func(TXFM_TYPE txfm_type) {
   switch (txfm_type) {
-    case TXFM_TYPE_DCT4: return av1_idct4_new;
-    case TXFM_TYPE_DCT8: return av1_idct8_new;
-    case TXFM_TYPE_DCT16: return av1_idct16_new;
-    case TXFM_TYPE_DCT32: return av1_idct32_new;
-    case TXFM_TYPE_DCT64: return av1_idct64_new;
-    case TXFM_TYPE_ADST4: return av1_iadst4_new;
-    case TXFM_TYPE_ADST8: return av1_iadst8_new;
-    case TXFM_TYPE_ADST16: return av1_iadst16_new;
+    case TXFM_TYPE_DCT4: return av1_idct4;
+    case TXFM_TYPE_DCT8: return av1_idct8;
+    case TXFM_TYPE_DCT16: return av1_idct16;
+    case TXFM_TYPE_DCT32: return av1_idct32;
+    case TXFM_TYPE_DCT64: return av1_idct64;
+    case TXFM_TYPE_ADST4: return av1_iadst4;
+    case TXFM_TYPE_ADST8: return av1_iadst8;
+    case TXFM_TYPE_ADST16: return av1_iadst16;
     case TXFM_TYPE_IDENTITY4: return av1_iidentity4_c;
     case TXFM_TYPE_IDENTITY8: return av1_iidentity8_c;
     case TXFM_TYPE_IDENTITY16: return av1_iidentity16_c;
@@ -149,7 +149,7 @@ static const int8_t inv_shift_32x8[2] = { -2, -4 };
 static const int8_t inv_shift_16x64[2] = { -2, -4 };
 static const int8_t inv_shift_64x16[2] = { -2, -4 };
 
-const int8_t *inv_txfm_shift_ls[TX_SIZES_ALL] = {
+const int8_t *av1_inv_txfm_shift_ls[TX_SIZES_ALL] = {
   inv_shift_4x4,   inv_shift_8x8,   inv_shift_16x16, inv_shift_32x32,
   inv_shift_64x64, inv_shift_4x8,   inv_shift_8x4,   inv_shift_8x16,
   inv_shift_16x8,  inv_shift_16x32, inv_shift_32x16, inv_shift_32x64,
@@ -158,7 +158,7 @@ const int8_t *inv_txfm_shift_ls[TX_SIZES_ALL] = {
 };
 
 /* clang-format off */
-const int8_t inv_cos_bit_col[MAX_TXWH_IDX]      // txw_idx
+const int8_t av1_inv_cos_bit_col[MAX_TXWH_IDX]      // txw_idx
                             [MAX_TXWH_IDX] = {  // txh_idx
     { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT,           0,           0 },
     { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT,           0 },
@@ -167,7 +167,7 @@ const int8_t inv_cos_bit_col[MAX_TXWH_IDX]      // txw_idx
     {           0,           0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT }
   };
 
-const int8_t inv_cos_bit_row[MAX_TXWH_IDX]      // txw_idx
+const int8_t av1_inv_cos_bit_row[MAX_TXWH_IDX]      // txw_idx
                             [MAX_TXWH_IDX] = {  // txh_idx
     { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT,           0,           0 },
     { INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT,           0 },
@@ -177,23 +177,22 @@ const int8_t inv_cos_bit_row[MAX_TXWH_IDX]      // txw_idx
   };
 /* clang-format on */
 
-const int8_t iadst4_range[7] = { 0, 1, 0, 0, 0, 0, 0 };
+static const int8_t iadst4_range[7] = { 0, 1, 0, 0, 0, 0, 0 };
 
 void av1_get_inv_txfm_cfg(TX_TYPE tx_type, TX_SIZE tx_size,
                           TXFM_2D_FLIP_CFG *cfg) {
   assert(cfg != NULL);
   cfg->tx_size = tx_size;
-  set_flip_cfg(tx_type, cfg);
   av1_zero(cfg->stage_range_col);
   av1_zero(cfg->stage_range_row);
   set_flip_cfg(tx_type, cfg);
   const TX_TYPE_1D tx_type_1d_col = vtx_tab[tx_type];
   const TX_TYPE_1D tx_type_1d_row = htx_tab[tx_type];
-  cfg->shift = inv_txfm_shift_ls[tx_size];
+  cfg->shift = av1_inv_txfm_shift_ls[tx_size];
   const int txw_idx = get_txw_idx(tx_size);
   const int txh_idx = get_txh_idx(tx_size);
-  cfg->cos_bit_col = inv_cos_bit_col[txw_idx][txh_idx];
-  cfg->cos_bit_row = inv_cos_bit_row[txw_idx][txh_idx];
+  cfg->cos_bit_col = av1_inv_cos_bit_col[txw_idx][txh_idx];
+  cfg->cos_bit_row = av1_inv_cos_bit_row[txw_idx][txh_idx];
   cfg->txfm_type_col = av1_txfm_type_ls[txh_idx][tx_type_1d_col];
   if (cfg->txfm_type_col == TXFM_TYPE_ADST4) {
     memcpy(cfg->stage_range_col, iadst4_range, sizeof(iadst4_range));
@@ -229,7 +228,7 @@ void av1_gen_inv_stage_range(int8_t *stage_range_col, int8_t *stage_range_row,
     (void)real_range_row;
     if (cfg->txfm_type_row == TXFM_TYPE_ADST4 && i == 1) {
       // the adst4 may use 1 extra bit on top of opt_range_row at stage 1
-      // so opt_range_col >= real_range_col will not hold
+      // so opt_range_row >= real_range_row will not hold
       stage_range_row[i] = opt_range_row;
     } else {
       assert(opt_range_row >= real_range_row);
@@ -242,7 +241,7 @@ void av1_gen_inv_stage_range(int8_t *stage_range_col, int8_t *stage_range_row,
         cfg->stage_range_col[i] + fwd_shift + shift[0] + bd + 1;
     (void)real_range_col;
     if (cfg->txfm_type_col == TXFM_TYPE_ADST4 && i == 1) {
-      // the adst4 may use 1 extra bit on top of opt_range_row at stage 1
+      // the adst4 may use 1 extra bit on top of opt_range_col at stage 1
       // so opt_range_col >= real_range_col will not hold
       stage_range_col[i] = opt_range_col;
     } else {

@@ -84,8 +84,8 @@ uint64_t av1_wedge_sse_from_residuals_avx2(const int16_t *r1, const int16_t *d,
 /**
  * See av1_wedge_sign_from_residuals_c
  */
-int av1_wedge_sign_from_residuals_avx2(const int16_t *ds, const uint8_t *m,
-                                       int N, int64_t limit) {
+int8_t av1_wedge_sign_from_residuals_avx2(const int16_t *ds, const uint8_t *m,
+                                          int N, int64_t limit) {
   int64_t acc;
   __m256i v_acc0_d = _mm256_setzero_si256();
 

@@ -48,7 +48,7 @@ void aom_paeth_predictor_4x4_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i zero = _mm_setzero_si128();
   const __m128i t16 = _mm_unpacklo_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   int i;
@@ -69,7 +69,7 @@ void aom_paeth_predictor_4x8_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i zero = _mm_setzero_si128();
   const __m128i t16 = _mm_unpacklo_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   int i;
@@ -90,7 +90,7 @@ void aom_paeth_predictor_4x16_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i zero = _mm_setzero_si128();
   const __m128i t16 = _mm_unpacklo_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   for (int i = 0; i < 16; ++i) {
@@ -110,7 +110,7 @@ void aom_paeth_predictor_8x4_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i zero = _mm_setzero_si128();
   const __m128i t16 = _mm_unpacklo_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   int i;
@@ -131,7 +131,7 @@ void aom_paeth_predictor_8x8_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i zero = _mm_setzero_si128();
   const __m128i t16 = _mm_unpacklo_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   int i;
@@ -152,7 +152,7 @@ void aom_paeth_predictor_8x16_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i zero = _mm_setzero_si128();
   const __m128i t16 = _mm_unpacklo_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   int i;
@@ -176,7 +176,7 @@ void aom_paeth_predictor_8x32_ssse3(uint8_t *dst, ptrdiff_t stride,
 
   for (int j = 0; j < 2; ++j) {
     const __m128i l = _mm_load_si128((const __m128i *)(left + j * 16));
-    __m128i rep = _mm_set1_epi16(0x8000);
+    __m128i rep = _mm_set1_epi16((short)0x8000);
     for (int i = 0; i < 16; ++i) {
       const __m128i l16 = _mm_shuffle_epi8(l, rep);
       const __m128i row = paeth_8x1_pred(&l16, &t16, &tl16);
@@ -205,7 +205,7 @@ void aom_paeth_predictor_16x4_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i top0 = _mm_unpacklo_epi8(t, zero);
   const __m128i top1 = _mm_unpackhi_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   for (int i = 0; i < 4; ++i) {
@@ -226,7 +226,7 @@ void aom_paeth_predictor_16x8_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i top0 = _mm_unpacklo_epi8(t, zero);
   const __m128i top1 = _mm_unpackhi_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   int i;
@@ -249,7 +249,7 @@ void aom_paeth_predictor_16x16_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i top0 = _mm_unpacklo_epi8(t, zero);
   const __m128i top1 = _mm_unpackhi_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
 
   int i;
@@ -272,7 +272,7 @@ void aom_paeth_predictor_16x32_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i top0 = _mm_unpacklo_epi8(t, zero);
   const __m128i top1 = _mm_unpackhi_epi8(t, zero);
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
   __m128i l16;
 
@@ -287,7 +287,7 @@ void aom_paeth_predictor_16x32_ssse3(uint8_t *dst, ptrdiff_t stride,
   }
 
   l = _mm_load_si128((const __m128i *)(left + 16));
-  rep = _mm_set1_epi16(0x8000);
+  rep = _mm_set1_epi16((short)0x8000);
   for (i = 0; i < 16; ++i) {
     l16 = _mm_shuffle_epi8(l, rep);
     const __m128i row = paeth_16x1_pred(&l16, &top0, &top1, &tl16);
@@ -310,7 +310,7 @@ void aom_paeth_predictor_16x64_ssse3(uint8_t *dst, ptrdiff_t stride,
 
   for (int j = 0; j < 4; ++j) {
     const __m128i l = _mm_load_si128((const __m128i *)(left + j * 16));
-    __m128i rep = _mm_set1_epi16(0x8000);
+    __m128i rep = _mm_set1_epi16((short)0x8000);
     for (int i = 0; i < 16; ++i) {
       const __m128i l16 = _mm_shuffle_epi8(l, rep);
       const __m128i row = paeth_16x1_pred(&l16, &top0, &top1, &tl16);
@@ -332,7 +332,7 @@ void aom_paeth_predictor_32x8_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i bh = _mm_unpackhi_epi8(b, zero);
 
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
   const __m128i l = _mm_loadl_epi64((const __m128i *)left);
   __m128i l16;
@@ -361,7 +361,7 @@ void aom_paeth_predictor_32x16_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i bh = _mm_unpackhi_epi8(b, zero);
 
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
   __m128i l = _mm_load_si128((const __m128i *)left);
   __m128i l16;
@@ -391,7 +391,7 @@ void aom_paeth_predictor_32x32_ssse3(uint8_t *dst, ptrdiff_t stride,
   const __m128i bh = _mm_unpackhi_epi8(b, zero);
 
   const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   const __m128i one = _mm_set1_epi16(1);
   __m128i l = _mm_load_si128((const __m128i *)left);
   __m128i l16;
@@ -408,7 +408,7 @@ void aom_paeth_predictor_32x32_ssse3(uint8_t *dst, ptrdiff_t stride,
     rep = _mm_add_epi16(rep, one);
   }
 
-  rep = _mm_set1_epi16(0x8000);
+  rep = _mm_set1_epi16((short)0x8000);
   l = _mm_load_si128((const __m128i *)(left + 16));
   for (i = 0; i < 16; ++i) {
     l16 = _mm_shuffle_epi8(l, rep);
@@ -440,7 +440,7 @@ void aom_paeth_predictor_32x64_ssse3(uint8_t *dst, ptrdiff_t stride,
   int i, j;
   for (j = 0; j < 4; ++j) {
     const __m128i l = _mm_load_si128((const __m128i *)(left + j * 16));
-    __m128i rep = _mm_set1_epi16(0x8000);
+    __m128i rep = _mm_set1_epi16((short)0x8000);
     for (i = 0; i < 16; ++i) {
       l16 = _mm_shuffle_epi8(l, rep);
       const __m128i r32l = paeth_16x1_pred(&l16, &al, &ah, &tl16);
@@ -478,7 +478,7 @@ void aom_paeth_predictor_64x32_ssse3(uint8_t *dst, ptrdiff_t stride,
   int i, j;
   for (j = 0; j < 2; ++j) {
     const __m128i l = _mm_load_si128((const __m128i *)(left + j * 16));
-    __m128i rep = _mm_set1_epi16(0x8000);
+    __m128i rep = _mm_set1_epi16((short)0x8000);
     for (i = 0; i < 16; ++i) {
       l16 = _mm_shuffle_epi8(l, rep);
       const __m128i r0 = paeth_16x1_pred(&l16, &al, &ah, &tl16);
@@ -520,7 +520,7 @@ void aom_paeth_predictor_64x64_ssse3(uint8_t *dst, ptrdiff_t stride,
   int i, j;
   for (j = 0; j < 4; ++j) {
     const __m128i l = _mm_load_si128((const __m128i *)(left + j * 16));
-    __m128i rep = _mm_set1_epi16(0x8000);
+    __m128i rep = _mm_set1_epi16((short)0x8000);
     for (i = 0; i < 16; ++i) {
       l16 = _mm_shuffle_epi8(l, rep);
       const __m128i r0 = paeth_16x1_pred(&l16, &al, &ah, &tl16);
@@ -561,7 +561,7 @@ void aom_paeth_predictor_64x16_ssse3(uint8_t *dst, ptrdiff_t stride,
 
   int i;
   const __m128i l = _mm_load_si128((const __m128i *)left);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
   for (i = 0; i < 16; ++i) {
     l16 = _mm_shuffle_epi8(l, rep);
     const __m128i r0 = paeth_16x1_pred(&l16, &al, &ah, &tl16);
@@ -636,7 +636,8 @@ static INLINE void smooth_pred_4xh(const __m128i *pixel, const __m128i *wh,
   const __m128i one = _mm_set1_epi16(1);
   const __m128i inc = _mm_set1_epi16(0x202);
   const __m128i gat = _mm_set1_epi32(0xc080400);
-  __m128i rep = second_half ? _mm_set1_epi16(0x8008) : _mm_set1_epi16(0x8000);
+  __m128i rep = second_half ? _mm_set1_epi16((short)0x8008)
+                            : _mm_set1_epi16((short)0x8000);
   __m128i d = _mm_set1_epi16(0x100);
 
   for (int i = 0; i < h; ++i) {
@@ -792,7 +793,8 @@ static INLINE void smooth_pred_8xh(const __m128i *pixels, const __m128i *wh,
   const __m128i inc = _mm_set1_epi16(0x202);
   const __m128i gat = _mm_set_epi32(0, 0, 0xe0c0a08, 0x6040200);
 
-  __m128i rep = second_half ? _mm_set1_epi16(0x8008) : _mm_set1_epi16(0x8000);
+  __m128i rep = second_half ? _mm_set1_epi16((short)0x8008)
+                            : _mm_set1_epi16((short)0x8000);
   __m128i d = _mm_set1_epi16(0x100);
 
   int i;
@@ -1400,7 +1402,7 @@ static INLINE void smooth_h_pred_4xh(const __m128i *pixel,
   const __m128i pred_round = _mm_set1_epi32((1 << (sm_weight_log2_scale - 1)));
   const __m128i one = _mm_set1_epi16(1);
   const __m128i gat = _mm_set1_epi32(0xc080400);
-  __m128i rep = _mm_set1_epi16(0x8000);
+  __m128i rep = _mm_set1_epi16((short)0x8000);
 
   for (int i = 0; i < h; ++i) {
     __m128i b = _mm_shuffle_epi8(pixel[0], rep);
@@ -1499,7 +1501,8 @@ static INLINE void smooth_h_pred_8xh(const __m128i *pixels, const __m128i *ww,
   const __m128i pred_round = _mm_set1_epi32((1 << (sm_weight_log2_scale - 1)));
   const __m128i one = _mm_set1_epi16(1);
   const __m128i gat = _mm_set_epi32(0, 0, 0xe0c0a08, 0x6040200);
-  __m128i rep = second_half ? _mm_set1_epi16(0x8008) : _mm_set1_epi16(0x8000);
+  __m128i rep = second_half ? _mm_set1_epi16((short)0x8008)
+                            : _mm_set1_epi16((short)0x8000);
 
   for (int i = 0; i < h; ++i) {
     __m128i b = _mm_shuffle_epi8(pixels[0], rep);

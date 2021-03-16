@@ -17,6 +17,7 @@
 
 #include "aom/aom_integer.h"
 #include "aom_ports/msvc.h"
+#include "aom/aom_codec.h"
 
 #if defined(__GNUC__) && __GNUC__
 extern void die(const char *fmt, ...) __attribute__((noreturn));
@@ -48,12 +49,23 @@ void ignore_end_spaces(char *str) {
   if (end >= str) end[1] = '\0';
 }
 
-int arg_cfg(int *argc, char ***argv, const char *file) {
-  char **argv_local = (char **)*argv;
-  char **argv_org = (char **)*argv;
+static const char kSbSizeWarningString[] =
+    "super_block_size has to be 64 or 128.";
+static const char kMinpartWarningString[] =
+    "min_partition_size has to be smaller or equal to max_partition_size.";
+static const char kMaxpartWarningString[] =
+    "max_partition_size has to be smaller or equal to super_block_size.";
+
+int parse_cfg(const char *file, cfg_options_t *config) {
   char line[1024 * 10];
   FILE *f = fopen(file, "r");
   if (!f) return 1;
+
+#define GET_PARAMS(field)          \
+  if (strcmp(left, #field) == 0) { \
+    config->field = atoi(right);   \
+    continue;                      \
+  }
 
   while (fgets(line, sizeof(line) - 1, f)) {
     char *actual_line = ignore_front_spaces(line);
@@ -61,7 +73,7 @@ int arg_cfg(int *argc, char ***argv, const char *file) {
     size_t length = strlen(actual_line);
 
     if (length == 0 || actual_line[0] == '#') continue;
-    right = strchr(actual_line, ':');
+    right = strchr(actual_line, '=');
     if (right == NULL) continue;
     right[0] = '\0';
 
@@ -74,23 +86,61 @@ int arg_cfg(int *argc, char ***argv, const char *file) {
     ignore_end_spaces(left);
     ignore_end_spaces(right);
 
-    char **new_args = argv_dup(*argc, (const char **)argv_local);
-    char *new_line = (char *)malloc(sizeof(*new_line) * 128);
+    GET_PARAMS(super_block_size);
+    GET_PARAMS(max_partition_size);
+    GET_PARAMS(min_partition_size);
+    GET_PARAMS(disable_ab_partition_type);
+    GET_PARAMS(disable_rect_partition_type);
+    GET_PARAMS(disable_1to4_partition_type);
+    GET_PARAMS(disable_flip_idtx);
+    GET_PARAMS(disable_cdef);
+    GET_PARAMS(disable_lr);
+    GET_PARAMS(disable_obmc);
+    GET_PARAMS(disable_warp_motion);
+    GET_PARAMS(disable_global_motion);
+    GET_PARAMS(disable_dist_wtd_comp);
+    GET_PARAMS(disable_diff_wtd_comp);
+    GET_PARAMS(disable_inter_intra_comp);
+    GET_PARAMS(disable_masked_comp);
+    GET_PARAMS(disable_one_sided_comp);
+    GET_PARAMS(disable_palette);
+    GET_PARAMS(disable_intrabc);
+    GET_PARAMS(disable_cfl);
+    GET_PARAMS(disable_smooth_intra);
+    GET_PARAMS(disable_filter_intra);
+    GET_PARAMS(disable_dual_filter);
+    GET_PARAMS(disable_intra_angle_delta);
+    GET_PARAMS(disable_intra_edge_filter);
+    GET_PARAMS(disable_tx_64x64);
+    GET_PARAMS(disable_smooth_inter_intra);
+    GET_PARAMS(disable_inter_inter_wedge);
+    GET_PARAMS(disable_inter_intra_wedge);
+    GET_PARAMS(disable_paeth_intra);
+    GET_PARAMS(disable_trellis_quant);
+    GET_PARAMS(disable_ref_frame_mv);
+    GET_PARAMS(reduced_reference_set);
+    GET_PARAMS(reduced_tx_type_set);
 
-    if (argv_local != argv_org) free(argv_local);
-
-    if (!strcmp(right, "ON"))
-      snprintf(new_line, sizeof(*new_line) * 128, "--%s", left);
-    else
-      snprintf(new_line, sizeof(*new_line) * 128, "--%s=%s", left, right);
-
-    new_args[(*argc) - 1] = new_args[(*argc) - 2];
-    new_args[(*argc) - 2] = new_line;
-    argv_local = new_args;
-    *argv = new_args;
-    (*argc)++;
+    fprintf(stderr, "\nInvalid parameter: %s", left);
+    exit(-1);
   }
+
+  if (config->super_block_size != 128 && config->super_block_size != 64) {
+    fprintf(stderr, "\n%s", kSbSizeWarningString);
+    exit(-1);
+  }
+  if (config->min_partition_size > config->max_partition_size) {
+    fprintf(stderr, "\n%s", kMinpartWarningString);
+    exit(-1);
+  }
+  if (config->max_partition_size > config->super_block_size) {
+    fprintf(stderr, "\n%s", kMaxpartWarningString);
+    exit(-1);
+  }
+
   fclose(f);
+  config->init_by_cfg_file = 1;
+
   return 0;
 }
 
@@ -209,10 +259,6 @@ int arg_parse_int(const struct arg *arg) {
   return 0;
 }
 
-struct aom_rational {
-  int num; /**< fraction numerator */
-  int den; /**< fraction denominator */
-};
 struct aom_rational arg_parse_rational(const struct arg *arg) {
   long int rawval;
   char *endptr;

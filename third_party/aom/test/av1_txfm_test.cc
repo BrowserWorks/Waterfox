@@ -94,7 +94,7 @@ double Sqrt2 = pow(2, 0.5);
 double invSqrt2 = 1 / pow(2, 0.5);
 
 double dct_matrix(double n, double k, int size) {
-  return cos(M_PI * (2 * n + 1) * k / (2 * size));
+  return cos(PI * (2 * n + 1) * k / (2 * size));
 }
 
 void reference_dct_1d(const double *in, double *out, int size) {
@@ -119,7 +119,7 @@ void reference_idct_1d(const double *in, double *out, int size) {
   }
 }
 
-// TODO(any): Copied from the old 'fadst4' (same as the new 'av1_fadst4_new'
+// TODO(any): Copied from the old 'fadst4' (same as the new 'av1_fadst4'
 // function). Should be replaced by a proper reference function that takes
 // 'double' input & output.
 static void fadst4_new(const tran_low_t *input, tran_low_t *output) {
@@ -179,7 +179,7 @@ void reference_adst_1d(const double *in, double *out, int size) {
   for (int k = 0; k < size; ++k) {
     out[k] = 0;
     for (int n = 0; n < size; ++n) {
-      out[k] += in[n] * sin(M_PI * (2 * n + 1) * (2 * k + 1) / (4 * size));
+      out[k] += in[n] * sin(PI * (2 * n + 1) * (2 * k + 1) / (4 * size));
     }
   }
 }

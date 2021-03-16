@@ -73,7 +73,7 @@ static INLINE uint16x8_t wiener_convolve8_horiz_8x8(
   int32x4_t sum_0, sum_1;
   int32x4_t s3_0, s3_1;
   const int32_t round_const_0 = (1 << (bd + FILTER_BITS - 1));
-  const int32_t round_const_1 = (1 << ((bd) + 1 + FILTER_BITS - round0_bits));
+  const int32_t round_const_1 = (1 << (bd + 1 + FILTER_BITS - round0_bits)) - 1;
 
   /* for the purpose of right shift by { conv_params->round_0 } */
   const int32x4_t round_bits = vdupq_n_s32(-round0_bits);
@@ -124,7 +124,7 @@ static INLINE uint16x4_t wiener_convolve8_horiz_4x8(
   int16x4_t sum, temp0, temp1, temp2;
 
   const int32_t round_const_0 = (1 << (bd + FILTER_BITS - 1));
-  const int32_t round_const_1 = (1 << ((bd) + 1 + FILTER_BITS - round0_bits));
+  const int32_t round_const_1 = (1 << (bd + 1 + FILTER_BITS - round0_bits)) - 1;
   const int32x4_t round_bits = vdupq_n_s32(-round0_bits);
   const int32x4_t zero = vdupq_n_s32(0);
   const int32x4_t round_vec_0 = vdupq_n_s32(round_const_0);

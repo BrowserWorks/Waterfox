@@ -52,7 +52,7 @@ void usage_exit(void) {
   exit(EXIT_FAILURE);
 }
 
-static int aom_img_size_bytes(aom_image_t *img) {
+static int img_size_bytes(aom_image_t *img) {
   int image_size_bytes = 0;
   int plane;
   for (plane = 0; plane < 3; ++plane) {
@@ -117,7 +117,7 @@ static int encode_frame(aom_codec_ctx_t *ctx, const aom_image_t *img,
 
 static void get_raw_image(aom_image_t **frame_to_encode, aom_image_t *raw,
                           aom_image_t *raw_shift) {
-  if (!CONFIG_LOWBITDEPTH) {
+  if (FORCE_HIGHBITDEPTH_DECODING) {
     // Need to allocate larger buffer to use hbd internal.
     int input_shift = 0;
     aom_img_upshift(raw_shift, raw, input_shift);
@@ -134,7 +134,7 @@ static aom_fixed_buf_t pass0(aom_image_t *raw, FILE *infile,
                              aom_image_t *raw_shift) {
   aom_codec_ctx_t codec;
   int frame_count = 0;
-  int image_size_bytes = aom_img_size_bytes(raw);
+  int image_size_bytes = img_size_bytes(raw);
   int u_blocks, v_blocks;
   int bu, bv;
   aom_fixed_buf_t stats = { NULL, 0 };
@@ -242,7 +242,7 @@ static void pass1(aom_image_t *raw, FILE *infile, const char *outfile_name,
   AvxVideoWriter *writer = NULL;
   aom_codec_ctx_t codec;
   int frame_count = 0;
-  int image_size_bytes = aom_img_size_bytes(raw);
+  int image_size_bytes = img_size_bytes(raw);
   int bu, bv;
   int u_blocks, v_blocks;
   aom_image_t *frame_to_encode;
@@ -259,6 +259,11 @@ static void pass1(aom_image_t *raw, FILE *infile, const char *outfile_name,
     die_codec(&codec, "Failed to turn off auto altref");
   if (aom_codec_control(&codec, AV1E_SET_FRAME_PARALLEL_DECODING, 0))
     die_codec(&codec, "Failed to set frame parallel decoding");
+  if (aom_codec_control(&codec, AV1E_ENABLE_EXT_TILE_DEBUG, 1))
+    die_codec(&codec, "Failed to enable encoder ext_tile debug");
+  if (aom_codec_control(&codec, AOME_SET_CPUUSED, 1))
+    die_codec(&codec, "Failed to set cpu-used");
+
   // Note: The superblock is a sequence parameter and has to be the same for 1
   // sequence. In lightfield application, must choose the superblock size(either
   // 64x64 or 128x128) before the encoding starts. Otherwise, the default is
@@ -272,12 +277,26 @@ static void pass1(aom_image_t *raw, FILE *infile, const char *outfile_name,
   v_blocks = (lf_height + lf_blocksize - 1) / lf_blocksize;
 
   reference_image_num = u_blocks * v_blocks;
+  // Set the max gf group length so the references are guaranteed to be in
+  // a different gf group than any of the regular frames. This avoids using
+  // both vbr and constant quality mode in a single group. The number of
+  // references now cannot surpass 17 because of the enforced MAX_GF_INTERVAL of
+  // 16. If it is necessary to exceed this reference frame limit, one will have
+  // to do some additional handling to ensure references are in separate gf
+  // groups from the regular frames.
+  if (aom_codec_control(&codec, AV1E_SET_MAX_GF_INTERVAL,
+                        reference_image_num - 1))
+    die_codec(&codec, "Failed to set max gf interval");
   aom_img_fmt_t ref_fmt = AOM_IMG_FMT_I420;
-  if (!CONFIG_LOWBITDEPTH) ref_fmt |= AOM_IMG_FMT_HIGHBITDEPTH;
+  if (FORCE_HIGHBITDEPTH_DECODING) ref_fmt |= AOM_IMG_FMT_HIGHBITDEPTH;
   // Allocate memory with the border so that it can be used as a reference.
+  int border_in_pixels =
+      (codec.config.enc->rc_resize_mode || codec.config.enc->rc_superres_mode)
+          ? AOM_BORDER_IN_PIXELS
+          : AOM_ENC_NO_SCALE_BORDER;
   for (i = 0; i < reference_image_num; i++) {
     if (!aom_img_alloc_with_border(&reference_images[i], ref_fmt, cfg->g_w,
-                                   cfg->g_h, 32, 8, AOM_BORDER_IN_PIXELS)) {
+                                   cfg->g_h, 32, 8, border_in_pixels)) {
       die("Failed to allocate image.");
     }
   }
@@ -393,6 +412,10 @@ static void pass1(aom_image_t *raw, FILE *infile, const char *outfile_name,
   for (i = 0; i < reference_image_num; i++) aom_img_free(&reference_images[i]);
 
   if (aom_codec_destroy(&codec)) die_codec(&codec, "Failed to destroy codec.");
+
+  // Modify large_scale_file fourcc.
+  if (cfg->large_scale_tile == 1)
+    aom_video_writer_set_fourcc(writer, LST_FOURCC);
   aom_video_writer_close(writer);
 
   printf("\nSecond pass complete. Processed %d frames.\n", frame_count);
@@ -449,7 +472,7 @@ int main(int argc, char **argv) {
   if (!aom_img_alloc(&raw, AOM_IMG_FMT_I420, w, h, 32)) {
     die("Failed to allocate image.");
   }
-  if (!CONFIG_LOWBITDEPTH) {
+  if (FORCE_HIGHBITDEPTH_DECODING) {
     // Need to allocate larger buffer to use hbd internal.
     aom_img_alloc(&raw_shift, AOM_IMG_FMT_I420 | AOM_IMG_FMT_HIGHBITDEPTH, w, h,
                   32);
@@ -471,7 +494,7 @@ int main(int argc, char **argv) {
   cfg.kf_mode = AOM_KF_DISABLED;
   cfg.large_scale_tile = 0;  // Only set it to 1 for camera frame encoding.
   cfg.g_bit_depth = AOM_BITS_8;
-  flags |= (cfg.g_bit_depth > AOM_BITS_8 || !CONFIG_LOWBITDEPTH)
+  flags |= (cfg.g_bit_depth > AOM_BITS_8 || FORCE_HIGHBITDEPTH_DECODING)
                ? AOM_CODEC_USE_HIGHBITDEPTH
                : 0;
 
@@ -491,7 +514,7 @@ int main(int argc, char **argv) {
         lf_blocksize, flags, &raw_shift);
   free(stats.buf);
 
-  if (!CONFIG_LOWBITDEPTH) aom_img_free(&raw_shift);
+  if (FORCE_HIGHBITDEPTH_DECODING) aom_img_free(&raw_shift);
   aom_img_free(&raw);
   fclose(infile);
 

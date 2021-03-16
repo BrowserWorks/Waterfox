@@ -22,7 +22,6 @@ TEST(EC_TEST, random_ec_test) {
   int sz;
   int i;
   int ret;
-  unsigned int sym;
   unsigned int seed;
   unsigned char *ptr;
   uint32_t ptr_sz;
@@ -90,6 +89,8 @@ TEST(EC_TEST, random_ec_test) {
         << " (Random seed: " << seed << ").\n";
     for (j = 0; j < sz; j++) {
       int dec_method;
+      unsigned int sym = data[j] + 1;  // Initialize sym to an invalid value.
+
       if (CDF_SHIFT == 0) {
         dec_method = 3 + (rand() & 1);
       } else {

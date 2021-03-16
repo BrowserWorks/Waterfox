@@ -17,7 +17,7 @@
 #include "aom_dsp/blend.h"
 #include "aom/aom_integer.h"
 #include "aom_dsp/x86/synonyms.h"
-#include "aom_dsp/x86//masked_sad_intrin_ssse3.h"
+#include "aom_dsp/x86/masked_sad_intrin_ssse3.h"
 
 static INLINE unsigned int masked_sad32xh_avx2(
     const uint8_t *src_ptr, int src_stride, const uint8_t *a_ptr, int a_stride,
@@ -64,7 +64,7 @@ static INLINE unsigned int masked_sad32xh_avx2(
   res = _mm256_hadd_epi32(res, res);
   res = _mm256_hadd_epi32(res, res);
   int32_t sad = _mm256_extract_epi32(res, 0);
-  return (sad + 31) >> 6;
+  return sad;
 }
 
 static INLINE __m256i xx_loadu2_m128i(const void *hi, const void *lo) {
@@ -117,7 +117,7 @@ static INLINE unsigned int masked_sad16xh_avx2(
   res = _mm256_hadd_epi32(res, res);
   res = _mm256_hadd_epi32(res, res);
   int32_t sad = _mm256_extract_epi32(res, 0);
-  return (sad + 31) >> 6;
+  return sad;
 }
 
 static INLINE unsigned int aom_masked_sad_avx2(
@@ -253,7 +253,7 @@ static INLINE unsigned int highbd_masked_sad8xh_avx2(
   res = _mm256_hadd_epi32(res, res);
   res = _mm256_hadd_epi32(res, res);
   int sad = _mm256_extract_epi32(res, 0) + _mm256_extract_epi32(res, 4);
-  return (sad + 31) >> 6;
+  return sad;
 }
 
 static INLINE unsigned int highbd_masked_sad16xh_avx2(
@@ -311,7 +311,7 @@ static INLINE unsigned int highbd_masked_sad16xh_avx2(
   res = _mm256_hadd_epi32(res, res);
   res = _mm256_hadd_epi32(res, res);
   int sad = _mm256_extract_epi32(res, 0) + _mm256_extract_epi32(res, 4);
-  return (sad + 31) >> 6;
+  return sad;
 }
 
 static INLINE unsigned int aom_highbd_masked_sad_avx2(

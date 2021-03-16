@@ -39,7 +39,7 @@ typedef struct txfm_param {
 // Constants:
 //  for (int i = 1; i< 32; ++i)
 //    printf("static const int cospi_%d_64 = %.0f;\n", i,
-//           round(16384 * cos(i*M_PI/64)));
+//           round(16384 * cos(i*PI/64)));
 // Note: sin(k*Pi/64) = cos((32-k)*Pi/64)
 static const tran_high_t cospi_1_64 = 16364;
 static const tran_high_t cospi_2_64 = 16305;

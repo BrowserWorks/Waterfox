@@ -13,24 +13,9 @@
 
 #include "config/aom_dsp_rtcd.h"
 #include "config/aom_config.h"
-
+#include "aom_dsp/arm/sum_neon.h"
 #include "aom/aom_integer.h"
 #include "aom_ports/mem.h"
-
-static INLINE int horizontal_add_s16x8(const int16x8_t v_16x8) {
-  const int32x4_t a = vpaddlq_s16(v_16x8);
-  const int64x2_t b = vpaddlq_s32(a);
-  const int32x2_t c = vadd_s32(vreinterpret_s32_s64(vget_low_s64(b)),
-                               vreinterpret_s32_s64(vget_high_s64(b)));
-  return vget_lane_s32(c, 0);
-}
-
-static INLINE int horizontal_add_s32x4(const int32x4_t v_32x4) {
-  const int64x2_t b = vpaddlq_s32(v_32x4);
-  const int32x2_t c = vadd_s32(vreinterpret_s32_s64(vget_low_s64(b)),
-                               vreinterpret_s32_s64(vget_high_s64(b)));
-  return vget_lane_s32(c, 0);
-}
 
 // w * h must be less than 2048 or local variable v_sum may overflow.
 static void variance_neon_w8(const uint8_t *a, int a_stride, const uint8_t *b,
@@ -143,6 +128,24 @@ unsigned int aom_variance64x64_neon(const uint8_t *a, int a_stride,
   *sse = sse1 + sse2;
   sum1 += sum2;
   return *sse - (unsigned int)(((int64_t)sum1 * sum1) >> 12);
+}
+
+unsigned int aom_variance128x128_neon(const uint8_t *a, int a_stride,
+                                      const uint8_t *b, int b_stride,
+                                      unsigned int *sse) {
+  int sum1, sum2;
+  uint32_t sse1, sse2;
+  sum1 = sse1 = 0;
+  for (int i = 0; i < 16; i++) {
+    variance_neon_w8(a + (8 * i * a_stride), a_stride, b + (8 * i * b_stride),
+                     b_stride, 128, 8, &sse2, &sum2);
+    sse1 += sse2;
+    sum1 += sum2;
+  }
+
+  *sse = sse1;
+
+  return *sse - (unsigned int)(((int64_t)sum1 * sum1) >> 14);
 }
 
 unsigned int aom_variance16x8_neon(const unsigned char *src_ptr,
@@ -370,9 +373,7 @@ unsigned int aom_get4x4sse_cs_neon(const unsigned char *src_ptr,
   d6u8 = vld1_u8(ref_ptr);
   ref_ptr += recon_stride;
   d3u8 = vld1_u8(src_ptr);
-  src_ptr += source_stride;
   d7u8 = vld1_u8(ref_ptr);
-  ref_ptr += recon_stride;
 
   q11u16 = vsubl_u8(d0u8, d4u8);
   q12u16 = vsubl_u8(d1u8, d5u8);

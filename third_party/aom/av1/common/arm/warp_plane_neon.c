@@ -20,7 +20,7 @@
 #include "av1/common/warped_motion.h"
 #include "av1/common/scale.h"
 
-/* This is a modified version of 'warped_filter' from warped_motion.c:
+/* This is a modified version of 'av1_warped_filter' from warped_motion.c:
    * Each coefficient is stored in 8 bits instead of 16 bits
    * The coefficients are rearranged in the column order 0, 2, 4, 6, 1, 3, 5, 7
 
@@ -333,22 +333,22 @@ static INLINE void vertical_filter_neon(const int16x8_t *src,
   c3 = vtrnq_s32(vreinterpretq_s32_s16(b3.val[0]),
                  vreinterpretq_s32_s16(b3.val[1]));
 
-  f0 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 0 * gamma) >> WARPEDDIFF_PREC_BITS)));
-  f1 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 1 * gamma) >> WARPEDDIFF_PREC_BITS)));
-  f2 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 2 * gamma) >> WARPEDDIFF_PREC_BITS)));
-  f3 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 3 * gamma) >> WARPEDDIFF_PREC_BITS)));
-  f4 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 4 * gamma) >> WARPEDDIFF_PREC_BITS)));
-  f5 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 5 * gamma) >> WARPEDDIFF_PREC_BITS)));
-  f6 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 6 * gamma) >> WARPEDDIFF_PREC_BITS)));
-  f7 = vld1q_s16(
-      (int16_t *)(warped_filter + ((sy + 7 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f0 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 0 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f1 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 1 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f2 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 2 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f3 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 3 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f4 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 4 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f5 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 5 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f6 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 6 * gamma) >> WARPEDDIFF_PREC_BITS)));
+  f7 = vld1q_s16((int16_t *)(av1_warped_filter +
+                             ((sy + 7 * gamma) >> WARPEDDIFF_PREC_BITS)));
 
   d0 = vtrnq_s32(vreinterpretq_s32_s16(f0), vreinterpretq_s32_s16(f2));
   d1 = vtrnq_s32(vreinterpretq_s32_s16(f4), vreinterpretq_s32_s16(f6));
@@ -640,7 +640,7 @@ void av1_warp_affine_neon(const int32_t *mat, const uint8_t *ref, int width,
             uint16x4_t tmp16_lo = vld1_u16(p);
             int32x4_t tmp32_lo = vreinterpretq_s32_u32(vmovl_u16(tmp16_lo));
             int16x4_t tmp16_low;
-            if (conv_params->use_jnt_comp_avg) {
+            if (conv_params->use_dist_wtd_comp_avg) {
               res_lo = vmulq_s32(res_lo, bwd);
               tmp32_lo = vmulq_s32(tmp32_lo, fwd);
               tmp32_lo = vaddq_s32(tmp32_lo, res_lo);
@@ -671,7 +671,7 @@ void av1_warp_affine_neon(const int32_t *mat, const uint8_t *ref, int width,
               uint16x4_t tmp16_hi = vld1_u16(p4);
               int32x4_t tmp32_hi = vreinterpretq_s32_u32(vmovl_u16(tmp16_hi));
               int16x4_t tmp16_high;
-              if (conv_params->use_jnt_comp_avg) {
+              if (conv_params->use_dist_wtd_comp_avg) {
                 res_hi = vmulq_s32(res_hi, bwd);
                 tmp32_hi = vmulq_s32(tmp32_hi, fwd);
                 tmp32_hi = vaddq_s32(tmp32_hi, res_hi);

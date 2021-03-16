@@ -343,7 +343,7 @@ class FlatBlockEstimatorTest : public ::testing::Test, public T {
   libaom_test::ACMRandom random_;
 };
 
-TYPED_TEST_CASE_P(FlatBlockEstimatorTest);
+TYPED_TEST_SUITE_P(FlatBlockEstimatorTest);
 
 TYPED_TEST_P(FlatBlockEstimatorTest, ExtractBlock) {
   const int kBlockSize = 16;
@@ -494,16 +494,16 @@ TYPED_TEST_P(FlatBlockEstimatorTest, FindFlatBlocks) {
   aom_flat_block_finder_free(&flat_block_finder);
 }
 
-REGISTER_TYPED_TEST_CASE_P(FlatBlockEstimatorTest, ExtractBlock,
-                           FindFlatBlocks);
+REGISTER_TYPED_TEST_SUITE_P(FlatBlockEstimatorTest, ExtractBlock,
+                            FindFlatBlocks);
 
 typedef ::testing::Types<BitDepthParams<uint8_t, 8, false>,   // lowbd
                          BitDepthParams<uint16_t, 8, true>,   // lowbd in 16-bit
                          BitDepthParams<uint16_t, 10, true>,  // highbd data
                          BitDepthParams<uint16_t, 12, true> >
     AllBitDepthParams;
-INSTANTIATE_TYPED_TEST_CASE_P(FlatBlockInstatiation, FlatBlockEstimatorTest,
-                              AllBitDepthParams);
+INSTANTIATE_TYPED_TEST_SUITE_P(FlatBlockInstatiation, FlatBlockEstimatorTest,
+                               AllBitDepthParams);
 
 template <typename T>
 class NoiseModelUpdateTest : public ::testing::Test, public T {
@@ -570,7 +570,7 @@ class NoiseModelUpdateTest : public ::testing::Test, public T {
   uint8_t *denoised_ptr_raw_[3];
 };
 
-TYPED_TEST_CASE_P(NoiseModelUpdateTest);
+TYPED_TEST_SUITE_P(NoiseModelUpdateTest);
 
 TYPED_TEST_P(NoiseModelUpdateTest, UpdateFailsNoFlatBlocks) {
   EXPECT_EQ(AOM_NOISE_STATUS_INSUFFICIENT_FLAT_BLOCKS,
@@ -929,17 +929,17 @@ TYPED_TEST_P(NoiseModelUpdateTest, NoiseCoeffsSignalsDifferentNoiseType) {
   }
   EXPECT_EQ(AOM_NOISE_STATUS_DIFFERENT_NOISE_TYPE, this->NoiseModelUpdate());
 }
-REGISTER_TYPED_TEST_CASE_P(NoiseModelUpdateTest, UpdateFailsNoFlatBlocks,
-                           UpdateSuccessForZeroNoiseAllFlat,
-                           UpdateFailsBlockSizeTooSmall,
-                           UpdateSuccessForWhiteRandomNoise,
-                           UpdateSuccessForScaledWhiteNoise,
-                           UpdateSuccessForCorrelatedNoise,
-                           NoiseStrengthChangeSignalsDifferentNoiseType,
-                           NoiseCoeffsSignalsDifferentNoiseType);
+REGISTER_TYPED_TEST_SUITE_P(NoiseModelUpdateTest, UpdateFailsNoFlatBlocks,
+                            UpdateSuccessForZeroNoiseAllFlat,
+                            UpdateFailsBlockSizeTooSmall,
+                            UpdateSuccessForWhiteRandomNoise,
+                            UpdateSuccessForScaledWhiteNoise,
+                            UpdateSuccessForCorrelatedNoise,
+                            NoiseStrengthChangeSignalsDifferentNoiseType,
+                            NoiseCoeffsSignalsDifferentNoiseType);
 
-INSTANTIATE_TYPED_TEST_CASE_P(NoiseModelUpdateTestInstatiation,
-                              NoiseModelUpdateTest, AllBitDepthParams);
+INSTANTIATE_TYPED_TEST_SUITE_P(NoiseModelUpdateTestInstatiation,
+                               NoiseModelUpdateTest, AllBitDepthParams);
 
 TEST(NoiseModelGetGrainParameters, TestLagSize) {
   aom_film_grain_t film_grain;
@@ -1229,7 +1229,7 @@ class WienerDenoiseTest : public ::testing::Test, public T {
   int stride_[3];
 };
 
-TYPED_TEST_CASE_P(WienerDenoiseTest);
+TYPED_TEST_SUITE_P(WienerDenoiseTest);
 
 TYPED_TEST_P(WienerDenoiseTest, InvalidBlockSize) {
   const uint8_t *const data_ptrs[3] = {
@@ -1336,8 +1336,8 @@ TYPED_TEST_P(WienerDenoiseTest, GradientTest) {
   }
 }
 
-REGISTER_TYPED_TEST_CASE_P(WienerDenoiseTest, InvalidBlockSize,
-                           InvalidChromaSubsampling, GradientTest);
+REGISTER_TYPED_TEST_SUITE_P(WienerDenoiseTest, InvalidBlockSize,
+                            InvalidChromaSubsampling, GradientTest);
 
-INSTANTIATE_TYPED_TEST_CASE_P(WienerDenoiseTestInstatiation, WienerDenoiseTest,
-                              AllBitDepthParams);
+INSTANTIATE_TYPED_TEST_SUITE_P(WienerDenoiseTestInstatiation, WienerDenoiseTest,
+                               AllBitDepthParams);

@@ -177,6 +177,8 @@ AudioContext::DisconnectFromWindow()
   if (window) {
     window->RemoveAudioContext(this);
   }
+
+  FFTBlock::MainThreadInit();
 }
 
 AudioContext::~AudioContext()

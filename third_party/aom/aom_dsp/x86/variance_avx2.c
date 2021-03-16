@@ -28,7 +28,7 @@ static INLINE __m128i mm256_add_hi_lo_epi32(const __m256i val) {
 static INLINE void variance_kernel_avx2(const __m256i src, const __m256i ref,
                                         __m256i *const sse,
                                         __m256i *const sum) {
-  const __m256i adj_sub = _mm256_set1_epi16(0xff01);  // (1,-1)
+  const __m256i adj_sub = _mm256_set1_epi16((short)0xff01);  // (1,-1)
 
   // unpack into pairs of source and reference values
   const __m256i src_ref0 = _mm256_unpacklo_epi8(src, ref);
@@ -234,6 +234,10 @@ unsigned int aom_sub_pixel_variance32xh_avx2(const uint8_t *src, int src_stride,
                                              int x_offset, int y_offset,
                                              const uint8_t *dst, int dst_stride,
                                              int height, unsigned int *sse);
+unsigned int aom_sub_pixel_variance16xh_avx2(const uint8_t *src, int src_stride,
+                                             int x_offset, int y_offset,
+                                             const uint8_t *dst, int dst_stride,
+                                             int height, unsigned int *sse);
 
 unsigned int aom_sub_pixel_avg_variance32xh_avx2(
     const uint8_t *src, int src_stride, int x_offset, int y_offset,
@@ -276,6 +280,11 @@ AOM_SUB_PIXEL_VAR_AVX2(64, 32, 32, 6, 5);
 AOM_SUB_PIXEL_VAR_AVX2(32, 64, 32, 5, 6);
 AOM_SUB_PIXEL_VAR_AVX2(32, 32, 32, 5, 5);
 AOM_SUB_PIXEL_VAR_AVX2(32, 16, 32, 5, 4);
+AOM_SUB_PIXEL_VAR_AVX2(16, 64, 16, 4, 6);
+AOM_SUB_PIXEL_VAR_AVX2(16, 32, 16, 4, 5);
+AOM_SUB_PIXEL_VAR_AVX2(16, 16, 16, 4, 4);
+AOM_SUB_PIXEL_VAR_AVX2(16, 8, 16, 4, 3);
+AOM_SUB_PIXEL_VAR_AVX2(16, 4, 16, 4, 2);
 
 #define AOM_SUB_PIXEL_AVG_VAR_AVX2(w, h, wf, wlog2, hlog2)                \
   unsigned int aom_sub_pixel_avg_variance##w##x##h##_avx2(                \

@@ -13,6 +13,7 @@
  *   - jemalloc_purge_freed_pages
  *   - jemalloc_free_dirty_pages
  *   - jemalloc_thread_local_arena
+ *   - jemalloc_ptr_info
  */
 
 #ifndef MOZ_MEMORY
@@ -85,6 +86,12 @@ MOZ_JEMALLOC_API void jemalloc_purge_freed_pages();
  */
 MOZ_JEMALLOC_API void jemalloc_free_dirty_pages();
 
-MOZ_JEMALLOC_API void jemalloc_thread_local_arena(jemalloc_bool enabled);
+MOZ_JEMALLOC_API void jemalloc_thread_local_arena(bool enabled);
+
+/*
+ * Provide information about any allocation enclosing the given address.
+ */
+MOZ_JEMALLOC_API void jemalloc_ptr_info(const void* ptr,
+                                        jemalloc_ptr_info_t* info);
 
 #endif /* mozmemory_h */

@@ -26,7 +26,8 @@ typedef struct ConvolveParams {
   int round_1;
   int plane;
   int is_compound;
-  int use_jnt_comp_avg;
+  int compound_index;  // 0: the first single in compound mode, 1: the second.
+  int use_dist_wtd_comp_avg;
   int fwd_offset;
   int bck_offset;
 } ConvolveParams;
@@ -41,32 +42,34 @@ typedef void (*aom_convolve_fn_t)(const uint8_t *src, int src_stride,
                                   uint8_t *dst, int dst_stride, int w, int h,
                                   const InterpFilterParams *filter_params_x,
                                   const InterpFilterParams *filter_params_y,
-                                  const int subpel_x_q4, const int subpel_y_q4,
+                                  const int subpel_x_qn, const int subpel_y_qn,
                                   ConvolveParams *conv_params);
 
 typedef void (*aom_highbd_convolve_fn_t)(
     const uint16_t *src, int src_stride, uint16_t *dst, int dst_stride, int w,
     int h, const InterpFilterParams *filter_params_x,
-    const InterpFilterParams *filter_params_y, const int subpel_x_q4,
-    const int subpel_y_q4, ConvolveParams *conv_params, int bd);
+    const InterpFilterParams *filter_params_y, const int subpel_x_qn,
+    const int subpel_y_qn, ConvolveParams *conv_params, int bd);
 
 struct AV1Common;
 struct scale_factors;
 
 void av1_convolve_2d_facade(const uint8_t *src, int src_stride, uint8_t *dst,
                             int dst_stride, int w, int h,
-                            InterpFilters interp_filters, const int subpel_x_q4,
-                            int x_step_q4, const int subpel_y_q4, int y_step_q4,
-                            int scaled, ConvolveParams *conv_params,
-                            const struct scale_factors *sf, int is_intrabc);
+                            const InterpFilterParams *interp_filters[2],
+                            const int subpel_x_qn, int x_step_q4,
+                            const int subpel_y_qn, int y_step_q4, int scaled,
+                            ConvolveParams *conv_params,
+                            const struct scale_factors *sf);
 
-static INLINE ConvolveParams get_conv_params_no_round(int do_average, int plane,
+static INLINE ConvolveParams get_conv_params_no_round(int cmp_index, int plane,
                                                       CONV_BUF_TYPE *dst,
                                                       int dst_stride,
                                                       int is_compound, int bd) {
   ConvolveParams conv_params;
-  conv_params.do_average = do_average;
-  assert(IMPLIES(do_average, is_compound));
+  conv_params.compound_index = cmp_index;
+  assert(IMPLIES(cmp_index, is_compound));
+
   conv_params.is_compound = is_compound;
   conv_params.round_0 = ROUND0_BITS;
   conv_params.round_1 = is_compound ? COMPOUND_ROUND1_BITS
@@ -82,6 +85,10 @@ static INLINE ConvolveParams get_conv_params_no_round(int do_average, int plane,
   conv_params.dst = dst;
   conv_params.dst_stride = dst_stride;
   conv_params.plane = plane;
+
+  // By default, set do average to 1 if this is the second single prediction
+  // in a compound mode.
+  conv_params.do_average = cmp_index;
   return conv_params;
 }
 
@@ -111,12 +118,16 @@ static INLINE ConvolveParams get_conv_params_wiener(int bd) {
 
 void av1_highbd_convolve_2d_facade(const uint8_t *src8, int src_stride,
                                    uint8_t *dst, int dst_stride, int w, int h,
-                                   InterpFilters interp_filters,
-                                   const int subpel_x_q4, int x_step_q4,
-                                   const int subpel_y_q4, int y_step_q4,
+                                   const InterpFilterParams *interp_filters[2],
+                                   const int subpel_x_qn, int x_step_q4,
+                                   const int subpel_y_qn, int y_step_q4,
                                    int scaled, ConvolveParams *conv_params,
-                                   const struct scale_factors *sf,
-                                   int is_intrabc, int bd);
+                                   const struct scale_factors *sf, int bd);
+
+// TODO(sarahparker) This will need to be integerized and optimized
+void av1_convolve_2d_sobel_y_c(const uint8_t *src, int src_stride, double *dst,
+                               int dst_stride, int w, int h, int dir,
+                               double norm);
 
 #ifdef __cplusplus
 }  // extern "C"

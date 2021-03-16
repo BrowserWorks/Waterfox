@@ -446,7 +446,6 @@ static void common_hz_2t_8x8mult_msa(const uint8_t *src, int32_t src_stride,
                 vec2, vec3);
     SRARI_H4_UH(vec0, vec1, vec2, vec3, FILTER_BITS);
     LD_SB4(src, src_stride, src0, src1, src2, src3);
-    src += (4 * src_stride);
 
     PCKEV_B2_SB(vec1, vec0, vec3, vec2, out0, out1);
     ST8x4_UB(out0, out1, dst, dst_stride);

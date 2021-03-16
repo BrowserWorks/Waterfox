@@ -20,9 +20,9 @@ const uint32_t kSizeTestNumValues = 6;
 const uint32_t kSizeTestExpectedSizes[kSizeTestNumValues] = {
   1, 1, 2, 3, 4, 5
 };
-const uint64_t kSizeTestInputs[kSizeTestNumValues] = {
-  0, 0x7f, 0x3fff, 0x1fffff, 0xffffff, 0x10000000
-};
+const uint64_t kSizeTestInputs[kSizeTestNumValues] = { 0,        0x7f,
+                                                       0x3fff,   0x1fffff,
+                                                       0xffffff, 0x10000000 };
 
 const uint8_t kOutOfRangeLeb128Value[5] = { 0x80, 0x80, 0x80, 0x80,
                                             0x10 };  // UINT32_MAX + 1

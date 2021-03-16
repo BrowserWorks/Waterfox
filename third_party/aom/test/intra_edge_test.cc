@@ -100,7 +100,7 @@ TEST_P(UpsampleTest8B, RandomValues) {
 }
 
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, UpsampleTest8B,
     ::testing::Values(TestFuncs(av1_upsample_intra_edge_c,
                                 av1_upsample_intra_edge_sse4_1)));
@@ -152,7 +152,7 @@ TEST_P(UpsampleTestHB, RandomValues) {
 }
 
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, UpsampleTestHB,
     ::testing::Values(TestFuncsHBD(av1_upsample_intra_edge_high_c,
                                    av1_upsample_intra_edge_high_sse4_1)));
@@ -223,7 +223,7 @@ TEST_P(FilterEdgeTest8B, RandomValues) {
 }
 
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SSE4_1, FilterEdgeTest8B,
     ::testing::Values(FilterEdgeTestFuncs(av1_filter_intra_edge_c,
                                           av1_filter_intra_edge_sse4_1)));
@@ -268,10 +268,10 @@ TEST_P(FilterEdgeTestHB, RandomValues) {
 }
 
 #if HAVE_SSE4_1
-INSTANTIATE_TEST_CASE_P(SSE4_1, FilterEdgeTestHB,
-                        ::testing::Values(FilterEdgeTestFuncsHBD(
-                            av1_filter_intra_edge_high_c,
-                            av1_filter_intra_edge_high_sse4_1)));
+INSTANTIATE_TEST_SUITE_P(SSE4_1, FilterEdgeTestHB,
+                         ::testing::Values(FilterEdgeTestFuncsHBD(
+                             av1_filter_intra_edge_high_c,
+                             av1_filter_intra_edge_high_sse4_1)));
 #endif  // HAVE_SSE4_1
 
 // Speed tests

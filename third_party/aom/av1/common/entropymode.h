@@ -63,7 +63,6 @@ struct AV1Common;
 typedef struct {
   const int16_t *scan;
   const int16_t *iscan;
-  const int16_t *neighbors;
 } SCAN_ORDER;
 
 typedef struct frame_contexts {
@@ -92,7 +91,8 @@ typedef struct frame_contexts {
 
   aom_cdf_prob inter_compound_mode_cdf[INTER_MODE_CONTEXTS]
                                       [CDF_SIZE(INTER_COMPOUND_MODES)];
-  aom_cdf_prob compound_type_cdf[BLOCK_SIZES_ALL][CDF_SIZE(COMPOUND_TYPES - 1)];
+  aom_cdf_prob compound_type_cdf[BLOCK_SIZES_ALL]
+                                [CDF_SIZE(MASKED_COMPOUND_TYPES)];
   aom_cdf_prob wedge_idx_cdf[BLOCK_SIZES_ALL][CDF_SIZE(16)];
   aom_cdf_prob interintra_cdf[BLOCK_SIZE_GROUPS][CDF_SIZE(2)];
   aom_cdf_prob wedge_interintra_cdf[BLOCK_SIZES_ALL][CDF_SIZE(2)];

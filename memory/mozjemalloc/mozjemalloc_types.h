@@ -38,12 +38,11 @@
 #else
 #include <stddef.h>
 #endif
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned char jemalloc_bool;
 
 /*
  * jemalloc_stats() is not a stable interface.  When using jemalloc_stats_t, be
@@ -54,13 +53,14 @@ typedef struct {
 	/*
 	 * Run-time configuration settings.
 	 */
-	jemalloc_bool	opt_junk;	/* Fill allocated memory with kAllocJunk? */
-	jemalloc_bool	opt_zero;	/* Fill allocated memory with 0x0? */
+	bool	opt_junk;	/* Fill allocated memory with kAllocJunk? */
+	bool	opt_zero;	/* Fill allocated memory with 0x0? */
 	size_t	narenas;	/* Number of arenas. */
 	size_t	quantum;	/* Allocation quantum. */
 	size_t	small_max;	/* Max quantum-spaced allocation size. */
 	size_t	large_max;	/* Max sub-chunksize allocation size. */
 	size_t	chunksize;	/* Size of each virtual memory mapping. */
+	size_t  page_size;	/* Size of pages. */
 	size_t	dirty_max;	/* Max dirty pages per arena. */
 
 	/*
@@ -77,6 +77,70 @@ typedef struct {
                                    allocator. */
 	size_t bin_unused; /* Bytes committed to a bin but currently unused. */
 } jemalloc_stats_t;
+
+enum PtrInfoTag {
+  // The pointer is not currently known to the allocator.
+  // 'addr' and 'size' are always 0.
+  TagUnknown,
+
+  // The pointer is within a live allocation.
+  // 'addr' and 'size' describe the allocation.
+  TagLiveSmall,
+  TagLiveLarge,
+  TagLiveHuge,
+
+  // The pointer is within a small freed allocation.
+  // 'addr' and 'size' describe the allocation.
+  TagFreedSmall,
+
+  // The pointer is within a freed page. Details about the original
+  // allocation, including its size, are not available.
+  // 'addr' and 'size' describe the page.
+  TagFreedPageDirty,
+  TagFreedPageDecommitted,
+  TagFreedPageMadvised,
+  TagFreedPageZeroed,
+};
+
+/*
+ * The information in jemalloc_ptr_info_t could be represented in a variety of
+ * ways. The chosen representation has the following properties.
+ * - The number of fields is minimized.
+ * - The 'tag' field unambiguously defines the meaning of the subsequent fields.
+ * Helper functions are used to group together related categories of tags.
+ */
+typedef struct {
+  enum PtrInfoTag tag;
+  void* addr;     // meaning depends on tag; see above
+  size_t size;    // meaning depends on tag; see above
+} jemalloc_ptr_info_t;
+
+static inline bool
+jemalloc_ptr_is_live(jemalloc_ptr_info_t* info)
+{
+  return info->tag == TagLiveSmall ||
+         info->tag == TagLiveLarge ||
+         info->tag == TagLiveHuge;
+}
+
+static inline bool
+jemalloc_ptr_is_freed(jemalloc_ptr_info_t* info)
+{
+  return info->tag == TagFreedSmall ||
+         info->tag == TagFreedPageDirty ||
+         info->tag == TagFreedPageDecommitted ||
+         info->tag == TagFreedPageMadvised ||
+         info->tag == TagFreedPageZeroed;
+}
+
+static inline bool
+jemalloc_ptr_is_freed_page(jemalloc_ptr_info_t* info)
+{
+  return info->tag == TagFreedPageDirty ||
+         info->tag == TagFreedPageDecommitted ||
+         info->tag == TagFreedPageMadvised ||
+         info->tag == TagFreedPageZeroed;
+}
 
 #ifdef __cplusplus
 } /* extern "C" */

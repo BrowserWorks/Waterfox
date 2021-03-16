@@ -517,6 +517,7 @@ static void masked_variance4xh(const uint8_t *src_ptr, int src_stride,
   *sse = _mm_cvtsi128_si32(_mm_srli_si128(sum, 4));
 }
 
+#if CONFIG_AV1_HIGHBITDEPTH
 // For width a multiple of 8
 static void highbd_bilinear_filter(const uint16_t *src, int src_stride,
                                    int xoffset, int yoffset, uint16_t *dst,
@@ -1025,6 +1026,7 @@ static void highbd_masked_variance4xh(const uint16_t *src_ptr, int src_stride,
   *sum_ = _mm_cvtsi128_si32(sum);
   *sse = _mm_cvtsi128_si32(_mm_srli_si128(sum, 4));
 }
+#endif  // CONFIG_AV1_HIGHBITDEPTH
 
 void aom_comp_mask_pred_ssse3(uint8_t *comp_pred, const uint8_t *pred,
                               int width, int height, const uint8_t *ref,

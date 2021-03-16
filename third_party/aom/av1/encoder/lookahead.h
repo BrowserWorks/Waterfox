@@ -19,7 +19,10 @@
 extern "C" {
 #endif
 
-#define MAX_LAG_BUFFERS 25
+#define MAX_LAG_BUFFERS 35
+#define MAX_LAP_BUFFERS 35
+#define MAX_TOTAL_BUFFERS (MAX_LAG_BUFFERS + MAX_LAP_BUFFERS)
+#define LAP_LAG_IN_FRAMES 17
 
 struct lookahead_entry {
   YV12_BUFFER_CONFIG img;
@@ -31,12 +34,20 @@ struct lookahead_entry {
 // The max of past frames we want to keep in the queue.
 #define MAX_PRE_FRAMES 1
 
+enum { ENCODE_STAGE, LAP_STAGE, MAX_STAGES } UENUM1BYTE(COMPRESSOR_STAGE);
+
+struct read_ctx {
+  int sz;       /* Number of buffers currently in the queue */
+  int read_idx; /* Read index */
+  int pop_sz;   /* Size to check for pop condition */
+  int valid;    /* Is this ctx valid? */
+};
+
 struct lookahead_ctx {
-  int max_sz;                  /* Absolute size of the queue */
-  int sz;                      /* Number of buffers currently in the queue */
-  int read_idx;                /* Read index */
-  int write_idx;               /* Write index */
-  struct lookahead_entry *buf; /* Buffer list */
+  int max_sz;                            /* Absolute size of the queue */
+  int write_idx;                         /* Write index */
+  struct read_ctx read_ctxs[MAX_STAGES]; /* Read context */
+  struct lookahead_entry *buf;           /* Buffer list */
 };
 
 /**\brief Initializes the lookahead stage
@@ -46,7 +57,8 @@ struct lookahead_ctx {
  */
 struct lookahead_ctx *av1_lookahead_init(
     unsigned int width, unsigned int height, unsigned int subsampling_x,
-    unsigned int subsampling_y, int use_highbitdepth, unsigned int depth);
+    unsigned int subsampling_y, int use_highbitdepth, unsigned int depth,
+    const int border_in_pixels, int byte_alignment, int num_lap_buffers);
 
 /**\brief Destroys the lookahead stage
  */
@@ -81,7 +93,8 @@ int av1_lookahead_push(struct lookahead_ctx *ctx, YV12_BUFFER_CONFIG *src,
  * \retval NULL, if drain set and queue is empty
  * \retval NULL, if drain not set and queue not of the configured depth
  */
-struct lookahead_entry *av1_lookahead_pop(struct lookahead_ctx *ctx, int drain);
+struct lookahead_entry *av1_lookahead_pop(struct lookahead_ctx *ctx, int drain,
+                                          COMPRESSOR_STAGE stage);
 
 /**\brief Get a future source buffer to encode
  *
@@ -90,14 +103,17 @@ struct lookahead_entry *av1_lookahead_pop(struct lookahead_ctx *ctx, int drain);
  *
  * \retval NULL, if no buffer exists at the specified index
  */
-struct lookahead_entry *av1_lookahead_peek(struct lookahead_ctx *ctx,
-                                           int index);
+struct lookahead_entry *av1_lookahead_peek(struct lookahead_ctx *ctx, int index,
+                                           COMPRESSOR_STAGE stage);
 
 /**\brief Get the number of frames currently in the lookahead queue
  *
  * \param[in] ctx       Pointer to the lookahead context
  */
-unsigned int av1_lookahead_depth(struct lookahead_ctx *ctx);
+unsigned int av1_lookahead_depth(struct lookahead_ctx *ctx,
+                                 COMPRESSOR_STAGE stage);
+
+int av1_lookahead_pop_sz(struct lookahead_ctx *ctx, COMPRESSOR_STAGE stage);
 
 #ifdef __cplusplus
 }  // extern "C"
