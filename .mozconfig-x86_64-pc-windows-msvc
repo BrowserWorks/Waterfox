@@ -4,14 +4,15 @@ TOOLTOOL_DIR=/tooltool11
 FXC=${TOOLTOOL_DIR}/fxc2/bin/fxc2.exe
 X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
 
-export AR="$TOOLTOOL_DIR/mingw-w64-clang/bin/llvm-lib"
-export CC="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang-cl"
-export CXX="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang-cl"
+export AR="${TOOLTOOL_DIR}/mingw-w64-clang/bin/llvm-lib"
+export CC="${TOOLTOOL_DIR}/mingw-w64-clang/bin/clang-cl"
+export CBINDGEN="${TOOLTOOL_DIR}/cbindgen/cbindgen"
+export CXX="${TOOLTOOL_DIR}/mingw-w64-clang/bin/clang-cl"
 export DIA_SDK_PATH="/mnt/MICROS~1/2017/Community/DIASDK~1/"
-export HOST_CC="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang"
-export HOST_CXX="$TOOLTOOL_DIR/mingw-w64-clang/bin/clang++"
-export LINKER="$TOOLTOOL_DIR/mingw-w64-clang/bin/lld-link"
-export LLVM_DLLTOOL="$TOOLTOOL_DIR/mingw-w64-clang/bin/llvm-dlltool"
+export HOST_CC="${TOOLTOOL_DIR}/mingw-w64-clang/bin/clang"
+export HOST_CXX="${TOOLTOOL_DIR}/mingw-w64-clang/bin/clang++"
+export LINKER="${TOOLTOOL_DIR}/mingw-w64-clang/bin/lld-link"
+export LLVM_DLLTOOL="${TOOLTOOL_DIR}/mingw-w64-clang/bin/llvm-dlltool"
 export MOZ_INCLUDE_SOURCE_INFO=1
 export MOZ_LTO=cross
 export MOZ_REQUIRE_SIGNING=0
@@ -36,7 +37,7 @@ ac_add_options --disable-profiling
 ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
-# ac_add_options --enable-lto
+ac_add_options --enable-ccache=${TOOLTOOL_DIR}/sccache/sccache
 ac_add_options --enable-optimize="-O2 -Qvec -w"
 ac_add_options --enable-proxy-bypass-protection
 ac_add_options --enable-rust-simd
