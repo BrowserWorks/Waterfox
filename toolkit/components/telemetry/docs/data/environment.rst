@@ -389,6 +389,10 @@ The following is a partial list of `collected preferences <https://searchfox.org
 
 - ``fission.autostart``: True if fission is enabled at startup. Default to false. For more information please visit `the project wiki page <https://wiki.mozilla.org/Project_Fission>`_.
 
+- ``privacy.firstparty.isolate``: True if the user has changed the (unsupported, hidden) First Party Isolation preference. Defaults to false.
+
+- ``privacy.resistFingerprinting``: True if the user has changed the (unsupported, hidden) Resist Fingerprinting preference. Defaults to false.
+
 - ``security.tls.version.enable-deprecated``: True if deprecated versions of TLS (1.0 and 1.1) have been enabled by the user. Defaults to false.
 
 attribution

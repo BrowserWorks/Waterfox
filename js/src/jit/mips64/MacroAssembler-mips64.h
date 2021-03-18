@@ -94,6 +94,10 @@ class MacroAssemblerMIPS64 : public MacroAssemblerMIPSShared {
   void ma_dins(Register rt, Register rs, Imm32 pos, Imm32 size);
   void ma_dext(Register rt, Register rs, Imm32 pos, Imm32 size);
 
+  // doubleword swap bytes
+  void ma_dsbh(Register rd, Register rt);
+  void ma_dshd(Register rd, Register rt);
+
   void ma_dctz(Register rd, Register rs);
 
   // load
@@ -544,7 +548,11 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64 {
     JSValueTag tag = (JSValueTag)JSVAL_TYPE_TO_TAG(type);
     ma_li(dest, Imm32(tag));
     ma_dsll(dest, dest, Imm32(JSVAL_TAG_SHIFT));
-    ma_dins(dest, src, Imm32(0), Imm32(JSVAL_TAG_SHIFT));
+    if (type == JSVAL_TYPE_INT32 || type == JSVAL_TYPE_BOOLEAN) {
+      ma_dins(dest, src, Imm32(0), Imm32(32));
+    } else {
+      ma_dins(dest, src, Imm32(0), Imm32(JSVAL_TAG_SHIFT));
+    }
   }
 
   void storeValue(ValueOperand val, Operand dst);

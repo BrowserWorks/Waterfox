@@ -1,4 +1,5 @@
-FROM          ubuntu:bionic-20200112
+# %ARG DOCKER_IMAGE_PARENT
+FROM          $DOCKER_IMAGE_PARENT
 MAINTAINER    Edwin Takahashi <egao@mozilla.com>
 
 # Create necessary directories and worker user account
@@ -72,7 +73,6 @@ ENV DISPLAY :0
 
 # Add utilities and configuration
 COPY    dot-files/config        /builds/worker/.config
-COPY    dot-files/pulse         /builds/worker/.pulse
 
 # Disable apport (app crash reporter) to avoid stealing focus from test runs
 ADD apport /etc/default/apport
@@ -93,12 +93,6 @@ RUN     chmod +x bin/*; chown -R worker:worker /builds/worker
 ADD motd /etc/taskcluster-motd
 ADD taskcluster-interactive-shell /bin/taskcluster-interactive-shell
 RUN     chmod +x /bin/taskcluster-interactive-shell
-
-# gnome-keyring-daemon is configured to have the IPC_LOCK capability (to lock pages with secrets in
-# memory), but docker isn't run with that capability granted. So, if we were to try running
-# gnome-keyring-daemon without first clearing the capability, it would just exit with the message
-# "Operation not permitted". Luckily it doesn't actually require the capability.
-RUN     setcap -r /usr/bin/gnome-keyring-daemon
 
 # Bug 1638183 - increase xserver maximum client count
 COPY     dot-files/config/xorg/99-serverflags.conf     /usr/share/X11/xorg.conf.d/

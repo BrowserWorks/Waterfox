@@ -6,15 +6,12 @@ use std::iter::FromIterator;
 use std::slice::IterMut;
 use std::ops::{Deref, DerefMut};
 use std::marker::PhantomData;
+use std::alloc::*;
 use std::cmp::*;
 use std::hash::*;
 use std::borrow::*;
 use range::RangeArgument;
 use std::ptr::NonNull;
-
-// Heap shimming because reasons. This doesn't unfortunately match the heap api
-// right now because reasons.
-mod heap;
 
 #[cfg(not(feature = "gecko-ffi"))]
 type SizeType = usize;
@@ -156,13 +153,19 @@ fn alloc_align<T>() -> usize {
     max(mem::align_of::<T>(), mem::align_of::<Header>())
 }
 
+fn layout<T>(cap: usize) -> Layout {
+    unsafe {
+        Layout::from_size_align_unchecked(
+            alloc_size::<T>(cap),
+            alloc_align::<T>(),
+        )
+    }
+}
+
 fn header_with_capacity<T>(cap: usize) -> NonNull<Header> {
     debug_assert!(cap > 0);
     unsafe {
-        let header = heap::allocate(
-            alloc_size::<T>(cap),
-            alloc_align::<T>(),
-        ) as *mut Header;
+        let header = alloc(layout::<T>(cap)) as *mut Header;
 
         if header.is_null() { oom() }
 
@@ -666,9 +669,10 @@ impl<T> ThinVec<T> {
 
     unsafe fn deallocate(&mut self) {
         if self.has_allocation() {
-            heap::deallocate(self.ptr() as *mut u8,
-                alloc_size::<T>(self.capacity()),
-                alloc_align::<T>());
+            dealloc(
+                self.ptr() as *mut u8,
+                layout::<T>(self.capacity()),
+            )
         }
     }
 
@@ -678,10 +682,12 @@ impl<T> ThinVec<T> {
         debug_assert!(new_cap > 0);
         if self.has_allocation() {
             let old_cap = self.capacity();
-            let ptr = heap::reallocate(self.ptr() as *mut u8,
-                                       alloc_size::<T>(old_cap),
-                                       alloc_size::<T>(new_cap),
-                                       alloc_align::<T>()) as *mut Header;
+            let ptr = realloc(
+                self.ptr() as *mut u8,
+                layout::<T>(old_cap),
+                alloc_size::<T>(new_cap),
+            ) as *mut Header;
+
             if ptr.is_null() { oom() }
             (*ptr).set_cap(new_cap);
             self.ptr = NonNull::new_unchecked(ptr);

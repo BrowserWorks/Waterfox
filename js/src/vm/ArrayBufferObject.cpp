@@ -1456,6 +1456,10 @@ void ArrayBufferObject::addSizeOfExcludingThis(
     case USER_OWNED:
       // User-owned data should be accounted for by the user.
       break;
+    case EXTERNAL:
+      // External data will be accounted for by the owner of the buffer,
+      // not this view.
+      break;
     case MAPPED:
       info->objectsNonHeapElementsNormal += buffer.byteLength();
       break;
@@ -1463,9 +1467,6 @@ void ArrayBufferObject::addSizeOfExcludingThis(
       info->objectsNonHeapElementsWasm += buffer.byteLength();
       MOZ_ASSERT(buffer.wasmMappedSize() >= buffer.byteLength());
       info->wasmGuardPages += buffer.wasmMappedSize() - buffer.byteLength();
-      break;
-    case EXTERNAL:
-      MOZ_CRASH("external buffers not currently supported");
       break;
     case BAD1:
       MOZ_CRASH("bad bufferKind()");

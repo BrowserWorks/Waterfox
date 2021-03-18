@@ -24,8 +24,11 @@ jobs:
         symbol: I(dt16t)
     debian10-test:
         symbol: I(deb10-test)
+    ubuntu1804-test-base:
+        symbol: I(ub18-test-base)
     ubuntu1804-test:
         symbol: I(ub18-test)
+        parent: ubuntu1804-test-base
     # Neither the debian8-*raw nor the debian8-*packages images can have
     # packages dependencies.
     debian8-raw:
@@ -240,5 +243,7 @@ jobs:
         parent: debian9-base
     system-symbols-mac:
         symbol: I(system-symbols-mac)
+        parent: debian10-base
     system-symbols-win:
         symbol: I(system-symbols-win)
+        parent: debian10-base
