@@ -4,10 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/CycleCollectedJSContext.h"
+#include "mozilla/dom/FunctionBinding.h"
 #include "nsIGlobalObject.h"
 #include "nsContentUtils.h"
 #include "nsThreadUtils.h"
 #include "nsHostObjectProtocolHandler.h"
+
+using mozilla::AutoSlowOperation;
+using mozilla::CycleCollectedJSContext;
+using mozilla::ErrorResult;
+using mozilla::IgnoredErrorResult;
+using mozilla::MicroTaskRunnable;
+using mozilla::dom::VoidFunction;
 
 nsIGlobalObject::~nsIGlobalObject()
 {
@@ -110,5 +119,30 @@ nsIGlobalObject::TraverseHostObjectURIs(nsCycleCollectionTraversalCallback &aCb)
 
   for (uint32_t index = 0; index < mHostObjectURIs.Length(); ++index) {
     nsHostObjectProtocolHandler::Traverse(mHostObjectURIs[index], aCb);
+  }
+}
+
+class QueuedMicrotask : public MicroTaskRunnable {
+ public:
+  QueuedMicrotask(nsIGlobalObject* aGlobal, VoidFunction& aCallback)
+      : mGlobal(aGlobal), mCallback(&aCallback) {}
+
+  void Run(AutoSlowOperation& aAso) final {
+    IgnoredErrorResult rv;
+    mCallback->Call(static_cast<ErrorResult&>(rv));
+  }
+
+  bool Suppressed() final { return mGlobal->IsInSyncOperation(); }
+
+ private:
+  nsCOMPtr<nsIGlobalObject> mGlobal;
+  RefPtr<VoidFunction> mCallback;
+};
+
+void nsIGlobalObject::QueueMicrotask(VoidFunction& aCallback) {
+  CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
+  if (context) {
+    RefPtr<MicroTaskRunnable> mt = new QueuedMicrotask(this, aCallback);
+    context->DispatchToMicroTask(mt.forget());
   }
 }
