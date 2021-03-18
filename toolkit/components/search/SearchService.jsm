@@ -1618,6 +1618,19 @@ SearchService.prototype = {
       return;
     }
 
+    const ptag = Services.prefs.getCharPref("browser.search.ptag", "SYS10000000");
+    if (engine.name == "Bing" && ptag != "SYS10000000") {
+      const regex = /(.*PTAG=)/g;
+      const searchURL = engine.__searchForm.match(regex)[0];
+      engine.__searchForm = searchURL + ptag;
+      engine._urls[0].params[7] = {
+        name: engine._urls[0].params[7].name,
+        value: ptag,
+        purpose: undefined
+      }
+    }
+
+
     if (engine._engineToUpdate) {
       // We need to replace engineToUpdate with the engine that just loaded.
       var oldEngine = engine._engineToUpdate;

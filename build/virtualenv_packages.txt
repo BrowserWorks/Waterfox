@@ -21,6 +21,7 @@ mozilla.pth:third_party/python/cram
 mozilla.pth:third_party/python/diskcache
 mozilla.pth:third_party/python/distro
 mozilla.pth:third_party/python/dlmanager
+mozilla.pth:third_party/python/ds_store
 mozilla.pth:third_party/python/ecdsa/src
 python2:mozilla.pth:third_party/python/enum34
 mozilla.pth:third_party/python/esprima
