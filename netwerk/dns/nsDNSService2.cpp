@@ -1101,7 +1101,7 @@ nsDNSService::Observe(nsISupports *subject, const char *topic, const char16_t *d
     }
 
     if (flushCache && resolver) {
-        resolver->FlushCache(false);
+        resolver->FlushCache();
         return NS_OK;
     }
 
