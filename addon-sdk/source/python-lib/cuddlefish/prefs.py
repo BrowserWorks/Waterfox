@@ -210,7 +210,6 @@ DEFAULT_TEST_PREFS = {
     'extensions.defaultProviders.enabled': True,
     'datareporting.policy.dataSubmissionPolicyBypassNotification': True,
     'layout.css.report_errors': True,
-    'layout.css.grid.enabled': True,
     'layout.spammy_warnings.enabled': False,
     # Always use network provider for geolocation tests
     # so we bypass the OSX dialog raised by the corelocation provider

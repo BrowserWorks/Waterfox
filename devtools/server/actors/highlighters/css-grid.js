@@ -33,7 +33,6 @@ const { LocalizationHelper } = require("devtools/shared/l10n");
 const LAYOUT_STRINGS_URI = "devtools/client/locales/layout.properties";
 const LAYOUT_L10N = new LocalizationHelper(LAYOUT_STRINGS_URI);
 
-const CSS_GRID_ENABLED_PREF = "layout.css.grid.enabled";
 const NEGATIVE_LINE_NUMBERS_PREF = "devtools.gridinspector.showNegativeLineNumbers";
 
 const DEFAULT_GRID_COLOR = "#4B0082";
@@ -760,7 +759,7 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
   }
 
   _show() {
-    if (Services.prefs.getBoolPref(CSS_GRID_ENABLED_PREF) && !this.isGrid()) {
+    if (!this.isGrid()) {
       this.hide();
       return false;
     }

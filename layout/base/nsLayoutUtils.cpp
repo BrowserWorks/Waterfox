@@ -151,7 +151,6 @@ using namespace mozilla::layers;
 using namespace mozilla::layout;
 using namespace mozilla::gfx;
 
-#define GRID_ENABLED_PREF_NAME "layout.css.grid.enabled"
 #define WEBKIT_PREFIXES_ENABLED_PREF_NAME "layout.css.prefixes.webkit"
 #define TEXT_ALIGN_UNSAFE_ENABLED_PREF_NAME "layout.css.text-align-unsafe-value.enabled"
 #define FLOAT_LOGICAL_VALUES_ENABLED_PREF_NAME "layout.css.float-logical-values.enabled"

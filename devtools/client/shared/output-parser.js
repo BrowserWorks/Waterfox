@@ -23,7 +23,6 @@ const {LocalizationHelper} = require("devtools/shared/l10n");
 const STYLE_INSPECTOR_L10N = new LocalizationHelper(STYLE_INSPECTOR_PROPERTIES);
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const CSS_GRID_ENABLED_PREF = "layout.css.grid.enabled";
 const CSS_SHAPES_ENABLED_PREF = "devtools.inspector.shapesHighlighter.enabled";
 
 /**
@@ -364,8 +363,7 @@ OutputParser.prototype = {
           if (options.expectCubicBezier &&
               BEZIER_KEYWORDS.indexOf(token.text) >= 0) {
             this._appendCubicBezier(token.text, options);
-          } else if (Services.prefs.getBoolPref(CSS_GRID_ENABLED_PREF) &&
-                     this._isDisplayGrid(text, token, options)) {
+          } else if (this._isDisplayGrid(text, token, options)) {
             this._appendGrid(token.text, options);
           } else if (colorOK() &&
                      colorUtils.isValidCSSColor(token.text, this.cssColor4)) {
