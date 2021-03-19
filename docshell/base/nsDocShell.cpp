@@ -5622,7 +5622,7 @@ nsDocShell::Stop(uint32_t aStopFlags)
   } else if (nsIWebNavigation::STOP_NETWORK & aStopFlags) {
     // Stop the document loading only
     if (mContentViewer) {
-      RefPtr<Document> doc = mContentViewer->GetDocument();
+      nsCOMPtr<nsIDocument> doc = mContentViewer->GetDocument();
       if (doc) {
         doc->StopDocumentLoad();
       }
