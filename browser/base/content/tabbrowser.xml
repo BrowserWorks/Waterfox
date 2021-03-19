@@ -1066,7 +1066,7 @@
             // XXX https://bugzilla.mozilla.org/show_bug.cgi?id=22183#c239
             try {
               if (docElement.getAttribute("chromehidden").includes("location")) {
-                var uri = this.io.createExposableURI(
+                var uri = this.mURIFixup.createExposableURI(
                             aBrowser.currentURI);
                 if (uri.scheme == "about")
                   newTitle = uri.spec + sep + newTitle;
