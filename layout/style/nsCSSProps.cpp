@@ -1287,7 +1287,6 @@ KTableEntry nsCSSProps::kDisplayKTable[] = {
   { eCSSKeyword_ruby_base_container, StyleDisplay::RubyBaseContainer },
   { eCSSKeyword_ruby_text,           StyleDisplay::RubyText },
   { eCSSKeyword_ruby_text_container, StyleDisplay::RubyTextContainer },
-  // The next two entries are controlled by the layout.css.grid.enabled pref.
   { eCSSKeyword_grid,                StyleDisplay::Grid },
   { eCSSKeyword_inline_grid,         StyleDisplay::InlineGrid },
   // The next 4 entries are controlled by the layout.css.prefixes.webkit pref.
@@ -2902,8 +2901,6 @@ static const nsCSSPropertyID gGridSubpropTable[] = {
   eCSSProperty_grid_auto_flow,
   eCSSProperty_grid_auto_rows,
   eCSSProperty_grid_auto_columns,
-  eCSSProperty_grid_row_gap, // can only be reset, not get/set
-  eCSSProperty_grid_column_gap, // can only be reset, not get/set
   eCSSProperty_UNKNOWN
 };
 

@@ -1791,6 +1791,141 @@ exports.CSS_PROPERTIES = {
       "unset"
     ]
   },
+  "-webkit-appearance": {
+    "isInherited": false,
+    "subproperties": [
+      "-moz-appearance"
+    ],
+    "supports": [],
+    "values": [
+      "-moz-gtk-info-bar",
+      "-moz-mac-active-source-list-selection",
+      "-moz-mac-disclosure-button-closed",
+      "-moz-mac-disclosure-button-open",
+      "-moz-mac-fullscreen-button",
+      "-moz-mac-help-button",
+      "-moz-mac-source-list",
+      "-moz-mac-source-list-selection",
+      "-moz-mac-vibrancy-dark",
+      "-moz-mac-vibrancy-light",
+      "-moz-win-borderless-glass",
+      "-moz-win-browsertabbar-toolbox",
+      "-moz-win-communications-toolbox",
+      "-moz-win-exclude-glass",
+      "-moz-win-glass",
+      "-moz-win-media-toolbox",
+      "-moz-window-button-box",
+      "-moz-window-button-box-maximized",
+      "-moz-window-button-close",
+      "-moz-window-button-maximize",
+      "-moz-window-button-minimize",
+      "-moz-window-button-restore",
+      "-moz-window-frame-bottom",
+      "-moz-window-frame-left",
+      "-moz-window-frame-right",
+      "-moz-window-titlebar",
+      "-moz-window-titlebar-maximized",
+      "button",
+      "button-arrow-down",
+      "button-arrow-next",
+      "button-arrow-previous",
+      "button-arrow-up",
+      "button-bevel",
+      "button-focus",
+      "caret",
+      "checkbox",
+      "checkbox-container",
+      "checkbox-label",
+      "checkmenuitem",
+      "dialog",
+      "dualbutton",
+      "groupbox",
+      "inherit",
+      "initial",
+      "listbox",
+      "listitem",
+      "menuarrow",
+      "menubar",
+      "menucheckbox",
+      "menuimage",
+      "menuitem",
+      "menuitemtext",
+      "menulist",
+      "menulist-button",
+      "menulist-text",
+      "menulist-textfield",
+      "menupopup",
+      "menuradio",
+      "menuseparator",
+      "meterbar",
+      "meterchunk",
+      "none",
+      "number-input",
+      "progressbar",
+      "progressbar-vertical",
+      "progresschunk",
+      "progresschunk-vertical",
+      "radio",
+      "radio-container",
+      "radio-label",
+      "radiomenuitem",
+      "range",
+      "range-thumb",
+      "resizer",
+      "resizerpanel",
+      "scale-horizontal",
+      "scale-vertical",
+      "scalethumb-horizontal",
+      "scalethumb-vertical",
+      "scalethumbend",
+      "scalethumbstart",
+      "scalethumbtick",
+      "scrollbar",
+      "scrollbar-horizontal",
+      "scrollbar-small",
+      "scrollbar-vertical",
+      "scrollbarbutton-down",
+      "scrollbarbutton-left",
+      "scrollbarbutton-right",
+      "scrollbarbutton-up",
+      "scrollbarthumb-horizontal",
+      "scrollbarthumb-vertical",
+      "scrollbartrack-horizontal",
+      "scrollbartrack-vertical",
+      "searchfield",
+      "separator",
+      "spinner",
+      "spinner-downbutton",
+      "spinner-textfield",
+      "spinner-upbutton",
+      "splitter",
+      "statusbar",
+      "statusbarpanel",
+      "tab",
+      "tab-scroll-arrow-back",
+      "tab-scroll-arrow-forward",
+      "tabpanel",
+      "tabpanels",
+      "textfield",
+      "textfield-multiline",
+      "toolbar",
+      "toolbarbutton",
+      "toolbarbutton-dropdown",
+      "toolbargripper",
+      "toolbox",
+      "tooltip",
+      "treeheader",
+      "treeheadercell",
+      "treeheadersortarrow",
+      "treeitem",
+      "treeline",
+      "treetwisty",
+      "treetwistyopen",
+      "treeview",
+      "unset",
+      "window"
+    ]
+  },
   "-webkit-backface-visibility": {
     "isInherited": false,
     "subproperties": [
@@ -3306,6 +3441,7 @@ exports.CSS_PROPERTIES = {
       "alternate",
       "alternate-reverse",
       "always",
+      "anywhere",
       "auto",
       "avoid",
       "backwards",
@@ -3394,7 +3530,6 @@ exports.CSS_PROPERTIES = {
       "element",
       "elements",
       "ellipsis",
-      "enabled",
       "end",
       "evenodd",
       "ew-resize",
@@ -3419,7 +3554,6 @@ exports.CSS_PROPERTIES = {
       "geometricprecision",
       "grab",
       "grabbing",
-      "grayscale",
       "grid",
       "groove",
       "groupbox",
@@ -6700,16 +6834,13 @@ exports.CSS_PROPERTIES = {
       "grid-template-columns",
       "grid-auto-flow",
       "grid-auto-rows",
-      "grid-auto-columns",
-      "grid-row-gap",
-      "grid-column-gap"
+      "grid-auto-columns"
     ],
     "supports": [
       6,
       8
     ],
     "values": [
-      "calc",
       "column",
       "dense",
       "inherit",
@@ -9064,7 +9195,6 @@ exports.CSS_PROPERTIES = {
       7
     ],
     "values": [
-      "-moz-calc",
       "calc",
       "inherit",
       "initial",
@@ -9887,78 +10017,6 @@ exports.PREFERENCES = [
     "layout.css.font-variations.enabled"
   ],
   [
-    "grid",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-area",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-auto-columns",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-auto-flow",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-auto-rows",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-column",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-column-end",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-column-gap",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-column-start",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-gap",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-row",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-row-end",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-row-gap",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-row-start",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-template",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-template-areas",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-template-columns",
-    "layout.css.grid.enabled"
-  ],
-  [
-    "grid-template-rows",
-    "layout.css.grid.enabled"
-  ],
-  [
     "initial-letter",
     "layout.css.initial-letter.enabled"
   ],
@@ -10193,6 +10251,10 @@ exports.PREFERENCES = [
   [
     "-webkit-animation-timing-function",
     "layout.css.prefixes.webkit"
+  ],
+  [
+    "-webkit-appearance",
+    "layout.css.webkit-appearance.enabled"
   ],
   [
     "-webkit-filter",

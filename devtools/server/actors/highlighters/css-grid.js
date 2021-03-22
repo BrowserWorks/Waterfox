@@ -33,7 +33,6 @@ const { LocalizationHelper } = require("devtools/shared/l10n");
 const LAYOUT_STRINGS_URI = "devtools/client/locales/layout.properties";
 const LAYOUT_L10N = new LocalizationHelper(LAYOUT_STRINGS_URI);
 
-const CSS_GRID_ENABLED_PREF = "layout.css.grid.enabled";
 const NEGATIVE_LINE_NUMBERS_PREF = "devtools.gridinspector.showNegativeLineNumbers";
 
 const DEFAULT_GRID_COLOR = "#4B0082";
@@ -97,18 +96,18 @@ const CANVAS_SIZE = 4096;
  * as input; optionally applying a matrix, and a function to each of the coordinates'
  * value.
  *
- * @param {Number} x1
- *        The x-axis coordinate of the rectangle's diagonal start point.
- * @param {Number} y1
- *        The y-axis coordinate of the rectangle's diagonal start point.
- * @param {Number} x2
- *        The x-axis coordinate of the rectangle's diagonal end point.
- * @param {Number} y2
- *        The y-axis coordinate of the rectangle's diagonal end point.
- * @param {Array} [matrix=identity()]
- *        A transformation matrix to apply.
+ * @param  {Number} x1
+ *         The x-axis coordinate of the rectangle's diagonal start point.
+ * @param  {Number} y1
+ *         The y-axis coordinate of the rectangle's diagonal start point.
+ * @param  {Number} x2
+ *         The x-axis coordinate of the rectangle's diagonal end point.
+ * @param  {Number} y2
+ *         The y-axis coordinate of the rectangle's diagonal end point.
+ * @param  {Array} [matrix=identity()]
+ *         A transformation matrix to apply.
  * @return {Array}
- *        The rect four corners' points transformed by the matrix given.
+ *         The rect four corners' points transformed by the matrix given.
  */
 function getPointsFromDiagonal(x1, y1, x2, y2, matrix = identity()) {
   return [
@@ -127,8 +126,8 @@ function getPointsFromDiagonal(x1, y1, x2, y2, matrix = identity()) {
  * Takes an array of four points and returns a DOMRect-like object, represent the
  * boundaries defined by the points given.
  *
- * @param {Array} points
- *        The four points.
+ * @param  {Array} points
+ *         The four points.
  * @return {Object}
  *         A DOMRect-like object.
  */
@@ -151,8 +150,8 @@ function getBoundsFromPoints(points) {
 /**
  * Takes an array of four points and returns a string represent a path description.
  *
- * @param {Array} points
- *        The four points.
+ * @param  {Array} points
+ *         The four points.
  * @return {String}
  *         A Path Description that can be used in svg's <path> element.
  */
@@ -166,22 +165,22 @@ function getPathDescriptionFromPoints(points) {
 /**
  * Draws a line to the context given, applying a transformation matrix if passed.
  *
- * @param {CanvasRenderingContext2D} ctx
- *        The 2d canvas context.
- * @param {Number} x1
- *        The x-axis of the coordinate for the begin of the line.
- * @param {Number} y1
- *        The y-axis of the coordinate for the begin of the line.
- * @param {Number} x2
- *        The x-axis of the coordinate for the end of the line.
- * @param {Number} y2
- *        The y-axis of the coordinate for the end of the line.
- * @param {Object} [options]
- *        The options object.
- * @param {Array} [options.matrix=identity()]
- *        The transformation matrix to apply.
- * @param {Array} [options.extendToBoundaries]
- *        If set, the line will be extended to reach the boundaries specified.
+ * @param  {CanvasRenderingContext2D} ctx
+ *         The 2d canvas context.
+ * @param  {Number} x1
+ *         The x-axis of the coordinate for the begin of the line.
+ * @param  {Number} y1
+ *         The y-axis of the coordinate for the begin of the line.
+ * @param  {Number} x2
+ *         The x-axis of the coordinate for the end of the line.
+ * @param  {Number} y2
+ *         The y-axis of the coordinate for the end of the line.
+ * @param  {Object} [options]
+ *         The options object.
+ * @param  {Array} [options.matrix=identity()]
+ *         The transformation matrix to apply.
+ * @param  {Array} [options.extendToBoundaries]
+ *         If set, the line will be extended to reach the boundaries specified.
  */
 function drawLine(ctx, x1, y1, x2, y2, options) {
   let matrix = options.matrix || identity();
@@ -214,18 +213,18 @@ function drawLine(ctx, x1, y1, x2, y2, options) {
  * Draws a rect to the context given, applying a transformation matrix if passed.
  * The coordinates are the start and end points of the rectangle's diagonal.
  *
- * @param {CanvasRenderingContext2D} ctx
- *        The 2d canvas context.
- * @param {Number} x1
- *        The x-axis coordinate of the rectangle's diagonal start point.
- * @param {Number} y1
- *        The y-axis coordinate of the rectangle's diagonal start point.
- * @param {Number} x2
- *        The x-axis coordinate of the rectangle's diagonal end point.
- * @param {Number} y2
- *        The y-axis coordinate of the rectangle's diagonal end point.
- * @param {Array} [matrix=identity()]
- *        The transformation matrix to apply.
+ * @param  {CanvasRenderingContext2D} ctx
+ *         The 2d canvas context.
+ * @param  {Number} x1
+ *         The x-axis coordinate of the rectangle's diagonal start point.
+ * @param  {Number} y1
+ *         The y-axis coordinate of the rectangle's diagonal start point.
+ * @param  {Number} x2
+ *         The x-axis coordinate of the rectangle's diagonal end point.
+ * @param  {Number} y2
+ *         The y-axis coordinate of the rectangle's diagonal end point.
+ * @param  {Array} [matrix=identity()]
+ *         The transformation matrix to apply.
  */
 function drawRect(ctx, x1, y1, x2, y2, matrix = identity()) {
   let p = getPointsFromDiagonal(x1, y1, x2, y2, matrix);
@@ -267,6 +266,69 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.arcTo(x, y, x, y + radius, radius);
   ctx.stroke();
   ctx.fill();
+}
+
+/**
+ * Utility method to draw an arrow-bubble rectangle in the provided canvas context.
+ *
+ * @param  {CanvasRenderingContext2D} ctx
+ *         The 2d canvas context.
+ * @param  {Number} x
+ *         The x-axis origin of the rectangle.
+ * @param  {Number} y
+ *         The y-axis origin of the rectangle.
+ * @param  {Number} width
+ *         The width of the rectangle.
+ * @param  {Number} height
+ *         The height of the rectangle.
+ * @param  {Number} radius
+ *         The radius of the rounding.
+ * @param  {Number} margin
+ *         The distance of the origin point from the pointer.
+ * @param  {Number} arrowSize
+ *         The size of the arrow.
+ * @param  {String} alignment
+ *         The alignment of the rectangle in relation to its position to the grid.
+ */
+function drawBubbleRect(ctx, x, y, width, height, radius, margin, arrowSize, alignment) {
+  let angle = 0;
+
+  if (alignment === "bottom") {
+    angle = 180;
+  } else if (alignment === "right") {
+    angle = 90;
+    [width, height] = [height, width];
+  } else if (alignment === "left") {
+    [width, height] = [height, width];
+    angle = 270;
+  }
+
+  let originX = x;
+  let originY = y;
+
+  ctx.save();
+  ctx.translate(originX, originY);
+  ctx.rotate(angle * (Math.PI / 180));
+  ctx.translate(-originX, -originY);
+  ctx.translate(-width / 2, -height - arrowSize - margin);
+
+  ctx.beginPath();
+  ctx.moveTo(x, y + radius);
+  ctx.lineTo(x, y + height - radius);
+  ctx.arcTo(x, y + height, x + radius, y + height, radius);
+  ctx.lineTo(x + width / 2 - arrowSize, y + height);
+  ctx.lineTo(x + width / 2, y + height + arrowSize);
+  ctx.lineTo(x + width / 2 + arrowSize, y + height);
+  ctx.arcTo(x + width, y + height, x + width, y + height - radius, radius);
+  ctx.lineTo(x + width, y + radius);
+  ctx.arcTo(x + width, y, x + width - radius, y, radius);
+  ctx.lineTo(x + radius, y);
+  ctx.arcTo(x, y, x, y + radius, radius);
+
+  ctx.stroke();
+  ctx.fill();
+
+  ctx.restore();
 }
 
 /**
@@ -623,7 +685,7 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
    * Gets the grid gap pattern used to render the gap regions based on the device
    * pixel ratio given.
    *
-   * @param {Number} devicePixelRatio
+   * @param  {Number} devicePixelRatio
    *         The device pixel ratio we want the pattern for.
    * @param  {Object} dimension
    *         Refers to the Map key for the grid dimension type which is either the
@@ -697,7 +759,7 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
   }
 
   _show() {
-    if (Services.prefs.getBoolPref(CSS_GRID_ENABLED_PREF) && !this.isGrid()) {
+    if (!this.isGrid()) {
       this.hide();
       return false;
     }
@@ -779,7 +841,7 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
   /**
    * Checks if the current node has a CSS Grid layout.
    *
-   * @return  {Boolean} true if the current node has a CSS grid layout, false otherwise.
+   * @return {Boolean} true if the current node has a CSS grid layout, false otherwise.
    */
   isGrid() {
     return this.currentNode.getGridFragments().length > 0;
@@ -885,7 +947,7 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
    * @param  {GridArea} area
    *         The grid area object.
    * @param  {Object} bounds
-   *          A DOMRect-like object represent the grid area rectangle.
+   *         A DOMRect-like object represent the grid area rectangle.
    */
   _updateGridAreaInfobar(area, bounds) {
     let { width, height } = bounds;
@@ -911,7 +973,7 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
    * @param  {Number} columnNumber
    *         The grid cell's column number.
    * @param  {Object} bounds
-   *          A DOMRect-like object represent the grid cell rectangle.
+   *         A DOMRect-like object represent the grid cell rectangle.
    */
   _updateGridCellInfobar(rowNumber, columnNumber, bounds) {
     let { width, height } = bounds;
@@ -1162,12 +1224,45 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
             startPos) {
     let lineStartPos = startPos;
 
+    // Keep track of the number of collapsed lines per line position
+    let stackedLines = [];
+
     const { lines } = gridDimension;
 
-    for (let i = 0, line = lines[i]; i < lines.length; line = lines[++i]) {
+    for (let i = 0, line; (line = lines[i++]);) {
       let linePos = line.start;
+      let negativeLineNumber = line.negativeNumber;
 
-      const negativeLineNumber = i - lines.length;
+      // Don't render any negative line number greater than -1.
+      if (negativeLineNumber == 0) {
+        break;
+      }
+
+      // Check for overlapping lines. We render a second box beneath the last overlapping
+      // line number to indicate there are lines beneath it.
+      const gridLine = gridDimension.tracks[line.number - 1];
+
+      if (gridLine) {
+        const { breadth }  = gridLine;
+
+        if (breadth === 0) {
+          stackedLines.push(negativeLineNumber);
+
+          if (stackedLines.length > 0) {
+            this.renderGridLineNumber(negativeLineNumber, linePos, lineStartPos,
+              line.breadth, dimensionType, 1);
+          }
+
+          continue;
+        }
+      }
+
+      // For negative line numbers, we want to display the smallest
+      // value at the front of the stack.
+      if (stackedLines.length) {
+        negativeLineNumber = stackedLines[0];
+        stackedLines = [];
+      }
 
       this.renderGridLineNumber(negativeLineNumber, linePos, lineStartPos, line.breadth,
         dimensionType);
@@ -1360,8 +1455,9 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
     // Keep track of the number of collapsed lines per line position
     let stackedLines = [];
 
-    for (let i = 0; i < gridDimension.lines.length; i++) {
-      let line = gridDimension.lines[i];
+    const { lines } = gridDimension;
+
+    for (let i = 0, line; (line = lines[i++]);) {
       let linePos = line.start;
 
       // If you place something using negative numbers, you can trigger some implicit grid
@@ -1379,14 +1475,18 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
       // Check for overlapping lines. We render a second box beneath the last overlapping
       // line number to indicate there are lines beneath it.
       const gridLine = gridDimension.tracks[line.number - 1];
+
       if (gridLine) {
         const { breadth }  = gridLine;
+
         if (breadth === 0) {
           stackedLines.push(gridDimension.lines[i].number);
+
           if (stackedLines.length > 0) {
             this.renderGridLineNumber(line.number, linePos, lineStartPos, line.breadth,
               dimensionType, 1);
           }
+
           continue;
         }
       }
@@ -1495,53 +1595,58 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
     let fontSize = (GRID_FONT_SIZE * displayPixelRatio);
     this.ctx.font = fontSize + "px " + GRID_FONT_FAMILY;
 
-    let textWidth = this.ctx.measureText(lineNumber).width;
-
-    // The width of the character 'm' approximates the height of the text.
+    // For a general grid box, the height of the character "m" will be its minimum width
+    // and height. If line number's text width is greater then grid box's text width
+    // will use that instead.
     let textHeight = this.ctx.measureText("m").width;
+    let textWidth = Math.max(textHeight, this.ctx.measureText(lineNumber).width);
 
     // Padding in pixels for the line number text inside of the line number container.
     let padding = 3 * displayPixelRatio;
+    let offsetFromEdge = 2 * displayPixelRatio;
 
     let boxWidth = textWidth + 2 * padding;
     let boxHeight = textHeight + 2 * padding;
 
-    // Calculate the x & y coordinates for the line number container, so that it is
-    // centered on the line, and in the middle of the gap if there is any.
+     // Calculate the x & y coordinates for the line number container, so that its arrow
+     // tip is centered on the line (or the gap if there is one), and is offset by the
+     // calculated padding value from the grid container edge.
     let x, y;
-
-    let startOffset = (boxHeight + 2) / devicePixelRatio;
-
-    if (Services.prefs.getBoolPref(NEGATIVE_LINE_NUMBERS_PREF)) {
-      // If the line number is negative, offset it from the grid container edge,
-      // (downwards if its a column, rightwards if its a row).
-      if (lineNumber < 0) {
-        startPos += startOffset;
-      } else {
-        startPos -= startOffset;
-      }
-    }
 
     if (dimensionType === COLUMNS) {
       x = linePos + breadth / 2;
       y = startPos;
-    } else {
+
+      if (lineNumber > 0) {
+        y -= offsetFromEdge;
+      } else {
+        y += offsetFromEdge;
+      }
+    } else if (dimensionType === ROWS) {
       x = startPos;
       y = linePos + breadth / 2;
+
+      if (lineNumber > 0) {
+        x -= offsetFromEdge;
+      } else {
+        x += offsetFromEdge;
+      }
     }
 
     [x, y] = apply(this.currentMatrix, [x, y]);
-
-    x -= boxWidth / 2;
-    y -= boxHeight / 2;
 
     if (stackedLineIndex) {
       // Offset the stacked line number by half of the box's width/height
       const xOffset = boxWidth / 4;
       const yOffset = boxHeight / 4;
 
-      x += xOffset;
-      y += yOffset;
+      if (lineNumber > 0) {
+        x -= xOffset;
+        y -= yOffset;
+      } else {
+        x += xOffset;
+        y += yOffset;
+      }
     }
 
     if (!this.hasNodeTransformations) {
@@ -1549,18 +1654,52 @@ class CssGridHighlighter extends AutoRefreshHighlighter {
       y = Math.max(y, padding);
     }
 
-    // Draw a rounded rectangle with a border width of 2 pixels, a border color matching
-    // the grid color and a white background (the line number will be written in black).
+    // Draw a bubble rectanglular arrow with a border width of 2 pixels, a border color
+    // matching the grid color and a white background (the line number will be written in
+    // black).
     this.ctx.lineWidth = 2 * displayPixelRatio;
     this.ctx.strokeStyle = this.color;
     this.ctx.fillStyle = "white";
+
+    // See param definitions of drawBubbleRect
     let radius = 2 * displayPixelRatio;
-    drawRoundedRect(this.ctx, x, y, boxWidth, boxHeight, radius);
+    let margin = 2 * displayPixelRatio;
+    let arrowSize = 8 * displayPixelRatio;
+
+    let minBoxSize = arrowSize * 2 + padding;
+    boxWidth = Math.max(boxWidth, minBoxSize);
+    boxHeight = Math.max(boxHeight, minBoxSize);
+
+    if (dimensionType === COLUMNS) {
+      if (lineNumber > 0) {
+        drawBubbleRect(this.ctx, x, y, boxWidth, boxHeight, radius, margin, arrowSize,
+          "top");
+        // After drawing the number box, we need to center the x/y coordinates of the
+        // number text written it.
+        y -= (boxHeight + arrowSize + radius) - boxHeight / 2;
+      } else {
+        drawBubbleRect(this.ctx, x, y, boxWidth, boxHeight, radius, margin, arrowSize,
+          "bottom");
+        y += (boxHeight + arrowSize + radius) - boxHeight / 2;
+      }
+    } else if (dimensionType === ROWS) {
+      if (lineNumber > 0) {
+        drawBubbleRect(this.ctx, x, y, boxWidth, boxHeight, radius, margin, arrowSize,
+          "left");
+        x -= (boxWidth + arrowSize + radius) - boxWidth / 2;
+      } else {
+        drawBubbleRect(this.ctx, x, y, boxWidth, boxHeight, radius, margin, arrowSize,
+          "right");
+        x += (boxWidth + arrowSize + radius) - boxWidth / 2;
+      }
+    }
 
     // Write the line number inside of the rectangle.
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
     this.ctx.fillStyle = "black";
     const numberText = stackedLineIndex ? "" : lineNumber;
-    this.ctx.fillText(numberText, x + padding, y + textHeight + padding);
+    this.ctx.fillText(numberText, x, y);
 
     this.ctx.restore();
   }
