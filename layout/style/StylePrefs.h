@@ -19,6 +19,7 @@ struct StylePrefs
   static bool sMozGradientsEnabled;
   static bool sControlCharVisibility;
   static bool sFramesTimingFunctionEnabled;
+  static bool sGridTemplateSubgridValueEnabled;
 
   static void Init();
 };

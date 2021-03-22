@@ -151,8 +151,6 @@ using namespace mozilla::layers;
 using namespace mozilla::layout;
 using namespace mozilla::gfx;
 
-#define GRID_ENABLED_PREF_NAME "layout.css.grid.enabled"
-#define GRID_TEMPLATE_SUBGRID_ENABLED_PREF_NAME "layout.css.grid-template-subgrid-value.enabled"
 #define WEBKIT_PREFIXES_ENABLED_PREF_NAME "layout.css.prefixes.webkit"
 #define TEXT_ALIGN_UNSAFE_ENABLED_PREF_NAME "layout.css.text-align-unsafe-value.enabled"
 #define FLOAT_LOGICAL_VALUES_ENABLED_PREF_NAME "layout.css.float-logical-values.enabled"
@@ -202,51 +200,6 @@ static ContentMap& GetContentMap() {
     sContentMap = new ContentMap();
   }
   return *sContentMap;
-}
-
-// When the pref "layout.css.grid.enabled" changes, this function is invoked
-// to let us update kDisplayKTable, to selectively disable or restore the
-// entries for "grid" and "inline-grid" in that table.
-static void
-GridEnabledPrefChangeCallback(const char* aPrefName, void* aClosure)
-{
-  MOZ_ASSERT(strncmp(aPrefName, GRID_ENABLED_PREF_NAME,
-                     ArrayLength(GRID_ENABLED_PREF_NAME)) == 0,
-             "We only registered this callback for a single pref, so it "
-             "should only be called for that pref");
-
-  static int32_t sIndexOfGridInDisplayTable;
-  static int32_t sIndexOfInlineGridInDisplayTable;
-  static bool sAreGridKeywordIndicesInitialized; // initialized to false
-
-  bool isGridEnabled =
-    Preferences::GetBool(GRID_ENABLED_PREF_NAME, false);
-  if (!sAreGridKeywordIndicesInitialized) {
-    // First run: find the position of "grid" and "inline-grid" in
-    // kDisplayKTable.
-    sIndexOfGridInDisplayTable =
-      nsCSSProps::FindIndexOfKeyword(eCSSKeyword_grid,
-                                     nsCSSProps::kDisplayKTable);
-    MOZ_ASSERT(sIndexOfGridInDisplayTable >= 0,
-               "Couldn't find grid in kDisplayKTable");
-    sIndexOfInlineGridInDisplayTable =
-      nsCSSProps::FindIndexOfKeyword(eCSSKeyword_inline_grid,
-                                     nsCSSProps::kDisplayKTable);
-    MOZ_ASSERT(sIndexOfInlineGridInDisplayTable >= 0,
-               "Couldn't find inline-grid in kDisplayKTable");
-    sAreGridKeywordIndicesInitialized = true;
-  }
-
-  // OK -- now, stomp on or restore the "grid" entries in kDisplayKTable,
-  // depending on whether the grid pref is enabled vs. disabled.
-  if (sIndexOfGridInDisplayTable >= 0) {
-    nsCSSProps::kDisplayKTable[sIndexOfGridInDisplayTable].mKeyword =
-      isGridEnabled ? eCSSKeyword_grid : eCSSKeyword_UNKNOWN;
-  }
-  if (sIndexOfInlineGridInDisplayTable >= 0) {
-    nsCSSProps::kDisplayKTable[sIndexOfInlineGridInDisplayTable].mKeyword =
-      isGridEnabled ? eCSSKeyword_inline_grid : eCSSKeyword_UNKNOWN;
-  }
 }
 
 // When the pref "layout.css.prefixes.webkit" changes, this function is invoked
@@ -724,22 +677,6 @@ nsLayoutUtils::UnsetValueEnabled()
   }
 
   return sUnsetValueEnabled;
-}
-
-bool
-nsLayoutUtils::IsGridTemplateSubgridValueEnabled()
-{
-  static bool sGridTemplateSubgridValueEnabled;
-  static bool sGridTemplateSubgridValueEnabledPrefCached = false;
-
-  if (!sGridTemplateSubgridValueEnabledPrefCached) {
-    sGridTemplateSubgridValueEnabledPrefCached = true;
-    Preferences::AddBoolVarCache(&sGridTemplateSubgridValueEnabled,
-                                 GRID_TEMPLATE_SUBGRID_ENABLED_PREF_NAME,
-                                 false);
-  }
-
-  return sGridTemplateSubgridValueEnabled;
 }
 
 bool
@@ -5174,22 +5111,11 @@ nsLayoutUtils::IntrinsicForAxis(PhysicalAxis              aAxis,
     // For -moz-max-content and -moz-min-content, we handle them like
     // specified widths, but ignore box-sizing.
     boxSizing = StyleBoxSizing::Content;
-    if (aMarginBoxMinSizeClamp != NS_MAXSIZE &&
-        styleISize.GetIntValue() == NS_STYLE_WIDTH_MIN_CONTENT) {
-      // We need |result| to be the 'min-content size' for the clamping below.
-      result = aFrame->GetMinISize(aRenderingContext);
-    }
   } else if (!styleISize.ConvertsToLength() &&
              !(haveFixedMinISize && haveFixedMaxISize && maxISize <= minISize)) {
 #ifdef DEBUG_INTRINSIC_WIDTH
     ++gNoiseIndent;
 #endif
-    if (aType != MIN_ISIZE) {
-      // At this point, |styleISize| is auto/-moz-fit-content/-moz-available or
-      // has a percentage.  The intrinisic size for those under a max-content
-      // constraint is the max-content contribution which we shouldn't clamp.
-      aMarginBoxMinSizeClamp = NS_MAXSIZE;
-    }
     if (MOZ_UNLIKELY(!isInlineAxis)) {
       IntrinsicSize intrinsicSize = aFrame->GetIntrinsicSize();
       const nsStyleCoord intrinsicBCoord =
@@ -7734,8 +7660,6 @@ struct PrefCallbacks
   PrefChangedFunc func;
 };
 static const PrefCallbacks kPrefCallbacks[] = {
-  { GRID_ENABLED_PREF_NAME,
-    GridEnabledPrefChangeCallback },
   { WEBKIT_PREFIXES_ENABLED_PREF_NAME,
     WebkitPrefixEnabledPrefChangeCallback },
   { TEXT_ALIGN_UNSAFE_ENABLED_PREF_NAME,

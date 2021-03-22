@@ -386,6 +386,7 @@ NS_IMETHODIMP
 nsDNSAsyncRequest::Cancel(nsresult reason)
 {
     NS_ENSURE_ARG(NS_FAILED(reason));
+    MOZ_DIAGNOSTIC_ASSERT(mResolver, "mResolver should not be null");
     mResolver->DetachCallback(mHost.get(), mOriginAttributes, mFlags, mAF,
                               mNetworkInterface.get(), this, reason);
     return NS_OK;
@@ -653,10 +654,10 @@ nsDNSService::Shutdown()
     RefPtr<nsHostResolver> res;
     {
         MutexAutoLock lock(mLock);
-        res = mResolver;
-        mResolver = nullptr;
+        res = std::move(mResolver);
     }
     if (res) {
+        // Shutdown outside lock.
         res->Shutdown();
     }
 
@@ -695,6 +696,11 @@ nsDNSService::SetPrefetchEnabled(bool inVal)
     MutexAutoLock lock(mLock);
     mDisablePrefetch = !inVal;
     return NS_OK;
+}
+
+already_AddRefed<nsHostResolver> nsDNSService::GetResolverLocked() {
+  MutexAutoLock lock(mLock);
+  return do_AddRef(mResolver);
 }
 
 nsresult
@@ -1083,16 +1089,19 @@ nsDNSService::Observe(nsISupports *subject, const char *topic, const char16_t *d
                  "unexpected observe call");
 
     bool flushCache = false;
+    RefPtr<nsHostResolver> resolver = GetResolverLocked();
+
     if (!strcmp(topic, NS_NETWORK_LINK_TOPIC)) {
         nsAutoCString converted = NS_ConvertUTF16toUTF8(data);
-        if (mResolver && !strcmp(converted.get(), NS_NETWORK_LINK_DATA_CHANGED)) {
+        if (!strcmp(converted.get(), NS_NETWORK_LINK_DATA_CHANGED)) {
             flushCache = true;
         }
     } else if (!strcmp(topic, "last-pb-context-exited")) {
         flushCache = true;
     }
-  if (flushCache && mResolver) {
-        mResolver->FlushCache();
+
+    if (flushCache && resolver) {
+        resolver->FlushCache();
         return NS_OK;
     }
 
@@ -1173,16 +1182,18 @@ nsDNSService::GetAFForLookup(const nsACString &host, uint32_t flags)
 NS_IMETHODIMP
 nsDNSService::GetDNSCacheEntries(nsTArray<mozilla::net::DNSCacheEntries> *args)
 {
-    NS_ENSURE_TRUE(mResolver, NS_ERROR_NOT_INITIALIZED);
-    mResolver->GetDNSCacheEntries(args);
+    RefPtr<nsHostResolver> resolver = GetResolverLocked();
+    NS_ENSURE_TRUE(resolver, NS_ERROR_NOT_INITIALIZED);
+    resolver->GetDNSCacheEntries(args);
     return NS_OK;
 }
 
 #if 0 // New Not used in classic so compiled out
 NS_IMETHODIMP
 nsDNSService::ClearCache(bool aTrrToo) {
-  NS_ENSURE_TRUE(mResolver, NS_ERROR_NOT_INITIALIZED);
-  mResolver->FlushCache(aTrrToo);
+  RefPtr<nsHostResolver> resolver = GetResolverLocked();
+  NS_ENSURE_TRUE(resolver, NS_ERROR_NOT_INITIALIZED);
+  resolver->FlushCache(aTrrToo);
   return NS_OK;
 }
 #endif

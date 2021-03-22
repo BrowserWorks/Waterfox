@@ -9133,7 +9133,7 @@ CSSParserImpl::ParseGridTemplateColumnsRows(nsCSSPropertyID aPropID)
   nsAString* ident = NextIdent();
   if (ident) {
     if (ident->LowerCaseEqualsLiteral("subgrid")) {
-      if (!nsLayoutUtils::IsGridTemplateSubgridValueEnabled()) {
+      if (!StylePrefs::sGridTemplateSubgridValueEnabled) {
         REPORT_UNEXPECTED(PESubgridNotSupported);
         return false;
       }
@@ -9321,7 +9321,7 @@ CSSParserImpl::ParseGridTemplate(bool aForGridShorthand)
   nsAString* ident = NextIdent();
   if (ident) {
     if (ident->LowerCaseEqualsLiteral("subgrid")) {
-      if (!nsLayoutUtils::IsGridTemplateSubgridValueEnabled()) {
+      if (!StylePrefs::sGridTemplateSubgridValueEnabled) {
         REPORT_UNEXPECTED(PESubgridNotSupported);
         return false;
       }
@@ -9471,13 +9471,6 @@ CSSParserImpl::ParseGrid()
     }
     return true;
   }
-
-  // https://drafts.csswg.org/css-grid/#grid-shorthand
-  // "Also, the gutter properties are reset by this shorthand,
-  //  even though they can't be set by it."
-  value.SetFloatValue(0.0f, eCSSUnit_Pixel);
-  AppendValue(eCSSProperty_grid_row_gap, value);
-  AppendValue(eCSSProperty_grid_column_gap, value);
 
   // [ auto-flow && dense? ] <'grid-auto-rows'>? / <'grid-template-columns'>
   auto res = ParseGridShorthandAutoProps(NS_STYLE_GRID_AUTO_FLOW_ROW);
