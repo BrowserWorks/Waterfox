@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2013 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -15,10 +15,12 @@
 #include <math.h>
 #include <string>
 #include <vector>
+
 #include "angle_gl.h"
 
 #include "common/PackedEnums.h"
 #include "common/mathutil.h"
+#include "common/platform.h"
 
 namespace sh
 {
@@ -36,7 +38,9 @@ size_t VariableExternalSize(GLenum type);
 int VariableRowCount(GLenum type);
 int VariableColumnCount(GLenum type);
 bool IsSamplerType(GLenum type);
+bool IsSamplerCubeType(GLenum type);
 bool IsImageType(GLenum type);
+bool IsImage2DType(GLenum type);
 bool IsAtomicCounterType(GLenum type);
 bool IsOpaqueType(GLenum type);
 bool IsMatrixType(GLenum type);
@@ -46,6 +50,7 @@ int MatrixRegisterCount(GLenum type, bool isRowMajorMatrix);
 int MatrixComponentCount(GLenum type, bool isRowMajorMatrix);
 int VariableSortOrder(GLenum type);
 GLenum VariableBoolVectorType(GLenum type);
+std::string GetGLSLTypeString(GLenum type);
 
 int AllocateFirstFreeBits(unsigned int *bits, unsigned int allocationSize, unsigned int bitsSize);
 
@@ -56,22 +61,48 @@ int AllocateFirstFreeBits(unsigned int *bits, unsigned int allocationSize, unsig
 // outSubscripts.
 std::string ParseResourceName(const std::string &name, std::vector<unsigned int> *outSubscripts);
 
-// Find the child field which matches 'fullName' == var.name + "." + field.name.
-// Return nullptr if not found.
-const sh::ShaderVariable *FindShaderVarField(const sh::ShaderVariable &var,
-                                             const std::string &fullName);
+// Strips only the last array index from a resource name.
+std::string StripLastArrayIndex(const std::string &name);
+
+bool SamplerNameContainsNonZeroArrayElement(const std::string &name);
 
 // Find the range of index values in the provided indices pointer.  Primitive restart indices are
 // only counted in the range if primitive restart is disabled.
-IndexRange ComputeIndexRange(GLenum indexType,
+IndexRange ComputeIndexRange(DrawElementsType indexType,
                              const GLvoid *indices,
                              size_t count,
                              bool primitiveRestartEnabled);
 
 // Get the primitive restart index value for the given index type.
-GLuint GetPrimitiveRestartIndex(GLenum indexType);
+GLuint GetPrimitiveRestartIndex(DrawElementsType indexType);
+
+// Get the primitive restart index value with the given C++ type.
+template <typename T>
+constexpr T GetPrimitiveRestartIndexFromType()
+{
+    return std::numeric_limits<T>::max();
+}
+
+static_assert(GetPrimitiveRestartIndexFromType<uint8_t>() == 0xFF,
+              "verify restart index for uint8_t values");
+static_assert(GetPrimitiveRestartIndexFromType<uint16_t>() == 0xFFFF,
+              "verify restart index for uint8_t values");
+static_assert(GetPrimitiveRestartIndexFromType<uint32_t>() == 0xFFFFFFFF,
+              "verify restart index for uint8_t values");
 
 bool IsTriangleMode(PrimitiveMode drawMode);
+bool IsPolygonMode(PrimitiveMode mode);
+
+namespace priv
+{
+extern const angle::PackedEnumMap<PrimitiveMode, bool> gLineModes;
+}  // namespace priv
+
+ANGLE_INLINE bool IsLineMode(PrimitiveMode primitiveMode)
+{
+    return priv::gLineModes[primitiveMode];
+}
+
 bool IsIntegerFormat(GLenum unsizedFormat);
 
 // Returns the product of the sizes in the vector, or 1 if the vector is empty. Doesn't currently
@@ -83,44 +114,42 @@ unsigned int ArraySizeProduct(const std::vector<unsigned int> &arraySizes);
 // GL_INVALID_INDEX and write the length of the original string.
 unsigned int ParseArrayIndex(const std::string &name, size_t *nameLengthWithoutArrayIndexOut);
 
+enum class SamplerFormat : uint8_t
+{
+    Float    = 0,
+    Unsigned = 1,
+    Signed   = 2,
+    Shadow   = 3,
+
+    InvalidEnum = 4,
+    EnumCount   = 4,
+};
+
 struct UniformTypeInfo final : angle::NonCopyable
 {
-    constexpr UniformTypeInfo(GLenum type,
-                              GLenum componentType,
-                              GLenum textureType,
-                              GLenum transposedMatrixType,
-                              GLenum boolVectorType,
-                              int rowCount,
-                              int columnCount,
-                              int componentCount,
-                              size_t componentSize,
-                              size_t internalSize,
-                              size_t externalSize,
-                              bool isSampler,
-                              bool isMatrixType,
-                              bool isImageType)
-        : type(type),
-          componentType(componentType),
-          textureType(textureType),
-          transposedMatrixType(transposedMatrixType),
-          boolVectorType(boolVectorType),
-          rowCount(rowCount),
-          columnCount(columnCount),
-          componentCount(componentCount),
-          componentSize(componentSize),
-          internalSize(internalSize),
-          externalSize(externalSize),
-          isSampler(isSampler),
-          isMatrixType(isMatrixType),
-          isImageType(isImageType)
-    {
-    }
+    inline constexpr UniformTypeInfo(GLenum type,
+                                     GLenum componentType,
+                                     GLenum textureType,
+                                     GLenum transposedMatrixType,
+                                     GLenum boolVectorType,
+                                     SamplerFormat samplerFormat,
+                                     int rowCount,
+                                     int columnCount,
+                                     int componentCount,
+                                     size_t componentSize,
+                                     size_t internalSize,
+                                     size_t externalSize,
+                                     bool isSampler,
+                                     bool isMatrixType,
+                                     bool isImageType,
+                                     const char *glslAsFloat);
 
     GLenum type;
     GLenum componentType;
     GLenum textureType;
     GLenum transposedMatrixType;
     GLenum boolVectorType;
+    SamplerFormat samplerFormat;
     int rowCount;
     int columnCount;
     int componentCount;
@@ -130,13 +159,84 @@ struct UniformTypeInfo final : angle::NonCopyable
     bool isSampler;
     bool isMatrixType;
     bool isImageType;
+    const char *glslAsFloat;
 };
+
+inline constexpr UniformTypeInfo::UniformTypeInfo(GLenum type,
+                                                  GLenum componentType,
+                                                  GLenum textureType,
+                                                  GLenum transposedMatrixType,
+                                                  GLenum boolVectorType,
+                                                  SamplerFormat samplerFormat,
+                                                  int rowCount,
+                                                  int columnCount,
+                                                  int componentCount,
+                                                  size_t componentSize,
+                                                  size_t internalSize,
+                                                  size_t externalSize,
+                                                  bool isSampler,
+                                                  bool isMatrixType,
+                                                  bool isImageType,
+                                                  const char *glslAsFloat)
+    : type(type),
+      componentType(componentType),
+      textureType(textureType),
+      transposedMatrixType(transposedMatrixType),
+      boolVectorType(boolVectorType),
+      samplerFormat(samplerFormat),
+      rowCount(rowCount),
+      columnCount(columnCount),
+      componentCount(componentCount),
+      componentSize(componentSize),
+      internalSize(internalSize),
+      externalSize(externalSize),
+      isSampler(isSampler),
+      isMatrixType(isMatrixType),
+      isImageType(isImageType),
+      glslAsFloat(glslAsFloat)
+{}
 
 const UniformTypeInfo &GetUniformTypeInfo(GLenum uniformType);
 
 const char *GetGenericErrorMessage(GLenum error);
 
 unsigned int ElementTypeSize(GLenum elementType);
+
+template <typename T>
+T GetClampedVertexCount(size_t vertexCount)
+{
+    static constexpr size_t kMax = static_cast<size_t>(std::numeric_limits<T>::max());
+    return static_cast<T>(vertexCount > kMax ? kMax : vertexCount);
+}
+
+enum class PipelineType
+{
+    GraphicsPipeline = 0,
+    ComputePipeline  = 1,
+};
+
+PipelineType GetPipelineType(ShaderType shaderType);
+
+// For use with KHR_debug.
+const char *GetDebugMessageSourceString(GLenum source);
+const char *GetDebugMessageTypeString(GLenum type);
+const char *GetDebugMessageSeverityString(GLenum severity);
+
+// For use with EXT_texture_format_sRGB_override and EXT_texture_sRGB_decode
+// A texture may be forced to decode to a nonlinear colorspace, to a linear colorspace, or to the
+// default colorspace of its current format.
+//
+// Default corresponds to "the texture should use the imageview that corresponds to its format"
+// Linear corresponds to "the texture has sRGB decoding disabled by extension, and should use a
+// linear imageview even if it is in a nonlinear format" NonLinear corresponds to "the texture has
+// sRGB override enabled by extension, and should use a nonlinear imageview even if it is in a
+// linear format"
+enum class SrgbOverride
+{
+    Default = 0,
+    SRGB,
+    Linear
+};
 
 }  // namespace gl
 
@@ -149,6 +249,7 @@ size_t CubeMapTextureTargetToLayerIndex(EGLenum target);
 EGLenum LayerIndexToCubeMapTextureTarget(size_t index);
 bool IsTextureTarget(EGLenum target);
 bool IsRenderbufferTarget(EGLenum target);
+bool IsExternalImageTarget(EGLenum target);
 
 const char *GetGenericErrorMessage(EGLint error);
 }  // namespace egl
@@ -164,7 +265,7 @@ EGLenum GLComponentTypeToEGLColorComponentType(GLenum glComponentType);
 EGLClientBuffer GLObjectHandleToEGLClientBuffer(GLuint handle);
 }  // namespace gl_egl
 
-#if !defined(ANGLE_ENABLE_WINDOWS_STORE)
+#if !defined(ANGLE_ENABLE_WINDOWS_UWP)
 std::string getTempPath();
 void writeFile(const char *path, const void *data, size_t size);
 #endif
@@ -172,5 +273,14 @@ void writeFile(const char *path, const void *data, size_t size);
 #if defined(ANGLE_PLATFORM_WINDOWS)
 void ScheduleYield();
 #endif
+
+// Get the underlying type. Useful for indexing into arrays with enum values by avoiding the clutter
+// of the extraneous static_cast<>() calls.
+// https://stackoverflow.com/a/8357462
+template <typename E>
+constexpr typename std::underlying_type<E>::type ToUnderlying(E e) noexcept
+{
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
 
 #endif  // COMMON_UTILITIES_H_

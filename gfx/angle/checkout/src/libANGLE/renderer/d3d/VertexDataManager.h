@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2012 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -22,7 +22,7 @@ class State;
 struct VertexAttribute;
 class VertexBinding;
 struct VertexAttribCurrentValueData;
-}
+}  // namespace gl
 
 namespace rx
 {
@@ -61,10 +61,10 @@ struct TranslatedAttribute
 
     const gl::VertexAttribute *attribute;
     const gl::VertexBinding *binding;
-    GLenum currentValueType;
+    gl::VertexAttribType currentValueType;
     unsigned int baseOffset;
     bool usesFirstVertexOffset;
-    unsigned int stride;   // 0 means not to advance the read pointer at all
+    unsigned int stride;  // 0 means not to advance the read pointer at all
 
     VertexBufferBinding vertexBuffer;
     BufferD3D *storage;
@@ -111,7 +111,8 @@ class VertexDataManager : angle::NonCopyable
                                       const gl::AttributesMask &dynamicAttribsMask,
                                       GLint start,
                                       size_t count,
-                                      GLsizei instances);
+                                      GLsizei instances,
+                                      GLuint baseInstance);
 
     // Promote static usage of dynamic buffers.
     static void PromoteDynamicAttribs(const gl::Context *context,
@@ -140,13 +141,15 @@ class VertexDataManager : angle::NonCopyable
                                         const TranslatedAttribute &translatedAttrib,
                                         GLint start,
                                         size_t count,
-                                        GLsizei instances);
+                                        GLsizei instances,
+                                        GLuint baseInstance);
 
     angle::Result storeDynamicAttrib(const gl::Context *context,
                                      TranslatedAttribute *translated,
                                      GLint start,
                                      size_t count,
-                                     GLsizei instances);
+                                     GLsizei instances,
+                                     GLuint baseInstance);
 
     BufferFactoryD3D *const mFactory;
 
@@ -157,4 +160,4 @@ class VertexDataManager : angle::NonCopyable
 
 }  // namespace rx
 
-#endif   // LIBANGLE_RENDERER_D3D_VERTEXDATAMANAGER_H_
+#endif  // LIBANGLE_RENDERER_D3D_VERTEXDATAMANAGER_H_

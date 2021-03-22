@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2010 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -42,6 +42,8 @@ class RenderbufferState final : angle::NonCopyable
     GLsizei getHeight() const;
     const Format &getFormat() const;
     GLsizei getSamples() const;
+    MultisamplingMode getMultisamplingMode() const;
+    InitState getInitState() const;
 
   private:
     friend class Renderbuffer;
@@ -50,35 +52,71 @@ class RenderbufferState final : angle::NonCopyable
                 GLsizei height,
                 const Format &format,
                 GLsizei samples,
+                MultisamplingMode multisamplingMode,
                 InitState initState);
 
     GLsizei mWidth;
     GLsizei mHeight;
     Format mFormat;
     GLsizei mSamples;
+    MultisamplingMode mMultisamplingMode;
 
     // For robust resource init.
     InitState mInitState;
 };
 
-class Renderbuffer final : public RefCountObject, public egl::ImageSibling, public LabeledObject
+class Renderbuffer final : public RefCountObject<RenderbufferID>,
+                           public egl::ImageSibling,
+                           public LabeledObject
 {
   public:
-    Renderbuffer(rx::GLImplFactory *implFactory, GLuint id);
+    Renderbuffer(rx::GLImplFactory *implFactory, RenderbufferID id);
     ~Renderbuffer() override;
 
-    Error onDestroy(const Context *context) override;
+    void onDestroy(const Context *context) override;
 
-    void setLabel(const std::string &label) override;
+    void setLabel(const Context *context, const std::string &label) override;
     const std::string &getLabel() const override;
 
-    Error setStorage(const Context *context, GLenum internalformat, size_t width, size_t height);
-    Error setStorageMultisample(const Context *context,
-                                size_t samples,
-                                GLenum internalformat,
-                                size_t width,
-                                size_t height);
-    Error setStorageEGLImageTarget(const Context *context, egl::Image *imageTarget);
+    angle::Result setStorage(const Context *context,
+                             GLenum internalformat,
+                             GLsizei width,
+                             GLsizei height);
+    angle::Result setStorageMultisample(const Context *context,
+                                        GLsizei samples,
+                                        GLenum internalformat,
+                                        GLsizei width,
+                                        GLsizei height,
+                                        MultisamplingMode mode);
+    angle::Result setStorageEGLImageTarget(const Context *context, egl::Image *imageTarget);
+
+    angle::Result copyRenderbufferSubData(Context *context,
+                                          const gl::Renderbuffer *srcBuffer,
+                                          GLint srcLevel,
+                                          GLint srcX,
+                                          GLint srcY,
+                                          GLint srcZ,
+                                          GLint dstLevel,
+                                          GLint dstX,
+                                          GLint dstY,
+                                          GLint dstZ,
+                                          GLsizei srcWidth,
+                                          GLsizei srcHeight,
+                                          GLsizei srcDepth);
+
+    angle::Result copyTextureSubData(Context *context,
+                                     const gl::Texture *srcTexture,
+                                     GLint srcLevel,
+                                     GLint srcX,
+                                     GLint srcY,
+                                     GLint srcZ,
+                                     GLint dstLevel,
+                                     GLint dstX,
+                                     GLint dstY,
+                                     GLint dstZ,
+                                     GLsizei srcWidth,
+                                     GLsizei srcHeight,
+                                     GLsizei srcDepth);
 
     rx::RenderbufferImpl *getImplementation() const;
 
@@ -86,34 +124,56 @@ class Renderbuffer final : public RefCountObject, public egl::ImageSibling, publ
     GLsizei getHeight() const;
     const Format &getFormat() const;
     GLsizei getSamples() const;
+    MultisamplingMode getMultisamplingMode() const;
     GLuint getRedSize() const;
     GLuint getGreenSize() const;
     GLuint getBlueSize() const;
     GLuint getAlphaSize() const;
     GLuint getDepthSize() const;
     GLuint getStencilSize() const;
+    const RenderbufferState &getState() const;
+
+    GLint getMemorySize() const;
 
     // FramebufferAttachmentObject Impl
     Extents getAttachmentSize(const ImageIndex &imageIndex) const override;
     Format getAttachmentFormat(GLenum binding, const ImageIndex &imageIndex) const override;
     GLsizei getAttachmentSamples(const ImageIndex &imageIndex) const override;
+    bool isRenderable(const Context *context,
+                      GLenum binding,
+                      const ImageIndex &imageIndex) const override;
 
-    void onAttach(const Context *context) override;
-    void onDetach(const Context *context) override;
+    void onAttach(const Context *context, rx::Serial framebufferSerial) override;
+    void onDetach(const Context *context, rx::Serial framebufferSerial) override;
     GLuint getId() const override;
 
     InitState initState(const ImageIndex &imageIndex) const override;
     void setInitState(const ImageIndex &imageIndex, InitState initState) override;
 
+    GLenum getImplementationColorReadFormat(const Context *context) const;
+    GLenum getImplementationColorReadType(const Context *context) const;
+
+    // We pass the pack buffer and state explicitly so they can be overridden during capture.
+    angle::Result getRenderbufferImage(const Context *context,
+                                       const PixelPackState &packState,
+                                       Buffer *packBuffer,
+                                       GLenum format,
+                                       GLenum type,
+                                       void *pixels) const;
+
   private:
+    // ObserverInterface implementation.
+    void onSubjectStateChange(angle::SubjectIndex index, angle::SubjectMessage message) override;
+
     rx::FramebufferAttachmentObjectImpl *getAttachmentImpl() const override;
 
     RenderbufferState mState;
     std::unique_ptr<rx::RenderbufferImpl> mImplementation;
 
     std::string mLabel;
+    angle::ObserverBinding mImplObserverBinding;
 };
 
 }  // namespace gl
 
-#endif   // LIBANGLE_RENDERBUFFER_H_
+#endif  // LIBANGLE_RENDERBUFFER_H_

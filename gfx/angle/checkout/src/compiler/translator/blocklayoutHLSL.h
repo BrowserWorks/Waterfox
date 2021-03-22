@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2013-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2013 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -13,9 +13,9 @@
 #include <cstddef>
 #include <vector>
 
+#include <GLSLANG/ShaderLang.h>
 #include "angle_gl.h"
 #include "blocklayout.h"
-#include <GLSLANG/ShaderLang.h>
 
 namespace sh
 {
@@ -35,8 +35,8 @@ class HLSLBlockEncoder : public BlockLayoutEncoder
 
     HLSLBlockEncoder(HLSLBlockEncoderStrategy strategy, bool transposeMatrices);
 
-    void enterAggregateType() override;
-    void exitAggregateType() override;
+    void enterAggregateType(const ShaderVariable &structVar) override;
+    void exitAggregateType(const ShaderVariable &structVar) override;
     void skipRegisters(unsigned int numRegisters);
 
     bool isPacked() const { return mEncoderStrategy == ENCODE_PACKED; }
@@ -62,7 +62,7 @@ class HLSLBlockEncoder : public BlockLayoutEncoder
 // This method returns the number of used registers for a ShaderVariable. It is dependent on the
 // HLSLBlockEncoder class to count the number of used registers in a struct (which are individually
 // packed according to the same rules).
-unsigned int HLSLVariableRegisterCount(const Uniform &variable, ShShaderOutput outputType);
-}
+unsigned int HLSLVariableRegisterCount(const ShaderVariable &variable, ShShaderOutput outputType);
+}  // namespace sh
 
 #endif  // COMMON_BLOCKLAYOUTHLSL_H_

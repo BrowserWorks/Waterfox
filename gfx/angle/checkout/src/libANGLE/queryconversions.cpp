@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2014 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -61,7 +61,16 @@ NativeT CastQueryValueToInt(GLenum pname, QueryT value)
 
     if (queryType == GL_FLOAT)
     {
-        return static_cast<NativeT>(std::round(value));
+        // ARM devices cast float to uint differently than Intel.
+        // Basically, any negative floating point number becomes 0
+        // when converted to unsigned int. Instead, convert to a signed
+        // int and then convert to unsigned int to "preserve the value"
+        // E.g. common case for tests is to pass in -1 as an invalid query
+        // value. If cast to a unsigned int it becomes 0 (GL_NONE) and is now
+        // a valid enum and negative tests fail. But converting to int
+        // and then to final unsigned int gives us 4294967295 (0xffffffff)
+        // which is what we want.
+        return static_cast<NativeT>(static_cast<GLint64>(std::round(value)));
     }
 
     return static_cast<NativeT>(value);
@@ -69,14 +78,9 @@ NativeT CastQueryValueToInt(GLenum pname, QueryT value)
 
 }  // anonymous namespace
 
-// ES 3.10 Section 2.2.2
-// When querying bitmasks(such as SAMPLE_MASK_VALUE or STENCIL_WRITEMASK) with GetIntegerv, the
-// mask value is treated as a signed integer, so that mask values with the high bit set will not be
-// clamped when returned as signed integers.
-GLint CastMaskValue(const Context *context, GLuint value)
+GLint CastMaskValue(GLuint value)
 {
-    return (context->getClientVersion() >= Version(3, 1) ? static_cast<GLint>(value)
-                                                         : clampCast<GLint>(value));
+    return clampCast<GLint>(value);
 }
 
 template <typename QueryT, typename InternalT>
@@ -89,6 +93,7 @@ template GLfloat CastFromGLintStateValue<GLfloat, GLenum>(GLenum pname, GLenum v
 template GLint CastFromGLintStateValue<GLint, GLenum>(GLenum pname, GLenum value);
 template GLint64 CastFromGLintStateValue<GLint64, GLenum>(GLenum pname, GLenum value);
 template GLuint CastFromGLintStateValue<GLuint, GLenum>(GLenum pname, GLenum value);
+template GLuint CastFromGLintStateValue<GLuint, GLint>(GLenum pname, GLint value);
 template GLfloat CastFromGLintStateValue<GLfloat, GLint>(GLenum pname, GLint value);
 template GLint CastFromGLintStateValue<GLint, GLint>(GLenum pname, GLint value);
 template GLfloat CastFromGLintStateValue<GLfloat, bool>(GLenum pname, bool value);
@@ -121,8 +126,10 @@ template GLint CastFromStateValue<GLint, GLint64>(GLenum pname, GLint64 value);
 template GLint64 CastFromStateValue<GLint64, GLint>(GLenum pname, GLint value);
 template GLint64 CastFromStateValue<GLint64, GLint64>(GLenum pname, GLint64 value);
 template GLfloat CastFromStateValue<GLfloat, GLint>(GLenum pname, GLint value);
+template GLfloat CastFromStateValue<GLfloat, GLuint>(GLenum pname, GLuint value);
 template GLfloat CastFromStateValue<GLfloat, GLfloat>(GLenum pname, GLfloat value);
 template GLint CastFromStateValue<GLint, GLfloat>(GLenum pname, GLfloat value);
+template GLuint CastFromStateValue<GLuint, GLfloat>(GLenum pname, GLfloat value);
 template GLuint CastFromStateValue<GLuint, GLint>(GLenum pname, GLint value);
 template GLuint CastFromStateValue<GLuint, GLuint>(GLenum pname, GLuint value);
 template GLint CastFromStateValue<GLint, GLboolean>(GLenum pname, GLboolean value);
@@ -156,13 +163,16 @@ NativeT CastQueryValueTo(GLenum pname, QueryT value)
 template GLint CastQueryValueTo<GLint, GLfloat>(GLenum pname, GLfloat value);
 template GLboolean CastQueryValueTo<GLboolean, GLint>(GLenum pname, GLint value);
 template GLint CastQueryValueTo<GLint, GLint>(GLenum pname, GLint value);
+template GLint CastQueryValueTo<GLint, GLuint>(GLenum pname, GLuint value);
 template GLfloat CastQueryValueTo<GLfloat, GLint>(GLenum pname, GLint value);
+template GLfloat CastQueryValueTo<GLfloat, GLuint>(GLenum pname, GLuint value);
 template GLfloat CastQueryValueTo<GLfloat, GLfloat>(GLenum pname, GLfloat value);
 template GLuint CastQueryValueTo<GLuint, GLint>(GLenum pname, GLint value);
+template GLuint CastQueryValueTo<GLuint, GLuint>(GLenum pname, GLuint value);
 template GLuint CastQueryValueTo<GLuint, GLfloat>(GLenum pname, GLfloat value);
 
 template <typename QueryT>
-void CastStateValues(Context *context,
+void CastStateValues(const Context *context,
                      GLenum nativeType,
                      GLenum pname,
                      unsigned int numParams,
@@ -202,7 +212,7 @@ void CastStateValues(Context *context,
     else if (nativeType == GL_INT_64_ANGLEX)
     {
         std::vector<GLint64> int64Params(numParams, 0);
-        context->getInteger64v(pname, int64Params.data());
+        context->getInteger64vImpl(pname, int64Params.data());
 
         for (unsigned int i = 0; i < numParams; ++i)
         {
@@ -217,11 +227,15 @@ void CastStateValues(Context *context,
 // The calls below will make CastStateValues successfully link with the GL state query types
 // The GL state query API types are: bool, int, uint, float, int64, uint64
 
-template void CastStateValues<GLboolean>(Context *, GLenum, GLenum, unsigned int, GLboolean *);
-template void CastStateValues<GLint>(Context *, GLenum, GLenum, unsigned int, GLint *);
-template void CastStateValues<GLuint>(Context *, GLenum, GLenum, unsigned int, GLuint *);
-template void CastStateValues<GLfloat>(Context *, GLenum, GLenum, unsigned int, GLfloat *);
-template void CastStateValues<GLint64>(Context *, GLenum, GLenum, unsigned int, GLint64 *);
+template void CastStateValues<GLboolean>(const Context *,
+                                         GLenum,
+                                         GLenum,
+                                         unsigned int,
+                                         GLboolean *);
+template void CastStateValues<GLint>(const Context *, GLenum, GLenum, unsigned int, GLint *);
+template void CastStateValues<GLuint>(const Context *, GLenum, GLenum, unsigned int, GLuint *);
+template void CastStateValues<GLfloat>(const Context *, GLenum, GLenum, unsigned int, GLfloat *);
+template void CastStateValues<GLint64>(const Context *, GLenum, GLenum, unsigned int, GLint64 *);
 
 template <typename QueryT>
 void CastIndexedStateValues(Context *context,
@@ -296,4 +310,4 @@ template void CastIndexedStateValues<GLint64>(Context *,
                                               GLuint index,
                                               unsigned int,
                                               GLint64 *);
-}
+}  // namespace gl

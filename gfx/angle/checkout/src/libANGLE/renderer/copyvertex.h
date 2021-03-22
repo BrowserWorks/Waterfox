@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2013-2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2013 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -14,29 +14,63 @@
 namespace rx
 {
 
-using VertexCopyFunction = void (*)(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+using VertexCopyFunction = void (*)(const uint8_t *input,
+                                    size_t stride,
+                                    size_t count,
+                                    uint8_t *output);
 
 // 'alphaDefaultValueBits' gives the default value for the alpha channel (4th component)
-template <typename T, size_t inputComponentCount, size_t outputComponentCount, uint32_t alphaDefaultValueBits>
-inline void CopyNativeVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+template <typename T,
+          size_t inputComponentCount,
+          size_t outputComponentCount,
+          uint32_t alphaDefaultValueBits>
+void CopyNativeVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
 
 template <size_t inputComponentCount, size_t outputComponentCount>
-inline void Copy8SintTo16SintVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+void Copy8SintTo16SintVertexData(const uint8_t *input,
+                                 size_t stride,
+                                 size_t count,
+                                 uint8_t *output);
 
 template <size_t componentCount>
-inline void Copy8SnormTo16SnormVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+void Copy8SnormTo16SnormVertexData(const uint8_t *input,
+                                   size_t stride,
+                                   size_t count,
+                                   uint8_t *output);
 
 template <size_t inputComponentCount, size_t outputComponentCount>
-inline void Copy32FixedTo32FVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+void Copy32FixedTo32FVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
 
 template <typename T, size_t inputComponentCount, size_t outputComponentCount, bool normalized>
-inline void CopyTo32FVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+void CopyTo32FVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+
+template <size_t inputComponentCount, size_t outputComponentCount>
+void Copy32FTo16FVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+
+void CopyXYZ32FToXYZ9E5(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+
+void CopyXYZ32FToX11Y11B10F(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
 
 template <bool isSigned, bool normalized, bool toFloat>
-inline void CopyXYZ10W2ToXYZW32FVertexData(const uint8_t *input, size_t stride, size_t count, uint8_t *output);
+void CopyXYZ10W2ToXYZW32FVertexData(const uint8_t *input,
+                                    size_t stride,
+                                    size_t count,
+                                    uint8_t *output);
 
-}
+template <bool isSigned, bool normalized>
+void CopyXYZ10ToXYZW32FVertexData(const uint8_t *input,
+                                  size_t stride,
+                                  size_t count,
+                                  uint8_t *output);
 
-#include "copyvertex.inc"
+template <bool isSigned, bool normalized>
+void CopyW2XYZ10ToXYZW32FVertexData(const uint8_t *input,
+                                    size_t stride,
+                                    size_t count,
+                                    uint8_t *output);
 
-#endif // LIBANGLE_RENDERER_COPYVERTEX_H_
+}  // namespace rx
+
+#include "copyvertex.inc.h"
+
+#endif  // LIBANGLE_RENDERER_COPYVERTEX_H_

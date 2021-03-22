@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -52,8 +52,7 @@ SimplifyLoopConditionsTraverser::SimplifyLoopConditionsTraverser(
       mFoundLoopToChange(false),
       mInsideLoopInitConditionOrExpression(false),
       mConditionsToSimplify(conditionsToSimplifyMask)
-{
-}
+{}
 
 // If we're inside a loop initialization, condition, or expression, we check for expressions that
 // should be moved out of the loop condition or expression. If one is found, the loop is
@@ -288,13 +287,14 @@ void SimplifyLoopConditionsTraverser::traverseLoop(TIntermLoop *node)
 
 }  // namespace
 
-void SimplifyLoopConditions(TIntermNode *root,
+bool SimplifyLoopConditions(TCompiler *compiler,
+                            TIntermNode *root,
                             unsigned int conditionsToSimplifyMask,
                             TSymbolTable *symbolTable)
 {
     SimplifyLoopConditionsTraverser traverser(conditionsToSimplifyMask, symbolTable);
     root->traverse(&traverser);
-    traverser.updateTree();
+    return traverser.updateTree(compiler, root);
 }
 
 }  // namespace sh

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -12,6 +12,7 @@
 
 #include "compiler/translator/IntermNode.h"
 #include "compiler/translator/SymbolTable.h"
+#include "compiler/translator/util.h"
 
 namespace sh
 {
@@ -43,8 +44,12 @@ bool ContainsVectorNode(const TIntermSequence &sequence)
 
 }  // anonymous namespace
 
-IntermNodePatternMatcher::IntermNodePatternMatcher(const unsigned int mask) : mMask(mask)
+IntermNodePatternMatcher::IntermNodePatternMatcher(const unsigned int mask) : mMask(mask) {}
+
+// static
+bool IntermNodePatternMatcher::IsDynamicIndexingOfNonSSBOVectorOrMatrix(TIntermBinary *node)
 {
+    return IsDynamicIndexingOfVectorOrMatrix(node) && !IsInShaderStorageBlock(node->getLeft());
 }
 
 // static
@@ -52,6 +57,12 @@ bool IntermNodePatternMatcher::IsDynamicIndexingOfVectorOrMatrix(TIntermBinary *
 {
     return node->getOp() == EOpIndexIndirect && !node->getLeft()->isArray() &&
            node->getLeft()->getBasicType() != EbtStruct;
+}
+
+// static
+bool IntermNodePatternMatcher::IsDynamicIndexingOfSwizzledVector(TIntermBinary *node)
+{
+    return IsDynamicIndexingOfVectorOrMatrix(node) && node->getLeft()->getAsSwizzleNode();
 }
 
 bool IntermNodePatternMatcher::matchInternal(TIntermBinary *node, TIntermNode *parentNode)

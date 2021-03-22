@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -32,16 +32,26 @@ void OutputIntTexCoordWrap(TInfoSinkBase &out,
     out << "int " << texCoordOutName << ";\n";
     out << "float " << texCoordOutName << "Offset = " << texCoord << " + float(" << texCoordOffset
         << ") / " << size << ";\n";
+    out << "bool " << texCoordOutName << "UseBorderColor = false;\n";
 
     // CLAMP_TO_EDGE
-    out << "if (" << wrapMode << " == 1)\n";
+    out << "if (" << wrapMode << " == 0)\n";
     out << "{\n";
     out << "    " << texCoordOutName << " = clamp(int(floor(" << size << " * " << texCoordOutName
         << "Offset)), 0, int(" << size << ") - 1);\n";
     out << "}\n";
 
-    // MIRRORED_REPEAT
+    // CLAMP_TO_BORDER
     out << "else if (" << wrapMode << " == 3)\n";
+    out << "{\n";
+    out << "    int texCoordInt = int(floor(" << size << " * " << texCoordOutName << "Offset));\n";
+    out << "    " << texCoordOutName << " = clamp(texCoordInt, 0, int(" << size << ") - 1);\n";
+    out << "    " << texCoordOutName << "UseBorderColor = (texCoordInt != " << texCoordOutName
+        << ");\n";
+    out << "}\n";
+
+    // MIRRORED_REPEAT
+    out << "else if (" << wrapMode << " == 2)\n";
     out << "{\n";
     out << "    float coordWrapped = 1.0 - abs(frac(abs(" << texCoordOutName
         << "Offset) * 0.5) * 2.0 - 1.0);\n";
@@ -84,6 +94,8 @@ void OutputIntTexCoordWraps(TInfoSinkBase &out,
     }
     *texCoordY = ImmutableString("tiy");
 
+    bool tizAvailable = false;
+
     if (IsSamplerArray(textureFunction.sampler))
     {
         *texCoordZ = ImmutableString("int(max(0, min(layers - 1, floor(0.5 + t.z))))");
@@ -99,8 +111,12 @@ void OutputIntTexCoordWraps(TInfoSinkBase &out,
         {
             OutputIntTexCoordWrap(out, "wrapR", "depth", *texCoordZ, "0", "tiz");
         }
-        *texCoordZ = ImmutableString("tiz");
+        *texCoordZ   = ImmutableString("tiz");
+        tizAvailable = true;
     }
+
+    out << "bool useBorderColor = tixUseBorderColor || tiyUseBorderColor"
+        << (tizAvailable ? " || tizUseBorderColor" : "") << ";\n";
 }
 
 void OutputHLSL4SampleFunctionPrefix(TInfoSinkBase &out,
@@ -163,20 +179,33 @@ const char *GetSamplerCoordinateTypeString(
     const TextureFunctionHLSL::TextureFunction &textureFunction,
     int hlslCoords)
 {
-    if (IsIntegerSampler(textureFunction.sampler) ||
+    // Gather[Red|Green|Blue|Alpha] accepts float texture coordinates on textures in integer or
+    // unsigned integer formats.
+    // https://docs.microsoft.com/en-us/windows/desktop/direct3dhlsl/dx-graphics-hlsl-to-gather
+    if ((IsIntegerSampler(textureFunction.sampler) &&
+         textureFunction.method != TextureFunctionHLSL::TextureFunction::GATHER) ||
         textureFunction.method == TextureFunctionHLSL::TextureFunction::FETCH)
     {
         switch (hlslCoords)
         {
             case 2:
-                if (textureFunction.sampler == EbtSampler2DMS ||
-                    textureFunction.sampler == EbtISampler2DMS ||
-                    textureFunction.sampler == EbtUSampler2DMS)
+                if (IsSampler2DMS(textureFunction.sampler))
+                {
                     return "int2";
+                }
                 else
+                {
                     return "int3";
+                }
             case 3:
-                return "int4";
+                if (IsSampler2DMSArray(textureFunction.sampler))
+                {
+                    return "int3";
+                }
+                else
+                {
+                    return "int4";
+                }
             default:
                 UNREACHABLE();
         }
@@ -209,6 +238,7 @@ int GetHLSLCoordCount(const TextureFunctionHLSL::TextureFunction &textureFunctio
             case EbtSampler2D:
             case EbtSamplerExternalOES:
             case EbtSampler2DMS:
+            case EbtSamplerVideoWEBGL:
                 hlslCoords = 2;
                 break;
             case EbtSamplerCube:
@@ -234,49 +264,13 @@ int GetHLSLCoordCount(const TextureFunctionHLSL::TextureFunction &textureFunctio
     }
     else
     {
-        switch (textureFunction.sampler)
+        if (IsSampler3D(textureFunction.sampler) || IsSamplerArray(textureFunction.sampler) ||
+            IsSamplerCube(textureFunction.sampler))
         {
-            case EbtSampler2D:
-                return 2;
-            case EbtSampler2DMS:
-                return 2;
-            case EbtSampler3D:
-                return 3;
-            case EbtSamplerCube:
-                return 3;
-            case EbtSampler2DArray:
-                return 3;
-            case EbtSamplerExternalOES:
-                return 2;
-            case EbtISampler2D:
-                return 2;
-            case EbtISampler2DMS:
-                return 2;
-            case EbtISampler3D:
-                return 3;
-            case EbtISamplerCube:
-                return 3;
-            case EbtISampler2DArray:
-                return 3;
-            case EbtUSampler2D:
-                return 2;
-            case EbtUSampler2DMS:
-                return 2;
-            case EbtUSampler3D:
-                return 3;
-            case EbtUSamplerCube:
-                return 3;
-            case EbtUSampler2DArray:
-                return 3;
-            case EbtSampler2DShadow:
-                return 2;
-            case EbtSamplerCubeShadow:
-                return 3;
-            case EbtSampler2DArrayShadow:
-                return 3;
-            default:
-                UNREACHABLE();
+            return 3;
         }
+        ASSERT(IsSampler2D(textureFunction.sampler));
+        return 2;
     }
     return 0;
 }
@@ -290,6 +284,7 @@ void OutputTextureFunctionArgumentList(TInfoSinkBase &out,
         switch (textureFunction.sampler)
         {
             case EbtSampler2D:
+            case EbtSamplerVideoWEBGL:
             case EbtSamplerExternalOES:
                 out << "sampler2D s";
                 break;
@@ -368,6 +363,7 @@ void OutputTextureFunctionArgumentList(TInfoSinkBase &out,
             case EbtSampler2DShadow:
             case EbtSampler2DArrayShadow:
             case EbtSamplerExternalOES:
+            case EbtSamplerVideoWEBGL:
                 out << ", float2 ddx, float2 ddy";
                 break;
             case EbtSampler3D:
@@ -400,17 +396,24 @@ void OutputTextureFunctionArgumentList(TInfoSinkBase &out,
         case TextureFunctionHLSL::TextureFunction::SIZE:
             break;
         case TextureFunctionHLSL::TextureFunction::FETCH:
-            if (textureFunction.sampler == EbtSampler2DMS ||
-                textureFunction.sampler == EbtISampler2DMS ||
-                textureFunction.sampler == EbtUSampler2DMS)
+            if (IsSampler2DMS(textureFunction.sampler) ||
+                IsSampler2DMSArray(textureFunction.sampler))
                 out << ", int index";
             else
                 out << ", int mip";
             break;
         case TextureFunctionHLSL::TextureFunction::GRAD:
             break;
+        case TextureFunctionHLSL::TextureFunction::GATHER:
+            break;
         default:
             UNREACHABLE();
+    }
+
+    if (textureFunction.method == TextureFunctionHLSL::TextureFunction::GATHER &&
+        IsShadowSampler(textureFunction.sampler))
+    {
+        out << ", float refZ";
     }
 
     if (textureFunction.offset)
@@ -430,13 +433,12 @@ void OutputTextureFunctionArgumentList(TInfoSinkBase &out,
             case EbtUSampler2DArray:
             case EbtSampler2DShadow:
             case EbtSampler2DArrayShadow:
-            case EbtSampler2DMS:
-            case EbtISampler2DMS:
-            case EbtUSampler2DMS:
             case EbtSamplerExternalOES:
+            case EbtSamplerVideoWEBGL:
                 out << ", int2 offset";
                 break;
             default:
+                // Offset is not supported for multisampled textures.
                 UNREACHABLE();
         }
     }
@@ -445,6 +447,11 @@ void OutputTextureFunctionArgumentList(TInfoSinkBase &out,
         textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0BIAS)
     {
         out << ", float bias";
+    }
+    else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::GATHER &&
+             !IsShadowSampler(textureFunction.sampler))
+    {
+        out << ", int comp = 0";
     }
 }
 
@@ -507,6 +514,11 @@ void OutputTextureSizeFunctionBody(TInfoSinkBase &out,
     {
         out << "    uint width; uint height; uint samples;\n"
             << "    " << textureReference << ".GetDimensions(width, height, samples);\n";
+    }
+    else if (IsSampler2DMSArray(textureFunction.sampler))
+    {
+        out << "    uint width; uint height; uint depth; uint samples;\n"
+            << "    " << textureReference << ".GetDimensions(width, height, depth, samples);\n";
     }
     else
     {
@@ -594,12 +606,23 @@ void OutputIntegerTextureSampleFunctionComputations(
     const ImmutableString &textureReference,
     ImmutableString *texCoordX,
     ImmutableString *texCoordY,
-    ImmutableString *texCoordZ)
+    ImmutableString *texCoordZ,
+    bool getDimensionsIgnoresBaseLevel)
 {
     if (!IsIntegerSampler(textureFunction.sampler))
     {
         return;
     }
+
+    if (getDimensionsIgnoresBaseLevel)
+    {
+        out << "    int baseLevel = samplerMetadata[samplerIndex].baseLevel;\n";
+    }
+    else
+    {
+        out << "    int baseLevel = 0;\n";
+    }
+
     if (IsSamplerCube(textureFunction.sampler))
     {
         out << "    float width; float height; float layers; float levels;\n";
@@ -607,10 +630,10 @@ void OutputIntegerTextureSampleFunctionComputations(
         out << "    uint mip = 0;\n";
 
         out << "    " << textureReference
-            << ".GetDimensions(mip, width, height, layers, levels);\n";
+            << ".GetDimensions(baseLevel + mip, width, height, layers, levels);\n";
 
-        out << "    bool xMajor = abs(t.x) > abs(t.y) && abs(t.x) > abs(t.z);\n";
-        out << "    bool yMajor = abs(t.y) > abs(t.z) && abs(t.y) > abs(t.x);\n";
+        out << "    bool xMajor = abs(t.x) >= abs(t.y) && abs(t.x) >= abs(t.z);\n";
+        out << "    bool yMajor = abs(t.y) >= abs(t.z) && abs(t.y) > abs(t.x);\n";
         out << "    bool zMajor = abs(t.z) > abs(t.x) && abs(t.z) > abs(t.y);\n";
         out << "    bool negative = (xMajor && t.x < 0.0f) || (yMajor && t.y < 0.0f) || "
                "(zMajor && t.z < 0.0f);\n";
@@ -627,6 +650,7 @@ void OutputIntegerTextureSampleFunctionComputations(
         out << "    float v = yMajor ? t.z : (negative ? t.y : -t.y);\n";
         out << "    float m = xMajor ? t.x : (yMajor ? t.y : t.z);\n";
 
+        out << "    float3 r = any(t) ? t : float3(1, 0, 0);\n";
         out << "    t.x = (u * 0.5f / m) + 0.5f;\n";
         out << "    t.y = (v * 0.5f / m) + 0.5f;\n";
 
@@ -637,10 +661,76 @@ void OutputIntegerTextureSampleFunctionComputations(
         {
             if (textureFunction.method == TextureFunctionHLSL::TextureFunction::IMPLICIT)
             {
-                out << "    float2 tSized = float2(t.x * width, t.y * height);\n"
-                       "    float2 dx = ddx(tSized);\n"
-                       "    float2 dy = ddy(tSized);\n"
-                       "    float lod = 0.5f * log2(max(dot(dx, dx), dot(dy, dy)));\n";
+                // We would like to calculate tha maximum of how many texels we move in the major
+                // face's texture as we move across the screen in any direction. Namely, we want the
+                // length of the directional derivative of the function p (defined below), maximized
+                // over screen space directions. (For short: we want the norm of Dp.) For
+                // simplicity, assume that z-axis is the major axis. By symmetry, we can assume that
+                // the positive z direction is major. (The calculated value will be the same even if
+                // this is false.) Let r denote the function from screen position to cube texture
+                // coordinates. Then p can be written as p = s . P . r, where P(r) = (r.x, r.y)/r.z
+                // is the projection onto the major cube face, and s = diag(width, height)/2. (s
+                // linearly maps from the cube face into texture space, so that p(r) is in units of
+                // texels.) The derivative is
+                // Dp(r) = s |1 0 -r.x/r.z|
+                //           |0 1 -r.y/r.z| |ddx(r) ddy(r)| / r.z
+                //       = |dot(a, ddx(r)) dot(a, ddy(r))|
+                //         |dot(b, ddx(r)) dot(b, ddy(r))| / (2 r.z)
+                // where a = w * vec3(1, 0, -r.x/r.z)
+                //       b = h * vec3(0, 1, -r.y/r.z)
+                // We would like to know max(L(x)) over unit vectors x, where L(x) = |Dp(r) x|^2.
+                // Since ddx(r) and ddy(r) are unknown, the best we can do is to sample L in some
+                // directions and take the maximum across the samples.
+                //
+                // Some implementations use max(L(n1), L(n2)) where n1 = vec2(1,0) and n2 =
+                // vec2(0,1).
+                //
+                // Some implementations use max(L(n1), L(n2), L(n3), L(n4)),
+                // where n3 = (n1 + n2) / |n1 + n2| = (n1 + n2)/sqrt(2)
+                //       n4 = (n1 - n2) / |n1 - n2| = (n1 - n2)/sqrt(2).
+                // In other words, two samples along the diagonal screen space directions have been
+                // added, giving a strictly better estimate of the true maximum.
+                //
+                // It turns out we can get twice the sample count very cheaply.
+                // We can use the linearity of Dp(r) to get these extra samples of L cheaply in
+                // terms of the already taken samples, L(n1) and L(n2):
+                // Denoting
+                // dpx = Dp(r)n1
+                // dpy = Dp(r)n2
+                // dpxx = dot(dpx, dpx)
+                // dpyy = dot(dpy, dpy)
+                // dpxy = dot(dpx, dpy)
+                // we obtain
+                // L(n3) = |Dp(r)n1 + Dp(r)n2|^2/2 = (dpxx + dpyy)/2 + dpxy
+                // L(n4) = |Dp(r)n1 - Dp(r)n2|^2/2 = (dpxx + dpyy)/2 - dpxy
+                // max(L(n1), L(n2), L(n3), L(n4))
+                // = max(max(L(n1), L(n2)), max(L(n3), L(n4)))
+                // = max(max(dpxx, dpyy), (dpxx + dpyy)/2 + abs(dpxy))
+                // So the extra cost is: one dot, one abs, one add, one multiply-add and one max.
+                // (All scalar.)
+                //
+                // In section 3.8.10.1, the OpenGL ES 3 specification defines the "scale factor",
+                // rho. In our terminology, this definition works out to taking sqrt(max(L(n1),
+                // L(n2))). Some implementations will use this estimate, here we use the strictly
+                // better sqrt(max(L(n1), L(n2), L(n3), L(n4))), since it's not much more expensive
+                // to calculate.
+
+                // Swap coordinates such that we can assume that the positive z-axis is major, in
+                // what follows.
+                out << "    float3 ddxr = xMajor ? ddx(r).yzx : yMajor ? ddx(r).zxy : ddx(r).xyz;\n"
+                       "    float3 ddyr = xMajor ? ddy(r).yzx : yMajor ? ddy(r).zxy : ddy(r).xyz;\n"
+                       "    r = xMajor ? r.yzx : yMajor ? r.zxy : r.xyz;\n";
+
+                out << "    float2 s = 0.5*float2(width, height);\n"
+                       "    float2 dpx = s * (ddxr.xy - ddxr.z*r.xy/r.z)/r.z;\n"
+                       "    float2 dpy = s * (ddyr.xy - ddyr.z*r.xy/r.z)/r.z;\n"
+                       "    float dpxx = dot(dpx, dpx);\n;"
+                       "    float dpyy = dot(dpy, dpy);\n;"
+                       "    float dpxy = dot(dpx, dpy);\n"
+                       "    float ma = max(dpxx, dpyy);\n"
+                       "    float mb = 0.5 * (dpxx + dpyy) + abs(dpxy);\n"
+                       "    float mab = max(ma, mb);\n"
+                       "    float lod = 0.5f * log2(mab);\n";
             }
             else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::GRAD)
             {
@@ -678,7 +768,7 @@ void OutputIntegerTextureSampleFunctionComputations(
             }
             out << "    mip = uint(min(max(round(lod), 0), levels - 1));\n"
                 << "    " << textureReference
-                << ".GetDimensions(mip, width, height, layers, levels);\n";
+                << ".GetDimensions(baseLevel + mip, width, height, layers, levels);\n";
         }
 
         // Convert from normalized floating-point to integer
@@ -697,98 +787,94 @@ void OutputIntegerTextureSampleFunctionComputations(
     }
     else if (textureFunction.method != TextureFunctionHLSL::TextureFunction::FETCH)
     {
-        if (IsSampler2D(textureFunction.sampler))
+        if (IsSamplerArray(textureFunction.sampler))
         {
-            if (IsSamplerArray(textureFunction.sampler))
+            out << "    float width; float height; float layers; float levels;\n";
+            if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0)
             {
-                out << "    float width; float height; float layers; float levels;\n";
-
-                if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0)
-                {
-                    out << "    uint mip = 0;\n";
-                }
-                else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0BIAS)
-                {
-                    out << "    uint mip = bias;\n";
-                }
-                else
-                {
-
-                    out << "    " << textureReference
-                        << ".GetDimensions(0, width, height, layers, levels);\n";
-                    if (textureFunction.method == TextureFunctionHLSL::TextureFunction::IMPLICIT ||
-                        textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
-                    {
-                        out << "    float2 tSized = float2(t.x * width, t.y * height);\n"
-                               "    float dx = length(ddx(tSized));\n"
-                               "    float dy = length(ddy(tSized));\n"
-                               "    float lod = log2(max(dx, dy));\n";
-
-                        if (textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
-                        {
-                            out << "    lod += bias;\n";
-                        }
-                    }
-                    else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::GRAD)
-                    {
-                        out << "    float2 sizeVec = float2(width, height);\n"
-                               "    float2 sizeDdx = ddx * sizeVec;\n"
-                               "    float2 sizeDdy = ddy * sizeVec;\n"
-                               "    float lod = log2(max(dot(sizeDdx, sizeDdx), "
-                               "dot(sizeDdy, sizeDdy))) * 0.5f;\n";
-                    }
-
-                    out << "    uint mip = uint(min(max(round(lod), 0), levels - 1));\n";
-                }
-
-                out << "    " << textureReference
-                    << ".GetDimensions(mip, width, height, layers, levels);\n";
+                out << "    uint mip = 0;\n";
+            }
+            else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0BIAS)
+            {
+                out << "    uint mip = bias;\n";
             }
             else
             {
-                out << "    float width; float height; float levels;\n";
-
-                if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0)
-                {
-                    out << "    uint mip = 0;\n";
-                }
-                else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0BIAS)
-                {
-                    out << "    uint mip = bias;\n";
-                }
-                else
-                {
-                    out << "    " << textureReference
-                        << ".GetDimensions(0, width, height, levels);\n";
-
-                    if (textureFunction.method == TextureFunctionHLSL::TextureFunction::IMPLICIT ||
-                        textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
-                    {
-                        out << "    float2 tSized = float2(t.x * width, t.y * height);\n"
-                               "    float dx = length(ddx(tSized));\n"
-                               "    float dy = length(ddy(tSized));\n"
-                               "    float lod = log2(max(dx, dy));\n";
-
-                        if (textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
-                        {
-                            out << "    lod += bias;\n";
-                        }
-                    }
-                    else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::GRAD)
-                    {
-                        out << "    float2 sizeVec = float2(width, height);\n"
-                               "    float2 sizeDdx = ddx * sizeVec;\n"
-                               "    float2 sizeDdy = ddy * sizeVec;\n"
-                               "    float lod = log2(max(dot(sizeDdx, sizeDdx), "
-                               "dot(sizeDdy, sizeDdy))) * 0.5f;\n";
-                    }
-
-                    out << "    uint mip = uint(min(max(round(lod), 0), levels - 1));\n";
-                }
 
                 out << "    " << textureReference
-                    << ".GetDimensions(mip, width, height, levels);\n";
+                    << ".GetDimensions(baseLevel, width, height, layers, levels);\n";
+                if (textureFunction.method == TextureFunctionHLSL::TextureFunction::IMPLICIT ||
+                    textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
+                {
+                    out << "    float2 tSized = float2(t.x * width, t.y * height);\n"
+                           "    float dx = length(ddx(tSized));\n"
+                           "    float dy = length(ddy(tSized));\n"
+                           "    float lod = log2(max(dx, dy));\n";
+
+                    if (textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
+                    {
+                        out << "    lod += bias;\n";
+                    }
+                }
+                else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::GRAD)
+                {
+                    out << "    float2 sizeVec = float2(width, height);\n"
+                           "    float2 sizeDdx = ddx * sizeVec;\n"
+                           "    float2 sizeDdy = ddy * sizeVec;\n"
+                           "    float lod = log2(max(dot(sizeDdx, sizeDdx), "
+                           "dot(sizeDdy, sizeDdy))) * 0.5f;\n";
+                }
+
+                out << "    uint mip = uint(min(max(round(lod), 0), levels - 1));\n";
             }
+
+            out << "    " << textureReference
+                << ".GetDimensions(baseLevel + mip, width, height, layers, levels);\n";
+        }
+        else if (IsSampler2D(textureFunction.sampler))
+        {
+            out << "    float width; float height; float levels;\n";
+
+            if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0)
+            {
+                out << "    uint mip = 0;\n";
+            }
+            else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::LOD0BIAS)
+            {
+                out << "    uint mip = bias;\n";
+            }
+            else
+            {
+                out << "    " << textureReference
+                    << ".GetDimensions(baseLevel, width, height, levels);\n";
+
+                if (textureFunction.method == TextureFunctionHLSL::TextureFunction::IMPLICIT ||
+                    textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
+                {
+                    out << "    float2 tSized = float2(t.x * width, t.y * height);\n"
+                           "    float dx = length(ddx(tSized));\n"
+                           "    float dy = length(ddy(tSized));\n"
+                           "    float lod = log2(max(dx, dy));\n";
+
+                    if (textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
+                    {
+                        out << "    lod += bias;\n";
+                    }
+                }
+                else if (textureFunction.method == TextureFunctionHLSL::TextureFunction::GRAD)
+                {
+                    out << "    float2 sizeVec = float2(width, height);\n"
+                           "    float2 sizeDdx = ddx * sizeVec;\n"
+                           "    float2 sizeDdy = ddy * sizeVec;\n"
+                           "    float lod = log2(max(dot(sizeDdx, sizeDdx), "
+                           "dot(sizeDdy, sizeDdy))) * 0.5f;\n";
+                }
+
+                out << "    uint mip = uint(min(max(round(lod), 0), levels - 1));\n";
+            }
+
+            out << "    " << textureReference
+                << ".GetDimensions(baseLevel + mip, width, height, levels);\n";
         }
         else if (IsSampler3D(textureFunction.sampler))
         {
@@ -805,7 +891,7 @@ void OutputIntegerTextureSampleFunctionComputations(
             else
             {
                 out << "    " << textureReference
-                    << ".GetDimensions(0, width, height, depth, levels);\n";
+                    << ".GetDimensions(baseLevel, width, height, depth, levels);\n";
 
                 if (textureFunction.method == TextureFunctionHLSL::TextureFunction::IMPLICIT ||
                     textureFunction.method == TextureFunctionHLSL::TextureFunction::BIAS)
@@ -833,13 +919,79 @@ void OutputIntegerTextureSampleFunctionComputations(
             }
 
             out << "    " << textureReference
-                << ".GetDimensions(mip, width, height, depth, levels);\n";
+                << ".GetDimensions(baseLevel + mip, width, height, depth, levels);\n";
         }
         else
             UNREACHABLE();
 
         OutputIntTexCoordWraps(out, textureFunction, texCoordX, texCoordY, texCoordZ);
     }
+}
+
+void OutputTextureGatherFunctionBody(TInfoSinkBase &out,
+                                     const TextureFunctionHLSL::TextureFunction &textureFunction,
+                                     ShShaderOutput outputType,
+                                     const ImmutableString &textureReference,
+                                     const ImmutableString &samplerReference,
+                                     const ImmutableString &texCoordX,
+                                     const ImmutableString &texCoordY,
+                                     const ImmutableString &texCoordZ)
+{
+    const int hlslCoords = GetHLSLCoordCount(textureFunction, outputType);
+    ImmutableString samplerCoordTypeString(
+        GetSamplerCoordinateTypeString(textureFunction, hlslCoords));
+    ImmutableStringBuilder samplerCoordBuilder(
+        samplerCoordTypeString.length() + strlen("(") + texCoordX.length() + strlen(", ") +
+        texCoordY.length() + strlen(", ") + texCoordZ.length() + strlen(")"));
+
+    samplerCoordBuilder << samplerCoordTypeString << "(" << texCoordX << ", " << texCoordY;
+    if (hlslCoords >= 3)
+    {
+        if (textureFunction.coords < 3)
+        {
+            samplerCoordBuilder << ", 0";
+        }
+        else
+        {
+            samplerCoordBuilder << ", " << texCoordZ;
+        }
+    }
+    samplerCoordBuilder << ")";
+
+    ImmutableString samplerCoordString(samplerCoordBuilder);
+
+    if (IsShadowSampler(textureFunction.sampler))
+    {
+        out << "return " << textureReference << ".GatherCmp(" << samplerReference << ", "
+            << samplerCoordString << ", refZ";
+        if (textureFunction.offset)
+        {
+            out << ", offset";
+        }
+        out << ");\n";
+        return;
+    }
+
+    constexpr std::array<const char *, 4> kHLSLGatherFunctions = {
+        {"GatherRed", "GatherGreen", "GatherBlue", "GatherAlpha"}};
+
+    out << "    switch(comp)\n"
+           "    {\n";
+    for (size_t component = 0; component < kHLSLGatherFunctions.size(); ++component)
+    {
+        out << "        case " << component << ":\n"
+            << "            return " << textureReference << "." << kHLSLGatherFunctions[component]
+            << "(" << samplerReference << ", " << samplerCoordString;
+        if (textureFunction.offset)
+        {
+            out << ", offset";
+        }
+        out << ");\n";
+    }
+
+    out << "        default:\n"
+           "            return float4(0.0, 0.0, 0.0, 1.0);\n"
+           "    }\n";
 }
 
 void OutputTextureSampleFunctionReturnStatement(
@@ -854,12 +1006,24 @@ void OutputTextureSampleFunctionReturnStatement(
 {
     out << "    return ";
 
+    if (IsIntegerSampler(textureFunction.sampler) && !IsSamplerCube(textureFunction.sampler) &&
+        textureFunction.method != TextureFunctionHLSL::TextureFunction::FETCH)
+    {
+        out << " useBorderColor ? ";
+        if (IsIntegerSamplerUnsigned(textureFunction.sampler))
+        {
+            out << "asuint";
+        }
+        out << "(samplerMetadata[samplerIndex].intBorderColor) : ";
+    }
+
     // HLSL intrinsic
     if (outputType == SH_HLSL_3_0_OUTPUT)
     {
         switch (textureFunction.sampler)
         {
             case EbtSampler2D:
+            case EbtSamplerVideoWEBGL:
             case EbtSamplerExternalOES:
                 out << "tex2D";
                 break;
@@ -991,9 +1155,8 @@ void OutputTextureSampleFunctionReturnStatement(
         else if (IsIntegerSampler(textureFunction.sampler) ||
                  textureFunction.method == TextureFunctionHLSL::TextureFunction::FETCH)
         {
-            if (textureFunction.sampler == EbtSampler2DMS ||
-                textureFunction.sampler == EbtISampler2DMS ||
-                textureFunction.sampler == EbtUSampler2DMS)
+            if (IsSampler2DMS(textureFunction.sampler) ||
+                IsSampler2DMSArray(textureFunction.sampler))
                 out << "), index";
             else
                 out << ", mip)";
@@ -1109,6 +1272,9 @@ ImmutableString TextureFunctionHLSL::TextureFunction::name() const
         case GRAD:
             name << "Grad";
             break;
+        case GATHER:
+            name << "Gather";
+            break;
         default:
             UNREACHABLE();
     }
@@ -1134,6 +1300,7 @@ const char *TextureFunctionHLSL::TextureFunction::getReturnType() const
             case EbtSampler2DMS:
             case EbtISampler2DMS:
             case EbtUSampler2DMS:
+            case EbtSamplerVideoWEBGL:
                 return "int2";
             case EbtSampler3D:
             case EbtISampler3D:
@@ -1141,6 +1308,9 @@ const char *TextureFunctionHLSL::TextureFunction::getReturnType() const
             case EbtSampler2DArray:
             case EbtISampler2DArray:
             case EbtUSampler2DArray:
+            case EbtSampler2DMSArray:
+            case EbtISampler2DMSArray:
+            case EbtUSampler2DMSArray:
             case EbtSampler2DArrayShadow:
                 return "int3";
             default:
@@ -1153,19 +1323,23 @@ const char *TextureFunctionHLSL::TextureFunction::getReturnType() const
         {
             case EbtSampler2D:
             case EbtSampler2DMS:
+            case EbtSampler2DMSArray:
             case EbtSampler3D:
             case EbtSamplerCube:
             case EbtSampler2DArray:
             case EbtSamplerExternalOES:
+            case EbtSamplerVideoWEBGL:
                 return "float4";
             case EbtISampler2D:
             case EbtISampler2DMS:
+            case EbtISampler2DMSArray:
             case EbtISampler3D:
             case EbtISamplerCube:
             case EbtISampler2DArray:
                 return "int4";
             case EbtUSampler2D:
             case EbtUSampler2DMS:
+            case EbtUSampler2DMSArray:
             case EbtUSampler3D:
             case EbtUSamplerCube:
             case EbtUSampler2DArray:
@@ -1173,7 +1347,14 @@ const char *TextureFunctionHLSL::TextureFunction::getReturnType() const
             case EbtSampler2DShadow:
             case EbtSamplerCubeShadow:
             case EbtSampler2DArrayShadow:
-                return "float";
+                if (method == TextureFunctionHLSL::TextureFunction::GATHER)
+                {
+                    return "float4";
+                }
+                else
+                {
+                    return "float";
+                }
             default:
                 UNREACHABLE();
         }
@@ -1277,6 +1458,19 @@ ImmutableString TextureFunctionHLSL::useTextureFunction(const ImmutableString &n
         textureFunction.proj   = true;
         textureFunction.offset = true;
     }
+    else if (name == "textureGather")
+    {
+        textureFunction.method = TextureFunction::GATHER;
+    }
+    else if (name == "textureGatherOffset")
+    {
+        textureFunction.method = TextureFunction::GATHER;
+        textureFunction.offset = true;
+    }
+    else if (name == "textureVideoWEBGL")
+    {
+        textureFunction.method = TextureFunction::IMPLICIT;
+    }
     else
         UNREACHABLE();
 
@@ -1292,7 +1486,7 @@ ImmutableString TextureFunctionHLSL::useTextureFunction(const ImmutableString &n
 
         bool bias = (argumentCount > mandatoryArgumentCount);  // Bias argument is optional
 
-        if (lod0 || shaderType == GL_VERTEX_SHADER)
+        if (lod0 || shaderType == GL_VERTEX_SHADER || shaderType == GL_COMPUTE_SHADER)
         {
             if (bias)
             {
@@ -1346,13 +1540,21 @@ void TextureFunctionHLSL::textureFunctionHeader(TInfoSinkBase &out,
             ImmutableString texCoordX("t.x");
             ImmutableString texCoordY("t.y");
             ImmutableString texCoordZ("t.z");
-            ProjectTextureCoordinates(textureFunction, &texCoordX, &texCoordY, &texCoordZ);
-            OutputIntegerTextureSampleFunctionComputations(out, textureFunction, outputType,
-                                                           textureReference, &texCoordX, &texCoordY,
-                                                           &texCoordZ);
-            OutputTextureSampleFunctionReturnStatement(out, textureFunction, outputType,
-                                                       textureReference, samplerReference,
-                                                       texCoordX, texCoordY, texCoordZ);
+            if (textureFunction.method == TextureFunction::GATHER)
+            {
+                OutputTextureGatherFunctionBody(out, textureFunction, outputType, textureReference,
+                                                samplerReference, texCoordX, texCoordY, texCoordZ);
+            }
+            else
+            {
+                ProjectTextureCoordinates(textureFunction, &texCoordX, &texCoordY, &texCoordZ);
+                OutputIntegerTextureSampleFunctionComputations(
+                    out, textureFunction, outputType, textureReference, &texCoordX, &texCoordY,
+                    &texCoordZ, getDimensionsIgnoresBaseLevel);
+                OutputTextureSampleFunctionReturnStatement(out, textureFunction, outputType,
+                                                           textureReference, samplerReference,
+                                                           texCoordX, texCoordY, texCoordZ);
+            }
         }
 
         out << "}\n"

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2015 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -7,7 +7,6 @@
 // DeviceD3D.cpp: D3D implementation of egl::Device
 
 #include "libANGLE/renderer/d3d/DeviceD3D.h"
-#include "libANGLE/renderer/d3d/RendererD3D.h"
 
 #include "libANGLE/Device.h"
 #include "libANGLE/Display.h"
@@ -19,8 +18,7 @@ namespace rx
 
 DeviceD3D::DeviceD3D(GLint deviceType, void *nativeDevice)
     : mDevice(nativeDevice), mDeviceType(deviceType), mIsInitialized(false)
-{
-}
+{}
 
 DeviceD3D::~DeviceD3D()
 {
@@ -34,9 +32,12 @@ DeviceD3D::~DeviceD3D()
 #endif
 }
 
-egl::Error DeviceD3D::getDevice(void **outValue)
+egl::Error DeviceD3D::getAttribute(const egl::Display *display, EGLint attribute, void **outValue)
 {
     ASSERT(mIsInitialized);
+    ANGLE_UNUSED_VARIABLE(display);
+    // Validated at higher levels.
+    ASSERT(getType() == attribute);
     *outValue = mDevice;
     return egl::NoError();
 }
@@ -80,4 +81,4 @@ void DeviceD3D::generateExtensions(egl::DeviceExtensions *outExtensions) const
     outExtensions->deviceD3D = true;
 }
 
-}
+}  // namespace rx

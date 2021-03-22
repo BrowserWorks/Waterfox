@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -27,8 +27,7 @@ class CallDAG::CallDAGCreator : public TIntermTraverser
           mDiagnostics(diagnostics),
           mCurrentFunction(nullptr),
           mCurrentIndex(0)
-    {
-    }
+    {}
 
     InitResult assignIndices()
     {
@@ -89,8 +88,7 @@ class CallDAG::CallDAGCreator : public TIntermTraverser
     {
         CreatorFunctionData()
             : definitionNode(nullptr), name(""), index(0), indexAssigned(false), visiting(false)
-        {
-        }
+        {}
 
         std::set<CreatorFunctionData *> callees;
         TIntermFunctionDefinition *definitionNode;
@@ -173,7 +171,7 @@ class CallDAG::CallDAGCreator : public TIntermTraverser
 
         InitResult result = INITDAG_SUCCESS;
 
-        std::stringstream errorStream;
+        std::stringstream errorStream = sh::InitializeStream<std::stringstream>();
 
         while (!functionsToProcess.empty())
         {
@@ -192,7 +190,7 @@ class CallDAG::CallDAGCreator : public TIntermTraverser
             if (!function->definitionNode)
             {
                 errorStream << "Undefined function '" << function->name
-                            << ")' used in the following call chain:";
+                            << "()' used in the following call chain:";
                 result = INITDAG_UNDEFINED;
                 break;
             }
@@ -260,13 +258,9 @@ class CallDAG::CallDAGCreator : public TIntermTraverser
 
 // CallDAG
 
-CallDAG::CallDAG()
-{
-}
+CallDAG::CallDAG() {}
 
-CallDAG::~CallDAG()
-{
-}
+CallDAG::~CallDAG() {}
 
 const size_t CallDAG::InvalidIndex = std::numeric_limits<size_t>::max();
 

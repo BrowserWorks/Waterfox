@@ -1,25 +1,25 @@
 //
-// Copyright (c) 2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2014 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
 
 // RenderbufferD3d.cpp: Implements the RenderbufferD3D class, a specialization of RenderbufferImpl
 
-
 #include "libANGLE/renderer/d3d/RenderbufferD3D.h"
 
+#include "libANGLE/Context.h"
 #include "libANGLE/Image.h"
+#include "libANGLE/renderer/d3d/ContextD3D.h"
 #include "libANGLE/renderer/d3d/EGLImageD3D.h"
-#include "libANGLE/renderer/d3d/RendererD3D.h"
 #include "libANGLE/renderer/d3d/RenderTargetD3D.h"
+#include "libANGLE/renderer/d3d/RendererD3D.h"
 
 namespace rx
 {
 RenderbufferD3D::RenderbufferD3D(const gl::RenderbufferState &state, RendererD3D *renderer)
     : RenderbufferImpl(state), mRenderer(renderer), mRenderTarget(nullptr), mImage(nullptr)
-{
-}
+{}
 
 RenderbufferD3D::~RenderbufferD3D()
 {
@@ -27,26 +27,32 @@ RenderbufferD3D::~RenderbufferD3D()
     mImage = nullptr;
 }
 
-gl::Error RenderbufferD3D::onDestroy(const gl::Context *context)
+void RenderbufferD3D::onDestroy(const gl::Context *context)
 {
-    deleteRenderTarget(context);
-    return gl::NoError();
+    SafeDelete(mRenderTarget);
 }
 
-gl::Error RenderbufferD3D::setStorage(const gl::Context *context,
-                                      GLenum internalformat,
-                                      size_t width,
-                                      size_t height)
+angle::Result RenderbufferD3D::setStorage(const gl::Context *context,
+                                          GLenum internalformat,
+                                          GLsizei width,
+                                          GLsizei height)
 {
-    return setStorageMultisample(context, 0, internalformat, width, height);
+    return setStorageMultisample(context, 0, internalformat, width, height,
+                                 gl::MultisamplingMode::Regular);
 }
 
-gl::Error RenderbufferD3D::setStorageMultisample(const gl::Context *context,
-                                                 size_t samples,
-                                                 GLenum internalformat,
-                                                 size_t width,
-                                                 size_t height)
+angle::Result RenderbufferD3D::setStorageMultisample(const gl::Context *context,
+                                                     GLsizei samples,
+                                                     GLenum internalformat,
+                                                     GLsizei width,
+                                                     GLsizei height,
+                                                     gl::MultisamplingMode mode)
 {
+    // TODO: Correctly differentiate between normal multisampling and render to texture.  In the
+    // latter case, the renderbuffer must be automatically resolved when rendering is broken and
+    // operations performed on it (such as blit, copy etc) should use the resolved image.
+    // http://anglebug.com/3107.
+
     // If the renderbuffer parameters are queried, the calling function
     // will expect one of the valid renderbuffer formats for use in
     // glRenderbufferStorage, but we should create depth and stencil buffers
@@ -59,38 +65,34 @@ gl::Error RenderbufferD3D::setStorageMultisample(const gl::Context *context,
 
     // ANGLE_framebuffer_multisample states GL_OUT_OF_MEMORY is generated on a failure to create
     // the specified storage.
-    // Because ES 3.0 already knows the exact number of supported samples, it would already have been
-    // validated and generated GL_INVALID_VALUE.
+    // Because ES 3.0 already knows the exact number of supported samples, it would already have
+    // been validated and generated GL_INVALID_VALUE.
     const gl::TextureCaps &formatCaps = mRenderer->getNativeTextureCaps().get(creationFormat);
-    if (samples > formatCaps.getMaxSamples())
-    {
-        return gl::OutOfMemory() << "Renderbuffer format does not support " << samples
-                                 << " samples, " << formatCaps.getMaxSamples()
-                                 << " is the maximum.";
-    }
+    ANGLE_CHECK_GL_ALLOC(GetImplAs<ContextD3D>(context),
+                         static_cast<uint32_t>(samples) <= formatCaps.getMaxSamples());
 
     RenderTargetD3D *newRT = nullptr;
-    ANGLE_TRY(mRenderer->createRenderTarget(context, static_cast<int>(width),
-                                            static_cast<int>(height), creationFormat,
-                                            static_cast<GLsizei>(samples), &newRT));
+    ANGLE_TRY(
+        mRenderer->createRenderTarget(context, width, height, creationFormat, samples, &newRT));
 
-    deleteRenderTarget(context);
+    SafeDelete(mRenderTarget);
     mImage        = nullptr;
     mRenderTarget = newRT;
 
-    return gl::NoError();
+    return angle::Result::Continue;
 }
 
-gl::Error RenderbufferD3D::setStorageEGLImageTarget(const gl::Context *context, egl::Image *image)
+angle::Result RenderbufferD3D::setStorageEGLImageTarget(const gl::Context *context,
+                                                        egl::Image *image)
 {
     mImage = GetImplAs<EGLImageD3D>(image);
-    deleteRenderTarget(context);
+    SafeDelete(mRenderTarget);
 
-    return gl::NoError();
+    return angle::Result::Continue;
 }
 
-gl::Error RenderbufferD3D::getRenderTarget(const gl::Context *context,
-                                           RenderTargetD3D **outRenderTarget)
+angle::Result RenderbufferD3D::getRenderTarget(const gl::Context *context,
+                                               RenderTargetD3D **outRenderTarget)
 {
     if (mImage)
     {
@@ -99,29 +101,21 @@ gl::Error RenderbufferD3D::getRenderTarget(const gl::Context *context,
     else
     {
         *outRenderTarget = mRenderTarget;
-        return gl::NoError();
+        return angle::Result::Continue;
     }
 }
 
-gl::Error RenderbufferD3D::getAttachmentRenderTarget(const gl::Context *context,
-                                                     GLenum /*binding*/,
-                                                     const gl::ImageIndex & /*imageIndex*/,
-                                                     FramebufferAttachmentRenderTarget **rtOut)
+angle::Result RenderbufferD3D::getAttachmentRenderTarget(const gl::Context *context,
+                                                         GLenum binding,
+                                                         const gl::ImageIndex &imageIndex,
+                                                         GLsizei samples,
+                                                         FramebufferAttachmentRenderTarget **rtOut)
 {
     return getRenderTarget(context, reinterpret_cast<RenderTargetD3D **>(rtOut));
 }
 
-void RenderbufferD3D::deleteRenderTarget(const gl::Context *context)
-{
-    onStateChange(context, angle::SubjectMessage::DEPENDENT_DIRTY_BITS);
-    if (mRenderTarget)
-    {
-        SafeDelete(mRenderTarget);
-    }
-}
-
-gl::Error RenderbufferD3D::initializeContents(const gl::Context *context,
-                                              const gl::ImageIndex &imageIndex)
+angle::Result RenderbufferD3D::initializeContents(const gl::Context *context,
+                                                  const gl::ImageIndex &imageIndex)
 {
     RenderTargetD3D *renderTarget = nullptr;
     ANGLE_TRY(getRenderTarget(context, &renderTarget));

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -16,13 +16,15 @@
 #include "libANGLE/Debug.h"
 #include "libANGLE/Error.h"
 #include "libANGLE/IndexRangeCache.h"
+#include "libANGLE/Observer.h"
 #include "libANGLE/RefCountObject.h"
+#include "libANGLE/angletypes.h"
 
 namespace rx
 {
 class BufferImpl;
 class GLImplFactory;
-};
+}  // namespace rx
 
 namespace gl
 {
@@ -35,8 +37,6 @@ class BufferState final : angle::NonCopyable
     BufferState();
     ~BufferState();
 
-    const std::string &getLabel();
-
     BufferUsage getUsage() const { return mUsage; }
     GLbitfield getAccessFlags() const { return mAccessFlags; }
     GLenum getAccess() const { return mAccess; }
@@ -45,6 +45,8 @@ class BufferState final : angle::NonCopyable
     GLint64 getMapOffset() const { return mMapOffset; }
     GLint64 getMapLength() const { return mMapLength; }
     GLint64 getSize() const { return mSize; }
+    bool isBoundForTransformFeedback() const { return mTransformFeedbackIndexedBindingCount != 0; }
+    std::string getLabel() const { return mLabel; }
 
   private:
     friend class Buffer;
@@ -62,48 +64,66 @@ class BufferState final : angle::NonCopyable
     int mBindingCount;
     int mTransformFeedbackIndexedBindingCount;
     int mTransformFeedbackGenericBindingCount;
+    GLboolean mImmutable;
+    GLbitfield mStorageExtUsageFlags;
 };
 
-class Buffer final : public RefCountObject, public LabeledObject
+class Buffer final : public RefCountObject<BufferID>,
+                     public LabeledObject,
+                     public angle::ObserverInterface,
+                     public angle::Subject
 {
   public:
-    Buffer(rx::GLImplFactory *factory, GLuint id);
+    Buffer(rx::GLImplFactory *factory, BufferID id);
     ~Buffer() override;
-    Error onDestroy(const Context *context) override;
+    void onDestroy(const Context *context) override;
 
-    void setLabel(const std::string &label) override;
+    void setLabel(const Context *context, const std::string &label) override;
     const std::string &getLabel() const override;
 
-    Error bufferData(const Context *context,
-                     BufferBinding target,
-                     const void *data,
-                     GLsizeiptr size,
-                     BufferUsage usage);
-    Error bufferSubData(const Context *context,
-                        BufferBinding target,
-                        const void *data,
-                        GLsizeiptr size,
-                        GLintptr offset);
-    Error copyBufferSubData(const Context *context,
-                            Buffer *source,
-                            GLintptr sourceOffset,
-                            GLintptr destOffset,
-                            GLsizeiptr size);
-    Error map(const Context *context, GLenum access);
-    Error mapRange(const Context *context, GLintptr offset, GLsizeiptr length, GLbitfield access);
-    Error unmap(const Context *context, GLboolean *result);
+    angle::Result bufferStorage(Context *context,
+                                BufferBinding target,
+                                GLsizeiptr size,
+                                const void *data,
+                                GLbitfield flags);
+    angle::Result bufferData(Context *context,
+                             BufferBinding target,
+                             const void *data,
+                             GLsizeiptr size,
+                             BufferUsage usage);
+    angle::Result bufferDataImpl(Context *context,
+                                 BufferBinding target,
+                                 const void *data,
+                                 GLsizeiptr size,
+                                 BufferUsage usage,
+                                 GLbitfield flags);
+    angle::Result bufferSubData(const Context *context,
+                                BufferBinding target,
+                                const void *data,
+                                GLsizeiptr size,
+                                GLintptr offset);
+    angle::Result copyBufferSubData(const Context *context,
+                                    Buffer *source,
+                                    GLintptr sourceOffset,
+                                    GLintptr destOffset,
+                                    GLsizeiptr size);
+    angle::Result map(const Context *context, GLenum access);
+    angle::Result mapRange(const Context *context,
+                           GLintptr offset,
+                           GLsizeiptr length,
+                           GLbitfield access);
+    angle::Result unmap(const Context *context, GLboolean *result);
 
     // These are called when another operation changes Buffer data.
-    void onTransformFeedback(const Context *context);
-    void onPixelPack(const Context *context);
+    void onDataChanged();
 
-    Error getIndexRange(const gl::Context *context,
-                        GLenum type,
-                        size_t offset,
-                        size_t count,
-                        bool primitiveRestartEnabled,
-                        IndexRange *outRange) const;
-
+    angle::Result getIndexRange(const gl::Context *context,
+                                DrawElementsType type,
+                                size_t offset,
+                                size_t count,
+                                bool primitiveRestartEnabled,
+                                IndexRange *outRange) const;
+    const BufferState &getState() const { return mState; }
     BufferUsage getUsage() const { return mState.mUsage; }
     GLbitfield getAccessFlags() const { return mState.mAccessFlags; }
     GLenum getAccess() const { return mState.mAccess; }
@@ -112,17 +132,43 @@ class Buffer final : public RefCountObject, public LabeledObject
     GLint64 getMapOffset() const { return mState.mMapOffset; }
     GLint64 getMapLength() const { return mState.mMapLength; }
     GLint64 getSize() const { return mState.mSize; }
+    GLint64 getMemorySize() const;
+    GLboolean isImmutable() const { return mState.mImmutable; }
+    GLbitfield getStorageExtUsageFlags() const { return mState.mStorageExtUsageFlags; }
+
+    // Buffers are always initialized immediately when allocated
+    InitState initState() const { return InitState::Initialized; }
 
     rx::BufferImpl *getImplementation() const { return mImpl; }
 
-    bool isBound() const;
-    bool isBoundForTransformFeedbackAndOtherUse() const;
+    ANGLE_INLINE bool isBound() const { return mState.mBindingCount > 0; }
+
+    ANGLE_INLINE bool isBoundForTransformFeedbackAndOtherUse() const
+    {
+        // The transform feedback generic binding point is not an indexed binding point but it also
+        // does not count as a non-transform-feedback use of the buffer, so we subtract it from the
+        // binding count when checking if the buffer is bound to a non-transform-feedback location.
+        // See https://crbug.com/853978
+        return mState.mTransformFeedbackIndexedBindingCount > 0 &&
+               mState.mTransformFeedbackIndexedBindingCount !=
+                   mState.mBindingCount - mState.mTransformFeedbackGenericBindingCount;
+    }
+
+    bool isDoubleBoundForTransformFeedback() const;
     void onTFBindingChanged(const Context *context, bool bound, bool indexed);
-    void onNonTFBindingChanged(const Context *context, int incr) { mState.mBindingCount += incr; }
+    void onNonTFBindingChanged(int incr) { mState.mBindingCount += incr; }
+    angle::Result getSubData(const gl::Context *context,
+                             GLintptr offset,
+                             GLsizeiptr size,
+                             void *outData);
+
+    // angle::ObserverInterface implementation.
+    void onSubjectStateChange(angle::SubjectIndex index, angle::SubjectMessage message) override;
 
   private:
     BufferState mState;
     rx::BufferImpl *mImpl;
+    angle::ObserverBinding mImplObserver;
 
     mutable IndexRangeCache mIndexRangeCache;
 };

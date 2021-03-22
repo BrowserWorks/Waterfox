@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2010 The ANGLE Project Authors. All rights reserved.
+// Copyright 2010 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -33,7 +33,9 @@ bool IsInterpolationIn(TQualifier qualifier)
     {
         case EvqSmoothIn:
         case EvqFlatIn:
+        case EvqNoPerspectiveIn:
         case EvqCentroidIn:
+        case EvqSampleIn:
             return true;
         default:
             return false;
@@ -375,6 +377,12 @@ GLenum GLVariableType(const TType &type)
             return GL_SAMPLER_2D_ARRAY;
         case EbtSampler2DMS:
             return GL_SAMPLER_2D_MULTISAMPLE;
+        case EbtSampler2DMSArray:
+            return GL_SAMPLER_2D_MULTISAMPLE_ARRAY;
+        case EbtSamplerCubeArray:
+            return GL_SAMPLER_CUBE_MAP_ARRAY;
+        case EbtSamplerBuffer:
+            return GL_SAMPLER_BUFFER;
         case EbtISampler2D:
             return GL_INT_SAMPLER_2D;
         case EbtISampler3D:
@@ -385,6 +393,12 @@ GLenum GLVariableType(const TType &type)
             return GL_INT_SAMPLER_2D_ARRAY;
         case EbtISampler2DMS:
             return GL_INT_SAMPLER_2D_MULTISAMPLE;
+        case EbtISampler2DMSArray:
+            return GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+        case EbtISamplerCubeArray:
+            return GL_INT_SAMPLER_CUBE_MAP_ARRAY;
+        case EbtISamplerBuffer:
+            return GL_INT_SAMPLER_BUFFER;
         case EbtUSampler2D:
             return GL_UNSIGNED_INT_SAMPLER_2D;
         case EbtUSampler3D:
@@ -395,12 +409,20 @@ GLenum GLVariableType(const TType &type)
             return GL_UNSIGNED_INT_SAMPLER_2D_ARRAY;
         case EbtUSampler2DMS:
             return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
+        case EbtUSampler2DMSArray:
+            return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+        case EbtUSamplerCubeArray:
+            return GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY;
+        case EbtUSamplerBuffer:
+            return GL_UNSIGNED_INT_SAMPLER_BUFFER;
         case EbtSampler2DShadow:
             return GL_SAMPLER_2D_SHADOW;
         case EbtSamplerCubeShadow:
             return GL_SAMPLER_CUBE_SHADOW;
         case EbtSampler2DArrayShadow:
             return GL_SAMPLER_2D_ARRAY_SHADOW;
+        case EbtSamplerCubeArrayShadow:
+            return GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW;
         case EbtImage2D:
             return GL_IMAGE_2D;
         case EbtIImage2D:
@@ -425,8 +447,22 @@ GLenum GLVariableType(const TType &type)
             return GL_INT_IMAGE_CUBE;
         case EbtUImageCube:
             return GL_UNSIGNED_INT_IMAGE_CUBE;
+        case EbtImageCubeArray:
+            return GL_IMAGE_CUBE_MAP_ARRAY;
+        case EbtIImageCubeArray:
+            return GL_INT_IMAGE_CUBE_MAP_ARRAY;
+        case EbtUImageCubeArray:
+            return GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY;
+        case EbtImageBuffer:
+            return GL_IMAGE_BUFFER;
+        case EbtIImageBuffer:
+            return GL_INT_IMAGE_BUFFER;
+        case EbtUImageBuffer:
+            return GL_UNSIGNED_INT_IMAGE_BUFFER;
         case EbtAtomicCounter:
             return GL_UNSIGNED_INT_ATOMIC_COUNTER;
+        case EbtSamplerVideoWEBGL:
+            return GL_SAMPLER_VIDEO_IMAGE_WEBGL;
         default:
             UNREACHABLE();
     }
@@ -447,7 +483,8 @@ GLenum GLVariablePrecision(const TType &type)
             case EbpLow:
                 return GL_LOW_FLOAT;
             case EbpUndefined:
-            // Should be defined as the default precision by the parser
+                // Desktop specs do not use precision
+                return GL_NONE;
             default:
                 UNREACHABLE();
         }
@@ -463,7 +500,8 @@ GLenum GLVariablePrecision(const TType &type)
             case EbpLow:
                 return GL_LOW_INT;
             case EbpUndefined:
-            // Should be defined as the default precision by the parser
+                // Desktop specs do not use precision
+                return GL_NONE;
             default:
                 UNREACHABLE();
         }
@@ -478,7 +516,7 @@ ImmutableString ArrayString(const TType &type)
     if (!type.isArray())
         return ImmutableString("");
 
-    const TVector<unsigned int> &arraySizes = *type.getArraySizes();
+    const TSpan<const unsigned int> &arraySizes     = type.getArraySizes();
     constexpr const size_t kMaxDecimalDigitsPerSize = 10u;
     ImmutableStringBuilder arrayString(arraySizes.size() * (kMaxDecimalDigitsPerSize + 2u));
     for (auto arraySizeIter = arraySizes.rbegin(); arraySizeIter != arraySizes.rend();
@@ -509,9 +547,11 @@ bool IsVaryingOut(TQualifier qualifier)
         case EvqVaryingOut:
         case EvqSmoothOut:
         case EvqFlatOut:
+        case EvqNoPerspectiveOut:
         case EvqCentroidOut:
         case EvqVertexOut:
         case EvqGeometryOut:
+        case EvqSampleOut:
             return true;
 
         default:
@@ -528,9 +568,11 @@ bool IsVaryingIn(TQualifier qualifier)
         case EvqVaryingIn:
         case EvqSmoothIn:
         case EvqFlatIn:
+        case EvqNoPerspectiveIn:
         case EvqCentroidIn:
         case EvqFragmentIn:
         case EvqGeometryIn:
+        case EvqSampleIn:
             return true;
 
         default:
@@ -559,6 +601,10 @@ InterpolationType GetInterpolationType(TQualifier qualifier)
         case EvqFlatOut:
             return INTERPOLATION_FLAT;
 
+        case EvqNoPerspectiveIn:
+        case EvqNoPerspectiveOut:
+            return INTERPOLATION_NOPERSPECTIVE;
+
         case EvqSmoothIn:
         case EvqSmoothOut:
         case EvqVertexOut:
@@ -573,6 +619,9 @@ InterpolationType GetInterpolationType(TQualifier qualifier)
         case EvqCentroidOut:
             return INTERPOLATION_CENTROID;
 
+        case EvqSampleIn:
+        case EvqSampleOut:
+            return INTERPOLATION_SAMPLE;
         default:
             UNREACHABLE();
 #if !UNREACHABLE_IS_NORETURN
@@ -680,6 +729,7 @@ bool IsBuiltinOutputVariable(TQualifier qualifier)
         case EvqSecondaryFragColorEXT:
         case EvqFragData:
         case EvqSecondaryFragDataEXT:
+        case EvqClipDistance:
             return true;
         default:
             break;
@@ -694,11 +744,17 @@ bool IsBuiltinFragmentInputVariable(TQualifier qualifier)
         case EvqFragCoord:
         case EvqPointCoord:
         case EvqFrontFacing:
+        case EvqHelperInvocation:
             return true;
         default:
             break;
     }
     return false;
+}
+
+bool IsShaderOutput(TQualifier qualifier)
+{
+    return IsVaryingOut(qualifier) || IsBuiltinOutputVariable(qualifier);
 }
 
 bool IsOutputESSL(ShShaderOutput output)
@@ -743,6 +799,198 @@ bool IsOutputHLSL(ShShaderOutput output)
 bool IsOutputVulkan(ShShaderOutput output)
 {
     return output == SH_GLSL_VULKAN_OUTPUT;
+}
+bool IsOutputMetal(ShShaderOutput output)
+{
+    return output == SH_GLSL_METAL_OUTPUT;
+}
+
+bool IsInShaderStorageBlock(TIntermTyped *node)
+{
+    TIntermSwizzle *swizzleNode = node->getAsSwizzleNode();
+    if (swizzleNode)
+    {
+        return IsInShaderStorageBlock(swizzleNode->getOperand());
+    }
+
+    TIntermBinary *binaryNode = node->getAsBinaryNode();
+    if (binaryNode)
+    {
+        switch (binaryNode->getOp())
+        {
+            case EOpIndexDirectInterfaceBlock:
+            case EOpIndexIndirect:
+            case EOpIndexDirect:
+            case EOpIndexDirectStruct:
+                return IsInShaderStorageBlock(binaryNode->getLeft());
+            default:
+                return false;
+        }
+    }
+
+    const TType &type = node->getType();
+    return type.getQualifier() == EvqBuffer;
+}
+
+GLenum GetImageInternalFormatType(TLayoutImageInternalFormat iifq)
+{
+    switch (iifq)
+    {
+        case EiifRGBA32F:
+            return GL_RGBA32F;
+        case EiifRGBA16F:
+            return GL_RGBA16F;
+        case EiifR32F:
+            return GL_R32F;
+        case EiifRGBA32UI:
+            return GL_RGBA32UI;
+        case EiifRGBA16UI:
+            return GL_RGBA16UI;
+        case EiifRGBA8UI:
+            return GL_RGBA8UI;
+        case EiifR32UI:
+            return GL_R32UI;
+        case EiifRGBA32I:
+            return GL_RGBA32I;
+        case EiifRGBA16I:
+            return GL_RGBA16I;
+        case EiifRGBA8I:
+            return GL_RGBA8I;
+        case EiifR32I:
+            return GL_R32I;
+        case EiifRGBA8:
+            return GL_RGBA8;
+        case EiifRGBA8_SNORM:
+            return GL_RGBA8_SNORM;
+        default:
+            return GL_NONE;
+    }
+}
+
+bool IsSpecWithFunctionBodyNewScope(ShShaderSpec shaderSpec, int shaderVersion)
+{
+    return (shaderVersion == 100 && !sh::IsWebGLBasedSpec(shaderSpec));
+}
+
+ImplicitTypeConversion GetConversion(TBasicType t1, TBasicType t2)
+{
+    if (t1 == t2)
+        return ImplicitTypeConversion::Same;
+
+    switch (t1)
+    {
+        case EbtInt:
+            switch (t2)
+            {
+                case EbtInt:
+                    UNREACHABLE();
+                    break;
+                case EbtUInt:
+                    return ImplicitTypeConversion::Invalid;
+                case EbtFloat:
+                    return ImplicitTypeConversion::Left;
+                default:
+                    return ImplicitTypeConversion::Invalid;
+            }
+            break;
+        case EbtUInt:
+            switch (t2)
+            {
+                case EbtInt:
+                    return ImplicitTypeConversion::Invalid;
+                case EbtUInt:
+                    UNREACHABLE();
+                    break;
+                case EbtFloat:
+                    return ImplicitTypeConversion::Left;
+                default:
+                    return ImplicitTypeConversion::Invalid;
+            }
+            break;
+        case EbtFloat:
+            switch (t2)
+            {
+                case EbtInt:
+                case EbtUInt:
+                    return ImplicitTypeConversion::Right;
+                case EbtFloat:
+                    UNREACHABLE();
+                    break;
+                default:
+                    return ImplicitTypeConversion::Invalid;
+            }
+            break;
+        default:
+            return ImplicitTypeConversion::Invalid;
+    }
+    return ImplicitTypeConversion::Invalid;
+}
+
+bool IsValidImplicitConversion(sh::ImplicitTypeConversion conversion, TOperator op)
+{
+    switch (conversion)
+    {
+        case sh::ImplicitTypeConversion::Same:
+            return true;
+        case sh::ImplicitTypeConversion::Left:
+            switch (op)
+            {
+                case EOpEqual:
+                case EOpNotEqual:
+                case EOpLessThan:
+                case EOpGreaterThan:
+                case EOpLessThanEqual:
+                case EOpGreaterThanEqual:
+                case EOpAdd:
+                case EOpSub:
+                case EOpMul:
+                case EOpDiv:
+                    return true;
+                default:
+                    break;
+            }
+            break;
+        case sh::ImplicitTypeConversion::Right:
+            switch (op)
+            {
+                case EOpAssign:
+                case EOpInitialize:
+                case EOpEqual:
+                case EOpNotEqual:
+                case EOpLessThan:
+                case EOpGreaterThan:
+                case EOpLessThanEqual:
+                case EOpGreaterThanEqual:
+                case EOpAdd:
+                case EOpSub:
+                case EOpMul:
+                case EOpDiv:
+                case EOpAddAssign:
+                case EOpSubAssign:
+                case EOpMulAssign:
+                case EOpDivAssign:
+                    return true;
+                default:
+                    break;
+            }
+            break;
+        case sh::ImplicitTypeConversion::Invalid:
+            break;
+    }
+    return false;
+}
+
+size_t FindFieldIndex(const TFieldList &fieldList, const char *fieldName)
+{
+    for (size_t fieldIndex = 0; fieldIndex < fieldList.size(); ++fieldIndex)
+    {
+        if (strcmp(fieldList[fieldIndex]->name().data(), fieldName) == 0)
+        {
+            return fieldIndex;
+        }
+    }
+    UNREACHABLE();
+    return 0;
 }
 
 }  // namespace sh

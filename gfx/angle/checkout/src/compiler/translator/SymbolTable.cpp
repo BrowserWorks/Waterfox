@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2013 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -8,7 +8,7 @@
 //
 
 #if defined(_MSC_VER)
-#pragma warning(disable : 4718)
+#    pragma warning(disable : 4718)
 #endif
 
 #include "compiler/translator/SymbolTable.h"
@@ -17,9 +17,42 @@
 #include "compiler/translator/ImmutableString.h"
 #include "compiler/translator/IntermNode.h"
 #include "compiler/translator/StaticType.h"
+#include "compiler/translator/util.h"
 
 namespace sh
 {
+namespace
+{
+bool CheckShaderType(Shader expected, GLenum actual)
+{
+    switch (expected)
+    {
+        case Shader::ALL:
+            return true;
+        case Shader::FRAGMENT:
+            return actual == GL_FRAGMENT_SHADER;
+        case Shader::VERTEX:
+            return actual == GL_VERTEX_SHADER;
+        case Shader::COMPUTE:
+            return actual == GL_COMPUTE_SHADER;
+        case Shader::GEOMETRY:
+            return actual == GL_GEOMETRY_SHADER;
+        case Shader::GEOMETRY_EXT:
+            return actual == GL_GEOMETRY_SHADER_EXT;
+        case Shader::NOT_COMPUTE:
+            return actual != GL_COMPUTE_SHADER;
+        default:
+            UNREACHABLE();
+            return false;
+    }
+}
+
+bool CheckExtension(uint32_t extensionIndex, const ShBuiltInResources &resources)
+{
+    const int *resourcePtr = reinterpret_cast<const int *>(&resources);
+    return resourcePtr[extensionIndex] > 0;
+}
+}  // namespace
 
 class TSymbolTable::TSymbolTableLevel
 {
@@ -68,9 +101,9 @@ TSymbolTable::TSymbolTable()
     : mGlobalInvariant(false),
       mUniqueIdCounter(0),
       mShaderType(GL_FRAGMENT_SHADER),
+      mShaderSpec(SH_GLES2_SPEC),
       mGlInVariableWithArraySize(nullptr)
-{
-}
+{}
 
 TSymbolTable::~TSymbolTable() = default;
 
@@ -132,7 +165,7 @@ bool TSymbolTable::setGlInArraySize(unsigned int inputArraySize)
     {
         return mGlInVariableWithArraySize->getType().getOutermostArraySize() == inputArraySize;
     }
-    const TInterfaceBlock *glPerVertex = mVar_gl_PerVertex;
+    const TInterfaceBlock *glPerVertex = static_cast<const TInterfaceBlock *>(m_gl_PerVertex);
     TType *glInType = new TType(glPerVertex, EvqPerVertexIn, TLayoutQualifier::Create());
     glInType->makeArray(inputArraySize);
     mGlInVariableWithArraySize =
@@ -148,16 +181,17 @@ TVariable *TSymbolTable::getGlInVariableWithArraySize() const
 
 const TVariable *TSymbolTable::gl_FragData() const
 {
-    return mVar_gl_FragData;
+    return static_cast<const TVariable *>(m_gl_FragData);
 }
 
 const TVariable *TSymbolTable::gl_SecondaryFragDataEXT() const
 {
-    return mVar_gl_SecondaryFragDataEXT;
+    return static_cast<const TVariable *>(m_gl_SecondaryFragDataEXT);
 }
 
-TSymbolTable::VariableMetadata *TSymbolTable::getOrCreateVariableMetadata(const TVariable &variable) {
-    int id = variable.uniqueId().get();
+TSymbolTable::VariableMetadata *TSymbolTable::getOrCreateVariableMetadata(const TVariable &variable)
+{
+    int id    = variable.uniqueId().get();
     auto iter = mVariableMetadata.find(id);
     if (iter == mVariableMetadata.end())
     {
@@ -168,13 +202,13 @@ TSymbolTable::VariableMetadata *TSymbolTable::getOrCreateVariableMetadata(const 
 
 void TSymbolTable::markStaticWrite(const TVariable &variable)
 {
-    auto metadata = getOrCreateVariableMetadata(variable);
+    auto metadata         = getOrCreateVariableMetadata(variable);
     metadata->staticWrite = true;
 }
 
 void TSymbolTable::markStaticRead(const TVariable &variable)
 {
-    auto metadata = getOrCreateVariableMetadata(variable);
+    auto metadata        = getOrCreateVariableMetadata(variable);
     metadata->staticRead = true;
 }
 
@@ -189,18 +223,18 @@ bool TSymbolTable::isStaticallyUsed(const TVariable &variable) const
 void TSymbolTable::addInvariantVarying(const TVariable &variable)
 {
     ASSERT(atGlobalLevel());
-    auto metadata = getOrCreateVariableMetadata(variable);
+    auto metadata       = getOrCreateVariableMetadata(variable);
     metadata->invariant = true;
 }
 
 bool TSymbolTable::isVaryingInvariant(const TVariable &variable) const
 {
     ASSERT(atGlobalLevel());
-    if (mGlobalInvariant)
+    if (mGlobalInvariant && (IsShaderOutput(variable.getType().getQualifier())))
     {
         return true;
     }
-    int id = variable.uniqueId().get();
+    int id    = variable.uniqueId().get();
     auto iter = mVariableMetadata.find(id);
     return iter != mVariableMetadata.end() && iter->second.invariant;
 }
@@ -249,6 +283,30 @@ const TSymbol *TSymbolTable::findGlobal(const ImmutableString &name) const
 {
     ASSERT(!mTable.empty());
     return mTable[0]->find(name);
+}
+
+const TSymbol *TSymbolTable::findGlobalWithConversion(
+    const std::vector<ImmutableString> &names) const
+{
+    for (const ImmutableString &name : names)
+    {
+        const TSymbol *target = findGlobal(name);
+        if (target != nullptr)
+            return target;
+    }
+    return nullptr;
+}
+
+const TSymbol *TSymbolTable::findBuiltInWithConversion(const std::vector<ImmutableString> &names,
+                                                       int shaderVersion) const
+{
+    for (const ImmutableString &name : names)
+    {
+        const TSymbol *target = findBuiltIn(name, shaderVersion);
+        if (target != nullptr)
+            return target;
+    }
+    return nullptr;
 }
 
 bool TSymbolTable::declare(TSymbol *symbol)
@@ -332,25 +390,35 @@ void TSymbolTable::initializeBuiltIns(sh::GLenum type,
                                       const ShBuiltInResources &resources)
 {
     mShaderType = type;
+    mShaderSpec = spec;
     mResources  = resources;
 
     // We need just one precision stack level for predefined precisions.
     mPrecisionStack.emplace_back(new PrecisionStackLevel);
 
-    switch (type)
+    if (IsDesktopGLSpec(spec))
     {
-        case GL_FRAGMENT_SHADER:
-            setDefaultPrecision(EbtInt, EbpMedium);
-            break;
-        case GL_VERTEX_SHADER:
-        case GL_COMPUTE_SHADER:
-        case GL_GEOMETRY_SHADER_EXT:
-            setDefaultPrecision(EbtInt, EbpHigh);
-            setDefaultPrecision(EbtFloat, EbpHigh);
-            break;
-        default:
-            UNREACHABLE();
+        setDefaultPrecision(EbtInt, EbpUndefined);
+        setDefaultPrecision(EbtFloat, EbpUndefined);
     }
+    else
+    {
+        switch (type)
+        {
+            case GL_FRAGMENT_SHADER:
+                setDefaultPrecision(EbtInt, EbpMedium);
+                break;
+            case GL_VERTEX_SHADER:
+            case GL_COMPUTE_SHADER:
+            case GL_GEOMETRY_SHADER_EXT:
+                setDefaultPrecision(EbtInt, EbpHigh);
+                setDefaultPrecision(EbtFloat, EbpHigh);
+                break;
+            default:
+                UNREACHABLE();
+        }
+    }
+
     // Set defaults for sampler types that have default precision, even those that are
     // only available if an extension exists.
     // New sampler types in ESSL3 don't have default precision. ESSL1 types do.
@@ -362,6 +430,13 @@ void TSymbolTable::initializeBuiltIns(sh::GLenum type,
     initSamplerDefaultPrecision(EbtSamplerExternal2DY2YEXT);
     // It isn't specified whether Sampler2DRect has default precision.
     initSamplerDefaultPrecision(EbtSampler2DRect);
+
+    if (spec < SH_GLES3_SPEC)
+    {
+        // Only set the default precision of shadow samplers in ESLL1. They become core in ESSL3
+        // where they do not have a defalut precision.
+        initSamplerDefaultPrecision(EbtSampler2DShadow);
+    }
 
     setDefaultPrecision(EbtAtomicCounter, EbpHigh);
 
@@ -375,7 +450,90 @@ void TSymbolTable::initSamplerDefaultPrecision(TBasicType samplerType)
     setDefaultPrecision(samplerType, EbpLow);
 }
 
-TSymbolTable::VariableMetadata::VariableMetadata() : staticRead(false), staticWrite(false), invariant(false)
+TSymbolTable::VariableMetadata::VariableMetadata()
+    : staticRead(false), staticWrite(false), invariant(false)
+{}
+
+const TSymbol *SymbolRule::get(ShShaderSpec shaderSpec,
+                               int shaderVersion,
+                               sh::GLenum shaderType,
+                               const ShBuiltInResources &resources,
+                               const TSymbolTableBase &symbolTable) const
 {
+    if (IsDesktopGLSpec(shaderSpec) != (mIsDesktop == 1))
+        return nullptr;
+
+    if (mVersion == kESSL1Only && shaderVersion != static_cast<int>(kESSL1Only))
+        return nullptr;
+
+    if (mVersion > shaderVersion)
+        return nullptr;
+
+    if (!CheckShaderType(static_cast<Shader>(mShaders), shaderType))
+        return nullptr;
+
+    if (mExtensionIndex != 0 && !CheckExtension(mExtensionIndex, resources))
+        return nullptr;
+
+    return mIsVar > 0 ? symbolTable.*(mSymbolOrVar.var) : mSymbolOrVar.symbol;
+}
+
+const TSymbol *FindMangledBuiltIn(ShShaderSpec shaderSpec,
+                                  int shaderVersion,
+                                  sh::GLenum shaderType,
+                                  const ShBuiltInResources &resources,
+                                  const TSymbolTableBase &symbolTable,
+                                  const SymbolRule *rules,
+                                  uint16_t startIndex,
+                                  uint16_t endIndex)
+{
+    for (uint32_t ruleIndex = startIndex; ruleIndex < endIndex; ++ruleIndex)
+    {
+        const TSymbol *symbol =
+            rules[ruleIndex].get(shaderSpec, shaderVersion, shaderType, resources, symbolTable);
+        if (symbol)
+        {
+            return symbol;
+        }
+    }
+
+    return nullptr;
+}
+
+bool UnmangledEntry::matches(const ImmutableString &name,
+                             ShShaderSpec shaderSpec,
+                             int shaderVersion,
+                             sh::GLenum shaderType,
+                             const TExtensionBehavior &extensions) const
+{
+    if (name != mName)
+        return false;
+
+    if (!CheckShaderType(static_cast<Shader>(mShaderType), shaderType))
+        return false;
+
+    if (IsDesktopGLSpec(shaderSpec))
+    {
+        if (mGLSLVersion > shaderVersion)
+            return false;
+
+        if (static_cast<TExtension>(mGLSLExtension) == TExtension::UNDEFINED)
+            return true;
+
+        return IsExtensionEnabled(extensions, static_cast<TExtension>(mGLSLExtension));
+    }
+    else
+    {
+        if (mESSLVersion == kESSL1Only && shaderVersion != static_cast<int>(kESSL1Only))
+            return false;
+
+        if (mESSLVersion > shaderVersion)
+            return false;
+
+        if (static_cast<TExtension>(mESSLExtension) == TExtension::UNDEFINED)
+            return true;
+
+        return IsExtensionEnabled(extensions, static_cast<TExtension>(mESSLExtension));
+    }
 }
 }  // namespace sh

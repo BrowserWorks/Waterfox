@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -170,8 +170,7 @@ class PullComputeDiscontinuousAndGradientLoops : public TIntermTraverser
           mMetadata(&(*metadataList)[index]),
           mIndex(index),
           mDag(dag)
-    {
-    }
+    {}
 
     void traverse(TIntermFunctionDefinition *node)
     {
@@ -336,8 +335,7 @@ class PushDiscontinuousLoops : public TIntermTraverser
           mIndex(index),
           mDag(dag),
           mNestedDiscont(mMetadata->mCalledInDiscontinuousLoop ? 1 : 0)
-    {
-    }
+    {}
 
     void traverse(TIntermFunctionDefinition *node)
     {
@@ -388,7 +386,7 @@ class PushDiscontinuousLoops : public TIntermTraverser
 
     int mNestedDiscont;
 };
-}
+}  // namespace
 
 bool ASTMetadataHLSL::hasGradientInCallGraph(TIntermLoop *node)
 {

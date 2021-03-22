@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2013 The ANGLE Project Authors. All rights reserved.
+// Copyright 2013 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -14,6 +14,28 @@
 
 namespace gl
 {
+namespace
+{
+bool IsStencilNoOp(GLenum stencilFunc,
+                   GLenum stencilFail,
+                   GLenum stencilPassDepthFail,
+                   GLenum stencilPassDepthPass)
+{
+    const bool isNeverAndKeep           = stencilFunc == GL_NEVER && stencilFail == GL_KEEP;
+    const bool isAlwaysAndKeepOrAllKeep = (stencilFunc == GL_ALWAYS || stencilFail == GL_KEEP) &&
+                                          stencilPassDepthFail == GL_KEEP &&
+                                          stencilPassDepthPass == GL_KEEP;
+
+    return isNeverAndKeep || isAlwaysAndKeepOrAllKeep;
+}
+
+// Calculate whether the range [outsideLow, outsideHigh] encloses the range [insideLow, insideHigh]
+bool EnclosesRange(int outsideLow, int outsideHigh, int insideLow, int insideHigh)
+{
+    return outsideLow <= insideLow && outsideHigh >= insideHigh;
+}
+}  // anonymous namespace
+
 RasterizerState::RasterizerState()
 {
     memset(this, 0, sizeof(RasterizerState));
@@ -27,6 +49,12 @@ RasterizerState::RasterizerState()
     polygonOffsetUnits  = 0.0f;
     pointDrawMode       = false;
     multiSample         = false;
+    dither              = true;
+}
+
+RasterizerState::RasterizerState(const RasterizerState &other)
+{
+    memcpy(this, &other, sizeof(RasterizerState));
 }
 
 bool operator==(const RasterizerState &a, const RasterizerState &b)
@@ -43,15 +71,17 @@ BlendState::BlendState()
 {
     memset(this, 0, sizeof(BlendState));
 
-    blend                 = false;
-    sourceBlendRGB        = GL_ONE;
-    sourceBlendAlpha      = GL_ONE;
-    destBlendRGB          = GL_ZERO;
-    destBlendAlpha        = GL_ZERO;
-    blendEquationRGB      = GL_FUNC_ADD;
-    blendEquationAlpha    = GL_FUNC_ADD;
-    sampleAlphaToCoverage = false;
-    dither                = true;
+    blend              = false;
+    sourceBlendRGB     = GL_ONE;
+    sourceBlendAlpha   = GL_ONE;
+    destBlendRGB       = GL_ZERO;
+    destBlendAlpha     = GL_ZERO;
+    blendEquationRGB   = GL_FUNC_ADD;
+    blendEquationAlpha = GL_FUNC_ADD;
+    colorMaskRed       = true;
+    colorMaskGreen     = true;
+    colorMaskBlue      = true;
+    colorMaskAlpha     = true;
 }
 
 BlendState::BlendState(const BlendState &other)
@@ -96,6 +126,30 @@ DepthStencilState::DepthStencilState(const DepthStencilState &other)
     memcpy(this, &other, sizeof(DepthStencilState));
 }
 
+bool DepthStencilState::isDepthMaskedOut() const
+{
+    return !depthMask;
+}
+
+bool DepthStencilState::isStencilMaskedOut() const
+{
+    return (stencilMask & stencilWritemask) == 0;
+}
+
+bool DepthStencilState::isStencilNoOp() const
+{
+    return isStencilMaskedOut() ||
+           IsStencilNoOp(stencilFunc, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
+}
+
+bool DepthStencilState::isStencilBackNoOp() const
+{
+    const bool isStencilBackMaskedOut = (stencilBackMask & stencilBackWritemask) == 0;
+    return isStencilBackMaskedOut ||
+           IsStencilNoOp(stencilBackFunc, stencilBackFail, stencilBackPassDepthFail,
+                         stencilBackPassDepthPass);
+}
+
 bool operator==(const DepthStencilState &a, const DepthStencilState &b)
 {
     return memcmp(&a, &b, sizeof(DepthStencilState)) == 0;
@@ -110,20 +164,22 @@ SamplerState::SamplerState()
 {
     memset(this, 0, sizeof(SamplerState));
 
-    minFilter     = GL_NEAREST_MIPMAP_LINEAR;
-    magFilter     = GL_LINEAR;
-    wrapS         = GL_REPEAT;
-    wrapT         = GL_REPEAT;
-    wrapR         = GL_REPEAT;
-    maxAnisotropy = 1.0f;
-    minLod        = -1000.0f;
-    maxLod        = 1000.0f;
-    compareMode   = GL_NONE;
-    compareFunc   = GL_LEQUAL;
-    sRGBDecode    = GL_DECODE_EXT;
+    setMinFilter(GL_NEAREST_MIPMAP_LINEAR);
+    setMagFilter(GL_LINEAR);
+    setWrapS(GL_REPEAT);
+    setWrapT(GL_REPEAT);
+    setWrapR(GL_REPEAT);
+    setMaxAnisotropy(1.0f);
+    setMinLod(-1000.0f);
+    setMaxLod(1000.0f);
+    setCompareMode(GL_NONE);
+    setCompareFunc(GL_LEQUAL);
+    setSRGBDecode(GL_DECODE_EXT);
 }
 
 SamplerState::SamplerState(const SamplerState &other) = default;
+
+SamplerState &SamplerState::operator=(const SamplerState &other) = default;
 
 // static
 SamplerState SamplerState::CreateDefaultForTarget(TextureType type)
@@ -134,22 +190,367 @@ SamplerState SamplerState::CreateDefaultForTarget(TextureType type)
     // default min filter is GL_LINEAR and the default s and t wrap modes are GL_CLAMP_TO_EDGE.
     if (type == TextureType::External || type == TextureType::Rectangle)
     {
-        state.minFilter = GL_LINEAR;
-        state.wrapS     = GL_CLAMP_TO_EDGE;
-        state.wrapT     = GL_CLAMP_TO_EDGE;
+        state.mMinFilter = GL_LINEAR;
+        state.mWrapS     = GL_CLAMP_TO_EDGE;
+        state.mWrapT     = GL_CLAMP_TO_EDGE;
     }
 
     return state;
 }
 
+void SamplerState::setMinFilter(GLenum minFilter)
+{
+    mMinFilter                    = minFilter;
+    mCompleteness.typed.minFilter = static_cast<uint8_t>(FromGLenum<FilterMode>(minFilter));
+}
+
+void SamplerState::setMagFilter(GLenum magFilter)
+{
+    mMagFilter                    = magFilter;
+    mCompleteness.typed.magFilter = static_cast<uint8_t>(FromGLenum<FilterMode>(magFilter));
+}
+
+void SamplerState::setWrapS(GLenum wrapS)
+{
+    mWrapS                    = wrapS;
+    mCompleteness.typed.wrapS = static_cast<uint8_t>(FromGLenum<WrapMode>(wrapS));
+}
+
+void SamplerState::setWrapT(GLenum wrapT)
+{
+    mWrapT = wrapT;
+    updateWrapTCompareMode();
+}
+
+void SamplerState::setWrapR(GLenum wrapR)
+{
+    mWrapR = wrapR;
+}
+
+void SamplerState::setMaxAnisotropy(float maxAnisotropy)
+{
+    mMaxAnisotropy = maxAnisotropy;
+}
+
+void SamplerState::setMinLod(GLfloat minLod)
+{
+    mMinLod = minLod;
+}
+
+void SamplerState::setMaxLod(GLfloat maxLod)
+{
+    mMaxLod = maxLod;
+}
+
+void SamplerState::setCompareMode(GLenum compareMode)
+{
+    mCompareMode = compareMode;
+    updateWrapTCompareMode();
+}
+
+void SamplerState::setCompareFunc(GLenum compareFunc)
+{
+    mCompareFunc = compareFunc;
+}
+
+void SamplerState::setSRGBDecode(GLenum sRGBDecode)
+{
+    mSRGBDecode = sRGBDecode;
+}
+
+void SamplerState::setBorderColor(const ColorGeneric &color)
+{
+    mBorderColor = color;
+}
+
+void SamplerState::updateWrapTCompareMode()
+{
+    uint8_t wrap    = static_cast<uint8_t>(FromGLenum<WrapMode>(mWrapT));
+    uint8_t compare = static_cast<uint8_t>(mCompareMode == GL_NONE ? 0x10 : 0x00);
+    mCompleteness.typed.wrapTCompareMode = wrap | compare;
+}
+
 ImageUnit::ImageUnit()
     : texture(), level(0), layered(false), layer(0), access(GL_READ_ONLY), format(GL_R32UI)
-{
-}
+{}
 
 ImageUnit::ImageUnit(const ImageUnit &other) = default;
 
 ImageUnit::~ImageUnit() = default;
+
+BlendStateExt::BlendStateExt(const size_t drawBuffers)
+    : mMaxFactorMask(FactorStorage::GetMask(drawBuffers)),
+      mSrcColor(FactorStorage::GetReplicatedValue(BlendFactorType::One, mMaxFactorMask)),
+      mDstColor(FactorStorage::GetReplicatedValue(BlendFactorType::Zero, mMaxFactorMask)),
+      mSrcAlpha(FactorStorage::GetReplicatedValue(BlendFactorType::One, mMaxFactorMask)),
+      mDstAlpha(FactorStorage::GetReplicatedValue(BlendFactorType::Zero, mMaxFactorMask)),
+      mMaxEquationMask(EquationStorage::GetMask(drawBuffers)),
+      mEquationColor(EquationStorage::GetReplicatedValue(BlendEquationType::Add, mMaxEquationMask)),
+      mEquationAlpha(EquationStorage::GetReplicatedValue(BlendEquationType::Add, mMaxEquationMask)),
+      mMaxColorMask(ColorMaskStorage::GetMask(drawBuffers)),
+      mColorMask(ColorMaskStorage::GetReplicatedValue(PackColorMask(true, true, true, true),
+                                                      mMaxColorMask)),
+      mMaxEnabledMask(0xFF >> (8 - drawBuffers)),
+      mEnabledMask(),
+      mMaxDrawBuffers(drawBuffers)
+{}
+
+BlendStateExt &BlendStateExt::operator=(const BlendStateExt &other)
+{
+    memcpy(this, &other, sizeof(BlendStateExt));
+    return *this;
+}
+
+void BlendStateExt::setEnabled(const bool enabled)
+{
+    mEnabledMask = enabled ? mMaxEnabledMask : DrawBufferMask::Zero();
+}
+
+void BlendStateExt::setEnabledIndexed(const size_t index, const bool enabled)
+{
+    ASSERT(index < mMaxDrawBuffers);
+    mEnabledMask.set(index, enabled);
+}
+
+BlendStateExt::ColorMaskStorage::Type BlendStateExt::expandColorMaskValue(const bool red,
+                                                                          const bool green,
+                                                                          const bool blue,
+                                                                          const bool alpha) const
+{
+    return BlendStateExt::ColorMaskStorage::GetReplicatedValue(
+        PackColorMask(red, green, blue, alpha), mMaxColorMask);
+}
+
+BlendStateExt::ColorMaskStorage::Type BlendStateExt::expandColorMaskIndexed(
+    const size_t index) const
+{
+    return ColorMaskStorage::GetReplicatedValue(
+        ColorMaskStorage::GetValueIndexed(index, mColorMask), mMaxColorMask);
+}
+
+void BlendStateExt::setColorMask(const bool red,
+                                 const bool green,
+                                 const bool blue,
+                                 const bool alpha)
+{
+    mColorMask = expandColorMaskValue(red, green, blue, alpha);
+}
+
+void BlendStateExt::setColorMaskIndexed(const size_t index, const uint8_t value)
+{
+    ASSERT(index < mMaxDrawBuffers);
+    ASSERT(value <= 0xF);
+    ColorMaskStorage::SetValueIndexed(index, value, &mColorMask);
+}
+
+void BlendStateExt::setColorMaskIndexed(const size_t index,
+                                        const bool red,
+                                        const bool green,
+                                        const bool blue,
+                                        const bool alpha)
+{
+    ASSERT(index < mMaxDrawBuffers);
+    ColorMaskStorage::SetValueIndexed(index, PackColorMask(red, green, blue, alpha), &mColorMask);
+}
+
+uint8_t BlendStateExt::getColorMaskIndexed(const size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return ColorMaskStorage::GetValueIndexed(index, mColorMask);
+}
+
+void BlendStateExt::getColorMaskIndexed(const size_t index,
+                                        bool *red,
+                                        bool *green,
+                                        bool *blue,
+                                        bool *alpha) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    UnpackColorMask(ColorMaskStorage::GetValueIndexed(index, mColorMask), red, green, blue, alpha);
+}
+
+DrawBufferMask BlendStateExt::compareColorMask(ColorMaskStorage::Type other) const
+{
+    return ColorMaskStorage::GetDiffMask(mColorMask, other);
+}
+
+BlendStateExt::EquationStorage::Type BlendStateExt::expandEquationValue(const GLenum mode) const
+{
+    return EquationStorage::GetReplicatedValue(FromGLenum<BlendEquationType>(mode),
+                                               mMaxEquationMask);
+}
+
+BlendStateExt::EquationStorage::Type BlendStateExt::expandEquationColorIndexed(
+    const size_t index) const
+{
+    return EquationStorage::GetReplicatedValue(
+        EquationStorage::GetValueIndexed(index, mEquationColor), mMaxEquationMask);
+}
+
+BlendStateExt::EquationStorage::Type BlendStateExt::expandEquationAlphaIndexed(
+    const size_t index) const
+{
+    return EquationStorage::GetReplicatedValue(
+        EquationStorage::GetValueIndexed(index, mEquationAlpha), mMaxEquationMask);
+}
+
+void BlendStateExt::setEquations(const GLenum modeColor, const GLenum modeAlpha)
+{
+    mEquationColor = expandEquationValue(modeColor);
+    mEquationAlpha = expandEquationValue(modeAlpha);
+}
+
+void BlendStateExt::setEquationsIndexed(const size_t index,
+                                        const GLenum modeColor,
+                                        const GLenum modeAlpha)
+{
+    ASSERT(index < mMaxDrawBuffers);
+    EquationStorage::SetValueIndexed(index, FromGLenum<BlendEquationType>(modeColor),
+                                     &mEquationColor);
+    EquationStorage::SetValueIndexed(index, FromGLenum<BlendEquationType>(modeAlpha),
+                                     &mEquationAlpha);
+}
+
+void BlendStateExt::setEquationsIndexed(const size_t index,
+                                        const size_t sourceIndex,
+                                        const BlendStateExt &source)
+{
+    ASSERT(index < mMaxDrawBuffers);
+    ASSERT(sourceIndex < source.mMaxDrawBuffers);
+    EquationStorage::SetValueIndexed(
+        index, EquationStorage::GetValueIndexed(sourceIndex, source.mEquationColor),
+        &mEquationColor);
+    EquationStorage::SetValueIndexed(
+        index, EquationStorage::GetValueIndexed(sourceIndex, source.mEquationAlpha),
+        &mEquationAlpha);
+}
+
+GLenum BlendStateExt::getEquationColorIndexed(size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return ToGLenum(EquationStorage::GetValueIndexed(index, mEquationColor));
+}
+
+GLenum BlendStateExt::getEquationAlphaIndexed(size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return ToGLenum(EquationStorage::GetValueIndexed(index, mEquationAlpha));
+}
+
+DrawBufferMask BlendStateExt::compareEquations(const EquationStorage::Type color,
+                                               const EquationStorage::Type alpha) const
+{
+    return EquationStorage::GetDiffMask(mEquationColor, color) |
+           EquationStorage::GetDiffMask(mEquationAlpha, alpha);
+}
+
+BlendStateExt::FactorStorage::Type BlendStateExt::expandFactorValue(const GLenum func) const
+{
+    return FactorStorage::GetReplicatedValue(FromGLenum<BlendFactorType>(func), mMaxFactorMask);
+}
+
+BlendStateExt::FactorStorage::Type BlendStateExt::expandSrcColorIndexed(const size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return FactorStorage::GetReplicatedValue(FactorStorage::GetValueIndexed(index, mSrcColor),
+                                             mMaxFactorMask);
+}
+
+BlendStateExt::FactorStorage::Type BlendStateExt::expandDstColorIndexed(const size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return FactorStorage::GetReplicatedValue(FactorStorage::GetValueIndexed(index, mDstColor),
+                                             mMaxFactorMask);
+}
+
+BlendStateExt::FactorStorage::Type BlendStateExt::expandSrcAlphaIndexed(const size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return FactorStorage::GetReplicatedValue(FactorStorage::GetValueIndexed(index, mSrcAlpha),
+                                             mMaxFactorMask);
+}
+
+BlendStateExt::FactorStorage::Type BlendStateExt::expandDstAlphaIndexed(const size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return FactorStorage::GetReplicatedValue(FactorStorage::GetValueIndexed(index, mDstAlpha),
+                                             mMaxFactorMask);
+}
+
+void BlendStateExt::setFactors(const GLenum srcColor,
+                               const GLenum dstColor,
+                               const GLenum srcAlpha,
+                               const GLenum dstAlpha)
+{
+    mSrcColor = expandFactorValue(srcColor);
+    mDstColor = expandFactorValue(dstColor);
+    mSrcAlpha = expandFactorValue(srcAlpha);
+    mDstAlpha = expandFactorValue(dstAlpha);
+}
+
+void BlendStateExt::setFactorsIndexed(const size_t index,
+                                      const GLenum srcColor,
+                                      const GLenum dstColor,
+                                      const GLenum srcAlpha,
+                                      const GLenum dstAlpha)
+{
+    ASSERT(index < mMaxDrawBuffers);
+    FactorStorage::SetValueIndexed(index, FromGLenum<BlendFactorType>(srcColor), &mSrcColor);
+    FactorStorage::SetValueIndexed(index, FromGLenum<BlendFactorType>(dstColor), &mDstColor);
+    FactorStorage::SetValueIndexed(index, FromGLenum<BlendFactorType>(srcAlpha), &mSrcAlpha);
+    FactorStorage::SetValueIndexed(index, FromGLenum<BlendFactorType>(dstAlpha), &mDstAlpha);
+}
+
+void BlendStateExt::setFactorsIndexed(const size_t index,
+                                      const size_t sourceIndex,
+                                      const BlendStateExt &source)
+{
+    ASSERT(index < mMaxDrawBuffers);
+    ASSERT(sourceIndex < source.mMaxDrawBuffers);
+    FactorStorage::SetValueIndexed(
+        index, FactorStorage::GetValueIndexed(sourceIndex, source.mSrcColor), &mSrcColor);
+    FactorStorage::SetValueIndexed(
+        index, FactorStorage::GetValueIndexed(sourceIndex, source.mDstColor), &mDstColor);
+    FactorStorage::SetValueIndexed(
+        index, FactorStorage::GetValueIndexed(sourceIndex, source.mSrcAlpha), &mSrcAlpha);
+    FactorStorage::SetValueIndexed(
+        index, FactorStorage::GetValueIndexed(sourceIndex, source.mDstAlpha), &mDstAlpha);
+}
+
+GLenum BlendStateExt::getSrcColorIndexed(size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return ToGLenum(FactorStorage::GetValueIndexed(index, mSrcColor));
+}
+
+GLenum BlendStateExt::getDstColorIndexed(size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return ToGLenum(FactorStorage::GetValueIndexed(index, mDstColor));
+}
+
+GLenum BlendStateExt::getSrcAlphaIndexed(size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return ToGLenum(FactorStorage::GetValueIndexed(index, mSrcAlpha));
+}
+
+GLenum BlendStateExt::getDstAlphaIndexed(size_t index) const
+{
+    ASSERT(index < mMaxDrawBuffers);
+    return ToGLenum(FactorStorage::GetValueIndexed(index, mDstAlpha));
+}
+
+DrawBufferMask BlendStateExt::compareFactors(const FactorStorage::Type srcColor,
+                                             const FactorStorage::Type dstColor,
+                                             const FactorStorage::Type srcAlpha,
+                                             const FactorStorage::Type dstAlpha) const
+{
+    return FactorStorage::GetDiffMask(mSrcColor, srcColor) |
+           FactorStorage::GetDiffMask(mDstColor, dstColor) |
+           FactorStorage::GetDiffMask(mSrcAlpha, srcAlpha) |
+           FactorStorage::GetDiffMask(mDstAlpha, dstAlpha);
+}
 
 static void MinMax(int a, int b, int *minimum, int *maximum)
 {
@@ -165,45 +566,198 @@ static void MinMax(int a, int b, int *minimum, int *maximum)
     }
 }
 
+Rectangle Rectangle::flip(bool flipX, bool flipY) const
+{
+    Rectangle flipped = *this;
+    if (flipX)
+    {
+        flipped.x     = flipped.x + flipped.width;
+        flipped.width = -flipped.width;
+    }
+    if (flipY)
+    {
+        flipped.y      = flipped.y + flipped.height;
+        flipped.height = -flipped.height;
+    }
+    return flipped;
+}
+
 Rectangle Rectangle::removeReversal() const
 {
-    Rectangle unreversed = *this;
-    if (isReversedX())
-    {
-        unreversed.x     = unreversed.x + unreversed.width;
-        unreversed.width = -unreversed.width;
-    }
-    if (isReversedY())
-    {
-        unreversed.y      = unreversed.y + unreversed.height;
-        unreversed.height = -unreversed.height;
-    }
-    return unreversed;
+    return flip(isReversedX(), isReversedY());
+}
+
+bool Rectangle::encloses(const gl::Rectangle &inside) const
+{
+    return x0() <= inside.x0() && y0() <= inside.y0() && x1() >= inside.x1() && y1() >= inside.y1();
 }
 
 bool ClipRectangle(const Rectangle &source, const Rectangle &clip, Rectangle *intersection)
 {
+    angle::CheckedNumeric<int> sourceX2(source.x);
+    sourceX2 += source.width;
+    if (!sourceX2.IsValid())
+    {
+        return false;
+    }
+    angle::CheckedNumeric<int> sourceY2(source.y);
+    sourceY2 += source.height;
+    if (!sourceY2.IsValid())
+    {
+        return false;
+    }
+
     int minSourceX, maxSourceX, minSourceY, maxSourceY;
-    MinMax(source.x, source.x + source.width, &minSourceX, &maxSourceX);
-    MinMax(source.y, source.y + source.height, &minSourceY, &maxSourceY);
+    MinMax(source.x, sourceX2.ValueOrDie(), &minSourceX, &maxSourceX);
+    MinMax(source.y, sourceY2.ValueOrDie(), &minSourceY, &maxSourceY);
+
+    angle::CheckedNumeric<int> clipX2(clip.x);
+    clipX2 += clip.width;
+    if (!clipX2.IsValid())
+    {
+        return false;
+    }
+    angle::CheckedNumeric<int> clipY2(clip.y);
+    clipY2 += clip.height;
+    if (!clipY2.IsValid())
+    {
+        return false;
+    }
 
     int minClipX, maxClipX, minClipY, maxClipY;
-    MinMax(clip.x, clip.x + clip.width, &minClipX, &maxClipX);
-    MinMax(clip.y, clip.y + clip.height, &minClipY, &maxClipY);
+    MinMax(clip.x, clipX2.ValueOrDie(), &minClipX, &maxClipX);
+    MinMax(clip.y, clipY2.ValueOrDie(), &minClipY, &maxClipY);
 
     if (minSourceX >= maxClipX || maxSourceX <= minClipX || minSourceY >= maxClipY ||
         maxSourceY <= minClipY)
     {
         return false;
     }
+
+    int x      = std::max(minSourceX, minClipX);
+    int y      = std::max(minSourceY, minClipY);
+    int width  = std::min(maxSourceX, maxClipX) - x;
+    int height = std::min(maxSourceY, maxClipY) - y;
+
     if (intersection)
     {
-        intersection->x      = std::max(minSourceX, minClipX);
-        intersection->y      = std::max(minSourceY, minClipY);
-        intersection->width  = std::min(maxSourceX, maxClipX) - std::max(minSourceX, minClipX);
-        intersection->height = std::min(maxSourceY, maxClipY) - std::max(minSourceY, minClipY);
+        intersection->x      = x;
+        intersection->y      = y;
+        intersection->width  = width;
+        intersection->height = height;
     }
-    return true;
+    return width != 0 && height != 0;
+}
+
+void GetEnclosingRectangle(const Rectangle &rect1, const Rectangle &rect2, Rectangle *rectUnion)
+{
+    // All callers use non-flipped framebuffer-size-clipped rectangles, so both flip and overflow
+    // are impossible.
+    ASSERT(!rect1.isReversedX() && !rect1.isReversedY());
+    ASSERT(!rect2.isReversedX() && !rect2.isReversedY());
+    ASSERT((angle::CheckedNumeric<int>(rect1.x) + rect1.width).IsValid());
+    ASSERT((angle::CheckedNumeric<int>(rect1.y) + rect1.height).IsValid());
+    ASSERT((angle::CheckedNumeric<int>(rect2.x) + rect2.width).IsValid());
+    ASSERT((angle::CheckedNumeric<int>(rect2.y) + rect2.height).IsValid());
+
+    // This function calculates a rectangle that covers both input rectangles:
+    //
+    //                     +---------+
+    //          rect1 -->  |         |
+    //                     |     +---+-----+
+    //                     |     |   |     | <-- rect2
+    //                     +-----+---+     |
+    //                           |         |
+    //                           +---------+
+    //
+    //   xy0 = min(rect1.xy0, rect2.xy0)
+    //                    \
+    //                     +---------+-----+
+    //          union -->  |         .     |
+    //                     |     + . + . . +
+    //                     |     .   .     |
+    //                     + . . + . +     |
+    //                     |     .         |
+    //                     +-----+---------+
+    //                                    /
+    //                         xy1 = max(rect1.xy1, rect2.xy1)
+
+    int x0 = std::min(rect1.x0(), rect2.x0());
+    int y0 = std::min(rect1.y0(), rect2.y0());
+
+    int x1 = std::max(rect1.x1(), rect2.x1());
+    int y1 = std::max(rect1.y1(), rect2.y1());
+
+    rectUnion->x      = x0;
+    rectUnion->y      = y0;
+    rectUnion->width  = x1 - x0;
+    rectUnion->height = y1 - y0;
+}
+
+void ExtendRectangle(const Rectangle &source, const Rectangle &extend, Rectangle *extended)
+{
+    // All callers use non-flipped framebuffer-size-clipped rectangles, so both flip and overflow
+    // are impossible.
+    ASSERT(!source.isReversedX() && !source.isReversedY());
+    ASSERT(!extend.isReversedX() && !extend.isReversedY());
+    ASSERT((angle::CheckedNumeric<int>(source.x) + source.width).IsValid());
+    ASSERT((angle::CheckedNumeric<int>(source.y) + source.height).IsValid());
+    ASSERT((angle::CheckedNumeric<int>(extend.x) + extend.width).IsValid());
+    ASSERT((angle::CheckedNumeric<int>(extend.y) + extend.height).IsValid());
+
+    int x0 = source.x0();
+    int x1 = source.x1();
+    int y0 = source.y0();
+    int y1 = source.y1();
+
+    const int extendX0 = extend.x0();
+    const int extendX1 = extend.x1();
+    const int extendY0 = extend.y0();
+    const int extendY1 = extend.y1();
+
+    // For each side of the rectangle, calculate whether it can be extended by the second rectangle.
+    // If so, extend it and continue for the next side with the new dimensions.
+
+    // Left: Reduce x0 if the second rectangle's vertical edge covers the source's:
+    //
+    //     +--- - - -                +--- - - -
+    //     |                         |
+    //     |  +--------------+       +-----------------+
+    //     |  |    source    |  -->  |       source    |
+    //     |  +--------------+       +-----------------+
+    //     |                         |
+    //     +--- - - -                +--- - - -
+    //
+    const bool enclosesHeight = EnclosesRange(extendY0, extendY1, y0, y1);
+    if (extendX0 < x0 && extendX1 >= x0 && enclosesHeight)
+    {
+        x0 = extendX0;
+    }
+
+    // Right: Increase x1 simiarly.
+    if (extendX0 <= x1 && extendX1 > x1 && enclosesHeight)
+    {
+        x1 = extendX1;
+    }
+
+    // Top: Reduce y0 if the second rectangle's horizontal edge covers the source's potentially
+    // extended edge.
+    const bool enclosesWidth = EnclosesRange(extendX0, extendX1, x0, x1);
+    if (extendY0 < y0 && extendY1 >= y0 && enclosesWidth)
+    {
+        y0 = extendY0;
+    }
+
+    // Right: Increase y1 simiarly.
+    if (extendY0 <= y1 && extendY1 > y1 && enclosesWidth)
+    {
+        y1 = extendY1;
+    }
+
+    extended->x      = x0;
+    extended->y      = y0;
+    extended->width  = x1 - x0;
+    extended->height = y1 - y0;
 }
 
 bool Box::operator==(const Box &other) const
@@ -215,6 +769,18 @@ bool Box::operator==(const Box &other) const
 bool Box::operator!=(const Box &other) const
 {
     return !(*this == other);
+}
+
+Rectangle Box::toRect() const
+{
+    ASSERT(z == 0 && depth == 1);
+    return Rectangle(x, y, width, height);
+}
+
+bool Box::coversSameExtent(const Extents &size) const
+{
+    return x == 0 && y == 0 && z == 0 && width == size.width && height == size.height &&
+           depth == size.depth;
 }
 
 bool operator==(const Offset &a, const Offset &b)
@@ -237,72 +803,15 @@ bool operator!=(const Extents &lhs, const Extents &rhs)
     return !(lhs == rhs);
 }
 
-ComponentTypeMask::ComponentTypeMask()
+bool ValidateComponentTypeMasks(unsigned long outputTypes,
+                                unsigned long inputTypes,
+                                unsigned long outputMask,
+                                unsigned long inputMask)
 {
-    mTypeMask.reset();
-}
-
-ComponentTypeMask::ComponentTypeMask(const ComponentTypeMask &other) = default;
-
-ComponentTypeMask::~ComponentTypeMask() = default;
-
-void ComponentTypeMask::reset()
-{
-    mTypeMask.reset();
-}
-
-bool ComponentTypeMask::none()
-{
-    return mTypeMask.none();
-}
-
-void ComponentTypeMask::setIndex(GLenum type, size_t index)
-{
-    ASSERT(index <= MAX_COMPONENT_TYPE_MASK_INDEX);
-
-    mTypeMask &= ~(0x10001 << index);
-
-    uint32_t m = 0;
-    switch (type)
-    {
-        case GL_INT:
-            m = 0x00001;
-            break;
-        case GL_UNSIGNED_INT:
-            m = 0x10000;
-            break;
-        case GL_FLOAT:
-            m = 0x10001;
-            break;
-        case GL_NONE:
-            m = 0x00000;
-            break;
-        default:
-            UNREACHABLE();
-    }
-
-    mTypeMask |= m << index;
-}
-
-unsigned long ComponentTypeMask::to_ulong() const
-{
-    return mTypeMask.to_ulong();
-}
-
-void ComponentTypeMask::from_ulong(unsigned long mask)
-{
-    mTypeMask = angle::BitSet<MAX_COMPONENT_TYPE_MASK_INDEX * 2>(mask);
-}
-
-bool ComponentTypeMask::Validate(unsigned long outputTypes,
-                                 unsigned long inputTypes,
-                                 unsigned long outputMask,
-                                 unsigned long inputMask)
-{
-    static_assert(IMPLEMENTATION_MAX_DRAW_BUFFERS <= MAX_COMPONENT_TYPE_MASK_INDEX,
+    static_assert(IMPLEMENTATION_MAX_DRAW_BUFFERS <= kMaxComponentTypeMaskIndex,
                   "Output/input masks should fit into 16 bits - 1 bit per draw buffer. The "
                   "corresponding type masks should fit into 32 bits - 2 bits per draw buffer.");
-    static_assert(MAX_VERTEX_ATTRIBS <= MAX_COMPONENT_TYPE_MASK_INDEX,
+    static_assert(MAX_VERTEX_ATTRIBS <= kMaxComponentTypeMaskIndex,
                   "Output/input masks should fit into 16 bits - 1 bit per attrib. The "
                   "corresponding type masks should fit into 32 bits - 2 bits per attrib.");
 
@@ -312,8 +821,8 @@ bool ComponentTypeMask::Validate(unsigned long outputTypes,
     // with the elswewhere used DrawBufferMask or AttributeMask.
 
     // OR the masks with themselves, shifted 16 bits. This is to match our split type bits.
-    outputMask |= (outputMask << MAX_COMPONENT_TYPE_MASK_INDEX);
-    inputMask |= (inputMask << MAX_COMPONENT_TYPE_MASK_INDEX);
+    outputMask |= (outputMask << kMaxComponentTypeMaskIndex);
+    inputMask |= (inputMask << kMaxComponentTypeMaskIndex);
 
     // To validate:
     // 1. Remove any indexes that are not enabled in the input (& inputMask)

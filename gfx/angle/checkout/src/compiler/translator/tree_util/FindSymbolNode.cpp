@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2015 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -23,10 +23,9 @@ class SymbolFinder : public TIntermTraverser
   public:
     SymbolFinder(const ImmutableString &symbolName)
         : TIntermTraverser(true, false, false), mSymbolName(symbolName), mNodeFound(nullptr)
-    {
-    }
+    {}
 
-    void visitSymbol(TIntermSymbol *node)
+    void visitSymbol(TIntermSymbol *node) override
     {
         if (node->variable().symbolType() != SymbolType::Empty && node->getName() == mSymbolName)
         {

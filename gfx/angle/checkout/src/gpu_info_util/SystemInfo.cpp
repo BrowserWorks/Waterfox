@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2013-2017 The ANGLE Project Authors. All rights reserved.
+// Copyright 2013 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -9,6 +9,7 @@
 #include "gpu_info_util/SystemInfo.h"
 
 #include <cstring>
+#include <iostream>
 #include <sstream>
 
 #include "common/debug.h"
@@ -16,7 +17,41 @@
 
 namespace angle
 {
-
+namespace
+{
+std::string VendorName(VendorID vendor)
+{
+    switch (vendor)
+    {
+        case kVendorID_AMD:
+            return "AMD";
+        case kVendorID_ARM:
+            return "ARM";
+        case kVendorID_Broadcom:
+            return "Broadcom";
+        case kVendorID_GOOGLE:
+            return "Google";
+        case kVendorID_ImgTec:
+            return "ImgTec";
+        case kVendorID_Intel:
+            return "Intel";
+        case kVendorID_Kazan:
+            return "Kazan";
+        case kVendorID_NVIDIA:
+            return "NVIDIA";
+        case kVendorID_Qualcomm:
+            return "Qualcomm";
+        case kVendorID_VeriSilicon:
+            return "VeriSilicon";
+        case kVendorID_Vivante:
+            return "Vivante";
+        case kVendorID_VMWare:
+            return "VMWare";
+        default:
+            return "Unknown (" + std::to_string(vendor) + ")";
+    }
+}
+}  // anonymous namespace
 GPUDeviceInfo::GPUDeviceInfo() = default;
 
 GPUDeviceInfo::~GPUDeviceInfo() = default;
@@ -29,6 +64,42 @@ SystemInfo::~SystemInfo() = default;
 
 SystemInfo::SystemInfo(const SystemInfo &other) = default;
 
+bool SystemInfo::hasNVIDIAGPU() const
+{
+    for (const GPUDeviceInfo &gpu : gpus)
+    {
+        if (IsNVIDIA(gpu.vendorId))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SystemInfo::hasIntelGPU() const
+{
+    for (const GPUDeviceInfo &gpu : gpus)
+    {
+        if (IsIntel(gpu.vendorId))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SystemInfo::hasAMDGPU() const
+{
+    for (const GPUDeviceInfo &gpu : gpus)
+    {
+        if (IsAMD(gpu.vendorId))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool IsAMD(VendorID vendorId)
 {
     return vendorId == kVendorID_AMD;
@@ -37,6 +108,11 @@ bool IsAMD(VendorID vendorId)
 bool IsARM(VendorID vendorId)
 {
     return vendorId == kVendorID_ARM;
+}
+
+bool IsBroadcom(VendorID vendorId)
+{
+    return vendorId == kVendorID_Broadcom;
 }
 
 bool IsImgTec(VendorID vendorId)
@@ -54,9 +130,9 @@ bool IsIntel(VendorID vendorId)
     return vendorId == kVendorID_Intel;
 }
 
-bool IsNvidia(VendorID vendorId)
+bool IsNVIDIA(VendorID vendorId)
 {
-    return vendorId == kVendorID_Nvidia;
+    return vendorId == kVendorID_NVIDIA;
 }
 
 bool IsQualcomm(VendorID vendorId)
@@ -64,9 +140,19 @@ bool IsQualcomm(VendorID vendorId)
     return vendorId == kVendorID_Qualcomm;
 }
 
+bool IsGoogle(VendorID vendorId)
+{
+    return vendorId == kVendorID_GOOGLE;
+}
+
 bool IsVeriSilicon(VendorID vendorId)
 {
     return vendorId == kVendorID_VeriSilicon;
+}
+
+bool IsVMWare(VendorID vendorId)
+{
+    return vendorId == kVendorID_VMWare;
 }
 
 bool IsVivante(VendorID vendorId)
@@ -136,13 +222,13 @@ bool ParseMacMachineModel(const std::string &identifier,
     const char *commaPtr  = &identifier[commaLoc + 1];
     char *endPtr          = nullptr;
 
-    int32_t majorTmp = std::strtol(numberPtr, &endPtr, 10);
+    int32_t majorTmp = static_cast<int32_t>(std::strtol(numberPtr, &endPtr, 10));
     if (endPtr == numberPtr)
     {
         return false;
     }
 
-    int32_t minorTmp = std::strtol(commaPtr, &endPtr, 10);
+    int32_t minorTmp = static_cast<int32_t>(std::strtol(commaPtr, &endPtr, 10));
     if (endPtr == commaPtr)
     {
         return false;
@@ -168,12 +254,12 @@ bool CMDeviceIDToDeviceAndVendorID(const std::string &id, uint32_t *vendorId, ui
     return success;
 }
 
-void FindPrimaryGPU(SystemInfo *info)
+void GetDualGPUInfo(SystemInfo *info)
 {
     ASSERT(!info->gpus.empty());
 
-    // On dual-GPU systems we assume the non-Intel GPU is the primary one.
-    int primary   = 0;
+    // On dual-GPU systems we assume the non-Intel GPU is the graphics one.
+    int active    = 0;
     bool hasIntel = false;
     for (size_t i = 0; i < info->gpus.size(); ++i)
     {
@@ -181,16 +267,72 @@ void FindPrimaryGPU(SystemInfo *info)
         {
             hasIntel = true;
         }
-        if (IsIntel(info->gpus[primary].vendorId))
+        if (IsIntel(info->gpus[active].vendorId))
         {
-            primary = static_cast<int>(i);
+            active = static_cast<int>(i);
         }
     }
 
-    // Assume that a combination of AMD or Nvidia with Intel means Optimus or AMD Switchable
-    info->primaryGPUIndex = primary;
-    info->isOptimus       = hasIntel && IsNvidia(info->gpus[primary].vendorId);
-    info->isAMDSwitchable = hasIntel && IsAMD(info->gpus[primary].vendorId);
+    // Assume that a combination of NVIDIA or AMD with Intel means Optimus or AMD Switchable
+    info->activeGPUIndex  = active;
+    info->isOptimus       = hasIntel && IsNVIDIA(info->gpus[active].vendorId);
+    info->isAMDSwitchable = hasIntel && IsAMD(info->gpus[active].vendorId);
 }
 
+void PrintSystemInfo(const SystemInfo &info)
+{
+    std::cout << info.gpus.size() << " GPUs:\n";
+
+    for (size_t i = 0; i < info.gpus.size(); i++)
+    {
+        const auto &gpu = info.gpus[i];
+
+        std::cout << "  " << i << " - " << VendorName(gpu.vendorId) << " device id: 0x" << std::hex
+                  << std::uppercase << gpu.deviceId << std::dec << "\n";
+        if (!gpu.driverVendor.empty())
+        {
+            std::cout << "       Driver Vendor: " << gpu.driverVendor << "\n";
+        }
+        if (!gpu.driverVersion.empty())
+        {
+            std::cout << "       Driver Version: " << gpu.driverVersion << "\n";
+        }
+        if (!gpu.driverDate.empty())
+        {
+            std::cout << "       Driver Date: " << gpu.driverDate << "\n";
+        }
+    }
+
+    std::cout << "\n";
+    std::cout << "Active GPU: " << info.activeGPUIndex << "\n";
+
+    std::cout << "\n";
+    std::cout << "Optimus: " << (info.isOptimus ? "true" : "false") << "\n";
+    std::cout << "AMD Switchable: " << (info.isAMDSwitchable ? "true" : "false") << "\n";
+
+    std::cout << "\n";
+    if (!info.machineManufacturer.empty())
+    {
+        std::cout << "Machine Manufacturer: " << info.machineManufacturer << "\n";
+    }
+    if (!info.machineModelName.empty())
+    {
+        std::cout << "Machine Model: " << info.machineModelName << "\n";
+    }
+    if (!info.machineModelVersion.empty())
+    {
+        std::cout << "Machine Model Version: " << info.machineModelVersion << "\n";
+    }
+    std::cout << std::endl;
+}
+
+VersionInfo ParseNvidiaDriverVersion(uint32_t version)
+{
+    return {
+        version >> 22,         // major
+        version >> 14 & 0xff,  // minor
+        version >> 6 & 0xff,   // subMinor
+        version & 0x3f         // patch
+    };
+}
 }  // namespace angle

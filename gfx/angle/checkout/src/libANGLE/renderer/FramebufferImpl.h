@@ -13,14 +13,17 @@
 #include "common/angleutils.h"
 #include "libANGLE/Error.h"
 #include "libANGLE/Framebuffer.h"
+#include "libANGLE/State.h"
 
 namespace gl
 {
-class State;
+class Buffer;
 class Framebuffer;
 class FramebufferAttachment;
+struct PixelPackState;
 struct Rectangle;
-}
+class State;
+}  // namespace gl
 
 namespace rx
 {
@@ -33,64 +36,87 @@ class FramebufferImpl : angle::NonCopyable
     virtual ~FramebufferImpl() {}
     virtual void destroy(const gl::Context *context) {}
 
-    virtual gl::Error discard(const gl::Context *context,
-                              size_t count,
-                              const GLenum *attachments) = 0;
-    virtual gl::Error invalidate(const gl::Context *context,
-                                 size_t count,
-                                 const GLenum *attachments) = 0;
-    virtual gl::Error invalidateSub(const gl::Context *context,
-                                    size_t count,
-                                    const GLenum *attachments,
-                                    const gl::Rectangle &area) = 0;
+    virtual angle::Result discard(const gl::Context *context,
+                                  size_t count,
+                                  const GLenum *attachments)       = 0;
+    virtual angle::Result invalidate(const gl::Context *context,
+                                     size_t count,
+                                     const GLenum *attachments)    = 0;
+    virtual angle::Result invalidateSub(const gl::Context *context,
+                                        size_t count,
+                                        const GLenum *attachments,
+                                        const gl::Rectangle &area) = 0;
 
-    virtual gl::Error clear(const gl::Context *context, GLbitfield mask) = 0;
-    virtual gl::Error clearBufferfv(const gl::Context *context,
-                                    GLenum buffer,
-                                    GLint drawbuffer,
-                                    const GLfloat *values) = 0;
-    virtual gl::Error clearBufferuiv(const gl::Context *context,
-                                     GLenum buffer,
-                                     GLint drawbuffer,
-                                     const GLuint *values) = 0;
-    virtual gl::Error clearBufferiv(const gl::Context *context,
-                                    GLenum buffer,
-                                    GLint drawbuffer,
-                                    const GLint *values) = 0;
-    virtual gl::Error clearBufferfi(const gl::Context *context,
-                                    GLenum buffer,
-                                    GLint drawbuffer,
-                                    GLfloat depth,
-                                    GLint stencil) = 0;
+    virtual angle::Result clear(const gl::Context *context, GLbitfield mask) = 0;
+    virtual angle::Result clearBufferfv(const gl::Context *context,
+                                        GLenum buffer,
+                                        GLint drawbuffer,
+                                        const GLfloat *values)               = 0;
+    virtual angle::Result clearBufferuiv(const gl::Context *context,
+                                         GLenum buffer,
+                                         GLint drawbuffer,
+                                         const GLuint *values)               = 0;
+    virtual angle::Result clearBufferiv(const gl::Context *context,
+                                        GLenum buffer,
+                                        GLint drawbuffer,
+                                        const GLint *values)                 = 0;
+    virtual angle::Result clearBufferfi(const gl::Context *context,
+                                        GLenum buffer,
+                                        GLint drawbuffer,
+                                        GLfloat depth,
+                                        GLint stencil)                       = 0;
 
-    virtual GLenum getImplementationColorReadFormat(const gl::Context *context) const = 0;
-    virtual GLenum getImplementationColorReadType(const gl::Context *context) const   = 0;
-    virtual gl::Error readPixels(const gl::Context *context,
-                                 const gl::Rectangle &area,
-                                 GLenum format,
-                                 GLenum type,
-                                 void *pixels) = 0;
+    virtual const gl::InternalFormat &getImplementationColorReadFormat(
+        const gl::Context *context) const;
+    virtual angle::Result readPixels(const gl::Context *context,
+                                     const gl::Rectangle &area,
+                                     GLenum format,
+                                     GLenum type,
+                                     const gl::PixelPackState &pack,
+                                     gl::Buffer *packBuffer,
+                                     void *pixels) = 0;
 
-    virtual gl::Error blit(const gl::Context *context,
-                           const gl::Rectangle &sourceArea,
-                           const gl::Rectangle &destArea,
-                           GLbitfield mask,
-                           GLenum filter) = 0;
+    virtual angle::Result blit(const gl::Context *context,
+                               const gl::Rectangle &sourceArea,
+                               const gl::Rectangle &destArea,
+                               GLbitfield mask,
+                               GLenum filter) = 0;
 
     virtual bool checkStatus(const gl::Context *context) const = 0;
 
-    virtual gl::Error syncState(const gl::Context *context,
-                                const gl::Framebuffer::DirtyBits &dirtyBits) = 0;
+    virtual angle::Result syncState(const gl::Context *context,
+                                    GLenum binding,
+                                    const gl::Framebuffer::DirtyBits &dirtyBits,
+                                    gl::Command command) = 0;
 
-    virtual gl::Error getSamplePosition(const gl::Context *context,
-                                        size_t index,
-                                        GLfloat *xy) const = 0;
+    virtual angle::Result getSamplePosition(const gl::Context *context,
+                                            size_t index,
+                                            GLfloat *xy) const = 0;
+
+    // Special configuration option for checkStatus(). Some back-ends don't require a syncState
+    // before calling checkStatus. In practice the GL back-end is the only config that needs
+    // syncState because it depends on the behaviour of the driver. Allowing the Vulkan and
+    // D3D back-ends to skip syncState lets us do more work in the syncState call.
+    virtual bool shouldSyncStateBeforeCheckStatus() const;
 
     const gl::FramebufferState &getState() const { return mState; }
 
   protected:
     const gl::FramebufferState &mState;
 };
+
+inline bool FramebufferImpl::shouldSyncStateBeforeCheckStatus() const
+{
+    return false;
 }
+
+// Default implementation returns the format specified in the attachment.
+inline const gl::InternalFormat &FramebufferImpl::getImplementationColorReadFormat(
+    const gl::Context *context) const
+{
+    const gl::FramebufferAttachment *readAttachment = mState.getReadAttachment();
+    return *readAttachment->getFormat().info;
+}
+}  // namespace rx
 
 #endif  // LIBANGLE_RENDERER_FRAMEBUFFERIMPL_H_

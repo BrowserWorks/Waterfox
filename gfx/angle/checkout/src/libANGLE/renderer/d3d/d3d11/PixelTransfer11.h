@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2013 The ANGLE Project Authors. All rights reserved.
+// Copyright 2013 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -21,13 +21,12 @@
 
 namespace gl
 {
-
 class Buffer;
+class Context;
 struct Box;
 struct Extents;
 struct PixelUnpackState;
-
-}
+}  // namespace gl
 
 namespace rx
 {
@@ -47,6 +46,7 @@ class PixelTransfer11
     // destArea: the sub-section of destRenderTarget to copy to
     angle::Result copyBufferToTexture(const gl::Context *context,
                                       const gl::PixelUnpackState &unpack,
+                                      gl::Buffer *unpackBuffer,
                                       unsigned int offset,
                                       RenderTargetD3D *destRenderTarget,
                                       GLenum destinationFormat,
@@ -54,7 +54,6 @@ class PixelTransfer11
                                       const gl::Box &destArea);
 
   private:
-
     struct CopyShaderParams
     {
         unsigned int FirstPixelOffset;
@@ -68,8 +67,12 @@ class PixelTransfer11
         unsigned int FirstSlice;
     };
 
-    static void setBufferToTextureCopyParams(const gl::Box &destArea, const gl::Extents &destSize, GLenum internalFormat,
-                                             const gl::PixelUnpackState &unpack, unsigned int offset, CopyShaderParams *parametersOut);
+    static void setBufferToTextureCopyParams(const gl::Box &destArea,
+                                             const gl::Extents &destSize,
+                                             GLenum internalFormat,
+                                             const gl::PixelUnpackState &unpack,
+                                             unsigned int offset,
+                                             CopyShaderParams *parametersOut);
 
     angle::Result loadResources(const gl::Context *context);
     angle::Result buildShaderMap(const gl::Context *context);
@@ -90,4 +93,4 @@ class PixelTransfer11
 
 }  // namespace rx
 
-#endif // LIBANGLE_RENDERER_D3D_D3D11_PIXELTRANSFER11_H_
+#endif  // LIBANGLE_RENDERER_D3D_D3D11_PIXELTRANSFER11_H_

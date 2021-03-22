@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017 The ANGLE Project Authors. All rights reserved.
+// Copyright 2017 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -7,7 +7,7 @@
 //
 
 #if defined(_MSC_VER)
-#pragma warning(disable : 4718)
+#    pragma warning(disable : 4718)
 #endif
 
 #include "compiler/translator/Symbol.h"
@@ -25,6 +25,7 @@ constexpr const ImmutableString kMainName("main");
 constexpr const ImmutableString kImageLoadName("imageLoad");
 constexpr const ImmutableString kImageStoreName("imageStore");
 constexpr const ImmutableString kImageSizeName("imageSize");
+constexpr const ImmutableString kAtomicCounterName("atomicCounter");
 
 static const char kFunctionMangledNameSeparator = '(';
 
@@ -92,8 +93,7 @@ TStructure::TStructure(TSymbolTable *symbolTable,
                        const TFieldList *fields,
                        SymbolType symbolType)
     : TSymbol(symbolTable, name, symbolType, SymbolClass::Struct), TFieldListCollection(fields)
-{
-}
+{}
 
 TStructure::TStructure(const TSymbolUniqueId &id,
                        const ImmutableString &name,
@@ -101,8 +101,7 @@ TStructure::TStructure(const TSymbolUniqueId &id,
                        const TFieldList *fields)
     : TSymbol(id, name, SymbolType::BuiltIn, extension, SymbolClass::Struct),
       TFieldListCollection(fields)
-{
-}
+{}
 
 void TStructure::createSamplerSymbols(const char *namePrefix,
                                       const TString &apiNamePrefix,
@@ -116,7 +115,7 @@ void TStructure::createSamplerSymbols(const char *namePrefix,
         const TType *fieldType = field->type();
         if (IsSampler(fieldType->getBasicType()) || fieldType->isStructureContainingSamplers())
         {
-            std::stringstream fieldName;
+            std::stringstream fieldName = sh::InitializeStream<std::stringstream>();
             fieldName << namePrefix << "_" << field->name();
             TString fieldApiName = apiNamePrefix + ".";
             fieldApiName += field->name().data();
@@ -129,7 +128,7 @@ void TStructure::createSamplerSymbols(const char *namePrefix,
 void TStructure::setName(const ImmutableString &name)
 {
     ImmutableString *mutableName = const_cast<ImmutableString *>(&mName);
-    *mutableName         = name;
+    *mutableName                 = name;
 }
 
 TInterfaceBlock::TInterfaceBlock(TSymbolTable *symbolTable,
@@ -154,8 +153,7 @@ TInterfaceBlock::TInterfaceBlock(const TSymbolUniqueId &id,
       TFieldListCollection(fields),
       mBlockStorage(EbsUnspecified),
       mBinding(0)
-{
-}
+{}
 
 TFunction::TFunction(TSymbolTable *symbolTable,
                      const ImmutableString &name,
@@ -219,12 +217,33 @@ bool TFunction::isImageFunction() const
            (name() == kImageSizeName || name() == kImageLoadName || name() == kImageStoreName);
 }
 
-bool TFunction::hasSamplerInStructParams() const
+bool TFunction::isAtomicCounterFunction() const
+{
+    return SymbolType() == SymbolType::BuiltIn && name().beginsWith(kAtomicCounterName);
+}
+
+bool TFunction::hasSamplerInStructOrArrayParams() const
 {
     for (size_t paramIndex = 0; paramIndex < mParamCount; ++paramIndex)
     {
         const TVariable *param = getParam(paramIndex);
-        if (param->getType().isStructureContainingSamplers())
+        if (param->getType().isStructureContainingSamplers() ||
+            (param->getType().isArray() && param->getType().isSampler()))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool TFunction::hasSamplerInStructOrArrayOfArrayParams() const
+{
+    for (size_t paramIndex = 0; paramIndex < mParamCount; ++paramIndex)
+    {
+        const TVariable *param = getParam(paramIndex);
+        if (param->getType().isStructureContainingSamplers() ||
+            (param->getType().isArrayOfArrays() && param->getType().isSampler()))
         {
             return true;
         }

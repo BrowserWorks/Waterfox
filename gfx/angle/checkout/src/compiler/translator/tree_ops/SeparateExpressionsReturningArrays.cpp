@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -45,8 +45,7 @@ SeparateExpressionsTraverser::SeparateExpressionsTraverser(TSymbolTable *symbolT
     : TIntermTraverser(true, false, false, symbolTable),
       mFoundArrayExpression(false),
       mPatternToSeparateMatcher(IntermNodePatternMatcher::kExpressionReturningArray)
-{
-}
+{}
 
 // Performs a shallow copy of an assignment node.
 // These shallow copies are useful when a node gets inserted into an aggregate node
@@ -114,7 +113,9 @@ void SeparateExpressionsTraverser::nextIteration()
 
 }  // namespace
 
-void SeparateExpressionsReturningArrays(TIntermNode *root, TSymbolTable *symbolTable)
+bool SeparateExpressionsReturningArrays(TCompiler *compiler,
+                                        TIntermNode *root,
+                                        TSymbolTable *symbolTable)
 {
     SeparateExpressionsTraverser traverser(symbolTable);
     // Separate one expression at a time, and reset the traverser between iterations.
@@ -123,8 +124,15 @@ void SeparateExpressionsReturningArrays(TIntermNode *root, TSymbolTable *symbolT
         traverser.nextIteration();
         root->traverse(&traverser);
         if (traverser.foundArrayExpression())
-            traverser.updateTree();
+        {
+            if (!traverser.updateTree(compiler, root))
+            {
+                return false;
+            }
+        }
     } while (traverser.foundArrayExpression());
+
+    return true;
 }
 
 }  // namespace sh

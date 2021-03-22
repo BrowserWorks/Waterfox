@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017 The ANGLE Project Authors. All rights reserved.
+// Copyright 2017 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -31,6 +31,10 @@ class ImageFunctionHLSL final : angle::NonCopyable
                                      bool readonly);
 
     void imageFunctionHeader(TInfoSinkBase &out);
+    const std::set<std::string> &getUsedImage2DFunctionNames() const
+    {
+        return mUsedImage2DFunctionNames;
+    }
 
   private:
     struct ImageFunction
@@ -84,6 +88,7 @@ class ImageFunctionHLSL final : angle::NonCopyable
                                              const ImmutableString &imageReference);
     using ImageFunctionSet = std::set<ImageFunction>;
     ImageFunctionSet mUsesImage;
+    std::set<std::string> mUsedImage2DFunctionNames;
 };
 
 }  // namespace sh

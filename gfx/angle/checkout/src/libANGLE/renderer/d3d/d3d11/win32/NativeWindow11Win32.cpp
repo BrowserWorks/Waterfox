@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -11,7 +11,9 @@
 
 #include "common/debug.h"
 
+// This header must be included before dcomp.h.
 #include <initguid.h>
+
 #include <dcomp.h>
 
 namespace rx
@@ -26,8 +28,7 @@ NativeWindow11Win32::NativeWindow11Win32(EGLNativeWindowType window,
       mDevice(nullptr),
       mCompositionTarget(nullptr),
       mVisual(nullptr)
-{
-}
+{}
 
 NativeWindow11Win32::~NativeWindow11Win32()
 {
@@ -86,7 +87,7 @@ HRESULT NativeWindow11Win32::createSwapChain(ID3D11Device *device,
         if (!mDevice)
         {
             IDXGIDevice *dxgiDevice = d3d11::DynamicCastComObject<IDXGIDevice>(device);
-            HRESULT result = createDComp(dxgiDevice, __uuidof(IDCompositionDevice),
+            HRESULT result          = createDComp(dxgiDevice, __uuidof(IDCompositionDevice),
                                          reinterpret_cast<void **>(&mDevice));
             SafeRelease(dxgiDevice);
 
@@ -116,18 +117,18 @@ HRESULT NativeWindow11Win32::createSwapChain(ID3D11Device *device,
         }
 
         IDXGIFactory2 *factory2             = d3d11::DynamicCastComObject<IDXGIFactory2>(factory);
-        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
+        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
         swapChainDesc.Width                 = width;
         swapChainDesc.Height                = height;
         swapChainDesc.Format                = format;
         swapChainDesc.Stereo                = FALSE;
         swapChainDesc.SampleDesc.Count      = 1;
-        swapChainDesc.SampleDesc.Quality = 0;
+        swapChainDesc.SampleDesc.Quality    = 0;
         swapChainDesc.BufferUsage =
             DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER | DXGI_USAGE_SHADER_INPUT;
         swapChainDesc.BufferCount = 2;
         swapChainDesc.Scaling     = DXGI_SCALING_STRETCH;
-        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        swapChainDesc.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
         swapChainDesc.AlphaMode =
             mHasAlpha ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
         swapChainDesc.Flags         = 0;
@@ -149,7 +150,7 @@ HRESULT NativeWindow11Win32::createSwapChain(ID3D11Device *device,
     IDXGIFactory2 *factory2 = d3d11::DynamicCastComObject<IDXGIFactory2>(factory);
     if (factory2 != nullptr)
     {
-        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
+        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
         swapChainDesc.Width                 = width;
         swapChainDesc.Height                = height;
         swapChainDesc.Format                = format;

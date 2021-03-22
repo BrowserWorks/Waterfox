@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -29,11 +29,12 @@ class FramebufferAttachment;
 
 namespace rx
 {
+class Context11;
 class Renderer11;
 class RenderTarget11;
 struct Renderer11DeviceCaps;
 
-using RTVArray          = std::array<ID3D11RenderTargetView *, gl::IMPLEMENTATION_MAX_DRAW_BUFFERS>;
+using RTVArray = std::array<ID3D11RenderTargetView *, gl::IMPLEMENTATION_MAX_DRAW_BUFFERS>;
 
 namespace gl_d3d11
 {
@@ -49,7 +50,10 @@ D3D11_DEPTH_WRITE_MASK ConvertDepthMask(bool depthWriteEnabled);
 UINT8 ConvertStencilMask(GLuint stencilmask);
 D3D11_STENCIL_OP ConvertStencilOp(GLenum stencilOp);
 
-D3D11_FILTER ConvertFilter(GLenum minFilter, GLenum magFilter, float maxAnisotropy, GLenum comparisonMode);
+D3D11_FILTER ConvertFilter(GLenum minFilter,
+                           GLenum magFilter,
+                           float maxAnisotropy,
+                           GLenum comparisonMode);
 D3D11_TEXTURE_ADDRESS_MODE ConvertTextureWrap(GLenum wrap);
 UINT ConvertMaxAnisotropy(float maxAnisotropy, D3D_FEATURE_LEVEL featureLevel);
 
@@ -66,17 +70,16 @@ unsigned int GetReservedVertexUniformVectors(D3D_FEATURE_LEVEL featureLevel);
 
 unsigned int GetReservedFragmentUniformVectors(D3D_FEATURE_LEVEL featureLevel);
 
-gl::Version GetMaximumClientVersion(D3D_FEATURE_LEVEL featureLevel);
+gl::Version GetMaximumClientVersion(const Renderer11DeviceCaps &caps);
 void GenerateCaps(ID3D11Device *device,
                   ID3D11DeviceContext *deviceContext,
                   const Renderer11DeviceCaps &renderer11DeviceCaps,
-                  const angle::WorkaroundsD3D &workarounds,
+                  const angle::FeaturesD3D &features,
+                  const char *description,
                   gl::Caps *caps,
                   gl::TextureCapsMap *textureCapsMap,
                   gl::Extensions *extensions,
                   gl::Limitations *limitations);
-
-void GetSamplePosition(GLsizei sampleCount, size_t index, GLfloat *xy);
 
 D3D_FEATURE_LEVEL GetMinimumFeatureLevelForES31();
 
@@ -95,7 +98,11 @@ enum ANGLED3D11DeviceType
 
 ANGLED3D11DeviceType GetDeviceType(ID3D11Device *device);
 
-void MakeValidSize(bool isImage, DXGI_FORMAT format, GLsizei *requestWidth, GLsizei *requestHeight, int *levelOffset);
+void MakeValidSize(bool isImage,
+                   DXGI_FORMAT format,
+                   GLsizei *requestWidth,
+                   GLsizei *requestHeight,
+                   int *levelOffset);
 
 angle::Result GenerateInitialTextureData(
     const gl::Context *context,
@@ -114,7 +121,7 @@ struct PositionTexCoordVertex
     float x, y;
     float u, v;
 };
-void SetPositionTexCoordVertex(PositionTexCoordVertex* vertex, float x, float y, float u, float v);
+void SetPositionTexCoordVertex(PositionTexCoordVertex *vertex, float x, float y, float u, float v);
 
 struct PositionLayerTexCoord3DVertex
 {
@@ -122,8 +129,13 @@ struct PositionLayerTexCoord3DVertex
     unsigned int l;
     float u, v, s;
 };
-void SetPositionLayerTexCoord3DVertex(PositionLayerTexCoord3DVertex* vertex, float x, float y,
-                                      unsigned int layer, float u, float v, float s);
+void SetPositionLayerTexCoord3DVertex(PositionLayerTexCoord3DVertex *vertex,
+                                      float x,
+                                      float y,
+                                      unsigned int layer,
+                                      float u,
+                                      float v,
+                                      float s);
 
 struct PositionVertex
 {
@@ -134,13 +146,13 @@ struct BlendStateKey final
 {
     // This will zero-initialize the struct, including padding.
     BlendStateKey();
+    BlendStateKey(const BlendStateKey &other);
 
-    gl::BlendState blendState;
+    gl::BlendStateExt blendStateExt;
 
-    // An int so struct size rounds nicely.
-    uint32_t rtvMax;
-
-    uint8_t rtvMasks[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+    // Use two 16-bit ints to round the struct nicely.
+    uint16_t rtvMax;
+    uint16_t sampleAlphaToCoverage;
 };
 
 bool operator==(const BlendStateKey &a, const BlendStateKey &b);
@@ -161,10 +173,11 @@ bool operator==(const RasterizerStateKey &a, const RasterizerStateKey &b);
 bool operator!=(const RasterizerStateKey &a, const RasterizerStateKey &b);
 
 template <typename outType>
-outType* DynamicCastComObject(IUnknown* object)
+outType *DynamicCastComObject(IUnknown *object)
 {
     outType *outObject = nullptr;
-    HRESULT result = object->QueryInterface(__uuidof(outType), reinterpret_cast<void**>(&outObject));
+    HRESULT result =
+        object->QueryInterface(__uuidof(outType), reinterpret_cast<void **>(&outObject));
     if (SUCCEEDED(result))
     {
         return outObject;
@@ -176,18 +189,33 @@ outType* DynamicCastComObject(IUnknown* object)
     }
 }
 
+template <typename outType>
+angle::ComPtr<outType> DynamicCastComObjectToComPtr(IUnknown *object)
+{
+    angle::ComPtr<outType> outObject;
+    const HRESULT hr = object->QueryInterface(IID_PPV_ARGS(&outObject));
+    if (SUCCEEDED(hr))
+    {
+        return outObject;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 inline bool isDeviceLostError(HRESULT errorCode)
 {
     switch (errorCode)
     {
-      case DXGI_ERROR_DEVICE_HUNG:
-      case DXGI_ERROR_DEVICE_REMOVED:
-      case DXGI_ERROR_DEVICE_RESET:
-      case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
-      case DXGI_ERROR_NOT_CURRENTLY_AVAILABLE:
-        return true;
-      default:
-        return false;
+        case DXGI_ERROR_DEVICE_HUNG:
+        case DXGI_ERROR_DEVICE_REMOVED:
+        case DXGI_ERROR_DEVICE_RESET:
+        case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
+        case DXGI_ERROR_NOT_CURRENTLY_AVAILABLE:
+            return true;
+        default:
+            return false;
     }
 }
 
@@ -228,15 +256,13 @@ class LazyShader final : public LazyResource<GetResourceTypeFromD3D11<D3D11Shade
     // All parameters must be constexpr. Not supported in VS2013.
     constexpr LazyShader(const BYTE *byteCode, size_t byteCodeSize, const char *name)
         : mByteCode(byteCode, byteCodeSize), mName(name)
-    {
-    }
+    {}
 
     constexpr LazyShader(LazyShader &&shader)
         : LazyResource<GetResourceTypeFromD3D11<D3D11ShaderType>()>(std::move(shader)),
           mByteCode(std::move(shader.mByteCode)),
           mName(shader.mName)
-    {
-    }
+    {}
 
     angle::Result resolve(d3d::Context *context, Renderer11 *renderer) override
     {
@@ -293,8 +319,9 @@ void SetBufferData(ID3D11DeviceContext *context, ID3D11Buffer *constantBuffer, c
     }
 }
 
-angle::WorkaroundsD3D GenerateWorkarounds(const Renderer11DeviceCaps &deviceCaps,
-                                          const DXGI_ADAPTER_DESC &adapterDesc);
+void InitializeFeatures(const Renderer11DeviceCaps &deviceCaps,
+                        const DXGI_ADAPTER_DESC &adapterDesc,
+                        angle::FeaturesD3D *features);
 
 enum ReservedConstantBufferSlot
 {
@@ -379,6 +406,7 @@ class TextureHelper11 : public Resource11Base<ID3D11Resource, std::shared_ptr, G
     void set(ResourceT *object, const d3d11::Format &format)
     {
         ASSERT(!valid());
+
         mFormatSet     = &format;
         mData->object  = object;
         mData->manager = nullptr;
@@ -410,7 +438,8 @@ enum class StagingAccess
 };
 
 bool UsePresentPathFast(const Renderer11 *renderer, const gl::FramebufferAttachment *colorbuffer);
-bool UsePrimitiveRestartWorkaround(bool primitiveRestartFixedIndexEnabled, GLenum type);
+bool UsePrimitiveRestartWorkaround(bool primitiveRestartFixedIndexEnabled,
+                                   gl::DrawElementsType type);
 
 enum class IndexStorageType
 {
@@ -431,10 +460,10 @@ enum class IndexStorageType
 
 IndexStorageType ClassifyIndexStorage(const gl::State &glState,
                                       const gl::Buffer *elementArrayBuffer,
-                                      GLenum elementType,
-                                      GLenum destElementType,
+                                      gl::DrawElementsType elementType,
+                                      gl::DrawElementsType destElementType,
                                       unsigned int offset);
 
 }  // namespace rx
 
-#endif // LIBANGLE_RENDERER_D3D_D3D11_RENDERER11_UTILS_H_
+#endif  // LIBANGLE_RENDERER_D3D_D3D11_RENDERER11_UTILS_H_

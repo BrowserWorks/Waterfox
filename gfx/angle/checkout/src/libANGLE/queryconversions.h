@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2014 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -58,7 +58,7 @@ struct GLTypeToGLenum<GLfloat>
     static constexpr GLenum value = GL_FLOAT;
 };
 
-GLint CastMaskValue(const Context *context, GLuint value);
+GLint CastMaskValue(GLuint value);
 
 template <typename QueryT, typename InternalT>
 QueryT CastFromGLintStateValue(GLenum pname, InternalT value);
@@ -119,7 +119,7 @@ GLboolean ConvertToGLBoolean(ParamType param)
 
 // The GL state query API types are: bool, int, uint, float, int64, uint64
 template <typename QueryT>
-void CastStateValues(Context *context,
+void CastStateValues(const Context *context,
                      GLenum nativeType,
                      GLenum pname,
                      unsigned int numParams,
@@ -133,6 +133,6 @@ void CastIndexedStateValues(Context *context,
                             GLuint index,
                             unsigned int numParams,
                             QueryT *outParams);
-}
+}  // namespace gl
 
 #endif  // LIBANGLE_QUERY_CONVERSIONS_H_

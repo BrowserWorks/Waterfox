@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2014 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -10,6 +10,8 @@
 #ifndef LIBANGLE_COMPILER_H_
 #define LIBANGLE_COMPILER_H_
 
+#include <vector>
+
 #include "GLSLANG/ShaderLang.h"
 #include "common/PackedEnums.h"
 #include "libANGLE/Error.h"
@@ -19,20 +21,23 @@ namespace rx
 {
 class CompilerImpl;
 class GLImplFactory;
-}
+}  // namespace rx
 
 namespace gl
 {
-class ContextState;
+class ShCompilerInstance;
+class State;
 
 class Compiler final : public RefCountObjectNoID
 {
   public:
-    Compiler(rx::GLImplFactory *implFactory, const ContextState &data);
+    Compiler(rx::GLImplFactory *implFactory, const State &data, egl::Display *display);
 
-    ShHandle getCompilerHandle(ShaderType shaderType);
+    void onDestroy(const Context *context) override;
+
+    ShCompilerInstance getInstance(ShaderType shaderType);
+    void putInstance(ShCompilerInstance &&instance);
     ShShaderOutput getShaderOutputType() const { return mOutputType; }
-    const std::string &getBuiltinResourcesString(ShaderType type);
 
   private:
     ~Compiler() override;
@@ -40,8 +45,29 @@ class Compiler final : public RefCountObjectNoID
     ShShaderSpec mSpec;
     ShShaderOutput mOutputType;
     ShBuiltInResources mResources;
+    ShaderMap<std::vector<ShCompilerInstance>> mPools;
+};
 
-    ShaderMap<ShHandle> mShaderCompilers;
+class ShCompilerInstance final : public angle::NonCopyable
+{
+  public:
+    ShCompilerInstance();
+    ShCompilerInstance(ShHandle handle, ShShaderOutput outputType, ShaderType shaderType);
+    ~ShCompilerInstance();
+    void destroy();
+
+    ShCompilerInstance(ShCompilerInstance &&other);
+    ShCompilerInstance &operator=(ShCompilerInstance &&other);
+
+    ShHandle getHandle();
+    ShaderType getShaderType() const;
+    const std::string &getBuiltinResourcesString();
+    ShShaderOutput getShaderOutputType() const;
+
+  private:
+    ShHandle mHandle;
+    ShShaderOutput mOutputType;
+    ShaderType mShaderType;
 };
 
 }  // namespace gl

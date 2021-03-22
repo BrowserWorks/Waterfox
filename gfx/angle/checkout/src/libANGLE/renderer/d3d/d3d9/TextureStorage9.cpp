@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -34,12 +34,9 @@ TextureStorage9::TextureStorage9(Renderer9 *renderer, DWORD usage)
       mRenderer(renderer),
       mD3DUsage(usage),
       mD3DPool(mRenderer->getTexturePool(usage))
-{
-}
+{}
 
-TextureStorage9::~TextureStorage9()
-{
-}
+TextureStorage9::~TextureStorage9() {}
 
 DWORD TextureStorage9::GetTextureUsage(GLenum internalformat, bool renderTarget)
 {
@@ -58,7 +55,6 @@ DWORD TextureStorage9::GetTextureUsage(GLenum internalformat, bool renderTarget)
 
     return d3dusage;
 }
-
 
 bool TextureStorage9::isRenderTarget() const
 {
@@ -104,28 +100,33 @@ angle::Result TextureStorage9::setData(const gl::Context *context,
                                        const uint8_t *pixelData)
 {
     ANGLE_HR_UNREACHABLE(GetImplAs<Context9>(context));
-    return angle::Result::Stop();
+    return angle::Result::Stop;
 }
 
 TextureStorage9_2D::TextureStorage9_2D(Renderer9 *renderer, SwapChain9 *swapchain)
     : TextureStorage9(renderer, D3DUSAGE_RENDERTARGET)
 {
     IDirect3DTexture9 *surfaceTexture = swapchain->getOffscreenTexture();
-    mTexture = surfaceTexture;
-    mMipLevels = surfaceTexture->GetLevelCount();
+    mTexture                          = surfaceTexture;
+    mMipLevels                        = surfaceTexture->GetLevelCount();
 
     mInternalFormat = swapchain->getRenderTargetInternalFormat();
 
     D3DSURFACE_DESC surfaceDesc;
     surfaceTexture->GetLevelDesc(0, &surfaceDesc);
-    mTextureWidth = surfaceDesc.Width;
+    mTextureWidth  = surfaceDesc.Width;
     mTextureHeight = surfaceDesc.Height;
     mTextureFormat = surfaceDesc.Format;
 
     mRenderTargets.resize(mMipLevels, nullptr);
 }
 
-TextureStorage9_2D::TextureStorage9_2D(Renderer9 *renderer, GLenum internalformat, bool renderTarget, GLsizei width, GLsizei height, int levels)
+TextureStorage9_2D::TextureStorage9_2D(Renderer9 *renderer,
+                                       GLenum internalformat,
+                                       bool renderTarget,
+                                       GLsizei width,
+                                       GLsizei height,
+                                       int levels)
     : TextureStorage9(renderer, GetTextureUsage(internalformat, renderTarget))
 {
     mTexture = nullptr;
@@ -133,12 +134,12 @@ TextureStorage9_2D::TextureStorage9_2D(Renderer9 *renderer, GLenum internalforma
     mInternalFormat = internalformat;
 
     const d3d9::TextureFormat &d3dFormatInfo = d3d9::GetTextureFormatInfo(internalformat);
-    mTextureFormat = d3dFormatInfo.texFormat;
+    mTextureFormat                           = d3dFormatInfo.texFormat;
 
     d3d9::MakeValidSize(false, d3dFormatInfo.texFormat, &width, &height, &mTopLevel);
-    mTextureWidth = width;
+    mTextureWidth  = width;
     mTextureHeight = height;
-    mMipLevels = mTopLevel + levels;
+    mMipLevels     = mTopLevel + levels;
 
     mRenderTargets.resize(levels, nullptr);
 }
@@ -165,7 +166,7 @@ angle::Result TextureStorage9_2D::getSurfaceLevel(const gl::Context *context,
     IDirect3DBaseTexture9 *baseTexture = nullptr;
     ANGLE_TRY(getBaseTexture(context, &baseTexture));
 
-    IDirect3DTexture9 *texture = static_cast<IDirect3DTexture9*>(baseTexture);
+    IDirect3DTexture9 *texture = static_cast<IDirect3DTexture9 *>(baseTexture);
 
     HRESULT result = texture->GetSurfaceLevel(level + mTopLevel, outSurface);
     ANGLE_TRY_HR(GetImplAs<Context9>(context), result, "Failed to get the surface from a texture");
@@ -176,11 +177,24 @@ angle::Result TextureStorage9_2D::getSurfaceLevel(const gl::Context *context,
         texture->AddDirtyRect(nullptr);
     }
 
-    return angle::Result::Continue();
+    return angle::Result::Continue;
+}
+
+angle::Result TextureStorage9_2D::findRenderTarget(const gl::Context *context,
+                                                   const gl::ImageIndex &index,
+                                                   GLsizei samples,
+                                                   RenderTargetD3D **outRT) const
+{
+    ASSERT(index.getLevelIndex() < getLevelCount());
+
+    ASSERT(outRT);
+    *outRT = mRenderTargets[index.getLevelIndex()];
+    return angle::Result::Continue;
 }
 
 angle::Result TextureStorage9_2D::getRenderTarget(const gl::Context *context,
                                                   const gl::ImageIndex &index,
+                                                  GLsizei samples,
                                                   RenderTargetD3D **outRT)
 {
     ASSERT(index.getLevelIndex() < getLevelCount());
@@ -206,7 +220,7 @@ angle::Result TextureStorage9_2D::getRenderTarget(const gl::Context *context,
 
     ASSERT(outRT);
     *outRT = mRenderTargets[index.getLevelIndex()];
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
 angle::Result TextureStorage9_2D::generateMipmap(const gl::Context *context,
@@ -243,7 +257,7 @@ angle::Result TextureStorage9_2D::getBaseTexture(const gl::Context *context,
     }
 
     *outTexture = mTexture;
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
 angle::Result TextureStorage9_2D::copyToStorage(const gl::Context *context,
@@ -266,7 +280,7 @@ angle::Result TextureStorage9_2D::copyToStorage(const gl::Context *context,
             mRenderer->copyToRenderTarget(context, dstSurf.Get(), srcSurf.Get(), isManaged()));
     }
 
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
 TextureStorage9_EGLImage::TextureStorage9_EGLImage(Renderer9 *renderer,
@@ -282,9 +296,7 @@ TextureStorage9_EGLImage::TextureStorage9_EGLImage(Renderer9 *renderer,
     mMipLevels      = mTopLevel + 1;
 }
 
-TextureStorage9_EGLImage::~TextureStorage9_EGLImage()
-{
-}
+TextureStorage9_EGLImage::~TextureStorage9_EGLImage() {}
 
 angle::Result TextureStorage9_EGLImage::getSurfaceLevel(const gl::Context *context,
                                                         gl::TextureTarget target,
@@ -301,15 +313,28 @@ angle::Result TextureStorage9_EGLImage::getSurfaceLevel(const gl::Context *conte
     RenderTarget9 *renderTarget9 = GetAs<RenderTarget9>(renderTargetD3D);
 
     *outSurface = renderTarget9->getSurface();
-    return angle::Result::Continue();
+    return angle::Result::Continue;
+}
+
+angle::Result TextureStorage9_EGLImage::findRenderTarget(const gl::Context *context,
+                                                         const gl::ImageIndex &index,
+                                                         GLsizei samples,
+                                                         RenderTargetD3D **outRT) const
+{
+    // Since the render target of a EGL image will be updated when orphaning, trying to find a cache
+    // of it can be rarely useful.
+    ANGLE_HR_UNREACHABLE(GetImplAs<Context9>(context));
+    return angle::Result::Stop;
 }
 
 angle::Result TextureStorage9_EGLImage::getRenderTarget(const gl::Context *context,
                                                         const gl::ImageIndex &index,
+                                                        GLsizei samples,
                                                         RenderTargetD3D **outRT)
 {
     ASSERT(!index.hasLayer());
     ASSERT(index.getLevelIndex() == 0);
+    ASSERT(samples == 0);
 
     return mImage->getRenderTarget(context, outRT);
 }
@@ -321,10 +346,10 @@ angle::Result TextureStorage9_EGLImage::getBaseTexture(const gl::Context *contex
     ANGLE_TRY(mImage->getRenderTarget(context, &renderTargetD3D));
 
     RenderTarget9 *renderTarget9 = GetAs<RenderTarget9>(renderTargetD3D);
-    *outTexture = renderTarget9->getTexture();
+    *outTexture                  = renderTarget9->getTexture();
     ASSERT(*outTexture != nullptr);
 
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
 angle::Result TextureStorage9_EGLImage::generateMipmap(const gl::Context *context,
@@ -332,7 +357,7 @@ angle::Result TextureStorage9_EGLImage::generateMipmap(const gl::Context *contex
                                                        const gl::ImageIndex &)
 {
     ANGLE_HR_UNREACHABLE(GetImplAs<Context9>(context));
-    return angle::Result::Stop();
+    return angle::Result::Stop;
 }
 
 angle::Result TextureStorage9_EGLImage::copyToStorage(const gl::Context *context,
@@ -364,14 +389,19 @@ angle::Result TextureStorage9_EGLImage::copyToStorage(const gl::Context *context
         destTexture9->AddDirtyRect(nullptr);
     }
 
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
-TextureStorage9_Cube::TextureStorage9_Cube(Renderer9 *renderer, GLenum internalformat, bool renderTarget, int size, int levels, bool hintLevelZeroOnly)
+TextureStorage9_Cube::TextureStorage9_Cube(Renderer9 *renderer,
+                                           GLenum internalformat,
+                                           bool renderTarget,
+                                           int size,
+                                           int levels,
+                                           bool hintLevelZeroOnly)
     : TextureStorage9(renderer, GetTextureUsage(internalformat, renderTarget))
 {
     mTexture = nullptr;
-    for (size_t i = 0; i < gl::CUBE_FACE_COUNT; ++i)
+    for (size_t i = 0; i < gl::kCubeFaceCount; ++i)
     {
         mRenderTarget[i] = nullptr;
     }
@@ -379,20 +409,20 @@ TextureStorage9_Cube::TextureStorage9_Cube(Renderer9 *renderer, GLenum internalf
     mInternalFormat = internalformat;
 
     const d3d9::TextureFormat &d3dFormatInfo = d3d9::GetTextureFormatInfo(internalformat);
-    mTextureFormat = d3dFormatInfo.texFormat;
+    mTextureFormat                           = d3dFormatInfo.texFormat;
 
     int height = size;
     d3d9::MakeValidSize(false, d3dFormatInfo.texFormat, &size, &height, &mTopLevel);
-    mTextureWidth = size;
+    mTextureWidth  = size;
     mTextureHeight = size;
-    mMipLevels = mTopLevel + levels;
+    mMipLevels     = mTopLevel + levels;
 }
 
 TextureStorage9_Cube::~TextureStorage9_Cube()
 {
     SafeRelease(mTexture);
 
-    for (size_t i = 0; i < gl::CUBE_FACE_COUNT; ++i)
+    for (size_t i = 0; i < gl::kCubeFaceCount; ++i)
     {
         SafeDelete(mRenderTarget[i]);
     }
@@ -409,7 +439,7 @@ angle::Result TextureStorage9_Cube::getSurfaceLevel(const gl::Context *context,
     IDirect3DBaseTexture9 *baseTexture = nullptr;
     ANGLE_TRY(getBaseTexture(context, &baseTexture));
 
-    IDirect3DCubeTexture9 *texture = static_cast<IDirect3DCubeTexture9*>(baseTexture);
+    IDirect3DCubeTexture9 *texture = static_cast<IDirect3DCubeTexture9 *>(baseTexture);
 
     D3DCUBEMAP_FACES face = gl_d3d9::ConvertCubeFace(target);
     HRESULT result        = texture->GetCubeMapSurface(face, level, outSurface);
@@ -421,15 +451,34 @@ angle::Result TextureStorage9_Cube::getSurfaceLevel(const gl::Context *context,
         texture->AddDirtyRect(face, nullptr);
     }
 
-    return angle::Result::Continue();
+    return angle::Result::Continue;
+}
+
+angle::Result TextureStorage9_Cube::findRenderTarget(const gl::Context *context,
+                                                     const gl::ImageIndex &index,
+                                                     GLsizei samples,
+                                                     RenderTargetD3D **outRT) const
+{
+    ASSERT(outRT);
+    ASSERT(index.getLevelIndex() == 0);
+    ASSERT(samples == 0);
+
+    ASSERT(index.getType() == gl::TextureType::CubeMap &&
+           gl::IsCubeMapFaceTarget(index.getTarget()));
+    const size_t renderTargetIndex = index.cubeMapFaceIndex();
+
+    *outRT = mRenderTarget[renderTargetIndex];
+    return angle::Result::Continue;
 }
 
 angle::Result TextureStorage9_Cube::getRenderTarget(const gl::Context *context,
                                                     const gl::ImageIndex &index,
+                                                    GLsizei samples,
                                                     RenderTargetD3D **outRT)
 {
     ASSERT(outRT);
     ASSERT(index.getLevelIndex() == 0);
+    ASSERT(samples == 0);
 
     ASSERT(index.getType() == gl::TextureType::CubeMap &&
            gl::IsCubeMapFaceTarget(index.getTarget()));
@@ -451,7 +500,7 @@ angle::Result TextureStorage9_Cube::getRenderTarget(const gl::Context *context,
     }
 
     *outRT = mRenderTarget[renderTargetIndex];
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
 angle::Result TextureStorage9_Cube::generateMipmap(const gl::Context *context,
@@ -488,7 +537,7 @@ angle::Result TextureStorage9_Cube::getBaseTexture(const gl::Context *context,
     }
 
     *outTexture = mTexture;
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
 angle::Result TextureStorage9_Cube::copyToStorage(const gl::Context *context,
@@ -514,6 +563,6 @@ angle::Result TextureStorage9_Cube::copyToStorage(const gl::Context *context,
         }
     }
 
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 }  // namespace rx

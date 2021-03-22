@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -20,9 +20,7 @@ ShaderExecutableD3D::ShaderExecutableD3D(const void *function, size_t length)
     memcpy(mFunctionBuffer.data(), function, length);
 }
 
-ShaderExecutableD3D::~ShaderExecutableD3D()
-{
-}
+ShaderExecutableD3D::~ShaderExecutableD3D() {}
 
 const uint8_t *ShaderExecutableD3D::getFunction() const
 {
@@ -53,9 +51,7 @@ UniformStorageD3D::UniformStorageD3D(size_t initialSize) : mUniformData()
     mUniformData.fill(0);
 }
 
-UniformStorageD3D::~UniformStorageD3D()
-{
-}
+UniformStorageD3D::~UniformStorageD3D() {}
 
 size_t UniformStorageD3D::size() const
 {

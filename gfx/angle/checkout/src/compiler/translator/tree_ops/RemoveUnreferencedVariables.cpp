@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017 The ANGLE Project Authors. All rights reserved.
+// Copyright 2017 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -48,8 +48,7 @@ class CollectVariableRefCountsTraverser : public TIntermTraverser
 
 CollectVariableRefCountsTraverser::CollectVariableRefCountsTraverser()
     : TIntermTraverser(true, false, false)
-{
-}
+{}
 
 void CollectVariableRefCountsTraverser::incrementStructTypeRefCount(const TType &type)
 {
@@ -153,8 +152,7 @@ RemoveUnreferencedVariablesTraverser::RemoveUnreferencedVariablesTraverser(
       mSymbolIdRefCounts(symbolIdRefCounts),
       mStructIdRefCounts(structIdRefCounts),
       mRemoveReferences(false)
-{
-}
+{}
 
 void RemoveUnreferencedVariablesTraverser::decrementStructTypeRefCount(const TType &type)
 {
@@ -360,14 +358,14 @@ void RemoveUnreferencedVariablesTraverser::traverseLoop(TIntermLoop *node)
 
 }  // namespace
 
-void RemoveUnreferencedVariables(TIntermBlock *root, TSymbolTable *symbolTable)
+bool RemoveUnreferencedVariables(TCompiler *compiler, TIntermBlock *root, TSymbolTable *symbolTable)
 {
     CollectVariableRefCountsTraverser collector;
     root->traverse(&collector);
     RemoveUnreferencedVariablesTraverser traverser(&collector.getSymbolIdRefCounts(),
                                                    &collector.getStructIdRefCounts(), symbolTable);
     root->traverse(&traverser);
-    traverser.updateTree();
+    return traverser.updateTree(compiler, root);
 }
 
 }  // namespace sh

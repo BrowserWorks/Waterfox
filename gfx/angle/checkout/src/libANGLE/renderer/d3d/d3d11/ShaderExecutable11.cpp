@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -25,8 +25,7 @@ ShaderExecutable11::ShaderExecutable11(const void *function,
       mGeometryExecutable(),
       mStreamOutExecutable(),
       mComputeExecutable()
-{
-}
+{}
 
 ShaderExecutable11::ShaderExecutable11(const void *function,
                                        size_t length,
@@ -38,8 +37,7 @@ ShaderExecutable11::ShaderExecutable11(const void *function,
       mGeometryExecutable(),
       mStreamOutExecutable(std::move(streamOut)),
       mComputeExecutable()
-{
-}
+{}
 
 ShaderExecutable11::ShaderExecutable11(const void *function,
                                        size_t length,
@@ -50,8 +48,7 @@ ShaderExecutable11::ShaderExecutable11(const void *function,
       mGeometryExecutable(std::move(executable)),
       mStreamOutExecutable(),
       mComputeExecutable()
-{
-}
+{}
 
 ShaderExecutable11::ShaderExecutable11(const void *function,
                                        size_t length,
@@ -62,12 +59,9 @@ ShaderExecutable11::ShaderExecutable11(const void *function,
       mGeometryExecutable(),
       mStreamOutExecutable(),
       mComputeExecutable(std::move(executable))
-{
-}
+{}
 
-ShaderExecutable11::~ShaderExecutable11()
-{
-}
+ShaderExecutable11::~ShaderExecutable11() {}
 
 const d3d11::VertexShader &ShaderExecutable11::getVertexShader() const
 {
@@ -96,12 +90,9 @@ const d3d11::ComputeShader &ShaderExecutable11::getComputeShader() const
 
 UniformStorage11::UniformStorage11(size_t initialSize)
     : UniformStorageD3D(initialSize), mConstantBuffer()
-{
-}
+{}
 
-UniformStorage11::~UniformStorage11()
-{
-}
+UniformStorage11::~UniformStorage11() {}
 
 angle::Result UniformStorage11::getConstantBuffer(const gl::Context *context,
                                                   Renderer11 *renderer,
@@ -109,7 +100,7 @@ angle::Result UniformStorage11::getConstantBuffer(const gl::Context *context,
 {
     if (size() > 0 && !mConstantBuffer.valid())
     {
-        D3D11_BUFFER_DESC desc = {0};
+        D3D11_BUFFER_DESC desc = {};
         desc.ByteWidth         = static_cast<unsigned int>(size());
         desc.Usage             = D3D11_USAGE_DEFAULT;
         desc.BindFlags         = D3D11_BIND_CONSTANT_BUFFER;
@@ -119,7 +110,7 @@ angle::Result UniformStorage11::getConstantBuffer(const gl::Context *context,
     }
 
     *bufferOut = &mConstantBuffer;
-    return angle::Result::Continue();
+    return angle::Result::Continue;
 }
 
 }  // namespace rx

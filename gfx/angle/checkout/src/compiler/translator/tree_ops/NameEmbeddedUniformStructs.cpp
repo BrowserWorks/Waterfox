@@ -22,8 +22,7 @@ class Traverser : public TIntermTraverser
   public:
     explicit Traverser(TSymbolTable *symbolTable)
         : TIntermTraverser(true, false, false, symbolTable)
-    {
-    }
+    {}
 
     bool visitDeclaration(Visit visit, TIntermDeclaration *decl) override
     {
@@ -93,10 +92,10 @@ class Traverser : public TIntermTraverser
 };
 }  // anonymous namespace
 
-void NameEmbeddedStructUniforms(TIntermBlock *root, TSymbolTable *symbolTable)
+bool NameEmbeddedStructUniforms(TCompiler *compiler, TIntermBlock *root, TSymbolTable *symbolTable)
 {
     Traverser nameStructs(symbolTable);
     root->traverse(&nameStructs);
-    nameStructs.updateTree();
+    return nameStructs.updateTree(compiler, root);
 }
 }  // namespace sh

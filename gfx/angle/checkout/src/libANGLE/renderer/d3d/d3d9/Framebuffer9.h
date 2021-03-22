@@ -23,21 +23,25 @@ class Framebuffer9 : public FramebufferD3D
     Framebuffer9(const gl::FramebufferState &data, Renderer9 *renderer);
     ~Framebuffer9() override;
 
-    gl::Error discard(const gl::Context *context, size_t count, const GLenum *attachments) override;
-    gl::Error invalidate(const gl::Context *context,
-                         size_t count,
-                         const GLenum *attachments) override;
-    gl::Error invalidateSub(const gl::Context *context,
-                            size_t count,
-                            const GLenum *attachments,
-                            const gl::Rectangle &area) override;
+    angle::Result discard(const gl::Context *context,
+                          size_t count,
+                          const GLenum *attachments) override;
+    angle::Result invalidate(const gl::Context *context,
+                             size_t count,
+                             const GLenum *attachments) override;
+    angle::Result invalidateSub(const gl::Context *context,
+                                size_t count,
+                                const GLenum *attachments,
+                                const gl::Rectangle &area) override;
 
-    gl::Error getSamplePosition(const gl::Context *context,
-                                size_t index,
-                                GLfloat *xy) const override;
+    angle::Result getSamplePosition(const gl::Context *context,
+                                    size_t index,
+                                    GLfloat *xy) const override;
 
-    gl::Error syncState(const gl::Context *context,
-                        const gl::Framebuffer::DirtyBits &dirtyBits) override;
+    angle::Result syncState(const gl::Context *context,
+                            GLenum binding,
+                            const gl::Framebuffer::DirtyBits &dirtyBits,
+                            gl::Command command) override;
 
     const gl::AttachmentArray<RenderTarget9 *> &getCachedColorRenderTargets() const
     {
@@ -49,6 +53,9 @@ class Framebuffer9 : public FramebufferD3D
         return mRenderTargetCache.getDepthStencil();
     }
 
+    const gl::InternalFormat &getImplementationColorReadFormat(
+        const gl::Context *context) const override;
+
   private:
     angle::Result clearImpl(const gl::Context *context,
                             const ClearParameters &clearParams) override;
@@ -59,6 +66,7 @@ class Framebuffer9 : public FramebufferD3D
                                  GLenum type,
                                  size_t outputPitch,
                                  const gl::PixelPackState &pack,
+                                 gl::Buffer *packPixels,
                                  uint8_t *pixels) override;
 
     angle::Result blitImpl(const gl::Context *context,
@@ -71,8 +79,6 @@ class Framebuffer9 : public FramebufferD3D
                            GLenum filter,
                            const gl::Framebuffer *sourceFramebuffer) override;
 
-    GLenum getRenderTargetImplementationFormat(RenderTargetD3D *renderTarget) const override;
-
     Renderer9 *const mRenderer;
 
     RenderTargetCache<RenderTarget9> mRenderTargetCache;
@@ -80,4 +86,4 @@ class Framebuffer9 : public FramebufferD3D
 
 }  // namespace rx
 
-#endif // LIBANGLE_RENDERER_D3D_D3D9_FRAMBUFFER9_H_
+#endif  // LIBANGLE_RENDERER_D3D_D3D9_FRAMBUFFER9_H_

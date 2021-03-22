@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -11,9 +11,7 @@
 
 namespace rx
 {
-NativeWindow9::NativeWindow9(EGLNativeWindowType window) : NativeWindowD3D(window)
-{
-}
+NativeWindow9::NativeWindow9(EGLNativeWindowType window) : NativeWindowD3D(window) {}
 
 bool NativeWindow9::initialize()
 {

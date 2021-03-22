@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -13,6 +13,7 @@
 #include "common/debug.h"
 #include "libANGLE/ImageIndex.h"
 #include "libANGLE/renderer/d3d/ImageD3D.h"
+#include "libANGLE/renderer/d3d/d3d11/MappedSubresourceVerifier11.h"
 #include "libANGLE/renderer/d3d/d3d11/renderer11_utils.h"
 
 namespace gl
@@ -46,7 +47,7 @@ class Image11 : public ImageD3D
     static angle::Result CopyImage(const gl::Context *context,
                                    Image11 *dest,
                                    Image11 *source,
-                                   const gl::Rectangle &sourceRect,
+                                   const gl::Box &sourceBox,
                                    const gl::Offset &destOffset,
                                    bool unpackFlipY,
                                    bool unpackPremultiplyAlpha,
@@ -89,6 +90,10 @@ class Image11 : public ImageD3D
     void verifyAssociatedStorageValid(TextureStorage11 *textureStorage) const;
     void disassociateStorage();
 
+    angle::Result getStagingTexture(const gl::Context *context,
+                                    const TextureHelper11 **outStagingTexture,
+                                    unsigned int *outSubresourceIndex);
+
   protected:
     template <typename T>
     friend class d3d11::ScopedUnmapper;
@@ -102,9 +107,6 @@ class Image11 : public ImageD3D
                                         const TextureHelper11 &textureHelper,
                                         UINT sourceSubResource);
 
-    angle::Result getStagingTexture(const gl::Context *context,
-                                    const TextureHelper11 **outStagingTexture,
-                                    unsigned int *outSubresourceIndex);
     angle::Result createStagingTexture(const gl::Context *context);
     void releaseStagingTexture();
 
@@ -113,6 +115,7 @@ class Image11 : public ImageD3D
     DXGI_FORMAT mDXGIFormat;
     TextureHelper11 mStagingTexture;
     unsigned int mStagingSubresource;
+    MappedSubresourceVerifier11 mStagingTextureSubresourceVerifier;
 
     bool mRecoverFromStorage;
     TextureStorage11 *mAssociatedStorage;
@@ -122,4 +125,4 @@ class Image11 : public ImageD3D
 
 }  // namespace rx
 
-#endif // LIBANGLE_RENDERER_D3D_D3D11_IMAGE11_H_
+#endif  // LIBANGLE_RENDERER_D3D_D3D11_IMAGE11_H_

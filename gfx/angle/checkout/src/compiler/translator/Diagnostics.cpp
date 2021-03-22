@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2013 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -16,12 +16,9 @@ namespace sh
 
 TDiagnostics::TDiagnostics(TInfoSinkBase &infoSink)
     : mInfoSink(infoSink), mNumErrors(0), mNumWarnings(0)
-{
-}
+{}
 
-TDiagnostics::~TDiagnostics()
-{
-}
+TDiagnostics::~TDiagnostics() {}
 
 void TDiagnostics::writeInfo(Severity severity,
                              const angle::pp::SourceLocation &loc,

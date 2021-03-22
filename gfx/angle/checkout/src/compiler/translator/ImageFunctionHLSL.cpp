@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2017 The ANGLE Project Authors. All rights reserved.
+// Copyright 2017 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -334,6 +334,13 @@ void ImageFunctionHLSL::imageFunctionHeader(TInfoSinkBase &out)
 {
     for (const ImageFunction &imageFunction : mUsesImage)
     {
+        // Skip to generate image2D functions here, dynamically generate these
+        // functions when linking, or after dispatch or draw.
+        if (IsImage2D(imageFunction.image))
+        {
+            mUsedImage2DFunctionNames.insert(imageFunction.name().data());
+            continue;
+        }
         // Function header
         out << imageFunction.getReturnType() << " " << imageFunction.name() << "(";
 

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2013-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2013 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -13,6 +13,7 @@
 #include "image_util/generatemip.h"
 #include "image_util/loadimage.h"
 
+#include "anglebase/no_destructor.h"
 #include "libANGLE/renderer/d3d/d3d9/Renderer9.h"
 #include "libANGLE/renderer/d3d/d3d9/vertexconversion.h"
 
@@ -29,192 +30,6 @@ constexpr D3DFORMAT D3DFMT_NULL = ((D3DFORMAT)(MAKEFOURCC('N', 'U', 'L', 'L')));
 
 // A map to determine the pixel size and mip generation function of a given D3D format
 typedef std::map<D3DFORMAT, D3DFormat> D3D9FormatInfoMap;
-
-D3DFormat::D3DFormat()
-    : pixelBytes(0),
-      blockWidth(0),
-      blockHeight(0),
-      redBits(0),
-      greenBits(0),
-      blueBits(0),
-      alphaBits(0),
-      luminanceBits(0),
-      depthBits(0),
-      stencilBits(0),
-      formatID(angle::FormatID::NONE)
-{
-}
-
-D3DFormat::D3DFormat(GLuint bits,
-                     GLuint blockWidth,
-                     GLuint blockHeight,
-                     GLuint redBits,
-                     GLuint greenBits,
-                     GLuint blueBits,
-                     GLuint alphaBits,
-                     GLuint lumBits,
-                     GLuint depthBits,
-                     GLuint stencilBits,
-                     FormatID formatID)
-    : pixelBytes(bits / 8),
-      blockWidth(blockWidth),
-      blockHeight(blockHeight),
-      redBits(redBits),
-      greenBits(greenBits),
-      blueBits(blueBits),
-      alphaBits(alphaBits),
-      luminanceBits(lumBits),
-      depthBits(depthBits),
-      stencilBits(stencilBits),
-      formatID(formatID)
-{
-}
-
-const D3DFormat &GetD3DFormatInfo(D3DFORMAT format)
-{
-    if (format == D3DFMT_NULL)
-    {
-        static const D3DFormat info(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FormatID::NONE);
-        return info;
-    }
-
-    if (format == D3DFMT_INTZ)
-    {
-        static const D3DFormat info(32, 1, 1, 0, 0, 0, 0, 0, 24, 8, FormatID::D24_UNORM_S8_UINT);
-        return info;
-    }
-
-    switch (format)
-    {
-        case D3DFMT_UNKNOWN:
-        {
-            static const D3DFormat info(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FormatID::NONE);
-            return info;
-        }
-
-        case D3DFMT_L8:
-        {
-            static const D3DFormat info(8, 1, 1, 0, 0, 0, 0, 8, 0, 0, FormatID::L8_UNORM);
-            return info;
-        }
-        case D3DFMT_A8:
-        {
-            static const D3DFormat info(8, 1, 1, 0, 0, 0, 8, 0, 0, 0, FormatID::A8_UNORM);
-            return info;
-        }
-        case D3DFMT_A8L8:
-        {
-            static const D3DFormat info(16, 1, 1, 0, 0, 0, 8, 8, 0, 0, FormatID::L8A8_UNORM);
-            return info;
-        }
-
-        case D3DFMT_A4R4G4B4:
-        {
-            static const D3DFormat info(16, 1, 1, 4, 4, 4, 4, 0, 0, 0, FormatID::B4G4R4A4_UNORM);
-            return info;
-        }
-        case D3DFMT_A1R5G5B5:
-        {
-            static const D3DFormat info(16, 1, 1, 5, 5, 5, 1, 0, 0, 0, FormatID::B5G5R5A1_UNORM);
-            return info;
-        }
-        case D3DFMT_R5G6B5:
-        {
-            static const D3DFormat info(16, 1, 1, 5, 6, 5, 0, 0, 0, 0, FormatID::R5G6B5_UNORM);
-            return info;
-        }
-        case D3DFMT_X8R8G8B8:
-        {
-            static const D3DFormat info(32, 1, 1, 8, 8, 8, 0, 0, 0, 0, FormatID::B8G8R8X8_UNORM);
-            return info;
-        }
-        case D3DFMT_A8R8G8B8:
-        {
-            static const D3DFormat info(32, 1, 1, 8, 8, 8, 8, 0, 0, 0, FormatID::B8G8R8A8_UNORM);
-            return info;
-        }
-
-        case D3DFMT_R16F:
-        {
-            static const D3DFormat info(16, 1, 1, 16, 0, 0, 0, 0, 0, 0, FormatID::R16_FLOAT);
-            return info;
-        }
-        case D3DFMT_G16R16F:
-        {
-            static const D3DFormat info(32, 1, 1, 16, 16, 0, 0, 0, 0, 0, FormatID::R16G16_FLOAT);
-            return info;
-        }
-        case D3DFMT_A16B16G16R16F:
-        {
-            static const D3DFormat info(64, 1, 1, 16, 16, 16, 16, 0, 0, 0,
-                                        FormatID::R16G16B16A16_FLOAT);
-            return info;
-        }
-        case D3DFMT_R32F:
-        {
-            static const D3DFormat info(32, 1, 1, 32, 0, 0, 0, 0, 0, 0, FormatID::R32_FLOAT);
-            return info;
-        }
-        case D3DFMT_G32R32F:
-        {
-            static const D3DFormat info(64, 1, 1, 32, 32, 0, 0, 0, 0, 0, FormatID::R32G32_FLOAT);
-            return info;
-        }
-        case D3DFMT_A32B32G32R32F:
-        {
-            static const D3DFormat info(128, 1, 1, 32, 32, 32, 32, 0, 0, 0,
-                                        FormatID::R32G32B32A32_FLOAT);
-            return info;
-        }
-
-        case D3DFMT_D16:
-        {
-            static const D3DFormat info(16, 1, 1, 0, 0, 0, 0, 0, 16, 0, FormatID::D16_UNORM);
-            return info;
-        }
-        case D3DFMT_D24S8:
-        {
-            static const D3DFormat info(32, 1, 1, 0, 0, 0, 0, 0, 24, 8,
-                                        FormatID::D24_UNORM_S8_UINT);
-            return info;
-        }
-        case D3DFMT_D24X8:
-        {
-            static const D3DFormat info(32, 1, 1, 0, 0, 0, 0, 0, 24, 0, FormatID::D16_UNORM);
-            return info;
-        }
-        case D3DFMT_D32:
-        {
-            static const D3DFormat info(32, 1, 1, 0, 0, 0, 0, 0, 32, 0, FormatID::D32_UNORM);
-            return info;
-        }
-
-        case D3DFMT_DXT1:
-        {
-            static const D3DFormat info(64, 4, 4, 0, 0, 0, 0, 0, 0, 0,
-                                        FormatID::BC1_RGBA_UNORM_BLOCK);
-            return info;
-        }
-        case D3DFMT_DXT3:
-        {
-            static const D3DFormat info(128, 4, 4, 0, 0, 0, 0, 0, 0, 0,
-                                        FormatID::BC2_RGBA_UNORM_BLOCK);
-            return info;
-        }
-        case D3DFMT_DXT5:
-        {
-            static const D3DFormat info(128, 4, 4, 0, 0, 0, 0, 0, 0, 0,
-                                        FormatID::BC3_RGBA_UNORM_BLOCK);
-            return info;
-        }
-
-        default:
-        {
-            static const D3DFormat defaultInfo;
-            return defaultInfo;
-        }
-    }
-}
 
 typedef std::pair<GLint, InitializeTextureDataFunction> InternalFormatInitialzerPair;
 typedef std::map<GLint, InitializeTextureDataFunction> InternalFormatInitialzerMap;
@@ -255,8 +70,7 @@ TextureFormat::TextureFormat()
       renderFormat(D3DFMT_UNKNOWN),
       dataInitializerFunction(nullptr),
       loadFunction(UnreachableLoad)
-{
-}
+{}
 
 static inline void InsertD3D9FormatInfo(D3D9FormatMap *map,
                                         GLenum internalFormat,
@@ -268,12 +82,12 @@ static inline void InsertD3D9FormatInfo(D3D9FormatMap *map,
     info.texFormat    = texFormat;
     info.renderFormat = renderFormat;
 
-    static const InternalFormatInitialzerMap dataInitializationMap =
-        BuildInternalFormatInitialzerMap();
+    static const angle::base::NoDestructor<InternalFormatInitialzerMap> dataInitializationMap(
+        BuildInternalFormatInitialzerMap());
     InternalFormatInitialzerMap::const_iterator dataInitIter =
-        dataInitializationMap.find(internalFormat);
+        dataInitializationMap->find(internalFormat);
     info.dataInitializerFunction =
-        (dataInitIter != dataInitializationMap.end()) ? dataInitIter->second : nullptr;
+        (dataInitIter != dataInitializationMap->end()) ? dataInitIter->second : nullptr;
 
     info.loadFunction = loadFunction;
 
@@ -334,10 +148,10 @@ static D3D9FormatMap BuildD3D9FormatMap()
     InsertD3D9FormatInfo(&map, GL_BGRA4_ANGLEX,                     D3DFMT_A8R8G8B8,      D3DFMT_A8R8G8B8,       LoadBGRA4ToBGRA8                          );
     InsertD3D9FormatInfo(&map, GL_BGR5_A1_ANGLEX,                   D3DFMT_A8R8G8B8,      D3DFMT_A8R8G8B8,       LoadBGR5A1ToBGRA8                         );
 
-    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGB_S3TC_DXT1_EXT,     D3DFMT_DXT1,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4,  8>          );
-    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,    D3DFMT_DXT1,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4,  8>          );
-    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGBA_S3TC_DXT3_ANGLE,  D3DFMT_DXT3,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4, 16>          );
-    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGBA_S3TC_DXT5_ANGLE,  D3DFMT_DXT5,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4, 16>          );
+    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGB_S3TC_DXT1_EXT,     D3DFMT_DXT1,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4, 1,  8>       );
+    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,    D3DFMT_DXT1,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4, 1,  8>       );
+    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGBA_S3TC_DXT3_ANGLE,  D3DFMT_DXT3,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4, 1, 16>       );
+    InsertD3D9FormatInfo(&map, GL_COMPRESSED_RGBA_S3TC_DXT5_ANGLE,  D3DFMT_DXT5,          D3DFMT_UNKNOWN,        LoadCompressedToNative<4, 4, 1, 16>       );
 
     // These formats require checking if the renderer supports D3DFMT_L8 or D3DFMT_A8L8 and
     // then changing the format and loading function appropriately.
@@ -350,9 +164,9 @@ static D3D9FormatMap BuildD3D9FormatMap()
 
 const TextureFormat &GetTextureFormatInfo(GLenum internalFormat)
 {
-    static const D3D9FormatMap formatMap = BuildD3D9FormatMap();
-    D3D9FormatMap::const_iterator iter   = formatMap.find(internalFormat);
-    if (iter != formatMap.end())
+    static const angle::base::NoDestructor<D3D9FormatMap> formatMap(BuildD3D9FormatMap());
+    D3D9FormatMap::const_iterator iter = formatMap->find(internalFormat);
+    if (iter != formatMap->end())
     {
         return iter->second;
     }
@@ -426,8 +240,7 @@ struct TranslationDescription
 // GLToCType maps from GL type (as GLenum) to the C typedef.
 template <GLenum GLType>
 struct GLToCType
-{
-};
+{};
 
 template <>
 struct GLToCType<GL_BYTE>
@@ -474,8 +287,7 @@ enum D3DVertexType
 // D3DToCType maps from D3D vertex type (as enum D3DVertexType) to the corresponding C type.
 template <unsigned int D3DType>
 struct D3DToCType
-{
-};
+{};
 
 template <>
 struct D3DToCType<D3DVT_FLOAT>
@@ -512,40 +324,32 @@ struct D3DToCType<D3DVT_USHORT_NORM>
 // that will provide the appropriate final size.
 template <unsigned int type, int size>
 struct WidenRule
-{
-};
+{};
 
 template <int size>
 struct WidenRule<D3DVT_FLOAT, size> : NoWiden<size>
-{
-};
+{};
 template <int size>
 struct WidenRule<D3DVT_SHORT, size> : WidenToEven<size>
-{
-};
+{};
 template <int size>
 struct WidenRule<D3DVT_SHORT_NORM, size> : WidenToEven<size>
-{
-};
+{};
 template <int size>
 struct WidenRule<D3DVT_UBYTE, size> : WidenToFour<size>
-{
-};
+{};
 template <int size>
 struct WidenRule<D3DVT_UBYTE_NORM, size> : WidenToFour<size>
-{
-};
+{};
 template <int size>
 struct WidenRule<D3DVT_USHORT_NORM, size> : WidenToEven<size>
-{
-};
+{};
 
 // VertexTypeFlags encodes the D3DCAPS9::DeclType flag and vertex declaration flag for each D3D
 // vertex type & size combination.
 template <unsigned int d3dtype, int size>
 struct VertexTypeFlags
-{
-};
+{};
 
 template <unsigned int _capflag, unsigned int _declflag>
 struct VertexTypeFlagsHelper
@@ -562,64 +366,51 @@ struct VertexTypeFlagsHelper
 
 template <>
 struct VertexTypeFlags<D3DVT_FLOAT, 1> : VertexTypeFlagsHelper<0, D3DDECLTYPE_FLOAT1>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_FLOAT, 2> : VertexTypeFlagsHelper<0, D3DDECLTYPE_FLOAT2>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_FLOAT, 3> : VertexTypeFlagsHelper<0, D3DDECLTYPE_FLOAT3>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_FLOAT, 4> : VertexTypeFlagsHelper<0, D3DDECLTYPE_FLOAT4>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_SHORT, 2> : VertexTypeFlagsHelper<0, D3DDECLTYPE_SHORT2>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_SHORT, 4> : VertexTypeFlagsHelper<0, D3DDECLTYPE_SHORT4>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_SHORT_NORM, 2>
     : VertexTypeFlagsHelper<D3DDTCAPS_SHORT2N, D3DDECLTYPE_SHORT2N>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_SHORT_NORM, 4>
     : VertexTypeFlagsHelper<D3DDTCAPS_SHORT4N, D3DDECLTYPE_SHORT4N>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_UBYTE, 4> : VertexTypeFlagsHelper<D3DDTCAPS_UBYTE4, D3DDECLTYPE_UBYTE4>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_UBYTE_NORM, 4>
     : VertexTypeFlagsHelper<D3DDTCAPS_UBYTE4N, D3DDECLTYPE_UBYTE4N>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_USHORT_NORM, 2>
     : VertexTypeFlagsHelper<D3DDTCAPS_USHORT2N, D3DDECLTYPE_USHORT2N>
-{
-};
+{};
 template <>
 struct VertexTypeFlags<D3DVT_USHORT_NORM, 4>
     : VertexTypeFlagsHelper<D3DDTCAPS_USHORT4N, D3DDECLTYPE_USHORT4N>
-{
-};
+{};
 
 // VertexTypeMapping maps GL type & normalized flag to preferred and fallback D3D vertex types (as
 // D3DVertexType enums).
 template <GLenum GLtype, bool normalized>
 struct VertexTypeMapping
-{
-};
+{};
 
 template <D3DVertexType Preferred, D3DVertexType Fallback = Preferred>
 struct VertexTypeMappingBase
@@ -636,46 +427,36 @@ struct VertexTypeMappingBase
 
 template <>
 struct VertexTypeMapping<GL_BYTE, false> : VertexTypeMappingBase<D3DVT_SHORT>
-{
-};  // Cast
+{};  // Cast
 template <>
 struct VertexTypeMapping<GL_BYTE, true> : VertexTypeMappingBase<D3DVT_FLOAT>
-{
-};  // Normalize
+{};  // Normalize
 template <>
 struct VertexTypeMapping<GL_UNSIGNED_BYTE, false> : VertexTypeMappingBase<D3DVT_UBYTE, D3DVT_FLOAT>
-{
-};  // Identity, Cast
+{};  // Identity, Cast
 template <>
 struct VertexTypeMapping<GL_UNSIGNED_BYTE, true>
     : VertexTypeMappingBase<D3DVT_UBYTE_NORM, D3DVT_FLOAT>
-{
-};  // Identity, Normalize
+{};  // Identity, Normalize
 template <>
 struct VertexTypeMapping<GL_SHORT, false> : VertexTypeMappingBase<D3DVT_SHORT>
-{
-};  // Identity
+{};  // Identity
 template <>
 struct VertexTypeMapping<GL_SHORT, true> : VertexTypeMappingBase<D3DVT_SHORT_NORM, D3DVT_FLOAT>
-{
-};  // Cast, Normalize
+{};  // Cast, Normalize
 template <>
 struct VertexTypeMapping<GL_UNSIGNED_SHORT, false> : VertexTypeMappingBase<D3DVT_FLOAT>
-{
-};  // Cast
+{};  // Cast
 template <>
 struct VertexTypeMapping<GL_UNSIGNED_SHORT, true>
     : VertexTypeMappingBase<D3DVT_USHORT_NORM, D3DVT_FLOAT>
-{
-};  // Cast, Normalize
+{};  // Cast, Normalize
 template <bool normalized>
 struct VertexTypeMapping<GL_FIXED, normalized> : VertexTypeMappingBase<D3DVT_FLOAT>
-{
-};  // FixedToFloat
+{};  // FixedToFloat
 template <bool normalized>
 struct VertexTypeMapping<GL_FLOAT, normalized> : VertexTypeMappingBase<D3DVT_FLOAT>
-{
-};  // Identity
+{};  // Identity
 
 // Given a GL type & norm flag and a D3D type, ConversionRule provides the type conversion rule
 // (Cast, Normalize, Identity, FixedToFloat). The conversion rules themselves are defined in
@@ -685,51 +466,42 @@ struct VertexTypeMapping<GL_FLOAT, normalized> : VertexTypeMappingBase<D3DVT_FLO
 // knows it's an identity mapping).
 template <GLenum fromType, bool normalized, unsigned int toType>
 struct ConversionRule : Cast<typename GLToCType<fromType>::type, typename D3DToCType<toType>::type>
-{
-};
+{};
 
 // All conversions from normalized types to float use the Normalize operator.
 template <GLenum fromType>
 struct ConversionRule<fromType, true, D3DVT_FLOAT> : Normalize<typename GLToCType<fromType>::type>
-{
-};
+{};
 
 // Use a full specialization for this so that it preferentially matches ahead of the generic
 // normalize-to-float rules.
 template <>
 struct ConversionRule<GL_FIXED, true, D3DVT_FLOAT> : FixedToFloat<GLint, 16>
-{
-};
+{};
 template <>
 struct ConversionRule<GL_FIXED, false, D3DVT_FLOAT> : FixedToFloat<GLint, 16>
-{
-};
+{};
 
 // A 2-stage construction is used for DefaultVertexValues because float must use SimpleDefaultValues
 // (i.e. 0/1) whether it is normalized or not.
 template <class T, bool normalized>
 struct DefaultVertexValuesStage2
-{
-};
+{};
 
 template <class T>
 struct DefaultVertexValuesStage2<T, true> : NormalizedDefaultValues<T>
-{
-};
+{};
 template <class T>
 struct DefaultVertexValuesStage2<T, false> : SimpleDefaultValues<T>
-{
-};
+{};
 
 // Work out the default value rule for a D3D type (expressed as the C type) and
 template <class T, bool normalized>
 struct DefaultVertexValues : DefaultVertexValuesStage2<T, normalized>
-{
-};
+{};
 template <bool normalized>
 struct DefaultVertexValues<float, normalized> : SimpleDefaultValues<float>
-{
-};
+{};
 
 // Policy rules for use with Converter, to choose whether to use the preferred or fallback
 // conversion. The fallback conversion produces an output that all D3D9 devices must support.
@@ -793,8 +565,7 @@ VertexFormat::VertexFormat()
       copyFunction(nullptr),
       nativeFormat(D3DDECLTYPE_UNUSED),
       componentType(GL_NONE)
-{
-}
+{}
 
 // Initialize a TranslationInfo
 VertexFormat CreateVertexFormatInfo(bool identity,
@@ -872,8 +643,7 @@ static inline unsigned int ComputeTypeIndex(GLenum type)
     }
 }
 
-const VertexFormat &GetVertexFormatInfo(DWORD supportedDeclTypes,
-                                        gl::VertexFormatType vertexFormatType)
+const VertexFormat &GetVertexFormatInfo(DWORD supportedDeclTypes, angle::FormatID vertexFormatID)
 {
     static bool initialized           = false;
     static DWORD initializedDeclTypes = 0;
@@ -908,12 +678,12 @@ const VertexFormat &GetVertexFormatInfo(DWORD supportedDeclTypes,
         initializedDeclTypes = supportedDeclTypes;
     }
 
-    const gl::VertexFormat &vertexFormat = gl::GetVertexFormatFromType(vertexFormatType);
+    const gl::VertexFormat &vertexFormat = gl::GetVertexFormatFromID(vertexFormatID);
 
     // Pure integer attributes only supported in ES3.0
     ASSERT(!vertexFormat.pureInteger);
     return formatConverters[ComputeTypeIndex(vertexFormat.type)][vertexFormat.normalized]
                            [vertexFormat.components - 1];
 }
-}
-}
+}  // namespace d3d9
+}  // namespace rx

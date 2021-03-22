@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2013 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -9,7 +9,6 @@
 #include "angle_gl.h"
 #include "compiler/translator/BuiltInFunctionEmulatorGLSL.h"
 #include "compiler/translator/OutputESSL.h"
-#include "compiler/translator/tree_ops/EmulatePrecision.h"
 #include "compiler/translator/tree_ops/RecordConstantPrecision.h"
 
 namespace sh
@@ -17,8 +16,7 @@ namespace sh
 
 TranslatorESSL::TranslatorESSL(sh::GLenum type, ShShaderSpec spec)
     : TCompiler(type, spec, SH_ESSL_OUTPUT)
-{
-}
+{}
 
 void TranslatorESSL::initBuiltInFunctionEmulator(BuiltInFunctionEmulator *emu,
                                                  ShCompileOptions compileOptions)
@@ -29,7 +27,7 @@ void TranslatorESSL::initBuiltInFunctionEmulator(BuiltInFunctionEmulator *emu,
     }
 }
 
-void TranslatorESSL::translate(TIntermBlock *root,
+bool TranslatorESSL::translate(TIntermBlock *root,
                                ShCompileOptions compileOptions,
                                PerformanceDiagnostics * /*perfDiagnostics*/)
 {
@@ -48,18 +46,14 @@ void TranslatorESSL::translate(TIntermBlock *root,
     // like non-preprocessor tokens.
     writePragma(compileOptions);
 
-    bool precisionEmulation =
-        getResources().WEBGL_debug_shader_precision && getPragma().debugShaderPrecision;
+    bool precisionEmulation = false;
+    if (!emulatePrecisionIfNeeded(root, sink, &precisionEmulation, SH_ESSL_OUTPUT))
+        return false;
 
-    if (precisionEmulation)
+    if (!RecordConstantPrecision(this, root, &getSymbolTable()))
     {
-        EmulatePrecision emulatePrecision(&getSymbolTable());
-        root->traverse(&emulatePrecision);
-        emulatePrecision.updateTree();
-        emulatePrecision.writeEmulationHelpers(sink, shaderVer, SH_ESSL_OUTPUT);
+        return false;
     }
-
-    RecordConstantPrecision(root, &getSymbolTable());
 
     // Write emulated built-in functions if needed.
     if (!getBuiltInFunctionEmulator().isOutputEmpty())
@@ -85,11 +79,14 @@ void TranslatorESSL::translate(TIntermBlock *root,
     // Write array bounds clamping emulation if needed.
     getArrayBoundsClamper().OutputClampingFunctionDefinition(sink);
 
-    if (getShaderType() == GL_COMPUTE_SHADER && isComputeShaderLocalSizeDeclared())
+    if (getShaderType() == GL_FRAGMENT_SHADER)
     {
-        const sh::WorkGroupSize &localSize = getComputeShaderLocalSize();
-        sink << "layout (local_size_x=" << localSize[0] << ", local_size_y=" << localSize[1]
-             << ", local_size_z=" << localSize[2] << ") in;\n";
+        EmitEarlyFragmentTestsGLSL(*this, sink);
+    }
+
+    if (getShaderType() == GL_COMPUTE_SHADER)
+    {
+        EmitWorkGroupSizeGLSL(*this, sink);
     }
 
     if (getShaderType() == GL_GEOMETRY_SHADER_EXT)
@@ -105,6 +102,8 @@ void TranslatorESSL::translate(TIntermBlock *root,
                            compileOptions);
 
     root->traverse(&outputESSL);
+
+    return true;
 }
 
 bool TranslatorESSL::shouldFlattenPragmaStdglInvariantAll()
@@ -125,15 +124,13 @@ void TranslatorESSL::writeExtensionBehavior(ShCompileOptions compileOptions)
 {
     TInfoSinkBase &sink                   = getInfoSink().obj;
     const TExtensionBehavior &extBehavior = getExtensionBehavior();
-    const bool isMultiviewExtEmulated =
-        (compileOptions & (SH_INITIALIZE_BUILTINS_FOR_INSTANCED_MULTIVIEW |
-                           SH_SELECT_VIEW_IN_NV_GLSL_VERTEX_SHADER)) != 0u;
     for (TExtensionBehavior::const_iterator iter = extBehavior.begin(); iter != extBehavior.end();
          ++iter)
     {
         if (iter->second != EBhUndefined)
         {
-            const bool isMultiview = (iter->first == TExtension::OVR_multiview);
+            const bool isMultiview = (iter->first == TExtension::OVR_multiview) ||
+                                     (iter->first == TExtension::OVR_multiview2);
             if (getResources().NV_shader_framebuffer_fetch &&
                 iter->first == TExtension::EXT_shader_framebuffer_fetch)
             {
@@ -145,15 +142,13 @@ void TranslatorESSL::writeExtensionBehavior(ShCompileOptions compileOptions)
                 sink << "#extension GL_NV_draw_buffers : " << GetBehaviorString(iter->second)
                      << "\n";
             }
-            else if (isMultiview && isMultiviewExtEmulated)
+            else if (isMultiview)
             {
-                if (getShaderType() == GL_VERTEX_SHADER &&
-                    (compileOptions & SH_SELECT_VIEW_IN_NV_GLSL_VERTEX_SHADER) != 0u)
+                // Only either OVR_multiview OR OVR_multiview2 should be emitted.
+                if ((iter->first != TExtension::OVR_multiview) ||
+                    !IsExtensionEnabled(extBehavior, TExtension::OVR_multiview2))
                 {
-                    // Emit the NV_viewport_array2 extension in a vertex shader if the
-                    // SH_SELECT_VIEW_IN_NV_GLSL_VERTEX_SHADER option is set and the
-                    // OVR_multiview(2) extension is requested.
-                    sink << "#extension GL_NV_viewport_array2 : require\n";
+                    EmitMultiviewGLSL(*this, compileOptions, iter->first, iter->second, sink);
                 }
             }
             else if (iter->first == TExtension::EXT_geometry_shader)
@@ -171,6 +166,24 @@ void TranslatorESSL::writeExtensionBehavior(ShCompileOptions compileOptions)
                             "this if the extension is \"required\"\n";
                 }
                 sink << "#endif\n";
+            }
+            else if (iter->first == TExtension::ANGLE_multi_draw)
+            {
+                // Don't emit anything. This extension is emulated
+                ASSERT((compileOptions & SH_EMULATE_GL_DRAW_ID) != 0);
+                continue;
+            }
+            else if (iter->first == TExtension::ANGLE_base_vertex_base_instance)
+            {
+                // Don't emit anything. This extension is emulated
+                ASSERT((compileOptions & SH_EMULATE_GL_BASE_VERTEX_BASE_INSTANCE) != 0);
+                continue;
+            }
+            else if (iter->first == TExtension::WEBGL_video_texture)
+            {
+                // Don't emit anything. This extension is emulated
+                // TODO(crbug.com/776222): support external image.
+                continue;
             }
             else
             {

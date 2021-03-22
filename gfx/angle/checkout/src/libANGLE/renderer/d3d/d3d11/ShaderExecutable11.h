@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -12,6 +12,11 @@
 
 #include "libANGLE/renderer/d3d/ShaderExecutableD3D.h"
 #include "libANGLE/renderer/d3d/d3d11/ResourceManager11.h"
+
+namespace gl
+{
+class Context;
+}  // namespace gl
 
 namespace rx
 {
@@ -61,4 +66,4 @@ class UniformStorage11 : public UniformStorageD3D
 
 }  // namespace rx
 
-#endif // LIBANGLE_RENDERER_D3D_D3D11_SHADEREXECUTABLE11_H_
+#endif  // LIBANGLE_RENDERER_D3D_D3D11_SHADEREXECUTABLE11_H_

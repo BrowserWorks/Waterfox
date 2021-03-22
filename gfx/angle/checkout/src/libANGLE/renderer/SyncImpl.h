@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2015 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -25,18 +25,20 @@ namespace rx
 class SyncImpl : angle::NonCopyable
 {
   public:
-    SyncImpl(){};
-    virtual ~SyncImpl(){};
+    SyncImpl() {}
+    virtual ~SyncImpl() {}
 
-    virtual gl::Error set(const gl::Context *context, GLenum condition, GLbitfield flags) = 0;
-    virtual gl::Error clientWait(const gl::Context *context,
-                                 GLbitfield flags,
-                                 GLuint64 timeout,
-                                 GLenum *outResult)                                       = 0;
-    virtual gl::Error serverWait(const gl::Context *context,
-                                 GLbitfield flags,
-                                 GLuint64 timeout)                                        = 0;
-    virtual gl::Error getStatus(const gl::Context *context, GLint *outResult)             = 0;
+    virtual void onDestroy(const gl::Context *context) {}
+
+    virtual angle::Result set(const gl::Context *context, GLenum condition, GLbitfield flags) = 0;
+    virtual angle::Result clientWait(const gl::Context *context,
+                                     GLbitfield flags,
+                                     GLuint64 timeout,
+                                     GLenum *outResult)                                       = 0;
+    virtual angle::Result serverWait(const gl::Context *context,
+                                     GLbitfield flags,
+                                     GLuint64 timeout)                                        = 0;
+    virtual angle::Result getStatus(const gl::Context *context, GLint *outResult)             = 0;
 };
 }  // namespace rx
 

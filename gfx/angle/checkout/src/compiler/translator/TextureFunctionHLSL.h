@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -14,10 +14,10 @@
 
 #include <set>
 
+#include "GLSLANG/ShaderLang.h"
 #include "compiler/translator/BaseTypes.h"
 #include "compiler/translator/Common.h"
 #include "compiler/translator/InfoSink.h"
-#include "GLSLANG/ShaderLang.h"
 
 namespace sh
 {
@@ -37,7 +37,8 @@ class TextureFunctionHLSL final : angle::NonCopyable
             LOD0BIAS,
             SIZE,  // textureSize()
             FETCH,
-            GRAD
+            GRAD,
+            GATHER
         };
 
         ImmutableString name() const;

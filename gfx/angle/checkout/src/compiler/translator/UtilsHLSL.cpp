@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2014 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -11,6 +11,7 @@
 #include "compiler/translator/IntermNode.h"
 #include "compiler/translator/StructureHLSL.h"
 #include "compiler/translator/SymbolTable.h"
+#include "compiler/translator/util.h"
 
 namespace sh
 {
@@ -72,6 +73,7 @@ HLSLTextureGroup TextureGroup(const TBasicType type, TLayoutImageInternalFormat 
     switch (type)
     {
         case EbtSampler2D:
+        case EbtSamplerVideoWEBGL:
             return HLSL_TEXTURE_2D;
         case EbtSamplerCube:
             return HLSL_TEXTURE_CUBE;
@@ -83,6 +85,8 @@ HLSLTextureGroup TextureGroup(const TBasicType type, TLayoutImageInternalFormat 
             return HLSL_TEXTURE_3D;
         case EbtSampler2DMS:
             return HLSL_TEXTURE_2D_MS;
+        case EbtSampler2DMSArray:
+            return HLSL_TEXTURE_2D_MS_ARRAY;
         case EbtISampler2D:
             return HLSL_TEXTURE_2D_INT4;
         case EbtISampler3D:
@@ -93,6 +97,8 @@ HLSLTextureGroup TextureGroup(const TBasicType type, TLayoutImageInternalFormat 
             return HLSL_TEXTURE_2D_ARRAY_INT4;
         case EbtISampler2DMS:
             return HLSL_TEXTURE_2D_MS_INT4;
+        case EbtISampler2DMSArray:
+            return HLSL_TEXTURE_2D_MS_ARRAY_INT4;
         case EbtUSampler2D:
             return HLSL_TEXTURE_2D_UINT4;
         case EbtUSampler3D:
@@ -103,6 +109,8 @@ HLSLTextureGroup TextureGroup(const TBasicType type, TLayoutImageInternalFormat 
             return HLSL_TEXTURE_2D_ARRAY_UINT4;
         case EbtUSampler2DMS:
             return HLSL_TEXTURE_2D_MS_UINT4;
+        case EbtUSampler2DMSArray:
+            return HLSL_TEXTURE_2D_MS_ARRAY_UINT4;
         case EbtSampler2DShadow:
             return HLSL_TEXTURE_2D_COMPARISON;
         case EbtSamplerCubeShadow:
@@ -304,6 +312,8 @@ const char *TextureString(const HLSLTextureGroup textureGroup)
             return "Texture3D<snorm float4>";
         case HLSL_TEXTURE_2D_MS:
             return "Texture2DMS<float4>";
+        case HLSL_TEXTURE_2D_MS_ARRAY:
+            return "Texture2DMSArray<float4>";
         case HLSL_TEXTURE_2D_INT4:
             return "Texture2D<int4>";
         case HLSL_TEXTURE_3D_INT4:
@@ -312,6 +322,8 @@ const char *TextureString(const HLSLTextureGroup textureGroup)
             return "Texture2DArray<int4>";
         case HLSL_TEXTURE_2D_MS_INT4:
             return "Texture2DMS<int4>";
+        case HLSL_TEXTURE_2D_MS_ARRAY_INT4:
+            return "Texture2DMSArray<int4>";
         case HLSL_TEXTURE_2D_UINT4:
             return "Texture2D<uint4>";
         case HLSL_TEXTURE_3D_UINT4:
@@ -320,6 +332,8 @@ const char *TextureString(const HLSLTextureGroup textureGroup)
             return "Texture2DArray<uint4>";
         case HLSL_TEXTURE_2D_MS_UINT4:
             return "Texture2DMS<uint4>";
+        case HLSL_TEXTURE_2D_MS_ARRAY_UINT4:
+            return "Texture2DMSArray<uint4>";
         case HLSL_TEXTURE_2D_COMPARISON:
             return "Texture2D";
         case HLSL_TEXTURE_CUBE_COMPARISON:
@@ -368,6 +382,8 @@ const char *TextureGroupSuffix(const HLSLTextureGroup type)
             return "3D_snorm_float4_";
         case HLSL_TEXTURE_2D_MS:
             return "2DMS";
+        case HLSL_TEXTURE_2D_MS_ARRAY:
+            return "2DMSArray";
         case HLSL_TEXTURE_2D_INT4:
             return "2D_int4_";
         case HLSL_TEXTURE_3D_INT4:
@@ -376,6 +392,8 @@ const char *TextureGroupSuffix(const HLSLTextureGroup type)
             return "2DArray_int4_";
         case HLSL_TEXTURE_2D_MS_INT4:
             return "2DMS_int4_";
+        case HLSL_TEXTURE_2D_MS_ARRAY_INT4:
+            return "2DMSArray_int4_";
         case HLSL_TEXTURE_2D_UINT4:
             return "2D_uint4_";
         case HLSL_TEXTURE_3D_UINT4:
@@ -384,6 +402,8 @@ const char *TextureGroupSuffix(const HLSLTextureGroup type)
             return "2DArray_uint4_";
         case HLSL_TEXTURE_2D_MS_UINT4:
             return "2DMS_uint4_";
+        case HLSL_TEXTURE_2D_MS_ARRAY_UINT4:
+            return "2DMSArray_uint4_";
         case HLSL_TEXTURE_2D_COMPARISON:
             return "2D_comparison";
         case HLSL_TEXTURE_CUBE_COMPARISON:
@@ -794,7 +814,7 @@ const char *RWTextureTypeSuffix(const TBasicType type,
         }
         default:
             // All other types are identified by their group suffix
-            return TextureGroupSuffix(type, imageInternalFormat);
+            return RWTextureGroupSuffix(type, imageInternalFormat);
     }
 #if !UNREACHABLE_IS_NORETURN
     UNREACHABLE();
@@ -838,6 +858,13 @@ TString DecorateVariableIfNeeded(const TVariable &variable)
         ASSERT(!name.beginsWith("f_"));
         ASSERT(!name.beginsWith("_"));
         return TString(name.data());
+    }
+    // For user defined variables, combine variable name with unique id
+    // so variables of the same name in different scopes do not get overwritten.
+    else if (variable.symbolType() == SymbolType::UserDefined &&
+             variable.getType().getQualifier() == EvqTemporary)
+    {
+        return Decorate(variable.name()) + str(variable.uniqueId().get());
     }
     else
     {
@@ -948,8 +975,11 @@ TString TypeString(const TType &type)
                 return "samplerCUBE";
             case EbtSamplerExternalOES:
                 return "sampler2D";
+            case EbtSamplerVideoWEBGL:
+                return "sampler2D";
             case EbtAtomicCounter:
-                return "atomic_uint";
+                // Multiple atomic_uints will be implemented as a single RWByteAddressBuffer
+                return "RWByteAddressBuffer";
             default:
                 break;
         }
@@ -978,7 +1008,8 @@ TString StructNameString(const TStructure &structure)
 
 TString QualifiedStructNameString(const TStructure &structure,
                                   bool useHLSLRowMajorPacking,
-                                  bool useStd140Packing)
+                                  bool useStd140Packing,
+                                  bool forcePadding)
 {
     if (structure.symbolType() == SymbolType::Empty)
     {
@@ -998,6 +1029,11 @@ TString QualifiedStructNameString(const TStructure &structure,
     if (useHLSLRowMajorPacking)
     {
         prefix += "rm_";
+    }
+
+    if (forcePadding)
+    {
+        prefix += "fp_";
     }
 
     return prefix + StructNameString(structure);
@@ -1027,6 +1063,8 @@ const char *InterpolationString(TQualifier qualifier)
             return "nointerpolation";
         case EvqCentroidOut:
             return "centroid";
+        case EvqSampleIn:
+            return "sample";
         default:
             UNREACHABLE();
     }
@@ -1047,6 +1085,8 @@ const char *QualifierString(TQualifier qualifier)
             return "inout";
         case EvqConstReadOnly:
             return "const";
+        case EvqSampleOut:
+            return "sample";
         default:
             UNREACHABLE();
     }

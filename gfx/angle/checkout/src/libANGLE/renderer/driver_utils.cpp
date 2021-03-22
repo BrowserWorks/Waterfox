@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -10,13 +10,33 @@
 
 #include "libANGLE/renderer/driver_utils.h"
 
+#include "common/platform.h"
+#include "common/system_utils.h"
+
+#if defined(ANGLE_PLATFORM_ANDROID)
+#    include <sys/system_properties.h>
+#endif
+
+#if defined(ANGLE_PLATFORM_LINUX)
+#    include <sys/utsname.h>
+#endif
+
+#if defined(ANGLE_PLATFORM_WINDOWS)
+#    include <versionhelpers.h>
+#endif
+
 namespace rx
 {
 // Intel
 // Referenced from https://cgit.freedesktop.org/vaapi/intel-driver/tree/src/i965_pciids.h
 namespace
 {
+// gen6
+const uint32_t SandyBridge[] = {0x0102, 0x0106, 0x010A, 0x0112, 0x0116, 0x0122, 0x0126};
+
 // gen7
+const uint32_t IvyBridge[] = {0x0152, 0x0156, 0x015A, 0x0162, 0x0166, 0x016A};
+
 const uint32_t Haswell[] = {
     0x0402, 0x0406, 0x040A, 0x040B, 0x040E, 0x0C02, 0x0C06, 0x0C0A, 0x0C0B, 0x0C0E,
     0x0A02, 0x0A06, 0x0A0A, 0x0A0B, 0x0A0E, 0x0D02, 0x0D06, 0x0D0A, 0x0D0B, 0x0D0E,  // hsw_gt1
@@ -47,9 +67,7 @@ const uint32_t Kabylake[] = {0x5916, 0x5913, 0x5906, 0x5926, 0x5921, 0x5915, 0x5
 
 }  // anonymous namespace
 
-IntelDriverVersion::IntelDriverVersion(uint16_t lastPart) : mVersionPart(lastPart)
-{
-}
+IntelDriverVersion::IntelDriverVersion(uint16_t lastPart) : mVersionPart(lastPart) {}
 
 bool IntelDriverVersion::operator==(const IntelDriverVersion &version)
 {
@@ -84,6 +102,17 @@ bool IntelDriverVersion::operator<(const IntelDriverVersion &version)
 bool IntelDriverVersion::operator>=(const IntelDriverVersion &version)
 {
     return !(*this < version);
+}
+
+bool IsSandyBridge(uint32_t DeviceId)
+{
+    return std::find(std::begin(SandyBridge), std::end(SandyBridge), DeviceId) !=
+           std::end(SandyBridge);
+}
+
+bool IsIvyBridge(uint32_t DeviceId)
+{
+    return std::find(std::begin(IvyBridge), std::end(IvyBridge), DeviceId) != std::end(IvyBridge);
 }
 
 bool IsHaswell(uint32_t DeviceId)
@@ -123,10 +152,18 @@ const char *GetVendorString(uint32_t vendorId)
     {
         case VENDOR_ID_AMD:
             return "Advanced Micro Devices";
-        case VENDOR_ID_NVIDIA:
-            return "NVIDIA";
+        case VENDOR_ID_ARM:
+            return "ARM";
+        case VENDOR_ID_BROADCOM:
+            return "Broadcom";
+        case VENDOR_ID_GOOGLE:
+            return "Google";
         case VENDOR_ID_INTEL:
             return "Intel";
+        case VENDOR_ID_NVIDIA:
+            return "NVIDIA";
+        case VENDOR_ID_POWERVR:
+            return "Imagination Technologies";
         case VENDOR_ID_QUALCOMM:
             return "Qualcomm";
         default:
@@ -134,6 +171,141 @@ const char *GetVendorString(uint32_t vendorId)
             ASSERT(vendorId == 0xba5eba11);  // Mock vendor ID used for tests.
             return "Unknown";
     }
+}
+
+int GetAndroidSDKVersion()
+{
+#if defined(ANGLE_PLATFORM_ANDROID)
+    char apiVersion[PROP_VALUE_MAX];
+    int length = __system_property_get("ro.build.version.sdk", apiVersion);
+    if (length == 0)
+    {
+        return 0;
+    }
+    return atoi(apiVersion);
+#else
+    return 0;
+#endif
+}
+
+OSVersion::OSVersion() {}
+OSVersion::OSVersion(int major, int minor, int patch)
+    : majorVersion(major), minorVersion(minor), patchVersion(patch)
+{}
+
+bool operator==(const OSVersion &a, const OSVersion &b)
+{
+    return std::tie(a.majorVersion, a.minorVersion, a.patchVersion) ==
+           std::tie(b.majorVersion, b.minorVersion, b.patchVersion);
+}
+bool operator!=(const OSVersion &a, const OSVersion &b)
+{
+    return std::tie(a.majorVersion, a.minorVersion, a.patchVersion) !=
+           std::tie(b.majorVersion, b.minorVersion, b.patchVersion);
+}
+bool operator<(const OSVersion &a, const OSVersion &b)
+{
+    return std::tie(a.majorVersion, a.minorVersion, a.patchVersion) <
+           std::tie(b.majorVersion, b.minorVersion, b.patchVersion);
+}
+bool operator>=(const OSVersion &a, const OSVersion &b)
+{
+    return std::tie(a.majorVersion, a.minorVersion, a.patchVersion) >=
+           std::tie(b.majorVersion, b.minorVersion, b.patchVersion);
+}
+
+#if !defined(ANGLE_PLATFORM_APPLE)
+OSVersion GetMacOSVersion()
+{
+    // Return a default version
+    return OSVersion(0, 0, 0);
+}
+#endif
+
+#if defined(ANGLE_PLATFORM_LINUX)
+bool ParseLinuxOSVersion(const char *version, int *major, int *minor, int *patch)
+{
+    errno = 0;  // reset global error flag.
+    char *next;
+    *major = static_cast<int>(strtol(version, &next, 10));
+    if (next == nullptr || *next != '.' || errno != 0)
+    {
+        return false;
+    }
+
+    *minor = static_cast<int>(strtol(next + 1, &next, 10));
+    if (next == nullptr || *next != '.' || errno != 0)
+    {
+        return false;
+    }
+
+    *patch = static_cast<int>(strtol(next + 1, &next, 10));
+    if (errno != 0)
+    {
+        return false;
+    }
+
+    return true;
+}
+#endif
+
+OSVersion GetLinuxOSVersion()
+{
+#if defined(ANGLE_PLATFORM_LINUX)
+    struct utsname uname_info;
+    if (uname(&uname_info) != 0)
+    {
+        return OSVersion(0, 0, 0);
+    }
+
+    int majorVersion = 0, minorVersion = 0, patchVersion = 0;
+    if (ParseLinuxOSVersion(uname_info.release, &majorVersion, &minorVersion, &patchVersion))
+    {
+        return OSVersion(majorVersion, minorVersion, patchVersion);
+    }
+#endif
+
+    return OSVersion(0, 0, 0);
+}
+
+// There are multiple environment variables that may or may not be set during Wayland
+// sessions, including WAYLAND_DISPLAY, XDG_SESSION_TYPE, and DESKTOP_SESSION
+bool IsWayland()
+{
+    static bool checked   = false;
+    static bool isWayland = false;
+    if (!checked)
+    {
+        if (IsLinux())
+        {
+            if (!angle::GetEnvironmentVar("WAYLAND_DISPLAY").empty())
+            {
+                isWayland = true;
+            }
+            else if (angle::GetEnvironmentVar("XDG_SESSION_TYPE") == "wayland")
+            {
+                isWayland = true;
+            }
+            else if (angle::GetEnvironmentVar("DESKTOP_SESSION").find("wayland") !=
+                     std::string::npos)
+            {
+                isWayland = true;
+            }
+        }
+        checked = true;
+    }
+    return isWayland;
+}
+
+bool IsWin10OrGreater()
+{
+#if defined(ANGLE_ENABLE_WINDOWS_UWP)
+    return true;
+#elif defined(ANGLE_PLATFORM_WINDOWS)
+    return IsWindows10OrGreater();
+#else
+    return false;
+#endif
 }
 
 }  // namespace rx

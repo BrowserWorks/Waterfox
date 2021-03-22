@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2012 The ANGLE Project Authors. All rights reserved.
+// Copyright 2012 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -70,11 +70,11 @@ class SwapChain9 : public SwapChainD3D
     IDirect3DSurface9 *mBackBuffer;
     IDirect3DSurface9 *mRenderTarget;
     IDirect3DSurface9 *mDepthStencil;
-    IDirect3DTexture9* mOffscreenTexture;
+    IDirect3DTexture9 *mOffscreenTexture;
 
     SurfaceRenderTarget9 mColorRenderTarget;
     SurfaceRenderTarget9 mDepthStencilRenderTarget;
 };
 
-}
-#endif // LIBANGLE_RENDERER_D3D_D3D9_SWAPCHAIN9_H_
+}  // namespace rx
+#endif  // LIBANGLE_RENDERER_D3D_D3D9_SWAPCHAIN9_H_

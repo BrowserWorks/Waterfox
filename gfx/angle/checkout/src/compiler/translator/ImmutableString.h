@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018 The ANGLE Project Authors. All rights reserved.
+// Copyright 2018 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -33,7 +33,7 @@ constexpr size_t constStrlen(const char *str)
     }
     return len;
 }
-}
+}  // namespace
 
 class ImmutableString
 {
@@ -44,15 +44,13 @@ class ImmutableString
     //  3. a null-terminated pool allocated char array. This can't be c_str() of a local TString,
     //     since when a TString goes out of scope it clears its first character.
     explicit constexpr ImmutableString(const char *data) : mData(data), mLength(constStrlen(data))
-    {
-    }
+    {}
 
     constexpr ImmutableString(const char *data, size_t length) : mData(data), mLength(length) {}
 
     ImmutableString(const std::string &str)
         : mData(AllocatePoolCharArray(str.c_str(), str.size())), mLength(str.size())
-    {
-    }
+    {}
 
     constexpr ImmutableString(const ImmutableString &) = default;
 
@@ -128,10 +126,9 @@ class ImmutableString
         }
     };
 
-    // This hash encodes the opening parentheses location (if any), name length and whether the name
-    // contains { or [ characters in addition to a 19-bit hash. This way the hash is more useful for
-    // lookups. The string passed in should be at most 63 characters.
+    // Perfect hash functions
     uint32_t mangledNameHash() const;
+    uint32_t unmangledNameHash() const;
 
   private:
     const char *mData;

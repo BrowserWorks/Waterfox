@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2012 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -29,7 +29,7 @@ class VertexBuffer9 : public VertexBuffer
     angle::Result storeVertexAttributes(const gl::Context *context,
                                         const gl::VertexAttribute &attrib,
                                         const gl::VertexBinding &binding,
-                                        GLenum currentValueType,
+                                        gl::VertexAttribType currentValueType,
                                         GLint start,
                                         size_t count,
                                         GLsizei instances,
@@ -51,6 +51,6 @@ class VertexBuffer9 : public VertexBuffer
     bool mDynamicUsage;
 };
 
-}
+}  // namespace rx
 
-#endif // LIBANGLE_RENDERER_D3D_D3D9_VERTEXBUFFER9_H_
+#endif  // LIBANGLE_RENDERER_D3D_D3D9_VERTEXBUFFER9_H_

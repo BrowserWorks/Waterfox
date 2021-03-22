@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2014 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -11,12 +11,17 @@
 
 #include "common/platform.h"
 
+#if defined(ANGLE_USE_ABSEIL)
+#    include "absl/container/flat_hash_map.h"
+#endif  // defined(ANGLE_USE_ABSEIL)
+
 #include <climits>
 #include <cstdarg>
 #include <cstddef>
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // A helper class to disallow copy and assignment operators
@@ -26,6 +31,14 @@ namespace angle
 #if defined(ANGLE_ENABLE_D3D9) || defined(ANGLE_ENABLE_D3D11)
 using Microsoft::WRL::ComPtr;
 #endif  // defined(ANGLE_ENABLE_D3D9) || defined(ANGLE_ENABLE_D3D11)
+
+#if defined(ANGLE_USE_ABSEIL)
+template <typename Key, typename T>
+using HashMap = absl::flat_hash_map<Key, T>;
+#else
+template <typename Key, typename T>
+using HashMap = std::unordered_map<Key, T>;
+#endif  // defined(ANGLE_USE_ABSEIL)
 
 class NonCopyable
 {
@@ -54,8 +67,7 @@ class WrappedArray final : angle::NonCopyable
   public:
     template <size_t N>
     constexpr WrappedArray(const T (&data)[N]) : mArray(&data[0]), mSize(N)
-    {
-    }
+    {}
 
     constexpr WrappedArray() : mArray(nullptr), mSize(0) {}
     constexpr WrappedArray(const T *data, size_t size) : mArray(data), mSize(size) {}
@@ -150,14 +162,15 @@ inline bool IsMaskFlagSet(T mask, T flag)
 
 inline const char *MakeStaticString(const std::string &str)
 {
-    static std::set<std::string> strings;
-    std::set<std::string>::iterator it = strings.find(str);
-    if (it != strings.end())
+    // On the heap so that no destructor runs on application exit.
+    static std::set<std::string> *strings = new std::set<std::string>;
+    std::set<std::string>::iterator it    = strings->find(str);
+    if (it != strings->end())
     {
         return it->c_str();
     }
 
-    return strings.insert(str).first->c_str();
+    return strings->insert(str).first->c_str();
 }
 
 std::string ArrayString(unsigned int i);
@@ -183,9 +196,16 @@ std::string ToString(const T &value)
     return o.str();
 }
 
+inline bool IsLittleEndian()
+{
+    constexpr uint32_t kEndiannessTest = 1;
+    const bool isLittleEndian          = *reinterpret_cast<const uint8_t *>(&kEndiannessTest) == 1;
+    return isLittleEndian;
+}
+
 // snprintf is not defined with MSVC prior to to msvc14
 #if defined(_MSC_VER) && _MSC_VER < 1900
-#define snprintf _snprintf
+#    define snprintf _snprintf
 #endif
 
 #define GL_A1RGB5_ANGLEX 0x6AC5
@@ -196,8 +216,9 @@ std::string ToString(const T &value)
 #define GL_INT_64_ANGLEX 0x6ABE
 #define GL_UINT_64_ANGLEX 0x6ABF
 #define GL_BGRA8_SRGB_ANGLEX 0x6AC0
+#define GL_BGR10_A2_ANGLEX 0x6AF9
 
-// These are dummy formats used to fit typeless D3D textures that can be bound to EGL pbuffers into
+// These are fake formats used to fit typeless D3D textures that can be bound to EGL pbuffers into
 // the format system (for extension EGL_ANGLE_d3d_texture_client_buffer):
 #define GL_RGBA8_TYPELESS_ANGLEX 0x6AC1
 #define GL_RGBA8_TYPELESS_SRGB_ANGLEX 0x6AC2
@@ -250,74 +271,105 @@ std::string ToString(const T &value)
 #define GL_RGB10_A2_SSCALED_ANGLEX 0x6AEC
 #define GL_RGB10_A2_USCALED_ANGLEX 0x6AED
 
-// TODO(jmadill): Clean this up at some point.
-#define EGL_PLATFORM_ANGLE_PLATFORM_METHODS_ANGLEX 0x9999
+// EXT_texture_type_2_10_10_10_REV
+#define GL_RGB10_UNORM_ANGLEX 0x6AEE
 
-// This internal enum is used to filter internal errors that are already handled.
-// TODO(jmadill): Remove this when refactor is done. http://anglebug.com/2491
-#define GL_INTERNAL_ERROR_ANGLEX 0x6AEE
+// These are fake formats for OES_vertex_type_10_10_10_2
+#define GL_A2_RGB10_UNORM_ANGLEX 0x6AEF
+#define GL_A2_RGB10_SNORM_ANGLEX 0x6AF0
+#define GL_A2_RGB10_USCALED_ANGLEX 0x6AF1
+#define GL_A2_RGB10_SSCALED_ANGLEX 0x6AF2
+#define GL_X2_RGB10_UINT_ANGLEX 0x6AF3
+#define GL_X2_RGB10_SINT_ANGLEX 0x6AF4
+#define GL_X2_RGB10_USCALED_ANGLEX 0x6AF5
+#define GL_X2_RGB10_SSCALED_ANGLEX 0x6AF6
+#define GL_X2_RGB10_UNORM_ANGLEX 0x6AF7
+#define GL_X2_RGB10_SNORM_ANGLEX 0x6AF8
 
-#define ANGLE_TRY_CHECKED_MATH(result)                     \
-    if (!result)                                           \
-    {                                                      \
-        return gl::InternalError() << "Integer overflow."; \
-    }
+#define ANGLE_CHECK_GL_ALLOC(context, result) \
+    ANGLE_CHECK(context, result, "Failed to allocate host memory", GL_OUT_OF_MEMORY)
 
-#define ANGLE_TRY_ALLOCATION(result)                                       \
-    if (!result)                                                           \
-    {                                                                      \
-        return gl::OutOfMemory() << "Failed to allocate internal buffer."; \
-    }
+#define ANGLE_CHECK_GL_MATH(context, result) \
+    ANGLE_CHECK(context, result, "Integer overflow.", GL_INVALID_OPERATION)
+
+#define ANGLE_GL_UNREACHABLE(context) \
+    UNREACHABLE();                    \
+    ANGLE_CHECK(context, false, "Unreachable Code.", GL_INVALID_OPERATION)
 
 // The below inlining code lifted from V8.
 #if defined(__clang__) || (defined(__GNUC__) && defined(__has_attribute))
-#define ANGLE_HAS_ATTRIBUTE_ALWAYS_INLINE (__has_attribute(always_inline))
-#define ANGLE_HAS___FORCEINLINE 0
+#    define ANGLE_HAS_ATTRIBUTE_ALWAYS_INLINE (__has_attribute(always_inline))
+#    define ANGLE_HAS___FORCEINLINE 0
 #elif defined(_MSC_VER)
-#define ANGLE_HAS_ATTRIBUTE_ALWAYS_INLINE 0
-#define ANGLE_HAS___FORCEINLINE 1
+#    define ANGLE_HAS_ATTRIBUTE_ALWAYS_INLINE 0
+#    define ANGLE_HAS___FORCEINLINE 1
 #else
-#define ANGLE_HAS_ATTRIBUTE_ALWAYS_INLINE 0
-#define ANGLE_HAS___FORCEINLINE 0
+#    define ANGLE_HAS_ATTRIBUTE_ALWAYS_INLINE 0
+#    define ANGLE_HAS___FORCEINLINE 0
 #endif
 
 #if defined(NDEBUG) && ANGLE_HAS_ATTRIBUTE_ALWAYS_INLINE
-#define ANGLE_INLINE inline __attribute__((always_inline))
+#    define ANGLE_INLINE inline __attribute__((always_inline))
 #elif defined(NDEBUG) && ANGLE_HAS___FORCEINLINE
-#define ANGLE_INLINE __forceinline
+#    define ANGLE_INLINE __forceinline
 #else
-#define ANGLE_INLINE inline
+#    define ANGLE_INLINE inline
 #endif
 
 #if defined(__clang__) || (defined(__GNUC__) && defined(__has_attribute))
-#if __has_attribute(noinline)
-#define ANGLE_NOINLINE __attribute__((noinline))
-#else
-#define ANGLE_NOINLINE
-#endif
+#    if __has_attribute(noinline)
+#        define ANGLE_NOINLINE __attribute__((noinline))
+#    else
+#        define ANGLE_NOINLINE
+#    endif
 #elif defined(_MSC_VER)
-#define ANGLE_NOINLINE __declspec(noinline)
+#    define ANGLE_NOINLINE __declspec(noinline)
 #else
-#define ANGLE_NOINLINE
+#    define ANGLE_NOINLINE
 #endif
 
-#ifndef ANGLE_STRINGIFY
-#define ANGLE_STRINGIFY(x) #x
+#if defined(__clang__) || (defined(__GNUC__) && defined(__has_attribute))
+#    if __has_attribute(format)
+#        define ANGLE_FORMAT_PRINTF(fmt, args) __attribute__((format(__printf__, fmt, args)))
+#    else
+#        define ANGLE_FORMAT_PRINTF(fmt, args)
+#    endif
+#else
+#    define ANGLE_FORMAT_PRINTF(fmt, args)
 #endif
+
+// Format messes up the # inside the macro.
+// clang-format off
+#ifndef ANGLE_STRINGIFY
+#    define ANGLE_STRINGIFY(x) #x
+#endif
+// clang-format on
 
 #ifndef ANGLE_MACRO_STRINGIFY
-#define ANGLE_MACRO_STRINGIFY(x) ANGLE_STRINGIFY(x)
+#    define ANGLE_MACRO_STRINGIFY(x) ANGLE_STRINGIFY(x)
 #endif
 
 // Detect support for C++17 [[nodiscard]]
 #if !defined(__has_cpp_attribute)
-#define __has_cpp_attribute(name) 0
+#    define __has_cpp_attribute(name) 0
 #endif  // !defined(__has_cpp_attribute)
 
 #if __has_cpp_attribute(nodiscard)
-#define ANGLE_NO_DISCARD [[nodiscard]]
+#    define ANGLE_NO_DISCARD [[nodiscard]]
 #else
-#define ANGLE_NO_DISCARD
+#    define ANGLE_NO_DISCARD
 #endif  // __has_cpp_attribute(nodiscard)
+
+#if __has_cpp_attribute(maybe_unused)
+#    define ANGLE_MAYBE_UNUSED [[maybe_unused]]
+#else
+#    define ANGLE_MAYBE_UNUSED
+#endif  // __has_cpp_attribute(maybe_unused)
+
+#if __has_cpp_attribute(require_constant_initialization)
+#    define ANGLE_REQUIRE_CONSTANT_INIT [[require_constant_initialization]]
+#else
+#    define ANGLE_REQUIRE_CONSTANT_INIT
+#endif  // __has_cpp_attribute(require_constant_initialization)
 
 #endif  // COMMON_ANGLEUTILS_H_

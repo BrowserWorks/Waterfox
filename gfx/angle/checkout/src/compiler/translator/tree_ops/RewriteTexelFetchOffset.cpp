@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -22,7 +22,10 @@ namespace
 class Traverser : public TIntermTraverser
 {
   public:
-    static void Apply(TIntermNode *root, const TSymbolTable &symbolTable, int shaderVersion);
+    ANGLE_NO_DISCARD static bool Apply(TCompiler *compiler,
+                                       TIntermNode *root,
+                                       const TSymbolTable &symbolTable,
+                                       int shaderVersion);
 
   private:
     Traverser(const TSymbolTable &symbolTable, int shaderVersion);
@@ -36,11 +39,13 @@ class Traverser : public TIntermTraverser
 
 Traverser::Traverser(const TSymbolTable &symbolTable, int shaderVersion)
     : TIntermTraverser(true, false, false), symbolTable(&symbolTable), shaderVersion(shaderVersion)
-{
-}
+{}
 
 // static
-void Traverser::Apply(TIntermNode *root, const TSymbolTable &symbolTable, int shaderVersion)
+bool Traverser::Apply(TCompiler *compiler,
+                      TIntermNode *root,
+                      const TSymbolTable &symbolTable,
+                      int shaderVersion)
 {
     Traverser traverser(symbolTable, shaderVersion);
     do
@@ -49,9 +54,14 @@ void Traverser::Apply(TIntermNode *root, const TSymbolTable &symbolTable, int sh
         root->traverse(&traverser);
         if (traverser.mFound)
         {
-            traverser.updateTree();
+            if (!traverser.updateTree(compiler, root))
+            {
+                return false;
+            }
         }
     } while (traverser.mFound);
+
+    return true;
 }
 
 void Traverser::nextIteration()
@@ -143,13 +153,16 @@ bool Traverser::visitAggregate(Visit visit, TIntermAggregate *node)
 
 }  // anonymous namespace
 
-void RewriteTexelFetchOffset(TIntermNode *root, const TSymbolTable &symbolTable, int shaderVersion)
+bool RewriteTexelFetchOffset(TCompiler *compiler,
+                             TIntermNode *root,
+                             const TSymbolTable &symbolTable,
+                             int shaderVersion)
 {
     // texelFetchOffset is only valid in GLSL 3.0 and later.
     if (shaderVersion < 300)
-        return;
+        return true;
 
-    Traverser::Apply(root, symbolTable, shaderVersion);
+    return Traverser::Apply(compiler, root, symbolTable, shaderVersion);
 }
 
 }  // namespace sh

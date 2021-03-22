@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2011 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -18,8 +18,7 @@ class BuiltInFunctionEmulator::BuiltInFunctionEmulationMarker : public TIntermTr
   public:
     BuiltInFunctionEmulationMarker(BuiltInFunctionEmulator &emulator)
         : TIntermTraverser(true, false, false), mEmulator(emulator)
-    {
-    }
+    {}
 
     bool visitUnary(Visit visit, TIntermUnary *node) override
     {
@@ -50,9 +49,7 @@ class BuiltInFunctionEmulator::BuiltInFunctionEmulationMarker : public TIntermTr
     BuiltInFunctionEmulator &mEmulator;
 };
 
-BuiltInFunctionEmulator::BuiltInFunctionEmulator()
-{
-}
+BuiltInFunctionEmulator::BuiltInFunctionEmulator() {}
 
 void BuiltInFunctionEmulator::addEmulatedFunction(const TSymbolUniqueId &uniqueId,
                                                   const char *emulatedFunctionDefinition)

@@ -18,12 +18,19 @@ class DebugAnnotator9 : public angle::LoggingAnnotator
 {
   public:
     DebugAnnotator9() {}
-    void beginEvent(const wchar_t *eventName) override;
-    void endEvent() override;
-    void setMarker(const wchar_t *markerName) override;
+    void beginEvent(gl::Context *context,
+                    gl::EntryPoint entryPoint,
+                    const char *eventName,
+                    const char *eventMessage) override;
+    void endEvent(gl::Context *context, const char *eventName, gl::EntryPoint entryPoint) override;
+    void setMarker(const char *markerName) override;
     bool getStatus() override;
+
+  private:
+    static constexpr size_t kMaxMessageLength = 256;
+    wchar_t mWCharMessage[kMaxMessageLength];
 };
 
-}
+}  // namespace rx
 
-#endif // LIBANGLE_RENDERER_D3D_D3D9_DEBUGANNOTATOR9_H_
+#endif  // LIBANGLE_RENDERER_D3D_D3D9_DEBUGANNOTATOR9_H_

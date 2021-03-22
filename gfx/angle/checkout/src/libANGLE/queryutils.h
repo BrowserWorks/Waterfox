@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -12,6 +12,7 @@
 #include "angle_gl.h"
 #include "common/PackedEnums.h"
 #include "common/angleutils.h"
+#include "libANGLE/Error.h"
 
 #include <EGL/egl.h>
 
@@ -19,7 +20,6 @@ namespace gl
 {
 class Buffer;
 class Context;
-class Error;
 class Sync;
 class Framebuffer;
 class GLES1State;
@@ -27,6 +27,7 @@ class Program;
 class Renderbuffer;
 class Sampler;
 class Shader;
+class State;
 class Texture;
 struct TextureCaps;
 struct UniformBlock;
@@ -42,12 +43,12 @@ void QueryFramebufferAttachmentParameteriv(const Context *context,
 void QueryBufferParameteriv(const Buffer *buffer, GLenum pname, GLint *params);
 void QueryBufferParameteri64v(const Buffer *buffer, GLenum pname, GLint64 *params);
 void QueryBufferPointerv(const Buffer *buffer, GLenum pname, void **params);
-void QueryProgramiv(const Context *context, const Program *program, GLenum pname, GLint *params);
+void QueryProgramiv(Context *context, const Program *program, GLenum pname, GLint *params);
 void QueryRenderbufferiv(const Context *context,
                          const Renderbuffer *renderbuffer,
                          GLenum pname,
                          GLint *params);
-void QueryShaderiv(Shader *shader, GLenum pname, GLint *params);
+void QueryShaderiv(const Context *context, Shader *shader, GLenum pname, GLint *params);
 void QueryTexLevelParameterfv(const Texture *texture,
                               TextureTarget target,
                               GLint level,
@@ -58,10 +59,30 @@ void QueryTexLevelParameteriv(const Texture *texture,
                               GLint level,
                               GLenum pname,
                               GLint *params);
-void QueryTexParameterfv(const Texture *texture, GLenum pname, GLfloat *params);
-void QueryTexParameteriv(const Texture *texture, GLenum pname, GLint *params);
+void QueryTexParameterfv(const Context *context,
+                         const Texture *texture,
+                         GLenum pname,
+                         GLfloat *params);
+void QueryTexParameterxv(const Context *context,
+                         const Texture *texture,
+                         GLenum pname,
+                         GLfixed *params);
+void QueryTexParameteriv(const Context *context,
+                         const Texture *texture,
+                         GLenum pname,
+                         GLint *params);
+void QueryTexParameterIiv(const Context *context,
+                          const Texture *texture,
+                          GLenum pname,
+                          GLint *params);
+void QueryTexParameterIuiv(const Context *context,
+                           const Texture *texture,
+                           GLenum pname,
+                           GLuint *params);
 void QuerySamplerParameterfv(const Sampler *sampler, GLenum pname, GLfloat *params);
 void QuerySamplerParameteriv(const Sampler *sampler, GLenum pname, GLint *params);
+void QuerySamplerParameterIiv(const Sampler *sampler, GLenum pname, GLint *params);
+void QuerySamplerParameterIuiv(const Sampler *sampler, GLenum pname, GLuint *params);
 
 // Warning: you should ensure binding really matches attrib.bindingIndex before using the following
 // functions.
@@ -100,22 +121,31 @@ void QueryInternalFormativ(const TextureCaps &format, GLenum pname, GLsizei bufS
 
 void QueryFramebufferParameteriv(const Framebuffer *framebuffer, GLenum pname, GLint *params);
 
-Error QuerySynciv(const Context *context,
-                  const Sync *sync,
-                  GLenum pname,
-                  GLsizei bufSize,
-                  GLsizei *length,
-                  GLint *values);
+angle::Result QuerySynciv(const Context *context,
+                          const Sync *sync,
+                          GLenum pname,
+                          GLsizei bufSize,
+                          GLsizei *length,
+                          GLint *values);
 
 void SetTexParameterf(Context *context, Texture *texture, GLenum pname, GLfloat param);
 void SetTexParameterfv(Context *context, Texture *texture, GLenum pname, const GLfloat *params);
 void SetTexParameteri(Context *context, Texture *texture, GLenum pname, GLint param);
 void SetTexParameteriv(Context *context, Texture *texture, GLenum pname, const GLint *params);
+void SetTexParameterIiv(Context *context, Texture *texture, GLenum pname, const GLint *params);
+void SetTexParameterIuiv(Context *context, Texture *texture, GLenum pname, const GLuint *params);
+void SetTexParameterx(Context *context, Texture *texture, GLenum pname, GLfixed param);
+void SetTexParameterxv(Context *context, Texture *texture, GLenum pname, const GLfixed *params);
 
-void SetSamplerParameterf(Sampler *sampler, GLenum pname, GLfloat param);
-void SetSamplerParameterfv(Sampler *sampler, GLenum pname, const GLfloat *params);
-void SetSamplerParameteri(Sampler *sampler, GLenum pname, GLint param);
-void SetSamplerParameteriv(Sampler *sampler, GLenum pname, const GLint *params);
+void SetSamplerParameterf(Context *context, Sampler *sampler, GLenum pname, GLfloat param);
+void SetSamplerParameterfv(Context *context, Sampler *sampler, GLenum pname, const GLfloat *params);
+void SetSamplerParameteri(Context *context, Sampler *sampler, GLenum pname, GLint param);
+void SetSamplerParameteriv(Context *context, Sampler *sampler, GLenum pname, const GLint *params);
+void SetSamplerParameterIiv(Context *context, Sampler *sampler, GLenum pname, const GLint *params);
+void SetSamplerParameterIuiv(Context *context,
+                             Sampler *sampler,
+                             GLenum pname,
+                             const GLuint *params);
 
 void SetFramebufferParameteri(const Context *context,
                               Framebuffer *framebuffer,
@@ -153,6 +183,13 @@ void QueryProgramInterfaceiv(const Program *program,
                              GLenum programInterface,
                              GLenum pname,
                              GLint *params);
+
+angle::Result SetMemoryObjectParameteriv(const Context *context,
+                                         MemoryObject *memoryObject,
+                                         GLenum pname,
+                                         const GLint *params);
+void QueryMemoryObjectParameteriv(const MemoryObject *memoryObject, GLenum pname, GLint *params);
+
 // GLES1 emulation
 
 ClientVertexArrayType ParamToVertexArrayType(GLenum param);
@@ -211,23 +248,38 @@ void SetPointParameter(GLES1State *state, PointParameter pname, const GLfloat *p
 void GetPointParameter(const GLES1State *state, PointParameter pname, GLfloat *params);
 
 void SetPointSize(GLES1State *state, GLfloat size);
-void GetPointSize(GLES1State *state, GLfloat *sizeOut);
+void GetPointSize(const GLES1State *state, GLfloat *sizeOut);
 
 unsigned int GetTexParameterCount(GLenum pname);
 
+bool GetQueryParameterInfo(const State &glState,
+                           GLenum pname,
+                           GLenum *type,
+                           unsigned int *numParams);
+
+void QueryProgramPipelineiv(const Context *context,
+                            ProgramPipeline *programPipeline,
+                            GLenum pname,
+                            GLint *params);
 }  // namespace gl
 
 namespace egl
 {
 struct Config;
+class Display;
 class Surface;
+class Sync;
 
 void QueryConfigAttrib(const Config *config, EGLint attribute, EGLint *value);
 
 void QueryContextAttrib(const gl::Context *context, EGLint attribute, EGLint *value);
 
-void QuerySurfaceAttrib(const Surface *surface, EGLint attribute, EGLint *value);
+egl::Error QuerySurfaceAttrib(const Display *display,
+                              const Surface *surface,
+                              EGLint attribute,
+                              EGLint *value);
 void SetSurfaceAttrib(Surface *surface, EGLint attribute, EGLint value);
+Error GetSyncAttrib(Display *display, Sync *sync, EGLint attribute, EGLint *value);
 
 }  // namespace egl
 

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2015 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -10,19 +10,18 @@
 
 #include <unistd.h>
 
-#include <cstdlib>
+#include <CoreServices/CoreServices.h>
 #include <mach-o/dyld.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#include <cstdlib>
 #include <vector>
 
 #include <array>
 
 namespace angle
 {
-
-namespace
-{
-
-std::string GetExecutablePathImpl()
+std::string GetExecutablePath()
 {
     std::string result;
 
@@ -42,27 +41,11 @@ std::string GetExecutablePathImpl()
     return buffer.data();
 }
 
-std::string GetExecutableDirectoryImpl()
+std::string GetExecutableDirectory()
 {
     std::string executablePath = GetExecutablePath();
     size_t lastPathSepLoc      = executablePath.find_last_of("/");
     return (lastPathSepLoc != std::string::npos) ? executablePath.substr(0, lastPathSepLoc) : "";
-}
-
-}  // anonymous namespace
-
-const char *GetExecutablePath()
-{
-    // TODO(jmadill): Make global static string thread-safe.
-    const static std::string &exePath = GetExecutablePathImpl();
-    return exePath.c_str();
-}
-
-const char *GetExecutableDirectory()
-{
-    // TODO(jmadill): Make global static string thread-safe.
-    const static std::string &exeDir = GetExecutableDirectoryImpl();
-    return exeDir.c_str();
 }
 
 const char *GetSharedLibraryExtension()
@@ -70,41 +53,12 @@ const char *GetSharedLibraryExtension()
     return "dylib";
 }
 
-Optional<std::string> GetCWD()
+double GetCurrentTime()
 {
-    std::array<char, 4096> pathBuf;
-    char *result = getcwd(pathBuf.data(), pathBuf.size());
-    if (result == nullptr)
-    {
-        return Optional<std::string>::Invalid();
-    }
-    return std::string(pathBuf.data());
-}
+    mach_timebase_info_data_t timebaseInfo;
+    mach_timebase_info(&timebaseInfo);
 
-bool SetCWD(const char *dirName)
-{
-    return (chdir(dirName) == 0);
+    double secondCoeff = timebaseInfo.numer * 1e-9 / timebaseInfo.denom;
+    return secondCoeff * mach_absolute_time();
 }
-
-bool UnsetEnvironmentVar(const char *variableName)
-{
-    return (unsetenv(variableName) == 0);
-}
-
-bool SetEnvironmentVar(const char *variableName, const char *value)
-{
-    return (setenv(variableName, value, 1) == 0);
-}
-
-std::string GetEnvironmentVar(const char *variableName)
-{
-    const char *value = getenv(variableName);
-    return (value == nullptr ? std::string() : std::string(value));
-}
-
-const char *GetPathSeparator()
-{
-    return ":";
-}
-
 }  // namespace angle

@@ -1,5 +1,5 @@
 //
-// Copyright(c) 2016 The ANGLE Project Authors. All rights reserved.
+// Copyright 2016 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -12,6 +12,11 @@
 #include "libANGLE/Debug.h"
 #include "libANGLE/Error.h"
 
+namespace angle
+{
+bool gUseAndroidOpenGLTlsSlot;
+}  // namespace angle
+
 namespace egl
 {
 
@@ -20,8 +25,7 @@ Thread::Thread()
       mError(EGL_SUCCESS),
       mAPI(EGL_OPENGL_ES_API),
       mContext(static_cast<gl::Context *>(EGL_NO_CONTEXT))
-{
-}
+{}
 
 void Thread::setLabel(EGLLabelKHR label)
 {
@@ -96,24 +100,12 @@ gl::Context *Thread::getContext() const
     return mContext;
 }
 
-gl::Context *Thread::getValidContext() const
-{
-    if (mContext && mContext->isContextLost())
-    {
-        mContext->handleError(gl::OutOfMemory() << "Context has been lost.");
-        return nullptr;
-    }
-
-    return mContext;
-}
-
-Display *Thread::getCurrentDisplay() const
+Display *Thread::getDisplay() const
 {
     if (mContext)
     {
-        return mContext->getCurrentDisplay();
+        return mContext->getDisplay();
     }
     return nullptr;
 }
-
 }  // namespace egl

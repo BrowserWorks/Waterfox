@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015 The ANGLE Project Authors. All rights reserved.
+// Copyright 2015 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -25,13 +25,14 @@ namespace rx
 class FenceNVImpl : angle::NonCopyable
 {
   public:
-    FenceNVImpl() { };
-    virtual ~FenceNVImpl() { };
+    FenceNVImpl() {}
+    virtual ~FenceNVImpl() {}
 
-    virtual gl::Error set(const gl::Context *context, GLenum condition)        = 0;
-    virtual gl::Error test(const gl::Context *context, GLboolean *outFinished) = 0;
-    virtual gl::Error finish(const gl::Context *context)                       = 0;
+    virtual void onDestroy(const gl::Context *context)                             = 0;
+    virtual angle::Result set(const gl::Context *context, GLenum condition)        = 0;
+    virtual angle::Result test(const gl::Context *context, GLboolean *outFinished) = 0;
+    virtual angle::Result finish(const gl::Context *context)                       = 0;
 };
 }  // namespace rx
 
-#endif // LIBANGLE_RENDERER_FENCENVIMPL_H_
+#endif  // LIBANGLE_RENDERER_FENCENVIMPL_H_

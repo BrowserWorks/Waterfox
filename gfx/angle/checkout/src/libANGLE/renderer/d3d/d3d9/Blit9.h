@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2002-2010 The ANGLE Project Authors. All rights reserved.
+// Copyright 2002 The ANGLE Project Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
@@ -20,13 +20,18 @@ class Framebuffer;
 class Texture;
 struct Extents;
 struct Offset;
-}
+}  // namespace gl
 
 namespace rx
 {
 class Context9;
 class Renderer9;
 class TextureStorage;
+
+namespace d3d
+{
+class Context;
+}  // namespace d3d
 
 class Blit9 : angle::NonCopyable
 {
@@ -140,7 +145,7 @@ class Blit9 : angle::NonCopyable
     angle::Result setShader(Context9 *,
                             ShaderId source,
                             const char *profile,
-                            angle::Result (Renderer9::*createShader)(Context9 *context9,
+                            angle::Result (Renderer9::*createShader)(d3d::Context *context,
                                                                      const DWORD *,
                                                                      size_t length,
                                                                      D3DShaderType **outShader),
@@ -156,6 +161,6 @@ class Blit9 : angle::NonCopyable
     IDirect3DSurface9 *mSavedRenderTarget;
     IDirect3DSurface9 *mSavedDepthStencil;
 };
-}
+}  // namespace rx
 
 #endif  // LIBANGLE_RENDERER_D3D_D3D9_BLIT9_H_

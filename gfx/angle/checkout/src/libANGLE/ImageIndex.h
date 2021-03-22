@@ -40,6 +40,8 @@ class ImageIndex
     // map.
     TextureTarget getTarget() const;
 
+    TextureTarget getTargetOrFirstCubeFace() const;
+
     bool isLayered() const;
     bool isEntireLevelCubeMap() const;
 
@@ -49,12 +51,14 @@ class ImageIndex
     static ImageIndex Make2DArray(GLint levelIndex, GLint layerIndex = kEntireLevel);
     static ImageIndex Make2DArrayRange(GLint levelIndex, GLint layerIndex, GLint layerCount);
     static ImageIndex Make3D(GLint levelIndex, GLint layerIndex = kEntireLevel);
-    static ImageIndex MakeFromTarget(TextureTarget target, GLint levelIndex);
+    static ImageIndex MakeFromTarget(TextureTarget target, GLint levelIndex, GLint depth = 0);
     static ImageIndex MakeFromType(TextureType type,
                                    GLint levelIndex,
                                    GLint layerIndex = kEntireLevel,
                                    GLint layerCount = 1);
     static ImageIndex Make2DMultisample();
+    static ImageIndex Make2DMultisampleArray(GLint layerIndex = kEntireLevel);
+    static ImageIndex Make2DMultisampleArrayRange(GLint layerIndex, GLint layerCount);
 
     static constexpr GLint kEntireLevel = static_cast<GLint>(-1);
 
@@ -94,6 +98,7 @@ class ImageIndexIterator
     static ImageIndexIterator Make3D(GLint minMip, GLint maxMip, GLint minLayer, GLint maxLayer);
     static ImageIndexIterator Make2DArray(GLint minMip, GLint maxMip, const GLsizei *layerCounts);
     static ImageIndexIterator Make2DMultisample();
+    static ImageIndexIterator Make2DMultisampleArray(const GLsizei *layerCounts);
     static ImageIndexIterator MakeGeneric(TextureType type,
                                           GLint minMip,
                                           GLint maxMip,
@@ -118,6 +123,9 @@ class ImageIndexIterator
 
     ImageIndex mCurrentIndex;
 };
+
+TextureTarget TextureTypeToTarget(TextureType type, GLint layerIndex);
+
 }  // namespace gl
 
 #endif  // LIBANGLE_IMAGE_INDEX_H_
