@@ -1618,8 +1618,8 @@ SearchService.prototype = {
       return;
     }
 
-    const ptag = Services.prefs.getCharPref("browser.search.ptag", "SYS10000000");
-    if (engine.name == "Bing" && ptag != "SYS10000000") {
+    const ptag = Services.prefs.getCharPref("browser.search.ptag", "SYS1000012");
+    if (engine.name == "Bing" && ptag != "SYS1000012") {
       const regex = /(.*PTAG=)/g;
       const searchURL = engine.__searchForm.match(regex)[0];
       engine.__searchForm = searchURL + ptag;
