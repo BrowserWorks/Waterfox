@@ -1,19 +1,15 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-import itertools
 import os
 
 import pytest
 import six
-from pytest import mark, raises
 from six.moves import shlex_quote
 
-from piptools.repositories import PyPIRepository
 from piptools.scripts.compile import cli as compile_cli
 from piptools.utils import (
     as_tuple,
-    create_install_command,
     dedup,
     flat_map,
     force_text,
@@ -22,7 +18,6 @@ from piptools.utils import (
     fs_str,
     get_compile_command,
     get_hashes_from_ireq,
-    get_trusted_hosts,
     is_pinned_requirement,
     is_url_requirement,
     name_from_req,
@@ -121,7 +116,7 @@ def test_as_tuple(from_line):
     should_be_rejected = ["foo==1.*", "foo~=1.1,<1.5,>1.2", "foo"]
     for spec in should_be_rejected:
         ireq = from_line(spec)
-        with raises(TypeError):
+        with pytest.raises(TypeError):
             as_tuple(ireq)
 
 
@@ -152,9 +147,9 @@ def test_get_hashes_from_ireq(from_line):
     assert get_hashes_from_ireq(ireq) == expected
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("line", "expected"),
-    [
+    (
         ("django==1.8", True),
         ("django===1.8", True),
         ("django>1.8", False),
@@ -162,7 +157,7 @@ def test_get_hashes_from_ireq(from_line):
         ("django==1.*", False),
         ("file:///example.zip", False),
         ("https://example.com/example.zip", False),
-    ],
+    ),
 )
 def test_is_pinned_requirement(from_line, line, expected):
     ireq = from_line(line)
@@ -174,9 +169,9 @@ def test_is_pinned_requirement_editable(from_editable):
     assert not is_pinned_requirement(ireq)
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("line", "expected"),
-    [
+    (
         ("django==1.8", False),
         ("django", False),
         ("file:///example.zip", True),
@@ -185,7 +180,7 @@ def test_is_pinned_requirement_editable(from_editable):
         ("git+git://github.com/jazzband/pip-tools@master", True),
         ("../example.zip", True),
         ("/example.zip", True),
-    ],
+    ),
 )
 def test_is_url_requirement(from_line, line, expected):
     ireq = from_line(line)
@@ -208,22 +203,22 @@ def test_fs_str():
     assert isinstance(fs_str("whatever"), str)
 
 
-@mark.skipif(six.PY2, reason="Not supported in py2")
+@pytest.mark.skipif(six.PY2, reason="Not supported in py2")
 def test_fs_str_with_bytes():
-    with raises(AssertionError):
+    with pytest.raises(AssertionError):
         fs_str(b"whatever")
 
 
-@mark.parametrize(
-    "value, expected_text", [(None, ""), (42, "42"), ("foo", "foo"), ("bãr", "bãr")]
+@pytest.mark.parametrize(
+    ("value", "expected_text"), ((None, ""), (42, "42"), ("foo", "foo"), ("bãr", "bãr"))
 )
 def test_force_text(value, expected_text):
     assert force_text(value) == expected_text
 
 
-@mark.parametrize(
-    "cli_args, expected_command",
-    [
+@pytest.mark.parametrize(
+    ("cli_args", "expected_command"),
+    (
         # Check empty args
         ([], "pip-compile"),
         # Check all options which will be excluded from command
@@ -252,14 +247,16 @@ def test_force_text(value, expected_text):
         (["--allow-unsafe"], "pip-compile --allow-unsafe"),
         # Check negative flags
         (["--no-index"], "pip-compile --no-index"),
+        (["--no-emit-index-url"], "pip-compile --no-emit-index-url"),
         (["--no-emit-trusted-host"], "pip-compile --no-emit-trusted-host"),
         (["--no-annotate"], "pip-compile --no-annotate"),
         # Check that default values will be removed from the command
         (["--emit-trusted-host"], "pip-compile"),
         (["--annotate"], "pip-compile"),
         (["--index"], "pip-compile"),
+        (["--emit-index-url"], "pip-compile"),
         (["--max-rounds=10"], "pip-compile"),
-        (["--no-build-isolation"], "pip-compile"),
+        (["--build-isolation"], "pip-compile"),
         # Check options with multiple values
         (
             ["--find-links", "links1", "--find-links", "links2"],
@@ -270,7 +267,26 @@ def test_force_text(value, expected_text):
         (["-f", "συνδέσεις"], "pip-compile --find-links='συνδέσεις'"),
         (["-o", "my file.txt"], "pip-compile --output-file='my file.txt'"),
         (["-o", "απαιτήσεις.txt"], "pip-compile --output-file='απαιτήσεις.txt'"),
-    ],
+        # Check '--pip-args' (forwarded) arguments
+        (
+            ["--pip-args", "--disable-pip-version-check"],
+            "pip-compile --pip-args='--disable-pip-version-check'",
+        ),
+        (
+            ["--pip-args", "--disable-pip-version-check --isolated"],
+            "pip-compile --pip-args='--disable-pip-version-check --isolated'",
+        ),
+        pytest.param(
+            ["--extra-index-url", "https://username:password@example.com/"],
+            "pip-compile --extra-index-url='https://username:****@example.com/'",
+            id="redact password in index",
+        ),
+        pytest.param(
+            ["--find-links", "https://username:password@example.com/"],
+            "pip-compile --find-links='https://username:****@example.com/'",
+            id="redact password in link",
+        ),
+    ),
 )
 def test_get_compile_command(tmpdir_cwd, cli_args, expected_command):
     """
@@ -280,8 +296,18 @@ def test_get_compile_command(tmpdir_cwd, cli_args, expected_command):
         assert get_compile_command(ctx) == expected_command
 
 
-@mark.parametrize(
-    "filename", ["requirements.in", "my requirements.in", "απαιτήσεις.txt"]
+def test_get_compile_command_escaped_filenames(tmpdir_cwd):
+    """
+    Test that get_compile_command output (re-)escapes ' -- '-escaped filenames.
+    """
+    with open("--requirements.in", "w"):
+        pass
+    with compile_cli.make_context("pip-compile", ["--", "--requirements.in"]) as ctx:
+        assert get_compile_command(ctx) == "pip-compile -- --requirements.in"
+
+
+@pytest.mark.parametrize(
+    "filename", ("requirements.in", "my requirements.in", "απαιτήσεις.txt")
 )
 def test_get_compile_command_with_files(tmpdir_cwd, filename):
     """
@@ -313,7 +339,7 @@ def test_get_compile_command_sort_args(tmpdir_cwd):
         pass
 
     args = [
-        "--no-index",
+        "--no-emit-index-url",
         "--no-emit-trusted-host",
         "--no-annotate",
         "setup.py",
@@ -326,32 +352,6 @@ def test_get_compile_command_sort_args(tmpdir_cwd):
     with compile_cli.make_context("pip-compile", args) as ctx:
         assert get_compile_command(ctx) == (
             "pip-compile --find-links=bar --find-links=foo "
-            "--no-annotate --no-emit-trusted-host --no-index "
+            "--no-annotate --no-emit-index-url --no-emit-trusted-host "
             "requirements.in setup.py"
         )
-
-
-def test_create_install_command():
-    """
-    Test create_install_command returns an instance of InstallCommand.
-    """
-    install_command = create_install_command()
-    assert install_command.name == "install"
-
-
-@mark.parametrize(
-    "hosts",
-    [
-        pytest.param((), id="no hosts"),
-        pytest.param(("example.com",), id="single host"),
-        pytest.param(("example.com:8080",), id="host with port"),
-        pytest.param(("example1.com", "example2.com:8080"), id="multiple hosts"),
-    ],
-)
-def test_get_trusted_hosts(hosts, tmpdir):
-    """
-    Test get_trusted_hosts(finder) returns a list of hosts.
-    """
-    pip_args = list(itertools.chain(*zip(["--trusted-host"] * len(hosts), hosts)))
-    repository = PyPIRepository(pip_args, cache_dir=str(tmpdir / "pypi-repo"))
-    assert tuple(get_trusted_hosts(repository.finder)) == hosts

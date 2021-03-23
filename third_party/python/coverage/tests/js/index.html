@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coverage.py Javascript Test Suite</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.9.2.css">
+    <script type="text/javascript" src="../../coverage/htmlfiles/jquery.min.js"></script>
+    <script type='text/javascript' src="../../coverage/htmlfiles/jquery.isonscreen.js"></script>
+    <script type="text/javascript" src="../../coverage/htmlfiles/coverage_html.js"></script>
+    <script type="text/javascript" src="../qunit/jquery.tmpl.min.js"></script>
+
+    <!-- Templates for the coverage report output -->
+    <script id="fixture-template" type="text/x-jquery-tmpl">
+        <table cellspacing='0' cellpadding='0'>
+            <tr>
+                <td class='linenos' valign='top'>
+                    <!-- #lineno-template goes here -->
+                </td>
+                <td class='text' valign='top'>
+                    <!-- #text-template goes here -->
+                </td>
+            </tr>
+        </table>
+    </script>
+
+    <script id="lineno-template" type="text/x-jquery-tmpl">
+        <p id='n${number}' class='${klass}'><a href='#n${number}'>${number}</a></p>
+    </script>
+
+    <script id="text-template" type="text/x-jquery-tmpl">
+        <p id='t${number}' class='${klass}{{if klass !== "w"}} show_${klass}{{/if}}'>Hello, world!</p>
+    </script>
+
+</head>
+<body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script src="https://code.jquery.com/qunit/qunit-2.9.2.js"></script>
+    <!-- pull in our tests -->
+    <script src="tests.js"></script>
+</body>
+</html>
