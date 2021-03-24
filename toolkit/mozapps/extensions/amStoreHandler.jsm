@@ -248,7 +248,7 @@ var StoreHandler = {
             let zr = new ZipReader(file);
             let manifest = this._parseManifest(zr);
             // only manifest version 2 currently supported
-            if (manifest.manifest_version != 2) {
+            if (manifest.manifest_version != 2 || !manifest.manifest_version) {
                 this._installFailedMsg("Manifest version not supported, must be manifest_version: 2");
                 return false;
             }

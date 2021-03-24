@@ -45,6 +45,17 @@ const UNSUPPORTED_APIS = [
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 
+function arraysEqual(arr1, arr2) {
+  if(arr1.length !== arr2.length)
+      return false;
+  for(var i = arr1.length; i--;) {
+      if(arr1[i] !== arr2[i])
+          return false;
+  }
+
+  return true;
+}
+
 add_task(async function setup() {
   await promiseStartupManager();
 });
@@ -104,44 +115,36 @@ add_task(async function test_compat_check() {
   let manifest = JSON.parse(fileContents);
   let manifestRes = StoreHandler._manifestCompatCheck(manifest);
   // should return list of all unsupported APIs
-  let matchCnt = 0;
-  manifestRes.forEach((val) => {
-    if (UNSUPPORTED_APIS.includes(val)) {matchCnt++};
-  })
-  equal(UNSUPPORTED_APIS.length, matchCnt)
+  equal(arraysEqual(manifestRes, UNSUPPORTED_APIS), true)
 });
 
 add_task(async function test_amend_manifest() {
-  let xpi = do_get_file("data/unsupported.xpi"); // TODO: add high manifest version and an unsuppported API
+  let xpi = do_get_file("data/high_manifest.xpi");
+  let xpi2 = do_get_file("data/no_manifest.xpi");
+  let xpi3 = do_get_file("data/unsupported.xpi");
   // fail if manifest v > 2
   let res = StoreHandler._amendManifest(xpi);
   equal(res, false)
   // manifest_version not present
-  let res = StoreHandler._amendManifest(xpi);
+  let res2 = StoreHandler._amendManifest(xpi2);
   equal(res, false)
   // if unsupportedAPIs return Array, else Object
-
+  let res3 = StoreHandler._amendManifest(xpi3);
+  equal(Array.isArray(res3), true);
+  equal(arraysEqual(res3, UNSUPPORTED_APIS), true);
   // stringify manifest
   // if successful should add id and delete update url
-  let xpi = do_get_file("data/locale.xpi"); // TODO: add update_url to locale manifest
-  let manifest = JSON.parse(StoreHandler._amendManifest(xpi));
+  let xpi4 = do_get_file("data/locale.xpi");
+  let manifest = JSON.parse(StoreHandler._amendManifest(xpi4));
   equal(typeof manifest.applications.gecko.id,  "string")
   equal(manifest.update_url, undefined)
-// failure
-}).only();
-
-// test write tmp manifest
-add_task(async function test_write_tmp_manifest() {
-
 });
-// failure
+
 // test replace xpi manifest
 add_task(async function test_replace_manifest() {
 
 });
-// failure
 // test install updated addon
 add_task(async function test_install_xpi() {
 
 });
-// failure
