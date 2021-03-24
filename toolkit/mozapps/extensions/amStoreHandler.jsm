@@ -248,7 +248,7 @@ var StoreHandler = {
             let zr = new ZipReader(file);
             let manifest = this._parseManifest(zr);
             // only manifest version 2 currently supported
-            if (manifest.manifest_version != 2) {
+            if (manifest.manifest_version != 2 || !manifest.manifest_version) {
                 this._installFailedMsg("Manifest version not supported, must be manifest_version: 2");
                 return false;
             }
@@ -320,8 +320,8 @@ var StoreHandler = {
             },
             "incognito":"split",
             "offline_enabled":"",
-            "optional_permissions":
-                ["background",
+            "optional_permissions":[
+                "background",
                 "contentSettings",
                 "contextMenus",
                 "debugger",
@@ -329,8 +329,8 @@ var StoreHandler = {
                 "tabCapture"
                 ],
             "options_page":"",
-            "permissions":
-                ["background",
+            "permissions":[
+                "background",
                 "contentSettings",
                 "debugger",
                 "pageCapture",
@@ -352,16 +352,17 @@ var StoreHandler = {
                 // only is unsupported
                 unsupportedInManifest.push(arr[0] + ": " + arr[1]);
             } else if (Object.keys(unsupported).includes(arr[0]) &&
-            unsupported[arr[0]] instanceof Array && arr[1] instanceof Array) {
+            Object.prototype.toString.call(unsupported[arr[0]]) == "[object Array]" &&
+            Object.prototype.toString.call(arr[1]) == "[object Array]") {
                 // if value in unsupported is an array, we know
                 // key is permissions related so we need to check
                 // each permission against the unsupported array
                 var permissionArr = [];
                 arr[1].forEach((value) => {
-                    if (unsupported[arr[0]].includes(value)) {permissionArr.push(value);}
+                    if (unsupported[arr[0]].includes(value)) {permissionArr.push(arr[0] + "." + value);}
                 })
                 if (permissionArr.length > 0) {
-                    unsupportedInManifest.push(permissionArr.join(","));
+                    unsupportedInManifest.push(...permissionArr);
                 }
             } else if (Object.keys(unsupported).includes(arr[0]) &&
             typeof unsupported[arr[0]] == "object" && typeof arr[1] == "object") {
