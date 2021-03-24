@@ -18,6 +18,7 @@
 
 #include <fontconfig/fontconfig.h>
 #include "gfxPlatformGtk.h"
+#include "mozilla/RelativeLuminanceUtils.h"
 #include "ScreenHelperGTK.h"
 
 #include "gtkdrawing.h"
@@ -888,7 +889,10 @@ nsLookAndFeel::GetIntImpl(IntID aID, int32_t &aResult)
       nscolor fg, bg;
       if (NS_SUCCEEDED(NativeGetColor(eColorID_windowtext, fg)) &&
           NS_SUCCEEDED(NativeGetColor(eColorID_window, bg))) {
-        aResult = NS_GetLuminosity(bg) < NS_GetLuminosity(fg) ? 1 : 0;
+        aResult = (RelativeLuminanceUtils::Compute(bg) <
+                   RelativeLuminanceUtils::Compute(fg))
+                      ? 1
+                      : 0;
         break;
       }
       MOZ_FALLTHROUGH;
