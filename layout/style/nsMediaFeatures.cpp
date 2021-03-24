@@ -46,6 +46,12 @@ static const nsCSSProps::KTableEntry kDisplayModeKeywords[] = {
   { eCSSKeyword_UNKNOWN,                 -1 }
 };
 
+static const nsCSSProps::KTableEntry kPrefersColorSchemeKeywords[] = {
+  { eCSSKeyword_light,                NS_STYLE_PREFERS_COLOR_SCHEME_LIGHT },
+  { eCSSKeyword_dark,                 NS_STYLE_PREFERS_COLOR_SCHEME_DARK },
+  { eCSSKeyword_UNKNOWN,		          -1 },
+};
+
 #ifdef XP_WIN
 struct WindowsThemeName {
   LookAndFeel::WindowsTheme id;
@@ -437,6 +443,25 @@ GetOperatingSystemVersion(nsPresContext* aPresContext, const nsMediaFeature* aFe
 }
 
 static void
+GetPrefersColorScheme(nsPresContext* aPresContext, const nsMediaFeature*,
+		                  nsCSSValue& aResult)
+{
+  int32_t colorScheme;
+  if (ShouldResistFingerprinting(aPresContext) || aPresContext->IsPrintingOrPrintPreview()) {
+    colorScheme = NS_STYLE_PREFERS_COLOR_SCHEME_LIGHT;
+  } else {
+    const bool dark = !!LookAndFeel::GetInt(LookAndFeel::eIntID_SystemUsesDarkTheme, 0);
+    if (dark) {
+      colorScheme = NS_STYLE_PREFERS_COLOR_SCHEME_DARK;
+    } else {
+      colorScheme = NS_STYLE_PREFERS_COLOR_SCHEME_LIGHT;
+    }
+  }
+
+  aResult.SetIntValue(colorScheme, eCSSUnit_Enumerated);
+}
+
+static void
 GetIsGlyph(nsPresContext* aPresContext, const nsMediaFeature* aFeature,
           nsCSSValue& aResult)
 {
@@ -533,6 +558,14 @@ nsMediaFeatures::features[] = {
     nsMediaFeature::eNoRequirements,
     { nullptr },
     GetMonochrome
+  },
+  {
+    &nsGkAtoms::prefers_color_scheme,
+    nsMediaFeature::eMinMaxAllowed,
+    nsMediaFeature::eEnumerated,
+    nsMediaFeature::eNoRequirements,
+    { kPrefersColorSchemeKeywords },
+    GetPrefersColorScheme
   },
   {
     &nsGkAtoms::resolution,
