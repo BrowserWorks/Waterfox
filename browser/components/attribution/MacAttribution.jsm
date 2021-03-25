@@ -136,7 +136,7 @@ async function queryQuarantineDatabase(
     );
   }
 
-  return parts[1].trim(), dataURL;
+  return [parts[1].trim(), dataURL];
 }
 
 var MacAttribution = {
@@ -177,7 +177,7 @@ var MacAttribution = {
     let url = "";
     let dataURL = "";
     try {
-      url, dataURL = await queryQuarantineDatabase(guid);
+      [url, dataURL] = await queryQuarantineDatabase(guid);
       await this.setPTAG(dataURL);
       log.debug(`getReferrerUrl: url: ${url}`);
     } catch (ex) {
