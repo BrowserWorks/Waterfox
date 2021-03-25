@@ -89,6 +89,7 @@ protected:
     bool    mCSDMaximizeButton;
     bool    mCSDMinimizeButton;
     bool    mCSDCloseButton;
+    bool    mSystemUsesDarkTheme;
     bool    mInitialized;
 
     void EnsureInit();
