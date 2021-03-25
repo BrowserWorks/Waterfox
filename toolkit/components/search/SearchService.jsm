@@ -1629,6 +1629,7 @@ SearchService.prototype = {
           value: ptag,
           purpose: undefined
         }
+      }
     }
 
 
