@@ -1369,7 +1369,7 @@ std::vector<std::string> DisplayExtensions::getStrings() const
     InsertExtensionString("EGL_ANGLE_keyed_mutex",                               keyedMutex,                         &extensionStrings);
     InsertExtensionString("EGL_ANGLE_surface_orientation",                       surfaceOrientation,                 &extensionStrings);
     InsertExtensionString("EGL_ANGLE_direct_composition",                        directComposition,                  &extensionStrings);
-    InsertExtensionString("EGL_ANGLE_windows_ui_composition",                    windowsUIComposition,               &extensionStrings);
+    // InsertExtensionString("EGL_ANGLE_windows_ui_composition",                    windowsUIComposition,               &extensionStrings);
     InsertExtensionString("EGL_NV_post_sub_buffer",                              postSubBuffer,                      &extensionStrings);
     InsertExtensionString("EGL_KHR_create_context",                              createContext,                      &extensionStrings);
     InsertExtensionString("EGL_EXT_device_query",                                deviceQuery,                        &extensionStrings);

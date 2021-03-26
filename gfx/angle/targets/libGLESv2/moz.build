@@ -246,7 +246,7 @@ SOURCES += [
     "../../checkout/src/libANGLE/renderer/d3d/d3d11/Buffer11.cpp",
     "../../checkout/src/libANGLE/renderer/d3d/d3d11/Clear11.cpp",
     "../../checkout/src/libANGLE/renderer/d3d/d3d11/Context11.cpp",
-    "../../checkout/src/libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.cpp",
+    # "../../checkout/src/libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.cpp",
     "../../checkout/src/libANGLE/renderer/d3d/d3d11/DebugAnnotator11.cpp",
     "../../checkout/src/libANGLE/renderer/d3d/d3d11/ExternalImageSiblingImpl11.cpp",
     "../../checkout/src/libANGLE/renderer/d3d/d3d11/Fence11.cpp",

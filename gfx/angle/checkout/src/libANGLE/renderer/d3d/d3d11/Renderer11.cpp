@@ -65,7 +65,7 @@
 #ifdef ANGLE_ENABLE_WINDOWS_UWP
 #    include "libANGLE/renderer/d3d/d3d11/winrt/NativeWindow11WinRT.h"
 #else
-#    include "libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.h"
+// #    include "libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.h"
 #    include "libANGLE/renderer/d3d/d3d11/win32/NativeWindow11Win32.h"
 #endif
 
@@ -1322,13 +1322,13 @@ void Renderer11::generateDisplayExtensions(egl::DisplayExtensions *outExtensions
     // All D3D feature levels support robust resource init
     outExtensions->robustResourceInitialization = true;
 
-#if !defined(ANGLE_ENABLE_WINDOWS_UWP)
-    // Compositor Native Window capabilies require WinVer >= 1803
-    if (CompositorNativeWindow11::IsSupportedWinRelease())
-    {
-        outExtensions->windowsUIComposition = true;
-    }
-#endif
+// #if !defined(ANGLE_ENABLE_WINDOWS_UWP)
+//     // Compositor Native Window capabilies require WinVer >= 1803
+//     if (CompositorNativeWindow11::IsSupportedWinRelease())
+//     {
+//         outExtensions->windowsUIComposition = true;
+//     }
+// #endif
 }
 
 angle::Result Renderer11::flush(Context11 *context11)
@@ -1383,18 +1383,18 @@ angle::Result Renderer11::finish(Context11 *context11)
 
 bool Renderer11::isValidNativeWindow(EGLNativeWindowType window) const
 {
-    static_assert(sizeof(ABI::Windows::UI::Composition::SpriteVisual *) == sizeof(HWND),
-                  "Pointer size must match Window Handle size");
+    // static_assert(sizeof(ABI::Windows::UI::Composition::SpriteVisual *) == sizeof(HWND),
+    //               "Pointer size must match Window Handle size");
 
 #if defined(ANGLE_ENABLE_WINDOWS_UWP)
     return NativeWindow11WinRT::IsValidNativeWindow(window);
 #else
-    if (NativeWindow11Win32::IsValidNativeWindow(window))
-    {
-        return true;
-    }
+    // if (NativeWindow11Win32::IsValidNativeWindow(window))
+    // {
+    //     return true;
+    // }
 
-    return CompositorNativeWindow11::IsValidNativeWindow(window);
+    // return CompositorNativeWindow11::IsValidNativeWindow(window);
 #endif
 }
 
@@ -1405,18 +1405,18 @@ NativeWindowD3D *Renderer11::createNativeWindow(EGLNativeWindowType window,
 #if defined(ANGLE_ENABLE_WINDOWS_UWP)
     return new NativeWindow11WinRT(window, config->alphaSize > 0);
 #else
-    auto useWinUiComp = window != nullptr && !NativeWindow11Win32::IsValidNativeWindow(window);
+    // auto useWinUiComp = window != nullptr && !NativeWindow11Win32::IsValidNativeWindow(window);
 
-    if (useWinUiComp)
-    {
-        return new CompositorNativeWindow11(window, config->alphaSize > 0);
-    }
-    else
-    {
+    // if (useWinUiComp)
+    // {
+    //     return new CompositorNativeWindow11(window, config->alphaSize > 0);
+    // }
+    // else
+    // {
         return new NativeWindow11Win32(
             window, config->alphaSize > 0,
             attribs.get(EGL_DIRECT_COMPOSITION_ANGLE, EGL_FALSE) == EGL_TRUE);
-    }
+    // }
 #endif
 }
 

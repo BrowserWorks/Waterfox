@@ -1014,7 +1014,7 @@ struct DisplayExtensions
     bool directComposition = false;
 
     // EGL_ANGLE_windows_ui_composition
-    bool windowsUIComposition = false;
+    // bool windowsUIComposition = false;
 
     // KHR_create_context_no_error
     bool createContextNoError = false;
