@@ -31,7 +31,7 @@ ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
 ac_add_options --enable-optimize="-O3 -msse3 -mssse3 -w"
-ac_add_options --enable-lto
+#ac_add_options --enable-lto
 ac_add_options --enable-rust-simd
 ac_add_options --enable-updater
 
