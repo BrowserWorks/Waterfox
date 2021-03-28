@@ -161,10 +161,10 @@ RenderDXGITextureHostOGL::EnsureLockable()
     mGL->fBindTexture(LOCAL_GL_TEXTURE_EXTERNAL_OES, mTextureHandle[1]);
     mGL->fTexParameteri(LOCAL_GL_TEXTURE_EXTERNAL_OES, LOCAL_GL_TEXTURE_MIN_FILTER, LOCAL_GL_LINEAR);
     MOZ_ALWAYS_TRUE(egl->fStreamConsumerGLTextureExternalAttribsNV(egl->Display(), mStream, consumerAttributes));
-    MOZ_ALWAYS_TRUE(egl->fCreateStreamProducerD3DTextureNV12ANGLE(egl->Display(), mStream, nullptr));
+    MOZ_ALWAYS_TRUE(egl->fCreateStreamProducerD3DTextureANGLE(egl->Display(), mStream, nullptr));
 
     // Insert the NV12 texture.
-    MOZ_ALWAYS_TRUE(egl->fStreamPostD3DTextureNV12ANGLE(egl->Display(), mStream, (void*)mTexture.get(), nullptr));
+    MOZ_ALWAYS_TRUE(egl->fStreamPostD3DTextureANGLE(egl->Display(), mStream, (void*)mTexture.get(), nullptr));
 
     // Now, we could check the stream status and use the NV12 gl handle.
     EGLint state;
