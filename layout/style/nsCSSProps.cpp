@@ -2349,8 +2349,11 @@ const KTableEntry nsCSSProps::kFilterFunctionKTable[] = {
 
 const KTableEntry nsCSSProps::kImageRenderingKTable[] = {
   { eCSSKeyword_auto, NS_STYLE_IMAGE_RENDERING_AUTO },
+  { eCSSKeyword_high_quality, NS_STYLE_IMAGE_RENDERING_OPTIMIZEQUALITY },
   { eCSSKeyword_optimizespeed, NS_STYLE_IMAGE_RENDERING_OPTIMIZESPEED },
   { eCSSKeyword_optimizequality, NS_STYLE_IMAGE_RENDERING_OPTIMIZEQUALITY },
+  { eCSSKeyword_pixelated, NS_STYLE_IMAGE_RENDERING_CRISPEDGES },
+  { eCSSKeyword_smooth, NS_STYLE_IMAGE_RENDERING_OPTIMIZESPEED },
   { eCSSKeyword__moz_crisp_edges, NS_STYLE_IMAGE_RENDERING_CRISPEDGES },
   { eCSSKeyword_UNKNOWN, -1 }
 };
