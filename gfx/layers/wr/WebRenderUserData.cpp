@@ -5,6 +5,11 @@
 
 #include "WebRenderUserData.h"
 #include "nsDisplayListInvalidation.h"
+#include "mozilla/layers/CompositorBridgeChild.h"
+#include "mozilla/layers/ImageClient.h"
+#include "mozilla/layers/WebRenderBridgeChild.h"
+#include "mozilla/layers/WebRenderLayerManager.h"
+#include "mozilla/layers/WebRenderMessages.h"
 
 namespace mozilla {
 namespace layers {
@@ -91,8 +96,8 @@ WebRenderImageData::CreateAsyncImageWebRenderCommands(mozilla::wr::DisplayListBu
                                                       const StackingContextHelper& aSc,
                                                       const LayerRect& aBounds,
                                                       const LayerRect& aSCBounds,
-                                                      const Matrix4x4& aSCTransform,
-                                                      const MaybeIntSize& aScaleToSize,
+                                                      const gfx::Matrix4x4& aSCTransform,
+                                                      const gfx::MaybeIntSize& aScaleToSize,
                                                       const wr::ImageRendering& aFilter,
                                                       const wr::MixBlendMode& aMixBlendMode)
 {
