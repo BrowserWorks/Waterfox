@@ -58,7 +58,7 @@ static const char* sEGLExtensionNames[] = {
     "EGL_KHR_stream_consumer_gltexture",
     "EGL_EXT_device_query",
     "EGL_NV_stream_consumer_gltexture_yuv",
-    "ANGLE_stream_producer_d3d_texture",
+    "EGL_ANGLE_stream_producer_d3d_texture",
 };
 
 #if defined(ANDROID)
