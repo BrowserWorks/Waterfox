@@ -352,7 +352,7 @@ def toolchain_prefix(value, host, target, cross_compiling):
         return tuple(value)
     # We don't want a toolchain prefix by default when building on mac for mac.
     if cross_compiling and not (target.os == "OSX" and host.os == "OSX"):
-
+        return ("%s-" % target.toolchain, "%s-" % target.alias)
 
 @depends(toolchain_prefix, target)
 def first_toolchain_prefix(toolchain_prefix, target):
