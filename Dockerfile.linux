@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:xenial
 
 RUN dpkg-reconfigure debconf -f noninteractive -p critical
 RUN apt-get update
@@ -65,5 +65,5 @@ RUN rustup default 1.49.0
 #RUN python /root/bootstrap.py --application-choice=browser --vcs git --no-interactive
 RUN ./mach bootstrap --application-choice=browser --no-interactive
 
-#ENTRYPOINT ./mach build -v && ./mach -v package && /bin/bash
+ENTRYPOINT ./mach build && ./mach package && ./mach package-multi-locale --locales en-US en-GB zh-CN zh-TW ja ko ru fr es-ES es-MX pt-PT pt-BR de pl nl da nn-NO sv-SE el it cs hu lt th id vi ar
 
