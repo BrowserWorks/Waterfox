@@ -187,7 +187,7 @@ var MacAttribution = {
         Cr.NS_ERROR_UNEXPECTED
       );
     }
-    return url;
+    return dataURL;
   },
 
   async setPTAG(dataURL) {
