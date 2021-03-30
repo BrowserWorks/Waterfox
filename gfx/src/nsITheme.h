@@ -22,6 +22,7 @@ class nsDeviceContext;
 class nsIFrame;
 class nsIAtom;
 class nsIWidget;
+class nsStyleContext;
 
 // IID for the nsITheme interface
 // {7329f760-08cb-450f-8225-dae729096dec}
@@ -60,6 +61,14 @@ public:
                                   uint8_t aWidgetType,
                                   const nsRect& aRect,
                                   const nsRect& aDirtyRect) = 0;
+
+  /**
+   * Get the used color of the given widget when it's specified as auto.
+   * It's currently only used for scrollbar-*-color properties.
+   */
+  virtual nscolor GetWidgetAutoColor(nsStyleContext* aContext,
+                                     uint8_t aWidgetType)
+  { return NS_RGB(0, 0, 0); }
 
   /**
    * Get the computed CSS border for the widget, in pixels.

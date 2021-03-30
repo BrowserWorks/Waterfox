@@ -1392,6 +1392,28 @@ CSS_PROP_USERINTERFACE(
     nullptr,
     offsetof(nsStyleUserInterface, mCaretColor),
     eStyleAnimType_ComplexColor)
+CSS_PROP_USERINTERFACE(
+    scrollbar-face-color,
+    scrollbar_face_color,
+    ScrollbarFaceColor,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
+    "layout.css.scrollbar-colors.enabled",
+    VARIANT_AUTO | VARIANT_HC,
+    nullptr,
+    offsetof(nsStyleUserInterface, mScrollbarFaceColor),
+    eStyleAnimType_ComplexColor)
+CSS_PROP_USERINTERFACE(
+    scrollbar-track-color,
+    scrollbar_track_color,
+    ScrollbarTrackColor,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
+    "layout.css.scrollbar-colors.enabled",
+    VARIANT_AUTO | VARIANT_HC,
+    nullptr,
+    offsetof(nsStyleUserInterface, mScrollbarTrackColor),
+    eStyleAnimType_ComplexColor)
 CSS_PROP_DISPLAY(
     clear,
     clear,

@@ -5330,6 +5330,22 @@ nsRuleNode::ComputeUserInterfaceData(void* aStartStruct,
                                  mPresContext,
                                  ui->mCaretColor, conditions);
 
+  // scrollbar-face-color: auto, color, inherit
+  const nsCSSValue* scrollbarFaceColor = aRuleData->ValueForScrollbarFaceColor();
+  SetComplexColor<eUnsetInherit>(*scrollbarFaceColor,
+                                 parentUI->mScrollbarFaceColor,
+                                 StyleComplexColor::Auto(),
+                                 mPresContext,
+                                 ui->mScrollbarFaceColor, conditions);
+
+  // scrollbar-track-color: auto, color, inherit
+  const nsCSSValue* scrollbarTrackColor = aRuleData->ValueForScrollbarTrackColor();
+  SetComplexColor<eUnsetInherit>(*scrollbarTrackColor,
+                                 parentUI->mScrollbarTrackColor,
+                                 StyleComplexColor::Auto(),
+                                 mPresContext,
+                                 ui->mScrollbarTrackColor, conditions);
+
   COMPUTE_END_INHERITED(UserInterface, ui)
 }
 
