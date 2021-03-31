@@ -1544,6 +1544,7 @@ struct SetEnumValueHelper
   DEFINE_ENUM_CLASS_SETTER(StyleFillRule, Nonzero, Evenodd)
   DEFINE_ENUM_CLASS_SETTER(StyleFloat, None, InlineEnd)
   DEFINE_ENUM_CLASS_SETTER(StyleFloatEdge, ContentBox, MarginBox)
+  DEFINE_ENUM_CLASS_SETTER(StyleScrollbarWidth, Auto, None)
   DEFINE_ENUM_CLASS_SETTER(StyleHyphens, None, Auto)
   DEFINE_ENUM_CLASS_SETTER(StyleStackSizing, Ignore, IgnoreVertical)
   DEFINE_ENUM_CLASS_SETTER(StyleTextJustify, None, InterCharacter)
@@ -5345,6 +5346,13 @@ nsRuleNode::ComputeUserInterfaceData(void* aStartStruct,
                                  StyleComplexColor::Auto(),
                                  mPresContext,
                                  ui->mScrollbarTrackColor, conditions);
+  // scrollbar-width: auto, thin, none
+  SetValue(*aRuleData->ValueForScrollbarWidth(),
+           ui->mScrollbarWidth,
+           conditions,
+           SETVAL_ENUMERATED,
+           parentUI->mScrollbarWidth,
+           StyleScrollbarWidth::Auto);
 
   COMPUTE_END_INHERITED(UserInterface, ui)
 }

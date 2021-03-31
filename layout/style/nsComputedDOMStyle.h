@@ -535,6 +535,7 @@ private:
   already_AddRefed<CSSValue> DoGetCursor();
   already_AddRefed<CSSValue> DoGetForceBrokenImageIcon();
   already_AddRefed<CSSValue> DoGetIMEMode();
+  already_AddRefed<CSSValue> DoGetScrollbarWidth();
   already_AddRefed<CSSValue> DoGetUserFocus();
   already_AddRefed<CSSValue> DoGetUserInput();
   already_AddRefed<CSSValue> DoGetUserModify();

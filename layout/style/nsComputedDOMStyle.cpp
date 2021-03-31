@@ -3537,6 +3537,16 @@ nsComputedDOMStyle::DoGetScrollSnapTypeY()
 }
 
 already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetScrollbarWidth()
+{
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  val->SetIdent(
+    nsCSSProps::ValueToKeywordEnum(StyleUserInterface()->mScrollbarWidth,
+                                   nsCSSProps::kScrollbarWidthKTable));
+  return val.forget();
+}
+
+already_AddRefed<CSSValue>
 nsComputedDOMStyle::GetScrollSnapPoints(const nsStyleCoord& aCoord)
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;

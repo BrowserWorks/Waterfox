@@ -3765,6 +3765,16 @@ CSS_PROP_DISPLAY(
     kScrollSnapTypeKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
+CSS_PROP_USERINTERFACE(
+    scrollbar-width,
+    scrollbar_width,
+    ScrollbarWidth,
+    CSS_PROPERTY_PARSE_VALUE,
+    "layout.css.scrollbar-width.enabled",
+    VARIANT_HK,
+    kScrollbarWidthKTable,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_Discrete)
 CSS_PROP_DISPLAY(
     shape-outside,
     shape_outside,
