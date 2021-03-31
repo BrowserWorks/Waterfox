@@ -11,6 +11,9 @@
 
 #include "nsColor.h"
 
+class nsIFrame;
+class nsStyleContext;
+
 namespace mozilla {
 
 /**
@@ -51,6 +54,18 @@ struct StyleComplexColor
   bool operator!=(const StyleComplexColor& aOther) const {
     return !(*this == aOther);
   }
+
+  /**
+   * Compute the color for this StyleComplexColor, taking into account
+   * the foreground color from aStyle.
+   */
+  nscolor CalcColor(nsStyleContext* aStyle) const;
+
+  /**
+   * Compute the color for this StyleComplexColor, taking into account
+   * the foreground color from aFrame's ComputedStyle.
+   */
+  nscolor CalcColor(const nsIFrame* aFrame) const;
 };
 
 }

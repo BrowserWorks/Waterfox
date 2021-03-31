@@ -706,9 +706,6 @@ ConstructBorderRenderer(nsPresContext* aPresContext,
 {
   nsMargin border = aStyleBorder.GetComputedBorder();
 
-  // Get our style context's color struct.
-  const nsStyleColor* ourColor = aStyleContext->StyleColor();
-
   // In NavQuirks mode we want to use the parent's context as a starting point
   // for determining the background color.
   bool quirks = aPresContext->CompatibilityMode() == eCompatibility_NavQuirks;
@@ -765,7 +762,7 @@ ConstructBorderRenderer(nsPresContext* aPresContext,
   // pull out styles, colors, composite colors
   NS_FOR_CSS_SIDES (i) {
     borderStyles[i] = aStyleBorder.GetBorderStyle(i);
-    borderColors[i] = ourColor->CalcComplexColor(aStyleBorder.mBorderColor[i]);
+    borderColors[i] = aStyleBorder.mBorderColor[i].CalcColor(aStyleContext);
     aStyleBorder.GetCompositeColors(i, &compositeColors[i]);
   }
 

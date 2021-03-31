@@ -3173,7 +3173,7 @@ nsStyleBackground::BackgroundColor(nsStyleContext* aContext) const
   // In that case, we can skip resolving StyleColor().
   return mBackgroundColor.IsNumericColor()
     ? mBackgroundColor.mColor
-    : aContext->StyleColor()->CalcComplexColor(mBackgroundColor);
+    : mBackgroundColor.CalcColor(aContext);
 }
 
 bool

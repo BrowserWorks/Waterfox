@@ -1209,7 +1209,7 @@ void
 nsComputedDOMStyle::SetValueFromComplexColor(nsROCSSPrimitiveValue* aValue,
                                              const StyleComplexColor& aColor)
 {
-  SetToRGBAColor(aValue, StyleColor()->CalcComplexColor(aColor));
+  SetToRGBAColor(aValue, aColor.CalcColor(mStyleContext));
 }
 
 already_AddRefed<CSSValue>
