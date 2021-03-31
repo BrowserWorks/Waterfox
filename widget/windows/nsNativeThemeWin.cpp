@@ -1920,19 +1920,13 @@ RENDER_AGAIN:
 static nscolor
 GetScrollbarFaceColorForAuto(nsStyleContext* aStyle)
 {
-  // Do we want to derive from scrollbar-track-color when possible?
-  DWORD sysColor = ::GetSysColor(COLOR_SCROLLBAR);
-  return NS_RGB(GetRValue(sysColor),
-                GetGValue(sysColor),
-                GetBValue(sysColor));
+  return NS_RGB(205, 205, 205);
 }
 
 static nscolor
 GetScrollbarTrackColorForAuto(nsStyleContext* aStyle)
 {
-  // Fallback to background color for now. Do we want to derive from
-  // scrollbar-face-color somehow?
-  return aStyle->StyleBackground()->BackgroundColor(aStyle);
+  return NS_RGB(240, 240, 240);
 }
 
 nscolor
