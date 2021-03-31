@@ -2978,6 +2978,12 @@ public:
     return ResolveToLength<true>(aGap, aPercentageBasis);
   }
 
+  /**
+   * Get the computed style from which the scrollbar style should be
+   * used for the given scrollbar part frame.
+   */
+  static nsStyleContext* StyleForScrollbar(nsIFrame* aScrollbarPart);
+
 private:
   static uint32_t sFontSizeInflationEmPerLine;
   static uint32_t sFontSizeInflationMinTwips;

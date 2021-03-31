@@ -118,6 +118,7 @@ protected:
                        HBRUSH defaultBack);
   nsresult DrawCustomScrollbarPart(gfxContext* aContext,
                                    nsIFrame* aFrame,
+                                   nsStyleContext* aStyle,
                                    uint8_t aWidgetType,
                                    const nsRect& aRect,
                                    const nsRect& aClipRect);
