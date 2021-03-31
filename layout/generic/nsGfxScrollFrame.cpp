@@ -1063,6 +1063,17 @@ nsHTMLScrollFrame::Reflow(nsPresContext* aPresContext,
       reflowScrollCorner = showResizer == mHelper.mCollapsedResizer;
       mHelper.mCollapsedResizer = !showResizer;
     }
+
+    // Hide the scrollbar when the scrollbar-width is set to none.
+    // This is only needed for root element because scrollbars of non-
+    // root elements with "scrollbar-width: none" is already suppressed
+    // in ScrollFrameHelper::CreateAnonymousContent.
+    nsStyleContext* scrollbarStyle = nsLayoutUtils::StyleForScrollbar(this);
+    auto scrollbarWidth = scrollbarStyle->StyleUserInterface()->mScrollbarWidth;
+    if (scrollbarWidth == StyleScrollbarWidth::None) {
+      state.mVScrollbar = ShowScrollbar::Never;
+      state.mHScrollbar = ShowScrollbar::Never;
+    }
   }
 
   nsRect oldScrollAreaBounds = mHelper.mScrollPort;
@@ -4487,9 +4498,15 @@ ScrollFrameHelper::CreateAnonymousContent(
   bool canHaveHorizontal;
   bool canHaveVertical;
   if (!mIsRoot) {
-    ScrollStyles styles = scrollable->GetScrollStyles();
-    canHaveHorizontal = styles.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN;
-    canHaveVertical = styles.mVertical != NS_STYLE_OVERFLOW_HIDDEN;
+    if (mOuter->StyleUserInterface()->mScrollbarWidth == StyleScrollbarWidth::None) {
+      // If scrollbar-width is none, don't generate scrollbars.
+      canHaveHorizontal = false;
+      canHaveVertical = false;
+    } else {
+      ScrollStyles styles = scrollable->GetScrollStyles();
+      canHaveHorizontal = styles.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN;
+      canHaveVertical = styles.mVertical != NS_STYLE_OVERFLOW_HIDDEN;
+    }
     if (!canHaveHorizontal && !canHaveVertical && !isResizable) {
       // Nothing to do.
       return NS_OK;
