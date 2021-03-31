@@ -1905,6 +1905,26 @@ var Policies = {
     },
   },
 
+  ShowHomeButton: {
+    onAllWindowsRestored(manager, param) {
+      if (param) {
+        let homeButtonPlacement = CustomizableUI.getPlacementOfWidget(
+          "home-button"
+        );
+        if (!homeButtonPlacement) {
+          let placement = CustomizableUI.getPlacementOfWidget("forward-button");
+          CustomizableUI.addWidgetToArea(
+            "home-button",
+            CustomizableUI.AREA_NAVBAR,
+            placement.position + 2
+          );
+        }
+      } else {
+        CustomizableUI.removeWidgetFromArea("home-button");
+      }
+    },
+  },
+
   SSLVersionMax: {
     onBeforeAddons(manager, param) {
       let tlsVersion;
