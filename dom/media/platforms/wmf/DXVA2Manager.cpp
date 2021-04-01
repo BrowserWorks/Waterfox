@@ -643,7 +643,7 @@ private:
   RefPtr<MFTDecoder> mTransform;
   RefPtr<D3D11RecycleAllocator> mTextureClientAllocator;
   RefPtr<ID3D11VideoDecoder> mDecoder;
-  RefPtr<layers::SyncObject> mSyncObject;
+  RefPtr<layers::SyncObjectClient> mSyncObject;
   GUID mDecoderGUID;
   uint32_t mWidth = 0;
   uint32_t mHeight = 0;
@@ -711,9 +711,10 @@ D3D11DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
       // and because it allows color conversion ocurring directly from this texture
       // DXVA does not seem to accept IDXGIKeyedMutex textures as input.
       mSyncObject =
-        layers::SyncObject::CreateSyncObject(layers::ImageBridgeChild::GetSingleton()->
-                                               GetTextureFactoryIdentifier().mSyncHandle,
-                                             mDevice);
+        layers::SyncObjectClient::CreateSyncObjectClient(
+            layers::ImageBridgeChild::GetSingleton()->
+              GetTextureFactoryIdentifier().mSyncHandle,
+            mDevice);
     }
   } else {
     mTextureClientAllocator =
@@ -723,8 +724,9 @@ D3D11DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
       // and because it allows color conversion ocurring directly from this texture
       // DXVA does not seem to accept IDXGIKeyedMutex textures as input.
       mSyncObject =
-        layers::SyncObject::CreateSyncObject(aKnowsCompositor->GetTextureFactoryIdentifier().mSyncHandle,
-                                             mDevice);
+        layers::SyncObjectClient::CreateSyncObjectClient(
+            aKnowsCompositor->GetTextureFactoryIdentifier().mSyncHandle,
+            mDevice);
     }
   }
   mTextureClientAllocator->SetMaxPoolSize(5);
@@ -882,7 +884,8 @@ D3D11DXVA2Manager::CreateOutputSample(RefPtr<IMFSample>& aSample,
     __uuidof(ID3D11Texture2D), aTexture, 0, FALSE, getter_AddRefs(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  sample->AddBuffer(buffer);
+  hr = sample->AddBuffer(buffer);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   aSample = sample;
   return S_OK;
@@ -906,7 +909,7 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
   NS_ENSURE_TRUE(client, E_FAIL);
 
   RefPtr<IDXGIKeyedMutex> mutex;
-  HRESULT hr;
+  HRESULT hr = S_OK;
   RefPtr<ID3D11Texture2D> texture = image->GetTexture();
 
   texture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
@@ -952,6 +955,7 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
       NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
       hr = mTransform->Output(&sample);
+      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
     }
   }
 
@@ -959,7 +963,9 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
     // It appears some race-condition may allow us to arrive here even when mSyncObject
     // is null. It's better to avoid that crash.
     client->SyncWithObject(mSyncObject);
-    mSyncObject->FinalizeFrame();
+    if (!mSyncObject->Synchronize(true)) {
+      return DXGI_ERROR_DEVICE_RESET;
+    }
   }
 
   image.forget(aOutImage);

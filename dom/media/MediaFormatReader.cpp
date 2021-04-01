@@ -398,7 +398,7 @@ MediaFormatReader::DecoderData::ShutdownDecoder()
   // mShutdownPromisePool will handle the order of decoder shutdown so
   // we can forget mDecoder and be ready to create a new one.
   mDecoder = nullptr;
-  mDescription = "shutdown";
+  mDescription = NS_LITERAL_CSTRING("shutdown");
   mOwner->ScheduleUpdate(mType == MediaData::AUDIO_DATA
                          ? TrackType::kAudioTrack
                          : TrackType::kVideoTrack);
@@ -549,7 +549,7 @@ public:
   {
     return mDecoder->IsHardwareAccelerated(aFailureReason);
   }
-  const char* GetDescriptionName() const override
+  nsCString GetDescriptionName() const override
   {
     return mDecoder->GetDescriptionName();
   }
@@ -1315,7 +1315,10 @@ MediaFormatReader::OnDemuxerInitDone(const MediaResult& aResult)
         mMetadataPromise.Reject(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
         return;
       }
-      mInfo.mVideo = *videoInfo->GetAsVideoInfo();
+      {
+        MutexAutoLock lock(mVideo.mMutex);
+        mInfo.mVideo = *videoInfo->GetAsVideoInfo();
+      }
       for (const MetadataTag& tag : videoInfo->mTags) {
         tags->Put(tag.mKey, tag.mValue);
       }
@@ -1344,7 +1347,10 @@ MediaFormatReader::OnDemuxerInitDone(const MediaResult& aResult)
                                                   nullptr));
 
     if (audioActive) {
-      mInfo.mAudio = *audioInfo->GetAsAudioInfo();
+      {
+        MutexAutoLock lock(mAudio.mMutex);
+        mInfo.mAudio = *audioInfo->GetAsAudioInfo();
+      }
       for (const MetadataTag& tag : audioInfo->mTags) {
         tags->Put(tag.mKey, tag.mValue);
       }
@@ -2336,7 +2342,7 @@ MediaFormatReader::Update(TrackType aTrack)
        uint32_t(size_t(decoder.mSizeOfQueue)),
        decoder.mDecodeRequest.Exists(),
        decoder.mFlushing,
-       decoder.mDescription,
+       decoder.mDescription.get(),
        uint32_t(decoder.mOutput.Length()),
        decoder.mWaitingForData,
        decoder.mDemuxEOS,
@@ -2998,19 +3004,24 @@ void
 MediaFormatReader::GetMozDebugReaderData(nsACString& aString)
 {
   nsAutoCString result;
-  const char* audioName = "unavailable";
-  const char* videoName = audioName;
+  nsAutoCString audioDecoderName("unavailable");
+  nsAutoCString videoDecoderName = audioDecoderName;
+  nsAutoCString audioType("none");
+  nsAutoCString videoType("none");
 
   if (HasAudio()) {
     MutexAutoLock lock(mAudio.mMutex);
-    audioName = mAudio.mDescription;
+    audioDecoderName = mAudio.mDescription;
+    audioType = mInfo.mAudio.mMimeType;
   }
   if (HasVideo()) {
     MutexAutoLock mon(mVideo.mMutex);
-    videoName = mVideo.mDescription;
+    videoDecoderName = mVideo.mDescription;
+    videoType = mInfo.mVideo.mMimeType;
   }
 
-  result += nsPrintfCString("Audio Decoder: %s\n", audioName);
+  result += nsPrintfCString(
+    "Audio Decoder(%s): %s\n", audioType.get(), audioDecoderName.get());
   result += nsPrintfCString("Audio Frames Decoded: %" PRIu64 "\n",
                             mAudio.mNumSamplesOutputTotal);
   if (HasAudio()) {
@@ -3037,7 +3048,8 @@ MediaFormatReader::GetMozDebugReaderData(nsACString& aString)
       mAudio.mWaitingForKey,
       mAudio.mLastStreamSourceID);
   }
-  result += nsPrintfCString("Video Decoder: %s\n", videoName);
+  result += nsPrintfCString(
+    "Video Decoder(%s): %s\n", videoType.get(), videoDecoderName.get());
   result +=
     nsPrintfCString("Hardware Video Decoding: %s\n",
                     VideoIsHardwareAccelerated() ? "enabled" : "disabled");

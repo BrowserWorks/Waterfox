@@ -40,12 +40,7 @@ public:
 
   TrackInfo::TrackType GetType() override { return TrackInfo::kVideoTrack; }
 
-  const char* GetDescriptionName() const override
-  {
-    nsCString failureReason;
-    return IsHardwareAccelerated(failureReason) ? "wmf hardware video decoder"
-                                                : "wmf software video decoder";
-  }
+  nsCString GetDescriptionName() const override;
 
   void Flush() override
   {
