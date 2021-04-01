@@ -1268,6 +1268,10 @@ enum class StyleWhiteSpace : uint8_t {
 #define NS_STYLE_DISPLAY_MODE_STANDALONE        2
 #define NS_STYLE_DISPLAY_MODE_FULLSCREEN        3
 
+// prefers-color-scheme
+#define NS_STYLE_PREFERS_COLOR_SCHEME_LIGHT	0
+#define NS_STYLE_PREFERS_COLOR_SCHEME_DARK	1
+
 } // namespace mozilla
 
 #endif /* nsStyleConsts_h___ */
