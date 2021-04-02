@@ -10,6 +10,8 @@
 #include "mozilla/ArrayUtils.h"
 #include "nsDebug.h"
 
+#define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
+
 namespace mozilla {
 
 AppleVTLinker::LinkStatus
@@ -60,6 +62,7 @@ AppleVTLinker::Link()
   skPropUsingHWAccel =
     GetIOConst("kVTDecompressionPropertyKey_UsingHardwareAcceleratedVideoDecoder");
 
+  LOG("Loaded VideoToolbox framework.");
   sLinkStatus = LinkStatus_SUCCEEDED;
   return true;
 
@@ -74,6 +77,7 @@ fail:
 AppleVTLinker::Unlink()
 {
   if (sLink) {
+    LOG("Unlinking VideoToolbox framework.");
 #define LINK_FUNC(func)                                                   \
     func = nullptr;
 #include "AppleVTFunctions.h"
