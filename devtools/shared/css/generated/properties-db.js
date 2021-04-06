@@ -3356,6 +3356,7 @@ exports.CSS_PROPERTIES = {
     ],
     "values": [
       "COLOR",
+      "-moz-activehyperlinktext",
       "-moz-all",
       "-moz-alt-content",
       "-moz-available",
@@ -9005,6 +9006,48 @@ exports.CSS_PROPERTIES = {
       "mandatory",
       "none",
       "proximity",
+      "unset"
+    ]
+  },
+  "scrollbar-color": {
+    "isInherited": true,
+    "subproperties": [
+      "scrollbar-color"
+    ],
+    "supports": [
+      2
+    ],
+    "values": [
+      "COLOR",
+      "auto",
+      "currentColor",
+      "hsl",
+      "hsla",
+      "inherit",
+      "initial",
+      "rgb",
+      "rgba",
+      "transparent",
+      "unset"
+    ]
+  },
+  "scrollbar-width": {
+    "isInherited": true,
+    "subproperties": [
+      "scrollbar-width"
+    ],
+    "supports": [],
+    "values": [
+      "-moz-activehyperlinktext",
+      "auto",
+      "ignore",
+      "ignore-horizontal",
+      "ignore-vertical",
+      "inherit",
+      "initial",
+      "none",
+      "stretch-to-fit",
+      "thin",
       "unset"
     ]
   },
