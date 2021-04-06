@@ -3271,6 +3271,8 @@ exports.CSS_PROPERTIES = {
       "scroll-snap-points-y",
       "scroll-snap-type-x",
       "scroll-snap-type-y",
+      "scrollbar-color",
+      "scrollbar-width",
       "shape-outside",
       "shape-rendering",
       "-moz-stack-sizing",
@@ -10083,6 +10085,14 @@ exports.PREFERENCES = [
   [
     "scroll-snap-type-y",
     "layout.css.scroll-snap.enabled"
+  ],
+  [
+    "scrollbar-color",
+    "layout.css.scrollbar-colors.enabled"
+  ],
+  [
+    "scrollbar-width",
+    "layout.css.scrollbar-width.enabled"
   ],
   [
     "shape-outside",

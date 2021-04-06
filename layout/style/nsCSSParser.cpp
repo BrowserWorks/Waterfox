@@ -798,6 +798,7 @@ protected:
   bool ParseImageLayerSize(nsCSSPropertyID aPropID);
   bool ParseImageLayerSizeValues(nsCSSValuePair& aOut);
   bool ParseBorderColor();
+  bool ParseScrollbarColor(nsCSSPropertyID aProperty);
   bool ParseBorderColors(nsCSSPropertyID aProperty);
   void SetBorderImageInitialValues();
   bool ParseBorderImageRepeat(bool aAcceptsInherit);
@@ -11824,6 +11825,8 @@ CSSParserImpl::ParsePropertyByFunction(nsCSSPropertyID aPropID)
     return ParsePaintOrder();
   case eCSSProperty_scroll_snap_type:
     return ParseScrollSnapType();
+  case eCSSProperty_scrollbar_color:
+    return ParseScrollbarColor(aPropID);
 #ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
   case eCSSProperty_mask:
     return ParseImageLayers(nsStyleImageLayers::kMaskLayerTable);
@@ -13135,6 +13138,27 @@ bool
 CSSParserImpl::ParseBorderColor()
 {
   return ParseBoxProperties(kBorderColorIDs);
+}
+
+bool
+CSSParserImpl::ParseScrollbarColor(nsCSSPropertyID aPropID)
+{
+  // aPropID is a single value prop-id
+  nsCSSValue value;
+  // 'auto', 'initial', 'inherit' and 'unset' stand alone, no list permitted.
+  if (!ParseSingleTokenVariant(value, VARIANT_INHERIT | VARIANT_AUTO, nullptr)) {
+    nsCSSValueList* item = value.SetListValue();
+    for (int32_t i = 0; i < 2; i++) {
+      if (ParseVariant(item->mValue, VARIANT_COLOR, nullptr) !=
+          CSSParseResult::Ok) {
+        return false;
+      }
+      item->mNext = new nsCSSValueList;
+      item = item->mNext;
+    }
+  }
+  AppendValue(aPropID, value);
+  return true;
 }
 
 void

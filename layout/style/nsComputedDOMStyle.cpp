@@ -3605,21 +3605,19 @@ nsComputedDOMStyle::DoGetScrollSnapCoordinate()
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetScrollbarFaceColor()
+nsComputedDOMStyle::DoGetScrollbarColor()
 {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueForWidgetColor(val, StyleUserInterface()->mScrollbarFaceColor,
-                         NS_THEME_SCROLLBARTHUMB_VERTICAL);
-  return val.forget();
-}
-
-already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetScrollbarTrackColor()
-{
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueForWidgetColor(val, StyleUserInterface()->mScrollbarTrackColor,
-                         NS_THEME_SCROLLBAR_VERTICAL);
-  return val.forget();
+  const nsStyleUserInterface* ui = StyleUserInterface();
+  RefPtr<nsDOMCSSValueList> list = GetROCSSValueList(false);
+  auto put = [this, &list](const StyleComplexColor& color,
+                           ThemeWidgetType type) {
+    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+    SetValueForWidgetColor(val, color, type);
+    list->AppendCSSValue(val.forget());
+  };
+  put(ui->mScrollbarFaceColor, NS_THEME_SCROLLBARTHUMB_VERTICAL);
+  put(ui->mScrollbarTrackColor, NS_THEME_SCROLLBAR_VERTICAL);
+  return list.forget();
 }
 
 already_AddRefed<CSSValue>

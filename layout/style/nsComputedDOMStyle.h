@@ -526,8 +526,7 @@ private:
   already_AddRefed<CSSValue> DoGetScrollSnapPointsY();
   already_AddRefed<CSSValue> DoGetScrollSnapDestination();
   already_AddRefed<CSSValue> DoGetScrollSnapCoordinate();
-  already_AddRefed<CSSValue> DoGetScrollbarFaceColor();
-  already_AddRefed<CSSValue> DoGetScrollbarTrackColor();
+  already_AddRefed<CSSValue> DoGetScrollbarColor();
   already_AddRefed<CSSValue> DoGetShapeOutside();
 
   /* User interface properties */
