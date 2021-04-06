@@ -1,5 +1,4 @@
 FROM ubuntu:xenial
-
 RUN dpkg-reconfigure debconf -f noninteractive -p critical
 RUN apt-get update
 # expect still prompts for region/tz info even in a noninteractive session
@@ -24,6 +23,7 @@ RUN apt-get install -y \
     mercurial \
     pkg-config \
     python \
+    software-properties-common \
     sudo \
     yasm \
     wget
@@ -44,6 +44,18 @@ RUN apt-get install -y \
     uuid \
     zip
 
+RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+RUN sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main" && \
+    apt-get update && \
+    apt-get install -y clang-6.0 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.8 100 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-6.0 1000 && \
+    # update-alternatives --install /usr/bin/clang++ clang /usr/bin/clang-3.8 100 && \
+    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.8 100 && \
+    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-6.0 1000 && \
+    update-alternatives --config clang && \
+    update-alternatives --config clang++
+
 ENV SHELL /bin/bash
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
@@ -58,6 +70,9 @@ ADD . /home/ubuntu/
 RUN mkdir /home/ubuntu/.mozbuild
 WORKDIR /home/ubuntu
 RUN chown -R ubuntu /home/ubuntu
+# RUN find /home/ubuntu -type f \! -path \*/\test/\* -exec chown ubuntu {} \;
+RUN curl -sL https://firefox-ci-tc.services.mozilla.com/api/queue/v1/task/Pvdo5WKzTpC9p9w30Di6qg/runs/0/artifacts/public%2Fbuild%2Fnasm.tar.bz2 | sudo tar -xj -C /home/
+RUN echo 'export NASM=/home/nasm/nasm' >> .mozconfig
 USER ubuntu
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN rustup default 1.49.0
