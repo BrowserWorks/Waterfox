@@ -10131,7 +10131,7 @@ exports.PREFERENCES = [
   ],
   [
     "scrollbar-color",
-    "layout.css.scrollbar-colors.enabled"
+    "layout.css.scrollbar-color.enabled"
   ],
   [
     "scrollbar-width",

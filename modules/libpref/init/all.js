@@ -2880,11 +2880,11 @@ pref("layout.css.isolation.enabled", true);
 // Is support for CSS Filters enabled?
 pref("layout.css.filters.enabled", true);
 
-// Is support for CSS Scrollbar color properties enabled?
+// Is support for scrollbar-color property enabled?
 #ifndef XP_MACOSX
-pref("layout.css.scrollbar-colors.enabled", true);
+pref("layout.css.scrollbar-color.enabled", true);
 #else
-pref("layout.css.scrollbar-colors.enabled", false);
+pref("layout.css.scrollbar-color.enabled", false);
 #endif
 
 // Is support for scrollbar-width property enabled?

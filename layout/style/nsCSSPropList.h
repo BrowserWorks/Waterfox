@@ -3750,7 +3750,7 @@ CSS_PROP_USERINTERFACE(
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
         CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
-    "layout.css.scrollbar-colors.enabled",
+    "layout.css.scrollbar-color.enabled",
     VARIANT_AUTO | VARIANT_HC,
     nullptr,
     CSS_PROP_NO_OFFSET,
