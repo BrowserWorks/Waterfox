@@ -27,8 +27,9 @@ body {
   color: var(--theme-selection-color);
 }
 
-:root[platform="win"] {
-  /* Set colors for native scrollbars on Windows dark theme */
+:root[platform="win"],
+:root[platform="linux"] {
+  /* Set colors for native scrollbars on Windows and Linux dark theme */
   /* Other platforms support for scrollbar theming is Bug 1460109 */
   scrollbar-color: var(--theme-body-color-inactive) var(--theme-splitter-color);
 }

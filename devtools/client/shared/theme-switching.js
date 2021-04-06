@@ -91,8 +91,8 @@
       loadEvents.push(loadPromise);
     }
 
-    if (os !== "win") {
-      // Windows always uses native scrollbars, other platforms still use custom floating
+    if (os !== "win" && os !== "linux" ) {
+      // Windows & Linux always use native scrollbars, Mac still uses custom floating
       // scrollbar implementation.
       try {
         const StylesheetUtils = require("devtools/shared/layout/utils");
