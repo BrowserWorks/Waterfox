@@ -1124,7 +1124,7 @@ ShadowRoot*
 Element::GetShadowRootByMode() const
 {
   /**
-   * 1. Let shadow be context object???s shadow root.
+   * 1. Let shadow be context object's shadow root.
    * 2. If shadow is null or its mode is "closed", then return null.
    */
   ShadowRoot* shadowRoot = GetShadowRoot();
@@ -1143,7 +1143,7 @@ already_AddRefed<ShadowRoot>
 Element::AttachShadow(const ShadowRootInit& aInit, ErrorResult& aError)
 {
   /**
-   * 1. If context object???s namespace is not the HTML namespace,
+   * 1. If context object's namespace is not the HTML namespace,
    *    then throw a "NotSupportedError" DOMException.
    */
   if (!IsHTMLElement()) {
@@ -1152,7 +1152,7 @@ Element::AttachShadow(const ShadowRootInit& aInit, ErrorResult& aError)
   }
 
   /**
-   * 2. If context object???s local name is not
+   * 2. If context object's local name is not
    *      a valid custom element name, "article", "aside", "blockquote",
    *      "body", "div", "footer", "h1", "h2", "h3", "h4", "h5", "h6",
    *      "header", "main" "nav", "p", "section", or "span",
@@ -1236,8 +1236,8 @@ Element::AttachShadowInternal(bool aClosed, ErrorResult& aError)
 
   /**
    * 4. Let shadow be a new shadow root whose node document is
-   *    context object???s node document, host is context object,
-   *    and mode is init???s mode.
+   *    context object's node document, host is context object,
+   *    and mode is init's mode.
    */
   RefPtr<ShadowRoot> shadowRoot =
     new ShadowRoot(this, aClosed, nodeInfo.forget(), protoBinding);
@@ -1245,7 +1245,7 @@ Element::AttachShadowInternal(bool aClosed, ErrorResult& aError)
   shadowRoot->SetIsComposedDocParticipant(IsInComposedDoc());
 
   /**
-   * 5. Set context object???s shadow root to shadow.
+   * 5. Set context object's shadow root to shadow.
    */
   SetShadowRoot(shadowRoot);
 
