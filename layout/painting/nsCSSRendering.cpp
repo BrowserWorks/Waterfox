@@ -2446,6 +2446,7 @@ GetBackgroundColor(nsIFrame* aFrame, nsStyleContext* aComputedStyle)
       break;
     case NS_THEME_SCROLLBAR_VERTICAL:
     case NS_THEME_SCROLLBAR_HORIZONTAL:
+    case NS_THEME_SCROLLCORNER:
       overrideColor =
         CalcScrollbarColor(aFrame, &nsStyleUserInterface::mScrollbarTrackColor);
       break;
