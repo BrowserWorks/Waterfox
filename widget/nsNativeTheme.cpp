@@ -799,6 +799,7 @@ nsNativeTheme::IsWidgetScrollbarPart(uint8_t aWidgetType)
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
     case NS_THEME_SCROLLBARTHUMB_VERTICAL:
     case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
+    case NS_THEME_SCROLLCORNER:
       return true;
     default:
       return false;
