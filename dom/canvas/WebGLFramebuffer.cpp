@@ -1243,26 +1243,26 @@ WebGLFramebuffer::CheckFramebufferStatus(const char* funcName)
 
 ////
 
-void
-WebGLFramebuffer::RefreshDrawBuffers() const
-{
-    const auto& gl = mContext->gl;
-    if (!gl->IsSupported(gl::GLFeature::draw_buffers))
-        return;
+void WebGLFramebuffer::RefreshDrawBuffers() const {
+  const auto& gl = mContext->gl;
+  if (!gl->IsSupported(gl::GLFeature::draw_buffers)) return;
 
-    // Prior to GL4.1, having a no-image FB attachment that's selected by DrawBuffers
-    // yields a framebuffer status of FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
-    // We could workaround this only on affected versions, but it's easier be
-    // unconditional.
-    std::vector<GLenum> driverBuffers(mContext->mImplMaxDrawBuffers, LOCAL_GL_NONE);
-    for (const auto& attach : mColorDrawBuffers) {
-        if (attach->HasImage()) {
-            const uint32_t index = attach->mAttachmentPoint - LOCAL_GL_COLOR_ATTACHMENT0;
-            driverBuffers[index] = attach->mAttachmentPoint;
-        }
+  // Prior to GL4.1, having a no-image FB attachment that's selected by
+  // DrawBuffers yields a framebuffer status of
+  // FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER. We could workaround this only on
+  // affected versions, but it's easier be unconditional.
+  std::vector<GLenum> driverBuffers(mContext->mImplMaxDrawBuffers,
+                                    LOCAL_GL_NONE);
+  for (const auto& attach : mColorDrawBuffers) {
+    if (attach->HasImage()) {
+      const uint32_t index =
+          attach->mAttachmentPoint - LOCAL_GL_COLOR_ATTACHMENT0;
+      driverBuffers[index] = attach->mAttachmentPoint;
     }
+  }
 
-    gl->fDrawBuffers(driverBuffers.size(), driverBuffers.data());
+  gl->fBindFramebuffer(LOCAL_GL_DRAW_FRAMEBUFFER, mGLName);
+  gl->fDrawBuffers(driverBuffers.size(), driverBuffers.data());
 }
 
 void
@@ -1281,7 +1281,8 @@ WebGLFramebuffer::RefreshReadBuffer() const
         driverBuffer = mColorReadBuffer->mAttachmentPoint;
     }
 
-    gl->fReadBuffer(driverBuffer);
+  gl->fBindFramebuffer(LOCAL_GL_READ_FRAMEBUFFER, mGLName);
+  gl->fReadBuffer(driverBuffer);
 }
 
 ////
