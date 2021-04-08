@@ -1654,22 +1654,20 @@ nsFtpState::Init(nsFtpChannel *channel)
         mChannel->URI()->SetPath(path);
     }
 
-    // Skip leading slash
-    char *fwdPtr = path.BeginWriting();
-    if (!fwdPtr)
-        return NS_ERROR_OUT_OF_MEMORY;
-    if (*fwdPtr == '/')
-        fwdPtr++;
-    if (*fwdPtr != '\0') {
-        // now unescape it... %xx reduced inline to resulting character
-        int32_t len = NS_UnescapeURL(fwdPtr);
-        mPath.Assign(fwdPtr, len);
-
-#ifdef DEBUG
-        if (mPath.FindCharInSet(CRLF) >= 0)
-            NS_ERROR("NewURI() should've prevented this!!!");
-#endif
+  // Skip leading slash
+  char* fwdPtr = path.BeginWriting();
+  if (!fwdPtr) return NS_ERROR_OUT_OF_MEMORY;
+  if (*fwdPtr == '/') fwdPtr++;
+  if (*fwdPtr != '\0') {
+    // now unescape it... %xx reduced inline to resulting character
+    int32_t len = NS_UnescapeURL(fwdPtr);
+    mPath.Assign(fwdPtr, len);
+    if (mPath.FindCharInSet(CRLF) != kNotFound ||
+        mPath.FindChar('\0') != kNotFound) {
+      mPath.Truncate();
+      return NS_ERROR_MALFORMED_URI;
     }
+  }
 
     // pull any username and/or password out of the uri
     nsAutoCString uname;
