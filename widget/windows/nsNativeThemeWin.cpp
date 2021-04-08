@@ -1942,41 +1942,6 @@ RENDER_AGAIN:
   return NS_OK;
 }
 
-static nscolor
-GetScrollbarFaceColorForAuto(nsStyleContext* aStyle)
-{
-  return NS_RGB(205, 205, 205);
-}
-
-static nscolor
-GetScrollbarTrackColorForAuto(nsStyleContext* aStyle)
-{
-  return NS_RGB(240, 240, 240);
-}
-
-nscolor
-nsNativeThemeWin::GetWidgetAutoColor(nsStyleContext* aStyle, uint8_t aWidgetType)
-{
-  switch (aWidgetType) {
-    case NS_THEME_SCROLLBAR:
-    case NS_THEME_SCROLLBAR_SMALL:
-    case NS_THEME_SCROLLBAR_VERTICAL:
-    case NS_THEME_SCROLLBAR_HORIZONTAL:
-    case NS_THEME_SCROLLBARBUTTON_UP:
-    case NS_THEME_SCROLLBARBUTTON_DOWN:
-    case NS_THEME_SCROLLBARBUTTON_LEFT:
-    case NS_THEME_SCROLLBARBUTTON_RIGHT:
-      return GetScrollbarTrackColorForAuto(aStyle);
-
-    case NS_THEME_SCROLLBARTHUMB_VERTICAL:
-    case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
-      return GetScrollbarFaceColorForAuto(aStyle);
-
-    default:
-      return nsITheme::GetWidgetAutoColor(aStyle, aWidgetType);
-  }
-}
-
 static void
 ScaleForFrameDPI(nsIntMargin* aMargin, nsIFrame* aFrame)
 {
@@ -4259,7 +4224,7 @@ nsNativeThemeWin::DrawCustomScrollbarPart(gfxContext* aContext,
 
   const nsStyleUserInterface* ui = aStyle->StyleUserInterface();
   nscolor trackColor = ui->mScrollbarTrackColor.mIsAuto
-    ? GetScrollbarTrackColorForAuto(aStyle)
+    ? NS_RGB(240, 240, 240)
     : ui->mScrollbarTrackColor.CalcColor(aStyle);
   switch (aWidgetType) {
     case NS_THEME_SCROLLBAR_HORIZONTAL:
@@ -4297,7 +4262,7 @@ nsNativeThemeWin::DrawCustomScrollbarPart(gfxContext* aContext,
     case NS_THEME_SCROLLBARTHUMB_VERTICAL:
     case NS_THEME_SCROLLBARTHUMB_HORIZONTAL: {
       nscolor faceColor = ui->mScrollbarFaceColor.mIsAuto
-        ? GetScrollbarFaceColorForAuto(aStyle)
+        ? NS_RGB(205, 205, 205)
         : ui->mScrollbarFaceColor.CalcColor(aStyle);
       faceColor = AdjustScrollbarFaceColor(faceColor, eventStates);
       ctx->SetColor(Color::FromABGR(faceColor));

@@ -63,17 +63,9 @@ public:
                                   const nsRect& aDirtyRect) = 0;
 
   /**
-   * Get the used color of the given widget when it's specified as auto.
-   * It's currently only used for scrollbar-*-color properties.
-   */
-  virtual nscolor GetWidgetAutoColor(nsStyleContext* aContext,
-                                     uint8_t aWidgetType)
-  { return NS_RGB(0, 0, 0); }
-
-  /**
    * Get the computed CSS border for the widget, in pixels.
    */
-  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext, 
+  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext,
                              nsIFrame* aFrame,
                              uint8_t aWidgetType,
                              nsIntMargin* aResult)=0;

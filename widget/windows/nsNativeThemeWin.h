@@ -37,10 +37,7 @@ public:
                                   const nsRect& aRect,
                                   const nsRect& aDirtyRect) override;
 
-  nscolor GetWidgetAutoColor(nsStyleContext* aStyle,
-                             uint8_t aWidgetType) override;
-
-  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext, 
+  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext,
                              nsIFrame* aFrame,
                              uint8_t aWidgetType,
                              nsIntMargin* aResult) override;

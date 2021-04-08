@@ -1212,33 +1212,6 @@ nsComputedDOMStyle::SetValueFromComplexColor(nsROCSSPrimitiveValue* aValue,
   SetToRGBAColor(aValue, aColor.CalcColor(mStyleContext));
 }
 
-void
-nsComputedDOMStyle::SetValueForWidgetColor(nsROCSSPrimitiveValue* aValue,
-                                           const StyleComplexColor& aColor,
-                                           uint8_t aWidgetType)
-{
-  if (!aColor.mIsAuto) {
-    SetToRGBAColor(aValue, aColor.CalcColor(mStyleContext));
-    return;
-  }
-  nsPresContext* presContext = mPresShell->GetPresContext();
-  MOZ_ASSERT(presContext);
-  if (nsContentUtils::ShouldResistFingerprinting(
-        mPresShell->GetPresContext()->GetDocShell())) {
-    // Return transparent when resisting fingerprinting.
-    SetToRGBAColor(aValue, NS_RGBA(0, 0, 0, 0));
-    return;
-  }
-  if (nsITheme* theme = presContext->GetTheme()) {
-    nscolor color = theme->GetWidgetAutoColor(mStyleContext, aWidgetType);
-    SetToRGBAColor(aValue, color);
-  } else {
-    // If we don't have theme, we don't know what value it should be,
-    // just give it a transparent fallback.
-    SetToRGBAColor(aValue, NS_RGBA(0, 0, 0, 0));
-  }
-}
-
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetColor()
 {
@@ -3608,15 +3581,24 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetScrollbarColor()
 {
   const nsStyleUserInterface* ui = StyleUserInterface();
-  RefPtr<nsDOMCSSValueList> list = GetROCSSValueList(false);
-  auto put = [this, &list](const StyleComplexColor& color,
-                           ThemeWidgetType type) {
+  MOZ_ASSERT(ui->mScrollbarFaceColor.mIsAuto ==
+             ui->mScrollbarTrackColor.mIsAuto,
+             "Whether the two colors are auto should be identical");
+
+  if (ui->mScrollbarFaceColor.mIsAuto) {
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    SetValueForWidgetColor(val, color, type);
+    val->SetIdent(eCSSKeyword_auto);
+    return val.forget();
+  }
+
+  RefPtr<nsDOMCSSValueList> list = GetROCSSValueList(false);
+  auto put = [this, &list](const StyleComplexColor& color) {
+    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+    SetValueFromComplexColor(val, color);
     list->AppendCSSValue(val.forget());
   };
-  put(ui->mScrollbarFaceColor, NS_THEME_SCROLLBARTHUMB_VERTICAL);
-  put(ui->mScrollbarTrackColor, NS_THEME_SCROLLBAR_VERTICAL);
+  put(ui->mScrollbarFaceColor);
+  put(ui->mScrollbarTrackColor);
   return list.forget();
 }
 
