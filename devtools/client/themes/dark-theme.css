@@ -336,13 +336,6 @@ div.CodeMirror span.eval-text {
   border-bottom: 0;
 }
 
-.devtools-textinput,
-.devtools-searchinput,
-.devtools-filterinput {
-  background-color: rgba(24, 29, 32, 1);
-  color: rgba(184, 200, 217, 1);
-}
-
 .CodeMirror-Tern-fname {
   color: #f7f7f7;
 }
