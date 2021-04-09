@@ -56,7 +56,7 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
   if (!aFrame)
     return EventStates();
 
-  bool isXULCheckboxRadio = 
+  bool isXULCheckboxRadio =
     (aWidgetType == NS_THEME_CHECKBOX ||
      aWidgetType == NS_THEME_RADIO) &&
     aFrame->GetContent()->IsXULElement();
@@ -93,7 +93,7 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
       flags |= NS_EVENT_STATE_DISABLED;
     }
   }
-  
+
   if (isXULCheckboxRadio && aWidgetType == NS_THEME_RADIO) {
     if (IsFocused(aFrame))
       flags |= NS_EVENT_STATE_FOCUS;
@@ -116,14 +116,14 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
   // On Windows, focused buttons are always drawn as such by the native theme.
   if (aWidgetType == NS_THEME_BUTTON)
     return flags;
-#endif    
+#endif
 #if defined(XP_MACOSX) || defined(XP_WIN)
   nsIDocument* doc = aFrame->GetContent()->OwnerDoc();
   nsPIDOMWindowOuter* window = doc->GetWindow();
   if (window && !window->ShouldShowFocusRing())
     flags &= ~NS_EVENT_STATE_FOCUS;
 #endif
-  
+
   return flags;
 }
 
@@ -500,9 +500,9 @@ nsNativeTheme::IsHorizontal(nsIFrame* aFrame)
 {
   if (!aFrame)
     return false;
-    
+
   return !aFrame->GetContent()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::orient,
-                                            nsGkAtoms::vertical, 
+                                            nsGkAtoms::vertical,
                                             eCaseMatters);
 }
 
@@ -799,6 +799,8 @@ nsNativeTheme::IsWidgetScrollbarPart(uint8_t aWidgetType)
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
     case NS_THEME_SCROLLBARTHUMB_VERTICAL:
     case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
+    case NS_THEME_SCROLLBARTRACK_HORIZONTAL:
+    case NS_THEME_SCROLLBARTRACK_VERTICAL:
     case NS_THEME_SCROLLCORNER:
       return true;
     default:
