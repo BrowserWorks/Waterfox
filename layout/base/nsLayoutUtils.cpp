@@ -2059,7 +2059,7 @@ nsLayoutUtils::GetNearestScrollableFrameForDirection(nsIFrame* aFrame,
   for (nsIFrame* f = aFrame; f; f = nsLayoutUtils::GetCrossDocParentFrame(f)) {
     nsIScrollableFrame* scrollableFrame = do_QueryFrame(f);
     if (scrollableFrame) {
-      ScrollbarStyles ss = scrollableFrame->GetScrollbarStyles();
+      ScrollStyles ss = scrollableFrame->GetScrollStyles();
       uint32_t directions = scrollableFrame->GetPerceivedScrollingDirections();
       if (aDirection == eVertical ?
           (ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN &&
@@ -2086,7 +2086,7 @@ nsLayoutUtils::GetNearestScrollableFrame(nsIFrame* aFrame, uint32_t aFlags)
           return scrollableFrame;
         }
       } else {
-        ScrollbarStyles ss = scrollableFrame->GetScrollbarStyles();
+        ScrollStyles ss = scrollableFrame->GetScrollStyles();
         if ((aFlags & SCROLLABLE_INCLUDE_HIDDEN) ||
             ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN ||
             ss.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN) {
@@ -8345,11 +8345,11 @@ nsLayoutUtils::CalculateScrollableRectForFrame(nsIScrollableFrame* aScrollableFr
     contentBounds = aScrollableFrame->GetScrollRange();
 
     nsPoint scrollPosition = aScrollableFrame->GetScrollPosition();
-    if (aScrollableFrame->GetScrollbarStyles().mVertical == NS_STYLE_OVERFLOW_HIDDEN) {
+    if (aScrollableFrame->GetScrollStyles().mVertical == NS_STYLE_OVERFLOW_HIDDEN) {
       contentBounds.y = scrollPosition.y;
       contentBounds.height = 0;
     }
-    if (aScrollableFrame->GetScrollbarStyles().mHorizontal == NS_STYLE_OVERFLOW_HIDDEN) {
+    if (aScrollableFrame->GetScrollStyles().mHorizontal == NS_STYLE_OVERFLOW_HIDDEN) {
       contentBounds.x = scrollPosition.x;
       contentBounds.width = 0;
     }
@@ -9455,4 +9455,50 @@ nsLayoutUtils::ComputeGeometryBox(nsIFrame* aFrame,
              : ComputeHTMLReferenceRect(aFrame, aGeometryBox);
 
   return r;
+}
+
+/* static */ nsStyleContext*
+nsLayoutUtils::StyleForScrollbar(nsIFrame* aScrollbarPart)
+{
+  // Get the closest content node which is not an anonymous scrollbar
+  // part. It should be the originating element of the scrollbar part.
+  nsIContent* content = aScrollbarPart->GetContent();
+  // Note that the content may be a normal element with scrollbar part
+  // value specified for its -moz-appearance, so don't rely on it being
+  // a native anonymous. Also note that we have to check the node name
+  // because anonymous element like generated content may originate a
+  // scrollbar.
+  MOZ_ASSERT(content, "No content for the scrollbar part?");
+  while (content && content->IsInNativeAnonymousSubtree() &&
+         content->IsAnyOfXULElements(nsGkAtoms::scrollbar,
+                                     nsGkAtoms::scrollbarbutton,
+                                     nsGkAtoms::scrollcorner,
+                                     nsGkAtoms::slider,
+                                     nsGkAtoms::thumb)) {
+    content = content->GetParent();
+  }
+  MOZ_ASSERT(content, "Native anonymous element with no originating node?");
+  // Use the style from the primary frame of the content.
+  // Note: it is important to use the primary frame rather than an
+  // ancestor frame of the scrollbar part for the correct handling of
+  // viewport scrollbar. The content of the scroll frame of the viewport
+  // is the root element, but its style inherits from the viewport.
+  // Since we need to use the style of root element for the viewport
+  // scrollbar, we have to get the style from the primary frame.
+  if (nsIFrame* primaryFrame = content->GetPrimaryFrame()) {
+    return primaryFrame->StyleContext();
+  }
+  // If the element doesn't have primary frame, get the computed style
+  // from the element directly. This can happen on viewport, because
+  // the scrollbar of viewport may be shown when the root element has
+  // > display: none; overflow: scroll;
+  nsPresContext* pc = aScrollbarPart->PresContext();
+  MOZ_ASSERT(content == pc->Document()->GetRootElement(),
+             "Root element is the only case for this fallback "
+             "path to be triggered");
+  RefPtr<nsStyleContext> style =
+    pc->StyleSet()->AsGecko()->ResolveStyleFor(content->AsElement(), nullptr);
+  // Dropping the strong reference is fine because the style should be
+  // held strongly by the element.
+  return style.get();
 }

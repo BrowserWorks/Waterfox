@@ -22,6 +22,7 @@ class nsDeviceContext;
 class nsIFrame;
 class nsIAtom;
 class nsIWidget;
+class nsStyleContext;
 
 // IID for the nsITheme interface
 // {7329f760-08cb-450f-8225-dae729096dec}
@@ -64,7 +65,7 @@ public:
   /**
    * Get the computed CSS border for the widget, in pixels.
    */
-  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext, 
+  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext,
                              nsIFrame* aFrame,
                              uint8_t aWidgetType,
                              nsIntMargin* aResult)=0;

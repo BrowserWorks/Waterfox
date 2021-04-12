@@ -37,7 +37,7 @@ public:
                                   const nsRect& aRect,
                                   const nsRect& aDirtyRect) override;
 
-  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext, 
+  NS_IMETHOD GetWidgetBorder(nsDeviceContext* aContext,
                              nsIFrame* aFrame,
                              uint8_t aWidgetType,
                              nsIntMargin* aResult) override;
@@ -113,6 +113,12 @@ protected:
   bool ClassicThemeSupportsWidget(nsIFrame* aFrame, uint8_t aWidgetType);
   void DrawCheckedRect(HDC hdc, const RECT& rc, int32_t fore, int32_t back,
                        HBRUSH defaultBack);
+  nsresult DrawCustomScrollbarPart(gfxContext* aContext,
+                                   nsIFrame* aFrame,
+                                   nsStyleContext* aStyle,
+                                   uint8_t aWidgetType,
+                                   const nsRect& aRect,
+                                   const nsRect& aClipRect);
   uint32_t GetWidgetNativeDrawingFlags(uint8_t aWidgetType);
   int32_t StandardGetState(nsIFrame* aFrame, uint8_t aWidgetType, bool wantFocused);
   bool IsMenuActive(nsIFrame* aFrame, uint8_t aWidgetType);

@@ -526,6 +526,7 @@ private:
   already_AddRefed<CSSValue> DoGetScrollSnapPointsY();
   already_AddRefed<CSSValue> DoGetScrollSnapDestination();
   already_AddRefed<CSSValue> DoGetScrollSnapCoordinate();
+  already_AddRefed<CSSValue> DoGetScrollbarColor();
   already_AddRefed<CSSValue> DoGetShapeOutside();
 
   /* User interface properties */
@@ -533,6 +534,7 @@ private:
   already_AddRefed<CSSValue> DoGetCursor();
   already_AddRefed<CSSValue> DoGetForceBrokenImageIcon();
   already_AddRefed<CSSValue> DoGetIMEMode();
+  already_AddRefed<CSSValue> DoGetScrollbarWidth();
   already_AddRefed<CSSValue> DoGetUserFocus();
   already_AddRefed<CSSValue> DoGetUserInput();
   already_AddRefed<CSSValue> DoGetUserModify();

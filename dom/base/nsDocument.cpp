@@ -10809,7 +10809,7 @@ UpdateViewportScrollbarOverrideForFullscreen(nsIDocument* aDoc)
 {
   if (nsIPresShell* presShell = aDoc->GetShell()) {
     if (nsPresContext* presContext = presShell->GetPresContext()) {
-      presContext->UpdateViewportScrollbarStylesOverride();
+      presContext->UpdateViewportScrollStylesOverride();
     }
   }
 }

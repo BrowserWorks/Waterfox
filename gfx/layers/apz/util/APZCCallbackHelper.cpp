@@ -98,10 +98,10 @@ ScrollFrameTo(nsIScrollableFrame* aFrame, const FrameMetrics& aMetrics, bool& aS
   // (by design). Note also that when we run into this case, even if both axes
   // have overflow:hidden, we want to set aSuccessOut to true, so that the displayport
   // follows the async scroll position rather than the gecko scroll position.
-  if (aFrame->GetScrollbarStyles().mVertical == NS_STYLE_OVERFLOW_HIDDEN) {
+  if (aFrame->GetScrollStyles().mVertical == NS_STYLE_OVERFLOW_HIDDEN) {
     targetScrollPosition.y = geckoScrollPosition.y;
   }
-  if (aFrame->GetScrollbarStyles().mHorizontal == NS_STYLE_OVERFLOW_HIDDEN) {
+  if (aFrame->GetScrollStyles().mHorizontal == NS_STYLE_OVERFLOW_HIDDEN) {
     targetScrollPosition.x = geckoScrollPosition.x;
   }
 
