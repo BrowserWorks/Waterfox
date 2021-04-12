@@ -7,6 +7,10 @@ if CONFIG['CC_TYPE'] in ('clang', 'clang-cl'):
         '-Wno-range-loop-construct',
     ]
 
+if CONFIG['CC_TYPE'] in ('gcc'):
+    CXXFLAGS += [
+        '-std=c++14',
+    ]
 
 if CONFIG['INTEL_ARCHITECTURE']:
     CXXFLAGS += CONFIG['SSE2_FLAGS']
