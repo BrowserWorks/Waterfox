@@ -36,9 +36,14 @@
     "favicon_url": "favicons/bbc-uk.ico"
   },
   {
+<<<<<<< local
     "title": "bing",
     "url": "https://www.bing.com/",
     "image_url": "images/bing-com@2x.png",
+=======
+    "domains": ["bing.com"],
+    "image_url": "images/bing-com@2x.svg",
+>>>>>>> graft
     "favicon_url": "favicons/bing-com.ico"
   },
   {
