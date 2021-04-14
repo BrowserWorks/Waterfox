@@ -1620,9 +1620,13 @@ SearchService.prototype = {
 
     const ptag = Services.prefs.getCharPref("browser.search.ptag", "");
       if (ptag && engine.name == "Bing") {
-        const regex = /(.*PTAG=)/g;
-        const searchURL = engine.__searchForm.match(regex)[0];
-        engine.__searchForm = searchURL + ptag;
+        const mainURL = "https://www.bing.com/search?q={searchTerms}"
+        engine.__searchForm = mainURL + "&PC=IS46&PTAG=" + ptag;
+        engine._urls[0].params[6] = {
+          name: engine._urls[0].params[6].name,
+          value: "IS46",
+          purpose: undefined
+        }
         engine._urls[0].params[7] = {
           name: engine._urls[0].params[7].name,
           value: ptag,
