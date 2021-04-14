@@ -408,7 +408,7 @@
   skin/classic/browser/install-ssb.svg                         (../shared/install-ssb.svg)
   skin/classic/browser/critical.svg                            (../shared/icons/critical.svg)
   skin/classic/browser/webRTC-indicator.css                    (../shared/webRTC-indicator.css)
-  skin/classic/browser/abyss/invertedTabShape.css               (../shared/floe/invertedTabShape.css)
+  skin/classic/browser/abyss/invertedTabShape.css               (../shared/abyss/invertedTabShape.css)
   skin/classic/browser/abyss/userChrome.css                     (../shared/abyss/userChrome.css)
   skin/classic/browser/abyss/userContent.css                    (../shared/abyss/userContent.css)
   skin/classic/browser/floe/invertedTabShape.css               (../shared/floe/invertedTabShape.css)
