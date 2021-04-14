@@ -13,6 +13,7 @@ BROWSER_CHROME_MANIFESTS += [
     'browser/disable_fxscreenshots/browser.ini',
     'browser/hardware_acceleration/browser.ini',
     'browser/managedbookmarks/browser.ini',
+    "browser/show_home_button/browser.ini",
 ]
 
 XPCSHELL_TESTS_MANIFESTS += ['xpcshell/xpcshell.ini']
