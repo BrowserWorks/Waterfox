@@ -205,8 +205,8 @@ jobs:
           - mozilla-release
           - mozilla-esr78
       when:
-          - {weekday: 'Monday', hour: 10, minute: 0}
-          - {weekday: 'Thursday', hour: 10, minute: 0}
+          - {weekday: 'Monday', hour: 8, minute: 0}
+          - {weekday: 'Thursday', hour: 8, minute: 0}
 
     - name: python-dependency-update
       job:
