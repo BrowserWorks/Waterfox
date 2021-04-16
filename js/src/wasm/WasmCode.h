@@ -295,6 +295,16 @@ class FuncImport {
   uint32_t interpExitCodeOffset() const { return pod.interpExitCodeOffset_; }
   uint32_t jitExitCodeOffset() const { return pod.jitExitCodeOffset_; }
 
+  bool canHaveJitExit() const {
+    return
+#ifdef ENABLE_WASM_SIMD
+        !funcType_.hasV128ArgOrRet() &&
+#endif
+        !funcType_.temporarilyUnsupportedReftypeForExit() &&
+        !funcType_.temporarilyUnsupportedResultCountForJitExit() &&
+        JitOptions.enableWasmJitEntry;
+  }
+
   bool clone(const FuncImport& src) {
     mozilla::PodAssign(&pod, &src.pod);
     return funcType_.clone(src.funcType_);
