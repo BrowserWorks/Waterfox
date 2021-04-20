@@ -1000,11 +1000,12 @@ public:
     }
   }
 
-protected:
-  void AssertValid()
-  {
-    MOZ_ASSERT(!(mClassFlags & ClassFlags::NULL_TERMINATED) ||
-               (mDataFlags & DataFlags::TERMINATED),
+ protected:
+  void AssertValid() {
+    MOZ_DIAGNOSTIC_ASSERT(!(this->mClassFlags & ClassFlags::INVALID_MASK));
+    MOZ_DIAGNOSTIC_ASSERT(!(this->mDataFlags & DataFlags::INVALID_MASK));
+    MOZ_ASSERT(!(this->mClassFlags & ClassFlags::NULL_TERMINATED) ||
+                   (this->mDataFlags & DataFlags::TERMINATED),
                "String classes whose static type guarantees a null-terminated "
                "buffer must not be assigned a non-null-terminated buffer.");
   }
