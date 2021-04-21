@@ -27,61 +27,64 @@ TraceLocals(BaselineFrame* frame, JSTracer* trc, unsigned start, unsigned end)
     }
 }
 
-void
-BaselineFrame::trace(JSTracer* trc, const JSJitFrameIter& frameIterator)
-{
-    replaceCalleeToken(TraceCalleeToken(trc, calleeToken()));
+void BaselineFrame::trace(JSTracer* trc, const JSJitFrameIter& frameIterator) {
+  replaceCalleeToken(TraceCalleeToken(trc, calleeToken()));
 
-    // Trace |this|, actual and formal args.
-    if (isFunctionFrame()) {
-        TraceRoot(trc, &thisArgument(), "baseline-this");
+  // Trace |this|, actual and formal args.
+  if (isFunctionFrame()) {
+    TraceRoot(trc, &thisArgument(), "baseline-this");
 
-        unsigned numArgs = js::Max(numActualArgs(), numFormalArgs());
-        TraceRootRange(trc, numArgs + isConstructing(), argv(), "baseline-args");
-    }
+    unsigned numArgs = std::max(numActualArgs(), numFormalArgs());
+    TraceRootRange(trc, numArgs + isConstructing(), argv(), "baseline-args");
+  }
 
-    // Trace environment chain, if it exists.
-    if (envChain_)
-        TraceRoot(trc, &envChain_, "baseline-envchain");
+  // Trace environment chain, if it exists.
+  if (envChain_) {
+    TraceRoot(trc, &envChain_, "baseline-envchain");
+  }
 
-    // Trace return value.
-    if (hasReturnValue())
-        TraceRoot(trc, returnValue().address(), "baseline-rval");
+  // Trace return value.
+  if (hasReturnValue()) {
+    TraceRoot(trc, returnValue().address(), "baseline-rval");
+  }
 
-    if (isEvalFrame() && script()->isDirectEvalInFunction())
-        TraceRoot(trc, evalNewTargetAddress(), "baseline-evalNewTarget");
+  if (isEvalFrame() && script()->isDirectEvalInFunction()) {
+    TraceRoot(trc, evalNewTargetAddress(), "baseline-evalNewTarget");
+  }
 
-    if (hasArgsObj())
-        TraceRoot(trc, &argsObj_, "baseline-args-obj");
+  if (hasArgsObj()) {
+    TraceRoot(trc, &argsObj_, "baseline-args-obj");
+  }
 
-    // Trace locals and stack values.
-    JSScript* script = this->script();
-    size_t nfixed = script->nfixed();
-    jsbytecode* pc;
-    frameIterator.baselineScriptAndPc(nullptr, &pc);
-    size_t nlivefixed = script->calculateLiveFixed(pc);
+  // Trace locals and stack values.
+  JSScript* script = this->script();
+  size_t nfixed = script->nfixed();
+  jsbytecode* pc;
+  frameIterator.baselineScriptAndPc(nullptr, &pc);
+  size_t nlivefixed = script->calculateLiveFixed(pc);
 
-    // NB: It is possible that numValueSlots() could be zero, even if nfixed is
-    // nonzero.  This is the case if the function has an early stack check.
-    if (numValueSlots() == 0)
-        return;
-
+  // NB: It is possible that numValueSlots could be zero, even if nfixed is
+  // nonzero.  This is the case when we're initializing the environment chain or
+  // failed the prologue stack check.
+  if (numValueSlots() > 0) {
     MOZ_ASSERT(nfixed <= numValueSlots());
 
     if (nfixed == nlivefixed) {
-        // All locals are live.
-        TraceLocals(this, trc, 0, numValueSlots());
+      // All locals are live.
+      TraceLocals(this, trc, 0, numValueSlots());
     } else {
-        // Trace operand stack.
-        TraceLocals(this, trc, nfixed, numValueSlots());
+      // Trace operand stack.
+      TraceLocals(this, trc, nfixed, numValueSlots());
 
-        // Clear dead block-scoped locals.
-        while (nfixed > nlivefixed)
-            unaliasedLocal(--nfixed).setUndefined();
+      // Clear dead block-scoped locals.
+      while (nfixed > nlivefixed) {
+        unaliasedLocal(--nfixed).setUndefined();
+      }
 
-        // Trace live locals.
-        TraceLocals(this, trc, 0, nlivefixed);
+      // Trace live locals.
+      TraceLocals(this, trc, 0, nlivefixed);
     }
+  }
 
     if (script->compartment()->debugEnvs)
         script->compartment()->debugEnvs->traceLiveFrame(trc, this);
