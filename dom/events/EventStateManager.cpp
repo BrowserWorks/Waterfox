@@ -2518,7 +2518,7 @@ EventStateManager::ComputeScrollTarget(nsIFrame* aTargetFrame,
       return frameToScroll;
     }
 
-    ScrollStyles ss = scrollableFrame->GetScrollStyles();
+    ScrollbarStyles ss = scrollableFrame->GetScrollbarStyles();
     bool hiddenForV = (NS_STYLE_OVERFLOW_HIDDEN == ss.mVertical);
     bool hiddenForH = (NS_STYLE_OVERFLOW_HIDDEN == ss.mHorizontal);
     if ((hiddenForV && hiddenForH) ||
@@ -2611,7 +2611,7 @@ EventStateManager::DoScrollText(nsIScrollableFrame* aScrollableFrame,
       ComputeScrollAmountForDefaultAction(aEvent, scrollAmountInDevPixels);
 
   // Don't scroll around the axis whose overflow style is hidden.
-  ScrollStyles overflowStyle = aScrollableFrame->GetScrollStyles();
+  ScrollbarStyles overflowStyle = aScrollableFrame->GetScrollbarStyles();
   if (overflowStyle.mHorizontal == NS_STYLE_OVERFLOW_HIDDEN) {
     actualDevPixelScrollAmount.x = 0;
   }

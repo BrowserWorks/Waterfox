@@ -802,7 +802,6 @@ const KTableEntry nsCSSProps::kAppearanceKTable[] = {
   { eCSSKeyword_scrollbartrack_vertical,      NS_THEME_SCROLLBARTRACK_VERTICAL },
   { eCSSKeyword_scrollbarthumb_horizontal,    NS_THEME_SCROLLBARTHUMB_HORIZONTAL },
   { eCSSKeyword_scrollbarthumb_vertical,      NS_THEME_SCROLLBARTHUMB_VERTICAL },
-  { eCSSKeyword_scrollcorner,           NS_THEME_SCROLLCORNER },
   { eCSSKeyword_textfield,              NS_THEME_TEXTFIELD },
   { eCSSKeyword_textfield_multiline,    NS_THEME_TEXTFIELD_MULTILINE },
   { eCSSKeyword_caret,                  NS_THEME_CARET },
@@ -1956,12 +1955,6 @@ const KTableEntry nsCSSProps::kScrollSnapTypeKTable[] = {
   { eCSSKeyword_mandatory, NS_STYLE_SCROLL_SNAP_TYPE_MANDATORY },
   { eCSSKeyword_proximity, NS_STYLE_SCROLL_SNAP_TYPE_PROXIMITY },
   { eCSSKeyword_UNKNOWN,   -1 }
-};
-
-const KTableEntry nsCSSProps::kScrollbarWidthKTable[] = {
-  { eCSSKeyword_auto, StyleScrollbarWidth::Auto },
-  { eCSSKeyword_thin, StyleScrollbarWidth::Thin },
-  { eCSSKeyword_none, StyleScrollbarWidth::None }
 };
 
 const KTableEntry nsCSSProps::kStackSizingKTable[] = {

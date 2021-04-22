@@ -7,7 +7,6 @@
 // code duplication.
 
 #include "nsAlgorithm.h"
-#include "nsColor.h"
 #include "nsIAtom.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
@@ -21,7 +20,6 @@
 class nsIFrame;
 class nsIPresShell;
 class nsPresContext;
-class nsStyleContext;
 
 namespace mozilla {
 class EventStates;
@@ -183,13 +181,6 @@ class nsNativeTheme : public nsITimerCallback, public nsINamed
 
   // scrollbar
   bool IsDarkBackground(nsIFrame* aFrame);
-  // custom scrollbar
-  typedef nscolor (*AutoColorGetter)(nsStyleContext*);
-  bool IsWidgetScrollbarPart(uint8_t aWidgetType);
-  nscolor GetScrollbarFaceColor(nsStyleContext* aStyle,
-                                AutoColorGetter aAutoGetter);
-  nscolor GetScrollbarTrackColor(nsStyleContext* aStyle,
-                                 AutoColorGetter aAutoGetter);
 
  private:
   uint32_t mAnimatedContentTimeout;

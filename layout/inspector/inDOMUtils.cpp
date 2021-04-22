@@ -773,7 +773,6 @@ PropertySupportsVariant(nsCSSPropertyID aPropertyID, uint32_t aVariant)
       case eCSSProperty__moz_border_left_colors:
       case eCSSProperty__moz_border_right_colors:
       case eCSSProperty__moz_border_top_colors:
-      case eCSSProperty_scrollbar_color:
         supported = VARIANT_COLOR;
         break;
 

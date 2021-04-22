@@ -1209,7 +1209,7 @@ void
 nsComputedDOMStyle::SetValueFromComplexColor(nsROCSSPrimitiveValue* aValue,
                                              const StyleComplexColor& aColor)
 {
-  SetToRGBAColor(aValue, aColor.CalcColor(mStyleContext));
+  SetToRGBAColor(aValue, StyleColor()->CalcComplexColor(aColor));
 }
 
 already_AddRefed<CSSValue>
@@ -3510,16 +3510,6 @@ nsComputedDOMStyle::DoGetScrollSnapTypeY()
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetScrollbarWidth()
-{
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleUserInterface()->mScrollbarWidth,
-                                   nsCSSProps::kScrollbarWidthKTable));
-  return val.forget();
-}
-
-already_AddRefed<CSSValue>
 nsComputedDOMStyle::GetScrollSnapPoints(const nsStyleCoord& aCoord)
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
@@ -3575,31 +3565,6 @@ nsComputedDOMStyle::DoGetScrollSnapCoordinate()
     }
     return valueList.forget();
   }
-}
-
-already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetScrollbarColor()
-{
-  const nsStyleUserInterface* ui = StyleUserInterface();
-  MOZ_ASSERT(ui->mScrollbarFaceColor.mIsAuto ==
-             ui->mScrollbarTrackColor.mIsAuto,
-             "Whether the two colors are auto should be identical");
-
-  if (ui->mScrollbarFaceColor.mIsAuto) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    val->SetIdent(eCSSKeyword_auto);
-    return val.forget();
-  }
-
-  RefPtr<nsDOMCSSValueList> list = GetROCSSValueList(false);
-  auto put = [this, &list](const StyleComplexColor& color) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    SetValueFromComplexColor(val, color);
-    list->AppendCSSValue(val.forget());
-  };
-  put(ui->mScrollbarFaceColor);
-  put(ui->mScrollbarTrackColor);
-  return list.forget();
 }
 
 already_AddRefed<CSSValue>

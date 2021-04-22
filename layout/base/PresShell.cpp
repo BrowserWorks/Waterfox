@@ -3400,7 +3400,7 @@ static void ScrollToShowRect(nsIScrollableFrame*      aFrameAsScrollable,
       aHorizontal.mWhenToScroll == nsIPresShell::SCROLL_IF_NOT_VISIBLE) {
     lineSize = aFrameAsScrollable->GetLineScrollAmount();
   }
-  ScrollStyles ss = aFrameAsScrollable->GetScrollStyles();
+  ScrollbarStyles ss = aFrameAsScrollable->GetScrollbarStyles();
   nsRect allowedRange(scrollPt, nsSize(0, 0));
   bool needToScroll = false;
   uint32_t directions = aFrameAsScrollable->GetPerceivedScrollingDirections();
@@ -3457,7 +3457,7 @@ static void ScrollToShowRect(nsIScrollableFrame*      aFrameAsScrollable,
   // a current smooth scroll operation.
   if (needToScroll) {
     nsIScrollableFrame::ScrollMode scrollMode = nsIScrollableFrame::INSTANT;
-    bool autoBehaviorIsSmooth = (aFrameAsScrollable->GetScrollStyles().mScrollBehavior
+    bool autoBehaviorIsSmooth = (aFrameAsScrollable->GetScrollbarStyles().mScrollBehavior
                                   == NS_STYLE_SCROLL_BEHAVIOR_SMOOTH);
     bool smoothScroll = (aFlags & nsIPresShell::SCROLL_SMOOTH) ||
                           ((aFlags & nsIPresShell::SCROLL_SMOOTH_AUTO) && autoBehaviorIsSmooth);

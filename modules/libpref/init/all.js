@@ -2880,16 +2880,6 @@ pref("layout.css.isolation.enabled", true);
 // Is support for CSS Filters enabled?
 pref("layout.css.filters.enabled", true);
 
-// Is support for scrollbar-color property enabled?
-#ifndef XP_MACOSX
-pref("layout.css.scrollbar-color.enabled", true);
-#else
-pref("layout.css.scrollbar-color.enabled", false);
-#endif
-
-// Is support for scrollbar-width property enabled?
-pref("layout.css.scrollbar-width.enabled", true);
-
 // Set the threshold distance in CSS pixels below which scrolling will snap to
 // an edge, when scroll snapping is set to "proximity".
 pref("layout.css.scroll-snap.proximity-threshold", 200);

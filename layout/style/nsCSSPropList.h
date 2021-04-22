@@ -3743,28 +3743,6 @@ CSS_PROP_DISPLAY(
     kScrollSnapTypeKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
-CSS_PROP_USERINTERFACE(
-    scrollbar-color,
-    scrollbar_color,
-    ScrollbarColor,
-    CSS_PROPERTY_PARSE_FUNCTION |
-        CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
-        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
-    "layout.css.scrollbar-color.enabled",
-    VARIANT_AUTO | VARIANT_HC,
-    nullptr,
-    CSS_PROP_NO_OFFSET,
-    eStyleAnimType_ComplexColor)
-CSS_PROP_USERINTERFACE(
-    scrollbar-width,
-    scrollbar_width,
-    ScrollbarWidth,
-    CSS_PROPERTY_PARSE_VALUE,
-    "layout.css.scrollbar-width.enabled",
-    VARIANT_HK,
-    kScrollbarWidthKTable,
-    CSS_PROP_NO_OFFSET,
-    eStyleAnimType_Discrete)
 CSS_PROP_DISPLAY(
     shape-outside,
     shape_outside,

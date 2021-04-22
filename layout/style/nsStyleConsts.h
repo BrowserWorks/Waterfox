@@ -144,13 +144,6 @@ enum class StyleHyphens : uint8_t {
   Auto,
 };
 
-// scrollbar-width
-enum class StyleScrollbarWidth : uint8_t {
-  Auto,
-  Thin,
-  None,
-};
-
 // <shape-radius> for <basic-shape>
 enum class StyleShapeRadius : uint8_t {
   ClosestSide,

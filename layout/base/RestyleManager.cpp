@@ -6,12 +6,10 @@
 
 #include "mozilla/RestyleManager.h"
 #include "mozilla/RestyleManagerInlines.h"
-#include "mozilla/dom/HTMLBodyElement.h"
 
 #include "Layers.h"
 #include "LayerAnimationInfo.h" // For LayerAnimationInfo::sRecords
 #include "mozilla/StyleSetHandleInlines.h"
-#include "nsIDocumentInlines.h"
 #include "nsIFrame.h"
 #include "nsIPresShellInlines.h"
 
@@ -459,7 +457,7 @@ RestyleManager::ChangeHintToString(nsChangeHint aHint)
     "NeutralChange", "InvalidateRenderingObservers",
     "ReflowChangesSizeOrPosition", "UpdateComputedBSize",
     "UpdateUsesOpacity", "UpdateBackgroundPosition",
-    "AddOrRemoveTransform", "ScrollbarChange",
+    "AddOrRemoveTransform", "CSSOverflowChange",
     "UpdateWidgetProperties"
   };
   static_assert(nsChangeHint_AllHints == (1 << ArrayLength(names)) - 1,
@@ -1150,42 +1148,6 @@ SyncViewsAndInvalidateDescendants(nsIFrame* aFrame, nsChangeHint aChange)
   }
 }
 
-static bool
-IsPrimaryFrameOfRootOrBodyElement(nsIFrame* aFrame)
-{
-  nsIContent* content = aFrame->GetContent();
-  if (!content) {
-    return false;
-  }
-
-  nsIDocument* document = content->OwnerDoc();
-  Element* root = document->GetRootElement();
-  if (!root) {
-    return false;
-  }
-  nsIFrame* rootFrame = root->GetPrimaryFrame();
-  if (!rootFrame) {
-    return false;
-  }
-  if (aFrame == rootFrame) {
-    return true;
-  }
-
-  Element* body = document->GetBodyElement();
-  if (!body) {
-    return false;
-  }
-  nsIFrame* bodyFrame = body->GetPrimaryFrame();
-  if (!bodyFrame) {
-    return false;
-  }
-  if (aFrame == bodyFrame) {
-    return true;
-  }
-
-  return false;
-}
-
 static void
 ApplyRenderingChangeToTree(nsIPresShell* aPresShell,
                            nsIFrame* aFrame,
@@ -1213,15 +1175,17 @@ ApplyRenderingChangeToTree(nsIPresShell* aPresShell,
   gInApplyRenderingChangeToTree = true;
 #endif
   if (aChange & nsChangeHint_RepaintFrame) {
-    // If the frame is the primary frame of either the body element or
-    // the html element, we propagate the repaint change hint to the
-    // viewport. This is necessary for background and scrollbar colors
-    // propagation.
-    if (IsPrimaryFrameOfRootOrBodyElement(aFrame)) {
-      nsIFrame* rootFrame = aFrame->
-        PresContext()->PresShell()->FrameConstructor()->GetRootFrame();
-      MOZ_ASSERT(rootFrame, "No root frame?");
-      DoApplyRenderingChangeToTree(rootFrame, nsChangeHint_RepaintFrame);
+    // If the frame's background is propagated to an ancestor, walk up to
+    // that ancestor and apply the RepaintFrame change hint to it.
+    nsStyleContext* bgSC;
+    nsIFrame* propagatedFrame = aFrame;
+    while (!nsCSSRendering::FindBackground(propagatedFrame, &bgSC)) {
+      propagatedFrame = propagatedFrame->GetParent();
+      NS_ASSERTION(aFrame, "root frame must paint");
+    }
+
+    if (propagatedFrame != aFrame) {
+      DoApplyRenderingChangeToTree(propagatedFrame, nsChangeHint_RepaintFrame);
       aChange &= ~nsChangeHint_RepaintFrame;
       if (!aChange) {
         return;
@@ -1357,11 +1321,11 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
   nsPresContext* presContext = PresContext();
   nsCSSFrameConstructor* frameConstructor = presContext->FrameConstructor();
 
-  // Handle nsChangeHint_ScrollbarChange, by either updating the
+  // Handle nsChangeHint_CSSOverflowChange, by either updating the
   // scrollbars on the viewport, or upgrading the change hint to frame-reconstruct.
   for (nsStyleChangeData& data : aChangeList) {
-    if (data.mHint & nsChangeHint_ScrollbarChange) {
-      data.mHint &= ~nsChangeHint_ScrollbarChange;
+    if (data.mHint & nsChangeHint_CSSOverflowChange) {
+      data.mHint &= ~nsChangeHint_CSSOverflowChange;
       bool doReconstruct = true; // assume the worst
 
       // Only bother with this if we're html/body, since:
@@ -1383,9 +1347,9 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
         // to reconstruct - we can just reflow, because no scrollframe is being
         // added/removed.
         nsIContent* prevOverrideNode =
-          presContext->GetViewportScrollStylesOverrideNode();
+          presContext->GetViewportScrollbarStylesOverrideNode();
         nsIContent* newOverrideNode =
-          presContext->UpdateViewportScrollStylesOverride();
+          presContext->UpdateViewportScrollbarStylesOverride();
 
         if (data.mContent == prevOverrideNode ||
             data.mContent == newOverrideNode) {

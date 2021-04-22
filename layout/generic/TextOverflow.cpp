@@ -305,8 +305,8 @@ TextOverflow::TextOverflow(nsDisplayListBuilder* aBuilder,
   mCanHaveInlineAxisScrollbar = false;
   if (mScrollableFrame) {
     auto scrollbarStyle = mBlockWM.IsVertical() ?
-      mScrollableFrame->GetScrollStyles().mVertical :
-      mScrollableFrame->GetScrollStyles().mHorizontal;
+      mScrollableFrame->GetScrollbarStyles().mVertical :
+      mScrollableFrame->GetScrollbarStyles().mHorizontal;
     mCanHaveInlineAxisScrollbar = scrollbarStyle != NS_STYLE_OVERFLOW_HIDDEN;
     if (!mAdjustForPixelSnapping) {
       // Scrolling to the end position can leave some text still overflowing due

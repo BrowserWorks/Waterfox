@@ -3333,7 +3333,8 @@ nsTreeBodyFrame::PaintCell(int32_t               aRowIndex,
 
       const nsStyleBorder* borderStyle = lineContext->StyleBorder();
       // Resolve currentcolor values against the treeline context
-      nscolor color = borderStyle->mBorderLeftColor.CalcColor(lineContext);
+      nscolor color = lineContext->StyleColor()->
+        CalcComplexColor(borderStyle->mBorderLeftColor);
       ColorPattern colorPatt(ToDeviceColor(color));
 
       uint8_t style = borderStyle->GetBorderStyle(eSideLeft);
