@@ -56,7 +56,7 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
   if (!aFrame)
     return EventStates();
 
-  bool isXULCheckboxRadio =
+  bool isXULCheckboxRadio = 
     (aWidgetType == NS_THEME_CHECKBOX ||
      aWidgetType == NS_THEME_RADIO) &&
     aFrame->GetContent()->IsXULElement();
@@ -93,7 +93,7 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
       flags |= NS_EVENT_STATE_DISABLED;
     }
   }
-
+  
   if (isXULCheckboxRadio && aWidgetType == NS_THEME_RADIO) {
     if (IsFocused(aFrame))
       flags |= NS_EVENT_STATE_FOCUS;
@@ -116,14 +116,14 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
   // On Windows, focused buttons are always drawn as such by the native theme.
   if (aWidgetType == NS_THEME_BUTTON)
     return flags;
-#endif
+#endif    
 #if defined(XP_MACOSX) || defined(XP_WIN)
   nsIDocument* doc = aFrame->GetContent()->OwnerDoc();
   nsPIDOMWindowOuter* window = doc->GetWindow();
   if (window && !window->ShouldShowFocusRing())
     flags &= ~NS_EVENT_STATE_FOCUS;
 #endif
-
+  
   return flags;
 }
 
@@ -500,9 +500,9 @@ nsNativeTheme::IsHorizontal(nsIFrame* aFrame)
 {
   if (!aFrame)
     return false;
-
+    
   return !aFrame->GetContent()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::orient,
-                                            nsGkAtoms::vertical,
+                                            nsGkAtoms::vertical, 
                                             eCaseMatters);
 }
 
@@ -783,74 +783,4 @@ nsNativeTheme::IsDarkBackground(nsIFrame* aFrame)
            NS_GET_R(bgColor) + NS_GET_G(bgColor) + NS_GET_B(bgColor) < 384;
   }
   return false;
-}
-
-bool
-nsNativeTheme::IsWidgetScrollbarPart(uint8_t aWidgetType)
-{
-  switch (aWidgetType) {
-    case NS_THEME_SCROLLBAR:
-    case NS_THEME_SCROLLBAR_SMALL:
-    case NS_THEME_SCROLLBAR_VERTICAL:
-    case NS_THEME_SCROLLBAR_HORIZONTAL:
-    case NS_THEME_SCROLLBARBUTTON_UP:
-    case NS_THEME_SCROLLBARBUTTON_DOWN:
-    case NS_THEME_SCROLLBARBUTTON_LEFT:
-    case NS_THEME_SCROLLBARBUTTON_RIGHT:
-    case NS_THEME_SCROLLBARTHUMB_VERTICAL:
-    case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
-    case NS_THEME_SCROLLBARTRACK_HORIZONTAL:
-    case NS_THEME_SCROLLBARTRACK_VERTICAL:
-    case NS_THEME_SCROLLCORNER:
-      return true;
-    default:
-      return false;
-  }
-}
-
-static nscolor
-GetOpaqueBackgroundColor(nsStyleContext* aStyle)
-{
-  nscolor color = aStyle->StyleBackground()->BackgroundColor(aStyle);
-  if (NS_GET_A(color) == 255) {
-    return color;
-  }
-  // Compose white background with the background color.
-  return NS_ComposeColors(NS_RGB(255, 255, 255), color);
-}
-
-nscolor
-nsNativeTheme::GetScrollbarFaceColor(nsStyleContext* aStyle,
-                                     AutoColorGetter aAutoGetter)
-{
-  StyleComplexColor complexColor =
-    aStyle->StyleUserInterface()->mScrollbarFaceColor;
-  if (complexColor.mIsAuto) {
-    return aAutoGetter(aStyle);
-  }
-  nscolor color = complexColor.CalcColor(aStyle);
-  if (NS_GET_A(color) == 255) {
-    return color;
-  }
-  nscolor bgColor = GetOpaqueBackgroundColor(aStyle);
-  return NS_ComposeColors(bgColor, color);
-}
-
-nscolor
-nsNativeTheme::GetScrollbarTrackColor(nsStyleContext* aStyle,
-                                      AutoColorGetter aAutoGetter)
-{
-  StyleComplexColor complexColor =
-    aStyle->StyleUserInterface()->mScrollbarTrackColor;
-  nscolor color;
-  if (complexColor.mIsAuto) {
-    color = aAutoGetter(aStyle);
-  } else {
-    color = complexColor.CalcColor(aStyle);
-  }
-  if (NS_GET_A(color) == 255) {
-    return color;
-  }
-  nscolor bgColor = GetOpaqueBackgroundColor(aStyle);
-  return NS_ComposeColors(bgColor, color);
 }

@@ -1419,7 +1419,7 @@ KeyframeEffectReadOnly::CanThrottleTransformChanges(nsIFrame& aFrame) const
     return true;
   }
 
-  ScrollStyles ss = scrollable->GetScrollStyles();
+  ScrollbarStyles ss = scrollable->GetScrollbarStyles();
   if (ss.mVertical == NS_STYLE_OVERFLOW_HIDDEN &&
       ss.mHorizontal == NS_STYLE_OVERFLOW_HIDDEN &&
       scrollable->GetLogicalScrollPosition() == nsPoint(0, 0)) {

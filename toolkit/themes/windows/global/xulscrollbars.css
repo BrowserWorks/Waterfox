@@ -15,7 +15,6 @@ scrollbar {
   -moz-appearance: scrollbar-horizontal;
   -moz-binding: url("chrome://global/content/bindings/scrollbar.xml#scrollbar");
   cursor: default;
-  background-color: #f0f0f0;
 }
 
 @media all and (-moz-overlay-scrollbars) {
@@ -48,7 +47,6 @@ slider[orient="vertical"] {
 thumb {
   -moz-appearance: scrollbarthumb-vertical;
   min-height: 8px;
-  background-color: #cdcdcd;
 }
 
 thumb[orient="horizontal"] {
@@ -56,10 +54,17 @@ thumb[orient="horizontal"] {
   min-width: 8px;
 }
 
+/* ::::: scrollbar button ::::: */
+
+scrollbarbutton {
+  min-width: 16px;
+  min-height: 16px;
+}
+
 /* ::::: square at the corner of two scrollbars ::::: */
 
 scrollcorner { 
-  -moz-appearance: scrollcorner;
+  /* XXX -moz-appearance: scrollcorner; */
   -moz-binding: url(chrome://global/content/bindings/scrollbar.xml#scrollbar-base);
   width: 16px;
   cursor: default;

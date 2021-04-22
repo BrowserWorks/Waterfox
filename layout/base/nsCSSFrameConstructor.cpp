@@ -2496,12 +2496,12 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
     GetRootFrame()->SetStyleContextWithoutNotification(sc);
   }
 
-  // Make sure to call UpdateViewportScrollStylesOverride before
+  // Make sure to call UpdateViewportScrollbarStylesOverride before
   // SetUpDocElementContainingBlock, since it sets up our scrollbar state
   // properly.
   DebugOnly<nsIContent*> propagatedScrollFrom;
   if (nsPresContext* presContext = mPresShell->GetPresContext()) {
-    propagatedScrollFrom = presContext->UpdateViewportScrollStylesOverride();
+    propagatedScrollFrom = presContext->UpdateViewportScrollbarStylesOverride();
   }
 
   SetUpDocElementContainingBlock(aDocElement);
@@ -4808,7 +4808,7 @@ nsCSSFrameConstructor::FindDisplayData(const nsStyleDisplay* aDisplay,
   if (aElement->IsHTMLElement(nsGkAtoms::body)) {
     if (nsPresContext* presContext = mPresShell->GetPresContext()) {
       propagatedScrollToViewport =
-        presContext->UpdateViewportScrollStylesOverride() == aElement;
+        presContext->UpdateViewportScrollbarStylesOverride() == aElement;
     }
   }
 
@@ -4844,7 +4844,7 @@ nsCSSFrameConstructor::FindDisplayData(const nsStyleDisplay* aDisplay,
       // scrollframe so that it paginates correctly, but we don't want to set
       // the bit on the block that tells it to clip at paint time.
       if (mPresShell->GetPresContext()->
-            ElementWouldPropagateScrollStyles(aElement)) {
+            ElementWouldPropagateScrollbarStyles(aElement)) {
         suppressScrollFrame = false;
       }
     }
@@ -8474,7 +8474,7 @@ nsCSSFrameConstructor::ContentRemoved(nsIContent* aContainer,
     // source is a fullscreen element, and we have code elsewhere to update
     // scrollbars after fullscreen elements are removed -- specifically, it's
     // part of the fullscreen cleanup code called by Element::UnbindFromTree.)
-    presContext->UpdateViewportScrollStylesOverride();
+    presContext->UpdateViewportScrollbarStylesOverride();
   }
 
 #ifdef DEBUG

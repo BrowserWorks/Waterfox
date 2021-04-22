@@ -3173,7 +3173,7 @@ nsStyleBackground::BackgroundColor(nsStyleContext* aContext) const
   // In that case, we can skip resolving StyleColor().
   return mBackgroundColor.IsNumericColor()
     ? mBackgroundColor.mColor
-    : mBackgroundColor.CalcColor(aContext);
+    : aContext->StyleColor()->CalcComplexColor(mBackgroundColor);
 }
 
 bool
@@ -3515,7 +3515,7 @@ nsStyleDisplay::CalcDifference(const nsStyleDisplay& aNewData) const
 
   if (mOverflowX != aNewData.mOverflowX
       || mOverflowY != aNewData.mOverflowY) {
-    hint |= nsChangeHint_ScrollbarChange;
+    hint |= nsChangeHint_CSSOverflowChange;
   }
 
   /* Note: When mScrollBehavior, mScrollSnapTypeX, mScrollSnapTypeY,
@@ -3548,7 +3548,7 @@ nsStyleDisplay::CalcDifference(const nsStyleDisplay& aNewData) const
       // XXX What is the minimum hint to ensure mShapeInfo is regenerated in
       // the next reflow?
       hint |= nsChangeHint_ReflowHintsForFloatAreaChange |
-              nsChangeHint_ScrollbarChange;
+              nsChangeHint_CSSOverflowChange;
     } else {
       // shape-outside changed, but we don't need to reflow because we're not
       // floating.
@@ -4264,9 +4264,6 @@ nsStyleUserInterface::nsStyleUserInterface(const nsPresContext* aContext)
   , mPointerEvents(NS_STYLE_POINTER_EVENTS_AUTO)
   , mCursor(NS_STYLE_CURSOR_AUTO)
   , mCaretColor(StyleComplexColor::Auto())
-  , mScrollbarFaceColor(StyleComplexColor::Auto())
-  , mScrollbarTrackColor(StyleComplexColor::Auto())
-  , mScrollbarWidth(StyleScrollbarWidth::Auto)
 {
   MOZ_COUNT_CTOR(nsStyleUserInterface);
 }
@@ -4279,9 +4276,6 @@ nsStyleUserInterface::nsStyleUserInterface(const nsStyleUserInterface& aSource)
   , mCursor(aSource.mCursor)
   , mCursorImages(aSource.mCursorImages)
   , mCaretColor(aSource.mCaretColor)
-  , mScrollbarFaceColor(aSource.mScrollbarFaceColor)
-  , mScrollbarTrackColor(aSource.mScrollbarTrackColor)
-  , mScrollbarWidth(aSource.mScrollbarWidth)
 {
   MOZ_COUNT_CTOR(nsStyleUserInterface);
 }
@@ -4343,17 +4337,8 @@ nsStyleUserInterface::CalcDifference(const nsStyleUserInterface& aNewData) const
     hint |= nsChangeHint_NeutralChange;
   }
 
-  if (mCaretColor != aNewData.mCaretColor ||
-      mScrollbarFaceColor != aNewData.mScrollbarFaceColor ||
-      mScrollbarTrackColor != aNewData.mScrollbarTrackColor) {
+  if (mCaretColor != aNewData.mCaretColor) {
     hint |= nsChangeHint_RepaintFrame;
-  }
-
-  if (mScrollbarWidth != aNewData.mScrollbarWidth) {
-    // For scrollbar-width change, we need some special handling similar
-    // to overflow properties. Specifically, we may need to reconstruct
-    // the scrollbar or force reflow of the viewport scrollbar.
-    hint |= nsChangeHint_ScrollbarChange;
   }
 
   return hint;

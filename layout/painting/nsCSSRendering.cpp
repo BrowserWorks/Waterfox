@@ -706,6 +706,9 @@ ConstructBorderRenderer(nsPresContext* aPresContext,
 {
   nsMargin border = aStyleBorder.GetComputedBorder();
 
+  // Get our style context's color struct.
+  const nsStyleColor* ourColor = aStyleContext->StyleColor();
+
   // In NavQuirks mode we want to use the parent's context as a starting point
   // for determining the background color.
   bool quirks = aPresContext->CompatibilityMode() == eCompatibility_NavQuirks;
@@ -762,7 +765,7 @@ ConstructBorderRenderer(nsPresContext* aPresContext,
   // pull out styles, colors, composite colors
   NS_FOR_CSS_SIDES (i) {
     borderStyles[i] = aStyleBorder.GetBorderStyle(i);
-    borderColors[i] = aStyleBorder.mBorderColor[i].CalcColor(aStyleContext);
+    borderColors[i] = ourColor->CalcComplexColor(aStyleBorder.mBorderColor[i]);
     aStyleBorder.GetCompositeColors(i, &compositeColors[i]);
   }
 
@@ -2423,43 +2426,6 @@ DrawBackgroundColor(nsCSSRendering::ImageLayerClipState& aClipState,
   aCtx->Restore();
 }
 
-static Maybe<nscolor>
-CalcScrollbarColor(nsIFrame* aFrame, StyleComplexColor nsStyleUserInterface::* aColor)
-{
-  nsStyleContext* scrollbarStyle = nsLayoutUtils::StyleForScrollbar(aFrame);
-  auto color = scrollbarStyle->StyleUserInterface()->*aColor;
-  if (color.mIsAuto) {
-    return Nothing();
-  }
-  return Some(color.CalcColor(scrollbarStyle));
-}
-
-static nscolor
-GetBackgroundColor(nsIFrame* aFrame, nsStyleContext* aComputedStyle)
-{
-  Maybe<nscolor> overrideColor = Nothing();
-  switch (aComputedStyle->StyleDisplay()->mAppearance) {
-    case NS_THEME_SCROLLBARTHUMB_VERTICAL:
-    case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
-      overrideColor =
-        CalcScrollbarColor(aFrame, &nsStyleUserInterface::mScrollbarFaceColor);
-      break;
-    case NS_THEME_SCROLLBAR_VERTICAL:
-    case NS_THEME_SCROLLBAR_HORIZONTAL:
-    case NS_THEME_SCROLLCORNER:
-      overrideColor =
-        CalcScrollbarColor(aFrame, &nsStyleUserInterface::mScrollbarTrackColor);
-      break;
-    default:
-      break;
-  }
-  if (overrideColor.isSome()) {
-    return *overrideColor;
-  }
-  return aComputedStyle->
-    GetVisitedDependentColor(&nsStyleBackground::mBackgroundColor);
-}
-
 nscolor
 nsCSSRendering::DetermineBackgroundColor(nsPresContext* aPresContext,
                                          nsStyleContext* aStyleContext,
@@ -2481,7 +2447,8 @@ nsCSSRendering::DetermineBackgroundColor(nsPresContext* aPresContext,
   const nsStyleBackground *bg = aStyleContext->StyleBackground();
   nscolor bgColor;
   if (aDrawBackgroundColor) {
-    bgColor = GetBackgroundColor(aFrame, aStyleContext);
+    bgColor = aStyleContext->
+      GetVisitedDependentColor(&nsStyleBackground::mBackgroundColor);
     if (NS_GET_A(bgColor) == 0) {
       aDrawBackgroundColor = false;
     }

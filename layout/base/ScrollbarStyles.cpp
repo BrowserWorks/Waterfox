@@ -3,12 +3,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/ScrollStyles.h"
+#include "ScrollbarStyles.h"
 #include "nsStyleStruct.h" // for nsStyleDisplay and nsStyleBackground::Position
 
 namespace mozilla {
 
-  ScrollStyles::ScrollStyles(uint8_t aH, uint8_t aV,
+  ScrollbarStyles::ScrollbarStyles(uint8_t aH, uint8_t aV,
                                    const nsStyleDisplay* aDisplay)
     : mHorizontal(aH), mVertical(aV),
       mScrollBehavior(aDisplay->mScrollBehavior),
@@ -19,7 +19,7 @@ namespace mozilla {
       mScrollSnapDestinationX(aDisplay->mScrollSnapDestination.mXPosition),
       mScrollSnapDestinationY(aDisplay->mScrollSnapDestination.mYPosition) {}
 
-  ScrollStyles::ScrollStyles(const nsStyleDisplay* aDisplay)
+  ScrollbarStyles::ScrollbarStyles(const nsStyleDisplay* aDisplay)
     : mHorizontal(aDisplay->mOverflowX), mVertical(aDisplay->mOverflowY),
       mScrollBehavior(aDisplay->mScrollBehavior),
       mScrollSnapTypeX(aDisplay->mScrollSnapTypeX),

@@ -1449,7 +1449,7 @@ nsPresContext::ScreenSizeInchesForFontInflation(bool* aChanged)
 }
 
 static bool
-CheckOverflow(const nsStyleDisplay* aDisplay, ScrollStyles* aStyles)
+CheckOverflow(const nsStyleDisplay* aDisplay, ScrollbarStyles* aStyles)
 {
   if (aDisplay->mOverflowX == NS_STYLE_OVERFLOW_VISIBLE &&
       aDisplay->mScrollBehavior == NS_STYLE_SCROLL_BEHAVIOR_AUTO &&
@@ -1465,17 +1465,17 @@ CheckOverflow(const nsStyleDisplay* aDisplay, ScrollStyles* aStyles)
   }
 
   if (aDisplay->mOverflowX == NS_STYLE_OVERFLOW_CLIP) {
-    *aStyles = ScrollStyles(NS_STYLE_OVERFLOW_HIDDEN,
+    *aStyles = ScrollbarStyles(NS_STYLE_OVERFLOW_HIDDEN,
                                NS_STYLE_OVERFLOW_HIDDEN, aDisplay);
   } else {
-    *aStyles = ScrollStyles(aDisplay);
+    *aStyles = ScrollbarStyles(aDisplay);
   }
   return true;
 }
 
 static nsIContent*
-GetPropagatedScrollStylesForViewport(nsPresContext* aPresContext,
-                                     ScrollStyles *aStyles)
+GetPropagatedScrollbarStylesForViewport(nsPresContext* aPresContext,
+                                        ScrollbarStyles *aStyles)
 {
   nsIDocument* document = aPresContext->Document();
   Element* docElement = document->GetRootElement();
@@ -1528,16 +1528,16 @@ GetPropagatedScrollStylesForViewport(nsPresContext* aPresContext,
 }
 
 nsIContent*
-nsPresContext::UpdateViewportScrollStylesOverride()
+nsPresContext::UpdateViewportScrollbarStylesOverride()
 {
   // Start off with our default styles, and then update them as needed.
-  mViewportStyleScrollbar = ScrollStyles(NS_STYLE_OVERFLOW_AUTO,
+  mViewportStyleScrollbar = ScrollbarStyles(NS_STYLE_OVERFLOW_AUTO,
                                             NS_STYLE_OVERFLOW_AUTO);
   mViewportScrollbarOverrideNode = nullptr;
   // Don't propagate the scrollbar state in printing or print preview.
   if (!IsPaginated()) {
     mViewportScrollbarOverrideNode =
-      GetPropagatedScrollStylesForViewport(this, &mViewportStyleScrollbar);
+      GetPropagatedScrollbarStylesForViewport(this, &mViewportStyleScrollbar);
   }
 
   nsIDocument* document = Document();
@@ -1549,7 +1549,7 @@ nsPresContext::UpdateViewportScrollStylesOverride()
     // affected across fullscreen change.
     if (fullscreenElement != document->GetRootElement() &&
         fullscreenElement != mViewportScrollbarOverrideNode) {
-      mViewportStyleScrollbar = ScrollStyles(NS_STYLE_OVERFLOW_HIDDEN,
+      mViewportStyleScrollbar = ScrollbarStyles(NS_STYLE_OVERFLOW_HIDDEN,
                                                 NS_STYLE_OVERFLOW_HIDDEN);
     }
   }
@@ -1557,7 +1557,7 @@ nsPresContext::UpdateViewportScrollStylesOverride()
 }
 
 bool
-nsPresContext::ElementWouldPropagateScrollStyles(Element* aElement)
+nsPresContext::ElementWouldPropagateScrollbarStyles(Element* aElement)
 {
   MOZ_ASSERT(IsPaginated(), "Should only be called on paginated contexts");
   if (aElement->GetParent() && !aElement->IsHTMLElement(nsGkAtoms::body)) {
@@ -1565,13 +1565,13 @@ nsPresContext::ElementWouldPropagateScrollStyles(Element* aElement)
     return false;
   }
 
-  // Go ahead and just call GetPropagatedScrollStylesForViewport, but update
-  // a dummy ScrollStyles we don't care about.  It'll do a bit of extra work,
+  // Go ahead and just call GetPropagatedScrollbarStylesForViewport, but update
+  // a dummy ScrollbarStyles we don't care about.  It'll do a bit of extra work,
   // but saves us having to have more complicated code or more code duplication;
   // in practice we will make this call quite rarely, because we checked for all
   // the common cases above.
-  ScrollStyles dummy(NS_STYLE_OVERFLOW_AUTO, NS_STYLE_OVERFLOW_AUTO);
-  return GetPropagatedScrollStylesForViewport(this, &dummy) == aElement;
+  ScrollbarStyles dummy(NS_STYLE_OVERFLOW_AUTO, NS_STYLE_OVERFLOW_AUTO);
+  return GetPropagatedScrollbarStylesForViewport(this, &dummy) == aElement;
 }
 
 void
