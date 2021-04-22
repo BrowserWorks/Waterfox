@@ -284,6 +284,7 @@ exports.CSS_PROPERTIES = {
       "scrollbarthumb-vertical",
       "scrollbartrack-horizontal",
       "scrollbartrack-vertical",
+      "scrollcorner",
       "searchfield",
       "separator",
       "spinner",
@@ -1892,6 +1893,7 @@ exports.CSS_PROPERTIES = {
       "scrollbarthumb-vertical",
       "scrollbartrack-horizontal",
       "scrollbartrack-vertical",
+      "scrollcorner",
       "searchfield",
       "separator",
       "spinner",
@@ -3271,6 +3273,8 @@ exports.CSS_PROPERTIES = {
       "scroll-snap-points-y",
       "scroll-snap-type-x",
       "scroll-snap-type-y",
+      "scrollbar-color",
+      "scrollbar-width",
       "shape-outside",
       "shape-rendering",
       "-moz-stack-sizing",
@@ -3354,6 +3358,7 @@ exports.CSS_PROPERTIES = {
     ],
     "values": [
       "COLOR",
+      "-moz-activehyperlinktext",
       "-moz-all",
       "-moz-alt-content",
       "-moz-available",
@@ -3764,6 +3769,7 @@ exports.CSS_PROPERTIES = {
       "scrollbarthumb-vertical",
       "scrollbartrack-horizontal",
       "scrollbartrack-vertical",
+      "scrollcorner",
       "se-resize",
       "searchfield",
       "select-after",
@@ -9006,6 +9012,48 @@ exports.CSS_PROPERTIES = {
       "unset"
     ]
   },
+  "scrollbar-color": {
+    "isInherited": true,
+    "subproperties": [
+      "scrollbar-color"
+    ],
+    "supports": [
+      2
+    ],
+    "values": [
+      "COLOR",
+      "auto",
+      "currentColor",
+      "hsl",
+      "hsla",
+      "inherit",
+      "initial",
+      "rgb",
+      "rgba",
+      "transparent",
+      "unset"
+    ]
+  },
+  "scrollbar-width": {
+    "isInherited": true,
+    "subproperties": [
+      "scrollbar-width"
+    ],
+    "supports": [],
+    "values": [
+      "-moz-activehyperlinktext",
+      "auto",
+      "ignore",
+      "ignore-horizontal",
+      "ignore-vertical",
+      "inherit",
+      "initial",
+      "none",
+      "stretch-to-fit",
+      "thin",
+      "unset"
+    ]
+  },
   "shape-rendering": {
     "isInherited": true,
     "subproperties": [
@@ -10083,6 +10131,14 @@ exports.PREFERENCES = [
   [
     "scroll-snap-type-y",
     "layout.css.scroll-snap.enabled"
+  ],
+  [
+    "scrollbar-color",
+    "layout.css.scrollbar-color.enabled"
+  ],
+  [
+    "scrollbar-width",
+    "layout.css.scrollbar-width.enabled"
   ],
   [
     "shape-outside",

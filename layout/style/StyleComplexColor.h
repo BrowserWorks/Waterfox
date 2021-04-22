@@ -11,6 +11,9 @@
 
 #include "nsColor.h"
 
+class nsIFrame;
+class nsStyleContext;
+
 namespace mozilla {
 
 /**
@@ -19,15 +22,19 @@ namespace mozilla {
  * Conceptually, the formula is "color * (1 - p) + currentcolor * p"
  * where p is mForegroundRatio. See mozilla::LinearBlendColors for
  * the actual algorithm.
+ *
+ * It can also represent an "auto" value, which is valid for some
+ * properties. See comment of mIsAuto.
  */
 struct StyleComplexColor
 {
   nscolor mColor;
   uint8_t mForegroundRatio;
   // Whether the complex color represents a computed-value time auto
-  // value. This is only a flag indicating that this value should not
-  // be interpolatable with other colors, while other fields still
-  // represents the actual used color of this value.
+  // value. This is a flag indicating that this value should not be
+  // interpolatable with other colors. When this flag is set, other
+  // fields represent a currentcolor. Properties can decide whether
+  // that should be used.
   bool mIsAuto;
 
   static StyleComplexColor FromColor(nscolor aColor) {
@@ -51,6 +58,18 @@ struct StyleComplexColor
   bool operator!=(const StyleComplexColor& aOther) const {
     return !(*this == aOther);
   }
+
+  /**
+   * Compute the color for this StyleComplexColor, taking into account
+   * the foreground color from aStyle.
+   */
+  nscolor CalcColor(nsStyleContext* aStyle) const;
+
+  /**
+   * Compute the color for this StyleComplexColor, taking into account
+   * the foreground color from aFrame's ComputedStyle.
+   */
+  nscolor CalcColor(const nsIFrame* aFrame) const;
 };
 
 }

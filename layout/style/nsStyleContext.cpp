@@ -516,7 +516,7 @@ ExtractColor(nsStyleContext* aContext, const nscolor& aColor)
 static nscolor
 ExtractColor(nsStyleContext* aContext, const StyleComplexColor& aColor)
 {
-  return aContext->StyleColor()->CalcComplexColor(aColor);
+  return aColor.CalcColor(aContext);
 }
 
 static nscolor

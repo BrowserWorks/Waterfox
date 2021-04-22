@@ -491,7 +491,7 @@ static nsSize CalcViewportUnitsScale(nsPresContext* aPresContext)
   nsIScrollableFrame* scrollFrame =
     aPresContext->PresShell()->GetRootScrollFrameAsScrollable();
   if (scrollFrame) {
-    ScrollbarStyles styles(scrollFrame->GetScrollbarStyles());
+    ScrollStyles styles(scrollFrame->GetScrollStyles());
 
     if (styles.mHorizontal == NS_STYLE_OVERFLOW_SCROLL ||
         styles.mVertical == NS_STYLE_OVERFLOW_SCROLL) {
@@ -1249,6 +1249,67 @@ SetComplexColor(const nsCSSValue& aValue,
 }
 
 template<UnsetAction UnsetTo>
+static void
+SetScrollbarColor(const nsCSSValue& aValue,
+                  const StyleComplexColor& aParentColor,
+                  const StyleComplexColor& aParentColor2,
+                  const StyleComplexColor& aInitialColor,
+                  nsPresContext* aPresContext,
+                  StyleComplexColor& aResult,
+                  StyleComplexColor& aResult2,
+                  RuleNodeCacheConditions& aConditions)
+{
+  nsCSSUnit unit = aValue.GetUnit();
+  if (unit == eCSSUnit_Null) {
+    return;
+  }
+  if (unit == eCSSUnit_Initial ||
+      (UnsetTo == eUnsetInitial && unit == eCSSUnit_Unset)) {
+    aResult = aInitialColor;
+    aResult2 = aInitialColor;
+  } else if (unit == eCSSUnit_Inherit ||
+             (UnsetTo == eUnsetInherit && unit == eCSSUnit_Unset)) {
+    aConditions.SetUncacheable();
+    aResult = aParentColor;
+    aResult2 = aParentColor2;
+  } else if (unit == eCSSUnit_Auto) {
+    aResult = StyleComplexColor::Auto();
+    aResult2 = StyleComplexColor::Auto();
+  } else {
+    const nsCSSValueList* item = aValue.GetListValue();
+    if (!item) {
+      return;
+    }
+    const nsCSSValue& aColorValue = item->mValue;
+    const nsCSSValue& aColorValue2 = item->mNext->mValue;
+
+    if (aColorValue.GetIntValue() == NS_COLOR_CURRENTCOLOR) {
+      aResult = StyleComplexColor::CurrentColor();
+    } else {
+      nscolor resultColor;
+      if (!SetColor(aColorValue, aParentColor.mColor, aPresContext,
+                    nullptr, resultColor, aConditions)) {
+        MOZ_ASSERT_UNREACHABLE("Unknown color value");
+        return;
+      }
+      aResult = StyleComplexColor::FromColor(resultColor);
+    }
+
+    if (aColorValue2.GetIntValue() == NS_COLOR_CURRENTCOLOR) {
+      aResult2 = StyleComplexColor::CurrentColor();
+    } else {
+      nscolor resultColor2;
+      if(!SetColor(aColorValue2, aParentColor2.mColor, aPresContext,
+               nullptr, resultColor2, aConditions)) {
+        MOZ_ASSERT_UNREACHABLE("Unknown color value");
+        return;
+      }
+      aResult2 = StyleComplexColor::FromColor(resultColor2);
+    }
+  }
+}
+
+template<UnsetAction UnsetTo>
 static Maybe<nscoord>
 ComputeLineWidthValue(const nsCSSValue& aValue,
                       const nscoord aParentCoord,
@@ -1544,6 +1605,7 @@ struct SetEnumValueHelper
   DEFINE_ENUM_CLASS_SETTER(StyleFillRule, Nonzero, Evenodd)
   DEFINE_ENUM_CLASS_SETTER(StyleFloat, None, InlineEnd)
   DEFINE_ENUM_CLASS_SETTER(StyleFloatEdge, ContentBox, MarginBox)
+  DEFINE_ENUM_CLASS_SETTER(StyleScrollbarWidth, Auto, None)
   DEFINE_ENUM_CLASS_SETTER(StyleHyphens, None, Auto)
   DEFINE_ENUM_CLASS_SETTER(StyleStackSizing, Ignore, IgnoreVertical)
   DEFINE_ENUM_CLASS_SETTER(StyleTextJustify, None, InterCharacter)
@@ -5329,6 +5391,25 @@ nsRuleNode::ComputeUserInterfaceData(void* aStartStruct,
                                  StyleComplexColor::Auto(),
                                  mPresContext,
                                  ui->mCaretColor, conditions);
+
+  // scrollbar-color: auto, color, inherit
+  const nsCSSValue* scrollbarColor = aRuleData->ValueForScrollbarColor();
+  SetScrollbarColor<eUnsetInherit>(*scrollbarColor,
+                                  parentUI->mScrollbarFaceColor,
+                                  parentUI->mScrollbarTrackColor,
+                                  StyleComplexColor::Auto(),
+                                  mPresContext,
+                                  ui->mScrollbarFaceColor,
+                                  ui->mScrollbarTrackColor,
+                                  conditions);
+
+  // scrollbar-width: auto, thin, none
+  SetValue(*aRuleData->ValueForScrollbarWidth(),
+           ui->mScrollbarWidth,
+           conditions,
+           SETVAL_ENUMERATED,
+           parentUI->mScrollbarWidth,
+           StyleScrollbarWidth::Auto);
 
   COMPUTE_END_INHERITED(UserInterface, ui)
 }

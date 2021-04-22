@@ -1859,6 +1859,15 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
   if (IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType))
     return false;
 
+  if (IsWidgetScrollbarPart(aWidgetType)) {
+    nsStyleContext* cs = nsLayoutUtils::StyleForScrollbar(aFrame);
+    if (cs->StyleUserInterface()->HasCustomScrollbars() ||
+        // We cannot handle thin scrollbar on GTK+ widget directly as well.
+        cs->StyleUserInterface()->mScrollbarWidth == StyleScrollbarWidth::Thin) {
+      return false;
+    }
+  }
+
   switch (aWidgetType) {
   // Combobox dropdowns don't support native theming in vertical mode.
   case NS_THEME_MENULIST:

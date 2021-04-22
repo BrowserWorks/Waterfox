@@ -27,6 +27,13 @@ body {
   color: var(--theme-selection-color);
 }
 
+:root[platform="win"],
+:root[platform="linux"] {
+  /* Set colors for native scrollbars on Windows and Linux dark theme */
+  /* Other platforms support for scrollbar theming is Bug 1460109 */
+  scrollbar-color: var(--theme-body-color-inactive) var(--theme-splitter-color);
+}
+
 .theme-bg-darker {
   background-color: var(--theme-selection-background-semitransparent);
 }
@@ -327,13 +334,6 @@ div.CodeMirror span.eval-text {
 
 .theme-tooltip-panel .devtools-tooltip-simple-text:last-child {
   border-bottom: 0;
-}
-
-.devtools-textinput,
-.devtools-searchinput,
-.devtools-filterinput {
-  background-color: rgba(24, 29, 32, 1);
-  color: rgba(184, 200, 217, 1);
 }
 
 .CodeMirror-Tern-fname {

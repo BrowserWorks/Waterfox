@@ -7,7 +7,10 @@
 
 #include "mozilla/EventStates.h"
 #include "mozilla/Logging.h"
+#include "mozilla/RelativeLuminanceUtils.h"
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/gfx/Types.h"  // for Color::FromABGR
+#include "nsColor.h"
 #include "nsDeviceContext.h"
 #include "nsRect.h"
 #include "nsSize.h"
@@ -17,6 +20,7 @@
 #include "nsPresContext.h"
 #include "nsIContent.h"
 #include "nsIFrame.h"
+#include "nsLayoutUtils.h"
 #include "nsNameSpaceManager.h"
 #include "nsIDOMHTMLInputElement.h"
 #include "nsLookAndFeel.h"
@@ -39,6 +43,7 @@
 #include <algorithm>
 
 using namespace mozilla;
+using namespace mozilla::gfx;
 using namespace mozilla::widget;
 
 extern mozilla::LazyLogModule gWindowsLog;
@@ -744,6 +749,7 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(uint8_t aWidgetTy
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
     case NS_THEME_SCROLLBARTHUMB_VERTICAL:
     case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
+    case NS_THEME_SCROLLCORNER:
       return Some(eUXScrollbar);
     case NS_THEME_RANGE:
     case NS_THEME_RANGE_THUMB:
@@ -1148,7 +1154,8 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
     case NS_THEME_WIN_BROWSERTABBAR_TOOLBOX:
     case NS_THEME_STATUSBAR:
     case NS_THEME_SCROLLBAR:
-    case NS_THEME_SCROLLBAR_SMALL: {
+    case NS_THEME_SCROLLBAR_SMALL:
+    case NS_THEME_SCROLLCORNER: {
       aState = 0;
       aPart = RP_BACKGROUND;
       return NS_OK;
@@ -1502,6 +1509,27 @@ GetThemeDpiScaleFactor(nsIFrame* aFrame)
   return 1.0;
 }
 
+static bool
+IsScrollbarWidthThin(nsStyleContext* aStyle)
+{
+  auto scrollbarWidth = aStyle->StyleUserInterface()->mScrollbarWidth;
+  return scrollbarWidth == StyleScrollbarWidth::Thin;
+}
+
+static bool
+IsScrollbarWidthThin(nsIFrame* aFrame)
+{
+  nsStyleContext* style = nsLayoutUtils::StyleForScrollbar(aFrame);
+  return IsScrollbarWidthThin(style);
+}
+
+static bool
+ShouldDrawCustomScrollbar(nsStyleContext* aStyle)
+{
+  return aStyle->StyleUserInterface()->HasCustomScrollbars() ||
+    IsScrollbarWidthThin(aStyle);
+}
+
 NS_IMETHODIMP
 nsNativeThemeWin::DrawWidgetBackground(gfxContext* aContext,
                                        nsIFrame* aFrame,
@@ -1509,6 +1537,14 @@ nsNativeThemeWin::DrawWidgetBackground(gfxContext* aContext,
                                        const nsRect& aRect,
                                        const nsRect& aDirtyRect)
 {
+  if (IsWidgetScrollbarPart(aWidgetType)) {
+    nsStyleContext* style = nsLayoutUtils::StyleForScrollbar(aFrame);
+    if (ShouldDrawCustomScrollbar(style)) {
+      return DrawCustomScrollbarPart(aContext, aFrame, style,
+                                     aWidgetType, aRect, aDirtyRect);
+    }
+  }
+
   HANDLE theme = GetTheme(aWidgetType);
   if (!theme)
     return ClassicDrawWidgetBackground(aContext, aFrame, aWidgetType, aRect, aDirtyRect); 
@@ -1957,6 +1993,7 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
       aWidgetType == NS_THEME_RESIZER || aWidgetType == NS_THEME_TABPANEL ||
       aWidgetType == NS_THEME_SCROLLBAR_HORIZONTAL ||
       aWidgetType == NS_THEME_SCROLLBAR_VERTICAL ||
+      aWidgetType == NS_THEME_SCROLLCORNER ||
       aWidgetType == NS_THEME_MENUITEM || aWidgetType == NS_THEME_CHECKMENUITEM ||
       aWidgetType == NS_THEME_RADIOMENUITEM || aWidgetType == NS_THEME_MENUPOPUP ||
       aWidgetType == NS_THEME_MENUIMAGE || aWidgetType == NS_THEME_MENUITEMTEXT ||
@@ -2328,6 +2365,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
     }
 
     case NS_THEME_SCROLLBAR:
+    case NS_THEME_SCROLLCORNER:
     {
       if (nsLookAndFeel::GetInt(
             nsLookAndFeel::eIntID_UseOverlayScrollbars) != 0) {
@@ -2612,10 +2650,34 @@ nsNativeThemeWin::ShouldHideScrollbars()
 nsITheme::Transparency
 nsNativeThemeWin::GetWidgetTransparency(nsIFrame* aFrame, uint8_t aWidgetType)
 {
+  if (IsWidgetScrollbarPart(aWidgetType)) {
+    nsStyleContext* style = nsLayoutUtils::StyleForScrollbar(aFrame);
+    if (ShouldDrawCustomScrollbar(style)) {
+      if (!style->StyleUserInterface()->mScrollbarTrackColor.IsNumericColor() || NS_GET_A(style->StyleUserInterface()->mScrollbarTrackColor.mColor) != 255) {
+        return eTransparent;
+      }
+      // DrawCustomScrollbarPart doesn't draw the track background for
+      // widgets on it, and these widgets are thinner than the track,
+      // so we need to return transparent for them.
+      switch (aWidgetType) {
+        case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
+        case NS_THEME_SCROLLBARTHUMB_VERTICAL:
+        case NS_THEME_SCROLLBARBUTTON_UP:
+        case NS_THEME_SCROLLBARBUTTON_DOWN:
+        case NS_THEME_SCROLLBARBUTTON_LEFT:
+        case NS_THEME_SCROLLBARBUTTON_RIGHT:
+          return eTransparent;
+        default:
+          break;
+      }
+    }
+  }
+
   switch (aWidgetType) {
   case NS_THEME_SCROLLBAR_SMALL:
   case NS_THEME_SCROLLBAR:
   case NS_THEME_STATUSBAR:
+  case NS_THEME_SCROLLCORNER:
     // Knowing that scrollbars and statusbars are opaque improves
     // performance, because we create layers for them. This better be
     // true across all Windows themes! If it's not true, we should
@@ -2697,6 +2759,7 @@ nsNativeThemeWin::ClassicThemeSupportsWidget(nsIFrame* aFrame,
     case NS_THEME_SCROLLBAR_VERTICAL:
     case NS_THEME_SCROLLBAR_HORIZONTAL:
     case NS_THEME_SCROLLBAR_NON_DISAPPEARING:
+    case NS_THEME_SCROLLCORNER:
     case NS_THEME_SCALE_HORIZONTAL:
     case NS_THEME_SCALE_VERTICAL:
     case NS_THEME_SCALETHUMB_HORIZONTAL:
@@ -2865,14 +2928,20 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
       break;
     case NS_THEME_SCROLLBARBUTTON_UP:
     case NS_THEME_SCROLLBARBUTTON_DOWN:
-      (*aResult).width = ::GetSystemMetrics(SM_CXVSCROLL);
-      (*aResult).height = ::GetSystemMetrics(SM_CYVSCROLL);
+      // For scrollbar-width:thin, we don't display the buttons.
+      if (!IsScrollbarWidthThin(aFrame)) {
+        (*aResult).width = ::GetSystemMetrics(SM_CXVSCROLL);
+        (*aResult).height = ::GetSystemMetrics(SM_CYVSCROLL);
+      }
       *aIsOverridable = false;
       break;
     case NS_THEME_SCROLLBARBUTTON_LEFT:
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
-      (*aResult).width = ::GetSystemMetrics(SM_CXHSCROLL);
-      (*aResult).height = ::GetSystemMetrics(SM_CYHSCROLL);
+      // For scrollbar-width:thin, we don't display the buttons.
+      if (!IsScrollbarWidthThin(aFrame)) {
+        (*aResult).width = ::GetSystemMetrics(SM_CXHSCROLL);
+        (*aResult).height = ::GetSystemMetrics(SM_CYHSCROLL);
+      }
       *aIsOverridable = false;
       break;
     case NS_THEME_SCROLLBAR_VERTICAL:
@@ -2948,8 +3017,14 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
       (*aResult).height = ::GetSystemMetrics(SM_CYVTHUMB);
       // Without theming, divide the thumb size by two in order to look more
       // native
-      if (!GetTheme(aWidgetType))
+      if (!GetTheme(aWidgetType)) {
         (*aResult).height >>= 1;
+      }
+      // If scrollbar-width is thin, divide the thickness by two to make
+      // it look more compact.
+      if (IsScrollbarWidthThin(aFrame)) {
+        aResult->width >>= 1;
+      }
       *aIsOverridable = false;
       break;
     case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
@@ -2957,8 +3032,14 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
       (*aResult).height = ::GetSystemMetrics(SM_CYHSCROLL);
       // Without theming, divide the thumb size by two in order to look more
       // native
-      if (!GetTheme(aWidgetType))
+      if (!GetTheme(aWidgetType)) {
         (*aResult).width >>= 1;
+      }
+      // If scrollbar-width is thin, divide the thickness by two to make
+      // it look more compact.
+      if (IsScrollbarWidthThin(aFrame)) {
+        aResult->height >>= 1;
+      }
       *aIsOverridable = false;
       break;
     case NS_THEME_SCROLLBAR_HORIZONTAL:
@@ -3165,9 +3246,10 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
     case NS_THEME_RANGE:
     case NS_THEME_RANGE_THUMB:
     case NS_THEME_SCROLLBARTHUMB_VERTICAL:
-    case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:     
+    case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
     case NS_THEME_SCROLLBAR_VERTICAL:
-    case NS_THEME_SCROLLBAR_HORIZONTAL:      
+    case NS_THEME_SCROLLBAR_HORIZONTAL:
+    case NS_THEME_SCROLLCORNER:
     case NS_THEME_SCALE_HORIZONTAL:
     case NS_THEME_SCALE_VERTICAL:
     case NS_THEME_SCALETHUMB_HORIZONTAL:
@@ -3686,6 +3768,9 @@ RENDER_AGAIN:
 
       break;
     }
+    case NS_THEME_SCROLLCORNER: {
+      ::FillRect(hdc, &widgetRect, (HBRUSH) (COLOR_SCROLLBAR + 1));
+    }
     // Draw scale track background
     case NS_THEME_RANGE:
     case NS_THEME_SCALE_VERTICAL:
@@ -3967,6 +4052,7 @@ nsNativeThemeWin::GetWidgetNativeDrawingFlags(uint8_t aWidgetType)
     case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
     case NS_THEME_SCROLLBAR_VERTICAL:
     case NS_THEME_SCROLLBAR_HORIZONTAL:
+    case NS_THEME_SCROLLCORNER:
     case NS_THEME_SCALE_HORIZONTAL:
     case NS_THEME_SCALE_VERTICAL:
     case NS_THEME_SCALETHUMB_HORIZONTAL:
@@ -4015,6 +4101,234 @@ nsNativeThemeWin::GetWidgetNativeDrawingFlags(uint8_t aWidgetType)
     gfxWindowsNativeDrawing::CANNOT_DRAW_TO_COLOR_ALPHA |
     gfxWindowsNativeDrawing::CANNOT_AXIS_ALIGNED_SCALE |
     gfxWindowsNativeDrawing::CANNOT_COMPLEX_TRANSFORM;
+}
+
+static nscolor
+GetScrollbarButtonColor(nscolor aTrackColor, EventStates aStates)
+{
+  // See numbers in GetScrollbarArrowColor.
+  // This function is written based on ratios between values listed there.
+
+  bool isActive = aStates.HasState(NS_EVENT_STATE_ACTIVE);
+  bool isHover = aStates.HasState(NS_EVENT_STATE_HOVER);
+  if (!isActive && !isHover) {
+    return aTrackColor;
+  }
+  float luminance = RelativeLuminanceUtils::Compute(aTrackColor);
+  if (isActive) {
+    if (luminance >= 0.18f) {
+      luminance *= 0.134f;
+    } else {
+      luminance /= 0.134f;
+      luminance = std::min(luminance, 1.0f);
+    }
+  } else {
+    if (luminance >= 0.18f) {
+      luminance *= 0.805f;
+    } else {
+      luminance /= 0.805f;
+    }
+  }
+  return RelativeLuminanceUtils::Adjust(aTrackColor, luminance);
+}
+
+static nscolor
+GetScrollbarArrowColor(nscolor aButtonColor)
+{
+  // In Windows 10 scrollbar, there are several gray colors used:
+  //
+  // State  | Background (lum) | Arrow   | Contrast
+  // -------+------------------+---------+---------
+  // Normal | Gray 240 (87.1%) | Gray 96 |     5.5
+  // Hover  | Gray 218 (70.1%) | Black   |    15.0
+  // Active | Gray 96  (11.7%) | White   |     6.3
+  //
+  // Contrast value is computed based on the definition in
+  // https://www.w3.org/TR/WCAG20/#contrast-ratiodef
+  //
+  // This function is written based on these values.
+
+  float luminance = RelativeLuminanceUtils::Compute(aButtonColor);
+  // Color with luminance larger than 0.72 has contrast ratio over 4.6
+  // to color with luminance of gray 96, so this value is chosen for
+  // this range. It is the luminance of gray 221.
+  if (luminance >= 0.72) {
+    // ComputeRelativeLuminanceFromComponents(96). That function cannot
+    // be constexpr because of std::pow.
+    const float GRAY96_LUMINANCE = 0.117f;
+    return RelativeLuminanceUtils::Adjust(aButtonColor, GRAY96_LUMINANCE);
+  }
+  // The contrast ratio of a color to black equals that to white when its
+  // luminance is around 0.18, with a contrast ratio ~4.6 to both sides,
+  // thus the value below. It's the lumanince of gray 118.
+  if (luminance >= 0.18) {
+    return NS_RGBA(0, 0, 0, NS_GET_A(aButtonColor));
+  }
+  return NS_RGBA(255, 255, 255, NS_GET_A(aButtonColor));
+}
+
+static nscolor
+AdjustScrollbarFaceColor(nscolor aFaceColor, EventStates aStates)
+{
+  // In Windows 10, scrollbar thumb has the following colors:
+  //
+  // State  | Color    | Luminance
+  // -------+----------+----------
+  // Normal | Gray 205 |     61.0%
+  // Hover  | Gray 166 |     38.1%
+  // Active | Gray 96  |     11.7%
+  //
+  // This function is written based on the ratios between the values.
+
+  bool isActive = aStates.HasState(NS_EVENT_STATE_ACTIVE);
+  bool isHover = aStates.HasState(NS_EVENT_STATE_HOVER);
+  if (!isActive && !isHover) {
+    return aFaceColor;
+  }
+  float luminance = RelativeLuminanceUtils::Compute(aFaceColor);
+  if (isActive) {
+    if (luminance >= 0.18f) {
+      luminance *= 0.192f;
+    } else {
+      luminance /= 0.192f;
+    }
+  } else {
+    if (luminance >= 0.18f) {
+      luminance *= 0.625f;
+    } else {
+      luminance /= 0.625f;
+    }
+  }
+  return RelativeLuminanceUtils::Adjust(aFaceColor, luminance);
+}
+
+// This tries to draw a Windows 10 style scrollbar with given colors.
+nsresult
+nsNativeThemeWin::DrawCustomScrollbarPart(gfxContext* aContext,
+                                          nsIFrame* aFrame,
+                                          nsStyleContext* aStyle,
+                                          uint8_t aWidgetType,
+                                          const nsRect& aRect,
+                                          const nsRect& aClipRect)
+{
+  EventStates eventStates = GetContentState(aFrame, aWidgetType);
+
+  gfxContextAutoSaveRestore autoSave(aContext);
+  RefPtr<gfxContext> ctx = aContext;
+  gfxFloat p2a = gfxFloat(aFrame->PresContext()->AppUnitsPerDevPixel());
+  gfxRect clipRect =
+    ThebesRect(LayoutDevicePixel::FromAppUnits(aClipRect, p2a).ToUnknownRect());
+  ctx->Clip(clipRect);
+  gfxRect rect =
+    ThebesRect(LayoutDevicePixel::FromAppUnits(aRect, p2a).ToUnknownRect());
+
+  const nsStyleUserInterface* ui = aStyle->StyleUserInterface();
+  nscolor trackColor = ui->mScrollbarTrackColor.mIsAuto
+    ? NS_RGB(240, 240, 240)
+    : ui->mScrollbarTrackColor.CalcColor(aStyle);
+  switch (aWidgetType) {
+    case NS_THEME_SCROLLBAR_HORIZONTAL:
+    case NS_THEME_SCROLLBAR_VERTICAL:
+    case NS_THEME_SCROLLCORNER: {
+      ctx->SetColor(Color::FromABGR(trackColor));
+      ctx->Rectangle(rect);
+      ctx->Fill();
+      return NS_OK;
+    }
+
+    default:
+      break;
+  }
+
+  // Scrollbar thumb and button are two CSS pixels thinner than the track.
+  gfxRect bgRect = rect;
+  gfxFloat dev2css = round(AppUnitsPerCSSPixel() / p2a);
+  switch (aWidgetType) {
+    case NS_THEME_SCROLLBARTHUMB_VERTICAL:
+    case NS_THEME_SCROLLBARBUTTON_UP:
+    case NS_THEME_SCROLLBARBUTTON_DOWN:
+      bgRect.Deflate(dev2css, 0);
+      break;
+    case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
+    case NS_THEME_SCROLLBARBUTTON_LEFT:
+    case NS_THEME_SCROLLBARBUTTON_RIGHT:
+      bgRect.Deflate(0, dev2css);
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unknown widget type");
+  }
+
+  switch (aWidgetType) {
+    case NS_THEME_SCROLLBARTHUMB_VERTICAL:
+    case NS_THEME_SCROLLBARTHUMB_HORIZONTAL: {
+      nscolor faceColor = ui->mScrollbarFaceColor.mIsAuto
+        ? NS_RGB(205, 205, 205)
+        : ui->mScrollbarFaceColor.CalcColor(aStyle);
+      faceColor = AdjustScrollbarFaceColor(faceColor, eventStates);
+      ctx->SetColor(Color::FromABGR(faceColor));
+      ctx->Rectangle(bgRect);
+      ctx->Fill();
+      break;
+    }
+    case NS_THEME_SCROLLBARBUTTON_UP:
+    case NS_THEME_SCROLLBARBUTTON_DOWN:
+    case NS_THEME_SCROLLBARBUTTON_LEFT:
+    case NS_THEME_SCROLLBARBUTTON_RIGHT: {
+      nscolor buttonColor = GetScrollbarButtonColor(trackColor, eventStates);
+      ctx->SetColor(Color::FromABGR(buttonColor));
+      ctx->Rectangle(bgRect);
+      ctx->Fill();
+
+      // We use the path of scrollbar up arrow on Windows 10 which is
+      // in a 17x17 area.
+      const gfxFloat kSize = 17.0;
+      // Setup the transform matrix.
+      gfxFloat width = rect.Width();
+      gfxFloat height = rect.Height();
+      gfxFloat size = std::min(width, height);
+      gfxFloat left = (width - size) / 2.0 + rect.x;
+      gfxFloat top = (height - size) / 2.0 + rect.y;
+      gfxFloat scale = size / kSize;
+      gfxFloat rad = 0.0;
+      if (aWidgetType == NS_THEME_SCROLLBARBUTTON_RIGHT) {
+        rad = M_PI / 2;
+      } else if (aWidgetType == NS_THEME_SCROLLBARBUTTON_DOWN) {
+        rad = M_PI;
+      } else if (aWidgetType == NS_THEME_SCROLLBARBUTTON_LEFT) {
+        rad = -M_PI / 2;
+      }
+      gfx::Matrix mat = ToMatrix(ctx->CurrentMatrix());
+      mat.PreTranslate(left, top);
+      mat.PreScale(scale, scale);
+      if (rad != 0.0) {
+        const gfxFloat kOffset = kSize / 2.0;
+        mat.PreTranslate(kOffset, kOffset);
+        mat.PreRotate(rad);
+        mat.PreTranslate(-kOffset, -kOffset);
+      }
+      ctx->SetMatrix(ThebesMatrix(mat));
+      // The arrow should not have antialias applied.
+      ctx->SetAntialiasMode(gfx::AntialiasMode::NONE);
+      // Set the arrow path.
+      ctx->NewPath();
+      ctx->MoveTo(gfxPoint(5.0, 9.0));
+      ctx->LineTo(gfxPoint(8.5, 6.0));
+      ctx->LineTo(gfxPoint(12.0, 9.0));
+      ctx->LineTo(gfxPoint(12.0, 12.0));
+      ctx->LineTo(gfxPoint(8.5, 9.0));
+      ctx->LineTo(gfxPoint(5.0, 12.0));
+      ctx->ClosePath();
+      // And paint the arrow.
+      nscolor arrowColor = GetScrollbarArrowColor(buttonColor);
+      ctx->SetColor(Color::FromABGR(arrowColor));
+      ctx->Fill();
+      break;
+    }
+
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unknown widget type");
+  }
+  return NS_OK;
 }
 
 ///////////////////////////////////////////

@@ -583,11 +583,6 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleColor
   void FinishStyle(nsPresContext* aPresContext) {}
   const static bool kHasFinishStyle = false;
 
-  nscolor CalcComplexColor(const mozilla::StyleComplexColor& aColor) const {
-    return mozilla::LinearBlendColors(aColor.mColor, mColor,
-                                      aColor.mForegroundRatio);
-  }
-
   nsChangeHint CalcDifference(const nsStyleColor& aNewData) const;
 
   void* operator new(size_t sz, nsStyleColor* aSelf) { return aSelf; }
@@ -3318,8 +3313,17 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleUserInterface
   uint8_t mCursor;                            // [inherited] See nsStyleConsts.h
   nsTArray<nsCursorImage> mCursorImages;      // [inherited] images and coords
   mozilla::StyleComplexColor mCaretColor;     // [inherited]
+  mozilla::StyleScrollbarWidth mScrollbarWidth;
+
+  mozilla::StyleComplexColor mScrollbarFaceColor;   // [inherited]
+  mozilla::StyleComplexColor mScrollbarTrackColor;  // [inherited]
 
   inline uint8_t GetEffectivePointerEvents(nsIFrame* aFrame) const;
+
+  bool HasCustomScrollbars() const
+  {
+    return !mScrollbarFaceColor.mIsAuto || !mScrollbarTrackColor.mIsAuto;
+  }
 };
 
 struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleXUL
