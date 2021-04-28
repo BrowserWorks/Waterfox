@@ -6,7 +6,7 @@
 #ifndef widget_windows_RemoteBackbuffer_h
 #define widget_windows_RemoteBackbuffer_h
 
-#include <thread>
+#include "prthread.h"
 #include <windows.h>
 #include "mozilla/Maybe.h"
 
@@ -51,7 +51,7 @@ class Provider {
   HANDLE mResponseReadyEvent;
   SharedData* mSharedDataPtr;
   bool mStopServiceThread;
-  std::thread mServiceThread;
+  PRThread* mServiceThread;
   std::unique_ptr<PresentableSharedImage> mBackbuffer;
   mozilla::Atomic<nsTransparencyMode, MemoryOrdering::Relaxed>
       mTransparencyMode;
