@@ -1,8 +1,5 @@
-#!/bin/bash
 set -ex
 
-export PATH=/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio/2017/Community\ /VC/Auxiliary/Build/:$PATH
-cd ../ 
 ./mach -v build
 ./mach -v build installer
 
