@@ -1,5 +1,7 @@
 set -ex
 
+cd /c/Builds/waterfox
+
 ./mach -v build
 ./mach -v build installer
 
