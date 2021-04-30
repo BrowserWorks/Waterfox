@@ -2,8 +2,9 @@
 set -ex
 
 export PATH=/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio/2017/Community\ /VC/Auxiliary/Build/:$PATH
-../mach -v build
-../mach -v build installer
+cd ../ 
+./mach -v build
+./mach -v build installer
 
 # YEAR=$(date +%Y)
 # MONTH=$(date +%m)
