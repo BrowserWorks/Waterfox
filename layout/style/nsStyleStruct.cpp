@@ -4266,7 +4266,6 @@ nsStyleUserInterface::nsStyleUserInterface(const nsPresContext* aContext)
   , mCaretColor(StyleComplexColor::Auto())
   , mScrollbarFaceColor(StyleComplexColor::Auto())
   , mScrollbarTrackColor(StyleComplexColor::Auto())
-  , mScrollbarWidth(StyleScrollbarWidth::Auto)
 {
   MOZ_COUNT_CTOR(nsStyleUserInterface);
 }
@@ -4281,7 +4280,6 @@ nsStyleUserInterface::nsStyleUserInterface(const nsStyleUserInterface& aSource)
   , mCaretColor(aSource.mCaretColor)
   , mScrollbarFaceColor(aSource.mScrollbarFaceColor)
   , mScrollbarTrackColor(aSource.mScrollbarTrackColor)
-  , mScrollbarWidth(aSource.mScrollbarWidth)
 {
   MOZ_COUNT_CTOR(nsStyleUserInterface);
 }
@@ -4349,13 +4347,6 @@ nsStyleUserInterface::CalcDifference(const nsStyleUserInterface& aNewData) const
     hint |= nsChangeHint_RepaintFrame;
   }
 
-  if (mScrollbarWidth != aNewData.mScrollbarWidth) {
-    // For scrollbar-width change, we need some special handling similar
-    // to overflow properties. Specifically, we may need to reconstruct
-    // the scrollbar or force reflow of the viewport scrollbar.
-    hint |= nsChangeHint_ScrollbarChange;
-  }
-
   return hint;
 }
 
@@ -4365,6 +4356,7 @@ nsStyleUserInterface::CalcDifference(const nsStyleUserInterface& aNewData) const
 
 nsStyleUIReset::nsStyleUIReset(const nsPresContext* aContext)
   : mUserSelect(StyleUserSelect::Auto)
+  , mScrollbarWidth(StyleScrollbarWidth::Auto)
   , mForceBrokenImageIcon(0)
   , mIMEMode(NS_STYLE_IME_MODE_AUTO)
   , mWindowDragging(StyleWindowDragging::Default)
@@ -4379,6 +4371,7 @@ nsStyleUIReset::nsStyleUIReset(const nsPresContext* aContext)
 
 nsStyleUIReset::nsStyleUIReset(const nsStyleUIReset& aSource)
   : mUserSelect(aSource.mUserSelect)
+  , mScrollbarWidth(aSource.mScrollbarWidth)
   , mForceBrokenImageIcon(aSource.mForceBrokenImageIcon)
   , mIMEMode(aSource.mIMEMode)
   , mWindowDragging(aSource.mWindowDragging)
@@ -4416,6 +4409,12 @@ nsStyleUIReset::CalcDifference(const nsStyleUIReset& aNewData) const
 
   if (mForceBrokenImageIcon != aNewData.mForceBrokenImageIcon) {
     hint |= nsChangeHint_ReconstructFrame;
+  }
+  if (mScrollbarWidth != aNewData.mScrollbarWidth) {
+    // For scrollbar-width change, we need some special handling similar
+    // to overflow properties. Specifically, we may need to reconstruct
+    // the scrollbar or force reflow of the viewport scrollbar.
+    hint |= nsChangeHint_ScrollbarChange;
   }
   if (mWindowShadow != aNewData.mWindowShadow) {
     // We really need just an nsChangeHint_SyncFrameView, except

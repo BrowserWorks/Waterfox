@@ -665,7 +665,7 @@ static nscoord
 GetScrollbarWidthNoTheme(nsIFrame* aBox)
 {
     nsStyleContext* scrollbarStyle = nsLayoutUtils::StyleForScrollbar(aBox);
-    switch (scrollbarStyle->StyleUserInterface()->mScrollbarWidth) {
+    switch (scrollbarStyle->StyleUIReset()->mScrollbarWidth) {
       default:
       case StyleScrollbarWidth::Auto:
         return 12 * AppUnitsPerCSSPixel();

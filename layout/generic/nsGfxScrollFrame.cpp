@@ -1069,7 +1069,7 @@ nsHTMLScrollFrame::Reflow(nsPresContext* aPresContext,
     // root elements with "scrollbar-width: none" is already suppressed
     // in ScrollFrameHelper::CreateAnonymousContent.
     nsStyleContext* scrollbarStyle = nsLayoutUtils::StyleForScrollbar(this);
-    auto scrollbarWidth = scrollbarStyle->StyleUserInterface()->mScrollbarWidth;
+    auto scrollbarWidth = scrollbarStyle->StyleUIReset()->mScrollbarWidth;
     if (scrollbarWidth == StyleScrollbarWidth::None) {
       state.mVScrollbar = ShowScrollbar::Never;
       state.mHScrollbar = ShowScrollbar::Never;
@@ -4498,7 +4498,7 @@ ScrollFrameHelper::CreateAnonymousContent(
   bool canHaveHorizontal;
   bool canHaveVertical;
   if (!mIsRoot) {
-    if (mOuter->StyleUserInterface()->mScrollbarWidth == StyleScrollbarWidth::None) {
+    if (mOuter->StyleUIReset()->mScrollbarWidth == StyleScrollbarWidth::None) {
       // If scrollbar-width is none, don't generate scrollbars.
       canHaveHorizontal = false;
       canHaveVertical = false;

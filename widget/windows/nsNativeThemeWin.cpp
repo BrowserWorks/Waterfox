@@ -57,7 +57,7 @@ nsNativeThemeWin::nsNativeThemeWin() :
   mMinimumWidgetSizeCacheValid()
 {
   // If there is a relevant change in forms.css for windows platform,
-  // static widget style variables (e.g. sButtonBorderSize) should be 
+  // static widget style variables (e.g. sButtonBorderSize) should be
   // reinitialized here.
 }
 
@@ -337,13 +337,13 @@ struct CaptionButtonPadding {
 
 // RECT: left, top, right, bottom
 static CaptionButtonPadding buttonData[3] = {
-  { 
+  {
     { { 1, 2, 0, 1 }, { 0, 2, 1, 1 }, { 1, 2, 2, 1 } }
   },
-  { 
+  {
     { { 1, 2, 0, 2 }, { 0, 2, 1, 2 }, { 1, 2, 2, 2 } }
   },
-  { 
+  {
     { { 0, 2, 0, 2 }, { 0, 2, 1, 2 }, { 1, 2, 2, 2 } }
   }
 };
@@ -509,7 +509,7 @@ nsNativeThemeWin::CalculateProgressOverlayRect(nsIFrame* aFrame,
     overlaySize = GetProgressOverlaySize(aIsVertical, aIsIndeterminate);
   } else {
     overlaySize = kProgressClassicOverlaySize;
-  } 
+  }
 
   // Calculate a bounds that is larger than the meters frame such that the
   // overlay starts and ends completely off the edge of the frame:
@@ -851,8 +851,8 @@ nsNativeThemeWin::IsMenuActive(nsIFrame *aFrame, uint8_t aWidgetType)
  * but elicits some kind of default behaviour from UXTheme when drawing
  * (but isThemeBackgroundPartiallyTransparent may not work).
  */
-nsresult 
-nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType, 
+nsresult
+nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
                                        int32_t& aPart, int32_t& aState)
 {
   switch (aWidgetType) {
@@ -874,7 +874,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
       }
 
       aState = StandardGetState(aFrame, aWidgetType, true);
-      
+
       // Check for default dialog buttons.  These buttons should always look
       // focused.
       if (aState == TS_NORMAL && IsDefaultButton(aFrame))
@@ -1026,7 +1026,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
         else
           aState = TS_NORMAL;
       }
-     
+
       return NS_OK;
     }
     case NS_THEME_SEPARATOR: {
@@ -1083,7 +1083,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
           aState = TS_ACTIVE;
         else if (eventState.HasState(NS_EVENT_STATE_HOVER))
           aState = TS_HOVER;
-        else 
+        else
           aState = TS_NORMAL;
       }
       return NS_OK;
@@ -1146,7 +1146,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
         aState = TS_DISABLED;
       else
         aState = StandardGetState(aFrame, aWidgetType, false);
-      return NS_OK;    
+      return NS_OK;
     }
     case NS_THEME_TOOLBOX:
     case NS_THEME_WIN_MEDIA_TOOLBOX:
@@ -1218,7 +1218,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
       }
       else
         aState = StandardGetState(aFrame, aWidgetType, true);
-      
+
       return NS_OK;
     }
     case NS_THEME_TREEHEADERSORTARROW: {
@@ -1233,9 +1233,9 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
         aState = TS_NORMAL;
         return NS_OK;
       }
-      
+
       aState = StandardGetState(aFrame, aWidgetType, true);
-      
+
       return NS_OK;
     }
     case NS_THEME_MENULIST: {
@@ -1354,7 +1354,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
       return NS_OK;
     }
     case NS_THEME_MENUITEM:
-    case NS_THEME_CHECKMENUITEM: 
+    case NS_THEME_CHECKMENUITEM:
     case NS_THEME_RADIOMENUITEM: {
       bool isTopLevel = false;
       bool isOpen = false;
@@ -1512,7 +1512,7 @@ GetThemeDpiScaleFactor(nsIFrame* aFrame)
 static bool
 IsScrollbarWidthThin(nsStyleContext* aStyle)
 {
-  auto scrollbarWidth = aStyle->StyleUserInterface()->mScrollbarWidth;
+  auto scrollbarWidth = aStyle->StyleUIReset()->mScrollbarWidth;
   return scrollbarWidth == StyleScrollbarWidth::Thin;
 }
 
@@ -1547,7 +1547,7 @@ nsNativeThemeWin::DrawWidgetBackground(gfxContext* aContext,
 
   HANDLE theme = GetTheme(aWidgetType);
   if (!theme)
-    return ClassicDrawWidgetBackground(aContext, aFrame, aWidgetType, aRect, aDirtyRect); 
+    return ClassicDrawWidgetBackground(aContext, aFrame, aWidgetType, aRect, aDirtyRect);
 
   // ^^ without the right sdk, assume xp theming and fall through.
   if (nsUXThemeData::CheckForCompositor()) {
@@ -1567,7 +1567,7 @@ nsNativeThemeWin::DrawWidgetBackground(gfxContext* aContext,
       case NS_THEME_WINDOW_BUTTON_RESTORE:
         // Not conventional bitmaps, can't be retrieved. If we fall
         // through here and call the theme library we'll get aero
-        // basic bitmaps. 
+        // basic bitmaps.
         return NS_OK;
       break;
       case NS_THEME_WIN_GLASS:
@@ -1652,7 +1652,7 @@ RENDER_AGAIN:
       // to just use the default value for Luna (which also happens to be correct for
       // all the other skins I've tried).
       int32_t edgeSize = 2;
-    
+
       // Armed with the size of the edge, we now need to either shift to the left or to the
       // right.  The clip rect won't include this extra area, so we know that we're
       // effectively shifting the edge out of view (such that it won't be painted).
@@ -1965,7 +1965,7 @@ ScaleForFrameDPI(LayoutDeviceIntSize* aSize, nsIFrame* aFrame)
 }
 
 NS_IMETHODIMP
-nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext, 
+nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
                                   nsIFrame* aFrame,
                                   uint8_t aWidgetType,
                                   nsIntMargin* aResult)
@@ -1985,11 +1985,11 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
   aResult->top = aResult->bottom = aResult->left = aResult->right = 0;
 
   if (!WidgetIsContainer(aWidgetType) ||
-      aWidgetType == NS_THEME_TOOLBOX || 
+      aWidgetType == NS_THEME_TOOLBOX ||
       aWidgetType == NS_THEME_WIN_MEDIA_TOOLBOX ||
       aWidgetType == NS_THEME_WIN_COMMUNICATIONS_TOOLBOX ||
       aWidgetType == NS_THEME_WIN_BROWSERTABBAR_TOOLBOX ||
-      aWidgetType == NS_THEME_STATUSBAR || 
+      aWidgetType == NS_THEME_STATUSBAR ||
       aWidgetType == NS_THEME_RESIZER || aWidgetType == NS_THEME_TABPANEL ||
       aWidgetType == NS_THEME_SCROLLBAR_HORIZONTAL ||
       aWidgetType == NS_THEME_SCROLLBAR_VERTICAL ||
@@ -2047,7 +2047,7 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
 }
 
 bool
-nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext, 
+nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
                                    nsIFrame* aFrame,
                                    uint8_t aWidgetType,
                                    nsIntMargin* aResult)
@@ -2194,7 +2194,7 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
 }
 
 bool
-nsNativeThemeWin::GetWidgetOverflow(nsDeviceContext* aContext, 
+nsNativeThemeWin::GetWidgetOverflow(nsDeviceContext* aContext,
                                     nsIFrame* aFrame,
                                     uint8_t aWidgetType,
                                     nsRect* aOverflowRect)
@@ -2288,7 +2288,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
       return NS_OK; // Don't worry about it for top level menus
 
   // Call GetSystemMetrics to determine size for WinXP scrollbars
-  // (GetThemeSysSize API returns the optimal size for the theme, but 
+  // (GetThemeSysSize API returns the optimal size for the theme, but
   //  Windows appears to always use metrics when drawing standard scrollbars)
   THEMESIZE sizeReq = TS_TRUE; // Best-fit size
   switch (aWidgetType) {
@@ -2335,10 +2335,10 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
 
     case NS_THEME_PROGRESSBAR:
     case NS_THEME_PROGRESSBAR_VERTICAL:
-      // Best-fit size for progress meters is too large for most 
+      // Best-fit size for progress meters is too large for most
       // themes. We want these widgets to be able to really shrink
       // down, so use the min-size request value (of 0).
-      sizeReq = TS_MIN; 
+      sizeReq = TS_MIN;
       break;
 
     case NS_THEME_RESIZER:
@@ -2474,7 +2474,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
 }
 
 NS_IMETHODIMP
-nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
+nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
                                      nsIAtom* aAttribute, bool* aShouldRepaint,
                                      const nsAttrValue* aOldValue)
 {
@@ -2530,7 +2530,7 @@ nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
     *aShouldRepaint = true;
   }
   else {
-    // Check the attribute to see if it's relevant.  
+    // Check the attribute to see if it's relevant.
     // disabled, checked, dlgtype, default, etc.
     *aShouldRepaint = false;
     if (aAttribute == nsGkAtoms::disabled ||
@@ -2556,7 +2556,7 @@ nsNativeThemeWin::ThemeChanged()
   return NS_OK;
 }
 
-bool 
+bool
 nsNativeThemeWin::ThemeSupportsWidget(nsPresContext* aPresContext,
                                       nsIFrame* aFrame,
                                       uint8_t aWidgetType)
@@ -2586,11 +2586,11 @@ nsNativeThemeWin::ThemeSupportsWidget(nsPresContext* aPresContext,
   return false;
 }
 
-bool 
+bool
 nsNativeThemeWin::WidgetIsContainer(uint8_t aWidgetType)
 {
   // XXXdwh At some point flesh all of this out.
-  if (aWidgetType == NS_THEME_MENULIST_BUTTON || 
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_RADIO ||
       aWidgetType == NS_THEME_CHECKBOX)
     return false;
@@ -2807,7 +2807,7 @@ nsNativeThemeWin::ClassicThemeSupportsWidget(nsIFrame* aFrame,
 }
 
 nsresult
-nsNativeThemeWin::ClassicGetWidgetBorder(nsDeviceContext* aContext, 
+nsNativeThemeWin::ClassicGetWidgetBorder(nsDeviceContext* aContext,
                                   nsIFrame* aFrame,
                                   uint8_t aWidgetType,
                                   nsIntMargin* aResult)
@@ -2815,7 +2815,7 @@ nsNativeThemeWin::ClassicGetWidgetBorder(nsDeviceContext* aContext,
   switch (aWidgetType) {
     case NS_THEME_GROUPBOX:
     case NS_THEME_BUTTON:
-      (*aResult).top = (*aResult).left = (*aResult).bottom = (*aResult).right = 2; 
+      (*aResult).top = (*aResult).left = (*aResult).bottom = (*aResult).right = 2;
       break;
     case NS_THEME_STATUSBAR:
       (*aResult).bottom = (*aResult).left = (*aResult).right = 0;
@@ -2834,12 +2834,12 @@ nsNativeThemeWin::ClassicGetWidgetBorder(nsDeviceContext* aContext,
       break;
     case NS_THEME_STATUSBARPANEL:
     case NS_THEME_RESIZERPANEL: {
-      (*aResult).top = 1;      
+      (*aResult).top = 1;
       (*aResult).left = 1;
       (*aResult).bottom = 1;
       (*aResult).right = aFrame->GetNextSibling() ? 3 : 1;
       break;
-    }    
+    }
     case NS_THEME_TOOLTIP:
       (*aResult).top = (*aResult).left = (*aResult).bottom = (*aResult).right = 1;
       break;
@@ -2989,9 +2989,9 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE:
-    case NS_THEME_MENULIST_TEXTFIELD:      
+    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_STATUSBAR:
-    case NS_THEME_STATUSBARPANEL:      
+    case NS_THEME_STATUSBARPANEL:
     case NS_THEME_RESIZERPANEL:
     case NS_THEME_PROGRESSCHUNK:
     case NS_THEME_PROGRESSCHUNK_VERTICAL:
@@ -3003,7 +3003,7 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
     case NS_THEME_TABPANELS:
       // no minimum widget size
       break;
-    case NS_THEME_RESIZER: {     
+    case NS_THEME_RESIZER: {
       NONCLIENTMETRICS nc;
       nc.cbSize = sizeof(nc);
       if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(nc), &nc, 0))
@@ -3094,14 +3094,14 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
 
     default:
       return NS_ERROR_FAILURE;
-  }  
+  }
   return NS_OK;
 }
 
 
 nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
                                  int32_t& aPart, int32_t& aState, bool& aFocused)
-{  
+{
   aFocused = false;
   switch (aWidgetType) {
     case NS_THEME_BUTTON: {
@@ -3361,9 +3361,9 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
           aState |= DFCS_PUSHED;
       }
 
-      return NS_OK;    
+      return NS_OK;
     }
-    case NS_THEME_RESIZER:    
+    case NS_THEME_RESIZER:
       aPart = DFC_SCROLL;
       aState = (IsFrameRTL(aFrame)) ?
                DFCS_SCROLLSIZEGRIPRIGHT : DFCS_SCROLLSIZEGRIP;
@@ -3425,7 +3425,7 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
 static void DrawTab(HDC hdc, const RECT& R, int32_t aPosition, bool aSelected,
                     bool aDrawLeft, bool aDrawRight)
 {
-  int32_t leftFlag, topFlag, rightFlag, lightFlag, shadeFlag;  
+  int32_t leftFlag, topFlag, rightFlag, lightFlag, shadeFlag;
   RECT topRect, sideRect, bottomRect, lightRect, shadeRect;
   int32_t selectedOffset, lOffset, rOffset;
 
@@ -3447,7 +3447,7 @@ static void DrawTab(HDC hdc, const RECT& R, int32_t aPosition, bool aSelected,
       ::SetRect(&lightRect, R.left, R.top, R.left+3, R.top+3);
       ::SetRect(&shadeRect, R.left+1, R.bottom-2, R.left+2, R.bottom-1);
       break;
-    case BF_TOP:    
+    case BF_TOP:
       leftFlag = BF_LEFT; topFlag = BF_TOP;
       rightFlag = BF_RIGHT;
       lightFlag = BF_DIAGONAL_ENDTOPRIGHT;
@@ -3456,10 +3456,10 @@ static void DrawTab(HDC hdc, const RECT& R, int32_t aPosition, bool aSelected,
       ::SetRect(&topRect, R.left+lOffset, R.top, R.right-rOffset, R.bottom);
       ::SetRect(&sideRect, R.left, R.top+2, R.right, R.bottom-1+selectedOffset);
       ::SetRect(&bottomRect, R.left, R.bottom-1, R.right, R.bottom);
-      ::SetRect(&lightRect, R.left, R.top, R.left+3, R.top+3);      
-      ::SetRect(&shadeRect, R.right-2, R.top+1, R.right-1, R.top+2);      
+      ::SetRect(&lightRect, R.left, R.top, R.left+3, R.top+3);
+      ::SetRect(&shadeRect, R.right-2, R.top+1, R.right-1, R.top+2);
       break;
-    case BF_RIGHT:    
+    case BF_RIGHT:
       leftFlag = BF_TOP; topFlag = BF_RIGHT;
       rightFlag = BF_BOTTOM;
       lightFlag = BF_DIAGONAL_ENDTOPLEFT;
@@ -3471,7 +3471,7 @@ static void DrawTab(HDC hdc, const RECT& R, int32_t aPosition, bool aSelected,
       ::SetRect(&lightRect, R.right-3, R.top, R.right-1, R.top+2);
       ::SetRect(&shadeRect, R.right-2, R.bottom-3, R.right, R.bottom-1);
       break;
-    case BF_BOTTOM:    
+    case BF_BOTTOM:
       leftFlag = BF_LEFT; topFlag = BF_BOTTOM;
       rightFlag = BF_RIGHT;
       lightFlag = BF_DIAGONAL_ENDTOPLEFT;
@@ -3565,11 +3565,11 @@ void nsNativeThemeWin::DrawCheckedRect(HDC hdc, const RECT& rc, int32_t fore, in
   static WORD patBits[8] = {
     0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55
   };
-        
+
   HBITMAP patBmp = ::CreateBitmap(8, 8, 1, 1, patBits);
   if (patBmp) {
     HBRUSH brush = (HBRUSH) ::CreatePatternBrush(patBmp);
-    if (brush) {        
+    if (brush) {
       COLORREF oldForeColor = ::SetTextColor(hdc, ::GetSysColor(fore));
       COLORREF oldBackColor = ::SetBkColor(hdc, ::GetSysColor(back));
       POINT vpOrg;
@@ -3582,11 +3582,11 @@ void nsNativeThemeWin::DrawCheckedRect(HDC hdc, const RECT& rc, int32_t fore, in
       ::SetTextColor(hdc, oldForeColor);
       ::SetBkColor(hdc, oldBackColor);
       ::SelectObject(hdc, oldBrush);
-      ::DeleteObject(brush);          
+      ::DeleteObject(brush);
     }
     else
       ::FillRect(hdc, &rc, defaultBack);
-  
+
     ::DeleteObject(patBmp);
   }
 }
@@ -3629,12 +3629,12 @@ RENDER_AGAIN:
   nativeDrawing.TransformToNativeRect(tr, widgetRect);
 
   rv = NS_OK;
-  switch (aWidgetType) { 
+  switch (aWidgetType) {
     // Draw button
     case NS_THEME_BUTTON: {
       if (focused) {
         // draw dark button focus border first
-        HBRUSH brush;        
+        HBRUSH brush;
         brush = ::GetSysColorBrush(COLOR_3DDKSHADOW);
         if (brush)
           ::FrameRect(hdc, &widgetRect, brush);
@@ -3747,14 +3747,14 @@ RENDER_AGAIN:
     case NS_THEME_SCROLLBAR_VERTICAL:
     case NS_THEME_SCROLLBAR_HORIZONTAL: {
 
-      // Windows fills in the scrollbar track differently 
+      // Windows fills in the scrollbar track differently
       // depending on whether these are equal
       DWORD color3D, colorScrollbar, colorWindow;
 
-      color3D = ::GetSysColor(COLOR_3DFACE);      
+      color3D = ::GetSysColor(COLOR_3DFACE);
       colorWindow = ::GetSysColor(COLOR_WINDOW);
       colorScrollbar = ::GetSysColor(COLOR_SCROLLBAR);
-      
+
       if ((color3D != colorScrollbar) && (colorWindow != colorScrollbar))
         // Use solid brush
         ::FillRect(hdc, &widgetRect, (HBRUSH) (COLOR_SCROLLBAR+1));
@@ -3774,7 +3774,7 @@ RENDER_AGAIN:
     // Draw scale track background
     case NS_THEME_RANGE:
     case NS_THEME_SCALE_VERTICAL:
-    case NS_THEME_SCALE_HORIZONTAL: { 
+    case NS_THEME_SCALE_HORIZONTAL: {
       const int32_t trackWidth = 4;
       // When rounding is necessary, we round the position of the track
       // away from the chevron of the thumb to make it look better.
@@ -3795,7 +3795,7 @@ RENDER_AGAIN:
 
       ::DrawEdge(hdc, &widgetRect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
       ::FillRect(hdc, &widgetRect, (HBRUSH) GetStockObject(GRAY_BRUSH));
- 
+
       break;
     }
     case NS_THEME_PROGRESSCHUNK_VERTICAL:
@@ -3831,7 +3831,7 @@ RENDER_AGAIN:
     // Draw Tab
     case NS_THEME_TAB: {
       DrawTab(hdc, widgetRect,
-        IsBottomTab(aFrame) ? BF_BOTTOM : BF_TOP, 
+        IsBottomTab(aFrame) ? BF_BOTTOM : BF_TOP,
         IsSelectedTab(aFrame),
         !IsRightToSelectedTab(aFrame),
         !IsLeftToSelectedTab(aFrame));
@@ -3887,13 +3887,13 @@ RENDER_AGAIN:
         color = COLOR_GRAYTEXT;
       else if ((state & DFCS_HOT))
         color = COLOR_HIGHLIGHTTEXT;
-      
+
       if (aWidgetType == NS_THEME_MENUCHECKBOX)
         DrawMenuImage(hdc, widgetRect, DFCS_MENUCHECK, color);
       else if (aWidgetType == NS_THEME_MENURADIO)
         DrawMenuImage(hdc, widgetRect, DFCS_MENUBULLET, color);
       else if (aWidgetType == NS_THEME_MENUARROW)
-        DrawMenuImage(hdc, widgetRect, 
+        DrawMenuImage(hdc, widgetRect,
                       (state & DFCS_RTL) ? DFCS_MENUARROWRIGHT : DFCS_MENUARROW,
                       color);
       break;
@@ -3953,7 +3953,7 @@ RENDER_AGAIN:
         vertex[0].Alpha = 0;
 
         vertex[1].x     = rect.right;
-        vertex[1].y     = rect.bottom; 
+        vertex[1].y     = rect.bottom;
         vertex[1].Red   = GetRValue(endColor) << 8;
         vertex[1].Green = GetGValue(endColor) << 8;
         vertex[1].Blue  = GetBValue(endColor) << 8;

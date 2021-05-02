@@ -1863,7 +1863,7 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
     nsStyleContext* cs = nsLayoutUtils::StyleForScrollbar(aFrame);
     if (cs->StyleUserInterface()->HasCustomScrollbars() ||
         // We cannot handle thin scrollbar on GTK+ widget directly as well.
-        cs->StyleUserInterface()->mScrollbarWidth == StyleScrollbarWidth::Thin) {
+        cs->StyleUIReset()->mScrollbarWidth == StyleScrollbarWidth::Thin) {
       return false;
     }
   }

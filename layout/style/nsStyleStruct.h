@@ -3252,6 +3252,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleUIReset
   nsChangeHint CalcDifference(const nsStyleUIReset& aNewData) const;
 
   mozilla::StyleUserSelect     mUserSelect;     // [reset](selection-style)
+  mozilla::StyleScrollbarWidth mScrollbarWidth;
   uint8_t mForceBrokenImageIcon; // [reset] (0 if not forcing, otherwise forcing)
   uint8_t                      mIMEMode;        // [reset]
   mozilla::StyleWindowDragging mWindowDragging; // [reset]
@@ -3313,7 +3314,6 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleUserInterface
   uint8_t mCursor;                            // [inherited] See nsStyleConsts.h
   nsTArray<nsCursorImage> mCursorImages;      // [inherited] images and coords
   mozilla::StyleComplexColor mCaretColor;     // [inherited]
-  mozilla::StyleScrollbarWidth mScrollbarWidth;
 
   mozilla::StyleComplexColor mScrollbarFaceColor;   // [inherited]
   mozilla::StyleComplexColor mScrollbarTrackColor;  // [inherited]

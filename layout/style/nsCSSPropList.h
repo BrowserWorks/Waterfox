@@ -3755,7 +3755,7 @@ CSS_PROP_USERINTERFACE(
     nullptr,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_ComplexColor)
-CSS_PROP_USERINTERFACE(
+CSS_PROP_UIRESET(
     scrollbar-width,
     scrollbar_width,
     ScrollbarWidth,
