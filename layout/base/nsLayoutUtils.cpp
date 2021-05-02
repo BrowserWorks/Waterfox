@@ -9496,8 +9496,7 @@ nsLayoutUtils::StyleForScrollbar(nsIFrame* aScrollbarPart)
   MOZ_ASSERT(content == pc->Document()->GetRootElement(),
              "Root element is the only case for this fallback "
              "path to be triggered");
-  RefPtr<nsStyleContext> style =
-    pc->StyleSet()->AsGecko()->ResolveStyleFor(content->AsElement(), nullptr);
+  RefPtr<nsStyleContext> style = aScrollbarPart->StyleContext();
   // Dropping the strong reference is fine because the style should be
   // held strongly by the element.
   return style.get();
