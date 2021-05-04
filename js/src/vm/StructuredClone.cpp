@@ -938,6 +938,8 @@ void SCOutput::discardTransferables() { buf.discardTransferables(); }
 
 }  // namespace js
 
+JSStructuredCloneData::~JSStructuredCloneData() { discardTransferables(); }
+
 // If the buffer contains Transferables, free them. Note that custom
 // Transferables will use the JSStructuredCloneCallbacks::freeTransfer() to
 // delete their transferables.
