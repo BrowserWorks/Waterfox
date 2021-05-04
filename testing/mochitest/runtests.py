@@ -823,7 +823,7 @@ def findTestMediaDevices(log):
         gst = gst010
     else:
         gst = gst10
-    subprocess.check_call([gst, 'videotestsrc',
+    subprocess.check_call([gst, 'videotestsrc', '--no-fault',
                            'pattern=green', 'num-buffers=1', '!',
                            'v4l2sink', 'device=%s' % device])
     info['video'] = name

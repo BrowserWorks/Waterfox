@@ -34,4 +34,6 @@ fi
 
 echo "Applying gecko.patch on top of $rev"
 patch -p3 < gecko.patch
+echo "Applying bug1648612.patch on top of $rev"
+patch -p3 < bug1648612.patch
 

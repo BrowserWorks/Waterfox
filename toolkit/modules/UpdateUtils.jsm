@@ -96,7 +96,7 @@ var UpdateUtils = {
    */
   async formatUpdateURL(url) {
     const locale = await this.getLocale();
-
+    let defaultSearch = await Services.search.getDefault();
     return url
       .replace(/%(\w+)%/g, (match, name) => {
         switch (name) {
@@ -121,9 +121,15 @@ var UpdateUtils = {
           case "SYSTEM_CAPABILITIES":
             return getSystemCapabilities();
           case "DISTRIBUTION":
-            return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+            if (Services.prefs.getCharPref("browser.search.ptag", "")) {
+              return getDistributionPrefValue(PREF_APP_DISTRIBUTION) == "default" ? Services.prefs.getCharPref("distribution.source", "wfx") : getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+            } else {
+              return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+            }
+            // return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
           case "DISTRIBUTION_VERSION":
-            return getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
+            return (getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION) == "default" && defaultSearch.name == "Bing") ? Services.prefs.getCharPref("browser.search.ptag", "default") : getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
+            // return getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
         }
         return match;
       })

@@ -7,6 +7,7 @@
 
 #include "ClientWebGLExtensions.h"
 #include "HostWebGLContext.h"
+#include "mozilla/dom/SanitizeRenderer.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/dom/WebGLContextEvent.h"
 #include "mozilla/dom/WorkerCommon.h"
@@ -1972,7 +1973,9 @@ void ClientWebGLContext::GetParameter(JSContext* cx, GLenum pname,
 
         const auto maybe = Run<RPROC(GetString)>(driverEnum);
         if (maybe) {
-          retval.set(StringValue(cx, *maybe, rv));
+          std::string renderer = *maybe;
+          mozilla::dom::SanitizeRenderer(renderer);
+          retval.set(StringValue(cx, renderer, rv));
         }
         return;
       }

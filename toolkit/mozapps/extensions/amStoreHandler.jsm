@@ -6,10 +6,42 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
     AddonManager: "resource://gre/modules/AddonManager.jsm",
+    BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
     FileUtils: "resource://gre/modules/FileUtils.jsm",
     OS: "resource://gre/modules/osfile.jsm",
     NetUtil: "resource://gre/modules/NetUtil.jsm"
 });
+
+XPCOMUtils.defineLazyGetter(this, "PopupNotifications", () => {
+    // eslint-disable-next-line no-shadow
+    let { PopupNotifications } = ChromeUtils.import(
+      "resource://gre/modules/PopupNotifications.jsm"
+    );
+    try {
+      const win = BrowserWindowTracker.getTopWindow();
+      const gBrowser = win.gBrowser;
+      const document = win.document;
+      const gURLBar = win.gURLBar;
+      let shouldSuppress = () => {
+        return (
+          win.windowState == win.STATE_MINIMIZED ||
+          (gURLBar.getAttribute("pageproxystate") != "valid" &&
+            gURLBar.focused) ||
+          gBrowser?.selectedBrowser.hasAttribute("tabmodalChromePromptShowing") ||
+          gBrowser?.selectedBrowser.hasAttribute("tabDialogShowing")
+        );
+      };
+      return new PopupNotifications(
+        gBrowser,
+        document.getElementById("notification-popup"),
+        document.getElementById("notification-popup-box"),
+        { shouldSuppress }
+      );
+    } catch (ex) {
+      Cu.reportError(ex);
+      return null;
+    }
+  });
 
 const ZipReader = Components.Constructor(
     "@mozilla.org/libjar/zip-reader;1",
@@ -87,11 +119,27 @@ var StoreHandler = {
      * @param msg string message to display
      */
     _installFailedMsg: function __installFailedMsg(msg="Encountered an error during extension installation") {
-        Services.prompt.alert(
+        const anchorID = "addons-notification-icon";
+        const win = BrowserWindowTracker.getTopWindow();
+        const browser = win.gBrowser.selectedBrowser;
+        let action = {
+            label: "OK",
+            accessKey: "failed_accessKey",
+            callback: () => {},
+          };
+        var options = {
+            persistent: true,
+            hideClose: true,
+          };
+        PopupNotifications.show(
+            browser,
+            "addon-install-failed",
+            msg,
+            anchorID,
+            action,
             null,
-            "Extension Install Failure",
-            msg
-          )
+            options
+          );
     },
 
     /**
@@ -117,7 +165,7 @@ var StoreHandler = {
             // Check that we had success.
             if (!Components.isSuccessCode(aResult)) {
                 if (retry == false) {this.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest, true);return false;}
-                this._installFailedMsg("Fetching resource failed");
+                this._installFailedMsg("The add-on could not be downloaded because of a connection failure.");
                 return false;
             };
             // write nsiInputStream to nsiOutputStream
@@ -129,7 +177,7 @@ var StoreHandler = {
                 if (!Components.isSuccessCode(aResult)) {
                     // delete any tmp files
                     this._cleanup(nsiFileXpi);
-                    this._installFailedMsg("Writing to tmp failed");
+                    this._installFailedMsg("This add-on could not be installed because of a filesystem error.");
                     return false;
                 };
                 try {
@@ -138,19 +186,21 @@ var StoreHandler = {
                     if (manifest instanceof Array) {
                         this._cleanup(nsiFileXpi);
                         this._installFailedMsg(
-                            "This addon requires use of the following unsupported APIs: " + manifest.join(",")
-                            )
+                            "This add-on could not be installed because not all of its features are supported."
+                            );
+                        Services.console.logStringMessage('CRX: Unsupported APIs: ' + manifest.join(","))
                         return false;
                     }
                     this._writeTmpManifest(nsiManifest, manifest);
                     this._replaceManifestInXpi(nsiFileXpi, nsiManifest);
                     await this._installXpi(nsiFileXpi);
-                    this._cleanup(nsiFileXpi);
+                    // this._cleanup(nsiFileXpi);
                     this._resetUUID();
                 } catch(e) {
                     // delete any tmp files
                     this._cleanup(nsiFileXpi);
-                    this._installFailedMsg("Issue installing extension :" + e);
+                    this._installFailedMsg("There was an issue while attempting to install the add-on.");
+                    Services.console.logStringMessage('CRX: Error installing add-on: ' + e)
                     return false;
                 };
             });
@@ -174,7 +224,7 @@ var StoreHandler = {
                 }
             };
             if (i == 3000) {
-                Services.console.logStringMessage("Magic not found");
+                Services.console.logStringMessage("CRX: Magic not found");
                 return false;
             };
             // remove Chrome ext headers
@@ -183,7 +233,7 @@ var StoreHandler = {
             await OS.File.writeAtomic(path, zipBuffer);
             return true;
         } catch(e) {
-            Services.console.logStringMessage("Error removing Chrome headers");
+            Services.console.logStringMessage("CRX: Error removing Chrome headers");
             return false;
         }
     },
@@ -198,7 +248,7 @@ var StoreHandler = {
             let zr = new ZipReader(file);
             let manifest = this._parseManifest(zr);
             // only manifest version 2 currently supported
-            if (manifest.manifest_version != 2) {
+            if (manifest.manifest_version != 2 || !manifest.manifest_version) {
                 this._installFailedMsg("Manifest version not supported, must be manifest_version: 2");
                 return false;
             }
@@ -221,7 +271,7 @@ var StoreHandler = {
             zr.close();
             return manifest;
         } catch(e) {
-            Services.console.logStringMessage("Error updating manifest: " + e);
+            Services.console.logStringMessage("CRX: Error updating manifest: " + e);
             return false;
         }
     },
@@ -270,8 +320,8 @@ var StoreHandler = {
             },
             "incognito":"split",
             "offline_enabled":"",
-            "optional_permissions":
-                ["background",
+            "optional_permissions":[
+                "background",
                 "contentSettings",
                 "contextMenus",
                 "debugger",
@@ -279,8 +329,8 @@ var StoreHandler = {
                 "tabCapture"
                 ],
             "options_page":"",
-            "permissions":
-                ["background",
+            "permissions":[
+                "background",
                 "contentSettings",
                 "debugger",
                 "pageCapture",
@@ -302,16 +352,17 @@ var StoreHandler = {
                 // only is unsupported
                 unsupportedInManifest.push(arr[0] + ": " + arr[1]);
             } else if (Object.keys(unsupported).includes(arr[0]) &&
-            unsupported[arr[0]] instanceof Array && arr[1] instanceof Array) {
+            Object.prototype.toString.call(unsupported[arr[0]]) == "[object Array]" &&
+            Object.prototype.toString.call(arr[1]) == "[object Array]") {
                 // if value in unsupported is an array, we know
                 // key is permissions related so we need to check
                 // each permission against the unsupported array
                 var permissionArr = [];
                 arr[1].forEach((value) => {
-                    if (unsupported[arr[0]].includes(value)) {permissionArr.push(value);}
+                    if (unsupported[arr[0]].includes(value)) {permissionArr.push(arr[0] + "." + value);}
                 })
                 if (permissionArr.length > 0) {
-                    unsupportedInManifest.push(permissionArr.join(","));
+                    unsupportedInManifest.push(...permissionArr);
                 }
             } else if (Object.keys(unsupported).includes(arr[0]) &&
             typeof unsupported[arr[0]] == "object" && typeof arr[1] == "object") {
@@ -387,7 +438,7 @@ var StoreHandler = {
             zw.addEntryFile("manifest.json", Ci.nsIZipWriter.COMPRESSION_NONE, manifestFile, false);
             zw.close();
         } catch(e) {
-            Services.console.logStringMessage("Error replacing manifest")
+            Services.console.logStringMessage("CRX: Error replacing manifest")
             return false;
         }
     },
@@ -397,17 +448,15 @@ var StoreHandler = {
      * @param xpiFile nsiFile tmp extension file to install
      */
     _installXpi: async function __installXpi(xpiFile) {
-        let install = await AddonManager.getInstallForFile(xpiFile)
-        await install.install(); //installs silently
-            // let win = Services.wm.getMostRecentWindow("navigator:browser");
-            // let browser = win.gBrowser;
-            // let systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-            // AddonManager.installAddonFromWebpage(
-            //     "application/x-xpinstall",
-            //     browser,
-            //     systemPrincipal,
-            //     install
-            // );
+        let install = await AddonManager.getInstallForFile(xpiFile);
+        const win = BrowserWindowTracker.getTopWindow();
+        const browser = win.gBrowser.selectedBrowser;
+        const document = win.document;
+        await AddonManager.installAddonFromAOM(
+            browser,
+            document.documentURI,
+            install
+          );
     },
 
     /**

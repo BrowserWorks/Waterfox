@@ -822,16 +822,6 @@ var gIdentityHandler = {
       return;
     }
 
-    // If this condition is true, the URL bar will have an "invalid"
-    // pageproxystate, which will hide the security indicators. Thus, we can
-    // safely avoid updating the security UI.
-    //
-    // This will also filter out intermediate about:blank loads to avoid
-    // flickering the identity block and doing unnecessary work.
-    if (this._hasInvalidPageProxyState()) {
-      return;
-    }
-
     this._refreshIdentityIcons();
 
     this._refreshPermissionIcons();

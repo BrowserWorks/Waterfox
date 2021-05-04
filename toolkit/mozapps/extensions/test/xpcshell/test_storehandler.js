@@ -12,8 +12,49 @@ const MANIFESTS = {
   }
 };
 
+const UNSUPPORTED_APIS = [
+  "externally_connectable",
+  "storage",
+  "chrome_settings_overrides.search_provider.alternate_urls",
+  "chrome_settings_overrides.search_provider.image_url",
+  "chrome_settings_overrides.search_provider.image_url_post_params",
+  "chrome_settings_overrides.search_provider.instant_url",
+  "chrome_settings_overrides.search_provider.instant_url_post_params",
+  "chrome_settings_overrides.search_provider.prepopulated_id",
+  "chrome_settings_overrides.startup_pages",
+  "chrome_url_overrides.bookmarks",
+  "chrome_url_overrides.history",
+  "commands.global",
+  "incognito: split",
+  "offline_enabled",
+  "optional_permissions.background",
+  "optional_permissions.contentSettings",
+  "optional_permissions.contextMenus",
+  "optional_permissions.debugger",
+  "optional_permissions.pageCapture",
+  "optional_permissions.tabCapture",
+  "options_page",
+  "permissions.background",
+  "permissions.contentSettings",
+  "permissions.debugger",
+  "permissions.pageCapture",
+  "permissions.tabCapture",
+  "version_name"
+]
+
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
+
+function arraysEqual(arr1, arr2) {
+  if(arr1.length !== arr2.length)
+      return false;
+  for(var i = arr1.length; i--;) {
+      if(arr1[i] !== arr2[i])
+          return false;
+  }
+
+  return true;
+}
 
 add_task(async function setup() {
   await promiseStartupManager();
@@ -63,35 +104,47 @@ add_task(async function test_locale_check() {
   let res2 = StoreHandler._localeCheck(manifest2, zr2);
   // default_locale should be deleted from manifest
   equal(res2.default_locale, undefined);
-}).only();
+});
 
 add_task(async function test_compat_check() {
   // compat check
+  let manifestFile = do_get_file("data/failure_manifest.json");
+  let inputStream = new FileStream(manifestFile, -1, -1, null);
+  let rsi = new ReusableStreamInstance(inputStream);
+  let fileContents = rsi.read(manifestFile.fileSize);
+  let manifest = JSON.parse(fileContents);
+  let manifestRes = StoreHandler._manifestCompatCheck(manifest);
   // should return list of all unsupported APIs
+  equal(arraysEqual(manifestRes, UNSUPPORTED_APIS), true)
 });
 
 add_task(async function test_amend_manifest() {
+  let xpi = do_get_file("data/high_manifest.xpi");
+  let xpi2 = do_get_file("data/no_manifest.xpi");
+  let xpi3 = do_get_file("data/unsupported.xpi");
   // fail if manifest v > 2
+  let res = StoreHandler._amendManifest(xpi);
+  equal(res, false)
   // manifest_version not present
+  let res2 = StoreHandler._amendManifest(xpi2);
+  equal(res, false)
   // if unsupportedAPIs return Array, else Object
-  // add guid
-  // delete update url
+  let res3 = StoreHandler._amendManifest(xpi3);
+  equal(Array.isArray(res3), true);
+  equal(arraysEqual(res3, UNSUPPORTED_APIS), true);
   // stringify manifest
-// failure
+  // if successful should add id and delete update url
+  let xpi4 = do_get_file("data/locale.xpi");
+  let manifest = JSON.parse(StoreHandler._amendManifest(xpi4));
+  equal(typeof manifest.applications.gecko.id,  "string")
+  equal(manifest.update_url, undefined)
 });
 
-// test write tmp manifest
-add_task(async function test_write_tmp_manifest() {
-
-});
-// failure
 // test replace xpi manifest
 add_task(async function test_replace_manifest() {
 
 });
-// failure
 // test install updated addon
 add_task(async function test_install_xpi() {
 
 });
-// failure

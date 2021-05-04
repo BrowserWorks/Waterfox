@@ -1,0 +1,2 @@
+> def b(x):
+>     print "x is %s" % x

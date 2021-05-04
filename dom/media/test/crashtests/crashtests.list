@@ -136,3 +136,5 @@ pref(media.autoplay.default,0) load 1587248.html
 load 1594466.html
 load 1604941.html
 skip-if(!winWidget) load 1608286.html
+load 1673526-1.html
+load 1673526-2.html

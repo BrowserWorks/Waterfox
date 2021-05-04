@@ -14,7 +14,6 @@ job-defaults:
         by-test-platform:
             linux.*64/debug: ['fission']
             default: ['fission']
-    run-on-projects: built-projects
     fission-run-on-projects:
         by-test-platform:
             linux.*64-qr/debug: ['trunk']
@@ -54,6 +53,10 @@ mochitest-plain:
     schedules-component: mochitest-plain
     loopback-video: true
     tier: default
+    run-on-projects:
+        by-test-platform:
+            .*-tsan/opt: ['trunk']
+            default: built-projects
     chunks:
         by-test-platform:
             android-em-7.*: 4

@@ -1,0 +1,37 @@
+Metadata-Version: 1.1
+Name: ds_store
+Version: 1.3.0
+Summary: Manipulate Finder .DS_Store files from Python
+Home-page: http://alastairs-place.net/projects/ds_store
+Author: Alastair Houghton
+Author-email: alastair@alastairs-place.net
+License: MIT License
+Description: ========
+        ds_store
+        ========
+        
+        .. image:: https://travis-ci.org/al45tair/ds_store.svg?branch=master
+            :target: https://travis-ci.org/al45tair/ds_store
+        
+        .. image:: https://readthedocs.org/projects/ds_store/badge/?version=latest
+            :target: http://ds_store.readthedocs.io/en/latest/?badge=latest
+        
+        What is this?
+        -------------
+        
+        ``ds_store`` lets you examine and modify ``.DS_Store`` files from Python
+        code; since it is written in pure Python, it is portable and will run on any
+        platform, not just Mac OS X.
+        
+        Credit is due to Wim Lewis, Mark Mentovai and Yvan Barthélemy for
+        reverse-engineering the .DS_Store file format. See
+        `Wim Lewis’ excellent documentation on CPAN`__ for more information.
+        
+        __ http://search.cpan.org/~wiml/Mac-Finder-DSStore/DSStoreFormat.pod
+        
+Platform: Any
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Topic :: Desktop Environment
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Provides: ds_store

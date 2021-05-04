@@ -37,12 +37,6 @@ amContentHandler.prototype = {
     let { loadInfo } = aRequest;
     const { triggeringPrincipal } = loadInfo;
     if (aMimetype == "application/x-chrome-extension") {
-      let confirmInstall = Services.prompt.confirm(
-        null,
-        "Web Extension Install Request",
-        "This website is attempting to install a web extension. If you trust this website please click \"OK\", else click \"Cancel\".",
-        );
-      if (!confirmInstall) {return;} //don't want to install if permission not given
       // Define tmp paths
       let uuidString = StoreHandler.getUUID().slice(1,-1);
       let xpiPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", uuidString, "extension.xpi");

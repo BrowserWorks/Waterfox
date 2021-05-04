@@ -1,0 +1,55 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/nedbat/coveragepy/blob/master/NOTICE.txt
+
+# Here's some random Python so that test_tokenize_myself will have some
+# stressful stuff to try.  This file is .tok instead of .py so pylint won't
+# complain about it, check_eol won't look at it, etc.
+
+first_back = """\
+hey there!
+"""
+
+other_back = """
+hey \
+there
+"""
+
+lots_of_back = """\
+hey \
+there
+"""
+# This next line is supposed to have trailing whitespace:
+fake_back = """\ 
+ouch
+"""
+
+# Lots of difficulty happens with code like:
+#
+# fake_back = """\
+# ouch
+# """
+#
+# Ugh, the edge cases...
+
+# What about a comment like this\
+"what's this string doing here?"
+
+class C(object):
+        def there():
+                this = 5 + \
+                    7
+                that = \
+                    "a continued line"
+
+cont1 = "one line of text" + \
+    "another line of text"
+
+a_long_string =              \
+    "part 1"                 \
+    "2"                      \
+    "3 is longer"
+
+def hello():
+        print("Hello world!")
+
+hello()

@@ -73,6 +73,9 @@ class nsDNSService final : public nsPIDNSService,
                            const mozilla::OriginAttributes& aOriginAttributes,
                            nsIDNSRecord** result);
 
+  // Locks the mutex and returns an addreffed resolver. May return null.
+  already_AddRefed<nsHostResolver> GetResolverLocked();
+
   RefPtr<nsHostResolver> mResolver;
   nsCOMPtr<nsIIDNService> mIDN;
 

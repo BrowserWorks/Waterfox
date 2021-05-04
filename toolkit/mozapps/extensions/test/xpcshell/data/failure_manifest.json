@@ -1,0 +1,41 @@
+{
+    "externally_connectable":["list", "of", "sites"],
+    "storage":"",
+    "chrome_settings_overrides":{
+        "search_provider":{
+            "alternate_urls":["list","of","urls"],
+            "image_url":"",
+            "image_url_post_params":["list","of","params"],
+            "instant_url":"",
+            "instant_url_post_params":["list","of","params"],
+            "prepopulated_id":""
+        },
+        "startup_pages":["list", "of", "pages"]
+    },
+    "chrome_url_overrides":{
+        "bookmarks":"",
+        "history":""
+    },
+    "commands":{
+        "global":""
+    },
+    "incognito":"split",
+    "offline_enabled":"",
+    "optional_permissions":[
+        "background",
+        "contentSettings",
+        "contextMenus",
+        "debugger",
+        "pageCapture",
+        "tabCapture"
+    ],
+    "options_page":"",
+    "permissions":[
+        "background",
+        "contentSettings",
+        "debugger",
+        "pageCapture",
+        "tabCapture"
+    ],
+    "version_name":""
+}

@@ -2398,6 +2398,8 @@ pref("first-startup.timeout", 30000);
   pref("default-browser-agent.enabled", false, locked);
 #endif
 
+pref("svg.context-properties.content.allowed-domains", "profile.accounts.firefox.com,profile.stage.mozaws.net");
+
 // Set pref for auto changing theme
 pref("browser.theme.auto", false);
 

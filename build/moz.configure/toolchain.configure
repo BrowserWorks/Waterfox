@@ -137,8 +137,9 @@ with only_when(host_is_osx | target_is_osx):
            help='Location of platform SDK to use')
 
     @depends('--with-macos-sdk', host)
+    @imports(_from='__builtin__', _import='open')
     @imports(_from='os.path', _import='isdir')
-    @imports(_from='biplist', _import='readPlist')
+    @imports('plistlib')
     def macos_sdk(sdk, host):
         sdk_min_version = Version('10.11')
         sdk_max_version = Version('12')
@@ -159,7 +160,8 @@ with only_when(host_is_osx | target_is_osx):
                 'valid SDK. SDKs are installed when the optional cross-development '
                 'tools are selected during the Xcode/Developer Tools installation.'
                 % sdk)
-        obj = readPlist(os.path.join(sdk, 'SDKSettings.plist'))
+        with open(os.path.join(sdk, 'SDKSettings.plist'), 'rb') as plist:
+            obj = plistlib.load(plist)
         if not obj:
             die('Error parsing SDKSettings.plist in the SDK directory: %s' % sdk)
         if 'Version' not in obj:
@@ -344,13 +346,13 @@ js_option('--with-toolchain-prefix', env='TOOLCHAIN_PREFIX', nargs=1,
           help='Prefix for the target toolchain')
 
 
-@depends('--with-toolchain-prefix', target, cross_compiling)
-def toolchain_prefix(value, target, cross_compiling):
+@depends("--with-toolchain-prefix", host, target, cross_compiling)
+def toolchain_prefix(value, host, target, cross_compiling):
     if value:
         return tuple(value)
-    if cross_compiling:
-        return ('%s-' % target.toolchain, '%s-' % target.alias)
-
+    # We don't want a toolchain prefix by default when building on mac for mac.
+    if cross_compiling and not (target.os == "OSX" and host.os == "OSX"):
+        return ("%s-" % target.toolchain, "%s-" % target.alias)
 
 @depends(toolchain_prefix, target)
 def first_toolchain_prefix(toolchain_prefix, target):

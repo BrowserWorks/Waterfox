@@ -21,6 +21,7 @@ mozilla.pth:third_party/python/cram
 mozilla.pth:third_party/python/diskcache
 mozilla.pth:third_party/python/distro
 mozilla.pth:third_party/python/dlmanager
+mozilla.pth:third_party/python/ds_store
 mozilla.pth:third_party/python/ecdsa/src
 python2:mozilla.pth:third_party/python/enum34
 mozilla.pth:third_party/python/esprima
@@ -33,6 +34,7 @@ mozilla.pth:third_party/python/importlib_metadata
 mozilla.pth:third_party/python/iso8601
 mozilla.pth:third_party/python/Jinja2/src
 mozilla.pth:third_party/python/jsonschema
+mozilla.pth:third_party/python/mac_alias
 mozilla.pth:third_party/python/MarkupSafe/src
 mozilla.pth:third_party/python/mohawk
 mozilla.pth:third_party/python/more-itertools

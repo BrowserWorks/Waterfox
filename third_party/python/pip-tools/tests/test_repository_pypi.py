@@ -2,9 +2,11 @@ import os
 
 import mock
 import pytest
+from pip._internal.models.link import Link
+from pip._internal.utils.urls import path_to_url
+from pip._vendor.requests import HTTPError, Session
 
-from piptools._compat import PackageFinder
-from piptools._compat.pip_compat import PIP_VERSION, Link, Session, path_to_url
+from piptools._compat import PIP_VERSION
 from piptools.repositories import PyPIRepository
 from piptools.repositories.pypi import open_local_or_remote_file
 
@@ -59,7 +61,7 @@ def test_get_hashes_editable_empty_set(from_editable, pypi_repository):
     assert pypi_repository.get_hashes(ireq) == set()
 
 
-@pytest.mark.parametrize("content, content_length", [(b"foo", 3), (b"foobar", 6)])
+@pytest.mark.parametrize(("content", "content_length"), ((b"foo", 3), (b"foobar", 6)))
 def test_open_local_or_remote_file__local_file(tmp_path, content, content_length):
     """
     Test the `open_local_or_remote_file` returns a context manager to a FileStream
@@ -84,14 +86,15 @@ def test_open_local_or_remote_file__directory(tmpdir):
     link = Link(path_to_url(tmpdir.strpath))
     session = Session()
 
-    with pytest.raises(ValueError, match="Cannot open directory for read"):
-        with open_local_or_remote_file(link, session):
-            pass  # pragma: no cover
+    with pytest.raises(
+        ValueError, match="Cannot open directory for read"
+    ), open_local_or_remote_file(link, session):
+        pass  # pragma: no cover
 
 
 @pytest.mark.parametrize(
-    "content, content_length, expected_content_length",
-    [(b"foo", 3, 3), (b"bar", None, None), (b"kek", "invalid-content-length", None)],
+    ("content", "content_length", "expected_content_length"),
+    ((b"foo", 3, 3), (b"bar", None, None), (b"kek", "invalid-content-length", None)),
 )
 def test_open_local_or_remote_file__remote_file(
     tmp_path, content, content_length, expected_content_length
@@ -126,48 +129,7 @@ def test_pypirepo_source_dir_is_str(pypi_repository):
     assert isinstance(pypi_repository.source_dir, str)
 
 
-@pytest.mark.skipif(
-    PIP_VERSION >= (10,),
-    reason="RequirementSet objects don't take arguments after pip 10.",
-)
-def test_pypirepo_calls_reqset_with_str_paths(pypi_repository, from_line):
-    """
-    Make sure that paths passed to RequirementSet init are str.
-
-    Passing unicode paths on Python 2 could make pip fail later on
-    unpack, if the package contains non-ASCII file names, because
-    non-ASCII str and unicode paths cannot be combined.
-    """
-    with mock.patch("piptools.repositories.pypi.RequirementSet") as mocked_init:
-        ireq = from_line("ansible==2.4.0.0")
-
-        # Setup a mock object to be returned from the RequirementSet call
-        mocked_reqset = mock.MagicMock()
-        mocked_init.return_value = mocked_reqset
-
-        # Do the call
-        pypi_repository.get_dependencies(ireq)
-
-        # Check that RequirementSet init is called with correct type arguments
-        assert mocked_init.call_count == 1
-        (init_call_args, init_call_kwargs) = mocked_init.call_args
-        assert isinstance(init_call_args[0], str)
-        assert isinstance(init_call_args[1], str)
-        assert isinstance(init_call_kwargs.get("download_dir"), str)
-        assert isinstance(init_call_kwargs.get("wheel_download_dir"), str)
-
-        # Check that _prepare_file is called correctly
-        assert mocked_reqset._prepare_file.call_count == 1
-        (pf_call_args, pf_call_kwargs) = mocked_reqset._prepare_file.call_args
-        (called_with_finder, called_with_ireq) = pf_call_args
-        assert isinstance(called_with_finder, PackageFinder)
-        assert called_with_ireq == ireq
-        assert not pf_call_kwargs
-
-
-@pytest.mark.skipif(
-    PIP_VERSION < (10,), reason="WheelCache.cleanup() introduced in pip==10.0.0"
-)
+@pytest.mark.skipif(PIP_VERSION[:2] > (20, 0), reason="Refactored in pip==20.1")
 @mock.patch("piptools.repositories.pypi.PyPIRepository.resolve_reqs")  # to run offline
 @mock.patch("piptools.repositories.pypi.WheelCache")
 def test_wheel_cache_cleanup_called(
@@ -205,3 +167,225 @@ def test_pip_cache_dir_is_empty(from_line, tmpdir):
     )
 
     assert not pypi_repository.options.cache_dir
+
+
+@pytest.mark.parametrize(
+    ("project_data", "expected_hashes"),
+    (
+        pytest.param(
+            {
+                "releases": {
+                    "0.1": [
+                        {
+                            "packagetype": "bdist_wheel",
+                            "digests": {"sha256": "fake-hash"},
+                        }
+                    ]
+                }
+            },
+            {"sha256:fake-hash"},
+            id="return single hash",
+        ),
+        pytest.param(
+            {
+                "releases": {
+                    "0.1": [
+                        {
+                            "packagetype": "bdist_wheel",
+                            "digests": {"sha256": "fake-hash-number1"},
+                        },
+                        {
+                            "packagetype": "sdist",
+                            "digests": {"sha256": "fake-hash-number2"},
+                        },
+                    ]
+                }
+            },
+            {"sha256:fake-hash-number1", "sha256:fake-hash-number2"},
+            id="return multiple hashes",
+        ),
+        pytest.param(
+            {
+                "releases": {
+                    "0.1": [
+                        {
+                            "packagetype": "bdist_wheel",
+                            "digests": {"sha256": "fake-hash-number1"},
+                        },
+                        {
+                            "packagetype": "sdist",
+                            "digests": {"sha256": "fake-hash-number2"},
+                        },
+                        {
+                            "packagetype": "bdist_eggs",
+                            "digests": {"sha256": "fake-hash-number3"},
+                        },
+                    ]
+                }
+            },
+            {"sha256:fake-hash-number1", "sha256:fake-hash-number2"},
+            id="return only bdist_wheel and sdist hashes",
+        ),
+        pytest.param(None, None, id="not found project data"),
+        pytest.param({}, None, id="not found releases key"),
+        pytest.param({"releases": {}}, None, id="not found version"),
+        pytest.param({"releases": {"0.1": [{}]}}, None, id="not found digests"),
+        pytest.param(
+            {"releases": {"0.1": [{"packagetype": "bdist_wheel", "digests": {}}]}},
+            None,
+            id="digests are empty",
+        ),
+        pytest.param(
+            {
+                "releases": {
+                    "0.1": [
+                        {"packagetype": "bdist_wheel", "digests": {"md5": "fake-hash"}}
+                    ]
+                }
+            },
+            None,
+            id="not found sha256 algo",
+        ),
+    ),
+)
+def test_get_hashes_from_pypi(from_line, tmpdir, project_data, expected_hashes):
+    """
+    Test PyPIRepository._get_hashes_from_pypi() returns expected hashes or None.
+    """
+
+    class MockPyPIRepository(PyPIRepository):
+        def _get_project(self, ireq):
+            return project_data
+
+    pypi_repository = MockPyPIRepository(
+        ["--no-cache-dir"], cache_dir=str(tmpdir / "pypi-repo-cache")
+    )
+    ireq = from_line("fake-package==0.1")
+
+    actual_hashes = pypi_repository._get_hashes_from_pypi(ireq)
+    assert actual_hashes == expected_hashes
+
+
+def test_get_project__returns_data(from_line, tmpdir, monkeypatch, pypi_repository):
+    """
+    Test PyPIRepository._get_project() returns expected project data.
+    """
+    expected_data = {"releases": {"0.1": [{"digests": {"sha256": "fake-hash"}}]}}
+
+    class MockResponse:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return expected_data
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(pypi_repository.session, "get", mock_get)
+    ireq = from_line("fake-package==0.1")
+
+    actual_data = pypi_repository._get_project(ireq)
+    assert actual_data == expected_data
+
+
+def test_get_project__handles_http_error(
+    from_line, tmpdir, monkeypatch, pypi_repository
+):
+    """
+    Test PyPIRepository._get_project() returns None if HTTP error is raised.
+    """
+
+    def mock_get(*args, **kwargs):
+        raise HTTPError("test http error")
+
+    monkeypatch.setattr(pypi_repository.session, "get", mock_get)
+    ireq = from_line("fake-package==0.1")
+
+    actual_data = pypi_repository._get_project(ireq)
+    assert actual_data is None
+
+
+def test_get_project__handles_json_decode_error(
+    from_line, tmpdir, monkeypatch, pypi_repository
+):
+    """
+    Test PyPIRepository._get_project() returns None if JSON decode error is raised.
+    """
+
+    class MockResponse:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            raise ValueError("test json error")
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(pypi_repository.session, "get", mock_get)
+    ireq = from_line("fake-package==0.1")
+
+    actual_data = pypi_repository._get_project(ireq)
+    assert actual_data is None
+
+
+def test_get_project__handles_404(from_line, tmpdir, monkeypatch, pypi_repository):
+    """
+    Test PyPIRepository._get_project() returns None if PyPI
+    response's status code is 404.
+    """
+
+    class MockResponse:
+        status_code = 404
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(pypi_repository.session, "get", mock_get)
+    ireq = from_line("fake-package==0.1")
+
+    actual_data = pypi_repository._get_project(ireq)
+    assert actual_data is None
+
+
+def test_name_collision(from_line, pypi_repository, make_package, make_sdist, tmpdir):
+    """
+    Test to ensure we don't fail if there are multiple URL-based requirements
+    ending with the same filename where later ones depend on earlier, e.g.
+    https://git.example.com/requirement1/master.zip#egg=req_package_1
+    https://git.example.com/requirement2/master.zip#egg=req_package_2
+    In this case, if req_package_2 depends on req_package_1 we don't want to
+    fail due to issues such as caching the requirement based on filename.
+    """
+    packages = {
+        "test_package_1": make_package("test_package_1", version="0.1"),
+        "test_package_2": make_package(
+            "test_package_2", version="0.1", install_requires=["test-package-1"]
+        ),
+    }
+
+    for pkg_name, pkg in packages.items():
+        pkg_path = str(tmpdir / pkg_name)
+
+        make_sdist(pkg, pkg_path, "--formats=zip")
+
+        os.rename(
+            os.path.join(pkg_path, "{}-{}.zip".format(pkg_name, "0.1")),
+            os.path.join(pkg_path, "master.zip"),
+        )
+
+    name_collision_1 = "file://{dist_path}#egg=test_package_1".format(
+        dist_path=tmpdir / "test_package_1" / "master.zip"
+    )
+    ireq = from_line(name_collision_1)
+    deps = pypi_repository.get_dependencies(ireq)
+    assert len(deps) == 0
+
+    name_collision_2 = "file://{dist_path}#egg=test_package_2".format(
+        dist_path=tmpdir / "test_package_2" / "master.zip"
+    )
+    ireq = from_line(name_collision_2)
+    deps = pypi_repository.get_dependencies(ireq)
+    assert len(deps) == 1
+    assert deps.pop().name == "test-package-1"

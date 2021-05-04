@@ -5434,7 +5434,7 @@ void ContentParent::TransmitBlobURLsForPrincipal(nsIPrincipal* aPrincipal) {
           }
 
           registrations.AppendElement(BlobURLRegistrationData(
-              nsCString(aURI), ipcBlob, aPrincipal, aRevoked));
+              nsCString(aURI), ipcBlob, aBlobPrincipal, aRevoked));
 
           rv = TransmitPermissionsForPrincipal(aPrincipal);
           Unused << NS_WARN_IF(NS_FAILED(rv));

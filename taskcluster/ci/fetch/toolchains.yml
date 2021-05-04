@@ -364,8 +364,8 @@ mingw-w64:
     description: mingw-w64 source code
     fetch:
         type: git
-        repo: git://git.code.sf.net/p/mingw-w64/mingw-w64
-        revision: 1b373beec6d07478ffba33726bb3bb21f32e4411
+        repo: https://git.code.sf.net/p/mingw-w64/mingw-w64
+        revision: 660e09f3cb20f181b6d6435cb623d65a3922a063
 
 libunwind:
     description: libunwind source code
@@ -423,6 +423,13 @@ clang-10:
         repo: https://github.com/llvm/llvm-project
         revision: d32170dbd5b0d54436537b6b75beaf44324e0c28
 
+clang-11:
+    description: clang 11.0.1 source code
+    fetch:
+        type: git
+        repo: https://github.com/llvm/llvm-project
+        revision: 43ff75f2c3feef64f9d73328230d34dac8832a91
+
 wasi-sdk:
     description: wasi-sdk source code
     fetch:
@@ -463,8 +470,7 @@ dump-syms:
     fetch:
         type: git
         repo: https://github.com/mozilla/dump_syms/
-        # 0.0.5
-        revision: 2603fb01a18e4e11d95b95fc08d9dacad9076f43
+        revision: 1e64e56720131bcf0ab01f201ed89a337c73069d
 
 fix-stacks:
     description: fix-stacks source code

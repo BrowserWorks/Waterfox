@@ -30,6 +30,9 @@ const PREF_PER_USER_DIR = "toolkit.policies.perUserDir";
 // and set PREF_ALTERNATE_PATH in firefox.js as:
 // /your/repo/browser/components/enterprisepolicies/helpers/sample.json
 const PREF_ALTERNATE_PATH = "browser.policies.alternatePath";
+// For testing GPO, you can set an alternate location in testing
+const PREF_ALTERNATE_GPO = "browser.policies.alternateGPO";
+
 // For testing, we may want to set PREF_ALTERNATE_PATH to point to a file
 // relative to the test root directory. In order to enable this, the string
 // below may be placed at the beginning of that preference value and it will
@@ -93,13 +96,13 @@ EnterprisePoliciesManager.prototype = {
   _initialize() {
     let provider = this._chooseProvider();
 
-    if (!provider) {
-      this.status = Ci.nsIEnterprisePolicies.INACTIVE;
+    if (provider.failed) {
+      this.status = Ci.nsIEnterprisePolicies.FAILED;
       return;
     }
 
-    if (provider.failed) {
-      this.status = Ci.nsIEnterprisePolicies.FAILED;
+    if (!provider.hasPolicies) {
+      this.status = Ci.nsIEnterprisePolicies.INACTIVE;
       return;
     }
 
@@ -113,22 +116,20 @@ EnterprisePoliciesManager.prototype = {
   },
 
   _chooseProvider() {
-    let provider = null;
+    let platformProvider = null;
     if (AppConstants.platform == "win") {
-      provider = new WindowsGPOPoliciesProvider();
+      platformProvider = new WindowsGPOPoliciesProvider();
     } else if (AppConstants.platform == "macosx") {
-      provider = new macOSPoliciesProvider();
+      platformProvider = new macOSPoliciesProvider();
     }
-    if (provider && provider.hasPolicies) {
-      return provider;
+    let jsonProvider = new JSONPoliciesProvider();
+    if (platformProvider && platformProvider.hasPolicies) {
+      if (jsonProvider.hasPolicies) {
+        return new CombinedProvider(platformProvider, jsonProvider);
+      }
+      return platformProvider;
     }
-
-    provider = new JSONPoliciesProvider();
-    if (provider.hasPolicies) {
-      return provider;
-    }
-
-    return null;
+    return jsonProvider;
   },
 
   _activatePolicies(unparsedPolicies) {
@@ -451,15 +452,11 @@ function areEnterpriseOnlyPoliciesAllowed() {
 class JSONPoliciesProvider {
   constructor() {
     this._policies = null;
-    this._failed = false;
     this._readData();
   }
 
   get hasPolicies() {
-    return (
-      this._failed ||
-      (this._policies !== null && !isEmptyObject(this._policies))
-    );
+    return this._policies !== null && !isEmptyObject(this._policies);
   }
 
   get policies() {
@@ -578,8 +575,11 @@ class WindowsGPOPoliciesProvider {
     // user policies first and then replace them if necessary.
     log.debug("root = HKEY_CURRENT_USER");
     this._readData(wrk, wrk.ROOT_KEY_CURRENT_USER);
-    log.debug("root = HKEY_LOCAL_MACHINE");
-    this._readData(wrk, wrk.ROOT_KEY_LOCAL_MACHINE);
+    // We don't access machine policies in testing
+    if (!Cu.isInAutomation && !isXpcshell) {
+      log.debug("root = HKEY_LOCAL_MACHINE");
+      this._readData(wrk, wrk.ROOT_KEY_LOCAL_MACHINE);
+    }
   }
 
   get hasPolicies() {
@@ -596,7 +596,13 @@ class WindowsGPOPoliciesProvider {
 
   _readData(wrk, root) {
     try {
-      wrk.open(root, "SOFTWARE\\Policies", wrk.ACCESS_READ);
+      let regLocation = "SOFTWARE\\Policies";
+      if (Cu.isInAutomation || isXpcshell) {
+        try {
+          regLocation = Services.prefs.getStringPref(PREF_ALTERNATE_GPO);
+        } catch (e) {}
+      }
+      wrk.open(root, regLocation, wrk.ACCESS_READ);
       if (wrk.hasChild("Waterfox\\" + Services.appinfo.name)) {
         this._policies = WindowsGPOParser.readPolicies(wrk, this._policies);
       }
@@ -629,6 +635,33 @@ class macOSPoliciesProvider {
 
   get failed() {
     return this._failed;
+  }
+}
+
+class CombinedProvider {
+  constructor(primaryProvider, secondaryProvider) {
+    // Combine policies with primaryProvider taking precedence.
+    // We only do this for top level policies.
+    this._policies = primaryProvider._policies;
+    for (let policyName of Object.keys(secondaryProvider.policies)) {
+      if (!(policyName in this._policies)) {
+        this._policies[policyName] = secondaryProvider.policies[policyName];
+      }
+    }
+  }
+
+  get hasPolicies() {
+    // Combined provider always has policies.
+    return true;
+  }
+
+  get policies() {
+    return this._policies;
+  }
+
+  get failed() {
+    // Combined provider never fails.
+    return false;
   }
 }
 

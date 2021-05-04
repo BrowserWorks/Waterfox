@@ -17,12 +17,12 @@
 # the source distribution instead for those particular packages.
 
 attrs==19.1.0
-biplist==1.0.3
 blessings==1.7
 compare-locales==8.0.0
 cookies==2.2.1
 coverage==5.1
 distro==1.4.0
+ds-store==1.3.0
 ecdsa==0.15
 esprima==4.0.1
 fluent.migrate==0.9

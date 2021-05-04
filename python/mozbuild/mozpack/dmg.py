@@ -11,8 +11,11 @@ import os
 import platform
 import shutil
 import subprocess
+import tempfile
+import base64
 
 from mozbuild.util import ensureParentDir
+from ds_store import DSStore
 
 is_linux = platform.system() == 'Linux'
 
@@ -48,6 +51,58 @@ def set_folder_icon(dir, tmpdir):
         hfs = os.path.join(tmpdir, 'staged.hfs')
         subprocess.check_call([
             buildconfig.substs['HFS_TOOL'],  hfs, 'attr', '/', 'C'])
+
+
+def update_visuals(stagedir, ds_path, bg_path):
+    if not ds_path and not bg_path:
+        return
+    bwsp = {
+        'ShowStatusBar': False,
+        'WindowBounds': '{{500, 500}, {540, 400}}',
+        'ContainerShowSidebar': False,
+        'PreviewPaneVisibility': False,
+        'SidebarWidth': 180,
+        'ShowTabView': False,
+        'ShowToolbar': False,
+        'ShowPathbar': False,
+        'ShowSidebar': False
+    }
+
+    icvp =  {
+        'viewOptionsVersion': 1,
+        'backgroundType': 2,
+        'backgroundColorRed': 1.0,
+        'backgroundColorGreen': 1.0,
+        'backgroundColorBlue': 1.0,
+        'gridOffsetX': 0.0,
+        'gridOffsetY': 0.0,
+        'gridSpacing': 100.0,
+        'arrangeBy': 'none',
+        'showIconPreview': False,
+        'showItemInfo': False,
+        'labelOnBottom': True,
+        'textSize': 16.0,
+        'iconSize': 128.0,
+        'scrollPositionX': 0.0,
+        'scrollPositionY': 0.0,
+        'backgroundImageAlias': b'\x00\x00\x00\x00\x01B\x00\x02\x00\x00\x08Waterfox\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xdco\xeb\xf9H+\x00\x00\x00\x00\x00\x02\x0f.background.png\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x13\xdco\xeb\xfa\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\nWaterfox 1\x00\x10\x00\x08\x00\x00\xdco\xeb\xf9\x00\x00\x00\x11\x00\x08\x00\x00\xdco\xeb\xfa\x00\x00\x00\x02\x00\x18Waterfox:.background.png\x00\x0e\x00 \x00\x0f\x00.\x00b\x00a\x00c\x00k\x00g\x00r\x00o\x00u\x00n\x00d\x00.\x00p\x00n\x00g\x00\x0f\x00\x12\x00\x08\x00W\x00a\x00t\x00e\x00r\x00f\x00o\x00x\x00\x12\x00\x10/.background.png\x00\x13\x00\x13/Volumes/Waterfox 1\x00\xff\xff\x00\x00'
+    }
+
+    icon_locations = {
+        'Waterfox.app': (100, 178),
+        ' ': (400, 178),
+        '.background.png': (800, 150),
+        '.VolumeIcon.icns': (800, 150)
+    }
+
+    with DSStore.open(ds_path, 'w+') as d:
+        d['.']['bwsp'] = bwsp
+        d['.']['icvp'] = icvp
+        for k,v in icon_locations.items():
+            d[k]['Iloc'] = v
+
+    # Delete .Trashes, if it gets created
+    shutil.rmtree(os.path.join(stagedir, '.Trashes'), True)
 
 
 def generate_hfs_file(stagedir, tmpdir, volume_name):
@@ -111,8 +166,42 @@ def create_dmg_from_staged(stagedir, output_dmg, tmpdir, volume_name):
             hfs,
             output_dmg
         ],
-                              # dmg is seriously chatty
-                              stdout=open(os.devnull, 'wb'))
+        # dmg is seriously chatty
+        stdout=open(os.devnull, 'wb'))
+
+
+class Path(str):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        os.unlink(self)
+
+
+def mktemp(dir=None, suffix=''):
+    fd, filename = tempfile.mkstemp(dir=dir, suffix=suffix)
+    os.close(fd)
+    return Path(filename)
+
+
+def add_license(output_dmg, branding):
+    with open(os.path.join(branding, 'license.txt'), 'r') as infile:
+        lines = infile.readlines()
+        eula_data = ''
+        for line in lines:
+            eula_data += line
+        eula_data = base64.b64encode(eula_data.encode())
+    with open(os.path.join(branding, 'eula.plist.template'), 'r') as infile:
+        lines = infile.readlines()
+        template = ''
+        for line in lines:
+            template += line
+    eula = template.replace(r'${EULA_DATA}', eula_data.decode())
+    with mktemp('.') as tmp_file:
+        with open(tmp_file, 'w') as infile:
+            infile.write(eula)
+        subprocess.call(['hdiutil', 'udifrez', '-xml',
+                tmp_file, "''", '-quiet', output_dmg])
 
 
 def check_tools(*tools):
@@ -148,16 +237,26 @@ def create_dmg(source_directory, output_dmg, volume_name, extra_files):
         # Copy the app bundle over using rsync
         rsync(source_directory, stagedir)
         # Copy extra files
+        ds_path, bg_path = [None, None]
         for source, target in extra_files:
+            if 'background' in target:
+                target = '.background.png'
             full_target = os.path.join(stagedir, target)
             mkdir(os.path.dirname(full_target))
             shutil.copyfile(source, full_target)
+            if target == '.DS_Store':
+                ds_path = full_target
+            elif target == '.background.png':
+                bg_path = full_target
+        update_visuals(stagedir, ds_path, bg_path)
         generate_hfs_file(stagedir, tmpdir, volume_name)
         create_app_symlink(stagedir, tmpdir)
         # Set the folder attributes to use a custom icon
         set_folder_icon(stagedir, tmpdir)
         chmod(stagedir)
         create_dmg_from_staged(stagedir, output_dmg, tmpdir, volume_name)
+        branding_dir = os.path.dirname(extra_files[0][0])
+        add_license(output_dmg, branding_dir)
 
 
 def extract_dmg_contents(dmgfile, destdir):
