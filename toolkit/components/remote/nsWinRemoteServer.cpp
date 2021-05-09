@@ -47,8 +47,12 @@ static nsresult GetMostRecentWindow(mozIDOMWindowProxy** aWindow) {
   return NS_ERROR_FAILURE;
 }
 
-void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
-                       uint32_t aState) {
+static void HandleCommandLine(const nsACString& aCmdLineString,
+                              nsIFile* aWorkingDir, uint32_t aState) {
+  if (aCmdLineString.IsEmpty()) {
+    return;
+  }
+
   nsresult rv;
 
   int justCounting = 1;
@@ -58,6 +62,7 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
   int between, quoted, bSlashCount;
   int argc;
   const char* p;
+  const char* const pEnd = aCmdLineString.EndReading();
   nsAutoCString arg;
 
   nsCOMPtr<nsICommandLineRunner> cmdLine(new nsCommandLine());
@@ -69,20 +74,24 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
   while (1) {
     // Initialize if required.
     if (init) {
-      p = aCmdLineString;
+      p = aCmdLineString.BeginReading();
       between = 1;
       argc = quoted = bSlashCount = 0;
 
       init = 0;
     }
+
+    const char charCurr = (p < pEnd) ? *p : 0;
+    const char charNext = (p + 1 < pEnd) ? *(p + 1) : 0;
+
     if (between) {
       // We are traversing whitespace between args.
       // Check for start of next arg.
-      if (*p != 0 && !isspace(*p)) {
+      if (charCurr != 0 && !isspace(charCurr)) {
         // Start of another arg.
         between = 0;
         arg = "";
-        switch (*p) {
+        switch (charCurr) {
           case '\\':
             // Count the backslash.
             bSlashCount = 1;
@@ -93,7 +102,7 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
             break;
           default:
             // Add character to arg.
-            arg += *p;
+            arg += charCurr;
             break;
         }
       } else {
@@ -102,7 +111,7 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
     } else {
       // We are processing the contents of an argument.
       // Check for whitespace or end.
-      if (*p == 0 || (!quoted && isspace(*p))) {
+      if (charCurr == 0 || (!quoted && isspace(charCurr))) {
         // Process pending backslashes (interpret them
         // literally since they're not followed by a ").
         while (bSlashCount) {
@@ -119,7 +128,7 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
         between = 1;
       } else {
         // Still inside argument, process the character.
-        switch (*p) {
+        switch (charCurr) {
           case '"':
             // First, digest preceding backslashes (if any).
             while (bSlashCount > 1) {
@@ -136,7 +145,7 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
               if (quoted) {
                 // Check for special case of consecutive double
                 // quotes inside a quoted section.
-                if (*(p + 1) == '"') {
+                if (charNext == '"') {
                   // This implies a literal double-quote.  Fake that
                   // out by causing next double-quote to look as
                   // if it was preceded by a backslash.
@@ -160,13 +169,13 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
               bSlashCount--;
             }
             // Just add next char to the current arg.
-            arg += *p;
+            arg += charCurr;
             break;
         }
       }
     }
     // Check for end of input.
-    if (*p) {
+    if (charCurr) {
       // Go to next character.
       p++;
     } else {
@@ -202,24 +211,24 @@ void HandleCommandLine(const char* aCmdLineString, nsIFile* aWorkingDir,
 }
 
 LRESULT CALLBACK WindowProc(HWND msgWindow, UINT msg, WPARAM wp, LPARAM lp) {
-  if (msg == WM_COPYDATA) {
+  if (msg == WM_COPYDATA && lp) {
     // This is an incoming request.
-    COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lp;
+    const COPYDATASTRUCT* cds = reinterpret_cast<const COPYDATASTRUCT*>(lp);
+    const nsDependentCSubstring messageData(reinterpret_cast<char*>(cds->lpData), cds->cbData);
+
     nsCOMPtr<nsIFile> workingDir;
 
     if (1 >= cds->dwData) {
-      char* wdpath = (char*)cds->lpData;
       // skip the command line, and get the working dir of the
       // other process, which is after the first null char
-      while (*wdpath) ++wdpath;
-
-      ++wdpath;
-
-      NS_NewLocalFile(NS_ConvertUTF8toUTF16(wdpath), false,
-                      getter_AddRefs(workingDir));
+      int32_t posNullChar = messageData.FindChar('\0');
+      if (posNullChar != kNotFound) {
+        NS_NewLocalFile(
+            NS_ConvertUTF8toUTF16(Substring(messageData, posNullChar + 1)),
+            false, getter_AddRefs(workingDir));
+      }
     }
-    HandleCommandLine((char*)cds->lpData, workingDir,
-                      nsICommandLine::STATE_REMOTE_AUTO);
+    HandleCommandLine(messageData, workingDir, nsICommandLine::STATE_REMOTE_AUTO);
 
     // Get current window and return its window handle.
     nsCOMPtr<mozIDOMWindowProxy> win;
