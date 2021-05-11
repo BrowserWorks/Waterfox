@@ -3,7 +3,7 @@ set -ex
 cd $APPVEYOR_BUILD_FOLDER
 
 BROWSER_VERSION=`cat browser/config/version_display.txt`
-SIGNTOOL=/c/Program\ Files\ \(x86\)/Windows\ Kits/10/bin/10.0.17763.0/x64/signtool.exe
+SIGNTOOL=/c/PROGRA~2/WI3CF2~1/10/bin/10.0.17763.0/x64/signtool.exe
 TOPDIR=$APPVEYOR_BUILD_FOLDER
 
 ./mach build
