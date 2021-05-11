@@ -23,7 +23,6 @@ cp $TOPDIR/browser/installer/windows/app.tag .
 cp $TOPDIR/other-licenses/7zstub/firefox/7zSD.sfx .
 cat 7zSD.sfx app.tag app.7z > "Waterfox Classic $BROWSER_VERSION Setup.exe"
 $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" "Waterfox Classic $BROWSER_VERSION Setup.exe"
-appveyor PushArtifact "Waterfox Classic $BROWSER_VERSION Setup.exe"
 popd
 
 # Generate update XML and file
@@ -61,5 +60,3 @@ sed -i "s/BUILDID/$BUILDID/g" update.xml
 sed -i "s/SIZE/$SIZE/g" update.xml
 sed -i "s/HASH/"$SHA512"/g" update.xml
 sed -i "s/PLATFORM/win/g" update.xml
-appveyor PushArtifact update.xml 
-appveyor PushArtifact waterfox-classic-$BROWSER_VERSION.en-US.win64.complete.xz.mar
