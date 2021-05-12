@@ -27,41 +27,38 @@ popd
 
 # Generate update XML and file
 
-pushd objdir-classic/dist/
-mkdir update
-cp $TOPDIR/tools/update-packaging/make_full_update.sh update/
-cp $TOPDIR/tools/update-packaging/common.sh update/
-cp "$TOPDIR/objdir-classic/dist/install/sea/Waterfox Classic $BROWSER_VERSION Setup.exe" update/
-xml=('<?xml version="1.0"?>'
-'<updates>'
-'    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
-'        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-classic-BROWSER_VERSION.en-US.win64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
-'    </update>'
-'</updates>')
+# pushd objdir-classic/dist/
+# mkdir update
+# cp $TOPDIR/tools/update-packaging/make_full_update.sh update/
+# cp $TOPDIR/tools/update-packaging/common.sh update/
+# cp "$TOPDIR/objdir-classic/dist/install/sea/Waterfox Classic $BROWSER_VERSION Setup.exe" update/
+# xml=('<?xml version="1.0"?>'
+# '<updates>'
+# '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
+# '        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-classic-BROWSER_VERSION.en-US.win64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+# '    </update>'
+# '</updates>')
 
-for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
-pushd update
-7z x "Waterfox Classic $BROWSER_VERSION Setup.exe" -otmp/
-echo "Present Dir " $PWD
-echo "$(ls)"
-echo "$(ls tmp/)"
-MAR=$TOPDIR/objdir-classic/dist/host/bin/mar \
-    MOZ_PRODUCT_VERSION=$BROWSER_VERSION MAR_CHANNEL_ID="default" \
-    ./make_full_update.sh \
-    waterfox-classic-$BROWSER_VERSION.en-US.win64.complete.xz.mar \
-    'tmp/core'
-BROWSER_VERSION=$(grep 'DisplayVersion=' tmp/core/application.ini | cut -d'=' -f2)
-VERSION=$(grep '\<Version\>' tmp/core/application.ini | cut -d'=' -f2)
-BUILDID=$(grep 'BuildID=' tmp/core/application.ini | cut -d'=' -f2)
-SHA512=$(shasum -a 512 waterfox-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $1}')
-    SIZE=$(ls -l waterfox-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $5}')
-echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
-sed -i "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" update.xml
-sed -i "s/BROWSER_VERSION/$BROWSER_VERSION/g" update.xml
-sed -i "s/VERSION/$VERSION/g" update.xml
-sed -i "s/BUILDID/$BUILDID/g" update.xml
-sed -i "s/SIZE/$SIZE/g" update.xml
-sed -i "s/HASH/"$SHA512"/g" update.xml
-sed -i "s/PLATFORM/win/g" update.xml
-popd
-popd
+# for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
+# pushd update
+# 7z x "Waterfox Classic $BROWSER_VERSION Setup.exe" -otmp/
+# MAR=$TOPDIR/objdir-classic/dist/host/bin/mar \
+#     MOZ_PRODUCT_VERSION=$BROWSER_VERSION MAR_CHANNEL_ID="default" \
+#     ./make_full_update.sh \
+#     waterfox-classic-$BROWSER_VERSION.en-US.win64.complete.xz.mar \
+#     'tmp/core'
+# BROWSER_VERSION=$(grep 'DisplayVersion=' tmp/core/application.ini | cut -d'=' -f2)
+# VERSION=$(grep '\<Version\>' tmp/core/application.ini | cut -d'=' -f2)
+# BUILDID=$(grep 'BuildID=' tmp/core/application.ini | cut -d'=' -f2)
+# SHA512=$(shasum -a 512 waterfox-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $1}')
+#     SIZE=$(ls -l waterfox-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $5}')
+# echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
+# sed -i "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" update.xml
+# sed -i "s/BROWSER_VERSION/$BROWSER_VERSION/g" update.xml
+# sed -i "s/VERSION/$VERSION/g" update.xml
+# sed -i "s/BUILDID/$BUILDID/g" update.xml
+# sed -i "s/SIZE/$SIZE/g" update.xml
+# sed -i "s/HASH/"$SHA512"/g" update.xml
+# sed -i "s/PLATFORM/win/g" update.xml
+# popd
+# popd
