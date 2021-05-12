@@ -42,6 +42,9 @@ xml=('<?xml version="1.0"?>'
 for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
 pushd update
 7z x "Waterfox Classic $BROWSER_VERSION Setup.exe" -otmp/
+echo "Present Dir " $PWD
+echo "$(ls)"
+echo "$(ls tmp/)"
 MAR=$TOPDIR/objdir-classic/dist/host/bin/mar \
     MOZ_PRODUCT_VERSION=$BROWSER_VERSION MAR_CHANNEL_ID="default" \
     ./make_full_update.sh \
@@ -60,3 +63,5 @@ sed -i "s/BUILDID/$BUILDID/g" update.xml
 sed -i "s/SIZE/$SIZE/g" update.xml
 sed -i "s/HASH/"$SHA512"/g" update.xml
 sed -i "s/PLATFORM/win/g" update.xml
+popd
+popd
