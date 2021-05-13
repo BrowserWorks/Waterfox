@@ -16,8 +16,8 @@ TOPDIR=$APPVEYOR_BUILD_FOLDER
 pushd objdir-classic/dist/install/sea/
 7z x waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
 rm -f waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
-find tmp/ -type f -name "*.exe" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
-find tmp/ -type f -name "*.dll" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
+find ./ -type f -name "*.exe" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
+find ./ -type f -name "*.dll" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
 7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
 cp $TOPDIR/browser/installer/windows/app.tag .
 cp $TOPDIR/other-licenses/7zstub/firefox/7zSD.sfx .
