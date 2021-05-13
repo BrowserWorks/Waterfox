@@ -50,8 +50,8 @@ MAR=$BUILD_DIR/objdir-classic/dist/host/bin/mar \
 BROWSER_VERSION=$(grep 'DisplayVersion=' tmp/core/application.ini | cut -d'=' -f2)
 VERSION=$(grep '\<Version\>' tmp/core/application.ini | cut -d'=' -f2)
 BUILDID=$(grep 'BuildID=' tmp/core/application.ini | cut -d'=' -f2)
-SHA512=$(shasum -a 512 waterfox-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $1}')
-    SIZE=$(ls -l waterfox-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $5}')
+SHA512=$(shasum -a 512 waterfox-classic-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $1}')
+    SIZE=$(ls -l waterfox-classic-$BROWSER_VERSION.en-US.win64.complete.xz.mar | awk '{print $5}')
 echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
 sed -i "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" update.xml
 sed -i "s/BROWSER_VERSION/$BROWSER_VERSION/g" update.xml
