@@ -240,13 +240,13 @@ using namespace mozilla::a11y;
 
 - (id)accessibilityHitTest:(NSPoint)point {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
-  return [self moxHitTest:point];
+  return GetObjectOrRepresentedView([self moxHitTest:point]);
   NS_OBJC_END_TRY_ABORT_BLOCK_NIL;
 }
 
 - (id)accessibilityFocusedUIElement {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
-  return [self moxFocusedUIElement];
+  return GetObjectOrRepresentedView([self moxFocusedUIElement]);
   NS_OBJC_END_TRY_ABORT_BLOCK_NIL;
 }
 
@@ -261,11 +261,11 @@ using namespace mozilla::a11y;
 #pragma mark - MOXAccessible protocol
 
 - (id)moxHitTest:(NSPoint)point {
-  return GetObjectOrRepresentedView(self);
+  return self;
 }
 
 - (id)moxFocusedUIElement {
-  return GetObjectOrRepresentedView(self);
+  return self;
 }
 
 - (void)moxPostNotification:(NSString*)notification {
