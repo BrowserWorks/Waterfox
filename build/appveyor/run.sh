@@ -14,7 +14,7 @@ TOPDIR=$APPVEYOR_BUILD_FOLDER
 # Extract unsigned installer, sign DLLs and EXEs and then create installer. Sign resulting installer.
 
 pushd objdir-classic/dist/install/sea/
-7z x waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe -otmp/
+7z x waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
 rm -f waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
 find tmp/ -type f -name "*.exe" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
 find tmp/ -type f -name "*.dll" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
@@ -41,7 +41,7 @@ xml=('<?xml version="1.0"?>'
 
 for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
 pushd update
-7z x "Waterfox Classic $BROWSER_VERSION Setup.exe"
+7z x "Waterfox Classic $BROWSER_VERSION Setup.exe" -otmp/
 MAR=$TOPDIR/objdir-classic/dist/host/bin/mar \
     MOZ_PRODUCT_VERSION=$BROWSER_VERSION MAR_CHANNEL_ID="default" \
     ./make_full_update.sh \
