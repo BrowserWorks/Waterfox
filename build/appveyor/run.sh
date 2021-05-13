@@ -16,22 +16,22 @@ TOPDIR=$APPVEYOR_BUILD_FOLDER
 pushd objdir-classic/dist/install/sea/
 7z x waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
 rm -f waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
-find ./ -type f -name "*.exe" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
-find ./ -type f -name "*.dll" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
+find ./ -type f -name "*.exe" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$BUILD_DIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
+find ./ -type f -name "*.dll" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$BUILD_DIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
 7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
-cp $TOPDIR/browser/installer/windows/app.tag .
-cp $TOPDIR/other-licenses/7zstub/firefox/7zSD.sfx .
+cp $BUILD_DIR/browser/installer/windows/app.tag .
+cp $BUILD_DIR/other-licenses/7zstub/firefox/7zSD.sfx .
 cat 7zSD.sfx app.tag app.7z > "Waterfox Classic $BROWSER_VERSION Setup.exe"
-$SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$TOPDIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" "Waterfox Classic $BROWSER_VERSION Setup.exe"
+$SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$BUILD_DIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" "Waterfox Classic $BROWSER_VERSION Setup.exe"
 popd
 
 # Generate update XML and file
 
 pushd objdir-classic/dist/
 mkdir update
-cp $TOPDIR/tools/update-packaging/make_full_update.sh update/
-cp $TOPDIR/tools/update-packaging/common.sh update/
-cp "$TOPDIR/objdir-classic/dist/install/sea/Waterfox Classic $BROWSER_VERSION Setup.exe" update/
+cp $BUILD_DIR/tools/update-packaging/make_full_update.sh update/
+cp $BUILD_DIR/tools/update-packaging/common.sh update/
+cp "$BUILD_DIR/objdir-classic/dist/install/sea/Waterfox Classic $BROWSER_VERSION Setup.exe" update/
 xml=('<?xml version="1.0"?>'
 '<updates>'
 '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
@@ -42,7 +42,7 @@ xml=('<?xml version="1.0"?>'
 for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
 pushd update
 7z x "Waterfox Classic $BROWSER_VERSION Setup.exe" -otmp/
-MAR=$TOPDIR/objdir-classic/dist/host/bin/mar \
+MAR=$BUILD_DIR/objdir-classic/dist/host/bin/mar \
     MOZ_PRODUCT_VERSION=$BROWSER_VERSION MAR_CHANNEL_ID="default" \
     ./make_full_update.sh \
     waterfox-classic-$BROWSER_VERSION.en-US.win64.complete.xz.mar \
