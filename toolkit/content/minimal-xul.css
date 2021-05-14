@@ -96,6 +96,11 @@ thumb {
   -moz-binding: url(chrome://global/content/bindings/scale.xml#scalethumb);
 }
 
+/* Don't collapse thumb when scrollbar is disabled. */
+thumb[collapsed="true"] {
+  visibility: hidden;
+}
+
 scrollbar, scrollbarbutton, scrollcorner, slider, thumb, scale {
   -moz-user-select: none;
 }

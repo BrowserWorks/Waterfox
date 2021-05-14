@@ -1805,7 +1805,7 @@ ${helpers.single_keyword("-moz-appearance",
                             scalethumbstart scalethumbtick scalethumb-vertical scale-vertical scrollbar
                             scrollbar-horizontal scrollbar-small scrollbar-vertical scrollbarbutton-down
                             scrollbarbutton-left scrollbarbutton-right scrollbarbutton-up scrollbarthumb-horizontal
-                            scrollbarthumb-vertical scrollbartrack-horizontal scrollbartrack-vertical searchfield
+                            scrollbarthumb-vertical scrollbartrack-horizontal scrollbartrack-vertical scrollcorner searchfield
                             separator spinner spinner-downbutton spinner-textfield spinner-upbutton splitter statusbar
                             statusbarpanel tab tabpanel tabpanels tab-scroll-arrow-back tab-scroll-arrow-forward
                             textfield textfield-multiline toolbar toolbarbutton toolbarbutton-dropdown toolbargripper

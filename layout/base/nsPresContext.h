@@ -10,6 +10,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/NotNull.h"
+#include "mozilla/ScrollStyles.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "nsColor.h"
@@ -38,7 +39,6 @@
 #include "mozilla/AppUnits.h"
 #include "prclist.h"
 #include "nsThreadUtils.h"
-#include "ScrollbarStyles.h"
 #include "nsIMessageManager.h"
 #include "mozilla/RestyleLogging.h"
 #include "Units.h"
@@ -130,7 +130,7 @@ public:
   using Encoding = mozilla::Encoding;
   template <typename T> using NotNull = mozilla::NotNull<T>;
   typedef mozilla::LangGroupFontPrefs LangGroupFontPrefs;
-  typedef mozilla::ScrollbarStyles ScrollbarStyles;
+  typedef mozilla::ScrollStyles ScrollStyles;
   typedef mozilla::StaticPresData StaticPresData;
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -733,19 +733,19 @@ public:
    * @return if scroll was propagated from some content node, the content node
    *         it was propagated from.
    */
-  nsIContent* UpdateViewportScrollbarStylesOverride();
+  nsIContent* UpdateViewportScrollStylesOverride();
 
   /**
    * Returns the cached result from the last call to
-   * UpdateViewportScrollbarStylesOverride() -- i.e. return the node
+   * UpdateViewportScrollStylesOverride() -- i.e. return the node
    * whose scrollbar styles we have propagated to the viewport (or nullptr if
    * there is no such node).
    */
-  nsIContent* GetViewportScrollbarStylesOverrideNode() const {
+  nsIContent* GetViewportScrollStylesOverrideNode() const {
     return mViewportScrollbarOverrideNode;
   }
 
-  const ScrollbarStyles& GetViewportScrollbarStylesOverride() const
+  const ScrollStyles& GetViewportScrollStylesOverride() const
   {
     return mViewportStyleScrollbar;
   }
@@ -754,7 +754,7 @@ public:
    * Check whether the given element would propagate its scrollbar styles to the
    * viewport in non-paginated mode.  Must only be called if IsPaginated().
    */
-  bool ElementWouldPropagateScrollbarStyles(mozilla::dom::Element* aElement);
+  bool ElementWouldPropagateScrollStyles(mozilla::dom::Element* aElement);
 
   /**
    * Set and get methods for controlling the background drawing
@@ -1372,13 +1372,13 @@ protected:
 
   // This is a non-owning pointer. May be null. If non-null, it's guaranteed
   // to be pointing to a node that's still alive, because we'll reset it in
-  // UpdateViewportScrollbarStylesOverride() as part of the cleanup code
+  // UpdateViewportScrollStylesOverride() as part of the cleanup code
   // when this node is removed from the document. (For <body> and the root node,
   // this call happens in nsCSSFrameConstructor::ContentRemoved(). For
   // fullscreen elements, it happens in the fullscreen-specific cleanup
   // invoked by Element::UnbindFromTree().)
   nsIContent* MOZ_NON_OWNING_REF mViewportScrollbarOverrideNode;
-  ScrollbarStyles       mViewportStyleScrollbar;
+  ScrollStyles          mViewportStyleScrollbar;
 
   uint8_t               mFocusRingWidth;
 

@@ -267,6 +267,7 @@ UNIFIED_SOURCES += [
     'ServoStyleSheet.cpp',
     'ServoSupportsRule.cpp',
     'StyleAnimationValue.cpp',
+    'StyleComplexColor.cpp',
     'StylePrefs.cpp',
     'StyleRule.cpp',
     'StyleSheet.cpp',
