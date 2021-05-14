@@ -1,9 +1,9 @@
 {
   "default": {
     "searchDefault": "Bing",
-    "searchOrder": ["Bing", "Google"],
+    "searchOrder": ["Bing", "Google", "Yahoo!"],
     "visibleDefaultEngines": [
-      "bing", "google", "startpage", "qwant", "ddg", "yandex", "wikipedia"
+      "bing", "google", "startpage", "qwant", "ddg", "yahoo", "yandex", "wikipedia"
     ]
   },
   "regionOverrides": {},
