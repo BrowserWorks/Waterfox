@@ -93,14 +93,17 @@ class SearchConfigTest {
 
   /**
    * Sets up the test.
+   *
+   * @param {string} [version]
+   *   The version to simulate for running the tests.
    */
-  async setup() {
+  async setup(version = "42.0") {
     AddonTestUtils.init(GLOBAL_SCOPE);
     AddonTestUtils.createAppInfo(
       "xpcshell@tests.mozilla.org",
       "XPCShell",
-      "42",
-      "42"
+      version,
+      version
     );
 
     const SEARCH_CONFIG = gEnvironment.get("SEARCH_CONFIG");
@@ -383,11 +386,13 @@ class SearchConfigTest {
       hasIncluded &&
       this._localeRegionInSection(config.included, region, locale);
 
-    let notExcluded =
+    let excluded =
       hasExcluded &&
-      !this._localeRegionInSection(config.excluded, region, locale);
-
-    if (included || notExcluded) {
+      this._localeRegionInSection(config.excluded, region, locale);
+    if (
+      (included && (!hasExcluded || !excluded)) ||
+      (!hasIncluded && hasExcluded && !excluded)
+    ) {
       this.assertOk(
         identifierIncluded,
         `Should be ${section} for ${infoString}`
@@ -540,9 +545,9 @@ class SearchConfigTest {
         this.assertOk(!submission, "Should not have a submission url");
       } else {
         this.assertOk(
-          submission.uri.host.endsWith(rules.domain),
+          submission?.uri.host.endsWith(rules.domain),
           `Should have the correct domain for type: ${urlType} ${location}.
-           Got "${submission.uri.host}", expected to end with "${rules.domain}".`
+           Got "${submission?.uri.host}", expected to end with "${rules.domain}".`
         );
       }
     }

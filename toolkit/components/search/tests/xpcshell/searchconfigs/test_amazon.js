@@ -3,90 +3,110 @@
 
 "use strict";
 
+const mainShippedRegions = [
+  "at",
+  "au",
+  "ca",
+  "ch",
+  "cn",
+  "de",
+  "es",
+  "fr",
+  "mc",
+  "gb",
+  "ie",
+  "it",
+  "jp",
+  "pt",
+  "se",
+  "sm",
+  "us",
+  "va",
+];
+
+const amazondotcomLocales = [
+  "ach",
+  "af",
+  "ar",
+  "az",
+  "bg",
+  "cak",
+  "cy",
+  "da",
+  "el",
+  "en-US",
+  "en-GB",
+  "eo",
+  "es-AR",
+  "eu",
+  "fa",
+  "ga-IE",
+  "gd",
+  "gl",
+  "gn",
+  "hr",
+  "hy-AM",
+  "ia",
+  "is",
+  "ka",
+  "km",
+  "lt",
+  "mk",
+  "ms",
+  "my",
+  "nb-NO",
+  "nn-NO",
+  "pt-PT",
+  "ro",
+  "si",
+  "sq",
+  "sr",
+  "th",
+  "tl",
+  "trs",
+  "uz",
+];
+
 const test = new SearchConfigTest({
   identifier: "amazon",
   default: {
-    // Not included anywhere.
+    // Not default anywhere.
   },
   available: {
     included: [
-      // Note: These should be based on region, but we don't currently enforce that.
-      // Note: the order here is important. A region/locale match higher up in the
-      // list will override a region/locale match lower down.
       {
-        regions: ["au", "ca"],
+        // The main regions we ship Amazon to. Below this are special cases.
+        regions: mainShippedRegions,
       },
       {
-        // We don't currently enforce by region, but do locale instead.
-        // regions: [
-        //   "at", "au", "be", "ca", "ch", "de", "fr", "gb", "ie", "it", "jp", "nl",
-        //   "us",
-        // ],
+        // Amazon.com ships to all of these locales, excluding the ones where
+        // we ship other items, but it does not matter that they are duplicated
+        // in the available list.
         locales: {
-          matches: [
-            "ach",
-            "af",
-            "ar",
-            "az",
-            "bg",
-            "bn",
-            "bn-IN",
-            "br",
-            "cak",
-            "cy",
-            "da",
-            "de",
-            "dsb",
-            "el",
-            "en-US",
-            "en-GB",
-            "eo",
-            "es-AR",
-            "eu",
-            "fa",
-            "ff",
-            "fr",
-            "ga-IE",
-            "gd",
-            "gl",
-            "gn",
-            "gu-IN",
-            "hr",
-            "hsb",
-            "hy-AM",
-            "ia",
-            "is",
-            "it",
-            "ja-JP-macos",
-            "ja",
-            "ka",
-            "km",
-            "kn",
-            "lij",
-            "lt",
-            "mk",
-            "mr",
-            "ms",
-            "my",
-            "nb-NO",
-            "nn-NO",
-            "pa-IN",
-            "pt-PT",
-            "ro",
-            "si",
-            "son",
-            "sq",
-            "sr",
-            "ta",
-            "te",
-            "th",
-            "tl",
-            "trs",
-            "ur",
-            "uz",
-            "wo",
-            "zh-CN",
-          ],
+          matches: amazondotcomLocales,
+        },
+      },
+      {
+        // Amazon.in
+        regions: ["in"],
+        locales: {
+          matches: ["bn", "gu-IN", "kn", "mr", "pa-IN", "ta", "te", "ur"],
+        },
+      },
+      {
+        // Amazon.fr
+        regions: ["be"],
+        locales: {
+          matches: ["fr"],
+        },
+      },
+    ],
+    excluded: [
+      {
+        // Extra special case for fr and cn as that only ships to the one locale.
+        regions: ["be", "in", "nl"],
+        locales: {
+          matches: amazondotcomLocales,
         },
       },
     ],
@@ -116,174 +136,13 @@ const test = new SearchConfigTest({
       noSuggestionsURL: true,
     },
     {
-      domain: "amazon.fr",
-      telemetryId: "amazon-france",
-      aliases: ["@amazon"],
-      included: [
-        {
-          locales: {
-            matches: ["br", "fr", "ff", "son", "wo"],
-          },
-        },
-        {
-          regions: ["fr"],
-          locales: {
-            matches: [
-              "ach",
-              "af",
-              "ar",
-              "az",
-              "bg",
-              "bn-IN",
-              "cak",
-              "unknown",
-              "eo",
-              "en-US",
-              "es-AR",
-              "fa",
-              "gn",
-              "hy-AM",
-              "ia",
-              "is",
-              "ka",
-              "km",
-              "lt",
-              "mk",
-              "ms",
-              "my",
-              "ro",
-              "si",
-              "th",
-              "tl",
-              "trs",
-              "uz",
-            ],
-          },
-        },
-      ],
-      excluded: [{ regions: ["au", "ca"] }],
-      searchUrlCode: "tag=firefox-fr-21",
-      noSuggestionsURL: true,
-    },
-    {
-      domain: "amazon.co.uk",
-      telemetryId: "amazon-en-GB",
-      aliases: ["@amazon"],
-      included: [
-        {
-          locales: {
-            matches: [
-              "cy",
-              "da",
-              "el",
-              "en-GB",
-              "eu",
-              "ga-IE",
-              "gd",
-              "gl",
-              "hr",
-              "nb-NO",
-              "nn-NO",
-              "pt-PT",
-              "sq",
-              "sr",
-            ],
-          },
-        },
-        {
-          regions: ["gb"],
-          locales: {
-            matches: [
-              "ach",
-              "af",
-              "ar",
-              "az",
-              "bg",
-              "bn-IN",
-              "cak",
-              "unknown",
-              "eo",
-              "en-US",
-              "es-AR",
-              "fa",
-              "gn",
-              "hy-AM",
-              "ia",
-              "is",
-              "ka",
-              "km",
-              "lt",
-              "mk",
-              "ms",
-              "my",
-              "ro",
-              "si",
-              "th",
-              "tl",
-              "trs",
-              "uz",
-            ],
-          },
-        },
-      ],
-      excluded: [{ regions: ["au", "ca"] }],
-      searchUrlCode: "tag=firefox-uk-21",
-      noSuggestionsURL: true,
-    },
-    {
-      domain: "amazon.com",
-      telemetryId: "amazondotcom",
-      aliases: ["@amazon"],
-      included: [
-        {
-          locales: {
-            matches: [
-              "ach",
-              "af",
-              "ar",
-              "az",
-              "bg",
-              "bn-IN",
-              "cak",
-              "unknown",
-              "eo",
-              "en-US",
-              "es-AR",
-              "fa",
-              "gn",
-              "hy-AM",
-              "ia",
-              "is",
-              "ka",
-              "km",
-              "lt",
-              "mk",
-              "ms",
-              "my",
-              "ro",
-              "si",
-              "th",
-              "tl",
-              "trs",
-              "uz",
-            ],
-          },
-        },
-      ],
-      excluded: [{ regions: ["au", "ca", "fr", "gb"] }],
-      searchUrlCode: "tag=mozilla-20",
-    },
-    {
       domain: "amazon.cn",
       telemetryId: "amazondotcn",
       included: [
         {
-          locales: {
-            matches: ["zh-CN"],
-          },
+          regions: ["cn"],
         },
       ],
-      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "ix=sunray",
       noSuggestionsURL: true,
     },
@@ -293,14 +152,48 @@ const test = new SearchConfigTest({
       aliases: ["@amazon"],
       included: [
         {
+          regions: ["jp"],
+        },
+      ],
+      searchUrlCode: "tag=mozillajapan-fx-22",
+      noSuggestionsURL: true,
+    },
+    {
+      domain: "amazon.co.uk",
+      telemetryId: "amazon-en-GB",
+      aliases: ["@amazon"],
+      included: [
+        {
+          regions: ["gb", "ie"],
+        },
+      ],
+      searchUrlCode: "tag=firefox-uk-21",
+      noSuggestionsURL: true,
+    },
+    {
+      domain: "amazon.com",
+      telemetryId: "amazondotcom",
+      aliases: ["@amazon"],
+      included: [
+        {
+          regions: ["us"],
+        },
+      ],
+      searchUrlCode: "tag=mozilla-20",
+    },
+    {
+      domain: "amazon.com",
+      telemetryId: "amazondotcom",
+      aliases: ["@amazon"],
+      included: [
+        {
           locales: {
-            startsWith: ["ja"],
+            matches: amazondotcomLocales,
           },
         },
       ],
-      excluded: [{ regions: ["au", "ca"] }],
-      searchUrlCode: "tag=mozillajapan-fx-22",
-      noSuggestionsURL: true,
+      excluded: [{ regions: mainShippedRegions }],
+      searchUrlCode: "tag=mozilla-20",
     },
     {
       domain: "amazon.de",
@@ -308,13 +201,40 @@ const test = new SearchConfigTest({
       aliases: ["@amazon"],
       included: [
         {
+          regions: ["at", "ch", "de"],
+        },
+      ],
+      searchUrlCode: "tag=firefox-de-21",
+      noSuggestionsURL: true,
+    },
+    {
+      domain: "amazon.es",
+      telemetryId: "amazon-es",
+      aliases: ["@amazon"],
+      included: [
+        {
+          regions: ["es", "pt"],
+        },
+      ],
+      searchUrlCode: "tag=mozillaspain-21",
+      noSuggestionsURL: true,
+    },
+    {
+      domain: "amazon.fr",
+      telemetryId: "amazon-france",
+      aliases: ["@amazon"],
+      included: [
+        {
+          regions: ["fr", "mc"],
+        },
+        {
+          regions: ["be"],
           locales: {
-            matches: ["de", "dsb", "hsb"],
+            matches: ["fr"],
           },
         },
       ],
-      excluded: [{ regions: ["au", "ca"] }],
-      searchUrlCode: "tag=firefox-de-21",
+      searchUrlCode: "tag=firefox-fr-21",
       noSuggestionsURL: true,
     },
     {
@@ -326,9 +246,9 @@ const test = new SearchConfigTest({
           locales: {
             matches: ["bn", "gu-IN", "kn", "mr", "pa-IN", "ta", "te", "ur"],
           },
+          regions: ["in"],
         },
       ],
-      excluded: [{ regions: ["au", "ca"] }],
       noSuggestionsURL: true,
     },
     {
@@ -337,13 +257,22 @@ const test = new SearchConfigTest({
       aliases: ["@amazon"],
       included: [
         {
-          locales: {
-            matches: ["it", "lij"],
-          },
+          regions: ["it", "sm", "va"],
         },
       ],
-      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "tag=firefoxit-21",
+      noSuggestionsURL: true,
+    },
+    {
+      domain: "amazon.se",
+      telemetryId: "amazon-se",
+      aliases: ["@amazon"],
+      included: [
+        {
+          regions: ["se"],
+        },
+      ],
+      searchUrlCode: "tag=mozillasweede-21",
       noSuggestionsURL: true,
     },
   ],
