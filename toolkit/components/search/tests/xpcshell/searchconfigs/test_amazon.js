@@ -101,7 +101,6 @@ const test = new SearchConfigTest({
           regions: ["au"],
         },
       ],
-      searchUrlCode: "tag=mozillaaustra-22",
       noSuggestionsURL: true,
     },
     {
