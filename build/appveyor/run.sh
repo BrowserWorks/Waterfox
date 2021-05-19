@@ -30,8 +30,8 @@ find ./ -type f -name "*.exe" -exec $SIGNTOOL sign -tr http://timestamp.digicert
 find ./ -type f -name "*.dll" -exec $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$BUILD_DIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" {} \;
 7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
 cp $BUILD_DIR/browser/installer/windows/app.tag .
-cp $BUILD_DIR/other-licenses/7zstub/firefox/7zSD.sfx .
-cat 7zSD.sfx app.tag app.7z > "Waterfox $BROWSER_VERSION Setup.exe"
+cp $BUILD_DIR/other-licenses/7zstub/firefox/7zSD.Win32.sfx .
+cat 7zSD.Win32.sfx app.tag app.7z > "Waterfox $BROWSER_VERSION Setup.exe"
 $SIGNTOOL sign -tr http://timestamp.digicert.com -fd sha256 -f "$BUILD_DIR/build/appveyor/waterfox.cer" -csp "eToken Base Cryptographic Provider" -kc "[{{$CSP}}]=te-ba4d65f7-af06-4aa4-91c1-54d4f0cb9b5b" "Waterfox $BROWSER_VERSION Setup.exe"
 popd
 
@@ -44,7 +44,7 @@ cp $BUILD_DIR/tools/update-packaging/common.sh update/
 cp "$BUILD_DIR/obj-x86_64-pc-mingw32/dist/install/sea/Waterfox $BROWSER_VERSION Setup.exe" update/
 xml=('<?xml version="1.0"?>'
 '<updates>'
-'    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
+'    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
 '        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-BROWSER_VERSION.en-US.win64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
 '    </update>'
 '</updates>')
