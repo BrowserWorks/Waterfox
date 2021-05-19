@@ -40,7 +40,7 @@ ac_add_options --with-macos-sdk=$CROSS_SYSROOT
 X=$(getconf NPROCESSORS_ONLN 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)
 
 mk_add_options AUTOCLOBBER=1
-mk_add_options MOZ_MAKE_FLAGS=-j${X}
+mk_add_options MOZ_MAKE_FLAGS=-j16
 
 ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 ac_add_options --disable-debug

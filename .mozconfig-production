@@ -36,11 +36,7 @@ elif test $(uname -s) = Linux; then
 fi
 
 if test $(uname -s) = MINGW32_NT-6.2; then
-	X=$(wmic cpu get NumberOfLogicalProcessors /Format:List | cut -d'=' -f2 | xargs)
-	mk_add_options MOZ_MAKE_FLAGS=-j${X}
-else
-	X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN) * 3 / 2))
-	mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+	mk_add_options MOZ_MAKE_FLAGS=-j16
 fi
 
 ac_add_options --disable-debug
@@ -61,7 +57,7 @@ ac_add_options --enable-rust-simd
 ac_add_options --enable-updater
 
 ac_add_options --with-branding=browser/branding/waterfox
-ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
+ac_add_options --with-l10n-base=$BUILD_DIR/browser/locales/l10n
 
 if test -f "$HOME/.mozbuild/sccache/sccache"; then
 	ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache

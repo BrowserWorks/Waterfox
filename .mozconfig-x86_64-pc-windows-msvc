@@ -23,7 +23,7 @@ export WIN_UCRT_REDIST_DIR="${WINDOWSSDKDIR}/Redist/ucrt/DLLs/x64"
 mk_add_options "export LD_PRELOAD=/tooltool11/liblowercase/liblowercase.so"
 mk_add_options "export LOWERCASE_DIRS=/mnt"
 mk_add_options "export PATH=${TOOLTOOL_DIR}/wine/bin:{TOOLTOOL_DIR}/fxc2/bin:/mnt/LLVM/bin:/home/akontos/tooltool11/mingw-w64-clang/bin:$EXTRA_PATH$PATH"
-mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+mk_add_options MOZ_MAKE_FLAGS=-j16
 
 ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 ac_add_options --disable-bits-download
