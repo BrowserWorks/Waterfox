@@ -239,6 +239,9 @@ nsSVGOuterSVGFrame::GetIntrinsicRatio()
   // We only have an intrinsic size/ratio if our width and height attributes
   // are both specified and set to non-percentage values, or we have a viewBox
   // rect: http://www.w3.org/TR/SVGMobile12/coords.html#IntrinsicSizing
+  // Unfortunately we have to return the ratio as two nscoords whereas what
+  // we have are two floats. Using app units allows for some floating point
+  // values to work but really small or large numbers will fail.
 
   SVGSVGElement *content = static_cast<SVGSVGElement*>(mContent);
   const nsSVGLength2& width =
@@ -247,8 +250,9 @@ nsSVGOuterSVGFrame::GetIntrinsicRatio()
     content->mLengthAttributes[SVGSVGElement::ATTR_HEIGHT];
 
   if (!width.IsPercentage() && !height.IsPercentage()) {
-    nsSize ratio(NSToCoordRoundWithClamp(width.GetAnimValue(content)),
-                 NSToCoordRoundWithClamp(height.GetAnimValue(content)));
+    nsSize ratio(
+      nsPresContext::CSSPixelsToAppUnits(width.GetAnimValue(content)),
+      nsPresContext::CSSPixelsToAppUnits(height.GetAnimValue(content)));
     if (ratio.width < 0) {
       ratio.width = 0;
     }
@@ -278,8 +282,8 @@ nsSVGOuterSVGFrame::GetIntrinsicRatio()
     if (viewBoxHeight < 0.0f) {
       viewBoxHeight = 0.0f;
     }
-    return nsSize(NSToCoordRoundWithClamp(viewBoxWidth),
-                  NSToCoordRoundWithClamp(viewBoxHeight));
+    return nsSize(nsPresContext::CSSPixelsToAppUnits(viewBoxWidth),
+                  nsPresContext::CSSPixelsToAppUnits(viewBoxHeight));
   }
 
   return nsSVGDisplayContainerFrame::GetIntrinsicRatio();
