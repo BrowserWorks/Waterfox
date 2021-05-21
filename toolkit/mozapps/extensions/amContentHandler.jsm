@@ -36,18 +36,7 @@ amContentHandler.prototype = {
     let uri = aRequest.URI;
     let { loadInfo } = aRequest;
     const { triggeringPrincipal } = loadInfo;
-    if (aMimetype == "application/x-chrome-extension") {
-      // Define tmp paths
-      let uuidString = StoreHandler.getUUID().slice(1,-1);
-      let xpiPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", uuidString, "extension.xpi");
-      let manifestPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", uuidString, "new_manifest.json");
-      // Define nsiFiles
-      let nsiFileXpi = StoreHandler.getNsiFile(xpiPath);
-      let nsiManifest = StoreHandler.getNsiFile(manifestPath);
-      // attempt install, wrapped async functions
-      StoreHandler.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest);
-      return; // don't want any of the rest of the ContentHandler to execute
-    } else if (aMimetype != XPI_CONTENT_TYPE) {
+    if (aMimetype != XPI_CONTENT_TYPE) {
       throw Components.Exception("", Cr.NS_ERROR_WONT_HANDLE_CONTENT);
     }
     if (!(aRequest instanceof Ci.nsIChannel)) {

@@ -67,7 +67,8 @@ add_task(async function test_remove_chrome_header() {
   let testCrx = do_get_file("data/test.crx");
   testCrx.copyTo(profileDir, "test.crx");
   // call StoreHandler func
-  let res = await StoreHandler._removeChromeHeaders(crx);
+  let sh = new StoreHandler();
+  let res = await sh._removeChromeHeaders(crx);
   equal(res, true);
   // assert that reading the updated crx starts with correct bytes
   let updatedCrx = await OS.File.read(crx);
@@ -75,7 +76,7 @@ add_task(async function test_remove_chrome_header() {
   equal(JSON.stringify(Array.from(magic)), JSON.stringify([80,75,3,4]));
   // corrupt file (no zip magic) should fail
   let small = "data/invalid.xpi";
-  let res2 = await StoreHandler._removeChromeHeaders(small);
+  let res2 = await sh._removeChromeHeaders(small);
   equal(res2, false);
 });
 
@@ -83,7 +84,7 @@ add_task(async function test_parse_manifest() {
   // parse manifest
   let xpi = do_get_file("data/nolocale.xpi");
   let zr = new ZipReader(xpi);
-  let res = StoreHandler._parseManifest(zr);
+  let res = new StoreHandler()._parseManifest(zr);
   equal(typeof res, "object");
 });
 
