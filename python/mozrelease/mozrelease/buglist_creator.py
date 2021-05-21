@@ -22,8 +22,7 @@ BUGZILLA_BUGLIST_TEMPLATE = 'https://bugzilla.mozilla.org/buglist.cgi?bug_id={bu
 BUG_NUMBER_REGEX = re.compile(r'bug \d+', re.IGNORECASE)
 CHANGELOG_TO_FROM_STRING = '{product}_{version}_RELEASE'
 CHANGESET_URL_TEMPLATE = (
-    '{repo}/{logtype}'
-    '?fromchange={from_version}&tochange={to_version}&full=1'
+    '{repo}/{logtype}' '?rev={to_version}+%25+{from_version}&revcount=1000'
 )
 FULL_CHANGESET_TEMPLATE = '* [Full Mercurial changelog]({url})\n'
 LIST_DESCRIPTION_TEMPLATE = 'Comparing Mercurial tag {from_version} to {to_version}:\n'
@@ -64,7 +63,7 @@ def create_bugs_url(product, current_version, current_revision, repo=None):
         resp = requests.get(CHANGESET_URL_TEMPLATE.format(repo=repo,
                                                           from_version=previous_version_tag,
                                                           to_version=current_revision,
-                                                          logtype='json-pushes'))
+                                                          logtype='json-log'))
         changeset_data = resp.json()
         unique_bugs, unique_backout_bugs = get_bugs_in_changeset(changeset_data)
 
@@ -82,7 +81,7 @@ def create_bugs_url(product, current_version, current_revision, repo=None):
             changeset_html = CHANGESET_URL_TEMPLATE.format(repo=repo,
                                                            from_version=previous_version_tag,
                                                            to_version=current_revision,
-                                                           logtype='pushloghtml')
+                                                           logtype='log')
             description += FULL_CHANGESET_TEMPLATE.format(url=changeset_html)
 
             return description
@@ -96,21 +95,20 @@ def create_bugs_url(product, current_version, current_revision, repo=None):
 
 def get_bugs_in_changeset(changeset_data):
     unique_bugs, unique_backout_bugs = set(), set()
-    for data in changeset_data.values():
-        for changeset in data['changesets']:
-            if is_excluded_change(changeset):
-                continue
+    for changeset in changeset_data["entries"]:
+        if is_excluded_change(changeset):
+            continue
 
-            changeset_desc = changeset['desc']
-            bug_re = BUG_NUMBER_REGEX.search(changeset_desc)
+        changeset_desc = changeset["desc"]
+        bug_re = BUG_NUMBER_REGEX.search(changeset_desc)
 
-            if bug_re:
-                bug_number = bug_re.group().split(' ')[1]
+        if bug_re:
+            bug_number = bug_re.group().split(" ")[1]
 
-                if is_backout_bug(changeset_desc):
-                    unique_backout_bugs.add(bug_number)
-                else:
-                    unique_bugs.add(bug_number)
+            if is_backout_bug(changeset_desc):
+                unique_backout_bugs.add(bug_number)
+            else:
+                unique_bugs.add(bug_number)
 
     return unique_bugs, unique_backout_bugs
 
