@@ -439,14 +439,53 @@
 }
 
 
-@-moz-document  url-prefix("about:"),
-                url-prefix("chrome://mozapps/content/extensions/aboutaddons.html"),
-                url("https://www.mozilla.org/credits/") {
+/* Added for WFX G3.2.1+ */
+@-moz-document  url-prefix("about:") {
+  body.light  {
+    color: var(--wfx-content-color) !important;
+	  background: var(--wfx-in-content-page-bg-color) !important;
+  }
+}
+
+
+@-moz-document url("about:buildconfig"), /* <-- added for WFX G3.2.1+ */
+               url("about:cache"), /* <-- added for WFX G3.2.1+ */
+               url("about:certificate"), /* <-- added for WFX G3.2.1+ */
+               url("about:checkerboard"), /* <-- added for WFX G3.2.1+ */
+               url("about:compat"), /* <-- added for WFX G3.2.1+ */
+               url("about:config"), /* <-- added for WFX G3.2.1+ */
+               url("about:crashes"), /* <-- added for WFX G3.2.1+ */
+               url-prefix("about:debugging"), /* <-- added for WFX G3.2.1+ */
+               url("about:devtools"), /* <-- added for WFX G3.2.1+ */
+               url("about:downloads"), /* <-- added for WFX G3.2.1+ */
+               url("about:home"), /* <-- added for WFX G3.2.1+ */
+               url-prefix("about:preferences"), /* <-- added for WFX G3.2.1+ */
+               url("about:license"), /* <-- added for WFX G3.2.1+ */
+               url("about:logins"), /* <-- added for WFX G3.2.1+ */
+               url("about:logo"), /* <-- added for WFX G3.2.1+ */
+               url("about:memory"), /* <-- added for WFX G3.2.1+ */
+               url-prefix("about:networking"), /* <-- added for WFX G3.2.1+ */
+               url("about:newtab"), /* <-- added for WFX G3.2.1+ */
+               url("about:performance"), /* <-- added for WFX G3.2.1+ */
+               url("about:plugins"), /* <-- added for WFX G3.2.1+ */
+               url-prefix("about:policies"), /* <-- added for WFX G3.2.1+ */
+               url("about:privatebrowsing"), /* <-- added for WFX G3.2.1+ */
+               url("about:profiles"), /* <-- added for WFX G3.2.1+ */
+               url("about:profiling"), /* <-- added for WFX G3.2.1+ */
+               url("about:protections"), /* <-- added for WFX G3.2.1+ */
+               url("about:rights"), /* <-- added for WFX G3.2.1+ */
+               url("about:support"), /* <-- added for WFX G3.2.1+ */
+               url-prefix("about:telemetry"), /* <-- added for WFX G3.2.1+ */
+               url("about:url-classifier"), /* <-- added for WFX G3.2.1+ */
+               url("about:webrtc"), /* <-- added for WFX G3.2.1+ */
+               url("about:welcome"), /* <-- added for WFX G3.2.1+ */
+               url-prefix("chrome://mozapps/content/extensions/aboutaddons.html"),
+               url("https://www.mozilla.org/credits/") {
 
   html,
-  body:not(:-moz-any(.sepia,.dark))  {
+  body {
     color: var(--wfx-content-color) !important;
-	background: var(--wfx-in-content-page-bg-color) !important;
+	  background: var(--wfx-in-content-page-bg-color) !important;
   }
   
   h1,
@@ -459,6 +498,14 @@
   input[type="color"]:hover,
   menulist:not([disabled="true"]):hover {
     background-color: var(--wfx-btn-hover-color) !important;
+  }
+  
+  /* Added for WFX G3.2.1+ */
+  @media (min-resolution: 1.1dppx) {
+    image.update-throbber {
+      list-style-image: url("chrome://global/skin/icons/loading@2x.png") !important;
+      filter: hue-rotate(-12deg) brightness(1.05);
+    }
   }
   
 
@@ -2242,6 +2289,7 @@ treecolpicker:hover {
   list-style-image: none !important;
 }
 
+.no-search-results-image, /* <-- added for Waterfox G3.2.1+ */
 .rights-header,
 .description-wrapper,
 #errorPageContainer {

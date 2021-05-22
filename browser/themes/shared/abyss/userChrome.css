@@ -134,6 +134,12 @@
 
 /* :::::: BROWSER TOOLBOX :::::: */
 
+/* Added for WFX G3.2.1+ */
+:root[privatebrowsingmode=temporary] #downloads-button[attention="success"] > .toolbarbutton-badge-stack > #downloads-indicator-anchor > #downloads-indicator-icon,
+:root[privatebrowsingmode=temporary] #downloads-button[attention="success"] > .toolbarbutton-badge-stack > #downloads-indicator-anchor > #downloads-indicator-progress-outer {
+    fill: var(--wfx-pbm-primary-color) !important;
+}
+
 #PersonalToolbar .toolbarbutton-1:not([disabled="true"]):-moz-any([open], [checked], :hover:active),
 .findbar-button:not([disabled="true"]):-moz-any([checked="true"], :hover:active),
 toolbarbutton.bookmark-item:not(.subviewbutton):hover:active:not([disabled="true"]),
@@ -1096,9 +1102,9 @@ panel#editBookmarkPanel button.expander-up {
 /* :::::: NAV BAR ::::: */ /* <-- added section for WFX G3.1.1+ */
 
 /* Fixes missing Waterfox icon when the menu button is set to 'Waterfox icon' and in 'badged' state */
-#PanelUI-menu-button[badge-status="update-available"],
-#PanelUI-menu-button[badge-status="update-manual"],
-#PanelUI-menu-button[badge-status="update-restart"] {
+#PanelUI-menu-button.browser[badge-status="update-available"],
+#PanelUI-menu-button.browser[badge-status="update-manual"],
+#PanelUI-menu-button.browser[badge-status="update-restart"] {
     list-style-image: url("chrome://branding/content/icon16.png") !important;
 }
 
@@ -1106,9 +1112,9 @@ panel#editBookmarkPanel button.expander-up {
 @media (min-resolution: 1.1dppx) {
 
   #PanelUI-menu-button.browser,
-	 #PanelUI-menu-button[badge-status="update-available"],
-  #PanelUI-menu-button[badge-status="update-manual"],
-  #PanelUI-menu-button[badge-status="update-restart"] {
+	 #PanelUI-menu-button.browser[badge-status="update-available"],
+  #PanelUI-menu-button.browser[badge-status="update-manual"],
+  #PanelUI-menu-button.browser[badge-status="update-restart"] {
     list-style-image: url("chrome://branding/content/icon32.png") !important;
   }
   
@@ -1576,7 +1582,12 @@ panel#editBookmarkPanel button.expander-up {
     background-color: transparent !important;
   }
 
-  #rightBox {
+  /* Added for WFX G3.2.1+ */
+  @media (min-resolution: 1.1dppx) {
+    .update-throbber {
+      list-style-image: url("chrome://global/skin/icons/loading@2x.png") !important;
+      filter: hue-rotate(-12deg) brightness(1.05);
+    }
   }
 
   #clientBox {

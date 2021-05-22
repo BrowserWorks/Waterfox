@@ -634,6 +634,14 @@ textbox:not(.findbar-textbox) {
   background-color: var(--wfx-gray-40);
 }
 
+/* Added for WFX G3.2.1+ */
+panelview#widget-overflow-mainView #searchbar {
+  background-color: var(--wfx-gray-40) !important;
+  color: var(--wfx-content-color) !important;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
 toolbarpaletteitem textbox.searchbar-textbox,
 #navigator-toolbox textbox {
   background-color: var(--wfx-gray-10);
@@ -669,6 +677,7 @@ toolbarpaletteitem textbox.searchbar-textbox {
   border-color: transparent !important;
 }
 
+panelview#widget-overflow-mainView #searchbar:focus-within, /* <-- added for G3.2.1+ */
 panel input:focus,
 #editBookmarkPanelRows > vbox > /*html|*/input:focus,
 #editBookmarkPanelRows > vbox > hbox > /*html|*/input:focus,
@@ -681,6 +690,13 @@ textbox[focused] {
   outline: none !important;
 }
 
+/* Added for WFX G3.2.1+ */
+panelview#widget-overflow-mainView #searchbar input.searchbar-textbox:focus {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+panelview#widget-overflow-mainView .search-go-button, /* <-- added for WFX G3.2.1+ */
 searchbar {
   border-radius: var(--wfx-large-radius) !important;
 }
