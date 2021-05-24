@@ -1,0 +1,15 @@
+[
+  {
+    "namespace": "extensibles",
+    "description": "API implementing additional built-in features",
+    "functions": [
+      {
+        "name": "init",
+        "type": "function",
+        "async": false,
+        "description": "Init additional context menu items",
+        "parameters": []
+      }
+    ]
+  }
+]
