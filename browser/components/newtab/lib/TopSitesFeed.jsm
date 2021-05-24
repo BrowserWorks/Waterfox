@@ -146,13 +146,14 @@ this.TopSitesFeed = class TopSitesFeed {
   observe(subj, topic, data) {
     // We should update the current top sites if the search engine has been changed since
     // the search engine that gets filtered out of top sites has changed.
-    if (
-      topic === "browser-search-engine-modified" &&
-      data === "engine-default" &&
-      this.store.getState().Prefs.values[FILTER_DEFAULT_SEARCH_PREF]
-    ) {
-      delete this._currentSearchHostname;
-      this._currentSearchHostname = getShortURLForCurrentSearch();
+    if (topic === "browser-search-engine-modified") {
+      if (
+        data === "engine-default" &&
+        this.store.getState().Prefs.values[FILTER_DEFAULT_SEARCH_PREF]
+      ) {
+        delete this._currentSearchHostname;
+        this._currentSearchHostname = getShortURLForCurrentSearch();
+      }
       this.refresh({ broadcast: true });
     } else if (
       topic === "nsPref:changed" &&
@@ -360,6 +361,17 @@ this.TopSitesFeed = class TopSitesFeed {
       plainPinned.map(async link => {
         if (!link) {
           return link;
+        }
+
+        // Drop pinned search shortcuts when their engine has been removed / hidden.
+        if (link.searchTopSite) {
+          const searchProvider = getSearchProvider(shortURL(link));
+          if (
+            !searchProvider ||
+            !(await checkHasSearchEngine(searchProvider.keyword))
+          ) {
+            return null;
+          }
         }
 
         // Copy all properties from a frecent link and add more
