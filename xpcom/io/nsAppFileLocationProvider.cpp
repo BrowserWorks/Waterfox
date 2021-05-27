@@ -233,7 +233,8 @@ nsresult nsAppFileLocationProvider::CloneMozBinDirectory(nsIFile** aLocalFile) {
 // GetProductDirectory - Gets the directory which contains the application data
 // folder
 //
-// UNIX   : ~/.mozilla/
+// UNIX   : ~/.mozilla/ or ${XDG_CONFIG_HOME:-~/.config}/mozilla
+//          if env var MOZ_LEGACY_HOME is set, then ~/.mozilla/ is used
 // WIN    : <Application Data folder on user's machine>\Mozilla
 // Mac    : :Documents:Mozilla:
 //----------------------------------------------------------------------------------------
@@ -277,19 +278,72 @@ nsresult nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
     return rv;
   }
 #elif defined(XP_UNIX)
-  rv = NS_NewNativeLocalFile(nsDependentCString(PR_GetEnv("HOME")), true,
+  const char* homeDir = PR_GetEnv("HOME");
+  // check old config ~/.mozilla
+  rv = NS_NewNativeLocalFile(nsDependentCString(homeDir), true,
                              getter_AddRefs(localDir));
   if (NS_FAILED(rv)) {
     return rv;
   }
+#  if defined(MOZ_WIDGET_GTK)
+  // exclude android/iOS from this check
+  rv = localDir->AppendRelativeNativePath(nsDependentCString(".mozilla"));
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = localDir->Exists(&exists);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  // check if we force the use of ~/.mozilla
+  const char* legacyhomedir = PR_GetEnv("MOZ_LEGACY_HOME");
+  if (legacyhomedir && *legacyhomedir) {
+    exists = true;
+  }
+  // otherwise, use new config
+  if (!exists) {
+    const char* xdghomedir = PR_GetEnv("XDG_CONFIG_HOME");
+    if (!xdghomedir || !*xdghomedir) {
+      // XDG_CONFIG_HOME = $HOME/.config
+      rv = NS_NewNativeLocalFile(nsDependentCString(homeDir), true,
+                                 getter_AddRefs(localDir));
+      if (NS_FAILED(rv)) {
+        return rv;
+      }
+      rv = localDir->AppendRelativeNativePath(nsDependentCString(".config"));
+      if (NS_FAILED(rv)) {
+        return rv;
+      }
+    } else {
+      rv = NS_NewNativeLocalFile(nsDependentCString(xdghomedir), true,
+                                 getter_AddRefs(localDir));
+    }
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+    rv = localDir->AppendRelativeNativePath(nsDependentCString("mozilla"));
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+  }
+#  endif
 #else
 #  error dont_know_how_to_get_product_dir_on_your_platform
 #endif
 
+#if !defined(MOZ_WIDGET_GTK)
+  // Since we have to check for legacy configuration, we have
+  // the complete path for Linux already, so this is not
+  // needed. If we stop checking for legacy at some point,
+  // then we can change this to not be protected by
+  // this clause.
   rv = localDir->AppendRelativeNativePath(DEFAULT_PRODUCT_DIR);
+
   if (NS_FAILED(rv)) {
     return rv;
   }
+#endif
+
   rv = localDir->Exists(&exists);
 
   if (NS_SUCCEEDED(rv) && !exists) {
@@ -309,7 +363,8 @@ nsresult nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
 // GetDefaultUserProfileRoot - Gets the directory which contains each user
 // profile dir
 //
-// UNIX   : ~/.mozilla/
+// UNIX   : ~/.mozilla/ or ${XDG_CONFIG_HOME:-~/.config}/mozilla
+//          if env var MOZ_LEGACY_HOME is set, then ~/.mozilla/ is used
 // WIN    : <Application Data folder on user's machine>\Mozilla\Profiles
 // Mac    : :Documents:Mozilla:Profiles:
 //----------------------------------------------------------------------------------------
