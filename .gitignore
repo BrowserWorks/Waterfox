@@ -4,6 +4,9 @@
 *~
 *.pyc
 *.pyo
+*.orig
+*.rej
+*.diff
 TAGS
 tags
 compile_commands.json
