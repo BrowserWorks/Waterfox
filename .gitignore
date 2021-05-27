@@ -4,6 +4,9 @@
 *~
 *.pyc
 *.pyo
+*.orig
+*.rej
+*.diff
 TAGS
 tags
 compile_commands.json
@@ -28,9 +31,6 @@ ID
 # Emacs project sentinel files.
 **/.projectile
 
-# User files that may appear at the root
-/.mozconfig*
-/mozconfig*
 /configure
 /old-configure
 /config.cache
