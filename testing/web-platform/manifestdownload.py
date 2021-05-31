@@ -78,8 +78,7 @@ def should_download(logger, manifest_paths, rebuild_time=timedelta(days=5)):
 def taskcluster_url(logger, commits):
     artifact_path = '/artifacts/public/manifests.tar.gz'
 
-    repos = {"mozilla-central": "mozilla-central",
-             "integration/autoland": "autoland"}
+    repos = {"releases/mozilla-esr78": "mozilla-esr78"}
     cset_url = ('https://hg.mozilla.org/{repo}/json-pushes?'
                 'changeset={changeset}&version=2&tipsonly=1')
 
