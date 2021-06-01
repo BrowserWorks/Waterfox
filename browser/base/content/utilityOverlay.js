@@ -1290,17 +1290,27 @@ function moveBookmarksBar() {
   var bottomTabs = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #TabsToolbar");
   var bookmarksBar = windowRoot.ownerGlobal.document.querySelector("#PersonalToolbar");
 
-  if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "top") {
-    windowRoot.ownerGlobal.document.querySelector("#nav-bar").insertAdjacentElement('afterend', bookmarksBar);
-  }
-  else if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom") {
-    if(bottomTabs) {
-      bottomTabs.insertAdjacentElement('beforebegin', bookmarksBar);
+  if (
+    Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom"
+  ) {
+    if (bottomTabs) {
+      bottomTabs.insertAdjacentElement("beforebegin", bookmarksBar);
+      Services.prefs.setBoolPref("browser.bookmarksBar.moved", true);
+    } else {
+      windowRoot.ownerGlobal.document
+        .querySelector("#browser-bottombox")
+        .insertAdjacentElement("afterbegin", bookmarksBar);
+      Services.prefs.setBoolPref("browser.bookmarksBar.moved", true);
     }
-    else
-    {
-      windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', bookmarksBar);
-    }
+  } else if (!Services.prefs.getBoolPref("browser.bookmarksBar.moved", false)) {
+    // do nothing if user hasn't attempted to move bookmarks bar
+  } else if (
+    Services.prefs.getStringPref("browser.bookmarksBar.position") == "top"
+  ) {
+    windowRoot.ownerGlobal.document
+      .querySelector("#nav-bar")
+      .insertAdjacentElement("afterend", bookmarksBar);
+    Services.prefs.setBoolPref("browser.bookmarksBar.moved", false);
   }
 }
 

@@ -2443,6 +2443,7 @@ pref("browser.windowControls.position", "left");
 
 // Bookmarks Toolbar Position
 pref("browser.bookmarksBar.position", "top");
+pref("browser.bookmarksBar.moved", false);
 
 // Show links on Status Bar or overlay
 pref("browser.statusbar.showlinks", true);
