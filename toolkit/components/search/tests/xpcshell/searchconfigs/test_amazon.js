@@ -10,6 +10,12 @@ const test = new SearchConfigTest({
   },
   available: {
     included: [
+      // Note: These should be based on region, but we don't currently enforce that.
+      // Note: the order here is important. A region/locale match higher up in the
+      // list will override a region/locale match lower down.
+      {
+        regions: ["au", "ca"],
+      },
       {
         // We don't currently enforce by region, but do locale instead.
         // regions: [
@@ -32,6 +38,8 @@ const test = new SearchConfigTest({
             "de",
             "dsb",
             "el",
+            "en-US",
+            "en-GB",
             "eo",
             "es-AR",
             "eu",
@@ -79,75 +87,18 @@ const test = new SearchConfigTest({
             "wo",
             "zh-CN",
           ],
-          startsWith: ["en"],
         },
       },
     ],
   },
   details: [
     {
-      // Note: These should be based on region, but we don't currently enforce that.
-      // Note: the order here is important. A region/locale match higher up in the
-      // list will override a region/locale match lower down.
       domain: "amazon.com.au",
       telemetryId: "amazon-au",
       aliases: ["@amazon"],
       included: [
         {
           regions: ["au"],
-          locales: {
-            matches: [
-              "ach",
-              "af",
-              "ar",
-              "az",
-              "bg",
-              "bn-IN",
-              "cak",
-              "unknown",
-              "eo",
-              "en-US",
-              "es-AR",
-              "fa",
-              "gn",
-              "hy-AM",
-              "ia",
-              "is",
-              "ka",
-              "km",
-              "lt",
-              "mk",
-              "ms",
-              "my",
-              "ro",
-              "si",
-              "th",
-              "tl",
-              "trs",
-              "uz",
-            ],
-          },
-        },
-        {
-          regions: ["au"],
-          locales: {
-            matches: [
-              "cy",
-              "da",
-              "el",
-              "en-GB",
-              "eu",
-              "ga-IE",
-              "gd",
-              "gl",
-              "hr",
-              "nb-NO",
-              "nn-NO",
-              "pt-PT",
-              "sq",
-              "sr",
-            ],
-          },
         },
       ],
       noSuggestionsURL: true,
@@ -158,52 +109,10 @@ const test = new SearchConfigTest({
       aliases: ["@amazon"],
       included: [
         {
-          locales: {
-            matches: ["en-CA"],
-          },
-        },
-        {
           regions: ["ca"],
-          locales: {
-            matches: [
-              "ach",
-              "af",
-              "ar",
-              "az",
-              "bg",
-              "bn-IN",
-              "cak",
-              "unknown",
-              "eo",
-              "en-US",
-              "es-AR",
-              "fa",
-              "gn",
-              "hy-AM",
-              "ia",
-              "is",
-              "ka",
-              "km",
-              "lt",
-              "mk",
-              "ms",
-              "my",
-              "ro",
-              "si",
-              "th",
-              "tl",
-              "trs",
-              "uz",
-            ],
-          },
-        },
-        {
-          regions: ["ca"],
-          locales: {
-            matches: ["br", "fr", "ff", "son", "wo"],
-          },
         },
       ],
+      searchUrlCode: "tag=mozillacanada-20",
       noSuggestionsURL: true,
     },
     {
@@ -252,7 +161,7 @@ const test = new SearchConfigTest({
           },
         },
       ],
-      excluded: [{ regions: ["ca"] }],
+      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "tag=firefox-fr-21",
       noSuggestionsURL: true,
     },
@@ -317,7 +226,7 @@ const test = new SearchConfigTest({
           },
         },
       ],
-      excluded: [{ regions: ["au"] }],
+      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "tag=firefox-uk-21",
       noSuggestionsURL: true,
     },
@@ -374,6 +283,7 @@ const test = new SearchConfigTest({
           },
         },
       ],
+      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "ix=sunray",
       noSuggestionsURL: true,
     },
@@ -388,6 +298,7 @@ const test = new SearchConfigTest({
           },
         },
       ],
+      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "tag=mozillajapan-fx-22",
       noSuggestionsURL: true,
     },
@@ -402,6 +313,7 @@ const test = new SearchConfigTest({
           },
         },
       ],
+      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "tag=firefox-de-21",
       noSuggestionsURL: true,
     },
@@ -416,6 +328,7 @@ const test = new SearchConfigTest({
           },
         },
       ],
+      excluded: [{ regions: ["au", "ca"] }],
       noSuggestionsURL: true,
     },
     {
@@ -429,6 +342,7 @@ const test = new SearchConfigTest({
           },
         },
       ],
+      excluded: [{ regions: ["au", "ca"] }],
       searchUrlCode: "tag=firefoxit-21",
       noSuggestionsURL: true,
     },
@@ -442,9 +356,4 @@ add_task(async function setup() {
 
 add_task(async function test_searchConfig_amazon() {
   await test.run(true);
-  // Only applies to the default locale fallback for the legacy config.
-  // Note: when we remove the legacy config, we should remove the "unknown"
-  // references in the 'details' section of the test above.
-  test._config.available.included[0].locales.matches.push("unknown");
-  await test.run(false);
 });

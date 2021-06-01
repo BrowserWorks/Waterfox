@@ -45,6 +45,11 @@
 #include "mozilla/Telemetry.h"
 #include "nsPrintfCString.h"
 
+#ifdef MOZ_THUNDERBIRD
+#  include "nsIPK11TokenDB.h"
+#  include "nsIPK11Token.h"
+#endif
+
 #include <stdlib.h>
 
 #ifdef XP_WIN
@@ -948,6 +953,26 @@ nsXREDirProvider::DoStartup() {
     // white-listed for read/write access. An example of this is the
     // tor-launcher launching the network configuration window. See bug 1485836.
     mozilla::SandboxBroker::GeckoDependentInitialize();
+#endif
+
+#ifdef MOZ_THUNDERBIRD
+  if (mozilla::Preferences::GetBool("security.prompt_for_master_password_on_startup",
+                           false)) {
+    // Prompt for the master password prior to opening application windows,
+    // to avoid the race that triggers multiple prompts (see bug 177175).
+    // We use this code until we have a better solution, possibly as
+    // described in bug 177175 comment 384.
+    nsCOMPtr<nsIPK11TokenDB> db =
+        do_GetService("@mozilla.org/security/pk11tokendb;1");
+    if (db) {
+      nsCOMPtr<nsIPK11Token> token;
+      if (NS_SUCCEEDED(db->GetInternalKeyToken(getter_AddRefs(token)))) {
+        mozilla::Unused << token->Login(false);
+      }
+    } else {
+      NS_WARNING("Failed to get nsIPK11TokenDB service.");
+    }
+  }
 #endif
 
     // Init the Extension Manager

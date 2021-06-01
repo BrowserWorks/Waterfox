@@ -501,19 +501,7 @@ bool Instance::callImport(JSContext* cx, uint32_t funcImportIndex,
     return true;
   }
 
-#ifdef ENABLE_WASM_SIMD
-  // Should have been guarded earlier
-  MOZ_ASSERT(!fi.funcType().hasV128ArgOrRet());
-#endif
-
-  // Functions with unsupported reference types in signature don't have a jit
-  // exit at the moment.
-  if (fi.funcType().temporarilyUnsupportedReftypeForExit()) {
-    return true;
-  }
-
-  // Functions that return multiple values don't have a jit exit at the moment.
-  if (fi.funcType().temporarilyUnsupportedResultCountForJitExit()) {
+  if (!fi.canHaveJitExit()) {
     return true;
   }
 

@@ -171,6 +171,7 @@ class BaseProcessLauncher {
 
   // Overrideable hooks. If superclass behavior is invoked, it's always at the
   // top of the override.
+  virtual bool SetChannel(IPC::Channel*) = 0;
   virtual bool DoSetup();
   virtual RefPtr<ProcessHandlePromise> DoLaunch() = 0;
   virtual bool DoFinishLaunch() { return true; };
@@ -210,7 +211,6 @@ class BaseProcessLauncher {
   char mPidString[32];
 
   // Set during launch.
-  IPC::Channel* mChannel = nullptr;
   std::wstring mChannelId;
   ScopedPRFileDesc mCrashAnnotationReadPipe;
   ScopedPRFileDesc mCrashAnnotationWritePipe;
@@ -227,6 +227,7 @@ class WindowsProcessLauncher : public BaseProcessLauncher {
         mCachedNtdllThunk(aHost->sCachedNtDllThunk) {}
 
  protected:
+  bool SetChannel(IPC::Channel*) override { return true; }
   virtual bool DoSetup() override;
   virtual RefPtr<ProcessHandlePromise> DoLaunch() override;
   virtual bool DoFinishLaunch() override;
@@ -250,6 +251,21 @@ class PosixProcessLauncher : public BaseProcessLauncher {
         mProfileDir(aHost->mProfileDir) {}
 
  protected:
+  bool SetChannel(IPC::Channel* aChannel) override {
+    // The source fd is owned by the channel; take ownership by
+    // dup()ing it and closing the channel's copy.  The destination fd
+    // is with respect to the not-yet-launched child process, so for
+    // this purpose it's just a number.
+    int origSrcFd;
+    aChannel->GetClientFileDescriptorMapping(&origSrcFd, &mChannelDstFd);
+    mChannelSrcFd.reset(dup(origSrcFd));
+    if (!mChannelSrcFd) {
+      return false;
+    }
+    aChannel->CloseClientFileDescriptor();
+    return true;
+  }
+
   virtual bool DoSetup() override;
   virtual RefPtr<ProcessHandlePromise> DoLaunch() override;
   virtual bool DoFinishLaunch() override;
@@ -257,6 +273,8 @@ class PosixProcessLauncher : public BaseProcessLauncher {
   nsCOMPtr<nsIFile> mProfileDir;
 
   std::vector<std::string> mChildArgv;
+  UniqueFileHandle mChannelSrcFd;
+  int mChannelDstFd;
 };
 
 #  if defined(XP_MACOSX)
@@ -1176,10 +1194,8 @@ bool PosixProcessLauncher::DoSetup() {
 
   // remap the IPC socket fd to a well-known int, as the OS does for
   // STDOUT_FILENO, for example
-  int srcChannelFd, dstChannelFd;
-  mChannel->GetClientFileDescriptorMapping(&srcChannelFd, &dstChannelFd);
   mLaunchOptions->fds_to_remap.push_back(
-      std::pair<int, int>(srcChannelFd, dstChannelFd));
+      std::pair<int, int>(mChannelSrcFd.get(), mChannelDstFd));
 
   // no need for kProcessChannelID, the child process inherits the
   // other end of the socketpair() from us
@@ -1281,7 +1297,7 @@ bool PosixProcessLauncher::DoFinishLaunch() {
   // We're in the parent and the child was launched. Close the child FD in the
   // parent as soon as possible, which will allow the parent to detect when the
   // child closes its FD (either due to normal exit or due to crash).
-  mChannel->CloseClientFileDescriptor();
+  mChannelSrcFd = nullptr;
 
   return true;
 }
@@ -1815,14 +1831,9 @@ RefPtr<ProcessLaunchPromise> BaseProcessLauncher::Launch(
   // data races with the IO thread (where e.g. OnChannelConnected may run
   // concurrently). The pool currently needs access to the channel, which is not
   // great.
-  //
-  // It's also unfortunate that we need to work with raw pointers to both the
-  // host and the channel. The assumption here is that the host (and therefore
-  // the channel) are never torn down until the return promise is resolved or
-  // rejected.
   aHost->InitializeChannel();
-  mChannel = aHost->GetChannel();
-  if (!mChannel) {
+  IPC::Channel* channel = aHost->GetChannel();
+  if (!channel || !SetChannel(channel)) {
     return ProcessLaunchPromise::CreateAndReject(LaunchError{}, __func__);
   }
   mChannelId = aHost->GetChannelId();

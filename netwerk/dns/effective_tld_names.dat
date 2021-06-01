@@ -6087,8 +6087,10 @@ biz.ss
 com.ss
 edu.ss
 gov.ss
+me.ss
 net.ss
 org.ss
+sch.ss
 
 // st : http://www.nic.st/html/policyrules/
 st
@@ -6097,7 +6099,6 @@ com.st
 consulado.st
 edu.st
 embaixada.st
-gov.st
 mil.st
 net.st
 org.st
@@ -7125,7 +7126,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2021-03-27T15:15:50Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2021-05-11T15:13:51Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -8645,9 +8646,6 @@ itau
 // itv : 2015-07-09 ITV Services Limited
 itv
 
-// iveco : 2015-09-03 CNH Industrial N.V.
-iveco
-
 // jaguar : 2014-11-13 Jaguar Land Rover Ltd
 jaguar
 
@@ -9095,6 +9093,9 @@ mtn
 // mtr : 2015-03-12 MTR Corporation Limited
 mtr
 
+// music : 2021-05-04 DotMusic Limited
+music
+
 // mutual : 2015-04-02 Northwestern Mutual MU TLD Registry, LLC
 mutual
 
@@ -9103,9 +9104,6 @@ nab
 
 // nagoya : 2013-10-24 GMO Registry, Inc.
 nagoya
-
-// nationwide : 2015-07-23 Nationwide Mutual Insurance Company
-nationwide
 
 // natura : 2015-03-12 NATURA COSMÉTICOS S.A.
 natura
@@ -9244,9 +9242,6 @@ onl
 
 // online : 2015-01-15 DotOnline Inc.
 online
-
-// onyourside : 2015-07-23 Nationwide Mutual Insurance Company
-onyourside
 
 // ooo : 2014-01-09 INFIBEAM AVENUES LIMITED
 ooo
@@ -9832,9 +9827,6 @@ sport
 
 // spot : 2015-02-26 Amazon Registry Services, Inc.
 spot
-
-// spreadbetting : 2014-12-11 Dotspreadbetting Registry Limited
-spreadbetting
 
 // srl : 2015-05-07 InterNetX, Corp
 srl
@@ -11826,10 +11818,11 @@ app.os.stg.fedoraproject.org
 
 // FearWorks Media Ltd. : https://fearworksmedia.co.uk
 // submitted by Keith Fairley <domains@fearworksmedia.co.uk>
-conn.uk
-copro.uk
 couk.me
 ukco.me
+conn.uk
+copro.uk
+hosp.uk
 
 // Fermax : https://fermax.com/
 // submitted by Koen Van Isterdael <k.vanisterdael@fermax.be>
@@ -11874,7 +11867,7 @@ flynnhosting.net
 // Forgerock : https://www.forgerock.com
 // Submitted by Roderick Parr <roderick.parr@forgerock.com>
 forgeblocks.com
-*.id.forgerock.io
+id.forgerock.io
 
 // Framer : https://www.framer.com
 // Submitted by Koen Rouwhorst <koenrh@framer.com>
@@ -11947,8 +11940,10 @@ gsj.bz
 
 // GitHub, Inc.
 // Submitted by Patrick Toomey <security@github.com>
-github.io
 githubusercontent.com
+github.dev
+githubpreview.dev
+github.io
 
 // GitLab, Inc.
 // Submitted by Alex Hanselka <alex@gitlab.com>
@@ -12086,6 +12081,10 @@ blogspot.td
 blogspot.tw
 blogspot.ug
 blogspot.vn
+
+// Goupile : https://goupile.fr
+// Submitted by Niels Martignene <hello@goupile.fr>
+goupile.fr
 
 // Group 53, LLC : https://www.group53.com
 // Submitted by Tyler Todd <noc@nova53.net>
@@ -12660,6 +12659,11 @@ nh-serv.co.uk
 // Submitted by Jeff Wheelhouse <support@nearlyfreespeech.net>
 nfshost.com
 
+// Noop : https://noop.app
+// Submitted by Nathaniel Schweinberg <noop@rearc.io>
+*.developer.app
+noop.app
+
 // Northflank Ltd. : https://northflank.com/
 // Submitted by Marco Suter <marco@northflank.com>
 *.northflank.app
@@ -12901,8 +12905,10 @@ orsites.com
 // Submitted by Yngve Pettersen <yngve@opera.com>
 operaunite.com
 
-// Oursky Limited : https://skygear.io/
-// Submited by Skygear Developer <hello@skygear.io>
+// Oursky Limited : https://authgear.com/, https://skygear.io/
+// Submited by Authgear Team <hello@authgear.com>, Skygear Developer <hello@skygear.io>
+authgear-staging.com
+authgearapps.com
 skygearapp.com
 
 // OutSystems
@@ -12978,8 +12984,6 @@ perspecta.cloud
 // PE Ulyanov Kirill Sergeevich : https://airy.host
 // Submitted by Kirill Ulyanov <k.ulyanov@airy.host>
 lk3.ru
-ra-ru.ru
-zsew.ru
 
 // Planet-Work : https://www.planet-work.com/
 // Submitted by Frédéric VANNIÈRE <f.vanniere@planet-work.com>
@@ -13045,8 +13049,8 @@ pubtls.org
 
 // PythonAnywhere LLP: https://www.pythonanywhere.com
 // Submitted by Giles Thomas <giles@pythonanywhere.com>
-*.pythonanywhere.com
-*.eu.pythonanywhere.com
+pythonanywhere.com
+eu.pythonanywhere.com
 
 // QOTO, Org.
 // Submitted by Jeffrey Phillips Freeman <jeffrey.freeman@qoto.org>
@@ -13282,6 +13286,10 @@ stackhero-network.com
 static.land
 dev.static.land
 sites.static.land
+
+// Storebase : https://www.storebase.io
+// Submitted by Tony Schirmer <tony@storebase.io>
+storebase.store
 
 // Strategic System Consulting (eApps Hosting): https://www.eapps.com/
 // Submitted by Alex Oancea <aoancea@cloudscale365.com>

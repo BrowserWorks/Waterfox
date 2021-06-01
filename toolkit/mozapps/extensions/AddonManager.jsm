@@ -1338,10 +1338,7 @@ var AddonManagerInternal = {
                     // Start installing updates when the add-on can be updated and
                     // background updates should be applied.
                     logger.debug("Found update for add-on ${id}", aAddon);
-                    if (
-                      aAddon.permissions & AddonManager.PERM_CAN_UPGRADE &&
-                      AddonManager.shouldAutoUpdate(aAddon)
-                    ) {
+                    if (AddonManager.shouldAutoUpdate(aAddon)) {
                       // XXX we really should resolve when this install is done,
                       // not when update-available check completes, no?
                       logger.debug(`Starting upgrade install of ${aAddon.id}`);
@@ -4144,6 +4141,9 @@ var AddonManager = {
     }
 
     if (!("applyBackgroundUpdates" in aAddon)) {
+      return false;
+    }
+    if (!(aAddon.permissions & AddonManager.PERM_CAN_UPGRADE)) {
       return false;
     }
     if (aAddon.applyBackgroundUpdates == AddonManager.AUTOUPDATE_ENABLE) {

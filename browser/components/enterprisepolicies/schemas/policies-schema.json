@@ -17,6 +17,10 @@
       }
     },
 
+    "AllowedDomainsForApps": {
+      "type": "string"
+    },
+
     "AppAutoUpdate": {
       "type": "boolean"
     },
@@ -477,6 +481,9 @@
             },
             "blocked_install_message": {
               "type": "string"
+            },
+            "updates_disabled": {
+              "type": "boolean"
             }
           }
         }
