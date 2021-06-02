@@ -391,7 +391,7 @@ ChromiumCDMChild::OnSessionClosed(const char* aSessionId,
 }
 
 void ChromiumCDMChild::QueryOutputProtectionStatus() {
-  GMP_LOG_DEBUG("ChromiumCDMChild::QueryOutputProtectionStatus()");
+  GMP_LOG("ChromiumCDMChild::QueryOutputProtectionStatus()");
   if (mCDM) {
     mCDM->OnQueryOutputProtectionStatus(cdm::kQuerySucceeded, uint32_t{},
                                         uint32_t{});
