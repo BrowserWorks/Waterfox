@@ -20,6 +20,7 @@ SIGNTOOL=/c/PROGRA~2/WI3CF2~1/10/bin/10.0.19041.0/x64/signtool.exe
 
 ./mach build
 ./mach package
+./mach package-multi-locale --locales en-US en-GB zh-CN zh-TW ja ko ru fr es-ES es-MX pt-PT pt-BR de pl nl da nn-NO sv-SE el it cs hu lt th id vi ar
 
 # Extract unsigned installer, sign DLLs and EXEs and then create installer. Sign resulting installer.
 
