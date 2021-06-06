@@ -4285,7 +4285,7 @@ pref("dom.payments.defaults.saveAddress", true);
 pref("dom.payments.request.supportedRegions", "US,CA");
 
 #ifdef MOZ_ASAN_REPORTER
-  pref("asanreporter.apiurl", "https://anf1.fuzzing.mozilla.org/crashproxy/submit/");
+  pref("asanreporter.apiurl", "", locked);
   pref("asanreporter.clientid", "unknown");
   pref("toolkit.telemetry.overrideUpdateChannel", "nightly-asan");
 #endif
@@ -4310,11 +4310,7 @@ pref("toolkit.aboutProcesses.showThreads", false);
 
 // When a crash happens, whether to include heap regions of the crash context
 // in the minidump. Enabled by default on nightly and aurora.
-#ifdef RELEASE_OR_BETA
-  pref("toolkit.crashreporter.include_context_heap", false);
-#else
-  pref("toolkit.crashreporter.include_context_heap", true);
-#endif
+pref("toolkit.crashreporter.include_context_heap", false, locked);
 
 pref("layers.omtp.enabled", false);
 
@@ -4322,7 +4318,7 @@ pref("layers.omtp.enabled", false);
 // user profile directory for these stylesheets:
 //  * userContent.css
 //  * userChrome.css
-pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
+pref("toolkit.legacyUserProfileCustomizations.stylesheets", true, locked);
 
 #ifdef MOZ_DATA_REPORTING
   pref("datareporting.policy.dataSubmissionEnabled", false, locked);
