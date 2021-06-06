@@ -42,16 +42,16 @@ pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v4
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
 pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v4/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
-pref("extensions.getAddons.discovery.api_url", "https://services.addons.mozilla.org/api/v4/discovery/?lang=%LOCALE%&edition=%DISTRIBUTION%");
+pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Use bloomfilters for the addons blocklist, instead of JSON only.
 pref("extensions.blocklist.useMLBF", true);
 pref("extensions.blocklist.useMLBF.stashes", true);
 
 // The URL for the privacy policy related to recommended extensions.
-pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
+pref("extensions.recommendations.privacyPolicyUrl", "", locked);
 // The URL for Firefox Color, recommended on the theme page in about:addons.
-pref("extensions.recommendations.themeRecommendationUrl", "https://color.firefox.com/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=theme-footer-link");
+pref("extensions.recommendations.themeRecommendationUrl", "", locked);
 
 pref("extensions.update.autoUpdateDefault", true);
 
@@ -1097,7 +1097,7 @@ pref("toolkit.crashreporter.infoURL",
 pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
 
 // base url for web-based feedback pages
-pref("app.feedback.baseURL", "https://ideas.mozilla.org/");
+pref("app.feedback.baseURL", "", locked);
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");
@@ -1458,6 +1458,7 @@ pref("browser.newtabpage.activity-stream.asrouter.providers.snippets", "", locke
 pref("browser.newtabpage.activity-stream.asrouter.providers.messaging-experiments", "", locked);
 
 // ASRouter user prefs
+pref("browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false, locked);
 pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false, locked);
 
@@ -1912,7 +1913,7 @@ pref("browser.tabs.crashReporting.includeURL", false, locked);
 
 // If true, unprivileged extensions may use experimental APIs on
 // nightly and developer edition.
-pref("extensions.experiments.enabled", true);
+pref("extensions.experiments.enabled", true, locked);
 
 #if defined(XP_WIN)
   // Allows us to deprioritize the processes of background tabs at an OS level
@@ -1994,7 +1995,7 @@ pref("print.use_simplify_page", true);
 
 // Space separated list of URLS that are allowed to send objects (instead of
 // only strings) through webchannels. This list is duplicated in mobile/android/app/mobile.js
-pref("webchannel.allowObject.urlWhitelist", "https://content.cdn.mozilla.net https://support.mozilla.org https://install.mozilla.org");
+pref("webchannel.allowObject.urlWhitelist", "", locked);
 
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
@@ -2049,7 +2050,7 @@ pref("app.normandy.logging.level", 50, locked); // Warn
 pref("app.normandy.run_interval_seconds", -1, locked); // 6 hours
 pref("app.normandy.shieldLearnMoreUrl", "", locked);
 pref("app.normandy.last_seen_buildid", "", locked);
-pref("app.normandy.onsync_skew_sec", 600);
+pref("app.normandy.onsync_skew_sec", -1, locked);
 #ifdef MOZ_DATA_REPORTING
   pref("app.shield.optoutstudies.enabled", false, locked);
 #else
@@ -2079,6 +2080,9 @@ pref("fission.frontend.simulate-messages", false);
 // Coverage ping is disabled by default.
 pref("toolkit.coverage.enabled", false, locked);
 pref("toolkit.coverage.endpoint.base", "", locked);
+
+// Coverage ping doesn't seem to respect the preferences above
+pref("toolkit.coverage.opt-out", true, locked);
 
 // Discovery prefs
 pref("browser.discovery.enabled", false, locked);
