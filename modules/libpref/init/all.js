@@ -69,7 +69,7 @@ pref("security.password_lifetime",       30);
 // and trust third party root certificates from the OS).
 // With any other value of the pref or on any other platform, this does nothing.
 // This preference takes precedence over "security.enterprise_roots.enabled".
-pref("security.family_safety.mode", 2);
+pref("security.family_safety.mode", 0);
 
 pref("security.enterprise_roots.enabled", false);
 
@@ -313,7 +313,7 @@ pref("browser.display.auto_quality_min_font_size", 20);
 // See http://whatwg.org/specs/web-apps/current-work/#ping
 pref("browser.send_pings", false);
 pref("browser.send_pings.max_per_link", 1);           // limit the number of pings that are sent per link click
-pref("browser.send_pings.require_same_host", false);  // only send pings to the same host if this is true
+pref("browser.send_pings.require_same_host", true);  // only send pings to the same host if this is true
 
 pref("browser.helperApps.neverAsk.saveToDisk", "");
 pref("browser.helperApps.neverAsk.openFile", "");
@@ -776,14 +776,14 @@ pref("toolkit.tabbox.switchByScrolling", false);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-pref("toolkit.telemetry.server", "https://incoming.telemetry.mozilla.org");
+pref("toolkit.telemetry.server", "", locked);
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
-pref("toolkit.telemetry.server_owner", "Mozilla");
+pref("toolkit.telemetry.server_owner", "", locked);
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
-pref("toolkit.telemetry.debugSlowSql", false);
+pref("toolkit.telemetry.debugSlowSql", false, locked);
 // Whether to use the unified telemetry behavior, requires a restart.
-pref("toolkit.telemetry.unified", true);
+pref("toolkit.telemetry.unified", false, locked);
 // AsyncShutdown delay before crashing in case of shutdown freeze
 #if !defined(MOZ_ASAN) && !defined(MOZ_TSAN)
   pref("toolkit.asyncshutdown.crash_timeout", 60000); // 1 minute
@@ -1425,7 +1425,7 @@ pref("network.http.altsvc.enabled", true);
 pref("network.http.altsvc.oe", true);
 
 // Turn on 0RTT data for TLS 1.3
-pref("security.tls.enable_0rtt_data", true);
+pref("security.tls.enable_0rtt_data", false);
 
 // the origin extension impacts h2 coalescing
 pref("network.http.originextension", true);
@@ -1548,7 +1548,7 @@ pref("dom.server-events.default-reconnection-time", 5000); // in milliseconds
 // This preference, if true, causes all UTF-8 domain names to be normalized to
 // punycode.  The intention is to allow UTF-8 domain names as input, but never
 // generate them from punycode.
-pref("network.IDN_show_punycode", false);
+pref("network.IDN_show_punycode", true);
 
 // If "network.IDN.use_whitelist" is set to true, TLDs with
 // "network.IDN.whitelist.tld" explicitly set to true are treated as
@@ -1719,7 +1719,7 @@ pref("network.dns.native-is-localhost", false);
 pref("network.dnsCacheExpirationGracePeriod", 60);
 
 // This preference can be used to turn off DNS prefetch.
-pref("network.dns.disablePrefetch", false);
+pref("network.dns.disablePrefetch", true);
 
 // This preference controls whether .onion hostnames are
 // rejected before being given to DNS. RFC 7686
@@ -1742,7 +1742,7 @@ pref("network.dns.resolver-thread-extra-idle-time-seconds", 60);
 
 // enables the prefetch service (i.e., prefetching of <link rel="next"> and
 // <link rel="prefetch"> URLs).
-pref("network.prefetch-next", true);
+pref("network.prefetch-next", false);
 
 // The following prefs pertain to the negotiate-auth extension (see bug 17578),
 // which provides transparent Kerberos or NTLM authentication using the SPNEGO
@@ -2396,7 +2396,7 @@ pref("input_event_queue.count_for_prediction", 9);
 pref("plugins.navigator.hidden_ctp_plugin", "");
 
 // The default value for nsIPluginTag.enabledState (STATE_ENABLED = 2)
-pref("plugin.default.state", 2);
+pref("plugin.default.state", 1);
 
 // This pref can take 3 possible string values:
 // "always"     - always use favor fallback mode
@@ -2450,8 +2450,8 @@ pref("plugins.favorfallback.rules", "");
 
 pref("dom.ipc.plugins.flash.disable-protected-mode", false);
 
-pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", true);
-pref("dom.ipc.plugins.reportCrashURL", true);
+pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", false, locked);
+pref("dom.ipc.plugins.reportCrashURL", false, locked);
 
 // Force the accelerated direct path for a subset of Flash wmode values
 pref("dom.ipc.plugins.forcedirect.enabled", true);
@@ -3779,9 +3779,9 @@ pref("browser.meta_refresh_when_inactive.disabled", false);
 pref("xpinstall.whitelist.required", true);
 // Only Firefox requires add-on signatures
 pref("xpinstall.signatures.required", false);
-pref("extensions.langpacks.signatures.required", false);
+pref("extensions.langpacks.signatures.required", false, locked);
 pref("extensions.webExtensionsMinPlatformVersion", "42.0a1");
-pref("extensions.experiments.enabled", true);
+pref("extensions.experiments.enabled", true, locked);
 
 // Other webextensions prefs
 pref("extensions.webextensions.keepStorageOnUninstall", false);
@@ -3814,12 +3814,12 @@ pref("extensions.webextensions.performanceCountersMaxAge", 5000);
 // Whether to allow the inline options browser in HTML about:addons page.
 pref("extensions.htmlaboutaddons.inline-options.enabled", true);
 // Show recommendations on the extension and theme list views.
-pref("extensions.htmlaboutaddons.recommendations.enabled", true);
+pref("extensions.htmlaboutaddons.recommendations.enabled", false, locked);
 
 // The URL for the privacy policy related to recommended add-ons.
-pref("extensions.recommendations.privacyPolicyUrl", "");
+pref("extensions.recommendations.privacyPolicyUrl", "", locked);
 // The URL for a recommended theme, shown on the theme page in about:addons.
-pref("extensions.recommendations.themeRecommendationUrl", "");
+pref("extensions.recommendations.themeRecommendationUrl", "", locked);
 
 // Report Site Issue button
 // Note that on enabling the button in other release channels, make sure to
@@ -4325,22 +4325,22 @@ pref("layers.omtp.enabled", false);
 pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
 
 #ifdef MOZ_DATA_REPORTING
-  pref("datareporting.policy.dataSubmissionEnabled", true);
+  pref("datareporting.policy.dataSubmissionEnabled", false, locked);
   pref("datareporting.policy.dataSubmissionPolicyNotifiedTime", "0");
   pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 0);
   pref("datareporting.policy.dataSubmissionPolicyBypassNotification", false);
   pref("datareporting.policy.currentPolicyVersion", 2);
   pref("datareporting.policy.minimumPolicyVersion", 1);
   pref("datareporting.policy.minimumPolicyVersion.channel-beta", 2);
-  pref("datareporting.policy.firstRunURL", "https://www.mozilla.org/privacy/firefox/");
+  pref("datareporting.policy.firstRunURL", "", locked);
 #endif
 
 #ifdef MOZ_SERVICES_HEALTHREPORT
   #if !defined(ANDROID)
-    pref("datareporting.healthreport.infoURL", "https://www.mozilla.org/legal/privacy/firefox.html#health-report");
+    pref("datareporting.healthreport.infoURL", "", locked);
 
     // Health Report is enabled by default on all channels.
-    pref("datareporting.healthreport.uploadEnabled", true);
+    pref("datareporting.healthreport.uploadEnabled", false, locked);
   #endif
 #endif
 
@@ -4409,8 +4409,8 @@ pref("services.common.log.logger.tokenserverclient", "Debug");
   pref("services.sync.log.logger.engine", "Debug");
   pref("services.sync.log.cryptoDebug", false);
 
-  pref("services.sync.telemetry.submissionInterval", 43200); // 12 hours in seconds
-  pref("services.sync.telemetry.maxPayloadCount", 500);
+  pref("services.sync.telemetry.submissionInterval", -1, locked); // 12 hours in seconds
+  pref("services.sync.telemetry.maxPayloadCount", 0, locked);
 
   #ifdef EARLY_BETA_OR_EARLIER
     // Enable the (fairly costly) client/server validation through early Beta, but
