@@ -1,7 +1,7 @@
 {
   "default": {
     "searchDefault": "Bing",
-    "searchOrder": ["Bing", "Google", "Yahoo!"],
+    "searchOrder": ["Bing", "Google"],
     "visibleDefaultEngines": [
       "bing", "google", "startpage", "qwant", "ddg", "yahoo", "yandex", "wikipedia"
     ]
