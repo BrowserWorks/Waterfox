@@ -1331,15 +1331,14 @@ BrowserGlue.prototype = {
       "resource:///modules/themes/light/"
     );
 
-
     AddonManager.maybeInstallBuiltinAddon(
       "abyss@waterfox.net",
-      "1.0",
+      "1.0.8",
       "resource:///modules/themes/abyss/"
     );
     AddonManager.maybeInstallBuiltinAddon(
       "floe@waterfox.net",
-      "1.0",
+      "1.0.8",
       "resource:///modules/themes/floe/"
     );
 
