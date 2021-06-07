@@ -11145,11 +11145,6 @@ cupcake.is
 // Submitted by Marvin Wiesner <Marvin@curv-labs.de>
 curv.dev
 
-// Curvegrid Inc. : https://www.curvegrid.com/
-// Submitted by Pierre Rousset <security@curvegrid.com>
-multibaas.app
-multibaas.com
-
 // Customer OCI - Oracle Dyn https://cloud.oracle.com/home https://dyn.com/dns/
 // Submitted by Gregory Drake <support@dyn.com>
 // Note: This is intended to also include customer-oci.com due to wildcards implicitly including the current label
@@ -13237,6 +13232,10 @@ seidat.net
 // Senseering GmbH : https://www.senseering.de
 // Submitted by Felix Mönckemeyer <f.moenckemeyer@senseering.de>
 senseering.net
+
+// Sendmsg: https://www.sendmsg.co.il
+// Submitted by Assaf Stern <domains@comstar.co.il>
+minisite.ms
 
 // Service Magnet : https://myservicemagnet.com
 // Submitted by Dave Sanders <dave@myservicemagnet.com>
