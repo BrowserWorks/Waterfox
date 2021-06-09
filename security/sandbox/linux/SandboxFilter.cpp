@@ -1202,7 +1202,7 @@ public:
 #ifdef MOZ_ASAN
         .ElseIf(advice == MADV_DONTDUMP, Allow())
 #endif
-        .Else(InvalidSyscall());
+        .Else(Error(ENOSYS));
     }
     case __NR_brk:
     CASES_FOR_geteuid:
