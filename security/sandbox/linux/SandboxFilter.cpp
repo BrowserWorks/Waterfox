@@ -470,6 +470,10 @@ private:
 #endif
     }
 
+    if (!broker) {
+      return BlockedSyscallTrap(aArgs, nullptr);
+    }
+
     if (fd != AT_FDCWD && path[0] != '/') {
       SANDBOX_LOG_ERROR("unsupported fd-relative fstatat(%d, \"%s\", %p, %d)",
                         fd, path, buf, flags);
@@ -1133,6 +1137,42 @@ class GMPSandboxPolicy : public SandboxPolicyCommon {
     }
   }
 
+  static intptr_t StatAtTrap(ArgsRef aArgs, void* aux) {
+    auto broker = static_cast<SandboxBrokerClient*>(aux);
+    auto fd = static_cast<int>(aArgs.args[0]);
+    auto path = reinterpret_cast<const char*>(aArgs.args[1]);
+    auto buf = reinterpret_cast<statstruct*>(aArgs.args[2]);
+    auto flags = static_cast<int>(aArgs.args[3]);
+
+    if (fd != AT_FDCWD && (flags & AT_EMPTY_PATH) != 0 &&
+        strcmp(path, "") == 0) {
+#ifdef __NR_fstat64
+      return DoSyscall(__NR_fstat64, fd, buf);
+#else
+      return DoSyscall(__NR_fstat, fd, buf);
+#endif
+    }
+
+    if (!broker) {
+      return BlockedSyscallTrap(aArgs, nullptr);
+    }
+
+    if (fd != AT_FDCWD && path[0] != '/') {
+      SANDBOX_LOG_ERROR("unsupported fd-relative fstatat(%d, \"%s\", %p, %d)",
+                        fd, path, buf, flags);
+      return BlockedSyscallTrap(aArgs, nullptr);
+    }
+    if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT)) != 0) {
+      SANDBOX_LOG_ERROR("unsupported flags %d in fstatat(%d, \"%s\", %p, %d)",
+                        (flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT)), fd,
+                        path, buf, flags);
+      return BlockedSyscallTrap(aArgs, nullptr);
+    }
+    return (flags & AT_SYMLINK_NOFOLLOW) == 0
+      ? broker->Stat(path, buf)
+      : broker->LStat(path, buf);
+  }
+
   const SandboxOpenedFiles* mFiles;
 public:
   explicit GMPSandboxPolicy(const SandboxOpenedFiles* aFiles)
@@ -1187,6 +1227,8 @@ public:
       return Trap(UnameTrap, nullptr);
     CASES_FOR_fcntl:
       return Trap(FcntlTrap, nullptr);
+    CASES_FOR_fstatat:
+      return Trap(StatAtTrap, nullptr);
 
     case __NR_dup:
       return Allow();
