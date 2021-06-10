@@ -25,7 +25,7 @@ def main(request, response):
     params['year'] = date.today().year + 1
     headers = [
         ("Content-Type", "application/json"),
-        ("Set-Cookie", "{name[0]}={value[0]}; Path={path[0]}; Expires=09 Jun {year} 10:18:14 GMT".format(**params)
+        ("Set-Cookie", "{name[0]}={value[0]}; Path={path[0]}; Expires=09 Jun {year} 10:18:14 GMT".format(**params))
     ]
     body = "{}"
     return headers, body
