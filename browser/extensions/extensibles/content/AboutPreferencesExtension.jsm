@@ -6,6 +6,10 @@ var EXPORTED_SYMBOLS = ["AboutPreferencesExtension"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
+
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 ChromeUtils.defineModuleGetter(
@@ -49,8 +53,11 @@ class AboutPreferencesExtension extends ExtensibleUtils {
       { id: "browser.tabs.copyurl", type: "bool" },
       { id: "browser.tabs.copyurl.activetab", type: "bool" },
       { id: "browser.tabs.copyallurls", type: "bool" },
+      { id: "browser.restart_menu.purgecache", type: "bool" },
+      { id: "browser.restart_menu.requireconfirm", type: "bool" },
+      { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
     ];
-    const kPrefToggles = [
+    const kTabPrefToggles = [
       [
         "duplicateTab",
         "duplicate-tab-options",
@@ -76,40 +83,78 @@ class AboutPreferencesExtension extends ExtensibleUtils {
         "browser.tabs.copyallurls",
       ],
     ];
+    var restartPrefToggles = [
+      [
+        "showRestartItem",
+        "restart-paneluibtn",
+        "appMenu-restart-button",
+        "browser.restart_menu.showpanelmenubtn",
+      ],
+      [
+        "purgeCache",
+        "clean-fast-restart-cache",
+        "",
+        "browser.restart_menu.purgecache",
+      ],
+      [
+        "requireRestartConfirmation",
+        "restart-reqconfirmation",
+        "",
+        "browser.restart_menu.requireconfirm",
+      ],
+    ];
     // register prefs
     this._registerPrefs(kPrefs);
-    // create label && vbox
-    let container = this._createPreferenceContainer(
+    // create tab pref container
+    let tabPrefContainer = this._createPreferenceContainer(
       document,
       "tabBarPositionSettingsContainer",
       "tabContextMenu-header",
-      "tabContextMenuSettingsContainer"
+      "tabContextMenuSettingsContainer",
+      false
     );
-    if (container) {
-      // create preference toggles && pref listeners
-      this._buildPreferenceToggles(document, kPrefToggles, container);
+    if (tabPrefContainer) {
+      // create tab preference toggles && listeners
+      this._buildPreferenceToggles(document, kTabPrefToggles, tabPrefContainer);
     }
+    // create restart pref container
+    let restartGroup = this._createPrefGroupbox(
+      document,
+      "restartGroup",
+      "themeGroup"
+    );
+    if (restartGroup) {
+      this._createLabel(document, "restartGroup", "restart-header", true);
+      // remove show restart button toggle if macosx
+      if (AppConstants.platform == "macosx") {
+        restartPrefToggles.splice(0, 1);
+      }
+      // create restart preference toggles && listeners
+      this._buildPreferenceToggles(document, restartPrefToggles, restartGroup);
+    }
+
     // finished initializing
     this.window.prefsInitializing = false;
   }
 
   // create container to group similar preferences
-  _createPreferenceContainer(aDocument, aAfterId, aL10n, aContainerId) {
+  _createPreferenceContainer(
+    aDocument,
+    aAfterId,
+    aL10n,
+    aContainerId,
+    aInside
+  ) {
     let container;
     try {
       // if we have already made the container, don't attempt to make it again
       if (aDocument.getElementById(aContainerId)) {
         return container;
       }
-      let labelPos = aDocument.getElementById(aAfterId);
-      let label = this.createElement(aDocument, "label");
-      let header = this.createElement(aDocument, "html:h2", {
-        "data-l10n-id": aL10n,
-        style:
-          "font-weight: 600;margin: 16px 0 4px;font-size: 1.14em;line-height: normal;",
-      });
-      labelPos.insertAdjacentElement("afterend", label);
-      label.insertAdjacentElement("afterbegin", header);
+      let label = this._createLabel(aDocument, aAfterId, aL10n, aInside);
+      if (!label) {
+        return container;
+      }
       container = this.createElement(aDocument, "vbox", {
         id: aContainerId,
       });
@@ -118,6 +163,50 @@ class AboutPreferencesExtension extends ExtensibleUtils {
       Cu.reportError(e);
     }
     return container;
+  }
+
+  _createLabel(aDocument, aAfterId, aL10n, aInside) {
+    let label;
+    try {
+      let labelPos = aDocument.getElementById(aAfterId);
+      label = this.createElement(aDocument, "label");
+      let header = this.createElement(aDocument, "html:h2", {
+        "data-l10n-id": aL10n,
+        style:
+          "font-weight: 600;margin: 16px 0 4px;font-size: 1.14em;line-height: normal;",
+      });
+      labelPos.insertAdjacentElement(
+        aInside ? "afterbegin" : "afterend",
+        label
+      );
+      label.insertAdjacentElement("afterbegin", header);
+    } catch (e) {
+      if (!e.inludes("labelPos is null")) {
+        Cu.reportError(e);
+      }
+    }
+    return label;
+  }
+
+  _createPrefGroupbox(aDocument, aId, aAfterId) {
+    let groupbox;
+    try {
+      if (aDocument.getElementById(aId)) {
+        return groupbox;
+      }
+      let groupPos = aDocument.getElementById(aAfterId);
+      groupbox = this.createElement(aDocument, "groupbox", {
+        id: aId,
+        "data-category": "paneGeneral",
+        hidden: true,
+      });
+      groupPos.insertAdjacentElement("afterend", groupbox);
+    } catch (e) {
+      if (!e.inludes("groupPos is null")) {
+        Cu.reportError(e);
+      }
+    }
+    return groupbox;
   }
 
   _buildPreferenceToggles(aDocument, aPrefToggles, aContainer) {
