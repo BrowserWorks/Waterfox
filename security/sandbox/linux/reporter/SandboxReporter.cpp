@@ -48,7 +48,7 @@ SandboxReporter::Init()
 {
   int fds[2];
 
-  if (0 != socketpair(AF_UNIX, SOCK_SEQPACKET, 0, fds)) {
+  if (0 != socketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0, fds)) {
     SANDBOX_LOG_ERROR("SandboxReporter: socketpair failed: %s",
 		      strerror(errno));
     return false;
@@ -199,6 +199,8 @@ SubmitToTelemetry(const SandboxReport& aReport)
 
     ARG_HEX(clone, 0); // flags
     ARG_DECIMAL(prctl, 0); // option
+    ARG_HEX(ioctl, 1); // request
+    ARG_DECIMAL(fcntl, 1); // cmd
     ARG_DECIMAL(madvise, 2); // advice
     ARG_CLOCKID(clock_gettime, 0); // clk_id
 

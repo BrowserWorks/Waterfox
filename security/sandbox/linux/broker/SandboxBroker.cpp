@@ -38,7 +38,7 @@ SandboxBroker::SandboxBroker(UniquePtr<const Policy> aPolicy, int aChildPid,
   : mChildPid(aChildPid), mPolicy(Move(aPolicy))
 {
   int fds[2];
-  if (0 != socketpair(AF_UNIX, SOCK_SEQPACKET, 0, fds)) {
+  if (0 != socketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0, fds)) {
     SANDBOX_LOG_ERROR("SandboxBroker: socketpair failed: %s", strerror(errno));
     mFileDesc = -1;
     aClientFd = -1;
@@ -283,6 +283,79 @@ SandboxBroker::Policy::AddDynamic(int aPerms, const char* aPath)
   }
 }
 
+void
+SandboxBroker::Policy::AddAncestors(const char* aPath, int aPerms)
+{
+  nsAutoCString path(aPath);
+
+  while (true) {
+    const auto lastSlash = path.RFindCharInSet("/");
+    if (lastSlash <= 0) {
+      MOZ_ASSERT(lastSlash == 0);
+      return;
+    }
+    path.Truncate(lastSlash);
+    AddPath(aPerms, path.get());
+  }
+}
+
+void
+SandboxBroker::Policy::FixRecursivePermissions()
+{
+  // This builds an entirely new hashtable in order to avoid iterator
+  // invalidation problems.
+  PathPermissionMap oldMap;
+  mMap.SwapElements(oldMap);
+
+  if (SandboxInfo::Get().Test(SandboxInfo::kVerbose)) {
+    SANDBOX_LOG_ERROR("fixing recursive policy entries");
+  }
+
+  for (auto iter = oldMap.ConstIter(); !iter.Done(); iter.Next()) {
+    const nsACString& path = iter.Key();
+    const int& localPerms = iter.Data();
+    int inheritedPerms = 0;
+
+    nsAutoCString ancestor(path);
+    // This is slightly different from the loop in AddAncestors: it
+    // leaves the trailing slashes attached so they'll match AddDir
+    // entries.
+    while (true) {
+      // Last() release-asserts that the string is not empty.  We
+      // should never have empty keys in the map, and the Truncate()
+      // below will always give us a non-empty string.
+      if (ancestor.Last() == '/') {
+        ancestor.Truncate(ancestor.Length() - 1);
+      }
+      const auto lastSlash = ancestor.RFindCharInSet("/");
+      if (lastSlash < 0) {
+        MOZ_ASSERT(ancestor.IsEmpty());
+        break;
+      }
+      ancestor.Truncate(lastSlash + 1);
+      const int ancestorPerms = oldMap.Get(ancestor);
+      if (ancestorPerms & RECURSIVE) {
+        inheritedPerms |= ancestorPerms & ~RECURSIVE;
+      }
+    }
+
+    const int newPerms = localPerms | inheritedPerms;
+    if ((newPerms & ~RECURSIVE) == inheritedPerms) {
+      if (SandboxInfo::Get().Test(SandboxInfo::kVerbose)) {
+        SANDBOX_LOG_ERROR("removing redundant %s: %d -> %d", PromiseFlatCString(path).get(),
+                          localPerms, newPerms);
+      }
+      // Skip adding this entry to the new map.
+      continue;
+    }
+    if (SandboxInfo::Get().Test(SandboxInfo::kVerbose)) {
+      SANDBOX_LOG_ERROR("new policy for %s: %d -> %d", PromiseFlatCString(path).get(),
+                        localPerms, newPerms);
+    }
+    mMap.Put(path, newPerms);
+  }
+}
+
 int
 SandboxBroker::Policy::Lookup(const nsACString& aPath) const
 {
@@ -343,7 +416,7 @@ AllowOperation(int aReqFlags, int aPerms)
 static bool
 AllowAccess(int aReqFlags, int aPerms)
 {
-  if (aReqFlags & ~(R_OK|W_OK|F_OK)) {
+  if (aReqFlags & ~(R_OK|W_OK|X_OK|F_OK)) {
     return false;
   }
   int needed = 0;
@@ -662,17 +735,7 @@ SandboxBroker::ThreadMain(void)
 
       case SANDBOX_FILE_ACCESS:
         if (permissive || AllowAccess(req.mFlags, perms)) {
-          // This can't use access() itself because that uses the ruid
-          // and not the euid.  In theory faccessat() with AT_EACCESS
-          // would work, but Linux doesn't actually implement the
-          // flags != 0 case; glibc has a hack which doesn't even work
-          // in this case so it'll ignore the flag, and Bionic just
-          // passes through the syscall and always ignores the flags.
-          //
-          // Instead, because we've already checked the requested
-          // r/w/x bits against the policy, just return success if the
-          // file exists and hope that's close enough.
-          if (stat(pathBuf, (struct stat*)&respBuf) == 0) {
+          if (access(pathBuf, req.mFlags) == 0) {
             resp.mError = 0;
           } else {
             resp.mError = -errno;

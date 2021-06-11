@@ -19,6 +19,10 @@
 #include "nsDirectoryServiceDefs.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "SpecialSystemDirectory.h"
+#include "nsReadableUtils.h"
+#include "nsIFileStreams.h"
+#include "nsILineInputStream.h"
+#include "nsNetCID.h"
 
 #ifdef ANDROID
 #include "cutils/properties.h"
@@ -26,6 +30,10 @@
 
 #ifdef MOZ_WIDGET_GTK
 #include <glib.h>
+#endif
+
+#ifndef ANDROID
+#include <glob.h>
 #endif
 
 namespace mozilla {
@@ -38,6 +46,91 @@ static const int rdwr = rdonly | wronly;
 static const int rdwrcr = rdwr | SandboxBroker::MAY_CREATE;
 }
 #endif
+
+static void
+AddPathsFromFile(SandboxBroker::Policy* aPolicy, nsACString& aPath)
+{
+  nsresult rv;
+  nsCOMPtr<nsIFile> ldconfig(do_CreateInstance(NS_LOCAL_FILE_CONTRACTID, &rv));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  rv = ldconfig->InitWithNativePath(aPath);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  nsCOMPtr<nsIFileInputStream> fileStream(
+    do_CreateInstance(NS_LOCALFILEINPUTSTREAM_CONTRACTID, &rv));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  rv = fileStream->Init(ldconfig, -1, -1, 0);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  nsCOMPtr<nsILineInputStream> lineStream(do_QueryInterface(fileStream, &rv));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  nsAutoCString line;
+  bool more = true;
+  do {
+    rv = lineStream->ReadLine(line, &more);
+    // Cut off any comments at the end of the line, also catches lines
+    // that are entirely a comment
+    int32_t hash = line.FindChar('#');
+    if (hash >= 0) {
+      line = Substring(line, 0, hash);
+    }
+    // Simplify our following parsing by trimming whitespace
+    line.CompressWhitespace(true, true);
+    if (line.IsEmpty()) {
+      // Skip comment lines
+      continue;
+    }
+    // Check for any included files and recursively process
+    nsACString::const_iterator start, end, token_end;
+
+    line.BeginReading(start);
+    line.EndReading(end);
+    token_end = end;
+
+    if (FindInReadable(NS_LITERAL_CSTRING("include "), start, token_end)) {
+      nsAutoCString includes(Substring(token_end, end));
+      for (const nsACString& includeGlob : includes.Split(' ')) {
+        glob_t globbuf;
+        if (!glob(PromiseFlatCString(includeGlob).get(), GLOB_NOSORT, nullptr, &globbuf)) {
+          for (size_t fileIdx = 0; fileIdx < globbuf.gl_pathc; fileIdx++) {
+            nsAutoCString filePath(globbuf.gl_pathv[fileIdx]);
+            AddPathsFromFile(aPolicy, filePath);
+          }
+          globfree(&globbuf);
+        }
+      }
+    }
+    // Skip anything left over that isn't an absolute path
+    if (line.First() != '/') {
+      continue;
+    }
+    // Cut off anything behind an = sign, used by dirname=TYPE directives
+    int32_t equals = line.FindChar('=');
+    if (equals >= 0) {
+      line = Substring(line, 0, equals);
+    }
+    char* resolvedPath = realpath(line.get(), nullptr);
+    if (resolvedPath) {
+      aPolicy->AddDir(rdonly, resolvedPath);
+      free(resolvedPath);
+    }
+  } while (more);
+}
+
+static void
+AddLdconfigPaths(SandboxBroker::Policy* aPolicy)
+{
+  nsAutoCString ldconfigPath(NS_LITERAL_CSTRING("/etc/ld.so.conf"));
+  AddPathsFromFile(aPolicy, ldconfigPath);
+}
 
 SandboxBrokerPolicyFactory::SandboxBrokerPolicyFactory()
 {
@@ -79,19 +172,28 @@ SandboxBrokerPolicyFactory::SandboxBrokerPolicyFactory()
 #endif
 
 #ifdef MOZ_WIDGET_GTK
-  // Bug 1321134: DConf's single bit of shared memory
   if (const auto userDir = g_get_user_runtime_dir()) {
+    // Bug 1321134: DConf's single bit of shared memory
     // The leaf filename is "user" by default, but is configurable.
     nsPrintfCString shmPath("%s/dconf/", userDir);
     policy->AddPrefix(rdwrcr, shmPath.get());
+    policy->AddAncestors(shmPath.get());
+#ifdef MOZ_PULSEAUDIO
+    // PulseAudio, if it can't get server info from X11, will break
+    // unless it can open this directory (or create it, but in our use
+    // case we know it already exists).  See bug 1335329.
+    nsPrintfCString pulsePath("%s/pulse", userDir);
+    policy->AddPath(rdonly, pulsePath.get());
+#endif // MOZ_PULSEAUDIO
   }
-#endif
+#endif // MOZ_WIDGET_GTK
 
   // Read permissions
   policy->AddPath(rdonly, "/dev/urandom");
   policy->AddPath(rdonly, "/proc/cpuinfo");
   policy->AddPath(rdonly, "/proc/meminfo");
   policy->AddDir(rdonly, "/lib");
+  policy->AddDir(rdonly, "/lib64");
   policy->AddDir(rdonly, "/etc");
   policy->AddDir(rdonly, "/usr/share");
   policy->AddDir(rdonly, "/usr/local/share");
@@ -103,9 +205,22 @@ SandboxBrokerPolicyFactory::SandboxBrokerPolicyFactory()
   policy->AddDir(rdonly, "/var/tmp");
   policy->AddDir(rdonly, "/sys/devices/cpu");
   policy->AddDir(rdonly, "/sys/devices/system/cpu");
+  policy->AddDir(rdonly, "/nix/store");
 
-  // Bug 1384178: mesa driver loader
+  // Bug 1384178: Mesa driver loader
   policy->AddPrefix(rdonly, "/sys/dev/char/226:");
+
+  // Bug 1385715: NVIDIA PRIME support
+  policy->AddPath(rdonly, "/proc/modules");
+
+#ifdef MOZ_PULSEAUDIO
+  // See bug 1384986 comment #1.
+  if (const auto xauth = PR_GetEnv("XAUTHORITY")) {
+    policy->AddPath(rdonly, xauth);
+  }
+#endif
+
+  AddLdconfigPaths(policy);
 
   // Configuration dirs in the homedir that we want to allow read
   // access to.
@@ -229,20 +344,21 @@ SandboxBrokerPolicyFactory::GetContentPolicy(int aPid, bool aFileProcess)
                      "security.sandbox.content.write_path_whitelist",
                      rdwr);
 
+  // Whitelisted for reading by the user/distro
+  AddDynamicPathList(policy.get(),
+                    "security.sandbox.content.read_path_whitelist",
+                    rdonly);
+
   // No read blocking at level 2 and below.
   // file:// processes also get global read permissions
   // This requires accessing user preferences so we can only do it now.
   // Our constructor is initialized before user preferences are read in.
   if (GetEffectiveContentSandboxLevel() <= 2 || aFileProcess) {
     policy->AddDir(rdonly, "/");
-    return policy;
+    // Any other read-only rules will be removed as redundant by
+    // Policy::FixRecursivePermissions, so there's no need to
+    // early-return here.
   }
-
-  // Read permissions only from here on!
-  // Whitelisted for reading by the user/distro
-  AddDynamicPathList(policy.get(),
-                    "security.sandbox.content.read_path_whitelist",
-                    rdonly);
 
   // Bug 1198550: the profiler's replacement for dl_iterate_phdr
   policy->AddPath(rdonly, nsPrintfCString("/proc/%d/maps", aPid).get());
@@ -251,9 +367,43 @@ SandboxBrokerPolicyFactory::GetContentPolicy(int aPid, bool aFileProcess)
   policy->AddPath(rdonly, nsPrintfCString("/proc/%d/statm", aPid).get());
   policy->AddPath(rdonly, nsPrintfCString("/proc/%d/smaps", aPid).get());
 
-  // Return the common policy.
-  return policy;
+  // userContent.css sits in the profile, which is normally blocked
+  // and we can't get the profile dir earlier
+  nsCOMPtr<nsIFile> profileDir;
+  nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
+                                       getter_AddRefs(profileDir));
+  if (NS_SUCCEEDED(rv)) {
+      nsCOMPtr<nsIFile> workDir;
+      rv = profileDir->Clone(getter_AddRefs(workDir));
+      if (NS_SUCCEEDED(rv)) {
+        rv = workDir->AppendNative(NS_LITERAL_CSTRING("chrome"));
+        if (NS_SUCCEEDED(rv)) {
+          rv = workDir->AppendNative(NS_LITERAL_CSTRING("userContent.css"));
+          if (NS_SUCCEEDED(rv)) {
+            nsAutoCString tmpPath;
+            rv = workDir->GetNativePath(tmpPath);
+            if (NS_SUCCEEDED(rv)) {
+              policy->AddPath(rdonly, tmpPath.get());
+            }
+          }
+        }
+      }
+      rv = profileDir->Clone(getter_AddRefs(workDir));
+      if (NS_SUCCEEDED(rv)) {
+        rv = workDir->AppendNative(NS_LITERAL_CSTRING("extensions"));
+        if (NS_SUCCEEDED(rv)) {
+          nsAutoCString tmpPath;
+          rv = workDir->GetNativePath(tmpPath);
+          if (NS_SUCCEEDED(rv)) {
+            policy->AddDir(rdonly, tmpPath.get());
+          }
+        }
+      }
+  }
 
+  // Return the common policy.
+  policy->FixRecursivePermissions();
+  return policy;
 }
 
 void
