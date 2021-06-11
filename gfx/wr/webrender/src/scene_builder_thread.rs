@@ -207,15 +207,13 @@ struct Document {
 }
 
 impl Document {
-    fn new(device_rect: DeviceIntRect, device_pixel_ratio: f32) -> Self {
+    fn new(device_rect: DeviceIntRect) -> Self {
         Document {
             scene: Scene::new(),
             interners: Interners::default(),
             stats: SceneStats::empty(),
             view: SceneView {
                 device_rect,
-                device_pixel_ratio,
-                page_zoom_factor: 1.0,
                 quality_settings: QualitySettings::default(),
             },
         }
@@ -227,7 +225,6 @@ pub struct SceneBuilderThread {
     rx: Receiver<SceneBuilderRequest>,
     tx: Sender<ApiMsg>,
     config: FrameBuilderConfig,
-    default_device_pixel_ratio: f32,
     font_instances: SharedFontInstanceMap,
     size_of_ops: Option<MallocSizeOfOps>,
     hooks: Option<Box<dyn SceneBuilderHooks + Send>>,
@@ -260,7 +257,6 @@ impl SceneBuilderThreadChannels {
 impl SceneBuilderThread {
     pub fn new(
         config: FrameBuilderConfig,
-        default_device_pixel_ratio: f32,
         font_instances: SharedFontInstanceMap,
         size_of_ops: Option<MallocSizeOfOps>,
         hooks: Option<Box<dyn SceneBuilderHooks + Send>>,
@@ -273,7 +269,6 @@ impl SceneBuilderThread {
             rx,
             tx,
             config,
-            default_device_pixel_ratio,
             font_instances,
             size_of_ops,
             hooks,
@@ -320,7 +315,6 @@ impl SceneBuilderThread {
                 Ok(SceneBuilderRequest::AddDocument(document_id, initial_size)) => {
                     let old = self.documents.insert(document_id, Document::new(
                         initial_size.into(),
-                        self.default_device_pixel_ratio,
                     ));
                     debug_assert!(old.is_none());
                 }
@@ -515,15 +509,11 @@ impl SceneBuilderThread {
                 SceneMsg::UpdateEpoch(pipeline_id, epoch) => {
                     scene.update_epoch(pipeline_id, epoch);
                 }
-                SceneMsg::SetPageZoom(factor) => {
-                    doc.view.page_zoom_factor = factor.get();
-                }
                 SceneMsg::SetQualitySettings { settings } => {
                     doc.view.quality_settings = settings;
                 }
-                SceneMsg::SetDocumentView { device_rect, device_pixel_ratio } => {
+                SceneMsg::SetDocumentView { device_rect } => {
                     doc.view.device_rect = device_rect;
-                    doc.view.device_pixel_ratio = device_pixel_ratio;
                 }
                 SceneMsg::SetDisplayList {
                     epoch,

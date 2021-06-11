@@ -39,7 +39,6 @@ use webrender::sw_compositor::SwCompositor;
 use webrender::{
     api::units::*,
     api::*,
-    host_utils::{thread_started, thread_stopped},
     render_api::*,
     set_profiler_hooks, AsyncPropertySampler, AsyncScreenshotHandle, Compositor, CompositorCapabilities,
     CompositorConfig, CompositorSurfaceTransform, DebugFlags, Device, MappableCompositor, MappedTileInfo,
@@ -716,7 +715,7 @@ pub extern "C" fn wr_renderer_get_screenshot_async(
     assert!(!screenshot_height.is_null());
 
     let (handle, size) = renderer.get_screenshot_async(
-        DeviceIntRect::new(
+        DeviceIntRect::from_origin_and_size(
             DeviceIntPoint::new(window_x, window_y),
             DeviceIntSize::new(window_width, window_height),
         ),
@@ -784,8 +783,8 @@ pub unsafe extern "C" fn wr_renderer_delete(renderer: *mut Renderer) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn wr_renderer_accumulate_memory_report(renderer: &mut Renderer, report: &mut MemoryReport) {
-    *report += renderer.report_memory();
+pub unsafe extern "C" fn wr_renderer_accumulate_memory_report(renderer: &mut Renderer, report: &mut MemoryReport, swgl: *mut c_void) {
+    *report += renderer.report_memory(swgl);
 }
 
 // cbindgen doesn't support tuples, so we have a little struct instead, with
@@ -886,6 +885,14 @@ extern "C" {
 struct GeckoProfilerHooks;
 
 impl ProfilerHooks for GeckoProfilerHooks {
+    fn register_thread(&self, thread_name: &str) {
+        gecko_profiler::register_thread(thread_name);
+    }
+
+    fn unregister_thread(&self) {
+        gecko_profiler::unregister_thread();
+    }
+
     fn begin_marker(&self, label: &CStr) {
         unsafe {
             gecko_profiler_start_marker(label.as_ptr());
@@ -1081,10 +1088,10 @@ pub extern "C" fn wr_thread_pool_new(low_priority: bool) -> *mut WrThreadPool {
             }
             let name = format!("WRWorker{}#{}", priority_tag, idx);
             register_thread_with_profiler(name.clone());
-            thread_started(&name);
+            gecko_profiler::register_thread(&name);
         })
         .exit_handler(|_idx| {
-            thread_stopped();
+            gecko_profiler::unregister_thread();
         })
         .build();
 
@@ -1483,7 +1490,6 @@ pub extern "C" fn wr_window_new(
     document_id: u32,
     compositor: *mut c_void,
     use_native_compositor: bool,
-    max_update_rects: usize,
     use_partial_present: bool,
     max_partial_present_rects: usize,
     draw_previous_partial_present_regions: bool,
@@ -1552,7 +1558,6 @@ pub extern "C" fn wr_window_new(
 
     let compositor_config = if software {
         CompositorConfig::Native {
-            max_update_rects: 1,
             compositor: Box::new(SwCompositor::new(
                 sw_gl.unwrap(),
                 Box::new(WrCompositor(compositor)),
@@ -1561,7 +1566,6 @@ pub extern "C" fn wr_window_new(
         }
     } else if use_native_compositor {
         CompositorConfig::Native {
-            max_update_rects,
             compositor: Box::new(WrCompositor(compositor)),
         }
     } else {
@@ -1862,7 +1866,7 @@ pub extern "C" fn wr_transaction_set_display_list(
 
 #[no_mangle]
 pub extern "C" fn wr_transaction_set_document_view(txn: &mut Transaction, doc_rect: &DeviceIntRect) {
-    txn.set_document_view(*doc_rect, 1.0);
+    txn.set_document_view(*doc_rect);
 }
 
 #[no_mangle]
@@ -1950,11 +1954,6 @@ pub extern "C" fn wr_transaction_scroll_layer(
 ) {
     let scroll_id = ExternalScrollId(scroll_id, pipeline_id);
     txn.scroll_node_with_id(new_scroll_origin, scroll_id, ScrollClamping::NoClamping);
-}
-
-#[no_mangle]
-pub extern "C" fn wr_transaction_pinch_zoom(txn: &mut Transaction, pinch_zoom: f32) {
-    txn.set_pinch_zoom(ZoomFactor::new(pinch_zoom));
 }
 
 #[no_mangle]
@@ -2111,7 +2110,7 @@ pub extern "C" fn wr_resource_updates_update_blob_image(
         descriptor.into(),
         Arc::new(bytes.flush_into_vec()),
         visible_rect,
-        &DirtyRect::Partial(dirty_rect),
+        &DirtyRect::Partial(dirty_rect.to_box2d()),
     );
 }
 

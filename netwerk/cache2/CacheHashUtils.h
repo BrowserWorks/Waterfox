@@ -30,8 +30,8 @@ class CacheHash : public nsISupports {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  typedef uint16_t Hash16_t;
-  typedef uint32_t Hash32_t;
+  using Hash16_t = uint16_t;
+  using Hash32_t = uint32_t;
 
   static Hash32_t Hash(const char* aData, uint32_t aSize,
                        uint32_t aInitval = 0);
@@ -49,15 +49,17 @@ class CacheHash : public nsISupports {
 
   void Feed(uint32_t aVal, uint8_t aLen = 4);
 
-  uint32_t mA, mB, mC;
-  uint8_t mPos;
-  uint32_t mBuf;
-  uint8_t mBufPos;
-  uint32_t mLength;
-  bool mFinalized;
+  static const uint32_t kGoldenRation = 0x9e3779b9;
+
+  uint32_t mA{kGoldenRation}, mB{kGoldenRation}, mC;
+  uint8_t mPos{0};
+  uint32_t mBuf{0};
+  uint8_t mBufPos{0};
+  uint32_t mLength{0};
+  bool mFinalized{false};
 };
 
-typedef uint64_t OriginAttrsHash;
+using OriginAttrsHash = uint64_t;
 
 OriginAttrsHash GetOriginAttrsHash(const mozilla::OriginAttributes& aOA);
 

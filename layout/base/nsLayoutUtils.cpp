@@ -4518,24 +4518,34 @@ static nscoord GetDefiniteSizeTakenByBoxSizing(
 // -moz-fit-content for min-width and max-width, since the others
 // (-moz-fit-content for width, and -moz-available) have no effect on
 // intrinsic widths.
-enum eWidthProperty { PROP_WIDTH, PROP_MAX_WIDTH, PROP_MIN_WIDTH };
 static bool GetIntrinsicCoord(nsIFrame::ExtremumLength aStyle,
                               gfxContext* aRenderingContext, nsIFrame* aFrame,
                               Maybe<nscoord> aInlineSizeFromAspectRatio,
-                              eWidthProperty aProperty, nscoord& aResult) {
-  MOZ_ASSERT(aProperty == PROP_WIDTH || aProperty == PROP_MAX_WIDTH ||
-                 aProperty == PROP_MIN_WIDTH,
-             "unexpected property");
+                              nsIFrame::SizeProperty aProperty,
+                              nscoord& aResult) {
+  if (aStyle == nsIFrame::ExtremumLength::MozAvailable) {
+    return false;
+  }
 
-  if (aStyle == nsIFrame::ExtremumLength::MozAvailable) return false;
+  if (aStyle == nsIFrame::ExtremumLength::FitContentFunction) {
+    // fit-content() should be handled by the caller.
+    return false;
+  }
+
   if (aStyle == nsIFrame::ExtremumLength::MozFitContent) {
-    if (aProperty == PROP_WIDTH) return false;  // handle like 'width: auto'
-    if (aProperty == PROP_MAX_WIDTH)
-      // constrain large 'width' values down to max-content
-      aStyle = nsIFrame::ExtremumLength::MaxContent;
-    else
-      // constrain small 'width' or 'max-width' values up to min-content
-      aStyle = nsIFrame::ExtremumLength::MinContent;
+    switch (aProperty) {
+      case nsIFrame::SizeProperty::Size:
+        // handle like 'width: auto'
+        return false;
+      case nsIFrame::SizeProperty::MaxSize:
+        // constrain large 'width' values down to max-content
+        aStyle = nsIFrame::ExtremumLength::MaxContent;
+        break;
+      case nsIFrame::SizeProperty::MinSize:
+        // constrain small 'width' or 'max-width' values up to min-content
+        aStyle = nsIFrame::ExtremumLength::MinContent;
+        break;
+    }
   }
 
   NS_ASSERTION(aStyle == nsIFrame::ExtremumLength::MinContent ||
@@ -4560,7 +4570,8 @@ template <typename SizeOrMaxSize>
 static bool GetIntrinsicCoord(const SizeOrMaxSize& aStyle,
                               gfxContext* aRenderingContext, nsIFrame* aFrame,
                               Maybe<nscoord> aInlineSizeFromAspectRatio,
-                              eWidthProperty aProperty, nscoord& aResult) {
+                              nsIFrame::SizeProperty aProperty,
+                              nscoord& aResult) {
   auto length = nsIFrame::ToExtremumLength(aStyle);
   if (!length) {
     return false;
@@ -4574,6 +4585,33 @@ static bool GetIntrinsicCoord(const SizeOrMaxSize& aStyle,
 #ifdef DEBUG_INTRINSIC_WIDTH
 static int32_t gNoiseIndent = 0;
 #endif
+
+static nscoord GetFitContentSizeForMaxOrPreferredSize(
+    const IntrinsicISizeType aType, const nsIFrame::SizeProperty aProperty,
+    const nsIFrame* aFrame, const LengthPercentage& aStyleSize,
+    const nscoord aInitialValue, const nscoord aMinContentSize,
+    const nscoord aMaxContentSize) {
+  MOZ_ASSERT(aProperty != nsIFrame::SizeProperty::MinSize);
+
+  nscoord size = NS_UNCONSTRAINEDSIZE;
+  // 1. Treat fit-content()'s arg as a plain LengthPercentage
+  // However, we have to handle the cyclic percentage contribution first.
+  //
+  // https://drafts.csswg.org/css-sizing-3/#cyclic-percentage-contribution
+  if (aType == IntrinsicISizeType::MinISize &&
+      aFrame->IsPercentageResolvedAgainstZero(aStyleSize, aProperty)) {
+    // Case (c) in the spec.
+    // FIXME: This doesn't follow the spec for calc(). We should fix this in
+    // Bug 1463700.
+    size = 0;
+  } else if (!GetAbsoluteCoord(aStyleSize, size)) {
+    // As initial value. Case (a) and (b) in the spec.
+    size = aInitialValue;
+  }
+
+  // 2. Clamp size by min-content and max-content.
+  return std::max(aMinContentSize, std::min(aMaxContentSize, size));
+}
 
 /**
  * Add aOffsets which describes what to add on outside of the content box
@@ -4629,34 +4667,86 @@ static nscoord AddIntrinsicSizeOffset(
   coordOutsideSize += aOffsets.margin;
 
   min += coordOutsideSize;
-  result = NSCoordSaturatingAdd(result, coordOutsideSize);
 
-  nscoord size;
+  // Compute min-content/max-content for fit-content().
+  nscoord minContent = 0;
+  nscoord maxContent = NS_UNCONSTRAINEDSIZE;
+  if (aStyleSize.IsFitContentFunction() ||
+      aStyleMaxSize.IsFitContentFunction() ||
+      aStyleMinSize.IsFitContentFunction()) {
+    if (aInlineSizeFromAspectRatio) {
+      minContent = maxContent = *aInlineSizeFromAspectRatio;
+    } else {
+      minContent = aFrame->GetMinISize(aRenderingContext);
+      maxContent = aFrame->GetPrefISize(aRenderingContext);
+    }
+  }
+
+  // Compute size.
+  nscoord size = NS_UNCONSTRAINEDSIZE;
   if (aType == IntrinsicISizeType::MinISize &&
       aFrame->IsPercentageResolvedAgainstZero(aStyleSize, aStyleMaxSize)) {
     // XXX bug 1463700: this doesn't handle calc() according to spec
     result = 0;  // let |min| handle padding/border/margin
   } else if (GetAbsoluteCoord(aStyleSize, size) ||
              GetIntrinsicCoord(aStyleSize, aRenderingContext, aFrame,
-                               aInlineSizeFromAspectRatio, PROP_WIDTH, size)) {
+                               aInlineSizeFromAspectRatio,
+                               nsIFrame::SizeProperty::Size, size)) {
     result = size + coordOutsideSize;
+  } else if (aStyleSize.IsFitContentFunction()) {
+    // |result| here is the content size or border size, depends on
+    // StyleBoxSizing. We use it as the initial value when handling the cyclic
+    // percentage.
+    nscoord initial = result;
+    nscoord fitContentFuncSize = GetFitContentSizeForMaxOrPreferredSize(
+        aType, nsIFrame::SizeProperty::Size, aFrame,
+        aStyleSize.AsFitContentFunction(), initial, minContent, maxContent);
+    // Add border and padding.
+    result = NSCoordSaturatingAdd(fitContentFuncSize, coordOutsideSize);
+  } else {
+    result = NSCoordSaturatingAdd(result, coordOutsideSize);
   }
 
+  // Compute max-size.
   nscoord maxSize = aFixedMaxSize ? *aFixedMaxSize : 0;
   if (aFixedMaxSize ||
       GetIntrinsicCoord(aStyleMaxSize, aRenderingContext, aFrame,
-                        aInlineSizeFromAspectRatio, PROP_MAX_WIDTH, maxSize)) {
+                        aInlineSizeFromAspectRatio,
+                        nsIFrame::SizeProperty::MaxSize, maxSize)) {
     maxSize += coordOutsideSize;
+    if (result > maxSize) {
+      result = maxSize;
+    }
+  } else if (aStyleMaxSize.IsFitContentFunction()) {
+    nscoord fitContentFuncSize = GetFitContentSizeForMaxOrPreferredSize(
+        aType, nsIFrame::SizeProperty::MaxSize, aFrame,
+        aStyleMaxSize.AsFitContentFunction(), NS_UNCONSTRAINEDSIZE, minContent,
+        maxContent);
+    maxSize = NSCoordSaturatingAdd(fitContentFuncSize, coordOutsideSize);
     if (result > maxSize) {
       result = maxSize;
     }
   }
 
+  // Compute min-size.
   nscoord minSize = aFixedMinSize ? *aFixedMinSize : 0;
   if (aFixedMinSize ||
       GetIntrinsicCoord(aStyleMinSize, aRenderingContext, aFrame,
-                        aInlineSizeFromAspectRatio, PROP_MIN_WIDTH, minSize)) {
+                        aInlineSizeFromAspectRatio,
+                        nsIFrame::SizeProperty::MinSize, minSize)) {
     minSize += coordOutsideSize;
+    if (result < minSize) {
+      result = minSize;
+    }
+  } else if (aStyleMinSize.IsFitContentFunction()) {
+    if (!GetAbsoluteCoord(aStyleMinSize.AsFitContentFunction(), minSize)) {
+      // FIXME: Bug 1463700, we should resolve only the percentage part to 0
+      // such as min-width: fit-content(calc(50% + 50px)).
+      minSize = 0;
+    }
+    nscoord fitContentFuncSize =
+        std::max(minContent, std::min(maxContent, minSize));
+    minSize = NSCoordSaturatingAdd(fitContentFuncSize, coordOutsideSize);
     if (result < minSize) {
       result = minSize;
     }
@@ -4840,6 +4930,8 @@ nscoord nsLayoutUtils::IntrinsicForAxis(
     // specified widths, but ignore box-sizing.
     boxSizing = StyleBoxSizing::Content;
   } else if (!styleISize.ConvertsToLength() &&
+             !(styleISize.IsFitContentFunction() &&
+               styleISize.AsFitContentFunction().ConvertsToLength()) &&
              !(haveFixedMinISize && haveFixedMaxISize &&
                maxISize <= minISize)) {
 #ifdef DEBUG_INTRINSIC_WIDTH
@@ -7126,9 +7218,6 @@ SurfaceFromElementResult nsLayoutUtils::SurfaceFromElement(
       imgIContainer::FLAG_SYNC_DECODE | imgIContainer::FLAG_ASYNC_NOTIFY;
   if (aSurfaceFlags & SFE_NO_COLORSPACE_CONVERSION)
     frameFlags |= imgIContainer::FLAG_DECODE_NO_COLORSPACE_CONVERSION;
-  if (aSurfaceFlags & SFE_TO_SRGB_COLORSPACE) {
-    frameFlags |= imgIContainer::FLAG_DECODE_TO_SRGB_COLORSPACE;
-  }
   if (aSurfaceFlags & SFE_ALLOW_NON_PREMULT) {
     frameFlags |= imgIContainer::FLAG_DECODE_NO_PREMULTIPLY_ALPHA;
   }
@@ -7279,23 +7368,13 @@ SurfaceFromElementResult nsLayoutUtils::SurfaceFromElement(
 
   // If it doesn't have a principal, just bail
   nsCOMPtr<nsIPrincipal> principal = aElement->GetCurrentVideoPrincipal();
-  if (!principal) return result;
+  if (!principal) {
+    return result;
+  }
 
   result.mLayersImage = aElement->GetCurrentImage();
-  if (!result.mLayersImage) return result;
-
-  if (aTarget) {
-    // They gave us a DrawTarget to optimize for, so even though we have a
-    // layers::Image, we should unconditionally grab a SourceSurface and try to
-    // optimize it.
-    result.mSourceSurface = result.mLayersImage->GetAsSourceSurface();
-    if (!result.mSourceSurface) return result;
-
-    RefPtr<SourceSurface> opt =
-        aTarget->OptimizeSourceSurface(result.mSourceSurface);
-    if (opt) {
-      result.mSourceSurface = opt;
-    }
+  if (!result.mLayersImage) {
+    return result;
   }
 
   result.mCORSUsed = aElement->GetCORSMode() != CORS_NONE;
@@ -7307,6 +7386,19 @@ SurfaceFromElementResult nsLayoutUtils::SurfaceFromElement(
   result.mHadCrossOriginRedirects = aElement->HadCrossOriginRedirects();
   result.mIsWriteOnly = CanvasUtils::CheckWriteOnlySecurity(
       result.mCORSUsed, result.mPrincipal, result.mHadCrossOriginRedirects);
+
+  if (aTarget) {
+    // They gave us a DrawTarget to optimize for, so even though we have a
+    // layers::Image, we should unconditionally try to grab a SourceSurface and
+    // try to optimize it.
+    if ((result.mSourceSurface = result.mLayersImage->GetAsSourceSurface())) {
+      RefPtr<SourceSurface> opt =
+          aTarget->OptimizeSourceSurface(result.mSourceSurface);
+      if (opt) {
+        result.mSourceSurface = opt;
+      }
+    }
+  }
 
   return result;
 }
@@ -9176,12 +9268,15 @@ CSSPoint nsLayoutUtils::GetCumulativeApzCallbackTransform(nsIFrame* aFrame) {
     // Apply the callback transform for the current frame.
     applyCallbackTransformForFrame(frame);
 
-    // Keep track of whether we've encountered the RCD-RSF.
+    // Keep track of whether we've encountered the RCD-RSF's content element.
     nsPresContext* pc = frame->PresContext();
-    if (nsIScrollableFrame* scrollFrame = do_QueryFrame(frame)) {
-      if (scrollFrame->IsRootScrollFrameOfDocument() &&
-          pc->IsRootContentDocument()) {
-        seenRcdRsf = true;
+    if (pc->IsRootContentDocument()) {
+      if (PresShell* shell = pc->GetPresShell()) {
+        if (nsIFrame* rsf = shell->GetRootScrollFrame()) {
+          if (frame->GetContent() == rsf->GetContent()) {
+            seenRcdRsf = true;
+          }
+        }
       }
     }
 
@@ -9668,7 +9763,8 @@ ComputedStyle* nsLayoutUtils::StyleForScrollbar(nsIFrame* aScrollbarPart) {
   return style.get();
 }
 
-// NOTE: Returns Nothing() if |aFrame| is not in out-of-process.
+// NOTE: Returns Nothing() if |aFrame| is not in out-of-process or if we haven't
+// received enough information from APZ.
 static Maybe<ScreenRect> GetFrameVisibleRectOnScreen(const nsIFrame* aFrame) {
   // We actually want the in-process top prescontext here.
   nsPresContext* topContextInProcess =
@@ -9695,6 +9791,14 @@ static Maybe<ScreenRect> GetFrameVisibleRectOnScreen(const nsIFrame* aFrame) {
     return Some(ScreenRect());
   }
 
+  Maybe<ScreenRect> visibleRect =
+      browserChild->GetTopLevelViewportVisibleRectInBrowserCoords();
+  if (!visibleRect) {
+    // We are unsure if we haven't received the transformed rectangle of the
+    // iframe's visible area.
+    return Nothing();
+  }
+
   nsIFrame* rootFrame = topContextInProcess->PresShell()->GetRootFrame();
   nsRect transformedToIFrame = nsLayoutUtils::TransformFrameRectToAncestor(
       aFrame, aFrame->GetRectRelativeToSelf(), rootFrame);
@@ -9707,9 +9811,7 @@ static Maybe<ScreenRect> GetFrameVisibleRectOnScreen(const nsIFrame* aFrame) {
           rectInLayoutDevicePixel),
       PixelCastJustification::ContentProcessIsLayerInUiProcess);
 
-  return Some(
-      browserChild->GetTopLevelViewportVisibleRectInBrowserCoords().Intersect(
-          transformedToRoot));
+  return Some(visibleRect->Intersect(transformedToRoot));
 }
 
 // static

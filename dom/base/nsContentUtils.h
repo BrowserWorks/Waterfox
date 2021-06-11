@@ -135,12 +135,12 @@ class Message;
 
 namespace JS {
 class Value;
-
-struct PropertyDescriptor;
+class PropertyDescriptor;
 }  // namespace JS
 
 namespace mozilla {
 class Dispatcher;
+class EditorBase;
 class ErrorResult;
 class EventListenerManager;
 class HTMLEditor;
@@ -245,6 +245,10 @@ struct EventNameMapping {
   // mMessage is eUnidentifiedEvent. See EventNameList.h
   bool mMaybeSpecialSVGorSMILEvent;
 };
+
+namespace mozilla {
+enum class PreventDefaultResult : uint8_t { No, ByContent, ByChrome };
+}
 
 class nsContentUtils {
   friend class nsAutoScriptBlockerSuppressNodeRemoved;
@@ -1498,7 +1502,7 @@ class nsContentUtils {
    * @param aEditorInputType    The inputType value of InputEvent.
    *                            If aEventTarget won't dispatch "input" event
    *                            with InputEvent, set EditorInputType::eUnknown.
-   * @param aTextEditor         Optional.  If this is called by editor,
+   * @param aEditorBase         Optional.  If this is called by editor,
    *                            editor should set this.  Otherwise, leave
    *                            nullptr.
    * @param aOptions            Optional.  If aEditorInputType value requires
@@ -1515,7 +1519,7 @@ class nsContentUtils {
   MOZ_CAN_RUN_SCRIPT static nsresult DispatchInputEvent(
       Element* aEventTarget, mozilla::EventMessage aEventMessage,
       mozilla::EditorInputType aEditorInputType,
-      mozilla::TextEditor* aTextEditor, mozilla::InputEventOptions&& aOptions,
+      mozilla::EditorBase* aEditorBase, mozilla::InputEventOptions&& aOptions,
       nsEventStatus* aEventStatus = nullptr);
 
   /**
@@ -2711,8 +2715,8 @@ class nsContentUtils {
    * even if there is no active editing host.
    * Note that this does not return editor in descendant documents.
    */
-  static mozilla::TextEditor* GetActiveEditor(nsPresContext* aPresContext);
-  static mozilla::TextEditor* GetActiveEditor(nsPIDOMWindowOuter* aWindow);
+  static mozilla::EditorBase* GetActiveEditor(nsPresContext* aPresContext);
+  static mozilla::EditorBase* GetActiveEditor(nsPIDOMWindowOuter* aWindow);
 
   /**
    * Returns `TextEditor` which manages `aAnonymousContent` if there is.
@@ -2917,8 +2921,8 @@ class nsContentUtils {
       float aY, int32_t aButton, int32_t aButtons, int32_t aClickCount,
       int32_t aModifiers, bool aIgnoreRootScrollFrame, float aPressure,
       unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
-      bool* aPreventDefault, bool aIsDOMEventSynthesized,
-      bool aIsWidgetEventSynthesized);
+      mozilla::PreventDefaultResult* aPreventDefault,
+      bool aIsDOMEventSynthesized, bool aIsWidgetEventSynthesized);
 
   static void FirePageShowEventForFrameLoaderSwap(
       nsIDocShellTreeItem* aItem,
@@ -3492,6 +3496,12 @@ nsContentUtils::InternalContentPolicyTypeToExternal(nsContentPolicyType aType) {
       return static_cast<ExtContentPolicyType>(aType);
   }
 }
+
+namespace mozilla {
+std::ostream& operator<<(
+    std::ostream& aOut,
+    const mozilla::PreventDefaultResult aPreventDefaultResult);
+}  // namespace mozilla
 
 class MOZ_RAII nsAutoScriptBlocker {
  public:

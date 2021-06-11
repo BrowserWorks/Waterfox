@@ -464,14 +464,14 @@ JSString* js::ObjectToSource(JSContext* cx, HandleObject obj) {
     }
 
     if (desc->isAccessorDescriptor()) {
-      if (desc->hasGetterObject() && desc->getterObject()) {
-        val.setObject(*desc->getterObject());
+      if (desc->hasGetter() && desc->getter()) {
+        val.setObject(*desc->getter());
         if (!AddProperty(id, val, PropertyKind::Getter)) {
           return nullptr;
         }
       }
-      if (desc->hasSetterObject() && desc->setterObject()) {
-        val.setObject(*desc->setterObject());
+      if (desc->hasSetter() && desc->setter()) {
+        val.setObject(*desc->setter());
         if (!AddProperty(id, val, PropertyKind::Setter)) {
           return nullptr;
         }
@@ -865,7 +865,7 @@ static bool CanAddNewPropertyExcludingProtoFast(PlainObject* obj) {
 
   // Get a list of all enumerable |from| properties.
 
-  Rooted<ShapePropertyVector> props(cx, ShapePropertyVector(cx));
+  Rooted<PropertyInfoWithKeyVector> props(cx, PropertyInfoWithKeyVector(cx));
 
 #ifdef DEBUG
   RootedShape fromShape(cx, fromPlain->lastProperty());
@@ -886,11 +886,7 @@ static bool CanAddNewPropertyExcludingProtoFast(PlainObject* obj) {
     if (MOZ_UNLIKELY(!iter->isDataProperty())) {
       return true;
     }
-    if (iter->attributes() == JSPROP_ENUMERATE) {
-      MOZ_ASSERT(iter->writable());
-      MOZ_ASSERT(iter->configurable());
-      MOZ_ASSERT(iter->enumerable());
-    } else {
+    if (iter->flags() != PropertyFlags::defaultDataPropFlags) {
       hasPropsWithNonDefaultAttrs = true;
     }
     if (!iter->enumerable()) {
@@ -927,14 +923,14 @@ static bool CanAddNewPropertyExcludingProtoFast(PlainObject* obj) {
     // Assert |from| still has the same properties.
     MOZ_ASSERT(fromPlain->lastProperty() == fromShape);
 
-    ShapePropertyWithKey fromProp = props[i - 1];
+    PropertyInfoWithKey fromProp = props[i - 1];
     MOZ_ASSERT(fromProp.isDataProperty());
     MOZ_ASSERT(fromProp.enumerable());
 
     nextKey = fromProp.key();
     propValue = fromPlain->getSlot(fromProp.slot());
 
-    Maybe<ShapeProperty> toProp;
+    Maybe<PropertyInfo> toProp;
     if (toWasEmpty) {
       MOZ_ASSERT(!toPlain->containsPure(nextKey));
       MOZ_ASSERT(toProp.isNothing());
@@ -977,7 +973,7 @@ static bool TryAssignNative(JSContext* cx, HandleObject to, HandleObject from,
   // Get a list of |from| properties. As long as from->shape() == fromShape
   // we can use this to speed up both the enumerability check and the GetProp.
 
-  Rooted<ShapePropertyVector> props(cx, ShapePropertyVector(cx));
+  Rooted<PropertyInfoWithKeyVector> props(cx, PropertyInfoWithKeyVector(cx));
 
   RootedShape fromShape(cx, fromNative->shape());
   for (ShapePropertyIter<NoGC> iter(fromShape); !iter.done(); iter++) {
@@ -998,7 +994,7 @@ static bool TryAssignNative(JSContext* cx, HandleObject to, HandleObject from,
   RootedValue toReceiver(cx, ObjectValue(*to));
 
   for (size_t i = props.length(); i > 0; i--) {
-    ShapePropertyWithKey prop = props[i - 1];
+    PropertyInfoWithKey prop = props[i - 1];
     nextKey = prop.key();
 
     // If |from| still has the same shape, it must still be a NativeObject with
@@ -1338,13 +1334,13 @@ static bool FromPropertyDescriptorToArray(
     result->initDenseElement(PROP_DESC_ATTRS_AND_KIND_INDEX,
                              Int32Value(attrsAndKind));
 
-    if (JSObject* get = desc->getterObject()) {
+    if (JSObject* get = desc->getter()) {
       result->initDenseElement(PROP_DESC_GETTER_INDEX, ObjectValue(*get));
     } else {
       result->initDenseElement(PROP_DESC_GETTER_INDEX, UndefinedValue());
     }
 
-    if (JSObject* set = desc->setterObject()) {
+    if (JSObject* set = desc->setter()) {
       result->initDenseElement(PROP_DESC_SETTER_INDEX, ObjectValue(*set));
     } else {
       result->initDenseElement(PROP_DESC_SETTER_INDEX, UndefinedValue());
@@ -1598,7 +1594,7 @@ static bool TryEnumerableOwnPropertiesNative(JSContext* cx, HandleObject obj,
     // Get a list of all |obj| properties. As long as obj->shape()
     // is equal to |objShape|, we can use this to speed up both the
     // enumerability check and GetProperty.
-    Rooted<ShapePropertyVector> props(cx, ShapePropertyVector(cx));
+    Rooted<PropertyInfoWithKeyVector> props(cx, PropertyInfoWithKeyVector(cx));
 
     // Collect all non-symbol properties.
     RootedShape objShape(cx, nobj->shape());
@@ -1615,7 +1611,7 @@ static bool TryEnumerableOwnPropertiesNative(JSContext* cx, HandleObject obj,
 
     RootedId id(cx);
     for (size_t i = props.length(); i > 0; i--) {
-      ShapePropertyWithKey prop = props[i - 1];
+      PropertyInfoWithKey prop = props[i - 1];
       id = prop.key();
 
       // If |obj| still has the same shape, it must still be a NativeObject with
@@ -1728,7 +1724,7 @@ static bool EnumerableOwnProperties(JSContext* cx, const JS::CallArgs& args) {
       if (JSID_IS_INT(id) && nobj->containsDenseElement(JSID_TO_INT(id))) {
         value.set(nobj->getDenseElement(JSID_TO_INT(id)));
       } else {
-        Maybe<ShapeProperty> prop = nobj->lookup(cx, id);
+        Maybe<PropertyInfo> prop = nobj->lookup(cx, id);
         if (prop.isNothing() || !prop->enumerable()) {
           continue;
         }
@@ -2113,6 +2109,10 @@ static const JSFunctionSpec object_static_methods[] = {
     JS_FN("seal", obj_seal, 1, 0),
     JS_FN("isSealed", obj_isSealed, 1, 0),
     JS_SELF_HOSTED_FN("fromEntries", "ObjectFromEntries", 1, 0),
+/* Proposal */
+#ifdef NIGHTLY_BUILD
+    JS_SELF_HOSTED_FN("hasOwn", "ObjectHasOwn", 2, 0),
+#endif
     JS_FS_END};
 
 static JSObject* CreateObjectConstructor(JSContext* cx, JSProtoKey key) {

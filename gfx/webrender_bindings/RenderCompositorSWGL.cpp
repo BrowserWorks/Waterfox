@@ -131,8 +131,8 @@ bool RenderCompositorSWGL::AllocateMappedBuffer(
   LayoutDeviceIntRegion opaque;
   for (size_t i = 0; i < aNumOpaqueRects; i++) {
     const auto& rect = aOpaqueRects[i];
-    opaque.OrWith(LayoutDeviceIntRect(rect.origin.x, rect.origin.y,
-                                      rect.size.width, rect.size.height));
+    opaque.OrWith(LayoutDeviceIntRect(rect.min.x, rect.min.y, rect.width(),
+                                      rect.height()));
   }
 
   LayoutDeviceIntRegion clear = mWidget->GetTransparentRegion();
@@ -162,8 +162,8 @@ void RenderCompositorSWGL::StartCompositing(
     mDirtyRegion.SetEmpty();
     for (size_t i = 0; i < aNumDirtyRects; i++) {
       const auto& rect = aDirtyRects[i];
-      mDirtyRegion.OrWith(LayoutDeviceIntRect(
-          rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
+      mDirtyRegion.OrWith(LayoutDeviceIntRect(rect.min.x, rect.min.y,
+                                              rect.width(), rect.height()));
     }
     // Ensure the region lies within the widget bounds
     mDirtyRegion.AndWith(bounds);
@@ -259,6 +259,9 @@ LayoutDeviceIntSize RenderCompositorSWGL::GetBufferSize() {
 
 void RenderCompositorSWGL::GetCompositorCapabilities(
     CompositorCapabilities* aCaps) {
+  // Always support a single update rect for SwCompositor
+  aCaps->max_update_rects = 1;
+
   // When the window contents may be damaged, we need to force a full redraw.
   aCaps->redraw_on_invalidation = true;
 }

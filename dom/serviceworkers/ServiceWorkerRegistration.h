@@ -21,6 +21,7 @@ class nsIGlobalObject;
 namespace mozilla {
 namespace dom {
 
+class NavigationPreloadManager;
 class Promise;
 class PushManager;
 class WorkerPrivate;
@@ -51,6 +52,19 @@ class ServiceWorkerRegistration final : public DOMEventTargetHelper {
 
     virtual void Unregister(ServiceWorkerBoolCallback&& aSuccessCB,
                             ServiceWorkerFailureCallback&& aFailureCB) = 0;
+
+    // Interface for NavigationPreload
+    virtual void SetNavigationPreloadEnabled(
+        bool aEnabled, ServiceWorkerBoolCallback&& aSuccessCB,
+        ServiceWorkerFailureCallback&& aFailureCB) = 0;
+
+    virtual void SetNavigationPreloadHeader(
+        const nsCString& aHeader, ServiceWorkerBoolCallback&& aSuccessCB,
+        ServiceWorkerFailureCallback&& aFailureCB) = 0;
+
+    virtual void GetNavigationPreloadState(
+        NavigationPreloadGetStateCallback&& aSuccessCB,
+        ServiceWorkerFailureCallback&& aFailureCB) = 0;
   };
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_DOM_SERVICEWORKERREGISTRATION_IID)
@@ -80,6 +94,8 @@ class ServiceWorkerRegistration final : public DOMEventTargetHelper {
   already_AddRefed<ServiceWorker> GetWaiting() const;
 
   already_AddRefed<ServiceWorker> GetActive() const;
+
+  already_AddRefed<NavigationPreloadManager> NavigationPreload();
 
   void UpdateState(const ServiceWorkerRegistrationDescriptor& aDescriptor);
 
@@ -133,6 +149,7 @@ class ServiceWorkerRegistration final : public DOMEventTargetHelper {
   RefPtr<ServiceWorker> mInstallingWorker;
   RefPtr<ServiceWorker> mWaitingWorker;
   RefPtr<ServiceWorker> mActiveWorker;
+  RefPtr<NavigationPreloadManager> mNavigationPreloadManager;
   RefPtr<PushManager> mPushManager;
 
   struct VersionCallback {

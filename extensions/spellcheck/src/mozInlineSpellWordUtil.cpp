@@ -9,9 +9,9 @@
 #include <utility>
 
 #include "mozilla/BinarySearch.h"
+#include "mozilla/EditorBase.h"
 #include "mozilla/HTMLEditor.h"
 #include "mozilla/Logging.h"
-#include "mozilla/TextEditor.h"
 #include "mozilla/dom/Element.h"
 
 #include "nsDebug.h"
@@ -99,19 +99,37 @@ static bool IsDOMWordSeparator(char16_t ch) {
   return false;
 }
 
+bool NodeOffset::operator==(
+    const mozilla::RangeBoundary& aRangeBoundary) const {
+  if (aRangeBoundary.Container() != mNode) {
+    return false;
+  }
+
+  const Maybe<uint32_t> rangeBoundaryOffset =
+      aRangeBoundary.Offset(RangeBoundary::OffsetFilter::kValidOffsets);
+
+  MOZ_ASSERT(mOffset >= 0);
+  return rangeBoundaryOffset &&
+         (*rangeBoundaryOffset == static_cast<uint32_t>(mOffset));
+}
+
+bool NodeOffsetRange::operator==(const nsRange& aRange) const {
+  return mBegin == aRange.StartRef() && mEnd == aRange.EndRef();
+}
+
 // static
 Maybe<mozInlineSpellWordUtil> mozInlineSpellWordUtil::Create(
-    const TextEditor& aTextEditor) {
-  dom::Document* document = aTextEditor.GetDocument();
+    const EditorBase& aEditorBase) {
+  dom::Document* document = aEditorBase.GetDocument();
   if (NS_WARN_IF(!document)) {
     return Nothing();
   }
 
-  const bool isContentEditableOrDesignMode = !!aTextEditor.AsHTMLEditor();
+  const bool isContentEditableOrDesignMode = aEditorBase.IsHTMLEditor();
 
   // Find the root node for the editor. For contenteditable the mRootNode could
   // change to shadow root if the begin and end are inside the shadowDOM.
-  nsINode* rootNode = aTextEditor.GetRoot();
+  nsINode* rootNode = aEditorBase.GetRoot();
   if (NS_WARN_IF(!rootNode)) {
     return Nothing();
   }
@@ -345,28 +363,26 @@ static void NormalizeWord(const nsAString& aInput, int32_t aPos, int32_t aLen,
 //    time. It would be better if the inline spellchecker didn't require a
 //    range unless the word was misspelled. This may or may not be possible.
 
-bool mozInlineSpellWordUtil::GetNextWord(nsAString& aText,
-                                         NodeOffsetRange* aNodeOffsetRange,
-                                         bool* aSkipChecking) {
+bool mozInlineSpellWordUtil::GetNextWord(Word& aWord) {
   MOZ_LOG(sInlineSpellWordUtilLog, LogLevel::Debug,
           ("%s: mNextWordIndex=%d", __FUNCTION__, mNextWordIndex));
 
   if (mNextWordIndex < 0 || mNextWordIndex >= int32_t(mRealWords.Length())) {
     mNextWordIndex = -1;
-    *aSkipChecking = true;
+    aWord.mSkipChecking = true;
     return false;
   }
 
-  const RealWord& word = mRealWords[mNextWordIndex];
-  MakeNodeOffsetRangeForWord(word, aNodeOffsetRange);
+  const RealWord& realWord = mRealWords[mNextWordIndex];
+  MakeNodeOffsetRangeForWord(realWord, &aWord.mNodeOffsetRange);
   ++mNextWordIndex;
-  *aSkipChecking = !word.mCheckableWord;
-  ::NormalizeWord(mSoftText.GetValue(), word.mSoftTextOffset, word.mLength,
-                  aText);
+  aWord.mSkipChecking = !realWord.mCheckableWord;
+  ::NormalizeWord(mSoftText.GetValue(), realWord.mSoftTextOffset,
+                  realWord.mLength, aWord.mText);
 
   MOZ_LOG(sInlineSpellWordUtilLog, LogLevel::Debug,
           ("%s: returning: %s (skip=%d)", __FUNCTION__,
-           NS_ConvertUTF16toUTF8(aText).get(), *aSkipChecking));
+           NS_ConvertUTF16toUTF8(aWord.mText).get(), aWord.mSkipChecking));
 
   return true;
 }

@@ -531,12 +531,12 @@ impl<'a> SceneBuilder<'a> {
             .background_color
             .and_then(|color| if color.a > 0.0 { Some(color) } else { None });
 
-        let device_pixel_scale = view.accumulated_scale_factor_for_snapping();
         let spatial_tree = SpatialTree::new();
 
+        // During scene building, we assume a 1:1 picture -> raster pixel scale
         let snap_to_device = SpaceSnapper::new(
             ROOT_SPATIAL_NODE_INDEX,
-            device_pixel_scale,
+            RasterPixelScale::new(1.0),
         );
 
         let mut builder = SceneBuilder {
@@ -575,7 +575,7 @@ impl<'a> SceneBuilder<'a> {
         BuiltScene {
             has_root_pipeline: scene.has_root_pipeline(),
             pipeline_epochs: scene.pipeline_epochs.clone(),
-            output_rect: view.device_rect.size.into(),
+            output_rect: view.device_rect.size().into(),
             background_color,
             hit_testing_scene: Arc::new(builder.hit_testing_scene),
             spatial_tree: builder.spatial_tree,

@@ -127,7 +127,7 @@ const PREF_URLBAR_DEFAULTS = new Map([
   //     ),
   //   });
   // The value of this pref is a JSON string of the root bucket.  See below.
-  ["resultBuckets", ""],
+  ["resultGroups", ""],
 
   // If true, we show tail suggestions when available.
   ["richSuggestions.tail", true],
@@ -336,7 +336,35 @@ function makeResultBuckets({ showSearchSuggestionsFirst }) {
       },
       // general
       {
-        group: UrlbarUtils.RESULT_GROUP.GENERAL,
+        children: [
+          {
+            maxResultCount: 3,
+            group: UrlbarUtils.RESULT_GROUP.INPUT_HISTORY,
+          },
+          {
+            flexChildren: true,
+            children: [
+              {
+                flex: 1,
+                group: UrlbarUtils.RESULT_GROUP.REMOTE_TAB,
+              },
+              {
+                flex: 2,
+                group: UrlbarUtils.RESULT_GROUP.GENERAL,
+              },
+              {
+                // We show a relatively large number of about page results because
+                // they only show up for very specific queries: those starting with
+                // `about:`.
+                flex: 2,
+                group: UrlbarUtils.RESULT_GROUP.ABOUT_PAGES,
+              },
+            ],
+          },
+          {
+            group: UrlbarUtils.RESULT_GROUP.INPUT_HISTORY,
+          },
+        ],
       },
     ],
   };
@@ -433,6 +461,22 @@ class Preferences {
   }
 
   /**
+   * Sets the value of the resultGroups pref to the current default buckets.
+   * This should be called from BrowserGlue._migrateUI when the default buckets
+   * are modified.
+   */
+  migrateResultBuckets() {
+    this.set(
+      "resultGroups",
+      JSON.stringify(
+        makeResultBuckets({
+          showSearchSuggestionsFirst: this.get("showSearchSuggestionsFirst"),
+        })
+      )
+    );
+  }
+
+  /**
    * Adds a preference observer.  Observers are held weakly.
    *
    * @param {object} observer
@@ -484,7 +528,7 @@ class Preferences {
     switch (pref) {
       case "showSearchSuggestionsFirst":
         this.set(
-          "resultBuckets",
+          "resultGroups",
           JSON.stringify(
             makeResultBuckets({ showSearchSuggestionsFirst: this.get(pref) })
           )
@@ -509,7 +553,7 @@ class Preferences {
 
   get _nimbus() {
     if (!this.__nimbus) {
-      this.__nimbus = NimbusFeatures.urlbar.getValue();
+      this.__nimbus = NimbusFeatures.urlbar.getAllVariables();
     }
     return this.__nimbus;
   }
@@ -552,7 +596,7 @@ class Preferences {
         }
         return val;
       }
-      case "resultBuckets":
+      case "resultGroups":
         try {
           return JSON.parse(this._readPref(pref));
         } catch (ex) {}
@@ -611,7 +655,7 @@ class Preferences {
    *
    * @param {string} name
    *   The name of the desired property in the object returned from
-   *   NimbusFeatures.urlbar.getValue().
+   *   NimbusFeatures.urlbar.getAllVariables().
    * @returns {object}
    *   An object describing the property's value with the following shape (same
    *   as _getPrefDescriptor()):

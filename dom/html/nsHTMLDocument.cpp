@@ -115,7 +115,7 @@ nsresult NS_NewHTMLDocument(Document** aInstancePtrResult, bool aLoadedAsData) {
     return rv;
   }
 
-  doc->SetLoadedAsData(aLoadedAsData);
+  doc->SetLoadedAsData(aLoadedAsData, /* aConsiderForMemoryReporting */ true);
   doc.forget(aInstancePtrResult);
 
   return NS_OK;
@@ -689,7 +689,41 @@ bool nsHTMLDocument::WillIgnoreCharsetOverride() {
       return true;
     }
   }
-  return false;
+
+  switch (mCharacterSetSource) {
+    case kCharsetUninitialized:
+    case kCharsetFromFallback:
+    case kCharsetFromTopLevelDomain:
+    case kCharsetFromDocTypeDefault:
+    case kCharsetFromInitialAutoDetectionWouldHaveBeenUTF8:
+    case kCharsetFromInitialAutoDetectionWouldNotHaveBeenUTF8DependedOnTLD:
+    case kCharsetFromFinalJapaneseAutoDetection:
+    case kCharsetFromFinalAutoDetectionWouldHaveBeenUTF8:
+    case kCharsetFromFinalAutoDetectionWouldNotHaveBeenUTF8DependedOnTLD:
+    case kCharsetFromParentFrame:
+    case kCharsetFromXmlDeclaration:
+    case kCharsetFromMetaPrescan:
+    case kCharsetFromMetaTag:
+    case kCharsetFromChannel:
+    case kCharsetFromUserForced:
+    case kCharsetFromUserForcedJapaneseAutoDetection:
+      return false;
+  }
+
+  bool potentialEffect = false;
+  nsIPrincipal* parentPrincipal = NodePrincipal();
+
+  auto subDoc = [&potentialEffect, parentPrincipal](Document& aSubDoc) {
+    if (parentPrincipal->Equals(aSubDoc.NodePrincipal()) &&
+        !aSubDoc.WillIgnoreCharsetOverride()) {
+      potentialEffect = true;
+      return CallState::Stop;
+    }
+    return CallState::Continue;
+  };
+  EnumerateSubDocuments(subDoc);
+
+  return !potentialEffect;
 }
 
 void nsHTMLDocument::GetFormsAndFormControls(nsContentList** aFormList,

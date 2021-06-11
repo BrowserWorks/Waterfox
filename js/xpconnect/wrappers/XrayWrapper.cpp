@@ -324,7 +324,7 @@ bool JSXrayTraits::getOwnPropertyFromTargetIfSafe(
   }
 
   // Disallow accessor properties.
-  if (desc->hasGetterOrSetter()) {
+  if (desc->isAccessorDescriptor()) {
     JSAutoRealm ar(cx, wrapperGlobal);
     JS_MarkCrossZoneId(cx, id);
     return ReportWrapperDenial(cx, id, WrapperDenialForXray,
@@ -449,7 +449,6 @@ static bool TryResolvePropertyFromSpecs(
         RootedObject getterObj(cx, JS_GetFunctionObject(getterFun));
         RootedObject setterObj(cx);
         if (psMatch->u.accessors.setter.selfHosted.funname) {
-          MOZ_ASSERT(attrs & JSPROP_SETTER);
           JSFunction* setterFun = JS::GetSelfHostedFunction(
               cx, psMatch->u.accessors.setter.selfHosted.funname, id, 0);
           if (!setterFun) {
@@ -655,10 +654,10 @@ bool JSXrayTraits::resolveOwnProperty(
           return false;
         }
         if (desc.isSome()) {
-          bool valueMatchesType =
-              (isErrorIntProperty && desc->value().isInt32()) ||
-              (isErrorStringProperty && desc->value().isString());
-          if (desc->hasGetterOrSetter() || !valueMatchesType) {
+          // Make sure the property has the expected type.
+          if (!desc->isDataDescriptor() ||
+              (isErrorIntProperty && !desc->value().isInt32()) ||
+              (isErrorStringProperty && !desc->value().isString())) {
             desc.reset();
           }
         }
@@ -772,7 +771,7 @@ bool JSXrayTraits::defineProperty(
   bool isObjectOrArray = (key == JSProto_Object || key == JSProto_Array);
   if (isObjectOrArray && isInstance) {
     RootedObject target(cx, getTargetObject(wrapper));
-    if (desc.hasGetterOrSetter()) {
+    if (desc.isAccessorDescriptor()) {
       JS_ReportErrorASCII(cx,
                           "Not allowed to define accessor property on [Object] "
                           "or [Array] XrayWrapper");
@@ -787,7 +786,7 @@ bool JSXrayTraits::defineProperty(
       return false;
     }
     if (existingDesc.isSome()) {
-      if (existingDesc->hasGetterOrSetter()) {
+      if (existingDesc->isAccessorDescriptor()) {
         JS_ReportErrorASCII(cx,
                             "Not allowed to overwrite accessor property on "
                             "[Object] or [Array] XrayWrapper");
@@ -1610,7 +1609,7 @@ bool XrayTraits::resolveOwnProperty(
           {PropertyAttribute::Configurable, PropertyAttribute::Writable})));
     } else if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_INFINITY)) {
       desc.set(Some(PropertyDescriptor::Data(
-        DoubleValue(PositiveInfinity<double>()), {})));
+          DoubleValue(PositiveInfinity<double>()), {})));
     } else if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_NAN)) {
       desc.set(Some(PropertyDescriptor::Data(NaNValue(), {})));
     }
@@ -1880,12 +1879,12 @@ static bool RecreateLostWaivers(JSContext* cx, const PropertyDescriptor* orig,
   // Compute whether the original objects were waived, and implicitly, whether
   // they were objects at all.
   bool valueWasWaived =
-      orig->value().isObject() &&
+      orig->hasValue() && orig->value().isObject() &&
       WrapperFactory::HasWaiveXrayFlag(&orig->value().toObject());
-  bool getterWasWaived = orig->hasGetterObject() && orig->getterObject() &&
-                         WrapperFactory::HasWaiveXrayFlag(orig->getterObject());
-  bool setterWasWaived = orig->hasSetterObject() && orig->setterObject() &&
-                         WrapperFactory::HasWaiveXrayFlag(orig->setterObject());
+  bool getterWasWaived = orig->hasGetter() && orig->getter() &&
+                         WrapperFactory::HasWaiveXrayFlag(orig->getter());
+  bool setterWasWaived = orig->hasSetter() && orig->setter() &&
+                         WrapperFactory::HasWaiveXrayFlag(orig->setter());
 
   // Recreate waivers. Note that for value, we need an extra UncheckedUnwrap
   // to handle same-compartment security wrappers (see above). This should
@@ -1899,19 +1898,19 @@ static bool RecreateLostWaivers(JSContext* cx, const PropertyDescriptor* orig,
     NS_ENSURE_TRUE(rewaived, false);
     wrapped.value().set(ObjectValue(*rewaived));
   }
-  if (getterWasWaived && !IsCrossCompartmentWrapper(wrapped.getterObject())) {
+  if (getterWasWaived && !IsCrossCompartmentWrapper(wrapped.getter())) {
     // We can't end up with WindowProxy or Location as getters.
-    MOZ_ASSERT(CheckedUnwrapStatic(wrapped.getterObject()));
-    rewaived = WrapperFactory::WaiveXray(cx, wrapped.getterObject());
+    MOZ_ASSERT(CheckedUnwrapStatic(wrapped.getter()));
+    rewaived = WrapperFactory::WaiveXray(cx, wrapped.getter());
     NS_ENSURE_TRUE(rewaived, false);
-    wrapped.setGetterObject(rewaived);
+    wrapped.setGetter(rewaived);
   }
-  if (setterWasWaived && !IsCrossCompartmentWrapper(wrapped.setterObject())) {
+  if (setterWasWaived && !IsCrossCompartmentWrapper(wrapped.setter())) {
     // We can't end up with WindowProxy or Location as setters.
-    MOZ_ASSERT(CheckedUnwrapStatic(wrapped.setterObject()));
-    rewaived = WrapperFactory::WaiveXray(cx, wrapped.setterObject());
+    MOZ_ASSERT(CheckedUnwrapStatic(wrapped.setter()));
+    rewaived = WrapperFactory::WaiveXray(cx, wrapped.setter());
     NS_ENSURE_TRUE(rewaived, false);
-    wrapped.setSetterObject(rewaived);
+    wrapped.setSetter(rewaived);
   }
 
   return true;
@@ -2053,7 +2052,7 @@ bool XrayWrapper<Base, Traits>::get(JSContext* cx, HandleObject wrapper,
   }
 
   MOZ_ASSERT(desc->isAccessorDescriptor());
-  RootedObject getter(cx, desc->getterObject());
+  RootedObject getter(cx, desc->getter());
 
   if (!getter) {
     vp.setUndefined();

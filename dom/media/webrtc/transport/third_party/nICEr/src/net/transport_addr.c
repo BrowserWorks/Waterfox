@@ -140,15 +140,11 @@ int nr_sockaddr_to_transport_addr(struct sockaddr *saddr, int protocol, int keep
       addr->ip_version=NR_IPV4;
 
       memcpy(&addr->u.addr4,saddr,sizeof(struct sockaddr_in));
-      addr->addr=(struct sockaddr *)&addr->u.addr4;
-      addr->addr_len=sizeof(struct sockaddr_in);
     }
     else if(saddr->sa_family==AF_INET6){
       addr->ip_version=NR_IPV6;
 
       memcpy(&addr->u.addr6, saddr, sizeof(struct sockaddr_in6));
-      addr->addr=(struct sockaddr *)&addr->u.addr6;
-      addr->addr_len=sizeof(struct sockaddr_in6);
     }
     else
       ABORT(R_BAD_ARGS);
@@ -162,31 +158,13 @@ int nr_sockaddr_to_transport_addr(struct sockaddr *saddr, int protocol, int keep
   }
 
 
-int nr_transport_addr_copy(nr_transport_addr *to, nr_transport_addr *from)
+int nr_transport_addr_copy(nr_transport_addr *to, const nr_transport_addr *from)
   {
-    int _status;
-
     memcpy(to,from,sizeof(nr_transport_addr));
-
-    // with IPC serialization, we should not assume that the pointer
-    // in from->addr is correct
-    switch (to->ip_version) {
-      case NR_IPV4:
-        to->addr=(struct sockaddr *)&to->u.addr4;
-        break;
-      case NR_IPV6:
-        to->addr=(struct sockaddr *)&to->u.addr6;
-        break;
-      default:
-        ABORT(R_BAD_ARGS);
-    }
-
-    _status=0;
-  abort:
-    return(_status);
+    return 0;
   }
 
-int nr_transport_addr_copy_keep_ifname(nr_transport_addr *to, nr_transport_addr *from)
+int nr_transport_addr_copy_keep_ifname(nr_transport_addr *to, const nr_transport_addr *from)
   {
     int r,_status;
     char save_ifname[MAXIFNAME];
@@ -201,6 +179,32 @@ int nr_transport_addr_copy_keep_ifname(nr_transport_addr *to, nr_transport_addr 
 
     if (r=nr_transport_addr_fmt_addr_string(to))
       ABORT(r);
+
+    _status=0;
+ abort:
+    return _status;
+  }
+
+int nr_transport_addr_copy_addrport(nr_transport_addr *to, const nr_transport_addr *from)
+  {
+    int r,_status;
+
+    switch (from->ip_version) {
+      case NR_IPV4:
+        memcpy(&to->u.addr4, &from->u.addr4, sizeof(to->u.addr4));
+        break;
+      case NR_IPV6:
+        memcpy(&to->u.addr6, &from->u.addr6, sizeof(to->u.addr6));
+        break;
+      default:
+        ABORT(R_BAD_ARGS);
+    }
+
+    to->ip_version = from->ip_version;
+
+    if (r=nr_transport_addr_fmt_addr_string(to)) {
+      ABORT(r);
+    }
 
     _status=0;
  abort:
@@ -222,8 +226,6 @@ int nr_ip4_port_to_transport_addr(UINT4 ip4, UINT2 port, int protocol, nr_transp
     addr->u.addr4.sin_family=PF_INET;
     addr->u.addr4.sin_port=htons(port);
     addr->u.addr4.sin_addr.s_addr=htonl(ip4);
-    addr->addr=(struct sockaddr *)&addr->u.addr4;
-    addr->addr_len=sizeof(struct sockaddr_in);
 
     if(r=nr_transport_addr_fmt_addr_string(addr))
       ABORT(r);
@@ -265,8 +267,6 @@ int nr_ip6_port_to_transport_addr(struct in6_addr* addr6, UINT2 port, int protoc
     addr->u.addr6.sin6_family=PF_INET6;
     addr->u.addr6.sin6_port=htons(port);
     memcpy(addr->u.addr6.sin6_addr.s6_addr, addr6->s6_addr, sizeof(addr6->s6_addr));
-    addr->addr=(struct sockaddr *)&addr->u.addr6;
-    addr->addr_len=sizeof(struct sockaddr_in6);
 
     if(r=nr_transport_addr_fmt_addr_string(addr))
       ABORT(r);
@@ -308,7 +308,7 @@ int nr_transport_addr_get_addrstring(const nr_transport_addr *addr, char *str, i
     return(_status);
   }
 
-int nr_transport_addr_get_port(nr_transport_addr *addr, int *port)
+int nr_transport_addr_get_port(const nr_transport_addr *addr, int *port)
   {
     int _status;
 
@@ -350,7 +350,7 @@ int nr_transport_addr_set_port(nr_transport_addr *addr, int port)
 
 /* memcmp() may not work if, for instance, the string or interface
    haven't been made. Hmmm.. */
-int nr_transport_addr_cmp(nr_transport_addr *addr1,nr_transport_addr *addr2,int mode)
+int nr_transport_addr_cmp(const nr_transport_addr *addr1,const nr_transport_addr *addr2,int mode)
   {
     assert(mode);
 
@@ -366,7 +366,6 @@ int nr_transport_addr_cmp(nr_transport_addr *addr1,nr_transport_addr *addr2,int 
     if(mode < NR_TRANSPORT_ADDR_CMP_MODE_ADDR)
       return(0);
 
-    assert(addr1->addr_len == addr2->addr_len);
     switch(addr1->ip_version){
       case NR_IPV4:
         if(addr1->u.addr4.sin_addr.s_addr != addr2->u.addr4.sin_addr.s_addr)
@@ -391,7 +390,7 @@ int nr_transport_addr_cmp(nr_transport_addr *addr1,nr_transport_addr *addr2,int 
     return(0);
   }
 
-int nr_transport_addr_is_loopback(nr_transport_addr *addr)
+int nr_transport_addr_is_loopback(const nr_transport_addr *addr)
   {
     switch(addr->ip_version){
       case NR_IPV4:
@@ -417,7 +416,7 @@ int nr_transport_addr_is_loopback(nr_transport_addr *addr)
     return(0);
   }
 
-int nr_transport_addr_is_link_local(nr_transport_addr *addr)
+int nr_transport_addr_is_link_local(const nr_transport_addr *addr)
   {
     switch(addr->ip_version){
       case NR_IPV4:
@@ -439,7 +438,7 @@ int nr_transport_addr_is_link_local(nr_transport_addr *addr)
     return(0);
   }
 
-int nr_transport_addr_is_mac_based(nr_transport_addr *addr)
+int nr_transport_addr_is_mac_based(const nr_transport_addr *addr)
   {
     switch(addr->ip_version){
       case NR_IPV4:
@@ -463,7 +462,7 @@ int nr_transport_addr_is_mac_based(nr_transport_addr *addr)
     return(0);
   }
 
-int nr_transport_addr_is_teredo(nr_transport_addr *addr)
+int nr_transport_addr_is_teredo(const nr_transport_addr *addr)
   {
     switch(addr->ip_version){
       case NR_IPV4:
@@ -482,7 +481,7 @@ int nr_transport_addr_is_teredo(nr_transport_addr *addr)
     return(0);
   }
 
-int nr_transport_addr_check_compatibility(nr_transport_addr *addr1, nr_transport_addr *addr2)
+int nr_transport_addr_check_compatibility(const nr_transport_addr *addr1, const nr_transport_addr *addr2)
   {
     // first make sure we're comparing the same ip versions and protocols
     if ((addr1->ip_version != addr2->ip_version) ||
@@ -500,7 +499,7 @@ int nr_transport_addr_check_compatibility(nr_transport_addr *addr1, nr_transport
     return(0);
   }
 
-int nr_transport_addr_is_wildcard(nr_transport_addr *addr)
+int nr_transport_addr_is_wildcard(const nr_transport_addr *addr)
   {
     switch(addr->ip_version){
       case NR_IPV4:
@@ -533,7 +532,7 @@ nr_transport_addr_mask nr_private_ipv4_addrs[] = {
   {0x64400000, 0xFFC00000}
 };
 
-int nr_transport_addr_get_private_addr_range(nr_transport_addr *addr)
+int nr_transport_addr_get_private_addr_range(const nr_transport_addr *addr)
   {
     switch(addr->ip_version){
       case NR_IPV4:
@@ -554,7 +553,7 @@ int nr_transport_addr_get_private_addr_range(nr_transport_addr *addr)
     return(0);
   }
 
-int nr_transport_addr_is_reliable_transport(nr_transport_addr *addr)
+int nr_transport_addr_is_reliable_transport(const nr_transport_addr *addr)
   {
     return addr->protocol == IPPROTO_TCP;
   }

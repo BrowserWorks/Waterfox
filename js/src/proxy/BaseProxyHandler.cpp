@@ -118,7 +118,7 @@ bool BaseProxyHandler::get(JSContext* cx, HandleObject proxy,
 
   // Step 5.
   MOZ_ASSERT(desc->isAccessorDescriptor());
-  RootedObject getter(cx, desc->getterObject());
+  RootedObject getter(cx, desc->getter());
 
   // Step 6.
   if (!getter) {
@@ -228,8 +228,8 @@ bool js::SetPropertyIgnoringNamedGetter(
   // Step 6.
   MOZ_ASSERT(ownDesc.isAccessorDescriptor());
   RootedObject setter(cx);
-  if (ownDesc.hasSetterObject()) {
-    setter = ownDesc.setterObject();
+  if (ownDesc.hasSetter()) {
+    setter = ownDesc.setter();
   }
   if (!setter) {
     return result.fail(JSMSG_GETTER_ONLY);

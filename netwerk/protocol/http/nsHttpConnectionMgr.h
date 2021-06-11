@@ -37,7 +37,7 @@ struct HttpRetParams;
 
 // message handlers have this signature
 class nsHttpConnectionMgr;
-typedef void (nsHttpConnectionMgr::*nsConnEventHandler)(int32_t, ARefBase*);
+using nsConnEventHandler = void (nsHttpConnectionMgr::*)(int32_t, ARefBase*);
 
 class nsHttpConnectionMgr final : public HttpConnectionMgrShell,
                                   public nsIObserver {
@@ -57,7 +57,7 @@ class nsHttpConnectionMgr final : public HttpConnectionMgrShell,
   //-------------------------------------------------------------------------
 
   [[nodiscard]] nsresult CancelTransactions(nsHttpConnectionInfo*,
-                                            nsresult reason);
+                                            nsresult code);
 
   //-------------------------------------------------------------------------
   // NOTE: functions below may be called only on the socket thread.
@@ -176,6 +176,9 @@ class nsHttpConnectionMgr final : public HttpConnectionMgrShell,
                                        SpeculativeTransaction* aTrans,
                                        bool aFetchHTTPSRR);
 
+  already_AddRefed<ConnectionEntry> FindConnectionEntry(
+      const nsHttpConnectionInfo* ci);
+
  public:
   static nsAHttpConnection* MakeConnectionHandle(HttpConnectionBase* aWrapped);
   void RegisterOriginCoalescingKey(HttpConnectionBase*, const nsACString& host,
@@ -260,15 +263,12 @@ class nsHttpConnectionMgr final : public HttpConnectionMgrShell,
   [[nodiscard]] nsresult ProcessNewTransaction(nsHttpTransaction*);
   [[nodiscard]] nsresult EnsureSocketThreadTarget();
   void ReportProxyTelemetry(ConnectionEntry* ent);
-  [[nodiscard]] nsresult CreateTransport(
-      ConnectionEntry*, nsAHttpTransaction*, uint32_t, bool, bool, bool, bool,
-      PendingTransactionInfo* pendingTransInfo);
   void StartedConnect();
   void RecvdConnect();
 
   ConnectionEntry* GetOrCreateConnectionEntry(
-      nsHttpConnectionInfo*, bool allowWildCard, bool aNoHttp2, bool aNoHttp3,
-      bool* aAvailableForDispatchNow = nullptr);
+      nsHttpConnectionInfo*, bool prohibitWildCard, bool aNoHttp2,
+      bool aNoHttp3, bool* aAvailableForDispatchNow = nullptr);
 
   [[nodiscard]] nsresult MakeNewConnection(
       ConnectionEntry* ent, PendingTransactionInfo* pendingTransInfo);
@@ -431,7 +431,7 @@ class nsHttpConnectionMgr final : public HttpConnectionMgrShell,
   // @param excludeActive: skip active tabid transactions.
   void ResumeReadOf(
       nsClassHashtable<nsUint64HashKey, nsTArray<RefPtr<nsHttpTransaction>>>&,
-      bool excludeActive = false);
+      bool excludeForActiveTab = false);
   void ResumeReadOf(nsTArray<RefPtr<nsHttpTransaction>>*);
 
   // Cached status of the active tab active transactions existence,

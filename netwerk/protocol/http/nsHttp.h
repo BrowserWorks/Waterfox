@@ -21,8 +21,6 @@ class nsICacheEntry;
 
 namespace mozilla {
 
-class Mutex;
-
 namespace net {
 class nsHttpResponseHead;
 class nsHttpRequestHead;
@@ -151,35 +149,14 @@ extern const nsCString kHttp3Versions[];
 // http atoms...
 //-----------------------------------------------------------------------------
 
-struct nsHttpAtom {
-  nsHttpAtom() : _val(nullptr){};
-  explicit nsHttpAtom(const char* val) : _val(val) {}
-  nsHttpAtom(const nsHttpAtom& other) = default;
-
-  operator const char*() const { return _val; }
-  const char* get() const { return _val; }
-
-  void operator=(const char* v) { _val = v; }
-  void operator=(const nsHttpAtom& a) { _val = a._val; }
-
-  // private
-  const char* _val;
-};
+struct nsHttpAtom;
 
 namespace nsHttp {
 [[nodiscard]] nsresult CreateAtomTable();
 void DestroyAtomTable();
 
-// The mutex is valid any time the Atom Table is valid
-// This mutex is used in the unusual case that the network thread and
-// main thread might access the same data
-Mutex* GetLock();
-
 // will dynamically add atoms to the table if they don't already exist
-nsHttpAtom ResolveAtom(const char*);
-inline nsHttpAtom ResolveAtom(const nsACString& s) {
-  return ResolveAtom(PromiseFlatCString(s).get());
-}
+nsHttpAtom ResolveAtom(const nsACString& s);
 
 // returns true if the specified token [start,end) is valid per RFC 2616
 // section 2.2
@@ -202,8 +179,7 @@ bool IsReasonableHeaderValue(const nsACString& s);
 // |separators| and may appear at the beginning or end of the |input|
 // string.  null is returned if the |token| is not found.  |input| may be
 // null, in which case null is returned.
-const char* FindToken(const char* input, const char* token,
-                      const char* separators);
+const char* FindToken(const char* input, const char* token, const char* seps);
 
 // This function parses a string containing a decimal-valued, non-negative
 // 64-bit integer.  If the value would exceed INT64_MAX, then false is
@@ -254,7 +230,7 @@ void DetermineFramingAndImmutability(nsICacheEntry* entry,
 // took place.  Called only on the parent process and only updates
 // mLastActiveTabLoadOptimizationHit timestamp to now.
 void NotifyActiveTabLoadOptimization();
-TimeStamp const GetLastActiveTabLoadOptimizationHit();
+TimeStamp GetLastActiveTabLoadOptimizationHit();
 void SetLastActiveTabLoadOptimizationHit(TimeStamp const& when);
 bool IsBeforeLastActiveTabLoadOptimization(TimeStamp const& when);
 
@@ -301,6 +277,31 @@ bool SendDataInChunks(const nsCString& aData, uint64_t aOffset, uint32_t aCount,
 
 }  // namespace nsHttp
 
+struct nsHttpAtom {
+  nsHttpAtom() = default;
+  nsHttpAtom(const nsHttpAtom& other) = default;
+
+  operator const char*() const { return get(); }
+  const char* get() const {
+    if (_val.IsEmpty()) {
+      return nullptr;
+    }
+    return _val.BeginReading();
+  }
+
+  const nsCString& val() const { return _val; }
+
+  void operator=(const nsHttpAtom& a) { _val = a._val; }
+
+  // This constructor is mainly used to build the static atom list
+  // Avoid using it for anything else.
+  explicit nsHttpAtom(const nsACString& val) : _val(val) {}
+
+ private:
+  nsCString _val;
+  friend nsHttpAtom nsHttp::ResolveAtom(const nsACString& s);
+};
+
 //-----------------------------------------------------------------------------
 // utilities...
 //-----------------------------------------------------------------------------
@@ -312,7 +313,7 @@ static inline uint32_t PRTimeToSeconds(PRTime t_usec) {
 #define NowInSeconds() PRTimeToSeconds(PR_Now())
 
 // Round q-value to 2 decimal places; return 2 most significant digits as uint.
-#define QVAL_TO_UINT(q) ((unsigned int)((q + 0.005) * 100.0))
+#define QVAL_TO_UINT(q) ((unsigned int)(((q) + 0.005) * 100.0))
 
 #define HTTP_LWS " \t"
 #define HTTP_HEADER_VALUE_SEPS HTTP_LWS ","
@@ -367,7 +368,7 @@ class ParsedHeaderValueListList {
   // Note that ParsedHeaderValueListList is currently used to parse
   // Alt-Svc and Server-Timing header. |allowInvalidValue| is set to true
   // when parsing Alt-Svc for historical reasons.
-  explicit ParsedHeaderValueListList(const nsCString& txt,
+  explicit ParsedHeaderValueListList(const nsCString& fullHeader,
                                      bool allowInvalidValue = true);
   nsTArray<ParsedHeaderValueList> mValues;
 

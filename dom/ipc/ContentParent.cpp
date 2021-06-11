@@ -14,7 +14,7 @@
 #include "base/shared_memory.h"
 
 #include "ContentParent.h"
-#include "ProcessUtils.h"
+#include "mozilla/ipc/ProcessUtils.h"
 #include "BrowserParent.h"
 
 #include "chrome/common/process_watcher.h"
@@ -45,7 +45,7 @@
 #include "ProcessPriorityManager.h"
 #include "SandboxHal.h"
 #include "SourceSurfaceRawData.h"
-#include "URIUtils.h"
+#include "mozilla/ipc/URIUtils.h"
 #include "gfxPlatform.h"
 #include "gfxPlatformFontList.h"
 #include "mozilla/AutoRestore.h"
@@ -3108,26 +3108,6 @@ bool ContentParent::InitInternal(ProcessPriority aInitialPriority) {
     KillHard("SandboxInitFailed");
   }
 #endif
-
-  if (!ServiceWorkerParentInterceptEnabled()) {
-    RefPtr<ServiceWorkerRegistrar> swr = ServiceWorkerRegistrar::Get();
-    MOZ_ASSERT(swr);
-
-    nsTArray<ServiceWorkerRegistrationData> registrations;
-    swr->GetRegistrations(registrations);
-
-    // Send down to the content process the permissions for each of the
-    // registered service worker scopes.
-    for (auto& registration : registrations) {
-      auto principalOrErr = PrincipalInfoToPrincipal(registration.principal());
-      if (principalOrErr.isOk()) {
-        nsCOMPtr<nsIPrincipal> principal = principalOrErr.unwrap();
-        TransmitPermissionsForPrincipal(principal);
-      }
-    }
-
-    Unused << SendInitServiceWorkers(ServiceWorkerConfiguration(registrations));
-  }
 
   {
     nsTArray<BlobURLRegistrationData> registrations;
@@ -6336,7 +6316,8 @@ mozilla::ipc::IPCResult ContentParent::RecvBHRThreadHang(
 
 mozilla::ipc::IPCResult ContentParent::RecvAddCertException(
     const nsACString& aSerializedCert, uint32_t aFlags,
-    const nsACString& aHostName, int32_t aPort, bool aIsTemporary,
+    const nsACString& aHostName, int32_t aPort,
+    const OriginAttributes& aOriginAttributes, bool aIsTemporary,
     AddCertExceptionResolver&& aResolver) {
   nsCOMPtr<nsISupports> certObj;
   nsresult rv = NS_DeserializeObject(aSerializedCert, getter_AddRefs(certObj));
@@ -6350,8 +6331,8 @@ mozilla::ipc::IPCResult ContentParent::RecvAddCertException(
       if (!overrideService) {
         rv = NS_ERROR_FAILURE;
       } else {
-        rv = overrideService->RememberValidityOverride(aHostName, aPort, cert,
-                                                       aFlags, aIsTemporary);
+        rv = overrideService->RememberValidityOverride(
+            aHostName, aPort, aOriginAttributes, cert, aFlags, aIsTemporary);
       }
     }
   }
@@ -7143,7 +7124,11 @@ void ContentParent::RemoveBrowsingContextGroup(BrowsingContextGroup* aGroup) {
   MOZ_DIAGNOSTIC_ASSERT(aGroup);
   // Remove the group from our list. This is called from the
   // BrowisngContextGroup when unsubscribing, so we don't need to do it here.
-  mGroups.Remove(aGroup);
+  if (mGroups.EnsureRemoved(aGroup) && CanSend()) {
+    // If we're removing the entry for the first time, tell the content process
+    // to clean up the group.
+    Unused << SendDestroyBrowsingContextGroup(aGroup->Id());
+  }
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvCommitBrowsingContextTransaction(

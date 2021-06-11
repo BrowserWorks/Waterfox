@@ -14,21 +14,22 @@ namespace dom {
 class ClientManagerService;
 class ClientSourceParent;
 
-typedef MozPromise<ClientSourceParent*, CopyableErrorResult,
-                   /* IsExclusive = */ false>
+typedef MozPromise<bool, CopyableErrorResult, /* IsExclusive = */ false>
     SourcePromise;
 
 class ClientHandleParent final : public PClientHandleParent {
   RefPtr<ClientManagerService> mService;
+
+  // mSource and mSourcePromiseHolder are mutually exclusive.
   ClientSourceParent* mSource;
+
+  // Operations will wait on this promise while mSource is null.
+  MozPromiseHolder<SourcePromise> mSourcePromiseHolder;
+
+  MozPromiseRequestHolder<SourcePromise> mSourcePromiseRequestHolder;
 
   nsID mClientId;
   PrincipalInfo mPrincipalInfo;
-
-  // A promise for HandleOps that want to access our ClientSourceParent.
-  // Resolved once FoundSource is called and we have a ClientSourceParent
-  // available.
-  RefPtr<SourcePromise::Private> mSourcePromise;
 
   // PClientHandleParent interface
   mozilla::ipc::IPCResult RecvTeardown() override;
@@ -52,6 +53,7 @@ class ClientHandleParent final : public PClientHandleParent {
 
   void FoundSource(ClientSourceParent* aSource);
 
+  // Should be called only once EnsureSource() has resolved. May return nullptr.
   ClientSourceParent* GetSource() const;
 
   RefPtr<SourcePromise> EnsureSource();

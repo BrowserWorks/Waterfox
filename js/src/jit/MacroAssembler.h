@@ -11,6 +11,7 @@
 #include "mozilla/MacroForEach.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/Variant.h"
 
 #if defined(JS_CODEGEN_X86)
 #  include "jit/x86/MacroAssembler-x86.h"
@@ -40,6 +41,8 @@
 #include "vm/FunctionFlags.h"
 #include "vm/JSObject.h"
 #include "vm/StringType.h"
+#include "wasm/WasmFrame.h"
+#include "wasm/WasmTypes.h"
 
 // [SMDOC] MacroAssembler multi-platform overview
 //
@@ -266,6 +269,17 @@ constexpr uint32_t WasmCallerTLSOffsetBeforeCall =
     wasm::FrameWithTls::callerTLSOffset() + ShadowStackSpace;
 constexpr uint32_t WasmCalleeTLSOffsetBeforeCall =
     wasm::FrameWithTls::calleeTLSOffset() + ShadowStackSpace;
+
+// Allocation sites may be passed to GC thing allocation methods either via a
+// register (for baseline compilation) or an enum indicating one of the
+// catch-all allocation sites (for optimized compilation).
+struct AllocSiteInput
+    : public mozilla::Variant<Register, gc::CatchAllAllocSite> {
+  using Base = mozilla::Variant<Register, gc::CatchAllAllocSite>;
+  AllocSiteInput() : Base(gc::CatchAllAllocSite::Unknown) {}
+  explicit AllocSiteInput(gc::CatchAllAllocSite catchAll) : Base(catchAll) {}
+  explicit AllocSiteInput(Register reg) : Base(reg) {}
+};
 
 // [SMDOC] Code generation invariants (incomplete)
 //
@@ -1072,6 +1086,8 @@ class MacroAssembler : public MacroAssemblerSpecific {
                     const Register temp) PER_ARCH;
   inline void mul64(const Register64& src1, const Register64& src2,
                     const Register64& dest) DEFINED_ON(arm64);
+  inline void mul64(Imm64 src1, const Register64& src2, const Register64& dest)
+      DEFINED_ON(arm64);
 
   inline void mulBy3(Register src, Register dest) PER_ARCH;
 
@@ -1145,6 +1161,7 @@ class MacroAssembler : public MacroAssemblerSpecific {
 
   inline void negateDouble(FloatRegister reg) PER_SHARED_ARCH;
 
+  inline void abs32(Register src, Register dest) PER_SHARED_ARCH;
   inline void absFloat32(FloatRegister src, FloatRegister dest) PER_SHARED_ARCH;
   inline void absDouble(FloatRegister src, FloatRegister dest) PER_SHARED_ARCH;
 
@@ -1696,6 +1713,8 @@ class MacroAssembler : public MacroAssemblerSpecific {
                                   Label* label) PER_SHARED_ARCH;
   inline void branchTestMagic(Condition cond, Register tag,
                               Label* label) PER_SHARED_ARCH;
+  void branchTestType(Condition cond, Register tag, JSValueType type,
+                      Label* label);
 
   // Perform a type-test on a Value, addressed by Address or BaseIndex, or
   // loaded into ValueOperand.
@@ -2139,46 +2158,25 @@ class MacroAssembler : public MacroAssemblerSpecific {
                                  FloatRegister lhsDest)
       DEFINED_ON(x86_shared, arm64);
 
-  inline void replaceLaneInt8x16(unsigned lane, FloatRegister lhs, Register rhs,
-                                 FloatRegister dest) DEFINED_ON(arm64);
-
   inline void replaceLaneInt16x8(unsigned lane, Register rhs,
                                  FloatRegister lhsDest)
       DEFINED_ON(x86_shared, arm64);
-
-  inline void replaceLaneInt16x8(unsigned lane, FloatRegister lhs, Register rhs,
-                                 FloatRegister dest) DEFINED_ON(arm64);
 
   inline void replaceLaneInt32x4(unsigned lane, Register rhs,
                                  FloatRegister lhsDest)
       DEFINED_ON(x86_shared, arm64);
 
-  inline void replaceLaneInt32x4(unsigned lane, FloatRegister lhs, Register rhs,
-                                 FloatRegister dest) DEFINED_ON(arm64);
-
   inline void replaceLaneInt64x2(unsigned lane, Register64 rhs,
                                  FloatRegister lhsDest)
       DEFINED_ON(x86, x64, arm64);
-
-  inline void replaceLaneInt64x2(unsigned lane, FloatRegister lhs,
-                                 Register64 rhs, FloatRegister dest)
-      DEFINED_ON(arm64);
 
   inline void replaceLaneFloat32x4(unsigned lane, FloatRegister rhs,
                                    FloatRegister lhsDest)
       DEFINED_ON(x86_shared, arm64);
 
-  inline void replaceLaneFloat32x4(unsigned lane, FloatRegister lhs,
-                                   FloatRegister rhs, FloatRegister dest)
-      DEFINED_ON(arm64);
-
   inline void replaceLaneFloat64x2(unsigned lane, FloatRegister rhs,
                                    FloatRegister lhsDest)
       DEFINED_ON(x86_shared, arm64);
-
-  inline void replaceLaneFloat64x2(unsigned lane, FloatRegister lhs,
-                                   FloatRegister rhs, FloatRegister dest)
-      DEFINED_ON(arm64);
 
   // Shuffle - blend and permute with immediate indices, and its many
   // specializations.  Lane values other than those mentioned are illegal.
@@ -2870,6 +2868,15 @@ class MacroAssembler : public MacroAssemblerSpecific {
       DEFINED_ON(x86_shared, arm64);
 
   // Sign replication operation
+
+  inline void signReplicationInt8x16(FloatRegister src, FloatRegister dest)
+      DEFINED_ON(x86_shared);
+
+  inline void signReplicationInt16x8(FloatRegister src, FloatRegister dest)
+      DEFINED_ON(x86_shared);
+
+  inline void signReplicationInt32x4(FloatRegister src, FloatRegister dest)
+      DEFINED_ON(x86_shared);
 
   inline void signReplicationInt64x2(FloatRegister src, FloatRegister dest)
       DEFINED_ON(x86_shared);
@@ -4564,7 +4571,9 @@ class MacroAssembler : public MacroAssemblerSpecific {
     bind(&done);
   }
 
-  void boxUint32(Register source, ValueOperand dest, bool allowDouble,
+  enum class Uint32Mode { FailOnDouble, ForceDouble };
+
+  void boxUint32(Register source, ValueOperand dest, Uint32Mode uint32Mode,
                  Label* fail);
 
   template <typename T>
@@ -4573,7 +4582,7 @@ class MacroAssembler : public MacroAssemblerSpecific {
 
   template <typename T>
   void loadFromTypedArray(Scalar::Type arrayType, const T& src,
-                          const ValueOperand& dest, bool allowDouble,
+                          const ValueOperand& dest, Uint32Mode uint32Mode,
                           Register temp, Label* fail);
 
   template <typename T>
@@ -4677,19 +4686,24 @@ class MacroAssembler : public MacroAssemblerSpecific {
   void checkAllocatorState(Label* fail);
   bool shouldNurseryAllocate(gc::AllocKind allocKind,
                              gc::InitialHeap initialHeap);
-  void nurseryAllocateObject(Register result, Register temp,
-                             gc::AllocKind allocKind, size_t nDynamicSlots,
-                             Label* fail);
+  void nurseryAllocateObject(
+      Register result, Register temp, gc::AllocKind allocKind,
+      size_t nDynamicSlots, Label* fail,
+      const AllocSiteInput& allocSite = AllocSiteInput());
   void bumpPointerAllocate(Register result, Register temp, Label* fail,
                            CompileZone* zone, void* posAddr,
                            const void* curEddAddr, JS::TraceKind traceKind,
-                           uint32_t size);
+                           uint32_t size,
+                           const AllocSiteInput& allocSite = AllocSiteInput());
+  void updateAllocSite(Register temp, Register result, CompileZone* zone,
+                       Register site);
 
   void freeListAllocate(Register result, Register temp, gc::AllocKind allocKind,
                         Label* fail);
   void allocateObject(Register result, Register temp, gc::AllocKind allocKind,
                       uint32_t nDynamicSlots, gc::InitialHeap initialHeap,
-                      Label* fail);
+                      Label* fail,
+                      const AllocSiteInput& allocSite = AllocSiteInput());
   void nurseryAllocateString(Register result, Register temp,
                              gc::AllocKind allocKind, Label* fail);
   void allocateString(Register result, Register temp, gc::AllocKind allocKind,
@@ -4718,13 +4732,14 @@ class MacroAssembler : public MacroAssemblerSpecific {
   void createPlainGCObject(Register result, Register shape, Register temp,
                            Register temp2, uint32_t numFixedSlots,
                            uint32_t numDynamicSlots, gc::AllocKind allocKind,
-                           gc::InitialHeap initialHeap, Label* fail);
+                           gc::InitialHeap initialHeap, Label* fail,
+                           const AllocSiteInput& allocSite = AllocSiteInput());
 
-  void createArrayWithFixedElements(Register result, Register shape,
-                                    Register temp, uint32_t arrayLength,
-                                    uint32_t arrayCapacity,
-                                    gc::AllocKind allocKind,
-                                    gc::InitialHeap initialHeap, Label* fail);
+  void createArrayWithFixedElements(
+      Register result, Register shape, Register temp, uint32_t arrayLength,
+      uint32_t arrayCapacity, gc::AllocKind allocKind,
+      gc::InitialHeap initialHeap, Label* fail,
+      const AllocSiteInput& allocSite = AllocSiteInput());
 
   void initGCThing(Register obj, Register temp,
                    const TemplateObject& templateObj, bool initContents = true);

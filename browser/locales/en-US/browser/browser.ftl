@@ -165,49 +165,6 @@ page-action-manage-extension =
 page-action-remove-extension =
     .label = Remove Extension
 
-## Page Action menu
-
-# Variables
-# $tabCount (integer) - Number of tabs selected
-page-action-send-tabs-panel =
-  .label = { $tabCount ->
-      [1] Send Tab to Device
-     *[other] Send { $tabCount } Tabs to Device
-  }
-page-action-send-tabs-urlbar =
-  .tooltiptext = { $tabCount ->
-      [1] Send Tab to Device
-     *[other] Send { $tabCount } Tabs to Device
-  }
-page-action-copy-url-panel =
-  .label = Copy Link
-page-action-copy-url-urlbar =
-  .tooltiptext = Copy Link
-page-action-email-link-panel =
-  .label = Email Link…
-page-action-email-link-urlbar =
-  .tooltiptext = Email Link…
-page-action-share-url-panel =
-  .label = Share
-page-action-share-url-urlbar =
-  .tooltiptext = Share
-page-action-share-more-panel =
-  .label = More…
-page-action-send-tab-not-ready =
-  .label = Syncing Devices…
-# "Pin" is being used as a metaphor for expressing the fact that these tabs
-# are "pinned" to the left edge of the tabstrip. Really we just want the
-# string to express the idea that this is a lightweight and reversible
-# action that keeps your tab where you can reach it easily.
-page-action-pin-tab-panel =
-  .label = Pin Tab
-page-action-pin-tab-urlbar =
-  .tooltiptext = Pin Tab
-page-action-unpin-tab-panel =
-  .label = Unpin Tab
-page-action-unpin-tab-urlbar =
-  .tooltiptext = Unpin Tab
-
 ## Auto-hide Context Menu
 
 full-screen-autohide =
@@ -223,10 +180,6 @@ full-screen-exit =
 # the Urlbar and searchbar.
 search-one-offs-with-title = This time, search with:
 
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = Change Search Settings
 search-one-offs-change-settings-compact-button =
     .tooltiptext = Change search settings
 
@@ -435,6 +388,8 @@ popup-select-microphone-device =
     .accesskey = M
 popup-select-microphone-icon =
     .tooltiptext = Microphone
+popup-select-speaker-icon =
+    .tooltiptext = Speakers
 popup-all-windows-shared = All visible windows on your screen will be shared.
 
 popup-screen-sharing-block =
@@ -610,22 +565,22 @@ crashed-subframe-submit =
 ## Bookmarks panels, menus and toolbar
 
 bookmarks-manage-bookmarks =
-  .label = Manage Bookmarks
-bookmarks-recent-bookmarks-panel-subheader = Recent Bookmarks
+  .label = Manage bookmarks
+bookmarks-recent-bookmarks-panel-subheader = Recent bookmarks
 bookmarks-toolbar-chevron =
   .tooltiptext = Show more bookmarks
 bookmarks-sidebar-content =
   .aria-label = Bookmarks
 bookmarks-menu-button =
-  .label = Bookmarks Menu
+  .label = Bookmarks menu
 bookmarks-other-bookmarks-menu =
-  .label = Other Bookmarks
+  .label = Other bookmarks
 bookmarks-mobile-bookmarks-menu =
-  .label = Mobile Bookmarks
+  .label = Mobile bookmarks
 bookmarks-tools-sidebar-visibility =
   .label = { $isVisible ->
-     [true] Hide Bookmarks Sidebar
-    *[other] View Bookmarks Sidebar
+     [true] Hide bookmarks sidebar
+    *[other] View bookmarks sidebar
   }
 bookmarks-tools-toolbar-visibility-menuitem =
   .label = { $isVisible ->
@@ -634,20 +589,20 @@ bookmarks-tools-toolbar-visibility-menuitem =
   }
 bookmarks-tools-toolbar-visibility-panel =
   .label = { $isVisible ->
-     [true] Hide Bookmarks Toolbar
-    *[other] Show Bookmarks Toolbar
+     [true] Hide bookmarks toolbar
+    *[other] Show bookmarks toolbar
   }
 bookmarks-tools-menu-button-visibility =
   .label = { $isVisible ->
-     [true] Remove Bookmarks Menu from Toolbar
-    *[other] Add Bookmarks Menu to Toolbar
+     [true] Remove bookmarks menu from toolbar
+    *[other] Add bookmarks menu to toolbar
   }
 bookmarks-search =
-  .label = Search Bookmarks
+  .label = Search bookmarks
 bookmarks-tools =
   .label = Bookmarking Tools
 bookmarks-bookmark-edit-panel =
-  .label = Edit This Bookmark
+  .label = Edit this bookmark
 
 # The aria-label is a spoken label that should not include the word "toolbar" or
 # such, because screen readers already know that this container is a toolbar.
@@ -657,15 +612,15 @@ bookmarks-toolbar =
   .accesskey = B
   .aria-label = Bookmarks
 bookmarks-toolbar-menu =
-  .label = Bookmarks Toolbar
+  .label = Bookmarks toolbar
 bookmarks-toolbar-placeholder =
-  .title = Bookmarks Toolbar Items
+  .title = Bookmarks toolbar items
 bookmarks-toolbar-placeholder-button =
-  .label = Bookmarks Toolbar Items
+  .label = Bookmarks toolbar items
 
 # "Bookmark" is a verb, as in "Add current tab to bookmarks".
 bookmarks-current-tab =
-  .label = Bookmark Current Tab
+  .label = Bookmark current tab
 
 ## Library Panel items
 
@@ -679,6 +634,12 @@ library-recent-activity-title =
 save-to-pocket-button =
   .label = Save to { -pocket-brand-name }
   .tooltiptext = Save to { -pocket-brand-name }
+
+## Repair text encoding toolbar button
+
+repair-text-encoding-button =
+  .label = Repair text encoding
+  .tooltiptext = Guess correct text encoding from page content
 
 ## Customize Toolbar Buttons
 

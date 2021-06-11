@@ -3,12 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 .sidebar-item {
-  --sidebar-text-color: var(--category-text);
-  --sidebar-selected-color: var(--category-text-selected);
-  --sidebar-background-hover: var(--category-background-hover);
-}
-
-.sidebar-item {
   color: var(--sidebar-text-color);
   border-radius: 2px;
   padding-inline-end: var(--category-padding);
@@ -36,7 +30,7 @@
 }
 
 .sidebar-item:not(.sidebar-item--selectable) {
-  color: var(--grey-50);
+  color: var(--secondary-text-color);
 }
 
 .sidebar-item--selectable:hover {

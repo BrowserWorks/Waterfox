@@ -40,22 +40,19 @@ std::unique_ptr<TaskController> TaskController::sSingleton;
 thread_local size_t mThreadPoolIndex = -1;
 std::atomic<uint64_t> Task::sCurrentTaskSeqNo = 0;
 
+const int32_t kMinimumPoolThreadCount = 2;
 const int32_t kMaximumPoolThreadCount = 8;
 
-static int32_t GetPoolThreadCount() {
+/* static */
+int32_t TaskController::GetPoolThreadCount() {
   if (PR_GetEnv("MOZ_TASKCONTROLLER_THREADCOUNT")) {
     return strtol(PR_GetEnv("MOZ_TASKCONTROLLER_THREADCOUNT"), nullptr, 0);
   }
 
   int32_t numCores = std::max<int32_t>(1, PR_GetNumberOfProcessors());
 
-  if (numCores == 1) {
-    return 1;
-  }
-  if (numCores == 2) {
-    return 2;
-  }
-  return std::min<int32_t>(kMaximumPoolThreadCount, numCores - 1);
+  return std::clamp<int32_t>(numCores - 1, kMinimumPoolThreadCount,
+                             kMaximumPoolThreadCount);
 }
 
 #if defined(MOZ_COLLECTING_RUNNABLE_TELEMETRY)
@@ -620,6 +617,25 @@ bool TaskController::ExecuteNextTaskOnlyMainThreadInternal(
   do {
     taskRan = DoExecuteNextTaskOnlyMainThreadInternal(aProofOfLock);
     if (taskRan) {
+      if (mIdleTaskManager && mIdleTaskManager->mTaskCount &&
+          mIdleTaskManager->IsSuspended(aProofOfLock)) {
+        uint32_t activeTasks = mMainThreadTasks.size();
+        for (TaskManager* manager : mTaskManagers) {
+          if (manager->IsSuspended(aProofOfLock)) {
+            activeTasks -= manager->mTaskCount;
+          } else {
+            break;
+          }
+        }
+
+        if (!activeTasks) {
+          // We have only idle (and maybe other suspended) tasks left, so need
+          // to update the idle state. We need to temporarily release the lock
+          // while we do that.
+          MutexAutoUnlock unlock(mGraphMutex);
+          mIdleTaskManager->State().RequestIdleDeadlineIfNeeded(unlock);
+        }
+      }
       break;
     }
 

@@ -13,6 +13,10 @@ exclude: true
 
 ⚠️  breaking change and deprecation notices
 
+## v91
+- Extended [`Autocomplete`][78.7] API to support addresses.
+  ([bug 1699794]({{bugzilla}}1699794)).
+
 ## v90
 - Added [`WebNotification.silent`][90.1] and [`WebNotification.vibrate`][90.2]
   support. See also [Web/API/Notification/silent][90.3] and
@@ -25,6 +29,12 @@ exclude: true
   ([bug 1701269]({{bugzilla}}1701269))
 - Removed deprecated [`GeckoView.onTouchEventForResult`][88.4].
   ([bug 1706403]({{bugzilla}}1706403))
+- ⚠️ Updated [`onContentPermissionRequest`][90.7] to use [`ContentPermission`][90.8]; added
+  [`setPermission`][90.9] to [`StorageController`][90.10] for modifying existing permissions, and
+  allowed Gecko to handle persisting permissions.
+- ⚠️ Added a deprecation schedule to most existing content blocking exception functionality;
+  other than [`addException`][90.11], content blocking exceptions should be treated as content
+  permissions going forward.
 
 [90.1]: {{javadoc_uri}}/WebNotification.html#silent
 [90.2]: {{javadoc_uri}}/WebNotification.html#vibrate
@@ -32,6 +42,11 @@ exclude: true
 [90.4]: https://developer.mozilla.org/en-US/docs/Web/API/Notification/vibrate
 [90.5]: {{javadoc_uri}}/GeckoRuntime.html#getProfileDir--
 [90.6]: {{javadoc_uri}}/GeckoRuntimeSettings.html#setForceEnableAccessibility-boolean-
+[90.7]: {{javadoc_uri}}/GeckoSession.PermissionDelegate.html#onContentPermissionRequest-org.mozilla.geckoview.GeckoSession-org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission-
+[90.8]: {{javadoc_uri}}/GeckoSession.PermissionDelegate.ContentPermission.html
+[90.9]: {{javadoc_uri}}/StorageController.html#setPermission-org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission-int-
+[90.10]: {{javadoc_uri}}/StorageController.html
+[90.11]: {{javadoc_uri}}/ContentBlockingController.html#addException-org.mozilla.geckoview.GeckoSession-
 
 ## v89
 - Added [`ContentPermission`][89.1], which is used to report what permissions content
@@ -999,4 +1014,4 @@ to allow adding gecko profiler markers.
 [65.24]: {{javadoc_uri}}/CrashReporter.html#sendCrashReport-android.content.Context-android.os.Bundle-java.lang.String-
 [65.25]: {{javadoc_uri}}/GeckoResult.html
 
-[api-version]: 2d5e889898a86955980ea9f802f734da5848d730
+[api-version]: 47d9ee299e7ba7be24963762712b0a1ecee29a68

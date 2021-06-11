@@ -407,18 +407,22 @@ bool Compartment::rewrap(JSContext* cx, MutableHandleObject obj,
 
 bool Compartment::wrap(JSContext* cx,
                        MutableHandle<JS::PropertyDescriptor> desc) {
-  if (desc.hasGetterObject()) {
-    if (!wrap(cx, desc.getterObject())) {
+  if (desc.hasGetter()) {
+    if (!wrap(cx, desc.getter())) {
       return false;
     }
   }
-  if (desc.hasSetterObject()) {
-    if (!wrap(cx, desc.setterObject())) {
+  if (desc.hasSetter()) {
+    if (!wrap(cx, desc.setter())) {
       return false;
     }
   }
-
-  return wrap(cx, desc.value());
+  if (desc.hasValue()) {
+    if (!wrap(cx, desc.value())) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool Compartment::wrap(JSContext* cx,

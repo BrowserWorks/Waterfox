@@ -25,6 +25,11 @@ ChromeUtils.defineModuleGetter(
   "PlacesDBUtils",
   "resource://gre/modules/PlacesDBUtils.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "ProcessType",
+  "resource://gre/modules/ProcessType.jsm"
+);
 
 function showThirdPartyModules() {
   return (
@@ -328,11 +333,8 @@ var snapshotFormatters = {
 
   async processes(data) {
     async function buildEntry(name, value) {
-      let entryName =
-        (await document.l10n.formatValue(
-          `process-type-${name.toLowerCase()}`
-        )) || name;
-
+      const fluentName = ProcessType.fluentNameFromProcessTypeString(name);
+      let entryName = (await document.l10n.formatValue(fluentName)) || name;
       $("processes-tbody").appendChild(
         $.new("tr", [$.new("td", entryName), $.new("td", value)])
       );
@@ -1036,7 +1038,7 @@ var snapshotFormatters = {
   },
 
   remoteAgent(data) {
-    if (!AppConstants.ENABLE_REMOTE_AGENT) {
+    if (!AppConstants.ENABLE_WEBDRIVER) {
       return;
     }
     $("remote-debugging-accepting-connections").textContent = data.listening;

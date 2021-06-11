@@ -14,7 +14,7 @@ use time::precise_time_ns;
 //use crate::api::peek_poke::PeekPoke;
 use crate::api::channel::{Sender, single_msg_channel, unbounded_channel};
 use crate::api::{ColorF, BuiltDisplayList, IdNamespace, ExternalScrollId};
-use crate::api::{SharedFontInstanceMap, FontKey, FontInstanceKey, NativeFontHandle, ZoomFactor};
+use crate::api::{SharedFontInstanceMap, FontKey, FontInstanceKey, NativeFontHandle};
 use crate::api::{BlobImageData, BlobImageKey, ImageData, ImageDescriptor, ImageKey, Epoch, QualitySettings};
 use crate::api::{BlobImageParams, BlobImageRequest, BlobImageResult, AsyncBlobImageRasterizer, BlobImageHandler};
 use crate::api::{DocumentId, PipelineId, PropertyBindingId, PropertyBindingKey, ExternalEvent};
@@ -317,14 +317,11 @@ impl Transaction {
     pub fn set_document_view(
         &mut self,
         device_rect: DeviceIntRect,
-        device_pixel_ratio: f32,
     ) {
-        assert!(device_pixel_ratio > 0.0);
-        window_size_sanity_check(device_rect.size);
+        window_size_sanity_check(device_rect.size());
         self.scene_ops.push(
             SceneMsg::SetDocumentView {
                 device_rect,
-                device_pixel_ratio,
             },
         );
     }
@@ -355,23 +352,8 @@ impl Transaction {
     }
 
     ///
-    pub fn set_page_zoom(&mut self, page_zoom: ZoomFactor) {
-        self.scene_ops.push(SceneMsg::SetPageZoom(page_zoom));
-    }
-
-    ///
-    pub fn set_pinch_zoom(&mut self, pinch_zoom: ZoomFactor) {
-        self.frame_ops.push(FrameMsg::SetPinchZoom(pinch_zoom));
-    }
-
-    ///
     pub fn set_is_transform_async_zooming(&mut self, is_zooming: bool, animation_id: PropertyBindingId) {
         self.frame_ops.push(FrameMsg::SetIsTransformAsyncZooming(is_zooming, animation_id));
-    }
-
-    ///
-    pub fn set_pan(&mut self, pan: DeviceIntPoint) {
-        self.frame_ops.push(FrameMsg::SetPan(pan));
     }
 
     /// Generate a new frame. When it's done and a RenderNotifier has been set
@@ -773,8 +755,6 @@ pub enum SceneMsg {
     ///
     UpdateEpoch(PipelineId, Epoch),
     ///
-    SetPageZoom(ZoomFactor),
-    ///
     SetRootPipeline(PipelineId),
     ///
     RemovePipeline(PipelineId),
@@ -797,8 +777,6 @@ pub enum SceneMsg {
     SetDocumentView {
         ///
         device_rect: DeviceIntRect,
-        ///
-        device_pixel_ratio: f32,
     },
     /// Set the current quality / performance configuration for this document.
     SetQualitySettings {
@@ -816,8 +794,6 @@ pub enum FrameMsg {
     ///
     RequestHitTester(Sender<Arc<dyn ApiHitTester>>),
     ///
-    SetPan(DeviceIntPoint),
-    ///
     ScrollNodeWithId(LayoutPoint, ExternalScrollId, ScrollClamping),
     ///
     GetScrollNodeState(Sender<Vec<ScrollNodeState>>),
@@ -825,8 +801,6 @@ pub enum FrameMsg {
     UpdateDynamicProperties(DynamicProperties),
     ///
     AppendDynamicTransformProperties(Vec<PropertyValue<LayoutTransform>>),
-    ///
-    SetPinchZoom(ZoomFactor),
     ///
     SetIsTransformAsyncZooming(bool, PropertyBindingId),
 }
@@ -836,7 +810,6 @@ impl fmt::Debug for SceneMsg {
         f.write_str(match *self {
             SceneMsg::UpdateEpoch(..) => "SceneMsg::UpdateEpoch",
             SceneMsg::SetDisplayList { .. } => "SceneMsg::SetDisplayList",
-            SceneMsg::SetPageZoom(..) => "SceneMsg::SetPageZoom",
             SceneMsg::RemovePipeline(..) => "SceneMsg::RemovePipeline",
             SceneMsg::SetDocumentView { .. } => "SceneMsg::SetDocumentView",
             SceneMsg::SetRootPipeline(..) => "SceneMsg::SetRootPipeline",
@@ -851,12 +824,10 @@ impl fmt::Debug for FrameMsg {
             FrameMsg::UpdateEpoch(..) => "FrameMsg::UpdateEpoch",
             FrameMsg::HitTest(..) => "FrameMsg::HitTest",
             FrameMsg::RequestHitTester(..) => "FrameMsg::RequestHitTester",
-            FrameMsg::SetPan(..) => "FrameMsg::SetPan",
             FrameMsg::ScrollNodeWithId(..) => "FrameMsg::ScrollNodeWithId",
             FrameMsg::GetScrollNodeState(..) => "FrameMsg::GetScrollNodeState",
             FrameMsg::UpdateDynamicProperties(..) => "FrameMsg::UpdateDynamicProperties",
             FrameMsg::AppendDynamicTransformProperties(..) => "FrameMsg::AppendDynamicTransformProperties",
-            FrameMsg::SetPinchZoom(..) => "FrameMsg::SetPinchZoom",
             FrameMsg::SetIsTransformAsyncZooming(..) => "FrameMsg::SetIsTransformAsyncZooming",
         })
     }

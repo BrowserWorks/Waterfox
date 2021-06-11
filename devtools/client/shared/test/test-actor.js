@@ -13,10 +13,6 @@ const {
   getAdjustedQuads,
   getWindowDimensions,
 } = require("devtools/shared/layout/utils");
-const {
-  isAgentStylesheet,
-  getCSSStyleRules,
-} = require("devtools/shared/inspector/css-logic");
 const InspectorUtils = require("InspectorUtils");
 
 // Set up a dummy environment so that EventUtils works. We need to be careful to
@@ -65,15 +61,11 @@ function getHighlighterCanvasFrameHelper(conn, actorID) {
 var testSpec = protocol.generateActorSpec({
   typeName: "test",
 
+  events: {
+    "highlighter-updated": {},
+  },
+
   methods: {
-    getNumberOfElementMatches: {
-      request: {
-        selector: Arg(0, "string"),
-      },
-      response: {
-        value: RetVal("number"),
-      },
-    },
     getHighlighterAttribute: {
       request: {
         nodeID: Arg(0, "string"),
@@ -109,10 +101,9 @@ var testSpec = protocol.generateActorSpec({
       },
       response: {},
     },
-    waitForHighlighterEvent: {
+    registerOneTimeHighlighterUpdate: {
       request: {
-        event: Arg(0, "string"),
-        actorID: Arg(1, "string"),
+        actorID: Arg(0, "string"),
       },
       response: {},
     },
@@ -120,13 +111,6 @@ var testSpec = protocol.generateActorSpec({
       request: {
         eventName: Arg(0, "string"),
         selector: Arg(1, "nullable:string"),
-      },
-      response: {},
-    },
-    changeZoomLevel: {
-      request: {
-        level: Arg(0, "string"),
-        actorID: Arg(1, "string"),
       },
       response: {},
     },
@@ -138,42 +122,10 @@ var testSpec = protocol.generateActorSpec({
         value: RetVal("json"),
       },
     },
-    synthesizeMouse: {
-      request: {
-        object: Arg(0, "json"),
-      },
-      response: {},
-    },
-    synthesizeKey: {
-      request: {
-        args: Arg(0, "json"),
-      },
-      response: {},
-    },
-    scrollIntoView: {
-      request: {
-        args: Arg(0, "string"),
-      },
-      response: {},
-    },
     hasPseudoClassLock: {
       request: {
         selector: Arg(0, "string"),
         pseudo: Arg(1, "string"),
-      },
-      response: {
-        value: RetVal("boolean"),
-      },
-    },
-    loadAndWaitForCustomEvent: {
-      request: {
-        url: Arg(0, "string"),
-      },
-      response: {},
-    },
-    hasNode: {
-      request: {
-        selector: Arg(0, "string"),
       },
       response: {
         value: RetVal("boolean"),
@@ -187,33 +139,6 @@ var testSpec = protocol.generateActorSpec({
         value: RetVal("json"),
       },
     },
-    setProperty: {
-      request: {
-        selector: Arg(0, "string"),
-        property: Arg(1, "string"),
-        value: Arg(2, "string"),
-      },
-      response: {},
-    },
-    getProperty: {
-      request: {
-        selector: Arg(0, "string"),
-        property: Arg(1, "string"),
-      },
-      response: {
-        value: RetVal("string"),
-      },
-    },
-    reload: {
-      request: {},
-      response: {},
-    },
-    reloadFrame: {
-      request: {
-        selector: Arg(0, "string"),
-      },
-      response: {},
-    },
     scrollWindow: {
       request: {
         x: Arg(0, "number"),
@@ -224,7 +149,6 @@ var testSpec = protocol.generateActorSpec({
         value: RetVal("json"),
       },
     },
-    reflow: {},
     getNodeRect: {
       request: {
         selector: Arg(0, "string"),
@@ -237,22 +161,6 @@ var testSpec = protocol.generateActorSpec({
       request: {
         parentSelector: Arg(0, "string"),
         childNodeIndex: Arg(1, "number"),
-      },
-      response: {
-        value: RetVal("json"),
-      },
-    },
-    getNodeInfo: {
-      request: {
-        selector: Arg(0, "string"),
-      },
-      response: {
-        value: RetVal("json"),
-      },
-    },
-    getStyleSheetsInfoForNode: {
-      request: {
-        selector: Arg(0, "string"),
       },
       response: {
         value: RetVal("json"),
@@ -362,13 +270,6 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
     }
     return node;
   },
-  /**
-   * Helper to get the number of elements matching a selector
-   * @param {string} CSS selector.
-   */
-  getNumberOfElementMatches: function(selector, root = this.content.document) {
-    return root.querySelectorAll(selector).length;
-  },
 
   /**
    * Get a value for a given attribute name, on one of the elements of the box
@@ -438,15 +339,18 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
   },
 
   /**
-   * Subscribe to a given highlighter event and respond when the event is received.
-   * @param {String} event The name of the highlighter event to listen to
+   * Register a one-time "updated" event listener.
+   * The method does not wait for the "updated" event itself so the response can be sent
+   * back and the client would know the event listener is properly set.
+   * A separate event, "highlighter-updated", will be emitted when the highlighter updates.
+   *
    * @param {String} actorID The highlighter actor ID
    */
-  waitForHighlighterEvent: function(event, actorID) {
-    const highlighter = this.conn.getActor(actorID);
-    const { _highlighter: h } = highlighter;
+  registerOneTimeHighlighterUpdate(actorID) {
+    const { _highlighter } = this.conn.getActor(actorID);
+    _highlighter.once("updated").then(() => this.emit("highlighter-updated"));
 
-    return h.once(event);
+    // Return directly so the client knows the event listener is set
   },
 
   /**
@@ -469,29 +373,6 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
   },
 
   /**
-   * Change the zoom level of the page.
-   * Optionally subscribe to the box-model highlighter's update event and waiting
-   * for it to refresh before responding.
-   * @param {Number} level The new zoom level
-   * @param {String} actorID Optional. The highlighter actor ID
-   */
-  changeZoomLevel: function(level, actorID) {
-    dumpn("Zooming page to " + level);
-    return new Promise(resolve => {
-      if (actorID) {
-        const actor = this.conn.getActor(actorID);
-        const { _highlighter: h } = actor;
-        h.once("updated", resolve);
-      } else {
-        resolve();
-      }
-
-      const bc = this.content.docShell.browsingContext;
-      bc.fullZoom = level;
-    });
-  },
-
-  /**
    * Get all box-model regions' adjusted boxquads for the given element
    * @param {String} selector The node selector to target a given element
    * @return {Object} An object with each property being a box-model region, each
@@ -508,63 +389,6 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
   },
 
   /**
-   * Get the window which mouse events on node should be delivered to.
-   */
-  windowForMouseEvent: function(node) {
-    return node.ownerDocument.defaultView;
-  },
-
-  /**
-   * Synthesize a mouse event on an element, after ensuring that it is visible
-   * in the viewport. This handler doesn't send a message back. Consumers
-   * should listen to specific events on the inspector/highlighter to know when
-   * the event got synthesized.
-   * @param {String} selector The node selector to get the node target for the event
-   * @param {Number} x
-   * @param {Number} y
-   * @param {Boolean} center If set to true, x/y will be ignored and
-   *                  synthesizeMouseAtCenter will be used instead
-   * @param {Object} options Other event options
-   */
-  synthesizeMouse: function({ selector, x, y, center, options }) {
-    const node = this._querySelector(selector);
-    node.scrollIntoView();
-    if (center) {
-      EventUtils.synthesizeMouseAtCenter(
-        node,
-        options,
-        this.windowForMouseEvent(node)
-      );
-    } else {
-      EventUtils.synthesizeMouse(
-        node,
-        x,
-        y,
-        options,
-        this.windowForMouseEvent(node)
-      );
-    }
-  },
-
-  /**
-   * Synthesize a key event for an element. This handler doesn't send a message
-   * back. Consumers should listen to specific events on the inspector/highlighter
-   * to know when the event got synthesized.
-   */
-  synthesizeKey: function({ key, options, content }) {
-    EventUtils.synthesizeKey(key, options, this.content);
-  },
-
-  /**
-   * Scroll an element into view.
-   * @param {String} selector The selector for the node to scroll into view.
-   */
-  scrollIntoView: function(selector) {
-    const node = this._querySelector(selector);
-    node.scrollIntoView();
-  },
-
-  /**
    * Check that an element currently has a pseudo-class lock.
    * @param {String} selector The node selector to get the pseudo-class from
    * @param {String} pseudo The pseudoclass to check for
@@ -573,34 +397,6 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
   hasPseudoClassLock: function(selector, pseudo) {
     const node = this._querySelector(selector);
     return InspectorUtils.hasPseudoClassLock(node, pseudo);
-  },
-
-  loadAndWaitForCustomEvent: function(url) {
-    return new Promise(resolve => {
-      // Wait for DOMWindowCreated first, as listening on the current outerwindow
-      // doesn't allow receiving test-page-processing-done.
-      this.targetActor.chromeEventHandler.addEventListener(
-        "DOMWindowCreated",
-        () => {
-          this.content.addEventListener("test-page-processing-done", resolve, {
-            once: true,
-          });
-        },
-        { once: true }
-      );
-
-      this.content.location = url;
-    });
-  },
-
-  hasNode: function(selector) {
-    try {
-      // _querySelector throws if the node doesn't exists
-      this._querySelector(selector);
-      return true;
-    } catch (e) {
-      return false;
-    }
   },
 
   /**
@@ -622,53 +418,6 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
       bottom: rect.bottom,
       left: rect.left,
     };
-  },
-
-  /**
-   * Set a JS property on a DOM Node.
-   * @param {String} selector The node selector
-   * @param {String} property The property name
-   * @param {String} value The attribute value
-   */
-  setProperty: function(selector, property, value) {
-    const node = this._querySelector(selector);
-    node[property] = value;
-  },
-
-  /**
-   * Get a JS property on a DOM Node.
-   * @param {String} selector The node selector
-   * @param {String} property The property name
-   * @return {String} value The attribute value
-   */
-  getProperty: function(selector, property) {
-    const node = this._querySelector(selector);
-    return node[property];
-  },
-
-  /**
-   * Reload the content window.
-   */
-  reload: function() {
-    this.content.location.reload();
-  },
-
-  /**
-   * Reload an iframe and wait for its load event.
-   * @param {String} selector The node selector
-   */
-  reloadFrame: function(selector) {
-    return new Promise(resolve => {
-      const node = this._querySelector(selector);
-
-      const onLoad = function() {
-        node.removeEventListener("load", onLoad);
-        resolve();
-      };
-      node.addEventListener("load", onLoad);
-
-      node.contentWindow.location.reload();
-    });
   },
 
   /**
@@ -701,16 +450,6 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
     });
   },
 
-  /**
-   * Forces the reflow and waits for the next repaint.
-   */
-  reflow: function() {
-    return new Promise(resolve => {
-      this.content.document.documentElement.offsetWidth;
-      this.content.requestAnimationFrame(resolve);
-    });
-  },
-
   async getNodeRect(selector) {
     const node = this._querySelector(selector);
     return getRect(this.content, node, this.content);
@@ -720,69 +459,6 @@ var TestActor = protocol.ActorClassWithSpec(testSpec, {
     const parentNode = this._querySelector(parentSelector);
     const node = parentNode.childNodes[childNodeIndex];
     return getAdjustedQuads(this.content, node)[0].bounds;
-  },
-
-  /**
-   * Get information about a DOM element, identified by a selector.
-   * @param {String} selector The CSS selector to get the node (can be an array
-   * of selectors to get elements in an iframe).
-   * @return {Object} data Null if selector didn't match any node, otherwise:
-   * - {String} tagName.
-   * - {String} namespaceURI.
-   * - {Number} numChildren The number of children in the element.
-   * - {Array} attributes An array of {name, value, namespaceURI} objects.
-   * - {String} outerHTML.
-   * - {String} innerHTML.
-   * - {String} textContent.
-   */
-  getNodeInfo: function(selector) {
-    const node = this._querySelector(selector);
-    let info = null;
-
-    if (node) {
-      info = {
-        tagName: node.tagName,
-        namespaceURI: node.namespaceURI,
-        numChildren: node.children.length,
-        numNodes: node.childNodes.length,
-        attributes: [...node.attributes].map(
-          ({ name, value, namespaceURI }) => {
-            return { name, value, namespaceURI };
-          }
-        ),
-        outerHTML: node.outerHTML,
-        innerHTML: node.innerHTML,
-        textContent: node.textContent,
-      };
-    }
-
-    return info;
-  },
-
-  /**
-   * Get information about the stylesheets which have CSS rules that apply to a given DOM
-   * element, identified by a selector.
-   * @param {String} selector The CSS selector to get the node (can be an array
-   * of selectors to get elements in an iframe).
-   * @return {Array} A list of stylesheet objects, each having the following properties:
-   * - {String} href.
-   * - {Boolean} isContentSheet.
-   */
-  getStyleSheetsInfoForNode: function(selector) {
-    const node = this._querySelector(selector);
-    const domRules = getCSSStyleRules(node);
-
-    const sheets = [];
-
-    for (let i = 0, n = domRules.length; i < n; i++) {
-      const sheet = domRules[i].parentStyleSheet;
-      sheets.push({
-        href: sheet.href,
-        isContentSheet: !isAgentStylesheet(sheet),
-      });
-    }
-
-    return sheets;
   },
 
   /**
@@ -907,17 +583,6 @@ class TestFront extends protocol.FrontClassWithSpec(testSpec) {
     return typeof this._highlighter === "function"
       ? this._highlighter()
       : this._highlighter;
-  }
-
-  /**
-   * Zoom the current page to a given level.
-   * @param {Number} level The new zoom level.
-   * @param {String} actorID Optional. The highlighter actor ID.
-   * @return {Promise} The returned promise will only resolve when the
-   * highlighter has updated to the new zoom level.
-   */
-  zoomPageTo(level, actorID = this.highlighter.actorID) {
-    return this.changeZoomLevel(level, actorID);
   }
 
   /* eslint-disable max-len */
@@ -1195,10 +860,6 @@ class TestFront extends protocol.FrontClassWithSpec(testSpec) {
       p3: { x: +rGuide.x1 + 1, y: +bGuide.y1 + 1 },
       p4: { x: lGuide.x1, y: +bGuide.y1 + 1 },
     };
-  }
-
-  waitForHighlighterEvent(event) {
-    return super.waitForHighlighterEvent(event, this.highlighter.actorID);
   }
 
   /**

@@ -161,6 +161,9 @@ pref("xpinstall.whitelist.add", "https://addons.mozilla.org");
 pref("extensions.langpacks.signatures.required", true);
 pref("xpinstall.signatures.required", true);
 
+// Use blocklist v2 until blocklist v3 is enabled on Android - bug 1639050
+pref("extensions.blocklist.useMLBF", false);
+
 // Disable add-ons that are not installed by the user in all scopes by default (See the SCOPE
 // constants in AddonManager.jsm for values to use here, and Bug 1405528 for a rationale).
 pref("extensions.autoDisableScopes", 15);
@@ -394,9 +397,6 @@ pref("apz.overscroll.enabled", true);
 pref("apz.second_tap_tolerance", "0.3");
 pref("apz.touch_move_tolerance", "0.03");
 pref("apz.touch_start_tolerance", "0.06");
-
-// Enable the Visual Viewport API
-pref("dom.visualviewport.enabled", true);
 
 pref("layers.progressive-paint", true);
 pref("layers.low-precision-buffer", true);

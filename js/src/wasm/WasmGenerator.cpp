@@ -21,13 +21,12 @@
 #include "mozilla/CheckedInt.h"
 #include "mozilla/EnumeratedRange.h"
 #include "mozilla/SHA1.h"
-#include "mozilla/Unused.h"
 
 #include <algorithm>
 
 #include "util/Memory.h"
 #include "util/Text.h"
-#include "vm/HelperThreadState.h"
+#include "vm/HelperThreads.h"
 #include "vm/Time.h"
 #include "vm/TraceLogging.h"
 #include "vm/TraceLoggingTypes.h"
@@ -46,7 +45,6 @@ using namespace js::wasm;
 
 using mozilla::CheckedInt;
 using mozilla::MakeEnumeratedRange;
-using mozilla::Unused;
 
 bool CompiledCode::swap(MacroAssembler& masm) {
   MOZ_ASSERT(bytes.empty());
@@ -230,16 +228,16 @@ bool ModuleGenerator::init(Metadata* maybeAsmJSMetadata) {
 
   size_t estimatedCodeSize =
       1.2 * EstimateCompiledCodeSize(tier(), codeSectionSize);
-  Unused << masm_.reserve(std::min(estimatedCodeSize, MaxCodeBytesPerProcess));
+  (void)masm_.reserve(std::min(estimatedCodeSize, MaxCodeBytesPerProcess));
 
-  Unused << metadataTier_->codeRanges.reserve(2 * moduleEnv_->numFuncDefs());
+  (void)metadataTier_->codeRanges.reserve(2 * moduleEnv_->numFuncDefs());
 
   const size_t ByteCodesPerCallSite = 50;
-  Unused << metadataTier_->callSites.reserve(codeSectionSize /
-                                             ByteCodesPerCallSite);
+  (void)metadataTier_->callSites.reserve(codeSectionSize /
+                                         ByteCodesPerCallSite);
 
   const size_t ByteCodesPerOOBTrap = 10;
-  Unused << metadataTier_->trapSites[Trap::OutOfBounds].reserve(
+  (void)metadataTier_->trapSites[Trap::OutOfBounds].reserve(
       codeSectionSize / ByteCodesPerOOBTrap);
 
   // Allocate space in TlsData for declarations that need it.
@@ -381,13 +379,12 @@ bool ModuleGenerator::init(Metadata* maybeAsmJSMetadata) {
   // Determine whether parallel or sequential compilation is to be used and
   // initialize the CompileTasks that will be used in either mode.
 
-  GlobalHelperThreadState& threads = HelperThreadState();
-  MOZ_ASSERT(threads.threadCount > 1);
+  MOZ_ASSERT(GetHelperThreadCount() > 1);
 
   uint32_t numTasks;
-  if (CanUseExtraThreads() && threads.cpuCount > 1) {
+  if (CanUseExtraThreads() && GetHelperThreadCPUCount() > 1) {
     parallel_ = true;
-    numTasks = 2 * threads.maxWasmCompilationThreads();
+    numTasks = 2 * GetMaxWasmCompilationThreads();
   } else {
     numTasks = 1;
   }

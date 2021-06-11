@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DocAccessibleParent.h"
+#include "AccAttributes.h"
 #include "AccessibleOrProxy.h"
 #include "nsCocoaUtils.h"
 
@@ -402,65 +403,64 @@ NSString* GeckoTextMarkerRange::Text() const {
   return nsCocoaUtils::ToNSString(text);
 }
 
-static NSColor* ColorFromString(const nsString& aColorStr) {
-  uint32_t r, g, b;
-  if (sscanf(NS_ConvertUTF16toUTF8(aColorStr).get(), "rgb(%u, %u, %u)", &r, &g,
-             &b) > 0) {
-    return [NSColor colorWithCalibratedRed:(CGFloat)r / 0xff
-                                     green:(CGFloat)g / 0xff
-                                      blue:(CGFloat)b / 0xff
-                                     alpha:1.0];
-  }
-
-  return nil;
+static NSColor* ColorFromColor(const Color& aColor) {
+  return [NSColor colorWithCalibratedRed:NS_GET_R(aColor.mValue) / 255.0
+                                   green:NS_GET_G(aColor.mValue) / 255.0
+                                    blue:NS_GET_B(aColor.mValue) / 255.0
+                                   alpha:1.0];
 }
 
 static NSDictionary* StringAttributesFromAttributes(
-    nsTArray<Attribute>& aAttributes, const AccessibleOrProxy& aContainer) {
+    AccAttributes* aAttributes, const AccessibleOrProxy& aContainer) {
   NSMutableDictionary* attrDict =
-      [NSMutableDictionary dictionaryWithCapacity:aAttributes.Length()];
+      [NSMutableDictionary dictionaryWithCapacity:aAttributes->Count()];
   NSMutableDictionary* fontAttrDict = [[NSMutableDictionary alloc] init];
   [attrDict setObject:fontAttrDict forKey:@"AXFont"];
-  for (size_t ii = 0; ii < aAttributes.Length(); ii++) {
-    RefPtr<nsAtom> attrName = NS_Atomize(aAttributes.ElementAt(ii).Name());
-    if (attrName == nsGkAtoms::backgroundColor) {
-      if (NSColor* color = ColorFromString(aAttributes.ElementAt(ii).Value())) {
+  for (auto iter : *aAttributes) {
+    if (iter.Name() == nsGkAtoms::backgroundColor) {
+      if (Maybe<Color> value = iter.Value<Color>()) {
+        NSColor* color = ColorFromColor(*value);
         [attrDict setObject:(__bridge id)color.CGColor
                      forKey:@"AXBackgroundColor"];
       }
-    } else if (attrName == nsGkAtoms::color) {
-      if (NSColor* color = ColorFromString(aAttributes.ElementAt(ii).Value())) {
+    } else if (iter.Name() == nsGkAtoms::color) {
+      if (Maybe<Color> value = iter.Value<Color>()) {
+        NSColor* color = ColorFromColor(*value);
         [attrDict setObject:(__bridge id)color.CGColor
                      forKey:@"AXForegroundColor"];
       }
-    } else if (attrName == nsGkAtoms::font_size) {
-      float fontPointSize = 0;
-      if (sscanf(NS_ConvertUTF16toUTF8(aAttributes.ElementAt(ii).Value()).get(),
-                 "%fpt", &fontPointSize) > 0) {
-        int32_t fontPixelSize = static_cast<int32_t>(fontPointSize * 4 / 3);
+    } else if (iter.Name() == nsGkAtoms::font_size) {
+      if (Maybe<FontSize> pointSize = iter.Value<FontSize>()) {
+        int32_t fontPixelSize = static_cast<int32_t>(pointSize->mValue * 4 / 3);
         [fontAttrDict setObject:@(fontPixelSize) forKey:@"AXFontSize"];
       }
-    } else if (attrName == nsGkAtoms::font_family) {
-      [fontAttrDict
-          setObject:nsCocoaUtils::ToNSString(aAttributes.ElementAt(ii).Value())
-             forKey:@"AXFontFamily"];
-    } else if (attrName == nsGkAtoms::textUnderlineColor) {
+    } else if (iter.Name() == nsGkAtoms::font_family) {
+      nsAutoString fontFamily;
+      iter.ValueAsString(fontFamily);
+      [fontAttrDict setObject:nsCocoaUtils::ToNSString(fontFamily)
+                       forKey:@"AXFontFamily"];
+    } else if (iter.Name() == nsGkAtoms::textUnderlineColor) {
       [attrDict setObject:@1 forKey:@"AXUnderline"];
-      if (NSColor* color = ColorFromString(aAttributes.ElementAt(ii).Value())) {
+      if (Maybe<Color> value = iter.Value<Color>()) {
+        NSColor* color = ColorFromColor(*value);
         [attrDict setObject:(__bridge id)color.CGColor
                      forKey:@"AXUnderlineColor"];
       }
-    } else if (attrName == nsGkAtoms::invalid) {
+    } else if (iter.Name() == nsGkAtoms::invalid) {
       // XXX: There is currently no attribute for grammar
-      if (aAttributes.ElementAt(ii).Value().EqualsLiteral("spelling")) {
-        [attrDict setObject:@YES
-                     forKey:NSAccessibilityMarkedMisspelledTextAttribute];
+      if (Maybe<nsAtom*> value = iter.Value<nsAtom*>()) {
+        if (*value == nsGkAtoms::spelling) {
+          [attrDict setObject:@YES
+                       forKey:NSAccessibilityMarkedMisspelledTextAttribute];
+        }
       }
     } else {
-      [attrDict
-          setObject:nsCocoaUtils::ToNSString(aAttributes.ElementAt(ii).Value())
-             forKey:nsCocoaUtils::ToNSString(NS_ConvertUTF8toUTF16(
-                        aAttributes.ElementAt(ii).Name()))];
+      nsAutoString valueStr;
+      iter.ValueAsString(valueStr);
+      nsAutoString keyStr;
+      iter.NameAsString(keyStr);
+      [attrDict setObject:nsCocoaUtils::ToNSString(valueStr)
+                   forKey:nsCocoaUtils::ToNSString(keyStr)];
     }
   }
 
@@ -496,7 +496,7 @@ NSAttributedString* GeckoTextMarkerRange::AttributedText() const {
         mEnd.mContainer.AsProxy()->ID(), mEnd.mOffset, &textAttributesRuns);
 
     for (size_t i = 0; i < textAttributesRuns.Length(); i++) {
-      nsTArray<Attribute>& attributes =
+      AccAttributes* attributes =
           textAttributesRuns.ElementAt(i).TextAttributes();
       RemoteAccessible* container =
           ipcDoc->GetAccessible(textAttributesRuns.ElementAt(i).ContainerID());
@@ -512,7 +512,7 @@ NSAttributedString* GeckoTextMarkerRange::AttributedText() const {
   } else if (auto htWrap = mStart.ContainerAsHyperTextWrap()) {
     nsTArray<nsString> texts;
     nsTArray<LocalAccessible*> containers;
-    nsTArray<nsCOMPtr<nsIPersistentProperties>> props;
+    nsTArray<RefPtr<AccAttributes>> props;
 
     htWrap->AttributedTextForRange(texts, props, containers, mStart.mOffset,
                                    mEnd.ContainerAsHyperTextWrap(),
@@ -522,13 +522,11 @@ NSAttributedString* GeckoTextMarkerRange::AttributedText() const {
                texts.Length() == containers.Length());
 
     for (size_t i = 0; i < texts.Length(); i++) {
-      nsTArray<Attribute> attributes;
-      nsAccUtils::PersistentPropertiesToArray(props.ElementAt(i), &attributes);
-
       NSAttributedString* substr = [[[NSAttributedString alloc]
           initWithString:nsCocoaUtils::ToNSString(texts.ElementAt(i))
               attributes:StringAttributesFromAttributes(
-                             attributes, containers.ElementAt(i))] autorelease];
+                             props.ElementAt(i), containers.ElementAt(i))]
+          autorelease];
       [str appendAttributedString:substr];
     }
   }

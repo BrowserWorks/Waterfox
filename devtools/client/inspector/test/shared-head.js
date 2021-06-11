@@ -784,3 +784,140 @@ async function waitUntilVisitedState(tab, selectors) {
     return hasVisitedState;
   });
 }
+
+/**
+ * Return wether or not the passed selector matches an element in the content page.
+ *
+ * @param {string} selector
+ * @returns Promise<Boolean>
+ */
+function hasMatchingElementInContentPage(selector) {
+  return SpecialPowers.spawn(gBrowser.selectedBrowser, [selector], function(
+    innerSelector
+  ) {
+    return content.document.querySelector(innerSelector) !== null;
+  });
+}
+
+/**
+ * Return the number of elements matching the passed selector.
+ *
+ * @param {string} selector
+ * @returns Promise<Number> the number of matching elements
+ */
+function getNumberOfMatchingElementsInContentPage(selector) {
+  return SpecialPowers.spawn(gBrowser.selectedBrowser, [selector], function(
+    innerSelector
+  ) {
+    return content.document.querySelectorAll(innerSelector).length;
+  });
+}
+
+/**
+ * Get the property of an element in the content page
+ *
+ * @param {string} selector: The selector to get the element we want the property of
+ * @param {string} propertyName: The name of the property we want the value of
+ * @returns {Promise} A promise that returns with the value of the property for the element
+ */
+function getContentPageElementProperty(selector, propertyName) {
+  return SpecialPowers.spawn(
+    gBrowser.selectedBrowser,
+    [selector, propertyName],
+    function(innerSelector, innerPropertyName) {
+      return content.document.querySelector(innerSelector)[innerPropertyName];
+    }
+  );
+}
+
+/**
+ * Set the property of an element in the content page
+ *
+ * @param {string} selector: The selector to get the element we want to set the property on
+ * @param {string} propertyName: The name of the property we want to set
+ * @param {string} propertyValue: The value that is going to be assigned to the property
+ * @returns {Promise}
+ */
+function setContentPageElementProperty(selector, propertyName, propertyValue) {
+  return SpecialPowers.spawn(
+    gBrowser.selectedBrowser,
+    [selector, propertyName, propertyValue],
+    function(innerSelector, innerPropertyName, innerPropertyValue) {
+      content.document.querySelector(innerSelector)[
+        innerPropertyName
+      ] = innerPropertyValue;
+    }
+  );
+}
+
+/**
+ * Get all the attributes for a DOM Node living in the content page.
+ *
+ * @param {String} selector The node selector
+ * @returns {Array<Object>} An array of {name, value} objects.
+ */
+async function getContentPageElementAttributes(selector) {
+  return SpecialPowers.spawn(
+    gBrowser.selectedBrowser,
+    [selector],
+    _selector => {
+      const node = content.document.querySelector(_selector);
+      return Array.from(node.attributes).map(({ name, value }) => ({
+        name,
+        value,
+      }));
+    }
+  );
+}
+
+/**
+ * Get an attribute on a DOM Node living in the content page.
+ *
+ * @param {String} selector The node selector
+ * @param {String} attribute The attribute name
+ * @return {String} value The attribute value
+ */
+async function getContentPageElementAttribute(selector, attribute) {
+  return SpecialPowers.spawn(
+    gBrowser.selectedBrowser,
+    [selector, attribute],
+    (_selector, _attribute) => {
+      return content.document.querySelector(_selector).getAttribute(_attribute);
+    }
+  );
+}
+
+/**
+ * Set an attribute on a DOM Node living in the content page.
+ *
+ * @param {String} selector The node selector
+ * @param {String} attribute The attribute name
+ * @param {String} value The attribute value
+ */
+async function setContentPageElementAttribute(selector, attribute, value) {
+  return SpecialPowers.spawn(
+    gBrowser.selectedBrowser,
+    [selector, attribute, value],
+    (_selector, _attribute, _value) => {
+      content.document
+        .querySelector(_selector)
+        .setAttribute(_attribute, _value);
+    }
+  );
+}
+
+/**
+ * Remove an attribute from a DOM Node living in the content page.
+ *
+ * @param {String} selector The node selector
+ * @param {String} attribute The attribute name
+ */
+async function removeContentPageElementAttribute(selector, attribute) {
+  return SpecialPowers.spawn(
+    gBrowser.selectedBrowser,
+    [selector, attribute],
+    (_selector, _attribute) => {
+      content.document.querySelector(_selector).removeAttribute(_attribute);
+    }
+  );
+}

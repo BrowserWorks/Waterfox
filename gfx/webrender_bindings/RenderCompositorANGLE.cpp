@@ -543,12 +543,10 @@ RenderedFrameId RenderCompositorANGLE::EndFrame(
         for (size_t i = 0; i < aDirtyRects.Length(); ++i) {
           const DeviceIntRect& rect = aDirtyRects[i];
           // Clip rect to bufferSize
-          int left = std::max(0, std::min(rect.origin.x, bufferSize.width));
-          int top = std::max(0, std::min(rect.origin.y, bufferSize.height));
-          int right = std::max(
-              0, std::min(rect.origin.x + rect.size.width, bufferSize.width));
-          int bottom = std::max(
-              0, std::min(rect.origin.y + rect.size.height, bufferSize.height));
+          int left = std::max(0, std::min(rect.min.x, bufferSize.width));
+          int top = std::max(0, std::min(rect.min.y, bufferSize.height));
+          int right = std::max(0, std::min(rect.max.x, bufferSize.width));
+          int bottom = std::max(0, std::min(rect.max.y, bufferSize.height));
 
           // When rect is not empty, the rect could be passed to Present1().
           if (left < right && top < bottom) {
@@ -878,14 +876,6 @@ bool RenderCompositorANGLE::ShouldUseNativeCompositor() {
   return UseCompositor();
 }
 
-uint32_t RenderCompositorANGLE::GetMaxUpdateRects() {
-  if (UseCompositor() &&
-      StaticPrefs::gfx_webrender_compositor_max_update_rects_AtStartup() > 0) {
-    return 1;
-  }
-  return 0;
-}
-
 void RenderCompositorANGLE::CompositorBeginFrame() {
   mDCLayerTree->CompositorBeginFrame();
 }
@@ -942,6 +932,8 @@ void RenderCompositorANGLE::AddSurface(
 
 void RenderCompositorANGLE::GetCompositorCapabilities(
     CompositorCapabilities* aCaps) {
+  RenderCompositor::GetCompositorCapabilities(aCaps);
+
   aCaps->virtual_surface_size = VIRTUAL_SURFACE_SIZE;
 }
 

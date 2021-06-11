@@ -6,12 +6,13 @@
 
 #include "HyperTextAccessible-inl.h"
 
-#include "LocalAccessible-inl.h"
 #include "nsAccessibilityService.h"
 #include "nsAccessiblePivot.h"
 #include "nsIAccessibleTypes.h"
+#include "AccAttributes.h"
 #include "DocAccessible.h"
 #include "HTMLListAccessible.h"
+#include "LocalAccessible-inl.h"
 #include "Pivot.h"
 #include "Relation.h"
 #include "Role.h"
@@ -29,19 +30,18 @@
 #include "nsFrameSelection.h"
 #include "nsILineIterator.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsPersistentProperties.h"
 #include "nsIScrollableFrame.h"
 #include "nsIMathMLFrame.h"
 #include "nsRange.h"
 #include "nsTextFragment.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/BinarySearch.h"
+#include "mozilla/EditorBase.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/HTMLEditor.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/StaticPrefs_layout.h"
-#include "mozilla/TextEditor.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLBRElement.h"
 #include "mozilla/dom/HTMLHeadingElement.h"
@@ -445,10 +445,10 @@ DOMPoint HyperTextAccessible::OffsetToDOMPoint(int32_t aOffset) const {
   // 0 offset is valid even if no children. In this case the associated editor
   // is empty so return a DOM point for editor root element.
   if (aOffset == 0) {
-    RefPtr<TextEditor> textEditor = GetEditor();
-    if (textEditor) {
-      if (textEditor->IsEmpty()) {
-        return DOMPoint(textEditor->GetRoot(), 0);
+    RefPtr<EditorBase> editorBase = GetEditor();
+    if (editorBase) {
+      if (editorBase->IsEmpty()) {
+        return DOMPoint(editorBase->GetRoot(), 0);
       }
     }
   }
@@ -1200,7 +1200,7 @@ void HyperTextAccessible::TextAfterOffset(int32_t aOffset,
   }
 }
 
-already_AddRefed<nsIPersistentProperties> HyperTextAccessible::TextAttributes(
+already_AddRefed<AccAttributes> HyperTextAccessible::TextAttributes(
     bool aIncludeDefAttrs, int32_t aOffset, int32_t* aStartOffset,
     int32_t* aEndOffset) {
   // 1. Get each attribute and its ranges one after another.
@@ -1208,14 +1208,13 @@ already_AddRefed<nsIPersistentProperties> HyperTextAccessible::TextAttributes(
   //    as in/out parameters. In other words, as attributes are collected,
   //    the attribute range itself can only stay the same or get smaller.
 
+  RefPtr<AccAttributes> attributes = new AccAttributes();
   *aStartOffset = *aEndOffset = 0;
   index_t offset = ConvertMagicOffset(aOffset);
   if (!offset.IsValid() || offset > CharacterCount()) {
     NS_ERROR("Wrong in offset!");
-    return nullptr;
+    return attributes.forget();
   }
-
-  RefPtr<nsPersistentProperties> attributes = new nsPersistentProperties();
 
   LocalAccessible* accAtOffset = GetChildAtOffset(offset);
   if (!accAtOffset) {
@@ -1226,9 +1225,8 @@ already_AddRefed<nsIPersistentProperties> HyperTextAccessible::TextAttributes(
         TextAttrsMgr textAttrsMgr(this);
         textAttrsMgr.GetAttributes(attributes);
       }
-      return attributes.forget();
     }
-    return nullptr;
+    return attributes.forget();
   }
 
   int32_t accAtOffsetIdx = accAtOffset->IndexInParent();
@@ -1256,9 +1254,8 @@ already_AddRefed<nsIPersistentProperties> HyperTextAccessible::TextAttributes(
   return attributes.forget();
 }
 
-already_AddRefed<nsIPersistentProperties>
-HyperTextAccessible::DefaultTextAttributes() {
-  RefPtr<nsPersistentProperties> attributes = new nsPersistentProperties();
+already_AddRefed<AccAttributes> HyperTextAccessible::DefaultTextAttributes() {
+  RefPtr<AccAttributes> attributes = new AccAttributes();
 
   TextAttrsMgr textAttrsMgr(this);
   textAttrsMgr.GetAttributes(attributes);
@@ -1272,8 +1269,7 @@ int32_t HyperTextAccessible::GetLevelInternal() {
   return AccessibleWrap::GetLevelInternal();
 }
 
-void HyperTextAccessible::SetMathMLXMLRoles(
-    nsIPersistentProperties* aAttributes) {
+void HyperTextAccessible::SetMathMLXMLRoles(AccAttributes* aAttributes) {
   // Add MathML xmlroles based on the position inside the parent.
   LocalAccessible* parent = LocalParent();
   if (parent) {
@@ -1296,65 +1292,65 @@ void HyperTextAccessible::SetMathMLXMLRoles(
             mathMLFrame->GetEmbellishData(embellishData);
             if (NS_MATHML_EMBELLISH_IS_FENCE(embellishData.flags)) {
               if (!LocalPrevSibling()) {
-                nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                                       nsGkAtoms::open_fence);
+                aAttributes->SetAttribute(nsGkAtoms::xmlroles,
+                                          nsGkAtoms::open_fence);
               } else if (!LocalNextSibling()) {
-                nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                                       nsGkAtoms::close_fence);
+                aAttributes->SetAttribute(nsGkAtoms::xmlroles,
+                                          nsGkAtoms::close_fence);
               }
             }
             if (NS_MATHML_EMBELLISH_IS_SEPARATOR(embellishData.flags)) {
-              nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                                     nsGkAtoms::separator_);
+              aAttributes->SetAttribute(nsGkAtoms::xmlroles,
+                                        nsGkAtoms::separator_);
             }
           }
         }
         break;
       case roles::MATHML_FRACTION:
-        nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                               IndexInParent() == 0 ? nsGkAtoms::numerator
-                                                    : nsGkAtoms::denominator);
+        aAttributes->SetAttribute(
+            nsGkAtoms::xmlroles, IndexInParent() == 0 ? nsGkAtoms::numerator
+                                                      : nsGkAtoms::denominator);
         break;
       case roles::MATHML_ROOT:
-        nsAccUtils::SetAccAttr(
-            aAttributes, nsGkAtoms::xmlroles,
+        aAttributes->SetAttribute(
+            nsGkAtoms::xmlroles,
             IndexInParent() == 0 ? nsGkAtoms::base : nsGkAtoms::root_index);
         break;
       case roles::MATHML_SUB:
-        nsAccUtils::SetAccAttr(
-            aAttributes, nsGkAtoms::xmlroles,
+        aAttributes->SetAttribute(
+            nsGkAtoms::xmlroles,
             IndexInParent() == 0 ? nsGkAtoms::base : nsGkAtoms::subscript);
         break;
       case roles::MATHML_SUP:
-        nsAccUtils::SetAccAttr(
-            aAttributes, nsGkAtoms::xmlroles,
+        aAttributes->SetAttribute(
+            nsGkAtoms::xmlroles,
             IndexInParent() == 0 ? nsGkAtoms::base : nsGkAtoms::superscript);
         break;
       case roles::MATHML_SUB_SUP: {
         int32_t index = IndexInParent();
-        nsAccUtils::SetAccAttr(
-            aAttributes, nsGkAtoms::xmlroles,
+        aAttributes->SetAttribute(
+            nsGkAtoms::xmlroles,
             index == 0
                 ? nsGkAtoms::base
                 : (index == 1 ? nsGkAtoms::subscript : nsGkAtoms::superscript));
       } break;
       case roles::MATHML_UNDER:
-        nsAccUtils::SetAccAttr(
-            aAttributes, nsGkAtoms::xmlroles,
+        aAttributes->SetAttribute(
+            nsGkAtoms::xmlroles,
             IndexInParent() == 0 ? nsGkAtoms::base : nsGkAtoms::underscript);
         break;
       case roles::MATHML_OVER:
-        nsAccUtils::SetAccAttr(
-            aAttributes, nsGkAtoms::xmlroles,
+        aAttributes->SetAttribute(
+            nsGkAtoms::xmlroles,
             IndexInParent() == 0 ? nsGkAtoms::base : nsGkAtoms::overscript);
         break;
       case roles::MATHML_UNDER_OVER: {
         int32_t index = IndexInParent();
-        nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                               index == 0
-                                   ? nsGkAtoms::base
-                                   : (index == 1 ? nsGkAtoms::underscript
-                                                 : nsGkAtoms::overscript));
+        aAttributes->SetAttribute(nsGkAtoms::xmlroles,
+                                  index == 0
+                                      ? nsGkAtoms::base
+                                      : (index == 1 ? nsGkAtoms::underscript
+                                                    : nsGkAtoms::overscript));
       } break;
       case roles::MATHML_MULTISCRIPTS: {
         // Get the <multiscripts> base.
@@ -1371,8 +1367,7 @@ void HyperTextAccessible::SetMathMLXMLRoles(
           nsIContent* content = GetContent();
           if (child == content) {
             // We are the base.
-            nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                                   nsGkAtoms::base);
+            aAttributes->SetAttribute(nsGkAtoms::xmlroles, nsGkAtoms::base);
           } else {
             // Browse the list of scripts to find us and determine our type.
             bool postscript = true;
@@ -1387,13 +1382,14 @@ void HyperTextAccessible::SetMathMLXMLRoles(
               }
               if (child == content) {
                 if (postscript) {
-                  nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                                         subscript ? nsGkAtoms::subscript
-                                                   : nsGkAtoms::superscript);
+                  aAttributes->SetAttribute(nsGkAtoms::xmlroles,
+                                            subscript ? nsGkAtoms::subscript
+                                                      : nsGkAtoms::superscript);
                 } else {
-                  nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
-                                         subscript ? nsGkAtoms::presubscript
-                                                   : nsGkAtoms::presuperscript);
+                  aAttributes->SetAttribute(nsGkAtoms::xmlroles,
+                                            subscript
+                                                ? nsGkAtoms::presubscript
+                                                : nsGkAtoms::presuperscript);
                 }
                 break;
               }
@@ -1408,25 +1404,20 @@ void HyperTextAccessible::SetMathMLXMLRoles(
   }
 }
 
-already_AddRefed<nsIPersistentProperties>
-HyperTextAccessible::NativeAttributes() {
-  nsCOMPtr<nsIPersistentProperties> attributes =
-      AccessibleWrap::NativeAttributes();
+already_AddRefed<AccAttributes> HyperTextAccessible::NativeAttributes() {
+  RefPtr<AccAttributes> attributes = AccessibleWrap::NativeAttributes();
 
   // 'formatting' attribute is deprecated, 'display' attribute should be
   // instead.
   nsIFrame* frame = GetFrame();
   if (frame && frame->IsBlockFrame()) {
-    nsAutoString unused;
-    attributes->SetStringProperty("formatting"_ns, u"block"_ns, unused);
+    attributes->SetAttribute(nsGkAtoms::formatting, nsGkAtoms::block);
   }
 
   if (FocusMgr()->IsFocused(this)) {
     int32_t lineNumber = CaretLineNumber();
     if (lineNumber >= 1) {
-      nsAutoString strLineNumber;
-      strLineNumber.AppendInt(lineNumber);
-      nsAccUtils::SetAccAttr(attributes, nsGkAtoms::lineNumber, strLineNumber);
+      attributes->SetAttribute(nsGkAtoms::lineNumber, lineNumber);
     }
   }
 
@@ -1593,7 +1584,7 @@ nsIntRect HyperTextAccessible::TextBounds(int32_t aStartOffset,
   return bounds;
 }
 
-already_AddRefed<TextEditor> HyperTextAccessible::GetEditor() const {
+already_AddRefed<EditorBase> HyperTextAccessible::GetEditor() const {
   if (!mContent->HasFlag(NODE_IS_EDITABLE)) {
     // If we're inside an editable container, then return that container's
     // editor
@@ -1635,7 +1626,7 @@ nsresult HyperTextAccessible::SetSelectionRange(int32_t aStartPos,
   // the selection we set here and leave the caret at the end of the text.
   // By calling GetEditor here, we ensure that editor initialization is
   // completed before we set the selection.
-  RefPtr<TextEditor> textEditor = GetEditor();
+  RefPtr<EditorBase> editorBase = GetEditor();
 
   bool isFocusable = InteractiveState() & states::FOCUSABLE;
 
@@ -1852,9 +1843,9 @@ void HyperTextAccessible::GetSelectionDOMRanges(SelectionType aSelectionType,
 
   nsINode* startNode = GetNode();
 
-  RefPtr<TextEditor> textEditor = GetEditor();
-  if (textEditor) {
-    startNode = textEditor->GetRoot();
+  RefPtr<EditorBase> editorBase = GetEditor();
+  if (editorBase) {
+    startNode = editorBase->GetRoot();
   }
 
   if (!startNode) return;
@@ -2336,9 +2327,10 @@ nsresult HyperTextAccessible::GetDOMPointByFrameOffset(
 }
 
 // HyperTextAccessible
-void HyperTextAccessible::GetSpellTextAttr(
-    nsINode* aNode, int32_t aNodeOffset, uint32_t* aStartOffset,
-    uint32_t* aEndOffset, nsIPersistentProperties* aAttributes) {
+void HyperTextAccessible::GetSpellTextAttr(nsINode* aNode, int32_t aNodeOffset,
+                                           uint32_t* aStartOffset,
+                                           uint32_t* aEndOffset,
+                                           AccAttributes* aAttributes) {
   RefPtr<nsFrameSelection> fs = FrameSelection();
   if (!fs) return;
 
@@ -2392,9 +2384,7 @@ void HyperTextAccessible::GetSpellTextAttr(
 
       if (endOffset < *aEndOffset) *aEndOffset = endOffset;
 
-      if (aAttributes) {
-        nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::invalid, u"spelling"_ns);
-      }
+      aAttributes->SetAttribute(nsGkAtoms::invalid, nsGkAtoms::spelling);
 
       return;
     }

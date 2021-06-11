@@ -181,13 +181,15 @@ class ContextChecks {
   void check(AbstractFramePtr frame, int argIndex);
 
   void check(const PropertyDescriptor& desc, int argIndex) {
-    if (desc.hasGetterObject()) {
-      check(desc.getterObject(), argIndex);
+    if (desc.hasGetter()) {
+      check(desc.getter(), argIndex);
     }
-    if (desc.hasSetterObject()) {
-      check(desc.setterObject(), argIndex);
+    if (desc.hasSetter()) {
+      check(desc.setter(), argIndex);
     }
-    check(desc.value(), argIndex);
+    if (desc.hasValue()) {
+      check(desc.value(), argIndex);
+    }
   }
 
   void check(Handle<mozilla::Maybe<Value>> maybe, int argIndex) {

@@ -16,7 +16,6 @@
 #include "mozilla/TextUtils.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/Tuple.h"
-#include "mozilla/Unused.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -103,7 +102,7 @@
 #include "vm/AsyncIteration.h"
 #include "vm/ErrorObject.h"
 #include "vm/GlobalObject.h"
-#include "vm/HelperThreadState.h"
+#include "vm/HelperThreads.h"
 #include "vm/Interpreter.h"
 #include "vm/Iteration.h"
 #include "vm/JSContext.h"
@@ -132,6 +131,7 @@
 #include "vm/JSContext-inl.h"
 #include "vm/JSObject-inl.h"
 #include "vm/NativeObject-inl.h"
+#include "vm/ObjectFlags-inl.h"
 #include "vm/StringType-inl.h"
 
 using namespace js;
@@ -2849,7 +2849,7 @@ static bool NewString(JSContext* cx, unsigned argc, Value* vp) {
           cx, buf.get(), len, &TestExternalStringCallbacks, &isExternal, heap);
     }
     if (dest && isExternal) {
-      mozilla::Unused << buf.release();  // Ownership was transferred.
+      (void)buf.release();  // Ownership was transferred.
     }
   } else {
     AutoStableStringChars stable(cx);
@@ -4572,7 +4572,7 @@ static bool HelperThreadCount(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   if (CanUseExtraThreads()) {
-    args.rval().setInt32(HelperThreadState().threadCount);
+    args.rval().setInt32(GetHelperThreadCount());
   } else {
     args.rval().setInt32(0);
   }
@@ -4620,28 +4620,28 @@ class ShapeSnapshot {
 
   GCVector<HeapPtr<Value>, 8> slots_;
 
-  struct PropertyInfo {
+  struct PropertySnapshot {
     HeapPtr<Shape*> propShape;
     HeapPtr<PropertyKey> key;
-    ShapeProperty prop;
+    PropertyInfo prop;
 
-    explicit PropertyInfo(Shape* shape)
+    explicit PropertySnapshot(Shape* shape)
         : propShape(shape),
-          key(shape->propertyWithKey().key()),
-          prop(propShape->property()) {}
+          key(propShape->propertyInfoWithKey().key()),
+          prop(propShape->propertyInfo()) {}
     void trace(JSTracer* trc) {
       TraceEdge(trc, &propShape, "propShape");
       TraceEdge(trc, &key, "key");
     }
-    bool operator==(const PropertyInfo& other) const {
+    bool operator==(const PropertySnapshot& other) const {
       return propShape == other.propShape && key == other.key &&
              prop == other.prop;
     }
-    bool operator!=(const PropertyInfo& other) const {
+    bool operator!=(const PropertySnapshot& other) const {
       return !operator==(other);
     }
   };
-  GCVector<PropertyInfo, 8> properties_;
+  GCVector<PropertySnapshot, 8> properties_;
 
  public:
   explicit ShapeSnapshot(JSContext* cx) : slots_(cx), properties_(cx) {}
@@ -4728,7 +4728,7 @@ bool ShapeSnapshot::init(JSObject* obj) {
     // Snapshot property information.
     Shape* propShape = shape_;
     while (!propShape->isEmptyShape()) {
-      if (!properties_.append(PropertyInfo(propShape))) {
+      if (!properties_.append(PropertySnapshot(propShape))) {
         return false;
       }
       propShape = propShape->previous();
@@ -4755,21 +4755,21 @@ void ShapeSnapshot::checkSelf(JSContext* cx) const {
     MOZ_RELEASE_ASSERT(shape_->objectFlags() == objectFlags_);
   }
 
-  for (const PropertyInfo& propInfo : properties_) {
-    Shape* propShape = propInfo.propShape;
-    ShapeProperty prop = propInfo.prop;
+  for (const PropertySnapshot& propSnapshot : properties_) {
+    Shape* propShape = propSnapshot.propShape;
+    PropertyInfo prop = propSnapshot.prop;
 
     // Skip if the Shape no longer matches the snapshotted data. This can
     // only happen for non-configurable dictionary properties.
-    if (PropertyInfo(propShape) != propInfo) {
+    if (PropertySnapshot(propShape) != propSnapshot) {
       MOZ_RELEASE_ASSERT(propShape->inDictionary());
-      MOZ_RELEASE_ASSERT(!(prop.attributes() & JSPROP_PERMANENT));
+      MOZ_RELEASE_ASSERT(prop.configurable());
       continue;
     }
 
     // Ensure ObjectFlags depending on property information are set if needed.
     ObjectFlags expectedFlags = GetObjectFlagsForNewProperty(
-        shape_, propInfo.key, prop.attributes(), cx);
+        shape_, propSnapshot.key, prop.flags(), cx);
     MOZ_RELEASE_ASSERT(expectedFlags == objectFlags_);
 
     // Accessors must have a PrivateGCThingValue(GetterSetter*) slot value.
@@ -4818,7 +4818,7 @@ void ShapeSnapshot::check(JSContext* cx, const ShapeSnapshot& later) const {
       MOZ_RELEASE_ASSERT(properties_[i] == later.properties_[i]);
       // Non-configurable accessor properties and non-configurable, non-writable
       // data properties shouldn't have had their slot mutated.
-      ShapeProperty prop = properties_[i].prop;
+      PropertyInfo prop = properties_[i].prop;
       if (!prop.configurable()) {
         if (prop.isAccessorProperty() ||
             (prop.isDataProperty() && !prop.writable())) {
@@ -6448,30 +6448,31 @@ static bool GetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
+#ifndef __wasi__
   auto getTimeZone = [](std::time_t* now) -> const char* {
     std::tm local{};
-#if defined(_WIN32)
+#  if defined(_WIN32)
     _tzset();
     if (localtime_s(&local, now) == 0) {
       return _tzname[local.tm_isdst > 0];
     }
-#else
-    tzset();
-#  if defined(HAVE_LOCALTIME_R)
-    if (localtime_r(now, &local)) {
 #  else
+    tzset();
+#    if defined(HAVE_LOCALTIME_R)
+    if (localtime_r(now, &local)) {
+#    else
     std::tm* localtm = std::localtime(now);
     if (localtm) {
       *local = *localtm;
-#  endif /* HAVE_LOCALTIME_R */
+#    endif /* HAVE_LOCALTIME_R */
 
-#  if defined(HAVE_TM_ZONE_TM_GMTOFF)
+#    if defined(HAVE_TM_ZONE_TM_GMTOFF)
       return local.tm_zone;
-#  else
+#    else
       return tzname[local.tm_isdst > 0];
-#  endif /* HAVE_TM_ZONE_TM_GMTOFF */
+#    endif /* HAVE_TM_ZONE_TM_GMTOFF */
     }
-#endif   /* _WIN32 */
+#  endif   /* _WIN32 */
     return nullptr;
   };
 
@@ -6481,7 +6482,7 @@ static bool GetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
       return ReturnStringCopy(cx, args, tz);
     }
   }
-
+#endif /* __wasi__ */
   args.rval().setUndefined();
   return true;
 }
@@ -6501,20 +6502,21 @@ static bool SetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
+#ifndef __wasi__
   auto setTimeZone = [](const char* value) {
-#if defined(_WIN32)
+#  if defined(_WIN32)
     return _putenv_s("TZ", value) == 0;
-#else
+#  else
     return setenv("TZ", value, true) == 0;
-#endif /* _WIN32 */
+#  endif /* _WIN32 */
   };
 
   auto unsetTimeZone = []() {
-#if defined(_WIN32)
+#  if defined(_WIN32)
     return _putenv_s("TZ", "") == 0;
-#else
+#  else
     return unsetenv("TZ") == 0;
-#endif /* _WIN32 */
+#  endif /* _WIN32 */
   };
 
   if (args[0].isString() && !args[0].toString()->empty()) {
@@ -6545,14 +6547,15 @@ static bool SetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
     }
   }
 
-#if defined(_WIN32)
+#  if defined(_WIN32)
   _tzset();
-#else
+#  else
   tzset();
-#endif /* _WIN32 */
+#  endif /* _WIN32 */
 
   JS::ResetTimeZone();
 
+#endif /* __wasi__ */
   args.rval().setUndefined();
   return true;
 }
@@ -7163,13 +7166,11 @@ static bool GetICUOptions(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-#  ifndef U_HIDE_DRAFT_API
   str = intl::CallICU(cx, ucal_getHostTimeZone);
   if (!str ||
       !JS_DefineProperty(cx, info, "host-timezone", str, JSPROP_ENUMERATE)) {
     return false;
   }
-#  endif
 #endif
 
   args.rval().setObject(*info);

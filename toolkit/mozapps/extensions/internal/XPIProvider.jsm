@@ -1809,6 +1809,7 @@ class BootstrapScope {
         temporarilyInstalled: addon.location.isTemporary,
         builtIn: addon.location.isBuiltin,
         isSystem: addon.location.isSystem,
+        recommendationState: addon.recommendationState,
       };
 
       if (aMethod == "startup" && addon.startupData) {
@@ -2494,10 +2495,6 @@ var XPIProvider = {
       // enabled extension will be migrated.
       try {
         if (
-          !Services.prefs.getBoolPref(
-            "extensions.allowPrivateBrowsingByDefault",
-            true
-          ) &&
           !Services.prefs.getBoolPref("extensions.incognito.migrated", false)
         ) {
           XPIDatabase.syncLoadDB(false);

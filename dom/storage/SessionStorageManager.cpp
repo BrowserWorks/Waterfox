@@ -13,10 +13,16 @@
 #include "StorageUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/OriginAttributes.h"
+#include "mozilla/PrincipalHashKey.h"
+#include "mozilla/ScopeExit.h"
+#include "mozilla/StoragePrincipalHelper.h"
+#include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/LocalStorageCommon.h"
 #include "mozilla/dom/PBackgroundSessionStorageCache.h"
 #include "mozilla/dom/PBackgroundSessionStorageManager.h"
+#include "mozilla/dom/PermissionMessageUtils.h"
+#include "mozilla/dom/WindowGlobalParent.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/PBackgroundChild.h"
@@ -48,6 +54,8 @@ void RecvPropagateBackgroundSessionStorageManager(
   if (sManagers) {
     if (RefPtr<BackgroundSessionStorageManager> mgr =
             sManagers->Get(aCurrentTopContextId)) {
+      mgr->MaybeDispatchSessionStoreUpdate();
+      mgr->SetCurrentBrowsingContextId(aTargetTopContextId);
       // Because of bfcache, we may re-register aTargetTopContextId in
       // CanonicalBrowsingContext::ReplacedBy.
       // XXXBFCache do we want to tweak this behavior and ensure this is
@@ -61,8 +69,61 @@ bool RecvRemoveBackgroundSessionStorageManager(uint64_t aTopContextId) {
   ::mozilla::ipc::AssertIsOnBackgroundThread();
 
   if (sManagers) {
-    sManagers->Remove(aTopContextId);
+    RefPtr<BackgroundSessionStorageManager> mgr;
+    sManagers->Remove(aTopContextId, getter_AddRefs(mgr));
+
+    if (mgr) {
+      mgr->CancelSessionStoreUpdate();
+    }
   }
+
+  return true;
+}
+
+bool RecvLoadSessionStorageData(
+    uint64_t aTopContextId,
+    nsTArray<mozilla::dom::SSCacheCopy>&& aCacheCopyList) {
+  if (aCacheCopyList.IsEmpty()) {
+    return true;
+  }
+
+  RefPtr<BackgroundSessionStorageManager> manager =
+      BackgroundSessionStorageManager::GetOrCreate(aTopContextId);
+
+  if (!manager) {
+    return true;
+  }
+
+  for (const auto& cacheInit : aCacheCopyList) {
+    manager->UpdateData(cacheInit.originAttributes(), cacheInit.originKey(),
+                        cacheInit.data());
+  }
+
+  return true;
+}
+
+bool RecvGetSessionStorageData(
+    uint64_t aTopContextId, uint32_t aSizeLimit, bool aCancelSessionStoreTimer,
+    ::mozilla::ipc::PBackgroundParent::GetSessionStorageManagerDataResolver&&
+        aResolver) {
+  nsTArray<mozilla::dom::SSCacheCopy> data;
+  auto resolve = MakeScopeExit([&]() { aResolver(std::move(data)); });
+
+  if (!sManagers) {
+    return true;
+  }
+
+  RefPtr<BackgroundSessionStorageManager> manager =
+      sManagers->Get(aTopContextId);
+  if (!manager) {
+    return true;
+  }
+
+  if (aCancelSessionStoreTimer) {
+    manager->CancelSessionStoreUpdate();
+  }
+
+  manager->GetData(aSizeLimit, data);
 
   return true;
 }
@@ -257,16 +318,12 @@ nsresult SessionStorageManager::LoadData(nsIPrincipal& aPrincipal,
   RefPtr<SessionStorageCacheChild> cacheActor =
       EnsureCache(originAttributes, originKey, aCache);
 
-  nsTArray<SSSetItemInfo> defaultData;
-  nsTArray<SSSetItemInfo> sessionData;
-  if (!cacheActor->SendLoad(&defaultData, &sessionData)) {
+  nsTArray<SSSetItemInfo> data;
+  if (!cacheActor->SendLoad(&data)) {
     return NS_ERROR_FAILURE;
   }
 
-  originRecord->mCache->DeserializeData(SessionStorageCache::eDefaultSetType,
-                                        defaultData);
-  originRecord->mCache->DeserializeData(SessionStorageCache::eSessionSetType,
-                                        sessionData);
+  originRecord->mCache->DeserializeData(data);
 
   originRecord->mLoaded.Flip();
   aCache.SetLoadedOrCloned();
@@ -297,22 +354,18 @@ void SessionStorageManager::CheckpointDataInternal(
   AssertIsOnMainThread();
   MOZ_ASSERT(mActor);
 
-  nsTArray<SSWriteInfo> defaultWriteInfos =
-      aCache.SerializeWriteInfos(SessionStorageCache::eDefaultSetType);
-  nsTArray<SSWriteInfo> sessionWriteInfos =
-      aCache.SerializeWriteInfos(SessionStorageCache::eSessionSetType);
+  nsTArray<SSWriteInfo> writeInfos = aCache.SerializeWriteInfos();
 
-  if (defaultWriteInfos.IsEmpty() && sessionWriteInfos.IsEmpty()) {
+  if (writeInfos.IsEmpty()) {
     return;
   }
 
   RefPtr<SessionStorageCacheChild> cacheActor =
       EnsureCache(aOriginAttrs, aOriginKey, aCache);
 
-  Unused << cacheActor->SendCheckpoint(defaultWriteInfos, sessionWriteInfos);
+  Unused << cacheActor->SendCheckpoint(writeInfos);
 
-  aCache.ResetWriteInfos(SessionStorageCache::eDefaultSetType);
-  aCache.ResetWriteInfos(SessionStorageCache::eSessionSetType);
+  aCache.ResetWriteInfos();
 }
 
 NS_IMETHODIMP
@@ -483,8 +536,7 @@ SessionStorageManager::CheckStorage(nsIPrincipal* aPrincipal, Storage* aStorage,
 }
 
 void SessionStorageManager::ClearStorages(
-    ClearStorageType aType, const OriginAttributesPattern& aPattern,
-    const nsACString& aOriginScope) {
+    const OriginAttributesPattern& aPattern, const nsACString& aOriginScope) {
   if (CanLoadData()) {
     nsresult rv = EnsureManager();
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -506,13 +558,7 @@ void SessionStorageManager::ClearStorages(
       if (aOriginScope.IsEmpty() ||
           StringBeginsWith(originKeyEntry.GetKey(), aOriginScope)) {
         const auto cache = originKeyEntry.GetData()->mCache;
-        if (aType == eAll) {
-          cache->Clear(SessionStorageCache::eDefaultSetType, false);
-          cache->Clear(SessionStorageCache::eSessionSetType, false);
-        } else {
-          MOZ_ASSERT(aType == eSessionOnly);
-          cache->Clear(SessionStorageCache::eSessionSetType, false);
-        }
+        cache->Clear(false);
 
         if (CanLoadData()) {
           MOZ_ASSERT(ActorExists());
@@ -535,27 +581,27 @@ nsresult SessionStorageManager::Observe(
 
   // Clear everything, caches + database
   if (!strcmp(aTopic, "cookie-cleared")) {
-    ClearStorages(eAll, pattern, ""_ns);
+    ClearStorages(pattern, ""_ns);
     return NS_OK;
   }
 
   // Clear from caches everything that has been stored
   // while in session-only mode
   if (!strcmp(aTopic, "session-only-cleared")) {
-    ClearStorages(eSessionOnly, pattern, aOriginScope);
+    ClearStorages(pattern, aOriginScope);
     return NS_OK;
   }
 
   // Clear everything (including so and pb data) from caches and database
   // for the given domain and subdomains.
   if (!strcmp(aTopic, "browser:purge-sessionStorage")) {
-    ClearStorages(eAll, pattern, aOriginScope);
+    ClearStorages(pattern, aOriginScope);
     return NS_OK;
   }
 
   if (!strcmp(aTopic, "profile-change")) {
     // For case caches are still referenced - clear them completely
-    ClearStorages(eAll, pattern, ""_ns);
+    ClearStorages(pattern, ""_ns);
     mOATable.Clear();
     return NS_OK;
   }
@@ -602,6 +648,25 @@ void BackgroundSessionStorageManager::PropagateManager(
 }
 
 // static
+void BackgroundSessionStorageManager::LoadData(
+    uint64_t aTopContextId,
+    const nsTArray<mozilla::dom::SSCacheCopy>& aCacheCopyList) {
+  MOZ_ASSERT(XRE_IsParentProcess());
+  AssertIsOnMainThread();
+
+  ::mozilla::ipc::PBackgroundChild* backgroundActor =
+      ::mozilla::ipc::BackgroundChild::GetOrCreateForCurrentThread();
+  if (NS_WARN_IF(!backgroundActor)) {
+    return;
+  }
+
+  if (NS_WARN_IF(!backgroundActor->SendLoadSessionStorageManagerData(
+          aTopContextId, aCacheCopyList))) {
+    return;
+  }
+}
+
+// static
 BackgroundSessionStorageManager* BackgroundSessionStorageManager::GetOrCreate(
     uint64_t aTopContextId) {
   MOZ_ASSERT(XRE_IsParentProcess());
@@ -631,12 +696,17 @@ BackgroundSessionStorageManager* BackgroundSessionStorageManager::GetOrCreate(
   }
 
   return sManagers
-      ->LookupOrInsertWith(aTopContextId,
-                           [] { return new BackgroundSessionStorageManager(); })
+      ->LookupOrInsertWith(
+          aTopContextId,
+          [aTopContextId] {
+            return new BackgroundSessionStorageManager(aTopContextId);
+          })
       .get();
 }
 
-BackgroundSessionStorageManager::BackgroundSessionStorageManager() {
+BackgroundSessionStorageManager::BackgroundSessionStorageManager(
+    uint64_t aBrowsingContextId)
+    : mCurrentBrowsingContextId(aBrowsingContextId) {
   MOZ_ASSERT(XRE_IsParentProcess());
   ::mozilla::ipc::AssertIsOnBackgroundThread();
 }
@@ -645,8 +715,7 @@ BackgroundSessionStorageManager::~BackgroundSessionStorageManager() = default;
 
 void BackgroundSessionStorageManager::CopyDataToContentProcess(
     const nsACString& aOriginAttrs, const nsACString& aOriginKey,
-    nsTArray<SSSetItemInfo>& aDefaultData,
-    nsTArray<SSSetItemInfo>& aSessionData) {
+    nsTArray<SSSetItemInfo>& aData) {
   MOZ_ASSERT(XRE_IsParentProcess());
   ::mozilla::ipc::AssertIsOnBackgroundThread();
 
@@ -656,16 +725,57 @@ void BackgroundSessionStorageManager::CopyDataToContentProcess(
     return;
   }
 
-  aDefaultData =
-      originRecord->mCache->SerializeData(SessionStorageCache::eDefaultSetType);
-  aSessionData =
-      originRecord->mCache->SerializeData(SessionStorageCache::eSessionSetType);
+  aData = originRecord->mCache->SerializeData();
+}
+
+/* static */
+RefPtr<BackgroundSessionStorageManager::DataPromise>
+BackgroundSessionStorageManager::GetData(BrowsingContext* aContext,
+                                         uint32_t aSizeLimit,
+                                         bool aClearSessionStoreTimer) {
+  MOZ_ASSERT(XRE_IsParentProcess());
+  MOZ_ASSERT(aContext->IsTop());
+
+  AssertIsOnMainThread();
+
+  ::mozilla::ipc::PBackgroundChild* backgroundActor =
+      ::mozilla::ipc::BackgroundChild::GetOrCreateForCurrentThread();
+  if (NS_WARN_IF(!backgroundActor)) {
+    return DataPromise::CreateAndReject(
+        ::mozilla::ipc::ResponseRejectReason::SendError, __func__);
+  }
+
+  return backgroundActor->SendGetSessionStorageManagerData(
+      aContext->Id(), aSizeLimit, aClearSessionStoreTimer);
+}
+
+void BackgroundSessionStorageManager::GetData(
+    uint32_t aSizeLimit, nsTArray<SSCacheCopy>& aCacheCopyList) {
+  for (auto attributesIter = mOATable.ConstIter(); !attributesIter.Done();
+       attributesIter.Next()) {
+    for (auto originIter = attributesIter.UserData()->ConstIter();
+         !originIter.Done(); originIter.Next()) {
+      const auto& cache = originIter.UserData()->mCache;
+      if (cache->GetOriginQuotaUsage() > aSizeLimit) {
+        continue;
+      }
+
+      nsTArray<SSSetItemInfo> data = cache->SerializeData();
+      if (data.IsEmpty()) {
+        continue;
+      }
+
+      SSCacheCopy& cacheCopy = *aCacheCopyList.AppendElement();
+      cacheCopy.originKey() = originIter.Key();
+      cacheCopy.originAttributes() = attributesIter.Key();
+      cacheCopy.data().SwapElements(data);
+    }
+  }
 }
 
 void BackgroundSessionStorageManager::UpdateData(
     const nsACString& aOriginAttrs, const nsACString& aOriginKey,
-    const nsTArray<SSWriteInfo>& aDefaultWriteInfos,
-    const nsTArray<SSWriteInfo>& aSessionWriteInfos) {
+    const nsTArray<SSWriteInfo>& aWriteInfos) {
   MOZ_ASSERT(XRE_IsParentProcess());
   ::mozilla::ipc::AssertIsOnBackgroundThread();
 
@@ -673,10 +783,79 @@ void BackgroundSessionStorageManager::UpdateData(
       GetOriginRecord(aOriginAttrs, aOriginKey, true, nullptr);
   MOZ_ASSERT(originRecord);
 
-  originRecord->mCache->DeserializeWriteInfos(
-      SessionStorageCache::eDefaultSetType, aDefaultWriteInfos);
-  originRecord->mCache->DeserializeWriteInfos(
-      SessionStorageCache::eSessionSetType, aSessionWriteInfos);
+  MaybeScheduleSessionStoreUpdate();
+
+  originRecord->mCache->DeserializeWriteInfos(aWriteInfos);
+}
+
+void BackgroundSessionStorageManager::UpdateData(
+    const nsACString& aOriginAttrs, const nsACString& aOriginKey,
+    const nsTArray<SSSetItemInfo>& aData) {
+  MOZ_ASSERT(XRE_IsParentProcess());
+  ::mozilla::ipc::AssertIsOnBackgroundThread();
+
+  auto* const originRecord =
+      GetOriginRecord(aOriginAttrs, aOriginKey, true, nullptr);
+  MOZ_ASSERT(originRecord);
+
+  originRecord->mCache->DeserializeData(aData);
+}
+
+void BackgroundSessionStorageManager::SetCurrentBrowsingContextId(
+    uint64_t aBrowsingContextId) {
+  MOZ_DIAGNOSTIC_ASSERT(aBrowsingContextId != mCurrentBrowsingContextId);
+  mCurrentBrowsingContextId = aBrowsingContextId;
+}
+
+void BackgroundSessionStorageManager::MaybeScheduleSessionStoreUpdate() {
+  if (mSessionStoreCallbackTimer) {
+    return;
+  }
+
+  if (StaticPrefs::browser_sessionstore_debug_no_auto_updates()) {
+    DispatchSessionStoreUpdate();
+    return;
+  }
+
+  auto result = NS_NewTimerWithFuncCallback(
+      [](nsITimer*, void* aClosure) {
+        auto* mgr = static_cast<BackgroundSessionStorageManager*>(aClosure);
+        mgr->DispatchSessionStoreUpdate();
+      },
+      this, StaticPrefs::browser_sessionstore_interval(),
+      nsITimer::TYPE_ONE_SHOT,
+      "BackgroundSessionStorageManager::DispatchSessionStoreUpdate");
+
+  if (result.isErr()) {
+    return;
+  }
+
+  mSessionStoreCallbackTimer = result.unwrap();
+}
+
+void BackgroundSessionStorageManager::MaybeDispatchSessionStoreUpdate() {
+  if (mSessionStoreCallbackTimer) {
+    BackgroundSessionStorageManager::DispatchSessionStoreUpdate();
+  }
+}
+
+void BackgroundSessionStorageManager::DispatchSessionStoreUpdate() {
+  ::mozilla::ipc::AssertIsOnBackgroundThread();
+  NS_DispatchToMainThread(NS_NewRunnableFunction(
+      "CanonicalBrowsingContext::UpdateSessionStore",
+      [targetBrowsingContextId = mCurrentBrowsingContextId]() {
+        CanonicalBrowsingContext::UpdateSessionStoreForStorage(
+            targetBrowsingContextId);
+      }));
+
+  CancelSessionStoreUpdate();
+}
+
+void BackgroundSessionStorageManager::CancelSessionStoreUpdate() {
+  if (mSessionStoreCallbackTimer) {
+    mSessionStoreCallbackTimer->Cancel();
+    mSessionStoreCallbackTimer = nullptr;
+  }
 }
 
 }  // namespace dom

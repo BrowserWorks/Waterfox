@@ -47,46 +47,11 @@ using namespace dom;
     return EditActionCanceled(NS_OK);                              \
   }
 
-nsresult TextEditor::InitEditorContentAndSelection() {
-  MOZ_ASSERT(IsEditActionDataAvailable());
-
-  nsresult rv = MaybeCreatePaddingBRElementForEmptyEditor();
-  if (NS_FAILED(rv)) {
-    NS_WARNING(
-        "EditorBase::MaybeCreatePaddingBRElementForEmptyEditor() failed");
-    return rv;
-  }
-
-  // If the selection hasn't been set up yet, set it up collapsed to the end of
-  // our editable content.
-  // XXX I think that this shouldn't do it in `HTMLEditor` because it maybe
-  //     removed by the web app and if they call `Selection::AddRange()`,
-  //     it may cause multiple selection ranges.
-  if (!SelectionRef().RangeCount()) {
-    nsresult rv = CollapseSelectionToEnd();
-    if (NS_FAILED(rv)) {
-      NS_WARNING("EditorBase::CollapseSelectionToEnd() failed");
-      return rv;
-    }
-  }
-
-  if (IsPlaintextEditor() && !IsSingleLineEditor()) {
-    nsresult rv = EnsurePaddingBRElementInMultilineEditor();
-    if (NS_FAILED(rv)) {
-      NS_WARNING(
-          "TextEditor::EnsurePaddingBRElementInMultilineEditor() failed");
-      return rv;
-    }
-  }
-
-  return NS_OK;
-}
-
 void TextEditor::OnStartToHandleTopLevelEditSubAction(
     EditSubAction aTopLevelEditSubAction,
     nsIEditor::EDirection aDirectionOfTopLevelEditSubAction, ErrorResult& aRv) {
   MOZ_ASSERT(IsEditActionDataAvailable());
-  MOZ_ASSERT(!AsHTMLEditor());
+  MOZ_ASSERT(IsTextEditor());
   MOZ_ASSERT(!aRv.Failed());
 
   EditorBase::OnStartToHandleTopLevelEditSubAction(
@@ -134,7 +99,7 @@ void TextEditor::OnStartToHandleTopLevelEditSubAction(
 
 nsresult TextEditor::OnEndHandlingTopLevelEditSubAction() {
   MOZ_ASSERT(IsTopLevelEditSubActionDataAvailable());
-  MOZ_ASSERT(!AsHTMLEditor());
+  MOZ_ASSERT(IsTextEditor());
 
   nsresult rv;
   while (true) {
@@ -159,7 +124,7 @@ nsresult TextEditor::OnEndHandlingTopLevelEditSubAction() {
     if (!IsSingleLineEditor() &&
         NS_FAILED(rv = EnsurePaddingBRElementInMultilineEditor())) {
       NS_WARNING(
-          "TextEditor::EnsurePaddingBRElementInMultilineEditor() failed");
+          "EditorBase::EnsurePaddingBRElementInMultilineEditor() failed");
       break;
     }
 
@@ -614,8 +579,7 @@ EditActionResult TextEditor::HandleInsertText(
 EditActionResult TextEditor::SetTextWithoutTransaction(
     const nsAString& aValue) {
   MOZ_ASSERT(IsEditActionDataAvailable());
-  MOZ_ASSERT(!AsHTMLEditor());
-  MOZ_ASSERT(IsPlaintextEditor());
+  MOZ_ASSERT(IsTextEditor());
   MOZ_ASSERT(!IsIMEComposing());
   MOZ_ASSERT(!IsUndoRedoEnabled());
   MOZ_ASSERT(GetEditAction() != EditAction::eReplaceText);
@@ -829,23 +793,10 @@ EditActionResult TextEditor::HandleDeleteSelectionInternal(
   return EditActionHandled(rv);
 }
 
-EditActionResult TextEditor::ComputeValueFromTextNodeAndPaddingBRElement(
+EditActionResult TextEditor::ComputeValueFromTextNodeAndBRElement(
     nsAString& aValue) const {
   MOZ_ASSERT(IsEditActionDataAvailable());
-
-  // If there is a padding <br> element, there's no content.  So output empty
-  // string.
-  if (mPaddingBRElementForEmptyEditor) {
-    aValue.Truncate();
-    return EditActionHandled();
-  }
-
-  // If it's neither <input type="text"> nor <textarea>, e.g., an HTML editor
-  // which is in plaintext mode (e.g., plaintext email composer on Thunderbird),
-  // it should be handled by the expensive path.
-  if (AsHTMLEditor()) {
-    return EditActionIgnored();
-  }
+  MOZ_ASSERT(!IsHTMLEditor());
 
   Element* anonymousDivElement = GetRoot();
   if (!anonymousDivElement) {
@@ -855,7 +806,8 @@ EditActionResult TextEditor::ComputeValueFromTextNodeAndPaddingBRElement(
   }
 
   nsIContent* textNodeOrPaddingBRElement = anonymousDivElement->GetFirstChild();
-  if (!textNodeOrPaddingBRElement) {
+  if (!textNodeOrPaddingBRElement ||
+      textNodeOrPaddingBRElement == mPaddingBRElementForEmptyEditor) {
     aValue.Truncate();
     return EditActionHandled();
   }
@@ -899,55 +851,6 @@ EditActionResult TextEditor::ComputeValueFromTextNodeAndPaddingBRElement(
   // Otherwise, the text data is the value.
   textNode->GetData(aValue);
   return EditActionHandled();
-}
-
-nsresult TextEditor::EnsurePaddingBRElementInMultilineEditor() {
-  MOZ_ASSERT(IsEditActionDataAvailable());
-  MOZ_ASSERT(IsPlaintextEditor());
-  MOZ_ASSERT(!IsSingleLineEditor());
-
-  Element* anonymousDivElement = GetRoot();
-  if (NS_WARN_IF(!anonymousDivElement)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Assuming EditorBase::MaybeCreatePaddingBRElementForEmptyEditor() has been
-  // called first.
-  // XXX This assumption is wrong.  This method may be called alone.  Actually,
-  //     we see this warning in mochitest log.  So, we should fix this bug
-  //     later.
-  if (NS_WARN_IF(!anonymousDivElement->GetLastChild())) {
-    return NS_ERROR_FAILURE;
-  }
-
-  RefPtr<HTMLBRElement> brElement =
-      HTMLBRElement::FromNode(anonymousDivElement->GetLastChild());
-  if (!brElement) {
-    AutoTransactionsConserveSelection dontChangeMySelection(*this);
-    EditorDOMPoint endOfAnonymousDiv(
-        EditorDOMPoint::AtEndOf(*anonymousDivElement));
-    CreateElementResult createPaddingBRResult =
-        InsertPaddingBRElementForEmptyLastLineWithTransaction(
-            endOfAnonymousDiv);
-    NS_WARNING_ASSERTION(
-        createPaddingBRResult.Succeeded(),
-        "EditorBase::InsertPaddingBRElementForEmptyLastLineWithTransaction() "
-        "failed");
-    return createPaddingBRResult.Rv();
-  }
-
-  // Check to see if the trailing BR is a former padding <br> element for empty
-  // editor - this will have stuck around if we previously morphed a trailing
-  // node into a padding <br> element.
-  if (!brElement->IsPaddingForEmptyEditor()) {
-    return NS_OK;
-  }
-
-  // Morph it back to a padding <br> element for empty last line.
-  brElement->UnsetFlags(NS_PADDING_FOR_EMPTY_EDITOR);
-  brElement->SetFlags(NS_PADDING_FOR_EMPTY_LAST_LINE);
-
-  return NS_OK;
 }
 
 EditActionResult TextEditor::MaybeTruncateInsertionStringForMaxLength(

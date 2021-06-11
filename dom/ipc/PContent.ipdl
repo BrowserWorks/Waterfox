@@ -53,7 +53,6 @@ include PTabContext;
 include ProtocolTypes;
 include PBackgroundSharedTypes;
 include PContentPermission;
-include ServiceWorkerConfiguration;
 include GraphicsMessages;
 include MemoryReportTypes;
 include ClientIPCTypes;
@@ -582,9 +581,14 @@ child:
                          OverrideMapping[] overrides, nsCString locale, bool reset);
     async RegisterChromeItem(ChromeRegistryItem item);
 
+    async ClearImageCacheFromPrincipal(nsIPrincipal aPrincipal);
+
+    async ClearImageCacheFromBaseDomain(nsCString aBaseDomain);
+
     async ClearImageCache(bool privateLoader, bool chrome);
 
-    async ClearStyleSheetCache(nsIPrincipal? aForPrincipal);
+    async ClearStyleSheetCache(nsIPrincipal? aForPrincipal,
+                               nsCString? aBaseDomain);
 
     async SetOffline(bool offline);
     async SetConnectivity(bool connectivity);
@@ -685,11 +689,6 @@ child:
      * Send the remote type associated with the content process.
      */
     async RemoteType(nsCString aRemoteType);
-
-    /**
-     * Send ServiceWorkerRegistrationData to child process.
-     */
-    async InitServiceWorkers(ServiceWorkerConfiguration aConfig);
 
     /**
      * Send BlobURLRegistrationData to child process.
@@ -898,6 +897,14 @@ child:
     // Begin subscribing to a new BrowsingContextGroup, sending down the current
     // value for every individual BrowsingContext.
     async RegisterBrowsingContextGroup(uint64_t aGroupId, SyncedContextInitializer[] aInits);
+
+    // The BrowsingContextGroup has been destroyed in the parent process. The
+    // content process won't destroy the group until it receives this message or
+    // during shutdown.
+    //
+    // When the content process receives this message, all contexts in the group
+    // should have already been destroyed.
+    async DestroyBrowsingContextGroup(uint64_t aGroupId);
 
 #if defined(MOZ_SANDBOX) && defined(MOZ_DEBUG) && defined(ENABLE_TESTS)
     // Initialize top-level actor for testing content process sandbox.
@@ -1534,7 +1541,7 @@ parent:
      * Adds a certificate exception for the given hostname and port.
      */
     async AddCertException(nsCString aSerializedCert, uint32_t aFlags,
-                           nsCString aHostName, int32_t aPort,
+                           nsCString aHostName, int32_t aPort, OriginAttributes aOriginAttributes,
                            bool aIsTemporary)
           returns (nsresult success);
 

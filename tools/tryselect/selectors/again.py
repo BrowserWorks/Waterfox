@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function, unicode_literals
 
 import json
 import os
@@ -18,10 +17,11 @@ class AgainParser(BaseTryParser):
             ["--index"],
             {
                 "default": 0,
-                "type": int,
+                "const": "list",
+                "nargs": "?",
                 "help": "Index of entry in the history to re-push, "
                 "where '0' is the most recent (default 0). "
-                "Use --list to display indices.",
+                "Use --index without a value to display indices.",
             },
         ],
         [
@@ -59,6 +59,15 @@ class AgainParser(BaseTryParser):
 def run(
     index=0, purge=False, list_configs=False, list_tasks=0, message="{msg}", **pushargs
 ):
+    if index == "list":
+        list_configs = True
+    else:
+        try:
+            index = int(index)
+        except ValueError:
+            print("error: '--index' must be an integer")
+            return 1
+
     if purge:
         os.remove(history_path)
         return
@@ -67,7 +76,7 @@ def run(
         print("error: history file not found: {}".format(history_path))
         return 1
 
-    with open(history_path, "r") as fh:
+    with open(history_path) as fh:
         history = fh.readlines()
 
     if list_configs or list_tasks > 0:

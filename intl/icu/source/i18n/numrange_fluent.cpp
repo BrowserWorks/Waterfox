@@ -12,6 +12,7 @@
 #include "numrange_impl.h"
 #include "util.h"
 #include "number_utypes.h"
+#include "number_decnum.h"
 
 using namespace icu;
 using namespace icu::number;
@@ -239,28 +240,48 @@ LocalizedNumberRangeFormatter::LocalizedNumberRangeFormatter(NFS<LNF>&& src) U_N
         : NFS<LNF>(std::move(src)) {
     // Steal the compiled formatter
     LNF&& _src = static_cast<LNF&&>(src);
+#ifndef __wasi__
     auto* stolen = _src.fAtomicFormatter.exchange(nullptr);
     delete fAtomicFormatter.exchange(stolen);
+#else
+    delete fAtomicFormatter;
+    fAtomicFormatter = _src.fAtomicFormatter;
+    _src.fAtomicFormatter = nullptr;
+#endif
 }
 
 LocalizedNumberRangeFormatter& LocalizedNumberRangeFormatter::operator=(const LNF& other) {
     NFS<LNF>::operator=(static_cast<const NFS<LNF>&>(other));
     // Do not steal; just clear
+#ifndef __wasi__
     delete fAtomicFormatter.exchange(nullptr);
+#else
+    delete fAtomicFormatter;
+#endif
     return *this;
 }
 
 LocalizedNumberRangeFormatter& LocalizedNumberRangeFormatter::operator=(LNF&& src) U_NOEXCEPT {
     NFS<LNF>::operator=(static_cast<NFS<LNF>&&>(src));
     // Steal the compiled formatter
+#ifndef __wasi__
     auto* stolen = src.fAtomicFormatter.exchange(nullptr);
     delete fAtomicFormatter.exchange(stolen);
+#else
+    delete fAtomicFormatter;
+    fAtomicFormatter = src.fAtomicFormatter;
+    src.fAtomicFormatter = nullptr;
+#endif
     return *this;
 }
 
 
 LocalizedNumberRangeFormatter::~LocalizedNumberRangeFormatter() {
+#ifndef __wasi__
     delete fAtomicFormatter.exchange(nullptr);
+#else
+    delete fAtomicFormatter;
+#endif
 }
 
 LocalizedNumberRangeFormatter::LocalizedNumberRangeFormatter(const RangeMacroProps& macros, const Locale& locale) {
@@ -344,7 +365,11 @@ LocalizedNumberRangeFormatter::getFormatter(UErrorCode& status) const {
     }
 
     // First try to get the pre-computed formatter
+#ifndef __wasi__
     auto* ptr = fAtomicFormatter.load();
+#else
+    auto* ptr = fAtomicFormatter;
+#endif
     if (ptr != nullptr) {
         return ptr;
     }
@@ -363,6 +388,7 @@ LocalizedNumberRangeFormatter::getFormatter(UErrorCode& status) const {
     // it is set to what is actually stored in the atomic
     // if another thread beat us to computing the formatter object.
     auto* nonConstThis = const_cast<LocalizedNumberRangeFormatter*>(this);
+#ifndef __wasi__
     if (!nonConstThis->fAtomicFormatter.compare_exchange_strong(ptr, temp)) {
         // Another thread beat us to computing the formatter
         delete temp;
@@ -371,32 +397,12 @@ LocalizedNumberRangeFormatter::getFormatter(UErrorCode& status) const {
         // Our copy of the formatter got stored in the atomic
         return temp;
     }
+#else
+    nonConstThis->fAtomicFormatter = temp;
+    return temp;
+#endif
 
 }
-
-
-UPRV_FORMATTED_VALUE_SUBCLASS_AUTO_IMPL(FormattedNumberRange)
-
-#define UPRV_NOARG
-
-UnicodeString FormattedNumberRange::getFirstDecimal(UErrorCode& status) const {
-    UPRV_FORMATTED_VALUE_METHOD_GUARD(ICU_Utility::makeBogusString())
-    return fData->quantity1.toScientificString();
-}
-
-UnicodeString FormattedNumberRange::getSecondDecimal(UErrorCode& status) const {
-    UPRV_FORMATTED_VALUE_METHOD_GUARD(ICU_Utility::makeBogusString())
-    return fData->quantity2.toScientificString();
-}
-
-UNumberRangeIdentityResult FormattedNumberRange::getIdentityResult(UErrorCode& status) const {
-    UPRV_FORMATTED_VALUE_METHOD_GUARD(UNUM_IDENTITY_RESULT_NOT_EQUAL)
-    return fData->identityResult;
-}
-
-
-UFormattedNumberRangeData::~UFormattedNumberRangeData() = default;
-
 
 
 #endif /* #if !UCONFIG_NO_FORMATTING */

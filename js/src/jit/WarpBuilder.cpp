@@ -966,7 +966,7 @@ bool WarpBuilder::build_SetArg(BytecodeLocation loc) {
   // must go through the arguments object.
   MDefinition* argsObj = current->argumentsObject();
   current->add(MPostWriteBarrier::New(alloc(), argsObj, val));
-  auto* ins = MSetArgumentsObjectArg::New(alloc(), argsObj, arg, val);
+  auto* ins = MSetArgumentsObjectArg::New(alloc(), argsObj, val, arg);
   current->add(ins);
   return resumeAfter(ins, loc);
 }
@@ -1328,6 +1328,18 @@ bool WarpBuilder::build_LoopHead(BytecodeLocation loc) {
 }
 
 bool WarpBuilder::buildTestOp(BytecodeLocation loc) {
+  MDefinition* originalValue = current->peek(-1);
+
+  if (auto* cacheIRSnapshot = getOpSnapshot<WarpCacheIR>(loc)) {
+    // If we have CacheIR, we can use it to refine the input. Note that
+    // the transpiler doesn't generate any control instructions. Instead,
+    // we fall through and generate them below.
+    MDefinition* value = current->pop();
+    if (!TranspileCacheIRToMIR(this, loc, cacheIRSnapshot, {value})) {
+      return false;
+    }
+  }
+
   if (loc.isBackedge()) {
     return buildTestBackedge(loc);
   }
@@ -1340,12 +1352,18 @@ bool WarpBuilder::buildTestOp(BytecodeLocation loc) {
     std::swap(target1, target2);
   }
 
-  // JSOp::And and JSOp::Or inspect the top stack value but don't pop it.
-  // Also note that JSOp::Case must pop a second value on the true-branch (the
-  // input to the switch-statement). This conditional pop happens in
+  MDefinition* value = current->pop();
+
+  // JSOp::And and JSOp::Or leave the top stack value unchanged.  The
+  // top stack value may have been converted to bool by a transpiled
+  // ToBool IC, so we push the original value. Also note that
+  // JSOp::Case must pop a second value on the true-branch (the input
+  // to the switch-statement). This conditional pop happens in
   // build_JumpTarget.
   bool mustKeepCondition = (op == JSOp::And || op == JSOp::Or);
-  MDefinition* value = mustKeepCondition ? current->peek(-1) : current->pop();
+  if (mustKeepCondition) {
+    current->push(originalValue);
+  }
 
   // If this op always branches to the same location we treat this as a
   // JSOp::Goto.
@@ -1363,6 +1381,10 @@ bool WarpBuilder::buildTestOp(BytecodeLocation loc) {
   }
   if (!addPendingEdge(PendingEdge::NewTestFalse(current, op), target2)) {
     return false;
+  }
+
+  if (const auto* typesSnapshot = getOpSnapshot<WarpPolymorphicTypes>(loc)) {
+    test->setObservedTypes(typesSnapshot->list());
   }
 
   setTerminatedBlock();
@@ -1389,8 +1411,13 @@ bool WarpBuilder::buildTestBackedge(BytecodeLocation loc) {
     return false;
   }
 
-  pred->end(MTest::New(alloc(), value, /* ifTrue = */ current,
-                       /* ifFalse = */ nullptr));
+  MTest* test = MTest::New(alloc(), value, /* ifTrue = */ current,
+                           /* ifFalse = */ nullptr);
+  pred->end(test);
+
+  if (const auto* typesSnapshot = getOpSnapshot<WarpPolymorphicTypes>(loc)) {
+    test->setObservedTypes(typesSnapshot->list());
+  }
 
   if (!addPendingEdge(PendingEdge::NewTestFalse(pred, op), successor)) {
     return false;
@@ -1499,10 +1526,24 @@ bool WarpBuilder::build_DynamicImport(BytecodeLocation loc) {
 }
 
 bool WarpBuilder::build_Not(BytecodeLocation loc) {
+  if (auto* cacheIRSnapshot = getOpSnapshot<WarpCacheIR>(loc)) {
+    // If we have CacheIR, we can use it to refine the input before
+    // emitting the MNot.
+    MDefinition* value = current->pop();
+    if (!TranspileCacheIRToMIR(this, loc, cacheIRSnapshot, {value})) {
+      return false;
+    }
+  }
+
   MDefinition* value = current->pop();
   MNot* ins = MNot::New(alloc(), value);
   current->add(ins);
   current->push(ins);
+
+  if (const auto* typesSnapshot = getOpSnapshot<WarpPolymorphicTypes>(loc)) {
+    ins->setObservedTypes(typesSnapshot->list());
+  }
+
   return true;
 }
 
@@ -1586,6 +1627,15 @@ bool WarpBuilder::build_ToPropertyKey(BytecodeLocation loc) {
 
 bool WarpBuilder::build_Typeof(BytecodeLocation loc) {
   MDefinition* input = current->pop();
+
+  if (const auto* typesSnapshot = getOpSnapshot<WarpPolymorphicTypes>(loc)) {
+    auto* ins = MTypeOf::New(alloc(), input);
+    ins->setObservedTypes(typesSnapshot->list());
+    current->add(ins);
+    current->push(ins);
+    return true;
+  }
+
   return buildIC(loc, CacheKind::TypeOf, {input});
 }
 
@@ -2475,7 +2525,7 @@ bool WarpBuilder::buildInitPropGetterSetterOp(BytecodeLocation loc) {
   MDefinition* value = current->pop();
   MDefinition* obj = current->peek(-1);
 
-  auto* ins = MInitPropGetterSetter::New(alloc(), obj, name, value);
+  auto* ins = MInitPropGetterSetter::New(alloc(), obj, value, name);
   current->add(ins);
   return resumeAfter(ins, loc);
 }
@@ -2834,24 +2884,6 @@ bool WarpBuilder::build_Debugger(BytecodeLocation loc) {
   MDebugger* debugger = MDebugger::New(alloc());
   current->add(debugger);
   return resumeAfter(debugger, loc);
-}
-
-bool WarpBuilder::build_InstrumentationActive(BytecodeLocation) {
-  bool active = scriptSnapshot()->instrumentationActive();
-  pushConstant(BooleanValue(active));
-  return true;
-}
-
-bool WarpBuilder::build_InstrumentationCallback(BytecodeLocation) {
-  JSObject* callback = scriptSnapshot()->instrumentationCallback();
-  pushConstant(ObjectValue(*callback));
-  return true;
-}
-
-bool WarpBuilder::build_InstrumentationScriptId(BytecodeLocation) {
-  int32_t scriptId = scriptSnapshot()->instrumentationScriptId();
-  pushConstant(Int32Value(scriptId));
-  return true;
 }
 
 bool WarpBuilder::build_TableSwitch(BytecodeLocation loc) {

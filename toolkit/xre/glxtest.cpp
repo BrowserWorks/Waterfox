@@ -538,6 +538,8 @@ static bool get_gles_status(EGLDisplay dpy,
         }
         free(renderDeviceName);
 #endif
+      } else {
+        record_value("MESA_ACCELERATED\nFALSE\n");
       }
     }
   }
@@ -833,19 +835,24 @@ static void get_glx_status(int* gotGlxInfo, int* gotDriDriver) {
 }
 
 static bool x11_egltest(int pci_count) {
-  if (!get_egl_status(nullptr, true, pci_count != 1)) {
-    return false;
-  }
-
   Display* dpy = XOpenDisplay(nullptr);
   if (!dpy) {
     return false;
   }
   XSetErrorHandler(x_error_handler);
 
+  // On at least amdgpu open source driver, eglInitialize fails unless
+  // a valid XDisplay pointer is passed as the native display.
+  if (!get_egl_status(dpy, true, pci_count != 1)) {
+    return false;
+  }
+
   get_x11_screen_info(dpy);
 
-  XCloseDisplay(dpy);
+  // Bug 1715245: Closing the display connection here crashes on NV prop.
+  // drivers. Just leave it open, the process will exit shortly after anyway.
+  // XCloseDisplay(dpy);
+
   record_value("TEST_TYPE\nEGL\n");
   return true;
 }

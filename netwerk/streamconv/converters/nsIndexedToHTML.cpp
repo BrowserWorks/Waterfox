@@ -48,8 +48,6 @@ static void AppendNonAsciiToNCR(const nsAString& in, nsCString& out) {
   }
 }
 
-nsIndexedToHTML::nsIndexedToHTML() : mExpectAbsLoc(false) {}
-
 nsresult nsIndexedToHTML::Create(nsISupports* aOuter, REFNSIID aIID,
                                  void** aResult) {
   nsresult rv;
@@ -657,8 +655,9 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest* aRequest, nsISupports* aCtxt,
   if (loc.IsEmpty()) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  if (loc.First() == char16_t('.'))
+  if (loc.First() == char16_t('.')) {
     pushBuffer.AppendLiteral(" class=\"hidden-object\"");
+  }
 
   pushBuffer.AppendLiteral(">\n <td sortable-data=\"");
 

@@ -44,6 +44,7 @@ macro_rules! try_opt {
 }
 
 mod android;
+mod browser;
 mod build;
 mod capabilities;
 mod command;
@@ -79,10 +80,7 @@ impl FatalError {
     }
 
     fn help_included(&self) -> bool {
-        match *self {
-            FatalError::Parsing(_) => true,
-            _ => false,
-        }
+        matches!(*self, FatalError::Parsing(_))
     }
 }
 

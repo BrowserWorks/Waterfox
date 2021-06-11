@@ -71,12 +71,6 @@
         ],
       });
 
-      let tabTooltip = document.getElementById("tabbrowser-tab-tooltip");
-      if (gProtonPlacesTooltip) {
-        tabTooltip.setAttribute("position", "after_start");
-        tabTooltip.setAttribute("anchortoclosest", "tab");
-      }
-
       // We take over setting the document title, so remove the l10n id to
       // avoid it being re-translated and overwriting document content if
       // we ever switch languages at runtime. After a language change, the
@@ -826,18 +820,13 @@
       if (!browser._notificationBox) {
         browser._notificationBox = new MozElements.NotificationBox(element => {
           element.setAttribute("notificationside", "top");
-          if (gProton) {
-            element.setAttribute(
-              "name",
-              `tab-notification-box-${this._nextNotificationBoxId++}`
-            );
-            // With Proton enabled all notification boxes are at the top, built into the browser chrome.
-            this.getTabNotificationDeck().append(element);
-            if (browser == this.selectedBrowser) {
-              this._updateVisibleNotificationBox(browser);
-            }
-          } else {
-            this.getBrowserContainer(browser).prepend(element);
+          element.setAttribute(
+            "name",
+            `tab-notification-box-${this._nextNotificationBoxId++}`
+          );
+          this.getTabNotificationDeck().append(element);
+          if (browser == this.selectedBrowser) {
+            this._updateVisibleNotificationBox(browser);
           }
         });
       }
@@ -1112,9 +1101,7 @@
 
       this._appendStatusPanel();
 
-      if (gProton) {
-        this._updateVisibleNotificationBox(newBrowser);
-      }
+      this._updateVisibleNotificationBox(newBrowser);
 
       let oldBrowserPopupsBlocked = oldBrowser.popupBlocker.getBlockedPopupCount();
       let newBrowserPopupsBlocked = newBrowser.popupBlocker.getBlockedPopupCount();
@@ -3108,7 +3095,7 @@
       }
     },
 
-    warnAboutClosingTabs(tabsToClose, aCloseTabs) {
+    warnAboutClosingTabs(tabsToClose, aCloseTabs, aSource) {
       if (tabsToClose <= 1) {
         return true;
       }
@@ -3171,6 +3158,40 @@
         checkboxLabel,
         warnOnClose
       );
+
+      Services.telemetry.setEventRecordingEnabled("close_tab_warning", true);
+      let closeTabEnumKey =
+        Object.entries(this.closingTabsEnum)
+          .find(([k, v]) => v == aCloseTabs)?.[0]
+          ?.toLowerCase() || "some";
+
+      let warnCheckbox = warnOnClose.value ? "checked" : "unchecked";
+      if (!checkboxLabel) {
+        warnCheckbox = "not-present";
+      }
+      let sessionWillBeRestored =
+        Services.prefs.getIntPref("browser.startup.page") == 3 ||
+        Services.prefs.getBoolPref("browser.sessionstore.resume_session_once");
+      let closesWindow = aCloseTabs == this.closingTabsEnum.ALL;
+      Services.telemetry.recordEvent(
+        "close_tab_warning",
+        "shown",
+        closesWindow ? "window" : "tabs",
+        null,
+        {
+          source: aSource || `close-${closeTabEnumKey}-tabs`,
+          button: buttonPressed == 0 ? "close" : "cancel",
+          warn_checkbox: warnCheckbox,
+          closing_tabs: "" + tabsToClose,
+          closing_wins: "" + +closesWindow, // ("1" or "0", depending on the value)
+          // This value doesn't really apply to whether this warning
+          // gets shown, but having pings be consistent (and perhaps
+          // being able to see trends for users with/without sessionrestore)
+          // seems useful:
+          will_restore: sessionWillBeRestored ? "yes" : "no",
+        }
+      );
+
       var reallyClose = buttonPressed == 0;
 
       // don't set the pref unless they press OK and it's false
@@ -3399,7 +3420,8 @@
       ) {
         window.closeWindow(
           true,
-          suppressWarnAboutClosingWindow ? null : window.warnAboutClosingWindow
+          suppressWarnAboutClosingWindow ? null : window.warnAboutClosingWindow,
+          "close-last-tab"
         );
         return;
       }
@@ -3725,7 +3747,8 @@
           // cancels the operation.  We are finished here in both cases.
           this._windowIsClosing = window.closeWindow(
             true,
-            window.warnAboutClosingWindow
+            window.warnAboutClosingWindow,
+            "close-last-tab"
           );
           return false;
         }
@@ -3991,7 +4014,8 @@
       if (aCloseWindow) {
         this._windowIsClosing = closeWindow(
           true,
-          window.warnAboutClosingWindow
+          window.warnAboutClosingWindow,
+          "close-last-tab"
         );
       }
     },
@@ -5342,6 +5366,7 @@
           .replace("#1", pluralCount);
       };
 
+      let alignToTab = true;
       let label;
       const selectedTabs = this.selectedTabs;
       const contextTabInSelection = selectedTabs.includes(tab);
@@ -5349,6 +5374,7 @@
         ? selectedTabs.length
         : 1;
       if (tab.mOverCloseButton) {
+        alignToTab = false;
         label = tab.selected
           ? stringWithShortcut(
               "tabs.closeTabs.tooltip",
@@ -5359,11 +5385,7 @@
               affectedTabsLength,
               gTabBrowserBundle.GetStringFromName("tabs.closeTabs.tooltip")
             ).replace("#1", affectedTabsLength);
-      }
-      // When Picture-in-Picture is open, we repurpose '.tab-icon-sound' as
-      // an inert Picture-in-Picture indicator, so we should display
-      // the default tooltip
-      else if (tab._overPlayingIcon && !tab.pictureinpicture) {
+      } else if (tab._overPlayingIcon) {
         let stringID;
         if (tab.selected) {
           stringID = tab.linkedBrowser.audioMuted
@@ -5388,6 +5410,7 @@
             gTabBrowserBundle.GetStringFromName(stringID)
           ).replace("#1", affectedTabsLength);
         }
+        alignToTab = false;
       } else {
         label = this.getTabTooltip(tab);
       }
@@ -5395,6 +5418,11 @@
       if (!gProtonPlacesTooltip) {
         event.target.setAttribute("label", label);
         return;
+      }
+
+      if (alignToTab) {
+        event.target.setAttribute("position", "after_start");
+        event.target.moveToAnchor(tab, "after_start");
       }
 
       let title = event.target.querySelector(".places-tooltip-title");
@@ -7137,11 +7165,8 @@ var TabContextMenu = {
   updateShareURLMenuItem() {
     // We only support "share URL" on macOS and on Windows 10:
     if (
-      !gProton ||
-      !(
-        AppConstants.platform == "macosx" ||
-        AppConstants.isPlatformAndVersionAtLeast("win", "6.4")
-      )
+      AppConstants.platform != "macosx" &&
+      !AppConstants.isPlatformAndVersionAtLeast("win", "6.4")
     ) {
       return;
     }

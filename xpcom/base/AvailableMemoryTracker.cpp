@@ -7,8 +7,10 @@
 #include "mozilla/AvailableMemoryTracker.h"
 
 #if defined(XP_WIN)
+#  include "mozilla/StaticPrefs_browser.h"
 #  include "mozilla/WindowsVersion.h"
 #  include "nsExceptionHandler.h"
+#  include "nsICrashReporter.h"
 #  include "nsIMemoryReporter.h"
 #  include "nsMemoryPressure.h"
 #  include "memoryapi.h"
@@ -89,6 +91,7 @@ class nsAvailableMemoryWatcher final : public nsIObserver,
   void OnLowMemory(const MutexAutoLock&);
   void OnHighMemory(const MutexAutoLock&);
   bool IsMemoryLow() const;
+  bool IsCommitSpaceLow() const;
   void StartPollingIfUserInteracting();
   void StopPolling();
   void StopPollingIfUserIdle(const MutexAutoLock&);
@@ -106,6 +109,7 @@ class nsAvailableMemoryWatcher final : public nsIObserver,
   bool mPolling;
   bool mInteracting;
   bool mUnderMemoryPressure;
+  bool mSavedReport;
 };
 
 const char* const nsAvailableMemoryWatcher::kObserverTopics[] = {
@@ -123,7 +127,8 @@ nsAvailableMemoryWatcher::nsAvailableMemoryWatcher()
       mWaitHandle(nullptr),
       mPolling(false),
       mInteracting(false),
-      mUnderMemoryPressure(false) {}
+      mUnderMemoryPressure(false),
+      mSavedReport(false) {}
 
 nsresult nsAvailableMemoryWatcher::Init() {
   mTimer = NS_NewTimer();
@@ -147,10 +152,13 @@ nsresult nsAvailableMemoryWatcher::Init() {
 // static
 VOID CALLBACK nsAvailableMemoryWatcher::LowMemoryCallback(PVOID aContext,
                                                           BOOLEAN aIsTimer) {
-  nsAvailableMemoryWatcher* watcher =
-      static_cast<nsAvailableMemoryWatcher*>(aContext);
+  RefPtr<nsAvailableMemoryWatcher> watcher =
+      already_AddRefed<nsAvailableMemoryWatcher>(
+          static_cast<nsAvailableMemoryWatcher*>(aContext));
   if (!aIsTimer) {
     MutexAutoLock lock(watcher->mMutex);
+    ::UnregisterWait(watcher->mWaitHandle);
+    watcher->mWaitHandle = nullptr;
     watcher->OnLowMemory(lock);
   }
 }
@@ -176,7 +184,12 @@ bool nsAvailableMemoryWatcher::RegisterMemoryResourceHandler() {
 
 void nsAvailableMemoryWatcher::UnregisterMemoryResourceHandler() {
   if (mWaitHandle) {
-    Unused << ::UnregisterWait(mWaitHandle);
+    bool res = ::UnregisterWait(mWaitHandle);
+    if (res || ::GetLastError() != ERROR_IO_PENDING) {
+      // We decrement the refcount only when we're sure the LowMemoryCallback()
+      // callback won't be invoked, otherwise the callback will do it
+      this->Release();
+    }
     mWaitHandle = nullptr;
   }
 
@@ -204,9 +217,17 @@ void nsAvailableMemoryWatcher::Shutdown(const MutexAutoLock&) {
 
 bool nsAvailableMemoryWatcher::ListenForLowMemory() {
   if (mLowMemoryHandle && !mWaitHandle) {
-    return ::RegisterWaitForSingleObject(
+    bool res = ::RegisterWaitForSingleObject(
         &mWaitHandle, mLowMemoryHandle, LowMemoryCallback, this, INFINITE,
         WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE);
+    if (res) {
+      // We bump the reference count when registering the callback to keep the
+      // object alive in case of shutdown. Note that the reference count will be
+      // decremented by the callback itself only when it gets called, if it
+      // doesn't we have to decrement it ourselves.
+      this->AddRef();
+    }
+    return res;
   }
 
   return false;
@@ -214,15 +235,38 @@ bool nsAvailableMemoryWatcher::ListenForLowMemory() {
 
 void nsAvailableMemoryWatcher::OnLowMemory(const MutexAutoLock&) {
   mUnderMemoryPressure = true;
-  ::UnregisterWait(mWaitHandle);
-  mWaitHandle = nullptr;
-  RecordLowMemoryEvent();
-  NS_DispatchEventualMemoryPressure(MemPressure_New);
+
+  // On Windows, memory allocations fails when the available commit space is
+  // not sufficient.  It's possible that this callback function is invoked
+  // but there is still commit space enough for the application to continue
+  // to run.  In such a case, there is no strong need to trigger the memory
+  // pressure event.  So we trigger the event only when the available commit
+  // space is low.
+  if (IsCommitSpaceLow()) {
+    if (!mSavedReport) {
+      // SaveMemoryReport needs to be run in the main thread
+      // (See nsMemoryReporterManager::GetReportsForThisProcessExtended)
+      NS_DispatchToMainThread(NS_NewRunnableFunction(
+          "nsAvailableMemoryWatcher::SaveMemoryReport",
+          [self = RefPtr{this}]() {
+            if (nsCOMPtr<nsICrashReporter> cr =
+                    do_GetService("@mozilla.org/toolkit/crash-reporter;1")) {
+              MutexAutoLock lock(self->mMutex);
+              self->mSavedReport = NS_SUCCEEDED(cr->SaveMemoryReport());
+            }
+          }));
+    }
+
+    RecordLowMemoryEvent();
+    NS_DispatchEventualMemoryPressure(MemPressure_New);
+  }
+
   StartPollingIfUserInteracting();
 }
 
 void nsAvailableMemoryWatcher::OnHighMemory(const MutexAutoLock&) {
   mUnderMemoryPressure = false;
+  mSavedReport = false;  // Will save a new report if memory gets low again
   NS_DispatchEventualMemoryPressure(MemPressure_Stopping);
   StopPolling();
   ListenForLowMemory();
@@ -234,6 +278,24 @@ bool nsAvailableMemoryWatcher::IsMemoryLow() const {
     return lowMemory;
   }
   return false;
+}
+
+bool nsAvailableMemoryWatcher::IsCommitSpaceLow() const {
+  // Other options to get the available page file size:
+  //   - GetPerformanceInfo
+  //     Too slow, don't use it.
+  //   - PdhCollectQueryData and PdhGetRawCounterValue
+  //     Faster than GetPerformanceInfo, but slower than GlobalMemoryStatusEx.
+  //   - NtQuerySystemInformation(SystemMemoryUsageInformation)
+  //     Faster than GlobalMemoryStatusEx, but undocumented.
+  MEMORYSTATUSEX memStatus = {sizeof(memStatus)};
+  if (!::GlobalMemoryStatusEx(&memStatus)) {
+    return false;
+  }
+
+  constexpr size_t kBytesPerMB = 1024 * 1024;
+  return (memStatus.ullAvailPageFile / kBytesPerMB) <
+         StaticPrefs::browser_low_commit_space_threshold_mb();
 }
 
 void nsAvailableMemoryWatcher::StartPollingIfUserInteracting() {
@@ -276,10 +338,13 @@ nsAvailableMemoryWatcher::Notify(nsITimer* aTimer) {
   MutexAutoLock lock(mMutex);
   StopPollingIfUserIdle(lock);
 
-  if (IsMemoryLow()) {
-    NS_DispatchEventualMemoryPressure(MemPressure_Ongoing);
-  } else {
+  if (!IsMemoryLow()) {
     OnHighMemory(lock);
+    return NS_OK;
+  }
+
+  if (IsCommitSpaceLow()) {
+    NS_DispatchEventualMemoryPressure(MemPressure_Ongoing);
   }
 
   return NS_OK;

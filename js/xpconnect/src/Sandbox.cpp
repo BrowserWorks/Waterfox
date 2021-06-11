@@ -722,15 +722,13 @@ bool SandboxProxyHandler::getPropertyDescriptorImpl(
   Rooted<PropertyDescriptor> desc(cx, *desc_);
 
   // Now fix up the getter/setter/value as needed.
-  if (desc.hasGetterObject() &&
-      !WrapAccessorFunction(cx, desc.getterObject(), proxy)) {
+  if (desc.hasGetter() && !WrapAccessorFunction(cx, desc.getter(), proxy)) {
     return false;
   }
-  if (desc.hasSetterObject() &&
-      !WrapAccessorFunction(cx, desc.setterObject(), proxy)) {
+  if (desc.hasSetter() && !WrapAccessorFunction(cx, desc.setter(), proxy)) {
     return false;
   }
-  if (desc.value().isObject()) {
+  if (desc.hasValue() && desc.value().isObject()) {
     RootedObject val(cx, &desc.value().toObject());
     if (JS::IsCallable(val) &&
         // Don't wrap DOM constructors: they don't care about the "this"
@@ -800,7 +798,7 @@ bool SandboxProxyHandler::get(JSContext* cx, JS::Handle<JSObject*> proxy,
   }
 
   MOZ_ASSERT(desc->isAccessorDescriptor());
-  RootedObject getter(cx, desc->getterObject());
+  RootedObject getter(cx, desc->getter());
 
   if (!getter) {
     vp.setUndefined();

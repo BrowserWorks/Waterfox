@@ -19,8 +19,7 @@
 #include "mozilla/IntegerPrintfMacros.h"
 #include "prnetdb.h"
 
-namespace mozilla {
-namespace net {
+namespace mozilla::net {
 
 #define kMinMetadataRead 1024  // TODO find optimal value from telemetry
 #define kAlignSize 4096
@@ -33,7 +32,7 @@ namespace net {
 #define kInitialBufSize 64
 
 // Max size of elements in bytes.
-#define kMaxElementsSize 64 * 1024
+#define kMaxElementsSize (64 * 1024)
 
 #define NOW_SECONDS() (uint32_t(PR_Now() / PR_USEC_PER_SEC))
 
@@ -43,14 +42,7 @@ CacheFileMetadata::CacheFileMetadata(CacheFileHandle* aHandle,
                                      const nsACString& aKey)
     : CacheMemoryConsumer(NORMAL),
       mHandle(aHandle),
-      mHashArray(nullptr),
-      mHashArraySize(0),
-      mHashCount(0),
       mOffset(-1),
-      mBuf(nullptr),
-      mBufSize(0),
-      mWriteBuf(nullptr),
-      mElementsSize(0),
       mIsDirty(false),
       mAnonymous(false),
       mAllocExactSize(false),
@@ -63,7 +55,7 @@ CacheFileMetadata::CacheFileMetadata(CacheFileHandle* aHandle,
   mMetaHdr.mExpirationTime = nsICacheEntry::NO_EXPIRATION_TIME;
   mKey = aKey;
 
-  DebugOnly<nsresult> rv;
+  DebugOnly<nsresult> rv{};
   rv = ParseKey(aKey);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
@@ -71,15 +63,6 @@ CacheFileMetadata::CacheFileMetadata(CacheFileHandle* aHandle,
 CacheFileMetadata::CacheFileMetadata(bool aMemoryOnly, bool aPinned,
                                      const nsACString& aKey)
     : CacheMemoryConsumer(aMemoryOnly ? MEMORY_ONLY : NORMAL),
-      mHandle(nullptr),
-      mHashArray(nullptr),
-      mHashArraySize(0),
-      mHashCount(0),
-      mOffset(0),
-      mBuf(nullptr),
-      mBufSize(0),
-      mWriteBuf(nullptr),
-      mElementsSize(0),
       mIsDirty(true),
       mAnonymous(false),
       mAllocExactSize(false),
@@ -96,22 +79,13 @@ CacheFileMetadata::CacheFileMetadata(bool aMemoryOnly, bool aPinned,
   mKey = aKey;
   mMetaHdr.mKeySize = mKey.Length();
 
-  DebugOnly<nsresult> rv;
+  DebugOnly<nsresult> rv{};
   rv = ParseKey(aKey);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
 CacheFileMetadata::CacheFileMetadata()
     : CacheMemoryConsumer(DONT_REPORT /* This is a helper class */),
-      mHandle(nullptr),
-      mHashArray(nullptr),
-      mHashArraySize(0),
-      mHashCount(0),
-      mOffset(0),
-      mBuf(nullptr),
-      mBufSize(0),
-      mWriteBuf(nullptr),
-      mElementsSize(0),
       mIsDirty(false),
       mAnonymous(false),
       mAllocExactSize(false),
@@ -504,7 +478,8 @@ nsresult CacheFileMetadata::SetHash(uint32_t aIndex,
 
   if (aIndex > mHashCount) {
     return NS_ERROR_INVALID_ARG;
-  } else if (aIndex == mHashCount) {
+  }
+  if (aIndex == mHashCount) {
     if ((aIndex + 1) * sizeof(CacheHash::Hash16_t) > mHashArraySize) {
       // reallocate hash array buffer
       if (mHashArraySize == 0) {
@@ -1045,5 +1020,4 @@ size_t CacheFileMetadata::SizeOfIncludingThis(
   return mallocSizeOf(this) + SizeOfExcludingThis(mallocSizeOf);
 }
 
-}  // namespace net
-}  // namespace mozilla
+}  // namespace mozilla::net

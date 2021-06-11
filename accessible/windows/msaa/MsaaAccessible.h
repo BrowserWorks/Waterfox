@@ -30,19 +30,20 @@ class MsaaAccessible : public ia2Accessible,
  public:
   static MsaaAccessible* Create(Accessible* aAcc);
 
+  Accessible* Acc() { return mAcc; }
   AccessibleWrap* LocalAcc();
 
   uint32_t GetExistingID() const { return mID; }
   static const uint32_t kNoID = 0;
   void SetID(uint32_t aID);
 
-  static int32_t GetChildIDFor(LocalAccessible* aAccessible);
+  static int32_t GetChildIDFor(Accessible* aAccessible);
   static uint32_t GetContentProcessIdFor(dom::ContentParentId aIPCContentId);
   static void ReleaseContentProcessIdFor(dom::ContentParentId aIPCContentId);
   static void AssignChildIDTo(NotNull<sdnAccessible*> aSdnAcc);
   static void ReleaseChildID(NotNull<sdnAccessible*> aSdnAcc);
-  static HWND GetHWNDFor(LocalAccessible* aAccessible);
-  static void FireWinEvent(LocalAccessible* aTarget, uint32_t aEventType);
+  static HWND GetHWNDFor(Accessible* aAccessible);
+  static void FireWinEvent(Accessible* aTarget, uint32_t aEventType);
 
   /**
    * Find an accessible by the given child ID in cached documents.
@@ -66,7 +67,7 @@ class MsaaAccessible : public ia2Accessible,
 
   void MsaaShutdown();
 
-  static IDispatch* NativeAccessible(LocalAccessible* aAccessible);
+  static IDispatch* NativeAccessible(Accessible* aAccessible);
 
   static MsaaAccessible* GetFrom(Accessible* aAcc);
 
@@ -191,7 +192,8 @@ class MsaaAccessible : public ia2Accessible,
     NAVRELATION_DETAILS = 0x1015,
     NAVRELATION_DETAILS_FOR = 0x1016,
     NAVRELATION_ERROR = 0x1017,
-    NAVRELATION_ERROR_FOR = 0x1018
+    NAVRELATION_ERROR_FOR = 0x1018,
+    NAVRELATION_LINKS_TO = 0x1019
   };
 
  private:

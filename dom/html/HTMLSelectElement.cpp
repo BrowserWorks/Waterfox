@@ -111,7 +111,7 @@ HTMLSelectElement::HTMLSelectElement(
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
     FromParser aFromParser)
     : nsGenericHTMLFormElementWithState(std::move(aNodeInfo), aFromParser,
-                                        NS_FORM_SELECT),
+                                        FormControlType::Select),
       mOptions(new HTMLOptionsCollection(this)),
       mAutocompleteAttrState(nsContentUtils::eAutocompleteAttrState_Unknown),
       mAutocompleteInfoState(nsContentUtils::eAutocompleteAttrState_Unknown),
@@ -179,17 +179,16 @@ void HTMLSelectElement::GetAutocompleteInfo(AutocompleteInfo& aInfo) {
       attributeVal, aInfo, mAutocompleteInfoState, true);
 }
 
-nsresult HTMLSelectElement::InsertChildBefore(nsIContent* aKid,
-                                              nsIContent* aBeforeThis,
-                                              bool aNotify) {
+void HTMLSelectElement::InsertChildBefore(nsIContent* aKid,
+                                          nsIContent* aBeforeThis, bool aNotify,
+                                          ErrorResult& aRv) {
   int32_t index = aBeforeThis ? ComputeIndexOf(aBeforeThis) : GetChildCount();
   SafeOptionListMutation safeMutation(this, this, aKid, index, aNotify);
-  nsresult rv = nsGenericHTMLFormElementWithState::InsertChildBefore(
-      aKid, aBeforeThis, aNotify);
-  if (NS_FAILED(rv)) {
+  nsGenericHTMLFormElementWithState::InsertChildBefore(aKid, aBeforeThis,
+                                                       aNotify, aRv);
+  if (aRv.Failed()) {
     safeMutation.MutationFailed();
   }
-  return rv;
 }
 
 void HTMLSelectElement::RemoveChildNode(nsIContent* aKid, bool aNotify) {

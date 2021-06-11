@@ -26,13 +26,13 @@ class nsIURI;
 struct nsSize;
 
 namespace mozilla {
+class EditorBase;
 class ErrorResult;
 class EventChainPostVisitor;
 class EventChainPreVisitor;
 class EventChainVisitor;
 class EventListenerManager;
 class EventStates;
-class TextEditor;
 class PresState;
 namespace dom {
 class ElementInternals;
@@ -699,11 +699,13 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
   virtual mozilla::EventListenerManager* GetEventListenerManagerForAttr(
       nsAtom* aAttrName, bool* aDefer) override;
 
-  /**
-   * Dispatch a simulated mouse click by keyboard to the given element.
-   */
-  nsresult DispatchSimulatedClick(nsGenericHTMLElement* aElement,
-                                  bool aIsTrusted, nsPresContext* aPresContext);
+  /** Handles dispatching a simulated click on `this` on space or enter. */
+  void HandleKeyboardActivation(mozilla::EventChainPostVisitor&);
+
+  /** Dispatch a simulated mouse click by keyboard to the given element. */
+  static nsresult DispatchSimulatedClick(nsGenericHTMLElement* aElement,
+                                         bool aIsTrusted,
+                                         nsPresContext* aPresContext);
 
   /**
    * Create a URI for the given aURISpec string.
@@ -834,14 +836,14 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
   }
 
   /**
-   * Locates the TextEditor associated with this node.  In general this is
+   * Locates the EditorBase associated with this node.  In general this is
    * equivalent to GetEditorInternal(), but for designmode or contenteditable,
    * this may need to get an editor that's not actually on this element's
    * associated TextControlFrame.  This is used by the spellchecking routines
    * to get the editor affected by changing the spellcheck attribute on this
    * node.
    */
-  virtual already_AddRefed<mozilla::TextEditor> GetAssociatedEditor();
+  virtual already_AddRefed<mozilla::EditorBase> GetAssociatedEditor();
 
   /**
    * Get the frame's offset information for offsetTop/Left/Width/Height.
@@ -903,8 +905,23 @@ class HTMLFieldSetElement;
 }  // namespace dom
 }  // namespace mozilla
 
-#define FORM_ELEMENT_FLAG_BIT(n_) \
+#define HTML_ELEMENT_FLAG_BIT(n_) \
   NODE_FLAG_BIT(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + (n_))
+
+// HTMLElement specific bits
+enum {
+  // Used to handle keyboard activation.
+  HTML_ELEMENT_ACTIVE_FOR_KEYBOARD = HTML_ELEMENT_FLAG_BIT(0),
+
+  // Remaining bits are type specific.
+  HTML_ELEMENT_TYPE_SPECIFIC_BITS_OFFSET =
+      ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + 1,
+};
+
+ASSERT_NODE_FLAGS_SPACE(HTML_ELEMENT_TYPE_SPECIFIC_BITS_OFFSET);
+
+#define FORM_ELEMENT_FLAG_BIT(n_) \
+  NODE_FLAG_BIT(HTML_ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + (n_))
 
 // Form element specific bits
 enum {
@@ -929,7 +946,7 @@ enum {
 // MAYBE_ORPHAN_FORM_ELEMENT set at the same time, so if it becomes an issue we
 // can probably merge them into the same bit.  --bz
 
-ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + 3);
+ASSERT_NODE_FLAGS_SPACE(HTML_ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + 3);
 
 #undef FORM_ELEMENT_FLAG_BIT
 
@@ -940,7 +957,7 @@ class nsGenericHTMLFormElement : public nsGenericHTMLElement,
                                  public nsIFormControl {
  public:
   nsGenericHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
-                           uint8_t aType);
+                           FormControlType);
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -1109,7 +1126,7 @@ class nsGenericHTMLFormElementWithState : public nsGenericHTMLFormElement {
  public:
   nsGenericHTMLFormElementWithState(
       already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
-      mozilla::dom::FromParser aFromParser, uint8_t aType);
+      mozilla::dom::FromParser aFromParser, FormControlType);
 
   /**
    * Get the presentation state for a piece of content, or create it if it does

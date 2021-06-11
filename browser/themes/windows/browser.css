@@ -557,11 +557,6 @@ menuitem.bookmark-item {
   }
 }
 
-#pageAction-urlbar-shareURL,
-#pageAction-panel-shareURL {
-  list-style-image: url("chrome://browser/skin/share.svg");
-}
-
 %include ../shared/identity-block/identity-block.inc.css
 %include ../shared/notification-icons.inc.css
 %include ../shared/addon-notification.inc.css
@@ -765,8 +760,7 @@ panel[touchmode] .PanelUI-subView #appMenu-zoom-controls > .subviewbutton-iconic
   margin-top: -4px;
 }
 
-@media (-moz-proton-contextmenus) {
-@media (-moz-windows-default-theme) and (-moz-os-version: windows-win10) {
+@media (-moz-windows-non-native-menus) {
   /* :not([hidden]) to avoid the display: flex unhiding the item. */
   #context-navigation:not([hidden]) {
     /* The Windows 10 version of the navigation area needs the scrollbox's
@@ -852,7 +846,6 @@ panel[touchmode] .PanelUI-subView #appMenu-zoom-controls > .subviewbutton-iconic
     margin-top: 0;
     margin-inline: 0;
   }
-}
 }
 
 %include browser-aero.css

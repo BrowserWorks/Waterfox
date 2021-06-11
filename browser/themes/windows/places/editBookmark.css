@@ -2,12 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-@media not (-moz-proton-doorhangers) {
-#editBookmarkPanelRows > vbox {
-  margin-bottom: .5em;
-}
-} /** END not Proton **/
-
 /* Folder menulist */
 
 #editBMPanel_folderMenuList::part(icon) {
@@ -24,30 +18,6 @@
   -moz-context-properties: fill;
   fill: currentColor;
 }
-
-/* Expanders */
-
-@media not (-moz-proton-modals) {
-.expander-up,
-.expander-down {
-  min-width: 0;
-  padding: 1px;
-  margin: 0;
-  margin-inline-end: 4px;
-  list-style-image: url("chrome://global/skin/icons/arrow-dropdown-16.svg");
-  -moz-context-properties: fill;
-  fill: currentColor;
-}
-
-.expander-up {
-  transform: scaleY(-1);
-}
-
-.expander-up > .button-box,
-.expander-down > .button-box {
-  padding: 0;
-}
-} /** END not Proton **/
 
 #editBMPanel_folderTree {
   margin-block: 2px;

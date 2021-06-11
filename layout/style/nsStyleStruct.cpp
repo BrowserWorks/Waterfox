@@ -188,13 +188,10 @@ class StyleImageRequestCleanupTask final : public mozilla::Runnable {
 // This is defined here for parallelism with LoadURI.
 void Gecko_LoadData_Drop(StyleLoadData* aData) {
   if (aData->resolved_image) {
+    // We want to dispatch this async to prevent reentrancy issues, as
+    // imgRequestProxy going away can destroy documents, etc, see bug 1677555.
     auto task = MakeRefPtr<StyleImageRequestCleanupTask>(*aData);
-    if (NS_IsMainThread()) {
-      task->Run();
-    } else {
-      // if Resolve was not called at some point, mDocGroup is not set.
-      SchedulerGroup::Dispatch(TaskCategory::Other, task.forget());
-    }
+    SchedulerGroup::Dispatch(TaskCategory::Other, task.forget());
   }
 
   // URIs are safe to refcount from any thread.
@@ -938,7 +935,8 @@ nsStyleSVGReset::nsStyleSVGReset(const Document& aDocument)
       mStopOpacity(1.0f),
       mFloodOpacity(1.0f),
       mVectorEffect(StyleVectorEffect::None),
-      mMaskType(StyleMaskType::Luminance) {
+      mMaskType(StyleMaskType::Luminance),
+      mD(StyleDProperty::None()) {
   MOZ_COUNT_CTOR(nsStyleSVGReset);
 }
 
@@ -960,7 +958,8 @@ nsStyleSVGReset::nsStyleSVGReset(const nsStyleSVGReset& aSource)
       mStopOpacity(aSource.mStopOpacity),
       mFloodOpacity(aSource.mFloodOpacity),
       mVectorEffect(aSource.mVectorEffect),
-      mMaskType(aSource.mMaskType) {
+      mMaskType(aSource.mMaskType),
+      mD(aSource.mD) {
   MOZ_COUNT_CTOR(nsStyleSVGReset);
 }
 
@@ -1005,7 +1004,7 @@ nsChangeHint nsStyleSVGReset::CalcDifference(
 
   if (mX != aNewData.mX || mY != aNewData.mY || mCx != aNewData.mCx ||
       mCy != aNewData.mCy || mR != aNewData.mR || mRx != aNewData.mRx ||
-      mRy != aNewData.mRy) {
+      mRy != aNewData.mRy || mD != aNewData.mD) {
     hint |= nsChangeHint_InvalidateRenderingObservers | nsChangeHint_NeedReflow;
   }
 
@@ -1027,7 +1026,7 @@ nsChangeHint nsStyleSVGReset::CalcDifference(
              mLightingColor != aNewData.mLightingColor ||
              mStopOpacity != aNewData.mStopOpacity ||
              mFloodOpacity != aNewData.mFloodOpacity ||
-             mMaskType != aNewData.mMaskType) {
+             mMaskType != aNewData.mMaskType || mD != aNewData.mD) {
     hint |= nsChangeHint_RepaintFrame;
   }
 
@@ -2913,7 +2912,7 @@ nsStyleText::nsStyleText(const Document& aDocument)
       mTextEmphasisColor(StyleColor::CurrentColor()),
       mWebkitTextFillColor(StyleColor::CurrentColor()),
       mWebkitTextStrokeColor(StyleColor::CurrentColor()),
-      mMozTabSize(
+      mTabSize(
           StyleNonNegativeLengthOrNumber::Number(NS_STYLE_TABSIZE_INITIAL)),
       mWordSpacing(LengthPercentage::Zero()),
       mLetterSpacing({0.}),
@@ -2953,7 +2952,7 @@ nsStyleText::nsStyleText(const nsStyleText& aSource)
       mTextEmphasisColor(aSource.mTextEmphasisColor),
       mWebkitTextFillColor(aSource.mWebkitTextFillColor),
       mWebkitTextStrokeColor(aSource.mWebkitTextStrokeColor),
-      mMozTabSize(aSource.mMozTabSize),
+      mTabSize(aSource.mTabSize),
       mWordSpacing(aSource.mWordSpacing),
       mLetterSpacing(aSource.mLetterSpacing),
       mLineHeight(aSource.mLineHeight),
@@ -2997,7 +2996,7 @@ nsChangeHint nsStyleText::CalcDifference(const nsStyleText& aNewData) const {
       (mTextIndent != aNewData.mTextIndent) ||
       (mTextJustify != aNewData.mTextJustify) ||
       (mWordSpacing != aNewData.mWordSpacing) ||
-      (mMozTabSize != aNewData.mMozTabSize)) {
+      (mTabSize != aNewData.mTabSize)) {
     return NS_STYLE_HINT_REFLOW;
   }
 

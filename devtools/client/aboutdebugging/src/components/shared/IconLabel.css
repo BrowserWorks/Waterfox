@@ -13,10 +13,10 @@
 }
 
 .icon-label--ok {
-  --icon-color: var(--green-70);
+  --icon-color: var(--icon-ok-color);
 }
 .icon-label--info {
-  --icon-color: var(--grey-90);
+  --icon-color: var(--icon-info-color);
 }
 
 .icon-label__icon {

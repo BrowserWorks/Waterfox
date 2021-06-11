@@ -19,6 +19,21 @@ function convertEntries(entries) {
   return result;
 }
 
+function parsePoint(str) {
+  var pieces = str.replace(/[()\s]+/g, "").split(",");
+  SimpleTest.is(pieces.length, 2, "expected string of form (x,y)");
+  for (var i = 0; i < 2; i++) {
+    var eq = pieces[i].indexOf("=");
+    if (eq >= 0) {
+      pieces[i] = pieces[i].substring(eq + 1);
+    }
+  }
+  return {
+    x: parseInt(pieces[0]),
+    y: parseInt(pieces[1]),
+  };
+}
+
 // TODO: Clean up these rect-handling functions so that e.g. a rect returned
 //       by Element.getBoundingClientRect() Just Works with them.
 function parseRect(str) {
@@ -233,6 +248,23 @@ function getLastContentDisplayportFor(elementId, expectPainted = true) {
     }
   }
   return null;
+}
+
+// Return the APZC tree (as produced by buildApzcTree) for the last
+// non-empty paint received by the compositor.
+function getLastApzcTree() {
+  let data = SpecialPowers.getDOMWindowUtils(window).getCompositorAPZTestData();
+  if (data == undefined) {
+    ok(false, "expected to have compositor apz test data");
+    return null;
+  }
+  if (data.paints.length == 0) {
+    ok(false, "expected to have at least one compositor paint bucket");
+    return null;
+  }
+  var seqno = data.paints[data.paints.length - 1].sequenceNumber;
+  data = convertTestData(data);
+  return buildApzcTree(data.paints[seqno]);
 }
 
 // Return a promise that is resolved on the next rAF callback

@@ -53,8 +53,9 @@ static nsresult WriteToFile(nsIFile* lf, const char* data, uint32_t len,
   rv = lf->OpenNSPRFileDesc(flags, mode, &fd);
   if (NS_FAILED(rv)) return rv;
 
-  if (len)
+  if (len) {
     rv = PR_Write(fd, data, len) == int32_t(len) ? NS_OK : NS_ERROR_FAILURE;
+  }
 
   PR_Close(fd);
   return rv;
@@ -102,7 +103,7 @@ class nsIncrementalDownload final : public nsIIncrementalDownload,
   NS_DECL_NSICHANNELEVENTSINK
   NS_DECL_NSIASYNCVERIFYREDIRECTCALLBACK
 
-  nsIncrementalDownload();
+  nsIncrementalDownload() = default;
 
  private:
   ~nsIncrementalDownload() = default;
@@ -123,38 +124,22 @@ class nsIncrementalDownload final : public nsIIncrementalDownload,
   nsCOMPtr<nsIChannel> mChannel;
   nsCOMPtr<nsITimer> mTimer;
   mozilla::UniquePtr<char[]> mChunk;
-  int32_t mChunkLen;
-  int32_t mChunkSize;
-  int32_t mInterval;
-  int64_t mTotalSize;
-  int64_t mCurrentSize;
-  uint32_t mLoadFlags;
-  int32_t mNonPartialCount;
-  nsresult mStatus;
-  bool mIsPending;
-  bool mDidOnStartRequest;
-  PRTime mLastProgressUpdate;
+  int32_t mChunkLen{0};
+  int32_t mChunkSize{DEFAULT_CHUNK_SIZE};
+  int32_t mInterval{DEFAULT_INTERVAL};
+  int64_t mTotalSize{-1};
+  int64_t mCurrentSize{-1};
+  uint32_t mLoadFlags{LOAD_NORMAL};
+  int32_t mNonPartialCount{0};
+  nsresult mStatus{NS_OK};
+  bool mIsPending{false};
+  bool mDidOnStartRequest{false};
+  PRTime mLastProgressUpdate{0};
   nsCOMPtr<nsIAsyncVerifyRedirectCallback> mRedirectCallback;
   nsCOMPtr<nsIChannel> mNewRedirectChannel;
   nsCString mPartialValidator;
-  bool mCacheBust;
+  bool mCacheBust{false};
 };
-
-nsIncrementalDownload::nsIncrementalDownload()
-    : mChunkLen(0),
-      mChunkSize(DEFAULT_CHUNK_SIZE),
-      mInterval(DEFAULT_INTERVAL),
-      mTotalSize(-1),
-      mCurrentSize(-1),
-      mLoadFlags(LOAD_NORMAL),
-      mNonPartialCount(0),
-      mStatus(NS_OK),
-      mIsPending(false),
-      mDidOnStartRequest(false),
-      mLastProgressUpdate(0),
-      mRedirectCallback(nullptr),
-      mNewRedirectChannel(nullptr),
-      mCacheBust(false) {}
 
 nsresult nsIncrementalDownload::FlushChunk() {
   NS_ASSERTION(mTotalSize != int64_t(-1), "total size should be known");
@@ -173,8 +158,9 @@ nsresult nsIncrementalDownload::FlushChunk() {
 void nsIncrementalDownload::UpdateProgress() {
   mLastProgressUpdate = PR_Now();
 
-  if (mProgressSink)
+  if (mProgressSink) {
     mProgressSink->OnProgress(this, mCurrentSize + mChunkLen, mTotalSize);
+  }
 }
 
 nsresult nsIncrementalDownload::CallOnStartRequest() {
@@ -527,9 +513,10 @@ nsIncrementalDownload::OnStartRequest(nsIRequest* request) {
       bool confirmedOK = false;
 
       rv = http->GetResponseHeader("Content-Range"_ns, buf);
-      if (NS_FAILED(rv))
+      if (NS_FAILED(rv)) {
         return rv;  // it isn't a useful 206 without a CONTENT-RANGE of some
-                    // sort
+      }
+      // sort
 
       // Content-Range: bytes 0-299999/25604694
       int32_t p = buf.Find("bytes ");
@@ -583,8 +570,9 @@ nsIncrementalDownload::OnStartRequest(nsIRequest* request) {
     rv = http->GetURI(getter_AddRefs(mFinalURI));
     if (NS_FAILED(rv)) return rv;
     Unused << http->GetResponseHeader("Etag"_ns, mPartialValidator);
-    if (StringBeginsWith(mPartialValidator, "W/"_ns))
+    if (StringBeginsWith(mPartialValidator, "W/"_ns)) {
       mPartialValidator.Truncate();  // don't use weak validators
+    }
     if (mPartialValidator.IsEmpty()) {
       rv = http->GetResponseHeader("Last-Modified"_ns, mPartialValidator);
       if (NS_FAILED(rv)) {
@@ -605,8 +593,10 @@ nsIncrementalDownload::OnStartRequest(nsIRequest* request) {
         NS_WARNING("server returned invalid Content-Range header!");
         return NS_ERROR_UNEXPECTED;
       }
-      if (PR_sscanf(buf.get() + slash + 1, "%lld", (int64_t*)&mTotalSize) != 1)
+      if (PR_sscanf(buf.get() + slash + 1, "%lld", (int64_t*)&mTotalSize) !=
+          1) {
         return NS_ERROR_UNEXPECTED;
+      }
     } else {
       rv = http->GetContentLength(&mTotalSize);
       if (NS_FAILED(rv)) return rv;
@@ -694,8 +684,9 @@ nsIncrementalDownload::OnDataAvailable(nsIRequest* request,
     }
   }
 
-  if (PR_Now() > mLastProgressUpdate + UPDATE_PROGRESS_INTERVAL)
+  if (PR_Now() > mLastProgressUpdate + UPDATE_PROGRESS_INTERVAL) {
     UpdateProgress();
+  }
 
   return NS_OK;
 }

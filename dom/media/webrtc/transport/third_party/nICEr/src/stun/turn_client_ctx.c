@@ -44,6 +44,7 @@
 #include "nr_socket_buffered_stun.h"
 #include "stun.h"
 #include "turn_client_ctx.h"
+#include "ice_ctx.h"
 
 int NR_LOG_TURN = 0;
 
@@ -79,10 +80,10 @@ static int nr_turn_client_start_refresh_timer(nr_turn_client_ctx *ctx,
                                               nr_turn_stun_ctx *sctx,
                                               UINT4 lifetime);
 static int nr_turn_permission_create(nr_turn_client_ctx *ctx,
-                                     nr_transport_addr *addr,
+                                     const nr_transport_addr *addr,
                                      nr_turn_permission **permp);
 static int nr_turn_permission_find(nr_turn_client_ctx *ctx,
-                                   nr_transport_addr *addr,
+                                   const nr_transport_addr *addr,
                                    nr_turn_permission **permp);
 static int nr_turn_permission_destroy(nr_turn_permission **permp);
 static void nr_turn_client_refresh_cb(NR_SOCKET s, int how, void *arg);
@@ -91,6 +92,33 @@ static int nr_turn_client_send_stun_request(nr_turn_client_ctx *ctx,
                                             nr_stun_message *req,
                                             int flags);
 
+int nr_transport_addr_listnode_create(const nr_transport_addr *addr, nr_transport_addr_listnode **listnodep)
+{
+  nr_transport_addr_listnode *listnode = 0;
+  int r,_status;
+
+  if (!(listnode=RCALLOC(sizeof(nr_transport_addr_listnode)))) {
+    ABORT(R_NO_MEMORY);
+  }
+
+  if ((r = nr_transport_addr_copy(&listnode->value, addr))) {
+    ABORT(r);
+  }
+
+  *listnodep = listnode;
+  listnode = 0;
+  _status = 0;
+
+abort:
+  nr_transport_addr_listnode_destroy(&listnode);
+  return(_status);
+}
+
+void nr_transport_addr_listnode_destroy(nr_transport_addr_listnode **listnode)
+{
+  RFREE(*listnode);
+  *listnode = 0;
+}
 
 /* nr_turn_stun_ctx functions */
 static int nr_turn_stun_ctx_create(nr_turn_client_ctx *tctx, int mode,
@@ -125,6 +153,7 @@ static int nr_turn_stun_ctx_create(nr_turn_client_ctx *tctx, int mode,
   sctx->error_cb=error_cb;
   sctx->mode=mode;
   sctx->last_error_code=0;
+  STAILQ_INIT(&sctx->addresses_tried);
 
   /* Add ourselves to the tctx's list */
   STAILQ_INSERT_TAIL(&tctx->stun_ctxs, sctx, entry);
@@ -152,6 +181,12 @@ static int nr_turn_stun_ctx_destroy(nr_turn_stun_ctx **ctxp)
   nr_stun_client_ctx_destroy(&ctx->stun);
   RFREE(ctx->realm);
   RFREE(ctx->nonce);
+
+  while (!STAILQ_EMPTY(&ctx->addresses_tried)) {
+    nr_transport_addr_listnode *listnode = STAILQ_FIRST(&ctx->addresses_tried);
+    STAILQ_REMOVE_HEAD(&ctx->addresses_tried, entry);
+    nr_transport_addr_listnode_destroy(&listnode);
+  }
 
   RFREE(ctx);
 
@@ -198,6 +233,7 @@ static int nr_turn_stun_ctx_start(nr_turn_stun_ctx *ctx)
 {
   int r, _status;
   nr_turn_client_ctx *tctx = ctx->tctx;
+  nr_transport_addr_listnode *address_tried = 0;
 
   if ((r=nr_stun_client_reset(ctx->stun))) {
     r_log(NR_LOG_TURN, LOG_ERR, "TURN(%s): Couldn't reset STUN",
@@ -211,7 +247,177 @@ static int nr_turn_stun_ctx_start(nr_turn_stun_ctx *ctx)
     ABORT(r);
   }
 
+  if ((r=nr_transport_addr_listnode_create(&ctx->stun->peer_addr, &address_tried))) {
+    ABORT(r);
+  }
+
+  STAILQ_INSERT_TAIL(&ctx->addresses_tried, address_tried, entry);
+
   _status=0;
+abort:
+  return _status;
+}
+
+static int nr_turn_stun_ctx_handle_redirect(nr_turn_stun_ctx *ctx)
+{
+  int r, _status;
+  nr_turn_client_ctx *tctx = ctx->tctx;
+  nr_stun_message_attribute *ec;
+  nr_stun_message_attribute *attr;
+  nr_transport_addr *alternate_addr = 0;
+  int index = 0;
+
+  if (!tctx->ctx) {
+    /* If we were to require TCP nr_sockets to allow multiple connect calls by
+     * disconnecting and re-connecting, we could avoid this requirement. */
+    r_log(NR_LOG_TURN, LOG_ERR,
+          "TURN(%s): nr_turn_stun_ctx_handle_redirect is not supported when "
+          "there is no ICE ctx, and by extension no socket factory, since we "
+          "need that to create new sockets in the TCP case",
+          tctx->label);
+    ABORT(R_BAD_ARGS);
+  }
+
+  if (ctx->stun->response->header.type != NR_STUN_MSG_ALLOCATE_ERROR_RESPONSE) {
+    r_log(NR_LOG_TURN, LOG_ERR,
+          "TURN(%s): nr_turn_stun_ctx_handle_redirect called for something "
+          "other than an Allocate error response (type=%d)",
+          tctx->label, ctx->stun->response->header.type);
+    ABORT(R_BAD_ARGS);
+  }
+
+  if (!nr_stun_message_has_attribute(ctx->stun->response,
+                                     NR_STUN_ATTR_ERROR_CODE, &ec) ||
+      (ec->u.error_code.number != 300)) {
+    r_log(NR_LOG_TURN, LOG_ERR,
+          "TURN(%s): nr_turn_stun_ctx_handle_redirect called without a "
+          "300 response",
+          tctx->label);
+    ABORT(R_BAD_ARGS);
+  }
+
+  while (!alternate_addr && !nr_stun_message_get_attribute(
+      ctx->stun->response, NR_STUN_ATTR_ALTERNATE_SERVER, index++, &attr)) {
+    alternate_addr = &attr->u.alternate_server;
+
+    // TODO: Someday we may need to handle IP version switching, but it is
+    // unclear how that is supposed to work with ICE when the IP version of
+    // the candidate's base address is fixed...
+    if (alternate_addr->ip_version != tctx->turn_server_addr.ip_version) {
+      r_log(NR_LOG_TURN, LOG_INFO,
+            "TURN(%s): nr_turn_stun_ctx_handle_redirect not trying %s, since it is a different IP version",
+            tctx->label, alternate_addr->as_string);
+      alternate_addr = 0;
+      continue;
+    }
+
+    /* Check if we've already tried this, and ignore if we have */
+    nr_transport_addr_listnode *address_tried = 0;
+    STAILQ_FOREACH(address_tried, &ctx->addresses_tried, entry) {
+      /* Ignore protocol */
+      alternate_addr->protocol = address_tried->value.protocol;
+      if (!nr_transport_addr_cmp(alternate_addr, &address_tried->value, NR_TRANSPORT_ADDR_CMP_MODE_ALL)) {
+        r_log(NR_LOG_TURN, LOG_INFO,
+              "TURN(%s): nr_turn_stun_ctx_handle_redirect already tried %s, ignoring",
+              tctx->label, alternate_addr->as_string);
+        alternate_addr = 0;
+        break;
+      }
+    }
+  }
+
+  if (!alternate_addr) {
+    /* Should we use a different error code depending on why we didn't find
+     * one? (eg; no ALTERNATE-SERVERS at all, none that we have not tried
+     * already, none that are of a compatible IP version?) */
+    r_log(NR_LOG_TURN, LOG_ERR,
+          "TURN(%s): nr_turn_stun_ctx_handle_redirect did not find a viable "
+          "ALTERNATE-SERVER",
+          tctx->label);
+    ABORT(R_FAILED);
+  }
+
+  r_log(NR_LOG_TURN, LOG_INFO,
+      "TURN(%s): nr_turn_stun_ctx_handle_redirect trying %s",
+      tctx->label, alternate_addr->as_string);
+
+  /* This also handles the call to nr_transport_addr_fmt_addr_string */
+  if ((r = nr_transport_addr_copy_addrport(&tctx->turn_server_addr,
+                                           alternate_addr))) {
+    r_log(NR_LOG_TURN, LOG_ERR,
+          "TURN(%s): nr_turn_stun_ctx_handle_redirect copying ALTERNATE-SERVER "
+          "failed(%d)!",
+          tctx->label, r);
+    assert(0);
+    ABORT(r);
+  }
+
+  /* TURN server address is now updated. Restart the STUN Allocate ctx. Note
+   * that we do not attempt to update the local address; if the TURN server
+   * redirects to something that is not best reached from the already-selected
+   * local address, oh well. */
+
+  if (tctx->turn_server_addr.protocol == IPPROTO_TCP) {
+    /* For TCP, we need to replace the underlying nr_socket, since we cannot
+     * un-connect it from the old server. */
+    /* If we were to require TCP nr_sockets to allow multiple connect calls by
+     * disconnecting and re-connecting, we could avoid this stuff, and just
+     * call nr_socket_connect. */
+    nr_transport_addr old_local_addr;
+    nr_socket* new_socket;
+    if ((r = nr_socket_getaddr(tctx->sock, &old_local_addr))) {
+      r_log(NR_LOG_TURN, LOG_ERR,
+            "TURN(%s): nr_turn_stun_ctx_handle_redirect "
+            "failed to get old local address (%d)!",
+            tctx->label, r);
+      assert(0);
+      ABORT(r);
+    }
+
+    if ((r = nr_socket_factory_create_socket(tctx->ctx->socket_factory,
+            &old_local_addr, &new_socket))) {
+      r_log(NR_LOG_TURN, LOG_ERR,
+            "TURN(%s): nr_turn_stun_ctx_handle_redirect "
+            "failed to create new raw TCP socket for redirect (%d)!",
+            tctx->label, r);
+      assert(0);
+      ABORT(r);
+    }
+
+    if ((r = nr_socket_buffered_stun_reset(tctx->sock, new_socket))) {
+      /* nr_socket_buffered_stun_reset always takes ownership of |new_socket| */
+      r_log(NR_LOG_TURN, LOG_ERR,
+            "TURN(%s): nr_turn_stun_ctx_handle_redirect "
+            "failed to update raw TCP socket (%d)!",
+            tctx->label, r);
+      assert(0);
+      ABORT(r);
+    }
+
+    if ((r = nr_socket_connect(tctx->sock, &tctx->turn_server_addr))) {
+      if (r != R_WOULDBLOCK) {
+        r_log(NR_LOG_TURN, LOG_ERR,
+              "TURN(%s): nr_turn_stun_ctx_handle_redirect nr_socket_connect "
+              "failed(%d)!",
+              tctx->label, r);
+        assert(0);
+        ABORT(r);
+      }
+    }
+  }
+
+  nr_transport_addr_copy(&ctx->stun->peer_addr, &tctx->turn_server_addr);
+
+  if ((r = nr_turn_stun_ctx_start(ctx))) {
+    r_log(NR_LOG_TURN, LOG_ERR,
+          "TURN(%s): nr_turn_stun_ctx_handle_redirect nr_turn_stun_ctx_start "
+          "failed(%d)!",
+          tctx->label, r);
+    assert(0);
+    ABORT(r);
+  }
+
+  _status = 0;
 abort:
   return _status;
 }
@@ -287,8 +493,16 @@ static void nr_turn_stun_ctx_cb(NR_SOCKET s, int how, void *arg)
         }
 
         ctx->retry_ct++;
-      }
-      else {
+      } else if (ctx->stun->error_code == 300) {
+        r_log(NR_LOG_TURN, LOG_INFO,
+              "TURN(%s): Redirect received, restarting TURN", ctx->tctx->label);
+        /* We don't limit this with a retry counter, we limit redirects by
+         * checking whether we've tried the ALTERNATE-SERVER yet. */
+        ctx->retry_ct = 0;
+        if ((r = nr_turn_stun_ctx_handle_redirect(ctx))) {
+          ABORT(r);
+        }
+      } else {
         ABORT(R_FAILED);
       }
       break;
@@ -315,11 +529,10 @@ abort:
 }
 
 /* nr_turn_client_ctx functions */
-int nr_turn_client_ctx_create(const char *label, nr_socket *sock,
-                              const char *username, Data *password,
-                              nr_transport_addr *addr,
-                              nr_turn_client_ctx **ctxp)
-{
+int nr_turn_client_ctx_create(const char* label, nr_socket* sock,
+                              const char* username, Data* password,
+                              nr_transport_addr* addr, nr_ice_ctx* ice_ctx,
+                              nr_turn_client_ctx** ctxp) {
   nr_turn_client_ctx *ctx=0;
   int r,_status;
 
@@ -352,6 +565,8 @@ int nr_turn_client_ctx_create(const char *label, nr_socket *sock,
         ABORT(r);
     }
   }
+
+  ctx->ctx = ice_ctx;
 
   *ctxp=ctx;
 
@@ -809,7 +1024,7 @@ abort:
    We might in the future. Mozilla bug 857736 */
 int nr_turn_client_send_indication(nr_turn_client_ctx *ctx,
                                    const UCHAR *msg, size_t len,
-                                   int flags, nr_transport_addr *remote_addr)
+                                   int flags, const nr_transport_addr *remote_addr)
 {
   int r,_status;
   nr_stun_client_send_indication_params params = { { 0 } };
@@ -923,7 +1138,7 @@ abort:
    unused.
 
 */
-int nr_turn_client_ensure_perm(nr_turn_client_ctx *ctx, nr_transport_addr *addr)
+int nr_turn_client_ensure_perm(nr_turn_client_ctx *ctx, const nr_transport_addr *addr)
 {
   int r, _status;
   nr_turn_permission *perm = 0;
@@ -962,7 +1177,7 @@ abort:
   return(_status);
 }
 
-static int nr_turn_permission_create(nr_turn_client_ctx *ctx, nr_transport_addr *addr,
+static int nr_turn_permission_create(nr_turn_client_ctx *ctx, const nr_transport_addr *addr,
                                      nr_turn_permission **permp)
 {
   int r, _status;
@@ -1007,7 +1222,7 @@ abort:
 }
 
 
-static int nr_turn_permission_find(nr_turn_client_ctx *ctx, nr_transport_addr *addr,
+static int nr_turn_permission_find(nr_turn_client_ctx *ctx, const nr_transport_addr *addr,
                                    nr_turn_permission **permp)
 {
   nr_turn_permission *perm;

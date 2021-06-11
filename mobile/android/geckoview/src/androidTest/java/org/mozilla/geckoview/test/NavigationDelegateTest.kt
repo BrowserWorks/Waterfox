@@ -164,6 +164,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun loadFileNotFound() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         testLoadExpectError("file:///test.mozilla",
                 WebRequestError.ERROR_CATEGORY_URI,
                 WebRequestError.ERROR_FILE_NOT_FOUND)
@@ -182,6 +186,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun loadUnknownHost() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         testLoadExpectError(UNKNOWN_HOST_URI,
                 WebRequestError.ERROR_CATEGORY_URI,
                 WebRequestError.ERROR_UNKNOWN_HOST)
@@ -191,6 +199,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun loadExternalDenied() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         testLoadExpectError(TestLoader().uri("file:///").flags(LOAD_FLAGS_EXTERNAL),
                 WebRequestError.ERROR_CATEGORY_UNKNOWN,
                 WebRequestError.ERROR_UNKNOWN)
@@ -203,12 +215,18 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun loadInvalidUri() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         testLoadEarlyError(INVALID_URI,
                 WebRequestError.ERROR_CATEGORY_URI,
                 WebRequestError.ERROR_MALFORMED_URI)
     }
 
     @Test fun loadBadPort() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         testLoadEarlyError("http://localhost:1/",
                 WebRequestError.ERROR_CATEGORY_NETWORK,
                 WebRequestError.ERROR_PORT_BLOCKED)
@@ -238,7 +256,7 @@ class NavigationDelegateTest : BaseSessionTest() {
                     @AssertCalled(count = 1, order = [2])
                     override fun onPageStop(session: GeckoSession, success: Boolean) {
                         assertThat("Load should succeed", success, equalTo(true))
-                        sessionRule.removeCertOverride(host, -1)
+                        sessionRule.removeAllCertOverrides()
                     }
                 })
         mainSession.evaluateJS("location.reload()")
@@ -248,6 +266,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun loadDeprecatedTls() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Load an initial generic error page in order to ensure 'allowDeprecatedTls' is false
         testLoadExpectError(UNKNOWN_HOST_URI,
                 WebRequestError.ERROR_CATEGORY_URI,
@@ -332,17 +354,28 @@ class NavigationDelegateTest : BaseSessionTest() {
         privateSession.loadUri(secureUri)
         privateSession.waitForPageStop()
 
+        var onLoadCalledCounter = 0
         privateSession.forCallbacksDuringWait(object : Callbacks.NavigationDelegate {
             @AssertCalled(count = 0)
             override fun onLoadError(session: GeckoSession, uri: String?, error: WebRequestError): GeckoResult<String>? {
                 return null
             }
 
-            @AssertCalled(count = 1)
             override fun onLoadRequest(session: GeckoSession, request: LoadRequest): GeckoResult<AllowOrDeny>? {
+                onLoadCalledCounter++
                 return null
             }
         })
+
+        val httpsFirstPBMPref = "dom.security.https_first_pbm"
+        val httpsFirstPBMPrefValue = (sessionRule.getPrefs(httpsFirstPBMPref)[0] as Boolean)
+        if (httpsFirstPBMPrefValue) {
+            // if https-first is enabled we get two calls to onLoadRequest
+            // (1) http://example.com/ and  (2) https://example.com/
+            assertThat("Assert count privateSession.onLoadRequest", onLoadCalledCounter, equalTo(2))
+        } else {
+            assertThat("Assert count privateSession.onLoadRequest", onLoadCalledCounter, equalTo(1))
+        }
 
         sessionRule.runtime.settings.setAllowInsecureConnections(GeckoRuntimeSettings.HTTPS_ONLY_PRIVATE)
 
@@ -384,6 +417,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun loadUnknownProtocolIframe() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Should match iframe URI from IFRAME_UNKNOWN_PROTOCOL
         val iframeUri = "foo://bar"
         sessionRule.session.loadTestPath(IFRAME_UNKNOWN_PROTOCOL)
@@ -456,6 +492,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun redirectLoad() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val redirectUri = if (sessionRule.env.isAutomation) {
             "http://example.org/tests/junit/hello.html"
         } else {
@@ -494,6 +533,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun redirectLoadIframe() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val path = if (sessionRule.env.isAutomation) {
             IFRAME_REDIRECT_AUTOMATION
         } else {
@@ -534,6 +576,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun redirectDenyLoad() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val redirectUri = if (sessionRule.env.isAutomation) {
             "http://example.org/tests/junit/hello.html"
         } else {
@@ -586,6 +632,9 @@ class NavigationDelegateTest : BaseSessionTest() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
 
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val redirectUri = "intent://test"
         val uri = "http://example.org/tests/junit/simple_redirect.sjs?$redirectUri"
 
@@ -607,6 +656,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
 
     @Test fun bypassClassifier() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val phishingUri = "https://www.itisatrap.org/firefox/its-a-trap.html"
         val category = ContentBlocking.SafeBrowsing.PHISHING
 
@@ -630,6 +682,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun safebrowsingPhishing() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val phishingUri = "https://www.itisatrap.org/firefox/its-a-trap.html"
         val category = ContentBlocking.SafeBrowsing.PHISHING
 
@@ -658,6 +714,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun safebrowsingMalware() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val malwareUri = "https://www.itisatrap.org/firefox/its-an-attack.html"
         val category = ContentBlocking.SafeBrowsing.MALWARE
 
@@ -712,6 +772,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun safebrowsingHarmful() {
         // TODO: Bug 1673954
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val harmfulUri = "https://www.itisatrap.org/firefox/harmful.html"
         val category = ContentBlocking.SafeBrowsing.HARMFUL
 
@@ -806,6 +870,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun uaOverrideNewSession() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val newSession = sessionRule.createClosedSession()
         newSession.settings.userAgentOverride = "Test user agent override"
 
@@ -818,6 +885,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun uaOverride() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadUri("https://example.com")
         sessionRule.waitForPageStop()
 
@@ -881,6 +951,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @WithDisplay(width = 600, height = 200)
     @Test fun viewportMode() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadTestPath(VIEWPORT_PATH)
         sessionRule.waitForPageStop()
 
@@ -914,6 +987,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun load() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadUri("$TEST_ENDPOINT$HELLO_HTML_PATH")
         sessionRule.waitForPageStop()
 
@@ -964,6 +1040,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun load_dataUri() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val dataUrl = "data:,Hello%2C%20World!"
         sessionRule.session.loadUri(dataUrl)
         sessionRule.waitForPageStop()
@@ -983,6 +1062,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @NullDelegate(GeckoSession.NavigationDelegate::class)
     @Test fun load_withoutNavigationDelegate() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Test that when navigation delegate is disabled, we can still perform loads.
         sessionRule.session.loadTestPath(HELLO_HTML_PATH)
         sessionRule.session.waitForPageStop()
@@ -993,6 +1075,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @NullDelegate(GeckoSession.NavigationDelegate::class)
     @Test fun load_canUnsetNavigationDelegate() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Test that if we unset the navigation delegate during a load, the load still proceeds.
         var onLocationCount = 0
         sessionRule.session.navigationDelegate = object : Callbacks.NavigationDelegate {
@@ -1015,6 +1100,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun loadString() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val dataString = "<html><head><title>TheTitle</title></head><body>TheBody</body></html>"
         val mimeType = "text/html"
         sessionRule.session.load(Loader().data(dataString, mimeType))
@@ -1057,6 +1145,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun loadData_html() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val bytes = getTestBytes(HELLO_HTML_PATH)
         assertThat("test html should have data", bytes.size, greaterThan(0))
 
@@ -1122,6 +1213,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun reload() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadUri("$TEST_ENDPOINT$HELLO_HTML_PATH")
         sessionRule.waitForPageStop()
 
@@ -1166,6 +1260,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun goBackAndForward() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadUri("$TEST_ENDPOINT$HELLO_HTML_PATH")
         sessionRule.waitForPageStop()
 
@@ -1249,6 +1346,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun onLoadUri_returnTrueCancelsLoad() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.delegateDuringNextWait(object : Callbacks.NavigationDelegate {
             @AssertCalled(count = 2)
             override fun onLoadRequest(session: GeckoSession,
@@ -1280,6 +1380,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun onNewSession_calledForWindowOpen() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Disable popup blocker.
         sessionRule.setPrefsUntilTestEnd(mapOf("dom.disable_open_during_load" to false))
 
@@ -1313,6 +1416,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @Test(expected = GeckoSessionTestRule.RejectedPromiseException::class)
     fun onNewSession_rejectLocal() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Disable popup blocker.
         sessionRule.setPrefsUntilTestEnd(mapOf("dom.disable_open_during_load" to false))
 
@@ -1368,6 +1474,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun onNewSession_childShouldLoad() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Disable popup blocker.
         sessionRule.setPrefsUntilTestEnd(mapOf("dom.disable_open_during_load" to false))
 
@@ -1395,6 +1504,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun onNewSession_setWindowOpener() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Disable popup blocker.
         sessionRule.setPrefsUntilTestEnd(mapOf("dom.disable_open_during_load" to false))
 
@@ -1411,6 +1523,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun onNewSession_supportNoOpener() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Disable popup blocker.
         sessionRule.setPrefsUntilTestEnd(mapOf("dom.disable_open_during_load" to false))
 
@@ -1427,6 +1542,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun onNewSession_notCalledForHandledLoads() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Disable popup blocker.
         sessionRule.setPrefsUntilTestEnd(mapOf("dom.disable_open_during_load" to false))
 
@@ -1472,6 +1590,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun onNewSession_submitFormWithTargetBlank() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadTestPath(FORM_BLANK_HTML_PATH)
         sessionRule.waitForPageStop()
 
@@ -1511,6 +1632,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun loadUriReferrer() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val uri = "https://example.com"
         val referrer = "https://foo.org/"
 
@@ -1526,6 +1650,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun loadUriReferrerSession() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val uri = "https://example.com/bar"
         val referrer = "https://example.org/"
 
@@ -1545,6 +1672,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun loadUriReferrerSessionFileUrl() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val uri = "file:///system/etc/fonts.xml"
         val referrer = "https://example.org"
 
@@ -1809,6 +1939,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @Test(expected = GeckoResult.UncaughtException::class)
     fun onNewSession_doesNotAllowOpened() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         // Disable popup blocker.
         sessionRule.setPrefsUntilTestEnd(mapOf("dom.disable_open_during_load" to false))
 
@@ -1831,6 +1964,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @Test
     fun extensionProcessSwitching() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.setPrefsUntilTestEnd(mapOf(
                 "xpinstall.signatures.required" to false,
                 "extensions.install.requireBuiltInCerts" to false,
@@ -1864,6 +2000,8 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @Test
     fun mainProcessSwitching() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
         processSwitchingTest("about:config")
     }
 
@@ -1936,6 +2074,9 @@ class NavigationDelegateTest : BaseSessionTest() {
     }
 
     @Test fun setLocationHash() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadUri("$TEST_ENDPOINT$HELLO_HTML_PATH")
         sessionRule.waitForPageStop()
 
@@ -1977,6 +2118,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun purgeHistory() {
         // TODO: Bug 1648158
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.loadUri("$TEST_ENDPOINT$HELLO_HTML_PATH")
         sessionRule.waitUntilCalled(object : Callbacks.NavigationDelegate {
             @AssertCalled(count = 1)
@@ -2030,6 +2175,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @WithDisplay(width = 100, height = 100)
     @Test fun userGesture() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         mainSession.loadUri("$TEST_ENDPOINT$CLICK_TO_RELOAD_HTML_PATH")
         mainSession.waitForPageStop()
 
@@ -2049,6 +2197,10 @@ class NavigationDelegateTest : BaseSessionTest() {
     @Test fun loadAfterLoad() {
         // TODO: Bug 1657028
         assumeThat(sessionRule.env.isFission, equalTo(false))
+
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         sessionRule.session.delegateDuringNextWait(object : Callbacks.NavigationDelegate {
             @AssertCalled(count = 2)
             override fun onLoadRequest(session: GeckoSession, request: LoadRequest): GeckoResult<AllowOrDeny>? {
@@ -2093,6 +2245,9 @@ class NavigationDelegateTest : BaseSessionTest() {
 
     @Test
     fun loadLongDataUriToplevelIndirect() {
+        // TODO: bug 1710943
+        assumeThat(sessionRule.env.isIsolatedProcess, equalTo(false))
+
         val dataBytes = ByteArray(3 * 1024 * 1024)
         val dataUri = createDataUri(dataBytes, "*/*")
 

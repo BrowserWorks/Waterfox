@@ -68,17 +68,6 @@ interface FrameLoader {
   void deactivateRemoteFrame();
 
   /**
-   * @see nsIDOMWindowUtils sendMouseEvent.
-   */
-  [Throws]
-  void sendCrossProcessMouseEvent(DOMString aType,
-                                  float aX,
-                                  float aY,
-                                  long aButton,
-                                  long aClickCount,
-                                  long aModifiers);
-
-  /**
    * Activate event forwarding from client (remote frame) to parent.
    */
   [Throws]
@@ -116,7 +105,7 @@ interface FrameLoader {
   /**
    * Request a session history update in native sessionStoreListeners.
    */
-  void requestSHistoryUpdate(boolean aImmediately);
+  void requestSHistoryUpdate();
 
   /**
    * Creates a print preview document in this frame, or updates the existing

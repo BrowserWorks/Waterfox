@@ -281,11 +281,6 @@ moz-input-box > menupopup .context-menu-add-engine > .menu-iconic-left {
 %include ../shared/notification-icons.inc.css
 %include ../shared/addon-notification.inc.css
 
-#pageAction-urlbar-shareURL,
-#pageAction-panel-shareURL {
-  list-style-image: url("chrome://browser/skin/share.svg");
-}
-
 /* Address bar results view */
 
 %include ../shared/urlbarView.inc.css
@@ -370,80 +365,6 @@ moz-input-box > menupopup .context-menu-add-engine > .menu-iconic-left {
   -moz-box-flex: 1; /* push the button icon to the start side */
   text-align: start;
 }
-
-@media not (-moz-proton-doorhangers) {
-#editBookmarkPanelRows > vbox > html|input,
-#editBookmarkPanelRows > vbox > hbox > html|input {
-  appearance: none;
-  background-color: var(--arrowpanel-field-background);
-  color: inherit;
-  border-radius: 2px;
-  border: 1px solid var(--panel-separator-color) !important;
-  margin: 0;
-  padding: 3px 6px;
-}
-
-#editBookmarkPanelRows > vbox > html|input:focus,
-#editBookmarkPanelRows > vbox > hbox > html|input:focus {
-  border-color: -moz-mac-focusring !important;
-  box-shadow: var(--focus-ring-box-shadow);
-}
-
-#editBMPanel_folderMenuList {
-  margin: 0;
-  min-height: 22px;
-  padding-block: 2px 1px;
-  padding-inline: 8px 4px;
-}
-
-#editBMPanel_folderMenuList:-moz-focusring {
-  box-shadow: var(--focus-ring-box-shadow);
-}
-
-#editBMPanel_folderMenuList::part(dropmarker) {
-  appearance: none;
-  -moz-context-properties: fill, fill-opacity;
-  fill: currentColor;
-  fill-opacity: 0.8;
-  list-style-image: url("chrome://global/skin/icons/arrow-dropdown-12.svg");
-  display: -moz-box;
-  -moz-box-align: center;
-  padding-inline-end: 4px;
-  width: 7px;
-}
-
-/**** expanders ****/
-
-#editBookmarkPanel .expander-up {
-  list-style-image: url("chrome://global/skin/icons/arrow-up-12.svg");
-}
-
-#editBookmarkPanel .expander-down {
-  list-style-image: url("chrome://global/skin/icons/arrow-dropdown-12.svg");
-}
-
-#editBookmarkPanel .expander-up,
-#editBookmarkPanel .expander-down {
-  appearance: none; /* override button.css */
-  -moz-context-properties: fill, fill-opacity;
-  fill: currentColor;
-  fill-opacity: 0.8;
-  margin: 0;
-  margin-inline-start: 4px;
-  min-width: 27px;
-  min-height: 22px;
-}
-
-#editBookmarkPanel .expander-up > .button-box > .button-icon,
-#editBookmarkPanel .expander-down > .button-box > .button-icon {
-  margin: 1px 0 0;
-}
-
-#editBookmarkPanel .expander-up > .button-box > .button-text,
-#editBookmarkPanel .expander-down > .button-box > .button-text {
-  display: none;
-}
-} /** END not Proton **/
 
 /**** folder tree and tag selector ****/
 

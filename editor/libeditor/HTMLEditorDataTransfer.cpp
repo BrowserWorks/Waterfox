@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/HTMLEditor.h"
+#include "HTMLEditor.h"
 
 #include <string.h>
 
@@ -12,6 +12,7 @@
 #include "InternetCiter.h"
 #include "WSRunObject.h"
 #include "mozilla/dom/Comment.h"
+#include "mozilla/dom/Document.h"
 #include "mozilla/dom/DataTransfer.h"
 #include "mozilla/dom/DocumentFragment.h"
 #include "mozilla/dom/DOMException.h"
@@ -20,6 +21,7 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/FileReader.h"
 #include "mozilla/dom/Selection.h"
+#include "mozilla/dom/StaticRange.h"
 #include "mozilla/dom/WorkerRef.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Attributes.h"
@@ -46,7 +48,6 @@
 #include "nsGkAtoms.h"
 #include "nsIClipboard.h"
 #include "nsIContent.h"
-#include "mozilla/dom/Document.h"
 #include "nsIDocumentEncoder.h"
 #include "nsIFile.h"
 #include "nsIInputStream.h"
@@ -77,7 +78,6 @@
 
 class nsAtom;
 class nsILoadContext;
-class nsISupports;
 
 namespace mozilla {
 
@@ -91,6 +91,44 @@ static bool FindIntegerAfterString(const char* aLeadingString,
                                    const nsCString& aCStr,
                                    int32_t& foundNumber);
 static void RemoveFragComments(nsCString& aStr);
+
+nsresult HTMLEditor::InsertDroppedDataTransferAsAction(
+    AutoEditActionDataSetter& aEditActionData, DataTransfer& aDataTransfer,
+    const EditorDOMPoint& aDroppedAt, Document* aSrcDocument) {
+  MOZ_ASSERT(aEditActionData.GetEditAction() == EditAction::eDrop);
+  MOZ_ASSERT(GetEditAction() == EditAction::eDrop);
+  MOZ_ASSERT(aDroppedAt.IsSet());
+  MOZ_ASSERT(aDataTransfer.MozItemCount() > 0);
+
+  aEditActionData.InitializeDataTransfer(&aDataTransfer);
+  RefPtr<StaticRange> targetRange = StaticRange::Create(
+      aDroppedAt.GetContainer(), aDroppedAt.Offset(), aDroppedAt.GetContainer(),
+      aDroppedAt.Offset(), IgnoreErrors());
+  NS_WARNING_ASSERTION(targetRange && targetRange->IsPositioned(),
+                       "Why did we fail to create collapsed static range at "
+                       "dropped position?");
+  if (targetRange && targetRange->IsPositioned()) {
+    aEditActionData.AppendTargetRange(*targetRange);
+  }
+  nsresult rv = aEditActionData.MaybeDispatchBeforeInputEvent();
+  if (NS_FAILED(rv)) {
+    NS_WARNING_ASSERTION(rv == NS_ERROR_EDITOR_ACTION_CANCELED,
+                         "MaybeDispatchBeforeInputEvent() failed");
+    return rv;
+  }
+  uint32_t numItems = aDataTransfer.MozItemCount();
+  for (uint32_t i = 0; i < numItems; ++i) {
+    DebugOnly<nsresult> rvIgnored = InsertFromDataTransfer(
+        &aDataTransfer, i, aSrcDocument, aDroppedAt, false);
+    if (NS_WARN_IF(Destroyed())) {
+      return NS_OK;
+    }
+    NS_WARNING_ASSERTION(
+        NS_SUCCEEDED(rvIgnored),
+        "HTMLEditor::InsertFromDataTransfer() failed, but ignored");
+  }
+  return NS_OK;
+}
 
 nsresult HTMLEditor::LoadHTML(const nsAString& aInputString) {
   MOZ_ASSERT(IsEditActionDataAvailable());
@@ -491,7 +529,7 @@ nsresult HTMLEditor::HTMLWithContextInserter::Run(
     rv = MOZ_KnownLive(mHTMLEditor)
              .PrepareToInsertContent(aPointToInsert, aDoDeleteSelection);
     if (NS_FAILED(rv)) {
-      NS_WARNING("HTMLEditor::PrepareToInsertContent() failed");
+      NS_WARNING("EditorBase::PrepareToInsertContent() failed");
       return rv;
     }
   }
@@ -1064,10 +1102,6 @@ nsresult HTMLEditor::HTMLWithContextInserter::FragmentFromPasteCreator::
       child = std::move(previous);
     }
   }
-  return NS_OK;
-}
-
-nsresult HTMLEditor::PrepareTransferable(nsITransferable** aTransferable) {
   return NS_OK;
 }
 
@@ -1828,7 +1862,7 @@ nsresult HTMLEditor::InsertFromTransferable(nsITransferable* aTransferable,
 }
 
 static void GetStringFromDataTransfer(const DataTransfer* aDataTransfer,
-                                      const nsAString& aType, int32_t aIndex,
+                                      const nsAString& aType, uint32_t aIndex,
                                       nsString& aOutputString) {
   nsCOMPtr<nsIVariant> variant;
   DebugOnly<nsresult> rvIgnored = aDataTransfer->GetDataAtNoSecurityCheck(
@@ -1845,16 +1879,16 @@ static void GetStringFromDataTransfer(const DataTransfer* aDataTransfer,
 }
 
 nsresult HTMLEditor::InsertFromDataTransfer(const DataTransfer* aDataTransfer,
-                                            int32_t aIndex,
+                                            uint32_t aIndex,
                                             Document* aSourceDoc,
                                             const EditorDOMPoint& aDroppedAt,
                                             bool aDoDeleteSelection) {
   MOZ_ASSERT(GetEditAction() == EditAction::eDrop ||
              GetEditAction() == EditAction::ePaste);
   MOZ_ASSERT(mPlaceholderBatch,
-             "TextEditor::InsertFromDataTransfer() should be called by "
-             "OnDrop() or paste action "
-             "and there should've already been placeholder transaction");
+             "HTMLEditor::InsertFromDataTransfer() should be called by "
+             "HandleDropEvent() or paste action and there should've already "
+             "been placeholder transaction");
   MOZ_ASSERT_IF(GetEditAction() == EditAction::eDrop, aDroppedAt.IsSet());
 
   ErrorResult error;
@@ -1962,7 +1996,7 @@ nsresult HTMLEditor::InsertFromDataTransfer(const DataTransfer* aDataTransfer,
       GetStringFromDataTransfer(aDataTransfer, type, aIndex, text);
       nsresult rv = InsertTextAt(text, aDroppedAt, aDoDeleteSelection);
       NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
-                           "TextEditor::InsertTextAt() failed");
+                           "EditorBase::InsertTextAt() failed");
       return rv;
     }
   }
@@ -1986,6 +2020,37 @@ bool HTMLEditor::HavePrivateHTMLFlavor(nsIClipboard* aClipboard) {
                        "nsIClipboard::HasDataMatchingFlavors(nsIClipboard::"
                        "kGlobalClipboard) failed");
   return NS_SUCCEEDED(rv) && bHavePrivateHTMLFlavor;
+}
+
+nsresult HTMLEditor::PasteAsAction(int32_t aClipboardType,
+                                   bool aDispatchPasteEvent,
+                                   nsIPrincipal* aPrincipal) {
+  AutoEditActionDataSetter editActionData(*this, EditAction::ePaste,
+                                          aPrincipal);
+  if (NS_WARN_IF(!editActionData.CanHandle())) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
+  if (aDispatchPasteEvent) {
+    if (!FireClipboardEvent(ePaste, aClipboardType)) {
+      return EditorBase::ToGenericNSResult(NS_ERROR_EDITOR_ACTION_CANCELED);
+    }
+  } else {
+    // The caller must already have dispatched a "paste" event.
+    editActionData.NotifyOfDispatchingClipboardEvent();
+  }
+
+  editActionData.InitializeDataTransferWithClipboard(
+      SettingDataTransfer::eWithFormat, aClipboardType);
+  nsresult rv = editActionData.CanHandleAndMaybeDispatchBeforeInputEvent();
+  if (NS_FAILED(rv)) {
+    NS_WARNING_ASSERTION(rv == NS_ERROR_EDITOR_ACTION_CANCELED,
+                         "CanHandleAndMaybeDispatchBeforeInputEvent() failed");
+    return EditorBase::ToGenericNSResult(rv);
+  }
+  rv = PasteInternal(aClipboardType);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "HTMLEditor::PasteInternal() failed");
+  return EditorBase::ToGenericNSResult(rv);
 }
 
 nsresult HTMLEditor::PasteInternal(int32_t aClipboardType) {
@@ -2193,17 +2258,22 @@ nsresult HTMLEditor::PasteNoFormattingAsAction(int32_t aSelectionType,
     return rv;
   }
 
-  // Get the nsITransferable interface for getting the data from the clipboard.
-  // use TextEditor::PrepareTransferable() to force unicode plaintext data.
-  nsCOMPtr<nsITransferable> transferable;
-  rv = TextEditor::PrepareTransferable(getter_AddRefs(transferable));
-  if (NS_FAILED(rv)) {
-    NS_WARNING("TextEditor::PrepareTransferable() failed");
-    return EditorBase::ToGenericNSResult(rv);
+  if (!GetDocument()) {
+    NS_WARNING("Editor didn't have document, but ignored");
+    return NS_OK;
   }
+
+  Result<nsCOMPtr<nsITransferable>, nsresult> maybeTransferable =
+      EditorUtils::CreateTransferableForPlainText(*GetDocument());
+  if (maybeTransferable.isErr()) {
+    NS_WARNING("EditorUtils::CreateTransferableForPlainText() failed");
+    return EditorBase::ToGenericNSResult(maybeTransferable.unwrapErr());
+  }
+  nsCOMPtr<nsITransferable> transferable(maybeTransferable.unwrap());
   if (!transferable) {
     NS_WARNING(
-        "TextEditor::PrepareTransferable() returned nullptr, but ignored");
+        "EditorUtils::CreateTransferableForPlainText() returned nullptr, but "
+        "ignored");
     return NS_OK;
   }
 
@@ -2916,12 +2986,15 @@ NS_IMETHODIMP HTMLEditor::Rewrap(bool aRespectNewlines) {
   }
 
   nsAutoString current;
-  bool isCollapsed;
-  rv = SharedOutputString(nsIDocumentEncoder::OutputFormatted |
-                              nsIDocumentEncoder::OutputLFLineBreak,
-                          &isCollapsed, current);
+  const bool isCollapsed = SelectionRef().IsCollapsed();
+  uint32_t flags = nsIDocumentEncoder::OutputFormatted |
+                   nsIDocumentEncoder::OutputLFLineBreak;
+  if (!isCollapsed) {
+    flags |= nsIDocumentEncoder::OutputSelectionOnly;
+  }
+  rv = ComputeValueInternal(u"text/plain"_ns, flags, current);
   if (NS_FAILED(rv)) {
-    NS_WARNING("TextEditor::SharedOutputString() failed");
+    NS_WARNING("EditorBase::ComputeValueInternal(text/plain) failed");
     return EditorBase::ToGenericNSResult(rv);
   }
 

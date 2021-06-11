@@ -13,6 +13,9 @@ const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetters(this, {
+  FeatureManifest: "resource://nimbus/FeatureManifest.js",
+});
 
 const IS_MAIN_PROCESS =
   Services.appinfo.processType === Services.appinfo.PROCESS_TYPE_DEFAULT;
@@ -86,13 +89,23 @@ XPCOMUtils.defineLazyGetter(this, "syncDataStore", () => {
 });
 
 const DEFAULT_STORE_ID = "ExperimentStoreData";
-// Experiment feature configs that should be saved to prefs for
-// fast access on startup.
-const SYNC_ACCESS_FEATURES = ["newtab", "aboutwelcome", "upgradeDialog"];
 
 class ExperimentStore extends SharedDataMap {
+  static SYNC_DATA_PREF_BRANCH = SYNC_DATA_PREF_BRANCH;
+  static SYNC_DEFAULTS_PREF_BRANCH = SYNC_DEFAULTS_PREF_BRANCH;
+
   constructor(sharedDataKey, options = { isParent: IS_MAIN_PROCESS }) {
     super(sharedDataKey || DEFAULT_STORE_ID, options);
+  }
+
+  async init() {
+    await super.init();
+
+    this.getAllActive().forEach(experiment => {
+      experiment.featureIds?.forEach(feature =>
+        this._emitFeatureUpdate(feature, "feature-experiment-loaded")
+      );
+    });
   }
 
   /**
@@ -180,7 +193,10 @@ class ExperimentStore extends SharedDataMap {
    */
   _updateSyncStore(experiment) {
     let featureId = experiment.branch.feature?.featureId;
-    if (SYNC_ACCESS_FEATURES.includes(featureId)) {
+    if (
+      FeatureManifest[featureId]?.isEarlyStartup ||
+      experiment.branch.feature?.isEarlyStartup
+    ) {
       if (!experiment.active) {
         // Remove experiments on un-enroll, no need to check if it exists
         syncDataStore.delete(featureId);
@@ -258,7 +274,10 @@ class ExperimentStore extends SharedDataMap {
       ...remoteConfigState,
       [featureId]: { ...configuration },
     });
-    if (SYNC_ACCESS_FEATURES.includes(featureId)) {
+    if (
+      FeatureManifest[featureId]?.isEarlyStartup ||
+      configuration.isEarlyStartup
+    ) {
       syncDataStore.setDefault(featureId, configuration);
     }
     this._emitFeatureUpdate(featureId, "remote-defaults-update");

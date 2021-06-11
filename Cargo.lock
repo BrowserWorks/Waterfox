@@ -571,7 +571,7 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 [[package]]
 name = "chardetng"
 version = "0.1.9"
-source = "git+https://github.com/hsivonen/chardetng?rev=39f95e2f7cd6e632a379cdeee62c68e8cedd7810#39f95e2f7cd6e632a379cdeee62c68e8cedd7810"
+source = "git+https://github.com/hsivonen/chardetng?rev=302c995f91f44cf26e77dc4758ad56c3ff0153ad#302c995f91f44cf26e77dc4758ad56c3ff0153ad"
 dependencies = [
  "encoding_rs",
  "memchr",
@@ -777,57 +777,55 @@ dependencies = [
 
 [[package]]
 name = "cranelift-bforest"
-version = "0.73.0"
-source = "git+https://github.com/bytecodealliance/wasmtime?rev=6b77786a6e758e91da9484a1c80b6fa5f88e1b3d#6b77786a6e758e91da9484a1c80b6fa5f88e1b3d"
+version = "0.74.0"
+source = "git+https://github.com/bytecodealliance/wasmtime?rev=824fa69756523f2b6d49029fe25de94130b1f144#824fa69756523f2b6d49029fe25de94130b1f144"
 dependencies = [
- "cranelift-entity 0.73.0",
+ "cranelift-entity 0.74.0",
 ]
 
 [[package]]
 name = "cranelift-codegen"
-version = "0.73.0"
-source = "git+https://github.com/bytecodealliance/wasmtime?rev=6b77786a6e758e91da9484a1c80b6fa5f88e1b3d#6b77786a6e758e91da9484a1c80b6fa5f88e1b3d"
+version = "0.74.0"
+source = "git+https://github.com/bytecodealliance/wasmtime?rev=824fa69756523f2b6d49029fe25de94130b1f144#824fa69756523f2b6d49029fe25de94130b1f144"
 dependencies = [
- "byteorder",
  "cranelift-bforest",
  "cranelift-codegen-meta",
  "cranelift-codegen-shared",
- "cranelift-entity 0.73.0",
+ "cranelift-entity 0.74.0",
  "log",
  "regalloc",
  "smallvec",
  "target-lexicon 0.12.0",
- "thiserror",
 ]
 
 [[package]]
 name = "cranelift-codegen-meta"
-version = "0.73.0"
-source = "git+https://github.com/bytecodealliance/wasmtime?rev=6b77786a6e758e91da9484a1c80b6fa5f88e1b3d#6b77786a6e758e91da9484a1c80b6fa5f88e1b3d"
+version = "0.74.0"
+source = "git+https://github.com/bytecodealliance/wasmtime?rev=824fa69756523f2b6d49029fe25de94130b1f144#824fa69756523f2b6d49029fe25de94130b1f144"
 dependencies = [
  "cranelift-codegen-shared",
- "cranelift-entity 0.73.0",
+ "cranelift-entity 0.74.0",
 ]
 
 [[package]]
 name = "cranelift-codegen-shared"
-version = "0.73.0"
-source = "git+https://github.com/bytecodealliance/wasmtime?rev=6b77786a6e758e91da9484a1c80b6fa5f88e1b3d#6b77786a6e758e91da9484a1c80b6fa5f88e1b3d"
+version = "0.74.0"
+source = "git+https://github.com/bytecodealliance/wasmtime?rev=824fa69756523f2b6d49029fe25de94130b1f144#824fa69756523f2b6d49029fe25de94130b1f144"
 
 [[package]]
 name = "cranelift-entity"
 version = "0.41.0"
-source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=cd07861d1c92147b35b538e6f94fde7d1986f9ad#cd07861d1c92147b35b538e6f94fde7d1986f9ad"
+source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=d582d76bf0d17984501f3933688bf7a1eb5cf208#d582d76bf0d17984501f3933688bf7a1eb5cf208"
 
 [[package]]
 name = "cranelift-entity"
-version = "0.73.0"
-source = "git+https://github.com/bytecodealliance/wasmtime?rev=6b77786a6e758e91da9484a1c80b6fa5f88e1b3d#6b77786a6e758e91da9484a1c80b6fa5f88e1b3d"
+version = "0.74.0"
+source = "git+https://github.com/bytecodealliance/wasmtime?rev=824fa69756523f2b6d49029fe25de94130b1f144#824fa69756523f2b6d49029fe25de94130b1f144"
 
 [[package]]
 name = "cranelift-frontend"
-version = "0.73.0"
-source = "git+https://github.com/bytecodealliance/wasmtime?rev=6b77786a6e758e91da9484a1c80b6fa5f88e1b3d#6b77786a6e758e91da9484a1c80b6fa5f88e1b3d"
+version = "0.74.0"
+source = "git+https://github.com/bytecodealliance/wasmtime?rev=824fa69756523f2b6d49029fe25de94130b1f144#824fa69756523f2b6d49029fe25de94130b1f144"
 dependencies = [
  "cranelift-codegen",
  "log",
@@ -837,11 +835,11 @@ dependencies = [
 
 [[package]]
 name = "cranelift-wasm"
-version = "0.73.0"
-source = "git+https://github.com/bytecodealliance/wasmtime?rev=6b77786a6e758e91da9484a1c80b6fa5f88e1b3d#6b77786a6e758e91da9484a1c80b6fa5f88e1b3d"
+version = "0.74.0"
+source = "git+https://github.com/bytecodealliance/wasmtime?rev=824fa69756523f2b6d49029fe25de94130b1f144#824fa69756523f2b6d49029fe25de94130b1f144"
 dependencies = [
  "cranelift-codegen",
- "cranelift-entity 0.73.0",
+ "cranelift-entity 0.74.0",
  "cranelift-frontend",
  "itertools 0.10.0",
  "log",
@@ -1051,8 +1049,9 @@ dependencies = [
 
 [[package]]
 name = "d3d12"
-version = "0.3.2"
-source = "git+https://github.com/gfx-rs/d3d12-rs?rev=be19a243b86e0bafb9937d661fc8eabb3e42b44e#be19a243b86e0bafb9937d661fc8eabb3e42b44e"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "091ed1b25fe47c7ff129fc440c23650b6114f36aa00bc7212cc8041879294428"
 dependencies = [
  "bitflags",
  "libloading 0.7.0",
@@ -1334,9 +1333,9 @@ dependencies = [
 
 [[package]]
 name = "euclid"
-version = "0.22.0"
+version = "0.22.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ab0e07e345fb061928646949fdf5fb888e5d75a57385e7f5856e45be289e745"
+checksum = "da96828553a086d7b18dcebfc579bd9628b016f86590d7453c115e490fa74b80"
 dependencies = [
  "num-traits",
  "serde",
@@ -1389,9 +1388,9 @@ checksum = "7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a"
 
 [[package]]
 name = "fallible_collections"
-version = "0.3.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9599e8ccc571becb62700174680e54e5c50fc5b4d34c1c56d8915e0325650fea"
+checksum = "4ad9169582543d2cfe9961be1e9eaf4fc42f9aa3483f7c485717b8dde36466ea"
 dependencies = [
  "hashbrown",
 ]
@@ -1756,6 +1755,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gecko-profiler"
+version = "0.1.0"
+
+[[package]]
 name = "gecko_logger"
 version = "0.1.0"
 dependencies = [
@@ -1833,8 +1836,8 @@ dependencies = [
 
 [[package]]
 name = "gfx-auxil"
-version = "0.8.0"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+version = "0.9.0"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 dependencies = [
  "fxhash",
  "gfx-hal",
@@ -1843,8 +1846,8 @@ dependencies = [
 
 [[package]]
 name = "gfx-backend-dx11"
-version = "0.7.0"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+version = "0.8.0"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -1864,8 +1867,8 @@ dependencies = [
 
 [[package]]
 name = "gfx-backend-dx12"
-version = "0.7.0"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+version = "0.8.0"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 dependencies = [
  "arrayvec",
  "bit-set",
@@ -1885,8 +1888,8 @@ dependencies = [
 
 [[package]]
 name = "gfx-backend-empty"
-version = "0.7.0"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+version = "0.8.0"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 dependencies = [
  "gfx-hal",
  "log",
@@ -1895,8 +1898,8 @@ dependencies = [
 
 [[package]]
 name = "gfx-backend-metal"
-version = "0.7.0"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+version = "0.8.1"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -1921,8 +1924,8 @@ dependencies = [
 
 [[package]]
 name = "gfx-backend-vulkan"
-version = "0.7.0"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+version = "0.8.0"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 dependencies = [
  "arrayvec",
  "ash",
@@ -1930,19 +1933,21 @@ dependencies = [
  "core-graphics-types",
  "gfx-hal",
  "inplace_it",
+ "libloading 0.7.0",
  "log",
  "naga",
  "objc",
  "parking_lot",
  "raw-window-handle",
+ "renderdoc-sys",
  "smallvec",
  "winapi",
 ]
 
 [[package]]
 name = "gfx-hal"
-version = "0.7.0"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+version = "0.8.0"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 dependencies = [
  "bitflags",
  "naga",
@@ -2003,6 +2008,7 @@ dependencies = [
  "fluent-langneg",
  "fluent-langneg-ffi",
  "fog_control",
+ "gecko-profiler",
  "gecko_logger",
  "geckoservo",
  "gkrust_utils",
@@ -2074,9 +2080,9 @@ dependencies = [
 
 [[package]]
 name = "glean"
-version = "38.0.1"
+version = "39.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e19f2098b5cd381c6ba54836131befa7f0733b2a25fbb42f562c24bb817fa0f6"
+checksum = "c8e24825d3123194a212e3daf8ddac150713cec4f1e126dc3c12ba207f0b5d77"
 dependencies = [
  "chrono",
  "crossbeam-channel 0.5.0",
@@ -2094,9 +2100,9 @@ dependencies = [
 
 [[package]]
 name = "glean-core"
-version = "38.0.1"
+version = "39.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d672b7cc992c10c7ce78af182e9298d6a1e75f477ac5f1e9a03e89cfad027c9"
+checksum = "d1a31d189a28ffde9bfcc7ab26586ee2b81705f0b95bf7a090b67fab1f378782"
 dependencies = [
  "bincode",
  "chrono",
@@ -2174,8 +2180,9 @@ dependencies = [
 
 [[package]]
 name = "gpu-alloc"
-version = "0.4.2"
-source = "git+https://github.com/zakarumych/gpu-alloc.git?rev=2cd1ad650cdd24d1647b6041f77ced0cbf1ff2a6#2cd1ad650cdd24d1647b6041f77ced0cbf1ff2a6"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cbc1b6ca374e81862526786d9cb42357ce03706ed1b8761730caafd02ab91f3a"
 dependencies = [
  "bitflags",
  "gpu-alloc-types",
@@ -2183,8 +2190,9 @@ dependencies = [
 
 [[package]]
 name = "gpu-alloc-types"
-version = "0.2.1"
-source = "git+https://github.com/zakarumych/gpu-alloc.git?rev=2cd1ad650cdd24d1647b6041f77ced0cbf1ff2a6#2cd1ad650cdd24d1647b6041f77ced0cbf1ff2a6"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54804d0d6bc9d7f26db4eaec1ad10def69b599315f487d32c334a80d1efe67a5"
 dependencies = [
  "bitflags",
 ]
@@ -2535,7 +2543,7 @@ dependencies = [
 [[package]]
 name = "jsparagus"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 dependencies = [
  "jsparagus-ast",
  "jsparagus-emitter",
@@ -2549,7 +2557,7 @@ dependencies = [
 [[package]]
 name = "jsparagus-ast"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 dependencies = [
  "bumpalo",
  "indexmap",
@@ -2558,7 +2566,7 @@ dependencies = [
 [[package]]
 name = "jsparagus-emitter"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 dependencies = [
  "bumpalo",
  "byteorder",
@@ -2571,7 +2579,7 @@ dependencies = [
 [[package]]
 name = "jsparagus-generated-parser"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 dependencies = [
  "bumpalo",
  "jsparagus-ast",
@@ -2581,12 +2589,12 @@ dependencies = [
 [[package]]
 name = "jsparagus-json-log"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 
 [[package]]
 name = "jsparagus-parser"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 dependencies = [
  "arrayvec",
  "bumpalo",
@@ -2598,7 +2606,7 @@ dependencies = [
 [[package]]
 name = "jsparagus-scope"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 dependencies = [
  "indexmap",
  "jsparagus-ast",
@@ -2608,7 +2616,7 @@ dependencies = [
 [[package]]
 name = "jsparagus-stencil"
 version = "0.1.0"
-source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=d5d8c00ebd3281d12e0be5dfddbb69f791f836f1#d5d8c00ebd3281d12e0be5dfddbb69f791f836f1"
+source = "git+https://github.com/mozilla-spidermonkey/jsparagus?rev=a45ca99e5be2062780032152a6daf94f29a307d3#a45ca99e5be2062780032152a6daf94f29a307d3"
 dependencies = [
  "jsparagus-ast",
 ]
@@ -2843,7 +2851,7 @@ dependencies = [
 [[package]]
 name = "lucet-module-wasmsbx"
 version = "0.1.1"
-source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=cd07861d1c92147b35b538e6f94fde7d1986f9ad#cd07861d1c92147b35b538e6f94fde7d1986f9ad"
+source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=d582d76bf0d17984501f3933688bf7a1eb5cf208#d582d76bf0d17984501f3933688bf7a1eb5cf208"
 dependencies = [
  "bincode",
  "byteorder",
@@ -2859,7 +2867,7 @@ dependencies = [
 [[package]]
 name = "lucet-runtime-internals-wasmsbx"
 version = "0.1.1"
-source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=cd07861d1c92147b35b538e6f94fde7d1986f9ad#cd07861d1c92147b35b538e6f94fde7d1986f9ad"
+source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=d582d76bf0d17984501f3933688bf7a1eb5cf208#d582d76bf0d17984501f3933688bf7a1eb5cf208"
 dependencies = [
  "bincode",
  "bitflags",
@@ -2881,7 +2889,7 @@ dependencies = [
 [[package]]
 name = "lucet-runtime-wasmsbx"
 version = "0.1.1"
-source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=cd07861d1c92147b35b538e6f94fde7d1986f9ad#cd07861d1c92147b35b538e6f94fde7d1986f9ad"
+source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=d582d76bf0d17984501f3933688bf7a1eb5cf208#d582d76bf0d17984501f3933688bf7a1eb5cf208"
 dependencies = [
  "cc",
  "libc",
@@ -2894,7 +2902,7 @@ dependencies = [
 [[package]]
 name = "lucet-wasi-wasmsbx"
 version = "0.1.1"
-source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=cd07861d1c92147b35b538e6f94fde7d1986f9ad#cd07861d1c92147b35b538e6f94fde7d1986f9ad"
+source = "git+https://github.com/PLSysSec/lucet_sandbox_compiler?rev=d582d76bf0d17984501f3933688bf7a1eb5cf208#d582d76bf0d17984501f3933688bf7a1eb5cf208"
 dependencies = [
  "cast",
  "failure",
@@ -3031,8 +3039,9 @@ dependencies = [
 
 [[package]]
 name = "metal"
-version = "0.21.0"
-source = "git+https://github.com/gfx-rs/metal-rs?rev=78f632d194c7c16d18b71d7373c4080847d110b0#78f632d194c7c16d18b71d7373c4080847d110b0"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c12e48c737ee9a55e8bb2352bcde588f79ae308d3529ee888f7cc0f469b5777"
 dependencies = [
  "bitflags",
  "block",
@@ -3257,7 +3266,7 @@ dependencies = [
 [[package]]
 name = "mp4parse"
 version = "0.11.5"
-source = "git+https://github.com/mozilla/mp4parse-rust?rev=dd967732ac836cc1ed5f1a7259d912c5d13e009b#dd967732ac836cc1ed5f1a7259d912c5d13e009b"
+source = "git+https://github.com/mozilla/mp4parse-rust?rev=1bb484e96ae724309e3346968e8ffd4c25e61616#1bb484e96ae724309e3346968e8ffd4c25e61616"
 dependencies = [
  "bitreader",
  "byteorder",
@@ -3276,7 +3285,7 @@ version = "0.1.0"
 [[package]]
 name = "mp4parse_capi"
 version = "0.11.5"
-source = "git+https://github.com/mozilla/mp4parse-rust?rev=dd967732ac836cc1ed5f1a7259d912c5d13e009b#dd967732ac836cc1ed5f1a7259d912c5d13e009b"
+source = "git+https://github.com/mozilla/mp4parse-rust?rev=1bb484e96ae724309e3346968e8ffd4c25e61616#1bb484e96ae724309e3346968e8ffd4c25e61616"
 dependencies = [
  "byteorder",
  "fallible_collections",
@@ -3303,8 +3312,8 @@ checksum = "a2983372caf4480544083767bf2d27defafe32af49ab4df3a0b7fc90793a3664"
 
 [[package]]
 name = "naga"
-version = "0.3.1"
-source = "git+https://github.com/gfx-rs/naga?tag=gfx-22#9cd6fd9c205a57824644d0baedc6c15997be1e36"
+version = "0.4.0"
+source = "git+https://github.com/gfx-rs/naga?tag=gfx-25#057d03ad86f18e3bb3866b20901d8d4e892dd3d6"
 dependencies = [
  "bit-set",
  "bitflags",
@@ -3313,14 +3322,15 @@ dependencies = [
  "log",
  "num-traits",
  "petgraph",
+ "rose_tree",
  "spirv_headers",
  "thiserror",
 ]
 
 [[package]]
 name = "neqo-common"
-version = "0.4.24"
-source = "git+https://github.com/mozilla/neqo?tag=v0.4.24#9ac8581e2df27f2e5b03abeba923dad1a7b9f6c4"
+version = "0.4.25"
+source = "git+https://github.com/mozilla/neqo?tag=v0.4.25#13b5a13022419babba7183f768a974edfe2bd58b"
 dependencies = [
  "chrono",
  "env_logger",
@@ -3332,8 +3342,8 @@ dependencies = [
 
 [[package]]
 name = "neqo-crypto"
-version = "0.4.24"
-source = "git+https://github.com/mozilla/neqo?tag=v0.4.24#9ac8581e2df27f2e5b03abeba923dad1a7b9f6c4"
+version = "0.4.25"
+source = "git+https://github.com/mozilla/neqo?tag=v0.4.25#13b5a13022419babba7183f768a974edfe2bd58b"
 dependencies = [
  "bindgen",
  "log",
@@ -3345,8 +3355,8 @@ dependencies = [
 
 [[package]]
 name = "neqo-http3"
-version = "0.4.24"
-source = "git+https://github.com/mozilla/neqo?tag=v0.4.24#9ac8581e2df27f2e5b03abeba923dad1a7b9f6c4"
+version = "0.4.25"
+source = "git+https://github.com/mozilla/neqo?tag=v0.4.25#13b5a13022419babba7183f768a974edfe2bd58b"
 dependencies = [
  "log",
  "neqo-common",
@@ -3359,8 +3369,8 @@ dependencies = [
 
 [[package]]
 name = "neqo-qpack"
-version = "0.4.24"
-source = "git+https://github.com/mozilla/neqo?tag=v0.4.24#9ac8581e2df27f2e5b03abeba923dad1a7b9f6c4"
+version = "0.4.25"
+source = "git+https://github.com/mozilla/neqo?tag=v0.4.25#13b5a13022419babba7183f768a974edfe2bd58b"
 dependencies = [
  "lazy_static",
  "log",
@@ -3373,8 +3383,8 @@ dependencies = [
 
 [[package]]
 name = "neqo-transport"
-version = "0.4.24"
-source = "git+https://github.com/mozilla/neqo?tag=v0.4.24#9ac8581e2df27f2e5b03abeba923dad1a7b9f6c4"
+version = "0.4.25"
+source = "git+https://github.com/mozilla/neqo?tag=v0.4.25#13b5a13022419babba7183f768a974edfe2bd58b"
 dependencies = [
  "indexmap",
  "lazy_static",
@@ -3969,9 +3979,9 @@ dependencies = [
 
 [[package]]
 name = "profiling"
-version = "0.1.10"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0c71198452babfbba7419e716d29853c462d59da73c41485ab7dc8b4dc0c4be"
+checksum = "c3a66d5e88679f2720126c11ee29da07a08f094eac52306b066edd7d393752d6"
 
 [[package]]
 name = "prost"
@@ -4111,7 +4121,7 @@ dependencies = [
 [[package]]
 name = "range-alloc"
 version = "0.1.2"
-source = "git+https://github.com/gfx-rs/gfx?rev=84e02f96149207b1bafecb1924b14315930c98ee#84e02f96149207b1bafecb1924b14315930c98ee"
+source = "git+https://github.com/gfx-rs/gfx?rev=27a1dae3796d33d23812f2bb8c7e3b5aea18b521#27a1dae3796d33d23812f2bb8c7e3b5aea18b521"
 
 [[package]]
 name = "raw-cpuid"
@@ -4249,6 +4259,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "renderdoc-sys"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1382d1f0a252c4bf97dc20d979a2fdd05b024acd7c2ed0f7595d7817666a157"
+
+[[package]]
 name = "rental"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4301,7 +4317,7 @@ dependencies = [
 [[package]]
 name = "rlbox_lucet_sandbox"
 version = "0.1.0"
-source = "git+https://github.com/PLSysSec/rlbox_lucet_sandbox/?rev=f3cace4fb8b53db0849c62af4fa62bade5a620f7#f3cace4fb8b53db0849c62af4fa62bade5a620f7"
+source = "git+https://github.com/PLSysSec/rlbox_lucet_sandbox/?rev=5c8e79048d3ff6f434109e19d4aee4ff8624d3d7#5c8e79048d3ff6f434109e19d4aee4ff8624d3d7"
 dependencies = [
  "failure",
  "goblin",
@@ -4320,6 +4336,15 @@ dependencies = [
  "base64 0.12.0",
  "bitflags",
  "serde",
+]
+
+[[package]]
+name = "rose_tree"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "284de9dae38774e2813aaabd7e947b4a6fe9b8c58c2309f754a487cdd50de1c2"
+dependencies = [
+ "petgraph",
 ]
 
 [[package]]
@@ -4838,6 +4863,7 @@ dependencies = [
  "euclid",
  "fallible",
  "fxhash",
+ "gecko-profiler",
  "hashbrown",
  "hashglobe",
  "indexmap",
@@ -5133,9 +5159,9 @@ checksum = "d23e87ee7a1ef5bd2d38cef24ff360f6e02beee13c6a7eb64dddde4a3da427a3"
 
 [[package]]
 name = "thunderdome"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7572415bd688d401c52f6e36f4c8e805b9ae1622619303b9fa835d531db0acae"
+checksum = "87b4947742c93ece24a0032141d9caa3d853752e694a57e35029dd2bd08673e0"
 
 [[package]]
 name = "time"
@@ -5628,9 +5654,9 @@ checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 
 [[package]]
 name = "wasmparser"
-version = "0.77.0"
+version = "0.78.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b35c86d22e720a07d954ebbed772d01180501afe7d03d464f413bb5f8914a8d6"
+checksum = "52144d4c78e5cf8b055ceab8e5fa22814ce4315d6002ad32cfd914f37c12fd65"
 
 [[package]]
 name = "wast"
@@ -5785,6 +5811,7 @@ dependencies = [
  "euclid",
  "foreign-types",
  "fxhash",
+ "gecko-profiler",
  "gleam",
  "log",
  "nsstring",
@@ -5821,7 +5848,7 @@ dependencies = [
 
 [[package]]
 name = "wgpu-core"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -5849,7 +5876,7 @@ dependencies = [
 
 [[package]]
 name = "wgpu-types"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "bitflags",
  "serde",

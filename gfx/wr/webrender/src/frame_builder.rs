@@ -213,12 +213,12 @@ impl<'a> FrameBuildingState<'a> {
         &mut self,
         surface_index: SurfaceIndex,
         tasks: Vec<RenderTaskId>,
-        device_rect: DeviceRect,
+        raster_rect: DeviceRect,
     ) {
         let surface = &mut self.surfaces[surface_index.0];
         assert!(surface.render_tasks.is_none());
         surface.render_tasks = Some(SurfaceRenderTasks::Tiled(tasks));
-        surface.device_rect = Some(device_rect);
+        surface.raster_rect = Some(raster_rect);
     }
 
     /// Initialize render tasks for a simple surface, that contains only a
@@ -228,12 +228,12 @@ impl<'a> FrameBuildingState<'a> {
         surface_index: SurfaceIndex,
         task_id: RenderTaskId,
         parent_surface_index: SurfaceIndex,
-        device_rect: DeviceRect,
+        raster_rect: DeviceRect,
     ) {
         let surface = &mut self.surfaces[surface_index.0];
         assert!(surface.render_tasks.is_none());
         surface.render_tasks = Some(SurfaceRenderTasks::Simple(task_id));
-        surface.device_rect = Some(device_rect);
+        surface.raster_rect = Some(raster_rect);
 
         self.add_child_render_task(
             parent_surface_index,
@@ -250,12 +250,12 @@ impl<'a> FrameBuildingState<'a> {
         root_task_id: RenderTaskId,
         port_task_id: RenderTaskId,
         parent_surface_index: SurfaceIndex,
-        device_rect: DeviceRect,
+        raster_rect: DeviceRect,
     ) {
         let surface = &mut self.surfaces[surface_index.0];
         assert!(surface.render_tasks.is_none());
         surface.render_tasks = Some(SurfaceRenderTasks::Chained { root_task_id, port_task_id });
-        surface.device_rect = Some(device_rect);
+        surface.raster_rect = Some(raster_rect);
 
         self.add_child_render_task(
             parent_surface_index,
@@ -455,7 +455,7 @@ impl FrameBuilder {
             ROOT_SPATIAL_NODE_INDEX,
         );
         default_dirty_region.add_dirty_region(
-            frame_context.global_screen_world_rect.cast_unit(),
+            frame_context.global_screen_world_rect.to_rect().cast_unit(),
             SubSliceIndex::DEFAULT,
             frame_context.spatial_tree,
         );
@@ -528,9 +528,7 @@ impl FrameBuilder {
         gpu_cache: &mut GpuCache,
         rg_builder: &mut RenderTaskGraphBuilder,
         stamp: FrameStamp,
-        global_device_pixel_scale: DevicePixelScale,
         device_origin: DeviceIntPoint,
-        pan: WorldPoint,
         scene_properties: &SceneProperties,
         data_stores: &mut DataStores,
         scratch: &mut ScratchBuffer,
@@ -550,22 +548,20 @@ impl FrameBuilder {
 
         self.globals.update(gpu_cache);
 
-        scene.spatial_tree.update_tree(
-            pan,
-            global_device_pixel_scale,
-            scene_properties,
-        );
+        scene.spatial_tree.update_tree(scene_properties);
         let mut transform_palette = scene.spatial_tree.build_transform_palette();
         scene.clip_store.begin_frame(&mut scratch.clip_store);
 
         rg_builder.begin_frame(stamp.frame_id());
 
-        let output_size = scene.output_rect.size.to_i32();
+        // TODO(dp): Remove me completely!!
+        let global_device_pixel_scale = DevicePixelScale::new(1.0);
+
+        let output_size = scene.output_rect.size();
         let screen_world_rect = (scene.output_rect.to_f32() / global_device_pixel_scale).round_out();
 
         let mut composite_state = CompositeState::new(
             scene.config.compositor_kind,
-            global_device_pixel_scale,
             scene.config.max_depth_ids,
             dirty_rects_are_valid,
         );
@@ -693,9 +689,9 @@ impl FrameBuilder {
         scene.clip_store.end_frame(&mut scratch.clip_store);
 
         Frame {
-            device_rect: DeviceIntRect::new(
+            device_rect: DeviceIntRect::from_origin_and_size(
                 device_origin,
-                scene.output_rect.size,
+                scene.output_rect.size(),
             ),
             passes,
             transform_palette: transform_palette.finish(),
@@ -730,18 +726,17 @@ impl FrameBuilder {
                     let map_local_to_world = SpaceMapper::new_with_target(
                         ROOT_SPATIAL_NODE_INDEX,
                         tile_cache.spatial_node_index,
-                        ctx.screen_world_rect,
+                        ctx.screen_world_rect.to_rect(),
                         ctx.spatial_tree,
                     );
                     let world_clip_rect = map_local_to_world
                         .map(&tile_cache.local_clip_rect)
                         .expect("bug: unable to map clip rect");
-                    let device_clip_rect = (world_clip_rect * ctx.global_device_pixel_scale).round();
+                    let device_clip_rect = (world_clip_rect * ctx.global_device_pixel_scale).round().to_box2d();
 
                     composite_state.push_surface(
                         tile_cache,
                         device_clip_rect,
-                        ctx.global_device_pixel_scale,
                         ctx.resource_cache,
                         gpu_cache,
                         deferred_resolves,

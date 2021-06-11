@@ -86,6 +86,16 @@ gcc-9.3.0:
         strip-components: 1
         add-prefix: gcc-source/
 
+gcc-11.1.0:
+    description: GCC 11.1.0+ source code
+    fetch:
+        type: git
+        repo: https://gcc.gnu.org/git/gcc.git
+        # Tip of the releases/gcc-11 as of 2021-06-02.
+        revision: 22e424002217e182dee2fcc7d2df6d0fc601300d
+        artifact-name: gcc-source.tar.zst
+        path-prefix: gcc-source/
+
 gmp-5.1.3:
     description: GMP 5.1.3 source code
     fetch:
@@ -215,13 +225,13 @@ nasm-2.14.02:
         sha256: e24ade3e928f7253aa8c14aa44726d1edf3f98643f87c9d72ec1df44b26be8f5
         size: 827620
 
-nasm-2.13.02:
-    description: nasm 2.13.02 source code
+nasm-2.15.05:
+    description: nasm 2.15.05 source code
     fetch:
         type: static-url
-        url: https://www.nasm.us/pub/nasm/releasebuilds/2.13.02/nasm-2.13.02.tar.xz
-        sha256: 8ac3235f49a6838ff7a8d7ef7c19a4430d0deecc0c2d3e3e237b5e9f53291757
-        size: 805744
+        url: https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.xz
+        sha256: 3caf6729c1073bf96629b57cee31eeb54f4f8129b01902c73428836550b30a3f
+        size: 995732
 
 wix-3.14.0:
     description: wix 3.14.0.2812 binary release
@@ -462,7 +472,7 @@ wasi-sdk:
     fetch:
         type: git
         repo: https://github.com/WebAssembly/wasi-sdk
-        revision: 8446a3f8d49f70d17e38cefd9990a9e79bf3e78a
+        revision: b36c433738f0c29160a5ac1c1cee1b1b884bf4a0
 
 ninja:
     description: ninja 1.9.0
@@ -490,7 +500,7 @@ lucetc-source:
     fetch:
         type: git
         repo: https://github.com/PLSysSec/lucet_sandbox_compiler/
-        revision: cd07861d1c92147b35b538e6f94fde7d1986f9ad
+        revision: d582d76bf0d17984501f3933688bf7a1eb5cf208
 
 dump-syms:
     description: dump_syms source code
@@ -594,3 +604,14 @@ nodejs-10-win64:
         artifact-name: nodejs.tar.zst
         strip-components: 1
         add-prefix: node/
+
+gnumake:
+    description: GNU make source
+    fetch:
+        type: static-url
+        url: http://ftp.gnu.org/gnu/make/make-4.3.tar.gz
+        sha256: e05fdde47c5f7ca45cb697e973894ff4f5d79e13b750ed57d7b66d8defc78e19
+        size: 2317073
+        artifact-name: make.tar.zst
+        strip-components: 1
+        add-prefix: make/

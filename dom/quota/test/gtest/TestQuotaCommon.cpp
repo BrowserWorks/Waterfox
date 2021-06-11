@@ -1181,12 +1181,12 @@ TEST(QuotaCommon_WarnOnlyTryUnwrap, Failure_WithCleanup)
 
 TEST(QuotaCommon_OrElseWarn, Success)
 {
-  bool orElseWarnRun = false;
+  bool fallbackRun = false;
   bool tryContinued = false;
 
   const auto res = [&]() -> mozilla::Result<mozilla::Ok, NotOk> {
-    QM_TRY(QM_OR_ELSE_WARN(OkIf(true), ([&orElseWarnRun](const NotOk) {
-                             orElseWarnRun = true;
+    QM_TRY(QM_OR_ELSE_WARN(OkIf(true), ([&fallbackRun](const NotOk) {
+                             fallbackRun = true;
                              return mozilla::Result<mozilla::Ok, NotOk>{
                                  mozilla::Ok{}};
                            })));
@@ -1196,20 +1196,20 @@ TEST(QuotaCommon_OrElseWarn, Success)
   }();
 
   EXPECT_TRUE(res.isOk());
-  EXPECT_FALSE(orElseWarnRun);
+  EXPECT_FALSE(fallbackRun);
   EXPECT_TRUE(tryContinued);
 }
 
 TEST(QuotaCommon_OrElseWarn, Failure_MappedToSuccess)
 {
-  bool orElseWarnRun = false;
+  bool fallbackRun = false;
   bool tryContinued = false;
 
   // XXX Consider allowing to set a custom error handler, so that we can
   // actually assert that a warning was emitted.
   const auto res = [&]() -> mozilla::Result<mozilla::Ok, NotOk> {
-    QM_TRY(QM_OR_ELSE_WARN(OkIf(false), ([&orElseWarnRun](const NotOk) {
-                             orElseWarnRun = true;
+    QM_TRY(QM_OR_ELSE_WARN(OkIf(false), ([&fallbackRun](const NotOk) {
+                             fallbackRun = true;
                              return mozilla::Result<mozilla::Ok, NotOk>{
                                  mozilla::Ok{}};
                            })));
@@ -1218,20 +1218,20 @@ TEST(QuotaCommon_OrElseWarn, Failure_MappedToSuccess)
   }();
 
   EXPECT_TRUE(res.isOk());
-  EXPECT_TRUE(orElseWarnRun);
+  EXPECT_TRUE(fallbackRun);
   EXPECT_TRUE(tryContinued);
 }
 
 TEST(QuotaCommon_OrElseWarn, Failure_MappedToError)
 {
-  bool orElseWarnRun = false;
+  bool fallbackRun = false;
   bool tryContinued = false;
 
   // XXX Consider allowing to set a custom error handler, so that we can
   // actually assert that a warning was emitted.
   const auto res = [&]() -> mozilla::Result<mozilla::Ok, NotOk> {
-    QM_TRY(QM_OR_ELSE_WARN(OkIf(false), ([&orElseWarnRun](const NotOk) {
-                             orElseWarnRun = true;
+    QM_TRY(QM_OR_ELSE_WARN(OkIf(false), ([&fallbackRun](const NotOk) {
+                             fallbackRun = true;
                              return mozilla::Result<mozilla::Ok, NotOk>{
                                  NotOk{}};
                            })));
@@ -1240,7 +1240,119 @@ TEST(QuotaCommon_OrElseWarn, Failure_MappedToError)
   }();
 
   EXPECT_TRUE(res.isErr());
-  EXPECT_TRUE(orElseWarnRun);
+  EXPECT_TRUE(fallbackRun);
+  EXPECT_FALSE(tryContinued);
+}
+
+TEST(QuotaCommon_OrElseWarnIf, Success)
+{
+  bool predicateRun = false;
+  bool fallbackRun = false;
+  bool tryContinued = false;
+
+  const auto res = [&]() -> mozilla::Result<mozilla::Ok, NotOk> {
+    QM_TRY(QM_OR_ELSE_WARN_IF(
+        OkIf(true),
+        [&predicateRun](const NotOk) {
+          predicateRun = true;
+          return false;
+        },
+        ([&fallbackRun](const NotOk) {
+          fallbackRun = true;
+          return mozilla::Result<mozilla::Ok, NotOk>{mozilla::Ok{}};
+        })));
+
+    tryContinued = true;
+    return mozilla::Ok{};
+  }();
+
+  EXPECT_TRUE(res.isOk());
+  EXPECT_FALSE(predicateRun);
+  EXPECT_FALSE(fallbackRun);
+  EXPECT_TRUE(tryContinued);
+}
+
+TEST(QuotaCommon_OrElseWarnIf, Failure_PredicateReturnsFalse)
+{
+  bool predicateRun = false;
+  bool fallbackRun = false;
+  bool tryContinued = false;
+
+  const auto res = [&]() -> mozilla::Result<mozilla::Ok, NotOk> {
+    QM_TRY(QM_OR_ELSE_WARN_IF(
+        OkIf(false),
+        [&predicateRun](const NotOk) {
+          predicateRun = true;
+          return false;
+        },
+        ([&fallbackRun](const NotOk) {
+          fallbackRun = true;
+          return mozilla::Result<mozilla::Ok, NotOk>{mozilla::Ok{}};
+        })));
+
+    tryContinued = true;
+    return mozilla::Ok{};
+  }();
+
+  EXPECT_TRUE(res.isErr());
+  EXPECT_TRUE(predicateRun);
+  EXPECT_FALSE(fallbackRun);
+  EXPECT_FALSE(tryContinued);
+}
+
+TEST(QuotaCommon_OrElseWarnIf, Failure_PredicateReturnsTrue_MappedToSuccess)
+{
+  bool predicateRun = false;
+  bool fallbackRun = false;
+  bool tryContinued = false;
+
+  const auto res = [&]() -> mozilla::Result<mozilla::Ok, NotOk> {
+    QM_TRY(QM_OR_ELSE_WARN_IF(
+        OkIf(false),
+        [&predicateRun](const NotOk) {
+          predicateRun = true;
+          return true;
+        },
+        ([&fallbackRun](const NotOk) {
+          fallbackRun = true;
+          return mozilla::Result<mozilla::Ok, NotOk>{mozilla::Ok{}};
+        })));
+
+    tryContinued = true;
+    return mozilla::Ok{};
+  }();
+
+  EXPECT_TRUE(res.isOk());
+  EXPECT_TRUE(predicateRun);
+  EXPECT_TRUE(fallbackRun);
+  EXPECT_TRUE(tryContinued);
+}
+
+TEST(QuotaCommon_OrElseWarnIf, Failure_PredicateReturnsTrue_MappedToError)
+{
+  bool predicateRun = false;
+  bool fallbackRun = false;
+  bool tryContinued = false;
+
+  const auto res = [&]() -> mozilla::Result<mozilla::Ok, NotOk> {
+    QM_TRY(QM_OR_ELSE_WARN_IF(
+        OkIf(false),
+        [&predicateRun](const NotOk) {
+          predicateRun = true;
+          return true;
+        },
+        ([&fallbackRun](const NotOk) {
+          fallbackRun = true;
+          return mozilla::Result<mozilla::Ok, NotOk>{mozilla::NotOk{}};
+        })));
+
+    tryContinued = true;
+    return mozilla::Ok{};
+  }();
+
+  EXPECT_TRUE(res.isErr());
+  EXPECT_TRUE(predicateRun);
+  EXPECT_TRUE(fallbackRun);
   EXPECT_FALSE(tryContinued);
 }
 
@@ -1364,6 +1476,53 @@ TEST(QuotaCommon_ErrToDefaultOkOrErr, NsCOMPtr_Err)
       NS_ERROR_UNEXPECTED);
   EXPECT_TRUE(res.isErr());
   EXPECT_EQ(res.unwrapErr(), NS_ERROR_UNEXPECTED);
+}
+
+TEST(QuotaCommon_IsSpecificError, Match)
+{ EXPECT_TRUE(IsSpecificError<NS_ERROR_FAILURE>(NS_ERROR_FAILURE)); }
+
+TEST(QuotaCommon_IsSpecificError, Mismatch)
+{ EXPECT_FALSE(IsSpecificError<NS_ERROR_FAILURE>(NS_ERROR_UNEXPECTED)); }
+
+TEST(QuotaCommon_ErrToOk, Bool_True)
+{
+  auto res = ErrToOk<true>(NS_ERROR_FAILURE);
+  EXPECT_TRUE(res.isOk());
+  EXPECT_EQ(res.unwrap(), true);
+}
+
+TEST(QuotaCommon_ErrToOk, Bool_False)
+{
+  auto res = ErrToOk<false>(NS_ERROR_FAILURE);
+  EXPECT_TRUE(res.isOk());
+  EXPECT_EQ(res.unwrap(), false);
+}
+
+TEST(QuotaCommon_ErrToOk, Int_42)
+{
+  auto res = ErrToOk<42>(NS_ERROR_FAILURE);
+  EXPECT_TRUE(res.isOk());
+  EXPECT_EQ(res.unwrap(), 42);
+}
+
+TEST(QuotaCommon_ErrToOk, NsCOMPtr_nullptr)
+{
+  auto res = ErrToOk<nullptr, nsCOMPtr<nsISupports>>(NS_ERROR_FAILURE);
+  EXPECT_TRUE(res.isOk());
+  EXPECT_EQ(res.unwrap(), nullptr);
+}
+
+TEST(QuotaCommon_ErrToDefaultOk, Ok)
+{
+  auto res = ErrToDefaultOk<Ok>(NS_ERROR_FAILURE);
+  EXPECT_TRUE(res.isOk());
+}
+
+TEST(QuotaCommon_ErrToDefaultOk, NsCOMPtr)
+{
+  auto res = ErrToDefaultOk<nsCOMPtr<nsISupports>>(NS_ERROR_FAILURE);
+  EXPECT_TRUE(res.isOk());
+  EXPECT_EQ(res.unwrap(), nullptr);
 }
 
 class StringPairParameterized
@@ -1665,14 +1824,14 @@ TEST(QuotaCommon_ScopedLogExtraInfo, AddAndRemove)
     const auto extraInfo =
         ScopedLogExtraInfo{ScopedLogExtraInfo::kTagQuery, text};
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
     const auto& extraInfoMap = ScopedLogExtraInfo::GetExtraInfoMap();
 
     EXPECT_EQ(text, *extraInfoMap.at(ScopedLogExtraInfo::kTagQuery));
 #endif
   }
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
   const auto& extraInfoMap = ScopedLogExtraInfo::GetExtraInfoMap();
 
   EXPECT_EQ(0u, extraInfoMap.count(ScopedLogExtraInfo::kTagQuery));
@@ -1692,19 +1851,19 @@ TEST(QuotaCommon_ScopedLogExtraInfo, Nested)
       const auto extraInfo =
           ScopedLogExtraInfo{ScopedLogExtraInfo::kTagQuery, nestedText};
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
       const auto& extraInfoMap = ScopedLogExtraInfo::GetExtraInfoMap();
       EXPECT_EQ(nestedText, *extraInfoMap.at(ScopedLogExtraInfo::kTagQuery));
 #endif
     }
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
     const auto& extraInfoMap = ScopedLogExtraInfo::GetExtraInfoMap();
     EXPECT_EQ(text, *extraInfoMap.at(ScopedLogExtraInfo::kTagQuery));
 #endif
   }
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
   const auto& extraInfoMap = ScopedLogExtraInfo::GetExtraInfoMap();
 
   EXPECT_EQ(0u, extraInfoMap.count(ScopedLogExtraInfo::kTagQuery));

@@ -77,10 +77,10 @@ MARKUPMAP(
       }
       // Never create an accessible if the div is not display:block; or
       // display:inline-block;
-      nsAutoString displayValue;
       StyleInfo styleInfo(aElement);
-      styleInfo.Display(displayValue);
-      if (displayValue != u"block"_ns && displayValue != u"inline-block"_ns) {
+      RefPtr<nsAtom> displayValue = styleInfo.Display();
+      if (displayValue != nsGkAtoms::block &&
+          !displayValue->Equals(u"inline-block"_ns)) {
         return nullptr;
       }
       // Check for various conditions to determine if this is a block
@@ -311,7 +311,7 @@ MARKUPMAP(
     [](Element* aElement, LocalAccessible* aContext) -> LocalAccessible* {
       return new HTMLOutputAccessible(aElement, aContext->Document());
     },
-    roles::STATUSBAR, Attr(live, polite))
+    roles::STATUSBAR, Attr(aria_live, polite))
 
 MARKUPMAP(p, nullptr, roles::PARAGRAPH)
 

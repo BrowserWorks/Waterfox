@@ -25,7 +25,6 @@ EXTRA_PATHS = (
     "testing/mozbase/manifestparser",
     "testing/mozbase/mozfile",
     "testing/mozbase/mozprocess",
-    "third_party/python/futures",
     "third_party/python/jsmin",
     "third_party/python/which",
 )
@@ -55,7 +54,7 @@ extensions = [
 js_source_path = [
     "../browser/components/extensions",
     "../browser/components/uitour",
-    "../testing/marionette",
+    "../remote/marionette",
     "../toolkit/components/extensions",
     "../toolkit/components/extensions/parent",
     "../toolkit/components/featuregates",

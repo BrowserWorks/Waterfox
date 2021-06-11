@@ -240,8 +240,8 @@
 @media (prefers-contrast) {
   :host,
   :root {
-    --in-content-page-color: -moz-DialogText;
-    --in-content-page-background: -moz-Dialog;
+    --in-content-page-color: WindowText;
+    --in-content-page-background: Window;
     --in-content-deemphasized-text: GrayText;
 
     --in-content-box-background: -moz-Dialog;
@@ -272,6 +272,7 @@
 
     --in-content-button-text-color-hover: HighlightText;
     --in-content-button-background: ButtonFace;
+    --in-content-button-text-color: ButtonText;
     --in-content-button-background-hover: Highlight;
     --in-content-button-background-active: Highlight;
 
@@ -397,7 +398,7 @@ html|input[type="color"],
 xul|menulist {
   appearance: none;
   min-height: 32px;
-  color: inherit;
+  color: var(--in-content-button-text-color, inherit);
   border: 1px solid transparent; /* shows up in high-contrast mode */
   border-radius: var(--in-content-button-border-radius);
   background-color: var(--in-content-button-background);
@@ -535,6 +536,14 @@ xul|button.primary:not([disabled="true"]):hover {
   color: var(--in-content-primary-button-text-color-hover);
 }
 
+html|button[autofocus]:enabled:hover:active,
+html|button[type="submit"]:enabled:hover:active,
+html|button.primary:enabled:hover:active,
+xul|button[default]:not([disabled="true"]):hover:active,
+xul|button.primary:not([disabled="true"]):hover:active {
+  background-color: var(--in-content-primary-button-background-active);
+}
+
 @media (prefers-contrast) {
   html|button[autofocus]:enabled:hover,
   html|button[type="submit"]:enabled:hover,
@@ -544,23 +553,16 @@ xul|button.primary:not([disabled="true"]):hover {
     border-color: currentColor;
   }
 
-  html|input[type="checkbox"]:not(:checked):enabled:hover {
-    color: var(--checkbox-checked-border-color);
+  button:focus {
+    color: var(--in-content-button-text-color);
   }
 
-  html|input[type="checkbox"]:checked:enabled {
-    /* color sets the border color in HCM */
-    color: var(--checkbox-checked-border-color);
-    fill: var(--checkbox-checked-color);
+  html|button[autofocus]:focus,
+  html|button[type="submit"]:focus,
+  xul|button[default]:focus,
+  button.primary:focus {
+    color: var(--in-content-primary-button-text-color);
   }
-}
-
-html|button[autofocus]:enabled:hover:active,
-html|button[type="submit"]:enabled:hover:active,
-html|button.primary:enabled:hover:active,
-xul|button[default]:not([disabled="true"]):hover:active,
-xul|button.primary:not([disabled="true"]):hover:active {
-  background-color: var(--in-content-primary-button-background-active);
 }
 
 .danger-button {
@@ -627,10 +629,10 @@ xul|menulist::part(dropmarker-icon) {
 
 xul|menulist > xul|menupopup {
   appearance: none;
-  border: 1px solid var(--in-content-box-border-color);
-  border-radius: 2px;
-  background-color: var(--in-content-box-background);
-  color: var(--in-content-text-color);
+  --panel-border-color: var(--in-content-box-border-color);
+  --panel-border-radius: 2px;
+  --panel-background: var(--in-content-box-background);
+  --panel-color: var(--in-content-text-color);
 }
 
 xul|menulist > xul|menupopup xul|menu,
@@ -892,6 +894,29 @@ html|input[type="checkbox"]:enabled:checked:hover {
 html|input[type="checkbox"]:enabled:checked:hover:active {
   background-color: var(--checkbox-checked-active-bgcolor);
 }
+
+@media (prefers-contrast) {
+  html|input[type="checkbox"] {
+    /* Normalize the border-color to the in-content version following color */
+    border-color: currentColor;
+    color: var(--checkbox-border-color);
+  }
+
+  html|input[type="checkbox"]:not(:checked):enabled:hover {
+    /* color sets the border color in HCM in-content */
+    color: var(--checkbox-checked-border-color);
+  }
+
+  html|input[type="checkbox"]:checked:enabled {
+    /* color sets the border color in HCM in-content */
+    color: var(--checkbox-checked-bgcolor);
+    fill: var(--checkbox-checked-color);
+  }
+
+  html|input[type="checkbox"]:checked:enabled:hover {
+    fill: var(--checkbox-checked-bgcolor);
+  }
+}
 } /** END Proton **/
 
 xul|richlistitem > xul|*.checkbox-check {
@@ -1006,6 +1031,7 @@ html|*#categories {
   border-radius: 4px;
   min-height: 48px;
   appearance: none;
+  color: inherit;
   margin-inline-start: 34px;
   padding-inline: 10px;
   transition: background-color 150ms;
@@ -1291,7 +1317,7 @@ xul|treecolpicker {
   appearance: none;
   border: none;
   background-color: var(--in-content-button-background);
-  color: inherit;
+  color: var(--in-content-button-text-color, inherit);
   padding: 5px 10px;
 }
 

@@ -29,7 +29,6 @@
 #include "mozilla/dom/PointerEventHandler.h"
 #include "mozilla/dom/BrowserBridgeParent.h"
 #include "mozilla/dom/RemoteDragStartData.h"
-#include "mozilla/dom/RemoteWebProgress.h"
 #include "mozilla/dom/RemoteWebProgressRequest.h"
 #include "mozilla/dom/SessionHistoryEntry.h"
 #include "mozilla/dom/SessionStoreUtils.h"
@@ -53,6 +52,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/ProcessHangMonitor.h"
+#include "mozilla/StaticPrefs_accessibility.h"
 #include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextEvents.h"
@@ -1184,6 +1184,7 @@ mozilla::ipc::IPCResult BrowserParent::RecvPDocAccessibleConstructor(
   }
 
   if (aParentDoc) {
+    // Iframe document rendered in the same process as its embedder.
     // A document should never directly be the parent of another document.
     // There should always be an outer doc accessible child of the outer
     // document containing the child.
@@ -1193,6 +1194,15 @@ mozilla::ipc::IPCResult BrowserParent::RecvPDocAccessibleConstructor(
     }
 
     auto parentDoc = static_cast<a11y::DocAccessibleParent*>(aParentDoc);
+    if (parentDoc->IsShutdown()) {
+      // This can happen if parentDoc is an OOP iframe, but its embedder has
+      // been destroyed. (DocAccessibleParent::Destroy destroys any child
+      // documents.) The OOP iframe (and anything it embeds) will die soon
+      // anyway, so mark this document as shutdown and ignore it.
+      doc->MarkAsShutdown();
+      return IPC_OK();
+    }
+
     mozilla::ipc::IPCResult added = parentDoc->AddChildDoc(doc, aParentID);
     if (!added) {
 #  ifdef DEBUG
@@ -1204,7 +1214,9 @@ mozilla::ipc::IPCResult BrowserParent::RecvPDocAccessibleConstructor(
 
 #  ifdef XP_WIN
     MOZ_ASSERT(aDocCOMProxy.IsNull());
-    a11y::WrapperFor(doc)->GetMsaa()->SetID(aMsaaID);
+    if (!StaticPrefs::accessibility_cache_enabled_AtStartup()) {
+      a11y::WrapperFor(doc)->GetMsaa()->SetID(aMsaaID);
+    }
     if (a11y::nsWinUtils::IsWindowEmulationStarted()) {
       doc->SetEmulatedWindowHandle(parentDoc->GetEmulatedWindowHandle());
     }
@@ -1221,17 +1233,21 @@ mozilla::ipc::IPCResult BrowserParent::RecvPDocAccessibleConstructor(
     MOZ_ASSERT(!aParentDoc && !aParentID);
     doc->SetTopLevelInContentProcess();
 #  ifdef XP_WIN
-    MOZ_ASSERT(!aDocCOMProxy.IsNull());
-    RefPtr<IAccessible> proxy(aDocCOMProxy.Get());
-    doc->SetCOMInterface(proxy);
+    if (!StaticPrefs::accessibility_cache_enabled_AtStartup()) {
+      MOZ_ASSERT(!aDocCOMProxy.IsNull());
+      RefPtr<IAccessible> proxy(aDocCOMProxy.Get());
+      doc->SetCOMInterface(proxy);
+    }
 #  endif
     a11y::ProxyCreated(doc);
 #  ifdef XP_WIN
-    // This *must* be called after ProxyCreated because WrapperFor will fail
-    // before that.
-    a11y::AccessibleWrap* wrapper = a11y::WrapperFor(doc);
-    MOZ_ASSERT(wrapper);
-    wrapper->GetMsaa()->SetID(aMsaaID);
+    if (!StaticPrefs::accessibility_cache_enabled_AtStartup()) {
+      // This *must* be called after ProxyCreated because WrapperFor will fail
+      // before that.
+      a11y::AccessibleWrap* wrapper = a11y::WrapperFor(doc);
+      MOZ_ASSERT(wrapper);
+      wrapper->GetMsaa()->SetID(aMsaaID);
+    }
 #  endif
     a11y::DocAccessibleParent* embedderDoc;
     uint64_t embedderID;
@@ -1265,14 +1281,18 @@ mozilla::ipc::IPCResult BrowserParent::RecvPDocAccessibleConstructor(
     doc->SetTopLevel();
     a11y::DocManager::RemoteDocAdded(doc);
 #  ifdef XP_WIN
-    a11y::WrapperFor(doc)->GetMsaa()->SetID(aMsaaID);
-    MOZ_ASSERT(!aDocCOMProxy.IsNull());
+    if (StaticPrefs::accessibility_cache_enabled_AtStartup()) {
+      doc->MaybeInitWindowEmulation();
+    } else {
+      a11y::WrapperFor(doc)->GetMsaa()->SetID(aMsaaID);
+      MOZ_ASSERT(!aDocCOMProxy.IsNull());
 
-    RefPtr<IAccessible> proxy(aDocCOMProxy.Get());
-    doc->SetCOMInterface(proxy);
-    doc->MaybeInitWindowEmulation();
-    if (a11y::LocalAccessible* outerDoc = doc->OuterDocOfRemoteBrowser()) {
-      doc->SendParentCOMProxy(outerDoc);
+      RefPtr<IAccessible> proxy(aDocCOMProxy.Get());
+      doc->SetCOMInterface(proxy);
+      doc->MaybeInitWindowEmulation();
+      if (a11y::LocalAccessible* outerDoc = doc->OuterDocOfRemoteBrowser()) {
+        doc->SendParentCOMProxy(outerDoc);
+      }
     }
 #  endif
   }
@@ -1382,15 +1402,6 @@ void BrowserParent::UpdateVsyncParentVsyncSource() {
 
   if (nsCOMPtr<nsIWidget> widget = GetWidget()) {
     mVsyncParent->UpdateVsyncSource(widget->GetVsyncSource());
-  }
-}
-
-void BrowserParent::SendMouseEvent(const nsAString& aType, float aX, float aY,
-                                   int32_t aButton, int32_t aClickCount,
-                                   int32_t aModifiers) {
-  if (!mIsDestroyed) {
-    Unused << PBrowserParent::SendMouseEvent(nsString(aType), aX, aY, aButton,
-                                             aClickCount, aModifiers);
   }
 }
 
@@ -2683,14 +2694,17 @@ mozilla::ipc::IPCResult BrowserParent::RecvOnStateChange(
     const WebProgressData& aWebProgressData, const RequestData& aRequestData,
     const uint32_t aStateFlags, const nsresult aStatus,
     const Maybe<WebProgressStateChangeData>& aStateChangeData) {
-  nsCOMPtr<nsIWebProgress> webProgress;
-  nsCOMPtr<nsIRequest> request;
-  RefPtr<CanonicalBrowsingContext> browsingContext;
-
-  if (!ReconstructWebProgressAndRequest(
-          aWebProgressData, aRequestData, getter_AddRefs(webProgress),
-          getter_AddRefs(request), getter_AddRefs(browsingContext))) {
+  RefPtr<CanonicalBrowsingContext> browsingContext =
+      BrowsingContextForWebProgress(aWebProgressData);
+  if (!browsingContext) {
     return IPC_OK();
+  }
+
+  nsCOMPtr<nsIRequest> request;
+  if (aRequestData.requestURI()) {
+    request = MakeAndAddRef<RemoteWebProgressRequest>(
+        aRequestData.requestURI(), aRequestData.originalRequestURI(),
+        aRequestData.matchedList());
   }
 
   if (aStateChangeData.isSome()) {
@@ -2712,9 +2726,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvOnStateChange(
     }
   }
 
-  if (nsCOMPtr<nsIWebProgressListener> listener =
-          GetBrowsingContext()->Top()->GetWebProgress()) {
-    listener->OnStateChange(webProgress, request, aStateFlags, aStatus);
+  if (auto* listener = browsingContext->GetWebProgress()) {
+    listener->OnStateChange(listener, request, aStateFlags, aStatus);
   }
 
   return IPC_OK();
@@ -2742,14 +2755,17 @@ mozilla::ipc::IPCResult BrowserParent::RecvOnLocationChange(
     nsIURI* aLocation, const uint32_t aFlags, const bool aCanGoBack,
     const bool aCanGoForward,
     const Maybe<WebProgressLocationChangeData>& aLocationChangeData) {
-  nsCOMPtr<nsIWebProgress> webProgress;
-  nsCOMPtr<nsIRequest> request;
-  RefPtr<CanonicalBrowsingContext> browsingContext;
-
-  if (!ReconstructWebProgressAndRequest(
-          aWebProgressData, aRequestData, getter_AddRefs(webProgress),
-          getter_AddRefs(request), getter_AddRefs(browsingContext))) {
+  RefPtr<CanonicalBrowsingContext> browsingContext =
+      BrowsingContextForWebProgress(aWebProgressData);
+  if (!browsingContext) {
     return IPC_OK();
+  }
+
+  nsCOMPtr<nsIRequest> request;
+  if (aRequestData.requestURI()) {
+    request = MakeAndAddRef<RemoteWebProgressRequest>(
+        aRequestData.requestURI(), aRequestData.originalRequestURI(),
+        aRequestData.matchedList());
   }
 
   browsingContext->SetCurrentRemoteURI(aLocation);
@@ -2784,9 +2800,8 @@ mozilla::ipc::IPCResult BrowserParent::RecvOnLocationChange(
     }
   }
 
-  if (nsCOMPtr<nsIWebProgressListener> listener =
-          browsingContext->Top()->GetWebProgress()) {
-    listener->OnLocationChange(webProgress, request, aLocation, aFlags);
+  if (auto* listener = browsingContext->GetWebProgress()) {
+    listener->OnLocationChange(listener, request, aLocation, aFlags);
   }
 
   // Since we've now changed Documents, notify the BrowsingContext that we've
@@ -2889,20 +2904,13 @@ already_AddRefed<nsIBrowser> BrowserParent::GetBrowser() {
   return browser.forget();
 }
 
-bool BrowserParent::ReconstructWebProgressAndRequest(
-    const WebProgressData& aWebProgressData, const RequestData& aRequestData,
-    nsIWebProgress** aOutWebProgress, nsIRequest** aOutRequest,
-    CanonicalBrowsingContext** aOutBrowsingContext) {
-  MOZ_DIAGNOSTIC_ASSERT(aOutWebProgress,
-                        "aOutWebProgress should never be null");
-  MOZ_DIAGNOSTIC_ASSERT(aOutRequest, "aOutRequest should never be null");
-  MOZ_DIAGNOSTIC_ASSERT(aOutBrowsingContext,
-                        "aOutBrowsingContext should never be null");
-
+already_AddRefed<CanonicalBrowsingContext>
+BrowserParent::BrowsingContextForWebProgress(
+    const WebProgressData& aWebProgressData) {
   // Look up the BrowsingContext which this notification was fired for.
   if (aWebProgressData.browsingContext().IsNullOrDiscarded()) {
     NS_WARNING("WebProgress Ignored: BrowsingContext is null or discarded");
-    return false;
+    return nullptr;
   }
   RefPtr<CanonicalBrowsingContext> browsingContext =
       aWebProgressData.browsingContext().get_canonical();
@@ -2915,7 +2923,7 @@ bool BrowserParent::ReconstructWebProgressAndRequest(
     WindowGlobalParent* embedder = browsingContext->GetParentWindowContext();
     if (!embedder || embedder->GetBrowserParent() != this) {
       NS_WARNING("WebProgress Ignored: wrong embedder process");
-      return false;
+      return nullptr;
     }
   }
 
@@ -2926,50 +2934,26 @@ bool BrowserParent::ReconstructWebProgressAndRequest(
           browsingContext->GetCurrentWindowGlobal();
       current && current->GetBrowserParent() != this) {
     NS_WARNING("WebProgress Ignored: no longer current window global");
-    return false;
+    return nullptr;
   }
 
-  // Construct a temporary RemoteWebProgress and RemoteWebProgressRequest which
-  // contains relevant state used by our in-parent callbacks.
-  nsCOMPtr<nsIWebProgress> webProgress = MakeAndAddRef<RemoteWebProgress>(
-      aWebProgressData.loadType(), aWebProgressData.isLoadingDocument(),
-      browsingContext->IsTopContent());
-
-  nsCOMPtr<nsIRequest> request;
-  if (aRequestData.requestURI()) {
-    request = MakeAndAddRef<RemoteWebProgressRequest>(
-        aRequestData.requestURI(), aRequestData.originalRequestURI(),
-        aRequestData.matchedList());
+  if (RefPtr<BrowsingContextWebProgress> progress =
+          browsingContext->GetWebProgress()) {
+    progress->SetLoadType(aWebProgressData.loadType());
   }
 
-  webProgress.forget(aOutWebProgress);
-  request.forget(aOutRequest);
-  browsingContext.forget(aOutBrowsingContext);
-  return true;
+  return browsingContext.forget();
 }
 
 mozilla::ipc::IPCResult BrowserParent::RecvSessionStoreUpdate(
     const Maybe<nsCString>& aDocShellCaps, const Maybe<bool>& aPrivatedMode,
-    nsTArray<nsCString>&& aOrigins, nsTArray<nsString>&& aKeys,
-    nsTArray<nsString>&& aValues, const bool aIsFullStorage,
-    const bool aNeedCollectSHistory, const bool& aIsFinal,
-    const uint32_t& aEpoch) {
+    const bool aNeedCollectSHistory, const uint32_t& aEpoch) {
   UpdateSessionStoreData data;
   if (aDocShellCaps.isSome()) {
     data.mDocShellCaps.Construct() = aDocShellCaps.value();
   }
   if (aPrivatedMode.isSome()) {
     data.mIsPrivate.Construct() = aPrivatedMode.value();
-  }
-  // In normal case, we only update the storage when needed.
-  // However, we need to reset the session storage(aOrigins.Length() will be 0)
-  //   if the usage is over the "browser_sessionstore_dom_storage_limit".
-  // In this case, aIsFullStorage is true.
-  if (aOrigins.Length() != 0 || aIsFullStorage) {
-    data.mStorageOrigins.Construct(std::move(aOrigins));
-    data.mStorageKeys.Construct(std::move(aKeys));
-    data.mStorageValues.Construct(std::move(aValues));
-    data.mIsFullStorage.Construct() = aIsFullStorage;
   }
 
   nsCOMPtr<nsISessionStoreFunctions> funcs =
@@ -2983,7 +2967,7 @@ mozilla::ipc::IPCResult BrowserParent::RecvSessionStoreUpdate(
   NS_ENSURE_TRUE(ok, IPC_OK());
 
   nsresult rv = funcs->UpdateSessionStore(
-      mFrameElement, mBrowsingContext, aEpoch, dataVal, aNeedCollectSHistory);
+      mFrameElement, mBrowsingContext, aEpoch, aNeedCollectSHistory, dataVal);
 
   NS_ENSURE_SUCCESS(rv, IPC_OK());
 
@@ -3840,7 +3824,7 @@ mozilla::ipc::IPCResult BrowserParent::RecvVisitURI(nsIURI* aURI,
 }
 
 mozilla::ipc::IPCResult BrowserParent::RecvQueryVisitedState(
-    const nsTArray<RefPtr<nsIURI>>&& aURIs) {
+    nsTArray<RefPtr<nsIURI>>&& aURIs) {
 #ifdef MOZ_ANDROID_HISTORY
   nsCOMPtr<IHistory> history = components::History::Service();
   if (NS_WARN_IF(!history)) {
@@ -3851,15 +3835,15 @@ mozilla::ipc::IPCResult BrowserParent::RecvQueryVisitedState(
     return IPC_OK();
   }
 
-  for (size_t i = 0; i < aURIs.Length(); ++i) {
-    if (!aURIs[i]) {
+  // FIXME(emilio): Is this check really needed?
+  for (nsIURI* uri : aURIs) {
+    if (!uri) {
       return IPC_FAIL(this, "Received null URI");
     }
   }
 
-  GeckoViewHistory* gvHistory = static_cast<GeckoViewHistory*>(history.get());
+  auto* gvHistory = static_cast<GeckoViewHistory*>(history.get());
   gvHistory->QueryVisitedState(widget, std::move(aURIs));
-
   return IPC_OK();
 #else
   return IPC_FAIL(this, "QueryVisitedState is Android-only");

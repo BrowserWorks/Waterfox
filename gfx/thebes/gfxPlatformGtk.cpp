@@ -115,12 +115,11 @@ gfxPlatformGtk::gfxPlatformGtk() {
     }
   }
 
-  InitBackendPrefs(GetBackendPrefs());
-
 #ifdef MOZ_WAYLAND
-  mUseWebGLDmabufBackend =
-      gfxVars::UseDMABuf() && GetDMABufDevice()->IsDMABufWebGLEnabled();
+  mUseWebGLDmabufBackend = true;
 #endif
+
+  InitBackendPrefs(GetBackendPrefs());
 
   gPlatformFTLibrary = Factory::NewFTLibrary();
   MOZ_RELEASE_ASSERT(gPlatformFTLibrary);
@@ -230,7 +229,8 @@ void gfxPlatformGtk::InitWebRenderConfig() {
 
   FeatureState& feature = gfxConfig::GetFeature(Feature::WEBRENDER_COMPOSITOR);
   if (feature.IsEnabled()) {
-    if (!gfxConfig::IsEnabled(Feature::WEBRENDER)) {
+    if (!(gfxConfig::IsEnabled(Feature::WEBRENDER) ||
+          gfxConfig::IsEnabled(Feature::WEBRENDER_SOFTWARE))) {
       feature.ForceDisable(FeatureStatus::Unavailable, "WebRender disabled",
                            "FEATURE_FAILURE_WR_DISABLED"_ns);
     } else if (!IsWaylandDisplay()) {
@@ -459,6 +459,15 @@ uint32_t gfxPlatformGtk::MaxGenericSubstitions() {
 }
 
 bool gfxPlatformGtk::AccelerateLayersByDefault() { return true; }
+
+#ifdef MOZ_WAYLAND
+bool gfxPlatformGtk::UseDMABufWebGL() {
+  static bool dmabufAvailable = []() {
+    return gfxVars::UseDMABuf() && GetDMABufDevice()->IsDMABufWebGLEnabled();
+  }();
+  return dmabufAvailable && mUseWebGLDmabufBackend;
+}
+#endif
 
 #if defined(MOZ_X11)
 

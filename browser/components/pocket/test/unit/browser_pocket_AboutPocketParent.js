@@ -77,56 +77,6 @@ test_runner(async function test_AboutPocketParent_sendResponseMessageToPanel({
   );
 });
 
-test_runner(async function test_AboutPocketParent_receiveMessage_PKT_initL10N({
-  sandbox,
-}) {
-  const sendResponseMessageToPanel = sandbox.stub(
-    aboutPocketParent,
-    "sendResponseMessageToPanel"
-  );
-
-  await aboutPocketParent.receiveMessage({
-    name: "PKT_initL10N",
-    data: {
-      payload: {
-        tos: ["https://foo.com", "https://bar.com"],
-      },
-      panelId: 1,
-    },
-  });
-
-  const { args } = sendResponseMessageToPanel.firstCall;
-
-  Assert.ok(
-    sendResponseMessageToPanel.calledOnce,
-    "Should fire sendResponseMessageToPanel once with PKT_initL10N"
-  );
-  Assert.equal(
-    args[0],
-    "PKT_initL10N",
-    "Should fire sendResponseMessageToPanel with proper PKT_initL10N messageId"
-  );
-  Assert.equal(
-    args[1],
-    1,
-    "Should fire sendResponseMessageToPanel with proper PKT_initL10N panelId"
-  );
-  Assert.equal(
-    args[2].dir,
-    "ltr",
-    "Should fire sendResponseMessageToPanel with proper PKT_initL10N payload dir"
-  );
-  Assert.ok(
-    args[2].strings,
-    "Should fire sendResponseMessageToPanel with PKT_initL10N payload strings"
-  );
-  Assert.equal(
-    args[2].strings.tos,
-    'By continuing, you agree to Pocket’s <a href="https://foo.com" target="_blank">Terms of Service</a> and <a href="https://bar.com" target="_blank">Privacy Policy</a>',
-    "Should fire sendResponseMessageToPanel with PKT_initL10N payload strings tos"
-  );
-});
-
 test_runner(
   async function test_AboutPocketParent_receiveMessage_PKT_show_signup({
     sandbox,

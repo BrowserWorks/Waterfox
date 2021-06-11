@@ -28,6 +28,8 @@ use mio::{Events, Poll, PollOpt, Ready, Token};
 use mio_extras::timer::{Builder, Timeout, Timer};
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use std::mem;
 use std::net::SocketAddr;
 
@@ -52,6 +54,7 @@ struct Http3TestServer {
     // This a map from a post request to amount of data ithas been received on the request.
     // The respons will carry the amount of data received.
     posts: HashMap<ClientRequestStream, usize>,
+    current_connection_hash: u64,
 }
 
 impl ::std::fmt::Display for Http3TestServer {
@@ -65,6 +68,7 @@ impl Http3TestServer {
         Self {
             server,
             posts: HashMap::new(),
+            current_connection_hash: 0,
         }
     }
 }
@@ -95,6 +99,10 @@ impl HttpServer for Http3TestServer {
                             String::from("content-length"),
                             default_ret.len().to_string(),
                         ),
+                        (
+                            String::from("x-http3-conn-hash"),
+                            self.current_connection_hash.to_string(),
+                        ),
                     ];
 
                     let path_hdr = headers.iter().find(|(k, _)| k == ":path");
@@ -113,7 +121,7 @@ impl HttpServer for Http3TestServer {
                                             ),
                                             (
                                                 String::from("content-type"),
-                                                String::from("text/plain")
+                                                String::from("text/plain"),
                                             ),
                                             (
                                                 String::from("content-length"),
@@ -206,7 +214,7 @@ impl HttpServer for Http3TestServer {
                                             ),
                                             (
                                                 String::from("content-type"),
-                                                String::from("text/plain")
+                                                String::from("text/plain"),
                                             ),
                                             (String::from("content-length"), 4000.to_string()),
                                         ],
@@ -228,7 +236,7 @@ impl HttpServer for Http3TestServer {
                                                 ),
                                                 (
                                                     String::from("content-type"),
-                                                    String::from("text/plain")
+                                                    String::from("text/plain"),
                                                 ),
                                                 (String::from("content-length"), v.to_string()),
                                             ],
@@ -276,7 +284,16 @@ impl HttpServer for Http3TestServer {
                         }
                     }
                 }
-                _ => {}
+                Http3ServerEvent::StateChange {
+                    conn,
+                    state,
+                } => {
+                    if matches!(state, neqo_http3::Http3State::Connected) {
+                        let mut h = DefaultHasher::new();
+                        conn.hash(&mut h);
+                        self.current_connection_hash = h.finish();
+                    }
+                }
             }
         }
     }

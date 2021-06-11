@@ -586,6 +586,7 @@ browser.startup:
       - 1622263
       - 1614351
       - 1683101
+      - 1714258
     description: >
       How the about:home startup cache functioned on startup.
 
@@ -600,7 +601,7 @@ browser.startup:
       8: User did not load about:home on its own by default.
       9: Cache is disabled because about:newtab preloading is disabled.
 
-    expires: "92"
+    expires: "95"
     kind: uint
     notification_emails:
       - mconley@mozilla.com
@@ -616,11 +617,12 @@ browser.startup:
       - 1622263
       - 1614351
       - 1683101
+      - 1714258
     description: >
       True if the about:home startup cache was written via the AsyncShutdown
       blocker.
 
-    expires: "92"
+    expires: "95"
     kind: boolean
     notification_emails:
       - mconley@mozilla.com
@@ -1162,38 +1164,6 @@ security:
     products:
       - 'firefox'
       - 'fennec'
-    record_in_processes:
-      - main
-  intermediate_preloading_num_preloaded:
-    bug_numbers:
-      - 1519273
-      - 1553550
-      - 1678206
-    description: >
-      Number of intermediate certificates pre-loaded.
-    expires: "92"
-    kind: uint
-    notification_emails:
-      - seceng-telemetry@mozilla.com
-      - dkeeler@mozilla.com
-    products:
-      - 'firefox'
-    record_in_processes:
-      - main
-  intermediate_preloading_num_pending:
-    bug_numbers:
-      - 1519273
-      - 1553550
-      - 1678206
-    description: >
-      Number of intermediate certificates pending pre-load.
-    expires: "92"
-    kind: uint
-    notification_emails:
-      - seceng-telemetry@mozilla.com
-      - dkeeler@mozilla.com
-    products:
-      - 'firefox'
     record_in_processes:
       - main
   https_only_mode_enabled:
@@ -1793,6 +1763,23 @@ os.environment:
       - main
     operating_systems:
       - windows
+
+  is_kept_in_dock:
+    bug_numbers:
+      - 1715348
+    description: Whether this app was kept in macOS Dock on startup
+    expires: "97"
+    kind: boolean
+    notification_emails:
+      - elee@mozilla.com
+      - shong@mozilla.com
+    release_channel_collection: opt-out
+    products:
+      - firefox
+    record_in_processes:
+      - main
+    operating_systems:
+      - mac
 
   is_taskbar_pinned:
     bug_numbers:
@@ -3406,10 +3393,11 @@ gfx.canvas.remote:
     bug_numbers:
       - 1641722
       - 1672582
+      - 1706844
     description: >
       Number of times remote canvas 2D has been activated.
     kind: uint
-    expires: "91"
+    expires: "97"
     notification_emails:
       - gfx-telemetry-alerts@mozilla.com
       - bowen@mozilla.com
@@ -3423,10 +3411,11 @@ gfx.canvas.remote:
     bug_numbers:
       - 1641722
       - 1672582
+      - 1706844
     description: >
       Number of times remote canvas 2D has been deactivated due to device creation failure.
     kind: uint
-    expires: "91"
+    expires: "97"
     notification_emails:
       - gfx-telemetry-alerts@mozilla.com
       - bowen@mozilla.com
@@ -3440,10 +3429,11 @@ gfx.canvas.remote:
     bug_numbers:
       - 1641722
       - 1672582
+      - 1706844
     description: >
       Number of times remote canvas 2D has been deactivated due to a stream read failure.
     kind: uint
-    expires: "91"
+    expires: "97"
     notification_emails:
       - gfx-telemetry-alerts@mozilla.com
       - bowen@mozilla.com
@@ -3751,23 +3741,6 @@ gfx:
       - 'firefox'
     record_in_processes:
       - 'main'
-    release_channel_collection: opt-out
-apz:
-  scrollwheel_overshoot:
-    bug_numbers:
-      - 1670003
-      - 1672576
-    description: >
-      Count of overshoot events, where the user reverses scrollwheel direction soon after the last scrollwheel input.
-    expires: "89"
-    kind: uint
-    notification_emails:
-      - botond@mozilla.com
-    products:
-      - 'firefox'
-    record_in_processes:
-      - 'main'
-      - 'gpu'
     release_channel_collection: opt-out
 
 # The following section contains the form autofill related scalars.
@@ -5633,7 +5606,7 @@ startup:
           user.
         Unknown:
           An unknown error occurred - this generally should not happen.
-    expires: "92"
+    expires: "95"
     keyed: false
     kind: string
     notification_emails:
@@ -5942,23 +5915,26 @@ blocklist:
     record_in_processes:
       - main
 
-  mlbf_stashes:
+  mlbf_source:
     bug_numbers:
-      - 1633466
-      - 1649960
-      - 1689274
+      - 1662857
     description: >
-      Keep track of whether the bloomfilter-based blocklist engine uses stashes from the
-      addons-bloomfilters collection, together with an infrequently updated base bloomfilter.
-      If false, the latest (full) bloom filter is downloaded on every update of the addon blocklist.
-      This metric is only meaningful if mlbf_enabled is true.
+      The source of the RemoteSettings attachment that holds the bloom filter.
+      Possible values are "dump_match", "cache_match", "remote_match", "dump_fallback", "cache_fallback", "unknown".
+      "dump_match", "cache_match" and "remote_match" are expected known-good values, and means that the loaded
+      bloomfilter matches the blocklist record in the RemoteSettings collection. The prefix denotes the immediate
+      source of the loaded data: "dump" means packaged with the application, "remote" means a freshly downloaded
+      bloomfilter, "cache" means a previously downloaded bloomfilter.
+      "dump_fallback" and "cache_fallback" means that the last known bloomfilter was used, despite it not matching
+      the latest record in the RemoteSettings collection. In this case the outdated bloomfilter is used as a fallback
+      (e.g. because the latest version cannot be downloaded).
+      "unknown" means that the bloomfilter cannot be loaded at all. This can happen if the blocklist is disabled
+      via preferences or enterprise policies.
     expires: "95"
-    kind: boolean
+    kind: string
     release_channel_collection: opt-out
     notification_emails:
       - addons-dev-internal@mozilla.com
-      - lgreco@mozilla.com
-      - awagner@mozilla.com
       - rwu@mozilla.com
     products:
       - 'firefox'
@@ -5995,7 +5971,7 @@ blocklist:
       - 1689274
     description: >
       Keep track of the timestamp of the oldest stash of the addons blocklist.
-      Only meaningful when mlbf_enabled and mlbf_stashes are true.
+      Only meaningful when mlbf_enabled is true.
       The value is a datetime string in UTC format, or "Missing Date" when unavailable.
     expires: "95"
     kind: string
@@ -6017,7 +5993,7 @@ blocklist:
       - 1689274
     description: >
       Keep track of the timestamp of the most recent stash of the addons blocklist.
-      Only meaningful when mlbf_enabled and mlbf_stashes are true.
+      Only meaningful when mlbf_enabled is true.
       The value is a datetime string in UTC format, or "Missing Date" when unavailable.
     expires: "95"
     kind: string

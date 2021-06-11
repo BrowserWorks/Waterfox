@@ -10,6 +10,7 @@
 #include "LocalAccessible-inl.h"
 #include "mozilla/a11y/PlatformChild.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/StaticPrefs_accessibility.h"
 #include "RootAccessible.h"
 
 namespace mozilla {
@@ -26,6 +27,12 @@ DocAccessibleChild::DocAccessibleChild(DocAccessible* aDoc, IProtocol* aManager)
   }
 
   SetManager(aManager);
+  if (StaticPrefs::accessibility_cache_enabled_AtStartup()) {
+    // If the cache is enabled, we don't need to care whether this is
+    // constructed in the parent process. We must still set this flag because we
+    // defer sending any events unless it is set.
+    SetConstructedInParentProcess();
+  }
 }
 
 DocAccessibleChild::~DocAccessibleChild() {
@@ -304,16 +311,17 @@ ipc::IPCResult DocAccessibleChild::RecvRestoreFocus() {
 
 void DocAccessibleChild::SetEmbedderOnBridge(dom::BrowserBridgeChild* aBridge,
                                              uint64_t aID) {
-  if (CanSend()) {
+  if (IsConstructedInParentProcess()) {
+    MOZ_ASSERT(CanSend());
     aBridge->SendSetEmbedderAccessible(this, aID);
-  } else {
-    // This DocAccessibleChild hasn't sent the constructor to the parent
-    // process yet. This happens if the top level document hasn't received its
-    // parent COM proxy yet, in which case sending constructors for child
-    // documents gets deferred. We must also defer sending this as an embedder.
-    MOZ_ASSERT(!IsConstructedInParentProcess());
-    PushDeferredEvent(MakeUnique<SerializedSetEmbedder>(aBridge, this, aID));
+    return;
   }
+  // Even though this doesn't fire an event, we must ensure this is sent in
+  // the correct order with insertions/removals, which are deferred until
+  // we are notified about parent process construction. Otherwise, the
+  // parent process might bind a child document to the wrong accessible if
+  // ids get reused.
+  PushDeferredEvent(MakeUnique<SerializedSetEmbedder>(aBridge, this, aID));
 }
 
 }  // namespace a11y

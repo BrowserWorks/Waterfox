@@ -48,7 +48,7 @@ nsresult LoadInfoArgsToLoadInfo(
 
 namespace net {
 
-typedef nsTArray<nsCOMPtr<nsIRedirectHistoryEntry>> RedirectHistoryArray;
+using RedirectHistoryArray = nsTArray<nsCOMPtr<nsIRedirectHistoryEntry>>;
 
 /**
  * Class that provides an nsILoadInfo implementation.
@@ -222,7 +222,8 @@ class LoadInfo final : public nsILoadInfo {
       bool aIsInDevToolsContext, bool aParserCreatedScript,
       bool aHasStoragePermission, bool aIsMetaRefresh,
       uint32_t aRequestBlockingReason, nsINode* aLoadingContext,
-      nsILoadInfo::CrossOriginEmbedderPolicy aLoadingEmbedderPolicy);
+      nsILoadInfo::CrossOriginEmbedderPolicy aLoadingEmbedderPolicy,
+      nsIURI* aUnstrippedURI);
   LoadInfo(const LoadInfo& rhs);
 
   NS_IMETHOD GetRedirects(JSContext* aCx,
@@ -279,7 +280,7 @@ class LoadInfo final : public nsILoadInfo {
   nsWeakPtr mContextForTopLevelLoad;
   nsSecurityFlags mSecurityFlags;
   uint32_t mSandboxFlags;
-  uint32_t mTriggeringSandboxFlags;
+  uint32_t mTriggeringSandboxFlags = 0;
   nsContentPolicyType mInternalContentPolicyType;
   LoadTainting mTainting = LoadTainting::Basic;
   bool mBlockAllMixedContent = false;
@@ -340,6 +341,8 @@ class LoadInfo final : public nsILoadInfo {
   // See https://wicg.github.io/cross-origin-embedder-policy/#corp-check.
   nsILoadInfo::CrossOriginEmbedderPolicy mLoadingEmbedderPolicy =
       nsILoadInfo::EMBEDDER_POLICY_NULL;
+
+  nsCOMPtr<nsIURI> mUnstrippedURI;
 };
 
 }  // namespace net

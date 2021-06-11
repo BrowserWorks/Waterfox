@@ -452,7 +452,7 @@ inline bool NativeObject::isInWholeCellBuffer() const {
 
 /* static */ inline JS::Result<NativeObject*, JS::OOM> NativeObject::create(
     JSContext* cx, js::gc::AllocKind kind, js::gc::InitialHeap heap,
-    js::HandleShape shape) {
+    js::HandleShape shape, js::gc::AllocSite* site /* = nullptr */) {
   debugCheckNewObject(shape, kind, heap);
 
   const JSClass* clasp = shape->getObjectClass();
@@ -462,7 +462,8 @@ inline bool NativeObject::isInWholeCellBuffer() const {
   size_t nDynamicSlots =
       calculateDynamicSlots(shape->numFixedSlots(), shape->slotSpan(), clasp);
 
-  JSObject* obj = js::AllocateObject(cx, kind, nDynamicSlots, heap, clasp);
+  JSObject* obj =
+      js::AllocateObject(cx, kind, nDynamicSlots, heap, clasp, site);
   if (!obj) {
     return cx->alreadyReportedOOM();
   }
@@ -583,7 +584,7 @@ MOZ_ALWAYS_INLINE bool NativeObject::setLastPropertyForNewDataProperty(
 
   MOZ_ASSERT(shape->previous() == lastProperty());
   MOZ_ASSERT(shape->base() == lastProperty()->base());
-  MOZ_ASSERT(shape->property().isDataProperty());
+  MOZ_ASSERT(shape->propertyInfo().isDataProperty());
   MOZ_ASSERT(shape->slotSpan() == lastProperty()->slotSpan() + 1);
 
   size_t slot = shape->slot();
@@ -681,7 +682,7 @@ static MOZ_ALWAYS_INLINE bool CallResolveOp(JSContext* cx,
 
   MOZ_ASSERT(!obj->is<TypedArrayObject>());
 
-  mozilla::Maybe<ShapeProperty> prop = obj->lookup(cx, id);
+  mozilla::Maybe<PropertyInfo> prop = obj->lookup(cx, id);
   if (prop.isSome()) {
     propp->setNativeProperty(*prop);
   } else {
@@ -745,7 +746,7 @@ static MOZ_ALWAYS_INLINE bool NativeLookupOwnPropertyInline(
   // Check for a native property. Call Shape::search directly (instead of
   // NativeObject::lookup) because it's inlined.
   if (Shape* shape = obj->lastProperty()->search(cx, id)) {
-    propp->setNativeProperty(shape->property());
+    propp->setNativeProperty(shape->propertyInfo());
     return true;
   }
 

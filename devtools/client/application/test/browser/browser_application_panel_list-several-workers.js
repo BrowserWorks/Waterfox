@@ -12,9 +12,15 @@ const SIMPLE_URL = URL_ROOT + "resources/service-workers/simple.html";
 const OTHER_SCOPE_URL = URL_ROOT + "resources/service-workers/scope-page.html";
 
 add_task(async function() {
+  // Disable bfcache for Fission for now.
+  // If Fission is disabled, the pref is no-op.
+  await SpecialPowers.pushPrefEnv({
+    set: [["fission.bfcacheInParent", false]],
+  });
+
   await enableApplicationPanel();
 
-  const { panel, toolbox, tab } = await openNewTabAndApplicationPanel(
+  const { panel, commands, tab } = await openNewTabAndApplicationPanel(
     SIMPLE_URL
   );
   const doc = panel.panelWin.document;
@@ -46,7 +52,7 @@ add_task(async function() {
 
   ok(true, "Second service worker registration is displayed");
 
-  await unregisterAllWorkers(toolbox.target.client, doc);
+  await unregisterAllWorkers(commands.client, doc);
 
   // close the tab
   info("Closing the tab.");

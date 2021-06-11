@@ -35,11 +35,9 @@ namespace mozilla::wr {
 /* static */
 UniquePtr<RenderCompositor> RenderCompositorEGL::Create(
     const RefPtr<widget::CompositorWidget>& aWidget, nsACString& aError) {
-#ifdef MOZ_WAYLAND
-  if (!gfx::gfxVars::UseEGL()) {
+  if ((kIsWayland || kIsX11) && !gfx::gfxVars::UseEGL()) {
     return nullptr;
   }
-#endif
   if (!RenderThread::Get()->SingletonGL()) {
     gfxCriticalNote << "Failed to get shared GL context";
     return nullptr;
@@ -69,12 +67,12 @@ RenderCompositorEGL::~RenderCompositorEGL() {
 }
 
 bool RenderCompositorEGL::BeginFrame() {
-#ifdef MOZ_WAYLAND
-  if (mEGLSurface == EGL_NO_SURFACE) {
+  if ((kIsWayland || kIsX11) && mEGLSurface == EGL_NO_SURFACE) {
     gfxCriticalNote
         << "We don't have EGLSurface to draw into. Called too early?";
     return false;
   }
+#ifdef MOZ_WAYLAND
   if (mWidget->AsGTK()) {
     mWidget->AsGTK()->SetEGLNativeWindowSize(GetBufferSize());
   }
@@ -117,13 +115,11 @@ RenderedFrameId RenderCompositorEGL::EndFrame(
     gfx::IntRegion bufferInvalid;
     const auto bufferSize = GetBufferSize();
     for (const DeviceIntRect& rect : aDirtyRects) {
-      const auto left = std::max(0, std::min(bufferSize.width, rect.origin.x));
-      const auto top = std::max(0, std::min(bufferSize.height, rect.origin.y));
+      const auto left = std::max(0, std::min(bufferSize.width, rect.min.x));
+      const auto top = std::max(0, std::min(bufferSize.height, rect.min.y));
 
-      const auto right = std::min(bufferSize.width,
-                                  std::max(0, rect.origin.x + rect.size.width));
-      const auto bottom = std::min(
-          bufferSize.height, std::max(0, rect.origin.y + rect.size.height));
+      const auto right = std::min(bufferSize.width, std::max(0, rect.max.x));
+      const auto bottom = std::min(bufferSize.height, std::max(0, rect.max.y));
 
       const auto width = right - left;
       const auto height = bottom - top;
@@ -176,7 +172,7 @@ bool RenderCompositorEGL::Resume() {
     mEGLSurfaceSize = LayoutDeviceIntSize(width, height);
     ANativeWindow_release(nativeWindow);
 #endif  // MOZ_WIDGET_ANDROID
-  } else if (kIsWayland) {
+  } else if (kIsWayland || kIsX11) {
     // Destroy EGLSurface if it exists and create a new one. We will set the
     // swap interval after MakeCurrent() has been called.
     DestroyEGLSurface();
@@ -273,16 +269,14 @@ void RenderCompositorEGL::SetBufferDamageRegion(const wr::DeviceIntRect* aRects,
     const auto bufferSize = GetBufferSize();
     for (size_t i = 0; i < aNumRects; i++) {
       const auto left =
-          std::max(0, std::min(bufferSize.width, aRects[i].origin.x));
+          std::max(0, std::min(bufferSize.width, aRects[i].min.x));
       const auto top =
-          std::max(0, std::min(bufferSize.height, aRects[i].origin.y));
+          std::max(0, std::min(bufferSize.height, aRects[i].min.y));
 
       const auto right =
-          std::min(bufferSize.width,
-                   std::max(0, aRects[i].origin.x + aRects[i].size.width));
+          std::min(bufferSize.width, std::max(0, aRects[i].max.x));
       const auto bottom =
-          std::min(bufferSize.height,
-                   std::max(0, aRects[i].origin.y + aRects[i].size.height));
+          std::min(bufferSize.height, std::max(0, aRects[i].max.y));
 
       const auto width = right - left;
       const auto height = bottom - top;

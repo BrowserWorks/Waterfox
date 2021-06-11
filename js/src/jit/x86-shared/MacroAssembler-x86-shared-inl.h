@@ -259,6 +259,16 @@ void MacroAssembler::negateDouble(FloatRegister reg) {
   vxorpd(scratch, reg, reg);  // s ^ 0x80000000000000
 }
 
+void MacroAssembler::abs32(Register src, Register dest) {
+  if (src != dest) {
+    move32(src, dest);
+  }
+  Label positive;
+  branchTest32(Assembler::NotSigned, dest, dest, &positive);
+  neg32(dest);
+  bind(&positive);
+}
+
 void MacroAssembler::absFloat32(FloatRegister src, FloatRegister dest) {
   ScratchFloat32Scope scratch(*this);
   loadConstantFloat32(mozilla::SpecificNaN<float>(
@@ -2161,6 +2171,25 @@ void MacroAssembler::unsignedRightShiftInt64x2(Imm32 count, FloatRegister src,
 }
 
 // Sign replication operation
+
+void MacroAssembler::signReplicationInt8x16(FloatRegister src,
+                                            FloatRegister dest) {
+  MOZ_ASSERT(src != dest);
+  vpxor(Operand(dest), dest, dest);
+  vpcmpgtb(Operand(src), dest, dest);
+}
+
+void MacroAssembler::signReplicationInt16x8(FloatRegister src,
+                                            FloatRegister dest) {
+  moveSimd128(src, dest);
+  vpsraw(Imm32(15), dest, dest);
+}
+
+void MacroAssembler::signReplicationInt32x4(FloatRegister src,
+                                            FloatRegister dest) {
+  moveSimd128(src, dest);
+  vpsrad(Imm32(31), dest, dest);
+}
 
 void MacroAssembler::signReplicationInt64x2(FloatRegister src,
                                             FloatRegister dest) {

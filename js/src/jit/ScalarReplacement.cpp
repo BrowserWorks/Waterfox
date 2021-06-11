@@ -1399,6 +1399,14 @@ bool ArgumentsReplacer::escapes(MInstruction* ins, bool guardedForMapped) {
   JitSpewDef(JitSpew_Escape, "Check arguments object\n", ins);
   JitSpewIndent spewIndent(JitSpew_Escape);
 
+  // We can replace inlined arguments in scripts with OSR entries, but
+  // the outermost arguments object has already been allocated before
+  // we enter via OSR and can't be replaced.
+  if (ins->isCreateArgumentsObject() && graph_.osrBlock()) {
+    JitSpew(JitSpew_Escape, "Can't replace outermost OSR arguments");
+    return true;
+  }
+
   // Check all uses to see whether they can be supported without
   // allocating an ArgumentsObject.
   for (MUseIterator i(ins->usesBegin()); i != ins->usesEnd(); i++) {
@@ -1462,10 +1470,18 @@ bool ArgumentsReplacer::escapes(MInstruction* ins, bool guardedForMapped) {
         return true;
       }
 
+      case MDefinition::Opcode::ApplyArgsObj: {
+        if (ins == def->toApplyArgsObj()->getThis()) {
+          JitSpew(JitSpew_Escape, "is escaped as |this| arg of ApplyArgsObj\n");
+          return true;
+        }
+        MOZ_ASSERT(ins == def->toApplyArgsObj()->getArgsObj());
+        break;
+      }
+
       // This is a replaceable consumer.
       case MDefinition::Opcode::ArgumentsObjectLength:
       case MDefinition::Opcode::GetArgumentsObjectArg:
-      case MDefinition::Opcode::ApplyArgsObj:
       case MDefinition::Opcode::LoadArgumentsObjectArg:
         break;
 
@@ -1543,7 +1559,7 @@ void ArgumentsReplacer::visitGuardToClass(MGuardToClass* ins) {
 void ArgumentsReplacer::visitGuardArgumentsObjectFlags(
     MGuardArgumentsObjectFlags* ins) {
   // Skip other arguments objects.
-  if (ins->getArgsObject() != args_) {
+  if (ins->argsObject() != args_) {
     return;
   }
 
@@ -1594,7 +1610,7 @@ void ArgumentsReplacer::visitUnbox(MUnbox* ins) {
 void ArgumentsReplacer::visitGetArgumentsObjectArg(
     MGetArgumentsObjectArg* ins) {
   // Skip other arguments objects.
-  if (ins->getArgsObject() != args_) {
+  if (ins->argsObject() != args_) {
     return;
   }
 
@@ -1632,7 +1648,7 @@ void ArgumentsReplacer::visitGetArgumentsObjectArg(
 void ArgumentsReplacer::visitLoadArgumentsObjectArg(
     MLoadArgumentsObjectArg* ins) {
   // Skip other arguments objects.
-  if (ins->getArgsObject() != args_) {
+  if (ins->argsObject() != args_) {
     return;
   }
 
@@ -1686,7 +1702,7 @@ void ArgumentsReplacer::visitLoadArgumentsObjectArg(
 void ArgumentsReplacer::visitArgumentsObjectLength(
     MArgumentsObjectLength* ins) {
   // Skip other arguments objects.
-  if (ins->getArgsObject() != args_) {
+  if (ins->argsObject() != args_) {
     return;
   }
 
@@ -1788,8 +1804,6 @@ bool ScalarReplacement(MIRGenerator* mir, MIRGraph& graph) {
   EmulateStateOf<ObjectMemoryView> replaceObject(mir, graph);
   EmulateStateOf<ArrayMemoryView> replaceArray(mir, graph);
   bool addedPhi = false;
-  bool shouldReplaceArguments =
-      JitOptions.scalarReplaceArguments && !graph.osrBlock();
 
   for (ReversePostorderIterator block = graph.rpoBegin();
        block != graph.rpoEnd(); block++) {
@@ -1819,7 +1833,7 @@ bool ScalarReplacement(MIRGenerator* mir, MIRGraph& graph) {
         continue;
       }
 
-      if (shouldReplaceArguments && IsOptimizableArgumentsInstruction(*ins)) {
+      if (IsOptimizableArgumentsInstruction(*ins)) {
         ArgumentsReplacer replacer(mir, graph, *ins);
         if (replacer.escapes(*ins)) {
           continue;

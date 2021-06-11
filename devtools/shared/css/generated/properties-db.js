@@ -867,7 +867,7 @@ exports.CSS_PROPERTIES = {
   "-moz-tab-size": {
     "isInherited": true,
     "subproperties": [
-      "-moz-tab-size"
+      "tab-size"
     ],
     "supports": [],
     "values": [
@@ -1866,6 +1866,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "auto",
       "content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -1885,6 +1886,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "auto",
       "content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -2949,7 +2951,7 @@ exports.CSS_PROPERTIES = {
       "text-emphasis-style",
       "text-emphasis-position",
       "text-emphasis-color",
-      "-moz-tab-size",
+      "tab-size",
       "line-break",
       "-webkit-text-fill-color",
       "-webkit-text-stroke-color",
@@ -3066,6 +3068,7 @@ exports.CSS_PROPERTIES = {
       "rx",
       "ry",
       "r",
+      "d",
       "table-layout",
       "text-overflow",
       "text-decoration-line",
@@ -3719,6 +3722,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -5786,6 +5790,21 @@ exports.CSS_PROPERTIES = {
       "unset"
     ]
   },
+  "d": {
+    "isInherited": false,
+    "subproperties": [
+      "d"
+    ],
+    "supports": [],
+    "values": [
+      "inherit",
+      "initial",
+      "none",
+      "path",
+      "revert",
+      "unset"
+    ]
+  },
   "direction": {
     "isInherited": true,
     "subproperties": [
@@ -5977,6 +5996,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "auto",
       "content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -5996,6 +6016,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "auto",
       "content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -6915,6 +6936,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -7000,6 +7022,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8081,6 +8104,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "-moz-max-content",
       "-moz-min-content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8101,6 +8125,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "-moz-max-content",
       "-moz-min-content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8121,6 +8146,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "-moz-max-content",
       "-moz-min-content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8141,6 +8167,7 @@ exports.CSS_PROPERTIES = {
       "-moz-fit-content",
       "-moz-max-content",
       "-moz-min-content",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8160,6 +8187,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8178,6 +8206,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8196,6 +8225,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -8214,6 +8244,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -9915,6 +9946,19 @@ exports.CSS_PROPERTIES = {
       "unset"
     ]
   },
+  "tab-size": {
+    "isInherited": true,
+    "subproperties": [
+      "tab-size"
+    ],
+    "supports": [],
+    "values": [
+      "inherit",
+      "initial",
+      "revert",
+      "unset"
+    ]
+  },
   "table-layout": {
     "isInherited": false,
     "subproperties": [
@@ -10724,6 +10768,7 @@ exports.CSS_PROPERTIES = {
       "-moz-available",
       "-moz-fit-content",
       "auto",
+      "fit-content",
       "inherit",
       "initial",
       "max-content",
@@ -10978,6 +11023,10 @@ exports.PREFERENCES = [
   [
     "backdrop-filter",
     "layout.css.backdrop-filter.enabled"
+  ],
+  [
+    "d",
+    "layout.css.d-property.enabled"
   ],
   [
     "font-variation-settings",

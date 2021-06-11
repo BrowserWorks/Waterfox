@@ -94,11 +94,6 @@ body {
   }
 }
 
-.search-one-offs[compact=true] .search-setting-button,
-.search-one-offs:not([compact=true]) .search-setting-button-compact {
-  display: none;
-}
-
 %ifdef MENUBAR_CAN_AUTOHIDE
 #toolbar-menubar[autohide="true"] {
   overflow: hidden;
@@ -158,11 +153,9 @@ panelview[mainview] > .panel-header {
   transition: height var(--panelui-subview-transition-duration);
 }
 
-@media (-moz-proton-doorhangers) {
 :is(panel, menupopup)::part(arrow) {
   display: none;
 }
-} /** END Proton **/
 
 @supports -moz-bool-pref("layout.css.emulate-moz-box-with-flex") {
   #tabbrowser-tabs {
@@ -791,12 +784,10 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   }
 }
 
-@media (-moz-proton) {
-  /* The page actions menu is hidden by default, it is only shown in small
-     windows as the overflow target of multiple page action buttons */
-  #pageActionButton {
-    visibility: collapse;
-  }
+/* The page actions menu is hidden by default, it is only shown in small
+   windows as the overflow target of multiple page action buttons */
+#pageActionButton {
+  visibility: collapse;
 }
 
 /* 680px is just below half of popular 1366px wide screens, so when putting two
@@ -1393,12 +1384,6 @@ toolbarpaletteitem:not([place="palette"]) > #stop-reload-button {
   -moz-window-shadow: none;
 }
 
-/* Page action panel */
-#pageAction-panel-sendToDevice-subview-body:not([state="notready"]) > .pageAction-sendToDevice-notReady,
-#pageAction-urlbar-sendToDevice-subview-body:not([state="notready"]) > .pageAction-sendToDevice-notReady {
-  display: none;
-}
-
 /* Page action buttons */
 .pageAction-panel-button > .toolbarbutton-icon {
   list-style-image: var(--pageAction-image-16px, inherit);
@@ -1668,11 +1653,3 @@ toolbar[keyNav=true]:not([collapsed=true], [customizing=true]) toolbartabstop {
 /**
  * End Dialogs
  */
-
-@media not (-moz-proton-doorhangers) {
-/* Password update/save doorhanger */
-#password-notification-username,
-#password-notification-password {
-  margin-inline-start: 6px;
-}
-} /** END not Proton **/

@@ -140,13 +140,6 @@ class ServiceWorkerManager final : public nsIServiceWorkerManager,
                           const nsACString& aScope,
                           ServiceWorkerUpdateFinishCallback* aCallback);
 
-  void PropagateSoftUpdate(const OriginAttributes& aOriginAttributes,
-                           const nsAString& aScope);
-
-  void Remove(const nsACString& aHost);
-
-  void RemoveAll();
-
   RefPtr<ServiceWorkerRegistrationPromise> Register(
       const ClientInfo& aClientInfo, const nsACString& aScopeURL,
       const nsACString& aScriptURL,
@@ -167,7 +160,9 @@ class ServiceWorkerManager final : public nsIServiceWorkerManager,
 
   already_AddRefed<ServiceWorkerRegistrationInfo> CreateNewRegistration(
       const nsCString& aScope, nsIPrincipal* aPrincipal,
-      ServiceWorkerUpdateViaCache aUpdateViaCache);
+      ServiceWorkerUpdateViaCache aUpdateViaCache,
+      IPCNavigationPreloadState aNavigationPreloadState =
+          IPCNavigationPreloadState(false, "true"_ns));
 
   void RemoveRegistration(ServiceWorkerRegistrationInfo* aRegistration);
 
@@ -226,9 +221,6 @@ class ServiceWorkerManager final : public nsIServiceWorkerManager,
       const ClientInfo& aClientInfo,
       const ServiceWorkerDescriptor& aServiceWorker);
 
-  void SetSkipWaitingFlag(nsIPrincipal* aPrincipal, const nsCString& aScope,
-                          uint64_t aServiceWorkerID);
-
   static already_AddRefed<ServiceWorkerManager> GetInstance();
 
   void LoadRegistration(const ServiceWorkerRegistrationData& aRegistration);
@@ -241,8 +233,6 @@ class ServiceWorkerManager final : public nsIServiceWorkerManager,
   nsresult SendPushEvent(const nsACString& aOriginAttributes,
                          const nsACString& aScope, const nsAString& aMessageId,
                          const Maybe<nsTArray<uint8_t>>& aData);
-
-  nsresult NotifyUnregister(nsIPrincipal* aPrincipal, const nsAString& aScope);
 
   void WorkerIsIdle(ServiceWorkerInfo* aWorker);
 

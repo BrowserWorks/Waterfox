@@ -16,6 +16,7 @@
 #include "jit/CompactBuffer.h"
 #include "jit/ICState.h"
 #include "jit/Simulator.h"
+#include "jit/TypeData.h"
 #include "js/experimental/JitInfo.h"
 #include "js/friend/XrayJitInfo.h"  // JS::XrayJitInfo
 #include "js/ScalarType.h"          // js::Scalar::Type
@@ -38,6 +39,7 @@ enum class InlinableNative : uint16_t;
 
 class ICCacheIRStub;
 class ICScript;
+class ICStubSpace;
 class Label;
 class MacroAssembler;
 struct Register;
@@ -255,6 +257,7 @@ class StubField {
     String,
     BaseScript,
     Id,
+    AllocSite,
 
     // These fields take up 64 bits on all platforms.
     RawInt64,
@@ -542,6 +545,8 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter {
   uint32_t nextInstructionId_;
   uint32_t numInputOperands_;
 
+  TypeData typeData_;
+
   // The data (shapes, slot offsets, etc.) that will be stored in the ICStub.
   Vector<StubField, 8, SystemAllocPolicy> stubFields_;
   size_t stubDataSize_;
@@ -691,6 +696,9 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter {
   void writeRawInt64Field(uint64_t val) {
     addStubField(val, StubField::Type::RawInt64);
   }
+  void writeAllocSiteField(gc::AllocSite* ptr) {
+    addStubField(uintptr_t(ptr), StubField::Type::AllocSite);
+  }
 
   void writeJSOpImm(JSOp op) {
     static_assert(sizeof(JSOp) == sizeof(uint8_t), "JSOp must fit in a byte");
@@ -785,6 +793,9 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter {
     numInputOperands_++;
     return op;
   }
+
+  TypeData typeData() const { return typeData_; }
+  void setTypeData(TypeData data) { typeData_ = data; }
 
   void trace(JSTracer* trc) override {
     // For now, assert we only GC before we append stub fields.
@@ -1224,6 +1235,7 @@ class MOZ_RAII CacheIRCloner {
   jsid getIdField(uint32_t stubOffset);
   const Value getValueField(uint32_t stubOffset);
   uint64_t getRawInt64Field(uint32_t stubOffset);
+  gc::AllocSite* getAllocSiteField(uint32_t stubOffset);
 };
 
 class MOZ_RAII IRGenerator {
@@ -1811,6 +1823,7 @@ class MOZ_RAII CompareIRGenerator : public IRGenerator {
 class MOZ_RAII ToBoolIRGenerator : public IRGenerator {
   HandleValue val_;
 
+  AttachDecision tryAttachBool();
   AttachDecision tryAttachInt32();
   AttachDecision tryAttachNumber();
   AttachDecision tryAttachString();
@@ -1910,12 +1923,14 @@ class MOZ_RAII NewArrayIRGenerator : public IRGenerator {
   JSOp op_;
 #endif
   HandleObject templateObject_;
+  JSScript* outerScript_;
 
   void trackAttached(const char* name);
 
  public:
   NewArrayIRGenerator(JSContext* cx, HandleScript, jsbytecode* pc,
-                      ICState state, JSOp op, HandleObject templateObj);
+                      ICState state, JSOp op, HandleObject templateObj,
+                      JSScript* outerScript);
 
   AttachDecision tryAttachStub();
   AttachDecision tryAttachArrayObject();
@@ -1926,12 +1941,14 @@ class MOZ_RAII NewObjectIRGenerator : public IRGenerator {
   JSOp op_;
 #endif
   HandleObject templateObject_;
+  JSScript* outerScript_;
 
   void trackAttached(const char* name);
 
  public:
   NewObjectIRGenerator(JSContext* cx, HandleScript, jsbytecode* pc,
-                       ICState state, JSOp op, HandleObject templateObj);
+                       ICState state, JSOp op, HandleObject templateObj,
+                       JSScript* outerScript);
 
   AttachDecision tryAttachStub();
   AttachDecision tryAttachPlainObject();

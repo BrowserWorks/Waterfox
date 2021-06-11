@@ -19,7 +19,6 @@
 #include "mozilla/ScopeExit.h"
 #include "mozilla/Span.h"  // mozilla::{Span,Span}
 #include "mozilla/Sprintf.h"
-#include "mozilla/Unused.h"
 #include "mozilla/Utf8.h"
 #include "mozilla/Vector.h"
 
@@ -1096,15 +1095,6 @@ XDRResult js::XDRScript(XDRState<mode>* xdr, HandleScope scriptEnclosingScope,
   RootedScript script(cx);
 
   bool isFunctionScript = funOrMod && funOrMod->is<JSFunction>();
-
-  // Instrumented scripts cannot be encoded, as they have extra instructions
-  // which are not normally present. Globals with instrumentation enabled must
-  // compile scripts via the bytecode emitter, which will insert these
-  // instructions.
-  if (xdr->hasOptions() ? !!xdr->options().instrumentationKinds
-                        : !!cx->global()->getInstrumentationHolder()) {
-    return xdr->fail(JS::TranscodeResult::Failure);
-  }
 
   if (mode == XDR_ENCODE) {
     script = scriptp.get();
@@ -2292,8 +2282,8 @@ bool js::IsOffThreadSourceCompressionEnabled() {
   // If we don't have concurrent execution compression will contend with
   // main-thread execution, in which case we disable. Similarly we don't want to
   // block the thread pool if it is too small.
-  return HelperThreadState().cpuCount > 1 &&
-         HelperThreadState().threadCount > 1 && CanUseExtraThreads();
+  return GetHelperThreadCPUCount() > 1 && GetHelperThreadCount() > 1 &&
+         CanUseExtraThreads();
 }
 
 bool ScriptSource::tryCompressOffThread(JSContext* cx) {
@@ -2462,7 +2452,7 @@ ScriptSource::~ScriptSource() {
   }
 
   // Since the realloc succeeded, unique is now holding a freed pointer.
-  mozilla::Unused << unique.release();
+  (void)unique.release();
   unique.reset(newPtr);
   return true;
 }
@@ -4839,6 +4829,10 @@ void JSScript::resetWarmUpCounterToDelayIonCompilation() {
       warmUpData_.toJitScript()->resetWarmUpCount(newCount);
     }
   }
+}
+
+gc::AllocSite* JSScript::createAllocSite() {
+  return jitScript()->createAllocSite(this);
 }
 
 void JSScript::AutoDelazify::holdScript(JS::HandleFunction fun) {

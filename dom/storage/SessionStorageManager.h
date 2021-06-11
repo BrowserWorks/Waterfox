@@ -15,15 +15,32 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsHashKeys.h"
 
+#include "mozilla/ipc/PBackgroundChild.h"
+#include "mozilla/ipc/PBackgroundParent.h"
+
+class nsIPrincipal;
+class nsITimer;
+
 namespace mozilla {
 class OriginAttributesPattern;
 
 namespace dom {
 
+class SSCacheCopy;
+
 bool RecvShutdownBackgroundSessionStorageManagers();
 void RecvPropagateBackgroundSessionStorageManager(uint64_t aCurrentTopContextId,
                                                   uint64_t aTargetTopContextId);
 bool RecvRemoveBackgroundSessionStorageManager(uint64_t aTopContextId);
+
+bool RecvGetSessionStorageData(
+    uint64_t aTopContextId, uint32_t aSizeLimit, bool aCancelSessionStoreTimer,
+    ::mozilla::ipc::PBackgroundParent::GetSessionStorageManagerDataResolver&&
+        aResolver);
+
+bool RecvLoadSessionStorageData(
+    uint64_t aTopContextId,
+    nsTArray<mozilla::dom::SSCacheCopy>&& aCacheCopyList);
 
 class BrowsingContext;
 class ContentParent;
@@ -126,12 +143,7 @@ class SessionStorageManager final : public SessionStorageManagerBase,
                                         SessionStorageCache* aCloneFrom,
                                         RefPtr<SessionStorageCache>* aRetVal);
 
-  enum ClearStorageType {
-    eAll,
-    eSessionOnly,
-  };
-  void ClearStorages(ClearStorageType aType,
-                     const OriginAttributesPattern& aPattern,
+  void ClearStorages(const OriginAttributesPattern& aPattern,
                      const nsACString& aOriginScope);
 
   SessionStorageCacheChild* EnsureCache(const nsCString& aOriginAttrs,
@@ -169,20 +181,78 @@ class BackgroundSessionStorageManager final : public SessionStorageManagerBase {
   // process.
   static void RemoveManager(uint64_t aTopContextId);
 
+  static void LoadData(
+      uint64_t aTopContextId,
+      const nsTArray<mozilla::dom::SSCacheCopy>& aCacheCopyList);
+
+  using DataPromise =
+      ::mozilla::ipc::PBackgroundChild::GetSessionStorageManagerDataPromise;
+  static RefPtr<DataPromise> GetData(BrowsingContext* aContext,
+                                     uint32_t aSizeLimit,
+                                     bool aClearSessionStoreTimer = false);
+
+  void GetData(uint32_t aSizeLimit, nsTArray<SSCacheCopy>& aCacheCopyList);
+
   void CopyDataToContentProcess(const nsACString& aOriginAttrs,
                                 const nsACString& aOriginKey,
-                                nsTArray<SSSetItemInfo>& aDefaultData,
-                                nsTArray<SSSetItemInfo>& aSessionData);
+                                nsTArray<SSSetItemInfo>& aData);
 
   void UpdateData(const nsACString& aOriginAttrs, const nsACString& aOriginKey,
-                  const nsTArray<SSWriteInfo>& aDefaultWriteInfos,
-                  const nsTArray<SSWriteInfo>& aSessionWriteInfos);
+                  const nsTArray<SSWriteInfo>& aWriteInfos);
+
+  void UpdateData(const nsACString& aOriginAttrs, const nsACString& aOriginKey,
+                  const nsTArray<SSSetItemInfo>& aData);
+
+  void SetCurrentBrowsingContextId(uint64_t aBrowsingContextId);
+
+  void MaybeDispatchSessionStoreUpdate();
+
+  void CancelSessionStoreUpdate();
 
  private:
   // Only be called by GetOrCreate() on the parent process.
-  explicit BackgroundSessionStorageManager();
+  explicit BackgroundSessionStorageManager(uint64_t aBrowsingContextId);
 
   ~BackgroundSessionStorageManager();
+
+  // Sets a timer for notifying main thread that the cache has been
+  // updated. May do nothing if we're coalescing notifications.
+  void MaybeScheduleSessionStoreUpdate();
+
+  void DispatchSessionStoreUpdate();
+
+  // The most current browsing context using this manager
+  uint64_t mCurrentBrowsingContextId;
+
+  // Callback for notifying main thread of calls to `UpdateData`.
+  //
+  // A timer that is held whenever this manager has dirty state that
+  // has not yet been reflected to the main thread. The timer is used
+  // to delay notifying the main thread to ask for changes, thereby
+  // coalescing/throttling changes. (Note that SessionStorage, like
+  // LocalStorage, treats attempts to set a value to its current value
+  // as a no-op.)
+  //
+
+  // The timer is initialized with a fixed delay as soon as the state
+  // becomes dirty; additional mutations to our state will not reset
+  // the timer because then we might never flush to the main
+  // thread. The timer is cleared only when a new set of data is sent
+  // to the main thread and therefore this manager no longer has any
+  // dirty state. This means that there is a period of time after the
+  // nsITimer fires where this value is non-null but there is no
+  // scheduled timer while we wait for the main thread to request the
+  // new state. Callers of GetData can also optionally cancel the
+  // current timer to reduce the amounts of notifications.
+  //
+  // When this manager is moved to a new top-level browsing context id
+  // via a PropagateBackgroundSessionStorageManager message, the
+  // behavior of the timer doesn't change because the main thread knows
+  // about the renaming and is initiating it (and any in-flight
+  // GetSessionStorageManagerData requests will be unaffected because
+  // they use async-returns so the response is inherently matched up via
+  // the issued promise).
+  nsCOMPtr<nsITimer> mSessionStoreCallbackTimer;
 };
 
 }  // namespace dom

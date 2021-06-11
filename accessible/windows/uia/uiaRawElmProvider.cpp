@@ -6,10 +6,10 @@
 
 #include "uiaRawElmProvider.h"
 
-#include "LocalAccessible-inl.h"
+#include "AccAttributes.h"
 #include "AccessibleWrap.h"
 #include "ARIAMap.h"
-#include "nsIPersistentProperties2.h"
+#include "LocalAccessible-inl.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -147,8 +147,8 @@ uiaRawElmProvider::GetPropertyValue(PROPERTYID aPropertyId,
     case UIA_AriaRolePropertyId: {
       nsAutoString xmlRoles;
 
-      nsCOMPtr<nsIPersistentProperties> attributes = mAcc->Attributes();
-      attributes->GetStringProperty("xml-roles"_ns, xmlRoles);
+      RefPtr<AccAttributes> attributes = mAcc->Attributes();
+      attributes->GetAttribute(nsGkAtoms::xmlroles, xmlRoles);
 
       if (!xmlRoles.IsEmpty()) {
         aPropertyValue->vt = VT_BSTR;
@@ -164,8 +164,16 @@ uiaRawElmProvider::GetPropertyValue(PROPERTYID aPropertyId,
       nsAutoString ariaProperties;
 
       aria::AttrIterator attribIter(mAcc->GetContent());
-      nsAutoString attribName, attribValue;
-      while (attribIter.Next(attribName, attribValue)) {
+      while (attribIter.Next()) {
+        nsAutoString attribName, attribValue;
+        nsAutoString value;
+        attribIter.AttrName()->ToString(attribName);
+        attribIter.AttrValue(attribValue);
+        if (attribName.Find("aria-", false, 0, 1) == 0) {
+          // Found 'aria-'
+          attribName.ReplaceLiteral(0, 5, u"");
+        }
+
         ariaProperties.Append(attribName);
         ariaProperties.Append('=');
         ariaProperties.Append(attribValue);

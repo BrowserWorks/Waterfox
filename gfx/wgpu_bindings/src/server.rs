@@ -208,12 +208,12 @@ pub unsafe extern "C" fn wgpu_server_buffer_get_mapped_range(
     global: &Global,
     buffer_id: id::BufferId,
     start: wgt::BufferAddress,
-    size: Option<wgt::BufferSize>,
+    size: wgt::BufferAddress,
 ) -> *mut u8 {
     gfx_select!(buffer_id => global.buffer_get_mapped_range(
         buffer_id,
         start,
-        size
+        Some(size)
     ))
     .unwrap()
     .0
@@ -332,8 +332,11 @@ impl GlobalExt for Global {
                     error_buf.init(err);
                 }
             }
-            DeviceAction::CreateRenderBundle(_id, desc, _base) => {
-                wgc::command::RenderBundleEncoder::new(&desc, self_id, None).unwrap();
+            DeviceAction::CreateRenderBundle(id, encoder, desc) => {
+                let (_, error) = self.render_bundle_encoder_finish::<B>(encoder, &desc, id);
+                if let Some(err) = error {
+                    error_buf.init(err);
+                }
             }
             DeviceAction::CreateCommandEncoder(id, desc) => {
                 let (_, error) = self.device_create_command_encoder::<B>(self_id, &desc, id);
@@ -450,6 +453,20 @@ impl GlobalExt for Global {
                     error_buf.init(err);
                 }
             }
+            CommandEncoderAction::ClearBuffer { dst, offset, size } => {
+                if let Err(err) = self
+                    .command_encoder_clear_buffer::<B>(self_id, dst, offset, size)
+                {
+                    error_buf.init(err);
+                }
+            }
+            CommandEncoderAction::ClearImage { dst, subresource_range } => {
+                if let Err(err) = self
+                    .command_encoder_clear_image::<B>(self_id, dst, subresource_range)
+                {
+                    error_buf.init(err);
+                }
+            }
         }
     }
 }
@@ -522,13 +539,14 @@ pub extern "C" fn wgpu_server_encoder_drop(global: &Global, self_id: id::Command
     gfx_select!(self_id => global.command_encoder_drop(self_id));
 }
 
-/// # Safety
-///
-/// This function is unsafe as there is no guarantee that the given pointer is
-/// valid for `byte_length` elements.
 #[no_mangle]
 pub extern "C" fn wgpu_server_command_buffer_drop(global: &Global, self_id: id::CommandBufferId) {
     gfx_select!(self_id => global.command_buffer_drop(self_id));
+}
+
+#[no_mangle]
+pub extern "C" fn wgpu_server_render_bundle_drop(global: &Global, self_id: id::RenderBundleId) {
+    gfx_select!(self_id => global.render_bundle_drop(self_id));
 }
 
 #[no_mangle]

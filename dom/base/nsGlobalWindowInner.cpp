@@ -4379,7 +4379,7 @@ void nsGlobalWindowInner::SetFocusedElement(Element* aElement,
     UpdateCanvasFocus(false, aElement);
     mFocusedElement = aElement;
     // TODO: Maybe this should be set on refocus too?
-    mFocusMethod = aFocusMethod & FOCUSMETHOD_MASK;
+    mFocusMethod = aFocusMethod & nsIFocusManager::METHOD_MASK;
   }
 
   if (mFocusedElement) {
@@ -4421,7 +4421,9 @@ bool nsGlobalWindowInner::TakeFocus(bool aFocus, uint32_t aFocusMethod) {
     return false;
   }
 
-  if (aFocus) mFocusMethod = aFocusMethod & FOCUSMETHOD_MASK;
+  if (aFocus) {
+    mFocusMethod = aFocusMethod & nsIFocusManager::METHOD_MASK;
+  }
 
   if (mHasFocus != aFocus) {
     mHasFocus = aFocus;
@@ -6596,13 +6598,15 @@ bool nsGlobalWindowInner::IsVRContentPresenting() const {
 
 void nsGlobalWindowInner::AddSizeOfIncludingThis(
     nsWindowSizes& aWindowSizes) const {
-  aWindowSizes.mDOMOtherSize += aWindowSizes.mState.mMallocSizeOf(this);
-  aWindowSizes.mDOMOtherSize += nsIGlobalObject::ShallowSizeOfExcludingThis(
-      aWindowSizes.mState.mMallocSizeOf);
+  aWindowSizes.mDOMSizes.mDOMOtherSize +=
+      aWindowSizes.mState.mMallocSizeOf(this);
+  aWindowSizes.mDOMSizes.mDOMOtherSize +=
+      nsIGlobalObject::ShallowSizeOfExcludingThis(
+          aWindowSizes.mState.mMallocSizeOf);
 
   EventListenerManager* elm = GetExistingListenerManager();
   if (elm) {
-    aWindowSizes.mDOMOtherSize +=
+    aWindowSizes.mDOMSizes.mDOMOtherSize +=
         elm->SizeOfIncludingThis(aWindowSizes.mState.mMallocSizeOf);
     aWindowSizes.mDOMEventListenersCount += elm->ListenerCount();
   }
@@ -6616,13 +6620,13 @@ void nsGlobalWindowInner::AddSizeOfIncludingThis(
   }
 
   if (mNavigator) {
-    aWindowSizes.mDOMOtherSize +=
+    aWindowSizes.mDOMSizes.mDOMOtherSize +=
         mNavigator->SizeOfIncludingThis(aWindowSizes.mState.mMallocSizeOf);
   }
 
   ForEachEventTargetObject([&](DOMEventTargetHelper* et, bool* aDoneOut) {
     if (nsCOMPtr<nsISizeOfEventTarget> iSizeOf = do_QueryObject(et)) {
-      aWindowSizes.mDOMEventTargetsSize +=
+      aWindowSizes.mDOMSizes.mDOMEventTargetsSize +=
           iSizeOf->SizeOfEventTargetIncludingThis(
               aWindowSizes.mState.mMallocSizeOf);
     }
@@ -6633,12 +6637,35 @@ void nsGlobalWindowInner::AddSizeOfIncludingThis(
   });
 
   if (mPerformance) {
-    aWindowSizes.mDOMPerformanceUserEntries =
+    aWindowSizes.mDOMSizes.mDOMPerformanceUserEntries =
         mPerformance->SizeOfUserEntries(aWindowSizes.mState.mMallocSizeOf);
-    aWindowSizes.mDOMPerformanceResourceEntries =
+    aWindowSizes.mDOMSizes.mDOMPerformanceResourceEntries =
         mPerformance->SizeOfResourceEntries(aWindowSizes.mState.mMallocSizeOf);
-    aWindowSizes.mDOMPerformanceEventEntries =
+    aWindowSizes.mDOMSizes.mDOMPerformanceEventEntries =
         mPerformance->SizeOfEventEntries(aWindowSizes.mState.mMallocSizeOf);
+  }
+}
+
+void nsGlobalWindowInner::RegisterDataDocumentForMemoryReporting(
+    Document* aDocument) {
+  aDocument->SetAddedToMemoryReportAsDataDocument();
+  mDataDocumentsForMemoryReporting.AppendElement(
+      do_GetWeakReference(aDocument));
+}
+
+void nsGlobalWindowInner::UnregisterDataDocumentForMemoryReporting(
+    Document* aDocument) {
+  nsWeakPtr doc = do_GetWeakReference(aDocument);
+  MOZ_ASSERT(mDataDocumentsForMemoryReporting.Contains(doc));
+  mDataDocumentsForMemoryReporting.RemoveElement(doc);
+}
+
+void nsGlobalWindowInner::CollectDOMSizesForDataDocuments(
+    nsWindowSizes& aSize) const {
+  for (const nsWeakPtr& ptr : mDataDocumentsForMemoryReporting) {
+    if (nsCOMPtr<Document> doc = do_QueryReferent(ptr)) {
+      doc->DocAddSizeOfIncludingThis(aSize);
+    }
   }
 }
 
@@ -7570,6 +7597,14 @@ void nsGlobalWindowInner::StorageAccessPermissionGranted() {
   // Reset the active storage principal
   if (mDoc) {
     mDoc->ClearActiveStoragePrincipal();
+    if (mWindowGlobalChild) {
+      // XXX(farre): This is a bit backwards, but clearing the storage
+      // principal might make us end up with a new effective storage
+      // principal on the child side than on the parent side, which
+      // means that we need to sync it. See bug 1705359.
+      mWindowGlobalChild->SetDocumentPrincipal(
+          mDoc->NodePrincipal(), mDoc->EffectiveStoragePrincipal());
+    }
   }
 }
 

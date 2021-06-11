@@ -14,7 +14,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   AppConstants: "resource://gre/modules/AppConstants.jsm",
   AttributionCode: "resource:///modules/AttributionCode.jsm",
   Services: "resource://gre/modules/Services.jsm",
-  ShellService: "resource:///modules/ShellService.jsm",
 });
 
 const DEFAULT_WELCOME_CONTENT = {
@@ -203,11 +202,11 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
     "chrome://activity-stream/content/data/content/assets/proton-bkg.jpg",
   screens: [
     {
-      id: "AW_SET_DEFAULT",
+      id: "AW_PIN_FIREFOX",
       order: 0,
       content: {
         title: {
-          string_id: "mr1-onboarding-welcome-header",
+          string_id: "mr1-onboarding-pin-header",
         },
         subtitle: {
           string_id: "mr1-welcome-screen-hero-text",
@@ -219,11 +218,11 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
         },
         primary_button: {
           label: {
-            string_id: "mr1-onboarding-set-default-only-primary-button-label",
+            string_id: "mr1-onboarding-pin-primary-button-label",
           },
           action: {
             navigate: true,
-            type: "PIN_AND_DEFAULT",
+            type: "PIN_FIREFOX_TO_TASKBAR",
           },
         },
         secondary_button: {
@@ -249,8 +248,37 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
       },
     },
     {
-      id: "AW_IMPORT_SETTINGS",
+      id: "AW_SET_DEFAULT",
       order: 1,
+      content: {
+        title: {
+          string_id: "mr1-onboarding-default-header",
+        },
+        subtitle: {
+          string_id: "mr1-onboarding-default-subtitle",
+        },
+        primary_button: {
+          label: {
+            string_id: "mr1-onboarding-default-primary-button-label",
+          },
+          action: {
+            navigate: true,
+            type: "SET_DEFAULT_BROWSER",
+          },
+        },
+        secondary_button: {
+          label: {
+            string_id: "mr1-onboarding-set-default-secondary-button-label",
+          },
+          action: {
+            navigate: true,
+          },
+        },
+      },
+    },
+    {
+      id: "AW_IMPORT_SETTINGS",
+      order: 2,
       content: {
         title: {
           string_id: "mr1-onboarding-import-header",
@@ -281,7 +309,7 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
     },
     {
       id: "AW_CHOOSE_THEME",
-      order: 2,
+      order: 3,
       content: {
         title: {
           string_id: "mr1-onboarding-theme-header",
@@ -434,15 +462,15 @@ const RULES = [
     description: "Proton Default AW content",
     getDefaults(featureConfig) {
       if (featureConfig?.isProton) {
-        return Cu.cloneInto(DEFAULT_PROTON_WELCOME_CONTENT, {});
+        return DEFAULT_PROTON_WELCOME_CONTENT;
       }
       return null;
     },
   },
   {
     description: "Windows pin to task bar screen",
-    async getDefaults() {
-      if (await ShellService.doesAppNeedPin()) {
+    getDefaults(featureConfig) {
+      if (featureConfig.needPin) {
         return {
           template: "multistage",
           screens: [
@@ -503,16 +531,17 @@ const RULES = [
   {
     description: "Default AW content",
     getDefaults() {
-      return { ...DEFAULT_WELCOME_CONTENT };
+      return DEFAULT_WELCOME_CONTENT;
     },
   },
 ];
 
-async function getDefaults(featureConfig) {
+function getDefaults(featureConfig) {
   for (const rule of RULES) {
-    const result = await rule.getDefaults(featureConfig);
+    const result = rule.getDefaults(featureConfig);
     if (result) {
-      return result;
+      // Make a deep copy of the object to avoid editing the original default.
+      return Cu.cloneInto(result, {});
     }
   }
   return null;
@@ -543,18 +572,23 @@ async function prepareContentForReact(content) {
     content.design = "proton";
   }
 
-  // Change content for Windows 7 because non-light themes aren't quite right.
-  if (AppConstants.isPlatformAndVersionAtMost("win", "6.1")) {
+  // Helper to find screens to remove and adjust screen order.
+  function removeScreens(check) {
     const { screens } = content;
     let removed = 0;
     for (let i = 0; i < screens?.length; i++) {
-      if (screens[i].content?.tiles?.type === "theme") {
+      if (check(screens[i])) {
         screens.splice(i--, 1);
         removed++;
       } else if (screens[i].order) {
         screens[i].order -= removed;
       }
     }
+  }
+
+  // Change content for Windows 7 because non-light themes aren't quite right.
+  if (AppConstants.isPlatformAndVersionAtMost("win", "6.1")) {
+    removeScreens(screen => screen.content?.tiles?.type === "theme");
   }
 
   // Set the primary import button source based on attribution.
@@ -583,35 +617,57 @@ async function prepareContentForReact(content) {
     }
   }
 
-  // Switch to "primary" if we also need to pin.
-  if (await ShellService.doesAppNeedPin()) {
-    const defaultScreenIndex = content.screens?.findIndex(screen =>
-      screen.id.startsWith("AW_SET_DEFAULT")
+  // If already pinned, convert "pin" screen to "welcome" with desired action.
+  let removeDefault = !content.needDefault;
+  if (!content.needPin) {
+    const pinScreen = content.screens?.find(screen =>
+      screen.id?.startsWith("AW_PIN_FIREFOX")
     );
+    if (pinScreen?.content) {
+      pinScreen.id = removeDefault ? "AW_GET_STARTED" : "AW_ONLY_DEFAULT";
+      pinScreen.content.title = {
+        string_id: "mr1-onboarding-welcome-header",
+      };
+      pinScreen.content.primary_button = {
+        label: {
+          string_id: removeDefault
+            ? "mr1-onboarding-get-started-primary-button-label"
+            : "mr1-onboarding-set-default-only-primary-button-label",
+        },
+        action: {
+          navigate: true,
+        },
+      };
 
-    // Check for string_id to avoid replacing hardcoded text for experiments
-    if (
-      content.screens[defaultScreenIndex]?.content?.primary_button?.label
-        ?.string_id
-    ) {
-      content.screens[defaultScreenIndex].id = "AW_PIN_AND_DEFAULT";
-
-      content.screens[
-        defaultScreenIndex
-      ].content.primary_button.label.string_id =
-        "mr1-onboarding-set-default-pin-primary-button-label";
+      // Get started content will navigate without action, so remove "Not now."
+      if (removeDefault) {
+        delete pinScreen.content.secondary_button;
+      } else {
+        // The "pin" screen will now handle "default" so remove other "default."
+        pinScreen.content.primary_button.action.type = "SET_DEFAULT_BROWSER";
+        removeDefault = true;
+      }
     }
+  }
+  if (removeDefault) {
+    removeScreens(screen => screen.id?.startsWith("AW_SET_DEFAULT"));
+  }
+
+  // Remove Firefox Accounts related UI and prevent related metrics.
+  if (!Services.prefs.getBoolPref("identity.fxaccounts.enabled", false)) {
+    delete content.screens?.find(
+      screen =>
+        screen.content?.secondary_button_top?.action?.type ===
+        "SHOW_FIREFOX_ACCOUNTS"
+    )?.content.secondary_button_top;
+    content.skipFxA = true;
   }
 
   // Remove the English-only image caption.
   if (Services.locale.appLocaleAsBCP47.split("-")[0] !== "en") {
-    const { help_text } =
-      content.screens?.find(screen => screen.content?.help_text?.deleteIfNotEn)
-        ?.content ?? {};
-
-    if (help_text?.text) {
-      delete help_text.text;
-    }
+    delete content.screens?.find(
+      screen => screen.content?.help_text?.deleteIfNotEn
+    )?.content.help_text.text;
   }
 
   return content;

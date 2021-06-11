@@ -2135,7 +2135,8 @@ bool nsContentUtils::IsCallerChromeOrErrorPage(JSContext* aCx,
   if (ThreadsafeIsSystemCaller(aCx)) {
     return true;
   }
-  nsGlobalWindowInner* win = xpc::WindowGlobalOrNull(aObject);
+  nsGlobalWindowInner* win =
+      xpc::WindowGlobalOrNull(js::UncheckedUnwrap(aObject));
   if (!win) {
     return false;
   }
@@ -3043,7 +3044,7 @@ void nsContentUtils::GenerateStateKey(nsIContent* aContent, Document* aDocument,
       }
 
       // Append the control type
-      KeyAppendInt(control->ControlType(), aKey);
+      KeyAppendInt(int32_t(control->ControlType()), aKey);
 
       // If in a form, add form name / index of form / index in form
       HTMLFormElement* formElement = control->GetFormElement();
@@ -4364,7 +4365,7 @@ nsresult nsContentUtils::DispatchInputEvent(Element* aEventTarget) {
 // static
 nsresult nsContentUtils::DispatchInputEvent(
     Element* aEventTargetElement, EventMessage aEventMessage,
-    EditorInputType aEditorInputType, TextEditor* aTextEditor,
+    EditorInputType aEditorInputType, EditorBase* aEditorBase,
     InputEventOptions&& aOptions, nsEventStatus* aEventStatus /* = nullptr */) {
   MOZ_ASSERT(aEventMessage == eEditorInput ||
              aEventMessage == eEditorBeforeInput);
@@ -4373,22 +4374,22 @@ nsresult nsContentUtils::DispatchInputEvent(
     return NS_ERROR_INVALID_ARG;
   }
 
-  // If this is called from editor, the instance should be set to aTextEditor.
+  // If this is called from editor, the instance should be set to aEditorBase.
   // Otherwise, we need to look for an editor for aEventTargetElement.
   // However, we don't need to do it for HTMLEditor since nobody shouldn't
   // dispatch "beforeinput" nor "input" event for HTMLEditor except HTMLEditor
   // itself.
   bool useInputEvent = false;
-  if (aTextEditor) {
+  if (aEditorBase) {
     useInputEvent = true;
   } else if (HTMLTextAreaElement* textAreaElement =
                  HTMLTextAreaElement::FromNode(aEventTargetElement)) {
-    aTextEditor = textAreaElement->GetTextEditorWithoutCreation();
+    aEditorBase = textAreaElement->GetTextEditorWithoutCreation();
     useInputEvent = true;
   } else if (HTMLInputElement* inputElement =
                  HTMLInputElement::FromNode(aEventTargetElement)) {
     if (inputElement->IsInputEventTarget()) {
-      aTextEditor = inputElement->GetTextEditorWithoutCreation();
+      aEditorBase = inputElement->GetTextEditorWithoutCreation();
       useInputEvent = true;
     }
   }
@@ -4423,8 +4424,8 @@ nsresult nsContentUtils::DispatchInputEvent(
       aEditorInputType == EditorInputType::eInsertReplacementText);
 
   nsCOMPtr<nsIWidget> widget;
-  if (aTextEditor) {
-    widget = aTextEditor->GetWidget();
+  if (aEditorBase) {
+    widget = aEditorBase->GetWidget();
     if (NS_WARN_IF(!widget)) {
       return NS_ERROR_FAILURE;
     }
@@ -4466,9 +4467,9 @@ nsresult nsContentUtils::DispatchInputEvent(
   // Otherwise, i.e., editor hasn't been created for the element yet,
   // we should set isComposing to false since the element can never has
   // composition without editor.
-  inputEvent.mIsComposing = aTextEditor && aTextEditor->GetComposition();
+  inputEvent.mIsComposing = aEditorBase && aEditorBase->GetComposition();
 
-  if (!aTextEditor || !aTextEditor->AsHTMLEditor()) {
+  if (!aEditorBase || aEditorBase->IsTextEditor()) {
     if (IsDataAvailableOnTextEditor(aEditorInputType)) {
       inputEvent.mData = std::move(aOptions.mData);
       MOZ_ASSERT(!inputEvent.mData.IsVoid(),
@@ -4483,7 +4484,7 @@ nsresult nsContentUtils::DispatchInputEvent(
         aOptions.mTargetRanges.IsEmpty(),
         "Target ranges for <input> and <textarea> should always be empty");
   } else {
-    MOZ_ASSERT(aTextEditor->AsHTMLEditor());
+    MOZ_ASSERT(aEditorBase->IsHTMLEditor());
     if (IsDataAvailableOnHTMLEditor(aEditorInputType)) {
       inputEvent.mData = std::move(aOptions.mData);
       MOZ_ASSERT(!inputEvent.mData.IsVoid(),
@@ -5403,9 +5404,10 @@ nsresult nsContentUtils::SetNodeTextContent(nsIContent* aContent,
 
   textContent->SetText(aValue, true);
 
-  nsresult rv = aContent->AppendChildTo(textContent, true);
+  ErrorResult rv;
+  aContent->AppendChildTo(textContent, true, rv);
   mb.NodesAdded();
-  return rv;
+  return rv.StealNSResult();
 }
 
 static bool AppendNodeTextContentsRecurse(nsINode* aNode, nsAString& aResult,
@@ -7092,7 +7094,7 @@ HTMLEditor* nsContentUtils::GetHTMLEditor(nsDocShell* aDocShell) {
 }
 
 // static
-TextEditor* nsContentUtils::GetActiveEditor(nsPresContext* aPresContext) {
+EditorBase* nsContentUtils::GetActiveEditor(nsPresContext* aPresContext) {
   if (!aPresContext) {
     return nullptr;
   }
@@ -7101,7 +7103,7 @@ TextEditor* nsContentUtils::GetActiveEditor(nsPresContext* aPresContext) {
 }
 
 // static
-TextEditor* nsContentUtils::GetActiveEditor(nsPIDOMWindowOuter* aWindow) {
+EditorBase* nsContentUtils::GetActiveEditor(nsPIDOMWindowOuter* aWindow) {
   if (!aWindow || !aWindow->GetExtantDoc()) {
     return nullptr;
   }
@@ -8153,6 +8155,8 @@ int16_t nsContentUtils::GetButtonsFlagForButton(int32_t aButton) {
       return MouseButtonsFlag::e4thFlag;
     case 4:
       return MouseButtonsFlag::e5thFlag;
+    case MouseButton::eEraser:
+      return MouseButtonsFlag::eEraserFlag;
     default:
       NS_ERROR("Button not known.");
       return 0;
@@ -8193,7 +8197,7 @@ nsresult nsContentUtils::SendMouseEvent(
     int32_t aButton, int32_t aButtons, int32_t aClickCount, int32_t aModifiers,
     bool aIgnoreRootScrollFrame, float aPressure,
     unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
-    bool* aPreventDefault, bool aIsDOMEventSynthesized,
+    PreventDefaultResult* aPreventDefault, bool aIsDOMEventSynthesized,
     bool aIsWidgetEventSynthesized) {
   nsPoint offset;
   nsCOMPtr<nsIWidget> widget = GetWidget(aPresShell, &offset);
@@ -8275,7 +8279,15 @@ nsresult nsContentUtils::SendMouseEvent(
     NS_ENSURE_SUCCESS(rv, rv);
   }
   if (aPreventDefault) {
-    *aPreventDefault = (status == nsEventStatus_eConsumeNoDefault);
+    if (status == nsEventStatus_eConsumeNoDefault) {
+      if (event.mFlags.mDefaultPreventedByContent) {
+        *aPreventDefault = PreventDefaultResult::ByContent;
+      } else {
+        *aPreventDefault = PreventDefaultResult::ByChrome;
+      }
+    } else {
+      *aPreventDefault = PreventDefaultResult::No;
+    }
   }
 
   return NS_OK;
@@ -10104,7 +10116,6 @@ bool nsContentUtils::IsMessageInputEvent(const IPC::Message& aMsg) {
       case mozilla::dom::PBrowser::Msg_RealTouchMoveEvent__ID:
       case mozilla::dom::PBrowser::Msg_RealDragEvent__ID:
       case mozilla::dom::PBrowser::Msg_UpdateDimensions__ID:
-      case mozilla::dom::PBrowser::Msg_MouseEvent__ID:
         return true;
     }
   }
@@ -10599,3 +10610,21 @@ nsCString nsContentUtils::TruncatedURLForDisplay(nsIURI* aURL,
   }
   return spec;
 }
+
+namespace mozilla {
+std::ostream& operator<<(std::ostream& aOut,
+                         const PreventDefaultResult aPreventDefaultResult) {
+  switch (aPreventDefaultResult) {
+    case PreventDefaultResult::No:
+      aOut << "unhandled";
+      break;
+    case PreventDefaultResult::ByContent:
+      aOut << "handled-by-content";
+      break;
+    case PreventDefaultResult::ByChrome:
+      aOut << "handled-by-chrome";
+      break;
+  }
+  return aOut;
+}
+}  // namespace mozilla

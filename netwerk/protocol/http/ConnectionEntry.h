@@ -84,8 +84,8 @@ class ConnectionEntry {
   }
 
   void InsertIntoDnsAndConnectSockets(DnsAndConnectSocket* sock);
+  void RemoveDnsAndConnectSocket(DnsAndConnectSocket* dnsAndSock, bool abandon);
   void CloseAllDnsAndConnectSockets();
-  bool IsInDnsAndConnectSockets(DnsAndConnectSocket* sock);
 
   HttpRetParams GetConnectionData();
   void LogConnections();
@@ -100,6 +100,14 @@ class ConnectionEntry {
 
   // Remove a particular DnsAndConnectSocket from the mDnsAndConnectSocket array
   bool RemoveDnsAndConnectSocket(DnsAndConnectSocket*);
+
+  bool MaybeProcessCoalescingKeys(nsIDNSAddrRecord* dnsRecord,
+                                  bool aIsHttp3 = false);
+
+  nsresult CreateDnsAndConnectSocket(nsAHttpTransaction* trans, uint32_t caps,
+                                     bool speculative, bool isFromPredictor,
+                                     bool urgentStart, bool allow1918,
+                                     PendingTransactionInfo* pendingTransInfo);
 
   // Spdy sometimes resolves the address in the socket manager in order
   // to re-coalesce sharded HTTP hosts. The dotted decimal address is
@@ -190,7 +198,7 @@ class ConnectionEntry {
   nsTArray<RefPtr<nsHttpConnection>> mIdleConns;  // idle persistent connections
   nsTArray<RefPtr<HttpConnectionBase>> mActiveConns;  // active connections
 
-  nsTArray<DnsAndConnectSocket*>
+  nsTArray<RefPtr<DnsAndConnectSocket>>
       mDnsAndConnectSockets;  // dns resolution and half open connections
 
   PendingTransactionQueue mPendingQ;

@@ -22,6 +22,7 @@ from string import Template
 from twisted.internet import reactor, protocol
 from twisted.internet.task import LoopingCall
 from twisted.internet.address import IPv4Address
+from twisted.internet.address import IPv6Address
 
 MAGIC_COOKIE = 0x2112A442
 
@@ -38,8 +39,9 @@ DATA_MSG = 0x007
 CREATE_PERMISSION = 0x008
 CHANNEL_BIND = 0x009
 
-IPV4 = 1
-IPV6 = 2
+# STUN spec chose silly values for these
+STUN_IPV4 = 1
+STUN_IPV6 = 2
 
 MAPPED_ADDRESS = 0x0001
 USERNAME = 0x0006
@@ -58,6 +60,12 @@ XOR_MAPPED_ADDRESS = 0x0020
 SOFTWARE = 0x8022
 ALTERNATE_SERVER = 0x8023
 FINGERPRINT = 0x8028
+
+STUN_PORT = 3478
+STUNS_PORT = 5349
+
+TURN_REDIRECT_PORT = 3479
+TURNS_REDIRECT_PORT = 5350
 
 
 def unpack_uint(bytes_buf):
@@ -105,6 +113,13 @@ def bitwise_pack(source, dest, start_bit, num_bits):
     mask = (1 << num_bits) - 1
     dest += source & mask
     return dest
+
+
+def to_ipaddress(protocol, host, port):
+    if ":" not in host:
+        return IPv4Address(protocol, host, port)
+
+    return IPv6Address(protocol, host, port)
 
 
 class StunAttribute(object):
@@ -261,36 +276,37 @@ class StunMessage(object):
     #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     #    |                X-Address (Variable)
     #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    __xor_v4addr_fmt = [1, 1, 2, 4]
-    __xor_v6addr_fmt = [1, 1, 2, 16]
-    __xor_v4addr_size = reduce(operator.add, __xor_v4addr_fmt)
-    __xor_v6addr_size = reduce(operator.add, __xor_v6addr_fmt)
+    __v4addr_fmt = [1, 1, 2, 4]
+    __v6addr_fmt = [1, 1, 2, 16]
+    __v4addr_size = reduce(operator.add, __v4addr_fmt)
+    __v6addr_size = reduce(operator.add, __v6addr_fmt)
+
+    def add_address(self, ip_address, version, port, attr_type):
+        if version == STUN_IPV4:
+            address = pack((0, STUN_IPV4, port, ip_address), self.__v4addr_fmt)
+        elif version == STUN_IPV6:
+            address = pack((0, STUN_IPV6, port, ip_address), self.__v6addr_fmt)
+        else:
+            raise ValueError("Invalid ip version: {}".format(version))
+        self.attributes.append(StunAttribute(attr_type, address))
 
     def get_xaddr(self, ip_addr, version):
-        if version == IPV4:
+        if version == STUN_IPV4:
             return self.cookie ^ ip_addr
-        elif version == IPV6:
+        elif version == STUN_IPV6:
             return ((self.cookie << 96) + self.transaction_id) ^ ip_addr
         else:
-            raise ValueError("Invalid family: {}".format(family))
+            raise ValueError("Invalid family: {}".format(version))
 
     def get_xport(self, port):
         return (self.cookie >> 16) ^ port
 
     def add_xor_address(self, addr_port, attr_type):
         ip_address = ipaddr.IPAddress(addr_port.host)
+        version = STUN_IPV6 if ip_address.version == 6 else STUN_IPV4
+        xaddr = self.get_xaddr(int(ip_address), version)
         xport = self.get_xport(addr_port.port)
-
-        if ip_address.version == 4:
-            xaddr = self.get_xaddr(int(ip_address), IPV4)
-            xor_address = pack((0, IPV4, xport, xaddr), self.__xor_v4addr_fmt)
-        elif ip_address.version == 6:
-            xaddr = self.get_xaddr(int(ip_address), IPV6)
-            xor_address = pack((0, IPV6, xport, xaddr), self.__xor_v6addr_fmt)
-        else:
-            raise ValueError("Invalid ip version: {}".format(ip_address.version))
-
-        self.attributes.append(StunAttribute(attr_type, xor_address))
+        self.add_address(xaddr, version, xport, attr_type)
 
     def add_data(self, buf):
         self.attributes.append(StunAttribute(DATA_ATTR, buf))
@@ -306,16 +322,12 @@ class StunMessage(object):
         if not addr_attr:
             return None
 
-        padding, family, xport, xaddr = unpack(addr_attr.data, self.__xor_v4addr_fmt)
+        padding, family, xport, xaddr = unpack(addr_attr.data, self.__v4addr_fmt)
         addr_ctor = IPv4Address
-        if family == IPV6:
-            from twisted.internet.address import IPv6Address
-
-            padding, family, xport, xaddr = unpack(
-                addr_attr.data, self.__xor_v6addr_fmt
-            )
+        if family == STUN_IPV6:
+            padding, family, xport, xaddr = unpack(addr_attr.data, self.__v6addr_fmt)
             addr_ctor = IPv6Address
-        elif family != IPV4:
+        elif family != STUN_IPV4:
             raise ValueError("Invalid family: {}".format(family))
 
         return addr_ctor(
@@ -362,6 +374,11 @@ class StunMessage(object):
         digest = self.calculate_message_digest(username, realm, password)
         self.find(MESSAGE_INTEGRITY).data = digest
 
+    def add_alternate_server(self, host, port):
+        address = ipaddr.IPAddress(host)
+        version = STUN_IPV6 if address.version == 6 else STUN_IPV4
+        self.add_address(int(address), version, port, ALTERNATE_SERVER)
+
 
 class Allocation(protocol.DatagramProtocol):
     """
@@ -398,7 +415,7 @@ class Allocation(protocol.DatagramProtocol):
 
         # Only handles UDP allocations. Doubtful that we need more than this.
         data_indication.add_xor_address(
-            IPv4Address("UDP", host, port), XOR_PEER_ADDRESS
+            to_ipaddress("UDP", host, port), XOR_PEER_ADDRESS
         )
         data_indication.add_data(data)
 
@@ -676,6 +693,40 @@ class StunHandler(object):
         return self.make_success_response(request)
 
 
+class StunRedirectHandler(StunHandler):
+    """
+    Frames and handles STUN messages by redirecting to the "real" server port.
+    Performs the redirect with auth, so does a 401 to unauthed requests.
+    Can be used to test port-based redirect handling.
+    """
+
+    def __init__(self, transport_handler):
+        super(StunRedirectHandler, self).__init__(transport_handler)
+
+    def handle_stun(self, stun_message, address):
+        self.client_address = address
+        if stun_message.msg_class == REQUEST:
+            challenge_response = self.check_long_term_auth(stun_message)
+
+            if challenge_response.msg_class == SUCCESS_RESPONSE:
+                return self.make_redirect_response(stun_message).build()
+
+            return challenge_response.build()
+
+    def make_redirect_response(self, request):
+        response = self.make_error_response(request, 300, "Try alternate")
+        port = STUN_PORT
+        if self.transport_handler.transport.getHost().port == TURNS_REDIRECT_PORT:
+            port = STUNS_PORT
+
+        response.add_alternate_server(
+            self.transport_handler.transport.getHost().host, port
+        )
+
+        response.add_message_integrity(turn_user, turn_realm, turn_pass)
+        return response
+
+
 class UdpStunHandler(protocol.DatagramProtocol):
     """
     Represents a UDP listen port for TURN.
@@ -683,7 +734,20 @@ class UdpStunHandler(protocol.DatagramProtocol):
 
     def datagramReceived(self, data, address):
         stun_handler = StunHandler(self)
-        stun_handler.data_received(data, IPv4Address("UDP", address[0], address[1]))
+        stun_handler.data_received(data, to_ipaddress("UDP", address[0], address[1]))
+
+    def write(self, data, address):
+        self.transport.write(bytes(data), (address.host, address.port))
+
+
+class UdpStunRedirectHandler(protocol.DatagramProtocol):
+    """
+    Represents a UDP listen port for TURN that will redirect.
+    """
+
+    def datagramReceived(self, data, address):
+        stun_handler = StunRedirectHandler(self)
+        stun_handler.data_received(data, to_ipaddress("UDP", address[0], address[1]))
 
     def write(self, data, address):
         self.transport.write(bytes(data), (address.host, address.port))
@@ -725,6 +789,31 @@ class TcpStunHandler(protocol.Protocol):
 
         for key in keys_to_delete:
             del allocations[key]
+
+    def write(self, data, address):
+        self.transport.write(bytes(data))
+
+
+class TcpStunRedirectHandlerFactory(protocol.Factory):
+    """
+    Represents a TCP listen port for TURN that will redirect.
+    """
+
+    def buildProtocol(self, addr):
+        return TcpStunRedirectHandler(addr)
+
+
+class TcpStunRedirectHandler(protocol.DatagramProtocol):
+    def __init__(self, addr):
+        self.address = addr
+        self.stun_handler = None
+
+    def dataReceived(self, data):
+        # This needs to persist, since it handles framing. Framing matters here
+        # because we do a round of auth before redirecting.
+        if not self.stun_handler:
+            self.stun_handler = StunRedirectHandler(self)
+        self.stun_handler.data_received(data, self.address)
 
     def write(self, data, address):
         self.transport.write(bytes(data))
@@ -814,12 +903,26 @@ if __name__ == "__main__":
         interface_6 = "::1"
         hostname = "localhost"
 
-    reactor.listenUDP(3478, UdpStunHandler(), interface=interface_4)
-    reactor.listenTCP(3478, TcpStunHandlerFactory(), interface=interface_4)
+    reactor.listenUDP(STUN_PORT, UdpStunHandler(), interface=interface_4)
+    reactor.listenTCP(STUN_PORT, TcpStunHandlerFactory(), interface=interface_4)
+
+    reactor.listenUDP(
+        TURN_REDIRECT_PORT, UdpStunRedirectHandler(), interface=interface_4
+    )
+    reactor.listenTCP(
+        TURN_REDIRECT_PORT, TcpStunRedirectHandlerFactory(), interface=interface_4
+    )
 
     try:
-        reactor.listenUDP(3478, UdpStunHandler(), interface=interface_6)
-        reactor.listenTCP(3478, TcpStunHandlerFactory(), interface=interface_6)
+        reactor.listenUDP(STUN_PORT, UdpStunHandler(), interface=interface_6)
+        reactor.listenTCP(STUN_PORT, TcpStunHandlerFactory(), interface=interface_6)
+
+        reactor.listenUDP(
+            TURN_REDIRECT_PORT, UdpStunRedirectHandler(), interface=interface_6
+        )
+        reactor.listenTCP(
+            TURN_REDIRECT_PORT, TcpStunRedirectHandlerFactory(), interface=interface_6
+        )
     except:
         pass
 
@@ -832,13 +935,23 @@ if __name__ == "__main__":
             KEY_FILE, CERT_FILE, SSL.TLSv1_2_METHOD
         )
         reactor.listenSSL(
-            5349, TcpStunHandlerFactory(), tls_context_factory, interface=interface_4
+            STUNS_PORT,
+            TcpStunHandlerFactory(),
+            tls_context_factory,
+            interface=interface_4,
         )
 
         try:
             reactor.listenSSL(
-                5349,
+                STUNS_PORT,
                 TcpStunHandlerFactory(),
+                tls_context_factory,
+                interface=interface_6,
+            )
+
+            reactor.listenSSL(
+                TURNS_REDIRECT_PORT,
+                TcpStunRedirectHandlerFactory(),
                 tls_context_factory,
                 interface=interface_6,
             )
@@ -866,7 +979,7 @@ if __name__ == "__main__":
     template = Template(
         '[\
 {"urls":["stun:$hostname", "stun:$hostname?transport=tcp"]}, \
-{"username":"$user","credential":"$pwd","urls": \
+{"username":"$user","credential":"$pwd","turn_redirect_port":"$TURN_REDIRECT_PORT","turns_redirect_port":"$TURNS_REDIRECT_PORT","urls": \
 ["turn:$hostname", "turn:$hostname?transport=tcp" $turns_url] \
 $cert_prop}]'  # Hack to make it easier to override cert checks
     )
@@ -878,6 +991,8 @@ $cert_prop}]'  # Hack to make it easier to override cert checks
             hostname=hostname,
             turns_url=turns_url,
             cert_prop=cert_prop,
+            TURN_REDIRECT_PORT=TURN_REDIRECT_PORT,
+            TURNS_REDIRECT_PORT=TURNS_REDIRECT_PORT,
         )
     )
 

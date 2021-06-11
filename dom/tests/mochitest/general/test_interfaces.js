@@ -405,21 +405,21 @@ var interfaceNamesInGlobalScope = [
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "GainNode", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "Gamepad", insecureContext: true },
+  { name: "Gamepad", insecureContext: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "GamepadAxisMoveEvent", insecureContext: true },
+  { name: "GamepadAxisMoveEvent", insecureContext: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "GamepadButtonEvent", insecureContext: true },
+  { name: "GamepadButtonEvent", insecureContext: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "GamepadButton", insecureContext: true },
+  { name: "GamepadButton", insecureContext: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "GamepadEvent", insecureContext: true },
+  { name: "GamepadEvent", insecureContext: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "GamepadHapticActuator", insecureContext: true },
+  { name: "GamepadHapticActuator", insecureContext: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "GamepadLightIndicator", insecureContext: false, disabled: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "GamepadPose", insecureContext: true },
+  { name: "GamepadPose", insecureContext: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "GamepadTouch", insecureContext: false, disabled: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1260,7 +1260,7 @@ var interfaceNamesInGlobalScope = [
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "VideoPlaybackQuality", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "VisualViewport", insecureContext: true, android: true },
+  { name: "VisualViewport", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "VRDisplay", releaseNonWindowsAndMac: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!

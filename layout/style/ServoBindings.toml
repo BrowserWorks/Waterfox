@@ -13,6 +13,7 @@ headers = [
     "mozilla/dom/KeyframeEffectBinding.h",
     "mozilla/dom/MediaList.h",
     "mozilla/dom/ShadowRoot.h",
+    "mozilla/dom/SVGPathSegBinding.h",
     "mozilla/ipc/ByteBuf.h",
     "mozilla/AnimationPropertySegment.h",
     "mozilla/ComputedTiming.h",
@@ -184,6 +185,7 @@ whitelist-vars = [
     "GECKO_IS_NIGHTLY",
     "mozilla::detail::gGkAtoms",
     "mozilla::detail::kGkAtomsArrayOffset",
+    "mozilla::dom::SVGPathSeg_Binding::PATHSEG_.*",
     "mozilla::profiler::detail::RacyFeatures::sActiveAndFeatures",
 ]
 # TODO(emilio): A bunch of types here can go away once we generate bindings and
@@ -583,6 +585,7 @@ cbindgen-types = [
     { gecko = "StyleDefaultFontSizes", servo = "crate::gecko::wrapper::DefaultFontSizes" },
     { gecko = "StyleCaptionSide", servo = "crate::values::computed::table::CaptionSide" },
     { gecko = "StylePageSize", servo = "crate::values::computed::page::PageSize" },
+    { gecko = "StyleDProperty", servo = "crate::values::specified::svg::DProperty" },
 ]
 
 mapped-generic-types = [

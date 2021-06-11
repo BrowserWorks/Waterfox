@@ -19,6 +19,7 @@
 #    include "mozilla/a11y/nsWinUtils.h"
 #  endif
 #endif
+#include "mozilla/AppShutdown.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/BrowserParent.h"
@@ -779,8 +780,10 @@ void BrowsingContext::Attach(bool aFromIPC, ContentParent* aOriginProcess) {
       }
     });
 
-    if (IsTopContent() && !Canonical()->GetWebProgress()) {
-      Canonical()->mWebProgress = new BrowsingContextWebProgress();
+    // We want to create a BrowsingContextWebProgress for all content
+    // BrowsingContexts.
+    if (IsContent() && !Canonical()->mWebProgress) {
+      Canonical()->mWebProgress = new BrowsingContextWebProgress(Canonical());
     }
   }
 
@@ -817,22 +820,6 @@ void BrowsingContext::Detach(bool aFromIPC) {
     mGroup->Toplevels().RemoveElement(this);
   }
 
-  auto callSendDiscard = [&](auto* aActor) {
-    // Hold a strong reference to ourself, and keep our BrowsingContextGroup
-    // alive, until the responses comes back to ensure we don't die while
-    // messages relating to this context are in-flight.
-    //
-    // When the callback is called, the keepalive on our group will be
-    // destroyed, and the reference to the BrowsingContext will be dropped,
-    // which may cause it to be fully destroyed.
-    mGroup->AddKeepAlive();
-    auto callback = [self = RefPtr{this}](auto) {
-      self->mGroup->RemoveKeepAlive();
-    };
-
-    aActor->SendDiscardBrowsingContext(this, callback, callback);
-  };
-
   if (XRE_IsParentProcess()) {
     Group()->EachParent([&](ContentParent* aParent) {
       // Only the embedder process is allowed to initiate a BrowsingContext
@@ -844,11 +831,25 @@ void BrowsingContext::Detach(bool aFromIPC) {
       // destroyed.
       if (!Canonical()->IsEmbeddedInProcess(aParent->ChildID()) &&
           !Canonical()->IsOwnedByProcess(aParent->ChildID())) {
-        callSendDiscard(aParent);
+        // Hold a strong reference to ourself, and keep our BrowsingContextGroup
+        // alive, until the responses comes back to ensure we don't die while
+        // messages relating to this context are in-flight.
+        //
+        // When the callback is called, the keepalive on our group will be
+        // destroyed, and the reference to the BrowsingContext will be dropped,
+        // which may cause it to be fully destroyed.
+        mGroup->AddKeepAlive();
+        auto callback = [self = RefPtr{this}](auto) {
+          self->mGroup->RemoveKeepAlive();
+        };
+
+        aParent->SendDiscardBrowsingContext(this, callback, callback);
       }
     });
   } else if (!aFromIPC) {
-    callSendDiscard(ContentChild::GetSingleton());
+    auto callback = [](auto) {};
+    ContentChild::GetSingleton()->SendDiscardBrowsingContext(this, callback,
+                                                             callback);
   }
 
   mGroup->Unregister(this);
@@ -1790,6 +1791,30 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(BrowsingContext)
       mCurrentWindowContext, mSessionStorageManager, mChildSessionHistory)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
+static bool IsCertainlyAliveForCC(BrowsingContext* aContext) {
+  return aContext->HasKnownLiveWrapper() ||
+         (AppShutdown::GetCurrentShutdownPhase() ==
+              ShutdownPhase::NotInShutdown &&
+          aContext->EverAttached() && !aContext->IsDiscarded());
+}
+
+NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(BrowsingContext)
+  if (IsCertainlyAliveForCC(tmp)) {
+    if (tmp->PreservingWrapper()) {
+      tmp->MarkWrapperLive();
+    }
+    return true;
+  }
+NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
+
+NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(BrowsingContext)
+  return IsCertainlyAliveForCC(tmp) && tmp->HasNothingToTrace(tmp);
+NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
+
+NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(BrowsingContext)
+  return IsCertainlyAliveForCC(tmp);
+NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
+
 class RemoteLocationProxy
     : public RemoteObjectProxy<BrowsingContext::LocationProxy,
                                Location_Binding::sCrossOriginProperties> {
@@ -2615,9 +2640,8 @@ bool BrowsingContext::InactiveForSuspend() const {
 }
 
 bool BrowsingContext::CanSet(FieldIndex<IDX_TouchEventsOverrideInternal>,
-                             dom::TouchEventsOverride, ContentParent*) {
-  // TODO: Bug 1688948 - Should only be set in the parent process.
-  return true;
+                             dom::TouchEventsOverride, ContentParent* aSource) {
+  return XRE_IsParentProcess() && !aSource;
 }
 
 void BrowsingContext::DidSet(FieldIndex<IDX_PrefersColorSchemeOverride>,
@@ -2875,11 +2899,6 @@ mozilla::dom::TouchEventsOverride BrowsingContext::TouchEventsOverride() const {
   return mozilla::dom::TouchEventsOverride::None;
 }
 
-void BrowsingContext::SetTouchEventsOverride(dom::TouchEventsOverride aOverride,
-                                             ErrorResult& aRv) {
-  SetTouchEventsOverrideInternal(aOverride, aRv);
-}
-
 // We map `watchedByDevTools` WebIDL attribute to `watchedByDevToolsInternal`
 // BC field. And we map it to the top level BrowsingContext.
 bool BrowsingContext::WatchedByDevTools() {
@@ -3025,6 +3044,14 @@ void BrowsingContext::DidSet(FieldIndex<IDX_CurrentInnerWindowId>) {
         prevWindowContext->Canonical()->DidBecomeCurrentWindowGlobal(false);
       }
       if (mCurrentWindowContext) {
+        // We set a timer when we set the current inner window. This
+        // will then flush the session storage to session store to
+        // make sure that we don't miss to store session storage to
+        // session store that is a result of navigation. This is due
+        // to Bug 1700623. We wish to fix this in Bug 1711886, where
+        // making sure to store everything would make this timer
+        // unnecessary.
+        Canonical()->MaybeScheduleSessionStoreUpdate();
         mCurrentWindowContext->Canonical()->DidBecomeCurrentWindowGlobal(true);
       }
     }

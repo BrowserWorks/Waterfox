@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use serde_json;
 use std::marker::PhantomData;
 use std::net::{SocketAddr, TcpListener as StdTcpListener};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -34,6 +33,16 @@ enum DispatchMessage<U: WebDriverExtensionRoute> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+/// Representation of whether we managed to successfully send a DeleteSession message
+/// and read the response during session teardown.
+pub enum SessionTeardownKind {
+    /// A DeleteSession message has been sent and the response handled.
+    Deleted,
+    /// No DeleteSession message has been sent, or the response was not received.
+    NotDeleted,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct Session {
     pub id: String,
 }
@@ -50,7 +59,7 @@ pub trait WebDriverHandler<U: WebDriverExtensionRoute = VoidWebDriverExtensionRo
         session: &Option<Session>,
         msg: WebDriverMessage<U>,
     ) -> WebDriverResult<WebDriverResponse>;
-    fn delete_session(&mut self, session: &Option<Session>);
+    fn teardown_session(&mut self, kind: SessionTeardownKind);
 }
 
 #[derive(Debug)]
@@ -85,11 +94,18 @@ impl<T: WebDriverHandler<U>, U: WebDriverExtensionRoute> Dispatcher<T, U> {
                         Ok(WebDriverResponse::CloseWindow(CloseWindowResponse(ref handles))) => {
                             if handles.is_empty() {
                                 debug!("Last window was closed, deleting session");
-                                self.delete_session();
+                                // The teardown_session implementation is responsible for actually
+                                // sending the DeleteSession message in this case
+                                self.teardown_session(SessionTeardownKind::NotDeleted);
                             }
                         }
-                        Ok(WebDriverResponse::DeleteSession) => self.delete_session(),
-                        Err(ref x) if x.delete_session => self.delete_session(),
+                        Ok(WebDriverResponse::DeleteSession) => {
+                            self.teardown_session(SessionTeardownKind::Deleted);
+                        }
+                        Err(ref x) if x.delete_session => {
+                            // This includes the case where we failed during session creation
+                            self.teardown_session(SessionTeardownKind::NotDeleted)
+                        }
                         _ => {}
                     }
 
@@ -103,9 +119,28 @@ impl<T: WebDriverHandler<U>, U: WebDriverExtensionRoute> Dispatcher<T, U> {
         }
     }
 
-    fn delete_session(&mut self) {
-        debug!("Deleting session");
-        self.handler.delete_session(&self.session);
+    fn teardown_session(&mut self, kind: SessionTeardownKind) {
+        debug!("Teardown session");
+        let final_kind = match kind {
+            SessionTeardownKind::NotDeleted if self.session.is_some() => {
+                let delete_session = WebDriverMessage {
+                    session_id: Some(
+                        self.session
+                            .as_ref()
+                            .expect("Failed to get session")
+                            .id
+                            .clone(),
+                    ),
+                    command: WebDriverCommand::DeleteSession,
+                };
+                match self.handler.handle_command(&self.session, delete_session) {
+                    Ok(_) => SessionTeardownKind::Deleted,
+                    Err(_) => SessionTeardownKind::NotDeleted,
+                }
+            }
+            _ => kind,
+        };
+        self.handler.teardown_session(final_kind);
         self.session = None;
     }
 
@@ -309,7 +344,7 @@ fn build_route<U: 'static + WebDriverExtensionRoute + Send + Sync>(
                 if let Some(origin) = origin_header {
                     let mut valid_host = false;
                     let host_url = Url::parse(&origin).ok();
-                    let host = host_url.as_ref().and_then(|x| x.host().to_owned());
+                    let host = host_url.as_ref().and_then(|x| x.host());
                     if let Some(host) = host {
                         valid_host = match host {
                             Host::Domain("localhost") => true,

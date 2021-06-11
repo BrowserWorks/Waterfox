@@ -141,6 +141,17 @@ class DecodedStreamGraphListener {
 
     MOZ_ASSERT_IF(aType == MediaSegment::AUDIO, !mAudioEnded);
     MOZ_ASSERT_IF(aType == MediaSegment::VIDEO, !mVideoEnded);
+    // This situation would happen when playing audio in >1x playback rate,
+    // because the audio output clock isn't align the graph time and would go
+    // forward faster. Eg. playback rate=2, when the graph time passes 10s, the
+    // audio clock time actually already goes forward 20s. After audio track
+    // ended, video track would tirgger the clock, but the video time still
+    // follows the graph time, which is smaller than the preivous audio clock
+    // time and should be ignored.
+    if (aCurrentTrackTime <= mLastOutputTime) {
+      MOZ_ASSERT(aType == MediaSegment::VIDEO);
+      return;
+    }
     MOZ_ASSERT(aCurrentTrackTime > mLastOutputTime);
     mLastOutputTime = aCurrentTrackTime;
 
@@ -315,7 +326,8 @@ class DecodedStreamData final {
                            const TimeUnit& aEnd,
                            const gfx::IntSize& aIntrinsicSize,
                            const TimeStamp& aTimeStamp, VideoSegment* aOutput,
-                           const PrincipalHandle& aPrincipalHandle);
+                           const PrincipalHandle& aPrincipalHandle,
+                           double aPlaybackRate);
 
   /* The following group of fields are protected by the decoder's monitor
    * and can be read or written on any thread.
@@ -729,6 +741,16 @@ void DecodedStream::SendAudio(const PrincipalHandle& aPrincipalHandle) {
   AutoTArray<RefPtr<AudioData>, 10> audio;
   mAudioQueue.GetElementsAfter(mData->mNextAudioTime, &audio);
 
+  // This will happen everytime when the media sink switches from `AudioSink` to
+  // `DecodedStream`. If we don't insert the silence then the A/V will be out of
+  // sync.
+  RefPtr<AudioData> nextAudio = audio.IsEmpty() ? nullptr : audio[0];
+  if (RefPtr<AudioData> silence = CreateSilenceDataIfGapExists(nextAudio)) {
+    LOG_DS(LogLevel::Verbose, "Detect a gap in audio, insert silence=%u",
+           silence->Frames());
+    audio.InsertElementAt(0, silence);
+  }
+
   // Append data which hasn't been sent to audio track before.
   mData->mAudioTrack->AppendData(audio, aPrincipalHandle);
   for (uint32_t i = 0; i < audio.Length(); ++i) {
@@ -741,6 +763,41 @@ void DecodedStream::SendAudio(const PrincipalHandle& aPrincipalHandle) {
     mData->mAudioTrack->NotifyEndOfStream();
     mData->mHaveSentFinishAudio = true;
   }
+}
+
+already_AddRefed<AudioData> DecodedStream::CreateSilenceDataIfGapExists(
+    RefPtr<AudioData>& aNextAudio) {
+  AssertOwnerThread();
+  if (!aNextAudio) {
+    return nullptr;
+  }
+  CheckedInt64 audioWrittenOffset =
+      mData->mAudioFramesWritten +
+      TimeUnitToFrames(*mStartTime, aNextAudio->mRate);
+  CheckedInt64 frameOffset =
+      TimeUnitToFrames(aNextAudio->mTime, aNextAudio->mRate);
+  if (audioWrittenOffset.value() >= frameOffset.value()) {
+    return nullptr;
+  }
+  // We've written less audio than our frame offset, return a silence data so we
+  // have enough audio to be at the correct offset for our current frames.
+  CheckedInt64 missingFrames = frameOffset - audioWrittenOffset;
+  AlignedAudioBuffer silenceBuffer(missingFrames.value() *
+                                   aNextAudio->mChannels);
+  if (!silenceBuffer) {
+    NS_WARNING("OOM in DecodedStream::CreateSilenceDataIfGapExists");
+    return nullptr;
+  }
+  auto duration = FramesToTimeUnit(missingFrames.value(), aNextAudio->mRate);
+  if (!duration.IsValid()) {
+    NS_WARNING("Int overflow in DecodedStream::CreateSilenceDataIfGapExists");
+    return nullptr;
+  }
+  RefPtr<AudioData> silenceData = new AudioData(
+      aNextAudio->mOffset, aNextAudio->mTime, std::move(silenceBuffer),
+      aNextAudio->mChannels, aNextAudio->mRate);
+  MOZ_DIAGNOSTIC_ASSERT(duration == silenceData->mDuration, "must be equal");
+  return silenceData.forget();
 }
 
 void DecodedStream::CheckIsDataAudible(const AudioData* aData) {
@@ -758,7 +815,8 @@ void DecodedStream::CheckIsDataAudible(const AudioData* aData) {
 void DecodedStreamData::WriteVideoToSegment(
     layers::Image* aImage, const TimeUnit& aStart, const TimeUnit& aEnd,
     const gfx::IntSize& aIntrinsicSize, const TimeStamp& aTimeStamp,
-    VideoSegment* aOutput, const PrincipalHandle& aPrincipalHandle) {
+    VideoSegment* aOutput, const PrincipalHandle& aPrincipalHandle,
+    double aPlaybackRate) {
   RefPtr<layers::Image> image = aImage;
   auto end =
       mVideoTrack->MicrosecondsToTrackTimeRoundDown(aEnd.ToMicroseconds());
@@ -769,7 +827,9 @@ void DecodedStreamData::WriteVideoToSegment(
   // Extend this so we get accurate durations for all frames.
   // Because this track is pushed, we need durations so the graph can track
   // when playout of the track has finished.
-  aOutput->ExtendLastFrameBy(end - start);
+  MOZ_ASSERT(aPlaybackRate > 0);
+  aOutput->ExtendLastFrameBy(
+      static_cast<TrackTime>((float)(end - start) / aPlaybackRate));
 
   mLastVideoStartTime = Some(aStart);
   mLastVideoEndTime = Some(aEnd);
@@ -902,7 +962,7 @@ void DecodedStream::SendVideo(const PrincipalHandle& aPrincipalHandle) {
                    currentTime + (lastEnd - currentPosition).ToTimeDuration());
       mData->WriteVideoToSegment(mData->mLastVideoImage, lastEnd, v->mTime,
                                  mData->mLastVideoImageDisplaySize, t, &output,
-                                 aPrincipalHandle);
+                                 aPrincipalHandle, mPlaybackRate);
       lastEnd = v->mTime;
     }
 
@@ -921,7 +981,7 @@ void DecodedStream::SendVideo(const PrincipalHandle& aPrincipalHandle) {
       mData->mLastVideoImage = v->mImage;
       mData->mLastVideoImageDisplaySize = v->mDisplay;
       mData->WriteVideoToSegment(v->mImage, lastEnd, end, v->mDisplay, t,
-                                 &output, aPrincipalHandle);
+                                 &output, aPrincipalHandle, mPlaybackRate);
     }
   }
 
@@ -961,7 +1021,7 @@ void DecodedStream::SendVideo(const PrincipalHandle& aPrincipalHandle) {
           mData->mLastVideoImage, start, start + deviation,
           mData->mLastVideoImageDisplaySize,
           currentTime + (start + deviation - currentPosition).ToTimeDuration(),
-          &endSegment, aPrincipalHandle);
+          &endSegment, aPrincipalHandle, mPlaybackRate);
       MOZ_ASSERT(endSegment.GetDuration() > 0);
       if (forceBlack) {
         endSegment.ReplaceWithDisabled();

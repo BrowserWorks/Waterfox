@@ -235,7 +235,7 @@ void LIRGenerator::visitNewStringObject(MNewStringObject* ins) {
 
 void LIRGenerator::visitInitElemGetterSetter(MInitElemGetterSetter* ins) {
   LInitElemGetterSetter* lir = new (alloc()) LInitElemGetterSetter(
-      useRegisterAtStart(ins->object()), useBoxAtStart(ins->idValue()),
+      useRegisterAtStart(ins->object()), useBoxAtStart(ins->id()),
       useRegisterAtStart(ins->value()));
   add(lir, ins);
   assignSafepoint(lir, ins);
@@ -243,7 +243,7 @@ void LIRGenerator::visitInitElemGetterSetter(MInitElemGetterSetter* ins) {
 
 void LIRGenerator::visitMutateProto(MMutateProto* ins) {
   LMutateProto* lir = new (alloc()) LMutateProto(
-      useRegisterAtStart(ins->getObject()), useBoxAtStart(ins->getValue()));
+      useRegisterAtStart(ins->object()), useBoxAtStart(ins->value()));
   add(lir, ins);
   assignSafepoint(lir, ins);
 }
@@ -262,9 +262,9 @@ void LIRGenerator::visitCreateThisWithTemplate(MCreateThisWithTemplate* ins) {
 }
 
 void LIRGenerator::visitCreateThis(MCreateThis* ins) {
-  LCreateThis* lir = new (alloc())
-      LCreateThis(useRegisterOrConstantAtStart(ins->getCallee()),
-                  useRegisterOrConstantAtStart(ins->getNewTarget()));
+  LCreateThis* lir =
+      new (alloc()) LCreateThis(useRegisterOrConstantAtStart(ins->callee()),
+                                useRegisterOrConstantAtStart(ins->newTarget()));
   defineReturn(lir, ins);
   assignSafepoint(lir, ins);
 }
@@ -343,21 +343,21 @@ void LIRGenerator::visitGetInlinedArgument(MGetInlinedArgument* ins) {
 }
 
 void LIRGenerator::visitGetArgumentsObjectArg(MGetArgumentsObjectArg* ins) {
-  LAllocation argsObj = useRegister(ins->getArgsObject());
+  LAllocation argsObj = useRegister(ins->argsObject());
   LGetArgumentsObjectArg* lir =
       new (alloc()) LGetArgumentsObjectArg(argsObj, temp());
   defineBox(lir, ins);
 }
 
 void LIRGenerator::visitSetArgumentsObjectArg(MSetArgumentsObjectArg* ins) {
-  LAllocation argsObj = useRegister(ins->getArgsObject());
+  LAllocation argsObj = useRegister(ins->argsObject());
   LSetArgumentsObjectArg* lir = new (alloc())
-      LSetArgumentsObjectArg(argsObj, useBox(ins->getValue()), temp());
+      LSetArgumentsObjectArg(argsObj, useBox(ins->value()), temp());
   add(lir, ins);
 }
 
 void LIRGenerator::visitLoadArgumentsObjectArg(MLoadArgumentsObjectArg* ins) {
-  MDefinition* argsObj = ins->getArgsObject();
+  MDefinition* argsObj = ins->argsObject();
   MOZ_ASSERT(argsObj->type() == MIRType::Object);
 
   MDefinition* index = ins->index();
@@ -370,7 +370,7 @@ void LIRGenerator::visitLoadArgumentsObjectArg(MLoadArgumentsObjectArg* ins) {
 }
 
 void LIRGenerator::visitArgumentsObjectLength(MArgumentsObjectLength* ins) {
-  MDefinition* argsObj = ins->getArgsObject();
+  MDefinition* argsObj = ins->argsObject();
   MOZ_ASSERT(argsObj->type() == MIRType::Object);
 
   auto* lir = new (alloc()) LArgumentsObjectLength(useRegister(argsObj));
@@ -380,7 +380,7 @@ void LIRGenerator::visitArgumentsObjectLength(MArgumentsObjectLength* ins) {
 
 void LIRGenerator::visitGuardArgumentsObjectFlags(
     MGuardArgumentsObjectFlags* ins) {
-  MDefinition* argsObj = ins->getArgsObject();
+  MDefinition* argsObj = ins->argsObject();
   MOZ_ASSERT(argsObj->type() == MIRType::Object);
 
   auto* lir =
@@ -392,7 +392,7 @@ void LIRGenerator::visitGuardArgumentsObjectFlags(
 
 void LIRGenerator::visitReturnFromCtor(MReturnFromCtor* ins) {
   LReturnFromCtor* lir = new (alloc())
-      LReturnFromCtor(useBox(ins->getValue()), useRegister(ins->getObject()));
+      LReturnFromCtor(useBox(ins->value()), useRegister(ins->object()));
   define(lir, ins);
 }
 
@@ -1134,9 +1134,8 @@ void LIRGenerator::visitTypeOf(MTypeOf* ins) {
 }
 
 void LIRGenerator::visitToAsyncIter(MToAsyncIter* ins) {
-  LToAsyncIter* lir =
-      new (alloc()) LToAsyncIter(useRegisterAtStart(ins->getIterator()),
-                                 useBoxAtStart(ins->getNextMethod()));
+  LToAsyncIter* lir = new (alloc()) LToAsyncIter(
+      useRegisterAtStart(ins->iterator()), useBoxAtStart(ins->nextMethod()));
   defineReturn(lir, ins);
   assignSafepoint(lir, ins);
 }
@@ -1395,29 +1394,30 @@ void LIRGenerator::visitMinMaxArray(MMinMaxArray* ins) {
   define(lir, ins);
 }
 
-void LIRGenerator::visitAbs(MAbs* ins) {
+LInstructionHelper<1, 1, 0>* LIRGenerator::allocateAbs(MAbs* ins,
+                                                       LAllocation input) {
   MDefinition* num = ins->input();
   MOZ_ASSERT(IsNumberType(num->type()));
 
   LInstructionHelper<1, 1, 0>* lir;
   switch (num->type()) {
     case MIRType::Int32:
-      lir = new (alloc()) LAbsI(useRegisterAtStart(num));
+      lir = new (alloc()) LAbsI(input);
       // needed to handle abs(INT32_MIN)
       if (ins->fallible()) {
         assignSnapshot(lir, ins->bailoutKind());
       }
       break;
     case MIRType::Float32:
-      lir = new (alloc()) LAbsF(useRegisterAtStart(num));
+      lir = new (alloc()) LAbsF(input);
       break;
     case MIRType::Double:
-      lir = new (alloc()) LAbsD(useRegisterAtStart(num));
+      lir = new (alloc()) LAbsD(input);
       break;
     default:
       MOZ_CRASH();
   }
-  defineReuseInput(lir, ins, 0);
+  return lir;
 }
 
 void LIRGenerator::visitClz(MClz* ins) {
@@ -1699,6 +1699,14 @@ void LIRGenerator::visitSub(MSub* ins) {
       assignSnapshot(lir, ins->bailoutKind());
     }
 
+    // If our LHS is a constant 0 and we don't have to worry about results that
+    // can't be represented as an int32, we can optimize to an LNegI.
+    if (!ins->fallible() && lhs->isConstant() &&
+        lhs->toConstant()->toInt32() == 0) {
+      lowerNegI(ins, rhs);
+      return;
+    }
+
     lowerForALU(lir, ins, lhs, rhs);
     MaybeSetRecoversInput(ins, lir);
     return;
@@ -1706,6 +1714,13 @@ void LIRGenerator::visitSub(MSub* ins) {
 
   if (ins->type() == MIRType::Int64) {
     MOZ_ASSERT(lhs->type() == MIRType::Int64);
+
+    // If our LHS is a constant 0, we can optimize to an LNegI64.
+    if (lhs->isConstant() && lhs->toConstant()->toInt64() == 0) {
+      lowerNegI64(ins, rhs);
+      return;
+    }
+
     LSubI64* lir = new (alloc()) LSubI64;
     lowerForALUInt64(lir, ins, lhs, rhs);
     return;
@@ -1736,20 +1751,28 @@ void LIRGenerator::visitMul(MMul* ins) {
     MOZ_ASSERT(lhs->type() == MIRType::Int32);
     ReorderCommutative(&lhs, &rhs, ins);
 
-    // If our RHS is a constant -1 and we don't have to worry about
-    // overflow, we can optimize to an LNegI.
+    // If our RHS is a constant -1 and we don't have to worry about results that
+    // can't be represented as an int32, we can optimize to an LNegI.
     if (!ins->fallible() && rhs->isConstant() &&
         rhs->toConstant()->toInt32() == -1) {
-      defineReuseInput(new (alloc()) LNegI(useRegisterAtStart(lhs)), ins, 0);
-    } else {
-      lowerMulI(ins, lhs, rhs);
+      lowerNegI(ins, lhs);
+      return;
     }
+
+    lowerMulI(ins, lhs, rhs);
     return;
   }
 
   if (ins->type() == MIRType::Int64) {
     MOZ_ASSERT(lhs->type() == MIRType::Int64);
     ReorderCommutative(&lhs, &rhs, ins);
+
+    // If our RHS is a constant -1, we can optimize to an LNegI64.
+    if (rhs->isConstant() && rhs->toConstant()->toInt64() == -1) {
+      lowerNegI64(ins, lhs);
+      return;
+    }
+
     LMulI64* lir = new (alloc()) LMulI64;
     lowerForMulInt64(lir, ins, lhs, rhs);
     return;
@@ -1763,9 +1786,10 @@ void LIRGenerator::visitMul(MMul* ins) {
     if (!ins->mustPreserveNaN() && rhs->isConstant() &&
         rhs->toConstant()->toDouble() == -1.0) {
       defineReuseInput(new (alloc()) LNegD(useRegisterAtStart(lhs)), ins, 0);
-    } else {
-      lowerForFPU(new (alloc()) LMathD(JSOp::Mul), ins, lhs, rhs);
+      return;
     }
+
+    lowerForFPU(new (alloc()) LMathD(JSOp::Mul), ins, lhs, rhs);
     return;
   }
 
@@ -1777,9 +1801,10 @@ void LIRGenerator::visitMul(MMul* ins) {
     if (!ins->mustPreserveNaN() && rhs->isConstant() &&
         rhs->toConstant()->toFloat32() == -1.0f) {
       defineReuseInput(new (alloc()) LNegF(useRegisterAtStart(lhs)), ins, 0);
-    } else {
-      lowerForFPU(new (alloc()) LMathF(JSOp::Mul), ins, lhs, rhs);
+      return;
     }
+
+    lowerForFPU(new (alloc()) LMathF(JSOp::Mul), ins, lhs, rhs);
     return;
   }
 
@@ -3934,11 +3959,11 @@ void LIRGenerator::visitGetPropertyCache(MGetPropertyCache* ins) {
 }
 
 void LIRGenerator::visitBindNameCache(MBindNameCache* ins) {
-  MOZ_ASSERT(ins->environmentChain()->type() == MIRType::Object);
+  MOZ_ASSERT(ins->envChain()->type() == MIRType::Object);
   MOZ_ASSERT(ins->type() == MIRType::Object);
 
-  LBindNameCache* lir = new (alloc())
-      LBindNameCache(useRegister(ins->environmentChain()), temp());
+  LBindNameCache* lir =
+      new (alloc()) LBindNameCache(useRegister(ins->envChain()), temp());
   define(lir, ins);
   assignSafepoint(lir, ins);
 }
@@ -5978,27 +6003,11 @@ void LIRGenerator::visitWasmSelect(MWasmSelect* ins) {
   }
 
   if (ins->type() == MIRType::Int64) {
-#if defined(JS_CODEGEN_ARM64)
-    // arm64 needs all three arguments forced into registers, but for x86, it
-    // may be beneficial to be more relaxed.  Hence special-case arm64.
-    auto* lir = new (alloc()) LWasmSelectI64(
-        useInt64RegisterAtStart(ins->trueExpr()),
-        useInt64Register(ins->falseExpr()), useRegister(ins->condExpr()));
-#else
-    auto* lir = new (alloc()) LWasmSelectI64(
-        useInt64RegisterAtStart(ins->trueExpr()), useInt64(ins->falseExpr()),
-        useRegister(ins->condExpr()));
-#endif
-
-    defineInt64ReuseInput(lir, ins, LWasmSelectI64::TrueExprIndex);
+    lowerWasmSelectI64(ins);
     return;
   }
 
-  auto* lir = new (alloc())
-      LWasmSelect(useRegisterAtStart(ins->trueExpr()), useAny(ins->falseExpr()),
-                  useRegister(ins->condExpr()));
-
-  defineReuseInput(lir, ins, LWasmSelect::TrueExprIndex);
+  lowerWasmSelectI(ins);
 }
 
 void LIRGenerator::visitWasmFence(MWasmFence* ins) {

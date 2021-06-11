@@ -73,6 +73,13 @@ loader.lazyRequireGetter(
   true
 );
 
+loader.lazyRequireGetter(
+  this,
+  "TouchSimulator",
+  "devtools/server/actors/emulation/touch-simulator",
+  true
+);
+
 function getWindowID(window) {
   return window.windowGlobalChild.innerWindowId;
 }
@@ -547,11 +554,14 @@ const browsingContextTargetPrototype = {
     );
     assert(this.actorID, "Actor should have an actorID.");
 
+    const innerWindowId = this.window ? getInnerId(this.window) : null;
+
     const response = {
       actor: this.actorID,
       browsingContextID: this.browsingContextID,
       // True for targets created by JSWindowActors, see constructor JSDoc.
       followWindowGlobalLifeCycle: this.followWindowGlobalLifeCycle,
+      innerWindowId,
       isTopLevelTarget: this.isTopLevelTarget,
       traits: {
         // @backward-compat { version 64 } Exposes a new trait to help identify
@@ -598,6 +608,11 @@ const browsingContextTargetPrototype = {
     if (this._attached) {
       // TODO: Bug 997119: Remove this coupling with thread actor
       this.threadActor._parentClosed = true;
+    }
+
+    if (this._touchSimulator) {
+      this._touchSimulator.stop();
+      this._touchSimulator = null;
     }
 
     this._detach();
@@ -1236,15 +1251,33 @@ const browsingContextTargetPrototype = {
       return;
     }
 
+    let reload = false;
+    if (typeof options.touchEventsOverride !== "undefined") {
+      const enableTouchSimulator = options.touchEventsOverride === "enabled";
+
+      // We want to reload the document if it's a top level target on which the touch
+      // simulator will be toggled and the user has turned the "reload on touch simulation"
+      // settings on.
+      if (
+        enableTouchSimulator !== this.touchSimulator.enabled &&
+        options.reloadOnTouchSimulationToggle === true &&
+        this.isTopLevelTarget
+      ) {
+        reload = true;
+      }
+
+      if (enableTouchSimulator) {
+        this.touchSimulator.start();
+      } else {
+        this.touchSimulator.stop();
+      }
+    }
+
     if (!this.isTopLevelTarget) {
-      // DevTools target options should only apply to the top target and be
+      // Following DevTools target options should only apply to the top target and be
       // propagated through the browsing context tree via the platform.
       return;
     }
-
-    // Wait a tick so that the response packet can be dispatched before the
-    // subsequent navigation event packet.
-    let reload = false;
 
     if (
       typeof options.javascriptEnabled !== "undefined" &&
@@ -1272,6 +1305,14 @@ const browsingContextTargetPrototype = {
     if (reload) {
       this.reload();
     }
+  },
+
+  get touchSimulator() {
+    if (!this._touchSimulator) {
+      this._touchSimulator = new TouchSimulator(this.chromeEventHandler);
+    }
+
+    return this._touchSimulator;
   },
 
   /**
@@ -1367,7 +1408,13 @@ const browsingContextTargetPrototype = {
   _changeTopLevelDocument(window) {
     // Fake a will-navigate on the previous document
     // to let a chance to unregister it
-    this._willNavigate(this.window, window.location.href, null, true);
+    this._willNavigate({
+      window: this.window,
+      newURI: window.location.href,
+      request: null,
+      isFrameSwitching: true,
+      navigationStart: Date.now(),
+    });
 
     this._windowDestroyed(this.window, null, true);
 
@@ -1415,9 +1462,16 @@ const browsingContextTargetPrototype = {
       this._updateChildDocShells();
     }
 
+    // If this follows WindowGlobal lifecycle, a new Target actor will be spawn for the top level
+    // target document. Only notify about in-process iframes.
+    // Note that OOP iframes won't emit window-ready and will also have their dedicated target.
+    if (this.followWindowGlobalLifeCycle && isTopLevel) {
+      return;
+    }
+
     this.emit("window-ready", {
-      window: window,
-      isTopLevel: isTopLevel,
+      window,
+      isTopLevel,
       isBFCache,
       id: getWindowID(window),
       isFrameSwitching,
@@ -1425,11 +1479,20 @@ const browsingContextTargetPrototype = {
   },
 
   _windowDestroyed(window, id = null, isFrozen = false) {
+    const isTopLevel = window == this.window;
+
+    // If this follows WindowGlobal lifecycle, this target will be destroyed, alongside its top level document.
+    // Only notify about in-process iframes.
+    // Note that OOP iframes won't emit window-ready and will also have their dedicated target.
+    if (this.followWindowGlobalLifeCycle && isTopLevel) {
+      return;
+    }
+
     this.emit("window-destroyed", {
-      window: window,
-      isTopLevel: window == this.window,
+      window,
+      isTopLevel,
       id: id || getWindowID(window),
-      isFrozen: isFrozen,
+      isFrozen,
     });
   },
 
@@ -1437,7 +1500,13 @@ const browsingContextTargetPrototype = {
    * Start notifying server and client about a new document being loaded in the
    * currently targeted browsing context.
    */
-  _willNavigate(window, newURI, request, isFrameSwitching = false) {
+  _willNavigate({
+    window,
+    newURI,
+    request,
+    isFrameSwitching = false,
+    navigationStart,
+  }) {
     let isTopLevel = window == this.window;
     let reset = false;
 
@@ -1462,10 +1531,11 @@ const browsingContextTargetPrototype = {
     // starts, (all pending user prompts are dealt with), but before the first
     // request starts.
     this.emit("will-navigate", {
-      window: window,
-      isTopLevel: isTopLevel,
-      newURI: newURI,
-      request: request,
+      window,
+      isTopLevel,
+      newURI,
+      request,
+      navigationStart,
     });
 
     // We don't do anything for inner frames here.
@@ -1838,6 +1908,12 @@ DebuggerProgressListener.prototype = {
     const isDocument = flag & Ci.nsIWebProgressListener.STATE_IS_DOCUMENT;
     const isWindow = flag & Ci.nsIWebProgressListener.STATE_IS_WINDOW;
 
+    // Ideally, we would fetch navigationStart from window.performance.timing.navigationStart
+    // but as WindowGlobal isn't instantiated yet we don't have access to it.
+    // This is ultimately handed over to DocumentEventListener, which uses this.
+    // See its comment about WILL_NAVIGATE_TIME_SHIFT for more details about the related workaround.
+    const navigationStart = Date.now();
+
     // Catch any iframe location change
     if (isDocument && isStop) {
       // Watch document stop to ensure having the new iframe url.
@@ -1849,7 +1925,13 @@ DebuggerProgressListener.prototype = {
       // One of the earliest events that tells us a new URI
       // is being loaded in this window.
       const newURI = request instanceof Ci.nsIChannel ? request.URI.spec : null;
-      this._targetActor._willNavigate(window, newURI, request);
+      this._targetActor._willNavigate({
+        window,
+        newURI,
+        request,
+        isFrameSwitching: false,
+        navigationStart,
+      });
     }
     if (isWindow && isStop) {
       // Don't dispatch "navigate" event just yet when there is a redirect to

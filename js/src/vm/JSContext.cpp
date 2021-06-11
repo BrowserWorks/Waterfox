@@ -15,7 +15,6 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/TextUtils.h"
-#include "mozilla/Unused.h"
 #include "mozilla/Utf8.h"  // mozilla::ConvertUtf16ToUtf8
 
 #include <stdarg.h>
@@ -418,9 +417,8 @@ static void PrintErrorLine(FILE* file, const char* prefix,
                            JSErrorNotes::Note* note) {}
 
 template <typename T>
-static void PrintSingleError(JSContext* cx, FILE* file,
-                             JS::ConstUTF8CharsZ toStringResult, T* report,
-                             PrintErrorKind kind) {
+static void PrintSingleError(FILE* file, JS::ConstUTF8CharsZ toStringResult,
+                             T* report, PrintErrorKind kind) {
   UniqueChars prefix;
   if (report->filename) {
     prefix = JS_smprintf("%s:", report->filename);
@@ -457,7 +455,7 @@ static void PrintSingleError(JSContext* cx, FILE* file,
     if (prefix) {
       fputs(prefix.get(), file);
     }
-    mozilla::Unused << fwrite(message, 1, ctmp - message, file);
+    (void)fwrite(message, 1, ctmp - message, file);
     message = ctmp;
   }
 
@@ -473,8 +471,7 @@ static void PrintSingleError(JSContext* cx, FILE* file,
   fflush(file);
 }
 
-static void PrintErrorImpl(JSContext* cx, FILE* file,
-                           JS::ConstUTF8CharsZ toStringResult,
+static void PrintErrorImpl(FILE* file, JS::ConstUTF8CharsZ toStringResult,
                            JSErrorReport* report, bool reportWarnings) {
   MOZ_ASSERT(report);
 
@@ -487,25 +484,25 @@ static void PrintErrorImpl(JSContext* cx, FILE* file,
   if (report->isWarning()) {
     kind = PrintErrorKind::Warning;
   }
-  PrintSingleError(cx, file, toStringResult, report, kind);
+  PrintSingleError(file, toStringResult, report, kind);
 
   if (report->notes) {
     for (auto&& note : *report->notes) {
-      PrintSingleError(cx, file, JS::ConstUTF8CharsZ(), note.get(),
+      PrintSingleError(file, JS::ConstUTF8CharsZ(), note.get(),
                        PrintErrorKind::Note);
     }
   }
 }
 
-JS_PUBLIC_API void JS::PrintError(JSContext* cx, FILE* file,
-                                  JSErrorReport* report, bool reportWarnings) {
-  PrintErrorImpl(cx, file, JS::ConstUTF8CharsZ(), report, reportWarnings);
+JS_PUBLIC_API void JS::PrintError(FILE* file, JSErrorReport* report,
+                                  bool reportWarnings) {
+  PrintErrorImpl(file, JS::ConstUTF8CharsZ(), report, reportWarnings);
 }
 
-JS_PUBLIC_API void JS::PrintError(JSContext* cx, FILE* file,
+JS_PUBLIC_API void JS::PrintError(FILE* file,
                                   const JS::ErrorReportBuilder& builder,
                                   bool reportWarnings) {
-  PrintErrorImpl(cx, file, builder.toStringResult(), builder.report(),
+  PrintErrorImpl(file, builder.toStringResult(), builder.report(),
                  reportWarnings);
 }
 

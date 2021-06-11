@@ -20,8 +20,7 @@
 #include "nsContentUtils.h"
 #include "nsNetUtil.h"
 
-namespace mozilla {
-namespace net {
+namespace mozilla::net {
 
 #define CONTEXT_EVICTION_PREFIX "ce_"
 const uint32_t kContextEvictionPrefixLength =
@@ -29,8 +28,7 @@ const uint32_t kContextEvictionPrefixLength =
 
 bool CacheFileContextEvictor::sDiskAlreadySearched = false;
 
-CacheFileContextEvictor::CacheFileContextEvictor()
-    : mEvicting(false), mIndexIsUpToDate(false) {
+CacheFileContextEvictor::CacheFileContextEvictor() {
   LOG(("CacheFileContextEvictor::CacheFileContextEvictor() [this=%p]", this));
 }
 
@@ -609,7 +607,8 @@ void CacheFileContextEvictor::EvictEntries() {
                               mEntries[0]->mOrigin);
       mEntries.RemoveElementAt(0);
       continue;
-    } else if (NS_FAILED(rv)) {
+    }
+    if (NS_FAILED(rv)) {
       LOG(
           ("CacheFileContextEvictor::EvictEntries() - Iterator failed to "
            "provide next hash (shutdown?), keeping eviction info on disk."
@@ -739,5 +738,4 @@ void CacheFileContextEvictor::EvictEntries() {
   MOZ_ASSERT_UNREACHABLE("We should never get here");
 }
 
-}  // namespace net
-}  // namespace mozilla
+}  // namespace mozilla::net

@@ -14,14 +14,9 @@ const MS_PER_DAY = 86400000; // 24 * 60 * 60 * 1000
 // AutoComplete query type constants.
 // Describes the various types of queries that we can process rows for.
 const QUERYTYPE_FILTERED = 0;
-const QUERYTYPE_ADAPTIVE = 3;
 
 // The default frecency value used when inserting matches with unknown frecency.
 const FRECENCY_DEFAULT = 1000;
-
-// By default we add remote tabs that have been used less than this time ago.
-// Any remaining remote tabs are added in queue if no other results are found.
-const RECENT_REMOTE_TAB_THRESHOLD_MS = 259200000; // 72 hours.
 
 // Regex used to match userContextId.
 const REGEXP_USER_CONTEXT_ID = /(?:^| )user-context-id:(\d+)/;
@@ -109,28 +104,6 @@ const SQL_SWITCHTAB_QUERY = `SELECT :query_type, t.url, t.url, NULL, NULL, NULL,
    ORDER BY t.ROWID DESC
    LIMIT :maxResults`;
 
-const SQL_ADAPTIVE_QUERY = `/* do not warn (bug 487789) */
-   SELECT :query_type, h.url, h.title, ${SQL_BOOKMARK_TAGS_FRAGMENT},
-          h.visit_count, h.typed, h.id, t.open_count, h.frecency
-   FROM (
-     SELECT ROUND(MAX(use_count) * (1 + (input = :search_string)), 1) AS rank,
-            place_id
-     FROM moz_inputhistory
-     WHERE input BETWEEN :search_string AND :search_string || X'FFFF'
-     GROUP BY place_id
-   ) AS i
-   JOIN moz_places h ON h.id = i.place_id
-   LEFT JOIN moz_openpages_temp t
-          ON t.url = h.url
-         AND t.userContextId = :userContextId
-   WHERE AUTOCOMPLETE_MATCH(NULL, h.url,
-                            IFNULL(btitle, h.title), tags,
-                            h.visit_count, h.typed, bookmarked,
-                            t.open_count,
-                            :matchBehavior, :searchBehavior)
-   ORDER BY rank DESC, h.frecency DESC
-   LIMIT :maxResults`;
-
 // Getters
 
 const { XPCOMUtils } = ChromeUtils.import(
@@ -141,11 +114,8 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 
 XPCOMUtils.defineLazyModuleGetters(this, {
-  AboutPagesUtils: "resource://gre/modules/AboutPagesUtils.jsm",
   KeywordUtils: "resource://gre/modules/KeywordUtils.jsm",
   ObjectUtils: "resource://gre/modules/ObjectUtils.jsm",
-  PlacesRemoteTabsAutocompleteProvider:
-    "resource://gre/modules/PlacesRemoteTabsAutocompleteProvider.jsm",
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
   ProfileAge: "resource://gre/modules/ProfileAge.jsm",
@@ -157,12 +127,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   UrlbarTokenizer: "resource:///modules/UrlbarTokenizer.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
 });
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
-  "syncUsernamePref",
-  "services.sync.username"
-);
 
 function setTimeout(callback, ms) {
   let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -592,13 +556,6 @@ function Search(
   result.setDefaultIndex(-1);
   this._result = result;
 
-  // Used to limit the number of adaptive results.
-  this._adaptiveCount = 0;
-  this._extraAdaptiveRows = [];
-
-  // Used to limit the number of remote tab results.
-  this._extraRemoteTabRows = [];
-
   // These are used to avoid adding duplicate entries to the results.
   this._usedURLs = [];
   this._usedPlaceIds = new Set();
@@ -762,14 +719,13 @@ Search.prototype = {
     // 2) inline completion from search engine resultDomains
     // 3) submission for the current search engine
     // 4) Places keywords
-    // 5) adaptive learning (this._adaptiveQuery)
-    // 6) open pages not supported by history (this._switchToTabQuery)
-    // 7) query based on match behavior
+    // 5) open pages not supported by history (this._switchToTabQuery)
+    // 6) query based on match behavior
     //
     // (4) only gets run if we get any filtered tokens, since if there are no
     // tokens, there is nothing to match.
     //
-    // (1) and (5) only get run if actions are enabled. When actions are
+    // (1) only runs if actions are enabled. When actions are
     // enabled, the first result is always a special result (resulting from one
     // of the queries between (1) and (4) inclusive). As such, the UI is
     // expected to auto-select the first result when actions are enabled. If the
@@ -830,25 +786,7 @@ Search.prototype = {
       }
     }
 
-    // Run the adaptive query first.
-    await conn.executeCached(
-      this._adaptiveQuery[0],
-      this._adaptiveQuery[1],
-      this._onResultRow.bind(this)
-    );
-    if (!this.pending) {
-      return;
-    }
-
-    // Then fetch remote tabs.
-    if (this._enableActions && this.hasBehavior("openpage")) {
-      await this._matchRemoteTabs();
-      if (!this.pending) {
-        return;
-      }
-    }
-
-    // Finally run all the remaining queries.
+    // Run our standard Places query.
     let queries = [];
     // "openpage" behavior is supported by the default query.
     // _switchToTabQuery instead returns only pages not supported by history.
@@ -863,31 +801,13 @@ Search.prototype = {
       }
     }
 
-    // If we have some unused adaptive matches, add them now.
-    while (
-      this._extraAdaptiveRows.length &&
-      this._result.matchCount < this._maxResults
-    ) {
-      this._addFilteredQueryMatch(this._extraAdaptiveRows.shift());
-    }
-
-    // If we have some unused remote tab matches, add them now.
-    while (
-      this._extraRemoteTabRows.length &&
-      this._result.matchCount < this._maxResults
-    ) {
-      this._addMatch(this._extraRemoteTabRows.shift());
-    }
-
-    this._matchAboutPages();
-
     // If we do not have enough matches search again with MATCH_ANYWHERE, to
     // get more matches.
     let count =
       this._counts[MATCH_TYPE.GENERAL] + this._counts[MATCH_TYPE.HEURISTIC];
     if (count < this._maxResults) {
       this._matchBehavior = Ci.mozIPlacesAutoComplete.MATCH_ANYWHERE;
-      let queries = [this._adaptiveQuery, this._searchQuery];
+      let queries = [this._searchQuery];
       if (this.hasBehavior("openpage")) {
         queries.unshift(this._switchToTabQuery);
       }
@@ -900,27 +820,6 @@ Search.prototype = {
     }
 
     this._matchPreloadedSites();
-  },
-
-  _shouldMatchAboutPages() {
-    // Only autocomplete input that starts with 'about:' and has at least 1 more
-    // character.
-    return this._strippedPrefix == "about:" && this._searchString;
-  },
-
-  _matchAboutPages() {
-    if (!this._shouldMatchAboutPages()) {
-      return;
-    }
-    for (const url of AboutPagesUtils.visibleAboutUrls) {
-      if (url.startsWith(`about:${this._searchString}`)) {
-        this._addMatch({
-          value: url,
-          comment: url,
-          frecency: FRECENCY_DEFAULT,
-        });
-      }
-    }
   },
 
   async _checkPreloadedSitesExpiry() {
@@ -1162,62 +1061,9 @@ Search.prototype = {
     this._addMatch(match);
   },
 
-  async _matchRemoteTabs() {
-    // Bail out early for non-sync users.
-    if (!syncUsernamePref) {
-      return;
-    }
-
-    let searchString = this._searchTokens.map(t => t.value).join(" ");
-    let matches = await PlacesRemoteTabsAutocompleteProvider.getMatches(
-      searchString,
-      this._maxResults
-    );
-    let remoteTabsAdded = 0;
-    for (let { url, title, icon, deviceName, lastUsed } of matches) {
-      // It's rare that Sync supplies the icon for the page (but if it does, it
-      // is a string URL)
-      if (!icon) {
-        icon = iconHelper(url);
-      } else {
-        icon = PlacesUtils.favicons.getFaviconLinkForIcon(
-          Services.io.newURI(icon)
-        ).spec;
-      }
-
-      let match = {
-        // We include the deviceName in the action URL so we can render it in
-        // the URLBar.
-        value: makeActionUrl("remotetab", { url, deviceName }),
-        comment: title || url,
-        style: "action remotetab",
-        // we want frecency > FRECENCY_DEFAULT so it doesn't get pushed out
-        // by "remote" matches.
-        frecency: FRECENCY_DEFAULT + 1,
-        icon,
-      };
-      // Mobile and desktop frecency scales are not compatible so we don't
-      // intermix open tabs with synced tabs. Instead, we limit the number of
-      // initial remote tabs to the floor of _maxResults / 2 so they do not
-      // overrun open tabs.
-      if (
-        remoteTabsAdded < this._maxResults / 2 &&
-        lastUsed > Date.now() - RECENT_REMOTE_TAB_THRESHOLD_MS
-      ) {
-        this._addMatch(match);
-        remoteTabsAdded++;
-      } else {
-        this._extraRemoteTabRows.push(match);
-      }
-    }
-  },
-
   _onResultRow(row, cancel) {
     let queryType = row.getResultByIndex(QUERYINDEX_QUERYTYPE);
     switch (queryType) {
-      case QUERYTYPE_ADAPTIVE:
-        this._addAdaptiveQueryMatch(row);
-        break;
       case QUERYTYPE_FILTERED:
         this._addFilteredQueryMatch(row);
         break;
@@ -1513,7 +1359,7 @@ Search.prototype = {
     let index = 0;
     if (!this._buckets) {
       this._buckets = [];
-      this._makeBuckets(UrlbarPrefs.get("resultBuckets"), this._maxResults);
+      this._makeBuckets(UrlbarPrefs.get("resultGroups"), this._maxResults);
     }
 
     let replace = 0;
@@ -1627,26 +1473,6 @@ Search.prototype = {
       style: ["autofill"].concat(extraStyles).join(" "),
       icon: iconHelper(finalCompleteValue),
     });
-  },
-
-  // This is the same as _addFilteredQueryMatch, but it only returns a few
-  // results, caching the others. If at the end we don't find other results, we
-  // can add these.
-  _addAdaptiveQueryMatch(row) {
-    // We should only show filtered results in search mode.
-    if (this._searchModeEngine) {
-      return;
-    }
-    // Allow one quarter of the results to be adaptive results.
-    // Note: ideally adaptive results should have their own provider and the
-    // results muxer should decide what to show.  But that's too complex to
-    // support in the current code, so that's left for a future refactoring.
-    if (this._adaptiveCount < Math.ceil(this._maxResults / 4)) {
-      this._addFilteredQueryMatch(row);
-    } else {
-      this._extraAdaptiveRows.push(row);
-    }
-    this._adaptiveCount++;
   },
 
   _addFilteredQueryMatch(row) {
@@ -1849,27 +1675,6 @@ Search.prototype = {
         // We only want to search the tokens that we are left with - not the
         // original search string.
         searchString: this._keywordFilteredSearchString,
-        userContextId: this._userContextId,
-        maxResults: this._maxResults,
-      },
-    ];
-  },
-
-  /**
-   * Obtains the query to search for adaptive results.
-   *
-   * @return an array consisting of the correctly optimized query to search the
-   *         database with and an object containing the params to bound.
-   */
-  get _adaptiveQuery() {
-    return [
-      SQL_ADAPTIVE_QUERY,
-      {
-        parent: PlacesUtils.tagsFolderId,
-        search_string: this._searchString,
-        query_type: QUERYTYPE_ADAPTIVE,
-        matchBehavior: this._matchBehavior,
-        searchBehavior: this._behavior,
         userContextId: this._userContextId,
         maxResults: this._maxResults,
       },

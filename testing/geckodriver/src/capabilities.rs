@@ -4,7 +4,6 @@
 
 use crate::command::LogOptions;
 use crate::logging::Level;
-use base64;
 use mozdevice::AndroidStorageInput;
 use mozprofile::preferences::Pref;
 use mozprofile::profile::Profile;
@@ -25,7 +24,6 @@ use std::path::{Path, PathBuf};
 use std::str::{self, FromStr};
 use webdriver::capabilities::{BrowserCapabilities, Capabilities};
 use webdriver::error::{ErrorStatus, WebDriverError, WebDriverResult};
-use zip;
 
 #[derive(Clone, Debug)]
 enum VersionError {
@@ -156,6 +154,10 @@ impl<'a> BrowserCapabilities for FirefoxCapabilities<'a> {
         Ok(true)
     }
 
+    fn accept_proxy(&mut self, _: &Capabilities, _: &Capabilities) -> WebDriverResult<bool> {
+        Ok(true)
+    }
+
     fn set_window_rect(&mut self, _: &Capabilities) -> WebDriverResult<bool> {
         Ok(true)
     }
@@ -166,7 +168,7 @@ impl<'a> BrowserCapabilities for FirefoxCapabilities<'a> {
         comparison: &str,
     ) -> WebDriverResult<bool> {
         Version::from_str(version)
-            .map_err(|err| VersionError::from(err))?
+            .map_err(VersionError::from)?
             .matches(comparison)
             .map_err(|err| VersionError::from(err).into())
     }
@@ -175,8 +177,10 @@ impl<'a> BrowserCapabilities for FirefoxCapabilities<'a> {
         Ok(true)
     }
 
-    fn accept_proxy(&mut self, _: &Capabilities, _: &Capabilities) -> WebDriverResult<bool> {
-        Ok(true)
+    fn web_socket_url(&mut self, caps: &Capabilities) -> WebDriverResult<bool> {
+        self.browser_version(caps)?
+            .map(|v| self.compare_browser_version(&v, ">=90"))
+            .unwrap_or(Ok(false))
     }
 
     fn validate_custom(&mut self, name: &str, value: &Value) -> WebDriverResult<()> {
@@ -412,12 +416,7 @@ impl FirefoxOptions {
         }
 
         if let Some(args) = rv.args.as_ref() {
-            let os_args = parse_args(
-                args.iter()
-                    .map(|x| OsString::from(x))
-                    .collect::<Vec<_>>()
-                    .iter(),
-            );
+            let os_args = parse_args(args.iter().map(OsString::from).collect::<Vec<_>>().iter());
             if let Some(path) = get_arg_value(os_args.iter(), Arg::Profile) {
                 if rv.profile.is_some() {
                     return Err(WebDriverError::new(
@@ -429,13 +428,11 @@ impl FirefoxOptions {
                 rv.profile = Some(Profile::new_from_path(&path_buf)?);
             }
 
-            if let Some(_) = get_arg_value(os_args.iter(), Arg::NamedProfile) {
-                if rv.profile.is_some() {
-                    return Err(WebDriverError::new(
-                        ErrorStatus::InvalidArgument,
-                        "Can't provide both a -P argument and a profile",
-                    ));
-                }
+            if get_arg_value(os_args.iter(), Arg::NamedProfile).is_some() && rv.profile.is_some() {
+                return Err(WebDriverError::new(
+                    ErrorStatus::InvalidArgument,
+                    "Can't provide both a -P argument and a profile",
+                ));
             }
         }
 
@@ -448,9 +445,7 @@ impl FirefoxOptions {
             })?;
 
             if use_web_socket {
-                let mut remote_args = Vec::new();
-                remote_args.push("--remote-debugging-port".to_owned());
-                remote_args.push("0".to_owned());
+                let mut remote_args = vec!["--remote-debugging-port".to_owned(), "0".to_owned()];
 
                 if let Some(ref mut args) = rv.args {
                     args.append(&mut remote_args);
@@ -464,6 +459,27 @@ impl FirefoxOptions {
                 if has_fission_pref.is_none() {
                     rv.prefs
                         .push(("fission.autostart".to_owned(), Pref::new(false)));
+                }
+            }
+        }
+
+        if let Some(json) = matched.get("webSocketUrl") {
+            let use_web_socket = json.as_bool().ok_or_else(|| {
+                WebDriverError::new(
+                    ErrorStatus::InvalidArgument,
+                    "webSocketUrl is not a boolean",
+                )
+            })?;
+
+            if use_web_socket {
+                let mut remote_args = Vec::new();
+                remote_args.push("--remote-debugging-port".to_owned());
+                remote_args.push("0".to_owned());
+
+                if let Some(ref mut args) = rv.args {
+                    args.append(&mut remote_args);
+                } else {
+                    rv.args = Some(remote_args);
                 }
             }
         }
@@ -627,7 +643,7 @@ impl FirefoxOptions {
                         })?
                         .to_owned();
 
-                    if activity.contains("/") {
+                    if activity.contains('/') {
                         return Err(WebDriverError::new(
                             ErrorStatus::InvalidArgument,
                             "androidActivity should not contain '/",
@@ -781,10 +797,8 @@ mod tests {
 
     use self::mozprofile::preferences::Pref;
     use super::*;
-    use crate::marionette::MarionetteHandler;
     use mozdevice::AndroidStorageInput;
-    use serde_json::json;
-    use std::default::Default;
+    use serde_json::{json, Map, Value};
     use std::fs::File;
     use std::io::Read;
 
@@ -853,6 +867,52 @@ mod tests {
     }
 
     #[test]
+    fn fx_options_from_capabilities_with_websocket_url_not_set() {
+        let mut caps = Capabilities::new();
+
+        let opts = FirefoxOptions::from_capabilities(None, AndroidStorageInput::Auto, &mut caps)
+            .expect("Valid Firefox options");
+
+        assert!(
+            opts.args.is_none(),
+            "CLI arguments for Firefox unexpectedly found"
+        );
+    }
+
+    #[test]
+    fn fx_options_from_capabilities_with_websocket_url_false() {
+        let mut caps = Capabilities::new();
+        caps.insert("webSocketUrl".into(), json!(false));
+
+        let opts = FirefoxOptions::from_capabilities(None, AndroidStorageInput::Auto, &mut caps)
+            .expect("Valid Firefox options");
+
+        assert!(
+            opts.args.is_none(),
+            "CLI arguments for Firefox unexpectedly found"
+        );
+    }
+
+    #[test]
+    fn fx_options_from_capabilities_with_websocket_url_true() {
+        let mut caps = Capabilities::new();
+        caps.insert("webSocketUrl".into(), json!(true));
+
+        let opts = FirefoxOptions::from_capabilities(None, AndroidStorageInput::Auto, &mut caps)
+            .expect("Valid Firefox options");
+
+        if let Some(args) = opts.args {
+            let mut iter = args.iter();
+            assert!(iter
+                .find(|&arg| arg == &"--remote-debugging-port".to_owned())
+                .is_some());
+            assert_eq!(iter.next(), Some(&"0".to_owned()));
+        } else {
+            assert!(false, "CLI arguments for Firefox not found");
+        }
+    }
+
+    #[test]
     fn fx_options_from_capabilities_with_debugger_address_not_set() {
         let mut caps = Capabilities::new();
 
@@ -875,7 +935,7 @@ mod tests {
 
         assert!(
             opts.args.is_none(),
-            "CLI arguments for remote protocol unexpectedly found"
+            "CLI arguments for Firefox unexpectedly found"
         );
     }
 
@@ -894,7 +954,7 @@ mod tests {
                 .is_some());
             assert_eq!(iter.next(), Some(&"0".to_owned()));
         } else {
-            assert!(false, "CLI arguments for remote protocol not found");
+            assert!(false, "CLI arguments for Firefox not found");
         }
 
         assert!(opts
@@ -1168,41 +1228,6 @@ mod tests {
             prefs.get("startup.homepage_welcome_url"),
             Some(&Pref::new("data:text/html,PASS"))
         );
-    }
-
-    #[test]
-    fn test_prefs() {
-        let encoded_profile = example_profile();
-        let mut prefs: Map<String, Value> = Map::new();
-        prefs.insert(
-            "browser.display.background_color".into(),
-            Value::String("#00ff00".into()),
-        );
-
-        let mut firefox_opts = Capabilities::new();
-        firefox_opts.insert("profile".into(), encoded_profile);
-        firefox_opts.insert("prefs".into(), Value::Object(prefs));
-
-        let opts = make_options(firefox_opts).expect("valid profile and prefs");
-        let mut profile = opts.profile.expect("valid firefox profile");
-
-        let mut handler = MarionetteHandler::new(Default::default());
-        handler
-            .set_prefs(2828, &mut profile, true, opts.prefs)
-            .expect("set preferences");
-
-        let prefs_set = profile.user_prefs().expect("valid user preferences");
-        println!("{:#?}", prefs_set.prefs);
-
-        assert_eq!(
-            prefs_set.get("startup.homepage_welcome_url"),
-            Some(&Pref::new("data:text/html,PASS"))
-        );
-        assert_eq!(
-            prefs_set.get("browser.display.background_color"),
-            Some(&Pref::new("#00ff00"))
-        );
-        assert_eq!(prefs_set.get("marionette.port"), Some(&Pref::new(2828)));
     }
 
     #[test]

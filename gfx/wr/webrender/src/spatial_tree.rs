@@ -490,8 +490,6 @@ impl SpatialTree {
 
     pub fn update_tree(
         &mut self,
-        pan: WorldPoint,
-        global_device_pixel_scale: DevicePixelScale,
         scene_properties: &SceneProperties,
     ) {
         if self.spatial_nodes.is_empty() {
@@ -504,7 +502,7 @@ impl SpatialTree {
 
         let root_node_index = self.root_reference_frame_index();
         let state = TransformUpdateState {
-            parent_reference_frame_transform: LayoutVector2D::new(pan.x, pan.y).into(),
+            parent_reference_frame_transform: LayoutVector2D::zero().into(),
             parent_accumulated_scroll_offset: LayoutVector2D::zero(),
             nearest_scrolling_ancestor_offset: LayoutVector2D::zero(),
             nearest_scrolling_ancestor_viewport: LayoutRect::zero(),
@@ -523,7 +521,7 @@ impl SpatialTree {
                 None => continue,
             };
 
-            node.update(&mut state, &mut self.coord_systems, global_device_pixel_scale, scene_properties, &*previous);
+            node.update(&mut state, &mut self.coord_systems, scene_properties, &*previous);
 
             if !node.children.is_empty() {
                 node.prepare_state_for_children(&mut state);
@@ -954,7 +952,7 @@ fn test_cst_simple_translation() {
         LayoutVector2D::zero(),
     );
 
-    cst.update_tree(WorldPoint::zero(), DevicePixelScale::new(1.0), &SceneProperties::new());
+    cst.update_tree(&SceneProperties::new());
 
     test_pt(100.0, 100.0, &cst, child1, root, 200.0, 100.0);
     test_pt(100.0, 100.0, &cst, child2, root, 200.0, 150.0);
@@ -996,7 +994,7 @@ fn test_cst_simple_scale() {
         LayoutVector2D::zero(),
     );
 
-    cst.update_tree(WorldPoint::zero(), DevicePixelScale::new(1.0), &SceneProperties::new());
+    cst.update_tree(&SceneProperties::new());
 
     test_pt(100.0, 100.0, &cst, child1, root, 400.0, 100.0);
     test_pt(100.0, 100.0, &cst, child2, root, 400.0, 200.0);
@@ -1046,7 +1044,7 @@ fn test_cst_scale_translation() {
         LayoutVector2D::zero(),
     );
 
-    cst.update_tree(WorldPoint::zero(), DevicePixelScale::new(1.0), &SceneProperties::new());
+    cst.update_tree(&SceneProperties::new());
 
     test_pt(100.0, 100.0, &cst, child1, root, 200.0, 150.0);
     test_pt(100.0, 100.0, &cst, child2, root, 300.0, 450.0);
@@ -1080,7 +1078,7 @@ fn test_cst_translation_rotate() {
         LayoutVector2D::zero(),
     );
 
-    cst.update_tree(WorldPoint::zero(), DevicePixelScale::new(1.0), &SceneProperties::new());
+    cst.update_tree(&SceneProperties::new());
 
     test_pt(100.0, 0.0, &cst, child1, root, 0.0, -100.0);
 }
@@ -1117,11 +1115,7 @@ fn test_is_ancestor1() {
         LayoutVector2D::zero(),
     );
 
-    st.update_tree(
-        WorldPoint::zero(),
-        DevicePixelScale::new(1.0),
-        &SceneProperties::new(),
-    );
+    st.update_tree(&SceneProperties::new());
 
     assert!(!st.is_ancestor(root, root));
     assert!(!st.is_ancestor(child1_0, child1_0));

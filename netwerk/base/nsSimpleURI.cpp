@@ -6,7 +6,7 @@
 #include "mozilla/DebugOnly.h"
 
 #undef LOG
-#include "IPCMessageUtils.h"
+#include "ipc/IPCMessageUtils.h"
 
 #include "nsSimpleURI.h"
 #include "nscore.h"
@@ -53,8 +53,6 @@ NS_IMPL_CI_INTERFACE_GETTER0(nsSimpleURI)
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsSimpleURI methods:
-
-nsSimpleURI::nsSimpleURI() : mIsRefValid(false), mIsQueryValid(false) {}
 
 NS_IMPL_ADDREF(nsSimpleURI)
 NS_IMPL_RELEASE(nsSimpleURI)

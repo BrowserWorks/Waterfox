@@ -1723,8 +1723,11 @@ import android.view.inputmethod.EditorInfo;
             outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
         } else if (autocapitalize.equals("words")) {
             outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_CAP_WORDS;
-        } else if (!typeHint.equalsIgnoreCase("text") && modeHint.length() == 0) {
+        } else if (modeHint.length() == 0 &&
+                   (outAttrs.inputType & InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE) != 0 &&
+                   !typeHint.equalsIgnoreCase("text")) {
             // auto-capitalized mode is the default for types other than text (bug 871884)
+            // except to password, url and email.
             outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
         }
 
@@ -1836,10 +1839,13 @@ import android.view.inputmethod.EditorInfo;
 
     @Override // IGeckoEditableParent
     public void onSelectionChange(final IBinder token,
-                                  final int start, final int end) {
+                                  final int start, final int end, final boolean causedOnlyByComposition) {
         // On Gecko or binder thread.
         if (DEBUG) {
-            Log.d(LOGTAG, "onSelectionChange(" + start + ", " + end + ")");
+            final StringBuilder sb = new StringBuilder("onSelectionChange(");
+            sb.append(start).append(", ").append(end).append(", ")
+                .append(causedOnlyByComposition).append(")");
+            Log.d(LOGTAG, sb.toString());
         }
 
         if (!binderCheckToken(token, /* allowNull */ false)) {
@@ -1859,6 +1865,14 @@ import android.view.inputmethod.EditorInfo;
         mLastTextChangeNewEnd = -1;
         mLastTextChangeReplacedSelection = false;
 
+        if (causedOnlyByComposition) {
+            // It is unnecessary to sync shadow text since this change is by composition from Java
+            // side.
+            return;
+        }
+
+        // It is ready to synchronize Java text with Gecko text when no more input events is
+        // dispatched.
         mIcPostHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -1885,6 +1899,13 @@ import android.view.inputmethod.EditorInfo;
 
         if (!binderCheckToken(token, /* allowNull */ false)) {
             return;
+        }
+
+        if (unboundedOldEnd >= Integer.MAX_VALUE / 2) {
+            // Integer.MAX_VALUE / 2 is a magic number to synchronize all.
+            // (See GeckoEditableSupport::FlushIMEText.)
+            // Previous text transactions are unnecessary now, so we have to ignore it.
+            mActions.clear();
         }
 
         final int currentLength = mText.getCurrentText().length();

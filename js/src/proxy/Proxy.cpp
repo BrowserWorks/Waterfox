@@ -81,8 +81,8 @@ static bool ProxyGetOnExpando(JSContext* cx, HandleObject proxy,
   MOZ_ASSERT(desc.isSome());
 
   // If the private name has a getter, delegate to that.
-  if (desc->hasGetterObject()) {
-    RootedValue getter(cx, JS::ObjectValue(*desc->getterObject()));
+  if (desc->hasGetter()) {
+    RootedValue getter(cx, JS::ObjectValue(*desc->getter()));
     return js::CallGetter(cx, receiver, getter, vp);
   }
 

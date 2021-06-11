@@ -6,8 +6,6 @@
 #include "RemoteAccessibleWrap.h"
 #include "LocalAccessible-inl.h"
 
-#include "nsPersistentProperties.h"
-
 #include "mozilla/a11y/DocAccessiblePlatformExtParent.h"
 
 using namespace mozilla::a11y;
@@ -52,10 +50,10 @@ void RemoteAccessibleWrap::Shutdown() {
 
 // LocalAccessible
 
-already_AddRefed<nsIPersistentProperties> RemoteAccessibleWrap::Attributes() {
-  AutoTArray<Attribute, 10> attrs;
+already_AddRefed<AccAttributes> RemoteAccessibleWrap::Attributes() {
+  RefPtr<AccAttributes> attrs;
   Proxy()->Attributes(&attrs);
-  return AttributeArrayToProperties(attrs);
+  return attrs.forget();
 }
 
 uint32_t RemoteAccessibleWrap::ChildCount() const {

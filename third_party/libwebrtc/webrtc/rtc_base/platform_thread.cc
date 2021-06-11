@@ -26,6 +26,8 @@
 #include <lwp.h>
 #endif
 
+#include "MicroGeckoProfiler.h"
+
 namespace rtc {
 
 PlatformThreadId CurrentThreadId() {
@@ -241,6 +243,9 @@ void PlatformThread::Run() {
   RTC_DCHECK(spawned_thread_checker_.CalledOnValidThread());
   rtc::SetCurrentThreadName(name_.c_str());
 
+  char stacktop;
+  AutoRegisterProfiler profiler(name_.c_str(), &stacktop);
+
   if (run_function_) {
     SetPriority(priority_);
     run_function_(obj_);
@@ -314,7 +319,7 @@ bool PlatformThread::SetPriority(ThreadPriority priority) {
 #endif
 
 #if defined(WEBRTC_WIN)
-  return SetThreadPriority(thread_, priority) != FALSE;
+  return SetThreadPriority(GetCurrentThread(), priority) != FALSE;
 #elif defined(__native_client__)
   // Setting thread priorities is not supported in NaCl.
   return true;
@@ -360,7 +365,7 @@ bool PlatformThread::SetPriority(ThreadPriority priority) {
       param.sched_priority = top_prio;
       break;
   }
-  return pthread_setschedparam(thread_, policy, &param) == 0;
+  return pthread_setschedparam(pthread_self(), policy, &param) == 0;
 #endif  // defined(WEBRTC_WIN)
 }
 

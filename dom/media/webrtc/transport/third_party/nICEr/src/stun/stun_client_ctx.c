@@ -151,36 +151,21 @@ int nr_stun_client_start(nr_stun_client_ctx *ctx, int mode, NR_async_cb finished
     return(_status);
   }
 
-int nr_stun_client_restart(nr_stun_client_ctx *ctx)
-  {
+  int nr_stun_client_restart(nr_stun_client_ctx* ctx,
+                             const nr_transport_addr* peer_addr) {
     int r,_status;
     int mode;
     NR_async_cb finished_cb;
     void *cb_arg;
-    nr_stun_message_attribute *ec;
-    nr_stun_message_attribute *as;
-
     if (ctx->state != NR_STUN_CLIENT_STATE_RUNNING)
         ABORT(R_NOT_PERMITTED);
-
-    assert(ctx->retry_ct <= 2);
-    if (ctx->retry_ct > 2)
-        ABORT(R_NOT_PERMITTED);
-
-    ++ctx->retry_ct;
 
     mode = ctx->mode;
     finished_cb = ctx->finished_cb;
     cb_arg = ctx->cb_arg;
 
-    if (nr_stun_message_has_attribute(ctx->response, NR_STUN_ATTR_ERROR_CODE, &ec)
-     && ec->u.error_code.number == 300) {
-        if (nr_stun_message_has_attribute(ctx->response, NR_STUN_ATTR_ALTERNATE_SERVER, &as)) {
-            nr_transport_addr_copy(&ctx->peer_addr, &as->u.alternate_server);
-        }
-    }
-
     nr_stun_client_reset(ctx);
+    nr_transport_addr_copy(&ctx->peer_addr, peer_addr);
 
     if (r=nr_stun_client_start(ctx, mode, finished_cb, cb_arg))
       ABORT(r);
@@ -460,6 +445,7 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
     char string[256];
     char *username = 0;
     Data *password = 0;
+    int allow_unauthed_redirect = 0;
     nr_stun_message_attribute *attr;
     nr_transport_addr *mapped_addr = 0;
     int fail_on_error = 0;
@@ -483,60 +469,73 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
     /* determine password */
     switch (ctx->mode) {
     case NR_STUN_CLIENT_MODE_BINDING_REQUEST_LONG_TERM_AUTH:
+      /* If the STUN server responds with an error, give up, since we don't
+       * want to delay the completion of gathering. */
+      fail_on_error = 1;
       compute_lt_key = 1;
       /* Fall through */
     case NR_STUN_CLIENT_MODE_BINDING_REQUEST_SHORT_TERM_AUTH:
-        password = ctx->params.stun_binding_request.password;
-        break;
+      password = ctx->params.stun_binding_request.password;
+      break;
 
     case NR_STUN_CLIENT_MODE_BINDING_REQUEST_NO_AUTH:
-        /* do nothing */
-        break;
+      /* If the STUN server responds with an error, give up, since we don't
+       * want to delay the completion of gathering. */
+      fail_on_error = 1;
+      break;
 
     case NR_STUN_CLIENT_MODE_BINDING_REQUEST_STUND_0_96:
-        /* do nothing */
-        break;
+      /* If the STUN server responds with an error, give up, since we don't
+       * want to delay the completion of gathering. */
+      fail_on_error = 1;
+      break;
 
 #ifdef USE_ICE
     case NR_ICE_CLIENT_MODE_BINDING_REQUEST:
-        password = &ctx->params.ice_binding_request.password;
-        break;
+      /* We do not set fail_on_error here. The error might be transient, and
+       * retrying isn't going to cause a slowdown. */
+      password = &ctx->params.ice_binding_request.password;
+      break;
     case NR_ICE_CLIENT_MODE_USE_CANDIDATE:
-        password = &ctx->params.ice_binding_request.password;
-        break;
+      /* We do not set fail_on_error here. The error might be transient, and
+       * retrying isn't going to cause a slowdown. */
+      password = &ctx->params.ice_binding_request.password;
+      break;
 #endif /* USE_ICE */
 
 #ifdef USE_TURN
     case NR_TURN_CLIENT_MODE_ALLOCATE_REQUEST:
       fail_on_error = 1;
       compute_lt_key = 1;
-        username = ctx->auth_params.username;
-        password = &ctx->auth_params.password;
-        /* do nothing */
-        break;
+      /* Do not require mutual auth on redirect responses to Allocate requests. */
+      allow_unauthed_redirect = 1;
+      username = ctx->auth_params.username;
+      password = &ctx->auth_params.password;
+      /* do nothing */
+      break;
     case NR_TURN_CLIENT_MODE_REFRESH_REQUEST:
       fail_on_error = 1;
       compute_lt_key = 1;
-        username = ctx->auth_params.username;
-        password = &ctx->auth_params.password;
-        /* do nothing */
-        break;
+      username = ctx->auth_params.username;
+      password = &ctx->auth_params.password;
+      /* do nothing */
+      break;
     case NR_TURN_CLIENT_MODE_PERMISSION_REQUEST:
       fail_on_error = 1;
       compute_lt_key = 1;
-        username = ctx->auth_params.username;
-        password = &ctx->auth_params.password;
-        /* do nothing */
-        break;
+      username = ctx->auth_params.username;
+      password = &ctx->auth_params.password;
+      /* do nothing */
+      break;
     case NR_TURN_CLIENT_MODE_SEND_INDICATION:
-        /* do nothing -- we just got our DATA-INDICATION */
-        break;
+      /* do nothing -- we just got our DATA-INDICATION */
+      break;
 #endif /* USE_TURN */
 
     default:
-        assert(0);
-        ABORT(R_FAILED);
-        break;
+      assert(0);
+      ABORT(R_FAILED);
+      break;
     }
 
     if (compute_lt_key) {
@@ -577,6 +576,13 @@ int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len
     r_log(NR_LOG_STUN,LOG_INFO,
           "STUN-CLIENT(%s): Received response; processing",ctx->label);
     response_matched=1;
+
+    if (allow_unauthed_redirect &&
+        nr_stun_message_has_attribute(ctx->response, NR_STUN_ATTR_ERROR_CODE,
+                                      &attr) &&
+        (attr->u.error_code.number / 100 == 3)) {
+      password = 0;
+    }
 
 /* TODO: !nn! currently using password!=0 to mean that auth is required,
  * TODO: !nn! but we should probably pass that in explicitly via the

@@ -11,6 +11,7 @@
 #include "mozilla/dom/MediaControlKeySource.h"
 #include "mozilla/dom/BrowsingContextWebProgress.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/dom/SessionHistoryEntry.h"
 #include "mozilla/dom/SessionStoreRestoreData.h"
 #include "mozilla/dom/SessionStoreUtils.h"
 #include "mozilla/dom/ipc/IdType.h"
@@ -30,6 +31,7 @@ class nsSHistory;
 class nsBrowserStatusFilter;
 class nsSecureBrowserUI;
 class CallerWillNotifyHistoryIndexAndLengthChanges;
+class nsITimer;
 
 namespace mozilla {
 enum class CallState;
@@ -46,7 +48,7 @@ class FeaturePolicy;
 struct LoadURIOptions;
 class MediaController;
 struct LoadingSessionHistoryInfo;
-class SessionHistoryEntry;
+class SSCacheCopy;
 class WindowGlobalParent;
 
 // RemotenessChangeOptions is passed through the methods to store the state
@@ -56,6 +58,7 @@ struct RemotenessChangeOptions {
   bool mReplaceBrowsingContext = false;
   uint64_t mSpecificGroupId = 0;
   bool mTryUseBFCache = false;
+  RefPtr<SessionHistoryEntry> mActiveSessionHistoryEntry;
 };
 
 // CanonicalBrowsingContext is a BrowsingContext living in the parent
@@ -292,6 +295,13 @@ class CanonicalBrowsingContext final : public BrowsingContext {
   void RequestRestoreTabContent(WindowGlobalParent* aWindow);
   already_AddRefed<Promise> GetRestorePromise();
 
+  nsresult WriteSessionStorageToSessionStore(
+      const nsTArray<SSCacheCopy>& aSesssionStorage, uint32_t aEpoch);
+
+  void UpdateSessionStoreSessionStorage(const std::function<void()>& aDone);
+
+  static void UpdateSessionStoreForStorage(uint64_t aBrowsingContextId);
+
   // Called when a BrowserParent for this BrowsingContext has been fully
   // destroyed (i.e. `ActorDestroy` was called).
   void BrowserParentDestroyed(BrowserParent* aBrowserParent,
@@ -312,6 +322,8 @@ class CanonicalBrowsingContext final : public BrowsingContext {
     MOZ_RELEASE_ASSERT(IsTop());
     mPriorityActive = aIsActive;
   }
+
+  void SetTouchEventsOverride(dom::TouchEventsOverride, ErrorResult& aRv);
 
  protected:
   // Called when the browsing context is being discarded.
@@ -405,6 +417,10 @@ class CanonicalBrowsingContext final : public BrowsingContext {
   // has become unloaded for one reason or another.
   void ShowSubframeCrashedUI(BrowserBridgeParent* aBridge);
 
+  void MaybeScheduleSessionStoreUpdate();
+
+  void CancelSessionStoreUpdate();
+
   // XXX(farre): Store a ContentParent pointer here rather than mProcessId?
   // Indicates which process owns the docshell.
   uint64_t mProcessId;
@@ -449,6 +465,8 @@ class CanonicalBrowsingContext final : public BrowsingContext {
 
   RefPtr<nsSecureBrowserUI> mSecureBrowserUI;
   RefPtr<BrowsingContextWebProgress> mWebProgress;
+
+  nsCOMPtr<nsIWebProgressListener> mDocShellProgressBridge;
   RefPtr<nsBrowserStatusFilter> mStatusFilter;
 
   RefPtr<FeaturePolicy> mContainerFeaturePolicy;
@@ -458,6 +476,8 @@ class CanonicalBrowsingContext final : public BrowsingContext {
   // If this is a top level context, this is true if our browser ID is marked as
   // active in the process priority manager.
   bool mPriorityActive = false;
+
+  nsCOMPtr<nsITimer> mSessionStoreSessionStorageUpdateTimer;
 };
 
 }  // namespace dom

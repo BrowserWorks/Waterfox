@@ -9,7 +9,7 @@ description = "Shared Rust code for libxul"
 geckoservo = { path = "../../../../servo/ports/geckolib" }
 kvstore = { path = "../../../components/kvstore" }
 lmdb-rkv-sys = { version = "0.11", features = ["mdb_idl_logn_9"] }
-mp4parse_capi = { git = "https://github.com/mozilla/mp4parse-rust", rev = "dd967732ac836cc1ed5f1a7259d912c5d13e009b" }
+mp4parse_capi = { git = "https://github.com/mozilla/mp4parse-rust", rev = "1bb484e96ae724309e3346968e8ffd4c25e61616" }
 nserror = { path = "../../../../xpcom/rust/nserror" }
 nsstring = { path = "../../../../xpcom/rust/nsstring" }
 netwerk_helper = { path = "../../../../netwerk/base/rust-helper" }
@@ -56,6 +56,7 @@ unic-langid-ffi = { path = "../../../../intl/locale/rust/unic-langid-ffi" }
 fluent-langneg = { version = "0.13", features = ["cldr"] }
 fluent-langneg-ffi = { path = "../../../../intl/locale/rust/fluent-langneg-ffi" }
 rust_minidump_writer_linux = { path = "../../../crashreporter/rust_minidump_writer_linux", optional = true }
+gecko-profiler = { path = "../../../../tools/profiler/rust-api"}
 
 # Note: `modern_sqlite` means rusqlite's bindings file be for a sqlite with
 # version less than or equal to what we link to. This isn't a problem because we
@@ -95,7 +96,7 @@ cranelift_arm32 = ["jsrust_shared/cranelift_arm32"]
 cranelift_arm64 = ["jsrust_shared/cranelift_arm64"]
 cranelift_none = ["jsrust_shared/cranelift_none"]
 smoosh = ["jsrust_shared/smoosh"]
-gecko_profiler = ["profiler_helper", "geckoservo/gecko_profiler"]
+gecko_profiler = ["gecko-profiler/enabled", "profiler_helper", "geckoservo/gecko_profiler"]
 gecko_profiler_parse_elf = ["profiler_helper/parse_elf"]
 new_xulstore = ["xulstore"]
 libfuzzer = []

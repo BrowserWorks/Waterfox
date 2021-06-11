@@ -25,8 +25,8 @@ const uint32_t kDefaultCacheLength = 128;
 
 namespace mozilla {
 
+class EditorBase;
 class PresShell;
-class TextEditor;
 
 namespace dom {
 class Document;
@@ -76,7 +76,7 @@ class DocAccessible : public HyperTextAccessibleWrap,
   virtual uint64_t NativeInteractiveState() const override;
   virtual bool NativelyUnavailable() const override;
   virtual void ApplyARIAState(uint64_t* aState) const override;
-  virtual already_AddRefed<nsIPersistentProperties> Attributes() override;
+  virtual already_AddRefed<AccAttributes> Attributes() override;
 
   virtual void TakeFocus() const override;
 
@@ -87,7 +87,7 @@ class DocAccessible : public HyperTextAccessibleWrap,
   virtual nsRect RelativeBounds(nsIFrame** aRelativeFrame) const override;
 
   // HyperTextAccessible
-  virtual already_AddRefed<TextEditor> GetEditor() const override;
+  virtual already_AddRefed<EditorBase> GetEditor() const override;
 
   // DocAccessible
 

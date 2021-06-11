@@ -46,8 +46,8 @@ add_task(async function() {
       column: 47,
       expression: "Foo.#privateStatic",
       fields: [
-        ["first", "a"],
-        ["second", "b"],
+        ["first", `"a"`],
+        ["second", `"b"`],
       ],
     },
     {
@@ -56,9 +56,7 @@ add_task(async function() {
       expression: "this",
       fields: [
         ["x", "1"],
-        // TODO: The private properties are not shown in the object preview at the moment,
-        // this should be fixed as part of Bug 1499679.
-        // ["#privateVar", "2"],
+        ["#privateVar", "2"],
       ],
     },
     { line: 51, column: 39, expression: "this.#privateVar", result: 2 },
@@ -78,7 +76,8 @@ async function previews(dbg, fnName, previews) {
 async function testBucketedArray(dbg) {
   const invokeResult = invokeInTab("largeArray");
   await waitForPaused(dbg);
-  const preview = await hoverOnToken(dbg, 34, 10, "popup");
+  await tryHovering(dbg, 34, 10, "popup");
+  const preview = dbg.selectors.getPreview();
 
   is(
     preview.properties.map(p => p.name).join(" "),

@@ -33,6 +33,12 @@ const TEST_URI = `data:text/html;charset=utf-8,
 <body>Autocomplete popup - invoke getter cache test</body>`;
 
 add_task(async function() {
+  // Disable bfcache for Fission for now.
+  // If Fission is disabled, the pref is no-op.
+  await SpecialPowers.pushPrefEnv({
+    set: [["fission.bfcacheInParent", false]],
+  });
+
   const hud = await openNewTabAndConsole(TEST_URI);
   const { jsterm } = hud;
   const { autocompletePopup } = jsterm;
@@ -108,11 +114,9 @@ add_task(async function() {
     "Reload the page to ensure asking for autocomplete again show the confirm dialog"
   );
   onPopupClose = autocompletePopup.once("popup-closed");
-  EventUtils.synthesizeKey("KEY_Escape");
-  await onPopupClose;
-
   await refreshTab();
   info("tab reloaded, waiting for the popup to close");
+  await onPopupClose;
 
   info("Press Ctrl+Space to open the confirm dialog again");
   EventUtils.synthesizeKey(" ", { ctrlKey: true });

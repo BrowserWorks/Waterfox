@@ -65,7 +65,7 @@ class SSLTokensCache : public nsIMemoryReporter {
   static mozilla::StaticRefPtr<SSLTokensCache> gInstance;
   static StaticMutex sLock;
 
-  uint32_t mCacheSize;  // Actual cache size in bytes
+  uint32_t mCacheSize{0};  // Actual cache size in bytes
 
   class TokenCacheRecord {
    public:
@@ -73,7 +73,7 @@ class SSLTokensCache : public nsIMemoryReporter {
     void Reset();
 
     nsCString mKey;
-    PRUint32 mExpirationTime;
+    PRUint32 mExpirationTime = 0;
     nsTArray<uint8_t> mToken;
     SessionCacheInfo mSessionCacheInfo;
   };

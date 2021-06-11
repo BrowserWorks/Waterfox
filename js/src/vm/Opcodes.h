@@ -2863,6 +2863,16 @@
      */ \
     MACRO(GetAliasedVar, get_aliased_var, NULL, 5, 0, 1, JOF_ENVCOORD|JOF_NAME) \
     /*
+     * Push the value of an aliased binding, which may have to bypass a DebugEnvironmentProxy
+     * on the environment chain.
+     *
+     *   Category: Variables and scopes
+     *   Type: Getting binding values
+     *   Operands: uint8_t hops, uint24_t slot
+     *   Stack: => aliasedVar
+     */ \
+    MACRO(GetAliasedDebugVar, get_aliased_debug_var, NULL, 5, 0, 1, JOF_DEBUGCOORD|JOF_NAME) \
+    /*
      * Get the value of a module import by name and pushes it onto the stack.
      *
      *   Category: Variables and scopes
@@ -3481,30 +3491,6 @@
      */ \
     MACRO(DebugCheckSelfHosted, debug_check_self_hosted, NULL, 1, 1, 1, JOF_BYTE) \
     /*
-     * Push a boolean indicating if instrumentation is active.
-     *
-     *   Category: Other
-     *   Operands:
-     *   Stack: => val
-     */ \
-    MACRO(InstrumentationActive, instrumentation_active, NULL, 1, 0, 1, JOF_BYTE) \
-    /*
-     * Push the instrumentation callback for the current realm.
-     *
-     *   Category: Other
-     *   Operands:
-     *   Stack: => val
-     */ \
-    MACRO(InstrumentationCallback, instrumentation_callback, NULL, 1, 0, 1, JOF_BYTE) \
-    /*
-     * Push the current script's instrumentation ID.
-     *
-     *   Category: Other
-     *   Operands:
-     *   Stack: => val
-     */ \
-    MACRO(InstrumentationScriptId, instrumentation_script_id, NULL, 1, 0, 1, JOF_BYTE) \
-    /*
      * Break in the debugger, if one is attached. Otherwise this is a no-op.
      *
      * The [`Debugger` API][1] offers a way to hook into this instruction.
@@ -3527,6 +3513,8 @@
  * a power of two.  Use this macro to do so.
  */
 #define FOR_EACH_TRAILING_UNUSED_OPCODE(MACRO) \
+  MACRO(227)                                   \
+  MACRO(228)                                   \
   MACRO(229)                                   \
   MACRO(230)                                   \
   MACRO(231)                                   \

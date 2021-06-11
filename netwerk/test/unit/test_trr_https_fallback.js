@@ -5,9 +5,11 @@
 "use strict";
 
 ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+var { setTimeout } = ChromeUtils.import("resource://gre/modules/Timer.jsm");
 
 let h2Port;
 let h3Port;
+let h3NoResponsePort;
 let trrServer;
 
 const dns = Cc["@mozilla.org/network/dns-service;1"].getService(
@@ -31,6 +33,10 @@ function setup() {
   Assert.notEqual(h3Port, null);
   Assert.notEqual(h3Port, "");
 
+  h3NoResponsePort = env.get("MOZHTTP3_PORT_NO_RESPONSE");
+  Assert.notEqual(h3NoResponsePort, null);
+  Assert.notEqual(h3NoResponsePort, "");
+
   Services.prefs.setIntPref("network.trr.mode", Ci.nsIDNSService.MODE_TRRFIRST);
 
   Services.prefs.setBoolPref("network.dns.upgrade_with_https_rr", true);
@@ -51,6 +57,7 @@ registerCleanupFunction(async () => {
     "network.dns.httpssvc.http3_fast_fallback_timeout"
   );
   Services.prefs.clearUserPref("network.http.speculative-parallel-limit");
+  Services.prefs.clearUserPref("network.dns.localDomains");
   if (trrServer) {
     await trrServer.stop();
   }
@@ -105,7 +112,7 @@ add_task(async function testFallbackToTheLastRecord() {
           priority: 1,
           name: "test.fallback1.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "123..." },
           ],
         },
@@ -119,7 +126,7 @@ add_task(async function testFallbackToTheLastRecord() {
           priority: 4,
           name: "foo.example.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "port", value: h2Port },
             { key: "echconfig", value: "456..." },
           ],
@@ -134,7 +141,7 @@ add_task(async function testFallbackToTheLastRecord() {
           priority: 3,
           name: "test.fallback3.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -148,7 +155,7 @@ add_task(async function testFallbackToTheLastRecord() {
           priority: 2,
           name: "test.fallback2.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -190,7 +197,7 @@ add_task(async function testFallbackToTheOrigin() {
           priority: 1,
           name: "test.foo1.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "123..." },
           ],
         },
@@ -204,7 +211,7 @@ add_task(async function testFallbackToTheOrigin() {
           priority: 3,
           name: "test.foo3.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -218,7 +225,7 @@ add_task(async function testFallbackToTheOrigin() {
           priority: 2,
           name: "test.foo2.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -273,7 +280,7 @@ add_task(async function testAllRecordsFailed() {
           priority: 1,
           name: "test.bar1.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "123..." },
           ],
         },
@@ -287,7 +294,7 @@ add_task(async function testAllRecordsFailed() {
           priority: 3,
           name: "test.bar3.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -301,7 +308,7 @@ add_task(async function testAllRecordsFailed() {
           priority: 2,
           name: "test.bar2.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -341,7 +348,7 @@ add_task(async function testFallbackToTheOrigin2() {
         data: {
           priority: 1,
           name: "test.example1.com",
-          values: [{ key: "alpn", value: ["h2", "h3"] }],
+          values: [{ key: "alpn", value: ["h2", "h3-26"] }],
         },
       },
       {
@@ -352,7 +359,7 @@ add_task(async function testFallbackToTheOrigin2() {
         data: {
           priority: 3,
           name: "test.example3.com",
-          values: [{ key: "alpn", value: ["h2", "h3"] }],
+          values: [{ key: "alpn", value: ["h2", "h3-26"] }],
         },
       },
     ],
@@ -419,7 +426,7 @@ add_task(async function testFallbackToTheOrigin3() {
           priority: 1,
           name: "vulnerable1.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -433,7 +440,7 @@ add_task(async function testFallbackToTheOrigin3() {
           priority: 2,
           name: "vulnerable2.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -446,7 +453,7 @@ add_task(async function testFallbackToTheOrigin3() {
         data: {
           priority: 3,
           name: "vulnerable3.com",
-          values: [{ key: "alpn", value: ["h2", "h3"] }],
+          values: [{ key: "alpn", value: ["h2", "h3-26"] }],
         },
       },
     ],
@@ -486,7 +493,7 @@ add_task(async function testResetExclusionList() {
           priority: 1,
           name: "test.reset1.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "port", value: h2Port },
             { key: "echconfig", value: "456..." },
           ],
@@ -501,7 +508,7 @@ add_task(async function testResetExclusionList() {
           priority: 2,
           name: "test.reset2.com",
           values: [
-            { key: "alpn", value: ["h2", "h3"] },
+            { key: "alpn", value: ["h2", "h3-26"] },
             { key: "echconfig", value: "456..." },
           ],
         },
@@ -622,6 +629,10 @@ add_task(async function testFastfallbackToH2() {
     "network.dns.httpssvc.http3_fast_fallback_timeout",
     1
   );
+  Services.prefs.setCharPref(
+    "network.dns.localDomains",
+    "test.fastfallback1.com"
+  );
 
   await trrServer.registerDoHAnswers("test.fastfallback.com", "HTTPS", {
     answers: [
@@ -635,7 +646,7 @@ add_task(async function testFastfallbackToH2() {
           name: "test.fastfallback1.com",
           values: [
             { key: "alpn", value: "h3-27" },
-            { key: "port", value: h3Port },
+            { key: "port", value: h3NoResponsePort },
             { key: "echconfig", value: "456..." },
           ],
         },

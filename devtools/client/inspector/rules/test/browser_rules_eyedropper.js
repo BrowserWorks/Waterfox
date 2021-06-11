@@ -44,9 +44,9 @@ add_task(async function() {
   const url = "data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI);
   await addTab(url);
 
-  const { testActor, inspector, view, toolbox } = await openRuleView();
+  const { inspector, view, toolbox } = await openRuleView();
 
-  await runTest(testActor, inspector, view, false);
+  await runTest(inspector, view, false);
 
   info("Reload the page to restore the initial state");
   await navigateTo(url);
@@ -58,10 +58,10 @@ add_task(async function() {
   // See Bug 1571421.
   await wait(1000);
 
-  await runTest(testActor, inspector, view, true);
+  await runTest(inspector, view, true);
 });
 
-async function runTest(testActor, inspector, view, isWindowHost) {
+async function runTest(inspector, view, isWindowHost) {
   await selectNode("#div2", inspector);
 
   info("Get the background-color property from the rule-view");
@@ -79,7 +79,7 @@ async function runTest(testActor, inspector, view, isWindowHost) {
   );
 
   info("Test that pressing escape dismisses the eyedropper");
-  await testESC(swatch, inspector, testActor);
+  await testESC(swatch, inspector);
 
   if (isWindowHost) {
     // The following code is only needed on linux otherwise the test seems to
@@ -99,7 +99,7 @@ async function runTest(testActor, inspector, view, isWindowHost) {
   await openEyedropper(view, swatch);
 
   info("Test that a color can be selected with the eyedropper");
-  await testSelect(view, swatch, inspector, testActor);
+  await testSelect(view, swatch, inspector);
 
   const onHidden = tooltip.once("hidden");
   tooltip.hide();
@@ -109,19 +109,23 @@ async function runTest(testActor, inspector, view, isWindowHost) {
   await waitForTick();
 }
 
-async function testESC(swatch, inspector, testActor) {
+async function testESC(swatch, inspector) {
   info("Press escape");
   const onCanceled = new Promise(resolve => {
     inspector.inspectorFront.once("color-pick-canceled", resolve);
   });
-  await testActor.synthesizeKey({ key: "VK_ESCAPE", options: {} });
+  BrowserTestUtils.synthesizeKey(
+    "VK_ESCAPE",
+    {},
+    gBrowser.selectedTab.linkedBrowser
+  );
   await onCanceled;
 
   const color = swatch.style.backgroundColor;
   is(color, ORIGINAL_COLOR, "swatch didn't change after pressing ESC");
 }
 
-async function testSelect(view, swatch, inspector, testActor) {
+async function testSelect(view, swatch, inspector) {
   info("Click at x:10px y:10px");
   const onPicked = new Promise(resolve => {
     inspector.inspectorFront.once("color-picked", resolve);
@@ -129,23 +133,14 @@ async function testSelect(view, swatch, inspector, testActor) {
   // The change to the content is done async after rule view change
   const onRuleViewChanged = view.once("ruleview-changed");
 
-  await testActor.synthesizeMouse({
-    selector: "html",
-    x: 10,
-    y: 10,
-    options: { type: "mousemove" },
+  await safeSynthesizeMouseEventAtCenterInContentPage("#div1", {
+    type: "mousemove",
   });
-  await testActor.synthesizeMouse({
-    selector: "html",
-    x: 10,
-    y: 10,
-    options: { type: "mousedown" },
+  await safeSynthesizeMouseEventAtCenterInContentPage("#div1", {
+    type: "mousedown",
   });
-  await testActor.synthesizeMouse({
-    selector: "html",
-    x: 10,
-    y: 10,
-    options: { type: "mouseup" },
+  await safeSynthesizeMouseEventAtCenterInContentPage("#div1", {
+    type: "mouseup",
   });
 
   await onPicked;

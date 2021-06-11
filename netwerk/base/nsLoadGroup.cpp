@@ -86,19 +86,7 @@ static void RescheduleRequest(nsIRequest* aRequest, int32_t delta) {
 }
 
 nsLoadGroup::nsLoadGroup()
-    : mForegroundCount(0),
-      mLoadFlags(LOAD_NORMAL),
-      mDefaultLoadFlags(0),
-      mPriority(PRIORITY_NORMAL),
-      mRequests(&sRequestHashOps, sizeof(RequestMapEntry)),
-      mStatus(NS_OK),
-      mIsCanceling(false),
-      mDefaultLoadIsTimed(false),
-      mBrowsingContextDiscarded(false),
-      mExternalRequestContext(false),
-      mNotifyObserverAboutBackgroundRequests(false),
-      mTimedRequests(0),
-      mCachedRequests(0) {
+    : mRequests(&sRequestHashOps, sizeof(RequestMapEntry)) {
   LOG(("LOADGROUP [%p]: Created.\n", this));
 }
 
@@ -146,14 +134,15 @@ nsLoadGroup::GetName(nsACString& result) {
 
 NS_IMETHODIMP
 nsLoadGroup::IsPending(bool* aResult) {
-  *aResult = (mForegroundCount > 0) ? true : false;
+  *aResult = mForegroundCount > 0;
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsLoadGroup::GetStatus(nsresult* status) {
-  if (NS_SUCCEEDED(mStatus) && mDefaultLoadRequest)
+  if (NS_SUCCEEDED(mStatus) && mDefaultLoadRequest) {
     return mDefaultLoadRequest->GetStatus(status);
+  }
 
   *status = mStatus;
   return NS_OK;
@@ -162,7 +151,7 @@ nsLoadGroup::GetStatus(nsresult* status) {
 static bool AppendRequestsToArray(PLDHashTable* aTable,
                                   nsTArray<nsIRequest*>* aArray) {
   for (auto iter = aTable->Iter(); !iter.Done(); iter.Next()) {
-    auto e = static_cast<RequestMapEntry*>(iter.Get());
+    auto* e = static_cast<RequestMapEntry*>(iter.Get());
     nsIRequest* request = e->mKey;
     NS_ASSERTION(request, "What? Null key in PLDHashTable entry?");
 
@@ -456,7 +445,7 @@ nsLoadGroup::AddRequest(nsIRequest* request, nsISupports* ctxt) {
   // Add the request to the list of active requests...
   //
 
-  auto entry = static_cast<RequestMapEntry*>(mRequests.Add(request, fallible));
+  auto* entry = static_cast<RequestMapEntry*>(mRequests.Add(request, fallible));
   if (!entry) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -548,7 +537,7 @@ nsresult nsLoadGroup::RemoveRequestFromHashtable(nsIRequest* request,
   // the request was *not* in the group so do not update the foreground
   // count or it will get messed up...
   //
-  auto entry = static_cast<RequestMapEntry*>(mRequests.Search(request));
+  auto* entry = static_cast<RequestMapEntry*>(mRequests.Search(request));
 
   if (!entry) {
     LOG(("LOADGROUP [%p]: Unable to remove request %p. Not in group!\n", this,
@@ -645,7 +634,7 @@ nsLoadGroup::GetRequests(nsISimpleEnumerator** aRequests) {
   requests.SetCapacity(mRequests.EntryCount());
 
   for (auto iter = mRequests.Iter(); !iter.Done(); iter.Next()) {
-    auto e = static_cast<RequestMapEntry*>(iter.Get());
+    auto* e = static_cast<RequestMapEntry*>(iter.Get());
     requests.AppendObject(e->mKey);
   }
 
@@ -759,7 +748,7 @@ nsLoadGroup::AdjustPriority(int32_t aDelta) {
   if (aDelta != 0) {
     mPriority += aDelta;
     for (auto iter = mRequests.Iter(); !iter.Done(); iter.Next()) {
-      auto e = static_cast<RequestMapEntry*>(iter.Get());
+      auto* e = static_cast<RequestMapEntry*>(iter.Get());
       RescheduleRequest(e->mKey, aDelta);
     }
   }

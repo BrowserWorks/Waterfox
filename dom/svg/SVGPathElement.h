@@ -56,10 +56,7 @@ class SVGPathElement final : public SVGPathElementBase {
   virtual already_AddRefed<Path> GetOrBuildPathForMeasuring() override;
 
   bool GetDistancesFromOriginToEndsOfVisibleSegments(
-      FallibleTArray<double>* aOutput) override {
-    return mD.GetAnimValue().GetDistancesFromOriginToEndsOfVisibleSegments(
-        aOutput);
-  }
+      FallibleTArray<double>* aOutput) override;
 
   // nsIContent interface
   virtual nsresult Clone(dom::NodeInfo*, nsINode** aResult) const override;
@@ -115,6 +112,9 @@ class SVGPathElement final : public SVGPathElementBase {
   CreateSVGPathSegCurvetoQuadraticSmoothRel(float x, float y);
   already_AddRefed<DOMSVGPathSegList> PathSegList();
   already_AddRefed<DOMSVGPathSegList> AnimatedPathSegList();
+
+  static bool IsDPropertyChangedViaCSS(const ComputedStyle& aNewStyle,
+                                       const ComputedStyle& aOldStyle);
 
  protected:
   SVGAnimatedPathSegList mD;

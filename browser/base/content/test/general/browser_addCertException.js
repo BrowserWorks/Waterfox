@@ -27,7 +27,7 @@ add_task(async function() {
     gIdentityHandler._identityPopup,
     "ViewShown"
   );
-  document.getElementById("identity-popup-security-expander").click();
+  document.getElementById("identity-popup-security-button").click();
   await promiseViewShown;
 
   is_element_visible(
@@ -72,6 +72,6 @@ add_task(async function() {
   let certOverrideService = Cc[
     "@mozilla.org/security/certoverride;1"
   ].getService(Ci.nsICertOverrideService);
-  certOverrideService.clearValidityOverride("expired.example.com", -1);
+  certOverrideService.clearValidityOverride("expired.example.com", -1, {});
   BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });

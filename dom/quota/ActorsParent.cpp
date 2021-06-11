@@ -77,6 +77,7 @@
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/dom/ipc/IdType.h"
 #include "mozilla/dom/localstorage/ActorsParent.h"
+#include "mozilla/dom/QMResultInlines.h"
 #include "mozilla/dom/quota/CheckedUnsafePtr.h"
 #include "mozilla/dom/quota/Client.h"
 #include "mozilla/dom/quota/DirectoryLock.h"
@@ -430,6 +431,7 @@ nsresult InvalidateCache(mozIStorageConnection& aConnection) {
   static constexpr auto kSetInvalidFlagQuery = "UPDATE cache SET valid = 0"_ns;
 
   QM_TRY(QM_OR_ELSE_WARN(
+      // Expression.
       ([&]() -> Result<Ok, nsresult> {
         mozStorageTransaction transaction(&aConnection, false);
 
@@ -440,6 +442,7 @@ nsresult InvalidateCache(mozIStorageConnection& aConnection) {
 
         return Ok{};
       }()),
+      // Fallback.
       ([&](const nsresult rv) -> Result<Ok, nsresult> {
         QM_TRY(aConnection.ExecuteSimpleSQL(kSetInvalidFlagQuery));
 
@@ -570,20 +573,16 @@ Result<nsCOMPtr<mozIStorageConnection>, nsresult> CreateWebAppsStoreConnection(
   }
 
   QM_TRY_INSPECT(const auto& connection,
-                 QM_OR_ELSE_WARN(
+                 QM_OR_ELSE_WARN_IF(
+                     // Expression.
                      MOZ_TO_RESULT_INVOKE_TYPED(
                          nsCOMPtr<mozIStorageConnection>, aStorageService,
                          OpenUnsharedDatabase, &aWebAppsStoreFile),
-                     ([](const nsresult rv)
-                          -> Result<nsCOMPtr<mozIStorageConnection>, nsresult> {
-                       if (IsDatabaseCorruptionError(rv)) {
-                         // Don't throw an error, leave a corrupted webappsstore
-                         // database as it is.
-                         return nsCOMPtr<mozIStorageConnection>{};
-                       }
-
-                       return Err(rv);
-                     })));
+                     // Predicate.
+                     IsDatabaseCorruptionError,
+                     // Fallback. Don't throw an error, leave a corrupted
+                     // webappsstore database as it is.
+                     ErrToDefaultOk<nsCOMPtr<mozIStorageConnection>>));
 
   if (connection) {
     // Don't propagate an error, leave a non-updateable webappsstore database as
@@ -2392,14 +2391,19 @@ Result<bool, nsresult> EnsureDirectory(nsIFile& aDirectory) {
   AssertIsOnIOThread();
 
   // Callers call this function without checking if the directory already
-  // exists (idempotent usage). QM_OR_ELSE_WARN is not used here since we just
-  // want to log NS_ERROR_FILE_ALREADY_EXISTS result and not spam the reports.
-  QM_TRY_INSPECT(
-      const auto& exists,
-      QM_OR_ELSE_LOG(MOZ_TO_RESULT_INVOKE(aDirectory, Create,
+  // exists (idempotent usage). QM_OR_ELSE_WARN_IF is not used here since we
+  // just want to log NS_ERROR_FILE_ALREADY_EXISTS result and not spam the
+  // reports.
+  QM_TRY_INSPECT(const auto& exists,
+                 QM_OR_ELSE_LOG_VERBOSE_IF(
+                     // Expression.
+                     MOZ_TO_RESULT_INVOKE(aDirectory, Create,
                                           nsIFile::DIRECTORY_TYPE, 0755)
                          .map([](Ok) { return false; }),
-                     (ErrToOkOrErr<NS_ERROR_FILE_ALREADY_EXISTS, true>)));
+                     // Predicate.
+                     IsSpecificError<NS_ERROR_FILE_ALREADY_EXISTS>,
+                     // Fallback.
+                     ErrToOk<true>));
 
   if (exists) {
     QM_TRY_INSPECT(const bool& isDirectory,
@@ -2634,7 +2638,7 @@ void InitializeQuotaManager() {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!gQuotaManagerInitialized);
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
   ScopedLogExtraInfo::Initialize();
 #endif
 
@@ -3284,13 +3288,6 @@ QuotaManager* QuotaManager::Get() {
 }
 
 // static
-QuotaManager& QuotaManager::GetRef() {
-  MOZ_ASSERT(gInstance);
-
-  return *gInstance;
-}
-
-// static
 bool QuotaManager::IsShuttingDown() { return gShutdown; }
 
 // static
@@ -3639,11 +3636,14 @@ nsresult QuotaManager::Init() {
   return NS_OK;
 }
 
-void QuotaManager::MaybeRecordShutdownStep(const Client::Type aClientType,
-                                           const nsACString& aStepDescription) {
+// static
+void QuotaManager::SafeMaybeRecordQuotaClientShutdownStep(
+    const Client::Type aClientType, const nsACString& aStepDescription) {
   // Callable on any thread.
 
-  MaybeRecordShutdownStep(Some(aClientType), aStepDescription);
+  if (auto* const quotaManager = QuotaManager::Get()) {
+    quotaManager->MaybeRecordShutdownStep(Some(aClientType), aStepDescription);
+  }
 }
 
 void QuotaManager::MaybeRecordQuotaManagerShutdownStep(
@@ -4622,7 +4622,9 @@ QuotaManager::LoadFullOriginMetadataWithRestore(nsIFile* aDirectory) {
   const auto& persistenceType = maybePersistenceType.value();
 
   QM_TRY_RETURN(QM_OR_ELSE_WARN(
+      // Expression.
       LoadFullOriginMetadata(aDirectory, persistenceType),
+      // Fallback.
       ([&aDirectory, &persistenceType,
         this](const nsresult rv) -> Result<FullOriginMetadata, nsresult> {
         QM_TRY(RestoreDirectoryMetadata2(aDirectory));
@@ -4722,25 +4724,25 @@ nsresult QuotaManager::InitializeRepository(PersistenceType aPersistenceType) {
                           // they won't be accessed after initialization.
                         }
 
-                        QM_TRY(QM_OR_ELSE_WARN(
+                        QM_TRY(QM_OR_ELSE_WARN_IF(
+                            // Expression.
                             ToResult(InitializeOrigin(
                                 aPersistenceType, metadata,
                                 metadata.mLastAccessTime, metadata.mPersisted,
                                 childDirectory)),
+                            // Predicate.
+                            IsDatabaseCorruptionError,
+                            // Fallback.
                             ([&childDirectory](
                                  const nsresult rv) -> Result<Ok, nsresult> {
-                              if (IsDatabaseCorruptionError(rv)) {
-                                // If the origin can't be initialized due to
-                                // corruption, this is a permanent
-                                // condition, and we need to remove all data
-                                // for the origin on disk.
+                              // If the origin can't be initialized due to
+                              // corruption, this is a permanent
+                              // condition, and we need to remove all data
+                              // for the origin on disk.
 
-                                QM_TRY(childDirectory->Remove(true));
+                              QM_TRY(childDirectory->Remove(true));
 
-                                return Ok{};
-                              }
-
-                              return Err(rv);
+                              return Ok{};
                             })));
 
                         break;
@@ -5823,20 +5825,22 @@ nsresult QuotaManager::MaybeCreateOrUpgradeStorage(
   return NS_OK;
 }
 
-nsresult QuotaManager::MaybeRemoveLocalStorageArchiveTmpFile() {
+Result<Ok, QMResult> QuotaManager::MaybeRemoveLocalStorageArchiveTmpFile() {
   AssertIsOnIOThread();
 
-  QM_TRY_INSPECT(const auto& lsArchiveTmpFile,
-                 GetLocalStorageArchiveTmpFile(*mStoragePath));
+  QM_TRY_INSPECT(
+      const auto& lsArchiveTmpFile,
+      GetLocalStorageArchiveTmpFile(*mStoragePath).mapErr(ToQMResult));
 
-  QM_TRY_INSPECT(const bool& exists,
-                 MOZ_TO_RESULT_INVOKE(lsArchiveTmpFile, Exists));
+  QM_TRY_INSPECT(
+      const bool& exists,
+      MOZ_TO_RESULT_INVOKE(lsArchiveTmpFile, Exists).mapErr(ToQMResult));
 
   if (exists) {
-    QM_TRY(lsArchiveTmpFile->Remove(false));
+    QM_TRY(ToQMResult(lsArchiveTmpFile->Remove(false)));
   }
 
-  return NS_OK;
+  return Ok{};
 }
 
 Result<Ok, nsresult> QuotaManager::MaybeCreateOrUpgradeLocalStorageArchive(
@@ -6000,11 +6004,14 @@ nsresult QuotaManager::EnsureStorageIsInitialized() {
 
   QM_TRY_UNWRAP(
       auto connection,
-      QM_OR_ELSE_WARN(
+      QM_OR_ELSE_WARN_IF(
+          // Expression.
           MOZ_TO_RESULT_INVOKE_TYPED(nsCOMPtr<mozIStorageConnection>, ss,
                                      OpenUnsharedDatabase, storageFile),
-          (FilterDatabaseCorruptionError<nullptr,
-                                         nsCOMPtr<mozIStorageConnection>>)));
+          // Predicate.
+          IsDatabaseCorruptionError,
+          // Fallback.
+          ErrToDefaultOk<nsCOMPtr<mozIStorageConnection>>));
 
   if (!connection) {
     // Nuke the database file.
@@ -6027,13 +6034,14 @@ nsresult QuotaManager::EnsureStorageIsInitialized() {
                  GetLocalStorageArchiveFile(*mStoragePath));
 
   if (CachedNextGenLocalStorageEnabled()) {
-    QM_TRY(QM_OR_ELSE_WARN(
+    QM_TRY(QM_OR_ELSE_WARN_IF(
+        // Expression.
         MaybeCreateOrUpgradeLocalStorageArchive(*lsArchiveFile),
+        // Predicate.
+        IsDatabaseCorruptionError,
+        // Fallback.
         ([&](const nsresult rv) -> Result<Ok, nsresult> {
-          if (IsDatabaseCorruptionError(rv)) {
-            QM_TRY_RETURN(CreateEmptyLocalStorageArchive(*lsArchiveFile));
-          }
-          return Err(rv);
+          QM_TRY_RETURN(CreateEmptyLocalStorageArchive(*lsArchiveFile));
         })));
   } else {
     QM_TRY(MaybeRemoveLocalStorageDataAndArchive(*lsArchiveFile));
@@ -10557,23 +10565,24 @@ nsresult CreateOrUpgradeDirectoryMetadataHelper::MaybeUpgradeOriginDirectory(
     QM_TRY_INSPECT(const auto& idbDirectory,
                    CloneFileAndAppend(*aDirectory, idbDirectoryName));
 
-    // Usually we only use QM_OR_ELSE_LOG/QM_OR_ELSE_LOG_IF with Create and
-    // NS_ERROR_FILE_ALREADY_EXISTS check, but typically the idb directory
-    // shouldn't exist during the upgrade and the upgrade runs only once in
-    // most of the cases, so the use of QM_OR_ELSE_WARN is ok here.
-    QM_TRY(QM_OR_ELSE_WARN(
+    // Usually we only use QM_OR_ELSE_LOG_VERBOSE/QM_OR_ELSE_LOG_VERBOSE_IF
+    // with Create and NS_ERROR_FILE_ALREADY_EXISTS check, but typically the
+    // idb directory shouldn't exist during the upgrade and the upgrade runs
+    // only once in most of the cases, so the use of QM_OR_ELSE_WARN_IF is ok
+    // here.
+    QM_TRY(QM_OR_ELSE_WARN_IF(
+        // Expression.
         ToResult(idbDirectory->Create(nsIFile::DIRECTORY_TYPE, 0755)),
+        // Predicate.
+        IsSpecificError<NS_ERROR_FILE_ALREADY_EXISTS>,
+        // Fallback.
         ([&idbDirectory](const nsresult rv) -> Result<Ok, nsresult> {
-          if (rv == NS_ERROR_FILE_ALREADY_EXISTS) {
-            QM_TRY_INSPECT(const bool& isDirectory,
-                           MOZ_TO_RESULT_INVOKE(idbDirectory, IsDirectory));
+          QM_TRY_INSPECT(const bool& isDirectory,
+                         MOZ_TO_RESULT_INVOKE(idbDirectory, IsDirectory));
 
-            QM_TRY(OkIf(isDirectory), Err(NS_ERROR_UNEXPECTED));
+          QM_TRY(OkIf(isDirectory), Err(NS_ERROR_UNEXPECTED));
 
-            return Ok{};
-          }
-
-          return Err(rv);
+          return Ok{};
         })));
 
     QM_TRY(CollectEachFile(

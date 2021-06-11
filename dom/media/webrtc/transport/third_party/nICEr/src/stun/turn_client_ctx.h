@@ -38,6 +38,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _turn_client_ctx_h
 #define _turn_client_ctx_h
 
+struct nr_ice_ctx_;
+
+typedef struct nr_transport_addr_listnode_ {
+  nr_transport_addr value;
+  STAILQ_ENTRY(nr_transport_addr_listnode_) entry;
+} nr_transport_addr_listnode;
+typedef STAILQ_HEAD(nr_transport_addr_listnode_head_, nr_transport_addr_listnode_) nr_transport_addr_listnode_head;
+
 /*
    Represents a single set of STUN transactions, i.e.,
    Allocate, Refresh, Permission. It automatically handles
@@ -53,6 +61,8 @@ typedef struct nr_turn_stun_ctx_ {
   NR_async_cb success_cb;
   NR_async_cb error_cb;
   int last_error_code;
+
+  nr_transport_addr_listnode_head addresses_tried;
 
   STAILQ_ENTRY(nr_turn_stun_ctx_) entry;
 } nr_turn_stun_ctx;
@@ -96,6 +106,12 @@ typedef struct nr_turn_client_ctx_ {
   nr_turn_stun_ctx_head stun_ctxs;
   nr_turn_permission_head permissions;
 
+  /* We need access to the socket factory to create new TCP sockets for handling
+   * STUN/300 responses. */
+  /* If we were to require TCP nr_sockets to allow multiple connect calls by
+   * disconnecting and re-connecting, we could avoid this requirement. */
+  struct nr_ice_ctx_* ctx;
+
   NR_async_cb finished_cb;
   void *cb_arg;
 
@@ -110,10 +126,13 @@ typedef struct nr_turn_client_ctx_ {
 
 extern int NR_LOG_TURN;
 
-int nr_turn_client_ctx_create(const char *label, nr_socket *sock,
-                              const char *username, Data *password,
-                              nr_transport_addr *addr,
-                              nr_turn_client_ctx **ctxp);
+int nr_transport_addr_listnode_create(const nr_transport_addr *addr, nr_transport_addr_listnode **listnodep);
+void nr_transport_addr_listnode_destroy(nr_transport_addr_listnode **listnode);
+int nr_turn_client_ctx_create(const char* label, nr_socket* sock,
+                              const char* username, Data* password,
+                              nr_transport_addr* addr,
+                              struct nr_ice_ctx_* ice_ctx,
+                              nr_turn_client_ctx** ctxp);
 int nr_turn_client_ctx_destroy(nr_turn_client_ctx **ctxp);
 int nr_turn_client_allocate(nr_turn_client_ctx *ctx,
                             NR_async_cb finished_cb, void *cb_arg);
@@ -129,7 +148,7 @@ int nr_turn_client_failed(nr_turn_client_ctx *ctx);
 int nr_turn_client_deallocate(nr_turn_client_ctx *ctx);
 int nr_turn_client_send_indication(nr_turn_client_ctx *ctx,
                                    const UCHAR *msg, size_t len,
-                                   int flags, nr_transport_addr *remote_addr);
+                                   int flags, const nr_transport_addr *remote_addr);
 int nr_turn_client_parse_data_indication(nr_turn_client_ctx *ctx,
                                          nr_transport_addr *source_addr,
                                          UCHAR *msg, size_t len,
@@ -137,6 +156,6 @@ int nr_turn_client_parse_data_indication(nr_turn_client_ctx *ctx,
                                          size_t newsize,
                                          nr_transport_addr *remote_addr);
 int nr_turn_client_ensure_perm(nr_turn_client_ctx *ctx,
-                               nr_transport_addr *addr);
+                               const nr_transport_addr *addr);
 #endif
 

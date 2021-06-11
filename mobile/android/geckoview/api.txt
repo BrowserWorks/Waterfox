@@ -118,6 +118,57 @@ package org.mozilla.geckoview {
     ctor protected Autocomplete();
   }
 
+  public static class Autocomplete.Address {
+    ctor @AnyThread protected Address();
+    field @NonNull public final String additionalName;
+    field @NonNull public final String addressLevel1;
+    field @NonNull public final String addressLevel2;
+    field @NonNull public final String addressLevel3;
+    field @NonNull public final String country;
+    field @NonNull public final String email;
+    field @NonNull public final String familyName;
+    field @NonNull public final String givenName;
+    field @Nullable public final String guid;
+    field @NonNull public final String name;
+    field @NonNull public final String organization;
+    field @NonNull public final String postalCode;
+    field @NonNull public final String streetAddress;
+    field @NonNull public final String tel;
+  }
+
+  public static class Autocomplete.Address.Builder {
+    ctor @AnyThread public Builder();
+    method @AnyThread @NonNull public Autocomplete.Address.Builder additionalName(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder addressLevel1(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder addressLevel2(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder addressLevel3(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address build();
+    method @AnyThread @NonNull public Autocomplete.Address.Builder country(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder email(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder familyName(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder givenName(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder guid(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder name(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder organization(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder postalCode(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder streetAddress(@Nullable String);
+    method @AnyThread @NonNull public Autocomplete.Address.Builder tel(@Nullable String);
+  }
+
+  public static class Autocomplete.AddressSaveOption extends Autocomplete.SaveOption {
+    ctor public AddressSaveOption(@NonNull Autocomplete.Address);
+  }
+
+  public static class Autocomplete.AddressSelectOption extends Autocomplete.SelectOption {
+    ctor public AddressSelectOption(@NonNull Autocomplete.Address);
+  }
+
+  public static class Autocomplete.AddressSelectOption.Hint {
+    ctor public Hint();
+    field public static final int INSECURE_FORM = 2;
+    field public static final int NONE = 0;
+  }
+
   public static class Autocomplete.CreditCard {
     ctor @AnyThread protected CreditCard();
     field @NonNull public final String expirationMonth;
@@ -210,6 +261,8 @@ package org.mozilla.geckoview {
   }
 
   public static interface Autocomplete.StorageDelegate {
+    method @Nullable @UiThread default public GeckoResult<Autocomplete.Address[]> onAddressFetch();
+    method @UiThread default public void onAddressSave(@NonNull Autocomplete.Address);
     method @Nullable @UiThread default public GeckoResult<Autocomplete.CreditCard[]> onCreditCardFetch();
     method @Nullable @UiThread default public GeckoResult<Autocomplete.LoginEntry[]> onLoginFetch(@NonNull String);
     method @UiThread default public void onLoginSave(@NonNull Autocomplete.LoginEntry);
@@ -462,16 +515,16 @@ package org.mozilla.geckoview {
   @AnyThread public class ContentBlockingController {
     ctor public ContentBlockingController();
     method @UiThread public void addException(@NonNull GeckoSession);
-    method @NonNull @UiThread public GeckoResult<Boolean> checkException(@NonNull GeckoSession);
-    method @UiThread public void clearExceptionList();
+    method @DeprecationSchedule(version=93,id="content-blocking-exception") @NonNull @UiThread public GeckoResult<Boolean> checkException(@NonNull GeckoSession);
+    method @DeprecationSchedule(version=93,id="content-blocking-exception") @UiThread public void clearExceptionList();
     method @NonNull @UiThread public GeckoResult<List<ContentBlockingController.LogEntry>> getLog(@NonNull GeckoSession);
-    method @UiThread public void removeException(@NonNull GeckoSession);
-    method @AnyThread public void removeException(@NonNull ContentBlockingController.ContentBlockingException);
-    method @AnyThread public void restoreExceptionList(@NonNull List<ContentBlockingController.ContentBlockingException>);
-    method @NonNull @UiThread public GeckoResult<List<ContentBlockingController.ContentBlockingException>> saveExceptionList();
+    method @DeprecationSchedule(version=93,id="content-blocking-exception") @UiThread public void removeException(@NonNull GeckoSession);
+    method @AnyThread @DeprecationSchedule(version=93,id="content-blocking-exception") public void removeException(@NonNull ContentBlockingController.ContentBlockingException);
+    method @AnyThread @DeprecationSchedule(version=93,id="content-blocking-exception") public void restoreExceptionList(@NonNull List<ContentBlockingController.ContentBlockingException>);
+    method @DeprecationSchedule(version=93,id="content-blocking-exception") @NonNull @UiThread public GeckoResult<List<ContentBlockingController.ContentBlockingException>> saveExceptionList();
   }
 
-  @AnyThread public static class ContentBlockingController.ContentBlockingException {
+  @DeprecationSchedule(version=93,id="content-blocking-exception") @AnyThread public static class ContentBlockingController.ContentBlockingException {
     method @NonNull public static ContentBlockingController.ContentBlockingException fromJson(@NonNull JSONObject);
     method @NonNull public JSONObject toJson();
     field @NonNull public final String uri;
@@ -965,7 +1018,7 @@ package org.mozilla.geckoview {
 
   public static interface GeckoSession.PermissionDelegate {
     method @UiThread default public void onAndroidPermissionsRequest(@NonNull GeckoSession, @Nullable String[], @NonNull GeckoSession.PermissionDelegate.Callback);
-    method @UiThread default public void onContentPermissionRequest(@NonNull GeckoSession, @Nullable String, int, @NonNull GeckoSession.PermissionDelegate.Callback);
+    method @Nullable @UiThread default public GeckoResult<Integer> onContentPermissionRequest(@NonNull GeckoSession, @NonNull GeckoSession.PermissionDelegate.ContentPermission);
     method @UiThread default public void onMediaPermissionRequest(@NonNull GeckoSession, @NonNull String, @Nullable GeckoSession.PermissionDelegate.MediaSource[], @Nullable GeckoSession.PermissionDelegate.MediaSource[], @NonNull GeckoSession.PermissionDelegate.MediaCallback);
     field public static final int PERMISSION_AUTOPLAY_AUDIBLE = 5;
     field public static final int PERMISSION_AUTOPLAY_INAUDIBLE = 4;
@@ -973,6 +1026,7 @@ package org.mozilla.geckoview {
     field public static final int PERMISSION_GEOLOCATION = 0;
     field public static final int PERMISSION_MEDIA_KEY_SYSTEM_ACCESS = 6;
     field public static final int PERMISSION_PERSISTENT_STORAGE = 2;
+    field public static final int PERMISSION_TRACKING = 7;
     field public static final int PERMISSION_XR = 3;
   }
 
@@ -983,9 +1037,12 @@ package org.mozilla.geckoview {
 
   public static class GeckoSession.PermissionDelegate.ContentPermission {
     ctor protected ContentPermission();
+    method @AnyThread @Nullable public static GeckoSession.PermissionDelegate.ContentPermission fromJson(@NonNull JSONObject);
+    method @AnyThread @NonNull public JSONObject toJson();
     field public static final int VALUE_ALLOW = 1;
     field public static final int VALUE_DENY = 2;
     field public static final int VALUE_PROMPT = 3;
+    field @Nullable public final String contextId;
     field public final int permission;
     field public final boolean privateMode;
     field @NonNull public final String uri;
@@ -1041,6 +1098,8 @@ package org.mozilla.geckoview {
   }
 
   public static interface GeckoSession.PromptDelegate {
+    method @Nullable @UiThread default public GeckoResult<GeckoSession.PromptDelegate.PromptResponse> onAddressSave(@NonNull GeckoSession, @NonNull GeckoSession.PromptDelegate.AutocompleteRequest<Autocomplete.AddressSaveOption>);
+    method @Nullable @UiThread default public GeckoResult<GeckoSession.PromptDelegate.PromptResponse> onAddressSelect(@NonNull GeckoSession, @NonNull GeckoSession.PromptDelegate.AutocompleteRequest<Autocomplete.AddressSelectOption>);
     method @Nullable @UiThread default public GeckoResult<GeckoSession.PromptDelegate.PromptResponse> onAlertPrompt(@NonNull GeckoSession, @NonNull GeckoSession.PromptDelegate.AlertPrompt);
     method @Nullable @UiThread default public GeckoResult<GeckoSession.PromptDelegate.PromptResponse> onAuthPrompt(@NonNull GeckoSession, @NonNull GeckoSession.PromptDelegate.AuthPrompt);
     method @Nullable @UiThread default public GeckoResult<GeckoSession.PromptDelegate.PromptResponse> onBeforeUnloadPrompt(@NonNull GeckoSession, @NonNull GeckoSession.PromptDelegate.BeforeUnloadPrompt);
@@ -1699,6 +1758,10 @@ package org.mozilla.geckoview {
     method @AnyThread @NonNull public GeckoResult<Void> clearDataFromHost(@NonNull String, long);
     method @AnyThread @NonNull public GeckoResult<List<GeckoSession.PermissionDelegate.ContentPermission>> getAllPermissions();
     method @AnyThread @NonNull public GeckoResult<List<GeckoSession.PermissionDelegate.ContentPermission>> getPermissions(@NonNull String);
+    method @AnyThread @NonNull public GeckoResult<List<GeckoSession.PermissionDelegate.ContentPermission>> getPermissions(@NonNull String, @Nullable String);
+    method @AnyThread public void setPermission(@NonNull GeckoSession.PermissionDelegate.ContentPermission, int);
+    method @AnyThread @DeprecationSchedule(id="setpermission-string",version=93) public void setPermission(@NonNull String, int, int);
+    method @AnyThread @DeprecationSchedule(id="setpermission-string",version=93) public void setPermission(@NonNull String, @Nullable String, boolean, int, int);
   }
 
   public static class StorageController.ClearFlags {

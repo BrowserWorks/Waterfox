@@ -25,7 +25,7 @@ class nsISystemProxySettings;
 namespace mozilla {
 namespace net {
 
-typedef nsTHashMap<nsCStringHashKey, uint32_t> nsFailedProxyTable;
+using nsFailedProxyTable = nsTHashMap<nsCStringHashKey, uint32_t>;
 
 class nsPACMan;
 class nsProxyInfo;
@@ -90,7 +90,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    *        This can be the name of a fully-qualified preference, or it can
    *        be null, in which case all preferences will be initialized.
    */
-  void PrefsChanged(nsIPrefBranch* prefs, const char* name);
+  void PrefsChanged(nsIPrefBranch* prefBranch, const char* pref);
 
   /**
    * This method is called to create a nsProxyInfo instance from the given
@@ -108,7 +108,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    *
    * @return A pointer beyond the parsed proxy string (never null).
    */
-  const char* ExtractProxyInfo(const char* proxy, uint32_t aResolveFlags,
+  const char* ExtractProxyInfo(const char* start, uint32_t aResolveFlags,
                                nsProxyInfo** result);
 
   /**
@@ -117,7 +117,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    * @param pacURI
    *        The URI spec of the PAC file to load.
    */
-  nsresult ConfigureFromPAC(const nsCString& pacURI, bool forceReload);
+  nsresult ConfigureFromPAC(const nsCString& spec, bool forceReload);
 
   /**
    * This method builds a list of nsProxyInfo objects from the given PAC-
@@ -143,7 +143,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    * @param result
    *        Upon return, this parameter holds the generated key.
    */
-  void GetProxyKey(nsProxyInfo* pi, nsCString& result);
+  void GetProxyKey(nsProxyInfo* pi, nsCString& key);
 
   /**
    * @return Seconds since start of session.
@@ -187,7 +187,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    *        of structure when you call this method.  This parameter must not
    *        be null.
    */
-  nsresult GetProtocolInfo(nsIURI* uri, nsProtocolInfo* result);
+  nsresult GetProtocolInfo(nsIURI* uri, nsProtocolInfo* info);
 
   /**
    * This method is an internal version nsIProtocolProxyService::newProxyInfo
@@ -220,8 +220,8 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
                                  const nsACString& aProxyAuthorizationHeader,
                                  const nsACString& aConnectionIsolationKey,
                                  uint32_t flags, uint32_t timeout,
-                                 nsIProxyInfo* next, uint32_t aResolveFlags,
-                                 nsIProxyInfo** result);
+                                 nsIProxyInfo* aFailoverProxy,
+                                 uint32_t aResolveFlags, nsIProxyInfo** result);
 
   /**
    * This method is an internal version of Resolve that does not query PAC.
@@ -258,7 +258,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    * asynchronously) to provide the updated proxyinfo list.
    */
   bool ApplyFilter(FilterLink const* filterLink, nsIChannel* channel,
-                   const nsProtocolInfo& info, nsCOMPtr<nsIProxyInfo> proxyInfo,
+                   const nsProtocolInfo& info, nsCOMPtr<nsIProxyInfo> list,
                    nsIProxyProtocolFilterResult* callback);
 
   /**
@@ -270,7 +270,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    * @param proxyInfo
    *        The proxy info list to be modified.  This is an inout param.
    */
-  void PruneProxyInfo(const nsProtocolInfo& info, nsIProxyInfo** proxyInfo);
+  void PruneProxyInfo(const nsProtocolInfo& info, nsIProxyInfo** list);
 
   /**
    * This method is a simple wrapper around PruneProxyInfo that takes the
@@ -290,7 +290,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
    * @param hostFilters
    *        A "no-proxy-for" exclusion list.
    */
-  void LoadHostFilters(const nsACString& hostFilters);
+  void LoadHostFilters(const nsACString& aFilters);
 
   /**
    * This method checks the given URI against mHostFiltersArray.
@@ -341,19 +341,19 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
  protected:
   // simplified array of filters defined by this struct
   struct HostInfo {
-    bool is_ipaddr;
-    int32_t port;
+    bool is_ipaddr{false};
+    int32_t port{0};
+    // other members intentionally uninitialized
     union {
       HostInfoIP ip;
       HostInfoName name;
     };
 
-    HostInfo()
-        : is_ipaddr(false),
-          port(0) { /* other members intentionally uninitialized */
-    }
+    HostInfo() = default;
     ~HostInfo() {
-      if (!is_ipaddr && name.host) free(name.host);
+      if (!is_ipaddr && name.host) {
+        free(name.host);
+      }
     }
   };
 
@@ -364,7 +364,7 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
 
  protected:
   // Indicates if local hosts (plain hostnames, no dots) should use the proxy
-  bool mFilterLocalHosts;
+  bool mFilterLocalHosts{false};
 
   // Holds an array of HostInfo objects
   nsTArray<UniquePtr<HostInfo>> mHostFiltersArray;
@@ -372,36 +372,37 @@ class nsProtocolProxyService final : public nsIProtocolProxyService2,
   // Filters, always sorted by the position.
   nsTArray<RefPtr<FilterLink>> mFilters;
 
-  uint32_t mProxyConfig;
+  uint32_t mProxyConfig{PROXYCONFIG_DIRECT};
 
   nsCString mHTTPProxyHost;
-  int32_t mHTTPProxyPort;
+  int32_t mHTTPProxyPort{-1};
 
   nsCString mHTTPSProxyHost;
-  int32_t mHTTPSProxyPort;
+  int32_t mHTTPSProxyPort{-1};
 
   // mSOCKSProxyTarget could be a host, a domain socket path,
   // or a named-pipe name.
   nsCString mSOCKSProxyTarget;
-  int32_t mSOCKSProxyPort;
-  int32_t mSOCKSProxyVersion;
-  bool mSOCKSProxyRemoteDNS;
-  bool mProxyOverTLS;
-  bool mWPADOverDHCPEnabled;
+  int32_t mSOCKSProxyPort{-1};
+  int32_t mSOCKSProxyVersion{4};
+  bool mSOCKSProxyRemoteDNS{false};
+  bool mProxyOverTLS{true};
+  bool mWPADOverDHCPEnabled{false};
 
   RefPtr<nsPACMan> mPACMan;  // non-null if we are using PAC
   nsCOMPtr<nsISystemProxySettings> mSystemProxySettings;
 
   PRTime mSessionStart;
   nsFailedProxyTable mFailedProxies;
-  int32_t mFailedProxyTimeout;
+  // 30 minute default
+  int32_t mFailedProxyTimeout{30 * 60};
 
  private:
   nsresult AsyncResolveInternal(nsIChannel* channel, uint32_t flags,
                                 nsIProtocolProxyCallback* callback,
                                 nsICancelable** result, bool isSyncOK,
                                 nsISerialEventTarget* mainThreadEventTarget);
-  bool mIsShutdown;
+  bool mIsShutdown{false};
   nsCOMPtr<nsITimer> mReloadPACTimer;
 };
 

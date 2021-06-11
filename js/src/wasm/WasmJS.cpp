@@ -437,11 +437,18 @@ bool wasm::StreamingCompilationAvailable(JSContext* cx) {
 }
 
 bool wasm::CodeCachingAvailable(JSContext* cx) {
+  // Fuzzilli breaks the out-of-process compilation mechanism,
+  // so we disable it permanently in those builds.
+#ifdef FUZZING_JS_FUZZILLI
+  return false;
+#else
+
   // At the moment, we require Ion support for code caching.  The main reason
   // for this is that wasm::CompileAndSerialize() does not have access to
   // information about which optimizing compiler it should use.  See comments in
   // CompileAndSerialize(), below.
   return StreamingCompilationAvailable(cx) && IonAvailable(cx);
+#endif
 }
 
 // ============================================================================
@@ -1382,8 +1389,8 @@ bool WasmModuleObject::customSections(JSContext* cx, unsigned argc, Value* vp) {
       return false;
     }
 
-    mozilla::Unused << JS::DeflateStringToUTF8Buffer(
-        linear, Span(name.begin(), name.length()));
+    (void)JS::DeflateStringToUTF8Buffer(linear,
+                                        Span(name.begin(), name.length()));
   }
 
   RootedValueVector elems(cx);
@@ -4537,7 +4544,7 @@ static bool ResolveResponse_OnFulfilled(JSContext* cx, unsigned argc,
     return RejectWithPendingException(cx, promise);
   }
 
-  Unused << task.release();
+  (void)task.release();
 
   callArgs.rval().setUndefined();
   return true;

@@ -107,10 +107,6 @@ ContentRestoreInternal.prototype = {
    * is started while it is pending, the appropriate callbacks are called.
    */
   restoreHistory(tabData, loadArguments, callbacks) {
-    if (Services.appinfo.sessionHistoryInParent) {
-      throw new Error("This function should be unused with SHIP");
-    }
-
     this._tabData = tabData;
 
     // In case about:blank isn't done yet.
@@ -147,11 +143,6 @@ ContentRestoreInternal.prototype = {
       tabData.disallow
     );
 
-    if (tabData.storage && this.docShell instanceof Ci.nsIDocShell) {
-      SessionStoreUtils.restoreSessionStorage(this.docShell, tabData.storage);
-      delete tabData.storage;
-    }
-
     // Add a progress listener to correctly handle browser.loadURI()
     // calls from foreign code.
     this._progressListener = new ProgressListener(this.docShell, {
@@ -174,10 +165,6 @@ ContentRestoreInternal.prototype = {
    * network, finishCallback is called. Returns true if the load was successful.
    */
   restoreTabContent(loadArguments, isRemotenessUpdate, finishCallback) {
-    if (Services.appinfo.sessionHistoryInParent) {
-      throw new Error("This function should be unused with SHIP");
-    }
-
     let tabData = this._tabData;
     this._tabData = null;
 
@@ -251,10 +238,6 @@ ContentRestoreInternal.prototype = {
    * pending tabs and makes sure to notify when the tab finished loading.
    */
   restoreTabContentStarted(finishCallback) {
-    if (Services.appinfo.sessionHistoryInParent) {
-      throw new Error("This function should be unused with SHIP");
-    }
-
     // The reload listener is no longer needed.
     this._historyListener.uninstall();
     this._historyListener = null;

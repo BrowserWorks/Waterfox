@@ -70,8 +70,9 @@
 #include "nsICookieManager.h"
 #include "nsICookieService.h"
 #include "nsIHttpChannel.h"
-#ifdef ENABLE_MARIONETTE
+#ifdef ENABLE_WEBDRIVER
 #  include "nsIMarionette.h"
+#  include "nsIRemoteAgent.h"
 #endif
 #include "nsStreamUtils.h"
 #include "WidgetUtils.h"
@@ -81,7 +82,7 @@
 
 #include "nsIExternalProtocolHandler.h"
 #include "BrowserChild.h"
-#include "URIUtils.h"
+#include "mozilla/ipc/URIUtils.h"
 
 #include "mozilla/dom/MediaDevices.h"
 #include "MediaManager.h"
@@ -1490,27 +1491,6 @@ void Navigator::GetGamepads(nsTArray<RefPtr<Gamepad>>& aGamepads,
   NS_ENSURE_TRUE_VOID(mWindow->GetDocShell());
   nsGlobalWindowInner* win = nsGlobalWindowInner::Cast(mWindow);
 
-  // As we are moving this API to secure contexts, we are going to temporarily
-  // show a console warning to developers.
-  if (!mGamepadSecureContextWarningShown && !win->IsSecureContext()) {
-    mGamepadSecureContextWarningShown = true;
-    auto msg =
-        u"The Gamepad API will only be available in "
-        "secure contexts (e.g., https). Please see "
-        "https://hacks.mozilla.org/2020/07/securing-gamepad-api/ for more "
-        "info."_ns;
-    nsContentUtils::ReportToConsoleNonLocalized(
-        msg, nsIScriptError::warningFlag, "DOM"_ns, win->GetExtantDoc());
-  }
-
-#ifdef EARLY_BETA_OR_EARLIER
-  if (!win->IsSecureContext()) {
-    return;
-  }
-#endif
-
-#ifdef NIGHTLY_BUILD
-  // We will move this into Beta in Firefox 82
   if (!FeaturePolicyUtils::IsFeatureAllowed(win->GetExtantDoc(),
                                             u"gamepad"_ns)) {
     aRv.ThrowSecurityError(
@@ -1518,7 +1498,6 @@ void Navigator::GetGamepads(nsTArray<RefPtr<Gamepad>>& aGamepads,
         "getGamepads() from this context.");
     return;
   }
-#endif
 
   win->SetHasGamepadEventListener(true);
   win->GetGamepads(aGamepads);
@@ -2134,16 +2113,27 @@ webgpu::Instance* Navigator::Gpu() {
 
 /* static */
 bool Navigator::Webdriver() {
-  bool marionetteRunning = false;
-
-#ifdef ENABLE_MARIONETTE
+#ifdef ENABLE_WEBDRIVER
   nsCOMPtr<nsIMarionette> marionette = do_GetService(NS_MARIONETTE_CONTRACTID);
   if (marionette) {
+    bool marionetteRunning = false;
     marionette->GetRunning(&marionetteRunning);
+    if (marionetteRunning) {
+      return true;
+    }
+  }
+
+  nsCOMPtr<nsIRemoteAgent> agent = do_GetService(NS_REMOTEAGENT_CONTRACTID);
+  if (agent) {
+    bool remoteAgentListening = false;
+    agent->GetListening(&remoteAgentListening);
+    if (remoteAgentListening) {
+      return true;
+    }
   }
 #endif
 
-  return marionetteRunning;
+  return false;
 }
 
 }  // namespace mozilla::dom

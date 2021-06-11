@@ -57,7 +57,7 @@ void LIRGeneratorMIPSShared::lowerForALUInt64(
     LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins,
     MDefinition* mir, MDefinition* lhs, MDefinition* rhs) {
   ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
-  ins->setInt64Operand(INT64_PIECES, lhs != rhs
+  ins->setInt64Operand(INT64_PIECES, willHaveDifferentLIRNodes(lhs, rhs)
                                          ? useInt64OrConstant(rhs)
                                          : useInt64OrConstantAtStart(rhs));
   defineInt64ReuseInput(ins, mir, 0);
@@ -73,6 +73,10 @@ void LIRGeneratorMIPSShared::lowerForMulInt64(LMulI64* ins, MMul* mir,
 #ifdef JS_CODEGEN_MIPS32
   needsTemp = true;
   cannotAliasRhs = true;
+  // See the documentation on willHaveDifferentLIRNodes; that test does not
+  // allow additional constraints.
+  MOZ_CRASH(
+      "cannotAliasRhs cannot be used the way it is used in the guard below");
   if (rhs->isConstant()) {
     int64_t constant = rhs->toConstant()->toInt64();
     int32_t shift = mozilla::FloorLog2(constant);
@@ -89,9 +93,10 @@ void LIRGeneratorMIPSShared::lowerForMulInt64(LMulI64* ins, MMul* mir,
   }
 #endif
   ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
-  ins->setInt64Operand(INT64_PIECES, (lhs != rhs || cannotAliasRhs)
-                                         ? useInt64OrConstant(rhs)
-                                         : useInt64OrConstantAtStart(rhs));
+  ins->setInt64Operand(INT64_PIECES,
+                       (willHaveDifferentLIRNodes(lhs, rhs) || cannotAliasRhs)
+                           ? useInt64OrConstant(rhs)
+                           : useInt64OrConstantAtStart(rhs));
 
   if (needsTemp) {
     ins->setTemp(0, temp());
@@ -251,6 +256,20 @@ void LIRGeneratorMIPSShared::lowerDivI(MDiv* div) {
   define(lir, div);
 }
 
+void LIRGeneratorMIPSShared::lowerNegI(MInstruction* ins, MDefinition* input) {
+  define(new (alloc()) LNegI(useRegisterAtStart(input)), ins);
+}
+
+void LIRGeneratorMIPSShared::lowerNegI64(MInstruction* ins,
+                                         MDefinition* input) {
+  defineInt64ReuseInput(new (alloc()) LNegI64(useInt64RegisterAtStart(input)),
+                        ins, 0);
+}
+
+void LIRGenerator::visitAbs(MAbs* ins) {
+  define(allocateAbs(ins, useRegisterAtStart(ins->input())), ins);
+}
+
 void LIRGeneratorMIPSShared::lowerMulI(MMul* mul, MDefinition* lhs,
                                        MDefinition* rhs) {
   LMulI* lir = new (alloc()) LMulI;
@@ -304,6 +323,20 @@ void LIRGenerator::visitPowHalf(MPowHalf* ins) {
   MOZ_ASSERT(input->type() == MIRType::Double);
   LPowHalfD* lir = new (alloc()) LPowHalfD(useRegisterAtStart(input));
   defineReuseInput(lir, ins, 0);
+}
+
+void LIRGeneratorMIPSShared::lowerWasmSelectI(MWasmSelect* select) {
+  auto* lir = new (alloc())
+      LWasmSelect(useRegisterAtStart(select->trueExpr()),
+                  useAny(select->falseExpr()), useRegister(select->condExpr()));
+  defineReuseInput(lir, select, LWasmSelect::TrueExprIndex);
+}
+
+void LIRGeneratorMIPSShared::lowerWasmSelectI64(MWasmSelect* select) {
+  auto* lir = new (alloc()) LWasmSelectI64(
+      useInt64RegisterAtStart(select->trueExpr()),
+      useInt64(select->falseExpr()), useRegister(select->condExpr()));
+  defineInt64ReuseInput(lir, select, LWasmSelectI64::TrueExprIndex);
 }
 
 LTableSwitch* LIRGeneratorMIPSShared::newLTableSwitch(
@@ -898,6 +931,13 @@ void LIRGenerator::visitWasmBitselectSimd128(MWasmBitselectSimd128* ins) {
 void LIRGenerator::visitWasmBinarySimd128(MWasmBinarySimd128* ins) {
   MOZ_CRASH("binary SIMD NYI");
 }
+
+#ifdef ENABLE_WASM_SIMD
+bool MWasmBitselectSimd128::specializeConstantMaskAsShuffle(
+    int8_t shuffle[16]) {
+  return false;
+}
+#endif
 
 bool MWasmBinarySimd128::specializeForConstantRhs() {
   // Probably many we want to do here

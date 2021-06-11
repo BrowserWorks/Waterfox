@@ -125,7 +125,7 @@ class TestNat {
     virtual int on_read(TestNat* nat, void* buf, size_t maxlen,
                         size_t* len) = 0;
     virtual int on_sendto(TestNat* nat, const void* msg, size_t len, int flags,
-                          nr_transport_addr* to) = 0;
+                          const nr_transport_addr* to) = 0;
     virtual int on_write(TestNat* nat, const void* msg, size_t len,
                          size_t* written) = 0;
   };
@@ -190,6 +190,11 @@ class TestNat {
   /* Note: this can only delay a single response so far (bug 1253657) */
   uint32_t delay_stun_resp_ms_;
 
+  // When we see an outgoing STUN request with a destination address or
+  // destination FQDN that matches a key in this map, we respond with a STUN/300
+  // with a list of ALTERNATE-SERVER fields based on the value in this map.
+  std::map<nsCString, CopyableTArray<nsCString>> stun_redirect_map_;
+
   NatDelegate* nat_delegate_;
 
  private:
@@ -216,12 +221,12 @@ class TestNrSocket : public NrSocketBase {
   // Overrides of NrSocketBase
   int create(nr_transport_addr* addr) override;
   int sendto(const void* msg, size_t len, int flags,
-             nr_transport_addr* to) override;
+             const nr_transport_addr* to) override;
   int recvfrom(void* buf, size_t maxlen, size_t* len, int flags,
                nr_transport_addr* from) override;
   int getaddr(nr_transport_addr* addrp) override;
   void close() override;
-  int connect(nr_transport_addr* addr) override;
+  int connect(const nr_transport_addr* addr) override;
   int write(const void* msg, size_t len, size_t* written) override;
   int read(void* buf, size_t maxlen, size_t* len) override;
 
@@ -242,18 +247,15 @@ class TestNrSocket : public NrSocketBase {
     UdpPacket(const void* msg, size_t len, const nr_transport_addr& addr)
         : buffer_(new MediaPacket) {
       buffer_->Copy(static_cast<const uint8_t*>(msg), len);
-      // TODO(bug 1170299): Remove const_cast when no longer necessary
-      nr_transport_addr_copy(&remote_address_,
-                             const_cast<nr_transport_addr*>(&addr));
+      nr_transport_addr_copy(&remote_address_, &addr);
     }
+
+    UdpPacket(UdpPacket&& aOrig) = default;
+
+    ~UdpPacket() = default;
 
     nr_transport_addr remote_address_;
     UniquePtr<MediaPacket> buffer_;
-
-    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(UdpPacket);
-
-   private:
-    ~UdpPacket() = default;
   };
 
   class PortMapping {
@@ -279,12 +281,12 @@ class TestNrSocket : public NrSocketBase {
     // If external_socket_ returns E_WOULDBLOCK, we don't want to propagate
     // that to the code using the TestNrSocket. We can also perhaps use this
     // to help simulate things like latency.
-    std::list<RefPtr<UdpPacket>> send_queue_;
+    std::list<UdpPacket> send_queue_;
   };
 
   struct DeferredPacket {
     DeferredPacket(TestNrSocket* sock, const void* data, size_t len, int flags,
-                   nr_transport_addr* addr,
+                   const nr_transport_addr* addr,
                    RefPtr<NrSocketBase> internal_socket)
         : socket_(sock),
           buffer_(),
@@ -330,6 +332,11 @@ class TestNrSocket : public NrSocketBase {
 
   static void process_delayed_cb(NR_SOCKET s, int how, void* cb_arg);
 
+  bool maybe_send_fake_response(const void* msg, size_t len,
+                                const nr_transport_addr* to);
+  Maybe<nsTArray<nsCString>> maybe_get_redirect_targets(
+      const nr_transport_addr* to) const;
+
   RefPtr<NrSocketBase> readable_socket_;
   // The socket for the "internal" address; used to talk to stuff behind the
   // same nat.
@@ -343,6 +350,11 @@ class TestNrSocket : public NrSocketBase {
   std::list<RefPtr<PortMapping>> port_mappings_;
 
   void* timer_handle_;
+
+  // Just used for fake stun responses right now. Not _necessarily_ just UDP
+  // stuff, UdpPacket just has what we need to make this work for UDP.
+  std::list<UdpPacket> read_buffer_;
+  std::unique_ptr<nr_transport_addr> connect_fake_stun_address_;
 };
 
 }  // namespace mozilla

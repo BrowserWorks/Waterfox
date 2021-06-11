@@ -60,6 +60,7 @@
 #include "mozilla/MouseEvents.h"
 #include "mozilla/ProfilerLabels.h"
 #include "mozilla/ProfilerMarkers.h"
+#include "mozilla/ScopeExit.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
@@ -1023,6 +1024,11 @@ nsresult EventDispatcher::Dispatch(nsISupports* aTarget,
             refreshDriver->EnterUserInputProcessing();
           }
         }
+        auto cleanup = MakeScopeExit([&] {
+          if (refreshDriver) {
+            refreshDriver->ExitUserInputProcessing();
+          }
+        });
 
         clearTargets = ShouldClearTargets(aEvent);
 
@@ -1137,10 +1143,6 @@ nsresult EventDispatcher::Dispatch(nsISupports* aTarget,
               default:
                 break;
             }
-          }
-
-          if (refreshDriver) {
-            driver->ExitUserInputProcessing();
           }
         }
 

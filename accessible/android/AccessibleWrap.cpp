@@ -8,6 +8,7 @@
 #include "JavaBuiltins.h"
 #include "LocalAccessible-inl.h"
 #include "HyperTextAccessible-inl.h"
+#include "AccAttributes.h"
 #include "AccEvent.h"
 #include "AndroidInputType.h"
 #include "DocAccessibleWrap.h"
@@ -19,7 +20,6 @@
 #include "Platform.h"
 #include "nsAccessibilityService.h"
 #include "nsEventShell.h"
-#include "nsPersistentProperties.h"
 #include "nsIAccessibleAnnouncementEvent.h"
 #include "nsAccUtils.h"
 #include "nsTextEquivUtils.h"
@@ -534,16 +534,14 @@ uint32_t AccessibleWrap::GetFlags(role aRole, uint64_t aState,
   return flags;
 }
 
-void AccessibleWrap::GetRoleDescription(role aRole,
-                                        nsIPersistentProperties* aAttributes,
+void AccessibleWrap::GetRoleDescription(role aRole, AccAttributes* aAttributes,
                                         nsAString& aGeckoRole,
                                         nsAString& aRoleDescription) {
   if (aRole == roles::HEADING && aAttributes) {
     // The heading level is an attribute, so we need that.
     AutoTArray<nsString, 1> formatString;
-    nsresult rv = aAttributes->GetStringProperty("level"_ns,
-                                                 *formatString.AppendElement());
-    if (NS_SUCCEEDED(rv) &&
+    if (aAttributes->GetAttribute(nsGkAtoms::level,
+                                  *formatString.AppendElement()) &&
         LocalizeString("headingLevel", aRoleDescription, formatString)) {
       return;
     }
@@ -551,8 +549,7 @@ void AccessibleWrap::GetRoleDescription(role aRole,
 
   if ((aRole == roles::LANDMARK || aRole == roles::REGION) && aAttributes) {
     nsAutoString xmlRoles;
-    if (NS_SUCCEEDED(
-            aAttributes->GetStringProperty("xml-roles"_ns, xmlRoles))) {
+    if (aAttributes->GetAttribute(nsGkAtoms::xmlroles, xmlRoles)) {
       nsWhitespaceTokenizer tokenizer(xmlRoles);
       while (tokenizer.hasMoreTokens()) {
         if (LocalizeString(NS_ConvertUTF16toUTF8(tokenizer.nextToken()).get(),
@@ -565,20 +562,6 @@ void AccessibleWrap::GetRoleDescription(role aRole,
 
   GetAccService()->GetStringRole(aRole, aGeckoRole);
   LocalizeString(NS_ConvertUTF16toUTF8(aGeckoRole).get(), aRoleDescription);
-}
-
-already_AddRefed<nsIPersistentProperties>
-AccessibleWrap::AttributeArrayToProperties(
-    const nsTArray<Attribute>& aAttributes) {
-  RefPtr<nsPersistentProperties> props = new nsPersistentProperties();
-  nsAutoString unused;
-
-  for (size_t i = 0; i < aAttributes.Length(); i++) {
-    props->SetStringProperty(aAttributes.ElementAt(i).Name(),
-                             aAttributes.ElementAt(i).Value(), unused);
-  }
-
-  return props.forget();
 }
 
 int32_t AccessibleWrap::GetAndroidClass(role aRole) {
@@ -671,7 +654,7 @@ mozilla::java::GeckoBundle::LocalRef AccessibleWrap::ToBundle(bool aSmall) {
   double step = UnspecifiedNaN<double>();
   WrapperRangeInfo(&curValue, &minValue, &maxValue, &step);
 
-  nsCOMPtr<nsIPersistentProperties> attributes = Attributes();
+  RefPtr<AccAttributes> attributes = Attributes();
 
   return ToBundle(State(), Bounds(), ActionCount(), name, textValue, nodeID,
                   description, curValue, minValue, maxValue, step, attributes);
@@ -682,7 +665,7 @@ mozilla::java::GeckoBundle::LocalRef AccessibleWrap::ToBundle(
     const nsString& aName, const nsString& aTextValue,
     const nsString& aDOMNodeID, const nsString& aDescription,
     const double& aCurVal, const double& aMinVal, const double& aMaxVal,
-    const double& aStep, nsIPersistentProperties* aAttributes) {
+    const double& aStep, AccAttributes* aAttributes) {
   if (!IsProxy() && IsDefunct()) {
     return nullptr;
   }
@@ -792,61 +775,52 @@ mozilla::java::GeckoBundle::LocalRef AccessibleWrap::ToBundle(
 
   if (aAttributes) {
     nsString inputTypeAttr;
-    nsAccUtils::GetAccAttr(aAttributes, nsGkAtoms::textInputType,
-                           inputTypeAttr);
+    aAttributes->GetAttribute(nsGkAtoms::textInputType, inputTypeAttr);
     int32_t inputType = GetInputType(inputTypeAttr);
     if (inputType) {
       GECKOBUNDLE_PUT(nodeInfo, "inputType",
                       java::sdk::Integer::ValueOf(inputType));
     }
 
-    nsString posinset;
-    nsresult rv = aAttributes->GetStringProperty("posinset"_ns, posinset);
-    if (NS_SUCCEEDED(rv)) {
-      int32_t rowIndex;
-      if (sscanf(NS_ConvertUTF16toUTF8(posinset).get(), "%d", &rowIndex) > 0) {
-        GECKOBUNDLE_START(collectionItemInfo);
-        GECKOBUNDLE_PUT(collectionItemInfo, "rowIndex",
-                        java::sdk::Integer::ValueOf(rowIndex));
-        GECKOBUNDLE_PUT(collectionItemInfo, "columnIndex",
-                        java::sdk::Integer::ValueOf(0));
-        GECKOBUNDLE_PUT(collectionItemInfo, "rowSpan",
-                        java::sdk::Integer::ValueOf(1));
-        GECKOBUNDLE_PUT(collectionItemInfo, "columnSpan",
-                        java::sdk::Integer::ValueOf(1));
-        GECKOBUNDLE_FINISH(collectionItemInfo);
+    Maybe<int32_t> rowIndex =
+        aAttributes->GetAttribute<int32_t>(nsGkAtoms::posinset);
+    if (rowIndex) {
+      GECKOBUNDLE_START(collectionItemInfo);
+      GECKOBUNDLE_PUT(collectionItemInfo, "rowIndex",
+                      java::sdk::Integer::ValueOf(*rowIndex));
+      GECKOBUNDLE_PUT(collectionItemInfo, "columnIndex",
+                      java::sdk::Integer::ValueOf(0));
+      GECKOBUNDLE_PUT(collectionItemInfo, "rowSpan",
+                      java::sdk::Integer::ValueOf(1));
+      GECKOBUNDLE_PUT(collectionItemInfo, "columnSpan",
+                      java::sdk::Integer::ValueOf(1));
+      GECKOBUNDLE_FINISH(collectionItemInfo);
 
-        GECKOBUNDLE_PUT(nodeInfo, "collectionItemInfo", collectionItemInfo);
-      }
+      GECKOBUNDLE_PUT(nodeInfo, "collectionItemInfo", collectionItemInfo);
     }
 
-    nsString colSize;
-    rv = aAttributes->GetStringProperty("child-item-count"_ns, colSize);
-    if (NS_SUCCEEDED(rv)) {
-      int32_t rowCount;
-      if (sscanf(NS_ConvertUTF16toUTF8(colSize).get(), "%d", &rowCount) > 0) {
-        GECKOBUNDLE_START(collectionInfo);
-        GECKOBUNDLE_PUT(collectionInfo, "rowCount",
-                        java::sdk::Integer::ValueOf(rowCount));
-        GECKOBUNDLE_PUT(collectionInfo, "columnCount",
-                        java::sdk::Integer::ValueOf(1));
+    Maybe<int32_t> rowCount =
+        aAttributes->GetAttribute<int32_t>(nsGkAtoms::child_item_count);
+    if (rowCount) {
+      GECKOBUNDLE_START(collectionInfo);
+      GECKOBUNDLE_PUT(collectionInfo, "rowCount",
+                      java::sdk::Integer::ValueOf(*rowCount));
+      GECKOBUNDLE_PUT(collectionInfo, "columnCount",
+                      java::sdk::Integer::ValueOf(1));
 
-        nsString unused;
-        rv = aAttributes->GetStringProperty("hierarchical"_ns, unused);
-        if (NS_SUCCEEDED(rv)) {
-          GECKOBUNDLE_PUT(collectionInfo, "isHierarchical",
-                          java::sdk::Boolean::TRUE());
-        }
-
-        if (IsSelect()) {
-          int32_t selectionMode = (aState & states::MULTISELECTABLE) ? 2 : 1;
-          GECKOBUNDLE_PUT(collectionInfo, "selectionMode",
-                          java::sdk::Integer::ValueOf(selectionMode));
-        }
-
-        GECKOBUNDLE_FINISH(collectionInfo);
-        GECKOBUNDLE_PUT(nodeInfo, "collectionInfo", collectionInfo);
+      if (aAttributes->HasAttribute(nsGkAtoms::tree)) {
+        GECKOBUNDLE_PUT(collectionInfo, "isHierarchical",
+                        java::sdk::Boolean::TRUE());
       }
+
+      if (IsSelect()) {
+        int32_t selectionMode = (aState & states::MULTISELECTABLE) ? 2 : 1;
+        GECKOBUNDLE_PUT(collectionInfo, "selectionMode",
+                        java::sdk::Integer::ValueOf(selectionMode));
+      }
+
+      GECKOBUNDLE_FINISH(collectionInfo);
+      GECKOBUNDLE_PUT(nodeInfo, "collectionInfo", collectionInfo);
     }
   }
 
@@ -895,10 +869,9 @@ bool AccessibleWrap::HandleLiveRegionEvent(AccEvent* aEvent) {
     return false;
   }
 
-  nsCOMPtr<nsIPersistentProperties> attributes = Attributes();
+  RefPtr<AccAttributes> attributes = Attributes();
   nsString live;
-  nsresult rv = attributes->GetStringProperty("container-live"_ns, live);
-  if (!NS_SUCCEEDED(rv)) {
+  if (!attributes->GetAttribute(nsGkAtoms::containerLive, live)) {
     return false;
   }
 
@@ -906,12 +879,11 @@ bool AccessibleWrap::HandleLiveRegionEvent(AccEvent* aEvent) {
                           ? nsIAccessibleAnnouncementEvent::ASSERTIVE
                           : nsIAccessibleAnnouncementEvent::POLITE;
 
-  nsString atomic;
-  rv = attributes->GetStringProperty("container-atomic"_ns, atomic);
-
+  Maybe<bool> atomic =
+      attributes->GetAttribute<bool>(nsGkAtoms::containerAtomic);
   LocalAccessible* announcementTarget = this;
   nsAutoString announcement;
-  if (atomic.EqualsIgnoreCase("true")) {
+  if (atomic && *atomic) {
     LocalAccessible* atomicAncestor = nullptr;
     for (LocalAccessible* parent = announcementTarget; parent;
          parent = parent->LocalParent()) {

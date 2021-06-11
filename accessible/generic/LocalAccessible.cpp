@@ -6,6 +6,7 @@
 #include "LocalAccessible-inl.h"
 
 #include "EmbeddedObjCollector.h"
+#include "AccAttributes.h"
 #include "AccGroupInfo.h"
 #include "AccIterator.h"
 #include "nsAccUtils.h"
@@ -38,6 +39,7 @@
 
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/HTMLFormElement.h"
+#include "mozilla/dom/HTMLAnchorElement.h"
 #include "nsIContent.h"
 #include "nsIForm.h"
 #include "nsIFormControl.h"
@@ -61,7 +63,6 @@
 #include "nsArrayUtils.h"
 #include "nsWhitespaceTokenizer.h"
 #include "nsAttrName.h"
-#include "nsPersistentProperties.h"
 
 #include "mozilla/Assertions.h"
 #include "mozilla/BasicEvents.h"
@@ -967,26 +968,26 @@ nsresult LocalAccessible::HandleAccEvent(AccEvent* aEvent) {
   return NS_OK;
 }
 
-already_AddRefed<nsIPersistentProperties> LocalAccessible::Attributes() {
-  nsCOMPtr<nsIPersistentProperties> attributes = NativeAttributes();
+already_AddRefed<AccAttributes> LocalAccessible::Attributes() {
+  RefPtr<AccAttributes> attributes = NativeAttributes();
   if (!HasOwnContent() || !mContent->IsElement()) return attributes.forget();
 
   // 'xml-roles' attribute coming from ARIA.
   nsAutoString xmlRoles;
   if (mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::role,
                                      xmlRoles)) {
-    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::xmlroles, xmlRoles);
+    attributes->SetAttribute(nsGkAtoms::xmlroles, xmlRoles);
   } else if (nsAtom* landmark = LandmarkRole()) {
     // 'xml-roles' attribute for landmark.
-    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::xmlroles, landmark);
+    attributes->SetAttribute(nsGkAtoms::xmlroles, landmark);
   }
 
   // Expose object attributes from ARIA attributes.
-  nsAutoString unused;
   aria::AttrIterator attribIter(mContent);
-  nsAutoString name, value;
-  while (attribIter.Next(name, value)) {
-    attributes->SetStringProperty(NS_ConvertUTF16toUTF8(name), value, unused);
+  while (attribIter.Next()) {
+    nsAutoString value;
+    attribIter.AttrValue(value);
+    attributes->SetAttribute(attribIter.AttrName(), value);
   }
 
   // If there is no aria-live attribute then expose default value of 'live'
@@ -994,15 +995,13 @@ already_AddRefed<nsIPersistentProperties> LocalAccessible::Attributes() {
   const nsRoleMapEntry* roleMapEntry = ARIARoleMap();
   if (roleMapEntry) {
     if (roleMapEntry->Is(nsGkAtoms::searchbox)) {
-      nsAccUtils::SetAccAttr(attributes, nsGkAtoms::textInputType,
-                             u"search"_ns);
+      attributes->SetAttribute(nsGkAtoms::textInputType, u"search"_ns);
     }
 
-    nsAutoString live;
-    nsAccUtils::GetAccAttr(attributes, nsGkAtoms::live, live);
-    if (live.IsEmpty()) {
+    if (!attributes->HasAttribute(nsGkAtoms::aria_live)) {
+      nsAutoString live;
       if (nsAccUtils::GetLiveAttrValue(roleMapEntry->liveAttRule, live)) {
-        nsAccUtils::SetAccAttr(attributes, nsGkAtoms::live, live);
+        attributes->SetAttribute(nsGkAtoms::aria_live, live);
       }
     }
   }
@@ -1010,10 +1009,8 @@ already_AddRefed<nsIPersistentProperties> LocalAccessible::Attributes() {
   return attributes.forget();
 }
 
-already_AddRefed<nsIPersistentProperties> LocalAccessible::NativeAttributes() {
-  RefPtr<nsPersistentProperties> attributes = new nsPersistentProperties();
-
-  nsAutoString unused;
+already_AddRefed<AccAttributes> LocalAccessible::NativeAttributes() {
+  RefPtr<AccAttributes> attributes = new AccAttributes();
 
   // We support values, so expose the string value as well, via the valuetext
   // object attribute. We test for the value interface because we don't want
@@ -1022,18 +1019,18 @@ already_AddRefed<nsIPersistentProperties> LocalAccessible::NativeAttributes() {
   if (HasNumericValue()) {
     nsAutoString valuetext;
     Value(valuetext);
-    attributes->SetStringProperty("valuetext"_ns, valuetext, unused);
+    attributes->SetAttribute(nsGkAtoms::aria_valuetext, valuetext);
   }
 
   // Expose checkable object attribute if the accessible has checkable state
   if (State() & states::CHECKABLE) {
-    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::checkable, u"true"_ns);
+    attributes->SetAttribute(nsGkAtoms::checkable, true);
   }
 
   // Expose 'explicit-name' attribute.
   nsAutoString name;
   if (Name(name) != eNameFromSubtree && !name.IsVoid()) {
-    attributes->SetStringProperty("explicit-name"_ns, u"true"_ns, unused);
+    attributes->SetAttribute(nsGkAtoms::explicit_name, true);
   }
 
   // Group attributes (level/setsize/posinset)
@@ -1044,13 +1041,12 @@ already_AddRefed<nsIPersistentProperties> LocalAccessible::NativeAttributes() {
   bool hierarchical = false;
   uint32_t itemCount = AccGroupInfo::TotalItemCount(this, &hierarchical);
   if (itemCount) {
-    nsAutoString itemCountStr;
-    itemCountStr.AppendInt(itemCount);
-    attributes->SetStringProperty("child-item-count"_ns, itemCountStr, unused);
+    attributes->SetAttribute(nsGkAtoms::child_item_count,
+                             static_cast<int32_t>(itemCount));
   }
 
   if (hierarchical) {
-    attributes->SetStringProperty("hierarchical"_ns, u"true"_ns, unused);
+    attributes->SetAttribute(nsGkAtoms::tree, true);
   }
 
   // If the accessible doesn't have own content (such as list item bullet or
@@ -1069,25 +1065,23 @@ already_AddRefed<nsIPersistentProperties> LocalAccessible::NativeAttributes() {
 
   nsAutoString id;
   if (nsCoreUtils::GetID(mContent, id)) {
-    attributes->SetStringProperty("id"_ns, id, unused);
+    attributes->SetAttribute(nsGkAtoms::id, id);
   }
 
   // Expose class because it may have useful microformat information.
   nsAutoString _class;
   if (mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::_class,
                                      _class)) {
-    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::_class, _class);
+    attributes->SetAttribute(nsGkAtoms::_class, _class);
   }
 
   // Expose tag.
-  nsAutoString tagName;
-  mContent->NodeInfo()->GetName(tagName);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::tag, tagName);
+  attributes->SetAttribute(nsGkAtoms::tag, mContent->NodeInfo()->NameAtom());
 
   // Expose draggable object attribute.
   if (auto htmlElement = nsGenericHTMLElement::FromNode(mContent)) {
     if (htmlElement->Draggable()) {
-      nsAccUtils::SetAccAttr(attributes, nsGkAtoms::draggable, u"true"_ns);
+      attributes->SetAttribute(nsGkAtoms::draggable, true);
     }
   }
 
@@ -1100,40 +1094,40 @@ already_AddRefed<nsIPersistentProperties> LocalAccessible::NativeAttributes() {
   StyleInfo styleInfo(mContent->AsElement());
 
   // Expose 'display' attribute.
-  styleInfo.Display(value);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::display, value);
+  RefPtr<nsAtom> displayValue = styleInfo.Display();
+  attributes->SetAttribute(nsGkAtoms::display, displayValue);
 
   // Expose 'text-align' attribute.
-  styleInfo.TextAlign(value);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::textAlign, value);
+  RefPtr<nsAtom> textAlignValue = styleInfo.TextAlign();
+  attributes->SetAttribute(nsGkAtoms::textAlign, textAlignValue);
 
   // Expose 'text-indent' attribute.
-  styleInfo.TextIndent(value);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::textIndent, value);
+  mozilla::LengthPercentage textIndent = styleInfo.TextIndent();
+  if (textIndent.ConvertsToLength()) {
+    attributes->SetAttribute(nsGkAtoms::textIndent,
+                             textIndent.ToLengthInCSSPixels());
+  } else if (textIndent.ConvertsToPercentage()) {
+    attributes->SetAttribute(nsGkAtoms::textIndent, textIndent.ToPercentage());
+  }
 
   // Expose 'margin-left' attribute.
-  styleInfo.MarginLeft(value);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::marginLeft, value);
+  attributes->SetAttribute(nsGkAtoms::marginLeft, styleInfo.MarginLeft());
 
   // Expose 'margin-right' attribute.
-  styleInfo.MarginRight(value);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::marginRight, value);
+  attributes->SetAttribute(nsGkAtoms::marginRight, styleInfo.MarginRight());
 
   // Expose 'margin-top' attribute.
-  styleInfo.MarginTop(value);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::marginTop, value);
+  attributes->SetAttribute(nsGkAtoms::marginTop, styleInfo.MarginTop());
 
   // Expose 'margin-bottom' attribute.
-  styleInfo.MarginBottom(value);
-  nsAccUtils::SetAccAttr(attributes, nsGkAtoms::marginBottom, value);
+  attributes->SetAttribute(nsGkAtoms::marginBottom, styleInfo.MarginBottom());
 
   // Expose data-at-shortcutkeys attribute for web applications and virtual
   // cursors. Currently mostly used by JAWS.
   nsAutoString atShortcutKeys;
   if (mContent->AsElement()->GetAttr(
           kNameSpaceID_None, nsGkAtoms::dataAtShortcutkeys, atShortcutKeys)) {
-    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::dataAtShortcutkeys,
-                           atShortcutKeys);
+    attributes->SetAttribute(nsGkAtoms::dataAtShortcutkeys, atShortcutKeys);
   }
 
   return attributes.forget();
@@ -1796,6 +1790,44 @@ Relation LocalAccessible::RelationByType(RelationType aType) const {
       }
 
       return Relation(mDoc, GetAtomicRegion());
+    }
+
+    case RelationType::LINKS_TO: {
+      Relation rel = Relation();
+      if (Role() == roles::LINK) {
+        dom::HTMLAnchorElement* anchor =
+            dom::HTMLAnchorElement::FromNode(mContent);
+        if (!anchor) {
+          return rel;
+        }
+        // If this node is an anchor element, query its hash to find the
+        // target.
+        nsAutoString hash;
+        anchor->GetHash(hash);
+        if (hash.IsEmpty()) {
+          return rel;
+        }
+
+        // GetHash returns an ID or name with a leading '#', trim it so we can
+        // search the doc by ID or name alone.
+        hash.Trim("#");
+        if (dom::Element* elm = mContent->OwnerDoc()->GetElementById(hash)) {
+          rel.AppendTarget(mDoc->GetAccessibleOrContainer(elm));
+        } else if (nsCOMPtr<nsINodeList> list =
+                       mContent->OwnerDoc()->GetElementsByName(hash)) {
+          // Loop through the named nodes looking for the first anchor
+          uint32_t length = list->Length();
+          for (uint32_t i = 0; i < length; i++) {
+            nsIContent* node = list->Item(i);
+            if (node->IsHTMLElement(nsGkAtoms::a)) {
+              rel.AppendTarget(mDoc->GetAccessibleOrContainer(node));
+              break;
+            }
+          }
+        }
+      }
+
+      return rel;
     }
 
     case RelationType::SUBWINDOW_OF:

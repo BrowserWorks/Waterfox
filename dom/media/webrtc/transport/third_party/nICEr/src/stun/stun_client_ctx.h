@@ -176,7 +176,6 @@ struct nr_stun_client_ctx_ {
   UINT4 mapped_addr_check_mask;  /* What checks to run on mapped addresses */
   int timeout_ms;
   struct timeval timer_set;
-  int retry_ct;
   NR_async_cb finished_cb;
   void *cb_arg;
   nr_stun_message *request;
@@ -186,7 +185,8 @@ struct nr_stun_client_ctx_ {
 
 int nr_stun_client_ctx_create(char *label, nr_socket *sock, nr_transport_addr *peer, UINT4 RTO, nr_stun_client_ctx **ctxp);
 int nr_stun_client_start(nr_stun_client_ctx *ctx, int mode, NR_async_cb finished_cb, void *cb_arg);
-int nr_stun_client_restart(nr_stun_client_ctx *ctx);
+int nr_stun_client_restart(nr_stun_client_ctx* ctx,
+                           const nr_transport_addr* peer_addr);
 int nr_stun_client_force_retransmit(nr_stun_client_ctx *ctx);
 int nr_stun_client_reset(nr_stun_client_ctx *ctx);
 int nr_stun_client_ctx_destroy(nr_stun_client_ctx **ctxp);

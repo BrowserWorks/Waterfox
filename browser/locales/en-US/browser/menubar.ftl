@@ -166,8 +166,8 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = Basic Page Style
     .accesskey = B
-menu-view-charset =
-    .label = Text Encoding
+menu-view-repair-text-encoding =
+    .label = Repair Text Encoding
     .accesskey = c
 
 ## These should match what Safari and other Apple applications
@@ -219,8 +219,8 @@ menu-history-reopen-all-windows = Reopen All Windows
 menu-bookmarks-menu =
     .label = Bookmarks
     .accesskey = B
-menu-bookmarks-show-all =
-    .label = Show All Bookmarks
+menu-bookmarks-manage =
+    .label = Manage Bookmarks
 menu-bookmark-current-tab =
     .label = Bookmark Current Tab
 menu-bookmark-edit =

@@ -19,17 +19,17 @@ const platformPromise = browser.runtime.getPlatformInfo().then(info => {
 });
 
 let debug = async function() {
-  if ((await releaseBranchPromise) !== "beta_or_release") {
+  if ((await releaseBranchPromise) !== "release_or_beta") {
     console.debug.apply(this, arguments);
   }
 };
 let error = async function() {
-  if ((await releaseBranchPromise) !== "beta_or_release") {
+  if ((await releaseBranchPromise) !== "release_or_beta") {
     console.error.apply(this, arguments);
   }
 };
 let warn = async function() {
-  if ((await releaseBranchPromise) !== "beta_or_release") {
+  if ((await releaseBranchPromise) !== "release_or_beta") {
     console.warn.apply(this, arguments);
   }
 };
@@ -61,6 +61,7 @@ class Shim {
     this._disabledByReleaseBranch = false;
 
     this._activeOnTabs = new Set();
+    this._showedOptInOnTabs = new Set();
 
     const pref = `disabled_shims.${this.id}`;
 
@@ -158,13 +159,22 @@ class Shim {
     return this._allowRequestsInETP();
   }
 
-  _allowRequestsInETP() {
+  async _allowRequestsInETP() {
     const matches = this.matches.map(m => m.patterns).flat();
-    return browser.trackingProtection.allow(this.id, matches, {
-      hosts: this.hosts,
-      notHosts: this.notHosts,
-      hostOptIns: Array.from(this._hostOptIns),
-    });
+    if (matches.length) {
+      await browser.trackingProtection.shim(this.id, matches);
+    }
+
+    if (this._hostOptIns.size) {
+      const optIns = this.getApplicableOptIns();
+      if (optIns.length) {
+        await browser.trackingProtection.allow(
+          this.id,
+          this._optInPatterns,
+          Array.from(this._hostOptIns)
+        );
+      }
+    }
   }
 
   _revokeRequestsInETP() {
@@ -176,6 +186,7 @@ class Shim {
       this._activeOnTabs.add(tabId);
     } else {
       this._activeOnTabs.delete(tabId);
+      this._showedOptInOnTabs.delete(tabId);
     }
   }
 
@@ -228,22 +239,6 @@ class Shim {
     return undefined;
   }
 
-  getAllOptIns() {
-    if (this._allOptIns) {
-      return this._allOptIns;
-    }
-    const optins = [];
-    for (const unblock of this.unblocksOnOptIn || []) {
-      if (typeof unblock === "string") {
-        optins.push(unblock);
-      } else {
-        optins.push.apply(optins, unblock.patterns);
-      }
-    }
-    this._allOptIns = optins;
-    return optins;
-  }
-
   async getApplicableOptIns() {
     if (this._applicableOptIns) {
       return this._applicableOptIns;
@@ -276,20 +271,34 @@ class Shim {
   async onUserOptIn(host) {
     const optins = await this.getApplicableOptIns();
     if (optins.length) {
-      const { matches } = this;
       this.userHasOptedIn = true;
-      const toUnblock = [...matches.map(m => m.patterns).flat(), ...optins];
-      await browser.trackingProtection.allow(this.id, toUnblock, {
-        hosts: this.hosts,
-        hostOptIns: [host],
-      });
+      this._hostOptIns.add(host);
+      await browser.trackingProtection.allow(
+        this.id,
+        optins,
+        Array.from(this._hostOptIns)
+      );
     }
-
-    this._hostOptIns.add(host);
   }
 
   hasUserOptedInAlready(host) {
     return this._hostOptIns.has(host);
+  }
+
+  showOptInWarningOnce(tabId, origin) {
+    if (this._showedOptInOnTabs.has(tabId)) {
+      return Promise.resolve();
+    }
+    this._showedOptInOnTabs.add(tabId);
+
+    const { bug, name } = this;
+    const warning = `${name} is allowed on ${origin} for this browsing session due to user opt-in. See https://bugzilla.mozilla.org/show_bug.cgi?id=${bug} for details.`;
+    return browser.tabs
+      .executeScript(tabId, {
+        code: `console.warn(${JSON.stringify(warning)})`,
+        runAt: "document_start",
+      })
+      .catch(() => {});
   }
 }
 
@@ -325,17 +334,10 @@ class Shims {
     }
 
     const allMatchTypePatterns = new Map();
-    const allOptInPatterns = new Set();
     const allLogos = [];
     for (const shim of this.shims.values()) {
       const { logos, matches } = shim;
       allLogos.push(...logos);
-      const optins = shim.getAllOptIns();
-      if (optins.length) {
-        for (const pattern of optins || []) {
-          allOptInPatterns.add(pattern);
-        }
-      }
       for (const { patterns, types } of matches || []) {
         for (const type of types) {
           if (!allMatchTypePatterns.has(type)) {
@@ -349,11 +351,6 @@ class Shims {
       }
     }
 
-    if (!allMatchTypePatterns.size) {
-      debug("Skipping shims; none enabled");
-      return;
-    }
-
     if (allLogos.length) {
       const urls = Array.from(new Set(allLogos)).map(l => {
         return `${LogosBaseURL}${l}`;
@@ -365,8 +362,10 @@ class Shims {
         }
       };
       browser.tabs.onRemoved.addListener(unmarkShimsActive);
-      browser.tabs.onUpdated.addListener(unmarkShimsActive, {
-        properties: ["discarded", "url"],
+      browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+        if (changeInfo.discarded || changeInfo.url) {
+          unmarkShimsActive(tabId);
+        }
       });
       browser.webRequest.onBeforeRequest.addListener(
         this._redirectLogos.bind(this),
@@ -375,12 +374,9 @@ class Shims {
       );
     }
 
-    if (allOptInPatterns.size) {
-      browser.webRequest.onBeforeRequest.addListener(
-        this._ensureOptInRequestAllowedOnTab.bind(this),
-        { urls: Array.from(allOptInPatterns) },
-        ["blocking"]
-      );
+    if (!allMatchTypePatterns.size) {
+      debug("Skipping shims; none enabled");
+      return;
     }
 
     for (const [type, { patterns }] of allMatchTypePatterns.entries()) {
@@ -461,11 +457,10 @@ class Shims {
     } else if (message === "optIn") {
       try {
         await shim.onUserOptIn(new URL(url).hostname);
-        const { name, bug } = shim;
         const origin = new URL(tab.url).origin;
         warn(
           "** User opted in for",
-          name,
+          shim.name,
           "shim on",
           origin,
           "on tab",
@@ -473,12 +468,7 @@ class Shims {
           "frame",
           frameId
         );
-        const warning = `${name} is now being allowed on ${origin} for this browsing session. See https://bugzilla.mozilla.org/show_bug.cgi?id=${bug} for details.`;
-        await browser.tabs.executeScript(id, {
-          code: `console.warn(${JSON.stringify(warning)})`,
-          frameId,
-          runAt: "document_start",
-        });
+        await shim.showOptInWarningOnce(id, origin);
       } catch (err) {
         console.error(err);
         throw new Error("error");
@@ -515,67 +505,6 @@ class Shims {
     }
 
     return { cancel: true };
-  }
-
-  async _ensureOptInRequestAllowedOnTab(details) {
-    await this._haveCheckedEnabledPref;
-
-    if (!this.enabled) {
-      return undefined;
-    }
-
-    // If a user has opted into allowing some tracking requests, we only
-    // want to allow them on those tabs where the opt-in should apply.
-    // This listener ensures that they are otherwise blocked.
-
-    const { frameId, requestId, tabId, url } = details;
-
-    // Ignore requests unrelated to tabs
-    if (tabId < 0) {
-      return undefined;
-    }
-
-    // We need to base our checks not on the frame's host, but the tab's.
-    const topHost = new URL((await browser.tabs.get(tabId)).url).hostname;
-
-    // Sanity check; only worry about requests ETP would actually block
-    if (!(await browser.trackingProtection.wasRequestUnblocked(requestId))) {
-      return undefined;
-    }
-
-    let userOptedIn = false;
-    for (const shim of this.shims.values()) {
-      await shim.ready;
-
-      if (!shim.enabled) {
-        continue;
-      }
-
-      if (!shim.onlyIfBlockedByETP) {
-        continue;
-      }
-
-      if (!shim.meantForHost(topHost)) {
-        continue;
-      }
-
-      if (!shim.hasUserOptedInAlready(topHost)) {
-        continue;
-      }
-
-      if (await shim.unblocksURLOnOptIn(url)) {
-        userOptedIn = true;
-        break;
-      }
-    }
-
-    // reblock the request if the user has not opted into it on the tab
-    if (!userOptedIn) {
-      return { cancel: true };
-    }
-
-    debug(`Allowing ${url} on tab ${tabId} frame ${frameId} due to opt-in`);
-    return undefined;
   }
 
   async _ensureShimForRequestOnTab(details) {
@@ -621,15 +550,18 @@ class Shims {
         continue;
       }
 
-      // If the user has already opted in for this shim, all requests it covers
-      // should be allowed; no need for a shim anymore.
-      if (shim.hasUserOptedInAlready(topHost)) {
-        return undefined;
-      }
-
       // If this URL and content type isn't meant for this shim, don't apply it.
       match = shim.isTriggeredByURLAndType(url, type);
       if (match) {
+        // If the user has already opted in for this shim, all requests it covers
+        // should be allowed; no need for a shim anymore.
+        if (shim.hasUserOptedInAlready(topHost)) {
+          warn(
+            `Allowing tracking ${type} ${url} on tab ${tabId} frame ${frameId} due to opt-in`
+          );
+          shim.showOptInWarningOnce(tabId, new URL(originUrl).origin);
+          return undefined;
+        }
         shimToApply = shim;
         break;
       }

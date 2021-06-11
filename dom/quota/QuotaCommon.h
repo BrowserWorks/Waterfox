@@ -7,6 +7,8 @@
 #ifndef mozilla_dom_quota_quotacommon_h__
 #define mozilla_dom_quota_quotacommon_h__
 
+#include "mozilla/dom/quota/Config.h"
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +25,10 @@
 #include "mozilla/Result.h"
 #include "mozilla/ResultExtensions.h"
 #include "mozilla/ThreadLocal.h"
+#if defined(QM_LOG_ERROR_ENABLED) && defined(QM_ERROR_STACKS_ENABLED)
+#  include "mozilla/Variant.h"
+#endif
+#include "mozilla/dom/QMResult.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
@@ -845,35 +851,37 @@ class NotNull;
 
 // QM_NOTEONLY_TRY_INSPECT doesn't make sense.
 
-/*
- * QM_OR_ELSE_WARN(expr, orElse) evaluates expr, which must produce a Result
- * value. On Success, it just moves the success over. On error, it calls
- * HandleError and a custom orElse function (passed as the second argument).
- * Failures are always reported as warnings. The macro essentially wraps the
- * orElse function with a warning. The macro is a sub macro and is intended to
- * be used along with one of the main macros such as QM_TRY.
- */
-#define QM_OR_ELSE_WARN(expr, orElseFunc)                         \
-  (expr).orElse([&](const auto& firstRes) {                       \
-    mozilla::dom::quota::QM_HANDLE_ERROR(                         \
-        #expr, firstRes, mozilla::dom::quota::Severity::Warning); \
-    return orElseFunc(firstRes);                                  \
+// QM_OR_ELSE_REPORT macro is an implementation detail of
+// QM_OR_ELSE_WARN/QM_OR_ELSE_NOTE/QM_OR_ELSE_LOG_VERBOSE and shouldn't be used
+// directly.
+
+#define QM_OR_ELSE_REPORT(severity, expr, fallback)                \
+  (expr).orElse([&](const auto& firstRes) {                        \
+    mozilla::dom::quota::QM_HANDLE_ERROR(                          \
+        #expr, firstRes, mozilla::dom::quota::Severity::severity); \
+    return fallback(firstRes);                                     \
   })
+
+/*
+ * QM_OR_ELSE_WARN(expr, fallback) evaluates expr, which must produce a Result
+ * value. On Success, it just moves the success over. On error, it calls
+ * HandleError (with the Warning severity) and a fallback function (passed as
+ * the second argument) which produces a new result. Failed expr is always
+ * reported as a warning (the macro essentially wraps the fallback function
+ * with a warning). QM_OR_ELSE_WARN is a sub macro and is intended to be used
+ * along with one of the main macros such as QM_TRY.
+ */
+#define QM_OR_ELSE_WARN(...) QM_OR_ELSE_REPORT(Warning, __VA_ARGS__)
 
 /**
  * QM_OR_ELSE_NOTE is like QM_OR_ELSE_WARN. The only difference is that
  * failures are reported using a lower level of severity relative to failures
  * reported by QM_OR_ELSE_WARN.
  */
-#define QM_OR_ELSE_NOTE(expr, orElseFunc)                                      \
-  (expr).orElse([&](const auto& firstRes) {                                    \
-    mozilla::dom::quota::QM_HANDLE_ERROR(#expr, firstRes,                      \
-                                         mozilla::dom::quota::Severity::Note); \
-    return orElseFunc(firstRes);                                               \
-  })
+#define QM_OR_ELSE_NOTE(...) QM_OR_ELSE_REPORT(Note, __VA_ARGS__)
 
 /**
- * QM_OR_ELSE_LOG is like QM_OR_ELSE_WARN. The only difference is that
+ * QM_OR_ELSE_LOG_VERBOSE is like QM_OR_ELSE_WARN. The only difference is that
  * failures are reported using the lowest severity which is currently ignored
  * in LogError, so nothing goes to the console, browser console and telemetry.
  * Since nothing goes to the telemetry, the macro can't signal the end of the
@@ -881,12 +889,71 @@ class NotNull;
  * telemetry. For that reason, the expression shouldn't contain nested QM_TRY
  * macro uses.
  */
-#define QM_OR_ELSE_LOG(expr, orElseFunc)                                      \
-  (expr).orElse([&](const auto& firstRes) {                                   \
-    mozilla::dom::quota::QM_HANDLE_ERROR(#expr, firstRes,                     \
-                                         mozilla::dom::quota::Severity::Log); \
-    return orElseFunc(firstRes);                                              \
-  })
+#define QM_OR_ELSE_LOG_VERBOSE(...) QM_OR_ELSE_REPORT(Log, __VA_ARGS__)
+
+namespace mozilla::dom::quota {
+
+// XXX Support orElseIf directly in mozilla::Result
+template <typename V, typename E, typename P, typename F>
+auto OrElseIf(Result<V, E>&& aResult, P&& aPred, F&& aFunc) -> Result<V, E> {
+  return MOZ_UNLIKELY(aResult.isErr())
+             ? (std::forward<P>(aPred)(aResult.inspectErr()))
+                   ? std::forward<F>(aFunc)(aResult.unwrapErr())
+                   : aResult.propagateErr()
+             : aResult.unwrap();
+}
+
+}  // namespace mozilla::dom::quota
+
+// QM_OR_ELSE_REPORT_IF macro is an implementation detail of
+// QM_OR_ELSE_WARN_IF/QM_OR_ELSE_NOTE_IF/QM_OR_ELSE_LOG_VERBOSE_IF and
+// shouldn't be used directly.
+
+#define QM_OR_ELSE_REPORT_IF(severity, expr, predicate, fallback) \
+  mozilla::dom::quota::OrElseIf(                                  \
+      (expr),                                                     \
+      [&](const auto& firstRes) {                                 \
+        bool res = predicate(firstRes);                           \
+        mozilla::dom::quota::QM_HANDLE_ERROR(                     \
+            #expr, firstRes,                                      \
+            res ? mozilla::dom::quota::Severity::severity         \
+                : mozilla::dom::quota::Severity::Error);          \
+        return res;                                               \
+      },                                                          \
+      fallback)
+
+/*
+ * QM_OR_ELSE_WARN_IF(expr, predicate, fallback) evaluates expr first, which
+ * must produce a Result value. On Success, it just moves the success over.
+ * On error, it calls a predicate function (passed as the second argument) and
+ * then it either calls HandleError (with the Warning severity) and a fallback
+ * function (passed as the third argument) which produces a new result if the
+ * predicate returned true. Or it calls HandleError (with the Error severity)
+ * and propagates the error result if the predicate returned false. So failed
+ * expr can be reported as a warning or as an error depending on the predicate.
+ * QM_OR_ELSE_WARN_IF is a sub macro and is intended to be used along with one
+ * of the main macros such as QM_TRY.
+ */
+#define QM_OR_ELSE_WARN_IF(...) QM_OR_ELSE_REPORT_IF(Warning, __VA_ARGS__)
+
+/**
+ * QM_OR_ELSE_NOTE_IF is like QM_OR_ELSE_WARN_IF. The only difference is that
+ * failures are reported using a lower level of severity relative to failures
+ * reported by QM_OR_ELSE_WARN_IF.
+ */
+#define QM_OR_ELSE_NOTE_IF(...) QM_OR_ELSE_REPORT_IF(Note, __VA_ARGS__)
+
+/**
+ * QM_OR_ELSE_LOG_VERBOSE_IF is like QM_OR_ELSE_WARN_IF. The only difference is
+ * that failures are reported using the lowest severity which is currently
+ * ignored in LogError, so nothing goes to the console, browser console and
+ * telemetry. Since nothing goes to the telemetry, the macro can't signal the
+ * end of the underlying error stack or change the type of the error stack in
+ * the telemetry. For that reason, the expression shouldn't contain nested
+ * QM_TRY macro uses.
+ */
+#define QM_OR_ELSE_LOG_VERBOSE_IF(...) \
+  QM_OR_ELSE_REPORT_IF(Verbose, __VA_ARGS__)
 
 // Telemetry probes to collect number of failure during the initialization.
 #ifdef NIGHTLY_BUILD
@@ -951,6 +1018,34 @@ auto ErrToDefaultOkOrErr(nsresult aValue) -> Result<V, nsresult> {
     return V{};
   }
   return Err(aValue);
+}
+
+// Helper template function so that QM_TRY predicates checking for a specific
+// error can be concisely written as IsSpecificError<NS_SOME_ERROR> instead of
+// as a more verbose lambda.
+template <nsresult ErrorValue>
+bool IsSpecificError(const nsresult aValue) {
+  return aValue == ErrorValue;
+}
+
+// Helper template function so that QM_TRY fallback functions that are
+// converting errors into specific in-band success values can be concisely
+// written as ErrToOk<SuccessValueToReturn> (with the return type inferred).
+// For example, many file-related APIs that access information about a file may
+// return an nsresult error code if the file does not exist. From an
+// application perspective, the file not existing is not actually exceptional
+// and can instead be handled by the success case.
+template <auto SuccessValue, typename V = decltype(SuccessValue)>
+auto ErrToOk(const nsresult aValue) -> Result<V, nsresult> {
+  return V{SuccessValue};
+}
+
+// Helper template function so that QM_TRY fallback functions that are
+// suppressing errors by converting them into (generic) success can be
+// concisely written as ErrToDefaultOk<>.
+template <typename V = mozilla::Ok>
+auto ErrToDefaultOk(const nsresult aValue) -> Result<V, nsresult> {
+  return V{};
 }
 
 // TODO: Maybe move this to mfbt/ResultExtensions.h
@@ -1075,6 +1170,10 @@ class MOZ_MUST_USE_TYPE GenericErrorResult<mozilla::ipc::IPCResult> {
       : mErrorValue(aErrorValue) {
     MOZ_ASSERT(!aErrorValue);
   }
+
+  GenericErrorResult(mozilla::ipc::IPCResult aErrorValue,
+                     const ErrorPropagationTag&)
+      : GenericErrorResult(aErrorValue) {}
 
   operator mozilla::ipc::IPCResult() const { return mErrorValue; }
 };
@@ -1218,12 +1317,23 @@ enum class Severity {
   Error,
   Warning,
   Note,
-  Log,
+  Verbose,
 };
 
-void LogError(const nsACString& aExpr, Maybe<nsresult> aRv,
+#ifdef QM_LOG_ERROR_ENABLED
+#  ifdef QM_ERROR_STACKS_ENABLED
+using ResultType = Variant<QMResult, nsresult, Nothing>;
+
+void LogError(const nsACString& aExpr, const ResultType& aResult,
               const nsACString& aSourceFilePath, int32_t aSourceFileLine,
-              Severity aSeverity);
+              Severity aSeverity)
+#  else
+void LogError(const nsACString& aExpr, Maybe<nsresult> aMaybeRv,
+              const nsACString& aSourceFilePath, int32_t aSourceFileLine,
+              Severity aSeverity)
+#  endif
+    ;
+#endif
 
 #ifdef DEBUG
 Result<bool, nsresult> WarnIfFileIsUnknown(nsIFile& aFile,
@@ -1231,15 +1341,11 @@ Result<bool, nsresult> WarnIfFileIsUnknown(nsIFile& aFile,
                                            int32_t aSourceFileLine);
 #endif
 
-#if defined(EARLY_BETA_OR_EARLIER) || defined(DEBUG)
-#  define QM_ENABLE_SCOPED_LOG_EXTRA_INFO
-#endif
-
 struct MOZ_STACK_CLASS ScopedLogExtraInfo {
   static constexpr const char kTagQuery[] = "query";
   static constexpr const char kTagContext[] = "context";
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
  private:
   static auto FindSlot(const char* aTag);
 
@@ -1298,11 +1404,23 @@ struct MOZ_STACK_CLASS ScopedLogExtraInfo {
 //
 // This functions are not intended to be called
 // directly, they should only be called from the QM_* macros.
-#if defined(EARLY_BETA_OR_EARLIER) || defined(DEBUG)
+#ifdef QM_LOG_ERROR_ENABLED
 template <typename T>
-MOZ_COLD void HandleError(const char* aExpr, const T& aRv,
-                          const char* aSourceFilePath, int32_t aSourceFileLine,
-                          const Severity aSeverity) {
+MOZ_COLD MOZ_NEVER_INLINE void HandleError(const char* aExpr, const T& aRv,
+                                           const char* aSourceFilePath,
+                                           int32_t aSourceFileLine,
+                                           const Severity aSeverity) {
+#  ifdef QM_ERROR_STACKS_ENABLED
+  if constexpr (std::is_same_v<T, QMResult> || std::is_same_v<T, nsresult>) {
+    mozilla::dom::quota::LogError(nsDependentCString(aExpr), ResultType(aRv),
+                                  nsDependentCString(aSourceFilePath),
+                                  aSourceFileLine, aSeverity);
+  } else {
+    mozilla::dom::quota::LogError(
+        nsDependentCString(aExpr), ResultType(Nothing{}),
+        nsDependentCString(aSourceFilePath), aSourceFileLine, aSeverity);
+  }
+#  else
   if constexpr (std::is_same_v<T, nsresult>) {
     mozilla::dom::quota::LogError(nsDependentCString(aExpr), Some(aRv),
                                   nsDependentCString(aSourceFilePath),
@@ -1312,6 +1430,7 @@ MOZ_COLD void HandleError(const char* aExpr, const T& aRv,
                                   nsDependentCString(aSourceFilePath),
                                   aSourceFileLine, aSeverity);
   }
+#  endif
 }
 #else
 template <typename T>
@@ -1445,15 +1564,6 @@ auto ReduceEachFileAtomicCancelable(nsIFile& aDirectory,
 
 constexpr bool IsDatabaseCorruptionError(const nsresult aRv) {
   return aRv == NS_ERROR_FILE_CORRUPTED || aRv == NS_ERROR_STORAGE_IOERR;
-}
-
-template <auto SuccessValue, typename V = decltype(SuccessValue)>
-auto FilterDatabaseCorruptionError(const nsresult aValue)
-    -> Result<V, nsresult> {
-  if (IsDatabaseCorruptionError(aValue)) {
-    return V{SuccessValue};
-  }
-  return Err(aValue);
 }
 
 template <typename Func>

@@ -267,7 +267,8 @@ Shape* RegExpObject::assignInitialShape(JSContext* cx,
   /* The lastIndex property alone is writable but non-configurable. */
   uint32_t slot;
   if (!NativeObject::addProperty(cx, self, cx->names().lastIndex,
-                                 LAST_INDEX_SLOT, JSPROP_PERMANENT, &slot)) {
+                                 LAST_INDEX_SLOT, {PropertyFlag::Writable},
+                                 &slot)) {
     return nullptr;
   }
   MOZ_ASSERT(slot == LAST_INDEX_SLOT);
@@ -672,7 +673,13 @@ RegExpRunStatus RegExpShared::execute(JSContext* cx,
   do {
     DebugOnly<bool> alreadyThrowing = cx->isExceptionPending();
     RegExpRunStatus result = irregexp::Execute(cx, re, input, start, matches);
-
+#ifdef DEBUG
+    // Check if we must simulate the interruption
+    if (js::irregexp::IsolateShouldSimulateInterrupt(cx->isolate)) {
+      js::irregexp::IsolateClearShouldSimulateInterrupt(cx->isolate);
+      cx->requestInterrupt(InterruptReason::CallbackUrgent);
+    }
+#endif
     if (result == RegExpRunStatus_Error) {
       /* Execute can return RegExpRunStatus_Error:
        *

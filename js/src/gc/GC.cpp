@@ -199,7 +199,6 @@
 #include "mozilla/ScopeExit.h"
 #include "mozilla/TextUtils.h"
 #include "mozilla/TimeStamp.h"
-#include "mozilla/Unused.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -506,6 +505,14 @@ inline size_t Arena::finalize(JSFreeOp* fop, AllocKind thingKind,
       nfinalized++;
     }
   }
+
+  if constexpr (std::is_same_v<T, JSObject>) {
+    if (isNewlyCreated) {
+      zone->pretenuring.updateCellCountsInNewlyCreatedArenas(
+          nmarked + nfinalized, nmarked);
+    }
+  }
+  isNewlyCreated = 0;
 
   if (thingKind == AllocKind::STRING ||
       thingKind == AllocKind::FAT_INLINE_STRING) {
@@ -1829,13 +1836,17 @@ void GCRuntime::updateHelperThreadCount() {
     return;
   }
 
-  double cpuCount = HelperThreadState().cpuCount;
+  double cpuCount = GetHelperThreadCPUCount();
   size_t target = size_t(cpuCount * helperThreadRatio.ref());
-  helperThreadCount = mozilla::Clamp(target, size_t(1), maxHelperThreads.ref());
-
-  HelperThreadState().ensureThreadCount(helperThreadCount);
+  target = std::clamp(target, size_t(1), maxHelperThreads.ref());
 
   AutoLockHelperThreadState lock;
+
+  // Attempt to create extra threads if possible. This is not supported when
+  // using an external thread pool.
+  (void)HelperThreadState().ensureThreadCount(target, lock);
+
+  helperThreadCount = std::min(target, GetHelperThreadCount());
   HelperThreadState().setGCParallelThreadCount(helperThreadCount, lock);
 }
 
@@ -4208,11 +4219,53 @@ bool GCRuntime::prepareZonesForCollection(JS::GCReason reason,
 }
 
 void GCRuntime::discardJITCodeForGC() {
+  size_t nurserySiteResetCount = 0;
+  size_t pretenuredSiteResetCount = 0;
+
   js::CancelOffThreadIonCompile(rt, JS::Zone::Prepare);
   for (GCZonesIter zone(this); !zone.done(); zone.next()) {
     gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::MARK_DISCARD_CODE);
-    zone->discardJitCode(rt->defaultFreeOp(), Zone::DiscardBaselineCode,
-                         Zone::DiscardJitScripts);
+
+    // We may need to reset allocation sites and discard JIT code to recover if
+    // we find object lifetimes have changed.
+    PretenuringZone& pz = zone->pretenuring;
+    bool resetNurserySites = pz.shouldResetNurseryAllocSites();
+    bool resetPretenuredSites = pz.shouldResetPretenuredAllocSites();
+
+    if (!zone->isPreservingCode()) {
+      Zone::DiscardOptions options;
+      options.discardBaselineCode = true;
+      options.discardJitScripts = true;
+      options.resetNurseryAllocSites = resetNurserySites;
+      options.resetPretenuredAllocSites = resetPretenuredSites;
+      zone->discardJitCode(rt->defaultFreeOp(), options);
+
+    } else if (resetNurserySites || resetPretenuredSites) {
+      zone->resetAllocSitesAndInvalidate(resetNurserySites,
+                                         resetPretenuredSites);
+    }
+
+    if (resetNurserySites) {
+      nurserySiteResetCount++;
+    }
+    if (resetPretenuredSites) {
+      pretenuredSiteResetCount++;
+    }
+  }
+
+  if (nursery().reportPretenuring()) {
+    if (nurserySiteResetCount) {
+      fprintf(
+          stderr,
+          "GC reset nursery alloc sites and invalidated code in %zu zones\n",
+          nurserySiteResetCount);
+    }
+    if (pretenuredSiteResetCount) {
+      fprintf(
+          stderr,
+          "GC reset pretenured alloc sites and invalidated code in %zu zones\n",
+          pretenuredSiteResetCount);
+    }
   }
 }
 
@@ -5745,6 +5798,7 @@ IncrementalProgress GCRuntime::endSweepingSweepGroup(JSFreeOp* fop,
     zone->changeGCState(Zone::Sweep, Zone::Finished);
     zone->arenas.unmarkPreMarkedFreeCells();
     zone->arenas.checkNoArenasToUpdate();
+    zone->pretenuring.clearCellCountsInNewlyCreatedArenas();
   }
 
   /*
@@ -6600,7 +6654,7 @@ void GCRuntime::finishCollection() {
 
   clearBufferedGrayRoots();
 
-  maybeStopStringPretenuring();
+  maybeStopPretenuring();
 
   {
     AutoLockGC lock(this);
@@ -6645,7 +6699,9 @@ void GCRuntime::checkGCStateNotInUse() {
 #endif
 }
 
-void GCRuntime::maybeStopStringPretenuring() {
+void GCRuntime::maybeStopPretenuring() {
+  nursery().maybeStopPretenuring(this);
+
   for (GCZonesIter zone(this); !zone.done(); zone.next()) {
     if (zone->allocNurseryStrings) {
       continue;
@@ -7011,7 +7067,7 @@ void GCRuntime::incrementalSlice(SliceBudget& budget,
 
       incrementalState = State::Mark;
 
-      if (useZeal && hasZealMode(ZealMode::YieldBeforeMarking)) {
+      if (useZeal && hasZealMode(ZealMode::YieldBeforeMarking) && isIncremental) {
         break;
       }
 
@@ -8541,8 +8597,7 @@ void GCRuntime::checkHashTablesAfterMovingGC() {
   rt->geckoProfiler().checkStringsMapAfterMovingGC();
   for (ZonesIter zone(this, SkipAtoms); !zone.done(); zone.next()) {
     zone->checkUniqueIdTableAfterMovingGC();
-    zone->checkInitialShapesTableAfterMovingGC();
-    zone->checkBaseShapeTableAfterMovingGC();
+    zone->shapeZone().checkTablesAfterMovingGC();
     zone->checkAllCrossCompartmentWrappersAfterMovingGC();
     zone->checkScriptMapsAfterMovingGC();
 

@@ -234,7 +234,7 @@
 #include "mozilla/NullPrincipal.h"
 #include "Navigator.h"
 #include "prenv.h"
-#include "URIUtils.h"
+#include "mozilla/ipc/URIUtils.h"
 #include "sslerr.h"
 #include "mozpkix/pkix.h"
 #include "NSSErrorsService.h"
@@ -523,12 +523,11 @@ already_AddRefed<nsDocShell> nsDocShell::Create(
   // Create our ContentListener
   ds->mContentListener = new nsDSURIContentListener(ds);
 
-  // If parent intercept is not enabled then we must forward to
-  // the network controller from docshell.  We also enable if we're
-  // in the parent process in order to support non-e10s configurations.
+  // We enable if we're in the parent process in order to support non-e10s
+  // configurations.
   // Note: This check is duplicated in SharedWorkerInterfaceRequestor's
   // constructor.
-  if (!ServiceWorkerParentInterceptEnabled() || XRE_IsParentProcess()) {
+  if (XRE_IsParentProcess()) {
     ds->mInterceptController = new ServiceWorkerInterceptController();
   }
 
@@ -1190,6 +1189,7 @@ void nsDocShell::FirePageHideShowNonRecursive(bool aShow) {
   // For pagehide, set mFiredUnloadEvent to true, so that unload doesn't fire.
   nsCOMPtr<nsIContentViewer> contentViewer(mContentViewer);
   if (aShow) {
+    contentViewer->SetIsHidden(false);
     mRefreshURIList = std::move(mBFCachedRefreshURIList);
     RefreshURIFromQueue();
     mFiredUnloadEvent = false;
@@ -1216,12 +1216,13 @@ void nsDocShell::FirePageHideShowNonRecursive(bool aShow) {
 
       nsCOMPtr<nsIChannel> channel = doc->GetChannel();
       if (channel) {
-        SetCurrentURI(doc->GetDocumentURI(), channel,
-                      /* aFireOnLocationChange */ true,
-                      /* aIsInitialAboutBlank */ false, /* aLocationFlags */ 0);
+        SetLoadType(LOAD_HISTORY);
         mEODForCurrentDocument = false;
         mIsRestoringDocument = true;
         mLoadGroup->AddRequest(channel, nullptr);
+        SetCurrentURI(doc->GetDocumentURI(), channel,
+                      /* aFireOnLocationChange */ true,
+                      /* aIsInitialAboutBlank */ false, /* aLocationFlags */ 0);
         mLoadGroup->RemoveRequest(channel, nullptr, NS_OK);
         mIsRestoringDocument = false;
       }
@@ -5105,29 +5106,31 @@ nsDocShell::SetTitle(const nsAString& aTitle) {
 
   // Update SessionHistory with the document's title.
   if (mLoadType != LOAD_BYPASS_HISTORY && mLoadType != LOAD_ERROR_PAGE) {
-    SetTitleOnHistoryEntry();
+    SetTitleOnHistoryEntry(true);
   }
 
   return NS_OK;
 }
 
-void nsDocShell::SetTitleOnHistoryEntry() {
+void nsDocShell::SetTitleOnHistoryEntry(bool aUpdateEntryInSessionHistory) {
   if (mOSHE) {
     mOSHE->SetTitle(mTitle);
   }
 
   if (mActiveEntry && mBrowsingContext) {
     mActiveEntry->SetTitle(mTitle);
-    if (XRE_IsParentProcess()) {
-      SessionHistoryEntry* entry =
-          mBrowsingContext->Canonical()->GetActiveSessionHistoryEntry();
-      if (entry) {
-        entry->SetTitle(mTitle);
+    if (aUpdateEntryInSessionHistory) {
+      if (XRE_IsParentProcess()) {
+        SessionHistoryEntry* entry =
+            mBrowsingContext->Canonical()->GetActiveSessionHistoryEntry();
+        if (entry) {
+          entry->SetTitle(mTitle);
+        }
+      } else {
+        mozilla::Unused
+            << ContentChild::GetSingleton()->SendSessionHistoryEntryTitle(
+                   mBrowsingContext, mTitle);
       }
-    } else {
-      mozilla::Unused
-          << ContentChild::GetSingleton()->SendSessionHistoryEntryTitle(
-                 mBrowsingContext, mTitle);
     }
   }
 }
@@ -8872,6 +8875,11 @@ nsresult nsDocShell::HandleSameDocumentNavigation(
           ("nsDocShell::HandleSameDocumentNavigation %p %s -> %s", this,
            mCurrentURI->GetSpecOrDefault().get(),
            aLoadState->URI()->GetSpecOrDefault().get()));
+
+  RefPtr<Document> doc = GetDocument();
+  NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
+  doc->DoNotifyPossibleTitleChange();
+
   nsCOMPtr<nsIURI> currentURI = mCurrentURI;
 
   // Save the position of the scrollers.
@@ -8909,8 +8917,6 @@ nsresult nsDocShell::HandleSameDocumentNavigation(
   }
 
   // Set the doc's URI according to the new history entry's URI.
-  RefPtr<Document> doc = GetDocument();
-  NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
   doc->SetDocumentURI(aLoadState->URI());
 
   /* This is a anchor traversal within the same page.
@@ -9061,10 +9067,10 @@ nsresult nsDocShell::HandleSameDocumentNavigation(
      * SH menus in go/back/forward buttons won't be empty for this.
      * Note, this happens on mOSHE (and mActiveEntry in the future) because of
      * the code above.
-     * XXX HandleSameDocumentNavigation needs to be made work with
-     *     session-history-in-parent, and then this might not be needed.
+     * Note, when session history lives in the parent process, this does not
+     * update the title there.
      */
-    SetTitleOnHistoryEntry();
+    SetTitleOnHistoryEntry(false);
   } else {
     if (aLoadState->LoadIsFromSessionHistory()) {
       MOZ_LOG(
@@ -9081,7 +9087,9 @@ nsresult nsDocShell::HandleSameDocumentNavigation(
 
       // Set the title for the SH entry for this target url so that
       // SH menus in go/back/forward buttons won't be empty for this.
-      SetTitleOnHistoryEntry();
+      // Note, when session history lives in the parent process, this does not
+      // update the title there.
+      SetTitleOnHistoryEntry(false);
     } else {
       Maybe<bool> scrollRestorationIsManual;
       if (mActiveEntry) {
@@ -9873,6 +9881,8 @@ nsIPrincipal* nsDocShell::GetInheritedPrincipal(
     aLoadInfo->SetIsFormSubmission(true);
   }
 
+  aLoadInfo->SetUnstrippedURI(aLoadState->GetUnstrippedURI());
+
   nsCOMPtr<nsIChannel> channel;
   aRv = CreateRealChannelForDocument(getter_AddRefs(channel), aLoadState->URI(),
                                      aLoadInfo, aCallbacks, aLoadFlags, srcdoc,
@@ -10447,8 +10457,18 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
   nsLoadFlags loadFlags = aLoadState->CalculateChannelLoadFlags(
       mBrowsingContext, Some(uriModified), Some(isXFOError));
 
+  // Get the unstripped URI from the current document channel. The unstripped
+  // URI will be preserved if it's a reload.
+  nsCOMPtr<nsIURI> currentUnstrippedURI;
+  nsCOMPtr<nsIChannel> docChannel = GetCurrentDocChannel();
+  if (docChannel) {
+    nsCOMPtr<nsILoadInfo> docLoadInfo = docChannel->LoadInfo();
+    docLoadInfo->GetUnstrippedURI(getter_AddRefs(currentUnstrippedURI));
+  }
+
   // Strip the target query parameters before creating the channel.
-  aLoadState->MaybeStripTrackerQueryStrings(mBrowsingContext);
+  aLoadState->MaybeStripTrackerQueryStrings(mBrowsingContext,
+                                            currentUnstrippedURI);
 
   nsCOMPtr<nsIChannel> channel;
   if (DocumentChannel::CanUseDocumentChannel(aLoadState->URI())) {
@@ -11291,6 +11311,9 @@ nsresult nsDocShell::UpdateURLAndHistory(Document* aDocument, nsIURI* aNewURI,
   // Implements
   // https://html.spec.whatwg.org/multipage/history.html#url-and-history-update-steps
 
+  // If we have a pending title change, handle it before creating a new entry.
+  aDocument->DoNotifyPossibleTitleChange();
+
   // Step 2, if aReplace is false: Create a new entry in the session
   // history. This will erase all SHEntries after the new entry and make this
   // entry the current one.  This operation may modify mOSHE, which we need
@@ -11662,6 +11685,8 @@ nsresult nsDocShell::AddToSessionHistory(
   bool expired = false;  // by default the page is not expired
   bool discardLayoutState = false;
   nsCOMPtr<nsICacheInfoChannel> cacheChannel;
+  bool userActivation = false;
+
   if (aChannel) {
     cacheChannel = do_QueryInterface(aChannel);
 
@@ -11701,6 +11726,8 @@ nsresult nsDocShell::AddToSessionHistory(
     }
 
     loadInfo->GetResultPrincipalURI(getter_AddRefs(resultPrincipalURI));
+
+    userActivation = loadInfo->GetHasValidUserGestureActivation();
 
     // For now keep storing just the principal in the SHEntry.
     if (!principalToInherit) {
@@ -11770,7 +11797,7 @@ nsresult nsDocShell::AddToSessionHistory(
                 principalToInherit, partitionedPrincipalToInherit, csp,
                 HistoryID(), GetCreatedDynamically(), originalURI,
                 resultPrincipalURI, loadReplace, referrerInfo, srcdoc,
-                srcdocEntry, baseURI, saveLayoutState, expired);
+                srcdocEntry, baseURI, saveLayoutState, expired, userActivation);
 
   if (mBrowsingContext->IsTop() && GetSessionHistory()) {
     bool shouldPersist = ShouldAddToSessionHistory(aURI, aChannel);
@@ -11883,7 +11910,8 @@ nsresult nsDocShell::LoadHistoryEntry(nsISHEntry* aEntry, uint32_t aLoadType,
   // in case.
   nsCOMPtr<nsISHEntry> kungFuDeathGrip(aEntry);
 
-  loadState->SetHasValidUserGestureActivation(aUserActivation);
+  loadState->SetHasValidUserGestureActivation(
+      loadState->HasValidUserGestureActivation() || aUserActivation);
 
   return LoadHistoryEntry(loadState, aLoadType, aEntry == mOSHE);
 }
@@ -11892,7 +11920,8 @@ nsresult nsDocShell::LoadHistoryEntry(const LoadingSessionHistoryInfo& aEntry,
                                       uint32_t aLoadType,
                                       bool aUserActivation) {
   RefPtr<nsDocShellLoadState> loadState = aEntry.CreateLoadInfo();
-  loadState->SetHasValidUserGestureActivation(aUserActivation);
+  loadState->SetHasValidUserGestureActivation(
+      loadState->HasValidUserGestureActivation() || aUserActivation);
 
   return LoadHistoryEntry(loadState, aLoadType,
                           aEntry.mLoadingCurrentActiveEntry);
@@ -12091,7 +12120,7 @@ nsDocShell::GetEditor(nsIEditor** aEditor) {
 
 NS_IMETHODIMP
 nsDocShell::SetEditor(nsIEditor* aEditor) {
-  HTMLEditor* htmlEditor = aEditor ? aEditor->AsHTMLEditor() : nullptr;
+  HTMLEditor* htmlEditor = aEditor ? aEditor->GetAsHTMLEditor() : nullptr;
   // If TextEditor comes, throw an error.
   if (aEditor && !htmlEditor) {
     return NS_ERROR_INVALID_ARG;

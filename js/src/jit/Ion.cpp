@@ -11,7 +11,6 @@
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ThreadLocal.h"
-#include "mozilla/Unused.h"
 
 #include "gc/FreeOp.h"
 #include "gc/Marking.h"
@@ -62,7 +61,7 @@
 #include "util/Memory.h"
 #include "util/Windows.h"
 #include "vm/BytecodeIterator.h"
-#include "vm/HelperThreadState.h"
+#include "vm/HelperThreads.h"
 #include "vm/Realm.h"
 #include "vm/TraceLogging.h"
 #ifdef MOZ_VTUNE
@@ -1712,7 +1711,7 @@ static AbortReason IonCompile(JSContext* cx, HandleScript script,
 
     // The allocator and associated data will be destroyed after being
     // processed in the finishedOffThreadCompilations list.
-    mozilla::Unused << alloc.release();
+    (void)alloc.release();
 
     return AbortReason::NoAbort;
   }
@@ -1938,7 +1937,7 @@ bool jit::OffThreadCompilationAvailable(JSContext* cx) {
   // Require cpuCount > 1 so that Ion compilation jobs and active-thread
   // execution are not competing for the same resources.
   return cx->runtime()->canUseOffthreadIonCompilation() &&
-         HelperThreadState().cpuCount > 1 && CanUseExtraThreads();
+         GetHelperThreadCPUCount() > 1 && CanUseExtraThreads();
 }
 
 MethodStatus jit::CanEnterIon(JSContext* cx, RunState& state) {

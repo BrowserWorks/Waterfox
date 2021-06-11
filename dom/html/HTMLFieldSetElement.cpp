@@ -18,7 +18,7 @@ namespace mozilla::dom {
 
 HTMLFieldSetElement::HTMLFieldSetElement(
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
-    : nsGenericHTMLFormElement(std::move(aNodeInfo), NS_FORM_FIELDSET),
+    : nsGenericHTMLFormElement(std::move(aNodeInfo), FormControlType::Fieldset),
       mElements(nullptr),
       mFirstLegend(nullptr),
       mInvalidElementsCount(0) {
@@ -119,9 +119,9 @@ HTMLFieldSetElement::SubmitNamesValues(HTMLFormSubmission* aFormSubmission) {
   return NS_OK;
 }
 
-nsresult HTMLFieldSetElement::InsertChildBefore(nsIContent* aChild,
-                                                nsIContent* aBeforeThis,
-                                                bool aNotify) {
+void HTMLFieldSetElement::InsertChildBefore(nsIContent* aChild,
+                                            nsIContent* aBeforeThis,
+                                            bool aNotify, ErrorResult& aRv) {
   bool firstLegendHasChanged = false;
 
   if (aChild->IsHTMLElement(nsGkAtoms::legend)) {
@@ -140,15 +140,15 @@ nsresult HTMLFieldSetElement::InsertChildBefore(nsIContent* aChild,
     }
   }
 
-  nsresult rv =
-      nsGenericHTMLFormElement::InsertChildBefore(aChild, aBeforeThis, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsGenericHTMLFormElement::InsertChildBefore(aChild, aBeforeThis, aNotify,
+                                              aRv);
+  if (aRv.Failed()) {
+    return;
+  }
 
   if (firstLegendHasChanged) {
     NotifyElementsForFirstLegendChange(aNotify);
   }
-
-  return rv;
 }
 
 void HTMLFieldSetElement::RemoveChildNode(nsIContent* aKid, bool aNotify) {

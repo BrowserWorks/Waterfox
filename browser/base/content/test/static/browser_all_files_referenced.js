@@ -69,6 +69,11 @@ if (AppConstants.MOZ_BACKGROUNDTASKS) {
   gExceptionPaths.push("resource://gre/modules/backgroundtasks/");
 }
 
+// Bug 1710546 https://bugzilla.mozilla.org/show_bug.cgi?id=1710546
+if (AppConstants.NIGHTLY_BUILD) {
+  gExceptionPaths.push("resource://builtin-addons/translations/");
+}
+
 // Each whitelist entry should have a comment indicating which file is
 // referencing the whitelisted file in a way that the test can't detect, or a
 // bug number to remove or use the file if it is indeed currently unreferenced.
@@ -183,10 +188,10 @@ var whitelist = [
     platforms: ["linux", "macosx"],
   },
   // Bug 1344267
-  { file: "chrome://marionette/content/test.xhtml" },
-  { file: "chrome://marionette/content/test_dialog.properties" },
-  { file: "chrome://marionette/content/test_dialog.xhtml" },
-  { file: "chrome://marionette/content/test_menupopup.xhtml" },
+  { file: "chrome://remote/content/marionette/test.xhtml" },
+  { file: "chrome://remote/content/marionette/test_dialog.properties" },
+  { file: "chrome://remote/content/marionette/test_dialog.xhtml" },
+  { file: "chrome://remote/content/marionette/test_menupopup.xhtml" },
   // Bug 1348559
   { file: "chrome://pippki/content/resetpassword.xhtml" },
   // Bug 1337345
@@ -239,6 +244,11 @@ var whitelist = [
   {
     file:
       "resource://gre/localization/en-US/toolkit/updates/backgroundupdate.ftl",
+  },
+  // Bug 1713242 - referenced by aboutThirdParty.html which is only for Windows
+  {
+    file: "resource://gre/localization/en-US/toolkit/about/aboutThirdParty.ftl",
+    platforms: ["linux", "macosx"],
   },
 ];
 
@@ -318,13 +328,13 @@ if (!isDevtools) {
   }
   // resource://devtools/shared/worker/loader.js,
   // resource://devtools/shared/builtin-modules.js
-  if (!AppConstants.ENABLE_REMOTE_AGENT) {
+  if (!AppConstants.ENABLE_WEBDRIVER) {
     whitelist.add("resource://gre/modules/jsdebugger.jsm");
   }
 }
 
 if (AppConstants.MOZ_CODE_COVERAGE) {
-  whitelist.add("chrome://marionette/content/PerTestCoverageUtils.jsm");
+  whitelist.add("chrome://remote/content/marionette/PerTestCoverageUtils.jsm");
 }
 
 const gInterestingCategories = new Set([

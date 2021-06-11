@@ -286,18 +286,14 @@ if (AppConstants.MOZ_CRASHREPORTER) {
   );
 }
 
-if ("@mozilla.org/remote/marionette;1" in Cc) {
+if (AppConstants.ENABLE_WEBDRIVER) {
   XPCOMUtils.defineLazyServiceGetter(
     this,
     "Marionette",
     "@mozilla.org/remote/marionette;1",
     "nsIMarionette"
   );
-} else {
-  this.Marionette = { running: false };
-}
 
-if (AppConstants.ENABLE_REMOTE_AGENT) {
   XPCOMUtils.defineLazyServiceGetter(
     this,
     "RemoteAgent",
@@ -305,6 +301,7 @@ if (AppConstants.ENABLE_REMOTE_AGENT) {
     "nsIRemoteAgent"
   );
 } else {
+  this.Marionette = { running: false };
   this.RemoteAgent = { listening: false };
 }
 
@@ -397,33 +394,22 @@ XPCOMUtils.defineLazyGetter(this, "gHighPriorityNotificationBox", () => {
   return new MozElements.NotificationBox(element => {
     element.classList.add("global-notificationbox");
     element.setAttribute("notificationside", "top");
-    element.toggleAttribute("prepend-notifications", gProton);
-    if (gProton) {
-      // With Proton enabled all notification boxes are at the top, built into the browser chrome.
-      let tabNotifications = document.getElementById("tab-notification-deck");
-      // With Proton enabled, notification messages use the CSS box model. When using
-      // negative margins on those notification messages to animate them in or out,
-      // if the ancestry of that node is all using the XUL box model, strange glitches
-      // arise. We sidestep this by containing the global notification box within a
-      // <div> that has CSS block layout.
-      let outer = document.createElement("div");
-      outer.appendChild(element);
-      gNavToolbox.insertBefore(outer, tabNotifications);
-    } else {
-      document.getElementById("appcontent").prepend(element);
-    }
+    element.setAttribute("prepend-notifications", true);
+    // Notification messages use the CSS box model. When using
+    // negative margins on those notification messages to animate them in or out,
+    // if the ancestry of that node is all using the XUL box model, strange glitches
+    // arise. We sidestep this by containing the global notification box within a
+    // <div> that has CSS block layout.
+    let outer = document.createElement("div");
+    outer.appendChild(element);
+    let tabNotifications = document.getElementById("tab-notification-deck");
+    gNavToolbox.insertBefore(outer, tabNotifications);
   });
 });
 
 // Regular notification bars shown at the bottom of the window.
 XPCOMUtils.defineLazyGetter(this, "gNotificationBox", () => {
-  return gProton
-    ? gHighPriorityNotificationBox
-    : new MozElements.NotificationBox(element => {
-        element.classList.add("global-notificationbox");
-        element.setAttribute("notificationside", "bottom");
-        document.getElementById("browser-bottombox").appendChild(element);
-      });
+  return gHighPriorityNotificationBox;
 });
 
 XPCOMUtils.defineLazyGetter(this, "InlineSpellCheckerUI", () => {
@@ -550,22 +536,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
   false
 );
 
-/* Work around the pref callback being run after the document has been unlinked.
-   See bug 1543537. */
-var docWeak = Cu.getWeakReference(document);
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
-  "gProton",
-  "browser.proton.enabled",
-  false,
-  (pref, oldValue, newValue) => {
-    let doc = docWeak.get();
-    if (doc) {
-      doc.documentElement.toggleAttribute("proton", newValue);
-    }
-  }
-);
-
 /* Temporary pref while the dust settles around the updated tooltip design
    for tabs and bookmarks toolbar. This will eventually be removed and
    browser.proton.enabled will be used instead. */
@@ -573,14 +543,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
   this,
   "gProtonPlacesTooltip",
   "browser.proton.places-tooltip.enabled",
-  false
-);
-
-/* Temporary pref while the Proton doorhangers work stablizes. */
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
-  "gProtonDoorhangers",
-  "browser.proton.doorhangers.enabled",
   false
 );
 
@@ -1703,8 +1665,6 @@ var gBrowserInit = {
     ) {
       document.documentElement.setAttribute("icon", "main-window");
     }
-
-    document.documentElement.toggleAttribute("proton", gProton);
 
     // Call this after we set attributes that might change toolbars' computed
     // text color.
@@ -3046,8 +3006,8 @@ function BrowserCloseTabOrWindow(event) {
   gBrowser.removeCurrentTab({ animate: true });
 }
 
-function BrowserTryToCloseWindow() {
-  if (WindowIsClosing()) {
+function BrowserTryToCloseWindow(event) {
+  if (WindowIsClosing(event)) {
     window.close();
   } // WindowIsClosing does all the necessary checks
 }
@@ -4169,13 +4129,9 @@ const BrowserSearch = {
    * has search engines.
    */
   updateOpenSearchBadge() {
-    if (gProton) {
-      gURLBar.addSearchEngineHelper.setEnginesFromBrowser(
-        gBrowser.selectedBrowser
-      );
-    } else {
-      BrowserPageActions.addSearchEngine.updateEngines();
-    }
+    gURLBar.addSearchEngineHelper.setEnginesFromBrowser(
+      gBrowser.selectedBrowser
+    );
 
     var searchBar = this.searchBar;
     if (!searchBar) {
@@ -4992,6 +4948,12 @@ var XULBrowserWindow = {
       document.getElementById("View:PageSource"),
     ]);
   },
+  get _menuItemForRepairTextEncoding() {
+    delete this._menuItemForRepairTextEncoding;
+    return (this._menuItemForRepairTextEncoding = document.getElementById(
+      "repair-text-encoding"
+    ));
+  },
 
   setDefaultStatus(status) {
     this.defaultStatus = status;
@@ -5140,6 +5102,18 @@ var XULBrowserWindow = {
         }
 
         this._updateElementsForContentType();
+
+        // Update Override Text Encoding state.
+        // Can't cache the button, because the presence of the element in the DOM
+        // may change over time.
+        let button = document.getElementById("characterencoding-button");
+        if (browser.mayEnableCharacterEncodingMenu) {
+          this._menuItemForRepairTextEncoding.removeAttribute("disabled");
+          button?.removeAttribute("disabled");
+        } else {
+          this._menuItemForRepairTextEncoding.setAttribute("disabled", "true");
+          button?.setAttribute("disabled", "true");
+        }
       }
 
       this.isBusy = false;
@@ -5256,6 +5230,15 @@ var XULBrowserWindow = {
     gTabletModePageCounter.inc();
 
     this._updateElementsForContentType();
+
+    // Unconditionally disable the Text Encoding button during load to
+    // keep the UI calm when navigating from one modern page to another and
+    // the toolbar button is visible.
+    // Can't cache the button, because the presence of the element in the DOM
+    // may change over time.
+    let button = document.getElementById("characterencoding-button");
+    this._menuItemForRepairTextEncoding.setAttribute("disabled", "true");
+    button?.setAttribute("disabled", "true");
 
     // Try not to instantiate gCustomizeMode as much as possible,
     // so don't use CustomizeMode.jsm to check for URI or customizing.
@@ -6686,7 +6669,7 @@ const nodeToTooltipMap = {
   "appMenu-zoomReset-button2": "zoomReset-button.tooltip",
   "appMenu-zoomReduce-button": "zoomReduce-button.tooltip",
   "appMenu-zoomReduce-button2": "zoomReduce-button.tooltip",
-  "reader-mode-button": "reader-mode-button.tooltip",
+  "reader-mode-button-icon": "reader-mode-button.tooltip",
   "print-button": "printButton.tooltip",
 };
 const nodeToShortcutMap = {
@@ -6712,7 +6695,7 @@ const nodeToShortcutMap = {
   "appMenu-zoomReset-button2": "key_fullZoomReset",
   "appMenu-zoomReduce-button": "key_fullZoomReduce",
   "appMenu-zoomReduce-button2": "key_fullZoomReduce",
-  "reader-mode-button": "key_toggleReaderMode",
+  "reader-mode-button-icon": "key_toggleReaderMode",
   "print-button": "printKb",
 };
 
@@ -7520,7 +7503,7 @@ var IndexedDBPromptHelper = {
           Ci.nsIPermissionManager.ALLOW_ACTION
         );
       },
-      disableHighlight: gProtonDoorhangers,
+      disableHighlight: true,
     };
 
     var secondaryActions = [
@@ -7619,7 +7602,7 @@ var CanvasPermissionPromptHelper = {
           state && state.checkboxChecked
         );
       },
-      disableHighlight: gProtonDoorhangers,
+      disableHighlight: true,
     };
 
     let secondaryActions = [
@@ -7793,9 +7776,7 @@ var WebAuthnPromptHelper = {
       }
     };
 
-    if (gProtonDoorhangers) {
-      mainAction.disableHighlight = true;
-    }
+    mainAction.disableHighlight = true;
 
     this._tid = tid;
     this._current = PopupNotifications.show(
@@ -7863,8 +7844,20 @@ function CanCloseWindow() {
   return true;
 }
 
-function WindowIsClosing() {
-  if (!closeWindow(false, warnAboutClosingWindow)) {
+function WindowIsClosing(event) {
+  let source;
+  if (event) {
+    let target = event.sourceEvent?.target;
+    if (target?.id?.startsWith("menu_")) {
+      source = "menuitem";
+    } else if (target?.nodeName == "toolbarbutton") {
+      source = "close-button";
+    } else {
+      let key = AppConstants.platform == "macosx" ? "metaKey" : "ctrlKey";
+      source = event[key] ? "shortcut" : "OS";
+    }
+  }
+  if (!closeWindow(false, warnAboutClosingWindow, source)) {
     return false;
   }
 
@@ -7886,9 +7879,11 @@ function WindowIsClosing() {
 /**
  * Checks if this is the last full *browser* window around. If it is, this will
  * be communicated like quitting. Otherwise, we warn about closing multiple tabs.
+ *
+ * @param source where the request to close came from (used for telemetry)
  * @returns true if closing can proceed, false if it got cancelled.
  */
-function warnAboutClosingWindow() {
+function warnAboutClosingWindow(source) {
   // Popups aren't considered full browser windows; we also ignore private windows.
   let isPBWindow =
     PrivateBrowsingUtils.isWindowPrivate(window) &&
@@ -7899,7 +7894,8 @@ function warnAboutClosingWindow() {
   if (!isPBWindow && !toolbar.visible) {
     return gBrowser.warnAboutClosingTabs(
       closingTabs,
-      gBrowser.closingTabsEnum.ALL
+      gBrowser.closingTabsEnum.ALL,
+      source
     );
   }
 
@@ -7937,7 +7933,11 @@ function warnAboutClosingWindow() {
   if (otherWindowExists) {
     return (
       isPBWindow ||
-      gBrowser.warnAboutClosingTabs(closingTabs, gBrowser.closingTabsEnum.ALL)
+      gBrowser.warnAboutClosingTabs(
+        closingTabs,
+        gBrowser.closingTabsEnum.ALL,
+        source
+      )
     );
   }
 
@@ -7959,7 +7959,11 @@ function warnAboutClosingWindow() {
   return (
     AppConstants.platform != "macosx" ||
     isPBWindow ||
-    gBrowser.warnAboutClosingTabs(closingTabs, gBrowser.closingTabsEnum.ALL)
+    gBrowser.warnAboutClosingTabs(
+      closingTabs,
+      gBrowser.closingTabsEnum.ALL,
+      source
+    )
   );
 }
 

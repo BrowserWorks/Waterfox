@@ -7,7 +7,6 @@
 #include "frontend/FunctionEmitter.h"
 
 #include "mozilla/Assertions.h"  // MOZ_ASSERT
-#include "mozilla/Unused.h"
 
 #include "builtin/ModuleObject.h"          // ModuleObject
 #include "frontend/AsyncEmitter.h"         // AsyncEmitter
@@ -312,7 +311,7 @@ bool FunctionEmitter::emitTopLevelFunction(GCThingIndex index) {
   // NOTE: The `index` is not directly stored as an opcode, but we collect the
   // range of indices in `BytecodeEmitter::emitDeclarationInstantiation` instead
   // of discrete indices.
-  mozilla::Unused << index;
+  (void)index;
 
   return true;
 }
@@ -381,9 +380,7 @@ bool FunctionScriptEmitter::prepareForParameters() {
     // parameter exprs, any unobservable environment ops (like pushing the
     // call object, setting '.this', etc) need to go in the prologue, else it
     // messes up breakpoint tests.
-    if (!bce_->switchToMain()) {
-      return false;
-    }
+    bce_->switchToMain();
   }
 
   if (!functionEmitterScope_->enterFunction(bce_, funbox_)) {
@@ -396,9 +393,7 @@ bool FunctionScriptEmitter::prepareForParameters() {
   }
 
   if (!funbox_->hasParameterExprs) {
-    if (!bce_->switchToMain()) {
-      return false;
-    }
+    bce_->switchToMain();
   }
 
   if (funbox_->needsPromiseResult()) {

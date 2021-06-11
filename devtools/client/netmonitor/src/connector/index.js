@@ -80,15 +80,38 @@ class Connector {
     // The owner object (NetMonitorAPI) received all events.
     this.owner = connection.owner;
 
+    if (this.hasResourceCommandSupport) {
+      this.networkFront = await this.watcherFront.getNetworkParentActor();
+    }
+
     await this.commands.targetCommand.watchTargets(
       [this.commands.targetCommand.TYPES.FRAME],
       this.onTargetAvailable
     );
 
-    await this.toolbox.resourceCommand.watchResources(
-      [this.toolbox.resourceCommand.TYPES.DOCUMENT_EVENT],
-      { onAvailable: this.onResourceAvailable }
-    );
+    const { TYPES } = this.toolbox.resourceCommand;
+    const targetResources = [
+      TYPES.DOCUMENT_EVENT,
+      TYPES.NETWORK_EVENT,
+      TYPES.NETWORK_EVENT_STACKTRACE,
+    ];
+
+    if (Services.prefs.getBoolPref("devtools.netmonitor.features.webSockets")) {
+      targetResources.push(TYPES.WEBSOCKET);
+    }
+
+    if (
+      Services.prefs.getBoolPref(
+        "devtools.netmonitor.features.serverSentEvents"
+      )
+    ) {
+      targetResources.push(TYPES.SERVER_SENT_EVENT);
+    }
+
+    await this.toolbox.resourceCommand.watchResources(targetResources, {
+      onAvailable: this.onResourceAvailable,
+      onUpdated: this.onResourceUpdated,
+    });
   }
 
   disconnect() {
@@ -104,18 +127,24 @@ class Connector {
       this.onTargetAvailable
     );
 
+    const { TYPES } = this.toolbox.resourceCommand;
     this.toolbox.resourceCommand.unwatchResources(
-      [this.toolbox.resourceCommand.TYPES.DOCUMENT_EVENT],
-      { onAvailable: this.onResourceAvailable }
+      [
+        TYPES.DOCUMENT_EVENT,
+        TYPES.NETWORK_EVENT,
+        TYPES.NETWORK_EVENT_STACKTRACE,
+        TYPES.WEBSOCKET,
+        TYPES.SERVER_SENT_EVENT,
+      ],
+      {
+        onAvailable: this.onResourceAvailable,
+        onUpdated: this.onResourceUpdated,
+      }
     );
 
     if (this.actions) {
       this.actions.batchReset();
     }
-
-    this.removeListeners();
-
-    this.currentTarget.off("will-navigate", this.willNavigate);
 
     this.webConsoleFront = null;
     this.dataProvider = null;
@@ -134,17 +163,6 @@ class Connector {
       return;
     }
 
-    if (isTargetSwitching) {
-      this.willNavigate();
-    }
-
-    // Listener for `will-navigate` event is (un)registered outside
-    // of the `addListeners` and `removeListeners` methods since
-    // these are used to pause/resume the connector.
-    // Paused network panel should be automatically resumed when page
-    // reload, so `will-navigate` listener needs to be there all the time.
-    targetFront.on("will-navigate", this.willNavigate);
-
     this.webConsoleFront = await this.currentTarget.getFront("console");
 
     this.dataProvider = new FirefoxDataProvider({
@@ -154,24 +172,19 @@ class Connector {
       resourceCommand: this.toolbox.resourceCommand,
     });
 
-    // If this is the first top level target, lets register all the listeners
-    if (!isTargetSwitching) {
-      await this.addListeners();
-    }
-
-    // Initialize Responsive Emulation front for network throttling.
-    this.responsiveFront = await this.currentTarget.getFront("responsive");
-    if (this.hasResourceCommandSupport) {
-      this.networkFront = await this.watcherFront.getNetworkParentActor();
+    // Initialize Responsive Emulation front for network throttling,
+    // only for toolboxes using Watcher and non-legacy Resources.
+    if (!this.hasResourceCommandSupport) {
+      this.responsiveFront = await this.currentTarget.getFront("responsive");
     }
   }
 
-  async onResourceAvailable(resources) {
+  async onResourceAvailable(resources, { areExistingResources }) {
     for (const resource of resources) {
       const { TYPES } = this.toolbox.resourceCommand;
 
       if (resource.resourceType === TYPES.DOCUMENT_EVENT) {
-        this.onDocEvent(resource);
+        this.onDocEvent(resource, { areExistingResources });
         continue;
       }
 
@@ -257,47 +270,6 @@ class Connector {
     }
   }
 
-  async addListeners(ignoreExistingResources = false) {
-    const targetResources = [
-      this.toolbox.resourceCommand.TYPES.NETWORK_EVENT,
-      this.toolbox.resourceCommand.TYPES.NETWORK_EVENT_STACKTRACE,
-    ];
-    if (Services.prefs.getBoolPref("devtools.netmonitor.features.webSockets")) {
-      targetResources.push(this.toolbox.resourceCommand.TYPES.WEBSOCKET);
-    }
-
-    if (
-      Services.prefs.getBoolPref(
-        "devtools.netmonitor.features.serverSentEvents"
-      )
-    ) {
-      targetResources.push(
-        this.toolbox.resourceCommand.TYPES.SERVER_SENT_EVENT
-      );
-    }
-
-    await this.toolbox.resourceCommand.watchResources(targetResources, {
-      onAvailable: this.onResourceAvailable,
-      onUpdated: this.onResourceUpdated,
-      ignoreExistingResources,
-    });
-  }
-
-  removeListeners() {
-    this.toolbox.resourceCommand.unwatchResources(
-      [
-        this.toolbox.resourceCommand.TYPES.NETWORK_EVENT,
-        this.toolbox.resourceCommand.TYPES.NETWORK_EVENT_STACKTRACE,
-        this.toolbox.resourceCommand.TYPES.WEBSOCKET,
-        this.toolbox.resourceCommand.TYPES.SERVER_SENT_EVENT,
-      ],
-      {
-        onAvailable: this.onResourceAvailable,
-        onUpdated: this.onResourceUpdated,
-      }
-    );
-  }
-
   enableActions(enable) {
     this.dataProvider.enableActions(enable);
   }
@@ -362,14 +334,29 @@ class Connector {
    *
    * @param {object} resource The DOCUMENT_EVENT resource
    */
-  onDocEvent(resource) {
+  onDocEvent(resource, { areExistingResources }) {
     if (!resource.targetFront.isTopLevel) {
-      // Only handle document events for the top level target.
+      // Only consider top level document, and ignore remote iframes top document
       return;
     }
 
-    if (resource.name === "dom-loading") {
-      // Netmonitor does not support dom-loading event yet.
+    // Netmonitor does not support dom-loading
+    if (
+      resource.name != "dom-interactive" &&
+      resource.name != "dom-complete" &&
+      resource.name != "will-navigate"
+    ) {
+      return;
+    }
+
+    if (resource.name == "will-navigate") {
+      // When we open the netmonitor while the page already started loading,
+      // we don't want to clear it. So here, we ignore will-navigate events
+      // which were stored in the ResourceCommand cache and only consider
+      // the live one coming straight from the server.
+      if (!areExistingResources) {
+        this.willNavigate();
+      }
       return;
     }
 

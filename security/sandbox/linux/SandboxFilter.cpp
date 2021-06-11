@@ -93,17 +93,17 @@ static_assert(F_GET_SEALS == (F_LINUX_SPECIFIC_BASE + 10));
 #endif
 
 namespace {
-  static const unsigned long kIoctlTypeMask = _IOC_TYPEMASK << _IOC_TYPESHIFT;
-  static const unsigned long kTtyIoctls = TIOCSTI & kIoctlTypeMask;
-  // On some older architectures (but not x86 or ARM), ioctls are
-  // assigned type fields differently, and the TIOC/TC/FIO group
-  // isn't all the same type.  If/when we support those archs,
-  // this would need to be revised (but really this should be a
-  // default-deny policy; see below).
-  static_assert(kTtyIoctls == (TCSETA & kIoctlTypeMask) &&
-      kTtyIoctls == (FIOASYNC & kIoctlTypeMask),
-      "tty-related ioctls use the same type");
-};
+static const unsigned long kIoctlTypeMask = _IOC_TYPEMASK << _IOC_TYPESHIFT;
+static const unsigned long kTtyIoctls = TIOCSTI & kIoctlTypeMask;
+// On some older architectures (but not x86 or ARM), ioctls are
+// assigned type fields differently, and the TIOC/TC/FIO group
+// isn't all the same type.  If/when we support those archs,
+// this would need to be revised (but really this should be a
+// default-deny policy; see below).
+static_assert(kTtyIoctls == (TCSETA & kIoctlTypeMask) &&
+                  kTtyIoctls == (FIOASYNC & kIoctlTypeMask),
+              "tty-related ioctls use the same type");
+};  // namespace
 
 // This file defines the seccomp-bpf system call filter policies.
 // See also SandboxFilterUtil.h, for the CASES_FOR_* macros and
@@ -295,12 +295,33 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
     // to handle the flags != 0 case is left to userspace; this is
     // impossible to do correctly in all cases, but that's not our
     // problem.
+    //
+    // Starting with kernel 5.8+ and glibc 2.33, there is faccessat2 that
+    // supports flags, handled below.
     if (fd != AT_FDCWD && path[0] != '/') {
       SANDBOX_LOG_ERROR("unsupported fd-relative faccessat(%d, \"%s\", %d)", fd,
                         path, mode);
       return BlockedSyscallTrap(aArgs, nullptr);
     }
     return broker->Access(path, mode);
+  }
+
+  static intptr_t AccessAt2Trap(ArgsRef aArgs, void* aux) {
+    auto* broker = static_cast<SandboxBrokerClient*>(aux);
+    auto fd = static_cast<int>(aArgs.args[0]);
+    const auto* path = reinterpret_cast<const char*>(aArgs.args[1]);
+    auto mode = static_cast<int>(aArgs.args[2]);
+    auto flags = static_cast<int>(aArgs.args[3]);
+    if (fd != AT_FDCWD && path[0] != '/') {
+      SANDBOX_LOG_ERROR(
+          "unsupported fd-relative faccessat2(%d, \"%s\", %d, %d)", fd, path,
+          mode, flags);
+      return BlockedSyscallTrap(aArgs, nullptr);
+    }
+    if ((flags & ~AT_EACCESS) == 0) {
+      return broker->Access(path, mode);
+    }
+    return ConvertError(ENOSYS);
   }
 
   static intptr_t StatAtTrap(ArgsRef aArgs, void* aux) {
@@ -630,6 +651,8 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
           return Trap(OpenAtTrap, mBroker);
         case __NR_faccessat:
           return Trap(AccessAtTrap, mBroker);
+        case __NR_faccessat2:
+          return Trap(AccessAt2Trap, mBroker);
         CASES_FOR_fstatat:
           return Trap(StatAtTrap, mBroker);
         // Used by new libc and Rust's stdlib, if available.
@@ -834,6 +857,9 @@ class SandboxPolicyCommon : public SandboxPolicyBase {
         // Thread creation.
       case __NR_clone:
         return ClonePolicy(InvalidSyscall());
+
+      case __NR_clone3:
+        return Error(ENOSYS);
 
         // More thread creation.
 #ifdef __NR_set_robust_list
@@ -1244,6 +1270,7 @@ class ContentSandboxPolicy : public SandboxPolicyCommon {
 #endif
         case __NR_openat:
         case __NR_faccessat:
+        case __NR_faccessat2:
         CASES_FOR_fstatat:
         case __NR_fchmodat:
         case __NR_linkat:
@@ -1480,6 +1507,9 @@ class ContentSandboxPolicy : public SandboxPolicyCommon {
       case __NR_clone:
         return ClonePolicy(Error(EPERM));
 
+      case __NR_clone3:
+        return Error(ENOSYS);
+
 #  ifdef __NR_fadvise64
       case __NR_fadvise64:
         return Allow();
@@ -1713,9 +1743,8 @@ class RDDSandboxPolicy final : public SandboxPolicyCommon {
         Arg<unsigned long> request(1);
         // ffmpeg, and anything else that calls isatty(), will be told
         // that nothing is a typewriter:
-        return If(request == TCGETS, Error(ENOTTY))
-            .Else(InvalidSyscall());
-       }
+        return If(request == TCGETS, Error(ENOTTY)).Else(InvalidSyscall());
+      }
       // Pass through the common policy.
       default:
         return SandboxPolicyCommon::EvaluateSyscall(sysno);

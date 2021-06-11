@@ -23,7 +23,7 @@ InputChannelThrottleQueueParent::Release(void) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(int32_t(mRefCnt) > 0, "dup release");
 
-  if (!mRefCnt.isThreadSafe) {
+  if (!nsAutoRefCnt::isThreadSafe) {
     NS_ASSERT_OWNINGTHREAD(InputChannelThrottleQueueParent);
   }
 
@@ -31,7 +31,7 @@ InputChannelThrottleQueueParent::Release(void) {
   NS_LOG_RELEASE(this, count, "InputChannelThrottleQueueParent");
 
   if (count == 0) {
-    if (!mRefCnt.isThreadSafe) {
+    if (!nsAutoRefCnt::isThreadSafe) {
       NS_ASSERT_OWNINGTHREAD(InputChannelThrottleQueueParent);
     }
 
@@ -49,9 +49,6 @@ InputChannelThrottleQueueParent::Release(void) {
   }
   return count;
 }
-
-InputChannelThrottleQueueParent::InputChannelThrottleQueueParent()
-    : mBytesProcessed(0), mMeanBytesPerSecond(0), mMaxBytesPerSecond(0) {}
 
 mozilla::ipc::IPCResult InputChannelThrottleQueueParent::RecvRecordRead(
     const uint32_t& aBytesRead) {

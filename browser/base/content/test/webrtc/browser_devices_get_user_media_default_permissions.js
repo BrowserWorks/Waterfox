@@ -43,18 +43,7 @@ var gTests = [
         "webRTC-shareMicrophone-notification-icon",
         "anchored to mic icon"
       );
-      checkDeviceSelectors(true);
-
-      // With Proton enabled, the icon does not appear in the panel.
-      if (!gProtonDoorhangers) {
-        let iconclass = PopupNotifications.panel.firstElementChild.getAttribute(
-          "iconclass"
-        );
-        ok(
-          iconclass.includes("microphone-icon"),
-          "panel using microphone icon"
-        );
-      }
+      checkDeviceSelectors(["microphone"]);
 
       let indicator = promiseIndicatorWindow();
       let observerPromise1 = expectObserverCalled(
@@ -148,15 +137,7 @@ var gTests = [
         "webRTC-shareDevices-notification-icon",
         "anchored to device icon"
       );
-      checkDeviceSelectors(false, true);
-
-      // With Proton enabled, the icon does not appear in the panel.
-      if (!gProtonDoorhangers) {
-        let iconclass = PopupNotifications.panel.firstElementChild.getAttribute(
-          "iconclass"
-        );
-        ok(iconclass.includes("camera-icon"), "panel using devices icon");
-      }
+      checkDeviceSelectors(["camera"]);
 
       let indicator = promiseIndicatorWindow();
       let observerPromise1 = expectObserverCalled(

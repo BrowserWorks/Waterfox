@@ -28,8 +28,6 @@ class WebConsoleConnectionProxy {
     this.target = target;
     this._connecter = null;
 
-    this._onTabNavigated = this._onTabNavigated.bind(this);
-    this._onTabWillNavigate = this._onTabWillNavigate.bind(this);
     this._onLastPrivateContextExited = this._onLastPrivateContextExited.bind(
       this
     );
@@ -47,15 +45,11 @@ class WebConsoleConnectionProxy {
       return this._connecter;
     }
 
-    if (!this.target.client) {
+    if (this.target.isDestroyed()) {
       return Promise.reject("target was destroyed");
     }
 
-    this.target.on("will-navigate", this._onTabWillNavigate);
-    this.target.on("navigate", this._onTabNavigated);
-
     const connection = (async () => {
-      this.client = this.target.client;
       this.webConsoleFront = await this.target.getFront("console");
 
       // There is no way to view response bodies from the Browser Console, so do
@@ -68,10 +62,6 @@ class WebConsoleConnectionProxy {
       await this.webConsoleUI.setSaveRequestAndResponseBodies(saveBodies);
 
       this._addWebConsoleFrontEventListeners();
-
-      if (this.webConsoleFront && !this.webConsoleFront.hasNativeConsoleAPI) {
-        await this.webConsoleUI.logWarningAboutReplacedAPI();
-      }
     })();
 
     let timeoutId;
@@ -144,51 +134,18 @@ class WebConsoleConnectionProxy {
   }
 
   /**
-   * The "navigate" event handlers. We redirect any message to the UI for displaying.
-   *
-   * @private
-   * @param object packet
-   *        The message received from the server.
-   */
-  _onTabNavigated(packet) {
-    // Some message might try to update while we are closing the toolbox.
-    if (!this.webConsoleUI) {
-      return;
-    }
-    this.webConsoleUI.handleTabNavigated(packet);
-  }
-
-  /**
-   * The "will-navigate" event handlers. We redirect any message to the UI for displaying.
-   *
-   * @private
-   * @param object packet
-   *        The message received from the server.
-   */
-  _onTabWillNavigate(packet) {
-    // Some message might try to update while we are closing the toolbox.
-    if (!this.webConsoleUI) {
-      return;
-    }
-    this.webConsoleUI.handleTabWillNavigate(packet);
-  }
-
-  /**
    * Disconnect the Web Console from the remote server.
    *
    * @return object
    *         A promise object that is resolved when disconnect completes.
    */
   disconnect() {
-    if (!this.client) {
+    if (!this.webConsoleFront) {
       return;
     }
 
     this._removeWebConsoleFrontEventListeners();
-    this.target.off("will-navigate", this._onTabWillNavigate);
-    this.target.off("navigate", this._onTabNavigated);
 
-    this.client = null;
     this.webConsoleFront = null;
   }
 }

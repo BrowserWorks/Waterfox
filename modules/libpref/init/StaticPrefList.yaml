@@ -267,6 +267,13 @@
 # The apz prefs are explained in AsyncPanZoomController.cpp
 #---------------------------------------------------------------------------
 
+# amount we zoom in for a double tap gesture if we couldn't find any content
+# based rect to zoom to
+- name: apz.doubletapzoom.defaultzoomin
+  type: AtomicFloat
+  value: 1.2f
+  mirror: always
+
 - name: apz.scrollbarbuttonrepeat.enabled
   type: RelaxedAtomicBool
   value: true
@@ -976,14 +983,23 @@
 # 1 = always
 # 2 = never
 #
-# Default to 0 on windows, 1 elsewhere.
+# Default to 0 on windows and mac, 1 elsewhere.
 - name: browser.display.document_color_use
   type: RelaxedAtomicUint32
-#ifdef XP_WIN
+#if defined(XP_WIN) || defined(XP_MACOSX)
   value: 0
 #else
   value: 1
 #endif
+  mirror: always
+  rust: true
+
+# 0 = always native
+# 1 = never native
+# other = default
+- name: browser.display.windows.non_native_menus
+  type: RelaxedAtomicUint32
+  value: 2
   mirror: always
   rust: true
 
@@ -1088,6 +1104,12 @@
   value: @IS_NOT_MOZILLA_OFFICIAL@
   mirror: always
 
+# See bug 1710926
+- name: browser.download.improvements_to_download_panel
+  type: bool
+  value: false
+  mirror: always
+
 - name: browser.download.sanitize_non_media_extensions
   type: bool
   value: true
@@ -1120,6 +1142,16 @@
   type: uint32_t
   value: 2000
   mirror: always
+
+#ifdef XP_WIN
+  # Notify TabUnloader or send the memory pressure if the memory resource
+  # notification is signaled AND the available commit space is lower than
+  # this value.
+-   name: browser.low_commit_space_threshold_mb
+    type: RelaxedAtomicUint32
+    value: 200
+    mirror: always
+#endif
 
 # Render animations and videos as a solid color
 - name: browser.measurement.render_anims_and_video_solid
@@ -1168,19 +1200,7 @@
   mirror: always
   rust: true
 
-- name: browser.proton.contextmenus.enabled
-  type: RelaxedAtomicBool
-  value: true
-  mirror: always
-  rust: true
-
 - name: browser.proton.modals.enabled
-  type: RelaxedAtomicBool
-  value: true
-  mirror: always
-  rust: true
-
-- name: browser.proton.doorhangers.enabled
   type: RelaxedAtomicBool
   value: true
   mirror: always
@@ -1231,7 +1251,7 @@
 
 # Minimal interval between two save operations in milliseconds (while the user is active).
 - name: browser.sessionstore.interval
-  type: uint32_t
+  type: RelaxedAtomicUint32
   value: 15000
   mirror: always
 
@@ -1239,7 +1259,7 @@
 # browser tabs that were not caused by a flush from the parent.
 # This is a testing flag and should not be used by end-users.
 - name: browser.sessionstore.debug.no_auto_updates
-  type: bool
+  type: RelaxedAtomicBool
   value: false
   mirror: always
 
@@ -2004,6 +2024,14 @@
   value: true
   mirror: always
 
+# In addition to the above IPC layer compresison, allow touchmove
+# events to be further coalesced in the child side after they
+# are sent.
+- name: dom.events.coalesce.touchmove
+  type: bool
+  value: @IS_NIGHTLY_BUILD@
+  mirror: always
+
 # Whether to expose test interfaces of various sorts
 - name: dom.expose_test_interfaces
   type: bool
@@ -2101,7 +2129,7 @@
 - name: dom.image-lazy-loading.root-margin.top
   type: float
 #if defined(EARLY_BETA_OR_EARLIER)
-  value: 600
+  value: 1000
 #else
   value: 300
 #endif
@@ -2115,7 +2143,7 @@
 - name: dom.image-lazy-loading.root-margin.bottom
   type: float
 #if defined(EARLY_BETA_OR_EARLIER)
-  value: 600
+  value: 1000
 #else
   value: 300
 #endif
@@ -2129,7 +2157,7 @@
 - name: dom.image-lazy-loading.root-margin.left
   type: float
 #if defined(EARLY_BETA_OR_EARLIER)
-  value: 600
+  value: 1000
 #else
   value: 300
 #endif
@@ -2143,7 +2171,7 @@
 - name: dom.image-lazy-loading.root-margin.right
   type: float
 #if defined(EARLY_BETA_OR_EARLIER)
-  value: 600
+  value: 1000
 #else
   value: 300
 #endif
@@ -2884,7 +2912,7 @@
 # request headers to be set.
 - name: dom.security.secFetch.enabled
   type: RelaxedAtomicBool
-  value: @IS_NIGHTLY_BUILD@
+  value: true
   mirror: always
 
 # This pref enables the featurePolicy header support.
@@ -3056,6 +3084,11 @@
   mirror: once
 
 - name: dom.serviceWorkers.enabled
+  type: RelaxedAtomicBool
+  value: false
+  mirror: always
+
+- name: dom.serviceWorkers.navigationPreload.enabled
   type: RelaxedAtomicBool
   value: false
   mirror: always
@@ -3303,19 +3336,19 @@
   mirror: always
 
 - name: dom.vibrator.max_vibrate_ms
-  type: uint32_t
+  type: RelaxedAtomicUint32
   value: 10000
   mirror: always
 
 - name: dom.vibrator.max_vibrate_list_len
-  type: uint32_t
+  type: RelaxedAtomicUint32
   value: 128
   mirror: always
 
 # Is support for Window.visualViewport enabled?
 - name: dom.visualviewport.enabled
   type: bool
-  value: false
+  value: true
   mirror: always
 
 # Is support for WebVR APIs enabled?
@@ -3536,12 +3569,12 @@
   # mouse messages.
 -   name: dom.w3c_pointer_events.dispatch_by_pointer_messages
     type: bool
-    value: false
+    value: @IS_NIGHTLY_BUILD@
     mirror: always
 
 -   name: dom.w3c_pointer_events.scroll_by_pen.enabled
     type: bool
-    value: false
+    value: true
     mirror: always
 #endif
 
@@ -3554,7 +3587,7 @@
 # W3C pointer events draft.
 - name: dom.w3c_pointer_events.implicit_capture
   type: bool
-  value: @IS_EARLY_BETA_OR_EARLIER@
+  value: true
   mirror: always
 
 # In case Touch API is enabled, this pref controls whether to support
@@ -3898,12 +3931,6 @@
 #---------------------------------------------------------------------------
 # Prefs starting with "extensions."
 #---------------------------------------------------------------------------
-
-# Private browsing opt-in is only supported on Firefox desktop.
-- name: extensions.allowPrivateBrowsingByDefault
-  type: bool
-  value: false
-  mirror: always
 
 # Whether the background.service_worker in the extension manifest.json file
 # is enabled.
@@ -4256,11 +4283,6 @@
 - name: general.smoothScroll.mouseWheel.durationMinMS
   type: RelaxedAtomicInt32
   value: 50
-  mirror: always
-
-- name: general.smoothScroll.mouseWheel.migrationPercent
-  type: RelaxedAtomicInt32
-  value: 100
   mirror: always
 
 - name: general.smoothScroll.other
@@ -5172,7 +5194,7 @@
 # software backend
 - name: gfx.webrender.software.unaccelerated-widget.allow
   type: RelaxedAtomicBool
-  value: @IS_EARLY_BETA_OR_EARLIER@
+  value: true
   mirror: always
 
 # Whether to force widgets to don't support acceleration to use WebRender
@@ -5488,7 +5510,7 @@
 # Whether we record SVG images as blobs or not.
 - name: image.svg.blob-image
   type: RelaxedAtomicBool
-  value: true
+  value: false
   mirror: always
 
 # Whether we attempt to decode WebP images or not.
@@ -5515,6 +5537,12 @@
 - name: image.avif.compliance_strictness
   type: RelaxedAtomicInt32
   value: 1
+  mirror: always
+
+# Whether we apply container-level transforms like mirroring and rotation
+- name: image.avif.apply_transforms
+  type: RelaxedAtomicBool
+  value: true
   mirror: always
 
 # Whether we use dav1d (true) or libaom (false) to decode AVIF image
@@ -5588,7 +5616,7 @@
   value: false
   mirror: always
 
-#ifdef XP_MACOSX
+#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
 # Whether text input without keyboard press nor IME composition should cause a
 # set of composition events or not.  E.g., when you use Emoji picker on macOS,
 # it inserts an Emoji character directly.  If set to true, `compositionstart`,
@@ -5739,6 +5767,12 @@
     type: bool
     value: false
     mirror: always
+
+# Experimental support for class static blocks in JavaScript.
+-   name: javascript.options.experimental.class_static_blocks
+    type: bool
+    value: false
+    mirror: always
 #endif  // NIGHTLY_BUILD
 
   # Support for Private Fields in JavaScript.
@@ -5861,22 +5895,13 @@
 
 - name: javascript.options.wasm_optimizingjit
   type: bool
-#if defined(MOZ_AARCH64) && !defined(NIGHTLY_BUILD)
-  value: false
-#else
   value: true
-#endif
   mirror: always
 
-# SIMD is supported only on x86 and x64, with arm64 support imminent.
 #if defined(ENABLE_WASM_SIMD)
 -   name: javascript.options.wasm_simd
     type: bool
-#if defined(MOZ_AARCH64)
-    value: @IS_NIGHTLY_BUILD@
-#else
     value: true
-#endif
     mirror: always
 #endif  // defined(ENABLE_WASM_SIMD)
 
@@ -5969,6 +5994,13 @@
     mirror: always  # LoadStartupJSPrefs
     do_not_use_directly: true
 #endif  // !defined(JS_CODEGEN_MIPSXX)
+
+# Whether to use the XPCOM thread pool for JS helper tasks.
+- name: javascript.options.external_thread_pool
+  type: bool
+  value: false
+  mirror: always
+  do_not_use_directly: true
 
 #---------------------------------------------------------------------------
 # Prefs starting with "layers."
@@ -6796,11 +6828,24 @@
   value: true
   mirror: always
 
+# Is support for d property for SVG path element?
+- name: layout.css.d-property.enabled
+  type: bool
+  value: @IS_NIGHTLY_BUILD@
+  mirror: always
+
 # Are we emulating -moz-{inline}-box layout using CSS flexbox?
 - name: layout.css.emulate-moz-box-with-flex
   type: bool
   value: false
   mirror: always
+
+# Is support for fit-content() enabled?
+- name: layout.css.fit-content-function.enabled
+  type: RelaxedAtomicBool
+  value: false
+  mirror: always
+  rust: true
 
 # Is support for the font-display @font-face descriptor enabled?
 - name: layout.css.font-display.enabled
@@ -7322,6 +7367,13 @@
 - name: layout.lower_priority_refresh_driver_during_load
   type: bool
   value: true
+  mirror: always
+
+# If > 0, nsRefreshDriver will keep ticking this amount of milliseconds after
+# top level page load.
+- name: layout.keep_ticking_after_load_ms
+  type: uint32_t
+  value: 1000
   mirror: always
 
 # Is layout of CSS outline-style:auto enabled?
@@ -9268,6 +9320,13 @@
   value: 2000
   mirror: always
 
+# When parsing "SOCKS" in PAC string, the default version of SOCKS that will be
+# used.
+- name: network.proxy.default_pac_script_socks_version
+  type: RelaxedAtomicUint32
+  value: 4
+  mirror: always
+
 # Some requests during a page load are marked as "tail", mainly trackers, but not only.
 # This pref controls whether such requests are put to the tail, behind other requests
 # emerging during page loading process.
@@ -9590,13 +9649,13 @@
 # available.
 - name: network.dns.upgrade_with_https_rr
   type: RelaxedAtomicBool
-  value: @IS_NIGHTLY_BUILD@
+  value: @IS_EARLY_BETA_OR_EARLIER@
   mirror: always
 
 # Whether to use HTTPS RR as AltSvc
 - name: network.dns.use_https_rr_as_altsvc
   type: RelaxedAtomicBool
-  value: @IS_NIGHTLY_BUILD@
+  value: @IS_EARLY_BETA_OR_EARLIER@
   mirror: always
 
 # Whether to check for NAT64 using the system resolver
@@ -9676,7 +9735,7 @@
 # Support http3 version1
 - name: network.http.http3.support_version1
   type: RelaxedAtomicBool
-  value: false
+  value: true
   mirror: always
 
 #---------------------------------------------------------------------------
@@ -10253,6 +10312,12 @@
   type: bool
   value: true
   mirror: always
+
+# the list which contains sites where should exempt from query stripping
+- name: privacy.query_stripping.allow_list
+  type: String
+  value: ""
+  mirror: never
 
 #---------------------------------------------------------------------------
 # Prefs starting with "prompts."
@@ -11350,22 +11415,6 @@
   value: false
   mirror: always
 
-# Whether system colors follow the document theme rather than the system on
-# chrome documents.
-- name: widget.system-colors-follow-theme
-  type: RelaxedAtomicBool
-#ifdef XP_MACOSX
-  value: true
-#else
-  # TODO(emilio): In order to enable this on GTK we need to teach
-  # nsNativeThemeGTK to draw non-system-themed widgets, which seems a bit hard,
-  # or alternatively do this only for documents which use the non-native theme.
-  #
-  # We also need to enable widget.gtk.alt-theme.dark.
-  value: false
-#endif
-  mirror: always
-
 - name: widget.window-transforms.disabled
   type: RelaxedAtomicBool
   value: false
@@ -11382,9 +11431,9 @@
   value: true
   mirror: always
 
-- name: widget.macos.respect-system-appearance
+- name: widget.macos.support-dark-appearance
   type: RelaxedAtomicBool
-  value: false
+  value: @IS_EARLY_BETA_OR_EARLIER@
   mirror: always
 #endif
 
@@ -11394,15 +11443,20 @@
   value: false
   mirror: always
 
+# Whether widget follows the firefox theme in order to choose a light / dark
+# appearance.
+- name: widget.gtk.follow-firefox-theme
+  type: RelaxedAtomicBool
+  value: true
+  mirror: always
+
 # Whether we try to extract dark theme GTK colors.
 #
-# This has a startup performance cost (see bug 1709295), so until we need them
-# (that is, until we implement the color-scheme CSS property / meta tag / etc,
-# or we start following the firefox theme color scheme in our UI with
-# widget.system-colors-follow-theme) we keep this code pref'd off.
+# For now, needed for follow-firefox-theme. In the future will also be needed
+# for the color-scheme CSS property / meta tag / etc.
 - name: widget.gtk.alt-theme.dark
   type: bool
-  value: false
+  value: true
   mirror: always
 
 # Whether selection colors for the non-system theme get passed from the system

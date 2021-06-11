@@ -224,9 +224,25 @@ nsHtml5TreeOpExecutor::DidBuildModel(bool aTerminated) {
     bool htmlOrPlain = contentType.EqualsLiteral(u"text/html") ||
                        contentType.EqualsLiteral(u"text/plain");
 
+    // Gather telemetry only for HTTP status code 200 in order to exclude
+    // error pages.
+    bool httpOk = false;
+    nsCOMPtr<nsIChannel> channel;
+    nsresult rv = GetParser()->GetChannel(getter_AddRefs(channel));
+    if (NS_SUCCEEDED(rv) && channel) {
+      nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(channel);
+      if (httpChannel) {
+        uint32_t httpStatus;
+        rv = httpChannel->GetResponseStatus(&httpStatus);
+        if (NS_SUCCEEDED(rv) && httpStatus == 200) {
+          httpOk = true;
+        }
+      }
+    }
+
     // Gather chardetng telemetry
     MOZ_ASSERT(mDocument->IsHTMLDocument());
-    if (htmlOrPlain && topLevel && !aTerminated &&
+    if (httpOk && htmlOrPlain && topLevel && !aTerminated &&
         !mDocument->AsHTMLDocument()->IsViewSource()) {
       // We deliberately measure only normally-completed (non-aborted) loads
       // that are not View Source loads. This seems like a better place for
@@ -1178,7 +1194,8 @@ void nsHtml5TreeOpExecutor::PreloadStyle(const nsAString& aURL,
 void nsHtml5TreeOpExecutor::PreloadImage(
     const nsAString& aURL, const nsAString& aCrossOrigin,
     const nsAString& aMedia, const nsAString& aSrcset, const nsAString& aSizes,
-    const nsAString& aImageReferrerPolicy, bool aLinkPreload) {
+    const nsAString& aImageReferrerPolicy, bool aLinkPreload,
+    const TimeStamp& aInitTimestamp) {
   nsCOMPtr<nsIURI> baseURI = BaseURIForPreload();
   bool isImgSet = false;
   nsCOMPtr<nsIURI> uri =
@@ -1187,7 +1204,7 @@ void nsHtml5TreeOpExecutor::PreloadImage(
     // use document wide referrer policy
     mDocument->MaybePreLoadImage(uri, aCrossOrigin,
                                  GetPreloadReferrerPolicy(aImageReferrerPolicy),
-                                 isImgSet, aLinkPreload);
+                                 isImgSet, aLinkPreload, aInitTimestamp);
   }
 }
 

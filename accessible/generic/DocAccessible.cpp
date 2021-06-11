@@ -6,6 +6,7 @@
 
 #include "LocalAccessible-inl.h"
 #include "AccIterator.h"
+#include "AccAttributes.h"
 #include "DocAccessible-inl.h"
 #include "DocAccessibleChild.h"
 #include "HTMLImageMapAccessible.h"
@@ -31,7 +32,6 @@
 #include "nsIFrame.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsImageFrame.h"
-#include "nsIPersistentProperties2.h"
 #include "nsViewManager.h"
 #include "nsIScrollableFrame.h"
 #include "nsUnicharUtils.h"
@@ -41,10 +41,11 @@
 #include "nsTHashSet.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/EditorBase.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/HTMLEditor.h"
 #include "mozilla/PresShell.h"
-#include "mozilla/TextEditor.h"
+#include "mozilla/StaticPrefs_accessibility.h"
 #include "mozilla/dom/AncestorIterator.h"
 #include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/DocumentType.h"
@@ -238,8 +239,8 @@ uint64_t DocAccessible::NativeState() const {
     state |= states::INVISIBLE | states::OFFSCREEN;
   }
 
-  RefPtr<TextEditor> textEditor = GetEditor();
-  state |= textEditor ? states::EDITABLE : states::READONLY;
+  RefPtr<EditorBase> editorBase = GetEditor();
+  state |= editorBase ? states::EDITABLE : states::READONLY;
 
   return state;
 }
@@ -260,9 +261,8 @@ void DocAccessible::ApplyARIAState(uint64_t* aState) const {
   if (mParent) mParent->ApplyARIAState(aState);
 }
 
-already_AddRefed<nsIPersistentProperties> DocAccessible::Attributes() {
-  nsCOMPtr<nsIPersistentProperties> attributes =
-      HyperTextAccessibleWrap::Attributes();
+already_AddRefed<AccAttributes> DocAccessible::Attributes() {
+  RefPtr<AccAttributes> attributes = HyperTextAccessibleWrap::Attributes();
 
   // No attributes if document is not attached to the tree or if it's a root
   // document.
@@ -270,9 +270,10 @@ already_AddRefed<nsIPersistentProperties> DocAccessible::Attributes() {
 
   // Override ARIA object attributes from outerdoc.
   aria::AttrIterator attribIter(mParent->GetContent());
-  nsAutoString name, value, unused;
-  while (attribIter.Next(name, value)) {
-    attributes->SetStringProperty(NS_ConvertUTF16toUTF8(name), value, unused);
+  while (attribIter.Next()) {
+    nsAutoString value;
+    attribIter.AttrValue(value);
+    attributes->SetAttribute(attribIter.AttrName(), value);
   }
 
   return attributes.forget();
@@ -294,7 +295,7 @@ void DocAccessible::TakeFocus() const {
 }
 
 // HyperTextAccessible method
-already_AddRefed<TextEditor> DocAccessible::GetEditor() const {
+already_AddRefed<EditorBase> DocAccessible::GetEditor() const {
   // Check if document is editable (designMode="on" case). Otherwise check if
   // the html:body (for HTML document case) or document element is editable.
   if (!mDocumentNode->HasFlag(NODE_IS_EDITABLE) &&
@@ -1760,10 +1761,15 @@ void DocAccessible::DoInitialUpdate() {
           browserChild->SetTopLevelDocAccessibleChild(ipcDoc);
 
 #if defined(XP_WIN)
-          IAccessibleHolder holder(
-              CreateHolderFromAccessible(WrapNotNull(this)));
-          MOZ_ASSERT(!holder.IsNull());
-          int32_t childID = MsaaAccessible::GetChildIDFor(this);
+          IAccessibleHolder holder;
+          int32_t childID;
+          if (StaticPrefs::accessibility_cache_enabled_AtStartup()) {
+            childID = 0;
+          } else {
+            holder = CreateHolderFromAccessible(WrapNotNull(this));
+            MOZ_ASSERT(!holder.IsNull());
+            childID = MsaaAccessible::GetChildIDFor(this);
+          }
 #else
           int32_t holder = 0, childID = 0;
 #endif
@@ -2346,7 +2352,22 @@ void DocAccessible::DoARIAOwnsRelocation(LocalAccessible* aOwner) {
     // Make an attempt to create an accessible if it wasn't created yet.
     if (!child) {
       // An owned child cannot be an ancestor of the owner.
-      if (aOwner->Elm()->IsInclusiveDescendantOf(childEl)) {
+      bool ok = true;
+      bool check = true;
+      for (LocalAccessible* parent = aOwner; parent && !parent->IsDoc();
+           parent = parent->LocalParent()) {
+        if (check) {
+          if (parent->Elm()->IsInclusiveDescendantOf(childEl)) {
+            ok = false;
+            break;
+          }
+        }
+        // We need to do the DOM descendant check again whenever the DOM
+        // lineage changes. If parent is relocated, that means the next
+        // ancestor will have a different DOM lineage.
+        check = parent->IsRelocated();
+      }
+      if (!ok) {
         continue;
       }
 

@@ -435,6 +435,13 @@ function setupEnvironment() {
       ["media.getusermedia.screensharing.enabled", true],
       ["media.getusermedia.window.focus_source.enabled", false],
       ["media.recorder.audio_node.enabled", true],
+      ["media.peerconnection.ice.obfuscate_host_addresses", false],
+      ["media.peerconnection.nat_simulator.filtering_type", ""],
+      ["media.peerconnection.nat_simulator.mapping_type", ""],
+      ["media.peerconnection.nat_simulator.block_tcp", false],
+      ["media.peerconnection.nat_simulator.block_udp", false],
+      ["media.peerconnection.nat_simulator.redirect_address", ""],
+      ["media.peerconnection.nat_simulator.redirect_targets", ""],
     ],
   };
 
@@ -919,6 +926,48 @@ const collectMemoryUsage = async path => {
     )
   );
   return { usage, reportCount };
+};
+
+// Some DNS helper functions
+const dnsLookup = async hostname => {
+  // Convenience API for various networking related stuff. _Almost_ convenient
+  // enough.
+  const neckoDashboard = SpecialPowers.Cc[
+    "@mozilla.org/network/dashboard;1"
+  ].getService(Ci.nsIDashboard);
+
+  const results = await new Promise(r => {
+    neckoDashboard.requestDNSLookup(hostname, results => {
+      r(SpecialPowers.wrap(results));
+    });
+  });
+
+  // |address| is an array-like dictionary (ie; keys are all integers).
+  // We convert to an array to make it less unwieldy.
+  const addresses = [...results.address];
+  info(`DNS results for ${hostname}: ${JSON.stringify(addresses)}`);
+  return addresses;
+};
+
+const dnsLookupV4 = async hostname => {
+  const addresses = await dnsLookup(hostname);
+  return addresses.filter(address => !address.includes(":"));
+};
+
+const dnsLookupV6 = async hostname => {
+  const addresses = await dnsLookup(hostname);
+  return addresses.filter(address => address.includes(":"));
+};
+
+const getTurnHostname = turnUrl => {
+  const urlNoParams = turnUrl.split("?")[0];
+  // Strip off scheme
+  const hostAndMaybePort = urlNoParams.split(":", 2)[1];
+  if (hostAndMaybePort[0] == "[") {
+    // IPV6 literal, strip out '[', and split at closing ']'
+    return hostAndMaybePort.substring(1).split("]")[0];
+  }
+  return hostAndMaybePort.split(":")[0];
 };
 
 /**

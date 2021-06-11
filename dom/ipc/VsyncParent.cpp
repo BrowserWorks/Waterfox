@@ -6,12 +6,12 @@
 
 #include "VsyncParent.h"
 
-#include "BackgroundParent.h"
-#include "BackgroundParentImpl.h"
+#include "mozilla/ipc/BackgroundParent.h"
 #include "gfxPlatform.h"
 #include "mozilla/Unused.h"
 #include "nsThreadUtils.h"
 #include "VsyncSource.h"
+#include "nsIThread.h"
 
 namespace mozilla::dom {
 
@@ -46,7 +46,8 @@ bool VsyncParent::NotifyVsync(const VsyncEvent& aVsync) {
   nsCOMPtr<nsIRunnable> vsyncEvent = NewRunnableMethod<VsyncEvent>(
       "dom::VsyncParent::DispatchVsyncEvent", this,
       &VsyncParent::DispatchVsyncEvent, aVsync);
-  MOZ_ALWAYS_SUCCEEDS(mInitialThread->Dispatch(vsyncEvent, NS_DISPATCH_NORMAL));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToThreadQueue(
+      vsyncEvent.forget(), mInitialThread, EventQueuePriority::Vsync));
   return true;
 }
 

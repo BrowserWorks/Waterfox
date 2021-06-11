@@ -13,6 +13,7 @@
 #include "gc/AllocKind.h"
 #include "gc/GCEnum.h"
 #include "gc/Memory.h"
+#include "gc/Pretenuring.h"
 #include "js/HeapAPI.h"
 #include "js/TypeDecls.h"
 #include "util/Poison.h"
@@ -21,6 +22,7 @@ namespace js {
 
 class AutoLockGC;
 class AutoLockGCBgAlloc;
+class Nursery;
 class NurseryDecommitTask;
 
 namespace gc {
@@ -190,22 +192,27 @@ class alignas(ArenaSize) Arena {
   Arena* next;
 
  private:
-  /*
-   * When recursive marking uses too much stack we delay marking of
-   * arenas and link them into a list for later processing. This
-   * uses the following fields.
-   */
-  static const size_t DELAYED_MARKING_FLAG_BITS = 3;
+  static const size_t ARENA_FLAG_BITS = 4;
   static const size_t DELAYED_MARKING_ARENA_BITS =
-      JS_BITS_PER_WORD - DELAYED_MARKING_FLAG_BITS;
+      JS_BITS_PER_WORD - ArenaShift;
+  static_assert(
+      ARENA_FLAG_BITS + DELAYED_MARKING_ARENA_BITS <= JS_BITS_PER_WORD,
+      "Not enough space to pack flags and nextDelayedMarkingArena_ pointer "
+      "into a single word.");
+
+  /*
+   * True until the arena is swept for the first time.
+   */
+  size_t isNewlyCreated : 1;
+
+  /*
+   * When recursive marking uses too much stack we delay marking of arenas and
+   * link them into a list for later processing. This uses the following fields.
+   */
   size_t onDelayedMarkingList_ : 1;
   size_t hasDelayedBlackMarking_ : 1;
   size_t hasDelayedGrayMarking_ : 1;
   size_t nextDelayedMarkingArena_ : DELAYED_MARKING_ARENA_BITS;
-  static_assert(
-      DELAYED_MARKING_ARENA_BITS >= JS_BITS_PER_WORD - ArenaShift,
-      "Arena::nextDelayedMarkingArena_ packing assumes that ArenaShift has "
-      "enough bits to cover allocKind and delayed marking state.");
 
   union {
     /*
@@ -722,27 +729,28 @@ static const int32_t ChunkStoreBufferOffsetFromLastByte =
 // Cell header stored before all nursery cells.
 struct alignas(gc::CellAlignBytes) NurseryCellHeader {
   // Store zone pointer with the trace kind in the lowest three bits.
-  const uintptr_t zoneAndTraceKind;
+  const uintptr_t allocSiteAndTraceKind;
 
   // We only need to store a subset of trace kinds so this doesn't cover the
   // full range.
   static const uintptr_t TraceKindMask = 3;
 
-  static uintptr_t MakeValue(JS::Zone* const zone, JS::TraceKind kind) {
+  static uintptr_t MakeValue(AllocSite* const site, JS::TraceKind kind) {
     MOZ_ASSERT(uintptr_t(kind) < TraceKindMask);
-    MOZ_ASSERT((uintptr_t(zone) & TraceKindMask) == 0);
-    return uintptr_t(zone) | uintptr_t(kind);
+    MOZ_ASSERT((uintptr_t(site) & TraceKindMask) == 0);
+    return uintptr_t(site) | uintptr_t(kind);
   }
 
-  NurseryCellHeader(JS::Zone* const zone, JS::TraceKind kind)
-      : zoneAndTraceKind(MakeValue(zone, kind)) {}
+  inline NurseryCellHeader(AllocSite* site, JS::TraceKind kind);
 
-  JS::Zone* zone() const {
-    return reinterpret_cast<JS::Zone*>(zoneAndTraceKind & ~TraceKindMask);
+  AllocSite* allocSite() const {
+    return reinterpret_cast<AllocSite*>(allocSiteAndTraceKind & ~TraceKindMask);
   }
+
+  JS::Zone* zone() const { return allocSite()->zone(); }
 
   JS::TraceKind traceKind() const {
-    return JS::TraceKind(zoneAndTraceKind & TraceKindMask);
+    return JS::TraceKind(allocSiteAndTraceKind & TraceKindMask);
   }
 
   static const NurseryCellHeader* from(const Cell* cell) {

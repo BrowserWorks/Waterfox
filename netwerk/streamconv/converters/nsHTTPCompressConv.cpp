@@ -37,23 +37,7 @@ NS_IMPL_ISUPPORTS(nsHTTPCompressConv, nsIStreamConverter, nsIStreamListener,
                   nsIThreadRetargetableStreamListener)
 
 // nsFTPDirListingConv methods
-nsHTTPCompressConv::nsHTTPCompressConv()
-    : mMode(HTTP_COMPRESS_IDENTITY),
-      mOutBuffer(nullptr),
-      mInpBuffer(nullptr),
-      mOutBufferLen(0),
-      mInpBufferLen(0),
-      mCheckHeaderDone(false),
-      mStreamEnded(false),
-      mStreamInitialized(false),
-      mDummyStreamInitialised(false),
-      d_stream{},
-      mLen(0),
-      hMode(0),
-      mSkipCount(0),
-      mFlags(0),
-      mDecodedDataLength(0),
-      mMutex("nsHTTPCompressConv") {
+nsHTTPCompressConv::nsHTTPCompressConv() {
   LOG(("nsHttpCompresssConv %p ctor\n", this));
   if (NS_IsMainThread()) {
     mFailUncleanStops =
@@ -368,7 +352,8 @@ nsHTTPCompressConv::OnDataAvailable(nsIRequest* request, nsIInputStream* iStr,
             inflateEnd(&d_stream);
             mStreamEnded = true;
             break;
-          } else if (code == Z_OK) {
+          }
+          if (code == Z_OK) {
             if (bytesWritten) {
               rv = do_OnDataAvailable(request, nullptr, aSourceOffset,
                                       (char*)mOutBuffer, bytesWritten);
@@ -450,7 +435,8 @@ nsHTTPCompressConv::OnDataAvailable(nsIRequest* request, nsIInputStream* iStr,
             inflateEnd(&d_stream);
             mStreamEnded = true;
             break;
-          } else if (code == Z_OK) {
+          }
+          if (code == Z_OK) {
             if (bytesWritten) {
               rv = do_OnDataAvailable(request, nullptr, aSourceOffset,
                                       (char*)mOutBuffer, bytesWritten);

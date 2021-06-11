@@ -22,12 +22,11 @@
 #  include "mozilla/webrender/RenderCompositorANGLE.h"
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WAYLAND) || defined(MOZ_X11)
 #  include "mozilla/webrender/RenderCompositorEGL.h"
 #endif
 
 #ifdef MOZ_WAYLAND
-#  include "mozilla/webrender/RenderCompositorEGL.h"
 #  include "mozilla/webrender/RenderCompositorNative.h"
 #endif
 
@@ -160,6 +159,10 @@ UniquePtr<RenderCompositor> RenderCompositor::Create(
     if (!gfxPlatform::IsHeadless()) {
       return RenderCompositorNativeSWGL::Create(aWidget, aError);
     }
+#elif defined(MOZ_WAYLAND)
+    if (gfx::gfxVars::UseWebRenderCompositor()) {
+      return RenderCompositorNativeSWGL::Create(aWidget, aError);
+    }
 #endif
     UniquePtr<RenderCompositor> comp =
         RenderCompositorLayersSWGL::Create(aWidget, aError);
@@ -188,7 +191,7 @@ UniquePtr<RenderCompositor> RenderCompositor::Create(
   }
 #endif
 
-#if defined(MOZ_WAYLAND) || defined(MOZ_WIDGET_ANDROID)
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WAYLAND) || defined(MOZ_X11)
   UniquePtr<RenderCompositor> eglCompositor =
       RenderCompositorEGL::Create(aWidget, aError);
   if (eglCompositor) {
@@ -214,6 +217,15 @@ RenderCompositor::RenderCompositor(
 RenderCompositor::~RenderCompositor() = default;
 
 bool RenderCompositor::MakeCurrent() { return gl()->MakeCurrent(); }
+
+void RenderCompositor::GetCompositorCapabilities(
+    CompositorCapabilities* aCaps) {
+  if (StaticPrefs::gfx_webrender_compositor_max_update_rects_AtStartup() > 0) {
+    aCaps->max_update_rects = 1;
+  } else {
+    aCaps->max_update_rects = 0;
+  }
+}
 
 GLenum RenderCompositor::IsContextLost(bool aForce) {
   auto* glc = gl();

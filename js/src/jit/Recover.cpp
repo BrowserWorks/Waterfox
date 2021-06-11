@@ -1282,6 +1282,10 @@ bool MRandom::writeRecoverData(CompactBufferWriter& writer) const {
   return true;
 }
 
+bool MRandom::canRecoverOnBailout() const {
+  return !js::SupportDifferentialTesting();
+}
+
 RRandom::RRandom(CompactBufferReader& reader) {}
 
 bool RRandom::recover(JSContext* cx, SnapshotIterator& iter) const {
@@ -1548,7 +1552,8 @@ bool RNewPlainObject::recover(JSContext* cx, SnapshotIterator& iter) const {
   RootedShape shape(cx, &iter.read().toGCCellPtr().as<Shape>());
 
   // See CodeGenerator::visitNewPlainObject.
-  JSObject* resultObject = NewPlainObject(cx, shape, allocKind_, initialHeap_);
+  JSObject* resultObject =
+      NewPlainObjectOptimizedFallback(cx, shape, allocKind_, initialHeap_);
   if (!resultObject) {
     return false;
   }
@@ -1873,6 +1878,10 @@ bool MSetArrayLength::writeRecoverData(CompactBufferWriter& writer) const {
   MOZ_ASSERT(elements()->type() != MIRType::Elements);
   writer.writeUnsigned(uint32_t(RInstruction::Recover_SetArrayLength));
   return true;
+}
+
+bool MSetArrayLength::canRecoverOnBailout() const {
+  return isRecoveredOnBailout();
 }
 
 RSetArrayLength::RSetArrayLength(CompactBufferReader& reader) {}

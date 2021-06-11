@@ -203,7 +203,7 @@ class nsHttpChannel final : public HttpBaseChannel,
 
   void AsyncOpenFinal(TimeStamp aTimeStamp);
 
-  [[nodiscard]] nsresult OpenCacheEntry(bool usingSSL);
+  [[nodiscard]] nsresult OpenCacheEntry(bool isHttps);
   [[nodiscard]] nsresult OpenCacheEntryInternal(bool isHttps);
   [[nodiscard]] nsresult ContinueConnect();
 
@@ -269,7 +269,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   virtual ~nsHttpChannel();
 
  private:
-  typedef nsresult (nsHttpChannel::*nsContinueRedirectionFunc)(nsresult result);
+  using nsContinueRedirectionFunc = nsresult (nsHttpChannel::*)(nsresult);
 
   // Directly call |aFunc| if the channel is not canceled and not suspended.
   // Otherwise, set |aFunc| to |mCallOnResume| and wait until the channel
@@ -337,7 +337,7 @@ class nsHttpChannel final : public HttpBaseChannel,
           aContinueProcessResponseFunc);
   [[nodiscard]] nsresult ContinueProcessResponseAfterNotModified(nsresult aRv);
 
-  [[nodiscard]] nsresult AsyncProcessRedirection(uint32_t httpStatus);
+  [[nodiscard]] nsresult AsyncProcessRedirection(uint32_t redirectType);
   [[nodiscard]] nsresult ContinueProcessRedirection(nsresult);
   [[nodiscard]] nsresult ContinueProcessRedirectionAfterFallback(nsresult);
   [[nodiscard]] nsresult ProcessFailedProxyConnect(uint32_t httpStatus);
@@ -362,6 +362,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   [[nodiscard]] virtual nsresult SetupReplacementChannel(
       nsIURI*, nsIChannel*, bool preserveMethod,
       uint32_t redirectFlags) override;
+  void HandleAsyncRedirectToUnstrippedURI();
 
   // proxy specific methods
   [[nodiscard]] nsresult ProxyFailover();
@@ -372,7 +373,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   // cache specific methods
   [[nodiscard]] nsresult OnNormalCacheEntryAvailable(nsICacheEntry* aEntry,
                                                      bool aNew,
-                                                     nsresult aResult);
+                                                     nsresult aEntryStatus);
   [[nodiscard]] nsresult OnCacheEntryAvailableInternal(nsICacheEntry* entry,
                                                        bool aNew,
                                                        nsresult status);
@@ -447,12 +448,12 @@ class nsHttpChannel final : public HttpBaseChannel,
       nsHttpResponseHead* aResponseHead);
 
   /**
-   * A function to process a single security header (STS or PKP), assumes
-   * some basic sanity checks have been applied to the channel. Called
+   * A function to process HTTP Strict Transport Security (HSTS) headers.
+   * Some basic consistency checks have been applied to the channel. Called
    * from ProcessSecurityHeaders.
    */
-  [[nodiscard]] nsresult ProcessSingleSecurityHeader(
-      uint32_t aType, nsITransportSecurityInfo* aSecInfo, uint32_t aFlags);
+  [[nodiscard]] nsresult ProcessHSTSHeader(nsITransportSecurityInfo* aSecInfo,
+                                           uint32_t aFlags);
 
   void InvalidateCacheEntryForLocation(const char* location);
   void AssembleCacheKey(const char* spec, uint32_t postID, nsACString& key);
@@ -521,6 +522,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   // auth specific data
   nsCOMPtr<nsIHttpChannelAuthProvider> mAuthProvider;
   nsCOMPtr<nsIURI> mRedirectURI;
+  nsCOMPtr<nsIURI> mUnstrippedRedirectURI;
   nsCOMPtr<nsIChannel> mRedirectChannel;
   nsCOMPtr<nsIChannel> mPreflightChannel;
 

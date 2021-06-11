@@ -102,7 +102,7 @@ add_task(async function test_contentscript_context() {
   await extension.unload();
 });
 
-async function contentscript_context_incognito_not_allowed_test() {
+add_task(async function test_contentscript_context_incognito_not_allowed() {
   async function background() {
     await browser.contentScripts.register({
       js: [{ file: "registered_script.js" }],
@@ -135,6 +135,11 @@ async function contentscript_context_incognito_not_allowed_test() {
     },
   });
 
+  // Bug 1715801: Re-enable pbm portion on GeckoView
+  if (AppConstants.platform == "android") {
+    Services.prefs.setBoolPref("dom.security.https_first_pbm", false);
+  }
+
   await extension.startup();
   await extension.awaitMessage("background-ready");
 
@@ -158,13 +163,11 @@ async function contentscript_context_incognito_not_allowed_test() {
 
   await contentPage.close();
   await extension.unload();
-}
 
-add_task(async function test_contentscript_context_incognito_not_allowed() {
-  return runWithPrefs(
-    [["extensions.allowPrivateBrowsingByDefault", false]],
-    contentscript_context_incognito_not_allowed_test
-  );
+  // Bug 1715801: Re-enable pbm portion on GeckoView
+  if (AppConstants.platform == "android") {
+    Services.prefs.clearUserPref("dom.security.https_first_pbm");
+  }
 });
 
 add_task(async function test_contentscript_context_unload_while_in_bfcache() {

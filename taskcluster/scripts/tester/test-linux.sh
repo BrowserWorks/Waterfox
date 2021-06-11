@@ -35,6 +35,7 @@ fi
 : MOZHARNESS_SCRIPT             ${MOZHARNESS_SCRIPT}
 : MOZHARNESS_CONFIG             ${MOZHARNESS_CONFIG}
 : MOZHARNESS_OPTIONS            ${MOZHARNESS_OPTIONS}
+: MOZ_ENABLE_WAYLAND            ${MOZ_ENABLE_WAYLAND}
 : NEED_XVFB                     ${NEED_XVFB:=true}
 : NEED_WINDOW_MANAGER           ${NEED_WINDOW_MANAGER:=false}
 : NEED_PULSEAUDIO               ${NEED_PULSEAUDIO:=false}
@@ -255,7 +256,7 @@ fi
 
 # Use |mach python| if a source checkout exists so in-tree packages are
 # available.
-[[ -x "${GECKO_PATH}/mach" ]] && python="${PYTHON:-python2.7} ${GECKO_PATH}/mach python" || python="${PYTHON:-python2.7}"
+[[ -x "${GECKO_PATH}/mach" ]] && python="${PYTHON:-python3} ${GECKO_PATH}/mach python" || python="${PYTHON:-python2.7}"
 
 # Save the computed mozharness command to a binary which is useful for
 # interactive mode.

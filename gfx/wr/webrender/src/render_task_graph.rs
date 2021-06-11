@@ -51,7 +51,7 @@ impl<'l> RenderTaskAllocation<'l> {
     #[inline(always)]
     pub fn init(self, value: RenderTask) -> RenderTaskId {
         RenderTaskId {
-            index: self.alloc.init(value) as u16,
+            index: self.alloc.init(value) as u32,
         }
     }
 }
@@ -61,12 +61,12 @@ impl<'l> RenderTaskAllocation<'l> {
 #[cfg_attr(feature = "capture", derive(Serialize))]
 #[cfg_attr(feature = "replay", derive(Deserialize))]
 pub struct RenderTaskId {
-    pub index: u16,
+    pub index: u32,
 }
 
 impl RenderTaskId {
     pub const INVALID: RenderTaskId = RenderTaskId {
-        index: u16::MAX,
+        index: u32::MAX,
     };
 }
 
@@ -264,7 +264,7 @@ impl RenderTaskGraphBuilder {
     pub fn add(&mut self) -> RenderTaskAllocation {
         // Assume every task is a root to start with
         self.roots.insert(
-            RenderTaskId { index: self.tasks.len() as u16 }
+            RenderTaskId { index: self.tasks.len() as u32 }
         );
 
         RenderTaskAllocation {
@@ -385,7 +385,7 @@ impl RenderTaskGraphBuilder {
         // Determine which pass each task can be freed on, which depends on which is
         // the last task that has this as an input.
         for i in 0 .. graph.tasks.len() {
-            let task_id = RenderTaskId { index: i as u16 };
+            let task_id = RenderTaskId { index: i as u32 };
             assign_free_pass(
                 task_id,
                 &mut self.child_task_buffer,
@@ -405,7 +405,7 @@ impl RenderTaskGraphBuilder {
         // Assign tasks to each pass based on their `render_on` attribute
         for (index, task) in graph.tasks.iter().enumerate() {
             if task.kind.is_a_rendering_operation() {
-                let id = RenderTaskId { index: index as u16 };
+                let id = RenderTaskId { index: index as u32 };
                 graph.passes[task.render_on.0].task_ids.push(id);
             }
         }
@@ -444,7 +444,7 @@ impl RenderTaskGraphBuilder {
                                     let surface = self.active_surfaces.get_mut(&texture_id).unwrap();
                                     if let Some(p) = surface.alloc_rect(size, kind, true) {
                                         location = Some((texture_id, p));
-                                        *used_rect = used_rect.union(&DeviceIntRect::new(p, size));
+                                        *used_rect = used_rect.union(&DeviceIntRect::from_origin_and_size(p, size));
                                         sub_pass.task_ids.push(*task_id);
                                         break;
                                     }
@@ -520,7 +520,7 @@ impl RenderTaskGraphBuilder {
                                 surface: SubPassSurface::Dynamic {
                                     texture_id,
                                     target_kind: kind,
-                                    used_rect: DeviceIntRect::new(p, size),
+                                    used_rect: DeviceIntRect::from_origin_and_size(p, size),
                                 },
                                 task_ids: vec![*task_id],
                             });
@@ -530,7 +530,7 @@ impl RenderTaskGraphBuilder {
                         assert!(location.is_some());
                         task.location = RenderTaskLocation::Dynamic {
                             texture_id: location.unwrap().0,
-                            rect: DeviceIntRect::new(location.unwrap().1, size),
+                            rect: DeviceIntRect::from_origin_and_size(location.unwrap().1, size),
                         };
                     }
                     RenderTaskLocation::Static { ref surface, .. } => {

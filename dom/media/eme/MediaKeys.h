@@ -18,6 +18,7 @@
 #include "mozilla/dom/Promise.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsIObserver.h"
 #include "nsRefPtrHashtable.h"
 #include "nsWrapperCache.h"
 
@@ -46,7 +47,7 @@ typedef uint32_t PromiseId;
 
 // This class is used on the main thread only.
 // Note: its addref/release is not (and can't be) thread safe!
-class MediaKeys final : public nsISupports,
+class MediaKeys final : public nsIObserver,
                         public nsWrapperCache,
                         public SupportsWeakPtr,
                         public DecoderDoctorLifeLogger<MediaKeys> {
@@ -55,6 +56,8 @@ class MediaKeys final : public nsISupports,
  public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(MediaKeys)
+
+  NS_DECL_NSIOBSERVER
 
   MediaKeys(nsPIDOMWindowInner* aParentWindow, const nsAString& aKeySystem,
             const MediaKeySystemConfiguration& aConfig);
@@ -68,6 +71,14 @@ class MediaKeys final : public nsISupports,
 
   nsresult Bind(HTMLMediaElement* aElement);
   void Unbind();
+
+  // Checks if there's any activity happening that could capture the media
+  // the keys are associated with and then expose that media outside of the
+  // origin it is in.
+  //
+  // This method does not return the results of the check, but the MediaKeys
+  // will notify mProxy of the results using `NotifyOutputProtectionStatus`.
+  void CheckIsElementCapturePossible();
 
   // Javascript: readonly attribute DOMString keySystem;
   void GetKeySystem(nsString& retval) const;
@@ -154,6 +165,10 @@ class MediaKeys final : public nsISupports,
     promise->MaybeResolve(aResult);
   }
 
+  // The topic used for requests related to mediakeys -- observe this to be
+  // notified of such requests.
+  constexpr static const char* kMediaKeysRequestTopic = "mediakeys-request";
+
  private:
   // Instantiate CDMProxy instance.
   // It could be MediaDrmCDMProxy (Widevine on Fennec) or ChromiumCDMProxy (the
@@ -201,6 +216,17 @@ class MediaKeys final : public nsISupports,
   const MediaKeySystemConfiguration mConfig;
 
   PendingPromiseIdTokenHashMap mPromiseIdToken;
+
+  // The topic a MediaKeys instance will observe to receive updates from
+  // EncryptedMediaChild.
+  constexpr static const char* kMediaKeysResponseTopic = "mediakeys-response";
+  // Tracks if we've added an observer for responses from the associated
+  // EncryptedMediaChild. When true an observer is already in place, otherwise
+  // the observer has not yet been added.
+  bool mObserverAdded = false;
+  // Stores the json request we will send to EncryptedMediaChild when querying
+  // output protection. Lazily populated upon first use.
+  nsString mCaptureCheckRequestJson;
 };
 
 }  // namespace dom

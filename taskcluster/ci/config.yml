@@ -11,7 +11,6 @@ treeherder:
         'js-bench-sm': 'JavaScript shell benchmarks with Spidermonkey'
         'js-bench-v8': 'JavaScript shell benchmarks with Google V8'
         'node': 'Node tests'
-        'py2': 'Python 2 unit tests'
         'py3': 'Python 3 unit tests'
         'A': 'Android Gradle tests'
         'Bpgo': 'Profile-guided optimization builds'
@@ -50,6 +49,8 @@ treeherder:
         'M-spi-nw-1proc': 'Mochitests with networking on socket process without e10s'
         'M-swr': 'Mochitests with software webrender enabled'
         'M-swr-1proc': 'Mochitests with software webrender enabled without e10s'
+        'M-wayland': 'Mochitests with Wayland backend enabled'
+        'M-wayland-1proc': 'Mochitests with Wayland backend enabled without e10s'
         'M-f': 'Mochitest failures'
         'M-f-1proc': 'Mochitest failures without e10s'
         'M-f-fis': 'Mochitest failures with fission enabled'
@@ -66,6 +67,7 @@ treeherder:
         'R': 'Reftests'
         'R-fis': 'Reftests with fission enabled'
         'R-swr': 'Reftests with software webrender enabled'
+        'R-wayland': 'Reftests with Wayland backend enabled'
         'Rap': 'Raptor performance tests on Firefox'
         'Rap-live': 'Raptor performance tests on Firefox with live sites'
         'Rap-fis': 'Raptor performance tests on Firefox with fission enabled'
@@ -83,6 +85,7 @@ treeherder:
         'T-Prof-gli': 'Talos performance tests with WebGL over IPC and Gecko Profiling'
         'T-swr': 'Talos performance tests with software webrender enabled'
         'tt': 'Telemetry tests'
+        'tt-fis': 'Telemetry tests with fission enabled'
         'SY': 'Are we slim yet tests by TaskCluster'
         'SY-fis': 'Are we slim yet tests by TaskCluster, fission enabled'
         'W': 'Web platform tests'
@@ -282,12 +285,6 @@ merge-automation:
                 - - browser/config/mozconfigs/macosx64/l10n-mozconfig
                   - ac_add_options --with-branding=browser/branding/nightly
                   - ac_add_options --enable-official-branding
-                - - build/mozconfig.common
-                  - 'MOZ_REQUIRE_SIGNING=${MOZ_REQUIRE_SIGNING-0}'
-                  - 'MOZ_REQUIRE_SIGNING=${MOZ_REQUIRE_SIGNING-1}'
-                - - build/mozconfig.common
-                  - '# Disable enforcing that add-ons are signed by the trusted root'
-                  - '# Enable enforcing that add-ons are signed by the trusted root'
             merge-old-head: true
             base-tag: 'FIREFOX_BETA_{major_version}_BASE'
             end-tag: 'FIREFOX_BETA_{major_version}_END'
@@ -317,9 +314,6 @@ merge-automation:
                 - - "build/mozconfig.common"
                   - "# Enable enforcing that add-ons are signed by the trusted root"
                   - "# Disable enforcing that add-ons are signed by the trusted root"
-                - - build/mozconfig.common
-                  - 'MOZ_REQUIRE_SIGNING=${MOZ_REQUIRE_SIGNING-1}'
-                  - 'MOZ_REQUIRE_SIGNING=${MOZ_REQUIRE_SIGNING-0}'
             merge-old-head: false
             base-tag: "FIREFOX_ESR_{major_version}_BASE"
             from-repo: 'https://hg.mozilla.org/releases/mozilla-release'

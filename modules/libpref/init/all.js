@@ -2209,8 +2209,6 @@ pref("extensions.abuseReport.amoDetailsURL", "https://services.addons.mozilla.or
 
 // Blocklist preferences
 pref("extensions.blocklist.enabled", true);
-pref("extensions.blocklist.useMLBF", false);
-pref("extensions.blocklist.useMLBF.stashes", false);
 // Required blocklist freshness for OneCRL OCSP bypass (default is 30 hours)
 // Note that this needs to exceed the interval at which we update OneCRL data,
 // configured in services.settings.poll_interval .
@@ -2226,9 +2224,7 @@ pref("services.blocklist.bucket", "blocklists");
 pref("services.blocklist.addons.collection", "addons");
 pref("services.blocklist.addons.checked", 0);
 pref("services.blocklist.addons.signer", "remote-settings.content-signature.mozilla.org");
-pref("services.blocklist.addons-mlbf.collection", "addons-bloomfilters");
 pref("services.blocklist.addons-mlbf.checked", 0);
-pref("services.blocklist.addons-mlbf.signer", "remote-settings.content-signature.mozilla.org");
 pref("services.blocklist.plugins.collection", "plugins");
 pref("services.blocklist.plugins.checked", 0);
 pref("services.blocklist.plugins.signer", "remote-settings.content-signature.mozilla.org");
@@ -3637,6 +3633,7 @@ pref("signon.capture.inputChanges.enabled", true);
 pref("signon.formlessCapture.enabled",      true);
 pref("signon.formRemovalCapture.enabled",   true);
 pref("signon.generation.available",               true);
+pref("signon.improvedPasswordRules.enabled", true);
 pref("signon.backup.enabled",               true);
 pref("signon.generation.confidenceThreshold",     "0.75");
 pref("signon.generation.enabled",                 true);
@@ -4445,46 +4442,61 @@ pref("services.common.log.logger.tokenserverclient", "Debug");
   pref("services.sync.extension-storage.skipPercentageChance", 50);
 #endif // MOZ_SERVICES_SYNC
 
-// Marionette is the remote protocol that lets OOP programs communicate with,
-// instrument, and control Gecko.
+#if defined(ENABLE_WEBDRIVER)
+  // WebDriver is a remote control interface that enables introspection and
+  // control of user agents. It provides a platform- and language-neutral wire
+  // protocol as a way for out-of-process programs to remotely instruct the
+  // behavior of web browsers.
+  //
+  // Gecko's implementation is backed by Marionette (WebDriver HTTP) and the
+  // Remote Agent (WebDriver BiDi).
 
-// Delay server startup until a modal dialogue has been clicked to allow time
-// for user to set breakpoints in the Browser Toolbox.
-pref("marionette.debugging.clicktostart", false);
+  // Delay server startup until a modal dialogue has been clicked to allow time
+  // for user to set breakpoints in the Browser Toolbox.
+  pref("marionette.debugging.clicktostart", false);
 
-// Verbosity of Marionette logger repository.
-//
-// Available levels are, in descending order of severity, "trace", "debug",
-// "config", "info", "warn", "error", and "fatal". The value is treated
-// case-insensitively.
-pref("marionette.log.level", "Info");
+  // Verbosity of Marionette logger repository.
+  //
+  // Available levels are, in descending order of severity, "trace", "debug",
+  // "config", "info", "warn", "error", and "fatal". The value is treated
+  // case-insensitively.
+  pref("marionette.log.level", "Info");
 
-// Certain log messages that are known to be long are truncated. This
-// preference causes them to not be truncated.
-pref("marionette.log.truncate", true);
+  // Certain log messages that are known to be long are truncated. This
+  // preference causes them to not be truncated.
+  pref("marionette.log.truncate", true);
 
-// Port to start Marionette server on.
-pref("marionette.port", 2828);
+  // Port to start Marionette server on.
+  pref("marionette.port", 2828);
 
-// Sets recommended automation preferences when Marionette is started.
-pref("marionette.prefs.recommended", true);
+  // Sets recommended automation preferences when Marionette is started.
+  pref("marionette.prefs.recommended", true);
 
-#if defined(ENABLE_REMOTE_AGENT)
+  // Defines the protocols that will be active for the Remote Agent.
+  // 1: WebDriver BiDi
+  // 2: CDP (Chrome DevTools Protocol)
+  // 3: WebDriver BiDi + CDP
+  #if defined(NIGHTLY_BUILD)
+    pref("remote.active-protocols", 3);
+  #else
+    pref("remote.active-protocols", 2);
+  #endif
+
   // Limits remote agent to listen on loopback devices,
   // e.g. 127.0.0.1, localhost, and ::1.
   pref("remote.force-local", true);
+
+  // Defines the verbosity of the internal logger.
+  //
+  // Available levels are, in descending order of severity, "Trace", "Debug",
+  // "Config", "Info", "Warn", "Error", and "Fatal". The value is treated
+  // case-sensitively.
+  pref("remote.log.level", "Info");
+
+  // Certain log messages that are known to be long are truncated. This
+  // preference causes them to not be truncated.
+  pref("remote.log.truncate", true);
 #endif
-
-// Defines the verbosity of the internal logger.
-//
-// Available levels are, in descending order of severity, "Trace", "Debug",
-// "Config", "Info", "Warn", "Error", and "Fatal". The value is treated
-// case-sensitively.
-pref("remote.log.level", "Info");
-
-// Certain log messages that are known to be long are truncated. This
-// preference causes them to not be truncated.
-pref("remote.log.truncate", true);
 
 // Enable the JSON View tool (an inspector for application/json documents).
 pref("devtools.jsonview.enabled", true);

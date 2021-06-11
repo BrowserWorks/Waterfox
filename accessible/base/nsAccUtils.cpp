@@ -6,6 +6,7 @@
 #include "nsAccUtils.h"
 
 #include "LocalAccessible-inl.h"
+#include "AccAttributes.h"
 #include "ARIAMap.h"
 #include "nsAccessibilityService.h"
 #include "nsCoreUtils.h"
@@ -17,7 +18,6 @@
 #include "TextLeafAccessible.h"
 
 #include "nsIDOMXULContainerElement.h"
-#include "nsIPersistentProperties2.h"
 #include "nsISimpleEnumerator.h"
 #include "mozilla/a11y/PDocAccessibleChild.h"
 #include "mozilla/dom/Document.h"
@@ -27,45 +27,17 @@
 using namespace mozilla;
 using namespace mozilla::a11y;
 
-void nsAccUtils::GetAccAttr(nsIPersistentProperties* aAttributes,
-                            nsAtom* aAttrName, nsAString& aAttrValue) {
-  aAttrValue.Truncate();
-
-  aAttributes->GetStringProperty(nsAtomCString(aAttrName), aAttrValue);
-}
-
-void nsAccUtils::SetAccAttr(nsIPersistentProperties* aAttributes,
-                            nsAtom* aAttrName, const nsAString& aAttrValue) {
-  nsAutoString oldValue;
-  aAttributes->SetStringProperty(nsAtomCString(aAttrName), aAttrValue,
-                                 oldValue);
-}
-
-void nsAccUtils::SetAccAttr(nsIPersistentProperties* aAttributes,
-                            nsAtom* aAttrName, nsAtom* aAttrValue) {
-  nsAutoString oldValue;
-  aAttributes->SetStringProperty(nsAtomCString(aAttrName),
-                                 nsAtomString(aAttrValue), oldValue);
-}
-
-void nsAccUtils::SetAccGroupAttrs(nsIPersistentProperties* aAttributes,
-                                  int32_t aLevel, int32_t aSetSize,
-                                  int32_t aPosInSet) {
+void nsAccUtils::SetAccGroupAttrs(AccAttributes* aAttributes, int32_t aLevel,
+                                  int32_t aSetSize, int32_t aPosInSet) {
   nsAutoString value;
 
   if (aLevel) {
-    value.AppendInt(aLevel);
-    SetAccAttr(aAttributes, nsGkAtoms::level, value);
+    aAttributes->SetAttribute(nsGkAtoms::level, aLevel);
   }
 
   if (aSetSize && aPosInSet) {
-    value.Truncate();
-    value.AppendInt(aPosInSet);
-    SetAccAttr(aAttributes, nsGkAtoms::posinset, value);
-
-    value.Truncate();
-    value.AppendInt(aSetSize);
-    SetAccAttr(aAttributes, nsGkAtoms::setsize, value);
+    aAttributes->SetAttribute(nsGkAtoms::posinset, aPosInSet);
+    aAttributes->SetAttribute(nsGkAtoms::setsize, aSetSize);
   }
 }
 
@@ -117,8 +89,8 @@ int32_t nsAccUtils::GetLevelForXULContainerItem(nsIContent* aContent) {
   return level;
 }
 
-void nsAccUtils::SetLiveContainerAttributes(
-    nsIPersistentProperties* aAttributes, nsIContent* aStartContent) {
+void nsAccUtils::SetLiveContainerAttributes(AccAttributes* aAttributes,
+                                            nsIContent* aStartContent) {
   nsAutoString live, relevant, busy;
   dom::Document* doc = aStartContent->GetComposedDoc();
   if (!doc) {
@@ -132,7 +104,7 @@ void nsAccUtils::SetLiveContainerAttributes(
         HasDefinedARIAToken(ancestor, nsGkAtoms::aria_relevant) &&
         ancestor->AsElement()->GetAttr(kNameSpaceID_None,
                                        nsGkAtoms::aria_relevant, relevant)) {
-      SetAccAttr(aAttributes, nsGkAtoms::containerRelevant, relevant);
+      aAttributes->SetAttribute(nsGkAtoms::containerRelevant, relevant);
     }
 
     // container-live, and container-live-role attributes
@@ -147,15 +119,15 @@ void nsAccUtils::SetLiveContainerAttributes(
       } else if (role) {
         GetLiveAttrValue(role->liveAttRule, live);
       } else if (nsStaticAtom* value = GetAccService()->MarkupAttribute(
-                     ancestor, nsGkAtoms::live)) {
+                     ancestor, nsGkAtoms::aria_live)) {
         value->ToString(live);
       }
 
       if (!live.IsEmpty()) {
-        SetAccAttr(aAttributes, nsGkAtoms::containerLive, live);
+        aAttributes->SetAttribute(nsGkAtoms::containerLive, live);
         if (role) {
-          SetAccAttr(aAttributes, nsGkAtoms::containerLiveRole,
-                     role->ARIARoleString());
+          aAttributes->SetAttribute(nsGkAtoms::containerLiveRole,
+                                    role->ARIARoleString());
         }
       }
     }
@@ -164,14 +136,14 @@ void nsAccUtils::SetLiveContainerAttributes(
     if (ancestor->IsElement() && ancestor->AsElement()->AttrValueIs(
                                      kNameSpaceID_None, nsGkAtoms::aria_atomic,
                                      nsGkAtoms::_true, eCaseMatters)) {
-      SetAccAttr(aAttributes, nsGkAtoms::containerAtomic, u"true"_ns);
+      aAttributes->SetAttribute(nsGkAtoms::containerAtomic, true);
     }
 
     // container-busy attribute
     if (busy.IsEmpty() && HasDefinedARIAToken(ancestor, nsGkAtoms::aria_busy) &&
         ancestor->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::aria_busy,
                                        busy)) {
-      SetAccAttr(aAttributes, nsGkAtoms::containerBusy, busy);
+      aAttributes->SetAttribute(nsGkAtoms::containerBusy, busy);
     }
 
     if (ancestor == topEl) {
@@ -443,38 +415,6 @@ bool nsAccUtils::MustPrune(AccessibleOrProxy aAccessible) {
   return childRole == roles::TEXT_LEAF || childRole == roles::STATICTEXT;
 }
 
-bool nsAccUtils::PersistentPropertiesToArray(nsIPersistentProperties* aProps,
-                                             nsTArray<Attribute>* aAttributes) {
-  if (!aProps) {
-    return true;
-  }
-  nsCOMPtr<nsISimpleEnumerator> propEnum;
-  nsresult rv = aProps->Enumerate(getter_AddRefs(propEnum));
-  NS_ENSURE_SUCCESS(rv, false);
-
-  bool hasMore;
-  while (NS_SUCCEEDED(propEnum->HasMoreElements(&hasMore)) && hasMore) {
-    nsCOMPtr<nsISupports> sup;
-    rv = propEnum->GetNext(getter_AddRefs(sup));
-    NS_ENSURE_SUCCESS(rv, false);
-
-    nsCOMPtr<nsIPropertyElement> propElem(do_QueryInterface(sup));
-    NS_ENSURE_TRUE(propElem, false);
-
-    nsAutoCString name;
-    rv = propElem->GetKey(name);
-    NS_ENSURE_SUCCESS(rv, false);
-
-    nsAutoString value;
-    rv = propElem->GetValue(value);
-    NS_ENSURE_SUCCESS(rv, false);
-
-    aAttributes->AppendElement(Attribute(name, value));
-  }
-
-  return true;
-}
-
 bool nsAccUtils::IsARIALive(const LocalAccessible* aAccessible) {
   // Get computed aria-live property based on the closest container with the
   // attribute. Inner nodes override outer nodes within the same
@@ -502,7 +442,7 @@ bool nsAccUtils::IsARIALive(const LocalAccessible* aAccessible) {
     } else if (role) {
       GetLiveAttrValue(role->liveAttRule, live);
     } else if (nsStaticAtom* value = GetAccService()->MarkupAttribute(
-                   ancestor, nsGkAtoms::live)) {
+                   ancestor, nsGkAtoms::aria_live)) {
       value->ToString(live);
     }
     if (!live.IsEmpty() && !live.EqualsLiteral("off")) {

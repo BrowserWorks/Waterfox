@@ -113,13 +113,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 // Temporary pref to be turned on when ready.
 XPCOMUtils.defineLazyPreferenceGetter(
   this,
-  "allowPrivateBrowsingByDefault",
-  "extensions.allowPrivateBrowsingByDefault",
-  true
-);
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
   "userContextIsolation",
   "extensions.userContextIsolation.enabled",
   false
@@ -165,6 +158,8 @@ XPCOMUtils.defineLazyGetter(this, "LAZY_NO_PROMPT_PERMISSIONS", async () => {
 const { sharedData } = Services.ppmm;
 
 const PRIVATE_ALLOWED_PERMISSION = "internal:privateBrowsingAllowed";
+const SVG_CONTEXT_PROPERTIES_PERMISSION =
+  "internal:svgContextPropertiesAllowed";
 
 // The userContextID reserved for the extension storage (its purpose is ensuring that the IndexedDB
 // storage used by the browser.storage.local API is not directly accessible from the extension code,
@@ -185,6 +180,52 @@ const PRIVILEGED_PERMS = new Set([
   "normandyAddonStudy",
   "networkStatus",
 ]);
+
+const INSTALL_AND_UPDATE_STARTUP_REASONS = new Set([
+  "ADDON_INSTALL",
+  "ADDON_UPGRADE",
+  "ADDON_DOWNGRADE",
+]);
+
+// Returns true if the extension is owned by Mozilla (is either privileged,
+// using one of the @mozilla.com/@mozilla.org protected addon id suffixes).
+//
+// This method throws if the extension's startupReason is not one of the expected
+// ones (either ADDON_INSTALL, ADDON_UPGRADE or ADDON_DOWNGRADE).
+//
+// NOTE: This methos is internally referring to "addonData.recommendationState" to
+// identify a Mozilla line extension. That property is part of the addonData only when
+// the extension is installed or updated, and so we enforce the expected
+// startup reason values to prevent it from silently returning different results
+// if called with an unexpected startupReason.
+function isMozillaExtension(extension) {
+  const { addonData, id, isPrivileged, startupReason } = extension;
+
+  if (!INSTALL_AND_UPDATE_STARTUP_REASONS.has(startupReason)) {
+    throw new Error(
+      `isMozillaExtension called with unexpected startupReason: ${startupReason}`
+    );
+  }
+
+  if (isPrivileged) {
+    return true;
+  }
+
+  if (id.endsWith("@mozilla.com") || id.endsWith("@mozilla.org")) {
+    return true;
+  }
+
+  // This check is a subset of what is being checked in AddonWrapper's
+  // recommendationStates (states expire dates for line extensions are
+  // not consideredcimportant in determining that the extension is
+  // provided by mozilla, and so they are omitted here on purpose).
+  const isMozillaLineExtension = addonData.recommendationState?.states?.includes(
+    "line"
+  );
+  const isSigned = addonData.signedState > AddonManager.SIGNEDSTATE_MISSING;
+
+  return isSigned && isMozillaLineExtension;
+}
 
 /**
  * Classify an individual permission from a webextension manifest
@@ -921,16 +962,6 @@ class ExtensionData {
 
     this.manifest = manifest;
     this.rawManifest = manifest;
-
-    if (
-      allowPrivateBrowsingByDefault &&
-      "incognito" in manifest &&
-      manifest.incognito == "not_allowed"
-    ) {
-      throw new Error(
-        `manifest.incognito set to "not_allowed" is currently unvailable for use.`
-      );
-    }
 
     if (manifest && manifest.default_locale) {
       await this.initLocale();
@@ -2574,31 +2605,49 @@ class Extension extends ExtensionData {
 
       // We automatically add permissions to system/built-in extensions.
       // Extensions expliticy stating not_allowed will never get permission.
-      if (!allowPrivateBrowsingByDefault) {
-        let isAllowed = this.permissions.has(PRIVATE_ALLOWED_PERMISSION);
-        if (this.manifest.incognito === "not_allowed") {
-          // If an extension previously had permission, but upgrades/downgrades to
-          // a version that specifies "not_allowed" in manifest, remove the
-          // permission.
-          if (isAllowed) {
-            ExtensionPermissions.remove(this.id, {
-              permissions: [PRIVATE_ALLOWED_PERMISSION],
-              origins: [],
-            });
-            this.permissions.delete(PRIVATE_ALLOWED_PERMISSION);
-          }
-        } else if (
-          !isAllowed &&
-          this.isPrivileged &&
-          !this.addonData.temporarilyInstalled
-        ) {
-          // Add to EP so it is preserved after ADDON_INSTALL.  We don't wait on the add here
-          // since we are pushing the value into this.permissions.  EP will eventually save.
-          ExtensionPermissions.add(this.id, {
+      let isAllowed = this.permissions.has(PRIVATE_ALLOWED_PERMISSION);
+      if (this.manifest.incognito === "not_allowed") {
+        // If an extension previously had permission, but upgrades/downgrades to
+        // a version that specifies "not_allowed" in manifest, remove the
+        // permission.
+        if (isAllowed) {
+          ExtensionPermissions.remove(this.id, {
             permissions: [PRIVATE_ALLOWED_PERMISSION],
             origins: [],
           });
-          this.permissions.add(PRIVATE_ALLOWED_PERMISSION);
+          this.permissions.delete(PRIVATE_ALLOWED_PERMISSION);
+        }
+      } else if (
+        !isAllowed &&
+        this.isPrivileged &&
+        !this.addonData.temporarilyInstalled
+      ) {
+        // Add to EP so it is preserved after ADDON_INSTALL.  We don't wait on the add here
+        // since we are pushing the value into this.permissions.  EP will eventually save.
+        ExtensionPermissions.add(this.id, {
+          permissions: [PRIVATE_ALLOWED_PERMISSION],
+          origins: [],
+        });
+        this.permissions.add(PRIVATE_ALLOWED_PERMISSION);
+      }
+
+      // We only want to update the SVG_CONTEXT_PROPERTIES_PERMISSION during install and
+      // upgrade/downgrade startups.
+      if (INSTALL_AND_UPDATE_STARTUP_REASONS.has(this.startupReason)) {
+        if (isMozillaExtension(this)) {
+          // Add to EP so it is preserved after ADDON_INSTALL.  We don't wait on the add here
+          // since we are pushing the value into this.permissions.  EP will eventually save.
+          ExtensionPermissions.add(this.id, {
+            permissions: [SVG_CONTEXT_PROPERTIES_PERMISSION],
+            origins: [],
+          });
+          this.permissions.add(SVG_CONTEXT_PROPERTIES_PERMISSION);
+        } else {
+          ExtensionPermissions.remove(this.id, {
+            permissions: [SVG_CONTEXT_PROPERTIES_PERMISSION],
+            origins: [],
+          });
+          this.permissions.delete(SVG_CONTEXT_PROPERTIES_PERMISSION);
         }
       }
 

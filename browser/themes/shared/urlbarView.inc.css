@@ -636,6 +636,9 @@
 .urlbarView-url {
   overflow: hidden;
   color: var(--urlbar-popup-url-color);
+  /* Increase line-height to avoid cutting overhanging glyphs due to masking on
+     the element */
+  line-height: 1.4;
 }
 
 .urlbarView-row[selected] > .urlbarView-row-inner > .urlbarView-no-wrap >.urlbarView-action,
@@ -708,6 +711,9 @@
 .urlbarView-tags {
   overflow: hidden;
   display: flex;
+  /* Increase line-height to avoid cutting overhanging glyphs due to masking on
+     the element */
+  line-height: 1.4;
 }
 
 .urlbarView-tag {
@@ -757,13 +763,13 @@
 #urlbar .search-panel-one-offs-header-label {
   white-space: nowrap;
   margin: 0;
-  padding-inline: 8px 2px;
+  padding-inline: var(--urlbarView-item-inline-padding) 18px;
 }
 
 #urlbar .searchbar-engine-one-off-item {
   min-width: 28px;
   height: 28px;
-  margin-inline: 6px;
+  margin-inline: 0 12px;
 }
 
 @media (-moz-proton) {
@@ -848,23 +854,21 @@
 /* search bar popup */
 
 #PopupSearchAutoComplete {
-  background-color: var(--autocomplete-popup-background);
-  color: var(--autocomplete-popup-color);
-  border-color: var(--arrowpanel-border-color);
+  --panel-background: var(--autocomplete-popup-background);
+  --panel-color: var(--autocomplete-popup-color);
+  --panel-border-color: var(--arrowpanel-border-color);
 }
 
 @media (-moz-proton) {
-#PopupSearchAutoComplete {
-  border: 1px solid var(--arrowpanel-border-color);
+#PopupSearchAutoComplete::part(content)  {
   /* Remove the top border since the panel is flush with the input. */
   border-top-width: 0;
-  /* override autocomplete.css padding */
-  padding: var(--panel-subview-body-padding) !important;
+  --panel-padding: var(--panel-subview-body-padding);
 }
 
 #PopupSearchAutoComplete:-moz-lwtheme {
-  color: var(--lwt-toolbar-field-focus-color);
-  background-color: var(--lwt-toolbar-field-focus);
+  --panel-color: var(--lwt-toolbar-field-focus-color);
+  --panel-background: var(--lwt-toolbar-field-focus);
 }
 } /*** END proton ***/
 

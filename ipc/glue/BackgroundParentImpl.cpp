@@ -69,6 +69,7 @@
 #include "mozilla/net/BackgroundDataBridgeParent.h"
 #include "mozilla/net/HttpBackgroundChannelParent.h"
 #include "mozilla/psm/VerifySSLServerCertParent.h"
+#include "nsIPrincipal.h"
 #include "nsNetUtil.h"
 #include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
@@ -1139,6 +1140,44 @@ BackgroundParentImpl::RecvRemoveBackgroundSessionStorageManager(
   return IPC_OK();
 }
 
+mozilla::ipc::IPCResult BackgroundParentImpl::RecvGetSessionStorageManagerData(
+    const uint64_t& aTopContextId, const uint32_t& aSizeLimit,
+    const bool& aCancelSessionStoreTimer,
+    GetSessionStorageManagerDataResolver&& aResolver) {
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  if (BackgroundParent::IsOtherProcessActor(this)) {
+    return IPC_FAIL(this, "Wrong actor");
+  }
+
+  if (!mozilla::dom::RecvGetSessionStorageData(aTopContextId, aSizeLimit,
+                                               aCancelSessionStoreTimer,
+                                               std::move(aResolver))) {
+    return IPC_FAIL(this, "Couldn't get session storage data");
+  }
+
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult BackgroundParentImpl::RecvLoadSessionStorageManagerData(
+    const uint64_t& aTopContextId,
+    nsTArray<mozilla::dom::SSCacheCopy>&& aOriginCacheCopy) {
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  if (BackgroundParent::IsOtherProcessActor(this)) {
+    return IPC_FAIL(this, "Wrong actor");
+  }
+
+  if (!mozilla::dom::RecvLoadSessionStorageData(aTopContextId,
+                                                std::move(aOriginCacheCopy))) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+
+  return IPC_OK();
+}
+
 already_AddRefed<dom::PFileSystemRequestParent>
 BackgroundParentImpl::AllocPFileSystemRequestParent(
     const FileSystemParams& aParams) {
@@ -1271,6 +1310,15 @@ mozilla::ipc::IPCResult BackgroundParentImpl::RecvPClientManagerConstructor(
 IPCResult BackgroundParentImpl::RecvStorageActivity(
     const PrincipalInfo& aPrincipalInfo) {
   dom::StorageActivityService::SendActivity(aPrincipalInfo);
+  return IPC_OK();
+}
+
+IPCResult BackgroundParentImpl::RecvPServiceWorkerManagerConstructor(
+    PServiceWorkerManagerParent* const aActor) {
+  // Only the parent process is allowed to construct this actor.
+  if (BackgroundParent::IsOtherProcessActor(this)) {
+    return IPC_FAIL_NO_REASON(aActor);
+  }
   return IPC_OK();
 }
 

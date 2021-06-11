@@ -7,7 +7,7 @@
 #ifndef mozilla_layers_AsyncPanZoomController_h
 #define mozilla_layers_AsyncPanZoomController_h
 
-#include "CrossProcessMutex.h"
+#include "mozilla/ipc/CrossProcessMutex.h"
 #include "mozilla/layers/GeckoContentController.h"
 #include "mozilla/layers/RepaintRequest.h"
 #include "mozilla/layers/SampleTime.h"
@@ -520,9 +520,6 @@ class AsyncPanZoomController {
 
   // Return the directions in which this APZC allows overscrolling.
   ScrollDirections GetOverscrollableDirections() const;
-
-  // Return the directions in which this APZC allows scrolling.
-  ScrollDirections GetScrollableDirections() const;
 
   // Return whether or not a scroll delta will be able to scroll in either
   // direction.

@@ -32,8 +32,8 @@ job-defaults:
         requires-signed-builds:
             by-test-platform:
                 windows10-64-asan/opt: false    # No XPCShell on ASAN yet
-                windows7-32-mingwclang/opt: false
-                windows7-32-mingwclang/debug: false
+                windows10-32-mingwclang/opt: false
+                windows10-32-mingwclang/debug: false
                 windows10-64-mingwclang/opt: false
                 windows10-64-mingwclang/debug: false
                 windows.*: true
@@ -48,6 +48,7 @@ xpcshell:
             default:
                 by-test-platform:
                     .*-tsan/opt: ['trunk']
+                    android-em-7.0-x86_64/debug-isolated-process: []
                     windows10-64-asan/opt: []  # No XPCShell on ASAN yet
                     default: built-projects
     chunks:
@@ -62,7 +63,6 @@ xpcshell:
             default: 5
     max-run-time:
         by-test-platform:
-            macosx1014-64(-shippable|-devedition|-asan)?(-qr)?/.*: 5400
             windows.*(-shippable)/opt: 5400
             .*64-ccov(-qr)?/.*: 7200
             .*-tsan/opt: 7200
@@ -75,6 +75,7 @@ xpcshell:
                 by-test-platform:
                     windows10-64-asan.*: 3
                     macosx1100.*: 2
+                    android-em-7.0-x86_64/debug-isolated-process: 3
                     default: default
     fetches:
         toolchain:
@@ -103,9 +104,9 @@ xpcshell:
                     - linux64-node
                     - linux64-minidump-stackwalk
 
-xpcshell-apple-silicon:
-    description: "xpcshell apple silicon specific failures test run"
-    treeherder-symbol: X-f(AS)
+xpcshell-failures:
+    description: "xpcshell specific failures test run"
+    treeherder-symbol: X-f(X)
     run-on-projects:
         by-variant:
             fission: []
@@ -120,9 +121,11 @@ xpcshell-apple-silicon:
         config:
             - unittests/mac_unittest.py
         extra-options:
-            - --run-failures=apple_silicon
-            - --timeout-as-pass
-            - --crash-as-pass
+            by-test-platform:
+                macosx1100.*:
+                    - --run-failures=apple_silicon
+                    - --timeout-as-pass
+                    - --crash-as-pass
     fetches:
         toolchain:
             - macosx64-node

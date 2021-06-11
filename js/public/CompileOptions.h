@@ -146,6 +146,8 @@ class JS_PUBLIC_API TransitiveCompileOptions {
   bool privateClassMethods = false;
   bool topLevelAwait = true;
 
+  bool classStaticBlocks = false;
+
   // True if transcoding to XDR should use Stencil instead of JSScripts.
   bool useStencilXDR = false;
 
@@ -170,9 +172,6 @@ class JS_PUBLIC_API TransitiveCompileOptions {
   unsigned introductionLineno = 0;
   uint32_t introductionOffset = 0;
   bool hasIntroductionInfo = false;
-
-  // Mask of operation kinds which should be instrumented.
-  uint32_t instrumentationKinds = 0;
 
  protected:
   TransitiveCompileOptions() = default;

@@ -34,7 +34,10 @@
 #include "js/UbiNode.h"
 #include "util/EnumFlags.h"
 #include "vm/JSAtom.h"
+#include "vm/ObjectFlags.h"
 #include "vm/Printer.h"
+#include "vm/PropertyInfo.h"
+#include "vm/PropertyKey.h"
 #include "vm/StringType.h"
 #include "vm/SymbolType.h"
 
@@ -121,101 +124,8 @@ MOZ_ALWAYS_INLINE size_t JSSLOT_FREE(const JSClass* clasp) {
 
 namespace js {
 
-/* Limit on the number of slotful properties in an object. */
-static const uint32_t SHAPE_INVALID_SLOT = Bit(24) - 1;
-static const uint32_t SHAPE_MAXIMUM_SLOT = Bit(24) - 2;
-
 class Shape;
 struct StackShape;
-
-// ShapeProperty contains information (attributes, slot number) for a property
-// stored in the Shape tree. Property lookups on NativeObjects return a
-// ShapeProperty.
-class ShapeProperty {
-  uint32_t slot_;
-  uint8_t attrs_;
-
- public:
-  ShapeProperty(uint8_t attrs, uint32_t slot) : slot_(slot), attrs_(attrs) {}
-
-  // Note: this returns true only for plain data properties with a slot. Returns
-  // false for custom data properties. See JSPROP_CUSTOM_DATA_PROP.
-  bool isDataProperty() const {
-    return !(attrs_ &
-             (JSPROP_GETTER | JSPROP_SETTER | JSPROP_CUSTOM_DATA_PROP));
-  }
-  bool isCustomDataProperty() const { return attrs_ & JSPROP_CUSTOM_DATA_PROP; }
-  bool isAccessorProperty() const {
-    return attrs_ & (JSPROP_GETTER | JSPROP_SETTER);
-  }
-
-  // Note: unlike isDataProperty, this returns true also for custom data
-  // properties. See JSPROP_CUSTOM_DATA_PROP.
-  bool isDataDescriptor() const {
-    return isDataProperty() || isCustomDataProperty();
-  }
-
-  bool hasSlot() const { return !isCustomDataProperty(); }
-
-  uint32_t slot() const {
-    MOZ_ASSERT(hasSlot());
-    MOZ_ASSERT(slot_ < SHAPE_INVALID_SLOT);
-    return slot_;
-  }
-
-  uint8_t attributes() const { return attrs_; }
-  bool writable() const { return !(attrs_ & JSPROP_READONLY); }
-  bool configurable() const { return !(attrs_ & JSPROP_PERMANENT); }
-  bool enumerable() const { return attrs_ & JSPROP_ENUMERATE; }
-
-  JS::PropertyAttributes propAttributes() const {
-    JS::PropertyAttributes attrs{};
-    if (configurable()) {
-      attrs += JS::PropertyAttribute::Configurable;
-    }
-    if (enumerable()) {
-      attrs += JS::PropertyAttribute::Enumerable;
-    }
-    if (isDataDescriptor() && writable()) {
-      attrs += JS::PropertyAttribute::Writable;
-    }
-    return attrs;
-  }
-
-  bool operator==(const ShapeProperty& other) const {
-    return slot_ == other.slot_ && attrs_ == other.attrs_;
-  }
-  bool operator!=(const ShapeProperty& other) const {
-    return !operator==(other);
-  }
-};
-
-class ShapePropertyWithKey : public ShapeProperty {
-  PropertyKey key_;
-
- public:
-  ShapePropertyWithKey(uint8_t attrs, uint32_t slot, PropertyKey key)
-      : ShapeProperty(attrs, slot), key_(key) {}
-
-  PropertyKey key() const { return key_; }
-
-  void trace(JSTracer* trc) {
-    TraceRoot(trc, &key_, "ShapePropertyWithKey-key");
-  }
-};
-
-template <class Wrapper>
-class WrappedPtrOperations<ShapePropertyWithKey, Wrapper> {
-  const ShapePropertyWithKey& value() const {
-    return static_cast<const Wrapper*>(this)->get();
-  }
-
- public:
-  bool isDataProperty() const { return value().isDataProperty(); }
-  uint32_t slot() const { return value().slot(); }
-  PropertyKey key() const { return value().key(); }
-  uint8_t attributes() const { return value().attributes(); }
-};
 
 struct ShapeHasher : public DefaultHasher<Shape*> {
   using Key = Shape*;
@@ -302,37 +212,6 @@ class DictionaryShapeLink {
     return !((*this) == other);
   }
 } JS_HAZ_GC_POINTER;
-
-class PropertyTree {
-  friend class ::JSFunction;
-
-#ifdef DEBUG
-  JS::Zone* zone_;
-#endif
-
-  bool insertChild(JSContext* cx, Shape* parent, Shape* child);
-
-  PropertyTree();
-
- public:
-  /*
-   * Use a lower limit for objects that are accessed using SETELEM (o[x] = y).
-   * These objects are likely used as hashmaps and dictionary mode is more
-   * efficient in this case.
-   */
-  enum { MAX_HEIGHT = 512, MAX_HEIGHT_WITH_ELEMENTS_ACCESS = 128 };
-
-  explicit PropertyTree(JS::Zone* zone)
-#ifdef DEBUG
-      : zone_(zone)
-#endif
-  {
-  }
-
-  MOZ_ALWAYS_INLINE Shape* inlinedGetChild(JSContext* cx, Shape* parent,
-                                           JS::Handle<StackShape> childSpec);
-  Shape* getChild(JSContext* cx, Shape* parent, JS::Handle<StackShape> child);
-};
 
 class TenuringTracer;
 
@@ -625,55 +504,8 @@ class MOZ_RAII AutoKeepShapeCaches {
  * earlier property, however.
  */
 
-class Shape;
-struct StackBaseShape;
-
-// Flags set on the Shape which describe the referring object. Once set these
-// cannot be unset (except during object densification of sparse indexes), and
-// are transferred from shape to shape as the object's last property changes.
-//
-// If you add a new flag here, please add appropriate code to JSObject::dump to
-// dump it as part of the object representation.
-enum class ObjectFlag : uint16_t {
-  IsUsedAsPrototype = 1 << 0,
-  NotExtensible = 1 << 1,
-  Indexed = 1 << 2,
-  HasInterestingSymbol = 1 << 3,
-  HadElementsAccess = 1 << 4,
-  FrozenElements = 1 << 5,  // See ObjectElements::FROZEN comment.
-  UncacheableProto = 1 << 6,
-  ImmutablePrototype = 1 << 7,
-
-  // See JSObject::isQualifiedVarObj().
-  QualifiedVarObj = 1 << 8,
-
-  // If set, the object may have a non-writable property or an accessor
-  // property.
-  //
-  // * This is only set for PlainObjects because we only need it for these
-  //   objects and setting it for other objects confuses insertInitialShape.
-  //
-  // * This flag does not account for properties named "__proto__". This is
-  //   because |Object.prototype| has a "__proto__" accessor property and we
-  //   don't want to include it because it would result in the flag being set on
-  //   most proto chains. Code using this flag must check for "__proto__"
-  //   property names separately.
-  HasNonWritableOrAccessorPropExclProto = 1 << 9,
-
-  // If set, the object either mutated or deleted an accessor property. This is
-  // used to invalidate IC/Warp code specializing on specific getter/setter
-  // objects. See also the SMDOC comment in vm/GetterSetter.h.
-  HadGetterSetterChange = 1 << 10,
-};
-
-using ObjectFlags = EnumFlags<ObjectFlag>;
-
 class BaseShape : public gc::TenuredCellWithNonGCPointer<const JSClass> {
  public:
-  friend class Shape;
-  friend struct StackBaseShape;
-  friend struct StackShape;
-
   /* Class of referring object, stored in the cell header */
   const JSClass* clasp() const { return headerPtr(); }
 
@@ -687,7 +519,7 @@ class BaseShape : public gc::TenuredCellWithNonGCPointer<const JSClass> {
  public:
   void finalize(JSFreeOp* fop) {}
 
-  explicit inline BaseShape(const StackBaseShape& base);
+  BaseShape(const JSClass* clasp, JS::Realm* realm, TaggedProto proto);
 
   /* Not defined: BaseShapes must not be stack allocated. */
   ~BaseShape() = delete;
@@ -707,7 +539,8 @@ class BaseShape : public gc::TenuredCellWithNonGCPointer<const JSClass> {
    * Lookup base shapes from the zone's baseShapes table, adding if not
    * already found.
    */
-  static BaseShape* get(JSContext* cx, Handle<StackBaseShape> base);
+  static BaseShape* get(JSContext* cx, const JSClass* clasp, JS::Realm* realm,
+                        Handle<TaggedProto> proto);
 
   static const JS::TraceKind TraceKind = JS::TraceKind::BaseShape;
 
@@ -739,76 +572,6 @@ class BaseShape : public gc::TenuredCellWithNonGCPointer<const JSClass> {
   }
 };
 
-/* Entries for the per-zone baseShapes set. */
-struct StackBaseShape : public DefaultHasher<WeakHeapPtr<BaseShape*>> {
-  const JSClass* clasp;
-  JS::Realm* realm;
-  TaggedProto proto;
-
-  inline StackBaseShape(const JSClass* clasp, JS::Realm* realm,
-                        TaggedProto proto);
-
-  struct Lookup {
-    const JSClass* clasp;
-    JS::Realm* realm;
-    TaggedProto proto;
-
-    MOZ_IMPLICIT Lookup(const StackBaseShape& base)
-        : clasp(base.clasp), realm(base.realm), proto(base.proto) {}
-
-    MOZ_IMPLICIT Lookup(BaseShape* base)
-        : clasp(base->clasp()), realm(base->realm()), proto(base->proto()) {}
-  };
-
-  static HashNumber hash(const Lookup& lookup) {
-    HashNumber hash = MovableCellHasher<TaggedProto>::hash(lookup.proto);
-    return mozilla::AddToHash(hash,
-                              mozilla::HashGeneric(lookup.clasp, lookup.realm));
-  }
-  static inline bool match(const WeakHeapPtr<BaseShape*>& key,
-                           const Lookup& lookup) {
-    return key.unbarrieredGet()->clasp() == lookup.clasp &&
-           key.unbarrieredGet()->realm() == lookup.realm &&
-           key.unbarrieredGet()->proto() == lookup.proto;
-  }
-
-  // StructGCPolicy implementation.
-  void trace(JSTracer* trc);
-};
-
-template <typename Wrapper>
-class WrappedPtrOperations<StackBaseShape, Wrapper> {};
-
-static MOZ_ALWAYS_INLINE js::HashNumber HashId(jsid id) {
-  // HashGeneric alone would work, but bits of atom and symbol addresses
-  // could then be recovered from the hash code. See bug 1330769.
-  if (MOZ_LIKELY(JSID_IS_ATOM(id))) {
-    return id.toAtom()->hash();
-  }
-  if (JSID_IS_SYMBOL(id)) {
-    return JSID_TO_SYMBOL(id)->hash();
-  }
-  return mozilla::HashGeneric(JSID_BITS(id));
-}
-
-}  // namespace js
-
-namespace mozilla {
-
-template <>
-struct DefaultHasher<jsid> {
-  using Lookup = jsid;
-  static HashNumber hash(jsid id) { return js::HashId(id); }
-  static bool match(jsid id1, jsid id2) { return id1 == id2; }
-};
-
-}  // namespace mozilla
-
-namespace js {
-
-using BaseShapeSet = JS::WeakCache<
-    JS::GCHashSet<WeakHeapPtr<BaseShape*>, StackBaseShape, SystemAllocPolicy>>;
-
 class Shape : public gc::CellWithTenuredGCPointer<gc::TenuredCell, BaseShape> {
   friend class ::JSObject;
   friend class ::JSFunction;
@@ -816,7 +579,6 @@ class Shape : public gc::CellWithTenuredGCPointer<gc::TenuredCell, BaseShape> {
   friend class NativeObject;
   friend class PropertyTree;
   friend class TenuringTracer;
-  friend struct StackBaseShape;
   friend struct StackShape;
   friend class JS::ubi::Concrete<Shape>;
   friend class js::gc::RelocationOverlay;
@@ -868,8 +630,8 @@ class Shape : public gc::CellWithTenuredGCPointer<gc::TenuredCell, BaseShape> {
  private:
   uint32_t immutableFlags;  /* immutable flags, see above */
   ObjectFlags objectFlags_; /* immutable object flags, see ObjectFlags */
-  uint8_t attrs;            /* attributes, see jsapi.h JSPROP_* */
-  uint8_t mutableFlags;     /* mutable flags, see below for defines */
+  PropertyFlags propFlags;
+  uint8_t mutableFlags; /* mutable flags, see below for defines */
 
   GCPtrShape parent; /* parent node, reverse for..in order */
   friend class DictionaryShapeLink;
@@ -1085,18 +847,19 @@ class Shape : public gc::CellWithTenuredGCPointer<gc::TenuredCell, BaseShape> {
   bool matches(const Shape* other) const {
     return propid_.get() == other->propid_.get() &&
            matchesParamsAfterId(other->base(), other->objectFlags(),
-                                other->maybeSlot(), other->attrs);
+                                other->maybeSlot(), other->propFlags);
   }
 
   inline bool matches(const StackShape& other) const;
 
   bool matchesParamsAfterId(BaseShape* base, ObjectFlags aobjectFlags,
-                            uint32_t aslot, unsigned aattrs) const {
+                            uint32_t aslot, PropertyFlags aflags) const {
     return base == this->base() && objectFlags() == aobjectFlags &&
-           matchesPropertyParamsAfterId(aslot, aattrs);
+           matchesPropertyParamsAfterId(aslot, aflags);
   }
-  bool matchesPropertyParamsAfterId(uint32_t aslot, unsigned aattrs) const {
-    return maybeSlot() == aslot && attrs == aattrs;
+  bool matchesPropertyParamsAfterId(uint32_t aslot,
+                                    PropertyFlags aflags) const {
+    return maybeSlot() == aslot && propFlags == aflags;
   }
 
  private:
@@ -1112,7 +875,7 @@ class Shape : public gc::CellWithTenuredGCPointer<gc::TenuredCell, BaseShape> {
     return !isCustomDataProperty();
   }
 
-  bool isCustomDataProperty() const { return attrs & JSPROP_CUSTOM_DATA_PROP; }
+  bool isCustomDataProperty() const { return propFlags.isCustomDataProperty(); }
 
  public:
   bool isEmptyShape() const {
@@ -1171,19 +934,15 @@ class Shape : public gc::CellWithTenuredGCPointer<gc::TenuredCell, BaseShape> {
   }
 
  public:
-  ShapeProperty property() const {
+  PropertyInfo propertyInfo() const {
     MOZ_ASSERT(!isEmptyShape());
-    return ShapeProperty(attrs, maybeSlot());
+    return PropertyInfo(propFlags, maybeSlot());
   }
 
-  ShapePropertyWithKey propertyWithKey() const {
-    return ShapePropertyWithKey(attrs, maybeSlot(), propid());
+  PropertyInfoWithKey propertyInfoWithKey() const {
+    return PropertyInfoWithKey(propFlags, maybeSlot(), propid());
   }
 
- private:
-  uint8_t attributes() const { return attrs; }
-
- public:
   uint32_t entryCount() {
     JS::AutoCheckCannotGC nogc;
     if (ShapeTable* table = maybeTable(nogc)) {
@@ -1263,7 +1022,6 @@ class Shape : public gc::CellWithTenuredGCPointer<gc::TenuredCell, BaseShape> {
   MOZ_ALWAYS_INLINE Shape* searchLinear(jsid id);
 
   void fixupAfterMovingGC();
-  void updateBaseShapeAfterMovingGC();
 
   // For JIT usage.
   static constexpr size_t offsetOfBaseShape() { return offsetOfHeaderPtr(); }
@@ -1338,85 +1096,22 @@ struct EmptyShape : public js::Shape {
                                               Handle<ObjectSubclass*> obj);
 };
 
-/*
- * Entries for the per-zone initialShapes set indexing initial shapes for
- * objects in the zone and the associated types.
- */
-struct InitialShapeEntry {
-  /*
-   * Initial shape to give to the object. This is an empty shape, except for
-   * certain classes (e.g. String, RegExp) which may add certain baked-in
-   * properties.
-   */
-  WeakHeapPtr<Shape*> shape;
-
-  /* State used to determine a match on an initial shape. */
-  struct Lookup {
-    const JSClass* clasp;
-    JS::Realm* realm;
-    TaggedProto proto;
-    uint32_t nfixed;
-    ObjectFlags objectFlags;
-
-    Lookup(const JSClass* clasp, JS::Realm* realm, const TaggedProto& proto,
-           uint32_t nfixed, ObjectFlags objectFlags)
-        : clasp(clasp),
-          realm(realm),
-          proto(proto),
-          nfixed(nfixed),
-          objectFlags(objectFlags) {}
-  };
-
-  inline InitialShapeEntry();
-  inline explicit InitialShapeEntry(Shape* shape);
-
-  static HashNumber hash(const Lookup& lookup) {
-    HashNumber hash = MovableCellHasher<TaggedProto>::hash(lookup.proto);
-    return mozilla::AddToHash(
-        hash, mozilla::HashGeneric(lookup.clasp, lookup.realm, lookup.nfixed,
-                                   lookup.objectFlags.toRaw()));
-  }
-  static inline bool match(const InitialShapeEntry& key, const Lookup& lookup) {
-    const Shape* shape = key.shape.unbarrieredGet();
-    return lookup.clasp == shape->getObjectClass() &&
-           lookup.realm == shape->realm() &&
-           lookup.nfixed == shape->numFixedSlots() &&
-           lookup.objectFlags == shape->objectFlags() &&
-           lookup.proto == shape->proto();
-  }
-  static void rekey(InitialShapeEntry& k, const InitialShapeEntry& newKey) {
-    k = newKey;
-  }
-
-  bool needsSweep() {
-    Shape* ushape = shape.unbarrieredGet();
-    return gc::IsAboutToBeFinalizedUnbarriered(&ushape);
-  }
-
-  bool operator==(const InitialShapeEntry& other) const {
-    return shape == other.shape;
-  }
-};
-
-using InitialShapeSet = JS::WeakCache<
-    JS::GCHashSet<InitialShapeEntry, InitialShapeEntry, SystemAllocPolicy>>;
-
 struct StackShape {
   /* For performance, StackShape only roots when absolutely necessary. */
   BaseShape* base;
   jsid propid;
   uint32_t immutableFlags;
   ObjectFlags objectFlags;
-  uint8_t attrs;
+  PropertyFlags propFlags;
   uint8_t mutableFlags;
 
   explicit StackShape(BaseShape* base, ObjectFlags objectFlags, jsid propid,
-                      uint32_t slot, unsigned attrs)
+                      uint32_t slot, PropertyFlags propFlags)
       : base(base),
         propid(propid),
         immutableFlags(slot),
         objectFlags(objectFlags),
-        attrs(uint8_t(attrs)),
+        propFlags(propFlags),
         mutableFlags(0) {
     MOZ_ASSERT(base);
     MOZ_ASSERT(!JSID_IS_VOID(propid));
@@ -1428,12 +1123,12 @@ struct StackShape {
         propid(shape->propidRef()),
         immutableFlags(shape->immutableFlags),
         objectFlags(shape->objectFlags()),
-        attrs(shape->attrs),
+        propFlags(shape->propFlags),
         mutableFlags(shape->mutableFlags) {}
 
   bool hasMissingSlot() const { return maybeSlot() == SHAPE_INVALID_SLOT; }
 
-  bool isCustomDataProperty() const { return attrs & JSPROP_CUSTOM_DATA_PROP; }
+  bool isCustomDataProperty() const { return propFlags.isCustomDataProperty(); }
 
   uint32_t slot() const {
     MOZ_ASSERT(!hasMissingSlot());
@@ -1447,10 +1142,10 @@ struct StackShape {
   }
 
   HashNumber hash() const {
-    HashNumber hash = HashId(propid);
+    HashNumber hash = HashPropertyKey(propid);
     return mozilla::AddToHash(
-        hash,
-        mozilla::HashGeneric(base, objectFlags.toRaw(), attrs, maybeSlot()));
+        hash, mozilla::HashGeneric(base, objectFlags.toRaw(), propFlags.toRaw(),
+                                   maybeSlot()));
   }
 
   // StructGCPolicy implementation.
@@ -1469,7 +1164,7 @@ class WrappedPtrOperations<StackShape, Wrapper> {
   uint32_t slot() const { return ss().slot(); }
   uint32_t maybeSlot() const { return ss().maybeSlot(); }
   uint32_t slotSpan() const { return ss().slotSpan(); }
-  uint8_t attrs() const { return ss().attrs; }
+  PropertyFlags propFlags() const { return ss().propFlags; }
   ObjectFlags objectFlags() const { return ss().objectFlags; }
   jsid propid() const { return ss().propid; }
 };
@@ -1482,7 +1177,7 @@ class MutableWrappedPtrOperations<StackShape, Wrapper>
  public:
   void setSlot(uint32_t slot) { ss().setSlot(slot); }
   void setBase(BaseShape* base) { ss().base = base; }
-  void setAttrs(uint8_t attrs) { ss().attrs = attrs; }
+  void setPropFlags(PropertyFlags flags) { ss().propFlags = flags; }
   void setObjectFlags(ObjectFlags objectFlags) {
     ss().objectFlags = objectFlags;
   }
@@ -1493,7 +1188,7 @@ inline Shape::Shape(const StackShape& other, uint32_t nfixed)
       propid_(other.propid),
       immutableFlags(other.immutableFlags),
       objectFlags_(other.objectFlags),
-      attrs(other.attrs),
+      propFlags(other.propFlags),
       mutableFlags(other.mutableFlags),
       parent(nullptr) {
   setNumFixedSlots(nfixed);
@@ -1508,7 +1203,7 @@ inline Shape::Shape(BaseShape* base, ObjectFlags objectFlags, uint32_t nfixed)
       propid_(JSID_EMPTY),
       immutableFlags(SHAPE_INVALID_SLOT | (nfixed << FIXED_SLOTS_SHIFT)),
       objectFlags_(objectFlags),
-      attrs(0),
+      propFlags(),
       mutableFlags(0),
       parent(nullptr) {
   MOZ_ASSERT(base);
@@ -1529,7 +1224,7 @@ inline Shape* Shape::searchLinear(jsid id) {
 inline bool Shape::matches(const StackShape& other) const {
   return propid_.get() == other.propid &&
          matchesParamsAfterId(other.base, other.objectFlags, other.maybeSlot(),
-                              other.attrs);
+                              other.propFlags);
 }
 
 MOZ_ALWAYS_INLINE bool ShapeCachePtr::search(jsid id, Shape* start,
@@ -1561,8 +1256,6 @@ MOZ_ALWAYS_INLINE bool ShapeIC::search(jsid id, Shape** foundShape) {
 
   return false;
 }
-
-using ShapePropertyVector = GCVector<ShapePropertyWithKey, 8>;
 
 // Iterator for iterating over a shape's properties. It can be used like this:
 //
@@ -1598,24 +1291,24 @@ class MOZ_RAII ShapePropertyIter {
     cursor_ = cursor_->previous();
   }
 
-  ShapePropertyWithKey get() const {
+  PropertyInfoWithKey get() const {
     MOZ_ASSERT(!done());
-    return cursor_->propertyWithKey();
+    return cursor_->propertyInfoWithKey();
   }
 
-  ShapePropertyWithKey operator*() const { return get(); }
+  PropertyInfoWithKey operator*() const { return get(); }
 
   // Fake pointer struct to make operator-> work.
   // See https://stackoverflow.com/a/52856349.
   struct FakePtr {
-    ShapePropertyWithKey val_;
-    const ShapePropertyWithKey* operator->() const { return &val_; }
+    PropertyInfoWithKey val_;
+    const PropertyInfoWithKey* operator->() const { return &val_; }
   };
   FakePtr operator->() const { return {get()}; }
 };
 
 MOZ_ALWAYS_INLINE HashNumber ShapeTable::Hasher::hash(PropertyKey key) {
-  return HashId(key);
+  return HashPropertyKey(key);
 }
 MOZ_ALWAYS_INLINE bool ShapeTable::Hasher::match(Shape* shape,
                                                  PropertyKey key) {

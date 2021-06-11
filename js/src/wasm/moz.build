@@ -27,6 +27,7 @@ UNIFIED_SOURCES += [
     "WasmCompile.cpp",
     "WasmContext.cpp",
     "WasmDebug.cpp",
+    "WasmFrame.cpp",
     "WasmFrameIter.cpp",
     "WasmGC.cpp",
     "WasmGenerator.cpp",
@@ -40,8 +41,12 @@ UNIFIED_SOURCES += [
     "WasmRealm.cpp",
     "WasmStubs.cpp",
     "WasmTable.cpp",
+    "WasmTlsData.cpp",
+    "WasmTypeDef.cpp",
     "WasmTypes.cpp",
     "WasmValidate.cpp",
+    "WasmValType.cpp",
+    "WasmValue.cpp",
 ]
 
 # We don't support signals for wasi yet.

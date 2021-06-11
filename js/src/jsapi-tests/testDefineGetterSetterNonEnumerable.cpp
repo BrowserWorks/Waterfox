@@ -31,16 +31,16 @@ BEGIN_TEST(testDefineGetterSetterNonEnumerable) {
 
   JS::RootedObject vObject(cx, vobj.toObjectOrNull());
   CHECK(JS_DefineProperty(cx, vObject, PROPERTY_NAME, funGetObj, funSetObj,
-                          JSPROP_GETTER | JSPROP_SETTER | JSPROP_ENUMERATE));
+                          JSPROP_ENUMERATE));
 
   CHECK(JS_DefineProperty(cx, vObject, PROPERTY_NAME, funGetObj, funSetObj,
-                          JSPROP_GETTER | JSPROP_SETTER | JSPROP_PERMANENT));
+                          JSPROP_PERMANENT));
 
   JS::Rooted<mozilla::Maybe<JS::PropertyDescriptor>> desc(cx);
   CHECK(JS_GetOwnPropertyDescriptor(cx, vObject, PROPERTY_NAME, &desc));
   CHECK(desc.isSome());
-  CHECK(desc->hasGetterObject());
-  CHECK(desc->hasSetterObject());
+  CHECK(desc->hasGetter());
+  CHECK(desc->hasSetter());
   CHECK(!desc->configurable());
   CHECK(!desc->enumerable());
 

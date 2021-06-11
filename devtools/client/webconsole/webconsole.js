@@ -125,7 +125,7 @@ class WebConsole {
   }
 
   getFrontByID(id) {
-    return this.currentTarget.client.getFrontByID(id);
+    return this.commands.client.getFrontByID(id);
   }
 
   /**
@@ -434,17 +434,6 @@ class WebConsole {
     });
 
     await Promise.all([onNodeFrontSet, onInspectorUpdated]);
-  }
-
-  /**
-   * Evaluate a JavaScript expression asynchronously.
-   *
-   * @param {String} string: The code you want to evaluate.
-   * @param {Object} options: Options for evaluation. See evaluateJSAsync method on
-   *                          devtools/client/fronts/webconsole.js
-   */
-  evaluateJSAsync(expression, options = {}) {
-    return this.ui._commands.evaluateJSAsync(expression, options);
   }
 
   /**

@@ -12,11 +12,6 @@ args:
       short: v
       long: verbose
       help: Enable verbose display
-  - zoom:
-      short: z
-      long: zoom
-      help: Set zoom factor
-      takes_value: true
   - shaders:
       long: shaders
       help: Override path for shaders
@@ -44,11 +39,6 @@ args:
   - software:
       long: software
       help: Enable software rendering
-  - dp_ratio:
-      short: p
-      long: device-pixel-ratio
-      help: Device pixel ratio
-      takes_value: true
   - size:
       short: s
       long: size

@@ -153,9 +153,9 @@ template EditorDOMPoint HTMLEditor::GetCurrentHardLineEndPoint(
 nsresult HTMLEditor::InitEditorContentAndSelection() {
   MOZ_ASSERT(IsEditActionDataAvailable());
 
-  nsresult rv = TextEditor::InitEditorContentAndSelection();
+  nsresult rv = EditorBase::InitEditorContentAndSelection();
   if (NS_FAILED(rv)) {
-    NS_WARNING("TextEditor::InitEditorContentAndSelection() failed");
+    NS_WARNING("EditorBase::InitEditorContentAndSelection() failed");
     return rv;
   }
 
@@ -8062,7 +8062,7 @@ nsresult HTMLEditor::AdjustCaretPositionAndEnsurePaddingBRElement(
       if (point.GetContainer() == bodyOrDocumentElement) {
         // Our root node is completely empty. Don't add a <br> here.
         // AfterEditInner() will add one for us when it calls
-        // TextEditor::MaybeCreatePaddingBRElementForEmptyEditor().
+        // EditorBase::MaybeCreatePaddingBRElementForEmptyEditor().
         // XXX This kind of dependency between methods makes us spaghetti.
         //     Let's handle it here later.
         // XXX This looks odd check.  If active editing host is not a

@@ -27,7 +27,7 @@ namespace net {
 
 class nsSimpleURI : public nsIURI, public nsISerializable, public nsISizeOf {
  protected:
-  nsSimpleURI();
+  nsSimpleURI() = default;
   virtual ~nsSimpleURI() = default;
 
  public:
@@ -55,21 +55,21 @@ class nsSimpleURI : public nsIURI, public nsISerializable, public nsISizeOf {
   // enum used in a few places to specify how .ref attribute should be handled
   enum RefHandlingEnum { eIgnoreRef, eHonorRef, eReplaceRef };
 
-  virtual nsresult Clone(nsIURI** aURI);
+  virtual nsresult Clone(nsIURI** result);
   virtual nsresult SetSpecInternal(const nsACString& aSpec,
                                    bool aStripWhitespace = false);
-  virtual nsresult SetScheme(const nsACString& input);
+  virtual nsresult SetScheme(const nsACString& scheme);
   virtual nsresult SetUserPass(const nsACString& input);
   nsresult SetUsername(const nsACString& input);
   virtual nsresult SetPassword(const nsACString& input);
   virtual nsresult SetHostPort(const nsACString& aValue);
   virtual nsresult SetHost(const nsACString& input);
   virtual nsresult SetPort(int32_t port);
-  virtual nsresult SetPathQueryRef(const nsACString& input);
-  virtual nsresult SetRef(const nsACString& input);
-  virtual nsresult SetFilePath(const nsACString& input);
-  virtual nsresult SetQuery(const nsACString& input);
-  virtual nsresult SetQueryWithEncoding(const nsACString& input,
+  virtual nsresult SetPathQueryRef(const nsACString& aPath);
+  virtual nsresult SetRef(const nsACString& aRef);
+  virtual nsresult SetFilePath(const nsACString& aFilePath);
+  virtual nsresult SetQuery(const nsACString& aQuery);
+  virtual nsresult SetQueryWithEncoding(const nsACString& aQuery,
                                         const Encoding* encoding);
   nsresult ReadPrivate(nsIObjectInputStream* stream);
 
@@ -96,7 +96,7 @@ class nsSimpleURI : public nsIURI, public nsISerializable, public nsISizeOf {
 
   // Helper to share code between Clone methods.
   virtual nsresult CloneInternal(RefHandlingEnum refHandlingMode,
-                                 const nsACString& newRef, nsIURI** clone);
+                                 const nsACString& newRef, nsIURI** result);
 
   nsresult EscapeAndSetPathQueryRef(const nsACString& aPath);
   nsresult SetPathQueryRefInternal(const nsACString& aPath);
@@ -108,9 +108,9 @@ class nsSimpleURI : public nsIURI, public nsISerializable, public nsISizeOf {
   nsCString mRef;   // so that URIs with different refs can share string data.
   nsCString
       mQuery;  // so that URLs with different querys can share string data.
-  bool mMutable;
-  bool mIsRefValid;    // To distinguish between empty-ref and no-ref.
-  bool mIsQueryValid;  // To distinguish between empty-query and no-query.
+  bool mIsRefValid{false};  // To distinguish between empty-ref and no-ref.
+  // To distinguish between empty-query and no-query.
+  bool mIsQueryValid{false};
 
  public:
   class Mutator final : public nsIURIMutator,

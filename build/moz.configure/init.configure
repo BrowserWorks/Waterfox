@@ -218,15 +218,8 @@ shell = help_shell | shell
 
 option(env="PYTHON3", nargs=1, help="Python 3 interpreter (3.6 or later)")
 
-option(
-    env="VIRTUALENV_NAME",
-    nargs=1,
-    default="init_py3",
-    help="Name of the in-objdir virtualenv",
-)
 
-
-@depends("PYTHON3", "VIRTUALENV_NAME", check_build_environment, mozconfig, "--help")
+@depends("PYTHON3", check_build_environment, mozconfig, "--help")
 @imports(_from="__builtin__", _import="Exception")
 @imports("os")
 @imports("sys")
@@ -238,7 +231,7 @@ option(
 @imports(_from="mozbuild.pythonutil", _import="find_python3_executable")
 @imports(_from="mozbuild.pythonutil", _import="python_executable_version")
 @imports(_from="six", _import="ensure_text")
-def virtualenv_python3(env_python, virtualenv_name, build_env, mozconfig, help):
+def virtualenv_python3(env_python, build_env, mozconfig, help):
     # Avoid re-executing python when running configure --help.
     if help:
         return
@@ -256,7 +249,6 @@ def virtualenv_python3(env_python, virtualenv_name, build_env, mozconfig, help):
     log.debug("python3: sys.executable: %r" % sys.executable)
 
     python = env_python[0] if env_python else None
-    virtualenv_name = virtualenv_name[0]
 
     # Did our python come from mozconfig? Overrides environment setting.
     # Ideally we'd rely on the mozconfig injection from mozconfig_options,
@@ -292,20 +284,13 @@ def virtualenv_python3(env_python, virtualenv_name, build_env, mozconfig, help):
     with LineIO(lambda l: log.info(l), "replace") as out:
         manager = VirtualenvManager(
             topsrcdir,
-            os.path.join(virtualenvs_root, virtualenv_name),
+            os.path.join(virtualenvs_root, "common"),
             out,
             os.path.join(topsrcdir, "build", "build_virtualenv_packages.txt"),
         )
 
-    # If we're not in the virtualenv, we need to update the path to include some
-    # necessary modules for find_program.
-    if "MOZBUILD_VIRTUALENV" in os.environ:
-        python = sys.executable
-    else:
-        sys.path.insert(0, os.path.join(topsrcdir, "testing", "mozbase", "mozfile"))
-        sys.path.insert(
-            0, os.path.join(topsrcdir, "third_party", "python", "backports")
-        )
+    # Update the path to include some necessary modules for find_program.
+    sys.path.insert(0, os.path.join(topsrcdir, "testing", "mozbase", "mozfile"))
 
     # If we know the Python executable the caller is asking for then verify its
     # version. If the caller did not ask for a specific executable then find
@@ -475,19 +460,25 @@ def mozconfig_options(mozconfig, early_options, automation, help):
             add(key, value)
 
 
+@depends(check_build_environment, "--help")
+@imports(_from="os.path", _import="exists")
+def js_package(build_env, help):
+    return not exists(os.path.join(build_env.topsrcdir, "browser"))
+
+
 # Source checkout and version control integration.
 # ================================================
 
 
-@depends(check_build_environment, "MOZ_AUTOMATION", "--help")
+@depends(check_build_environment, "MOZ_AUTOMATION", js_package, "--help")
 @checking("for vcs source checkout")
 @imports("os")
-def vcs_checkout_type(build_env, automation, help):
+def vcs_checkout_type(build_env, automation, js_package, help):
     if os.path.exists(os.path.join(build_env.topsrcdir, ".hg")):
         return "hg"
     elif os.path.exists(os.path.join(build_env.topsrcdir, ".git")):
         return "git"
-    elif automation and not help:
+    elif automation and not js_package and not help:
         raise FatalCheckError(
             "unable to resolve VCS type; must run "
             "from a source checkout when MOZ_AUTOMATION "
@@ -645,9 +636,9 @@ def application(app):
 imply_option("--enable-project", application)
 
 
-@depends(check_build_environment)
-def default_project(build_env):
-    if build_env.topobjdir.endswith("/js/src"):
+@depends(check_build_environment, js_package)
+def default_project(build_env, js_package):
+    if js_package or build_env.topobjdir.endswith("/js/src"):
         return "js"
     return "browser"
 

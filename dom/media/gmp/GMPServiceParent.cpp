@@ -11,7 +11,7 @@
 #include "GMPLog.h"
 #include "GMPParent.h"
 #include "GMPVideoDecoderParent.h"
-#include "GeckoChildProcessHost.h"
+#include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "base/task.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Logging.h"
@@ -40,6 +40,10 @@
 #include "nsXPCOMPrivate.h"
 #include "prio.h"
 #include "runnable_utils.h"
+
+#ifdef DEBUG
+#  include "mozilla/dom/MediaKeys.h"  // MediaKeys::kMediaKeysRequestTopic
+#endif
 
 using mozilla::ipc::Transport;
 
@@ -103,8 +107,8 @@ nsresult GeckoMediaPluginServiceParent::Init() {
       obsService->AddObserver(this, NS_XPCOM_WILL_SHUTDOWN_OBSERVER_ID, false));
 
 #ifdef DEBUG
-  MOZ_ALWAYS_SUCCEEDS(
-      obsService->AddObserver(this, "mediakeys-request", false));
+  MOZ_ALWAYS_SUCCEEDS(obsService->AddObserver(
+      this, dom::MediaKeys::kMediaKeysRequestTopic, false));
 #endif
 
   nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);

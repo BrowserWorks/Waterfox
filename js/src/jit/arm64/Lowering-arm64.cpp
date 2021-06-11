@@ -140,20 +140,25 @@ template void LIRGeneratorARM64::lowerForFPU(LInstructionHelper<1, 2, 1>* ins,
                                              MDefinition* mir, MDefinition* lhs,
                                              MDefinition* rhs);
 
+// These all currently have codegen that depends on reuse but only because the
+// masm API depends on that.  We need new three-address masm APIs, for both
+// constant and variable rhs.
+//
+// MAdd => LAddI64
+// MSub => LSubI64
+// MBitAnd, MBitOr, MBitXor => LBitOpI64
 void LIRGeneratorARM64::lowerForALUInt64(
     LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins,
     MDefinition* mir, MDefinition* lhs, MDefinition* rhs) {
   ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
-  ins->setInt64Operand(INT64_PIECES,
-                       lhs != rhs ? useInt64RegisterOrConstant(rhs)
-                                  : useInt64RegisterOrConstantAtStart(rhs));
-  defineInt64ReuseInput(ins, mir, 0);
+  ins->setInt64Operand(INT64_PIECES, useInt64RegisterOrConstantAtStart(rhs));
+  defineInt64(ins, mir);
 }
 
 void LIRGeneratorARM64::lowerForMulInt64(LMulI64* ins, MMul* mir,
                                          MDefinition* lhs, MDefinition* rhs) {
   ins->setInt64Operand(LMulI64::Lhs, useInt64RegisterAtStart(lhs));
-  ins->setInt64Operand(LMulI64::Rhs, useInt64RegisterAtStart(rhs));
+  ins->setInt64Operand(LMulI64::Rhs, useInt64RegisterOrConstantAtStart(rhs));
   defineInt64(ins, mir);
 }
 
@@ -168,8 +173,8 @@ void LIRGeneratorARM64::lowerForShiftInt64(
   static_assert(LRotateI64::Count == INT64_PIECES,
                 "Assume Count is located at INT64_PIECES.");
 
-  ins->setOperand(INT64_PIECES, useRegisterOrConstant(rhs));
-  defineInt64ReuseInput(ins, mir, 0);
+  ins->setOperand(INT64_PIECES, useRegisterOrConstantAtStart(rhs));
+  defineInt64(ins, mir);
 }
 
 template void LIRGeneratorARM64::lowerForShiftInt64(
@@ -268,6 +273,14 @@ void LIRGeneratorARM64::lowerDivI(MDiv* div) {
   define(lir, div);
 }
 
+void LIRGeneratorARM64::lowerNegI(MInstruction* ins, MDefinition* input) {
+  define(new (alloc()) LNegI(useRegisterAtStart(input)), ins);
+}
+
+void LIRGeneratorARM64::lowerNegI64(MInstruction* ins, MDefinition* input) {
+  defineInt64(new (alloc()) LNegI64(useInt64RegisterAtStart(input)), ins);
+}
+
 void LIRGeneratorARM64::lowerMulI(MMul* mul, MDefinition* lhs,
                                   MDefinition* rhs) {
   LMulI* lir = new (alloc()) LMulI;
@@ -359,6 +372,32 @@ void LIRGenerator::visitPowHalf(MPowHalf* ins) {
   MOZ_ASSERT(input->type() == MIRType::Double);
   LPowHalfD* lir = new (alloc()) LPowHalfD(useRegister(input));
   define(lir, ins);
+}
+
+void LIRGeneratorARM64::lowerWasmSelectI(MWasmSelect* select) {
+  if (select->type() == MIRType::Simd128) {
+    LAllocation t = useRegisterAtStart(select->trueExpr());
+    LAllocation f = useRegister(select->falseExpr());
+    LAllocation c = useRegister(select->condExpr());
+    auto* lir = new (alloc()) LWasmSelect(t, f, c);
+    defineReuseInput(lir, select, LWasmSelect::TrueExprIndex);
+  } else {
+    LAllocation t = useRegisterAtStart(select->trueExpr());
+    LAllocation f = useRegisterAtStart(select->falseExpr());
+    LAllocation c = useRegisterAtStart(select->condExpr());
+    define(new (alloc()) LWasmSelect(t, f, c), select);
+  }
+}
+
+void LIRGeneratorARM64::lowerWasmSelectI64(MWasmSelect* select) {
+  LInt64Allocation t = useInt64RegisterAtStart(select->trueExpr());
+  LInt64Allocation f = useInt64RegisterAtStart(select->falseExpr());
+  LAllocation c = useRegisterAtStart(select->condExpr());
+  defineInt64(new (alloc()) LWasmSelectI64(t, f, c), select);
+}
+
+void LIRGenerator::visitAbs(MAbs* ins) {
+  define(allocateAbs(ins, useRegisterAtStart(ins->input())), ins);
 }
 
 LTableSwitch* LIRGeneratorARM64::newLTableSwitch(const LAllocation& in,
@@ -833,7 +872,7 @@ void LIRGenerator::visitWasmLoad(MWasmLoad* ins) {
   MDefinition* base = ins->base();
   MOZ_ASSERT(base->type() == MIRType::Int32);
 
-  LAllocation ptr = useRegisterAtStart(base);
+  LAllocation ptr = useRegisterOrConstantAtStart(base);
 
   if (ins->type() == MIRType::Int64) {
     auto* lir = new (alloc()) LWasmLoadI64(ptr);
@@ -851,14 +890,14 @@ void LIRGenerator::visitWasmStore(MWasmStore* ins) {
   MDefinition* value = ins->value();
 
   if (ins->access().type() == Scalar::Int64) {
-    LAllocation baseAlloc = useRegisterAtStart(base);
+    LAllocation baseAlloc = useRegisterOrConstantAtStart(base);
     LInt64Allocation valueAlloc = useInt64RegisterAtStart(value);
     auto* lir = new (alloc()) LWasmStoreI64(baseAlloc, valueAlloc);
     add(lir, ins);
     return;
   }
 
-  LAllocation baseAlloc = useRegisterAtStart(base);
+  LAllocation baseAlloc = useRegisterOrConstantAtStart(base);
   LAllocation valueAlloc = useRegisterAtStart(value);
   auto* lir = new (alloc()) LWasmStore(baseAlloc, valueAlloc);
   add(lir, ins);
@@ -887,10 +926,9 @@ void LIRGenerator::visitCopySign(MCopySign* ins) {
     lir = new (alloc()) LCopySignF();
   }
 
-  // TODO: Are these really what we want?  Inherited from x64 / mips.
   lir->setOperand(0, useRegisterAtStart(lhs));
-  lir->setOperand(1, useRegister(rhs));
-  defineReuseInput(lir, ins, 0);
+  lir->setOperand(1, useRegisterAtStart(rhs));
+  define(lir, ins);
 }
 
 void LIRGenerator::visitExtendInt32ToInt64(MExtendInt32ToInt64* ins) {
@@ -931,9 +969,6 @@ void LIRGenerator::visitWasmBinarySimd128(MWasmBinarySimd128* ins) {
   MOZ_ASSERT(rhs->type() == MIRType::Simd128);
   MOZ_ASSERT(ins->type() == MIRType::Simd128);
 
-  // Without useRegisterAtStart, the regalloc gets confused and starts copying
-  // things redundantly.  Worth investigating further.  Also seen on x86.
-
   LAllocation lhsAlloc = useRegisterAtStart(lhs);
   LAllocation rhsAlloc = useRegisterAtStart(rhs);
   LDefinition tempReg0 = LDefinition::BogusTemp();
@@ -949,6 +984,13 @@ void LIRGenerator::visitWasmBinarySimd128(MWasmBinarySimd128* ins) {
   MOZ_CRASH("No SIMD");
 #endif
 }
+
+#ifdef ENABLE_WASM_SIMD
+bool MWasmBitselectSimd128::specializeConstantMaskAsShuffle(
+    int8_t shuffle[16]) {
+  return false;
+}
+#endif
 
 bool MWasmBinarySimd128::specializeForConstantRhs() {
   // Probably many we want to do here
@@ -998,8 +1040,8 @@ void LIRGenerator::visitWasmShiftSimd128(MWasmShiftSimd128* ins) {
 #  ifdef DEBUG
     js::wasm::ReportSimdAnalysis("shift -> constant shift");
 #  endif
-    auto* lir =
-        new (alloc()) LWasmConstantShiftSimd128(useRegister(lhs), shiftCount);
+    auto* lir = new (alloc())
+        LWasmConstantShiftSimd128(useRegisterAtStart(lhs), shiftCount);
     define(lir, ins);
     return;
   }
@@ -1085,14 +1127,17 @@ void LIRGenerator::visitWasmReplaceLaneSimd128(MWasmReplaceLaneSimd128* ins) {
   MOZ_ASSERT(ins->lhs()->type() == MIRType::Simd128);
   MOZ_ASSERT(ins->type() == MIRType::Simd128);
 
+  // Optimal code generation reuses the lhs register because the rhs scalar is
+  // merged into a vector lhs.
+  LAllocation lhs = useRegisterAtStart(ins->lhs());
   if (ins->rhs()->type() == MIRType::Int64) {
-    auto* lir = new (alloc()) LWasmReplaceInt64LaneSimd128(
-        useRegister(ins->lhs()), useInt64Register(ins->rhs()));
-    define(lir, ins);
+    auto* lir = new (alloc())
+        LWasmReplaceInt64LaneSimd128(lhs, useInt64Register(ins->rhs()));
+    defineReuseInput(lir, ins, 0);
   } else {
-    auto* lir = new (alloc()) LWasmReplaceLaneSimd128(useRegister(ins->lhs()),
-                                                      useRegister(ins->rhs()));
-    define(lir, ins);
+    auto* lir =
+        new (alloc()) LWasmReplaceLaneSimd128(lhs, useRegister(ins->rhs()));
+    defineReuseInput(lir, ins, 0);
   }
 #else
   MOZ_CRASH("No SIMD");
@@ -1256,6 +1301,10 @@ void LIRGenerator::visitWasmReduceSimd128(MWasmReduceSimd128* ins) {
 
 void LIRGenerator::visitWasmLoadLaneSimd128(MWasmLoadLaneSimd128* ins) {
 #ifdef ENABLE_WASM_SIMD
+  // Optimal allocation here reuses the value input for the output register
+  // because codegen otherwise has to copy the input to the output; this is
+  // because load-lane is implemented as load + replace-lane.  Bug 1706106 may
+  // change all of that, so leave it alone for now.
   LUse base = useRegisterAtStart(ins->base());
   LUse inputUse = useRegisterAtStart(ins->value());
   MOZ_ASSERT(!ins->hasMemoryBase());

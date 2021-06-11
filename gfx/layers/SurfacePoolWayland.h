@@ -10,30 +10,130 @@
 
 #include "mozilla/layers/SurfacePool.h"
 #include "mozilla/widget/nsWaylandDisplay.h"
+#include "mozilla/widget/WaylandShmBuffer.h"
 
 namespace mozilla::layers {
 
+using gfx::DrawTarget;
+using gfx::IntPoint;
+using gfx::IntRegion;
 using gfx::IntSize;
+using gfx::Rect;
 using gl::GLContext;
+using widget::nsWaylandDisplay;
+using widget::WaylandShmBuffer;
+
+typedef void (*CallbackFunc)(void* aData, uint32_t aTime);
+
+class CallbackMultiplexHelper {
+ public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CallbackMultiplexHelper);
+
+  explicit CallbackMultiplexHelper(CallbackFunc aCallbackFunc,
+                                   void* aCallbackData);
+
+  void Callback(uint32_t aTime);
+  bool IsActive() { return mActive; }
+
+ private:
+  ~CallbackMultiplexHelper() = default;
+
+  void RunCallback(uint32_t aTime);
+
+  bool mActive = true;
+  CallbackFunc mCallbackFunc = nullptr;
+  void* mCallbackData = nullptr;
+};
 
 class NativeSurfaceWayland {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(NativeSurfaceWayland);
 
-  EGLSurface GetEGLSurface() { return mEGLSurface; }
+  static RefPtr<NativeSurfaceWayland> Create(const IntSize& aSize,
+                                             GLContext* aGL);
 
-  struct wl_surface* mWlSurface = nullptr;
-  struct wl_subsurface* mWlSubsurface = nullptr;
-  struct wp_viewport* mViewport = nullptr;
+  virtual Maybe<GLuint> GetAsFramebuffer() { return Nothing(); };
+  virtual RefPtr<DrawTarget> GetAsDrawTarget() { return nullptr; };
+
+  virtual void Commit(const IntRegion& aInvalidRegion) = 0;
+  virtual void NotifySurfaceReady(){};
+  virtual void DestroyGLResources(){};
+
+  void CreateSubsurface(wl_surface* aParentSurface);
+  void ClearSubsurface();
+  bool HasSubsurface() { return !!mWlSubsurface; }
+
+  void SetPosition(int aX, int aY);
+  void SetViewportSourceRect(const Rect aSourceRect);
+  void SetViewportDestinationSize(int aWidth, int aHeight);
+
+  void RequestFrameCallback(
+      const RefPtr<CallbackMultiplexHelper>& aMultiplexHelper);
+  static void FrameCallbackHandler(void* aData, wl_callback* aCallback,
+                                   uint32_t aTime);
+
+  wl_surface* mWlSurface = nullptr;
+  wl_subsurface* mWlSubsurface = nullptr;
+
+ protected:
+  explicit NativeSurfaceWayland(
+      const RefPtr<nsWaylandDisplay>& aWaylandDisplay);
+  virtual ~NativeSurfaceWayland();
+
+  void FrameCallbackHandler(wl_callback* aCallback, uint32_t aTime);
+
+  Mutex mMutex;
+  RefPtr<nsWaylandDisplay> mWaylandDisplay;
+  wp_viewport* mViewport = nullptr;
+  IntPoint mPosition = IntPoint(0, 0);
+  Rect mViewportSourceRect = Rect(-1, -1, -1, -1);
+  IntSize mViewportDestinationSize = IntSize(-1, -1);
+  nsTArray<RefPtr<CallbackMultiplexHelper>> mCallbackMultiplexHelpers;
+  bool mCallbackRequested = false;
+};
+
+class NativeSurfaceWaylandEGL final : public NativeSurfaceWayland {
+ public:
+  Maybe<GLuint> GetAsFramebuffer() override;
+  void Commit(const IntRegion& aInvalidRegion) override;
+  void NotifySurfaceReady() override;
+  void DestroyGLResources() override;
 
  private:
-  friend class SurfacePoolWayland;
-  NativeSurfaceWayland(const IntSize& aSize, GLContext* aGL);
-  ~NativeSurfaceWayland();
+  friend RefPtr<NativeSurfaceWayland> NativeSurfaceWayland::Create(
+      const IntSize& aSize, GLContext* aGL);
+
+  NativeSurfaceWaylandEGL(const RefPtr<nsWaylandDisplay>& aWaylandDisplay,
+                          GLContext* aGL);
+  ~NativeSurfaceWaylandEGL();
 
   GLContext* mGL = nullptr;
-  struct wl_egl_window* mEGLWindow = nullptr;
+  wl_egl_window* mEGLWindow = nullptr;
   EGLSurface mEGLSurface = nullptr;
+};
+
+class NativeSurfaceWaylandSHM final : public NativeSurfaceWayland {
+ public:
+  RefPtr<DrawTarget> GetAsDrawTarget() override;
+  void Commit(const IntRegion& aInvalidRegion) override;
+  static void BufferReleaseCallbackHandler(void* aData, wl_buffer* aBuffer);
+
+ private:
+  friend RefPtr<NativeSurfaceWayland> NativeSurfaceWayland::Create(
+      const IntSize& aSize, GLContext* aGL);
+
+  NativeSurfaceWaylandSHM(const RefPtr<nsWaylandDisplay>& aWaylandDisplay,
+                          const IntSize& aSize);
+
+  RefPtr<WaylandShmBuffer> ObtainBufferFromPool();
+  void ReturnBufferToPool(const RefPtr<WaylandShmBuffer>& aBuffer);
+  void EnforcePoolSizeLimit();
+  void BufferReleaseCallbackHandler(wl_buffer* aBuffer);
+
+  IntSize mSize;
+  nsTArray<RefPtr<WaylandShmBuffer>> mInUseBuffers;
+  nsTArray<RefPtr<WaylandShmBuffer>> mAvailableBuffers;
+  RefPtr<WaylandShmBuffer> mCurrentBuffer;
 };
 
 class SurfacePoolWayland final : public SurfacePool {
@@ -58,6 +158,8 @@ class SurfacePoolWayland final : public SurfacePool {
   struct SurfacePoolEntry {
     IntSize mSize;
     RefPtr<NativeSurfaceWayland> mNativeSurface;  // non-null
+    GLContext* mGLContext;
+    bool mRecycle;
   };
 
   bool CanRecycleSurfaceForRequest(const SurfacePoolEntry& aEntry,

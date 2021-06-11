@@ -351,7 +351,8 @@ class nsXULPopupManager final : public nsIDOMEventListener,
 
   // nsIRollupListener
   MOZ_CAN_RUN_SCRIPT_BOUNDARY
-  virtual bool Rollup(uint32_t aCount, bool aFlush, const nsIntPoint* pos,
+  virtual bool Rollup(uint32_t aCount, bool aFlush,
+                      const mozilla::LayoutDeviceIntPoint* pos,
                       nsIContent** aLastRolledUp) override;
   virtual bool ShouldRollupOnMouseWheelEvent() override;
   virtual bool ShouldConsumeOnMouseWheelEvent() override;
@@ -501,9 +502,6 @@ class nsXULPopupManager final : public nsIDOMEventListener,
   bool ShowPopupAsNativeMenu(nsIContent* aPopup, int32_t aXPos, int32_t aYPos,
                              bool aIsContextMenu,
                              mozilla::dom::Event* aTriggerEvent);
-
-  void ShowTooltipAtPosition(nsIContent* aPopup, nsIContent* aTriggerContent,
-                             const nsAString& aPosition);
 
   /**
    * Open a tooltip at a specific screen position specified by aXPos and aYPos,

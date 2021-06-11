@@ -19,6 +19,8 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = "dom_quota"
 
 EXPORTS.mozilla.dom += [
+    "QMResult.h",
+    "QMResultInlines.h",
     "StorageManager.h",
 ]
 
@@ -30,6 +32,7 @@ EXPORTS.mozilla.dom.quota += [
     "Client.h",
     "ClientImpl.h",
     "CommonMetadata.h",
+    "Config.h",
     "DecryptingInputStream.h",
     "DecryptingInputStream_impl.h",
     "DirectoryLock.h",
@@ -69,6 +72,7 @@ UNIFIED_SOURCES += [
     "nsIndexedDBProtocolHandler.cpp",
     "NSSCipherStrategy.cpp",
     "PersistenceType.cpp",
+    "QMResult.cpp",
     "QuotaCommon.cpp",
     "QuotaManagerService.cpp",
     "QuotaRequests.cpp",

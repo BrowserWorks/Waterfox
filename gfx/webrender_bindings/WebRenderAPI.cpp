@@ -162,7 +162,7 @@ class NewRenderer : public RendererEvent {
             aRenderThread.ThreadPoolLP().Raw(), &WebRenderMallocSizeOf,
             &WebRenderMallocEnclosingSizeOf, 0, compositor.get(),
             compositor->ShouldUseNativeCompositor(),
-            compositor->GetMaxUpdateRects(), compositor->UsePartialPresent(),
+            compositor->UsePartialPresent(),
             compositor->GetMaxPartialPresentRects(),
             compositor->ShouldDrawPreviousPartialPresentRegions(), mDocHandle,
             &wrRenderer, mMaxTextureSize, &errorMessage,
@@ -305,10 +305,10 @@ bool TransactionBuilder::IsRenderedFrameInvalidated() const {
 void TransactionBuilder::SetDocumentView(
     const LayoutDeviceIntRect& aDocumentRect) {
   wr::DeviceIntRect wrDocRect;
-  wrDocRect.origin.x = aDocumentRect.x;
-  wrDocRect.origin.y = aDocumentRect.y;
-  wrDocRect.size.width = aDocumentRect.width;
-  wrDocRect.size.height = aDocumentRect.height;
+  wrDocRect.min.x = aDocumentRect.x;
+  wrDocRect.min.y = aDocumentRect.y;
+  wrDocRect.max.x = aDocumentRect.x + aDocumentRect.width;
+  wrDocRect.max.y = aDocumentRect.y + aDocumentRect.height;
   wr_transaction_set_document_view(mTxn, &wrDocRect);
 }
 
@@ -346,10 +346,6 @@ void TransactionWrapper::UpdateScrollPosition(
     const layers::ScrollableLayerGuid::ViewID& aScrollId,
     const wr::LayoutPoint& aScrollPosition) {
   wr_transaction_scroll_layer(mTxn, aPipelineId, aScrollId, aScrollPosition);
-}
-
-void TransactionWrapper::UpdatePinchZoom(float aZoom) {
-  wr_transaction_pinch_zoom(mTxn, aZoom);
 }
 
 void TransactionWrapper::UpdateIsTransformAsyncZooming(uint64_t aAnimationId,

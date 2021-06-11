@@ -389,7 +389,6 @@ panelmultiview[transitioning] > .panel-viewcontainer > .panel-viewstack > panelv
   max-width: @standaloneSubviewWidth@;
 }
 
-@media (-moz-proton-doorhangers) {
 #BMB_bookmarksPopup::part(arrowscrollbox) {
   border: 0;
 }
@@ -406,30 +405,6 @@ panelmultiview[transitioning] > .panel-viewcontainer > .panel-viewstack > panelv
 #BMB_bookmarksPopup .subviewbutton {
   padding: var(--arrowpanel-menuitem-padding);
 }
-} /** END Proton **/
-
-@media not (-moz-proton-doorhangers) {
-#BMB_bookmarksPopup::part(arrowscrollbox) {
-  padding: 0;
-}
-
-/* Remove padding on xul:arrowscrollbox to avoid extra padding on footer */
-#BMB_bookmarksPopup menupopup::part(arrowscrollbox) {
-  padding-bottom: 0;
-}
-
-#BMB_bookmarksPopup menupopup[nofooterpopup=true]::part(arrowscrollbox) {
-  padding-bottom: 4px;
-}
-
-%ifndef XP_MACOSX
-/* Add some space at the top because there are no headers in menupopups of
-   the bookmarks menu. */
-#BMB_bookmarksPopup menupopup::part(arrowscrollbox-scrollbox) {
-  padding-top: 4px;
-}
-%endif
-} /** END not Proton **/
 
 #confirmation-hint {
   --arrowpanel-background: #0060df;
@@ -440,7 +415,7 @@ panelmultiview[transitioning] > .panel-viewcontainer > .panel-viewstack > panelv
   font-size: 1.1rem;
 }
 
-#confirmation-hint::part(arrowcontent) {
+#confirmation-hint::part(content) {
   -moz-box-align: center;
 }
 
@@ -575,7 +550,7 @@ panelview:not([mainview]) .toolbarbutton-text,
   min-width: calc(@menuPanelWidth@ + 32px);
 }
 
-.cui-widget-panel.cui-widget-panelWithFooter::part(arrowcontent) {
+.cui-widget-panel.cui-widget-panelWithFooter::part(content) {
   padding-bottom: 0;
 }
 
@@ -1209,6 +1184,30 @@ panelmultiview[mainViewId="PanelUI-fxa"] #PanelUI-remotetabs-syncnow {
   --panel-ui-sync-illustration-height: 141px;
 }
 
+.sendToDevice-device[clientType=phone] {
+  list-style-image: url("chrome://browser/skin/device-phone.svg");
+}
+
+.sendToDevice-device[clientType=tablet] {
+  list-style-image: url("chrome://browser/skin/device-tablet.svg");
+}
+
+.sendToDevice-device[clientType=desktop] {
+  list-style-image: url("chrome://browser/skin/device-desktop.svg");
+}
+
+.sendToDevice-device[clientType=tv] {
+  list-style-image: url("chrome://browser/skin/device-tv.svg");
+}
+
+.sendToDevice-device[clientType=vr] {
+  list-style-image: url("chrome://browser/skin/device-vr.svg");
+}
+
+.sendToDevice-device.signintosync {
+  list-style-image: url("chrome://browser/skin/sync.svg");
+}
+
 .PanelUI-fxa-service-description-label,
 .PanelUI-remotetabs-instruction-label {
   /* If you change the margin here, the min-height of the synced tabs panel
@@ -1817,13 +1816,6 @@ menuitem.panel-subview-footer@menuStateActive@,
 #BMB_bookmarksPopup .subviewbutton > .menu-iconic-left {
   margin-inline-end: 3px;
 }
-
-@media not (-moz-proton-doorhangers) {
-#BMB_bookmarksPopup menupopup > .bookmarks-actions-menuseparator {
-  /* Hide bottom separator as the styled footer includes a top border serving the same purpose */
-  display: none;
-}
-} /** END not Proton **/
 
 /* Disabled (empty) item is always alone and never has an icon, so fix its left padding */
 #BMB_bookmarksPopup menupopup[emptyplacesresult] .bookmark-item.subviewbutton {
@@ -2468,12 +2460,7 @@ panelview:not([mainview]) #PanelUI-whatsNew-title {
   /* -10px to compensate for the margin on the container. We can't get rid of that
      because it helps position the background image. */
   margin: 0 calc(-10px + var(--horizontal-padding)) var(--vertical-section-padding);
-}
-
-@media (-moz-proton-doorhangers) {
-#protections-popup-message .whatsNew-message-body {
   margin-inline: 6px;
-}
 }
 
 #PanelUI-whatsNew .whatsNew-message-body.has-icon {

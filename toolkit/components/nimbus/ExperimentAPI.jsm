@@ -288,11 +288,10 @@ const ExperimentAPI = {
  */
 const NimbusFeatures = {};
 for (let feature in FeatureManifest) {
-  XPCOMUtils.defineLazyGetter(NimbusFeatures, feature, () =>
-    // Alias upgradeDialog to reuse aboutwelcome, which has sync access in 88.
-    feature === "upgradeDialog"
-      ? NimbusFeatures.aboutwelcome
-      : new ExperimentFeature(feature)
+  XPCOMUtils.defineLazyGetter(
+    NimbusFeatures,
+    feature,
+    () => new ExperimentFeature(feature)
   );
 }
 
@@ -314,22 +313,6 @@ class ExperimentFeature {
     );
     this._listenForRemoteDefaults = this._listenForRemoteDefaults.bind(this);
     const variables = this.manifest?.variables || {};
-
-    // Add special enabled flag
-    if (this.manifest?.enabledFallbackPref) {
-      XPCOMUtils.defineLazyPreferenceGetter(
-        this,
-        "enabled",
-        this.manifest?.enabledFallbackPref,
-        null,
-        () => {
-          ExperimentAPI._store._emitFeatureUpdate(
-            this.featureId,
-            "pref-updated"
-          );
-        }
-      );
-    }
 
     Object.keys(variables).forEach(key => {
       const { type, fallbackPref } = variables[key];
@@ -445,19 +428,21 @@ class ExperimentFeature {
       return this.getRemoteConfig().enabled;
     }
 
-    // Then check the fallback pref, if it is defined
-    if (isBooleanValueDefined(this.enabled)) {
-      return this.enabled;
+    let enabled;
+    try {
+      enabled = this.getVariable("enabled", { sendExposureEvent });
+    } catch (e) {
+      /* This is expected not all features have an enabled flag defined */
+    }
+    if (isBooleanValueDefined(enabled)) {
+      return enabled;
     }
 
-    // Finally, return options.defaulValue if neither was found
     return defaultValue;
   }
 
   /**
-   * Lookup feature in active experiments and return value.
-   * By default, this will send an exposure event.
-   * @param {{sendExposureEvent: boolean, defaultValue?: any}} options
+   * @deprecated Please use .getAllVariables() instead.
    * @returns {obj} The feature value
    */
   getValue({ sendExposureEvent } = {}) {
@@ -480,6 +465,33 @@ class ExperimentFeature {
     return {
       ...this.prefGetters,
       ...this.getRemoteConfig()?.variables,
+      ...userPrefs,
+    };
+  }
+
+  /**
+   * Lookup feature variables in experiments, prefs, and remote defaults.
+   * @param {{sendExposureEvent: boolean, defaultValues?: {[variableName: string]: any}}} options
+   * @returns {{[variableName: string]: any}} The feature value
+   */
+  getAllVariables({ sendExposureEvent, defaultValues = null } = {}) {
+    // Any user pref will override any other configuration
+    let userPrefs = this._getUserPrefsValues();
+    const branch = ExperimentAPI.activateBranch({
+      featureId: this.featureId,
+      sendExposureEvent: sendExposureEvent && this._sendExposureEventOnce,
+    });
+
+    // Prevent future exposure events if user is enrolled in an experiment
+    if (branch && sendExposureEvent) {
+      this._sendExposureEventOnce = false;
+    }
+
+    return {
+      ...this.prefGetters,
+      ...defaultValues,
+      ...this.getRemoteConfig()?.variables,
+      ...(branch?.feature?.value || null),
       ...userPrefs,
     };
   }
@@ -509,7 +521,7 @@ class ExperimentFeature {
     })?.feature?.value?.[variable];
 
     // Prevent future exposure events if user is enrolled in an experiment
-    if (experimentValue && sendExposureEvent) {
+    if (typeof experimentValue !== "undefined" && sendExposureEvent) {
       this._sendExposureEventOnce = false;
     }
 

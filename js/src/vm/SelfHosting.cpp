@@ -118,7 +118,7 @@ using mozilla::Maybe;
 static void selfHosting_WarningReporter(JSContext* cx, JSErrorReport* report) {
   MOZ_ASSERT(report->isWarning());
 
-  JS::PrintError(cx, stderr, report, true);
+  JS::PrintError(stderr, report, true);
 }
 
 static bool intrinsic_ToObject(JSContext* cx, unsigned argc, Value* vp) {
@@ -619,18 +619,18 @@ static bool intrinsic_DefineProperty(JSContext* cx, unsigned argc, Value* vp) {
   if (attributes & ACCESSOR_DESCRIPTOR_KIND) {
     Value getter = args[3];
     if (getter.isObject()) {
-      desc.setGetterObject(&getter.toObject());
+      desc.setGetter(&getter.toObject());
     } else if (getter.isUndefined()) {
-      desc.setGetterObject(nullptr);
+      desc.setGetter(nullptr);
     } else {
       MOZ_ASSERT(getter.isNull());
     }
 
     Value setter = args[4];
     if (setter.isObject()) {
-      desc.setSetterObject(&setter.toObject());
+      desc.setSetter(&setter.toObject());
     } else if (setter.isUndefined()) {
-      desc.setSetterObject(nullptr);
+      desc.setSetter(nullptr);
     } else {
       MOZ_ASSERT(setter.isNull());
     }
@@ -1815,7 +1815,7 @@ static bool intrinsic_CreateNamespaceBinding(JSContext* cx, unsigned argc,
   MOZ_ASSERT(args[2].toObject().is<ModuleNamespaceObject>());
   // The property already exists in the evironment but is not writable, so set
   // the slot directly.
-  mozilla::Maybe<ShapeProperty> prop = environment->lookup(cx, name);
+  mozilla::Maybe<PropertyInfo> prop = environment->lookup(cx, name);
   MOZ_ASSERT(prop.isSome());
   environment->setSlot(prop->slot(), args[2]);
   args.rval().setUndefined();
@@ -1832,7 +1832,7 @@ static bool intrinsic_EnsureModuleEnvironmentNamespace(JSContext* cx,
   RootedModuleEnvironmentObject environment(cx, &module->initialEnvironment());
   // The property already exists in the evironment but is not writable, so set
   // the slot directly.
-  mozilla::Maybe<ShapeProperty> prop =
+  mozilla::Maybe<PropertyInfo> prop =
       environment->lookup(cx, cx->names().starNamespaceStar);
   MOZ_ASSERT(prop.isSome());
   environment->setSlot(prop->slot(), args[1]);
@@ -2881,7 +2881,7 @@ static void GetUnclonedValue(NativeObject* selfHostedObject,
   // non-permanent atoms here should be impossible.
   MOZ_ASSERT_IF(JSID_IS_STRING(id), JSID_TO_STRING(id)->isPermanentAtom());
 
-  mozilla::Maybe<ShapeProperty> prop = selfHostedObject->lookupPure(id);
+  mozilla::Maybe<PropertyInfo> prop = selfHostedObject->lookupPure(id);
   MOZ_ASSERT(prop.isSome());
   MOZ_ASSERT(prop->isDataProperty());
   *vp = selfHostedObject->getSlot(prop->slot());
@@ -2903,7 +2903,7 @@ static bool CloneProperties(JSContext* cx, HandleNativeObject selfHostedObject,
     }
   }
 
-  Rooted<ShapePropertyVector> props(cx, ShapePropertyVector(cx));
+  Rooted<PropertyInfoWithKeyVector> props(cx, PropertyInfoWithKeyVector(cx));
   for (ShapePropertyIter<NoGC> iter(selfHostedObject->shape()); !iter.done();
        iter++) {
     if (iter->enumerable() && !props.append(*iter)) {
@@ -2919,8 +2919,17 @@ static bool CloneProperties(JSContext* cx, HandleNativeObject selfHostedObject,
     if (!ids.append(props[i].key())) {
       return false;
     }
-    uint8_t propAttrs = props[i].attributes() &
-                        (JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY);
+    PropertyInfo prop = props[i];
+    uint8_t propAttrs = 0;
+    if (prop.enumerable()) {
+      propAttrs |= JSPROP_ENUMERATE;
+    }
+    if (!prop.configurable()) {
+      propAttrs |= JSPROP_PERMANENT;
+    }
+    if (!prop.writable()) {
+      propAttrs |= JSPROP_READONLY;
+    }
     if (!attrs.append(propAttrs)) {
       return false;
     }

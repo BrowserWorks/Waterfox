@@ -84,11 +84,6 @@ var pktUI = (function() {
   const initialPanelSize = {
     signup: {
       control: { height: 450, width: 300 },
-      button_control: { height: 442, width: 300 },
-      variant_a: { height: 408, width: 300 },
-      variant_b: { height: 383, width: 300 },
-      variant_c: { height: 424, width: 300 },
-      button_variant: { height: 388, width: 300 },
     },
     saved: {
       control: { height: 132, width: 350 },
@@ -154,44 +149,12 @@ var pktUI = (function() {
    * Show the sign-up panel
    */
   function showSignUp() {
-    // AB test: Direct logged-out users to tab vs panel
-    if (pktApi.getSignupPanelTabTestVariant() == "v2") {
-      let site = Services.prefs.getCharPref("extensions.pocket.site");
-      openTabWithUrl(
-        "https://" +
-          site +
-          "/firefox_learnmore?s=ffi&t=autoredirect&tv=page_learnmore&src=ff_ext",
-        Services.scriptSecurityManager.createNullPrincipal({}),
-        null
-      );
-
-      // force the panel closed before it opens
-      getPanel().hidePopup();
-
-      return;
-    }
-
-    // Control: Show panel as normal
     getFirefoxAccountSignedInUser(function(userdata) {
-      var controlvariant = pktApi.getSignupPanelTabTestVariant() == "control";
-      var variant = "storyboard_lm";
-      const loggedOutVariant =
-        Services.prefs.getCharPref("extensions.pocket.loggedOutVariant") ||
-        "control";
       let sizes = initialPanelSize.signup.control;
-      if (loggedOutVariant && initialPanelSize.signup[loggedOutVariant]) {
-        sizes = initialPanelSize.signup[loggedOutVariant];
-      }
 
       showPanel(
         "about:pocket-signup?pockethost=" +
           Services.prefs.getCharPref("extensions.pocket.site") +
-          "&loggedOutVariant=" +
-          loggedOutVariant +
-          "&variant=" +
-          variant +
-          "&controlvariant=" +
-          controlvariant +
           "&locale=" +
           getUILocale(),
         sizes
@@ -314,30 +277,26 @@ var pktUI = (function() {
 
     // Send error message for invalid url
     if (!isValidURL()) {
-      // TODO: Pass key for localized error in error object
-      let error = {
-        message: "Only links can be saved",
-        localizedKey: "onlylinkssaved",
+      let errorData = {
+        localizedKey: "pocket-panel-saved-error-only-links",
       };
       pktUIMessaging.sendErrorMessageToPanel(
         saveLinkMessageId,
         _panelId,
-        error
+        errorData
       );
       return;
     }
 
     // Check online state
     if (!navigator.onLine) {
-      // TODO: Pass key for localized error in error object
-      let error = {
-        message:
-          "You must be connected to the Internet in order to save to Pocket. Please connect to the Internet and try again.",
+      let errorData = {
+        localizedKey: "pocket-panel-saved-error-no-internet",
       };
       pktUIMessaging.sendErrorMessageToPanel(
         saveLinkMessageId,
         _panelId,
-        error
+        errorData
       );
       return;
     }
@@ -408,17 +367,16 @@ var pktUI = (function() {
           return;
         }
 
-        // If there is no error message in the error use a
-        // complete catch-all
-        var errorMessage =
-          error.message || "There was an error when trying to save to Pocket.";
-        var panelError = { message: errorMessage };
+        // For unknown server errors, use a generic catch-all error message
+        let errorData = {
+          localizedKey: "pocket-panel-saved-error-generic",
+        };
 
         // Send error message to panel
         pktUIMessaging.sendErrorMessageToPanel(
           saveLinkMessageId,
           _panelId,
-          panelError
+          errorData
         );
       },
     };

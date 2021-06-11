@@ -25,7 +25,7 @@ ConnectionEntry::~ConnectionEntry() {
 
   MOZ_ASSERT(!mIdleConns.Length());
   MOZ_ASSERT(!mActiveConns.Length());
-  MOZ_ASSERT(!mDnsAndConnectSockets.Length());
+  MOZ_DIAGNOSTIC_ASSERT(!mDnsAndConnectSockets.Length());
   MOZ_ASSERT(!PendingQueueLength());
   MOZ_ASSERT(!UrgentStartQueueLength());
   MOZ_ASSERT(!mDoNotDestroy);
@@ -48,9 +48,8 @@ bool ConnectionEntry::AvailableForDispatchNow() {
     return true;
   }
 
-  return gHttpHandler->ConnMgr()->GetH2orH3ActiveConn(this, false, false)
-             ? true
-             : false;
+  return gHttpHandler->ConnMgr()->GetH2orH3ActiveConn(this, false, false) !=
+         nullptr;
 }
 
 uint32_t ConnectionEntry::UnconnectedDnsAndConnectSockets() const {
@@ -63,26 +62,18 @@ uint32_t ConnectionEntry::UnconnectedDnsAndConnectSockets() const {
   return unconnectedDnsAndConnectSockets;
 }
 
-bool ConnectionEntry::RemoveDnsAndConnectSocket(
-    DnsAndConnectSocket* dnsAndSock) {
-  bool isPrimary = false;
-  // A failure to create the transport object at all
-  // will result in it not being present in the DnsAndConnectSockets table.
-  // That's expected.
+void ConnectionEntry::InsertIntoDnsAndConnectSockets(
+    DnsAndConnectSocket* sock) {
+  mDnsAndConnectSockets.AppendElement(sock);
+  gHttpHandler->ConnMgr()->IncreaseNumDnsAndConnectSockets();
+}
+
+void ConnectionEntry::RemoveDnsAndConnectSocket(DnsAndConnectSocket* dnsAndSock,
+                                                bool abandon) {
+  if (abandon) {
+    dnsAndSock->Abandon();
+  }
   if (mDnsAndConnectSockets.RemoveElement(dnsAndSock)) {
-    isPrimary = true;
-    if (dnsAndSock->IsSpeculative()) {
-      Telemetry::AutoCounter<Telemetry::HTTPCONNMGR_UNUSED_SPECULATIVE_CONN>
-          unusedSpeculativeConn;
-      ++unusedSpeculativeConn;
-
-      if (dnsAndSock->IsFromPredictor()) {
-        Telemetry::AutoCounter<Telemetry::PREDICTOR_TOTAL_PRECONNECTS_UNUSED>
-            totalPreconnectsUnused;
-        ++totalPreconnectsUnused;
-      }
-    }
-
     gHttpHandler->ConnMgr()->DecreaseNumDnsAndConnectSockets();
   }
 
@@ -97,8 +88,20 @@ bool ConnectionEntry::RemoveDnsAndConnectSocket(
            "    failed to process pending queue\n"));
     }
   }
+}
 
-  return isPrimary;
+void ConnectionEntry::CloseAllDnsAndConnectSockets() {
+  for (const auto& dnsAndSock : mDnsAndConnectSockets) {
+    dnsAndSock->Abandon();
+    gHttpHandler->ConnMgr()->DecreaseNumDnsAndConnectSockets();
+  }
+  mDnsAndConnectSockets.Clear();
+  nsresult rv = gHttpHandler->ConnMgr()->ProcessPendingQ(mConnInfo);
+  if (NS_FAILED(rv)) {
+    LOG(
+        ("ConnectionEntry::CloseAllDnsAndConnectSockets\n"
+         "    failed to process pending queue\n"));
+  }
 }
 
 void ConnectionEntry::DisallowHttp2() {
@@ -519,25 +522,16 @@ void ConnectionEntry::MakeAllDontReuseExcept(HttpConnectionBase* conn) {
 
   // Cancel any other pending connections - their associated transactions
   // are in the pending queue and will be dispatched onto this new connection
-  for (int32_t index = DnsAndConnectSocketsLength() - 1; index >= 0; --index) {
-    RefPtr<DnsAndConnectSocket> dnsAndSock = mDnsAndConnectSockets[index];
-    LOG(
-        ("ConnectionEntry::MakeAllDontReuseExcept forcing DnsAndConnectSocket "
-         "abandon %p\n",
-         dnsAndSock.get()));
-    mDnsAndConnectSockets[index]->Abandon();
-  }
+  CloseAllDnsAndConnectSockets();
 }
 
 bool ConnectionEntry::FindConnToClaim(
     PendingTransactionInfo* pendingTransInfo) {
   nsHttpTransaction* trans = pendingTransInfo->Transaction();
 
-  uint32_t dnsAndSockLength = DnsAndConnectSocketsLength();
-  for (uint32_t i = 0; i < dnsAndSockLength; i++) {
-    auto* dnsAndSock = mDnsAndConnectSockets[i];
-    if (dnsAndSock->AcceptsTransaction(trans) &&
-        pendingTransInfo->TryClaimingDnsAndConnectSocket(dnsAndSock)) {
+  for (const auto& dnsAndSock : mDnsAndConnectSockets) {
+    if (dnsAndSock->AcceptsTransaction(trans) && dnsAndSock->Claim()) {
+      pendingTransInfo->RememberDnsAndConnectSocket(dnsAndSock);
       // We've found a speculative connection or a connection that
       // is free to be used in the DnsAndConnectSockets list.
       // A free to be used connection is a connection that was
@@ -722,10 +716,7 @@ uint32_t ConnectionEntry::TimeoutTick() {
     TimeStamp currentTime = TimeStamp::Now();
     double maxConnectTime_ms = gHttpHandler->ConnectTimeout();
 
-    for (uint32_t index = mDnsAndConnectSockets.Length(); index > 0;) {
-      index--;
-
-      DnsAndConnectSocket* dnsAndSock = mDnsAndConnectSockets[index];
+    for (const auto& dnsAndSock : Reversed(mDnsAndConnectSockets)) {
       double delta = dnsAndSock->Duration(currentTime);
       // If the socket has timed out, close it so the waiting
       // transaction will get the proper signal.
@@ -740,7 +731,7 @@ uint32_t ConnectionEntry::TimeoutTick() {
       if (delta > maxConnectTime_ms + 5000) {
         LOG(("Abandon DnsAndConnectSocket to %s after %.2fms.\n",
              mConnInfo->HashKey().get(), delta));
-        dnsAndSock->Abandon();
+        RemoveDnsAndConnectSocket(dnsAndSock, true);
       }
     }
   }
@@ -770,22 +761,6 @@ void ConnectionEntry::MoveConnection(HttpConnectionBase* proxyConn,
   }
 }
 
-void ConnectionEntry::InsertIntoDnsAndConnectSockets(
-    DnsAndConnectSocket* sock) {
-  mDnsAndConnectSockets.AppendElement(sock);
-  gHttpHandler->ConnMgr()->IncreaseNumDnsAndConnectSockets();
-}
-
-void ConnectionEntry::CloseAllDnsAndConnectSockets() {
-  for (int32_t i = int32_t(DnsAndConnectSocketsLength()) - 1; i >= 0; i--) {
-    mDnsAndConnectSockets[i]->Abandon();
-  }
-}
-
-bool ConnectionEntry::IsInDnsAndConnectSockets(DnsAndConnectSocket* sock) {
-  return mDnsAndConnectSockets.Contains(sock);
-}
-
 HttpRetParams ConnectionEntry::GetConnectionData() {
   HttpRetParams data;
   data.host = mConnInfo->Origin();
@@ -810,7 +785,7 @@ HttpRetParams ConnectionEntry::GetConnectionData() {
     data.idle.AppendElement(info);
   }
   for (uint32_t i = 0; i < mDnsAndConnectSockets.Length(); i++) {
-    DnsAndConnectSockets dnsAndSock;
+    DnsAndConnectSockets dnsAndSock{};
     dnsAndSock.speculative = mDnsAndConnectSockets[i]->IsSpeculative();
     data.dnsAndSocks.AppendElement(dnsAndSock);
   }
@@ -885,7 +860,11 @@ bool ConnectionEntry::RemoveTransFromPendingQ(nsHttpTransaction* aTrans) {
   }
 
   // Abandon all DnsAndConnectSockets belonging to the given transaction.
-  pendingTransInfo->AbandonDnsAndConnectSocketAndForgetActiveConn();
+  nsWeakPtr tmp = pendingTransInfo->ForgetDnsAndConnectSocketAndActiveConn();
+  RefPtr<DnsAndConnectSocket> dnsAndSock = do_QueryReferent(tmp);
+  if (dnsAndSock) {
+    RemoveDnsAndConnectSocket(dnsAndSock, true);
+  }
   return true;
 }
 
@@ -909,6 +888,92 @@ void ConnectionEntry::MaybeUpdateEchConfig(nsHttpConnectionInfo* aConnInfo) {
   // next connection.
   CloseAllDnsAndConnectSockets();
   CloseIdleConnections();
+}
+
+bool ConnectionEntry::MaybeProcessCoalescingKeys(nsIDNSAddrRecord* dnsRecord,
+                                                 bool aIsHttp3) {
+  if (!mConnInfo || !mConnInfo->EndToEndSSL() || (!aIsHttp3 && !AllowHttp2()) ||
+      mConnInfo->UsingProxy() || !mCoalescingKeys.IsEmpty() || !dnsRecord) {
+    return false;
+  }
+
+  nsTArray<NetAddr> addressSet;
+  nsresult rv = dnsRecord->GetAddresses(addressSet);
+
+  if (NS_FAILED(rv) || addressSet.IsEmpty()) {
+    return false;
+  }
+
+  for (uint32_t i = 0; i < addressSet.Length(); ++i) {
+    if ((addressSet[i].raw.family == AF_INET && addressSet[i].inet.ip == 0) ||
+        (addressSet[i].raw.family == AF_INET6 &&
+         addressSet[i].inet6.ip.u64[0] == 0 &&
+         addressSet[i].inet6.ip.u64[1] == 0)) {
+      // Bug 1680249 - Don't create the coalescing key if the ip address is
+      // `0.0.0.0` or `::`.
+      LOG(
+          ("ConnectionEntry::MaybeProcessCoalescingKeys skip creating "
+           "Coalescing Key for host [%s]",
+           mConnInfo->Origin()));
+      continue;
+    }
+    nsCString* newKey = mCoalescingKeys.AppendElement(nsCString());
+    newKey->SetLength(kIPv6CStrBufSize + 26);
+    addressSet[i].ToStringBuffer(newKey->BeginWriting(), kIPv6CStrBufSize);
+    newKey->SetLength(strlen(newKey->BeginReading()));
+    if (mConnInfo->GetAnonymous()) {
+      newKey->AppendLiteral("~A:");
+    } else {
+      newKey->AppendLiteral("~.:");
+    }
+    if (mConnInfo->GetFallbackConnection()) {
+      newKey->AppendLiteral("~F:");
+    } else {
+      newKey->AppendLiteral("~.:");
+    }
+    newKey->AppendInt(mConnInfo->OriginPort());
+    newKey->AppendLiteral("/[");
+    nsAutoCString suffix;
+    mConnInfo->GetOriginAttributes().CreateSuffix(suffix);
+    newKey->Append(suffix);
+    newKey->AppendLiteral("]viaDNS");
+    LOG(
+        ("ConnectionEntry::MaybeProcessCoalescingKeys "
+         "Established New Coalescing Key # %d for host "
+         "%s [%s]",
+         i, mConnInfo->Origin(), newKey->get()));
+  }
+  return true;
+}
+
+nsresult ConnectionEntry::CreateDnsAndConnectSocket(
+    nsAHttpTransaction* trans, uint32_t caps, bool speculative,
+    bool isFromPredictor, bool urgentStart, bool allow1918,
+    PendingTransactionInfo* pendingTransInfo) {
+  MOZ_ASSERT(OnSocketThread(), "not on socket thread");
+  MOZ_ASSERT((speculative && !pendingTransInfo) ||
+             (!speculative && pendingTransInfo));
+
+  RefPtr<DnsAndConnectSocket> sock = new DnsAndConnectSocket(
+      mConnInfo, trans, caps, speculative, isFromPredictor, urgentStart);
+
+  if (speculative) {
+    sock->SetAllow1918(allow1918);
+  }
+
+  nsresult rv = sock->Init(this);
+  if (NS_FAILED(rv)) {
+    sock->Abandon();
+    return rv;
+  }
+
+  InsertIntoDnsAndConnectSockets(sock);
+
+  if (pendingTransInfo && sock->Claim()) {
+    pendingTransInfo->RememberDnsAndConnectSocket(sock);
+  }
+
+  return NS_OK;
 }
 
 }  // namespace net

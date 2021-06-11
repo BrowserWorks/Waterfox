@@ -42,14 +42,8 @@ var gTests = [
         "webRTC-shareScreen-notification-icon",
         "anchored to device icon"
       );
-      checkDeviceSelectors(false, false, true);
+      checkDeviceSelectors(["screen"]);
       let notification = PopupNotifications.panel.firstElementChild;
-
-      // With Proton enabled, the icon does not appear in the panel.
-      if (!gProtonDoorhangers) {
-        let iconclass = notification.getAttribute("iconclass");
-        ok(iconclass.includes("screen-icon"), "panel using screen icon");
-      }
 
       let menulist = document.getElementById("webRTC-selectWindow-menulist");
       let count = menulist.itemCount;
@@ -185,7 +179,7 @@ var gTests = [
         "webRTC-shareScreen-notification-icon",
         "anchored to device icon"
       );
-      checkDeviceSelectors(false, false, true);
+      checkDeviceSelectors(["screen"]);
 
       observerPromise = expectObserverCalled("getUserMedia:response:deny");
       await promiseMessage(permissionError, () => {
@@ -216,14 +210,8 @@ var gTests = [
         "webRTC-shareScreen-notification-icon",
         "anchored to device icon"
       );
-      checkDeviceSelectors(false, false, true);
+      checkDeviceSelectors(["screen"]);
       let notification = PopupNotifications.panel.firstElementChild;
-
-      // With Proton enabled, the icon does not appear in the panel.
-      if (!gProtonDoorhangers) {
-        let iconclass = notification.getAttribute("iconclass");
-        ok(iconclass.includes("screen-icon"), "panel using screen icon");
-      }
 
       let menulist = document.getElementById("webRTC-selectWindow-menulist");
       let count = menulist.itemCount;
@@ -430,15 +418,7 @@ var gTests = [
         "webRTC-shareScreen-notification-icon",
         "anchored to device icon"
       );
-      checkDeviceSelectors(true, false, true);
-
-      // With Proton enabled, the icon does not appear in the panel.
-      if (!gProtonDoorhangers) {
-        let iconclass = PopupNotifications.panel.firstElementChild.getAttribute(
-          "iconclass"
-        );
-        ok(iconclass.includes("screen-icon"), "panel using screen icon");
-      }
+      checkDeviceSelectors(["microphone", "screen"]);
 
       let menulist = document.getElementById("webRTC-selectWindow-menulist");
       let count = menulist.itemCount;
@@ -498,7 +478,7 @@ var gTests = [
       await promiseRequestDevice(false, true, null, "screen");
       await promise;
       await observerPromise;
-      checkDeviceSelectors(false, false, true);
+      checkDeviceSelectors(["screen"]);
 
       let observerPromise1 = expectObserverCalled("getUserMedia:response:deny");
       let observerPromise2 = expectObserverCalled("recording-window-ended");
@@ -533,18 +513,18 @@ var gTests = [
         return;
       }
 
-      async function share(audio, video, screen) {
+      async function share(deviceTypes) {
         let promise = promisePopupNotificationShown("webRTC-shareDevices");
         let observerPromise = expectObserverCalled("getUserMedia:request");
         await promiseRequestDevice(
-          audio,
-          video || !!screen,
+          /* audio */ deviceTypes.includes("microphone"),
+          /* video */ deviceTypes.some(t => t == "screen" || t == "camera"),
           null,
-          screen && "window"
+          deviceTypes.includes("screen") && "window"
         );
         await promise;
         await observerPromise;
-        checkDeviceSelectors(audio, video, screen);
+        checkDeviceSelectors(deviceTypes);
         if (screen) {
           let menulist = document.getElementById(
             "webRTC-selectWindow-menulist"
@@ -578,12 +558,12 @@ var gTests = [
 
       info("Share screen and microphone");
       let indicator = promiseIndicatorWindow();
-      await share(true, false, true);
+      await share(["microphone", "screen"]);
       await indicator;
       await check({ audio: true, screen: "Screen" });
 
       info("Share camera");
-      await share(false, true);
+      await share(["camera"]);
       await check({ video: true, audio: true, screen: "Screen" });
 
       info("Stop the screen share, mic+cam should continue");
@@ -595,12 +575,12 @@ var gTests = [
 
       info("Now, share only the screen...");
       indicator = promiseIndicatorWindow();
-      await share(false, false, true);
+      await share(["screen"]);
       await indicator;
       await check({ screen: "Screen" });
 
       info("... and add camera and microphone in a second request.");
-      await share(true, true);
+      await share(["microphone", "camera"]);
       await check({ video: true, audio: true, screen: "Screen" });
 
       info("Stop the camera, this should stop everything.");
@@ -616,7 +596,7 @@ var gTests = [
       await promiseRequestDevice(false, true, null, "screen");
       await promise;
       await observerPromise;
-      checkDeviceSelectors(false, false, true);
+      checkDeviceSelectors(["screen"]);
       let menulist = document.getElementById("webRTC-selectWindow-menulist");
       menulist.getItemAtIndex(menulist.itemCount - 1).doCommand();
 
@@ -658,7 +638,7 @@ var gTests = [
       await promiseRequestDevice(false, true, null, "screen");
       await promise;
       await observerPromise;
-      checkDeviceSelectors(false, false, true);
+      checkDeviceSelectors(["screen"]);
       let menulist = document.getElementById("webRTC-selectWindow-menulist");
       menulist.getItemAtIndex(menulist.itemCount - 1).doCommand();
 
@@ -730,7 +710,7 @@ var gTests = [
       await promiseRequestDevice(false, true, null, "screen");
       await promise;
       await observerPromise;
-      checkDeviceSelectors(false, false, true);
+      checkDeviceSelectors(["screen"]);
       document
         .getElementById("webRTC-selectWindow-menulist")
         .getItemAtIndex(2)

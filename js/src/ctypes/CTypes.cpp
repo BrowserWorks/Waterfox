@@ -12,7 +12,6 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/TextUtils.h"
-#include "mozilla/Unused.h"
 #include "mozilla/Vector.h"
 #include "mozilla/WrappingOperations.h"
 
@@ -5999,8 +5998,7 @@ bool StructType::DefineInternal(JSContext* cx, JSObject* typeObj_,
 
       if (!JS_DefineUCProperty(cx, prototype, nameChars.twoByteChars(),
                                name->length(), getterObj, setterObj,
-                               JSPROP_ENUMERATE | JSPROP_PERMANENT |
-                                   JSPROP_GETTER | JSPROP_SETTER)) {
+                               JSPROP_ENUMERATE | JSPROP_PERMANENT)) {
         return false;
       }
 

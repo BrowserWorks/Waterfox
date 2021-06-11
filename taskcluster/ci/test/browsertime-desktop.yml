@@ -329,14 +329,14 @@ browsertime-tp6-live-sheriffed:
             - --chimera
             - --live-sites
     raptor-subtests:
-        - [cnn-ampstories, cnn-amp]
+        - cnn
     run-on-projects:
         by-variant:
             fission: []
             default:
                 by-test-platform:
                     (linux|windows10-64|macos)(?!.*shippable).*: []
-                    windows.*-32.*shippable.*: []
+                    windows.*-32.*: []
                     macosx1014.*: []
                     default: [autoland]
     tier: 2

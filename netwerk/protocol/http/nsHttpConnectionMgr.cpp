@@ -67,7 +67,7 @@ nsHttpConnectionMgr::nsHttpConnectionMgr()
       mThrottleReadLimit(0),
       mThrottleReadInterval(0),
       mThrottleHoldTime(0),
-      mThrottleMaxTime(0),
+      mThrottleMaxTime(nullptr),
       mBeConservativeForProxy(true),
       mIsShuttingDown(false),
       mNumActiveConns(0),
@@ -248,8 +248,9 @@ void nsHttpConnectionMgr::PruneDeadConnectionsAfter(uint32_t timeInSeconds) {
 void nsHttpConnectionMgr::ConditionallyStopPruneDeadConnectionsTimer() {
   // Leave the timer in place if there are connections that potentially
   // need management
-  if (mNumIdleConns || (mNumActiveConns && gHttpHandler->IsSpdyEnabled()))
+  if (mNumIdleConns || (mNumActiveConns && gHttpHandler->IsSpdyEnabled())) {
     return;
+  }
 
   LOG(("nsHttpConnectionMgr::StopPruneDeadConnectionsTimer\n"));
 
@@ -1234,18 +1235,19 @@ nsresult nsHttpConnectionMgr::MakeNewConnection(
   outerLoopEnd:;
   }
 
-  if (AtActiveConnectionLimit(ent, trans->Caps()))
+  if (AtActiveConnectionLimit(ent, trans->Caps())) {
     return NS_ERROR_NOT_AVAILABLE;
+  }
 
-  nsresult rv =
-      CreateTransport(ent, trans, trans->Caps(), false, false,
-                      trans->ClassOfService() & nsIClassOfService::UrgentStart,
-                      true, pendingTransInfo);
+  nsresult rv = ent->CreateDnsAndConnectSocket(
+      trans, trans->Caps(), false, false,
+      trans->ClassOfService() & nsIClassOfService::UrgentStart, true,
+      pendingTransInfo);
   if (NS_FAILED(rv)) {
     /* hard failure */
     LOG(
         ("nsHttpConnectionMgr::MakeNewConnection [ci = %s trans = %p] "
-         "CreateTransport() hard failure.\n",
+         "CreateDnsAndConnectSocket() hard failure.\n",
          ent->mConnInfo->HashKey().get(), trans));
     trans->Close(rv);
     if (rv == NS_ERROR_NOT_AVAILABLE) rv = NS_ERROR_FAILURE;
@@ -1599,14 +1601,15 @@ nsresult nsHttpConnectionMgr::DispatchAbstractTransaction(
 void nsHttpConnectionMgr::ReportProxyTelemetry(ConnectionEntry* ent) {
   enum { PROXY_NONE = 1, PROXY_HTTP = 2, PROXY_SOCKS = 3, PROXY_HTTPS = 4 };
 
-  if (!ent->mConnInfo->UsingProxy())
+  if (!ent->mConnInfo->UsingProxy()) {
     Telemetry::Accumulate(Telemetry::HTTP_PROXY_TYPE, PROXY_NONE);
-  else if (ent->mConnInfo->UsingHttpsProxy())
+  } else if (ent->mConnInfo->UsingHttpsProxy()) {
     Telemetry::Accumulate(Telemetry::HTTP_PROXY_TYPE, PROXY_HTTPS);
-  else if (ent->mConnInfo->UsingHttpProxy())
+  } else if (ent->mConnInfo->UsingHttpProxy()) {
     Telemetry::Accumulate(Telemetry::HTTP_PROXY_TYPE, PROXY_HTTP);
-  else
+  } else {
     Telemetry::Accumulate(Telemetry::HTTP_PROXY_TYPE, PROXY_SOCKS);
+  }
 }
 
 nsresult nsHttpConnectionMgr::ProcessNewTransaction(nsHttpTransaction* trans) {
@@ -1741,36 +1744,6 @@ void nsHttpConnectionMgr::RecvdConnect() {
   }
 
   ConditionallyStopTimeoutTick();
-}
-
-nsresult nsHttpConnectionMgr::CreateTransport(
-    ConnectionEntry* ent, nsAHttpTransaction* trans, uint32_t caps,
-    bool speculative, bool isFromPredictor, bool urgentStart, bool allow1918,
-    PendingTransactionInfo* pendingTransInfo) {
-  MOZ_ASSERT(OnSocketThread(), "not on socket thread");
-  MOZ_ASSERT((speculative && !pendingTransInfo) ||
-             (!speculative && pendingTransInfo));
-
-  RefPtr<DnsAndConnectSocket> sock = new DnsAndConnectSocket(
-      ent, trans, caps, speculative, isFromPredictor, urgentStart);
-
-  if (speculative) {
-    sock->SetAllow1918(allow1918);
-  }
-  // The socket stream holds the reference to the half open
-  // socket - so if the stream fails to init the half open
-  // will go away.
-  nsresult rv = sock->Init();
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (pendingTransInfo) {
-    DebugOnly<bool> claimed =
-        pendingTransInfo->TryClaimingDnsAndConnectSocket(sock);
-    MOZ_ASSERT(claimed);
-  }
-
-  ent->InsertIntoDnsAndConnectSockets(sock);
-  return NS_OK;
 }
 
 void nsHttpConnectionMgr::DispatchSpdyPendingQ(
@@ -3319,9 +3292,9 @@ void nsHttpConnectionMgr::DoSpeculativeConnectionInternal(
     if (aFetchHTTPSRR) {
       Unused << aTrans->FetchHTTPSRR();
     }
-    DebugOnly<nsresult> rv =
-        CreateTransport(aEnt, aTrans, aTrans->Caps(), true, isFromPredictor,
-                        false, allow1918, nullptr);
+    DebugOnly<nsresult> rv = aEnt->CreateDnsAndConnectSocket(
+        aTrans, aTrans->Caps(), true, isFromPredictor, false, allow1918,
+        nullptr);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
   } else {
     LOG(
@@ -3552,6 +3525,11 @@ nsHttpConnectionMgr::FindTransactionHelper(bool removeWhenFound,
   return info.forget();
 }
 
+already_AddRefed<ConnectionEntry>
+nsHttpConnectionMgr::FindConnectionEntry(const nsHttpConnectionInfo* ci) {
+  return mCT.Get(ci->HashKey());
+}
+
 nsHttpConnectionMgr* nsHttpConnectionMgr::AsHttpConnectionMgr() { return this; }
 
 HttpConnectionMgrParent* nsHttpConnectionMgr::AsHttpConnectionMgrParent() {
@@ -3564,8 +3542,9 @@ void nsHttpConnectionMgr::NewIdleConnectionAdded(uint32_t timeToLive) {
   // If the added connection was first idle connection or has shortest
   // time to live among the watched connections, pruning dead
   // connections needs to be done when it can't be reused anymore.
-  if (!mTimer || NowInSeconds() + timeToLive < mTimeOfNextWakeUp)
+  if (!mTimer || NowInSeconds() + timeToLive < mTimeOfNextWakeUp) {
     PruneDeadConnectionsAfter(timeToLive);
+  }
 }
 
 void nsHttpConnectionMgr::DecrementNumIdleConns() {

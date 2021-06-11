@@ -246,7 +246,6 @@ struct MOZ_STACK_CLASS DebuggerScript::CallData {
   bool clearAllBreakpoints();
   bool isInCatchScope();
   bool getOffsetsCoverage();
-  bool setInstrumentationId();
 
   using Method = bool (CallData::*)();
 
@@ -528,6 +527,12 @@ static bool PushInnerFunctions(JSContext* cx, Debugger* dbg, HandleObject array,
     JSObject* obj = &gcThing.as<JSObject>();
     if (obj->is<JSFunction>()) {
       fun = &obj->as<JSFunction>();
+
+      // Ignore any delazification placeholder functions. These should not be
+      // exposed to debugger in any way.
+      if (fun->isGhost()) {
+        continue;
+      }
 
       if (!PushFunctionScript(cx, dbg, fun, array)) {
         return false;
@@ -1504,6 +1509,7 @@ static bool BytecodeIsEffectful(JSOp op) {
     case JSOp::Swap:
     case JSOp::Pick:
     case JSOp::Unpick:
+    case JSOp::GetAliasedDebugVar:
     case JSOp::GetAliasedVar:
     case JSOp::Uint24:
     case JSOp::ResumeIndex:
@@ -1553,9 +1559,6 @@ static bool BytecodeIsEffectful(JSOp op) {
     case JSOp::IsConstructing:
     case JSOp::OptimizeSpreadCall:
     case JSOp::ImportMeta:
-    case JSOp::InstrumentationActive:
-    case JSOp::InstrumentationCallback:
-    case JSOp::InstrumentationScriptId:
     case JSOp::EnterWith:
     case JSOp::LeaveWith:
     case JSOp::SpreadNew:
@@ -2303,27 +2306,6 @@ bool DebuggerScript::CallData::getOffsetsCoverage() {
   return true;
 }
 
-bool DebuggerScript::CallData::setInstrumentationId() {
-  if (!ensureScriptMaybeLazy()) {
-    return false;
-  }
-
-  if (!obj->getInstrumentationId().isUndefined()) {
-    JS_ReportErrorASCII(cx, "Script instrumentation ID is already set");
-    return false;
-  }
-
-  if (!args.get(0).isNumber()) {
-    JS_ReportErrorASCII(cx, "Script instrumentation ID must be a number");
-    return false;
-  }
-
-  obj->setReservedSlot(INSTRUMENTATION_ID_SLOT, args.get(0));
-
-  args.rval().setUndefined();
-  return true;
-}
-
 /* static */
 bool DebuggerScript::construct(JSContext* cx, unsigned argc, Value* vp) {
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_NO_CONSTRUCTOR,
@@ -2363,7 +2345,6 @@ const JSFunctionSpec DebuggerScript::methods_[] = {
     JS_DEBUG_FN("getOffsetMetadata", getOffsetMetadata, 1),
     JS_DEBUG_FN("getOffsetsCoverage", getOffsetsCoverage, 0),
     JS_DEBUG_FN("getEffectfulOffsets", getEffectfulOffsets, 1),
-    JS_DEBUG_FN("setInstrumentationId", setInstrumentationId, 1),
 
     // The following APIs are deprecated due to their reliance on the
     // under-defined 'entrypoint' concept. Make use of getPossibleBreakpoints,

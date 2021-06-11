@@ -32,7 +32,10 @@ class nsLookAndFeel final : public nsXPLookAndFeel {
   char16_t GetPasswordCharacterImpl() override;
   bool GetEchoPasswordImpl() override;
 
-  void WithAltThemeConfigured(const std::function<void(bool)>&);
+  template <typename Callback>
+  void WithAltThemeConfigured(const Callback&);
+
+  void InitializeAltTheme();
 
   void GetGtkContentTheme(LookAndFeelTheme&) override;
 
@@ -151,13 +154,16 @@ class nsLookAndFeel final : public nsXPLookAndFeel {
   bool mCSDReversedPlacement = false;
   bool mPrefersReducedMotion = false;
   bool mInitialized = false;
+  bool mEverInitialized = false;
   int32_t mCSDMaximizeButtonPosition = 0;
   int32_t mCSDMinimizeButtonPosition = 0;
   int32_t mCSDCloseButtonPosition = 0;
 
   void EnsureInit();
-  // Returns whether the current theme or theme variant was changed.
-  bool ConfigureContentGtkTheme();
+
+  static void FirefoxThemeChanged(const char*, void* aInstance);
+  void RestoreSystemTheme();
+  bool MatchFirefoxThemeIfNeeded();
 };
 
 #endif

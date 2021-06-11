@@ -61,7 +61,7 @@ class RequestContext final : public nsIRequestContext, public nsITimerCallback {
   Atomic<uint32_t> mBlockingTransactionCount;
   UniquePtr<SpdyPushCache> mSpdyCache;
 
-  typedef nsCOMPtr<nsIRequestTailUnblockCallback> PendingTailRequest;
+  using PendingTailRequest = nsCOMPtr<nsIRequestTailUnblockCallback>;
   // Number of known opened non-tailed requets
   uint32_t mNonTailRequests;
   // Queue of requests that have been tailed, when conditions are met
@@ -423,8 +423,7 @@ RequestContextService* RequestContextService::sSelf = nullptr;
 
 NS_IMPL_ISUPPORTS(RequestContextService, nsIRequestContextService, nsIObserver)
 
-RequestContextService::RequestContextService()
-    : mRCIDNamespace(0), mNextRCID(1) {
+RequestContextService::RequestContextService() {
   MOZ_ASSERT(!sSelf, "multiple rcs instances!");
   MOZ_ASSERT(NS_IsMainThread());
   sSelf = this;

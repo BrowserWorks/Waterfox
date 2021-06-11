@@ -13,18 +13,18 @@ const TEST_URL = URL_ROOT + "doc_markup_pagesize_02.html";
 Services.prefs.setIntPref("devtools.markup.pagesize", 5);
 
 add_task(async function() {
-  const { inspector, testActor } = await openInspectorForURL(TEST_URL);
+  const { inspector } = await openInspectorForURL(TEST_URL);
 
   info("Selecting the UL node");
   await clickContainer("ul", inspector);
   info("Reloading the page with the UL node selected will expand its children");
-  await reloadPage(inspector, testActor);
+  await refreshTab();
   await inspector.markup._waitForChildren();
 
   info("Click on the 'show all nodes' button in the UL's list of children");
   await showAllNodes(inspector);
 
-  await assertAllNodesAreVisible(inspector, testActor);
+  await assertAllNodesAreVisible(inspector);
 });
 
 async function showAllNodes(inspector) {
@@ -37,12 +37,12 @@ async function showAllNodes(inspector) {
   await inspector.markup._waitForChildren();
 }
 
-async function assertAllNodesAreVisible(inspector, testActor) {
+async function assertAllNodesAreVisible(inspector) {
   const container = await getContainerForSelector("ul", inspector);
   ok(
     !container.elt.querySelector("button"),
     "All nodes button isn't here anymore"
   );
-  const numItems = await testActor.getNumberOfElementMatches("ul > *");
+  const numItems = await getNumberOfMatchingElementsInContentPage("ul > *");
   is(container.children.childNodes.length, numItems);
 }

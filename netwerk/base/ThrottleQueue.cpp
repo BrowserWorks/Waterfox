@@ -234,15 +234,14 @@ NS_IMPL_ISUPPORTS(ThrottleQueue, nsIInputChannelThrottleQueue, nsITimerCallback,
                   nsINamed)
 
 ThrottleQueue::ThrottleQueue()
-    : mMeanBytesPerSecond(0),
-      mMaxBytesPerSecond(0),
-      mBytesProcessed(0),
-      mTimerArmed(false) {
+
+{
   nsresult rv;
   nsCOMPtr<nsIEventTarget> sts;
   nsCOMPtr<nsIIOService> ioService = do_GetIOService(&rv);
-  if (NS_SUCCEEDED(rv))
+  if (NS_SUCCEEDED(rv)) {
     sts = do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
+  }
   if (NS_SUCCEEDED(rv)) mTimer = NS_NewTimer(sts);
 }
 
@@ -350,7 +349,8 @@ ThrottleQueue::GetName(nsACString& aName) {
 
 void ThrottleQueue::QueueStream(ThrottleInputStream* aStream) {
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
-  if (mAsyncEvents.IndexOf(aStream) == mAsyncEvents.NoIndex) {
+  if (mAsyncEvents.IndexOf(aStream) ==
+      nsTArray<RefPtr<mozilla::net::ThrottleInputStream>>::NoIndex) {
     mAsyncEvents.AppendElement(aStream);
 
     if (!mTimerArmed) {

@@ -35,7 +35,7 @@ job-defaults:
         by-test-platform:
             android-em-7.0-x86_64-shippable(-qr)?/opt: geckoview-androidTest.apk
             android-em-7.0-x86_64(-qr)?/opt: geckoview-androidTest.apk
-            android-em-7.0-x86_64(-qr)?/debug: geckoview-androidTest.apk
+            android-em-7.0-x86_64(-qr)?/debug(-isolated-process)?: geckoview-androidTest.apk
             default: null
     python-3: true
 
@@ -55,7 +55,10 @@ web-platform-tests:
                     linux.*64(-shippable)?-qr/opt: 1
                     windows10-64(-shippable)?-qr/opt: 1
                     default: 2
-            default: default
+            default:
+                by-test-platform:
+                    android-em-7.0-x86_64/debug-isolated-process: 3
+                    default: default
     chunks:
         by-test-platform:
             android.*: 16
@@ -92,6 +95,7 @@ web-platform-tests:
                     linux.*-qr/.*: ['release']  # skip on integration branches due to high load
                     windows.*-qr/.*: ['release']  # skip on integration branches due to high load
                     .*-tsan/opt: ['trunk']
+                    android-em-7.0-x86_64/debug-isolated-process: []
                     default: built-projects
     mozharness:
         chunked: true
@@ -171,6 +175,7 @@ web-platform-tests-reftest:
             default:
                 by-test-platform:
                     .*-tsan/opt: ['trunk']
+                    android-em-7.0-x86_64/debug-isolated-process: []
                     default: built-projects
     tier:
         by-variant:
@@ -183,6 +188,7 @@ web-platform-tests-reftest:
             default:
                 by-test-platform:
                     linux1804-64-asan(-qr)?/opt: 2
+                    android-em-7.0-x86_64/debug-isolated-process: 3
                     default: default
     mozharness:
         extra-options:

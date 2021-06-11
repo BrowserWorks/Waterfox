@@ -46,6 +46,7 @@ class JSActorMessageMeta;
 struct PageUseCounters;
 class WindowSessionStoreState;
 struct WindowSessionStoreUpdate;
+class SSCacheQueryResult;
 
 /**
  * A handle in the parent process to a specific nsGlobalWindowInner object.
@@ -109,6 +110,8 @@ class WindowGlobalParent final : public WindowContext,
   // lifetime of the WindowGlobal object, even to reflect changes in
   // |document.domain|.
   nsIPrincipal* DocumentPrincipal() { return mDocumentPrincipal; }
+
+  nsIPrincipal* DocumentStoragePrincipal() { return mDocumentStoragePrincipal; }
 
   // The BrowsingContext which this WindowGlobal has been loaded into.
   // FIXME: It's quite awkward that this method has a slightly different name
@@ -211,9 +214,11 @@ class WindowGlobalParent final : public WindowContext,
 
   const nsACString& GetRemoteType() override;
 
-  nsresult UpdateSessionStore(const Maybe<FormData>& aFormData,
-                              const Maybe<nsPoint>& aScrollPosition,
-                              uint32_t aEpoch);
+  nsresult WriteFormDataAndScrollToSessionStore(
+      const Maybe<FormData>& aFormData, const Maybe<nsPoint>& aScrollPosition,
+      uint32_t aEpoch);
+
+  void NotifySessionStoreUpdatesComplete(Element* aEmbedder);
 
   Maybe<uint64_t> GetSingleChannelId() { return mSingleChannelId; }
 
@@ -232,7 +237,8 @@ class WindowGlobalParent final : public WindowContext,
   mozilla::ipc::IPCResult RecvInternalLoad(nsDocShellLoadState* aLoadState);
   mozilla::ipc::IPCResult RecvUpdateDocumentURI(nsIURI* aURI);
   mozilla::ipc::IPCResult RecvUpdateDocumentPrincipal(
-      nsIPrincipal* aNewDocumentPrincipal);
+      nsIPrincipal* aNewDocumentPrincipal,
+      nsIPrincipal* aNewDocumentStoragePrincipal);
   mozilla::ipc::IPCResult RecvUpdateDocumentHasLoaded(bool aDocumentHasLoaded);
   mozilla::ipc::IPCResult RecvUpdateDocumentHasUserInteracted(
       bool aDocumentHasUserInteracted);
@@ -305,11 +311,20 @@ class WindowGlobalParent final : public WindowContext,
 
   nsresult ResetSessionStore(uint32_t aEpoch);
 
-  // NOTE: This document principal doesn't reflect possible |document.domain|
-  // mutations which may have been made in the actual document.
+  // Returns failure if the new storage principal cannot be validated
+  // against the current document principle.
+  nsresult SetDocumentStoragePrincipal(
+      nsIPrincipal* aNewDocumentStoragePrincipal);
+
+  // NOTE: Neither this document principal nor the document storage
+  // principal doesn't reflect possible |document.domain| mutations
+  // which may have been made in the actual document.
   nsCOMPtr<nsIPrincipal> mDocumentPrincipal;
+  nsCOMPtr<nsIPrincipal> mDocumentStoragePrincipal;
+
   // The principal to use for the content blocking allow list.
   nsCOMPtr<nsIPrincipal> mDocContentBlockingAllowListPrincipal;
+
   nsCOMPtr<nsIURI> mDocumentURI;
   Maybe<nsString> mDocumentTitle;
 

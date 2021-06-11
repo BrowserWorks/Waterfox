@@ -19,6 +19,7 @@
 #include "mozilla/EditAction.h"
 #include "mozilla/EditorDOMPoint.h"
 #include "mozilla/EditorUtils.h"
+#include "mozilla/Encoding.h"  // for Encoding
 #include "mozilla/EventStates.h"
 #include "mozilla/InternalMutationEvent.h"
 #include "mozilla/mozInlineSpellChecker.h"
@@ -184,14 +185,14 @@ HTMLEditor::~HTMLEditor() {
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(HTMLEditor)
 
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLEditor, TextEditor)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLEditor, EditorBase)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mTypeInState)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mComposerCommandsUpdater)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mChangedRangeForTopLevelEditSubAction)
   tmp->HideAnonymousEditingUIs();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(HTMLEditor, TextEditor)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(HTMLEditor, EditorBase)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTypeInState)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mComposerCommandsUpdater)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mChangedRangeForTopLevelEditSubAction)
@@ -233,7 +234,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(HTMLEditor)
   NS_INTERFACE_MAP_ENTRY(nsITableEditor)
   NS_INTERFACE_MAP_ENTRY(nsIMutationObserver)
   NS_INTERFACE_MAP_ENTRY(nsIEditorMailSupport)
-NS_INTERFACE_MAP_END_INHERITING(TextEditor)
+NS_INTERFACE_MAP_END_INHERITING(EditorBase)
 
 nsresult HTMLEditor::Init(Document& aDoc, Element* aRoot,
                           nsISelectionController* aSelCon, uint32_t aFlags,
@@ -357,6 +358,130 @@ void HTMLEditor::PreDestroy(bool aDestroyingFrames) {
   }
 
   EditorBase::PreDestroy(aDestroyingFrames);
+}
+
+NS_IMETHODIMP HTMLEditor::GetDocumentCharacterSet(nsACString& aCharacterSet) {
+  nsresult rv = GetDocumentCharsetInternal(aCharacterSet);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                       "HTMLEditor::GetDocumentCharsetInternal() failed");
+  return rv;
+}
+
+NS_IMETHODIMP HTMLEditor::SetDocumentCharacterSet(
+    const nsACString& aCharacterSet) {
+  AutoEditActionDataSetter editActionData(*this, EditAction::eSetCharacterSet);
+  nsresult rv = editActionData.CanHandleAndMaybeDispatchBeforeInputEvent();
+  if (NS_FAILED(rv)) {
+    NS_WARNING_ASSERTION(rv == NS_ERROR_EDITOR_ACTION_CANCELED,
+                         "CanHandleAndMaybeDispatchBeforeInputEvent() failed");
+    return EditorBase::ToGenericNSResult(rv);
+  }
+
+  RefPtr<Document> document = GetDocument();
+  if (NS_WARN_IF(!document)) {
+    return EditorBase::ToGenericNSResult(NS_ERROR_NOT_INITIALIZED);
+  }
+  // This method is scriptable, so add-ons could pass in something other
+  // than a canonical name.
+  const Encoding* encoding = Encoding::ForLabelNoReplacement(aCharacterSet);
+  if (!encoding) {
+    NS_WARNING("Encoding::ForLabelNoReplacement() failed");
+    return EditorBase::ToGenericNSResult(NS_ERROR_INVALID_ARG);
+  }
+  document->SetDocumentCharacterSet(WrapNotNull(encoding));
+
+  // Update META charset element.
+  if (UpdateMetaCharsetWithTransaction(*document, aCharacterSet)) {
+    return NS_OK;
+  }
+
+  // Set attributes to the created element
+  if (aCharacterSet.IsEmpty()) {
+    return NS_OK;
+  }
+
+  RefPtr<nsContentList> headElementList =
+      document->GetElementsByTagName(u"head"_ns);
+  if (NS_WARN_IF(!headElementList)) {
+    return NS_OK;
+  }
+
+  nsCOMPtr<nsIContent> primaryHeadElement = headElementList->Item(0);
+  if (NS_WARN_IF(!primaryHeadElement)) {
+    return NS_OK;
+  }
+
+  // Create a new meta charset tag
+  Result<RefPtr<Element>, nsresult> maybeNewMetaElement =
+      CreateNodeWithTransaction(*nsGkAtoms::meta,
+                                EditorDOMPoint(primaryHeadElement, 0));
+  if (maybeNewMetaElement.isErr()) {
+    NS_WARNING(
+        "EditorBase::CreateNodeWithTransaction(nsGkAtoms::meta) failed, but "
+        "ignored");
+    return NS_OK;
+  }
+  MOZ_ASSERT(maybeNewMetaElement.inspect());
+
+  // not undoable, undo should undo CreateNodeWithTransaction().
+  DebugOnly<nsresult> rvIgnored = NS_OK;
+  rvIgnored = maybeNewMetaElement.inspect()->SetAttr(
+      kNameSpaceID_None, nsGkAtoms::httpEquiv, u"Content-Type"_ns, true);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rvIgnored),
+                       "Element::SetAttr(nsGkAtoms::httpEquiv, Content-Type) "
+                       "failed, but ignored");
+  rvIgnored = maybeNewMetaElement.inspect()->SetAttr(
+      kNameSpaceID_None, nsGkAtoms::content,
+      u"text/html;charset="_ns + NS_ConvertASCIItoUTF16(aCharacterSet), true);
+  NS_WARNING_ASSERTION(
+      NS_SUCCEEDED(rvIgnored),
+      "Element::SetAttr(nsGkAtoms::content) failed, but ignored");
+  return NS_OK;
+}
+
+bool HTMLEditor::UpdateMetaCharsetWithTransaction(
+    Document& aDocument, const nsACString& aCharacterSet) {
+  // get a list of META tags
+  RefPtr<nsContentList> metaElementList =
+      aDocument.GetElementsByTagName(u"meta"_ns);
+  if (NS_WARN_IF(!metaElementList)) {
+    return false;
+  }
+
+  for (uint32_t i = 0; i < metaElementList->Length(true); ++i) {
+    RefPtr<Element> metaElement = metaElementList->Item(i)->AsElement();
+    MOZ_ASSERT(metaElement);
+
+    nsAutoString currentValue;
+    metaElement->GetAttr(kNameSpaceID_None, nsGkAtoms::httpEquiv, currentValue);
+
+    if (!FindInReadable(u"content-type"_ns, currentValue,
+                        nsCaseInsensitiveStringComparator)) {
+      continue;
+    }
+
+    metaElement->GetAttr(kNameSpaceID_None, nsGkAtoms::content, currentValue);
+
+    constexpr auto charsetEquals = u"charset="_ns;
+    nsAString::const_iterator originalStart, start, end;
+    originalStart = currentValue.BeginReading(start);
+    currentValue.EndReading(end);
+    if (!FindInReadable(charsetEquals, start, end,
+                        nsCaseInsensitiveStringComparator)) {
+      continue;
+    }
+
+    // set attribute to <original prefix> charset=text/html
+    nsresult rv = SetAttributeWithTransaction(
+        *metaElement, *nsGkAtoms::content,
+        Substring(originalStart, start) + charsetEquals +
+            NS_ConvertASCIItoUTF16(aCharacterSet));
+    NS_WARNING_ASSERTION(
+        NS_SUCCEEDED(rv),
+        "EditorBase::SetAttributeWithTransaction(nsGkAtoms::content) failed");
+    return NS_SUCCEEDED(rv);
+  }
+  return false;
 }
 
 NS_IMETHODIMP HTMLEditor::NotifySelectionChanged(Document* aDocument,
@@ -493,13 +618,13 @@ void HTMLEditor::RemoveEventListeners() {
     return;
   }
 
-  TextEditor::RemoveEventListeners();
+  EditorBase::RemoveEventListeners();
 }
 
 NS_IMETHODIMP HTMLEditor::SetFlags(uint32_t aFlags) {
-  nsresult rv = TextEditor::SetFlags(aFlags);
+  nsresult rv = EditorBase::SetFlags(aFlags);
   if (NS_FAILED(rv)) {
-    NS_WARNING("TextEditor::SetFlags() failed");
+    NS_WARNING("EditorBase::SetFlags() failed");
     return rv;
   }
 
@@ -741,19 +866,15 @@ void HTMLEditor::PostHandleSelectionChangeCommand(Command aCommand) {
 nsresult HTMLEditor::HandleKeyPressEvent(WidgetKeyboardEvent* aKeyboardEvent) {
   // NOTE: When you change this method, you should also change:
   //   * editor/libeditor/tests/test_htmleditor_keyevent_handling.html
-
-  if (IsReadonly()) {
-    // When we're not editable, the events are handled on EditorBase, so, we can
-    // bypass TextEditor.
-    nsresult rv = EditorBase::HandleKeyPressEvent(aKeyboardEvent);
-    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
-                         "EditorBase::HandleKeyPressEvent() failed");
-    return rv;
-  }
-
   if (NS_WARN_IF(!aKeyboardEvent)) {
     return NS_ERROR_UNEXPECTED;
   }
+
+  if (IsReadonly()) {
+    HandleKeyPressEventInReadOnlyMode(*aKeyboardEvent);
+    return NS_OK;
+  }
+
   MOZ_ASSERT(aKeyboardEvent->mMessage == eKeyPress,
              "HandleKeyPressEvent gets non-keypress event");
 
@@ -762,29 +883,26 @@ nsresult HTMLEditor::HandleKeyPressEvent(WidgetKeyboardEvent* aKeyboardEvent) {
     case NS_VK_WIN:
     case NS_VK_SHIFT:
     case NS_VK_CONTROL:
-    case NS_VK_ALT: {
-      // These keys are handled on EditorBase, so, we can bypass
-      // TextEditor.
+    case NS_VK_ALT:
+      // FYI: This shouldn't occur since modifier key shouldn't cause eKeyPress
+      //      event.
+      aKeyboardEvent->PreventDefault();
+      return NS_OK;
+
+    case NS_VK_BACK:
+    case NS_VK_DELETE: {
       nsresult rv = EditorBase::HandleKeyPressEvent(aKeyboardEvent);
       NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
                            "EditorBase::HandleKeyPressEvent() failed");
       return rv;
     }
-    case NS_VK_BACK:
-    case NS_VK_DELETE: {
-      // These keys are handled on TextEditor.
-      nsresult rv = TextEditor::HandleKeyPressEvent(aKeyboardEvent);
-      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
-                           "TextEditor::HandleKeyPressEvent() failed");
-      return rv;
-    }
     case NS_VK_TAB: {
       if (IsPlaintextEditor()) {
         // If this works as plain text editor, e.g., mail editor for plain
-        // text, should be handled on TextEditor.
-        nsresult rv = TextEditor::HandleKeyPressEvent(aKeyboardEvent);
+        // text, should be handled with common logic with EditorBase.
+        nsresult rv = EditorBase::HandleKeyPressEvent(aKeyboardEvent);
         NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
-                             "TextEditor::HandleKeyPressEvent() failed");
+                             "EditorBase::HandleKeyPressEvent() failed");
         return rv;
       }
 
@@ -859,7 +977,7 @@ nsresult HTMLEditor::HandleKeyPressEvent(WidgetKeyboardEvent* aKeyboardEvent) {
       aKeyboardEvent->PreventDefault();
       nsresult rv = OnInputText(u"\t"_ns);
       NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
-                           "TextEditor::OnInputText(\\t) failed");
+                           "EditorBase::OnInputText(\\t) failed");
       return EditorBase::ToGenericNSResult(rv);
     }
     case NS_VK_RETURN:
@@ -889,7 +1007,7 @@ nsresult HTMLEditor::HandleKeyPressEvent(WidgetKeyboardEvent* aKeyboardEvent) {
   aKeyboardEvent->PreventDefault();
   nsAutoString str(aKeyboardEvent->mCharCode);
   nsresult rv = OnInputText(str);
-  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "TextEditor::OnInputText() failed");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "EditorBase::OnInputText() failed");
   return rv;
 }
 
@@ -3159,7 +3277,7 @@ nsresult HTMLEditor::ReplaceTextWithTransaction(
   }
   NS_WARNING_ASSERTION(
       !ignoredError.Failed(),
-      "TextEditor::OnStartToHandleTopLevelEditSubAction() failed, but ignored");
+      "HTMLEditor::OnStartToHandleTopLevelEditSubAction() failed, but ignored");
 
   // FYI: Create the insertion point before changing the DOM tree because
   //      the point may become invalid offset after that.
@@ -4030,7 +4148,7 @@ already_AddRefed<nsIContent> HTMLEditor::SplitNodeWithTransaction(
     NS_WARNING_ASSERTION(NS_SUCCEEDED(rvIgnored),
                          "RangeUpdater::SelAdjSplitNode() failed, but ignored");
   }
-  if (AsHTMLEditor() && newLeftContent) {
+  if (newLeftContent) {
     TopLevelEditSubActionDataRef().DidSplitContent(
         *this, *aStartOfRightNode.GetContainerAsContent(), *newLeftContent);
   }
@@ -4208,8 +4326,6 @@ void HTMLEditor::DoSplitNode(const EditorDOMPoint& aStartOfRightNode,
     Text* rightAsText = aStartOfRightNode.GetContainerAsText();
     Text* leftAsText = aNewLeftNode.GetAsText();
     if (rightAsText && leftAsText) {
-      MOZ_DIAGNOSTIC_ASSERT(AsHTMLEditor(),
-                            "Text node in TextEditor shouldn't be split");
       // Fix right node
       nsAutoString leftText;
       IgnoredErrorResult ignoredError;
@@ -4369,7 +4485,7 @@ nsresult HTMLEditor::JoinNodesWithTransaction(nsINode& aLeftNode,
   }
   NS_WARNING_ASSERTION(
       !ignoredError.Failed(),
-      "TextEditor::OnStartToHandleTopLevelEditSubAction() failed, but ignored");
+      "HTMLEditor::OnStartToHandleTopLevelEditSubAction() failed, but ignored");
 
   // Remember some values; later used for saved selection updating.
   // Find the offset between the nodes to be joined.
@@ -4377,10 +4493,8 @@ nsresult HTMLEditor::JoinNodesWithTransaction(nsINode& aLeftNode,
   // Find the number of children of the lefthand node
   uint32_t oldLeftNodeLen = aLeftNode.Length();
 
-  if (AsHTMLEditor()) {
-    TopLevelEditSubActionDataRef().WillJoinContents(
-        *this, *aLeftNode.AsContent(), *aRightNode.AsContent());
-  }
+  TopLevelEditSubActionDataRef().WillJoinContents(*this, *aLeftNode.AsContent(),
+                                                  *aRightNode.AsContent());
 
   RefPtr<JoinNodeTransaction> transaction = JoinNodeTransaction::MaybeCreate(
       *this, *aLeftNode.AsContent(), *aRightNode.AsContent());
@@ -4402,10 +4516,8 @@ nsresult HTMLEditor::JoinNodesWithTransaction(nsINode& aLeftNode,
   NS_WARNING_ASSERTION(NS_SUCCEEDED(rvIgnored),
                        "RangeUpdater::SelAdjJoinNodes() failed, but ignored");
 
-  if (AsHTMLEditor()) {
-    TopLevelEditSubActionDataRef().DidJoinContents(
-        *this, *aLeftNode.AsContent(), *aRightNode.AsContent());
-  }
+  TopLevelEditSubActionDataRef().DidJoinContents(*this, *aLeftNode.AsContent(),
+                                                 *aRightNode.AsContent());
 
   if (mInlineSpellChecker) {
     RefPtr<mozInlineSpellChecker> spellChecker = mInlineSpellChecker;
@@ -4433,7 +4545,6 @@ nsresult HTMLEditor::JoinNodesWithTransaction(nsINode& aLeftNode,
 nsresult HTMLEditor::DoJoinNodes(nsIContent& aContentToKeep,
                                  nsIContent& aContentToJoin) {
   MOZ_ASSERT(IsEditActionDataAvailable());
-  MOZ_DIAGNOSTIC_ASSERT(AsHTMLEditor());
 
   uint32_t firstNodeLength = aContentToJoin.Length();
 

@@ -25,13 +25,13 @@ use crate::image::DirtyRect;
 #[derive(Hash, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct DevicePixel;
 
-pub type DeviceIntRect = Rect<i32, DevicePixel>;
+pub type DeviceIntRect = Box2D<i32, DevicePixel>;
 pub type DeviceIntPoint = Point2D<i32, DevicePixel>;
 pub type DeviceIntSize = Size2D<i32, DevicePixel>;
 pub type DeviceIntLength = Length<i32, DevicePixel>;
 pub type DeviceIntSideOffsets = SideOffsets2D<i32, DevicePixel>;
 
-pub type DeviceRect = Rect<f32, DevicePixel>;
+pub type DeviceRect = Box2D<f32, DevicePixel>;
 pub type DeviceBox2D = Box2D<f32, DevicePixel>;
 pub type DevicePoint = Point2D<f32, DevicePixel>;
 pub type DeviceVector2D = Vector2D<f32, DevicePixel>;
@@ -45,7 +45,7 @@ pub struct FramebufferPixel;
 
 pub type FramebufferIntPoint = Point2D<i32, FramebufferPixel>;
 pub type FramebufferIntSize = Size2D<i32, FramebufferPixel>;
-pub type FramebufferIntRect = Rect<i32, FramebufferPixel>;
+pub type FramebufferIntRect = Box2D<i32, FramebufferPixel>;
 
 /// Geometry in the coordinate system of a Picture (intermediate
 /// surface) in physical pixels.
@@ -99,7 +99,8 @@ pub type LayoutIntSize = Size2D<i32, LayoutPixel>;
 #[derive(Hash, Clone, Copy, Debug, Eq, MallocSizeOf, PartialEq, Ord, PartialOrd)]
 pub struct WorldPixel;
 
-pub type WorldRect = Rect<f32, WorldPixel>;
+pub type WorldRect = Box2D<f32, WorldPixel>;
+pub type WorldIntRect = Box2D<i32, WorldPixel>;
 pub type WorldPoint = Point2D<f32, WorldPixel>;
 pub type WorldSize = Size2D<f32, WorldPixel>;
 pub type WorldPoint3D = Point3D<f32, WorldPixel>;
@@ -132,6 +133,9 @@ pub type RasterToLayoutTransform = Transform3D<f32, RasterPixel, LayoutPixel>;
 
 pub type PictureToRasterTransform = Transform3D<f32, PicturePixel, RasterPixel>;
 pub type RasterToPictureTransform = Transform3D<f32, RasterPixel, PicturePixel>;
+
+/// Scaling ratio from picture pixels to raster pixels (e.g. if scaling a picture surface up/down).
+pub type RasterPixelScale = Scale<f32, PicturePixel, RasterPixel>;
 
 // Fixed position coordinates, to avoid float precision errors.
 pub type LayoutPointAu = Point2D<Au, LayoutPixel>;
@@ -175,8 +179,8 @@ impl TexelRect {
 impl Into<TexelRect> for DeviceIntRect {
     fn into(self) -> TexelRect {
         TexelRect {
-            uv0: self.min().to_f32(),
-            uv1: self.max().to_f32(),
+            uv0: self.min.to_f32(),
+            uv1: self.max.to_f32(),
         }
     }
 }
@@ -299,6 +303,22 @@ impl<U> RectExt for Rect<f32, U> {
     }
     fn bottom_right(&self) -> Self::Point {
         self.max()
+    }
+}
+
+impl<U> RectExt for Box2D<f32, U> {
+    type Point = Point2D<f32, U>;
+    fn top_left(&self) -> Self::Point {
+        self.min
+    }
+    fn top_right(&self) -> Self::Point {
+        Point2D::new(self.max.x, self.min.y)
+    }
+    fn bottom_left(&self) -> Self::Point {
+        Point2D::new(self.min.x, self.max.y)
+    }
+    fn bottom_right(&self) -> Self::Point {
+        self.max
     }
 }
 

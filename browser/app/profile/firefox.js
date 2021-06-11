@@ -44,10 +44,6 @@ pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firef
 pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v4/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
 pref("extensions.getAddons.discovery.api_url", "https://services.addons.mozilla.org/api/v4/discovery/?lang=%LOCALE%&edition=%DISTRIBUTION%");
 
-// Use bloomfilters for the addons blocklist, instead of JSON only.
-pref("extensions.blocklist.useMLBF", true);
-pref("extensions.blocklist.useMLBF.stashes", true);
-
 // The URL for the privacy policy related to recommended extensions.
 pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
 // The URL for Firefox Color, recommended on the theme page in about:addons.
@@ -1067,6 +1063,14 @@ pref("places.frecency.defaultVisitBonus", 0);
 pref("places.frecency.unvisitedBookmarkBonus", 140);
 pref("places.frecency.unvisitedTypedBonus", 200);
 
+#ifdef NIGHTLY_BUILD
+  // Clear data by base domain (including partitioned storage) when the user
+  // selects "Forget About This Site".
+  pref("places.forgetThisSite.clearByBaseDomain", true);
+#else
+  pref("places.forgetThisSite.clearByBaseDomain", false);
+#endif
+
 // Controls behavior of the "Add Exception" dialog launched from SSL error pages
 // 0 - don't pre-populate anything
 // 1 - pre-populate site URL, but don't fetch certificate
@@ -1319,7 +1323,6 @@ pref("services.sync.prefs.sync.browser.tabs.warnOnClose", true);
 pref("services.sync.prefs.sync.browser.tabs.warnOnOpen", true);
 pref("services.sync.prefs.sync.browser.taskbar.previews.enable", true);
 pref("services.sync.prefs.sync.browser.urlbar.maxRichResults", true);
-pref("services.sync.prefs.sync.browser.urlbar.resultBuckets", true);
 pref("services.sync.prefs.sync.browser.urlbar.showSearchSuggestionsFirst", true);
 pref("services.sync.prefs.sync.browser.urlbar.suggest.bookmark", true);
 pref("services.sync.prefs.sync.browser.urlbar.suggest.history", true);
@@ -1509,6 +1512,7 @@ pref("browser.newtabpage.activity-stream.logowordmark.alwaysVisible", true);
 pref("trailhead.firstrun.newtab.triplets", "");
 // Separate about welcome
 pref("browser.aboutwelcome.enabled", true);
+pref("browser.aboutwelcome.protonDesign", true);
 // Used to set multistage welcome UX
 pref("browser.aboutwelcome.screens", "");
 pref("browser.aboutwelcome.skipFocus", true);
@@ -2574,3 +2578,8 @@ pref("first-startup.timeout", 30000);
 // are expected to go away once a standardized alternative becomes
 // available.
 pref("svg.context-properties.content.allowed-domains", "profile.accounts.firefox.com,profile.stage.mozaws.net");
+
+// Preference that allows individual users to disable Firefox Translations.
+#ifdef NIGHTLY_BUILD
+  pref("extensions.translations.disabled", true);
+#endif

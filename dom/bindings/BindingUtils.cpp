@@ -1385,7 +1385,9 @@ void GetInterfaceImpl(JSContext* aCx, nsIInterfaceRequestor* aRequestor,
 }
 
 bool ThrowingConstructor(JSContext* cx, unsigned argc, JS::Value* vp) {
-  return ThrowErrorMessage<MSG_ILLEGAL_CONSTRUCTOR>(cx, nullptr);
+  // Cast nullptr to void* to work around
+  // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=100666
+  return ThrowErrorMessage<MSG_ILLEGAL_CONSTRUCTOR>(cx, (void*)nullptr);
 }
 
 bool ThrowConstructorWithoutNew(JSContext* cx, const char* name) {
@@ -1814,9 +1816,8 @@ static bool ResolvePrototypeOrConstructor(
         return false;
       }
 
-      desc.set(
-        Some(JS::PropertyDescriptor::Data(JS::StringValue(nameStr),
-          { JS::PropertyAttribute::Configurable })));
+      desc.set(Some(JS::PropertyDescriptor::Data(
+          JS::StringValue(nameStr), {JS::PropertyAttribute::Configurable})));
       return true;
     }
 

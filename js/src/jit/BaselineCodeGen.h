@@ -175,6 +175,7 @@ class BaselineCodeGen {
   void emitLoadReturnValue(ValueOperand val);
   void emitPushNonArrowFunctionNewTarget();
   void emitGetAliasedVar(ValueOperand dest);
+  [[nodiscard]] bool emitGetAliasedDebugVar(ValueOperand dest);
 
   [[nodiscard]] bool emitNextIC();
   [[nodiscard]] bool emitInterruptCheck();
@@ -216,7 +217,6 @@ class BaselineCodeGen {
 
   [[nodiscard]] bool emitReturn();
 
-  [[nodiscard]] bool emitToBoolean();
   [[nodiscard]] bool emitTest(bool branchIfTrue);
   [[nodiscard]] bool emitAndOr(bool branchIfTrue);
   [[nodiscard]] bool emitCoalesce();

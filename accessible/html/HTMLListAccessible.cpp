@@ -6,10 +6,10 @@
 
 #include "HTMLListAccessible.h"
 
+#include "AccAttributes.h"
 #include "DocAccessible.h"
 #include "EventTree.h"
 #include "nsAccUtils.h"
-#include "nsPersistentProperties.h"
 #include "nsTextEquivUtils.h"
 #include "Role.h"
 #include "States.h"
@@ -55,8 +55,12 @@ nsRect HTMLLIAccessible::BoundsInAppUnits() const {
   nsRect rect = AccessibleWrap::BoundsInAppUnits();
 
   LocalAccessible* bullet = Bullet();
-  if (bullet && GetFrame()->StyleList()->mListStylePosition !=
-                    NS_STYLE_LIST_STYLE_POSITION_INSIDE) {
+  nsIFrame* frame = GetFrame();
+  MOZ_ASSERT(!(bullet && !frame), "Cannot have a bullet if there is no frame");
+
+  if (bullet && frame &&
+      frame->StyleList()->mListStylePosition !=
+          NS_STYLE_LIST_STYLE_POSITION_INSIDE) {
     nsRect bulletRect = bullet->BoundsInAppUnits();
     return rect.Union(bulletRect);
   }
@@ -115,9 +119,8 @@ uint64_t HTMLListBulletAccessible::NativeState() const {
   return LeafAccessible::NativeState() | states::READONLY;
 }
 
-already_AddRefed<nsIPersistentProperties>
-HTMLListBulletAccessible::NativeAttributes() {
-  RefPtr<nsPersistentProperties> attributes = new nsPersistentProperties();
+already_AddRefed<AccAttributes> HTMLListBulletAccessible::NativeAttributes() {
+  RefPtr<AccAttributes> attributes = new AccAttributes();
   return attributes.forget();
 }
 

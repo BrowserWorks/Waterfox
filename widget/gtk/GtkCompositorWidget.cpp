@@ -44,10 +44,10 @@ GtkCompositorWidget::GtkCompositorWidget(
     }
 
     Visual* visual = windowAttrs.visual;
-    mDepth = windowAttrs.depth;
+    int depth = windowAttrs.depth;
 
     // Initialize the window surface provider
-    mProvider.Initialize(mXWindow, visual, mDepth, aInitData.Shaped());
+    mProvider.Initialize(mXWindow, visual, depth, aInitData.Shaped());
   }
 #endif
   auto size = mClientSize.Lock();
@@ -102,8 +102,6 @@ EGLNativeWindowType GtkCompositorWidget::GetEGLNativeWindow() {
   return nullptr;
 }
 
-int32_t GtkCompositorWidget::GetDepth() { return mDepth; }
-
 #if defined(MOZ_WAYLAND)
 void GtkCompositorWidget::SetEGLNativeWindowSize(
     const LayoutDeviceIntSize& aEGLWindowSize) {
@@ -114,13 +112,9 @@ void GtkCompositorWidget::SetEGLNativeWindowSize(
 #endif
 
 LayoutDeviceIntRegion GtkCompositorWidget::GetTransparentRegion() {
-  if (!mWidget) {
-    return LayoutDeviceIntRect();
-  }
-
   // We need to clear target buffer alpha values of popup windows as
   // SW-WR paints with alpha blending (see Bug 1674473).
-  if (mWidget->IsPopup()) {
+  if (!mWidget || mWidget->IsPopup()) {
     return LayoutDeviceIntRect(LayoutDeviceIntPoint(0, 0), GetClientSize());
   }
 

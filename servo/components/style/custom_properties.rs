@@ -88,7 +88,7 @@ pub type Name = Atom;
 ///
 /// <https://drafts.csswg.org/css-variables/#typedef-custom-property-name>
 pub fn parse_name(s: &str) -> Result<&str, ()> {
-    if s.starts_with("--") {
+    if s.starts_with("--") && s.len() > 2 {
         Ok(&s[2..])
     } else {
         Err(())
@@ -318,11 +318,6 @@ fn parse_declaration_value<'i, 't>(
     missing_closing_characters: &mut String,
 ) -> Result<(TokenSerializationType, TokenSerializationType), ParseError<'i>> {
     input.parse_until_before(Delimiter::Bang | Delimiter::Semicolon, |input| {
-        // Need at least one token
-        let start = input.state();
-        input.next_including_whitespace()?;
-        input.reset(&start);
-
         parse_declaration_value_block(input, references, missing_closing_characters)
     })
 }
@@ -334,6 +329,7 @@ fn parse_declaration_value_block<'i, 't>(
     mut references: Option<&mut VarOrEnvReferences>,
     missing_closing_characters: &mut String,
 ) -> Result<(TokenSerializationType, TokenSerializationType), ParseError<'i>> {
+    input.skip_whitespace();
     let mut token_start = input.position();
     let mut token = match input.next_including_whitespace_and_comments() {
         Ok(token) => token,
@@ -477,10 +473,8 @@ fn parse_fallback<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(), ParseError<'
     // Exclude `!` and `;` at the top level
     // https://drafts.csswg.org/css-syntax/#typedef-declaration-value
     input.parse_until_before(Delimiter::Bang | Delimiter::Semicolon, |input| {
-        // At least one non-comment token.
-        input.next_including_whitespace()?;
         // Skip until the end.
-        while let Ok(_) = input.next_including_whitespace_and_comments() {}
+        while input.next_including_whitespace_and_comments().is_ok() {}
         Ok(())
     })
 }
@@ -584,8 +578,7 @@ impl<'a> CustomPropertiesBuilder<'a> {
                     match result {
                         Ok(new_value) => new_value,
                         Err(..) => {
-                            // Don't touch the map, this has the same effect as
-                            // making it compute to the inherited one.
+                            map.remove(name);
                             return;
                         },
                     }
@@ -659,8 +652,7 @@ impl<'a> CustomPropertiesBuilder<'a> {
             None => return self.inherited.cloned(),
         };
         if self.may_have_cycles {
-            let inherited = self.inherited.as_ref().map(|m| &***m);
-            substitute_all(&mut map, inherited, self.device);
+            substitute_all(&mut map, self.device);
         }
         map.shrink_to_fit();
         Some(Arc::new(map))
@@ -673,7 +665,6 @@ impl<'a> CustomPropertiesBuilder<'a> {
 /// It does cycle dependencies removal at the same time as substitution.
 fn substitute_all(
     custom_properties_map: &mut CustomPropertiesMap,
-    inherited: Option<&CustomPropertiesMap>,
     device: &Device,
 ) {
     // The cycle dependencies removal in this function is a variant
@@ -711,10 +702,7 @@ fn substitute_all(
         /// all unfinished strong connected components.
         stack: SmallVec<[usize; 5]>,
         map: &'a mut CustomPropertiesMap,
-        /// The inherited variables. We may need to restore some if we fail
-        /// substitution.
-        inherited: Option<&'a CustomPropertiesMap>,
-        /// to resolve the environment to substitute `env()` variables.
+        /// To resolve the environment to substitute `env()` variables.
         device: &'a Device,
     }
 
@@ -856,16 +844,8 @@ fn substitute_all(
                 context.map.insert(name, computed_value);
             },
             Err(..) => {
-                // This is invalid, reset it to the unset (inherited) value.
-                let inherited = context.inherited.and_then(|m| m.get(&name)).cloned();
-                match inherited {
-                    Some(computed_value) => {
-                        context.map.insert(name, computed_value);
-                    },
-                    None => {
-                        context.map.remove(&name);
-                    },
-                };
+                // This is invalid, reset it to the guaranteed-invalid value.
+                context.map.remove(&name);
             },
         }
 
@@ -883,7 +863,6 @@ fn substitute_all(
             stack: SmallVec::new(),
             var_info: SmallVec::new(),
             map: custom_properties_map,
-            inherited,
             device,
         };
         traverse(name, &mut context);
@@ -996,12 +975,12 @@ fn substitute_block<'i>(
                         while input.next().is_ok() {}
                     } else {
                         input.expect_comma()?;
+                        input.skip_whitespace();
                         let after_comma = input.state();
                         let first_token_type = input
                             .next_including_whitespace_and_comments()
-                            // parse_var_function() ensures that .unwrap() will not fail.
-                            .unwrap()
-                            .serialization_type();
+                            .ok()
+                            .map_or_else(TokenSerializationType::nothing, |t| t.serialization_type());
                         input.reset(&after_comma);
                         let mut position = (after_comma.position(), first_token_type);
                         last_token_type = substitute_block(

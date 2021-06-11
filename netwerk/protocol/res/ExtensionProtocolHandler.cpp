@@ -13,13 +13,13 @@
 #include "mozilla/dom/Promise-inl.h"
 #include "mozilla/ExtensionPolicyService.h"
 #include "mozilla/FileUtils.h"
+#include "mozilla/ipc/FileDescriptor.h"
 #include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/ResultExtensions.h"
 
-#include "FileDescriptor.h"
 #include "FileDescriptorFile.h"
 #include "LoadInfo.h"
 #include "nsContentUtils.h"
@@ -346,16 +346,7 @@ ExtensionProtocolHandler::GetSingleton() {
 }
 
 ExtensionProtocolHandler::ExtensionProtocolHandler()
-    : SubstitutingProtocolHandler(EXTENSION_SCHEME)
-#if !defined(XP_WIN)
-#  if defined(XP_MACOSX)
-      ,
-      mAlreadyCheckedDevRepo(false)
-#  endif /* XP_MACOSX */
-      ,
-      mAlreadyCheckedAppDir(false)
-#endif /* ! XP_WIN */
-{
+    : SubstitutingProtocolHandler(EXTENSION_SCHEME) {
   // Note, extensions.webextensions.protocol.remote=false is for
   // debugging purposes only. With process-level sandboxing, child
   // processes (specifically content and extension processes), will

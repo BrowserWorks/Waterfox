@@ -957,6 +957,15 @@ var BookmarksEventHandler = {
       return false;
     }
 
+    if (
+      gProtonPlacesTooltip &&
+      tooltipNode &&
+      !tooltipNode.closest("menupopup")
+    ) {
+      aEvent.target.setAttribute("position", "after_start");
+      aEvent.target.moveToAnchor(tooltipNode, "after_start");
+    }
+
     let tooltipTitle = aEvent.target.querySelector(".places-tooltip-title");
     tooltipTitle.hidden = !title || title == url;
     if (!tooltipTitle.hidden) {
@@ -1678,10 +1687,6 @@ var BookmarkingUI = {
       entry: "subviewbutton",
     };
 
-    if (!gProtonDoorhangers) {
-      extraClasses.footer = "panel-subview-footer";
-    }
-
     new PlacesMenu(event, `place:parent=${PlacesUtils.bookmarks.menuGuid}`, {
       extraClasses,
       insertionPoint: ".panel-subview-footer-button",
@@ -1799,11 +1804,6 @@ var BookmarkingUI = {
   init() {
     CustomizableUI.addListener(this);
     this.updateEmptyToolbarMessage();
-
-    if (gProtonPlacesTooltip) {
-      let bhTooltip = document.getElementById("bhTooltip");
-      bhTooltip.setAttribute("position", "after_start");
-    }
   },
 
   _hasBookmarksObserver: false,

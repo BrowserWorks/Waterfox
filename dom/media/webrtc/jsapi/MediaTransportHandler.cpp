@@ -360,6 +360,8 @@ static nsresult addNrIceServer(const nsString& aIceUrl,
     if (hostPos > 1) /* The username was removed */
       return NS_ERROR_FAILURE;
     path.Mid(host, hostPos, hostLen);
+    // Strip off brackets around IPv6 literals
+    host.Trim("[]");
   }
   if (port == -1) port = (isStuns || isTurns) ? 5349 : 3478;
 
@@ -481,9 +483,15 @@ static Maybe<NrIceCtx::NatSimulatorConfig> GetNatConfig() {
   nsAutoCString filtering_type;
   (void)Preferences::GetCString(
       "media.peerconnection.nat_simulator.filtering_type", filtering_type);
+  nsAutoCString redirect_address;
+  (void)Preferences::GetCString(
+      "media.peerconnection.nat_simulator.redirect_address", redirect_address);
+  nsAutoCString redirect_targets;
+  (void)Preferences::GetCString(
+      "media.peerconnection.nat_simulator.redirect_targets", redirect_targets);
 
   if (block_udp || block_tcp || !mapping_type.IsEmpty() ||
-      !filtering_type.IsEmpty()) {
+      !filtering_type.IsEmpty() || !redirect_address.IsEmpty()) {
     CSFLogDebug(LOGTAG, "NAT filtering type: %s", filtering_type.get());
     CSFLogDebug(LOGTAG, "NAT mapping type: %s", mapping_type.get());
     NrIceCtx::NatSimulatorConfig natConfig;
@@ -492,6 +500,17 @@ static Maybe<NrIceCtx::NatSimulatorConfig> GetNatConfig() {
     natConfig.mErrorCodeForDrop = error_code_for_drop;
     natConfig.mFilteringType = filtering_type;
     natConfig.mMappingType = mapping_type;
+    if (redirect_address.Length()) {
+      CSFLogDebug(LOGTAG, "Redirect address: %s", redirect_address.get());
+      CSFLogDebug(LOGTAG, "Redirect targets: %s", redirect_targets.get());
+      natConfig.mRedirectAddress = redirect_address;
+      std::stringstream str(redirect_targets.Data());
+      std::string target;
+      while (getline(str, target, ',')) {
+        CSFLogDebug(LOGTAG, "Adding target: %s", target.c_str());
+        natConfig.mRedirectTargets.AppendElement(target);
+      }
+    }
     return Some(natConfig);
   }
   return Nothing();

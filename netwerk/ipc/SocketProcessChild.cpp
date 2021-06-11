@@ -28,6 +28,7 @@
 #include "mozilla/net/TRRServiceChild.h"
 #include "mozilla/ipc/PChildToParentStreamChild.h"
 #include "mozilla/ipc/PParentToChildStreamChild.h"
+#include "mozilla/ipc/ProcessUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/RemoteLazyInputStreamChild.h"
 #include "mozilla/Telemetry.h"
@@ -40,7 +41,6 @@
 #include "nsNSSComponent.h"
 #include "nsSocketTransportService2.h"
 #include "nsThreadManager.h"
-#include "ProcessUtils.h"
 #include "SocketProcessBridgeParent.h"
 
 #if defined(XP_WIN)
@@ -61,6 +61,10 @@
 #  include "mozilla/net/WebrtcTCPSocketChild.h"
 #endif
 
+#if defined(MOZ_SANDBOX) && defined(MOZ_DEBUG) && defined(ENABLE_TESTS)
+#  include "mozilla/SandboxTestingChild.h"
+#endif
+
 namespace mozilla {
 namespace net {
 
@@ -68,8 +72,7 @@ using namespace ipc;
 
 SocketProcessChild* sSocketProcessChild;
 
-SocketProcessChild::SocketProcessChild()
-    : mShuttingDown(false), mMutex("SocketProcessChild::mMutex") {
+SocketProcessChild::SocketProcessChild() {
   LOG(("CONSTRUCT SocketProcessChild::SocketProcessChild\n"));
   nsDebugImpl::SetMultiprocessMode("Socket");
 
@@ -144,11 +147,7 @@ bool SocketProcessChild::Init(base::ProcessId aParentPid,
   // Initialize DNS Service here, since it needs to be done in main thread.
   nsCOMPtr<nsIDNSService> dns =
       do_GetService("@mozilla.org/network/dns-service;1", &rv);
-  if (NS_FAILED(rv)) {
-    return false;
-  }
-
-  return true;
+  return NS_SUCCEEDED(rv);
 }
 
 void SocketProcessChild::ActorDestroy(ActorDestroyReason aWhy) {
@@ -274,6 +273,17 @@ mozilla::ipc::IPCResult SocketProcessChild::RecvInitProfiler(
 #endif
   return IPC_OK();
 }
+
+#if defined(MOZ_SANDBOX) && defined(MOZ_DEBUG) && defined(ENABLE_TESTS)
+mozilla::ipc::IPCResult SocketProcessChild::RecvInitSandboxTesting(
+    Endpoint<PSandboxTestingChild>&& aEndpoint) {
+  if (!SandboxTestingChild::Initialize(std::move(aEndpoint))) {
+    return IPC_FAIL(
+        this, "InitSandboxTesting failed to initialise the child process.");
+  }
+  return IPC_OK();
+}
+#endif
 
 mozilla::ipc::IPCResult SocketProcessChild::RecvSocketProcessTelemetryPing() {
   const uint32_t kExpectedUintValue = 42;

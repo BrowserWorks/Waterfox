@@ -8,7 +8,7 @@
 
 "use strict";
 
-const RESULT_BUCKETS_PREF = "browser.urlbar.resultBuckets";
+const RESULT_BUCKETS_PREF = "browser.urlbar.resultGroups";
 const MAX_RICH_RESULTS_PREF = "browser.urlbar.maxRichResults";
 
 // For simplicity, most of the flex tests below assume that this is 10, so
@@ -1317,13 +1317,39 @@ add_resultBuckets_task({
   ],
 });
 
+add_resultBuckets_task({
+  testName: "resultSpan = 3 followed by others",
+  resultBuckets: {
+    children: [
+      {
+        group: UrlbarUtils.RESULT_GROUP.GENERAL,
+      },
+      {
+        group: UrlbarUtils.RESULT_GROUP.REMOTE_SUGGESTION,
+      },
+    ],
+  },
+  providerResults: [
+    // max results remote suggestions
+    ...makeRemoteSuggestionResults(MAX_RESULTS),
+    // 1 history with resultSpan = 3
+    Object.assign(makeHistoryResults(1)[0], { resultSpan: 3 }),
+  ],
+  expectedResultIndexes: [
+    // general/history: 1
+    ...makeIndexRange(MAX_RESULTS, 1),
+    // remote suggestions: maxResults - resultSpan of 3 = 10 - 3 = 7
+    ...makeIndexRange(0, 7),
+  ],
+});
+
 /**
  * Adds a test task.
  *
  * @param {string} testName
  *   This name is logged with `info` as the task starts.
  * @param {object} resultBuckets
- *   browser.urlbar.resultBuckets is set to this value as the task starts.
+ *   browser.urlbar.resultGroups is set to this value as the task starts.
  * @param {array} providerResults
  *   Array of result objects that the test provider will add.
  * @param {array} expectedResultIndexes
@@ -1336,7 +1362,7 @@ function add_resultBuckets_task({
   expectedResultIndexes,
 }) {
   let func = async () => {
-    info(`Running resultBuckest test: ${testName}`);
+    info(`Running resultGroups test: ${testName}`);
     setResultBuckets(resultBuckets);
     let provider = registerBasicTestProvider(providerResults);
     let context = createContext("foo", { providers: [provider.name] });

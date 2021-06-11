@@ -6,6 +6,9 @@
 
 #include "QuotaCommon.h"
 
+#ifdef QM_ERROR_STACKS_ENABLED
+#  include "base/process_util.h"
+#endif
 #include "mozIStorageConnection.h"
 #include "mozIStorageStatement.h"
 #include "mozilla/ErrorNames.h"
@@ -165,25 +168,23 @@ Result<nsCOMPtr<nsIFile>, nsresult> CloneFileAndAppend(
 
 Result<nsIFileKind, nsresult> GetDirEntryKind(nsIFile& aFile) {
   // Callers call this function without checking if the directory already
-  // exists (idempotent usage). QM_OR_ELSE_WARN is not used here since we just
-  // want to log NS_ERROR_FILE_NOT_FOUND, NS_ERROR_FILE_TARGET_DOES_NOT_EXIST
-  // and NS_ERROR_FILE_FS_CORRUPTED results and not spam the reports.
-  QM_TRY_RETURN(QM_OR_ELSE_LOG(
+  // exists (idempotent usage). QM_OR_ELSE_WARN_IF is not used here since we
+  // just want to log NS_ERROR_FILE_NOT_FOUND,
+  // NS_ERROR_FILE_TARGET_DOES_NOT_EXIST and NS_ERROR_FILE_FS_CORRUPTED results
+  // and not spam the reports.
+  QM_TRY_RETURN(QM_OR_ELSE_LOG_VERBOSE_IF(
       MOZ_TO_RESULT_INVOKE(aFile, IsDirectory).map([](const bool isDirectory) {
         return isDirectory ? nsIFileKind::ExistsAsDirectory
                            : nsIFileKind::ExistsAsFile;
       }),
-      ([](const nsresult rv) -> Result<nsIFileKind, nsresult> {
-        if (rv == NS_ERROR_FILE_NOT_FOUND ||
-            rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST ||
-            // We treat NS_ERROR_FILE_FS_CORRUPTED as if the file did not
-            // exist at all.
-            rv == NS_ERROR_FILE_FS_CORRUPTED) {
-          return nsIFileKind::DoesNotExist;
-        }
-
-        return Err(rv);
-      })));
+      ([](const nsresult rv) {
+        return rv == NS_ERROR_FILE_NOT_FOUND ||
+               rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST ||
+               // We treat NS_ERROR_FILE_FS_CORRUPTED as if the file did not
+               // exist at all.
+               rv == NS_ERROR_FILE_FS_CORRUPTED;
+      }),
+      ErrToOk<nsIFileKind::DoesNotExist>));
 }
 
 Result<nsCOMPtr<mozIStorageStatement>, nsresult> CreateStatement(
@@ -240,7 +241,7 @@ template Result<SingleStepSuccessType<SingleStepResult::ReturnNullIfNoResult>,
 CreateAndExecuteSingleStepStatement<SingleStepResult::ReturnNullIfNoResult>(
     mozIStorageConnection& aConnection, const nsACString& aStatementString);
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
+#ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
 MOZ_THREAD_LOCAL(const nsACString*) ScopedLogExtraInfo::sQueryValue;
 MOZ_THREAD_LOCAL(const nsACString*) ScopedLogExtraInfo::sContextValue;
 
@@ -402,37 +403,35 @@ nsDependentCSubstring MakeSourceFileRelativePath(
 
 }  // namespace detail
 
-void LogError(const nsACString& aExpr, const Maybe<nsresult> aRv,
+#ifdef QM_LOG_ERROR_ENABLED
+#  ifdef QM_ERROR_STACKS_ENABLED
+void LogError(const nsACString& aExpr, const ResultType& aResult,
               const nsACString& aSourceFilePath, const int32_t aSourceFileLine,
-              const Severity aSeverity) {
+              const Severity aSeverity)
+#  else
+void LogError(const nsACString& aExpr, const Maybe<nsresult> aMaybeRv,
+              const nsACString& aSourceFilePath, const int32_t aSourceFileLine,
+              const Severity aSeverity)
+#  endif
+{
   // TODO: Add MOZ_LOG support, bug 1711661.
 
-  // We have to ignore failures with the Log severity. until we have support
+  // We have to ignore failures with the Verbose severity until we have support
   // for MOZ_LOG.
-  if (aSeverity == Severity::Log) {
+  if (aSeverity == Severity::Verbose) {
     return;
   }
 
-#if defined(EARLY_BETA_OR_EARLIER) || defined(DEBUG)
-  nsAutoCString extraInfosString;
+  nsAutoCString context;
 
-  nsAutoCString rvName;
-  if (aRv) {
-    if (NS_ERROR_GET_MODULE(*aRv) == NS_ERROR_MODULE_WIN32) {
-      // XXX We could also try to get the Win32 error name here.
-      rvName = nsPrintfCString("WIN32(0x%" PRIX16 ")", NS_ERROR_GET_CODE(*aRv));
-    } else {
-      rvName = mozilla::GetStaticErrorName(*aRv);
-    }
-    extraInfosString.AppendPrintf(
-        " failed with "
-        "result 0x%" PRIX32 "%s%s%s",
-        static_cast<uint32_t>(*aRv), !rvName.IsEmpty() ? " (" : "",
-        !rvName.IsEmpty() ? rvName.get() : "", !rvName.IsEmpty() ? ")" : "");
+#  ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
+  const auto& extraInfoMap = ScopedLogExtraInfo::GetExtraInfoMap();
+
+  if (const auto contextIt = extraInfoMap.find(ScopedLogExtraInfo::kTagContext);
+      contextIt != extraInfoMap.cend()) {
+    context = *contextIt->second;
   }
-
-  const auto sourceFileRelativePath =
-      detail::MakeSourceFileRelativePath(aSourceFilePath);
+#  endif
 
   const auto severityString = [&aSeverity]() -> nsLiteralCString {
     switch (aSeverity) {
@@ -442,22 +441,92 @@ void LogError(const nsACString& aExpr, const Maybe<nsresult> aRv,
         return "WARNING"_ns;
       case Severity::Note:
         return "NOTE"_ns;
-      case Severity::Log:
-        return "LOG"_ns;
+      case Severity::Verbose:
+        return "VERBOSE"_ns;
     }
     MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Bad severity value!");
   }();
-#endif
 
-#ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
-  const auto& extraInfos = ScopedLogExtraInfo::GetExtraInfoMap();
-  for (const auto& item : extraInfos) {
-    extraInfosString.Append(", "_ns + nsDependentCString(item.first) + "="_ns +
+  Maybe<nsresult> maybeRv;
+
+#  ifdef QM_ERROR_STACKS_ENABLED
+  if (aResult.is<QMResult>()) {
+    maybeRv = Some(aResult.as<QMResult>().NSResult());
+  } else if (aResult.is<nsresult>()) {
+    maybeRv = Some(aResult.as<nsresult>());
+  }
+#  else
+  maybeRv = aMaybeRv;
+#  endif
+
+  nsAutoCString rvCode;
+  nsAutoCString rvName;
+
+  if (maybeRv) {
+    nsresult rv = *maybeRv;
+
+    rvCode = nsPrintfCString("0x%" PRIX32, static_cast<uint32_t>(rv));
+
+    // XXX NS_ERROR_MODULE_WIN32 should be handled in GetErrorName directly.
+    if (NS_ERROR_GET_MODULE(rv) == NS_ERROR_MODULE_WIN32) {
+      // XXX We could also try to get the Win32 error name here.
+      rvName = nsPrintfCString(
+          "NS_ERROR_GENERATE_FAILURE(NS_ERROR_MODULE_WIN32, 0x%" PRIX16 ")",
+          NS_ERROR_GET_CODE(rv));
+    } else {
+      mozilla::GetErrorName(rv, rvName);
+    }
+  }
+
+#  ifdef QM_ERROR_STACKS_ENABLED
+  nsAutoCString frameIdString;
+  nsAutoCString stackIdString;
+  nsAutoCString processIdString;
+
+  if (aResult.is<QMResult>()) {
+    const QMResult& result = aResult.as<QMResult>();
+    frameIdString = IntToCString(result.FrameId());
+    stackIdString = IntToCString(result.StackId());
+    processIdString =
+        IntToCString(static_cast<uint32_t>(base::GetCurrentProcId()));
+  }
+#  endif
+
+  nsAutoCString extraInfosString;
+
+  if (!rvCode.IsEmpty()) {
+    extraInfosString.Append(" failed with resultCode "_ns + rvCode);
+  }
+
+  if (!rvName.IsEmpty()) {
+    extraInfosString.Append(", resultName "_ns + rvName);
+  }
+
+#  ifdef QM_ERROR_STACKS_ENABLED
+  if (!frameIdString.IsEmpty()) {
+    extraInfosString.Append(", frameId "_ns + frameIdString);
+  }
+
+  if (!stackIdString.IsEmpty()) {
+    extraInfosString.Append(", stackId "_ns + stackIdString);
+  }
+
+  if (!processIdString.IsEmpty()) {
+    extraInfosString.Append(", processId "_ns + processIdString);
+  }
+#  endif
+
+#  ifdef QM_SCOPED_LOG_EXTRA_INFO_ENABLED
+  for (const auto& item : extraInfoMap) {
+    extraInfosString.Append(", "_ns + nsDependentCString(item.first) + " "_ns +
                             *item.second);
   }
-#endif
+#  endif
 
-#ifdef DEBUG
+  const auto sourceFileRelativePath =
+      detail::MakeSourceFileRelativePath(aSourceFilePath);
+
+#  ifdef QM_LOG_ERROR_TO_CONSOLE_ENABLED
   NS_DebugBreak(
       NS_DEBUG_WARNING,
       nsAutoCString("QM_TRY failure ("_ns + severityString + ")"_ns).get(),
@@ -466,42 +535,56 @@ void LogError(const nsACString& aExpr, const Maybe<nsresult> aRv,
                                         aExpr + extraInfosString)))
           .get(),
       nsPromiseFlatCString(sourceFileRelativePath).get(), aSourceFileLine);
-#endif
+#  endif
 
-#if defined(EARLY_BETA_OR_EARLIER) || defined(DEBUG)
-  nsCOMPtr<nsIConsoleService> console =
-      do_GetService(NS_CONSOLESERVICE_CONTRACTID);
-  if (console) {
-    NS_ConvertUTF8toUTF16 message(
-        "QM_TRY failure ("_ns + severityString + ")"_ns + ": '"_ns + aExpr +
-        "' at "_ns + sourceFileRelativePath + ":"_ns +
-        IntToCString(aSourceFileLine) + extraInfosString);
+#  ifdef QM_LOG_ERROR_TO_BROWSER_CONSOLE_ENABLED
+  // XXX We might want to allow reporting to the browsing console even when
+  // there's no context in future once we are sure that it can't spam the
+  // browser console or when we have special about:quotamanager for the
+  // reporting (instead of the browsing console).
+  // Another option is to keep the current check and rely on MOZ_LOG reporting
+  // in future once that's available.
+  if (!context.IsEmpty()) {
+    nsCOMPtr<nsIConsoleService> console =
+        do_GetService(NS_CONSOLESERVICE_CONTRACTID);
+    if (console) {
+      NS_ConvertUTF8toUTF16 message(
+          "QM_TRY failure ("_ns + severityString + ")"_ns + ": '"_ns + aExpr +
+          extraInfosString + "', file "_ns + sourceFileRelativePath + ":"_ns +
+          IntToCString(aSourceFileLine));
 
-    // The concatenation above results in a message like:
-    // QM_TRY failure: 'EXPR' failed with result NS_ERROR_FAILURE at
-    // dom/quota/Foo.cpp:12345
+      // The concatenation above results in a message like:
+      // QM_TRY failure (ERROR): 'MaybeRemoveLocalStorageArchiveTmpFile() failed
+      // with resultCode 0x80004005, resultName NS_ERROR_FAILURE, frameId 1,
+      // stackId 1, processId 53978, context Initialization::Storage', file
+      // dom/quota/ActorsParent.cpp:6029
 
-    console->LogStringMessage(message.get());
+      console->LogStringMessage(message.get());
+    }
   }
+#  endif
 
-#  ifdef QM_ENABLE_SCOPED_LOG_EXTRA_INFO
-  if (const auto contextIt = extraInfos.find(ScopedLogExtraInfo::kTagContext);
-      contextIt != extraInfos.cend()) {
+#  ifdef QM_LOG_ERROR_TO_TELEMETRY_ENABLED
+  if (!context.IsEmpty()) {
     // For now, we don't include aExpr in the telemetry event. It might help to
     // match locations across versions, but they might be large.
     auto extra = Some([&] {
       auto res = CopyableTArray<EventExtraEntry>{};
-      res.SetCapacity(6);
-      // TODO We could still fill the module field, based on the source
-      // directory, but we probably don't need to.
-      // res.AppendElement(EventExtraEntry{"module"_ns, aModule});
-      res.AppendElement(
-          EventExtraEntry{"source_file"_ns, nsCString(sourceFileRelativePath)});
-      res.AppendElement(
-          EventExtraEntry{"source_line"_ns, IntToCString(aSourceFileLine)});
-      res.AppendElement(EventExtraEntry{
-          "context"_ns, nsPromiseFlatCString{*contextIt->second}});
-      res.AppendElement(EventExtraEntry{"severity"_ns, severityString});
+      res.SetCapacity(9);
+
+      res.AppendElement(EventExtraEntry{"context"_ns, nsCString{context}});
+
+#    ifdef QM_ERROR_STACKS_ENABLED
+      if (!frameIdString.IsEmpty()) {
+        res.AppendElement(
+            EventExtraEntry{"frame_id"_ns, nsCString{frameIdString}});
+      }
+
+      if (!processIdString.IsEmpty()) {
+        res.AppendElement(
+            EventExtraEntry{"process_id"_ns, nsCString{processIdString}});
+      }
+#    endif
 
       if (!rvName.IsEmpty()) {
         res.AppendElement(EventExtraEntry{"result"_ns, nsCString{rvName}});
@@ -518,6 +601,21 @@ void LogError(const nsACString& aExpr, const Maybe<nsresult> aRv,
       res.AppendElement(
           EventExtraEntry{"seq"_ns, IntToCString(++sSequenceNumber)});
 
+      res.AppendElement(EventExtraEntry{"severity"_ns, severityString});
+
+      res.AppendElement(
+          EventExtraEntry{"source_file"_ns, nsCString(sourceFileRelativePath)});
+
+      res.AppendElement(
+          EventExtraEntry{"source_line"_ns, IntToCString(aSourceFileLine)});
+
+#    ifdef QM_ERROR_STACKS_ENABLED
+      if (!stackIdString.IsEmpty()) {
+        res.AppendElement(
+            EventExtraEntry{"stack_id"_ns, nsCString{stackIdString}});
+      }
+#    endif
+
       return res;
     }());
 
@@ -525,8 +623,8 @@ void LogError(const nsACString& aExpr, const Maybe<nsresult> aRv,
                            Nothing(), extra);
   }
 #  endif
-#endif
 }
+#endif
 
 #ifdef DEBUG
 Result<bool, nsresult> WarnIfFileIsUnknown(nsIFile& aFile,

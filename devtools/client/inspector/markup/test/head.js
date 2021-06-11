@@ -57,18 +57,6 @@ function loadHelperScript(filePath) {
 }
 
 /**
- * Reload the current page
- * @return a promise that resolves when the inspector has emitted the event
- * new-root
- */
-function reloadPage(inspector, testActor) {
-  info("Reloading the page");
-  const newRoot = inspector.once("new-root");
-  testActor.reload();
-  return newRoot;
-}
-
-/**
  * Get the MarkupContainer object instance that corresponds to the given
  * NodeFront
  * @param {NodeFront} nodeFront
@@ -215,21 +203,19 @@ var addNewAttributes = async function(selector, text, inspector) {
  * @param {String} selector The selector for the node to check.
  * @param {Object} expected An object containing the attributes to check.
  *        e.g. {id: "id1", class: "someclass"}
- * @param {TestActorFront} testActor The current TestActorFront instance.
  *
  * Note that node.getAttribute() returns attribute values provided by the HTML
  * parser. The parser only provides unescaped entities so &amp; will return &.
  */
-var assertAttributes = async function(selector, expected, testActor) {
-  const { attributes: actual } = await testActor.getNodeInfo(selector);
-
+var assertAttributes = async function(selector, expected) {
+  const actualAttributes = await getContentPageElementAttributes(selector);
   is(
-    actual.length,
+    actualAttributes.length,
     Object.keys(expected).length,
     "The node " + selector + " has the expected number of attributes."
   );
   for (const attr in expected) {
-    const foundAttr = actual.find(({ name }) => name === attr);
+    const foundAttr = actualAttributes.find(({ name }) => name === attr);
     const foundValue = foundAttr ? foundAttr.value : undefined;
     ok(foundAttr, "The node " + selector + " has the attribute " + attr);
     is(

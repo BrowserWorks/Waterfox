@@ -173,7 +173,6 @@ linux1804-tests:
     - mochitest-webgl2-ext
     - reftest
     - reftest-no-accel
-    - reftest-snapshot
     - telemetry-tests-client
     - test-verify
     - test-verify-gpu
@@ -183,6 +182,8 @@ linux1804-tests:
 linux1804-qr-tests:
     - cppunit
     - crashtest
+    - firefox-ui-functional-local
+    - firefox-ui-functional-remote
     - gtest
     # - jittest  # See comment in linux1804-ccov-tests set.
     - jsreftest
@@ -199,8 +200,15 @@ linux1804-qr-tests:
     - mochitest-webgl2-core
     - mochitest-webgl2-ext
     - reftest
+    - reftest-snapshot
     - test-verify
     - xpcshell
+
+linux1804-ccov-qr-tests:
+    - reftest-snapshot
+
+linux1804-devedition-qr-tests:
+    - reftest-snapshot
 
 linux1804-ccov-tests:
     # jittest run on regular linux builds is redundant with SM(p), so we omit it
@@ -212,6 +220,8 @@ linux1804-ccov-tests:
 linux-qr-smoketests:
     - cppunit
     - crashtest
+    - firefox-ui-functional-local
+    - firefox-ui-functional-remote
     - gtest
     - jsreftest
     - marionette
@@ -225,8 +235,8 @@ linux-qr-smoketests:
     - mochitest-webgl2-core
     - mochitest-webgl2-ext
     - reftest
+    - reftest-snapshot
     - test-verify
-    - web-platform-tests
     - xpcshell
 
 linux-talos-flex:
@@ -250,8 +260,6 @@ windows-qr-tests:
 
 windows7-qr-tests:
     - mochitest-browser-chrome
-    - mochitest-webgl1-core
-    - mochitest-webgl2-core
     - reftest
 
 windows32-qr-tests:
@@ -264,8 +272,6 @@ windows32-qr-tests:
     - test-verify
 
 windows-7-tests:
-    - cppunit
-    - gtest
     - mochitest-browser-chrome
     - mochitest-webgpu
     - reftest
@@ -273,6 +279,8 @@ windows-7-tests:
     - xpcshell
 
 windows32-tests:
+    - cppunit
+    - gtest
     - crashtest
     - firefox-ui-functional-local
     - firefox-ui-functional-remote
@@ -347,7 +355,7 @@ mingwclang-tests-debug:
 # The following is the same as the above block, minus reftests.
 # Reftests were disabled due to frequent hangs; see bug 1642719
 # for re-enabling.
-mingwclang-win7-tests-debug:
+mingwclang-win32-tests-debug:
     - cppunit
     - firefox-ui-functional-local
     - firefox-ui-functional-remote
@@ -394,10 +402,10 @@ windows-talos:
 
 # macOS
 
-macosx1100-64-qr-failures-tests:
-    - xpcshell-apple-silicon
-    - mochitest-media-apple-silicon
-    - mochitest-browser-chrome-apple-silicon
+macosx1100-64-qr-failure-tests:
+    - xpcshell-failures
+    - mochitest-media-failures
+    - mochitest-browser-chrome-failures
 
 macosx1100-64-jittests:
     - jittest
@@ -416,6 +424,10 @@ macosx1100-64-qr-tests:
     - reftest
     - xpcshell
 
+macosx1015-64-qr-failure-tests:
+    - mochitest-media-failures
+    - mochitest-browser-chrome-failures
+
 macosx1015-64-qr-tests:
     - cppunit
     - crashtest
@@ -426,8 +438,11 @@ macosx1015-64-qr-tests:
     - jsreftest
     - marionette
     - mochitest-a11y
+    - mochitest-browser-chrome
     - mochitest-chrome
     - mochitest-chrome-gpu
+    - mochitest-devtools-chrome
+    - mochitest-media
     - mochitest-plain
     - mochitest-plain-gpu
     - mochitest-remote
@@ -438,21 +453,16 @@ macosx1015-64-qr-tests:
     - mochitest-webgpu
     - reftest
     - telemetry-tests-client
+    - test-verify
+    - test-verify-gpu
+    - test-verify-wpt
+    - xpcshell
 
 # debug only
 macosx1015-64-tests:
     - crashtest
     - reftest
     - web-platform-tests-reftest
-
-macosx1014-64-qr-tests:
-    - mochitest-browser-chrome
-    - mochitest-devtools-chrome
-    - mochitest-media
-    - test-verify
-    - test-verify-gpu
-    - test-verify-wpt
-    - xpcshell
 
 macosx64-talos:
     - talos-bcv
@@ -567,6 +577,7 @@ android-hw-browsertime:
     - browsertime-unity-webgl-mobile
 
 linux-tsan-tests:
+    - crashtest
     - mochitest-a11y
     - mochitest-browser-chrome
     - mochitest-media

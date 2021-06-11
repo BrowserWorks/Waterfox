@@ -40,8 +40,6 @@ loader.lazyRequireGetter(
   "devtools/client/shared/redux/middleware/ignore",
   true
 );
-const ConsoleCommands = require("devtools/client/webconsole/commands.js");
-
 const ZoomKeys = require("devtools/client/shared/zoom-keys");
 
 const PREF_SIDEBAR_ENABLED = "devtools.webconsole.sidebarToggle";
@@ -149,20 +147,33 @@ class WebConsoleUI {
 
     this._initializer = (async () => {
       this._initUI();
-      // Bug 1605763: It's important to call _attachTargets once the UI is initialized, as
-      // TargetCommand.startListening will start fetching additional targets
-      // and may overload the Browser Console.
-      await this._attachTargets();
 
-      this._commands = new ConsoleCommands({
-        devToolsClient: this.hud.currentTarget.client,
-        proxy: this.getProxy(),
-        hud: this.hud,
-        threadFront: this.hud.toolbox && this.hud.toolbox.threadFront,
-        currentTarget: this.hud.currentTarget,
-      });
+      if (this.isBrowserConsole) {
+        // Bug 1605763:
+        // TargetCommand.startListening will start fetching additional targets
+        // and may overload the Browser Console with loads of targets and resources.
+        // We can call it from here, as `_attachTargets` is called after the UI is initialized.
+        // Bug 1642599:
+        // TargetCommand.startListening has to be called before:
+        // - `_attachTargets`, in order to set TargetCommand.watcherFront which is used by ResourceWatcher.watchResources.
+        // - `ConsoleCommands`, in order to set TargetCommand.targetFront which is wrapped by hud.currentTarget
+        await this.hud.commands.targetCommand.startListening();
+      }
 
       await this.wrapper.init();
+
+      // Bug 1605763: It's important to call _attachTargets once the UI is initialized, as
+      // it may overload the Browser Console with many updates.
+      // It is also important to do it only after the wrapper is initialized,
+      // otherwise its `store` will be null while we already call a few dispatch methods
+      // from onResourceAvailable
+      await this._attachTargets();
+
+      // `_attachTargets` will process resources and throttle some actions
+      // Wait for these actions to be dispatched before reporting that the
+      // console is initialized. Otherwise `showToolbox` will resolve before
+      // all already existing console messages are displayed.
+      await this.wrapper.waitAsyncDispatches();
     })();
 
     return this._initializer;
@@ -212,6 +223,8 @@ class WebConsoleUI {
         resourceCommand.TYPES.PLATFORM_MESSAGE,
         resourceCommand.TYPES.NETWORK_EVENT,
         resourceCommand.TYPES.NETWORK_EVENT_STACKTRACE,
+        resourceCommand.TYPES.CLONED_CONTENT_PROCESS_MESSAGE,
+        resourceCommand.TYPES.DOCUMENT_EVENT,
       ],
       {
         onAvailable: this._onResourceAvailable,
@@ -334,17 +347,6 @@ class WebConsoleUI {
   async _attachTargets() {
     this.additionalProxies = new Map();
 
-    if (this.isBrowserConsole) {
-      // Bug 1605763:
-      // TargetCommand.startListening will start fetching additional targets
-      // and may overload the Browser Console with loads of targets and resources.
-      // We can call it from here, as `_attchTargets` is called after the UI is initialized.
-      // Bug 1642599:
-      // TargetCommand.startListening ought to be called before watching for resources,
-      // in order to set TargetCommand.watcherFront which is used by ResourceCommand.watchResources.
-      await this.hud.commands.targetCommand.startListening();
-    }
-
     // Listen for all target types, including:
     // - frames, in order to get the parent process target
     // which is considered as a frame rather than a process.
@@ -366,12 +368,55 @@ class WebConsoleUI {
         resourceCommand.TYPES.NETWORK_EVENT,
         resourceCommand.TYPES.NETWORK_EVENT_STACKTRACE,
         resourceCommand.TYPES.CLONED_CONTENT_PROCESS_MESSAGE,
+        resourceCommand.TYPES.DOCUMENT_EVENT,
       ],
       {
         onAvailable: this._onResourceAvailable,
         onUpdated: this._onResourceUpdated,
       }
     );
+  }
+
+  handleDocumentEvent(resource) {
+    // Only consider top level document, and ignore remote iframes top document
+    if (!resource.targetFront.isTopLevel) {
+      return;
+    }
+
+    if (resource.name == "will-navigate") {
+      this.handleWillNavigate({
+        timeStamp: resource.time,
+        url: resource.newURI,
+      });
+    } else if (resource.name == "dom-complete") {
+      this.handleNavigated({
+        hasNativeConsoleAPI: resource.hasNativeConsoleAPI,
+      });
+    }
+    // For now, ignore all other DOCUMENT_EVENT's.
+  }
+
+  /**
+   * Handler for when the page is done loading.
+   *
+   * @param Boolean hasNativeConsoleAPI
+   *        True if the `console` object is the native one and hasn't been overloaded by a custom
+   *        object by the page itself.
+   */
+  async handleNavigated({ hasNativeConsoleAPI }) {
+    // Wait for completion of any async dispatch before notifying that the console
+    // is fully updated after a page reload
+    await this.wrapper.waitAsyncDispatches();
+
+    if (!hasNativeConsoleAPI) {
+      this.logWarningAboutReplacedAPI();
+    }
+
+    this.emit("reloaded");
+  }
+
+  handleWillNavigate({ timeStamp, url }) {
+    this.wrapper.dispatchTabWillNavigate({ timeStamp, url });
   }
 
   async watchCssMessages() {
@@ -388,6 +433,10 @@ class WebConsoleUI {
     const messages = [];
     for (const resource of resources) {
       const { TYPES } = this.hud.resourceCommand;
+      if (resource.resourceType === TYPES.DOCUMENT_EVENT) {
+        this.handleDocumentEvent(resource);
+        continue;
+      }
       // Ignore messages forwarded from content processes if we're in fission browser toolbox.
       if (
         !this.wrapper ||
@@ -659,30 +708,6 @@ class WebConsoleUI {
 
   _onChangeSplitConsoleState() {
     this.wrapper.dispatchSplitConsoleCloseButtonToggle();
-  }
-
-  /**
-   * Handler for the tabNavigated notification.
-   *
-   * @param string event
-   *        Event name.
-   * @param object packet
-   *        Notification packet received from the server.
-   */
-  async handleTabNavigated(packet) {
-    // Wait for completion of any async dispatch before notifying that the console
-    // is fully updated after a page reload
-    await this.wrapper.waitAsyncDispatches();
-
-    if (!packet.nativeConsoleAPI) {
-      this.logWarningAboutReplacedAPI();
-    }
-
-    this.emit("reloaded");
-  }
-
-  handleTabWillNavigate(packet) {
-    this.wrapper.dispatchTabWillNavigate(packet);
   }
 
   getInputCursor() {

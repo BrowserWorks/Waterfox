@@ -25,7 +25,7 @@
 #include "vm/JSFunction.h"
 #include "vm/JSScript.h"
 #include "vm/SavedFrame.h"
-#include "wasm/WasmTypes.h"  // js::wasm::DebugFrame
+#include "wasm/WasmFrame.h"  // js::wasm::DebugFrame
 
 namespace js {
 
@@ -516,6 +516,8 @@ class InterpreterFrame {
   inline HandleObject environmentChain() const;
 
   inline EnvironmentObject& aliasedEnvironment(EnvironmentCoordinate ec) const;
+  inline EnvironmentObject& aliasedEnvironmentMaybeDebug(
+      EnvironmentCoordinate ec) const;
   inline GlobalObject& global() const;
   inline CallObject& callObj() const;
   inline ExtensibleLexicalEnvironmentObject& extensibleLexicalEnvironment()

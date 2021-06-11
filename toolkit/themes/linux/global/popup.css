@@ -9,16 +9,18 @@
 
 menupopup,
 panel {
-  border: 1px solid ThreeDShadow;
   min-width: 1px;
-  background-color: Menu;
-  color: MenuText;
+  --panel-padding: 0;
+  --panel-color: MenuText;
+  --panel-background: Menu;
+  --panel-border-radius: 0;
+  --panel-border-color: ThreeDShadow;
+  --panel-width: initial;
 }
 
 /* ::::: arrow panel ::::: */
 
 panel[type="arrow"] {
-  appearance: none;
   border: none;
   background-color: transparent;
 }
@@ -33,34 +35,37 @@ panel[type="arrow"][side="right"] {
   margin-block: -20px;
 }
 
-.panel-arrowcontent {
-  padding: var(--arrowpanel-padding);
-  color: var(--arrowpanel-color);
-  background: var(--arrowpanel-background);
-  border-radius: var(--arrowpanel-border-radius);
-  border: 1px solid var(--arrowpanel-border-color);
+:is(panel, menupopup)::part(content) {
+  display: -moz-box;
+  -moz-box-flex: 1;
+  padding: var(--panel-padding);
+  color: var(--panel-color);
+  background: var(--panel-background);
+  border-radius: var(--panel-border-radius);
+  border: 1px solid var(--panel-border-color);
+  width: var(--panel-width);
+}
+
+:is(panel, menupopup)[orient=vertical]::part(content) {
+  -moz-box-orient: vertical;
+}
+
+:is(panel, menupopup)[type="arrow"]::part(content) {
+  /* TODO: Make this shadow apply to other popups (needs tests fixes to account
+   * for negative margins) */
   box-shadow: 0 0 4px hsla(0,0%,0%,.2);
   margin: 4px;
 }
 
-.panel-arrowcontent > html|slot {
-  /* propagate border-radius from arrowcontent to slotted children */
-  border-radius: inherit;
-}
-
-:host([orient=vertical]) .panel-arrowcontent {
-  -moz-box-orient: vertical;
-}
-
-panel[type="arrow"].panel-no-padding::part(arrowcontent) {
+panel[type="arrow"].panel-no-padding::part(content) {
   padding: 0;
   overflow: hidden; /* Don't let panel content overflow the border */
 }
 
 :is(panel, menupopup)::part(arrow) {
   -moz-context-properties: fill, stroke;
-  fill: var(--arrowpanel-background);
-  stroke: var(--arrowpanel-border-color);
+  fill: var(--panel-background);
+  stroke: var(--panel-border-color);
 }
 
 :is(panel, menupopup)[side="top"]::part(arrow),

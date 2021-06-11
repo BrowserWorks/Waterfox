@@ -128,7 +128,7 @@ static int nr_socket_wrapped_destroy(void** objp) {
 }
 
 static int nr_socket_wrapped_sendto(void* obj, const void* msg, size_t len,
-                                    int flags, nr_transport_addr* addr) {
+                                    int flags, const nr_transport_addr* addr) {
   nr_socket_wrapped* wrapped = static_cast<nr_socket_wrapped*>(obj);
 
   return nr_socket_sendto(wrapped->sock_, msg, len, flags, &wrapped->addr_);
@@ -247,6 +247,18 @@ int TestStunServer::TryOpenListenSocket(nr_local_addr* addr, uint16_t port) {
   return 0;
 }
 
+static int addressFamilyToIpVersion(int address_family) {
+  switch (address_family) {
+    case AF_INET:
+      return NR_IPV4;
+    case AF_INET6:
+      return NR_IPV6;
+    default:
+      MOZ_CRASH();
+  }
+  return NR_IPV4;
+}
+
 int TestStunServer::Initialize(int address_family) {
   static const size_t max_addrs = 100;
   nr_local_addr addrs[max_addrs];
@@ -273,7 +285,7 @@ int TestStunServer::Initialize(int address_family) {
   }
 
   for (i = 0; i < addr_ct; ++i) {
-    if (addrs[i].addr.addr->sa_family == address_family) {
+    if (addrs[i].addr.ip_version == addressFamilyToIpVersion(address_family)) {
       break;
     }
   }
@@ -306,7 +318,7 @@ int TestStunServer::Initialize(int address_family) {
   }
 
   r = nr_stun_server_ctx_create(const_cast<char*>("Test STUN server"),
-                                send_sock_, &stun_server_);
+                                &stun_server_);
   if (r) {
     MOZ_MTLOG(ML_ERROR, "Couldn't create STUN server");
     return R_INTERNAL;

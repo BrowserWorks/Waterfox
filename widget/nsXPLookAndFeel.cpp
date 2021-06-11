@@ -22,6 +22,7 @@
 #include "mozilla/Services.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/ServoCSSParser.h"
+#include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/StaticPrefs_editor.h"
 #include "mozilla/StaticPrefs_findbar.h"
 #include "mozilla/StaticPrefs_ui.h"
@@ -418,10 +419,9 @@ void nsXPLookAndFeel::OnPrefChanged(const char* aPref, void* aClosure) {
 }
 
 static constexpr nsLiteralCString kMediaQueryPrefs[] = {
+    "browser.display.windows.native_menus"_ns,
     "browser.proton.enabled"_ns,
-    "browser.proton.contextmenus.enabled"_ns,
     "browser.proton.modals.enabled"_ns,
-    "browser.proton.doorhangers.enabled"_ns,
     "browser.proton.places-tooltip.enabled"_ns,
     "browser.theme.toolbar-theme"_ns,
 };
@@ -927,9 +927,12 @@ static bool ShouldUseStandinsForNativeColorForNonNativeTheme(
   return false;
 }
 
-static bool ShouldRespectSystemAppearanceForChromeDoc() {
+static bool ShouldRespectSystemColorSchemeForChromeDoc() {
 #ifdef XP_MACOSX
-  return StaticPrefs::widget_macos_respect_system_appearance();
+  // macOS follows the global toolbar theme, not the system theme.
+  // (If the global toolbar theme is set to System, then it *that* follows the
+  // system theme.)
+  return false;
 #else
   // GTK historically has behaved like this. Other platforms don't have support
   // for light / dark color schemes yet so it doesn't matter for them.
@@ -937,34 +940,38 @@ static bool ShouldRespectSystemAppearanceForChromeDoc() {
 #endif
 }
 
-static bool ShouldRespectThemeAppearanceForChromeDoc() {
-  return StaticPrefs::widget_system_colors_follow_theme();
+static bool ShouldRespectGlobalToolbarThemeAppearanceForChromeDoc() {
+#ifdef XP_MACOSX
+  // Need to be consistent with AppearanceOverride.mm on macOS, which respects
+  // the browser.theme.toolbar-theme pref.
+  // However, if widget.macos.support-dark-appearance is false, we need to
+  // pretend everything's Light and not follow the toolbar theme.
+  return StaticPrefs::widget_macos_support_dark_appearance();
+#elif defined(MOZ_WIDGET_GTK)
+  return StaticPrefs::widget_gtk_follow_firefox_theme();
+#else
+  return false;
+#endif
 }
 
 LookAndFeel::ColorScheme LookAndFeel::ColorSchemeForDocument(
     const dom::Document& aDoc) {
-  if (nsContentUtils::IsChromeDoc(&aDoc) &&
-      ShouldRespectSystemAppearanceForChromeDoc()) {
-    if (ShouldRespectThemeAppearanceForChromeDoc()) {
-      const auto* doc = &aDoc;
-      while (const auto* parent = doc->GetInProcessParentDocument()) {
-        doc = parent;
-      }
-      switch (doc->ThreadSafeGetDocumentLWTheme()) {
-        case dom::Document::Doc_Theme_Dark:
-          return ColorScheme::Light;
-        case dom::Document::Doc_Theme_Bright:
-          // NOTE(emilio): This looks backwards, but it's actually correct.
-          // Doc_Theme_Bright means that the theme has bright _text_ (and thus
-          // dark background). Tricky!
+  if (nsContentUtils::IsChromeDoc(&aDoc)) {
+    if (ShouldRespectGlobalToolbarThemeAppearanceForChromeDoc()) {
+      switch (StaticPrefs::browser_theme_toolbar_theme()) {
+        case 0:  // Dark
           return ColorScheme::Dark;
-        case dom::Document::Doc_Theme_Neutral:
-        case dom::Document::Doc_Theme_None:
+        case 1:  // Light
+          return ColorScheme::Light;
+        case 2:  // System
+          return SystemColorScheme();
         default:
           break;
       }
     }
-    return SystemColorScheme();
+    if (ShouldRespectSystemColorSchemeForChromeDoc()) {
+      return SystemColorScheme();
+    }
   }
   return LookAndFeel::ColorScheme::Light;
 }

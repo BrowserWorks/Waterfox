@@ -18,7 +18,6 @@
 #include "mozilla/Sprintf.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtrExtensions.h"  // UniqueFreePtr
-#include "mozilla/Unused.h"
 #include "mozilla/Utf8.h"
 #include "mozilla/Variant.h"
 
@@ -85,7 +84,11 @@
 #include "frontend/Parser.h"
 #include "frontend/SourceNotes.h"  // SrcNote, SrcNoteType, SrcNoteIterator
 #include "gc/PublicIterators.h"
+#ifdef DEBUG
+#  include "irregexp/RegExpAPI.h"
+#endif
 #include "gc/GC-inl.h"  // ZoneCellIter
+
 #ifdef JS_SIMULATOR_ARM
 #  include "jit/arm/Simulator-arm.h"
 #endif
@@ -625,6 +628,7 @@ bool shell::enablePrivateClassMethods = false;
 bool shell::enableTopLevelAwait = true;
 bool shell::enableErgonomicBrandChecks = true;
 bool shell::useOffThreadParseGlobal = true;
+bool shell::enableClassStaticBlocks = false;
 #ifdef JS_GC_ZEAL
 uint32_t shell::gZealBits = 0;
 uint32_t shell::gZealFrequency = 0;
@@ -1124,8 +1128,8 @@ static bool MaybeRunFinalizationRegistryCleanupTasks(JSContext* cx) {
     {
       AutoReportException are(cx);
       RootedValue unused(cx);
-      mozilla::Unused << JS_CallFunction(cx, nullptr, callback,
-                                         HandleValueArray::empty(), &unused);
+      (void)JS_CallFunction(cx, nullptr, callback, HandleValueArray::empty(),
+                            &unused);
     }
 
     ranTasks = true;
@@ -1586,8 +1590,8 @@ static bool AddIntlExtras(JSContext* cx, unsigned argc, Value* vp) {
     {
       // Report exceptions but keep going.
       AutoReportException are(cx);
-      mozilla::Unused << EvalUtf8AndPrint(cx, buffer.begin(), buffer.length(),
-                                          startline, compileOnly);
+      (void)EvalUtf8AndPrint(cx, buffer.begin(), buffer.length(), startline,
+                             compileOnly);
     }
 
     // If a let or const fail to initialize they will remain in an unusable
@@ -2549,11 +2553,6 @@ static bool Evaluate(JSContext* cx, unsigned argc, Value* vp) {
         // The CompileOption should discard source as well.
         if (globalOptions.discardSource && !options.discardSource) {
           JS_ReportErrorASCII(cx, "discardSource option mismatch");
-          return false;
-        }
-        if (globalOptions.instrumentationKinds !=
-            options.instrumentationKinds) {
-          JS_ReportErrorASCII(cx, "instrumentationKinds mismatch");
           return false;
         }
       }
@@ -5232,6 +5231,42 @@ static bool SetInterruptCallback(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
+#ifdef DEBUG
+// var s0 = "A".repeat(10*1024);
+// interruptRegexp(/a(bc|bd)/, s0);
+// first arg is regexp
+// second arg is string
+static bool InterruptRegexp(JSContext* cx, unsigned argc, Value* vp) {
+  CallArgs args = CallArgsFromVp(argc, vp);
+  ShellContext* sc = GetShellContext(cx);
+  RootedObject callee(cx, &args.callee());
+
+  if (args.length() != 2) {
+    ReportUsageErrorASCII(cx, callee, "Wrong number of arguments.");
+    return false;
+  }
+  if (!(args[0].isObject() && args[0].toObject().is<RegExpObject>())) {
+    ReportUsageErrorASCII(cx, callee,
+                          "First argument must be a regular expression.");
+    return false;
+  }
+  if (!args[1].isString()) {
+    ReportUsageErrorASCII(cx, callee, "Second argument must be a String.");
+    return false;
+  }
+  // Set interrupt flags
+  sc->serviceInterrupt = true;
+  js::irregexp::IsolateSetShouldSimulateInterrupt(cx->isolate);
+
+  RootedObject regexp(cx, &args[0].toObject());
+  RootedString string(cx, args[1].toString());
+  int32_t lastIndex = 0;
+
+  return js::RegExpMatcherRaw(cx, regexp, string, lastIndex, nullptr,
+                              args.rval());
+}
+#endif
+
 static bool SetJitCompilerOption(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
   RootedObject callee(cx, &args.callee());
@@ -6554,7 +6589,7 @@ class AutoCStringVector {
     }
 
     // Now owned by this vector.
-    mozilla::Unused << arg.release();
+    (void)arg.release();
     return true;
   }
   char* const* get() const { return argv_.begin(); }
@@ -9519,7 +9554,11 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
     JS_FN_HELP("setJitCompilerOption", SetJitCompilerOption, 2, 0,
 "setJitCompilerOption(<option>, <number>)",
 "  Set a compiler option indexed in JSCompileOption enum to a number.\n"),
-
+#ifdef DEBUG
+    JS_FN_HELP("interruptRegexp", InterruptRegexp, 2, 0,
+"interruptRegexp(<regexp>, <string>)",
+"  Interrrupt the execution of regular expression.\n"),
+#endif
     JS_FN_HELP("enableLastWarning", EnableLastWarning, 0, 0,
 "enableLastWarning()",
 "  Enable storing the last warning."),
@@ -10197,7 +10236,7 @@ js::shell::AutoReportException::~AutoReportException() {
   MOZ_ASSERT(!report.report()->isWarning());
 
   FILE* fp = ErrorFilePointer();
-  JS::PrintError(cx, fp, report, reportWarnings);
+  JS::PrintError(fp, report, reportWarnings);
   JS_ClearPendingException(cx);
 
   if (!PrintStackTrace(cx, exnStack.stack())) {
@@ -10237,7 +10276,7 @@ void js::shell::WarningReporter(JSContext* cx, JSErrorReport* report) {
   }
 
   // Print the warning.
-  JS::PrintError(cx, fp, report, reportWarnings);
+  JS::PrintError(fp, report, reportWarnings);
 }
 
 static bool global_enumerate(JSContext* cx, JS::HandleObject obj,
@@ -11034,6 +11073,7 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
   enableErgonomicBrandChecks =
       !op.getBoolOption("disable-ergonomic-brand-checks");
   enableTopLevelAwait = op.getBoolOption("enable-top-level-await");
+  enableClassStaticBlocks = op.getBoolOption("enable-class-static-blocks");
   useOffThreadParseGlobal = op.getBoolOption("off-thread-parse-global");
 
   JS::ContextOptionsRef(cx)
@@ -11064,7 +11104,8 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
       .setPrivateClassFields(enablePrivateClassFields)
       .setPrivateClassMethods(enablePrivateClassMethods)
       .setErgnomicBrandChecks(enableErgonomicBrandChecks)
-      .setTopLevelAwait(enableTopLevelAwait);
+      .setTopLevelAwait(enableTopLevelAwait)
+      .setClassStaticBlocks(enableClassStaticBlocks);
 
   JS::SetUseOffThreadParseGlobal(useOffThreadParseGlobal);
 
@@ -11365,10 +11406,6 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
 
   if (op.getBoolOption("disable-bailout-loop-check")) {
     jit::JitOptions.disableBailoutLoopCheck = true;
-  }
-
-  if (op.getBoolOption("scalar-replace-arguments")) {
-    jit::JitOptions.scalarReplaceArguments = true;
   }
 
 #if defined(JS_CODEGEN_ARM)
@@ -12019,6 +12056,8 @@ int main(int argc, char** argv) {
           "Disable ergonomic brand checks for private class fields") ||
       !op.addBoolOption('\0', "enable-top-level-await",
                         "Enable top-level await") ||
+      !op.addBoolOption('\0', "enable-class-static-blocks",
+                        "Enable class static blocks") ||
       !op.addBoolOption('\0', "off-thread-parse-global",
                         "Use parseGlobal in all off-thread compilation") ||
       !op.addBoolOption('\0', "no-large-arraybuffers",

@@ -200,8 +200,6 @@ impl WrenchThing for CapturedSequence {
 
 pub struct Wrench {
     window_size: DeviceIntSize,
-    pub device_pixel_ratio: f32,
-    page_zoom_factor: ZoomFactor,
 
     pub renderer: webrender::Renderer,
     pub api: RenderApi,
@@ -226,7 +224,6 @@ impl Wrench {
         proxy: Option<EventsLoopProxy>,
         shader_override_path: Option<PathBuf>,
         use_optimized_shaders: bool,
-        dp_ratio: f32,
         size: DeviceIntSize,
         do_rebuild: bool,
         no_subpixel_aa: bool,
@@ -235,7 +232,6 @@ impl Wrench {
         no_batch: bool,
         precache_shaders: bool,
         disable_dual_source_blending: bool,
-        zoom_factor: f32,
         chase_primitive: webrender::ChasePrimitive,
         dump_shader_source: Option<String>,
         notifier: Option<Box<dyn RenderNotifier>>,
@@ -253,7 +249,6 @@ impl Wrench {
         };
 
         let opts = webrender::RendererOptions {
-            device_pixel_ratio: dp_ratio,
             resource_override_path: shader_override_path,
             use_optimized_shaders,
             enable_subpixel_aa: !no_subpixel_aa,
@@ -297,7 +292,6 @@ impl Wrench {
         let document_id = api.add_document(size);
 
         let graphics_api = renderer.get_graphics_api_info();
-        let zoom_factor = ZoomFactor::new(zoom_factor);
 
         let mut wrench = Wrench {
             window_size: size,
@@ -309,8 +303,6 @@ impl Wrench {
 
             rebuild_display_lists: do_rebuild,
             verbose,
-            device_pixel_ratio: dp_ratio,
-            page_zoom_factor: ZoomFactor::new(0.0),
 
             root_pipeline_id: PipelineId(0, 0),
 
@@ -320,7 +312,6 @@ impl Wrench {
             callbacks,
         };
 
-        wrench.set_page_zoom(zoom_factor);
         wrench.set_title("start");
         let mut txn = Transaction::new();
         txn.set_root_pipeline(wrench.root_pipeline_id);
@@ -333,20 +324,6 @@ impl Wrench {
         let mut txn = Transaction::new();
         txn.set_quality_settings(settings);
         self.api.send_transaction(self.document_id, txn);
-    }
-
-    pub fn get_page_zoom(&self) -> ZoomFactor {
-        self.page_zoom_factor
-    }
-
-    pub fn set_page_zoom(&mut self, zoom_factor: ZoomFactor) {
-        if self.page_zoom_factor.get() != zoom_factor.get() {
-            self.page_zoom_factor = zoom_factor;
-            let mut txn = Transaction::new();
-            txn.set_page_zoom(self.page_zoom_factor);
-            self.api.send_transaction(self.document_id, txn);
-            self.set_title("");
-        }
     }
 
     pub fn layout_simple_ascii(
@@ -418,10 +395,8 @@ impl Wrench {
 
     pub fn set_title(&mut self, extra: &str) {
         self.window_title_to_set = Some(format!(
-            "Wrench: {} ({}x zoom={}) - {} - {}",
+            "Wrench: {} - {} - {}",
             extra,
-            self.device_pixel_ratio,
-            self.page_zoom_factor.get(),
             self.graphics_api.renderer,
             self.graphics_api.version
         ));
@@ -656,11 +631,11 @@ impl Wrench {
         let dr = self.renderer.debug_renderer().unwrap();
 
         for ref co in &color_and_offset {
-            let x = self.device_pixel_ratio * (15.0 + co.1);
-            let mut y = self.device_pixel_ratio * (15.0 + co.1 + dr.line_height());
+            let x = 15.0 + co.1;
+            let mut y = 15.0 + co.1 + dr.line_height();
             for ref line in &help_lines {
                 dr.add_text(x, y, line, co.0.into(), None);
-                y += self.device_pixel_ratio * dr.line_height();
+                y += dr.line_height();
             }
         }
         self.renderer.device.end_frame();

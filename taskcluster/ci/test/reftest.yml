@@ -45,8 +45,8 @@ crashtest:
     treeherder-symbol: R(C)
     variants:
         by-test-platform:
-            linux1804-64-qr/debug: ['webrender-sw', 'fission']
-            linux1804-64-asan-qr/opt: ['webrender-sw', 'fission']
+            linux1804-64-qr/debug: ['webrender-sw', 'fission', 'wayland']
+            linux1804-64-asan-qr/opt: ['webrender-sw', 'fission', 'wayland']
             windows10-64-qr/debug: ['webrender-sw', 'fission']
             macosx101.*64-qr/debug: ['webrender-sw', 'fission']
             android-em-7.0-x86_64-qr/debug: ['webrender-sw', 'fission']
@@ -54,6 +54,7 @@ crashtest:
     chunks:
         by-test-platform:
             android-em-7.*: 1
+            linux.*64-tsan/opt: 8
             default: 1
     e10s: true
     run-on-projects:
@@ -67,6 +68,7 @@ crashtest:
             default:
                 by-test-platform:
                     windows10-aarch64/.*: ['mozilla-central', 'mozilla-beta', 'mozilla-release']
+                    android-em-7.0-x86_64/debug-isolated-process: []
                     default: built-projects
     max-run-time: 3600
     tier:
@@ -80,6 +82,7 @@ crashtest:
                     windows10-aarch64.*: 2
                     macosx1100.*: 2
                     android-hw-.*-qr/.*: 2
+                    android-em-7.0-x86_64/debug-isolated-process: 3
                     default: default
 
 crashtest-qr:
@@ -134,7 +137,7 @@ jsreftest:
             default:
                 by-test-platform:
                     android-hw-.*-aarch64(?:-shippable)?/.*: ['mozilla-central', 'release']
-                    android-hw-.*-api-16(?:-shippable)?/.*: ['mozilla-central', 'release']
+                    android-hw-.*-arm7(?:-shippable)?/.*: ['mozilla-central', 'release']
                     default: built-projects
     virtualization:
         by-test-platform:
@@ -150,10 +153,11 @@ reftest:
             default: virtual-with-gpu
     variants:
         by-test-platform:
-            linux1804-64-qr/debug: ['webrender-sw', 'fission']
-            linux1804-64-asan-qr/opt: ['webrender-sw', 'fission']
+            linux1804-64-qr/debug: ['webrender-sw', 'fission', 'wayland']
+            linux1804-64-asan-qr/opt: ['webrender-sw', 'fission', 'wayland']
             windows10-64-qr/debug: ['webrender-sw', 'fission']
             macosx101.*64-qr/debug: ['webrender-sw', 'fission']
+            android-em-7.0-x86_64-qr/debug: ['webrender-sw', 'fission']
             default: ['fission']
     chunks:
         by-test-platform:
@@ -163,7 +167,8 @@ reftest:
             macosx101.*-64/debug: 4
             macosx101.*-64(-ccov.*|-qr)/debug: 6
             windows.*/opt: 2
-            windows.*/debug: 4
+            windows10-64.*/debug: 4
+            windows10-32.*/debug: 6
             windows10-64-asan/opt: 3
             windows10-64-ccov-qr/opt: 9
             default: 8
@@ -177,10 +182,11 @@ reftest:
             default:
                 by-test-platform:
                     windows10-aarch64/.*: ['mozilla-central', 'mozilla-beta', 'mozilla-release']
+                    android-em-7.0-x86_64/debug-isolated-process: []
                     default: built-projects
     max-run-time:
         by-test-platform:
-            windows7-32-mingwclang/debug: 5400
+            windows10-32-mingwclang/debug: 5400
             windows10-64-ccov.*/.*: 5400
             windows10-64-asan/opt: 5400
             macosx.*64-ccov.*/.*: 5400
@@ -203,11 +209,16 @@ reftest:
                     windows10-aarch64.*: 2
                     android-hw-.*-qr/.*: 2
                     macosx1100.*: 2
+                    android-em-7.0-x86_64/debug-isolated-process: 3
                     default: default
 
 reftest-qr:
     description: "Reftest webrender run"
     treeherder-symbol: R(R)
+    variants:
+        by-test-platform:
+            android-hw-p2-8-0-android-aarch64-qr/debug: ['webrender-sw']
+            default: []
     chunks: 2
     e10s: true
     run-on-projects:
@@ -255,6 +266,11 @@ reftest-snapshot:
     description: "Reftest snapshot"
     treeherder-symbol: R(Rs)
     virtualization: virtual
+    variants:
+        by-test-platform:
+            linux1804-64-qr/debug: ['webrender-sw']
+            linux1804-64-asan-qr/opt: ['webrender-sw']
+            default: []
     run-on-projects:
         by-variant:
             fission:

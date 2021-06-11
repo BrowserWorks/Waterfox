@@ -2317,6 +2317,16 @@ class LNegI : public LInstructionHelper<1, 1, 0> {
   }
 };
 
+// Negative of an int64
+class LNegI64 : public LInstructionHelper<INT64_PIECES, INT64_PIECES, 0> {
+ public:
+  LIR_HEADER(NegI64);
+  explicit LNegI64(const LInt64Allocation& num)
+      : LInstructionHelper(classOpcode) {
+    setInt64Operand(0, num);
+  }
+};
+
 // Negative of a double.
 class LNegD : public LInstructionHelper<1, 1, 0> {
  public:
@@ -9147,6 +9157,22 @@ class LWasmConstantShiftSimd128 : public LInstructionHelper<1, 1, 0> {
 
   const LAllocation* src() { return getOperand(Src); }
   int32_t shift() { return shift_; }
+  wasm::SimdOp simdOp() const { return mir_->toWasmShiftSimd128()->simdOp(); }
+};
+
+// (v128) -> v128 sign replication operation.
+class LWasmSignReplicationSimd128 : public LInstructionHelper<1, 1, 0> {
+ public:
+  LIR_HEADER(WasmSignReplicationSimd128)
+
+  static constexpr uint32_t Src = 0;
+
+  explicit LWasmSignReplicationSimd128(const LAllocation& src)
+      : LInstructionHelper(classOpcode) {
+    setOperand(Src, src);
+  }
+
+  const LAllocation* src() { return getOperand(Src); }
   wasm::SimdOp simdOp() const { return mir_->toWasmShiftSimd128()->simdOp(); }
 };
 

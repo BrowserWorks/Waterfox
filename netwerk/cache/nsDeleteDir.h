@@ -47,7 +47,7 @@ class nsDeleteDir {
   /**
    * Returns the trash directory corresponding to the given directory.
    */
-  static nsresult GetTrashDir(nsIFile* dir, nsCOMPtr<nsIFile>* result);
+  static nsresult GetTrashDir(nsIFile* target, nsCOMPtr<nsIFile>* result);
 
   /**
    * Remove all trashes left from previous run. This function does nothing when
@@ -69,11 +69,11 @@ class nsDeleteDir {
   static nsDeleteDir* gInstance;
   mozilla::Mutex mLock;
   mozilla::CondVar mCondVar;
-  bool mNotified;
+  bool mNotified{false};
   nsCOMArray<nsITimer> mTimers;
   nsCOMPtr<nsISerialEventTarget> mBackgroundET;
-  bool mShutdownPending;
-  bool mStopDeleting;
+  bool mShutdownPending{false};
+  bool mStopDeleting{false};
 };
 
 #endif  // nsDeleteDir_h__

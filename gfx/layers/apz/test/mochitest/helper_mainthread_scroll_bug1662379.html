@@ -88,10 +88,7 @@ function reparent() {
 }
 
 function getAsyncScrollOffsetForUniqueRcdChild() {
-  let data = SpecialPowers.getDOMWindowUtils(window).getCompositorAPZTestData();
-  let bucket = data.paints[data.paints.length - 1];
-  info("Got compositor data: " + JSON.stringify(bucket));
-  let apzcTree = buildApzcTree(convertScrollFrameData(bucket.scrollFrames));
+  let apzcTree = getLastApzcTree();
   let rcd = findRcdNode(apzcTree);
   // We assume a unique child of the RCD. If this is not the case, bail out.
   if (rcd == null || rcd.children.length != 1) {
@@ -99,10 +96,7 @@ function getAsyncScrollOffsetForUniqueRcdChild() {
     return {x: -1, y: -1};
   }
   let child = rcd.children[0];
-  let scroll = child.asyncScrollOffset;
-  let pieces = scroll.replace(/[()\s]+/g, "").split(",");
-  is(pieces.length, 2, "expected string of form (x,y)");
-  return {x: parseInt(pieces[0]), y: parseInt(pieces[1])};
+  return parsePoint(child.asyncScrollOffset);
 }
 
 async function test() {

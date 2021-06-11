@@ -50,7 +50,7 @@ add_task(async function setup() {
         url: "https://example.com",
         icon: UrlbarUtils.ICON.DEFAULT,
         client: "7cqCr77ptzX3",
-        lastUsed: 1452124677,
+        lastUsed: Math.floor(Date.now() / 1000),
       },
       {
         type: "tab",
@@ -58,7 +58,7 @@ add_task(async function setup() {
         url: "https://example-2.com",
         icon: UrlbarUtils.ICON.DEFAULT,
         client: "7cqCr77ptzX3",
-        lastUsed: 1452124677,
+        lastUsed: Math.floor(Date.now() / 1000),
       },
     ],
   };
@@ -88,7 +88,7 @@ add_task(async function setup() {
     .stub(SyncedTabs._internal, "getTabClients")
     .callsFake(() => Promise.resolve(Cu.cloneInto([REMOTE_TAB], {})));
 
-  // Reset internal cache in PlacesRemoteTabsAutocompleteProvider.
+  // Reset internal cache in UrlbarProviderRemoteTabs.
   Services.obs.notifyObservers(null, "weave:engine:sync:finish", "tabs");
 
   registerCleanupFunction(async function() {

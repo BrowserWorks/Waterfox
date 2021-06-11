@@ -99,18 +99,16 @@ ServiceWorkerPrivate::ServiceWorkerPrivate(ServiceWorkerInfo* aInfo)
   mIdleWorkerTimer = NS_NewTimer();
   MOZ_ASSERT(mIdleWorkerTimer);
 
-  if (ServiceWorkerParentInterceptEnabled()) {
-    RefPtr<ServiceWorkerPrivateImpl> inner = new ServiceWorkerPrivateImpl(this);
+  RefPtr<ServiceWorkerPrivateImpl> inner = new ServiceWorkerPrivateImpl(this);
 
-    // Assert in all debug builds as well as non-debug Nightly and Dev Edition.
+  // Assert in all debug builds as well as non-debug Nightly and Dev Edition.
 #ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
-    MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(inner->Initialize()));
+  MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(inner->Initialize()));
 #else
-    MOZ_ALWAYS_SUCCEEDS(inner->Initialize());
+  MOZ_ALWAYS_SUCCEEDS(inner->Initialize());
 #endif
 
-    mInner = std::move(inner);
-  }
+  mInner = std::move(inner);
 }
 
 ServiceWorkerPrivate::~ServiceWorkerPrivate() {
@@ -1752,7 +1750,7 @@ nsresult ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   NS_ConvertUTF8toUTF16 scriptSpec(mInfo->ScriptSpec());
 
   mWorkerPrivate = WorkerPrivate::Constructor(jsapi.cx(), scriptSpec, false,
-                                              WorkerTypeService, VoidString(),
+                                              WorkerKindService, VoidString(),
                                               ""_ns, &info, error);
   if (NS_WARN_IF(error.Failed())) {
     return error.StealNSResult();

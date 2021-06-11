@@ -134,6 +134,7 @@ class ObjectOpResult {
   JS_PUBLIC_API bool failCantSetInterposed();
   JS_PUBLIC_API bool failCantDefineWindowElement();
   JS_PUBLIC_API bool failCantDeleteWindowElement();
+  JS_PUBLIC_API bool failCantDefineWindowNamedProperty();
   JS_PUBLIC_API bool failCantDeleteWindowNamedProperty();
   JS_PUBLIC_API bool failCantPreventExtensions();
   JS_PUBLIC_API bool failCantSetProto();
@@ -572,7 +573,7 @@ static const uint32_t JSCLASS_FOREGROUND_FINALIZE =
 // application.
 static const uint32_t JSCLASS_GLOBAL_APPLICATION_SLOTS = 5;
 static const uint32_t JSCLASS_GLOBAL_SLOT_COUNT =
-    JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 2 + 31;
+    JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 2 + 30;
 
 static constexpr uint32_t JSCLASS_GLOBAL_FLAGS_WITH_SLOTS(uint32_t n) {
   return JSCLASS_IS_GLOBAL |

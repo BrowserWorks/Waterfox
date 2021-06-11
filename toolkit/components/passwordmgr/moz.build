@@ -45,6 +45,8 @@ EXTRA_JS_MODULES += [
     "NewPasswordModel.jsm",
     "OSCrypto.jsm",
     "PasswordGenerator.jsm",
+    "PasswordRulesManager.jsm",
+    "PasswordRulesParser.jsm",
     "storage-json.js",
 ]
 

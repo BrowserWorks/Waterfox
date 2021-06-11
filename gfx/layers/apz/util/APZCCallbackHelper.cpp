@@ -545,19 +545,20 @@ nsEventStatus APZCCallbackHelper::DispatchSynthesizedMouseEvent(
   return DispatchWidgetEvent(event);
 }
 
-bool APZCCallbackHelper::DispatchMouseEvent(
+PreventDefaultResult APZCCallbackHelper::DispatchMouseEvent(
     PresShell* aPresShell, const nsString& aType, const CSSPoint& aPoint,
     int32_t aButton, int32_t aClickCount, int32_t aModifiers,
     unsigned short aInputSourceArg, uint32_t aPointerId) {
-  NS_ENSURE_TRUE(aPresShell, true);
+  NS_ENSURE_TRUE(aPresShell, PreventDefaultResult::ByContent);
 
-  bool defaultPrevented = false;
+  PreventDefaultResult preventDefaultResult;
   nsContentUtils::SendMouseEvent(
       aPresShell, aType, aPoint.x, aPoint.y, aButton,
       nsIDOMWindowUtils::MOUSE_BUTTONS_NOT_SPECIFIED, aClickCount, aModifiers,
       /* aIgnoreRootScrollFrame = */ false, 0, aInputSourceArg, aPointerId,
-      false, &defaultPrevented, false, /* aIsWidgetEventSynthesized = */ false);
-  return defaultPrevented;
+      false, &preventDefaultResult, false,
+      /* aIsWidgetEventSynthesized = */ false);
+  return preventDefaultResult;
 }
 
 void APZCCallbackHelper::FireSingleTapEvent(const LayoutDevicePoint& aPoint,

@@ -8,7 +8,6 @@
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/FloatingPoint.h"
-#include "mozilla/Unused.h"
 
 #include "jsmath.h"
 
@@ -214,6 +213,9 @@ const void* CacheIRCloner::getRawPointerField(uint32_t stubOffset) {
 uint64_t CacheIRCloner::getRawInt64Field(uint32_t stubOffset) {
   return static_cast<uint64_t>(readStubInt64(stubOffset));
 }
+gc::AllocSite* CacheIRCloner::getAllocSiteField(uint32_t stubOffset) {
+  return reinterpret_cast<gc::AllocSite*>(readStubWord(stubOffset));
+}
 
 jsid CacheIRCloner::getIdField(uint32_t stubOffset) {
   return jsid::fromRawBits(readStubWord(stubOffset));
@@ -239,7 +241,7 @@ GetPropIRGenerator::GetPropIRGenerator(JSContext* cx, HandleScript script,
     : IRGenerator(cx, script, pc, cacheKind, state), val_(val), idVal_(idVal) {}
 
 static void EmitLoadSlotResult(CacheIRWriter& writer, ObjOperandId holderId,
-                               NativeObject* holder, ShapeProperty prop) {
+                               NativeObject* holder, PropertyInfo prop) {
   if (holder->isFixedSlot(prop.slot())) {
     writer.loadFixedSlotResult(holderId,
                                NativeObject::getFixedSlotOffset(prop.slot()));
@@ -462,7 +464,7 @@ static bool IsCacheableProtoChain(NativeObject* obj, NativeObject* holder) {
 #endif
 
 static bool IsCacheableGetPropReadSlot(NativeObject* obj, NativeObject* holder,
-                                       ShapeProperty prop) {
+                                       PropertyInfo prop) {
   MOZ_ASSERT(IsCacheableProtoChain(obj, holder));
 
   return prop.isDataProperty();
@@ -477,7 +479,7 @@ enum NativeGetPropCacheability {
 
 static NativeGetPropCacheability IsCacheableGetPropCall(NativeObject* obj,
                                                         NativeObject* holder,
-                                                        ShapeProperty prop) {
+                                                        PropertyInfo prop) {
   MOZ_ASSERT(IsCacheableProtoChain(obj, holder));
 
   if (!prop.isAccessorProperty()) {
@@ -557,7 +559,7 @@ static bool IsCacheableNoProperty(JSContext* cx, NativeObject* obj,
 
 static NativeGetPropCacheability CanAttachNativeGetProp(
     JSContext* cx, JSObject* obj, PropertyKey id, NativeObject** holder,
-    Maybe<ShapeProperty>* shapeProp, jsbytecode* pc) {
+    Maybe<PropertyInfo>* propInfo, jsbytecode* pc) {
   MOZ_ASSERT(JSID_IS_STRING(id) || JSID_IS_SYMBOL(id));
   MOZ_ASSERT(!*holder);
 
@@ -575,13 +577,13 @@ static NativeGetPropCacheability CanAttachNativeGetProp(
   if (prop.isNativeProperty()) {
     MOZ_ASSERT(baseHolder);
     *holder = baseHolder;
-    *shapeProp = mozilla::Some(prop.shapeProperty());
+    *propInfo = mozilla::Some(prop.propertyInfo());
 
-    if (IsCacheableGetPropReadSlot(nobj, *holder, shapeProp->ref())) {
+    if (IsCacheableGetPropReadSlot(nobj, *holder, propInfo->ref())) {
       return CanAttachReadSlot;
     }
 
-    return IsCacheableGetPropCall(nobj, *holder, shapeProp->ref());
+    return IsCacheableGetPropCall(nobj, *holder, propInfo->ref());
   }
 
   if (!prop.isFound()) {
@@ -832,7 +834,7 @@ static void EmitReadSlotGuard(CacheIRWriter& writer, NativeObject* obj,
 
 template <SlotReadType MaybeCrossCompartment = SlotReadType::Normal>
 static void EmitReadSlotResult(CacheIRWriter& writer, NativeObject* obj,
-                               NativeObject* holder, Maybe<ShapeProperty> prop,
+                               NativeObject* holder, Maybe<PropertyInfo> prop,
                                ObjOperandId objId) {
   Maybe<ObjOperandId> holderId;
   EmitReadSlotGuard<MaybeCrossCompartment>(writer, obj, holder, objId,
@@ -851,7 +853,7 @@ static void EmitReadSlotResult(CacheIRWriter& writer, NativeObject* obj,
 static void EmitCallGetterResultNoGuards(JSContext* cx, CacheIRWriter& writer,
                                          NativeObject* obj,
                                          NativeObject* holder,
-                                         ShapeProperty prop,
+                                         PropertyInfo prop,
                                          ValOperandId receiverId) {
   JSFunction* target = &holder->getGetter(prop)->as<JSFunction>();
   bool sameRealm = cx->realm() == target->realm();
@@ -878,7 +880,7 @@ static void EmitCallGetterResultNoGuards(JSContext* cx, CacheIRWriter& writer,
 // See the SMDOC comment in vm/GetterSetter.h for more info on Getter/Setter
 // properties
 static void EmitGuardGetterSetterSlot(CacheIRWriter& writer,
-                                      NativeObject* holder, ShapeProperty prop,
+                                      NativeObject* holder, PropertyInfo prop,
                                       ObjOperandId holderId,
                                       bool holderIsConstant = false) {
   // If the holder is guaranteed to be the same object, and it never had a
@@ -903,7 +905,7 @@ static void EmitGuardGetterSetterSlot(CacheIRWriter& writer,
 
 static void EmitCallGetterResultGuards(CacheIRWriter& writer, NativeObject* obj,
                                        NativeObject* holder, HandleId id,
-                                       ShapeProperty prop, ObjOperandId objId,
+                                       PropertyInfo prop, ObjOperandId objId,
                                        ICState::Mode mode) {
   // Use the megamorphic guard if we're in megamorphic mode, except if |obj|
   // is a Window as GuardHasGetterSetter doesn't support this yet (Window may
@@ -934,7 +936,7 @@ static void EmitCallGetterResultGuards(CacheIRWriter& writer, NativeObject* obj,
 
 static void EmitCallGetterResult(JSContext* cx, CacheIRWriter& writer,
                                  NativeObject* obj, NativeObject* holder,
-                                 HandleId id, ShapeProperty prop,
+                                 HandleId id, PropertyInfo prop,
                                  ObjOperandId objId, ValOperandId receiverId,
                                  ICState::Mode mode) {
   EmitCallGetterResultGuards(writer, obj, holder, id, prop, objId, mode);
@@ -984,7 +986,7 @@ static bool CanAttachDOMCall(JSContext* cx, JSJitInfo::OpType type,
 
 static bool CanAttachDOMGetterSetter(JSContext* cx, JSJitInfo::OpType type,
                                      NativeObject* obj, NativeObject* holder,
-                                     ShapeProperty prop, ICState::Mode mode) {
+                                     PropertyInfo prop, ICState::Mode mode) {
   MOZ_ASSERT(type == JSJitInfo::Getter || type == JSJitInfo::Setter);
 
   JSObject* accessor = type == JSJitInfo::Getter ? holder->getGetter(prop)
@@ -996,7 +998,7 @@ static bool CanAttachDOMGetterSetter(JSContext* cx, JSJitInfo::OpType type,
 
 static void EmitCallDOMGetterResultNoGuards(CacheIRWriter& writer,
                                             NativeObject* holder,
-                                            ShapeProperty prop,
+                                            PropertyInfo prop,
                                             ObjOperandId objId) {
   JSFunction* getter = &holder->getGetter(prop)->as<JSFunction>();
   writer.callDOMGetterResult(objId, getter->jitInfo());
@@ -1005,7 +1007,7 @@ static void EmitCallDOMGetterResultNoGuards(CacheIRWriter& writer,
 
 static void EmitCallDOMGetterResult(JSContext* cx, CacheIRWriter& writer,
                                     NativeObject* obj, NativeObject* holder,
-                                    HandleId id, ShapeProperty prop,
+                                    HandleId id, PropertyInfo prop,
                                     ObjOperandId objId) {
   // Note: this relies on EmitCallGetterResultGuards emitting a shape guard
   // for specialized stubs.
@@ -1036,7 +1038,7 @@ AttachDecision GetPropIRGenerator::tryAttachNative(HandleObject obj,
                                                    ObjOperandId objId,
                                                    HandleId id,
                                                    ValOperandId receiverId) {
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeObject* holder = nullptr;
 
   NativeGetPropCacheability type =
@@ -1143,7 +1145,7 @@ AttachDecision GetPropIRGenerator::tryAttachWindowProxy(HandleObject obj,
   // Now try to do the lookup on the Window (the current global).
   GlobalObject* windowObj = cx_->global();
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability type =
       CanAttachNativeGetProp(cx_, windowObj, id, &holder, &prop, pc_);
   switch (type) {
@@ -1239,7 +1241,7 @@ AttachDecision GetPropIRGenerator::tryAttachCrossCompartmentWrapper(
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
 
   // Enter realm of target to prevent failing compartment assertions when doing
   // the lookup.
@@ -1350,7 +1352,7 @@ AttachDecision GetPropIRGenerator::tryAttachXrayCrossCompartmentWrapper(
     return AttachDecision::NoAction;
   }
 
-  RootedObject getter(cx_, desc->getterObject());
+  RootedObject getter(cx_, desc->getter());
   if (!getter || !getter->is<JSFunction>() ||
       !getter->as<JSFunction>().isNativeWithoutJitEntry()) {
     return AttachDecision::NoAction;
@@ -1505,7 +1507,7 @@ AttachDecision GetPropIRGenerator::tryAttachDOMProxyExpando(
 
   // Try to do the lookup on the expando object.
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability canCache =
       CanAttachNativeGetProp(cx_, expandoObj, id, &holder, &prop, pc_);
   if (canCache == CanAttachNone) {
@@ -1601,7 +1603,7 @@ AttachDecision GetPropIRGenerator::tryAttachDOMProxyUnshadowed(
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability canCache =
       CanAttachNativeGetProp(cx_, checkObj, id, &holder, &prop, pc_);
   if (canCache == CanAttachNone) {
@@ -1755,7 +1757,7 @@ AttachDecision GetPropIRGenerator::tryAttachTypedArray(HandleObject obj,
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability type =
       CanAttachNativeGetProp(cx_, obj, id, &holder, &prop, pc_);
   if (type != CanAttachNativeGetter) {
@@ -1838,7 +1840,7 @@ AttachDecision GetPropIRGenerator::tryAttachDataView(HandleObject obj,
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability type =
       CanAttachNativeGetProp(cx_, obj, id, &holder, &prop, pc_);
   if (type != CanAttachNativeGetter) {
@@ -1902,7 +1904,7 @@ AttachDecision GetPropIRGenerator::tryAttachArrayBufferMaybeShared(
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability type =
       CanAttachNativeGetProp(cx_, obj, id, &holder, &prop, pc_);
   if (type != CanAttachNativeGetter) {
@@ -1953,7 +1955,7 @@ AttachDecision GetPropIRGenerator::tryAttachRegExp(HandleObject obj,
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability type =
       CanAttachNativeGetProp(cx_, obj, id, &holder, &prop, pc_);
   if (type != CanAttachNativeGetter) {
@@ -2097,7 +2099,7 @@ AttachDecision GetPropIRGenerator::tryAttachModuleNamespace(HandleObject obj,
 
   auto* ns = &obj->as<ModuleNamespaceObject>();
   ModuleEnvironmentObject* env = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (!ns->bindings().lookup(id, &env, &prop)) {
     return AttachDecision::NoAction;
   }
@@ -2160,7 +2162,7 @@ AttachDecision GetPropIRGenerator::tryAttachPrimitive(ValOperandId valId,
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeGetPropCacheability type =
       CanAttachNativeGetProp(cx_, proto, id, &holder, &prop, pc_);
   switch (type) {
@@ -2496,9 +2498,9 @@ AttachDecision GetPropIRGenerator::tryAttachSparseElement(
   return AttachDecision::Attach;
 }
 
-// For Uint32Array we let the stub return a double only if the current result is
-// a double, to allow better codegen in Warp.
-static bool AllowDoubleForUint32Array(TypedArrayObject* tarr, uint64_t index) {
+// For Uint32Array we let the stub return an Int32 if we have not seen a
+// double, to allow better codegen in Warp while avoiding bailout loops.
+static bool ForceDoubleForUint32Array(TypedArrayObject* tarr, uint64_t index) {
   MOZ_ASSERT(index < tarr->length());
 
   if (tarr->type() != Scalar::Type::Uint32) {
@@ -2532,11 +2534,11 @@ AttachDecision GetPropIRGenerator::tryAttachTypedArrayElement(
   }
 
   // If the number is not representable as an integer the result will be
-  // |undefined| so we leave |allowDoubleForUint32| as false.
-  bool allowDoubleForUint32 = false;
+  // |undefined| so we leave |forceDoubleForUint32| as false.
+  bool forceDoubleForUint32 = false;
   if (!handleOOB) {
     uint64_t index = uint64_t(indexInt64);
-    allowDoubleForUint32 = AllowDoubleForUint32Array(tarr, index);
+    forceDoubleForUint32 = ForceDoubleForUint32Array(tarr, index);
   }
 
   writer.guardShapeForClass(objId, tarr->shape());
@@ -2545,7 +2547,7 @@ AttachDecision GetPropIRGenerator::tryAttachTypedArrayElement(
   IntPtrOperandId intPtrIndexId = guardToIntPtrIndex(idVal_, keyId, handleOOB);
 
   writer.loadTypedArrayElementResult(objId, intPtrIndexId, tarr->type(),
-                                     handleOOB, allowDoubleForUint32);
+                                     handleOOB, forceDoubleForUint32);
   writer.returnFromIC();
 
   trackAttached("TypedElement");
@@ -2686,7 +2688,7 @@ AttachDecision GetNameIRGenerator::tryAttachStub() {
 static bool CanAttachGlobalName(JSContext* cx,
                                 GlobalLexicalEnvironmentObject* globalLexical,
                                 PropertyKey id, NativeObject** holder,
-                                Maybe<ShapeProperty>* prop) {
+                                Maybe<PropertyInfo>* prop) {
   // The property must be found, and it must be found as a normal data property.
   NativeObject* current = globalLexical;
   while (true) {
@@ -2725,7 +2727,7 @@ AttachDecision GetNameIRGenerator::tryAttachGlobalNameValue(ObjOperandId objId,
   auto* globalLexical = &env_->as<GlobalLexicalEnvironmentObject>();
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (!CanAttachGlobalName(cx_, globalLexical, id, &holder, &prop)) {
     return AttachDecision::NoAction;
   }
@@ -2789,7 +2791,7 @@ AttachDecision GetNameIRGenerator::tryAttachGlobalNameGetter(ObjOperandId objId,
   MOZ_ASSERT(globalLexical->isGlobal());
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (!CanAttachGlobalName(cx_, globalLexical, id, &holder, &prop)) {
     return AttachDecision::NoAction;
   }
@@ -2864,7 +2866,7 @@ AttachDecision GetNameIRGenerator::tryAttachEnvironmentName(ObjOperandId objId,
   }
 
   JSObject* env = env_;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   NativeObject* holder = nullptr;
 
   while (env) {
@@ -2971,7 +2973,7 @@ AttachDecision BindNameIRGenerator::tryAttachGlobalName(ObjOperandId objId,
   MOZ_ASSERT(globalLexical->isGlobal());
 
   JSObject* result = nullptr;
-  if (Maybe<ShapeProperty> prop = globalLexical->lookup(cx_, id)) {
+  if (Maybe<PropertyInfo> prop = globalLexical->lookup(cx_, id)) {
     // If this is an uninitialized lexical or a const, we need to return a
     // RuntimeLexicalErrorObject.
     if (globalLexical->getSlot(prop->slot()).isMagic() || !prop->writable()) {
@@ -2990,7 +2992,7 @@ AttachDecision BindNameIRGenerator::tryAttachGlobalName(ObjOperandId objId,
     // If the property exists on the global and is non-configurable, it cannot
     // be shadowed by the lexical scope so we can just return the global without
     // a shape guard.
-    Maybe<ShapeProperty> prop = result->as<GlobalObject>().lookup(cx_, id);
+    Maybe<PropertyInfo> prop = result->as<GlobalObject>().lookup(cx_, id);
     if (prop.isNothing() || prop->configurable()) {
       writer.guardShape(objId, globalLexical->lastProperty());
     }
@@ -3010,7 +3012,7 @@ AttachDecision BindNameIRGenerator::tryAttachEnvironmentName(ObjOperandId objId,
   }
 
   JSObject* env = env_;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   while (true) {
     if (!env->is<GlobalObject>() && !env->is<EnvironmentObject>()) {
       return AttachDecision::NoAction;
@@ -3569,7 +3571,7 @@ AttachDecision SetPropIRGenerator::tryAttachStub() {
 }
 
 static void EmitStoreSlotAndReturn(CacheIRWriter& writer, ObjOperandId objId,
-                                   NativeObject* nobj, ShapeProperty prop,
+                                   NativeObject* nobj, PropertyInfo prop,
                                    ValOperandId rhsId) {
   if (nobj->isFixedSlot(prop.slot())) {
     size_t offset = NativeObject::getFixedSlotOffset(prop.slot());
@@ -3581,9 +3583,9 @@ static void EmitStoreSlotAndReturn(CacheIRWriter& writer, ObjOperandId objId,
   writer.returnFromIC();
 }
 
-static Maybe<ShapeProperty> LookupShapeForSetSlot(JSOp op, NativeObject* obj,
-                                                  jsid id) {
-  Maybe<ShapeProperty> prop = obj->lookupPure(id);
+static Maybe<PropertyInfo> LookupShapeForSetSlot(JSOp op, NativeObject* obj,
+                                                 jsid id) {
+  Maybe<PropertyInfo> prop = obj->lookupPure(id);
   if (prop.isNothing() || !prop->isDataProperty() || !prop->writable()) {
     return mozilla::Nothing();
   }
@@ -3599,7 +3601,7 @@ static Maybe<ShapeProperty> LookupShapeForSetSlot(JSOp op, NativeObject* obj,
 }
 
 static bool CanAttachNativeSetSlot(JSOp op, JSObject* obj, PropertyKey id,
-                                   Maybe<ShapeProperty>* prop) {
+                                   Maybe<PropertyInfo>* prop) {
   if (!obj->is<NativeObject>()) {
     return false;
   }
@@ -3611,7 +3613,7 @@ static bool CanAttachNativeSetSlot(JSOp op, JSObject* obj, PropertyKey id,
 // There is no need to guard on the shape. Global lexical bindings are
 // non-configurable and can not be shadowed.
 static bool IsGlobalLexicalSetGName(JSOp op, NativeObject* obj,
-                                    ShapeProperty prop) {
+                                    PropertyInfo prop) {
   // Ensure that the env can't change.
   if (op != JSOp::SetGName && op != JSOp::StrictSetGName) {
     return false;
@@ -3632,7 +3634,7 @@ AttachDecision SetPropIRGenerator::tryAttachNativeSetSlot(HandleObject obj,
                                                           ObjOperandId objId,
                                                           HandleId id,
                                                           ValOperandId rhsId) {
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (!CanAttachNativeSetSlot(JSOp(*pc_), obj, id, &prop)) {
     return AttachDecision::NoAction;
   }
@@ -3709,7 +3711,7 @@ void SetPropIRGenerator::trackAttached(const char* name) {
 
 static bool IsCacheableSetPropCallNative(NativeObject* obj,
                                          NativeObject* holder,
-                                         ShapeProperty prop) {
+                                         PropertyInfo prop) {
   MOZ_ASSERT(IsCacheableProtoChain(obj, holder));
 
   if (!prop.isAccessorProperty()) {
@@ -3739,7 +3741,7 @@ static bool IsCacheableSetPropCallNative(NativeObject* obj,
 
 static bool IsCacheableSetPropCallScripted(NativeObject* obj,
                                            NativeObject* holder,
-                                           ShapeProperty prop) {
+                                           PropertyInfo prop) {
   MOZ_ASSERT(IsCacheableProtoChain(obj, holder));
 
   if (IsWindow(obj)) {
@@ -3766,7 +3768,7 @@ static bool IsCacheableSetPropCallScripted(NativeObject* obj,
 
 static bool CanAttachSetter(JSContext* cx, jsbytecode* pc, JSObject* obj,
                             PropertyKey id, NativeObject** holder,
-                            Maybe<ShapeProperty>* shapeProp) {
+                            Maybe<PropertyInfo>* propInfo) {
   // Don't attach a setter stub for ops like JSOp::InitElem.
   MOZ_ASSERT(IsPropertySetOp(JSOp(*pc)));
 
@@ -3780,18 +3782,18 @@ static bool CanAttachSetter(JSContext* cx, jsbytecode* pc, JSObject* obj,
     return false;
   }
 
-  if (!IsCacheableSetPropCallScripted(nobj, *holder, prop.shapeProperty()) &&
-      !IsCacheableSetPropCallNative(nobj, *holder, prop.shapeProperty())) {
+  if (!IsCacheableSetPropCallScripted(nobj, *holder, prop.propertyInfo()) &&
+      !IsCacheableSetPropCallNative(nobj, *holder, prop.propertyInfo())) {
     return false;
   }
 
-  *shapeProp = mozilla::Some(prop.shapeProperty());
+  *propInfo = mozilla::Some(prop.propertyInfo());
   return true;
 }
 
 static void EmitCallSetterNoGuards(JSContext* cx, CacheIRWriter& writer,
                                    NativeObject* obj, NativeObject* holder,
-                                   ShapeProperty prop, ObjOperandId objId,
+                                   PropertyInfo prop, ObjOperandId objId,
                                    ValOperandId rhsId) {
   JSFunction* target = &holder->getSetter(prop)->as<JSFunction>();
   bool sameRealm = cx->realm() == target->realm();
@@ -3809,7 +3811,7 @@ static void EmitCallSetterNoGuards(JSContext* cx, CacheIRWriter& writer,
 }
 
 static void EmitCallDOMSetterNoGuards(JSContext* cx, CacheIRWriter& writer,
-                                      NativeObject* holder, ShapeProperty prop,
+                                      NativeObject* holder, PropertyInfo prop,
                                       ObjOperandId objId, ValOperandId rhsId) {
   JSFunction* setter = &holder->getSetter(prop)->as<JSFunction>();
   MOZ_ASSERT(cx->realm() == setter->realm());
@@ -3823,7 +3825,7 @@ AttachDecision SetPropIRGenerator::tryAttachSetter(HandleObject obj,
                                                    HandleId id,
                                                    ValOperandId rhsId) {
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (!CanAttachSetter(cx_, pc_, obj, id, &holder, &prop)) {
     return AttachDecision::NoAction;
   }
@@ -4222,7 +4224,7 @@ AttachDecision SetPropIRGenerator::tryAttachDOMProxyUnshadowed(
   }
 
   NativeObject* holder = nullptr;
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (!CanAttachSetter(cx_, pc_, proto, id, &holder, &prop)) {
     return AttachDecision::NoAction;
   }
@@ -4270,7 +4272,7 @@ AttachDecision SetPropIRGenerator::tryAttachDOMProxyExpando(
     expandoObj = &expandoAndGeneration->expando.toObject();
   }
 
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (CanAttachNativeSetSlot(JSOp(*pc_), expandoObj, id, &prop)) {
     auto* nativeExpandoObj = &expandoObj->as<NativeObject>();
 
@@ -4406,7 +4408,7 @@ AttachDecision SetPropIRGenerator::tryAttachWindowProxy(HandleObject obj,
   // Now try to do the set on the Window (the current global).
   GlobalObject* windowObj = cx_->global();
 
-  Maybe<ShapeProperty> prop;
+  Maybe<PropertyInfo> prop;
   if (!CanAttachNativeSetSlot(JSOp(*pc_), windowObj, id, &prop)) {
     return AttachDecision::NoAction;
   }
@@ -4484,7 +4486,7 @@ bool SetPropIRGenerator::canAttachAddSlotStub(HandleObject obj, HandleId id) {
     }
 
     // If prototype defines this property in a non-plain way, don't optimize.
-    Maybe<ShapeProperty> protoProp = proto->as<NativeObject>().lookup(cx_, id);
+    Maybe<PropertyInfo> protoProp = proto->as<NativeObject>().lookup(cx_, id);
     if (protoProp.isSome() && !protoProp->isDataProperty()) {
       return false;
     }
@@ -4541,12 +4543,12 @@ AttachDecision SetPropIRGenerator::tryAttachAddSlotStub(HandleShape oldShape) {
   }
   auto* nobj = &obj->as<NativeObject>();
 
-  ShapeProperty shapeProp = prop.shapeProperty();
+  PropertyInfo propInfo = prop.propertyInfo();
   NativeObject* holder = nobj;
 
   // The property must be the last added property of the object.
   Shape* newShape = holder->lastProperty();
-  MOZ_RELEASE_ASSERT(newShape->property() == shapeProp);
+  MOZ_RELEASE_ASSERT(newShape->propertyInfo() == propInfo);
 
   // Old shape should be parent of new shape. Object flag updates may make this
   // false even for simple data properties. It may be possible to support these
@@ -4556,8 +4558,8 @@ AttachDecision SetPropIRGenerator::tryAttachAddSlotStub(HandleShape oldShape) {
   }
 
   // Basic shape checks.
-  if (newShape->inDictionary() || !shapeProp.isDataProperty() ||
-      !shapeProp.writable()) {
+  if (newShape->inDictionary() || !propInfo.isDataProperty() ||
+      !propInfo.writable()) {
     return AttachDecision::NoAction;
   }
 
@@ -4576,12 +4578,12 @@ AttachDecision SetPropIRGenerator::tryAttachAddSlotStub(HandleShape oldShape) {
 
   ShapeGuardProtoChain(writer, nobj, objId);
 
-  if (holder->isFixedSlot(shapeProp.slot())) {
-    size_t offset = NativeObject::getFixedSlotOffset(shapeProp.slot());
+  if (holder->isFixedSlot(propInfo.slot())) {
+    size_t offset = NativeObject::getFixedSlotOffset(propInfo.slot());
     writer.addAndStoreFixedSlot(objId, offset, rhsValId, newShape);
     trackAttached("AddSlot");
   } else {
-    size_t offset = holder->dynamicSlotIndex(shapeProp.slot()) * sizeof(Value);
+    size_t offset = holder->dynamicSlotIndex(propInfo.slot()) * sizeof(Value);
     uint32_t numOldSlots = NativeObject::calculateDynamicSlots(oldShape);
     uint32_t numNewSlots = holder->numDynamicSlots();
     if (numOldSlots == numNewSlots) {
@@ -4648,14 +4650,14 @@ AttachDecision InstanceOfIRGenerator::tryAttachStub() {
 
   // If the above succeeded, then these should be true about @@hasInstance,
   // because the property on Function.__proto__ is an immutable data property:
-  MOZ_ASSERT(hasInstanceProp.shapeProperty().isDataProperty());
-  MOZ_ASSERT(!hasInstanceProp.shapeProperty().configurable());
-  MOZ_ASSERT(!hasInstanceProp.shapeProperty().writable());
+  MOZ_ASSERT(hasInstanceProp.propertyInfo().isDataProperty());
+  MOZ_ASSERT(!hasInstanceProp.propertyInfo().configurable());
+  MOZ_ASSERT(!hasInstanceProp.propertyInfo().writable());
 
   MOZ_ASSERT(IsCacheableProtoChain(fun, hasInstanceHolder));
 
   // Ensure that the function's prototype slot is the same.
-  Maybe<ShapeProperty> prop = fun->lookupPure(cx_->names().prototype);
+  Maybe<PropertyInfo> prop = fun->lookupPure(cx_->names().prototype);
   if (prop.isNothing() || !prop->isDataProperty()) {
     trackAttached(IRGenerator::NotAttached);
     return AttachDecision::NoAction;
@@ -4708,7 +4710,7 @@ void InstanceOfIRGenerator::trackAttached(const char* name) {
   }
 #else
   // Silence Clang -Wunused-private-field warning.
-  mozilla::Unused << lhsVal_;
+  (void)lhsVal_;
 #endif
 }
 
@@ -4755,6 +4757,7 @@ AttachDecision TypeOfIRGenerator::tryAttachPrimitive(ValOperandId valId) {
   writer.loadConstantStringResult(
       TypeName(js::TypeOfValue(val_), cx_->names()));
   writer.returnFromIC();
+  writer.setTypeData(TypeData(JSValueType(val_.type())));
   trackAttached("Primitive");
   return AttachDecision::Attach;
 }
@@ -4767,6 +4770,7 @@ AttachDecision TypeOfIRGenerator::tryAttachObject(ValOperandId valId) {
   ObjOperandId objId = writer.guardToObject(valId);
   writer.loadTypeOfObjectResult(objId);
   writer.returnFromIC();
+  writer.setTypeData(TypeData(JSValueType(val_.type())));
   trackAttached("Object");
   return AttachDecision::Attach;
 }
@@ -4872,7 +4876,7 @@ static bool IsArrayPrototypeOptimizable(JSContext* cx, ArrayObject* arr,
   }
 
   // Ensure that Array.prototype's @@iterator slot is unchanged.
-  Maybe<ShapeProperty> prop = proto->lookupPure(iteratorKey);
+  Maybe<PropertyInfo> prop = proto->lookupPure(iteratorKey);
   if (prop.isNothing() || !prop->isDataProperty()) {
     return false;
   }
@@ -4900,7 +4904,7 @@ static bool IsArrayIteratorPrototypeOptimizable(JSContext* cx,
   *arrIterProto = proto;
 
   // Ensure that %ArrayIteratorPrototype%'s "next" slot is unchanged.
-  Maybe<ShapeProperty> prop = proto->lookupPure(cx->names().next);
+  Maybe<PropertyInfo> prop = proto->lookupPure(cx->names().next);
   if (prop.isNothing() || !prop->isDataProperty()) {
     return false;
   }
@@ -5323,13 +5327,13 @@ AttachDecision CallIRGenerator::tryAttachDataViewGet(HandleFunction callee,
     return AttachDecision::NoAction;
   }
 
-  // For getUint32 we let the stub return a double only if the current result is
-  // a double, to allow better codegen in Warp.
-  bool allowDoubleForUint32 = false;
+  // For getUint32 we let the stub return an Int32 if we have not seen a
+  // double, to allow better codegen in Warp while avoiding bailout loops.
+  bool forceDoubleForUint32 = false;
   if (type == Scalar::Uint32) {
     bool isLittleEndian = argc_ > 1 && args_[1].toBoolean();
     uint32_t res = dv->read<uint32_t>(offsetInt64, isLittleEndian);
-    allowDoubleForUint32 = res >= INT32_MAX;
+    forceDoubleForUint32 = res >= INT32_MAX;
   }
 
   // Initialize the input operand.
@@ -5360,7 +5364,7 @@ AttachDecision CallIRGenerator::tryAttachDataViewGet(HandleFunction callee,
   }
 
   writer.loadDataViewValueResult(objId, intPtrOffsetId, boolLittleEndianId,
-                                 type, allowDoubleForUint32);
+                                 type, forceDoubleForUint32);
   writer.returnFromIC();
 
   trackAttached("DataViewGet");
@@ -8550,7 +8554,8 @@ AttachDecision CallIRGenerator::tryAttachWasmCall(HandleFunction calleeFunc) {
   // If there are too many arguments, don't optimize (we won't be able to store
   // the arguments in the LIR node).
   static_assert(wasm::MaxArgsForJitInlineCall <= ArgumentKindArgIndexLimit);
-  if (sig.args().length() > wasm::MaxArgsForJitInlineCall) {
+  if (sig.args().length() > wasm::MaxArgsForJitInlineCall ||
+      argc_ > ArgumentKindArgIndexLimit) {
     return AttachDecision::NoAction;
   }
 
@@ -9158,7 +9163,7 @@ AttachDecision CallIRGenerator::tryAttachCallScripted(
       // expect. Note that getThisForScripted checked newTarget is a function
       // with a non-configurable .prototype data property.
       JSFunction* newTarget = &newTarget_.toObject().as<JSFunction>();
-      Maybe<ShapeProperty> prop = newTarget->lookupPure(cx_->names().prototype);
+      Maybe<PropertyInfo> prop = newTarget->lookupPure(cx_->names().prototype);
       MOZ_ASSERT(prop.isSome());
       MOZ_ASSERT(newTarget->numFixedSlots() == 0, "Stub code relies on this");
       uint32_t slot = prop->slot();
@@ -9981,7 +9986,9 @@ void ToBoolIRGenerator::trackAttached(const char* name) {
 
 AttachDecision ToBoolIRGenerator::tryAttachStub() {
   AutoAssertNoPendingException aanpe(cx_);
+  writer.setTypeData(TypeData(JSValueType(val_.type())));
 
+  TRY_ATTACH(tryAttachBool());
   TRY_ATTACH(tryAttachInt32());
   TRY_ATTACH(tryAttachNumber());
   TRY_ATTACH(tryAttachString());
@@ -9992,6 +9999,19 @@ AttachDecision ToBoolIRGenerator::tryAttachStub() {
 
   trackAttached(IRGenerator::NotAttached);
   return AttachDecision::NoAction;
+}
+
+AttachDecision ToBoolIRGenerator::tryAttachBool() {
+  if (!val_.isBoolean()) {
+    return AttachDecision::NoAction;
+  }
+
+  ValOperandId valId(writer.setInputOperandId(0));
+  writer.guardNonDoubleType(valId, ValueType::Boolean);
+  writer.loadOperandResult(valId);
+  writer.returnFromIC();
+  trackAttached("ToBoolBool");
+  return AttachDecision::Attach;
 }
 
 AttachDecision ToBoolIRGenerator::tryAttachInt32() {
@@ -10987,12 +11007,14 @@ AttachDecision BinaryArithIRGenerator::tryAttachStringInt32Arith() {
 
 NewArrayIRGenerator::NewArrayIRGenerator(JSContext* cx, HandleScript script,
                                          jsbytecode* pc, ICState state, JSOp op,
-                                         HandleObject templateObj)
+                                         HandleObject templateObj,
+                                         JSScript* outerScript)
     : IRGenerator(cx, script, pc, CacheKind::NewArray, state),
 #ifdef JS_CACHEIR_SPEW
       op_(op),
 #endif
-      templateObject_(templateObj) {
+      templateObject_(templateObj),
+      outerScript_(outerScript) {
   MOZ_ASSERT(templateObject_);
 }
 
@@ -11025,10 +11047,15 @@ AttachDecision NewArrayIRGenerator::tryAttachArrayObject() {
   writer.guardNoAllocationMetadataBuilder(
       cx_->realm()->addressOfMetadataBuilder());
 
+  gc::AllocSite* site = outerScript_->createAllocSite();
+  if (!site) {
+    return AttachDecision::NoAction;
+  }
+
   Shape* shape = arrayObj->lastProperty();
   uint32_t length = arrayObj->length();
 
-  writer.newArrayObjectResult(length, shape);
+  writer.newArrayObjectResult(length, shape, site);
 
   writer.returnFromIC();
 
@@ -11047,12 +11074,14 @@ AttachDecision NewArrayIRGenerator::tryAttachStub() {
 
 NewObjectIRGenerator::NewObjectIRGenerator(JSContext* cx, HandleScript script,
                                            jsbytecode* pc, ICState state,
-                                           JSOp op, HandleObject templateObj)
+                                           JSOp op, HandleObject templateObj,
+                                           JSScript* outerScript)
     : IRGenerator(cx, script, pc, CacheKind::NewObject, state),
 #ifdef JS_CACHEIR_SPEW
       op_(op),
 #endif
-      templateObject_(templateObj) {
+      templateObject_(templateObj),
+      outerScript_(outerScript) {
   MOZ_ASSERT(templateObject_);
 }
 
@@ -11085,6 +11114,11 @@ AttachDecision NewObjectIRGenerator::tryAttachPlainObject() {
   MOZ_ASSERT(!nativeObj->hasDynamicElements());
   MOZ_ASSERT(!nativeObj->isSharedMemory());
 
+  gc::AllocSite* site = outerScript_->createAllocSite();
+  if (!site) {
+    return AttachDecision::NoAction;
+  }
+
   uint32_t numFixedSlots = nativeObj->numUsedFixedSlots();
   uint32_t numDynamicSlots = nativeObj->numDynamicSlots();
   gc::AllocKind allocKind = nativeObj->allocKindForTenure();
@@ -11092,7 +11126,8 @@ AttachDecision NewObjectIRGenerator::tryAttachPlainObject() {
 
   writer.guardNoAllocationMetadataBuilder(
       cx_->realm()->addressOfMetadataBuilder());
-  writer.newPlainObjectResult(numFixedSlots, numDynamicSlots, allocKind, shape);
+  writer.newPlainObjectResult(numFixedSlots, numDynamicSlots, allocKind, shape,
+                              site);
 
   writer.returnFromIC();
 

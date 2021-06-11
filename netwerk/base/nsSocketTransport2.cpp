@@ -253,11 +253,7 @@ nsresult ErrorAccordingToNSPR(PRErrorCode errorCode) {
 //-----------------------------------------------------------------------------
 
 nsSocketInputStream::nsSocketInputStream(nsSocketTransport* trans)
-    : mTransport(trans),
-      mReaderRefCnt(0),
-      mCondition(NS_OK),
-      mCallbackFlags(0),
-      mByteCount(0) {}
+    : mTransport(trans) {}
 
 // called on the socket transport thread...
 //
@@ -344,9 +340,9 @@ nsSocketInputStream::Available(uint64_t* avail) {
 
     mTransport->ReleaseFD_Locked(fd);
 
-    if (n >= 0)
+    if (n >= 0) {
       *avail = n;
-    else {
+    } else {
       PRErrorCode code = PR_GetError();
       if (code == PR_WOULD_BLOCK_ERROR) return NS_OK;
       mCondition = ErrorAccordingToNSPR(code);
@@ -367,8 +363,9 @@ nsSocketInputStream::Read(char* buf, uint32_t count, uint32_t* countRead) {
   {
     MutexAutoLock lock(mTransport->mLock);
 
-    if (NS_FAILED(mCondition))
+    if (NS_FAILED(mCondition)) {
       return (mCondition == NS_BASE_STREAM_CLOSED) ? NS_OK : mCondition;
+    }
 
     fd = mTransport->GetFD_Locked();
     if (!fd) return NS_BASE_STREAM_WOULD_BLOCK;
@@ -393,9 +390,9 @@ nsSocketInputStream::Read(char* buf, uint32_t count, uint32_t* countRead) {
 
     mTransport->ReleaseFD_Locked(fd);
 
-    if (n > 0)
+    if (n > 0) {
       mByteCount += (*countRead = n);
-    else if (n < 0) {
+    } else if (n < 0) {
       PRErrorCode code = PR_GetError();
       if (code == PR_WOULD_BLOCK_ERROR) return NS_BASE_STREAM_WOULD_BLOCK;
       mCondition = ErrorAccordingToNSPR(code);
@@ -435,10 +432,11 @@ nsSocketInputStream::CloseWithStatus(nsresult reason) {
   {
     MutexAutoLock lock(mTransport->mLock);
 
-    if (NS_SUCCEEDED(mCondition))
+    if (NS_SUCCEEDED(mCondition)) {
       rv = mCondition = reason;
-    else
+    } else {
       rv = NS_OK;
+    }
   }
   if (NS_FAILED(rv)) mTransport->OnInputClosed(rv);
   return NS_OK;
@@ -459,8 +457,9 @@ nsSocketInputStream::AsyncWait(nsIInputStreamCallback* callback, uint32_t flags,
       //
       mCallback = NS_NewInputStreamReadyEvent("nsSocketInputStream::AsyncWait",
                                               callback, target);
-    } else
+    } else {
       mCallback = callback;
+    }
     mCallbackFlags = flags;
 
     hasError = NS_FAILED(mCondition);
@@ -484,11 +483,7 @@ nsSocketInputStream::AsyncWait(nsIInputStreamCallback* callback, uint32_t flags,
 //-----------------------------------------------------------------------------
 
 nsSocketOutputStream::nsSocketOutputStream(nsSocketTransport* trans)
-    : mTransport(trans),
-      mWriterRefCnt(0),
-      mCondition(NS_OK),
-      mCallbackFlags(0),
-      mByteCount(0) {}
+    : mTransport(trans) {}
 
 // called on the socket transport thread...
 //
@@ -579,9 +574,9 @@ nsSocketOutputStream::Write(const char* buf, uint32_t count,
 
     mTransport->ReleaseFD_Locked(fd);
 
-    if (n > 0)
+    if (n > 0) {
       mByteCount += (*countWritten = n);
-    else if (n < 0) {
+    } else if (n < 0) {
       PRErrorCode code = PR_GetError();
       if (code == PR_WOULD_BLOCK_ERROR) return NS_BASE_STREAM_WOULD_BLOCK;
       mCondition = ErrorAccordingToNSPR(code);
@@ -637,10 +632,11 @@ nsSocketOutputStream::CloseWithStatus(nsresult reason) {
   {
     MutexAutoLock lock(mTransport->mLock);
 
-    if (NS_SUCCEEDED(mCondition))
+    if (NS_SUCCEEDED(mCondition)) {
       rv = mCondition = reason;
-    else
+    } else {
       rv = NS_OK;
+    }
   }
   if (NS_FAILED(rv)) mTransport->OnOutputClosed(rv);
   return NS_OK;
@@ -660,8 +656,9 @@ nsSocketOutputStream::AsyncWait(nsIOutputStreamCallback* callback,
       // build event proxy
       //
       mCallback = NS_NewOutputStreamReadyEvent(callback, target);
-    } else
+    } else {
       mCallback = callback;
+    }
 
     mCallbackFlags = flags;
   }
@@ -674,44 +671,10 @@ nsSocketOutputStream::AsyncWait(nsIOutputStreamCallback* callback,
 //-----------------------------------------------------------------------------
 
 nsSocketTransport::nsSocketTransport()
-    : mPort(0),
-      mProxyPort(0),
-      mOriginPort(0),
-      mProxyTransparent(false),
-      mProxyTransparentResolvesHost(false),
-      mHttpsProxy(false),
-      mConnectionFlags(0),
-      mResetFamilyPreference(false),
-      mTlsFlags(0),
-      mReuseAddrPort(false),
-      mState(STATE_CLOSED),
-      mAttached(false),
-      mInputClosed(true),
-      mOutputClosed(true),
-      mResolving(false),
-      mEchConfigUsed(false),
-      mResolvedByTRR(false),
-      mNetAddrIsSet(false),
-      mSelfAddrIsSet(false),
-      mLock("nsSocketTransport.mLock"),
-      mFD(this),
-      mFDref(0),
-      mFDconnected(false),
+    : mFD(this),
       mSocketTransportService(gSocketTransportService),
       mInput(this),
-      mOutput(this),
-      mLingerPolarity(false),
-      mLingerTimeout(0),
-      mQoSBits(0x00),
-      mKeepaliveEnabled(false),
-      mKeepaliveIdleTimeS(-1),
-      mKeepaliveRetryIntervalS(-1),
-      mKeepaliveProbeCount(-1),
-      mDoNotRetryToConnect(false) {
-  this->mNetAddr.raw.family = 0;
-  this->mNetAddr.inet = {};
-  this->mSelfAddr.raw.family = 0;
-  this->mSelfAddr.inet = {};
+      mOutput(this) {
   SOCKET_LOG(("creating nsSocketTransport @%p\n", this));
 
   mTimeouts[TIMEOUT_CONNECT] = UINT16_MAX;     // no timeout
@@ -798,10 +761,11 @@ nsresult nsSocketTransport::Init(const nsTArray<nsCString>& types,
   // now verify that each socket type has a registered socket provider.
   for (uint32_t i = 0, type = 0; i < typeCount; ++i) {
     // store socket types
-    if (i == 0 && proxyType)
+    if (i == 0 && proxyType) {
       mTypes.AppendElement(proxyType);
-    else
+    } else {
       mTypes.AppendElement(types[type++]);
+    }
 
     nsCOMPtr<nsISocketProvider> provider;
     rv = spserv->GetSocketProvider(mTypes[i].get(), getter_AddRefs(provider));
@@ -869,12 +833,13 @@ nsresult nsSocketTransport::InitWithConnectedSocket(PRFileDesc* fd,
   mHost.Assign(buf);
 
   uint16_t port;
-  if (addr->raw.family == AF_INET)
+  if (addr->raw.family == AF_INET) {
     port = addr->inet.port;
-  else if (addr->raw.family == AF_INET6)
+  } else if (addr->raw.family == AF_INET6) {
     port = addr->inet6.port;
-  else
+  } else {
     port = 0;
+  }
   mPort = ntohs(port);
 
   memcpy(&mNetAddr, addr, sizeof(NetAddr));
@@ -1021,16 +986,21 @@ nsresult nsSocketTransport::ResolveHost() {
   mResolving = true;
 
   uint32_t dnsFlags = 0;
-  if (mConnectionFlags & nsSocketTransport::BYPASS_CACHE)
+  if (mConnectionFlags & nsSocketTransport::BYPASS_CACHE) {
     dnsFlags = nsIDNSService::RESOLVE_BYPASS_CACHE;
-  if (mConnectionFlags & nsSocketTransport::REFRESH_CACHE)
+  }
+  if (mConnectionFlags & nsSocketTransport::REFRESH_CACHE) {
     dnsFlags = nsIDNSService::RESOLVE_REFRESH_CACHE;
-  if (mConnectionFlags & nsSocketTransport::DISABLE_IPV6)
+  }
+  if (mConnectionFlags & nsSocketTransport::DISABLE_IPV6) {
     dnsFlags |= nsIDNSService::RESOLVE_DISABLE_IPV6;
-  if (mConnectionFlags & nsSocketTransport::DISABLE_IPV4)
+  }
+  if (mConnectionFlags & nsSocketTransport::DISABLE_IPV4) {
     dnsFlags |= nsIDNSService::RESOLVE_DISABLE_IPV4;
-  if (mConnectionFlags & nsSocketTransport::DISABLE_TRR)
+  }
+  if (mConnectionFlags & nsSocketTransport::DISABLE_TRR) {
     dnsFlags |= nsIDNSService::RESOLVE_DISABLE_TRR;
+  }
 
   if (mConnectionFlags & nsSocketTransport::USE_IP_HINT_ADDRESS) {
     dnsFlags |= nsIDNSService::RESOLVE_IP_HINT;
@@ -1094,17 +1064,21 @@ nsresult nsSocketTransport::BuildSocket(PRFileDesc*& fd, bool& proxyTransparent,
   fd = nullptr;
 
   uint32_t controlFlags = 0;
-  if (mProxyTransparentResolvesHost)
+  if (mProxyTransparentResolvesHost) {
     controlFlags |= nsISocketProvider::PROXY_RESOLVES_HOST;
+  }
 
-  if (mConnectionFlags & nsISocketTransport::ANONYMOUS_CONNECT)
+  if (mConnectionFlags & nsISocketTransport::ANONYMOUS_CONNECT) {
     controlFlags |= nsISocketProvider::ANONYMOUS_CONNECT;
+  }
 
-  if (mConnectionFlags & nsISocketTransport::NO_PERMANENT_STORAGE)
+  if (mConnectionFlags & nsISocketTransport::NO_PERMANENT_STORAGE) {
     controlFlags |= nsISocketProvider::NO_PERMANENT_STORAGE;
+  }
 
-  if (mConnectionFlags & nsISocketTransport::BE_CONSERVATIVE)
+  if (mConnectionFlags & nsISocketTransport::BE_CONSERVATIVE) {
     controlFlags |= nsISocketProvider::BE_CONSERVATIVE;
+  }
 
   if (mConnectionFlags &
       nsISocketTransport::ANONYMOUS_CONNECT_ALLOW_CLIENT_CERT) {
@@ -1269,8 +1243,9 @@ nsresult nsSocketTransport::InitiateSocket() {
       nsAutoCString netAddrCString;
       netAddrCString.SetLength(kIPv6CStrBufSize);
       if (!mNetAddr.ToStringBuffer(netAddrCString.BeginWriting(),
-                                   kIPv6CStrBufSize))
+                                   kIPv6CStrBufSize)) {
         netAddrCString = "<IP-to-string failed>"_ns;
+      }
       SOCKET_LOG(
           ("nsSocketTransport::InitiateSocket skipping "
            "speculative connection for host [%s:%d] proxy "
@@ -1538,12 +1513,12 @@ nsresult nsSocketTransport::InitiateSocket() {
     //
     // If the PR_Connect(...) would block, then poll for a connection.
     //
-    if ((PR_WOULD_BLOCK_ERROR == code) || (PR_IN_PROGRESS_ERROR == code))
+    if ((PR_WOULD_BLOCK_ERROR == code) || (PR_IN_PROGRESS_ERROR == code)) {
       mPollFlags = (PR_POLL_EXCEPT | PR_POLL_WRITE);
-    //
-    // If the socket is already connected, then return success...
-    //
-    else if (PR_IS_CONNECTED_ERROR == code) {
+      //
+      // If the socket is already connected, then return success...
+      //
+    } else if (PR_IS_CONNECTED_ERROR == code) {
       //
       // we are connected!
       //
@@ -1591,8 +1566,9 @@ nsresult nsSocketTransport::InitiateSocket() {
       }
 
       rv = ErrorAccordingToNSPR(code);
-      if ((rv == NS_ERROR_CONNECTION_REFUSED) && !mProxyHost.IsEmpty())
+      if ((rv == NS_ERROR_CONNECTION_REFUSED) && !mProxyHost.IsEmpty()) {
         rv = NS_ERROR_PROXY_CONNECTION_REFUSED;
+      }
     }
   }
   return rv;
@@ -1772,12 +1748,12 @@ void nsSocketTransport::OnMsgInputClosed(nsresult reason) {
 
   mInputClosed = true;
   // check if event should affect entire transport
-  if (NS_FAILED(reason) && (reason != NS_BASE_STREAM_CLOSED))
+  if (NS_FAILED(reason) && (reason != NS_BASE_STREAM_CLOSED)) {
     mCondition = reason;  // XXX except if NS_FAILED(mCondition), right??
-  else if (mOutputClosed)
+  } else if (mOutputClosed) {
     mCondition =
         NS_BASE_STREAM_CLOSED;  // XXX except if NS_FAILED(mCondition), right??
-  else {
+  } else {
     if (mState == STATE_TRANSFERRING) mPollFlags &= ~PR_POLL_READ;
     mInput.OnSocketReady(reason);
   }
@@ -1793,12 +1769,12 @@ void nsSocketTransport::OnMsgOutputClosed(nsresult reason) {
 
   mOutputClosed = true;
   // check if event should affect entire transport
-  if (NS_FAILED(reason) && (reason != NS_BASE_STREAM_CLOSED))
+  if (NS_FAILED(reason) && (reason != NS_BASE_STREAM_CLOSED)) {
     mCondition = reason;  // XXX except if NS_FAILED(mCondition), right??
-  else if (mInputClosed)
+  } else if (mInputClosed) {
     mCondition =
         NS_BASE_STREAM_CLOSED;  // XXX except if NS_FAILED(mCondition), right??
-  else {
+  } else {
     if (mState == STATE_TRANSFERRING) mPollFlags &= ~PR_POLL_WRITE;
     mOutput.OnSocketReady(reason);
   }
@@ -1966,11 +1942,14 @@ void nsSocketTransport::OnSocketEvent(uint32_t type, nsresult status,
         // need. Internet address families require a DNS lookup (or possibly
         // several) before we can connect.
 #if defined(XP_UNIX)
-        if (mNetAddrIsSet && mNetAddr.raw.family == AF_LOCAL)
+        if (mNetAddrIsSet && mNetAddr.raw.family == AF_LOCAL) {
           mCondition = InitiateSocket();
-        else
+        } else {
+#else
+        {
 #endif
           mCondition = ResolveHost();
+        }
 
       } else {
         SOCKET_LOG(("  ignoring redundant event\n"));
@@ -1997,10 +1976,11 @@ void nsSocketTransport::OnSocketEvent(uint32_t type, nsresult status,
         // transport resolves the real host here, so there's no fixup
         // (see bug 226943).
         if ((status == NS_ERROR_UNKNOWN_HOST) && !mProxyTransparent &&
-            !mProxyHost.IsEmpty())
+            !mProxyHost.IsEmpty()) {
           mCondition = NS_ERROR_UNKNOWN_PROXY_HOST;
-        else
+        } else {
           mCondition = status;
+        }
       } else if (mState == STATE_RESOLVING) {
         mCondition = InitiateSocket();
       }
@@ -2045,10 +2025,12 @@ void nsSocketTransport::OnSocketEvent(uint32_t type, nsresult status,
   if (NS_FAILED(mCondition)) {
     SOCKET_LOG(("  after event [this=%p cond=%" PRIx32 "]\n", this,
                 static_cast<uint32_t>(mCondition)));
-    if (!mAttached)  // need to process this error ourselves...
+    if (!mAttached) {  // need to process this error ourselves...
       OnSocketDetached(nullptr);
-  } else if (mPollFlags == PR_POLL_EXCEPT)
+    }
+  } else if (mPollFlags == PR_POLL_EXCEPT) {
     mPollFlags = 0;  // make idle
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -2155,8 +2137,9 @@ void nsSocketTransport::OnSocketReady(PRFileDesc* fd, int16_t outFlags) {
         //
         mCondition = ErrorAccordingToNSPR(code);
         if ((mCondition == NS_ERROR_CONNECTION_REFUSED) &&
-            !mProxyHost.IsEmpty())
+            !mProxyHost.IsEmpty()) {
           mCondition = NS_ERROR_PROXY_CONNECTION_REFUSED;
+        }
         SOCKET_LOG(("  connection failed! [reason=%" PRIx32 "]\n",
                     static_cast<uint32_t>(mCondition)));
       }
@@ -2197,9 +2180,9 @@ void nsSocketTransport::OnSocketDetached(PRFileDesc* fd) {
   }
 
   // If we are not shutting down try again.
-  if (!gIOService->IsNetTearingDown() && RecoverFromError())
+  if (!gIOService->IsNetTearingDown() && RecoverFromError()) {
     mCondition = NS_OK;
-  else {
+  } else {
     mState = STATE_CLOSED;
 
     // make sure there isn't any pending DNS request
@@ -2306,8 +2289,9 @@ nsSocketTransport::OpenInputStream(uint32_t flags, uint32_t segsize,
     if (NS_FAILED(rv)) return rv;
 
     *result = pipeIn;
-  } else
+  } else {
     *result = &mInput;
+  }
 
   // flag input stream as open
   mInputClosed = false;
@@ -2349,8 +2333,9 @@ nsSocketTransport::OpenOutputStream(uint32_t flags, uint32_t segsize,
     if (NS_FAILED(rv)) return rv;
 
     *result = pipeOut;
-  } else
+  } else {
     *result = &mOutput;
+  }
 
   // flag output stream as open
   mOutputClosed = false;
@@ -2445,8 +2430,9 @@ nsSocketTransport::IsAlive(bool* result) {
   char c;
   int32_t rval = PR_Recv(fd, &c, 1, PR_MSG_PEEK, 0);
 
-  if ((rval > 0) || (rval < 0 && PR_GetError() == PR_WOULD_BLOCK_ERROR))
+  if ((rval > 0) || (rval < 0 && PR_GetError() == PR_WOULD_BLOCK_ERROR)) {
     *result = true;
+  }
 
   return NS_OK;
 }
@@ -2649,10 +2635,11 @@ nsSocketTransport::GetRecvBufferSize(uint32_t* aSize) {
   nsresult rv = NS_OK;
   PRSocketOptionData opt;
   opt.option = PR_SockOpt_RecvBufferSize;
-  if (PR_GetSocketOption(fd, &opt) == PR_SUCCESS)
+  if (PR_GetSocketOption(fd, &opt) == PR_SUCCESS) {
     *aSize = opt.value.recv_buffer_size;
-  else
+  } else {
     rv = NS_ERROR_FAILURE;
+  }
 
   return rv;
 }
@@ -2665,10 +2652,11 @@ nsSocketTransport::GetSendBufferSize(uint32_t* aSize) {
   nsresult rv = NS_OK;
   PRSocketOptionData opt;
   opt.option = PR_SockOpt_SendBufferSize;
-  if (PR_GetSocketOption(fd, &opt) == PR_SUCCESS)
+  if (PR_GetSocketOption(fd, &opt) == PR_SUCCESS) {
     *aSize = opt.value.send_buffer_size;
-  else
+  } else {
     rv = NS_ERROR_FAILURE;
+  }
 
   return rv;
 }

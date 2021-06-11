@@ -7,12 +7,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import sys
 import logging
 
-from mach.decorators import (
-    CommandArgument,
-    CommandProvider,
-    Command,
-    SubCommand,
-)
+from mach.decorators import CommandArgument, CommandProvider, Command, SubCommand
 
 from mozbuild.base import MachCommandBase
 from mozbuild.vendor.moz_yaml import load_moz_yaml, MozYamlVerifyError
@@ -84,7 +79,7 @@ class Vendor(MachCommandBase):
         if not ignore_modified and not check_for_update:
             self.check_modified_files()
         if not revision:
-            revision = "master"
+            revision = "HEAD"
 
         from mozbuild.vendor.vendor_manifest import VendorManifest
 
@@ -151,7 +146,9 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
         "vendor",
         "python",
         description="Vendor Python packages from pypi.org into third_party/python. "
-        "Some extra files like docs and tests will automatically be excluded.",
+        "Some extra files like docs and tests will automatically be excluded."
+        "Installs the packages listed in third_party/python/requirements.in and "
+        "their dependencies.",
     )
     @CommandArgument(
         "--keep-extra-files",
@@ -159,17 +156,17 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
         default=False,
         help="Keep all files, including tests and documentation.",
     )
-    @CommandArgument(
-        "packages",
-        default=None,
-        nargs="*",
-        help="Packages to vendor. If omitted, packages and their dependencies "
-        "defined in Pipfile.lock will be vendored. If Pipfile has been modified, "
-        "then Pipfile.lock will be regenerated. Note that transient dependencies "
-        "may be updated when running this command.",
-    )
     def vendor_python(self, command_context, **kwargs):
         from mozbuild.vendor.vendor_python import VendorPython
+
+        if sys.version_info[:2] != (3, 6):
+            print(
+                "You must use Python 3.6 to vendor Python packages. If you don't "
+                "have Python 3.6, you can request that your package be added by "
+                "creating a bug: \n"
+                "https://bugzilla.mozilla.org/enter_bug.cgi?product=Firefox%20Build%20System&component=Mach%20Core"  # noqa F401
+            )
+            return 1
 
         vendor_command = self._spawn(VendorPython)
         vendor_command.vendor(**kwargs)

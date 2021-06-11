@@ -924,7 +924,6 @@ already_AddRefed<Notification> Notification::CreateInternal(
 }
 
 Notification::~Notification() {
-  mData.setUndefined();
   mozilla::DropJSObjects(this);
   AssertIsOnTargetThread();
   MOZ_ASSERT(!mWorkerRef);
@@ -1221,7 +1220,7 @@ ServiceWorkerNotificationObserver::Observe(nsISupports* aSubject,
   }
 
   if (!strcmp("alertclickcallback", aTopic)) {
-    if (XRE_IsParentProcess() || !ServiceWorkerParentInterceptEnabled()) {
+    if (XRE_IsParentProcess()) {
       nsCOMPtr<nsIServiceWorkerManager> swm =
           mozilla::components::ServiceWorkerManager::Service();
       if (NS_WARN_IF(!swm)) {
@@ -1256,7 +1255,7 @@ ServiceWorkerNotificationObserver::Observe(nsISupports* aSubject,
       notificationStorage->Delete(origin, mID);
     }
 
-    if (XRE_IsParentProcess() || !ServiceWorkerParentInterceptEnabled()) {
+    if (XRE_IsParentProcess()) {
       nsCOMPtr<nsIServiceWorkerManager> swm =
           mozilla::components::ServiceWorkerManager::Service();
       if (NS_WARN_IF(!swm)) {

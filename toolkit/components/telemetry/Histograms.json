@@ -2234,18 +2234,32 @@
     "keyed": true,
     "description": "The time between navigationStart and the first contentful paint of a foreground http or https root content document, in milliseconds. The contentful paint timestamp is taken during display list building and does not include rasterization or compositing of that paint. This is collected only on page load where the main document uses or suppports HTTP3"
   },
-  "HTTP3_UPLOAD_TIME": {
+  "HTTP3_UPLOAD_TIME_10M_100M": {
     "alert_emails": ["necko@mozilla.com", "ddamjanovic@mozilla.com"],
     "record_in_processes": ["main", "content"],
     "products": ["firefox", "fennec"],
-    "bug_numbers": [1675496],
+    "bug_numbers": [1675496, 1712441],
     "expires_in_version": "96",
     "kind": "exponential",
-    "high": 30000,
-    "n_buckets": 50,
+    "high": 120000,
+    "n_buckets": 100,
     "releaseChannelCollection": "opt-out",
     "keyed": true,
-    "description": "HTTP transaction upload time (ms) (keys: uses_http3_10_50 (load size 10M to 50M), uses_http3_50_100 (load size 50M to 100M), uses_http3_gt_100 (load size > 100M), supports_http3_10_50, supports_http3_50_100, supports_http3_gt_100"
+    "description": "HTTP transaction upload time (ms) (keys: uses_http3_10_50 (load size 10M to 50M), uses_http3_50_100 (load size 50M to 100M), supports_http3_10_50, supports_http3_50_100)"
+  },
+  "HTTP3_UPLOAD_TIME_GT_100M": {
+    "alert_emails": ["necko@mozilla.com", "ddamjanovic@mozilla.com"],
+    "record_in_processes": ["main", "content"],
+    "products": ["firefox", "fennec"],
+    "bug_numbers": [1712441],
+    "expires_in_version": "96",
+    "kind": "exponential",
+    "low": 30000,
+    "high": 240000,
+    "n_buckets": 100,
+    "releaseChannelCollection": "opt-out",
+    "keyed": true,
+    "description": "HTTP transaction upload time for resources larger than 100M (ms) (keys: uses_http3, supports_http3)"
   },
   "HTTPS_RR_OPEN_TO_FIRST_SENT": {
     "alert_emails": ["necko@mozilla.com", "kershaw@mozilla.com"],
@@ -6365,7 +6379,7 @@
     "releaseChannelCollection": "opt-out",
     "record_in_processes": ["main"],
     "products": ["firefox"],
-    "expires_in_version": "92",
+    "expires_in_version": "95",
     "keyed": true,
     "kind": "exponential",
     "low": 1,
@@ -7437,8 +7451,8 @@
     "record_in_processes": ["main"],
     "products": ["firefox"],
     "alert_emails": ["mconley@mozilla.com", "esmyth@mozilla.com"],
-    "bug_numbers": [1340842],
-    "expires_in_version": "92",
+    "bug_numbers": [1340842, 1714255],
+    "expires_in_version": "95",
     "kind": "exponential",
     "high": 10000,
     "n_buckets": 50,
@@ -7448,8 +7462,8 @@
     "record_in_processes": ["main"],
     "products": ["firefox"],
     "alert_emails": ["mconley@mozilla.com", "esmyth@mozilla.com"],
-    "bug_numbers": [1340842],
-    "expires_in_version": "92",
+    "bug_numbers": [1340842, 1714255],
+    "expires_in_version": "95",
     "kind": "exponential",
     "high": 10000,
     "n_buckets": 50,
@@ -8137,8 +8151,8 @@
     "record_in_processes": ["content"],
     "products": ["firefox"],
     "alert_emails": ["mconley@mozilla.com"],
-    "bug_numbers": [1622263, 1683101],
-    "expires_in_version": "92",
+    "bug_numbers": [1622263, 1683101, 1714258],
+    "expires_in_version": "95",
     "kind": "exponential",
     "high": 10000,
     "n_buckets": 100,
@@ -12612,17 +12626,6 @@
     "n_values": 6,
     "description": "1 = No SHA1 signatures, 2 = SHA1 certificates issued by an imported root, 3 = SHA1 certificates issued before 2016, 4 = SHA1 certificates issued after 2015, 5 = another error prevented successful verification"
   },
-  "CRLITE_RESULT": {
-    "record_in_processes": ["main"],
-    "products": ["firefox"],
-    "expires_in_version": "92",
-    "kind": "categorical",
-    "labels": ["FilterNotAvailable", "IssuerNotEnrolled", "CertificateTooNew", "CertificateValid", "CertificateRevoked", "LibraryFailure", "CertRevokedByStash"],
-    "description": "The result of looking up revocation information for a TLS server certificate in CRLite.",
-    "bug_numbers": [1586855, 1607765, 1670984, 1678206],
-    "releaseChannelCollection": "opt-out",
-    "alert_emails": ["dkeeler@mozilla.com", "seceng-telemetry@mozilla.com"]
-  },
   "WEAVE_START_COUNT": {
     "record_in_processes": ["main", "content"],
     "products": ["firefox", "fennec"],
@@ -13454,6 +13457,15 @@
     "description": "The safety of a page where we see a password field. (0: safe page & safe submit; 1: safe page & unsafe submit; 2: safe page & unknown submit; 3: unsafe page & safe submit; 4: unsafe page & unsafe submit; 5: unsafe page & unknown submit)",
     "record_into_store": ["main"]
   },
+  "PWMGR_NUM_IMPROVED_GENERATED_PASSWORDS": {
+    "record_in_processes": ["main"],
+    "products": ["firefox", "fennec"],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "The number of passwords generated when 'signon.improvedPasswordRules.enabled' is true. 0 = Password generated by default rules, 1 = Password generated by custom rules",
+    "alert_emails": ["tgiles@mozilla.com", "passwords-dev@mozilla.com"],
+    "bug_numbers": [1686071]
+  },
   "PWMGR_NUM_PASSWORDS_PER_HOSTNAME": {
     "record_in_processes": ["main"],
     "products": ["firefox", "fennec"],
@@ -13908,16 +13920,6 @@
     "n_values": 100,
     "releaseChannelCollection": "opt-out",
     "description": "Graphics Crash Reason (...)"
-  },
-  "SCROLL_INPUT_METHODS": {
-    "record_in_processes": ["main", "content", "gpu"],
-    "products": ["firefox"],
-    "alert_emails": ["botond@mozilla.com"],
-    "bug_numbers": [1670003, 1672576],
-    "expires_in_version": "89",
-    "kind": "enumerated",
-    "n_values": 64,
-    "description": "Count of scroll actions triggered by different input methods. See gfx/layers/apz/util/ScrollInputMethods.h for a list of possible values and their meanings."
   },
   "WEBFONT_DOWNLOAD_TIME": {
     "record_in_processes": ["main", "content"],
@@ -14809,35 +14811,6 @@
     "n_buckets": 100,
     "bug_numbers": [1341531],
     "description": "Time (ms) for the APZ handled wheel event to dispatch, but before handlers executing."
-  },
-  "INTERMEDIATE_PRELOADING_ERRORS": {
-    "record_in_processes": ["main"],
-    "products": ["firefox"],
-    "alert_emails": ["seceng-telemetry@mozilla.com", "dkeeler@mozilla.com"],
-    "expires_in_version": "92",
-    "kind": "categorical",
-    "labels": ["emptyAttachment",
-               "failedToDownloadMisc",
-               "failedToFetch",
-               "failedToObserve",
-               "failedToRemove",
-               "failedToUpdateNSS",
-               "failedToUpdateDB",
-               "unexpectedHash",
-               "unexpectedLength"],
-    "bug_numbers": [1519273, 1553550, 1678206],
-    "description": "Errors occurred during intermediate certificate preloading."
-  },
-  "INTERMEDIATE_PRELOADING_UPDATE_TIME_MS": {
-    "record_in_processes": ["main"],
-    "products": ["firefox"],
-    "alert_emails": ["seceng-telemetry@mozilla.com", "dkeeler@mozilla.com"],
-    "expires_in_version": "92",
-    "kind": "exponential",
-    "high": 180000,
-    "n_buckets": 50,
-    "bug_numbers": [1519273, 1553550, 1678206],
-    "description": "Number of milliseconds to update the pre-loaded data, if updated."
   },
   "IPC_SYNC_MESSAGE_MANAGER_LATENCY_MS": {
     "record_in_processes": ["main", "content"],
@@ -16651,6 +16624,28 @@
     "bug_numbers": [1689987],
     "alert_emails": ["necko@mozilla.com", "kershaw@mozilla.com"],
     "description": "HTTP subitem channel: ODoH lookup time (ms)"
+  },
+  "HTTP_PRELOAD_IMAGE_STARTREQUEST_DELAY": {
+    "record_in_processes": ["content"],
+    "products": ["firefox"],
+    "expires_in_version": "96",
+    "kind": "exponential",
+    "high": 5000,
+    "n_buckets": 50,
+    "bug_numbers": [1713489],
+    "alert_emails": ["necko@mozilla.com", "mwoodrow@mozilla.com"],
+    "description": "Time spent waiting on the main-thread to be available to process OnStartRequest, for image preload requests"
+  },
+  "DOCUMENT_PRELOAD_IMAGE_ASYNCOPEN_DELAY": {
+    "record_in_processes": ["content"],
+    "products": ["firefox"],
+    "expires_in_version": "96",
+    "kind": "exponential",
+    "high": 5000,
+    "n_buckets": 50,
+    "bug_numbers": [1713489],
+    "alert_emails": ["necko@mozilla.com", "mwoodrow@mozilla.com"],
+    "description": "Time spent waiting on the main-thread to be available to run AsyncOpen, for image preload requests"
   },
   "OPAQUE_RESPONSE_BLOCKING_TIME_MS" : {
     "record_in_processes": ["main"],

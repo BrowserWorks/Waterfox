@@ -70,8 +70,11 @@ TEST(TestAudioInputProcessing, UnaccountedPacketizerBuffering)
     processedTime = 0;
     nextTime = MediaTrackGraphImpl::RoundUpToEndOfAudioBlock(nrFrames);
     generator.GenerateInterleaved(buffer.Elements(), nrFrames);
-    aip->NotifyInputData(graph, buffer.Elements(), nrFrames, rate, channels,
+    aip->NotifyInputData(graph,
+                         AudioInputProcessing::BufferInfo{
+                             buffer.Elements(), nrFrames, channels, rate},
                          nextTime - nrFrames);
+    aip->ProcessInput(graph, nullptr);
     aip->Pull(graph, processedTime, nextTime, segment.GetDuration(), &segment,
               true, &ended);
     EXPECT_EQ(aip->NumBufferedFrames(graph), 24U);
@@ -87,8 +90,11 @@ TEST(TestAudioInputProcessing, UnaccountedPacketizerBuffering)
     processedTime = nextTime;
     nextTime = MediaTrackGraphImpl::RoundUpToEndOfAudioBlock(2 * nrFrames);
     generator.GenerateInterleaved(buffer.Elements(), nrFrames);
-    aip->NotifyInputData(graph, buffer.Elements(), nrFrames, rate, channels,
+    aip->NotifyInputData(graph,
+                         AudioInputProcessing::BufferInfo{
+                             buffer.Elements(), nrFrames, channels, rate},
                          nextTime - (2 * nrFrames));
+    aip->ProcessInput(graph, nullptr);
     aip->Pull(graph, processedTime, nextTime, segment.GetDuration(), &segment,
               true, &ended);
     EXPECT_EQ(aip->NumBufferedFrames(graph), 120U);

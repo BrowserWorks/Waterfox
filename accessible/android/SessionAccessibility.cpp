@@ -8,13 +8,13 @@
 #include "AndroidUiThread.h"
 #include "DocAccessibleParent.h"
 #include "nsThreadUtils.h"
+#include "AccAttributes.h"
 #include "AccessibilityEvent.h"
 #include "HyperTextAccessible.h"
 #include "JavaBuiltins.h"
 #include "RootAccessibleWrap.h"
 #include "nsAccessibilityService.h"
 #include "nsViewManager.h"
-#include "nsIPersistentProperties2.h"
 
 #include "mozilla/PresShell.h"
 #include "mozilla/dom/BrowserParent.h"
@@ -416,13 +416,11 @@ void SessionAccessibility::ReplaceFocusPathCache(
 
     if (aData.Length() == aAccessibles.Length()) {
       const BatchData& data = aData.ElementAt(i);
-      nsCOMPtr<nsIPersistentProperties> props =
-          AccessibleWrap::AttributeArrayToProperties(data.Attributes());
       auto bundle =
           acc->ToBundle(data.State(), data.Bounds(), data.ActionCount(),
                         data.Name(), data.TextValue(), data.DOMNodeID(),
                         data.Description(), data.CurValue(), data.MinValue(),
-                        data.MaxValue(), data.Step(), props);
+                        data.MaxValue(), data.Step(), data.Attributes());
       infos->SetElement(i, bundle);
     } else {
       infos->SetElement(i, acc->ToBundle());

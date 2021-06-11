@@ -368,6 +368,22 @@ void LIRGeneratorARM::lowerDivI(MDiv* div) {
   defineReturn(lir, div);
 }
 
+void LIRGeneratorARM::lowerNegI(MInstruction* ins, MDefinition* input) {
+  define(new (alloc()) LNegI(useRegisterAtStart(input)), ins);
+}
+
+void LIRGeneratorARM::lowerNegI64(MInstruction* ins, MDefinition* input) {
+  // Reuse the input.  Define + use-at-start would create risk that the output
+  // uses the same register pair as the input but in reverse order.  Reusing
+  // probably has less spilling than the alternative, define + use.
+  defineInt64ReuseInput(new (alloc()) LNegI64(useInt64RegisterAtStart(input)),
+                        ins, 0);
+}
+
+void LIRGenerator::visitAbs(MAbs* ins) {
+  define(allocateAbs(ins, useRegisterAtStart(ins->input())), ins);
+}
+
 void LIRGeneratorARM::lowerMulI(MMul* mul, MDefinition* lhs, MDefinition* rhs) {
   LMulI* lir = new (alloc()) LMulI;
   if (mul->fallible()) {
@@ -480,6 +496,20 @@ void LIRGenerator::visitPowHalf(MPowHalf* ins) {
   MOZ_ASSERT(input->type() == MIRType::Double);
   LPowHalfD* lir = new (alloc()) LPowHalfD(useRegisterAtStart(input));
   defineReuseInput(lir, ins, 0);
+}
+
+void LIRGeneratorARM::lowerWasmSelectI(MWasmSelect* select) {
+  auto* lir = new (alloc())
+      LWasmSelect(useRegisterAtStart(select->trueExpr()),
+                  useAny(select->falseExpr()), useRegister(select->condExpr()));
+  defineReuseInput(lir, select, LWasmSelect::TrueExprIndex);
+}
+
+void LIRGeneratorARM::lowerWasmSelectI64(MWasmSelect* select) {
+  auto* lir = new (alloc()) LWasmSelectI64(
+      useInt64RegisterAtStart(select->trueExpr()),
+      useInt64(select->falseExpr()), useRegister(select->condExpr()));
+  defineInt64ReuseInput(lir, select, LWasmSelectI64::TrueExprIndex);
 }
 
 LTableSwitch* LIRGeneratorARM::newLTableSwitch(const LAllocation& in,
@@ -1167,6 +1197,13 @@ void LIRGenerator::visitWasmBitselectSimd128(MWasmBitselectSimd128* ins) {
 void LIRGenerator::visitWasmBinarySimd128(MWasmBinarySimd128* ins) {
   MOZ_CRASH("binary SIMD NYI");
 }
+
+#ifdef ENABLE_WASM_SIMD
+bool MWasmBitselectSimd128::specializeConstantMaskAsShuffle(
+    int8_t shuffle[16]) {
+  return false;
+}
+#endif
 
 bool MWasmBinarySimd128::specializeForConstantRhs() {
   // Probably many we want to do here

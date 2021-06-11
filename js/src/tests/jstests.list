@@ -53,7 +53,6 @@ skip-if(!this.hasOwnProperty("Intl")) include test262/intl402/jstests.list
 skip-if(!this.hasOwnProperty("Atomics")) include test262/built-ins/Atomics/jstests.list
 skip-if(!this.hasOwnProperty("SharedArrayBuffer")) include test262/built-ins/SharedArrayBuffer/jstests.list
 
-
 #####################################
 # Test262 tests disabled on browser #
 #####################################
@@ -653,6 +652,9 @@ skip script test262/intl402/DisplayNames/locales-length-poison-throws.js
 skip script test262/built-ins/TypedArrayConstructors/internals/DefineOwnProperty/BigInt/tonumber-value-detached-buffer.js
 skip script test262/built-ins/TypedArrayConstructors/internals/DefineOwnProperty/tonumber-value-detached-buffer.js
 
+# Tests not yet updated for https://github.com/tc39/intl-displaynames-v2
+skip script test262/intl402/DisplayNames/prototype/resolvedOptions/return-object.js
+
 
 ##############################################
 # Enable Iterator Helpers tests in the shell #
@@ -1015,3 +1017,4 @@ shell-option(--enable-iterator-helpers) script non262/Iterator/prototype/take/le
 shell-option(--enable-iterator-helpers) script non262/Iterator/prototype/take/name.js
 shell-option(--enable-iterator-helpers) script non262/Iterator/prototype/take/take.js
 shell-option(--enable-iterator-helpers) script non262/Iterator/prototype/take/take-more-than-available.js
+

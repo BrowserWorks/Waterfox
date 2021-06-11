@@ -10,6 +10,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/RangeBoundary.h"
 #include "mozilla/Result.h"
 #include "mozilla/dom/Document.h"
 #include "nsCOMPtr.h"
@@ -22,7 +23,7 @@ class nsRange;
 class nsINode;
 
 namespace mozilla {
-class TextEditor;
+class EditorBase;
 
 namespace dom {
 class Document;
@@ -41,6 +42,8 @@ struct NodeOffset {
     return mNode == aOther.mNode && mOffset == aOther.mOffset;
   }
 
+  bool operator==(const mozilla::RangeBoundary& aRangeBoundary) const;
+
   bool operator!=(const NodeOffset& aOther) const { return !(*this == aOther); }
 
   nsINode* Node() const { return mNode.get(); }
@@ -56,6 +59,8 @@ class NodeOffsetRange {
   NodeOffsetRange() {}
   NodeOffsetRange(NodeOffset b, NodeOffset e)
       : mBegin(std::move(b)), mEnd(std::move(e)) {}
+
+  bool operator==(const nsRange& aRange) const;
 
   const NodeOffset& Begin() const { return mBegin; }
 
@@ -84,7 +89,7 @@ class NodeOffsetRange {
 class MOZ_STACK_CLASS mozInlineSpellWordUtil {
  public:
   static mozilla::Maybe<mozInlineSpellWordUtil> Create(
-      const mozilla::TextEditor& aTextEditor);
+      const mozilla::EditorBase& aEditorBase);
 
   // sets the current position, this should be inside the range. If we are in
   // the middle of a word, we'll move to its start.
@@ -108,12 +113,17 @@ class MOZ_STACK_CLASS mozInlineSpellWordUtil {
                      nsRange** aRange) const;
   static already_AddRefed<nsRange> MakeRange(const NodeOffsetRange& aRange);
 
+  struct Word {
+    nsAutoString mText;
+    NodeOffsetRange mNodeOffsetRange;
+    bool mSkipChecking = false;
+  };
+
   // Moves to the the next word in the range, and retrieves it's text and range.
-  // false is returned when we are done checking.
-  // aSkipChecking will be set if the word is "special" and shouldn't be
+  // `false` is returned when we are done checking.
+  // mSkipChecking will be set if the word is "special" and shouldn't be
   // checked (e.g., an email address).
-  bool GetNextWord(nsAString& aText, NodeOffsetRange* aNodeOffsetRange,
-                   bool* aSkipChecking);
+  bool GetNextWord(Word& aWord);
 
   // Call to normalize some punctuation. This function takes an autostring
   // so we can access characters directly.

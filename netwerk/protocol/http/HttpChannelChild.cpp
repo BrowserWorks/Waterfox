@@ -362,9 +362,20 @@ void HttpChannelChild::ProcessOnStartRequest(
   LOG(("HttpChannelChild::ProcessOnStartRequest [this=%p]\n", this));
   MOZ_ASSERT(OnSocketThread());
 
+  TimeStamp start = TimeStamp::Now();
+
   mEventQ->RunOrEnqueue(new NeckoTargetChannelFunctionEvent(
       this, [self = UnsafePtr<HttpChannelChild>(this), aResponseHead,
-             aUseResponseHead, aRequestHeaders, aArgs]() {
+             aUseResponseHead, aRequestHeaders, aArgs, start]() {
+#ifdef NIGHTLY_BUILD
+        if (self->mLoadFlags & nsIRequest::LOAD_RECORD_START_REQUEST_DELAY) {
+          TimeDuration delay = TimeStamp::Now() - start;
+          Telemetry::Accumulate(
+              Telemetry::HTTP_PRELOAD_IMAGE_STARTREQUEST_DELAY,
+              static_cast<uint32_t>(delay.ToMilliseconds()));
+        }
+#endif
+
         self->OnStartRequest(aResponseHead, aUseResponseHead, aRequestHeaders,
                              aArgs);
       }));
@@ -409,8 +420,9 @@ void HttpChannelChild::OnStartRequest(
   MOZ_ASSERT(!aRequestHeaders.HasHeader(nsHttp::Cookie));
   MOZ_ASSERT(!nsHttpResponseHead(aResponseHead).HasHeader(nsHttp::Set_Cookie));
 
-  if (aUseResponseHead && !mCanceled)
+  if (aUseResponseHead && !mCanceled) {
     mResponseHead = MakeUnique<nsHttpResponseHead>(aResponseHead);
+  }
 
   if (!aArgs.securityInfoSerialization().IsEmpty()) {
     [[maybe_unused]] nsresult rv = NS_DeserializeObject(
@@ -489,18 +501,9 @@ void HttpChannelChild::OnStartRequest(
   }
 
   // Remember whether HTTP3 is supported
-  if (mResponseHead && (mResponseHead->Version() == HttpVersion::v2_0) &&
-      (mResponseHead->Status() < 500) && (mResponseHead->Status() != 421)) {
-    nsAutoCString altSvc;
-    Unused << mResponseHead->GetHeader(nsHttp::Alternate_Service, altSvc);
-    if (!altSvc.IsEmpty() || nsHttp::IsReasonableHeaderValue(altSvc)) {
-      for (uint32_t i = 0; i < kHttp3VersionCount; i++) {
-        if (PL_strstr(altSvc.get(), kHttp3Versions[i].get())) {
-          mSupportsHTTP3 = true;
-          break;
-        }
-      }
-    }
+  if (mResponseHead) {
+    mSupportsHTTP3 =
+        nsHttpHandler::IsHttp3SupportedByServer(mResponseHead.get());
   }
 
   DoOnStartRequest(this, nullptr);
@@ -1797,10 +1800,11 @@ HttpChannelChild::OnRedirectVerifyCallback(nsresult aResult) {
     targetLoadInfoForwarder.emplace(args);
   }
 
-  if (CanSend())
+  if (CanSend()) {
     SendRedirect2Verify(aResult, *headerTuples, sourceRequestBlockingReason,
                         targetLoadInfoForwarder, loadFlags, referrerInfo,
                         redirectURI, corsPreflightArgs);
+  }
 
   return NS_OK;
 }

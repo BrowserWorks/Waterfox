@@ -122,7 +122,6 @@ class GlobalObject : public NativeObject {
     FOR_OF_PIC_CHAIN,
     WINDOW_PROXY,
     GLOBAL_THIS_RESOLVED,
-    INSTRUMENTATION,
     SOURCE_URLS,
     REALM_KEY_OBJECT,
     ARRAY_SHAPE,
@@ -750,7 +749,7 @@ class GlobalObject : public NativeObject {
     }
 
     NativeObject* holder = &slot.toObject().as<NativeObject>();
-    mozilla::Maybe<ShapeProperty> prop = holder->lookupPure(name);
+    mozilla::Maybe<PropertyInfo> prop = holder->lookupPure(name);
     if (prop.isNothing()) {
       *vp = UndefinedValue();
       return false;
@@ -769,7 +768,7 @@ class GlobalObject : public NativeObject {
       return false;
     }
 
-    if (mozilla::Maybe<ShapeProperty> prop = holder->lookup(cx, name)) {
+    if (mozilla::Maybe<PropertyInfo> prop = holder->lookup(cx, name)) {
       vp.set(holder->getSlot(prop->slot()));
       *exists = true;
     } else {
@@ -882,15 +881,6 @@ class GlobalObject : public NativeObject {
   }
   void setWindowProxy(JSObject* windowProxy) {
     setReservedSlot(WINDOW_PROXY, ObjectValue(*windowProxy));
-  }
-
-  JSObject* getInstrumentationHolder() const {
-    Value v = getReservedSlot(INSTRUMENTATION);
-    MOZ_ASSERT(v.isObject() || v.isUndefined());
-    return v.isObject() ? &v.toObject() : nullptr;
-  }
-  void setInstrumentationHolder(JSObject* instrumentation) {
-    setReservedSlot(INSTRUMENTATION, ObjectValue(*instrumentation));
   }
 
   JSObject* getSourceURLsHolder() const {

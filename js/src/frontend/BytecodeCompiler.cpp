@@ -134,9 +134,9 @@ class MOZ_STACK_CLASS frontend::SourceAwareCompiler {
 
   bool canHandleParseFailure(const Directives& newDirectives);
 
-  void handleParseFailure(const Directives& newDirectives,
-                          TokenStreamPosition& startPosition,
-                          CompilationState::CompilationStatePosition& startStatePosition);
+  void handleParseFailure(
+      const Directives& newDirectives, TokenStreamPosition& startPosition,
+      CompilationState::CompilationStatePosition& startStatePosition);
 
  public:
   CompilationState& compilationState() { return compilationState_; };
@@ -1099,6 +1099,8 @@ static bool DelazifyCanonicalScriptedFunctionImpl(JSContext* cx,
                                                   ScriptSource* ss) {
   MOZ_ASSERT(!lazy->hasBytecode(), "Script is already compiled!");
   MOZ_ASSERT(lazy->function() == fun);
+
+  MOZ_DIAGNOSTIC_ASSERT(!fun->isGhost());
 
   AutoIncrementalTimer timer(cx->realm()->timers.delazificationTime);
 

@@ -915,7 +915,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleText {
   mozilla::StyleColor mWebkitTextFillColor;
   mozilla::StyleColor mWebkitTextStrokeColor;
 
-  mozilla::StyleNonNegativeLengthOrNumber mMozTabSize;
+  mozilla::StyleNonNegativeLengthOrNumber mTabSize;
   mozilla::LengthPercentage mWordSpacing;
   mozilla::StyleLetterSpacing mLetterSpacing;
   mozilla::StyleLineHeight mLineHeight;
@@ -1923,6 +1923,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleSVGReset {
 
   mozilla::StyleVectorEffect mVectorEffect;
   mozilla::StyleMaskType mMaskType;
+
+  mozilla::StyleDProperty mD;
 };
 
 struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleEffects {

@@ -187,6 +187,7 @@ struct nsFont;
 namespace mozilla {
 class AbstractThread;
 class StyleSheet;
+class EditorBase;
 class EditorCommand;
 class Encoding;
 class ErrorResult;
@@ -204,7 +205,6 @@ class SMILAnimationController;
 enum class StyleCursorKind : uint8_t;
 enum class StylePrefersColorScheme : uint8_t;
 enum class StyleRuleChangeKind : uint32_t;
-class TextEditor;
 template <typename>
 class OwningNonNull;
 struct URLExtraData;
@@ -302,6 +302,7 @@ enum BFCacheStatus {
   CONTAINS_REMOTE_SUBFRAMES = 1 << 11,   // Status 11
   NOT_ONLY_TOPLEVEL_IN_BCG = 1 << 12,    // Status 12
   ABOUT_PAGE = 1 << 13,                  // Status 13
+  RESTORING = 1 << 14,                   // Status 14
 };
 
 }  // namespace dom
@@ -732,8 +733,8 @@ class Document : public nsINode,
 
   // nsINode
   bool IsNodeOfType(uint32_t aFlags) const final;
-  nsresult InsertChildBefore(nsIContent* aKid, nsIContent* aBeforeThis,
-                             bool aNotify) override;
+  void InsertChildBefore(nsIContent* aKid, nsIContent* aBeforeThis,
+                         bool aNotify, ErrorResult& aRv) override;
   void RemoveChildNode(nsIContent* aKid, bool aNotify) final;
   nsresult Clone(dom::NodeInfo* aNodeInfo, nsINode** aResult) const override {
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1048,7 +1049,7 @@ class Document : public nsINode,
    */
   void SetIsInitialDocument(bool aIsInitialDocument);
 
-  void SetLoadedAsData(bool aLoadedAsData) { mLoadedAsData = aLoadedAsData; }
+  void SetLoadedAsData(bool aLoadedAsData, bool aConsiderForMemoryReporting);
 
   /**
    * Normally we assert if a runnable labeled with one DocGroup touches data
@@ -1514,6 +1515,8 @@ class Document : public nsINode,
   void AddMediaElementWithMSE();
   void RemoveMediaElementWithMSE();
 
+  void DoNotifyPossibleTitleChange();
+
  protected:
   friend class nsUnblockOnloadEvent;
 
@@ -1545,7 +1548,6 @@ class Document : public nsINode,
   void DestroyElementMaps();
 
   Element* GetRootElementInternal() const;
-  void DoNotifyPossibleTitleChange();
 
   void SetPageUnloadingEventTimeStamp() {
     MOZ_ASSERT(!mPageUnloadingEventTimeStamp);
@@ -2513,11 +2515,16 @@ class Document : public nsINode,
 
     return !NodePrincipal()->SchemeIs("http") &&
            !NodePrincipal()->SchemeIs("https") &&
-           !NodePrincipal()->SchemeIs("ftp") &&
            !NodePrincipal()->SchemeIs("file");
   }
 
   bool IsLoadedAsData() { return mLoadedAsData; }
+
+  void SetAddedToMemoryReportAsDataDocument() {
+    mAddedToMemoryReportingAsDataDocument = true;
+  }
+
+  void UnregisterFromMemoryReportingForDataDocument();
 
   bool MayStartLayout() { return mMayStartLayout; }
 
@@ -2931,7 +2938,7 @@ class Document : public nsINode,
    */
   void MaybePreLoadImage(nsIURI* uri, const nsAString& aCrossOriginAttr,
                          ReferrerPolicyEnum aReferrerPolicy, bool aIsImgSet,
-                         bool aLinkPreload);
+                         bool aLinkPreload, const TimeStamp& aInitTimestamp);
   void PreLoadImage(nsIURI* uri, const nsAString& aCrossOriginAttr,
                     ReferrerPolicyEnum aReferrerPolicy, bool aIsImgSet,
                     bool aLinkPreload);
@@ -4187,9 +4194,9 @@ class Document : public nsINode,
 
    private:
     // The returned editor's life is guaranteed while this instance is alive.
-    TextEditor* GetTargetEditor() const;
+    EditorBase* GetTargetEditor() const;
 
-    RefPtr<TextEditor> mActiveEditor;
+    RefPtr<EditorBase> mActiveEditor;
     RefPtr<HTMLEditor> mHTMLEditor;
     RefPtr<EditorCommand> mEditorCommand;
     const InternalCommandData& mCommandData;
@@ -4485,6 +4492,10 @@ class Document : public nsINode,
   // True if we're loaded as data and therefor has any dangerous stuff, such
   // as scripts and plugins, disabled.
   bool mLoadedAsData : 1;
+
+  // True if the document is considered for memory reporting as a
+  // data document
+  bool mAddedToMemoryReportingAsDataDocument : 1;
 
   // If true, whoever is creating the document has gotten it to the
   // point where it's safe to start layout on it.

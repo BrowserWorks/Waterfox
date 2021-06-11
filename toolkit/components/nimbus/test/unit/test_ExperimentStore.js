@@ -1,8 +1,5 @@
 "use strict";
 
-const SYNC_DATA_PREF_BRANCH = "nimbus.syncdatastore.";
-const SYNC_DEFAULTS_PREF_BRANCH = "nimbus.syncdefaultsstore.";
-
 const { ExperimentFakes } = ChromeUtils.import(
   "resource://testing-common/NimbusTestUtils.jsm"
 );
@@ -10,15 +7,8 @@ const { ExperimentStore } = ChromeUtils.import(
   "resource://nimbus/lib/ExperimentStore.jsm"
 );
 
-// Experiment store caches in prefs Enrollments for fast sync access
-function cleanupStorePrefCache() {
-  try {
-    Services.prefs.deleteBranch(SYNC_DATA_PREF_BRANCH);
-    Services.prefs.deleteBranch(SYNC_DEFAULTS_PREF_BRANCH);
-  } catch (e) {
-    // Expected if nothing is cached
-  }
-}
+const { SYNC_DATA_PREF_BRANCH, SYNC_DEFAULTS_PREF_BRANCH } = ExperimentStore;
+const { cleanupStorePrefCache } = ExperimentFakes;
 
 add_task(async function test_sharedDataMap_key() {
   const store = new ExperimentStore();
@@ -301,6 +291,26 @@ add_task(async function test_sync_features_only() {
   store = ExperimentFakes.store();
 
   Assert.equal(store.getAll().length, 0, "cfr is not a sync access experiment");
+});
+
+add_task(async function test_sync_features_remotely() {
+  cleanupStorePrefCache();
+
+  let store = ExperimentFakes.store();
+  let experiment = ExperimentFakes.experiment("foo", {
+    feature: { featureId: "cfr", enabled: true, isEarlyStartup: true },
+  });
+
+  await store.init();
+
+  store.addExperiment(experiment);
+  store = ExperimentFakes.store();
+
+  Assert.ok(
+    Services.prefs.prefHasUserValue("nimbus.syncdatastore.cfr"),
+    "The cfr feature was stored as early access in prefs"
+  );
+  Assert.equal(store.getAll().length, 0, "Featre restored from prefs");
 });
 
 add_task(async function test_sync_access_unenroll() {

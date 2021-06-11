@@ -270,6 +270,12 @@ opt = args.jemalloc
 if opt is not None:
     CONFIGURE_ARGS += " --enable-jemalloc" if opt else " --disable-jemalloc"
 
+# By default, we build with NSPR, even if not specified. But we actively allow
+# builds to disable NSPR.
+opt = variant.get("nspr")
+if opt is None or opt:
+    CONFIGURE_ARGS += " --enable-nspr-build"
+
 # Some of the variants request a particular word size (eg ARM simulators).
 word_bits = variant.get("bits")
 
@@ -448,14 +454,13 @@ if use_minidump:
 
 
 mozconfig = os.path.join(DIR.source, "mozconfig.autospider")
-CONFIGURE_ARGS += " --enable-nspr-build"
 CONFIGURE_ARGS += " --prefix={OBJDIR}/dist".format(OBJDIR=quote(OBJDIR))
 
 # Generate a mozconfig.
 with open(mozconfig, "wt") as fh:
     if AUTOMATION and platform.system() == "Windows":
         fh.write('. "$topsrcdir/build/%s/mozconfig.vs-latest"\n' % variant_platform)
-    fh.write("ac_add_options --with-project=js\n")
+    fh.write("ac_add_options --enable-project=js\n")
     fh.write("ac_add_options " + CONFIGURE_ARGS + "\n")
     fh.write("mk_add_options MOZ_OBJDIR=" + quote(OBJDIR) + "\n")
 
@@ -646,7 +651,7 @@ if args.variant == "msan":
 
 # Generate stacks from minidumps.
 if use_minidump:
-    venv_python = os.path.join(OBJDIR, "_virtualenvs", "init_py3", "bin", "python3")
+    venv_python = os.path.join(OBJDIR, "_virtualenvs", "common", "bin", "python3")
     run_command(
         [
             venv_python,

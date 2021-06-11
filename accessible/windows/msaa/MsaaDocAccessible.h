@@ -14,6 +14,7 @@ namespace mozilla {
 namespace a11y {
 class Accessible;
 class DocAccessible;
+class DocAccessibleParent;
 
 class MsaaDocAccessible : public ia2AccessibleHypertext {
  public:
@@ -38,15 +39,21 @@ class MsaaDocAccessible : public ia2AccessibleHypertext {
   /**
    * Manage the mapping from id to Accessible.
    */
-  void AddID(uint32_t aID, AccessibleWrap* aAcc) {
+  void AddID(uint32_t aID, Accessible* aAcc) {
     mIDToAccessibleMap.InsertOrUpdate(aID, aAcc);
   }
   void RemoveID(uint32_t aID) { mIDToAccessibleMap.Remove(aID); }
-  AccessibleWrap* GetAccessibleByID(uint32_t aID) const {
+  Accessible* GetAccessibleByID(uint32_t aID) const {
     return mIDToAccessibleMap.Get(aID);
   }
 
   static MsaaDocAccessible* GetFrom(DocAccessible* aDoc);
+  static MsaaDocAccessible* GetFrom(DocAccessibleParent* aDoc);
+
+  /**
+   * Get the MsaaDocAccessible for the document which owns the given Accessible.
+   */
+  static MsaaDocAccessible* GetFromOwned(Accessible* aAcc);
 
  protected:
   using ia2AccessibleHypertext::ia2AccessibleHypertext;
@@ -54,7 +61,7 @@ class MsaaDocAccessible : public ia2AccessibleHypertext {
   /*
    * This provides a mapping from 32 bit id to accessible objects.
    */
-  nsTHashMap<nsUint32HashKey, AccessibleWrap*> mIDToAccessibleMap;
+  nsTHashMap<nsUint32HashKey, Accessible*> mIDToAccessibleMap;
 };
 
 }  // namespace a11y

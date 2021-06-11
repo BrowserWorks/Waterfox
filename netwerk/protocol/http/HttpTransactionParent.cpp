@@ -33,7 +33,7 @@ NS_INTERFACE_MAP_END
 NS_IMETHODIMP_(MozExternalRefCountType) HttpTransactionParent::Release(void) {
   MOZ_ASSERT(int32_t(mRefCnt) > 0, "dup release");
 
-  if (!mRefCnt.isThreadSafe) {
+  if (!::mozilla::ThreadSafeAutoRefCnt::isThreadSafe) {
     NS_ASSERT_OWNINGTHREAD(HttpTransactionParent);
   }
 
@@ -353,7 +353,7 @@ mozilla::TimeStamp HttpTransactionParent::GetResponseEnd() {
   return mTimings.responseEnd;
 }
 
-const TimingStruct HttpTransactionParent::Timings() { return mTimings; }
+TimingStruct HttpTransactionParent::Timings() { return mTimings; }
 
 bool HttpTransactionParent::ResponseIsComplete() { return mResponseIsComplete; }
 

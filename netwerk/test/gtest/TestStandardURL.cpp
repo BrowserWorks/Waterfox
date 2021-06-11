@@ -11,6 +11,9 @@
 #include "nsIURIMutator.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/Unused.h"
+#include "nsSerializationHelper.h"
+#include "mozilla/Base64.h"
+#include "nsEscape.h"
 
 // In nsStandardURL.cpp
 extern nsresult Test_NormalizeIPv4(const nsACString& host, nsCString& result);
@@ -189,8 +192,8 @@ TEST(TestStandardURL, NormalizeBad)
       "2.2.2.256",     "2.2.-2.3",      "+2.2.2.3",        "13.0x2x2.2.3",
       "0x2x2.13.2.3"};
 
-  for (uint32_t i = 0; i < sizeof(manual) / sizeof(manual[0]); i++) {
-    nsCString encHost(manual[i]);
+  for (auto& i : manual) {
+    nsCString encHost(i);
     ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost, result));
   }
 }
@@ -223,8 +226,8 @@ TEST(TestStandardURL, From_test_standardurldotjs)
       "0X7F000001",
       "0X007F.0X0000.0X0000.0X0001",
       "000177.0.00000.0X0001"};
-  for (uint32_t i = 0; i < sizeof(localIPv4s) / sizeof(localIPv4s[0]); i++) {
-    nsCString encHost(localIPv4s[i]);
+  for (auto& localIPv4 : localIPv4s) {
+    nsCString encHost(localIPv4);
     ASSERT_EQ(NS_OK, Test_NormalizeIPv4(encHost, result));
     ASSERT_TRUE(result.EqualsLiteral("127.0.0.1"));
   }
@@ -237,8 +240,8 @@ TEST(TestStandardURL, From_test_standardurldotjs)
                             "2+3",         "0.0.0.-1",
                             "1.2.3.4..",   "1..2",
                             ".1.2.3.4"};
-  for (uint32_t i = 0; i < sizeof(nonIPv4s) / sizeof(nonIPv4s[0]); i++) {
-    nsCString encHost(nonIPv4s[i]);
+  for (auto& nonIPv4 : nonIPv4s) {
+    nsCString encHost(nonIPv4);
     ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost, result));
   }
 }
@@ -356,4 +359,51 @@ TEST(TestStandardURL, Deserialize_Bug1392739)
   nsCOMPtr<nsIURIMutator> mutator =
       do_CreateInstance(NS_STANDARDURLMUTATOR_CID);
   ASSERT_EQ(mutator->Deserialize(params), NS_ERROR_FAILURE);
+}
+
+TEST(TestStandardURL, CorruptSerialization)
+{
+  auto spec = "http://user:pass@example.com/path/to/file.ext?query#hash"_ns;
+
+  nsCOMPtr<nsIURI> uri;
+  nsresult rv = NS_MutateURI(NS_STANDARDURLMUTATOR_CONTRACTID)
+                    .SetSpec(spec)
+                    .Finalize(uri);
+  ASSERT_EQ(rv, NS_OK);
+
+  nsAutoCString serialization;
+  nsCOMPtr<nsISerializable> serializable = do_QueryInterface(uri);
+  ASSERT_TRUE(serializable);
+
+  // Check that the URL is normally serializable.
+  ASSERT_EQ(NS_OK, NS_SerializeToString(serializable, serialization));
+  nsCOMPtr<nsISupports> deserializedObject;
+  ASSERT_EQ(NS_OK, NS_DeserializeObject(serialization,
+                                        getter_AddRefs(deserializedObject)));
+
+  nsAutoCString canonicalBin;
+  Unused << Base64Decode(serialization, canonicalBin);
+
+// The spec serialization begins at byte 49
+// If the implementation of nsStandardURL::Write changes, this test will need
+// to be adjusted.
+#define SPEC_OFFSET 49
+
+  ASSERT_EQ(Substring(canonicalBin, SPEC_OFFSET, 7), "http://"_ns);
+
+  nsAutoCString corruptedBin = canonicalBin;
+  // change mScheme.mPos
+  corruptedBin.BeginWriting()[SPEC_OFFSET + spec.Length()] = 1;
+  Unused << Base64Encode(corruptedBin, serialization);
+  ASSERT_EQ(
+      NS_ERROR_MALFORMED_URI,
+      NS_DeserializeObject(serialization, getter_AddRefs(deserializedObject)));
+
+  corruptedBin = canonicalBin;
+  // change mScheme.mLen
+  corruptedBin.BeginWriting()[SPEC_OFFSET + spec.Length() + 4] = 127;
+  Unused << Base64Encode(corruptedBin, serialization);
+  ASSERT_EQ(
+      NS_ERROR_MALFORMED_URI,
+      NS_DeserializeObject(serialization, getter_AddRefs(deserializedObject)));
 }

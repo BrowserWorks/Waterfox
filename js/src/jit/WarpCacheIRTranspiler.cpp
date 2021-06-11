@@ -156,6 +156,9 @@ class MOZ_RAII WarpCacheIRTranspiler : public WarpBuilderShared {
   const wasm::FuncExport* wasmFuncExportField(uint32_t offset) {
     return reinterpret_cast<const wasm::FuncExport*>(readStubWord(offset));
   }
+  gc::AllocSite* allocSiteStubField(uint32_t offset) {
+    return reinterpret_cast<gc::AllocSite*>(readStubWord(offset));
+  }
   const void* rawPointerField(uint32_t offset) {
     return reinterpret_cast<const void*>(readStubWord(offset));
   }
@@ -213,6 +216,8 @@ class MOZ_RAII WarpCacheIRTranspiler : public WarpBuilderShared {
   [[nodiscard]] bool emitCompareResult(JSOp op, OperandId lhsId,
                                        OperandId rhsId,
                                        MCompare::CompareType compareType);
+
+  [[nodiscard]] bool emitTruthyResult(OperandId inputId);
 
   [[nodiscard]] bool emitNewIteratorResult(MNewIterator::Type type,
                                            uint32_t templateObjectOffset);
@@ -503,7 +508,7 @@ bool WarpCacheIRTranspiler::emitProxySet(ObjOperandId objId, uint32_t idOffset,
   jsid id = idStubField(idOffset);
   MDefinition* rhs = getOperand(rhsId);
 
-  auto* ins = MProxySet::New(alloc(), obj, id, rhs, strict);
+  auto* ins = MProxySet::New(alloc(), obj, rhs, id, strict);
   addEffectful(ins);
 
   return resumeAfter(ins);
@@ -658,7 +663,7 @@ bool WarpCacheIRTranspiler::emitMegamorphicStoreSlot(ObjOperandId objId,
   PropertyName* name = stringStubField(nameOffset)->asAtom().asPropertyName();
   MDefinition* rhs = getOperand(rhsId);
 
-  auto* ins = MMegamorphicStoreSlot::New(alloc(), obj, name, rhs);
+  auto* ins = MMegamorphicStoreSlot::New(alloc(), obj, rhs, name);
   addEffectful(ins);
 
   return resumeAfter(ins);
@@ -1807,13 +1812,13 @@ bool WarpCacheIRTranspiler::emitLoadTypedArrayElementExistsResult(
 
 bool WarpCacheIRTranspiler::emitLoadTypedArrayElementResult(
     ObjOperandId objId, IntPtrOperandId indexId, Scalar::Type elementType,
-    bool handleOOB, bool allowDoubleForUint32) {
+    bool handleOOB, bool forceDoubleForUint32) {
   MDefinition* obj = getOperand(objId);
   MDefinition* index = getOperand(indexId);
 
   if (handleOOB) {
     auto* load = MLoadTypedArrayElementHole::New(
-        alloc(), obj, index, elementType, allowDoubleForUint32);
+        alloc(), obj, index, elementType, forceDoubleForUint32);
     add(load);
 
     pushResult(load);
@@ -1830,7 +1835,7 @@ bool WarpCacheIRTranspiler::emitLoadTypedArrayElementResult(
 
   auto* load = MLoadUnboxedScalar::New(alloc(), elements, index, elementType);
   load->setResultType(
-      MIRTypeForArrayBufferViewRead(elementType, allowDoubleForUint32));
+      MIRTypeForArrayBufferViewRead(elementType, forceDoubleForUint32));
   add(load);
 
   pushResult(load);
@@ -2162,7 +2167,7 @@ void WarpCacheIRTranspiler::addDataViewData(MDefinition* obj, Scalar::Type type,
 bool WarpCacheIRTranspiler::emitLoadDataViewValueResult(
     ObjOperandId objId, IntPtrOperandId offsetId,
     BooleanOperandId littleEndianId, Scalar::Type elementType,
-    bool allowDoubleForUint32) {
+    bool forceDoubleForUint32) {
   MDefinition* obj = getOperand(objId);
   MDefinition* offset = getOperand(offsetId);
   MDefinition* littleEndian = getOperand(littleEndianId);
@@ -2182,7 +2187,7 @@ bool WarpCacheIRTranspiler::emitLoadDataViewValueResult(
   add(load);
 
   MIRType knownType =
-      MIRTypeForArrayBufferViewRead(elementType, allowDoubleForUint32);
+      MIRTypeForArrayBufferViewRead(elementType, forceDoubleForUint32);
   load->setResultType(knownType);
 
   pushResult(load);
@@ -2418,11 +2423,11 @@ bool WarpCacheIRTranspiler::emitInt32RightShiftResult(Int32OperandId lhsId,
 
 bool WarpCacheIRTranspiler::emitInt32URightShiftResult(Int32OperandId lhsId,
                                                        Int32OperandId rhsId,
-                                                       bool allowDouble) {
+                                                       bool forceDouble) {
   MDefinition* lhs = getOperand(lhsId);
   MDefinition* rhs = getOperand(rhsId);
 
-  MIRType specialization = allowDouble ? MIRType::Double : MIRType::Int32;
+  MIRType specialization = forceDouble ? MIRType::Double : MIRType::Int32;
   auto* ins = MUrsh::New(alloc(), lhs, rhs, specialization);
   add(ins);
 
@@ -3572,7 +3577,7 @@ bool WarpCacheIRTranspiler::emitNewArrayFromLengthResult(
     }
   }
 
-  auto* obj = MNewArrayDynamicLength::New(alloc(), templateObj, heap, length);
+  auto* obj = MNewArrayDynamicLength::New(alloc(), length, templateObj, heap);
   addEffectful(obj);
   pushResult(obj);
   return resumeAfter(obj);
@@ -3599,7 +3604,7 @@ bool WarpCacheIRTranspiler::emitNewTypedArrayFromLengthResult(
   }
 
   auto* obj =
-      MNewTypedArrayDynamicLength::New(alloc(), templateObj, heap, length);
+      MNewTypedArrayDynamicLength::New(alloc(), length, templateObj, heap);
   addEffectful(obj);
   pushResult(obj);
   return resumeAfter(obj);
@@ -3616,8 +3621,8 @@ bool WarpCacheIRTranspiler::emitNewTypedArrayFromArrayBufferResult(
   // TODO: support pre-tenuring.
   gc::InitialHeap heap = gc::DefaultHeap;
 
-  auto* obj = MNewTypedArrayFromArrayBuffer::New(alloc(), templateObj, heap,
-                                                 buffer, byteOffset, length);
+  auto* obj = MNewTypedArrayFromArrayBuffer::New(alloc(), buffer, byteOffset,
+                                                 length, templateObj, heap);
   addEffectful(obj);
 
   pushResult(obj);
@@ -3632,7 +3637,7 @@ bool WarpCacheIRTranspiler::emitNewTypedArrayFromArrayResult(
   // TODO: support pre-tenuring.
   gc::InitialHeap heap = gc::DefaultHeap;
 
-  auto* obj = MNewTypedArrayFromArray::New(alloc(), templateObj, heap, array);
+  auto* obj = MNewTypedArrayFromArray::New(alloc(), array, templateObj, heap);
   addEffectful(obj);
 
   pushResult(obj);
@@ -3655,9 +3660,9 @@ bool WarpCacheIRTranspiler::emitAtomicsCompareExchangeResult(
   auto* elements = MArrayBufferViewElements::New(alloc(), obj);
   add(elements);
 
-  bool allowDoubleForUint32 = true;
+  bool forceDoubleForUint32 = true;
   MIRType knownType =
-      MIRTypeForArrayBufferViewRead(elementType, allowDoubleForUint32);
+      MIRTypeForArrayBufferViewRead(elementType, forceDoubleForUint32);
 
   auto* cas = MCompareExchangeTypedArrayElement::New(
       alloc(), elements, index, elementType, expected, replacement);
@@ -3683,9 +3688,9 @@ bool WarpCacheIRTranspiler::emitAtomicsExchangeResult(
   auto* elements = MArrayBufferViewElements::New(alloc(), obj);
   add(elements);
 
-  bool allowDoubleForUint32 = true;
+  bool forceDoubleForUint32 = true;
   MIRType knownType =
-      MIRTypeForArrayBufferViewRead(elementType, allowDoubleForUint32);
+      MIRTypeForArrayBufferViewRead(elementType, forceDoubleForUint32);
 
   auto* exchange = MAtomicExchangeTypedArrayElement::New(
       alloc(), elements, index, value, elementType);
@@ -3713,9 +3718,9 @@ bool WarpCacheIRTranspiler::emitAtomicsBinaryOp(ObjOperandId objId,
   auto* elements = MArrayBufferViewElements::New(alloc(), obj);
   add(elements);
 
-  bool allowDoubleForUint32 = true;
+  bool forceDoubleForUint32 = true;
   MIRType knownType =
-      MIRTypeForArrayBufferViewRead(elementType, allowDoubleForUint32);
+      MIRTypeForArrayBufferViewRead(elementType, forceDoubleForUint32);
 
   auto* binop = MAtomicTypedArrayElementBinop::New(
       alloc(), op, elements, index, elementType, value, forEffect);
@@ -3791,9 +3796,9 @@ bool WarpCacheIRTranspiler::emitAtomicsLoadResult(ObjOperandId objId,
   auto* elements = MArrayBufferViewElements::New(alloc(), obj);
   add(elements);
 
-  bool allowDoubleForUint32 = true;
+  bool forceDoubleForUint32 = true;
   MIRType knownType =
-      MIRTypeForArrayBufferViewRead(elementType, allowDoubleForUint32);
+      MIRTypeForArrayBufferViewRead(elementType, forceDoubleForUint32);
 
   auto* load = MLoadUnboxedScalar::New(alloc(), elements, index, elementType,
                                        DoesRequireMemoryBarrier);
@@ -3863,12 +3868,45 @@ bool WarpCacheIRTranspiler::emitBigIntAsUintNResult(Int32OperandId bitsId,
   return true;
 }
 
-bool WarpCacheIRTranspiler::emitLoadValueTruthyResult(ValOperandId inputId) {
+bool WarpCacheIRTranspiler::emitTruthyResult(OperandId inputId) {
   MDefinition* input = getOperand(inputId);
 
   auto* result = convertToBoolean(input);
 
   pushResult(result);
+  return true;
+}
+
+bool WarpCacheIRTranspiler::emitLoadInt32TruthyResult(ValOperandId inputId) {
+  return emitTruthyResult(inputId);
+}
+
+bool WarpCacheIRTranspiler::emitLoadDoubleTruthyResult(
+    NumberOperandId inputId) {
+  return emitTruthyResult(inputId);
+}
+
+bool WarpCacheIRTranspiler::emitLoadStringTruthyResult(
+    StringOperandId inputId) {
+  return emitTruthyResult(inputId);
+}
+
+bool WarpCacheIRTranspiler::emitLoadObjectTruthyResult(ObjOperandId inputId) {
+  return emitTruthyResult(inputId);
+}
+
+bool WarpCacheIRTranspiler::emitLoadBigIntTruthyResult(
+    BigIntOperandId inputId) {
+  return emitTruthyResult(inputId);
+}
+
+bool WarpCacheIRTranspiler::emitLoadValueTruthyResult(ValOperandId inputId) {
+  return emitTruthyResult(inputId);
+}
+
+bool WarpCacheIRTranspiler::emitLoadOperandResult(ValOperandId inputId) {
+  MDefinition* input = getOperand(inputId);
+  pushResult(input);
   return true;
 }
 
@@ -4686,11 +4724,12 @@ bool WarpCacheIRTranspiler::emitGuardNoAllocationMetadataBuilder(
 bool WarpCacheIRTranspiler::emitNewPlainObjectResult(uint32_t numFixedSlots,
                                                      uint32_t numDynamicSlots,
                                                      gc::AllocKind allocKind,
-                                                     uint32_t shapeOffset) {
+                                                     uint32_t shapeOffset,
+                                                     uint32_t siteOffset) {
   Shape* shape = shapeStubField(shapeOffset);
+  gc::AllocSite* site = allocSiteStubField(siteOffset);
 
-  // TODO: support pre-tenuring.
-  gc::InitialHeap heap = gc::DefaultHeap;
+  gc::InitialHeap heap = site->initialHeap();
 
   auto* shapeConstant = MConstant::NewShape(alloc(), shape);
   add(shapeConstant);
@@ -4704,11 +4743,12 @@ bool WarpCacheIRTranspiler::emitNewPlainObjectResult(uint32_t numFixedSlots,
 }
 
 bool WarpCacheIRTranspiler::emitNewArrayObjectResult(uint32_t length,
-                                                     uint32_t shapeOffset) {
+                                                     uint32_t shapeOffset,
+                                                     uint32_t siteOffset) {
   Shape* shape = shapeStubField(shapeOffset);
+  gc::AllocSite* site = allocSiteStubField(siteOffset);
 
-  // TODO: support pre-tenuring.
-  gc::InitialHeap heap = gc::DefaultHeap;
+  gc::InitialHeap heap = site->initialHeap();
 
   auto* shapeConstant = MConstant::NewShape(alloc(), shape);
   add(shapeConstant);

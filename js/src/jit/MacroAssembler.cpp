@@ -110,27 +110,21 @@ void MacroAssembler::storeToTypedBigIntArray(Scalar::Type arrayType,
 }
 
 void MacroAssembler::boxUint32(Register source, ValueOperand dest,
-                               bool allowDouble, Label* fail) {
-  if (allowDouble) {
-    // If the value fits in an int32, store an int32 type tag.
-    // Else, convert the value to double and box it.
-    Label done, isDouble;
-    branchTest32(Assembler::Signed, source, source, &isDouble);
-    {
+                               Uint32Mode mode, Label* fail) {
+  switch (mode) {
+    // Fail if the value does not fit in an int32.
+    case Uint32Mode::FailOnDouble: {
+      branchTest32(Assembler::Signed, source, source, fail);
       tagValue(JSVAL_TYPE_INT32, source, dest);
-      jump(&done);
+      break;
     }
-    bind(&isDouble);
-    {
+    case Uint32Mode::ForceDouble: {
+      // Always convert the value to double.
       ScratchDoubleScope fpscratch(*this);
       convertUInt32ToDouble(source, fpscratch);
       boxDouble(fpscratch, dest, fpscratch);
+      break;
     }
-    bind(&done);
-  } else {
-    // Fail if the value does not fit in an int32.
-    branchTest32(Assembler::Signed, source, source, fail);
-    tagValue(JSVAL_TYPE_INT32, source, dest);
   }
 }
 
@@ -195,7 +189,7 @@ template void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType,
 template <typename T>
 void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType, const T& src,
                                         const ValueOperand& dest,
-                                        bool allowDouble, Register temp,
+                                        Uint32Mode uint32Mode, Register temp,
                                         Label* fail) {
   switch (arrayType) {
     case Scalar::Int8:
@@ -211,7 +205,7 @@ void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType, const T& src,
     case Scalar::Uint32:
       // Don't clobber dest when we could fail, instead use temp.
       load32(src, temp);
-      boxUint32(temp, dest, allowDouble, fail);
+      boxUint32(temp, dest, uint32Mode, fail);
       break;
     case Scalar::Float32: {
       ScratchDoubleScope dscratch(*this);
@@ -239,12 +233,12 @@ void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType, const T& src,
 template void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType,
                                                  const Address& src,
                                                  const ValueOperand& dest,
-                                                 bool allowDouble,
+                                                 Uint32Mode uint32Mode,
                                                  Register temp, Label* fail);
 template void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType,
                                                  const BaseIndex& src,
                                                  const ValueOperand& dest,
-                                                 bool allowDouble,
+                                                 Uint32Mode uint32Mode,
                                                  Register temp, Label* fail);
 
 template <typename T>
@@ -304,7 +298,8 @@ bool MacroAssembler::shouldNurseryAllocate(gc::AllocKind allocKind,
 // this fills in the slots_ pointer.
 void MacroAssembler::nurseryAllocateObject(Register result, Register temp,
                                            gc::AllocKind allocKind,
-                                           size_t nDynamicSlots, Label* fail) {
+                                           size_t nDynamicSlots, Label* fail,
+                                           const AllocSiteInput& allocSite) {
   MOZ_ASSERT(IsNurseryAllocable(allocKind));
 
   // We still need to allocate in the nursery, per the comment in
@@ -316,6 +311,14 @@ void MacroAssembler::nurseryAllocateObject(Register result, Register temp,
     return;
   }
 
+  // Check whether this allocation site needs pretenuring. This dynamic check
+  // only happens for baseline code.
+  if (allocSite.is<Register>()) {
+    Register site = allocSite.as<Register>();
+    branch32(Assembler::Equal, Address(site, gc::AllocSite::offsetOfState()),
+             Imm32(int32_t(gc::AllocSite::State::LongLived)), fail);
+  }
+
   // No explicit check for nursery.isEnabled() is needed, as the comparison
   // with the nursery's end will always fail in such cases.
   CompileZone* zone = GetJitContext()->realm()->zone();
@@ -324,9 +327,10 @@ void MacroAssembler::nurseryAllocateObject(Register result, Register temp,
   MOZ_ASSERT(totalSize < INT32_MAX);
   MOZ_ASSERT(totalSize % gc::CellAlignBytes == 0);
 
-  bumpPointerAllocate(
-      result, temp, fail, zone, zone->addressOfNurseryPosition(),
-      zone->addressOfNurseryCurrentEnd(), JS::TraceKind::Object, totalSize);
+  bumpPointerAllocate(result, temp, fail, zone,
+                      zone->addressOfNurseryPosition(),
+                      zone->addressOfNurseryCurrentEnd(), JS::TraceKind::Object,
+                      totalSize, allocSite);
 
   if (nDynamicSlots) {
     store32(Imm32(nDynamicSlots),
@@ -402,14 +406,16 @@ void MacroAssembler::callFreeStub(Register slots) {
 void MacroAssembler::allocateObject(Register result, Register temp,
                                     gc::AllocKind allocKind,
                                     uint32_t nDynamicSlots,
-                                    gc::InitialHeap initialHeap, Label* fail) {
+                                    gc::InitialHeap initialHeap, Label* fail,
+                                    const AllocSiteInput& allocSite) {
   MOZ_ASSERT(gc::IsObjectAllocKind(allocKind));
 
   checkAllocatorState(fail);
 
   if (shouldNurseryAllocate(allocKind, initialHeap)) {
     MOZ_ASSERT(initialHeap == gc::DefaultHeap);
-    return nurseryAllocateObject(result, temp, allocKind, nDynamicSlots, fail);
+    return nurseryAllocateObject(result, temp, allocKind, nDynamicSlots, fail,
+                                 allocSite);
   }
 
   // Fall back to calling into the VM to allocate objects in the tenured heap
@@ -425,7 +431,7 @@ void MacroAssembler::allocateObject(Register result, Register temp,
 void MacroAssembler::createGCObject(Register obj, Register temp,
                                     const TemplateObject& templateObj,
                                     gc::InitialHeap initialHeap, Label* fail,
-                                    bool initContents) {
+                                    bool initContents /* = true */) {
   gc::AllocKind allocKind = templateObj.getAllocKind();
   MOZ_ASSERT(gc::IsObjectAllocKind(allocKind));
 
@@ -443,12 +449,13 @@ void MacroAssembler::createGCObject(Register obj, Register temp,
 void MacroAssembler::createPlainGCObject(
     Register result, Register shape, Register temp, Register temp2,
     uint32_t numFixedSlots, uint32_t numDynamicSlots, gc::AllocKind allocKind,
-    gc::InitialHeap initialHeap, Label* fail) {
+    gc::InitialHeap initialHeap, Label* fail, const AllocSiteInput& allocSite) {
   MOZ_ASSERT(gc::IsObjectAllocKind(allocKind));
   MOZ_ASSERT(shape != temp, "shape can overlap with temp2, but not temp");
 
   // Allocate object.
-  allocateObject(result, temp, allocKind, numDynamicSlots, initialHeap, fail);
+  allocateObject(result, temp, allocKind, numDynamicSlots, initialHeap, fail,
+                 allocSite);
 
   // Initialize shape field.
   storePtr(shape, Address(result, JSObject::offsetOfShape()));
@@ -478,7 +485,7 @@ void MacroAssembler::createPlainGCObject(
 void MacroAssembler::createArrayWithFixedElements(
     Register result, Register shape, Register temp, uint32_t arrayLength,
     uint32_t arrayCapacity, gc::AllocKind allocKind,
-    gc::InitialHeap initialHeap, Label* fail) {
+    gc::InitialHeap initialHeap, Label* fail, const AllocSiteInput& allocSite) {
   MOZ_ASSERT(gc::IsObjectAllocKind(allocKind));
   MOZ_ASSERT(shape != temp, "shape can overlap with temp2, but not temp");
   MOZ_ASSERT(result != temp);
@@ -490,7 +497,7 @@ void MacroAssembler::createArrayWithFixedElements(
              arrayCapacity + ObjectElements::VALUES_PER_HEADER);
 
   // Allocate object.
-  allocateObject(result, temp, allocKind, 0, initialHeap, fail);
+  allocateObject(result, temp, allocKind, 0, initialHeap, fail, allocSite);
 
   // Initialize shape field.
   storePtr(shape, Address(result, JSObject::offsetOfShape()));
@@ -552,8 +559,8 @@ void MacroAssembler::nurseryAllocateBigInt(Register result, Register temp,
 void MacroAssembler::bumpPointerAllocate(Register result, Register temp,
                                          Label* fail, CompileZone* zone,
                                          void* posAddr, const void* curEndAddr,
-                                         JS::TraceKind traceKind,
-                                         uint32_t size) {
+                                         JS::TraceKind traceKind, uint32_t size,
+                                         const AllocSiteInput& allocSite) {
   uint32_t totalSize = size + Nursery::nurseryCellHeaderSize();
   MOZ_ASSERT(totalSize < INT32_MAX, "Nursery allocation too large");
   MOZ_ASSERT(totalSize % gc::CellAlignBytes == 0);
@@ -576,8 +583,6 @@ void MacroAssembler::bumpPointerAllocate(Register result, Register temp,
   branchPtr(Assembler::Below, Address(temp, endOffset.value()), result, fail);
   storePtr(result, Address(temp, 0));
   subPtr(Imm32(size), result);
-  storePtr(ImmWord(zone->nurseryCellHeader(traceKind)),
-           Address(result, -js::Nursery::nurseryCellHeaderSize()));
 
   if (GetJitContext()->runtime->geckoProfiler().enabled()) {
     uint32_t* countAddress = zone->addressOfNurseryAllocCount();
@@ -592,6 +597,40 @@ void MacroAssembler::bumpPointerAllocate(Register result, Register temp,
       add32(Imm32(1), Address(temp, 0));
     }
   }
+
+  if (allocSite.is<gc::CatchAllAllocSite>()) {
+    // No allocation site supplied. This is the case when called from Warp, or
+    // from places that don't support pretenuring.
+    gc::CatchAllAllocSite siteKind = allocSite.as<gc::CatchAllAllocSite>();
+    storePtr(ImmWord(zone->nurseryCellHeader(traceKind, siteKind)),
+             Address(result, -js::Nursery::nurseryCellHeaderSize()));
+  } else {
+    // Update allocation site and store pointer in the nursery cell header. This
+    // is only used from baseline.
+    Register site = allocSite.as<Register>();
+    updateAllocSite(temp, result, zone, site);
+    // See NurseryCellHeader::MakeValue.
+    orPtr(Imm32(int32_t(traceKind)), site);
+    storePtr(site, Address(result, -js::Nursery::nurseryCellHeaderSize()));
+  }
+}
+
+// Update the allocation site in the same way as Nursery::allocateCell.
+void MacroAssembler::updateAllocSite(Register temp, Register result,
+                                     CompileZone* zone, Register site) {
+  Label done;
+
+  add32(Imm32(1), Address(site, gc::AllocSite::offsetOfNurseryAllocCount()));
+
+  branchPtr(Assembler::NotEqual,
+            Address(site, gc::AllocSite::offsetOfNextNurseryAllocated()),
+            ImmPtr(nullptr), &done);
+
+  loadPtr(AbsoluteAddress(zone->addressOfNurseryAllocatedSites()), temp);
+  storePtr(temp, Address(site, gc::AllocSite::offsetOfNextNurseryAllocated()));
+  storePtr(site, AbsoluteAddress(zone->addressOfNurseryAllocatedSites()));
+
+  bind(&done);
 }
 
 // Inlined equivalent of gc::AllocateString, jumping to fail if nursery
@@ -3581,6 +3620,44 @@ void MacroAssembler::loadFunctionName(Register func, Register output,
     movePtr(emptyString, output);
   }
   bind(&hasName);
+}
+
+void MacroAssembler::branchTestType(Condition cond, Register tag,
+                                    JSValueType type, Label* label) {
+  switch (type) {
+    case JSVAL_TYPE_DOUBLE:
+      branchTestDouble(cond, tag, label);
+      break;
+    case JSVAL_TYPE_INT32:
+      branchTestInt32(cond, tag, label);
+      break;
+    case JSVAL_TYPE_BOOLEAN:
+      branchTestBoolean(cond, tag, label);
+      break;
+    case JSVAL_TYPE_UNDEFINED:
+      branchTestUndefined(cond, tag, label);
+      break;
+    case JSVAL_TYPE_NULL:
+      branchTestNull(cond, tag, label);
+      break;
+    case JSVAL_TYPE_MAGIC:
+      branchTestMagic(cond, tag, label);
+      break;
+    case JSVAL_TYPE_STRING:
+      branchTestString(cond, tag, label);
+      break;
+    case JSVAL_TYPE_SYMBOL:
+      branchTestSymbol(cond, tag, label);
+      break;
+    case JSVAL_TYPE_BIGINT:
+      branchTestBigInt(cond, tag, label);
+      break;
+    case JSVAL_TYPE_OBJECT:
+      branchTestObject(cond, tag, label);
+      break;
+    default:
+      MOZ_CRASH("Unexpected value type");
+  }
 }
 
 void MacroAssembler::branchTestObjCompartment(Condition cond, Register obj,

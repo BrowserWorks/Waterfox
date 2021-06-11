@@ -705,6 +705,15 @@ async function promiseRequestDevice(
   );
 }
 
+async function promiseRequestAudioOutput() {
+  info("requesting audio output");
+  const bc = gBrowser.selectedBrowser;
+  return SpecialPowers.spawn(bc, [], async function() {
+    const global = content.wrappedJSObject;
+    global.requestAudioOutput();
+  });
+}
+
 async function stopTracks(
   aKind,
   aAlreadyStopped,
@@ -802,8 +811,24 @@ async function closeStream(
   await assertWebRTCIndicatorStatus(null);
 }
 
-async function reloadAndAssertClosedStreams() {
-  info("reloading the web page");
+async function reloadAsUser() {
+  info("reloading as a user");
+
+  const reloadButton = document.getElementById("reload-button");
+  await TestUtils.waitForCondition(() => !reloadButton.disabled);
+  // Disable observers as the page is being reloaded which can destroy
+  // the actors listening to the notifications.
+  await disableObserverVerification();
+
+  let loadedPromise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
+  reloadButton.click();
+  await loadedPromise;
+
+  await enableObserverVerification();
+}
+
+async function reloadFromContent() {
+  info("reloading from content");
 
   // Disable observers as the page is being reloaded which can destroy
   // the actors listening to the notifications.
@@ -817,63 +842,53 @@ async function reloadAndAssertClosedStreams() {
   await loadedPromise;
 
   await enableObserverVerification();
+}
 
+async function reloadAndAssertClosedStreams() {
+  await reloadFromContent();
   await checkNotSharing();
 }
 
-function checkDeviceSelectors(aAudio, aVideo, aScreen, aWindow = window) {
+/**
+ * @param {("microphone"|"camera"|"screen")[]} aExpectedTypes
+ * @param {Window} [aWindow]
+ */
+function checkDeviceSelectors(aExpectedTypes, aWindow = window) {
+  for (const type of aExpectedTypes) {
+    if (!["microphone", "camera", "screen", "speaker"].includes(type)) {
+      throw new Error(`Bad device type name ${type}`);
+    }
+  }
   let document = aWindow.document;
-  let micSelector = document.getElementById("webRTC-selectMicrophone");
-  if (aAudio) {
-    ok(!micSelector.hidden, "microphone selector visible");
-    let micSelectorList = document.getElementById(
-      "webRTC-selectMicrophone-menulist"
+
+  for (let type of ["Microphone", "Camera", "Speaker"]) {
+    let selector = document.getElementById(`webRTC-select${type}`);
+    if (!aExpectedTypes.includes(type.toLowerCase())) {
+      ok(selector.hidden, `${type} selector hidden`);
+      continue;
+    }
+    ok(!selector.hidden, `${type} selector visible`);
+    let selectorList = document.getElementById(`webRTC-select${type}-menulist`);
+    let label = document.getElementById(
+      `webRTC-select${type}-single-device-label`
     );
-    let micLabel = document.getElementById(
-      "webRTC-selectMicrophone-single-device-label"
-    );
-    // If there's only 1 device listed, then we should show the label instead of
-    // the menulist.
-    if (micSelectorList.itemCount == 1) {
-      ok(micSelectorList.hidden, "Selector list should be hidden.");
-      ok(!micLabel.hidden, "Selector label should not be hidden.");
+    // If there's only 1 device listed, then we should show the label
+    // instead of the menulist.
+    if (selectorList.itemCount == 1) {
+      ok(selectorList.hidden, `${type} selector list should be hidden.`);
+      ok(!label.hidden, `${type} selector label should not be hidden.`);
       is(
-        micLabel.value,
-        micSelectorList.selectedItem.getAttribute("label"),
-        "Label should be showing the lone device label."
+        label.value,
+        selectorList.selectedItem.getAttribute("label"),
+        `${type} label should be showing the lone device label.`
       );
     } else {
-      ok(!micSelectorList.hidden, "Selector list should not be hidden.");
-      ok(micLabel.hidden, "Selector label should be hidden.");
+      ok(!selectorList.hidden, `${type} selector list should not be hidden.`);
+      ok(label.hidden, `${type} selector label should be hidden.`);
     }
-  } else {
-    ok(micSelector.hidden, "microphone selector hidden");
   }
-
-  let cameraSelector = document.getElementById("webRTC-selectCamera");
-  if (aVideo) {
-    ok(!cameraSelector.hidden, "camera selector visible");
-    let cameraSelectorList = document.getElementById(
-      "webRTC-selectCamera-menulist"
-    );
-    let cameraLabel = document.getElementById(
-      "webRTC-selectCamera-single-device-label"
-    );
-    // If there's only 1 device listed, then we should show the label instead of
-    // the menulist.
-    if (cameraSelectorList.itemCount == 1) {
-      ok(cameraSelectorList.hidden, "Selector list should be hidden.");
-      ok(!cameraLabel.hidden, "Selector label should not be hidden.");
-    } else {
-      ok(!cameraSelectorList.hidden, "Selector list should not be hidden.");
-      ok(cameraLabel.hidden, "Selector label should be hidden.");
-    }
-  } else {
-    ok(cameraSelector.hidden, "camera selector hidden");
-  }
-
   let screenSelector = document.getElementById("webRTC-selectWindowOrScreen");
-  if (aScreen) {
+  if (aExpectedTypes.includes("screen")) {
     ok(!screenSelector.hidden, "screen selector visible");
   } else {
     ok(screenSelector.hidden, "screen selector hidden");
@@ -1243,7 +1258,11 @@ async function shareDevices(
     await promiseRequestDevice(mic, camera, null, null, browser);
     await promise;
 
-    checkDeviceSelectors(mic, camera);
+    const expectedDeviceSelectorTypes = [
+      camera && "camera",
+      mic && "microphone",
+    ].filter(x => x);
+    checkDeviceSelectors(expectedDeviceSelectorTypes);
     let observerPromise1 = expectObserverCalled("getUserMedia:response:allow");
     let observerPromise2 = expectObserverCalled("recording-device-events");
 
@@ -1271,7 +1290,7 @@ async function shareDevices(
     await promiseRequestDevice(false, true, null, "screen", browser);
     await promise;
 
-    checkDeviceSelectors(false, false, true, window);
+    checkDeviceSelectors(["screen"], window);
 
     let document = window.document;
 

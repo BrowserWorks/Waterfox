@@ -83,7 +83,9 @@ static nsLineBox* FindContainingLine(nsIFrame* aFrame) {
 
 static void AdjustCaretFrameForLineEnd(nsIFrame** aFrame, int32_t* aOffset) {
   nsLineBox* line = FindContainingLine(*aFrame);
-  if (!line) return;
+  if (!line) {
+    return;
+  }
   int32_t count = line->GetChildCount();
   for (nsIFrame* f = line->mFirstChild; count > 0;
        --count, f = f->GetNextSibling()) {
@@ -636,11 +638,15 @@ nsIFrame* nsCaret::GetCaretFrameForNodeOffset(
     *aReturnUnadjustedFrame = theFrame;
   }
 
-  // if theFrame is after a text frame that's logically at the end of the line
-  // (e.g. if theFrame is a <br> frame), then put the caret at the end of
-  // that text frame instead. This way, the caret will be positioned as if
-  // trailing whitespace was not trimmed.
-  AdjustCaretFrameForLineEnd(&theFrame, &theFrameOffset);
+  if (nsFrameSelection::AdjustFrameForLineStart(theFrame, theFrameOffset)) {
+    aFrameSelection->SetHint(CARET_ASSOCIATE_AFTER);
+  } else {
+    // if theFrame is after a text frame that's logically at the end of the line
+    // (e.g. if theFrame is a <br> frame), then put the caret at the end of
+    // that text frame instead. This way, the caret will be positioned as if
+    // trailing whitespace was not trimmed.
+    AdjustCaretFrameForLineEnd(&theFrame, &theFrameOffset);
+  }
 
   // Mamdouh : modification of the caret to work at rtl and ltr with Bidi
   //

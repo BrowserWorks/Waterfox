@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "LocalAccessible-inl.h"
+#include "AccAttributes.h"
 #include "AccessibleOrProxy.h"
 #include "DocAccessibleChild.h"
 #include "DocAccessibleWrap.h"
@@ -13,7 +14,6 @@
 #include "nsLayoutUtils.h"
 #include "nsAccessibilityService.h"
 #include "nsAccUtils.h"
-#include "nsIPersistentProperties2.h"
 #include "Pivot.h"
 #include "SessionAccessibility.h"
 #include "TraversalRule.h"
@@ -151,7 +151,7 @@ void DocAccessibleWrap::CacheViewportCallback(nsITimer* aTimer,
           accessible->State(), accessible->Bounds(), accessible->ActionCount(),
           name, textValue, nodeID, description, UnspecifiedNaN<double>(),
           UnspecifiedNaN<double>(), UnspecifiedNaN<double>(),
-          UnspecifiedNaN<double>(), nsTArray<Attribute>()));
+          UnspecifiedNaN<double>(), nullptr));
     }
 
     ipcDoc->SendBatch(eBatch_Viewport, cacheData);
@@ -239,9 +239,7 @@ void DocAccessibleWrap::CacheFocusPath(AccessibleWrap* aAccessible) {
       acc->WrapperDOMNodeID(nodeID);
       nsAutoString description;
       acc->Description(description);
-      nsCOMPtr<nsIPersistentProperties> props = acc->Attributes();
-      nsTArray<Attribute> attributes;
-      nsAccUtils::PersistentPropertiesToArray(props, &attributes);
+      RefPtr<AccAttributes> attributes = acc->Attributes();
       cacheData.AppendElement(
           BatchData(acc->Document()->IPCDoc(), UNIQUE_ID(acc), acc->State(),
                     acc->Bounds(), acc->ActionCount(), name, textValue, nodeID,
@@ -279,12 +277,11 @@ void DocAccessibleWrap::UpdateFocusPathBounds() {
         continue;
       }
 
-      boundsData.AppendElement(
-          BatchData(accessible->Document()->IPCDoc(), UNIQUE_ID(accessible), 0,
-                    accessible->Bounds(), 0, nsString(), nsString(), nsString(),
-                    nsString(), UnspecifiedNaN<double>(),
-                    UnspecifiedNaN<double>(), UnspecifiedNaN<double>(),
-                    UnspecifiedNaN<double>(), nsTArray<Attribute>()));
+      boundsData.AppendElement(BatchData(
+          accessible->Document()->IPCDoc(), UNIQUE_ID(accessible), 0,
+          accessible->Bounds(), 0, nsString(), nsString(), nsString(),
+          nsString(), UnspecifiedNaN<double>(), UnspecifiedNaN<double>(),
+          UnspecifiedNaN<double>(), UnspecifiedNaN<double>(), nullptr));
     }
 
     ipcDoc->SendBatch(eBatch_BoundsUpdate, boundsData);

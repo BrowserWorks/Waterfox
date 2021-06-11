@@ -544,6 +544,8 @@ var AddonUpdateChecker = {
    *
    * @param  aUpdates
    *         An array of update objects
+   * @param  aAddon
+   *         The add-on that is being updated.
    * @param  aAppVersion
    *         The version of the application or null to use the current version
    * @param  aPlatformVersion
@@ -556,6 +558,7 @@ var AddonUpdateChecker = {
    */
   async getNewestCompatibleUpdate(
     aUpdates,
+    aAddon,
     aAppVersion,
     aPlatformVersion,
     aIgnoreMaxVersion,
@@ -568,9 +571,27 @@ var AddonUpdateChecker = {
       aPlatformVersion = Services.appinfo.platformVersion;
     }
 
+    let newestVersion = aAddon.version;
     let newest = null;
+    let blocked = null;
+    let blockedState;
     for (let update of aUpdates) {
       if (!update.updateURL) {
+        continue;
+      }
+      if (Services.vc.compare(newestVersion, update.version) >= 0) {
+        // Update older than add-on version or older than previous result.
+        continue;
+      }
+      if (
+        !matchesVersions(
+          update,
+          aAppVersion,
+          aPlatformVersion,
+          aIgnoreMaxVersion,
+          aIgnoreStrictCompat
+        )
+      ) {
         continue;
       }
       let state = await Blocklist.getAddonBlocklistState(
@@ -579,21 +600,34 @@ var AddonUpdateChecker = {
         aPlatformVersion
       );
       if (state != Ci.nsIBlocklistService.STATE_NOT_BLOCKED) {
+        if (
+          !blocked ||
+          Services.vc.compare(blocked.version, update.version) < 0
+        ) {
+          blocked = update;
+          blockedState = state;
+        }
         continue;
       }
-      if (
-        (newest == null ||
-          Services.vc.compare(newest.version, update.version) < 0) &&
-        matchesVersions(
-          update,
-          aAppVersion,
-          aPlatformVersion,
-          aIgnoreMaxVersion,
-          aIgnoreStrictCompat
-        )
-      ) {
-        newest = update;
-      }
+      newest = update;
+      newestVersion = update.version;
+    }
+    if (
+      blocked &&
+      (!newest || Services.vc.compare(blocked.version, newestVersion) >= 0)
+    ) {
+      // If |newest| has a higher version than |blocked|, then the add-on would
+      // not be considered for installation. But if |blocked| would otherwise
+      // be eligible for installation, then report to telemetry that installation
+      // has been blocked because of the blocklist.
+      Blocklist.recordAddonBlockChangeTelemetry(
+        {
+          id: aAddon.id,
+          version: blocked.version,
+          blocklistState: blockedState,
+        },
+        "addon_update_check"
+      );
     }
     return newest;
   },

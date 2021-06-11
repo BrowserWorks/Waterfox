@@ -2332,7 +2332,7 @@ template <typename SizeOrMaxSize>
 static inline bool IsIntrinsicKeyword(const SizeOrMaxSize& aSize) {
   // All keywords other than auto/none/-moz-available depend on intrinsic sizes.
   return aSize.IsMaxContent() || aSize.IsMinContent() ||
-         aSize.IsMozFitContent();
+         aSize.IsMozFitContent() || aSize.IsFitContentFunction();
 }
 
 bool nsIFrame::CanBeDynamicReflowRoot() const {
@@ -2559,7 +2559,12 @@ bool nsIFrame::DisplayBackgroundUnconditional(nsDisplayListBuilder* aBuilder,
   // true.
   if (hitTesting || aForceBackground ||
       !StyleBackground()->IsTransparent(this) ||
-      StyleDisplay()->HasAppearance()) {
+      StyleDisplay()->HasAppearance() ||
+      // We do forcibly create a display item for background color animations
+      // even if the current background-color is transparent so that we can
+      // run the animations on the compositor.
+      EffectCompositor::HasAnimationsForCompositor(
+          this, DisplayItemType::TYPE_BACKGROUND_COLOR)) {
     result = nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
         aBuilder, this,
         GetRectRelativeToSelf() + aBuilder->ToReferenceFrame(this),
@@ -6526,8 +6531,8 @@ nsIFrame::ISizeComputationResult nsIFrame::ComputeISizeValue(
     gfxContext* aRenderingContext, const WritingMode aWM,
     const LogicalSize& aContainingBlockSize,
     const LogicalSize& aContentEdgeToBoxSizing, nscoord aBoxSizingToMarginEdge,
-    ExtremumLength aSize, const StyleSizeOverrides& aSizeOverrides,
-    ComputeSizeFlags aFlags) {
+    ExtremumLength aSize, Maybe<nscoord> aAvailableISizeOverride,
+    const StyleSizeOverrides& aSizeOverrides, ComputeSizeFlags aFlags) {
   // If 'this' is a container for font size inflation, then shrink
   // wrapping inside of it should not apply font size inflation.
   AutoMaybeDisableFontInflation an(this);
@@ -6563,6 +6568,7 @@ nsIFrame::ISizeComputationResult nsIFrame::ComputeISizeValue(
       return {result, intrinsicSizeFromAspectRatio
                           ? AspectRatioUsage::ToComputeISize
                           : AspectRatioUsage::None};
+    case ExtremumLength::FitContentFunction:
     case ExtremumLength::MozFitContent: {
       nscoord pref = NS_UNCONSTRAINEDSIZE;
       nscoord min = 0;
@@ -6574,9 +6580,13 @@ nsIFrame::ISizeComputationResult nsIFrame::ComputeISizeValue(
         pref = GetPrefISize(aRenderingContext);
         min = GetMinISize(aRenderingContext);
       }
-      nscoord fill =
-          aContainingBlockSize.ISize(aWM) -
-          (aBoxSizingToMarginEdge + aContentEdgeToBoxSizing.ISize(aWM));
+
+      nscoord fill = aAvailableISizeOverride
+                         ? *aAvailableISizeOverride
+                         : aContainingBlockSize.ISize(aWM) -
+                               (aBoxSizingToMarginEdge +
+                                aContentEdgeToBoxSizing.ISize(aWM));
+
       if (MOZ_UNLIKELY(
               aFlags.contains(ComputeSizeFlag::IClampMarginBoxMinSize))) {
         min = std::min(min, fill);
@@ -7742,6 +7752,33 @@ bool nsIFrame::IsPercentageResolvedAgainstZero(
   return ((sizeHasPercent || aStyleMaxSize.HasPercent()) &&
           IsFrameOfType(nsIFrame::eReplacedSizing)) ||
          (sizeHasPercent && FormControlShrinksForPercentSize(this));
+}
+
+// Summary of the Cyclic-Percentage Intrinsic Size Contribution Rules:
+//
+// Element Type         |       Replaced           |        Non-replaced
+// Contribution Type    | min-content  max-content | min-content  max-content
+// ---------------------------------------------------------------------------
+// min size             | zero         zero        | zero         zero
+// max & preferred size | zero         initial     | initial      initial
+//
+// https://drafts.csswg.org/css-sizing-3/#cyclic-percentage-contribution
+bool nsIFrame::IsPercentageResolvedAgainstZero(const LengthPercentage& aSize,
+                                               SizeProperty aProperty) const {
+  // Early return to avoid calling the virtual function, IsFrameOfType().
+  if (aProperty == SizeProperty::MinSize) {
+    return true;
+  }
+
+  const bool hasPercentOnReplaced =
+      aSize.HasPercent() && IsFrameOfType(nsIFrame::eReplacedSizing);
+  if (aProperty == SizeProperty::MaxSize) {
+    return hasPercentOnReplaced;
+  }
+
+  MOZ_ASSERT(aProperty == SizeProperty::Size);
+  return hasPercentOnReplaced ||
+         (aSize.HasPercent() && FormControlShrinksForPercentSize(this));
 }
 
 bool nsIFrame::IsBlockWrapper() const {

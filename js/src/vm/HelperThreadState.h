@@ -22,6 +22,7 @@
 #include "ds/Fifo.h"
 #include "frontend/CompilationStencil.h"  // CompilationStencil, ExtensibleCompilationStencil, CompilationGCOutput
 #include "js/CompileOptions.h"
+#include "js/HelperThreadAPI.h"
 #include "js/TypeDecls.h"
 #include "threading/ConditionVariable.h"
 #include "threading/Thread.h"
@@ -83,6 +84,8 @@ class GlobalHelperThreadState {
 
   // Number of threads to create. May be accessed without locking.
   size_t threadCount;
+
+  bool terminating_ = false;
 
   typedef Vector<jit::IonCompileTask*, 0, SystemAllocPolicy>
       IonCompileTaskVector;
@@ -158,7 +161,18 @@ class GlobalHelperThreadState {
   // This is used to get the HelperThreadTask that are currently running.
   HelperThreadTaskVector helperTasks_;
 
-  bool useInternalThreadPool_;
+  // Callback to dispatch a task using an external thread pool. Set by
+  // JS::SetHelperThreadTaskCallback. If this is not set the internal thread
+  // pool is used.
+  JS::HelperThreadTaskCallback dispatchTaskCallback = nullptr;
+
+  // The number of tasks dispatched to the external thread pool that have not
+  // started running yet.
+  size_t externalTasksPending_ = 0;
+
+  bool isInitialized_ = false;
+
+  bool useInternalThreadPool_ = true;
 
   ParseTask* removeFinishedParseTask(JSContext* cx, ParseTaskKind kind,
                                      JS::OffThreadToken* token);
@@ -177,6 +191,10 @@ class GlobalHelperThreadState {
 
   GlobalHelperThreadState();
 
+  bool isInitialized(const AutoLockHelperThreadState& lock) const {
+    return isInitialized_;
+  }
+
   HelperThreadVector& threads(const AutoLockHelperThreadState& lock) {
     return threads_;
   }
@@ -185,12 +203,19 @@ class GlobalHelperThreadState {
     return threads_;
   }
 
-  bool ensureInitialized();
-  bool ensureThreadCount(size_t count);
-  void finish();
-  void finishThreads();
+  [[nodiscard]] bool ensureInitialized();
+  [[nodiscard]] bool ensureThreadCount(size_t count,
+                                       const AutoLockHelperThreadState& lock);
+  void finish(AutoLockHelperThreadState& lock);
+  void finishThreads(AutoLockHelperThreadState& lock);
 
-  [[nodiscard]] bool ensureContextList(size_t count);
+  void setCpuCount(size_t count);
+
+  void setExternalTaskCallback(JS::HelperThreadTaskCallback callback,
+                               size_t threadCount);
+
+  [[nodiscard]] bool ensureContextList(size_t count,
+                                       const AutoLockHelperThreadState& lock);
   JSContext* getFirstUnusedContext(AutoLockHelperThreadState& locked);
   void destroyHelperContexts(AutoLockHelperThreadState& lock);
 
@@ -214,7 +239,13 @@ class GlobalHelperThreadState {
             mozilla::TimeDuration timeout = mozilla::TimeDuration::Forever());
   void notifyAll(CondVar which, const AutoLockHelperThreadState&);
 
-  bool useInternalThreadPool(const AutoLockHelperThreadState& locked);
+  bool useInternalThreadPool(const AutoLockHelperThreadState& lock) const {
+    return useInternalThreadPool_;
+  }
+
+  bool isTerminating(const AutoLockHelperThreadState& locked) const {
+    return terminating_;
+  }
 
  private:
   void notifyOne(CondVar which, const AutoLockHelperThreadState&);
@@ -313,6 +344,19 @@ class GlobalHelperThreadState {
     return helperTasks_;
   }
 
+  bool canStartWasmCompile(const AutoLockHelperThreadState& lock,
+                           wasm::CompileMode mode);
+
+  bool canStartWasmTier1CompileTask(const AutoLockHelperThreadState& lock);
+  bool canStartWasmTier2CompileTask(const AutoLockHelperThreadState& lock);
+  bool canStartWasmTier2GeneratorTask(const AutoLockHelperThreadState& lock);
+  bool canStartPromiseHelperTask(const AutoLockHelperThreadState& lock);
+  bool canStartIonCompileTask(const AutoLockHelperThreadState& lock);
+  bool canStartIonFreeTask(const AutoLockHelperThreadState& lock);
+  bool canStartParseTask(const AutoLockHelperThreadState& lock);
+  bool canStartCompressionTask(const AutoLockHelperThreadState& lock);
+  bool canStartGCParallelTask(const AutoLockHelperThreadState& lock);
+
   HelperThreadTask* maybeGetWasmCompile(const AutoLockHelperThreadState& lock,
                                         wasm::CompileMode mode);
 
@@ -377,9 +421,9 @@ class GlobalHelperThreadState {
       JSContext* cx, JS::OffThreadToken* token);
 
   bool hasActiveThreads(const AutoLockHelperThreadState&);
-  bool hasQueuedTasks(const AutoLockHelperThreadState& locked);
-  void waitForAllThreads();
-  void waitForAllThreadsLocked(AutoLockHelperThreadState&);
+  bool canStartTasks(const AutoLockHelperThreadState& locked);
+  void waitForAllTasks();
+  void waitForAllTasksLocked(AutoLockHelperThreadState&);
 
   bool checkTaskThreadLimit(ThreadType threadType, size_t maxThreads,
                             bool isMaster,
@@ -410,6 +454,8 @@ class GlobalHelperThreadState {
 
   void dispatch(const AutoLockHelperThreadState& locked);
 
+  void runTask(HelperThreadTask* task, AutoLockHelperThreadState& lock);
+
  public:
   bool submitTask(wasm::UniqueTier2GeneratorTask task);
   bool submitTask(wasm::CompileTask* task, wasm::CompileMode mode);
@@ -425,6 +471,14 @@ class GlobalHelperThreadState {
   bool submitTask(GCParallelTask* task,
                   const AutoLockHelperThreadState& locked);
   void runTaskLocked(HelperThreadTask* task, AutoLockHelperThreadState& lock);
+  void runTaskFromExternalThread(AutoLockHelperThreadState& lock);
+
+  using Selector = HelperThreadTask* (
+      GlobalHelperThreadState::*)(const AutoLockHelperThreadState&);
+  static const Selector selectors[];
+
+  HelperThreadTask* findHighestPriorityTask(
+      const AutoLockHelperThreadState& locked);
 };
 
 static inline GlobalHelperThreadState& HelperThreadState() {
@@ -446,19 +500,12 @@ class HelperThread {
    */
   ProfilingStack* profilingStack = nullptr;
 
-  /*
-   * Indicate to a thread that it should terminate itself. This is only read
-   * or written with the helper thread state lock held.
-   */
-  bool terminate = false;
-
  public:
   HelperThread();
   [[nodiscard]] bool init();
 
   ThreadId threadId() { return thread.get_id(); }
 
-  void setTerminate(const AutoLockHelperThreadState& lock);
   void join();
 
   static void ThreadMain(void* arg);
@@ -476,13 +523,6 @@ class HelperThread {
    private:
     ProfilingStack* profilingStack;
   };
-
-  using Selector = HelperThreadTask* (
-      GlobalHelperThreadState::*)(const AutoLockHelperThreadState&);
-  static const Selector selectors[];
-
-  HelperThreadTask* findHighestPriorityTask(
-      const AutoLockHelperThreadState& locked);
 };
 
 class MOZ_RAII AutoSetHelperThreadContext {

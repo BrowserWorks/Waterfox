@@ -2185,8 +2185,7 @@ already_AddRefed<CanvasPattern> CanvasRenderingContext2D::CreatePattern(
   // The canvas spec says that createPattern should use the first frame
   // of animated images
   auto flags = nsLayoutUtils::SFE_WANT_FIRST_FRAME_IF_IMAGE |
-               nsLayoutUtils::SFE_EXACT_SIZE_SURFACE |
-               nsLayoutUtils::SFE_TO_SRGB_COLORSPACE;
+               nsLayoutUtils::SFE_EXACT_SIZE_SURFACE;
   SurfaceFromElementResult res =
       nsLayoutUtils::SurfaceFromElement(element, flags, mTarget);
 
@@ -4529,8 +4528,7 @@ void CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     // of animated images. We also don't want to rasterize vector images.
     uint32_t sfeFlags = nsLayoutUtils::SFE_WANT_FIRST_FRAME_IF_IMAGE |
                         nsLayoutUtils::SFE_NO_RASTERIZING_VECTORS |
-                        nsLayoutUtils::SFE_EXACT_SIZE_SURFACE |
-                        nsLayoutUtils::SFE_TO_SRGB_COLORSPACE;
+                        nsLayoutUtils::SFE_EXACT_SIZE_SURFACE;
 
     SurfaceFromElementResult res =
         CanvasRenderingContext2D::CachedSurfaceFromElement(element);
@@ -4540,11 +4538,16 @@ void CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     }
 
     if (!res.mSourceSurface && !res.mDrawInfo.mImgContainer) {
-      // The spec says to silently do nothing in the following cases:
+      // https://html.spec.whatwg.org/#check-the-usability-of-the-image-argument:
+      //
+      // Only throw if the request is broken and the element is an
+      // HTMLImageElement / SVGImageElement. Note that even for those the spec
+      // says to silently do nothing in the following cases:
       //   - The element is still loading.
       //   - The image is bad, but it's not in the broken state (i.e., we could
       //     decode the headers and get the size).
-      if (!res.mIsStillLoading && !res.mHasSize) {
+      if (!res.mIsStillLoading && !res.mHasSize &&
+          (aImage.IsHTMLImageElement() || aImage.IsSVGImageElement())) {
         aError.ThrowInvalidStateError("Passed-in image is \"broken\"");
       }
       return;

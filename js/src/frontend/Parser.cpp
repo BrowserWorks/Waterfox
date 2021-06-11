@@ -24,7 +24,6 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Range.h"
 #include "mozilla/Sprintf.h"
-#include "mozilla/Unused.h"
 #include "mozilla/Utf8.h"
 #include "mozilla/Variant.h"
 
@@ -777,12 +776,15 @@ bool GeneralParser<ParseHandler, Unit>::noteDeclaredPrivateName(
     case PropertyType::AsyncMethod:
     case PropertyType::AsyncGeneratorMethod:
       if (placement == FieldPlacement::Instance) {
-        // Optimized private method. Must be marked closed-over so that
-        // EmitterScope::lookupPrivate() works even if the method is used, but
-        // not within any method (from a computed property name).
+        // Optimized private method. Non-optimized paths still get
+        // DeclarationKind::Synthetic.
         declKind = DeclarationKind::PrivateMethod;
-        closedOver = ClosedOver::Yes;
       }
+
+      // Methods must be marked closed-over so that
+      // EmitterScope::lookupPrivate() works even if the method is used, but not
+      // within any method (from a computed property name, or debugger frame)
+      closedOver = ClosedOver::Yes;
       kind = PrivateNameKind::Method;
       break;
     case PropertyType::Getter:
@@ -1559,7 +1561,7 @@ Maybe<ClassBodyScope::ParserData*> NewClassBodyScopeData(
 
   // `EmitterScope::lookupPrivate()` requires `.privateBrand` to be stored in a
   // predictable slot: the first slot available in the environment object,
-  // `JSSLOT_FREE(&ClassBodyLexicalEnvironmentObject::class_)`. We assume that
+  // `ClassBodyLexicalEnvironmentObject::privateBrandSlot()`. We assume that
   // if `.privateBrand` is first in the scope, it will be stored there.
   MOZ_ASSERT_IF(!privateBrand.empty(),
                 GetScopeDataTrailingNames(bindings)[0].name() ==
@@ -2224,6 +2226,7 @@ FunctionFlags InitialFunctionFlags(FunctionSyntaxKind kind,
       break;
     case FunctionSyntaxKind::Method:
     case FunctionSyntaxKind::FieldInitializer:
+    case FunctionSyntaxKind::StaticClassBlock:
       flags = FunctionFlags::INTERPRETED_METHOD;
       allocKind = gc::AllocKind::FUNCTION_EXTENDED;
       break;
@@ -7503,6 +7506,23 @@ bool GeneralParser<ParseHandler, Unit>::classMember(
       return false;
     }
 
+    if (tt == TokenKind::LeftCurly) {
+      /* Parsing static class block: static { ... } */
+      FunctionNodeType staticBlockBody =
+          staticClassBlock(classInitializedMembers);
+      if (!staticBlockBody) {
+        return false;
+      }
+
+      StaticClassBlockType classBlock =
+          handler_.newStaticClassBlock(staticBlockBody);
+      if (!classBlock) {
+        return false;
+      }
+
+      return handler_.addClassMemberDefinition(classMembers, classBlock);
+    }
+
     if (tt != TokenKind::LeftParen && tt != TokenKind::Assign &&
         tt != TokenKind::Semi && tt != TokenKind::RightCurly) {
       isStatic = true;
@@ -8350,6 +8370,119 @@ GeneralParser<ParseHandler, Unit>::privateMethodInitializer(
 
 template <class ParseHandler, typename Unit>
 typename ParseHandler::FunctionNodeType
+GeneralParser<ParseHandler, Unit>::staticClassBlock(
+    ClassInitializedMembers& classInitializedMembers) {
+  // Both for getting-this-done, and because this will invariably be executed,
+  // syntax parsing should be aborted.
+  if (!abortIfSyntaxParser()) {
+    return null();
+  }
+
+  if (!options().classStaticBlocks) {
+    error(JSMSG_CLASS_STATIC_NOT_SUPPORTED);
+    return null();
+  }
+
+  FunctionSyntaxKind syntaxKind = FunctionSyntaxKind::StaticClassBlock;
+  FunctionAsyncKind asyncKind = FunctionAsyncKind::SyncFunction;
+  GeneratorKind generatorKind = GeneratorKind::NotGenerator;
+  bool isSelfHosting = options().selfHostingMode;
+  FunctionFlags flags =
+      InitialFunctionFlags(syntaxKind, generatorKind, asyncKind, isSelfHosting);
+
+  // Create the function node for the static class body.
+  FunctionNodeType funNode = handler_.newFunction(syntaxKind, pos());
+  if (!funNode) {
+    return null();
+  }
+
+  // Create the FunctionBox and link it to the function object.
+  Directives directives(true);
+  FunctionBox* funbox =
+      newFunctionBox(funNode, TaggedParserAtomIndex::null(), flags, pos().begin,
+                     directives, generatorKind, asyncKind);
+  if (!funbox) {
+    return null();
+  }
+  funbox->initWithEnclosingParseContext(pc_, flags, syntaxKind);
+  MOZ_ASSERT(funbox->isSyntheticFunction());
+  MOZ_ASSERT(!funbox->allowSuperCall());
+  MOZ_ASSERT(!funbox->allowArguments());
+  MOZ_ASSERT(!funbox->allowReturn());
+
+  // Set start at `static` token.
+  MOZ_ASSERT(anyChars.isCurrentTokenType(TokenKind::Static));
+  setFunctionStartAtCurrentToken(funbox);
+
+  // Push a SourceParseContext on to the stack.
+  ParseContext* outerpc = pc_;
+  SourceParseContext funpc(this, funbox, /* newDirectives = */ nullptr);
+  if (!funpc.init()) {
+    return null();
+  }
+
+  pc_->functionScope().useAsVarScope(pc_);
+
+  uint32_t start = pos().begin;
+
+  tokenStream.consumeKnownToken(TokenKind::LeftCurly);
+
+  // Static class blocks are code-generated as if they were static field
+  // initializers, so we bump the staticFields count here, which ensures
+  // .staticInitializers is noted as used.
+  classInitializedMembers.staticFields++;
+
+  LexicalScopeNodeType body = functionBody(
+      InHandling::InAllowed, YieldHandling::YieldIsKeyword,
+      FunctionSyntaxKind::Method, FunctionBodyType::StatementListBody);
+  if (!body) {
+    return null();
+  }
+
+  if (anyChars.isEOF()) {
+    error(JSMSG_UNTERMINATED_STATIC_CLASS_BLOCK);
+    return null();
+  }
+
+  tokenStream.consumeKnownToken(TokenKind::RightCurly,
+                                TokenStream::Modifier::SlashIsRegExp);
+
+  TokenPos wholeBodyPos(start, pos().end);
+
+  handler_.setEndPosition(funNode, wholeBodyPos.end);
+  setFunctionEndFromCurrentToken(funbox);
+
+  // Create a ListNode for the parameters + body (there are no parameters).
+  ListNodeType argsbody =
+      handler_.newList(ParseNodeKind::ParamsBody, wholeBodyPos);
+  if (!argsbody) {
+    return null();
+  }
+
+  handler_.setFunctionFormalParametersAndBody(funNode, argsbody);
+  funbox->setArgCount(0);
+
+  if (pc_->superScopeNeedsHomeObject()) {
+    funbox->setNeedsHomeObject();
+  }
+
+  handler_.setEndPosition(body, pos().begin);
+  handler_.setEndPosition(funNode, pos().end);
+  handler_.setFunctionBody(funNode, body);
+
+  if (!finishFunction()) {
+    return null();
+  }
+
+  if (!leaveInnerFunction(outerpc)) {
+    return null();
+  }
+
+  return funNode;
+}
+
+template <class ParseHandler, typename Unit>
+typename ParseHandler::FunctionNodeType
 GeneralParser<ParseHandler, Unit>::fieldInitializerOpt(
     TokenPos propNamePos, Node propName, TaggedParserAtomIndex propAtom,
     ClassInitializedMembers& classInitializedMembers, bool isStatic,
@@ -8804,7 +8937,7 @@ typename ParseHandler::Node GeneralParser<ParseHandler, Unit>::statement(
       // The Return parameter is only used here, and the effect is easily
       // detected this way, so don't bother passing around an extra parameter
       // everywhere.
-      if (!pc_->isFunctionBox()) {
+      if (!pc_->allowReturn()) {
         error(JSMSG_BAD_RETURN_OR_YIELD, js_return_str);
         return null();
       }
@@ -9017,7 +9150,7 @@ GeneralParser<ParseHandler, Unit>::statementListItem(
       // The Return parameter is only used here, and the effect is easily
       // detected this way, so don't bother passing around an extra parameter
       // everywhere.
-      if (!pc_->isFunctionBox()) {
+      if (!pc_->allowReturn()) {
         error(JSMSG_BAD_RETURN_OR_YIELD, js_return_str);
         return null();
       }

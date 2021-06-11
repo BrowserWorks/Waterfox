@@ -1557,8 +1557,8 @@ bool Debugger::unwrapPropertyDescriptor(
     desc.setValue(value);
   }
 
-  if (desc.hasGetterObject()) {
-    RootedObject get(cx, desc.getterObject());
+  if (desc.hasGetter()) {
+    RootedObject get(cx, desc.getter());
     if (get) {
       if (!unwrapDebuggeeObject(cx, &get)) {
         return false;
@@ -1567,11 +1567,11 @@ bool Debugger::unwrapPropertyDescriptor(
         return false;
       }
     }
-    desc.setGetterObject(get);
+    desc.setGetter(get);
   }
 
-  if (desc.hasSetterObject()) {
-    RootedObject set(cx, desc.setterObject());
+  if (desc.hasSetter()) {
+    RootedObject set(cx, desc.setter());
     if (set) {
       if (!unwrapDebuggeeObject(cx, &set)) {
         return false;
@@ -1580,7 +1580,7 @@ bool Debugger::unwrapPropertyDescriptor(
         return false;
       }
     }
-    desc.setSetterObject(set);
+    desc.setSetter(set);
   }
 
   return true;
@@ -5163,6 +5163,12 @@ class MOZ_STACK_CLASS Debugger::ScriptQuery : public Debugger::QueryBase {
 
       fun = script->function();
 
+      // Ignore any delazification placeholder functions. These should not be
+      // exposed to debugger in any way.
+      if (fun->isGhost()) {
+        continue;
+      }
+
       // Delazify script.
       JSScript* compiledScript = GetOrCreateFunctionScript(cx, fun);
       if (!compiledScript) {
@@ -6361,18 +6367,6 @@ DebuggerSource* Debugger::wrapWasmSource(
   return wrapVariantReferent(cx, referent);
 }
 
-bool DebugAPI::getScriptInstrumentationId(JSContext* cx, HandleObject dbgObject,
-                                          HandleScript script,
-                                          MutableHandleValue rval) {
-  Debugger* dbg = Debugger::fromJSObject(dbgObject);
-  DebuggerScript* dbgScript = dbg->wrapScript(cx, script);
-  if (!dbgScript) {
-    return false;
-  }
-  rval.set(dbgScript->getInstrumentationId());
-  return true;
-}
-
 bool Debugger::observesFrame(AbstractFramePtr frame) const {
   if (frame.isWasmDebugFrame()) {
     return observesWasm(frame.wasmInstance());
@@ -6953,7 +6947,7 @@ JS_PUBLIC_API bool FireOnGarbageCollectionHook(
     Debugger* dbg = Debugger::fromJSObject(triggered.back());
 
     if (dbg->getHook(Debugger::OnGarbageCollection)) {
-      mozilla::Unused << dbg->enterDebuggerHook(cx, [&]() -> bool {
+      (void)dbg->enterDebuggerHook(cx, [&]() -> bool {
         return dbg->fireOnGarbageCollectionHook(cx, data);
       });
       MOZ_ASSERT(!cx->isExceptionPending());

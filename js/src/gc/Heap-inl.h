@@ -32,6 +32,7 @@ inline void js::gc::Arena::init(JS::Zone* zoneArg, AllocKind kind,
 
   zone = zoneArg;
   allocKind = kind;
+  isNewlyCreated = 1;
   onDelayedMarkingList_ = 0;
   hasDelayedBlackMarking_ = 0;
   hasDelayedGrayMarking_ = 0;
@@ -61,5 +62,9 @@ inline size_t& js::gc::Arena::atomBitmapStart() {
   MOZ_ASSERT(zone && zone->isAtomsZone());
   return atomBitmapStart_;
 }
+
+inline js::gc::NurseryCellHeader::NurseryCellHeader(AllocSite* site,
+                                                    JS::TraceKind kind)
+    : allocSiteAndTraceKind(MakeValue(site, kind)) {}
 
 #endif

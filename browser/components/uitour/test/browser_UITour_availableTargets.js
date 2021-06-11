@@ -19,13 +19,6 @@ function getExpectedTargets() {
     "library",
     "logins",
     "pageAction-bookmark",
-    ...(gProton
-      ? []
-      : [
-          "pageAction-copyURL",
-          "pageAction-emailLink",
-          "pageAction-sendToDevice",
-        ]),
     ...(hasPocket ? ["pocket"] : []),
     "privateWindow",
     ...(hasQuit ? ["quit"] : []),
@@ -79,58 +72,6 @@ add_UITour_task(async function test_availableTargets_search() {
   } finally {
     Services.prefs.clearUserPref("browser.search.widget.inNavBar");
   }
-});
-
-add_UITour_task(
-  async function test_availableTargets_removeUrlbarPageActionsAll() {
-    if (gProton) {
-      ok(
-        true,
-        "In proton actions cannot be removed from or added to the URL bar."
-      );
-      return;
-    }
-    pageActionsHelper.setActionsUrlbarState(false);
-    UITour.clearAvailableTargetsCache();
-    let data = await getConfigurationPromise("availableTargets");
-    let expecteds = getExpectedTargets();
-    ok_targets(data, expecteds);
-    let expectedActions = [
-      ["pageAction-bookmark", "pageAction-panel-bookmark"],
-      ["pageAction-copyURL", "pageAction-panel-copyURL"],
-      ["pageAction-emailLink", "pageAction-panel-emailLink"],
-      ["pageAction-sendToDevice", "pageAction-panel-sendToDevice"],
-    ];
-    for (let [targetName, expectedNodeId] of expectedActions) {
-      await assertTargetNode(targetName, expectedNodeId);
-    }
-    pageActionsHelper.restoreActionsUrlbarState();
-  }
-);
-
-add_UITour_task(async function test_availableTargets_addUrlbarPageActionsAll() {
-  if (gProton) {
-    ok(
-      true,
-      "In proton actions cannot be removed from or added to the URL bar."
-    );
-    return;
-  }
-  pageActionsHelper.setActionsUrlbarState(true);
-  UITour.clearAvailableTargetsCache();
-  let data = await getConfigurationPromise("availableTargets");
-  let expecteds = getExpectedTargets();
-  ok_targets(data, expecteds);
-  let expectedActions = [
-    ["pageAction-bookmark", "star-button-box"],
-    ["pageAction-copyURL", "pageAction-urlbar-copyURL"],
-    ["pageAction-emailLink", "pageAction-urlbar-emailLink"],
-    ["pageAction-sendToDevice", "pageAction-urlbar-sendToDevice"],
-  ];
-  for (let [targetName, expectedNodeId] of expectedActions) {
-    await assertTargetNode(targetName, expectedNodeId);
-  }
-  pageActionsHelper.restoreActionsUrlbarState();
 });
 
 function ok_targets(actualData, expectedTargets) {

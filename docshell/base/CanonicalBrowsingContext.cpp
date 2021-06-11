@@ -14,13 +14,13 @@
 #include "mozilla/dom/BrowsingContextGroup.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/EventTarget.h"
+#include "mozilla/dom/PBackgroundSessionStorageCache.h"
 #include "mozilla/dom/PWindowGlobalParent.h"
 #include "mozilla/dom/WindowGlobalParent.h"
 #include "mozilla/dom/ContentProcessManager.h"
 #include "mozilla/dom/MediaController.h"
 #include "mozilla/dom/MediaControlService.h"
 #include "mozilla/dom/ContentPlaybackController.h"
-#include "mozilla/dom/SessionHistoryEntry.h"
 #include "mozilla/dom/SessionStorageManager.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/net/DocumentLoadListener.h"
@@ -42,6 +42,9 @@
 #include "nsBrowserStatusFilter.h"
 #include "nsIBrowser.h"
 #include "nsTHashSet.h"
+#include "SessionStoreFunctions.h"
+#include "nsIXPConnect.h"
+#include "nsImportModule.h"
 
 #ifdef NS_PRINTING
 #  include "mozilla/embedding/printingui/PrintingParent.h"
@@ -157,16 +160,61 @@ nsISecureBrowserUI* CanonicalBrowsingContext::GetSecureBrowserUI() {
   return mSecureBrowserUI;
 }
 
+namespace {
+// The DocShellProgressBridge is attached to a root content docshell loaded in
+// the parent process. Notifications are paired up with the docshell which they
+// came from, so that they can be fired to the correct
+// BrowsingContextWebProgress and bubble through this tree separately.
+//
+// Notifications are filtered by a nsBrowserStatusFilter before being received
+// by the DocShellProgressBridge.
+class DocShellProgressBridge : public nsIWebProgressListener {
+ public:
+  NS_DECL_ISUPPORTS
+  // NOTE: This relies in the expansion of `NS_FORWARD_SAFE` and all listener
+  // methods accepting an `aWebProgress` argument. If this changes in the
+  // future, this may need to be written manually.
+  NS_FORWARD_SAFE_NSIWEBPROGRESSLISTENER(GetTargetContext(aWebProgress))
+
+  explicit DocShellProgressBridge(uint64_t aTopContextId)
+      : mTopContextId(aTopContextId) {}
+
+ private:
+  virtual ~DocShellProgressBridge() = default;
+
+  nsIWebProgressListener* GetTargetContext(nsIWebProgress* aWebProgress) {
+    RefPtr<CanonicalBrowsingContext> context;
+    if (nsCOMPtr<nsIDocShell> docShell = do_QueryInterface(aWebProgress)) {
+      context = docShell->GetBrowsingContext()->Canonical();
+    } else {
+      context = CanonicalBrowsingContext::Get(mTopContextId);
+    }
+    return context && !context->IsDiscarded() ? context->GetWebProgress()
+                                              : nullptr;
+  }
+
+  uint64_t mTopContextId = 0;
+};
+
+NS_IMPL_ISUPPORTS(DocShellProgressBridge, nsIWebProgressListener)
+}  // namespace
+
 void CanonicalBrowsingContext::MaybeAddAsProgressListener(
     nsIWebProgress* aWebProgress) {
-  if (!GetWebProgress()) {
+  // Only add as a listener if the created docshell is a toplevel content
+  // docshell. We'll get notifications for all of our subframes through a single
+  // listener.
+  if (!IsTopContent()) {
     return;
   }
-  if (!mStatusFilter) {
+
+  if (!mDocShellProgressBridge) {
+    mDocShellProgressBridge = new DocShellProgressBridge(Id());
     mStatusFilter = new nsBrowserStatusFilter();
-    mStatusFilter->AddProgressListener(GetWebProgress(),
+    mStatusFilter->AddProgressListener(mDocShellProgressBridge,
                                        nsIWebProgress::NOTIFY_ALL);
   }
+
   aWebProgress->AddProgressListener(mStatusFilter, nsIWebProgress::NOTIFY_ALL);
 }
 
@@ -177,9 +225,10 @@ void CanonicalBrowsingContext::ReplacedBy(
   MOZ_ASSERT(!aNewContext->mSessionHistory);
   MOZ_ASSERT(IsTop() && aNewContext->IsTop());
   if (mStatusFilter) {
-    mStatusFilter->RemoveProgressListener(mWebProgress);
+    mStatusFilter->RemoveProgressListener(mDocShellProgressBridge);
     mStatusFilter = nullptr;
   }
+  mWebProgress->ContextReplaced(aNewContext);
   aNewContext->mWebProgress = std::move(mWebProgress);
 
   // Use the Transaction for the fields which need to be updated whether or not
@@ -210,10 +259,10 @@ void CanonicalBrowsingContext::ReplacedBy(
 
   if (mSessionHistory) {
     mSessionHistory->SetBrowsingContext(aNewContext);
-    if (mozilla::BFCacheInParent()) {
-      // XXXBFCache Should we clear the epoch always?
-      mSessionHistory->SetEpoch(0, Nothing());
-    }
+    // At this point we will be creating a new ChildSHistory in the child.
+    // That means that the child's epoch will be reset, so it makes sense to
+    // reset the epoch in the parent too.
+    mSessionHistory->SetEpoch(0, Nothing());
     mSessionHistory.swap(aNewContext->mSessionHistory);
     RefPtr<ChildSHistory> childSHistory = ForgetChildSHistory();
     aNewContext->SetChildSHistory(childSHistory);
@@ -691,12 +740,12 @@ void CanonicalBrowsingContext::SessionHistoryCommit(uint64_t aLoadId,
           }
         }
 
-        if (loadFromSessionHistory) {
-          // XXX Synchronize browsing context tree and session history tree?
-          shistory->UpdateIndex();
-        } else if (addEntry) {
+        if (!loadFromSessionHistory && addEntry) {
           shistory->AddEntry(mActiveEntry, aPersist);
         }
+        // XXX Synchronize browsing context tree and session history tree?
+        // UpdateIndexWithEntry updates the index and clears the requestedIndex.
+        shistory->UpdateIndexWithEntry(mActiveEntry);
       } else {
         // FIXME The old implementations adds it to the parent's mLSHE if there
         //       is one, need to figure out if that makes sense here (peterv
@@ -710,9 +759,6 @@ void CanonicalBrowsingContext::SessionHistoryCommit(uint64_t aLoadId,
                                                          this);
           }
           mActiveEntry = newActiveEntry;
-          // FIXME UpdateIndex() here may update index too early (but even the
-          //       old implementation seems to have similar issues).
-          shistory->UpdateIndex();
         } else if (addEntry) {
           if (mActiveEntry) {
             if (LOAD_TYPE_HAS_FLAGS(
@@ -742,6 +788,10 @@ void CanonicalBrowsingContext::SessionHistoryCommit(uint64_t aLoadId,
             }
           }
         }
+        // FIXME UpdateIndex() here may update index too early (but even the
+        //       old implementation seems to have similar issues).
+        // UpdateIndexWithEntry updates the index and clears the requestedIndex.
+        shistory->UpdateIndexWithEntry(mActiveEntry);
       }
 
       ResetSHEntryHasUserInteractionCache();
@@ -1022,6 +1072,8 @@ void CanonicalBrowsingContext::CanonicalDiscard() {
   if (IsTop()) {
     BackgroundSessionStorageManager::RemoveManager(Id());
   }
+
+  CancelSessionStoreUpdate();
 }
 
 void CanonicalBrowsingContext::NotifyStartDelayedAutoplayMedia() {
@@ -2026,6 +2078,119 @@ void CanonicalBrowsingContext::RestoreState::Resolve() {
   mPromise = nullptr;
 }
 
+nsresult CanonicalBrowsingContext::WriteSessionStorageToSessionStore(
+    const nsTArray<SSCacheCopy>& aSesssionStorage, uint32_t aEpoch) {
+  RefPtr<WindowGlobalParent> windowParent = GetCurrentWindowGlobal();
+
+  if (!windowParent) {
+    return NS_OK;
+  }
+
+  Element* frameElement = windowParent->GetRootOwnerElement();
+  if (!frameElement) {
+    return NS_OK;
+  }
+
+  nsCOMPtr<nsISessionStoreFunctions> funcs =
+      do_ImportModule("resource://gre/modules/SessionStoreFunctions.jsm");
+  if (!funcs) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsIXPConnectWrappedJS> wrapped = do_QueryInterface(funcs);
+  AutoJSAPI jsapi;
+  if (!jsapi.Init(wrapped->GetJSObjectGlobal())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  Record<nsCString, Record<nsString, nsString>> storage;
+  JS::RootedValue update(jsapi.cx());
+
+  if (!aSesssionStorage.IsEmpty()) {
+    SessionStoreUtils::ConstructSessionStorageValues(this, aSesssionStorage,
+                                                     storage);
+    if (!ToJSValue(jsapi.cx(), storage, &update)) {
+      return NS_ERROR_FAILURE;
+    }
+  } else {
+    update.setNull();
+  }
+
+  return funcs->UpdateSessionStoreForStorage(frameElement, this, aEpoch,
+                                             update);
+}
+
+void CanonicalBrowsingContext::UpdateSessionStoreSessionStorage(
+    const std::function<void()>& aDone) {
+  using DataPromise = BackgroundSessionStorageManager::DataPromise;
+  BackgroundSessionStorageManager::GetData(
+      this, StaticPrefs::browser_sessionstore_dom_storage_limit(),
+      /* aCancelSessionStoreTiemr = */ true)
+      ->Then(GetCurrentSerialEventTarget(), __func__,
+             [self = RefPtr{this}, aDone, epoch = GetSessionStoreEpoch()](
+                 const DataPromise::ResolveOrRejectValue& valueList) {
+               if (valueList.IsResolve()) {
+                 self->WriteSessionStorageToSessionStore(
+                     valueList.ResolveValue(), epoch);
+               }
+               aDone();
+             });
+}
+
+/* static */
+void CanonicalBrowsingContext::UpdateSessionStoreForStorage(
+    uint64_t aBrowsingContextId) {
+  RefPtr<CanonicalBrowsingContext> browsingContext = Get(aBrowsingContextId);
+
+  if (!browsingContext) {
+    return;
+  }
+
+  browsingContext->UpdateSessionStoreSessionStorage([]() {});
+}
+
+void CanonicalBrowsingContext::MaybeScheduleSessionStoreUpdate() {
+  if (!IsTop()) {
+    Top()->MaybeScheduleSessionStoreUpdate();
+    return;
+  }
+
+  if (IsInBFCache()) {
+    return;
+  }
+
+  if (mSessionStoreSessionStorageUpdateTimer) {
+    return;
+  }
+
+  if (StaticPrefs::browser_sessionstore_debug_no_auto_updates()) {
+    UpdateSessionStoreSessionStorage([]() {});
+    return;
+  }
+
+  auto result = NS_NewTimerWithFuncCallback(
+      [](nsITimer*, void* aClosure) {
+        auto* context = static_cast<CanonicalBrowsingContext*>(aClosure);
+        context->UpdateSessionStoreSessionStorage([]() {});
+      },
+      this, StaticPrefs::browser_sessionstore_interval(),
+      nsITimer::TYPE_ONE_SHOT,
+      "CanonicalBrowsingContext::MaybeScheduleSessionStoreUpdate");
+
+  if (result.isErr()) {
+    return;
+  }
+
+  mSessionStoreSessionStorageUpdateTimer = result.unwrap();
+}
+
+void CanonicalBrowsingContext::CancelSessionStoreUpdate() {
+  if (mSessionStoreSessionStorageUpdateTimer) {
+    mSessionStoreSessionStorageUpdateTimer->Cancel();
+    mSessionStoreSessionStorageUpdateTimer = nullptr;
+  }
+}
+
 void CanonicalBrowsingContext::SetContainerFeaturePolicy(
     FeaturePolicy* aContainerFeaturePolicy) {
   mContainerFeaturePolicy = aContainerFeaturePolicy;
@@ -2168,6 +2333,11 @@ bool CanonicalBrowsingContext::AllowedInBFCache(
   }
 
   uint16_t bfcacheCombo = 0;
+  if (mRestoreState) {
+    bfcacheCombo |= BFCacheStatus::RESTORING;
+    MOZ_LOG(gSHIPBFCacheLog, LogLevel::Debug, (" * during session restore"));
+  }
+
   if (Group()->Toplevels().Length() > 1) {
     bfcacheCombo |= BFCacheStatus::NOT_ONLY_TOPLEVEL_IN_BCG;
     MOZ_LOG(gSHIPBFCacheLog, LogLevel::Debug,
@@ -2178,12 +2348,15 @@ bool CanonicalBrowsingContext::AllowedInBFCache(
   // subframes, so it's OK to allow those few about:* pages enter BFCache.
   MOZ_ASSERT(IsTop(), "Trying to put a non top level BC into BFCache");
 
-  nsCOMPtr<nsIURI> currentURI = GetCurrentURI();
-  // Exempt about:* pages from bfcache, with the exception of about:blank
-  if (currentURI && currentURI->SchemeIs("about") &&
-      !currentURI->GetSpecOrDefault().EqualsLiteral("about:blank")) {
-    bfcacheCombo |= BFCacheStatus::ABOUT_PAGE;
-    MOZ_LOG(gSHIPBFCacheLog, LogLevel::Debug, (" * about:* page"));
+  WindowGlobalParent* wgp = GetCurrentWindowGlobal();
+  if (wgp && wgp->GetDocumentURI()) {
+    nsCOMPtr<nsIURI> currentURI = wgp->GetDocumentURI();
+    // Exempt about:* pages from bfcache, with the exception of about:blank
+    if (currentURI->SchemeIs("about") &&
+        !currentURI->GetSpecOrDefault().EqualsLiteral("about:blank")) {
+      bfcacheCombo |= BFCacheStatus::ABOUT_PAGE;
+      MOZ_LOG(gSHIPBFCacheLog, LogLevel::Debug, (" * about:* page"));
+    }
   }
 
   // For telemetry we're collecting all the flags for all the BCs hanging
@@ -2229,9 +2402,15 @@ bool CanonicalBrowsingContext::AllowedInBFCache(
   return bfcacheCombo == 0;
 }
 
+void CanonicalBrowsingContext::SetTouchEventsOverride(
+    dom::TouchEventsOverride aOverride, ErrorResult& aRv) {
+  SetTouchEventsOverrideInternal(aOverride, aRv);
+}
+
 NS_IMPL_CYCLE_COLLECTION_INHERITED(CanonicalBrowsingContext, BrowsingContext,
                                    mSessionHistory, mContainerFeaturePolicy,
-                                   mCurrentBrowserParent)
+                                   mCurrentBrowserParent, mWebProgress,
+                                   mSessionStoreSessionStorageUpdateTimer)
 
 NS_IMPL_ADDREF_INHERITED(CanonicalBrowsingContext, BrowsingContext)
 NS_IMPL_RELEASE_INHERITED(CanonicalBrowsingContext, BrowsingContext)

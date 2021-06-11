@@ -42,6 +42,8 @@ class LIRGeneratorX86Shared : public LIRGeneratorShared {
                    MDefinition* lhs, MDefinition* rhs);
   void lowerForBitAndAndBranch(LBitAndAndBranch* baab, MInstruction* mir,
                                MDefinition* lhs, MDefinition* rhs);
+  void lowerNegI(MInstruction* ins, MDefinition* input);
+  void lowerNegI64(MInstruction* ins, MDefinition* input);
   void lowerMulI(MMul* mul, MDefinition* lhs, MDefinition* rhs);
   void lowerDivI(MDiv* div);
   void lowerModI(MMod* mod);
@@ -49,6 +51,8 @@ class LIRGeneratorX86Shared : public LIRGeneratorShared {
   void lowerUMod(MMod* mod);
   void lowerUrshD(MUrsh* mir);
   void lowerPowOfTwoI(MPow* mir);
+  void lowerWasmSelectI(MWasmSelect* select);
+  void lowerWasmSelectI64(MWasmSelect* select);
   void lowerBigIntLsh(MBigIntLsh* ins);
   void lowerBigIntRsh(MBigIntRsh* ins);
   void lowerWasmBuiltinTruncateToInt32(MWasmBuiltinTruncateToInt32* ins);

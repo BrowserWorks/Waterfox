@@ -456,7 +456,7 @@ bool ModuleEnvironmentObject::hasImportBinding(HandlePropertyName name) {
 
 bool ModuleEnvironmentObject::lookupImport(
     jsid name, ModuleEnvironmentObject** envOut,
-    mozilla::Maybe<ShapeProperty>* propOut) {
+    mozilla::Maybe<PropertyInfo>* propOut) {
   return importBindings().lookup(name, envOut, propOut);
 }
 
@@ -472,11 +472,11 @@ bool ModuleEnvironmentObject::lookupProperty(JSContext* cx, HandleObject obj,
                                              PropertyResult* propp) {
   const IndirectBindingMap& bindings =
       obj->as<ModuleEnvironmentObject>().importBindings();
-  mozilla::Maybe<ShapeProperty> shapeProp;
+  mozilla::Maybe<PropertyInfo> propInfo;
   ModuleEnvironmentObject* env;
-  if (bindings.lookup(id, &env, &shapeProp)) {
+  if (bindings.lookup(id, &env, &propInfo)) {
     objp.set(env);
-    propp->setNativeProperty(*shapeProp);
+    propp->setNativeProperty(*propInfo);
     return true;
   }
 
@@ -507,7 +507,7 @@ bool ModuleEnvironmentObject::getProperty(JSContext* cx, HandleObject obj,
                                           MutableHandleValue vp) {
   const IndirectBindingMap& bindings =
       obj->as<ModuleEnvironmentObject>().importBindings();
-  mozilla::Maybe<ShapeProperty> prop;
+  mozilla::Maybe<PropertyInfo> prop;
   ModuleEnvironmentObject* env;
   if (bindings.lookup(id, &env, &prop)) {
     vp.set(env->getSlot(prop->slot()));
@@ -537,7 +537,7 @@ bool ModuleEnvironmentObject::getOwnPropertyDescriptor(
     MutableHandle<mozilla::Maybe<PropertyDescriptor>> desc) {
   const IndirectBindingMap& bindings =
       obj->as<ModuleEnvironmentObject>().importBindings();
-  mozilla::Maybe<ShapeProperty> prop;
+  mozilla::Maybe<PropertyInfo> prop;
   ModuleEnvironmentObject* env;
   if (bindings.lookup(id, &env, &prop)) {
     desc.set(mozilla::Some(PropertyDescriptor::Data(
@@ -3442,7 +3442,7 @@ bool js::CheckLexicalNameConflict(
     HandleObject varObj, HandlePropertyName name) {
   const char* redeclKind = nullptr;
   RootedId id(cx, NameToId(name));
-  mozilla::Maybe<ShapeProperty> prop;
+  mozilla::Maybe<PropertyInfo> prop;
   if (varObj->is<GlobalObject>() &&
       varObj->as<GlobalObject>().realm()->isInVarNames(name)) {
     // ES 15.1.11 step 5.a
@@ -3479,7 +3479,7 @@ bool js::CheckLexicalNameConflict(
 [[nodiscard]] static bool CheckVarNameConflict(
     JSContext* cx, Handle<LexicalEnvironmentObject*> lexicalEnv,
     HandlePropertyName name) {
-  mozilla::Maybe<ShapeProperty> prop = lexicalEnv->lookup(cx, name);
+  mozilla::Maybe<PropertyInfo> prop = lexicalEnv->lookup(cx, name);
   if (prop.isSome()) {
     ReportRuntimeRedeclaration(cx, name, prop->writable() ? "let" : "const");
     return false;
@@ -3674,15 +3674,15 @@ static bool InitHoistedFunctionDeclarations(JSContext* cx, HandleScript script,
     MOZ_ASSERT(varObj->is<NativeObject>() ||
                varObj->is<DebugEnvironmentProxy>());
     if (varObj->is<GlobalObject>()) {
-      ShapeProperty shapeProp = prop.shapeProperty();
-      if (shapeProp.configurable()) {
+      PropertyInfo propInfo = prop.propertyInfo();
+      if (propInfo.configurable()) {
         if (!DefineDataProperty(cx, varObj, name, rval, attrs)) {
           return false;
         }
       } else {
-        MOZ_ASSERT(shapeProp.isDataProperty());
-        MOZ_ASSERT(shapeProp.writable());
-        MOZ_ASSERT(shapeProp.enumerable());
+        MOZ_ASSERT(propInfo.isDataProperty());
+        MOZ_ASSERT(propInfo.writable());
+        MOZ_ASSERT(propInfo.enumerable());
       }
 
       // Careful: the presence of a shape, even one appearing to derive from
@@ -4195,7 +4195,7 @@ JSObject* js::MaybeOptimizeBindGlobalName(JSContext* cx,
   // 'let') at compile time.
   Rooted<GlobalLexicalEnvironmentObject*> env(cx,
                                               &global->lexicalEnvironment());
-  mozilla::Maybe<ShapeProperty> prop = env->lookup(cx, name);
+  mozilla::Maybe<PropertyInfo> prop = env->lookup(cx, name);
   if (prop.isSome()) {
     if (prop->writable() &&
         !env->getSlot(prop->slot()).isMagic(JS_UNINITIALIZED_LEXICAL)) {
@@ -4217,3 +4217,110 @@ JSObject* js::MaybeOptimizeBindGlobalName(JSContext* cx,
 
   return nullptr;
 }
+
+#if defined(DEBUG) || defined(JS_JITSPEW)
+static void DumpEnvironmentObject(JSObject* unrootedEnvObj) {
+  JSContext* cx = TlsContext.get();
+  if (!cx) {
+    fprintf(stderr, "*** can't get JSContext for current thread\n");
+    return;
+  }
+
+  Rooted<JSObject*> envObj(cx, unrootedEnvObj);
+  while (envObj) {
+    Rooted<EnvironmentObject*> env(cx);
+    if (envObj->is<EnvironmentObject>()) {
+      env = &envObj->as<EnvironmentObject>();
+    } else if (envObj->is<DebugEnvironmentProxy>()) {
+      fprintf(stderr, "[DebugProxy] ");
+      env = &envObj->as<DebugEnvironmentProxy>().environment();
+    } else {
+      MOZ_ASSERT(envObj->is<GlobalObject>());
+      fprintf(stderr, "global\n");
+      break;
+    }
+
+    Rooted<Scope*> scope(cx);
+    if (env->is<CallObject>()) {
+      fprintf(stderr, "CallObject");
+    } else if (env->is<VarEnvironmentObject>()) {
+      fprintf(stderr, "VarEnvironmentObject");
+      scope = &env->as<VarEnvironmentObject>().scope();
+    } else if (env->is<ModuleEnvironmentObject>()) {
+      fprintf(stderr, "ModuleEnvironmentObject");
+    } else if (env->is<WasmInstanceEnvironmentObject>()) {
+      fprintf(stderr, "WasmInstanceEnvironmentObject");
+      scope = &env->as<WasmInstanceEnvironmentObject>().scope();
+    } else if (env->is<WasmFunctionCallObject>()) {
+      fprintf(stderr, "WasmFunctionCallObject");
+      scope = &env->as<WasmFunctionCallObject>().scope();
+    } else if (env->is<LexicalEnvironmentObject>()) {
+      if (env->is<ScopedLexicalEnvironmentObject>()) {
+        if (env->is<BlockLexicalEnvironmentObject>()) {
+          if (env->is<NamedLambdaObject>()) {
+            fprintf(stderr, "NamedLambdaObject");
+          } else {
+            fprintf(stderr, "BlockLexicalEnvironmentObject");
+          }
+        } else if (env->is<ClassBodyLexicalEnvironmentObject>()) {
+          fprintf(stderr, "ClassBodyLexicalEnvironmentObject");
+        } else {
+          fprintf(stderr, "ScopedLexicalEnvironmentObject");
+        }
+        scope = &env->as<ScopedLexicalEnvironmentObject>().scope();
+      } else if (env->is<ExtensibleLexicalEnvironmentObject>()) {
+        if (env->is<GlobalLexicalEnvironmentObject>()) {
+          fprintf(stderr, "GlobalLexicalEnvironmentObject");
+        } else if (env->is<NonSyntacticLexicalEnvironmentObject>()) {
+          fprintf(stderr, "NonSyntacticLexicalEnvironmentObject");
+        } else {
+          fprintf(stderr, "ExtensibleLexicalEnvironmentObject");
+        }
+      } else {
+        fprintf(stderr, "LexicalEnvironmentObject");
+      }
+    } else if (env->is<NonSyntacticVariablesObject>()) {
+      fprintf(stderr, "NonSyntacticVariablesObject");
+    } else if (env->is<WithEnvironmentObject>()) {
+      fprintf(stderr, "WithEnvironmentObject");
+    } else if (env->is<RuntimeLexicalErrorObject>()) {
+      fprintf(stderr, "RuntimeLexicalErrorObject");
+    } else {
+      fprintf(stderr, "EnvironmentObject");
+    }
+
+    if (scope) {
+      fprintf(stderr, " {\n");
+      for (Rooted<BindingIter> bi(cx, BindingIter(scope)); bi; bi++) {
+        if (bi.location().kind() == BindingLocation::Kind::Environment) {
+          UniqueChars bytes = AtomToPrintableString(cx, bi.name());
+          if (!bytes) {
+            fprintf(stderr, "  *** out of memory\n");
+            return;
+          }
+
+          fprintf(stderr, "  %u: %s %s\n", bi.location().slot(),
+                  BindingKindString(bi.kind()), bytes.get());
+        }
+      }
+      fprintf(stderr, "}");
+    }
+
+    fprintf(stderr, "\n");
+
+    if (envObj->is<DebugEnvironmentProxy>()) {
+      envObj = &envObj->as<DebugEnvironmentProxy>().enclosingEnvironment();
+    } else {
+      envObj = &env->enclosingEnvironment();
+    }
+
+    if (envObj) {
+      fprintf(stderr, "-> ");
+    }
+  }
+}
+
+void EnvironmentObject::dump() { DumpEnvironmentObject(this); }
+
+void DebugEnvironmentProxy::dump() { DumpEnvironmentObject(this); }
+#endif /* defined(DEBUG) || defined(JS_JITSPEW) */

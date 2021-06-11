@@ -15,18 +15,18 @@ const TEST_URL =
 requestLongerTimeout(2);
 
 add_task(async function() {
-  const { inspector, testActor } = await openInspectorForURL(TEST_URL);
+  const { inspector } = await openInspectorForURL(TEST_URL);
 
   inspector.markup._frame.focus();
 
   info("Check that editing the <svg> element works like other nodes");
-  await testDocumentElement(inspector, testActor);
+  await testDocumentElement(inspector);
 
   info("Check (again) that editing the <svg> element works like other nodes");
-  await testDocumentElement2(inspector, testActor);
+  await testDocumentElement2(inspector);
 });
 
-async function testDocumentElement(inspector, testActor) {
+async function testDocumentElement(inspector) {
   const currentDocElementOuterHTML = await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
     [],
@@ -47,23 +47,23 @@ async function testDocumentElement(inspector, testActor) {
   await onReselected;
 
   is(
-    await getAttributeInBrowser(gBrowser.selectedBrowser, "svg", "width"),
+    await getContentPageElementAttribute("svg", "width"),
     "200",
     "<svg> width has been updated"
   );
   is(
-    await getAttributeInBrowser(gBrowser.selectedBrowser, "svg", "height"),
+    await getContentPageElementAttribute("svg", "height"),
     "200",
     "<svg> height has been updated"
   );
   is(
-    await testActor.getProperty("svg", "outerHTML"),
+    await getContentPageElementProperty("svg", "outerHTML"),
     docElementSVG,
     "<svg> markup has been updated"
   );
 }
 
-async function testDocumentElement2(inspector, testActor) {
+async function testDocumentElement2(inspector) {
   const currentDocElementOuterHTML = await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
     [],
@@ -84,17 +84,17 @@ async function testDocumentElement2(inspector, testActor) {
   await onReselected;
 
   is(
-    await getAttributeInBrowser(gBrowser.selectedBrowser, "svg", "width"),
+    await getContentPageElementAttribute("svg", "width"),
     "300",
     "<svg> width has been updated"
   );
   is(
-    await getAttributeInBrowser(gBrowser.selectedBrowser, "svg", "height"),
+    await getContentPageElementAttribute("svg", "height"),
     "300",
     "<svg> height has been updated"
   );
   is(
-    await testActor.getProperty("svg", "outerHTML"),
+    await getContentPageElementProperty("svg", "outerHTML"),
     docElementSVG,
     "<svg> markup has been updated"
   );

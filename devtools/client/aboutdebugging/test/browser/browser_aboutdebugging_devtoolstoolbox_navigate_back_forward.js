@@ -14,13 +14,19 @@ async function waitForUrl(url, toolbox, browserTab, win) {
         browserTab.linkedBrowser.currentURI.spec === url
     ),
     toolbox.target.once("navigate"),
-    toolbox.target.client.waitForRequestsToSettle(),
+    toolbox.commands.client.waitForRequestsToSettle(),
     waitForAboutDebuggingRequests(win.AboutDebugging.store),
   ]);
 }
 
 // Test that ensures the remote page can go forward and back via UI buttons
 add_task(async function() {
+  // Disable bfcache for Fission for now.
+  // If Fission is disabled, the pref is no-op.
+  await SpecialPowers.pushPrefEnv({
+    set: [["fission.bfcacheInParent", false]],
+  });
+
   const browserTab = await addTab(ORIGINAL_URL);
 
   const { document, tab, window } = await openAboutDebugging();

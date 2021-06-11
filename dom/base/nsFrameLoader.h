@@ -211,11 +211,6 @@ class nsFrameLoader final : public nsStubMutationObserver,
 
   void DeactivateRemoteFrame(mozilla::ErrorResult& aRv);
 
-  void SendCrossProcessMouseEvent(const nsAString& aType, float aX, float aY,
-                                  int32_t aButton, int32_t aClickCount,
-                                  int32_t aModifiers,
-                                  mozilla::ErrorResult& aRv);
-
   void ActivateFrameEvent(const nsAString& aType, bool aCapture,
                           mozilla::ErrorResult& aRv);
 
@@ -227,7 +222,7 @@ class nsFrameLoader final : public nsStubMutationObserver,
 
   void RequestEpochUpdate(uint32_t aEpoch);
 
-  void RequestSHistoryUpdate(bool aImmediately = false);
+  void RequestSHistoryUpdate();
 
   already_AddRefed<Promise> PrintPreview(nsIPrintSettings* aPrintSettings,
                                          BrowsingContext* aSourceBC,
@@ -489,7 +484,7 @@ class nsFrameLoader final : public nsStubMutationObserver,
   // browsing context for a newly opened tab/window is ready.
   void InvokeBrowsingContextReadyCallback();
 
-  void RequestTabStateFlush();
+  void RequestFinalTabStateFlush();
 
   RefPtr<mozilla::dom::BrowsingContext> mPendingBrowsingContext;
   nsCOMPtr<nsIURI> mURIToLoad;

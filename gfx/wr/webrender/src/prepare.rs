@@ -1285,7 +1285,7 @@ pub fn update_brush_segment_clip_task(
     }
 
     let segment_world_rect = match pic_state.map_pic_to_world.map(&clip_chain.pic_clip_rect) {
-        Some(rect) => rect,
+        Some(rect) => rect.to_box2d(),
         None => return ClipMaskKind::Clipped,
     };
 
@@ -1546,7 +1546,7 @@ fn get_unclipped_device_rect(
 ) -> Option<DeviceRect> {
     let raster_rect = map_to_raster.map(&prim_rect)?;
     let world_rect = raster_rect * Scale::new(1.0);
-    Some(world_rect * device_pixel_scale)
+    Some((world_rect * device_pixel_scale).to_box2d())
 }
 
 /// Given an unclipped device rect, try to find a minimal device space
@@ -1561,17 +1561,17 @@ fn get_clipped_device_rect(
     device_pixel_scale: DevicePixelScale,
 ) -> Option<DeviceRect> {
     let unclipped_raster_rect = {
-        let world_rect = *unclipped * Scale::new(1.0);
+        let world_rect = unclipped.to_rect() * Scale::new(1.0);
         let raster_rect = world_rect * device_pixel_scale.inverse();
 
         raster_rect.cast_unit()
     };
 
-    let unclipped_world_rect = map_to_world.map(&unclipped_raster_rect)?;
+    let unclipped_world_rect = map_to_world.map(&unclipped_raster_rect)?.to_box2d();
 
     let clipped_world_rect = unclipped_world_rect.intersection(&world_clip_rect)?;
 
-    let clipped_raster_rect = map_to_world.unmap(&clipped_world_rect)?;
+    let clipped_raster_rect = map_to_world.unmap(&clipped_world_rect.to_rect())?;
 
     let clipped_raster_rect = clipped_raster_rect.intersection(&unclipped_raster_rect)?;
 

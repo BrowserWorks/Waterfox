@@ -135,7 +135,6 @@ class VirtualenvManager(VirtualenvHelper):
             self.topsrcdir, "third_party", "python", "virtualenv", "virtualenv.py"
         )
 
-    @property
     def version_info(self):
         return eval(
             subprocess.check_output(
@@ -283,6 +282,7 @@ class VirtualenvManager(VirtualenvHelper):
             )
 
         self.write_exe_info(python)
+        self._disable_pip_outdated_warning()
 
         return self.virtualenv_root
 
@@ -292,27 +292,20 @@ class VirtualenvManager(VirtualenvHelper):
             packages = [line.rstrip().split(":") for line in fh]
         return packages
 
-    def populate(self, sitecustomize=None):
+    def populate(self, ignore_sitecustomize=False):
         """Populate the virtualenv.
 
         The manifest file consists of colon-delimited fields. The first field
         specifies the action. The remaining fields are arguments to that
         action. The following actions are supported:
 
-        setup.py -- Invoke setup.py for a package. Expects the arguments:
-            1. relative path directory containing setup.py.
-            2. argument(s) to setup.py. e.g. "develop". Each program argument
-               is delimited by a colon. Arguments with colons are not yet
-               supported.
-
         filename.pth -- Adds the path given as argument to filename.pth under
             the virtualenv site packages directory.
 
-        optional -- This denotes the action as optional. The requested action
-            is attempted. If it fails, we issue a warning and go on. The
-            initial "optional" field is stripped then the remaining line is
-            processed like normal. e.g.
-            "optional:setup.py:python/foo:built_ext:-i"
+        thunderbird -- This denotes the action as to only occur for Thunderbird
+            checkouts. The initial "thunderbird" field is stripped, then the
+            remaining line is processed like normal. e.g.
+            "thunderbird:comms.pth:python/foo"
 
         packages.txt -- Denotes that the specified path is a child manifest. It
             will be read and processed as if its contents were concatenated
@@ -324,12 +317,6 @@ class VirtualenvManager(VirtualenvHelper):
         !windows -- This denotes that the action should only be taken when run
             on non-Windows systems.
 
-        python3 -- This denotes that the action should only be taken when run
-            on Python 3.
-
-        python2 -- This denotes that the action should only be taken when run
-            on python 2.
-
         set-variable -- Set the given environment variable; e.g.
             `set-variable FOO=1`.
 
@@ -340,32 +327,11 @@ class VirtualenvManager(VirtualenvHelper):
         """
         import distutils.sysconfig
 
+        is_thunderbird = os.path.exists(os.path.join(self.topsrcdir, "comm"))
         packages = self.packages()
         python_lib = distutils.sysconfig.get_python_lib()
-        do_close = not bool(sitecustomize)
-        sitecustomize = sitecustomize or open(
-            os.path.join(os.path.dirname(python_lib), "sitecustomize.py"), mode="w"
-        )
 
         def handle_package(package):
-            if package[0].startswith("set-variable "):
-                assert len(package) == 1
-                assignment = package[0][len("set-variable ") :].strip()
-                var, val = assignment.split("=", 1)
-                var = var if PY3 else ensure_binary(var)
-                val = val if PY3 else ensure_binary(val)
-                sitecustomize.write(
-                    "import os\n" "os.environ[%s] = %s\n" % (repr(var), repr(val))
-                )
-                return True
-
-            if package[0] == "setup.py":
-                assert len(package) >= 2
-
-                self.call_setup(os.path.join(self.topsrcdir, package[1]), package[2:])
-
-                return True
-
             if package[0] == "packages.txt":
                 assert len(package) == 2
 
@@ -378,15 +344,12 @@ class VirtualenvManager(VirtualenvHelper):
                     src,
                     populate_local_paths=self.populate_local_paths,
                 )
-                submanager.populate(sitecustomize=sitecustomize)
-
-                return True
-
-            if package[0].endswith(".pth"):
+                submanager.populate(ignore_sitecustomize=True)
+            elif package[0].endswith(".pth"):
                 assert len(package) == 2
 
                 if not self.populate_local_paths:
-                    return True
+                    return
 
                 path = os.path.join(self.topsrcdir, package[1])
 
@@ -396,34 +359,16 @@ class VirtualenvManager(VirtualenvHelper):
                     # to be moved around (as long as the paths relative to
                     # each other remain the same).
                     f.write("%s\n" % os.path.relpath(path, python_lib))
-                return True
-
-            if package[0] == "optional":
-                try:
+            elif package[0] == "thunderbird":
+                if is_thunderbird:
                     handle_package(package[1:])
-                    return True
-                except Exception:
-                    print(
-                        "Error processing command. Ignoring",
-                        "because optional. (%s)" % ":".join(package),
-                        file=self.log_handle,
-                    )
-                    return False
-
-            if package[0] in ("windows", "!windows"):
+            elif package[0] in ("windows", "!windows"):
                 for_win = not package[0].startswith("!")
                 is_win = sys.platform == "win32"
                 if is_win == for_win:
-                    return handle_package(package[1:])
-                return True
-
-            if package[0] in ("python2", "python3"):
-                for_python3 = package[0].endswith("3")
-                if PY3 == for_python3:
-                    return handle_package(package[1:])
-                return True
-
-            raise Exception("Unknown action: %s" % package[0])
+                    handle_package(package[1:])
+            else:
+                raise Exception("Unknown action: %s" % package[0])
 
         # We always target the OS X deployment target that Python itself was
         # built with, regardless of what's in the current environment. If we
@@ -466,16 +411,18 @@ class VirtualenvManager(VirtualenvHelper):
                 handle_package(package)
 
         finally:
-            if do_close:
-                # This hack isn't necessary for Python 3, or for the
-                # out-of-objdir virtualenvs.
-                if self.populate_local_paths and PY2:
+            # This hack isn't necessary for Python 3, or for the
+            # out-of-objdir virtualenvs.
+            if PY2 and self.populate_local_paths and not ignore_sitecustomize:
+                with open(
+                    os.path.join(os.path.dirname(python_lib), "sitecustomize.py"),
+                    mode="w",
+                ) as sitecustomize:
                     sitecustomize.write(
                         "# Importing mach_bootstrap has the side effect of\n"
                         "# installing an import hook\n"
                         "import mach_bootstrap\n"
                     )
-                sitecustomize.close()
 
             os.environ.pop("MACOSX_DEPLOYMENT_TARGET", None)
 
@@ -593,10 +540,7 @@ class VirtualenvManager(VirtualenvHelper):
             if req.satisfied_by is not None:
                 return
 
-        args = [
-            "install",
-            package,
-        ]
+        args = ["install", package]
 
         if vendored:
             args.extend(
@@ -634,11 +578,7 @@ class VirtualenvManager(VirtualenvHelper):
         if not os.path.isabs(path):
             path = os.path.join(self.topsrcdir, path)
 
-        args = [
-            "install",
-            "--requirement",
-            path,
-        ]
+        args = ["install", "--requirement", path]
 
         if require_hashes:
             args.append("--require-hashes")
@@ -647,14 +587,58 @@ class VirtualenvManager(VirtualenvHelper):
             args.append("--quiet")
 
         if vendored:
-            args.extend(
-                [
-                    "--no-deps",
-                    "--no-index",
-                ]
-            )
+            args.extend(["--no-deps", "--no-index"])
 
         return self._run_pip(args)
+
+    def _disable_pip_outdated_warning(self):
+        """Disables the pip outdated warning by changing pip's 'installer'
+
+        "pip" has behaviour to ensure that it doesn't print it's "outdated"
+        warning if it's part of a Linux distro package. This is because
+        Linux distros generally have a slightly out-of-date pip package
+        that they know to be stable, and users aren't always able to
+        (or want to) update it.
+
+        This behaviour works by checking if the "pip" installer
+        (encoded in the dist-info/INSTALLER file) is "pip" itself,
+        or a different value (e.g.: a distro).
+
+        We can take advantage of this behaviour by telling pip
+        that it was installed by "mach", so it won't print the
+        warning.
+
+        https://github.com/pypa/pip/blob/5ee933aab81273da3691c97f2a6e7016ecbe0ef9/src/pip/_internal/self_outdated_check.py#L100-L101 # noqa F401
+        """
+
+        # Defer "distutils" import until this function is called so that
+        # "mach bootstrap" doesn't fail due to Linux distro python-distutils
+        # package not being installed.
+        # By the time this function is called, "distutils" must be installed
+        # because it's needed by the "virtualenv" package.
+        from distutils import dist
+
+        distribution = dist.Distribution({"script_args": "--no-user-cfg"})
+        installer = distribution.get_command_obj("install")
+        installer.prefix = os.path.normpath(self.virtualenv_root)
+        installer.finalize_options()
+
+        # Path to virtualenv's "site-packages" directory
+        site_packages = installer.install_purelib
+
+        pip_dist_info = next(
+            (
+                file
+                for file in os.listdir(site_packages)
+                if file.startswith("pip-") and file.endswith(".dist-info")
+            ),
+            None,
+        )
+        if not pip_dist_info:
+            raise Exception("Failed to find pip dist-info in new virtualenv")
+
+        with open(os.path.join(site_packages, pip_dist_info, "INSTALLER"), "w") as file:
+            file.write("mach")
 
     def _run_pip(self, args):
         env = os.environ.copy()
@@ -692,10 +676,7 @@ def verify_python_version(log_handle):
     from distutils.version import LooseVersion
 
     major, minor, micro = sys.version_info[:3]
-    minimum_python_versions = {
-        2: LooseVersion("2.7.3"),
-        3: LooseVersion("3.6.0"),
-    }
+    minimum_python_versions = {2: LooseVersion("2.7.3"), 3: LooseVersion("3.6.0")}
     our = LooseVersion("%d.%d.%d" % (major, minor, micro))
 
     if major not in minimum_python_versions or our < minimum_python_versions[major]:

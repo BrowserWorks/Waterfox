@@ -214,7 +214,7 @@
       // line scroll amout should be the width (at horizontal scrollbox) or
       // the height (at vertical scrollbox) of the scrolled elements.
       // However, the elements may have different width or height.  So,
-      // for consistent speed, let's use avalage with of the elements.
+      // for consistent speed, let's use average width of the elements.
       var elements = this._getScrollableElements();
       return elements.length && this.scrollSize / elements.length;
     }
@@ -651,18 +651,13 @@
         return;
       }
 
+      const { deltaMode } = event;
       let doScroll = false;
       let instant;
       let scrollAmount = 0;
       if (this.getAttribute("orient") == "vertical") {
         doScroll = true;
-        if (event.deltaMode == event.DOM_DELTA_PIXEL) {
-          scrollAmount = event.deltaY;
-        } else if (event.deltaMode == event.DOM_DELTA_PAGE) {
-          scrollAmount = event.deltaY * this.scrollClientSize;
-        } else {
-          scrollAmount = event.deltaY * this.lineScrollAmount;
-        }
+        scrollAmount = event.deltaY;
       } else {
         // We allow vertical scrolling to scroll a horizontal scrollbox
         // because many users have a vertical scroll wheel but no
@@ -678,13 +673,9 @@
 
         if (this._prevMouseScrolls.every(prev => prev == isVertical)) {
           doScroll = true;
-          if (event.deltaMode == event.DOM_DELTA_PIXEL) {
-            scrollAmount = scrollByDelta;
+          scrollAmount = scrollByDelta;
+          if (deltaMode == event.DOM_DELTA_PIXEL) {
             instant = true;
-          } else if (event.deltaMode == event.DOM_DELTA_PAGE) {
-            scrollAmount = scrollByDelta * this.scrollClientSize;
-          } else {
-            scrollAmount = scrollByDelta * this.lineScrollAmount;
           }
         }
 
@@ -696,6 +687,24 @@
 
       if (doScroll) {
         let direction = scrollAmount < 0 ? -1 : 1;
+
+        if (deltaMode == event.DOM_DELTA_PAGE) {
+          scrollAmount *= this.scrollClientSize;
+        } else if (deltaMode == event.DOM_DELTA_LINE) {
+          // Try to not scroll by more than one page when using line scrolling,
+          // so that all elements are scrollable.
+          let lineAmount = this.lineScrollAmount;
+          let clientSize = this.scrollClientSize;
+          if (Math.abs(scrollAmount * lineAmount) > clientSize) {
+            // NOTE: This still tries to scroll a non-fractional amount of
+            // items per line scrolled.
+            scrollAmount =
+              Math.max(1, Math.floor(clientSize / lineAmount)) * direction;
+          }
+          scrollAmount *= lineAmount;
+        } else {
+          // DOM_DELTA_PIXEL, leave scrollAmount untouched.
+        }
         let startPos = this.scrollPosition;
 
         if (!this._isScrolling || this._direction != direction) {

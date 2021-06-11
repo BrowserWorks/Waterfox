@@ -21,8 +21,8 @@ class mozInlineSpellResume;
 class UpdateCurrentDictionaryCallback;
 
 namespace mozilla {
+class EditorBase;
 class EditorSpellCheck;
-class TextEditor;
 enum class EditSubAction : int32_t;
 
 namespace dom {
@@ -158,7 +158,7 @@ class mozInlineSpellChecker final : public nsIInlineSpellChecker,
   };
   static SpellCheckingState gCanEnableSpellChecking;
 
-  RefPtr<mozilla::TextEditor> mTextEditor;
+  RefPtr<mozilla::EditorBase> mEditorBase;
   RefPtr<mozilla::EditorSpellCheck> mSpellCheck;
   RefPtr<mozilla::EditorSpellCheck> mPendingSpellCheck;
 
@@ -233,7 +233,7 @@ class mozInlineSpellChecker final : public nsIInlineSpellChecker,
   // examines the dom node in question and returns true if the inline spell
   // checker should skip the node (i.e. the text is inside of a block quote
   // or an e-mail signature...)
-  static bool ShouldSpellCheckNode(mozilla::TextEditor* aTextEditor,
+  static bool ShouldSpellCheckNode(mozilla::EditorBase* aEditorBase,
                                    nsINode* aNode);
 
   // spell check the text contained within aRange, potentially scheduling
@@ -287,7 +287,7 @@ class mozInlineSpellChecker final : public nsIInlineSpellChecker,
 
   nsresult ResumeCheck(mozilla::UniquePtr<mozInlineSpellStatus>&& aStatus);
 
-  // Those methods are called when mTextEditor splits a node or joins the
+  // Those methods are called when mEditorBase splits a node or joins the
   // given nodes.
   void DidSplitNode(nsINode* aExistingRightNode, nsINode* aNewLeftNode);
   void DidJoinNodes(nsINode& aRightNode, nsINode& aLeftNode);
@@ -303,10 +303,24 @@ class mozInlineSpellChecker final : public nsIInlineSpellChecker,
  protected:
   virtual ~mozInlineSpellChecker();
 
-  // Adds the ranges corresponding to the misspelled words as long as
-  // aSpellCheckerSelection isn't full.
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY void AddRangesForMisspelledWords(
-      const nsTArray<NodeOffsetRange>& aRanges,
+  struct CompareRangeAndNodeOffsetRange;
+
+  // Ensures that all misspelled words have corresponding ranges in
+  // aSpellCheckerSelection. Reuses those of the old ranges, which still
+  // correspond to misspelled words and adds new ranges for those misspelled
+  // words for which no corresponding old range exists.
+  // Removes the old ranges which aren't reused from aSpellCheckerSelection.
+  //
+  // @param aNodeOffsetRangesForWords corresponds to aIsMisspelled.
+  //                                  `aNodeOffsetRangesForWords.Length() ==
+  //                                  aIsMisspelled.Length()`.
+  // @param aOldRangesForSomeWords ranges belonging to aSpellCheckerSelection.
+  //                               Its length may differ from
+  //                               `aNodeOffsetRangesForWords.Length()`.
+  // @param aIsMisspelled indicates which words are misspelled.
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY void UpdateRangesForMisspelledWords(
+      const nsTArray<NodeOffsetRange>& aNodeOffsetRangesForWords,
+      const nsTArray<RefPtr<nsRange>>& aOldRangesForSomeWords,
       const nsTArray<bool>& aIsMisspelled,
       mozilla::dom::Selection& aSpellCheckerSelection);
 
@@ -317,8 +331,8 @@ class mozInlineSpellChecker final : public nsIInlineSpellChecker,
   // track the number of pending spell checks and async operations that may lead
   // to spell checks, notifying observers accordingly
   void ChangeNumPendingSpellChecks(int32_t aDelta,
-                                   mozilla::TextEditor* aTextEditor = nullptr);
-  void NotifyObservers(const char* aTopic, mozilla::TextEditor* aTextEditor);
+                                   mozilla::EditorBase* aEditorBase = nullptr);
+  void NotifyObservers(const char* aTopic, mozilla::EditorBase* aEditorBase);
 
   void StartToListenToEditSubActions() { mIsListeningToEditSubActions = true; }
   void EndListeningToEditSubActions() { mIsListeningToEditSubActions = false; }

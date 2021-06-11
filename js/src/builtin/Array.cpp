@@ -636,7 +636,7 @@ bool js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
   bool lengthIsWritable = arr->lengthIsWritable();
 #ifdef DEBUG
   {
-    mozilla::Maybe<ShapeProperty> lengthProp = arr->lookupPure(id);
+    mozilla::Maybe<PropertyInfo> lengthProp = arr->lookupPure(id);
     MOZ_ASSERT(lengthProp.isSome());
     MOZ_ASSERT(lengthProp->writable() == lengthIsWritable);
   }
@@ -825,11 +825,12 @@ bool js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
 
   // Step 20.
   if (desc.hasWritable() && !desc.writable()) {
-    Maybe<ShapeProperty> lengthProp = arr->lookup(cx, id);
+    Maybe<PropertyInfo> lengthProp = arr->lookup(cx, id);
     MOZ_ASSERT(lengthProp.isSome());
     MOZ_ASSERT(lengthProp->isCustomDataProperty());
-    unsigned attrs = lengthProp->attributes() | JSPROP_READONLY;
-    if (!NativeObject::changeCustomDataPropAttributes(cx, arr, id, attrs)) {
+    PropertyFlags flags = lengthProp->flags();
+    flags.clearFlag(PropertyFlag::Writable);
+    if (!NativeObject::changeCustomDataPropAttributes(cx, arr, id, flags)) {
       return false;
     }
   }
@@ -930,8 +931,9 @@ static bool AddLengthProperty(JSContext* cx, HandleArrayObject obj) {
   MOZ_ASSERT(obj->empty());
 
   RootedId lengthId(cx, NameToId(cx->names().length));
-  return NativeObject::addCustomDataProperty(
-      cx, obj, lengthId, JSPROP_CUSTOM_DATA_PROP | JSPROP_PERMANENT);
+  constexpr PropertyFlags flags = {PropertyFlag::CustomDataProperty,
+                                   PropertyFlag::Writable};
+  return NativeObject::addCustomDataProperty(cx, obj, lengthId, flags);
 }
 
 static bool IsArrayConstructor(const JSObject* obj) {
@@ -3824,7 +3826,8 @@ static inline bool EnsureNewArrayElements(JSContext* cx, ArrayObject* obj,
 template <uint32_t maxLength>
 static MOZ_ALWAYS_INLINE ArrayObject* NewArray(JSContext* cx, uint32_t length,
                                                HandleObject protoArg,
-                                               NewObjectKind newKind) {
+                                               NewObjectKind newKind,
+                                               gc::AllocSite* site = nullptr) {
   gc::AllocKind allocKind = GuessArrayGCKind(length);
   MOZ_ASSERT(CanChangeToBackgroundAllocKind(allocKind, &ArrayObject::class_));
   allocKind = ForegroundToBackgroundAllocKind(allocKind);
@@ -3844,9 +3847,10 @@ static MOZ_ALWAYS_INLINE ArrayObject* NewArray(JSContext* cx, uint32_t length,
     NewObjectCache& cache = cx->caches().newObjectCache;
     NewObjectCache::EntryIndex entry = -1;
     if (cache.lookupProto(&ArrayObject::class_, proto, allocKind, &entry)) {
-      gc::InitialHeap heap = GetInitialHeap(newKind, &ArrayObject::class_);
+      gc::InitialHeap heap =
+          GetInitialHeap(newKind, &ArrayObject::class_, site);
       AutoSetNewObjectMetadata metadata(cx);
-      JSObject* obj = cache.newObjectFromHit(cx, entry, heap);
+      JSObject* obj = cache.newObjectFromHit(cx, entry, heap, site);
       if (obj) {
         /* Fixup the elements pointer and length, which may be incorrect. */
         ArrayObject* arr = &obj->as<ArrayObject>();
@@ -3874,9 +3878,10 @@ static MOZ_ALWAYS_INLINE ArrayObject* NewArray(JSContext* cx, uint32_t length,
 
   AutoSetNewObjectMetadata metadata(cx);
   RootedArrayObject arr(
-      cx, ArrayObject::createArray(
-              cx, allocKind, GetInitialHeap(newKind, &ArrayObject::class_),
-              shape, length, metadata));
+      cx,
+      ArrayObject::createArray(
+          cx, allocKind, GetInitialHeap(newKind, &ArrayObject::class_, site),
+          shape, length, metadata));
   if (!arr) {
     return nullptr;
   }
@@ -3908,20 +3913,21 @@ static MOZ_ALWAYS_INLINE ArrayObject* NewArray(JSContext* cx, uint32_t length,
   return arr;
 }
 
-ArrayObject* JS_FASTCALL
-js::NewDenseEmptyArray(JSContext* cx, HandleObject proto /* = nullptr */) {
+ArrayObject* js::NewDenseEmptyArray(JSContext* cx,
+                                    HandleObject proto /* = nullptr */) {
   return NewArray<0>(cx, 0, proto, GenericObject);
 }
 
-ArrayObject* JS_FASTCALL js::NewTenuredDenseEmptyArray(
-    JSContext* cx, HandleObject proto /* = nullptr */) {
+ArrayObject* js::NewTenuredDenseEmptyArray(JSContext* cx,
+                                           HandleObject proto /* = nullptr */) {
   return NewArray<0>(cx, 0, proto, TenuredObject);
 }
 
-ArrayObject* JS_FASTCALL js::NewDenseFullyAllocatedArray(
+ArrayObject* js::NewDenseFullyAllocatedArray(
     JSContext* cx, uint32_t length, HandleObject proto /* = nullptr */,
-    NewObjectKind newKind /* = GenericObject */) {
-  return NewArray<UINT32_MAX>(cx, length, proto, newKind);
+    NewObjectKind newKind /* = GenericObject */,
+    gc::AllocSite* site /* = nullptr */) {
+  return NewArray<UINT32_MAX>(cx, length, proto, newKind, site);
 }
 
 ArrayObject* js::NewDensePartlyAllocatedArray(
@@ -3931,7 +3937,7 @@ ArrayObject* js::NewDensePartlyAllocatedArray(
                                                          newKind);
 }
 
-ArrayObject* JS_FASTCALL js::NewDenseUnallocatedArray(
+ArrayObject* js::NewDenseUnallocatedArray(
     JSContext* cx, uint32_t length, HandleObject proto /* = nullptr */,
     NewObjectKind newKind /* = GenericObject */) {
   return NewArray<0>(cx, length, proto, newKind);
@@ -4049,7 +4055,7 @@ void js::ArraySpeciesLookup::initialize(JSContext* cx) {
   state_ = State::Disabled;
 
   // Look up Array.prototype[@@iterator] and ensure it's a data property.
-  Maybe<ShapeProperty> ctorProp =
+  Maybe<PropertyInfo> ctorProp =
       arrayProto->lookup(cx, NameToId(cx->names().constructor));
   if (ctorProp.isNothing() || !ctorProp->isDataProperty()) {
     return;
@@ -4066,7 +4072,7 @@ void js::ArraySpeciesLookup::initialize(JSContext* cx) {
   }
 
   // Look up the '@@species' value on Array
-  Maybe<ShapeProperty> speciesProp =
+  Maybe<PropertyInfo> speciesProp =
       arrayCtor->lookup(cx, SYMBOL_TO_JSID(cx->wellKnownSymbols().species));
   if (speciesProp.isNothing() || !arrayCtor->hasGetter(*speciesProp)) {
     return;

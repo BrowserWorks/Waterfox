@@ -44,13 +44,6 @@ XPCOMUtils.defineLazyServiceGetter(
   "nsIClipboardHelper"
 );
 
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
-  "protonEnabled",
-  "browser.proton.enabled",
-  false
-);
-
 const DEFAULT_FORM_HISTORY_NAME = "searchbar-history";
 const SEARCH_BUTTON_ID = "urlbar-search-button";
 
@@ -92,7 +85,6 @@ class UrlbarInput {
             </html:div>
           </html:div>
           <hbox class="search-one-offs"
-                compact="true"
                 includecurrentengine="true"
                 disabletab="true"/>
         </vbox>
@@ -1426,10 +1418,6 @@ class UrlbarInput {
       if (forceSuppressFocusBorder) {
         this.toggleAttribute("suppress-focus-border", true);
       }
-
-      if (!protonEnabled) {
-        this.startLayoutExtend();
-      }
     }
   }
 
@@ -1667,9 +1655,6 @@ class UrlbarInput {
       return;
     }
     await this._updateLayoutBreakoutDimensions();
-    if (!protonEnabled) {
-      this.startLayoutExtend();
-    }
   }
 
   startLayoutExtend() {
@@ -1681,21 +1666,7 @@ class UrlbarInput {
     ) {
       return;
     }
-    if (protonEnabled && !this.view.isOpen) {
-      return;
-    }
-    // The Urlbar is unfocused or reduce motion is on and the view is closed.
-    // gReduceMotion is accurate in most cases, but it is automatically set to
-    // true when windows are loaded. We check `prefers-reduced-motion: reduce`
-    // to ensure the user actually set prefers-reduced-motion. We check
-    // gReduceMotion first to save work in the common case of having
-    // prefers-reduced-motion disabled.
-    if (
-      !this.view.isOpen &&
-      (this.getAttribute("focused") != "true" ||
-        (this.window.gReduceMotion &&
-          this.window.matchMedia("(prefers-reduced-motion: reduce)").matches))
-    ) {
+    if (!this.view.isOpen) {
       return;
     }
 
@@ -1726,15 +1697,6 @@ class UrlbarInput {
     // user sees only sees two states: not expanded, and expanded with the view
     // open.
     if (!this.hasAttribute("breakout-extend") || this.view.isOpen) {
-      return;
-    }
-
-    if (
-      !protonEnabled &&
-      this.getAttribute("focused") == "true" &&
-      (!this.window.gReduceMotion ||
-        !this.window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-    ) {
       return;
     }
 
@@ -2748,9 +2710,6 @@ class UrlbarInput {
     });
 
     this.removeAttribute("focused");
-    if (!protonEnabled) {
-      this.endLayoutExtend();
-    }
 
     if (this._autofillPlaceholder && this.window.gBrowser.userTypedValue) {
       // If we were autofilling, remove the autofilled portion, by restoring
@@ -2827,9 +2786,7 @@ class UrlbarInput {
   }
 
   _on_contextmenu(event) {
-    if (protonEnabled) {
-      this.addSearchEngineHelper.refreshContextMenu(event);
-    }
+    this.addSearchEngineHelper.refreshContextMenu(event);
 
     // Context menu opened via keyboard shortcut.
     if (!event.button) {
@@ -2862,10 +2819,6 @@ class UrlbarInput {
       if (untrim) {
         this.inputField.value = this._focusUntrimmedValue = this._untrimmedValue;
       }
-    }
-
-    if (!protonEnabled) {
-      this.startLayoutExtend();
     }
 
     if (this.focusedViaMousedown) {
@@ -2914,6 +2867,9 @@ class UrlbarInput {
         this.focusedViaMousedown = !this.focused;
         this._preventClickSelectsAll = this.focused;
 
+        // Keep the focus status, since the attribute may be changed
+        // upon calling this.focus().
+        const hasFocus = this.hasAttribute("focused");
         if (event.target != this.inputField) {
           this.focus();
         }
@@ -2938,7 +2894,7 @@ class UrlbarInput {
           // user has Top Sites disabled, creating a flashing effect.
           this.view.autoOpen({
             event,
-            suppressFocusBorder: !this.hasAttribute("focused"),
+            suppressFocusBorder: !hasFocus,
           });
         }
         break;
@@ -3589,7 +3545,7 @@ class AddSearchEngineHelper {
    * them in a submenu.
    */
   get maxInlineEngines() {
-    return 3;
+    return this.shortcutButtons._maxInlineAddEngines;
   }
 
   /**
@@ -3602,21 +3558,7 @@ class AddSearchEngineHelper {
     let engines = browser.engines?.slice() || [];
     if (!this._sameEngines(this.engines, engines)) {
       this.engines = engines;
-
-      // Update shortcut buttons. We only add `maxInlineEngines` engines, to
-      // cover the most common cases, others can be added from the context menu.
-      this.shortcutButtons.updateWebEngines(
-        engines.slice(0, this.maxInlineEngines).map(e => ({
-          name: e.title,
-          uri: e.uri,
-          get icon() {
-            // The icon is actually the browser favicon, that may not be in
-            // place yet, it will be fetched from the browser when the ui
-            // element is built.
-            return e.icon;
-          },
-        }))
-      );
+      this.shortcutButtons.updateWebEngines(engines);
     }
   }
 

@@ -201,7 +201,7 @@ bool nsXULPopupManager::RollupNativeMenu() {
 }
 
 bool nsXULPopupManager::Rollup(uint32_t aCount, bool aFlush,
-                               const nsIntPoint* pos,
+                               const LayoutDeviceIntPoint* pos,
                                nsIContent** aLastRolledUp) {
   if (aLastRolledUp) {
     *aLastRolledUp = nullptr;
@@ -302,8 +302,7 @@ bool nsXULPopupManager::Rollup(uint32_t aCount, bool aFlush,
       // event will get consumed, so here only a quick coordinates check is
       // done rather than a slower complete check of what is at that location.
       nsPresContext* presContext = item->Frame()->PresContext();
-      CSSIntPoint posCSSPixels(presContext->DevPixelsToIntCSSPixels(pos->x),
-                               presContext->DevPixelsToIntCSSPixels(pos->y));
+      CSSIntPoint posCSSPixels = presContext->DevPixelsToIntCSSPixels(*pos);
       if (anchorRect.Contains(posCSSPixels)) {
         if (consumeResult == ConsumeOutsideClicks_ParentOnly) {
           consume = true;
@@ -952,22 +951,6 @@ void nsXULPopupManager::ShowPopupAtScreenRect(
                                     aAttributesOverride);
 
   BeginShowingPopup(aPopup, aIsContextMenu, false, aTriggerEvent);
-}
-
-void nsXULPopupManager::ShowTooltipAtPosition(nsIContent* aPopup,
-                                              nsIContent* aTriggerContent,
-                                              const nsAString& aPosition) {
-  nsMenuPopupFrame* popupFrame = GetPopupFrameForContent(aPopup, true);
-  if (!popupFrame || !MayShowPopup(popupFrame)) {
-    return;
-  }
-
-  InitTriggerEvent(nullptr, nullptr, nullptr);
-
-  popupFrame->InitializePopup(aTriggerContent, aTriggerContent, aPosition, 0, 0,
-                              MenuPopupAnchorType_Node, false);
-
-  BeginShowingPopup(aPopup, false, false, nullptr);
 }
 
 void nsXULPopupManager::ShowTooltipAtScreen(nsIContent* aPopup,

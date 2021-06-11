@@ -51,10 +51,13 @@ void LIRGeneratorX86Shared::lowerForShift(LInstructionHelper<1, 2, 0>* ins,
   if (rhs->isConstant()) {
     ins->setOperand(1, useOrConstantAtStart(rhs));
   } else if (Assembler::HasBMI2() && !mir->isRotate()) {
-    ins->setOperand(1, lhs != rhs ? useRegister(rhs) : useRegisterAtStart(rhs));
+    ins->setOperand(1, willHaveDifferentLIRNodes(lhs, rhs)
+                           ? useRegister(rhs)
+                           : useRegisterAtStart(rhs));
   } else {
-    ins->setOperand(
-        1, lhs != rhs ? useFixed(rhs, ecx) : useFixedAtStart(rhs, ecx));
+    ins->setOperand(1, willHaveDifferentLIRNodes(lhs, rhs)
+                           ? useFixed(rhs, ecx)
+                           : useFixedAtStart(rhs, ecx));
   }
 
   defineReuseInput(ins, mir, 0);
@@ -123,8 +126,9 @@ void LIRGeneratorX86Shared::lowerForALU(LInstructionHelper<1, 2, 0>* ins,
                                         MDefinition* mir, MDefinition* lhs,
                                         MDefinition* rhs) {
   ins->setOperand(0, useRegisterAtStart(lhs));
-  ins->setOperand(1,
-                  lhs != rhs ? useOrConstant(rhs) : useOrConstantAtStart(rhs));
+  ins->setOperand(1, willHaveDifferentLIRNodes(lhs, rhs)
+                         ? useOrConstant(rhs)
+                         : useOrConstantAtStart(rhs));
   defineReuseInput(ins, mir, 0);
 }
 
@@ -136,7 +140,8 @@ void LIRGeneratorX86Shared::lowerForFPU(LInstructionHelper<1, 2, Temps>* ins,
   // inputs must be the same location as the output.
   if (!Assembler::HasAVX()) {
     ins->setOperand(0, useRegisterAtStart(lhs));
-    ins->setOperand(1, lhs != rhs ? use(rhs) : useAtStart(rhs));
+    ins->setOperand(
+        1, willHaveDifferentLIRNodes(lhs, rhs) ? use(rhs) : useAtStart(rhs));
     defineReuseInput(ins, mir, 0);
   } else {
     ins->setOperand(0, useRegisterAtStart(lhs));
@@ -161,13 +166,28 @@ void LIRGeneratorX86Shared::lowerForBitAndAndBranch(LBitAndAndBranch* baab,
   add(baab, mir);
 }
 
+void LIRGeneratorX86Shared::lowerNegI(MInstruction* ins, MDefinition* input) {
+  defineReuseInput(new (alloc()) LNegI(useRegisterAtStart(input)), ins, 0);
+}
+
+void LIRGeneratorX86Shared::lowerNegI64(MInstruction* ins, MDefinition* input) {
+  defineInt64ReuseInput(new (alloc()) LNegI64(useInt64RegisterAtStart(input)),
+                        ins, 0);
+}
+
+void LIRGenerator::visitAbs(MAbs* ins) {
+  defineReuseInput(allocateAbs(ins, useRegisterAtStart(ins->input())), ins, 0);
+}
+
 void LIRGeneratorX86Shared::lowerMulI(MMul* mul, MDefinition* lhs,
                                       MDefinition* rhs) {
   // Note: If we need a negative zero check, lhs is used twice.
   LAllocation lhsCopy = mul->canBeNegativeZero() ? use(lhs) : LAllocation();
-  LMulI* lir = new (alloc()) LMulI(
-      useRegisterAtStart(lhs),
-      lhs != rhs ? useOrConstant(rhs) : useOrConstantAtStart(rhs), lhsCopy);
+  LMulI* lir = new (alloc())
+      LMulI(useRegisterAtStart(lhs),
+            willHaveDifferentLIRNodes(lhs, rhs) ? useOrConstant(rhs)
+                                                : useOrConstantAtStart(rhs),
+            lhsCopy);
   if (mul->fallible()) {
     assignSnapshot(lir, mul->bailoutKind());
   }
@@ -285,6 +305,20 @@ void LIRGenerator::visitWasmNeg(MWasmNeg* ins) {
     default:
       MOZ_CRASH();
   }
+}
+
+void LIRGeneratorX86Shared::lowerWasmSelectI(MWasmSelect* select) {
+  auto* lir = new (alloc())
+      LWasmSelect(useRegisterAtStart(select->trueExpr()),
+                  useAny(select->falseExpr()), useRegister(select->condExpr()));
+  defineReuseInput(lir, select, LWasmSelect::TrueExprIndex);
+}
+
+void LIRGeneratorX86Shared::lowerWasmSelectI64(MWasmSelect* select) {
+  auto* lir = new (alloc()) LWasmSelectI64(
+      useInt64RegisterAtStart(select->trueExpr()),
+      useInt64(select->falseExpr()), useRegister(select->condExpr()));
+  defineInt64ReuseInput(lir, select, LWasmSelectI64::TrueExprIndex);
 }
 
 void LIRGenerator::visitAsmJSLoadHeap(MAsmJSLoadHeap* ins) {
@@ -762,7 +796,9 @@ void LIRGenerator::visitCopySign(MCopySign* ins) {
   // As lowerForFPU, but we want rhs to be in a FP register too.
   lir->setOperand(0, useRegisterAtStart(lhs));
   if (!Assembler::HasAVX()) {
-    lir->setOperand(1, lhs != rhs ? useRegister(rhs) : useRegisterAtStart(rhs));
+    lir->setOperand(1, willHaveDifferentLIRNodes(lhs, rhs)
+                           ? useRegister(rhs)
+                           : useRegisterAtStart(rhs));
     defineReuseInput(lir, ins, 0);
   } else {
     lir->setOperand(1, useRegisterAtStart(rhs));
@@ -918,21 +954,14 @@ void LIRGenerator::visitWasmBinarySimd128(MWasmBinarySimd128* ins) {
   // For binary ops, the Masm API always is usually (rhs, lhsDest) and requires
   // AtStart+ReuseInput for the lhs.
   //
-  // The rhs is tricky due to register allocator restrictions:
-  //  - if lhs == rhs and lhs is AtStart then rhs must be AtStart too
-  //  - if lhs != rhs and lhs is AtStart then rhs must not be AtStart,
-  //    this appears to have something to do with risk of the rhs
-  //    being clobbered.  Anyway it doesn't matter much, since the
-  //    liveness of rhs will not prevent the lhs register to be reused
-  //    for the output.
-  //
   // For a few ops, the API is actually (rhsDest, lhs) and the rules are the
   // same but the reversed.  We swapped operands above; they will be swapped
   // again in the code generator to emit the right code.
 
   LAllocation lhsDestAlloc = useRegisterAtStart(lhs);
-  LAllocation rhsAlloc =
-      lhs != rhs ? useRegister(rhs) : useRegisterAtStart(rhs);
+  LAllocation rhsAlloc = willHaveDifferentLIRNodes(lhs, rhs)
+                             ? useRegister(rhs)
+                             : useRegisterAtStart(rhs);
   auto* lir = new (alloc())
       LWasmBinarySimd128(op, lhsDestAlloc, rhsAlloc, tempReg0, tempReg1);
   defineReuseInput(lir, ins, LWasmBinarySimd128::LhsDest);
@@ -940,6 +969,28 @@ void LIRGenerator::visitWasmBinarySimd128(MWasmBinarySimd128* ins) {
   MOZ_CRASH("No SIMD");
 #endif
 }
+
+#ifdef ENABLE_WASM_SIMD
+bool MWasmBitselectSimd128::specializeConstantMaskAsShuffle(
+    int8_t shuffle[16]) {
+  // Optimization when control vector is a mask with all 0 or all 1 per lane.
+  // On x86, there is no bitselect, blend operations will be a win,
+  // e.g. via PBLENDVB or PBLENDW.
+  SimdConstant constant =
+      static_cast<MWasmFloatConstant*>(control())->toSimd128();
+  const SimdConstant::I8x16& bytes = constant.asInt8x16();
+  for (int8_t i = 0; i < 16; i++) {
+    if (bytes[i] == -1) {
+      shuffle[i] = i + 16;
+    } else if (bytes[i] == 0) {
+      shuffle[i] = i;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+#endif
 
 bool MWasmBinarySimd128::specializeForConstantRhs() {
   // The order follows MacroAssembler.h, generally
@@ -1060,31 +1111,56 @@ void LIRGenerator::visitWasmShiftSimd128(MWasmShiftSimd128* ins) {
   MOZ_ASSERT(ins->type() == MIRType::Simd128);
 
   if (rhs->isConstant()) {
-    int32_t shiftCount = rhs->toConstant()->toInt32();
+    int32_t shiftCountMask;
     switch (ins->simdOp()) {
       case wasm::SimdOp::I8x16Shl:
       case wasm::SimdOp::I8x16ShrU:
       case wasm::SimdOp::I8x16ShrS:
-        shiftCount &= 7;
+        shiftCountMask = 7;
         break;
       case wasm::SimdOp::I16x8Shl:
       case wasm::SimdOp::I16x8ShrU:
       case wasm::SimdOp::I16x8ShrS:
-        shiftCount &= 15;
+        shiftCountMask = 15;
         break;
       case wasm::SimdOp::I32x4Shl:
       case wasm::SimdOp::I32x4ShrU:
       case wasm::SimdOp::I32x4ShrS:
-        shiftCount &= 31;
+        shiftCountMask = 31;
         break;
       case wasm::SimdOp::I64x2Shl:
       case wasm::SimdOp::I64x2ShrU:
       case wasm::SimdOp::I64x2ShrS:
-        shiftCount &= 63;
+        shiftCountMask = 63;
         break;
       default:
         MOZ_CRASH("Unexpected shift operation");
     }
+
+    int32_t shiftCount = rhs->toConstant()->toInt32() & shiftCountMask;
+    if (shiftCount == shiftCountMask) {
+      // Check if possible to apply sign replication optimization.
+      // For some ops the input shall be reused.
+      switch (ins->simdOp()) {
+        case wasm::SimdOp::I8x16ShrS: {
+          auto* lir =
+              new (alloc()) LWasmSignReplicationSimd128(useRegister(lhs));
+          define(lir, ins);
+          return;
+        }
+        case wasm::SimdOp::I16x8ShrS:
+        case wasm::SimdOp::I32x4ShrS:
+        case wasm::SimdOp::I64x2ShrS: {
+          auto* lir = new (alloc())
+              LWasmSignReplicationSimd128(useRegisterAtStart(lhs));
+          defineReuseInput(lir, ins, LWasmConstantShiftSimd128::Src);
+          return;
+        }
+        default:
+          break;
+      }
+    }
+
 #  ifdef DEBUG
     js::wasm::ReportSimdAnalysis("shift -> constant shift");
 #  endif
@@ -1187,7 +1263,7 @@ void LIRGenerator::visitWasmShuffleSimd128(MWasmShuffleSimd128* ins) {
       LDefinition temp = LDefinition::BogusTemp();
       switch (*s.shuffleOp) {
         case LWasmShuffleSimd128::BLEND_8x16:
-          temp = tempSimd128();
+          temp = tempFixed(xmm0);
           break;
         default:
           break;

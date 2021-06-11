@@ -520,15 +520,12 @@ nsresult CreateOrMigrateSchema(mozIStorageConnection& aConn) {
     // if a new migration is incorrect by fast failing on the corruption.
     // Unfortunately, this must be performed outside of the transaction.
 
-    QM_TRY(
-        QM_OR_ELSE_WARN(ToResult(aConn.ExecuteSimpleSQL("VACUUM"_ns)),
-                        ([&aConn](const nsresult rv) -> Result<Ok, nsresult> {
-                          if (rv == NS_ERROR_STORAGE_CONSTRAINT) {
-                            QM_TRY(IntegrityCheck(aConn));
-                          }
-
-                          return Err(rv);
-                        })));
+    QM_TRY(aConn.ExecuteSimpleSQL("VACUUM"_ns), QM_PROPAGATE,
+           ([&aConn](const nsresult rv) {
+             if (rv == NS_ERROR_STORAGE_CONSTRAINT) {
+               QM_WARNONLY_TRY(IntegrityCheck(aConn));
+             }
+           }));
   }
 
   return NS_OK;
@@ -554,8 +551,13 @@ nsresult InitializeConnection(mozIStorageConnection& aConn) {
       kPageSize)));
 
   // Limit fragmentation by growing the database by many pages at once.
-  QM_TRY(QM_OR_ELSE_WARN(ToResult(aConn.SetGrowthIncrement(kGrowthSize, ""_ns)),
-                         ErrToDefaultOkOrErr<NS_ERROR_FILE_TOO_BIG>));
+  QM_TRY(QM_OR_ELSE_WARN_IF(
+      // Expression.
+      ToResult(aConn.SetGrowthIncrement(kGrowthSize, ""_ns)),
+      // Predicate.
+      IsSpecificError<NS_ERROR_FILE_TOO_BIG>,
+      // Fallback.
+      ErrToDefaultOk<>));
 
   // Enable WAL journaling.  This must be performed in a separate transaction
   // after changing the page_size and enabling auto_vacuum.

@@ -17,6 +17,8 @@ const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
 
+Cu.importGlobalProperties(["Glean"]);
+
 XPCOMUtils.defineLazyModuleGetters(this, {
   AboutNewTab: "resource:///modules/AboutNewTab.jsm",
   ActorManagerParent: "resource://gre/modules/ActorManagerParent.jsm",
@@ -50,6 +52,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   FxAccounts: "resource://gre/modules/FxAccounts.jsm",
   HomePage: "resource:///modules/HomePage.jsm",
   Integration: "resource://gre/modules/Integration.jsm",
+  Interactions: "resource:///modules/Interactions.jsm",
   Log: "resource://gre/modules/Log.jsm",
   LoginBreaches: "resource:///modules/LoginBreaches.jsm",
   NetUtil: "resource://gre/modules/NetUtil.jsm",
@@ -1934,6 +1937,7 @@ BrowserGlue.prototype = {
 
     BrowserUsageTelemetry.uninit();
     SearchSERPTelemetry.uninit();
+    Interactions.uninit();
     PageThumbs.uninit();
     NewTabUtils.uninit();
 
@@ -1972,6 +1976,35 @@ BrowserGlue.prototype = {
         await addon.disable({ allowSystemAddons: true });
       }
     });
+  },
+
+  // Set up a listener to enable/disable the translation extension
+  // based on its preference.
+  _monitorTranslationsPref() {
+    const PREF = "extensions.translations.disabled";
+    const ID = "firefox-translations@mozilla.org";
+    const _checkTranslationsPref = async () => {
+      let addon = await AddonManager.getAddonByID(ID);
+      let disabled = Services.prefs.getBoolPref(PREF, false);
+      if (!addon && disabled) {
+        // not installed, bail out early.
+        return;
+      }
+      if (!disabled) {
+        // first time install of addon and install on firefox update
+        addon =
+          (await AddonManager.maybeInstallBuiltinAddon(
+            ID,
+            "0.4.0",
+            "resource://builtin-addons/translations/"
+          )) || addon;
+        await addon.enable();
+      } else if (addon) {
+        await addon.disable();
+      }
+    };
+    Services.prefs.addObserver(PREF, _checkTranslationsPref);
+    _checkTranslationsPref();
   },
 
   _monitorHTTPSOnlyPref() {
@@ -2109,6 +2142,7 @@ BrowserGlue.prototype = {
     BrowserUsageTelemetry.init();
     SearchSERPTelemetry.init();
 
+    Interactions.init();
     ExtensionsUI.init();
 
     let signingRequired;
@@ -2170,6 +2204,9 @@ BrowserGlue.prototype = {
     this._monitorHTTPSOnlyPref();
     this._monitorIonPref();
     this._monitorIonStudies();
+    if (AppConstants.NIGHTLY_BUILD) {
+      this._monitorTranslationsPref();
+    }
 
     FirefoxMonitor.init();
   },
@@ -2343,6 +2380,23 @@ BrowserGlue.prototype = {
         },
       },
 
+      // Report macOS Dock status
+      {
+        condition: AppConstants.platform == "macosx",
+        task: () => {
+          try {
+            Services.telemetry.scalarSet(
+              "os.environment.is_kept_in_dock",
+              Cc["@mozilla.org/widget/macdocksupport;1"].getService(
+                Ci.nsIMacDockSupport
+              ).isAppInDock
+            );
+          } catch (ex) {
+            Cu.reportError(ex);
+          }
+        },
+      },
+
       {
         task: () => {
           this._maybeShowDefaultBrowserPrompt();
@@ -2399,15 +2453,6 @@ BrowserGlue.prototype = {
       {
         task: () => {
           TabUnloader.init();
-        },
-      },
-
-      // request startup of Chromium remote debugging protocol
-      // (observer will only be notified when --remote-debugging-port is passed)
-      {
-        condition: AppConstants.ENABLE_REMOTE_AGENT,
-        task: () => {
-          Services.obs.notifyObservers(null, "remote-startup-requested");
         },
       },
 
@@ -2510,8 +2555,16 @@ BrowserGlue.prototype = {
         },
       },
 
-      // Marionette needs to be initialized as very last step
       {
+        task: () => {
+          this._collectProtonTelemetry();
+        },
+      },
+
+      // WebDriver components (Remote Agent and Marionette) need to be
+      // initialized as very last step.
+      {
+        condition: AppConstants.ENABLE_WEBDRIVER,
         task: () => {
           // Use idleDispatch a second time to run this after the per-window
           // idle tasks.
@@ -2520,11 +2573,15 @@ BrowserGlue.prototype = {
               null,
               "browser-startup-idle-tasks-finished"
             );
+
+            // Request startup of the Remote Agent (support for WebDriver BiDi
+            // and the partial Chrome DevTools protocol) before Marionette.
+            Services.obs.notifyObservers(null, "remote-startup-requested");
             Services.obs.notifyObservers(null, "marionette-startup-requested");
           });
         },
       },
-      // Do NOT add anything after marionette initialization.
+      // Do NOT add anything after WebDriver initialization.
     ];
 
     for (let task of idleTasks) {
@@ -2663,6 +2720,11 @@ BrowserGlue.prototype = {
     );
   },
 
+  _quitSource: "unknown",
+  _registerQuitSource(source) {
+    this._quitSource = source;
+  },
+
   _onQuitRequest: function BG__onQuitRequest(aCancelQuit, aQuitType) {
     // If user has already dismissed quit request, then do nothing
     if (aCancelQuit instanceof Ci.nsISupportsPRBool && aCancelQuit.data) {
@@ -2691,6 +2753,7 @@ BrowserGlue.prototype = {
 
     var windowcount = 0;
     var pagecount = 0;
+    let pinnedcount = 0;
     for (let win of BrowserWindowTracker.orderedWindows) {
       if (win.closed) {
         continue;
@@ -2698,6 +2761,7 @@ BrowserGlue.prototype = {
       windowcount++;
       let tabbrowser = win.gBrowser;
       if (tabbrowser) {
+        pinnedcount += tabbrowser._numPinnedTabs;
         pagecount +=
           tabbrowser.browsers.length -
           tabbrowser._numPinnedTabs -
@@ -2795,6 +2859,28 @@ BrowserGlue.prototype = {
       checkboxLabel,
       warnOnClose
     );
+    Services.telemetry.setEventRecordingEnabled("close_tab_warning", true);
+    let warnCheckbox = warnOnClose.value ? "checked" : "unchecked";
+    if (!checkboxLabel) {
+      warnCheckbox = "not-present";
+    }
+    Services.telemetry.recordEvent(
+      "close_tab_warning",
+      "shown",
+      "application",
+      null,
+      {
+        source: this._quitSource,
+        button: buttonPressed == 0 ? "close" : "cancel",
+        warn_checkbox: warnCheckbox,
+        closing_wins: "" + windowcount,
+        closing_tabs: "" + (pagecount + pinnedcount),
+        will_restore: sessionWillBeRestored ? "yes" : "no",
+      }
+    );
+
+    this._quitSource = "unknown";
+
     // If the user has unticked the box, and has confirmed closing, stop showing
     // the warning.
     if (!sessionWillBeRestored && buttonPressed == 0 && !warnOnClose.value) {
@@ -3123,7 +3209,7 @@ BrowserGlue.prototype = {
   _migrateUI: function BG__migrateUI() {
     // Use an increasing number to keep track of the current migration state.
     // Completely unrelated to the current Firefox release number.
-    const UI_VERSION = 109;
+    const UI_VERSION = 112;
     const BROWSER_DOCURL = AppConstants.BROWSER_CHROME_URL;
 
     if (!Services.prefs.prefHasUserValue("browser.migration.version")) {
@@ -3579,12 +3665,11 @@ BrowserGlue.prototype = {
 
       if (!userCustomizedWheelMin && !userCustomizedWheelMax) {
         // If the user has an existing profile but hasn't customized the wheel
-        // animation duration, indicate that they need to be migrated to the new
-        // values by setting their "migration complete" percentage to 0.
-        Services.prefs.setIntPref(
-          "general.smoothScroll.mouseWheel.migrationPercent",
-          0
-        );
+        // animation duration, they will now get the new default values. This
+        // condition used to set a migrationPercent pref to 0, so that users
+        // upgrading an older profile would gradually have their wheel animation
+        // speed migrated to the new values. However, that "gradual migration"
+        // was phased out by FF 86, so we don't need to set that pref anymore.
       } else if (userCustomizedWheelMin && !userCustomizedWheelMax) {
         // If they customized just one of the two, save the old value for the
         // other one as well, because the two values go hand-in-hand and we
@@ -3604,8 +3689,8 @@ BrowserGlue.prototype = {
         );
       } else {
         // The last remaining case is if they customized both values, in which
-        // case also we leave the "migration complete" percentage at 100, as no
-        // further migration is needed.
+        // case also don't need to do anything; the user's customized values
+        // will be retained and respected.
       }
     }
 
@@ -3737,6 +3822,24 @@ BrowserGlue.prototype = {
         //Then clear user pref
         Services.prefs.clearUserPref("signon.recipes.remoteRecipesEnabled");
       }
+    }
+
+    if (currentUIVersion < 110) {
+      // Update Urlbar result buckets to add support for
+      // RESULT_GROUP.INPUT_HISTORY.
+      UrlbarPrefs.migrateResultBuckets();
+    }
+
+    if (currentUIVersion < 111) {
+      // Update Urlbar result buckets to add support for
+      // RESULT_GROUP.REMOTE_TABS.
+      UrlbarPrefs.migrateResultBuckets();
+    }
+
+    if (currentUIVersion < 112) {
+      // Update Urlbar result buckets to add support for
+      // RESULT_GROUP.ABOUT_PAGES.
+      UrlbarPrefs.migrateResultBuckets();
     }
 
     // Update the migration version.
@@ -4146,6 +4249,14 @@ BrowserGlue.prototype = {
       badge.classList.remove("feature-callout");
       AppMenuNotifications.removeNotification("fxa-needs-authentication");
     }
+  },
+
+  _collectProtonTelemetry() {
+    let protonEnabled = Services.prefs.getBoolPref(
+      "browser.proton.enabled",
+      true
+    );
+    Glean.browserUi.protonEnabled.set(protonEnabled);
   },
 
   QueryInterface: ChromeUtils.generateQI([
@@ -4569,6 +4680,10 @@ var DefaultBrowserCheck = {
     );
     // Resolve the translations for the prompt elements and return only the
     // string values
+    const pinMessage =
+      AppConstants.platform == "macosx"
+        ? "default-browser-prompt-message-pin-mac"
+        : "default-browser-prompt-message-pin";
     let [promptTitle, promptMessage, askLabel, yesButton, notNowButton] = (
       await win.document.l10n.formatMessages([
         {
@@ -4577,9 +4692,7 @@ var DefaultBrowserCheck = {
             : "default-browser-prompt-title-alt",
         },
         {
-          id: needPin
-            ? "default-browser-prompt-message-pin"
-            : "default-browser-prompt-message-alt",
+          id: needPin ? pinMessage : "default-browser-prompt-message-alt",
         },
         { id: "default-browser-prompt-checkbox-not-again-label" },
         {

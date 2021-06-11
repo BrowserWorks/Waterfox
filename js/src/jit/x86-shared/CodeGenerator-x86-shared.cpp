@@ -1955,6 +1955,12 @@ void CodeGenerator::visitNegI(LNegI* ins) {
   masm.neg32(input);
 }
 
+void CodeGenerator::visitNegI64(LNegI64* ins) {
+  Register64 input = ToRegister64(ins->getInt64Operand(0));
+  MOZ_ASSERT(input == ToOutRegister64(ins));
+  masm.neg64(input);
+}
+
 void CodeGenerator::visitNegD(LNegD* ins) {
   FloatRegister input = ToFloatRegister(ins->input());
   MOZ_ASSERT(input == ToFloatRegister(ins->output()));
@@ -2974,6 +2980,33 @@ void CodeGenerator::visitWasmConstantShiftSimd128(
       break;
     default:
       MOZ_CRASH("Shift SimdOp not implemented");
+  }
+#else
+  MOZ_CRASH("No SIMD");
+#endif
+}
+
+void CodeGenerator::visitWasmSignReplicationSimd128(
+    LWasmSignReplicationSimd128* ins) {
+#ifdef ENABLE_WASM_SIMD
+  FloatRegister src = ToFloatRegister(ins->src());
+  FloatRegister dest = ToFloatRegister(ins->output());
+
+  switch (ins->simdOp()) {
+    case wasm::SimdOp::I8x16ShrS:
+      masm.signReplicationInt8x16(src, dest);
+      break;
+    case wasm::SimdOp::I16x8ShrS:
+      masm.signReplicationInt16x8(src, dest);
+      break;
+    case wasm::SimdOp::I32x4ShrS:
+      masm.signReplicationInt32x4(src, dest);
+      break;
+    case wasm::SimdOp::I64x2ShrS:
+      masm.signReplicationInt64x2(src, dest);
+      break;
+    default:
+      MOZ_CRASH("Shift SimdOp unsupported sign replication optimization");
   }
 #else
   MOZ_CRASH("No SIMD");

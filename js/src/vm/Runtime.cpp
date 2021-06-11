@@ -8,7 +8,6 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ThreadLocal.h"
-#include "mozilla/Unused.h"
 
 #if defined(XP_DARWIN)
 #  include <mach/mach.h>
@@ -69,7 +68,6 @@ Atomic<JS::LargeAllocationFailureCallback> js::OnLargeAllocationFailure;
 JS::FilenameValidationCallback js::gFilenameValidationCallback = nullptr;
 
 namespace js {
-bool (*HelperThreadTaskCallback)(js::UniquePtr<RunnableTask>);
 
 #ifndef __wasi__
 bool gCanUseExtraThreads = true;

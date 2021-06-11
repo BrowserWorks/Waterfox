@@ -10800,6 +10800,10 @@ apigee.io
 appspacehosted.com
 appspaceusercontent.com
 
+// Appudo UG (haftungsbeschränkt) : https://www.appudo.com
+// Submitted by Alexander Hochbaum <admin@appudo.com>
+appudo.net
+
 // Aptible : https://www.aptible.com/
 // Submitted by Thomas Orozco <thomas@aptible.com>
 on-aptible.com
@@ -10828,6 +10832,10 @@ myasustor.com
 // AVM : https://avm.de
 // Submitted by Andreas Weise <a.weise@avm.de>
 myfritz.net
+
+// AVStack Pte. Ltd. : https://avstack.io
+// Submitted by Jasper Hugo <jasper@avstack.io>
+onavstack.net
 
 // AW AdvisorWebsites.com Software Inc : https://advisorwebsites.com
 // Submitted by James Kennedy <domains@advisorwebsites.com>
@@ -10868,6 +10876,10 @@ blackbaudcdn.net
 // Blatech : http://www.blatech.net
 // Submitted by Luke Bratch <luke@bratch.co.uk>
 of.je
+
+// Blue Bite, LLC : https://bluebite.com
+// Submitted by Joshua Weiss <admin.engineering@bluebite.com>
+bluebite.io
 
 // Boomla : https://boomla.com
 // Submitted by Tibor Halter <thalter@boomla.com>
@@ -11132,11 +11144,6 @@ cupcake.is
 // Curv UG : https://curv-labs.de/
 // Submitted by Marvin Wiesner <Marvin@curv-labs.de>
 curv.dev
-
-// Curvegrid Inc. : https://www.curvegrid.com/
-// Submitted by Pierre Rousset <security@curvegrid.com>
-multibaas.app
-multibaas.com
 
 // Customer OCI - Oracle Dyn https://cloud.oracle.com/home https://dyn.com/dns/
 // Submitted by Gregory Drake <support@dyn.com>
@@ -11874,6 +11881,10 @@ id.forgerock.io
 framer.app
 framercanvas.com
 
+// Frusky MEDIA&PR : https://www.frusky.de
+// Submitted by Victor Pupynin <hallo@frusky.de>
+*.frusky.de
+
 // RavPage : https://www.ravpage.co.il
 // Submitted by Roni Horowitz <roni@responder.co.il>
 ravpage.co.il
@@ -11941,7 +11952,6 @@ gsj.bz
 // GitHub, Inc.
 // Submitted by Patrick Toomey <security@github.com>
 githubusercontent.com
-github.dev
 githubpreview.dev
 github.io
 
@@ -12350,6 +12360,10 @@ myjino.ru
 *.landing.myjino.ru
 *.spectrum.myjino.ru
 *.vps.myjino.ru
+
+// Jotelulu S.L. : https://jotelulu.com
+// Submitted by Daniel Fariña <ingenieria@jotelulu.com>
+jotelulu.cloud
 
 // Joyent : https://www.joyent.com/
 // Submitted by Brian Bennett <brian.bennett@joyent.com>
@@ -13018,6 +13032,13 @@ dyn53.io
 // Submitted by Zulfais <pc@co.bn>
 co.bn
 
+// Postman, Inc : https://postman.com
+// Submitted by Rahul Dhawan <security@postman.com>
+postman-echo.com
+pstmn.io
+mock.pstmn.io
+httpbin.org
+
 // prgmr.com : https://prgmr.com/
 // Submitted by Sarah Newman <owner@prgmr.com>
 xen.prgmr.com
@@ -13148,6 +13169,10 @@ hzc.io
 wellbeingzone.eu
 wellbeingzone.co.uk
 
+// Rico Developments Limited : https://adimo.co
+// Submitted by Colin Brown <hello@adimo.co>
+adimo.co.uk
+
 // Rochester Institute of Technology : http://www.rit.edu/
 // Submitted by Jennifer Herting <jchits@rit.edu>
 git-pages.rit.edu
@@ -13207,6 +13232,10 @@ seidat.net
 // Senseering GmbH : https://www.senseering.de
 // Submitted by Felix Mönckemeyer <f.moenckemeyer@senseering.de>
 senseering.net
+
+// Sendmsg: https://www.sendmsg.co.il
+// Submitted by Assaf Stern <domains@comstar.co.il>
+minisite.ms
 
 // Service Magnet : https://myservicemagnet.com
 // Submitted by Dave Sanders <dave@myservicemagnet.com>
@@ -13280,6 +13309,10 @@ srht.site
 // Stackhero : https://www.stackhero.io
 // Submitted by Adrien Gillon <adrien+public-suffix-list@stackhero.io>
 stackhero-network.com
+
+// Staclar : https://staclar.com
+// Submitted by Matthias Merkel <matthias.merkel@staclar.com>
+novecore.site
 
 // staticland : https://static.land
 // Submitted by Seth Vincent <sethvincent@gmail.com>

@@ -22,6 +22,7 @@
 #include "js/GCHashTable.h"
 #include "vm/AtomsTable.h"
 #include "vm/JSFunction.h"
+#include "vm/ShapeZone.h"
 
 namespace js {
 
@@ -235,6 +236,8 @@ class Zone : public js::ZoneAllocator, public js::gc::GraphNodeBase<JS::Zone> {
   js::MainThreadData<unsigned> gcSweepGroupIndex;
 #endif
 
+  js::gc::PretenuringZone pretenuring;
+
  private:
   // Side map for storing unique ids for cells, independent of address.
   js::ZoneOrGCTaskData<js::gc::UniqueIdMap> uniqueIds_;
@@ -296,17 +299,8 @@ class Zone : public js::ZoneAllocator, public js::gc::GraphNodeBase<JS::Zone> {
   // Cache for Function.prototype.toString. Purged on GC.
   js::ZoneOrGCTaskData<js::FunctionToStringCache> functionToStringCache_;
 
-  // Shared Shape property tree.
-  js::ZoneData<js::PropertyTree> propertyTree_;
-
-  // Set of all unowned base shapes in the Zone.
-  js::ZoneData<js::BaseShapeSet> baseShapes_;
-
-  // Set of initial shapes in the Zone. For certain prototypes -- namely,
-  // those of various builtin classes -- there are two entries: one for a
-  // lookup via TaggedProto, and one for a lookup via JSProtoKey. See
-  // InitialShapeProto.
-  js::ZoneData<js::InitialShapeSet> initialShapes_;
+  // Information about Shapes and BaseShapes.
+  js::ZoneData<js::ShapeZone> shapeZone_;
 
   // The set of all finalization registries in this zone.
   using FinalizationRegistrySet =
@@ -382,20 +376,19 @@ class Zone : public js::ZoneAllocator, public js::gc::GraphNodeBase<JS::Zone> {
 
   [[nodiscard]] bool findSweepGroupEdges(Zone* atomsZone);
 
-  enum ShouldDiscardBaselineCode : bool {
-    KeepBaselineCode = false,
-    DiscardBaselineCode
+  struct DiscardOptions {
+    DiscardOptions() {}
+    bool discardBaselineCode = true;
+    bool discardJitScripts = false;
+    bool resetNurseryAllocSites = false;
+    bool resetPretenuredAllocSites = false;
   };
 
-  enum ShouldDiscardJitScripts : bool {
-    KeepJitScripts = false,
-    DiscardJitScripts
-  };
+  void discardJitCode(JSFreeOp* fop,
+                      const DiscardOptions& options = DiscardOptions());
 
-  void discardJitCode(
-      JSFreeOp* fop,
-      ShouldDiscardBaselineCode discardBaselineCode = DiscardBaselineCode,
-      ShouldDiscardJitScripts discardJitScripts = KeepJitScripts);
+  void resetAllocSitesAndInvalidate(bool resetNurserySites,
+                                    bool resetPretenuredSites);
 
   void addSizeOfIncludingThis(
       mozilla::MallocSizeOf mallocSizeOf, JS::CodeSizes* code,
@@ -591,13 +584,9 @@ class Zone : public js::ZoneAllocator, public js::gc::GraphNodeBase<JS::Zone> {
     return functionToStringCache_.ref();
   }
 
-  js::PropertyTree& propertyTree() { return propertyTree_.ref(); }
+  js::ShapeZone& shapeZone() { return shapeZone_.ref(); }
+  js::PropertyTree& propertyTree() { return shapeZone().propertyTree; }
 
-  js::BaseShapeSet& baseShapes() { return baseShapes_.ref(); }
-
-  js::InitialShapeSet& initialShapes() { return initialShapes_.ref(); }
-
-  void fixupInitialShapeTable();
   void fixupAfterMovingGC();
   void fixupScriptMapsAfterMovingGC(JSTracer* trc);
 
@@ -654,12 +643,16 @@ class Zone : public js::ZoneAllocator, public js::gc::GraphNodeBase<JS::Zone> {
   // See: https://tc39.es/proposal-weakrefs/#sec-clear-kept-objects
   void clearKeptObjects();
 
+  js::gc::AllocSite* unknownAllocSite() {
+    return &pretenuring.unknownAllocSite;
+  }
+  js::gc::AllocSite* optimizedAllocSite() {
+    return &pretenuring.optimizedAllocSite;
+  }
+
 #ifdef JSGC_HASH_TABLE_CHECKS
   void checkAllCrossCompartmentWrappersAfterMovingGC();
   void checkStringWrappersAfterMovingGC();
-
-  void checkInitialShapesTableAfterMovingGC();
-  void checkBaseShapeTableAfterMovingGC();
 
   // Assert that the UniqueId table has been redirected successfully.
   void checkUniqueIdTableAfterMovingGC();

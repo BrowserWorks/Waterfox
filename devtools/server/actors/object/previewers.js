@@ -486,13 +486,18 @@ function GenericObject(
     kind: "Object",
     ownProperties: Object.create(null),
     ownSymbols: [],
+    privateProperties: [],
   });
 
   const names = ObjectUtils.getPropNamesFromObject(obj, rawObj);
+  const privatePropertiesSymbols = ObjectUtils.getSafePrivatePropertiesSymbols(
+    obj
+  );
   const symbols = ObjectUtils.getSafeOwnPropertySymbols(obj);
 
   preview.ownPropertiesLength = names.length;
   preview.ownSymbolsLength = symbols.length;
+  preview.privatePropertiesLength = privatePropertiesSymbols.length;
 
   let length,
     i = 0;
@@ -522,6 +527,37 @@ function GenericObject(
     }
   }
 
+  // Retrieve private properties, which are represented as non-enumerable Symbols
+  for (const privateProperty of privatePropertiesSymbols) {
+    if (
+      !privateProperty.description ||
+      !privateProperty.description.startsWith("#")
+    ) {
+      continue;
+    }
+    const descriptor = objectActor._propertyDescriptor(privateProperty);
+    if (!descriptor) {
+      continue;
+    }
+
+    preview.privateProperties.push(
+      Object.assign(
+        {
+          descriptor,
+        },
+        hooks.createValueGrip(privateProperty)
+      )
+    );
+
+    if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
+      break;
+    }
+  }
+
+  if (i === OBJECT_PREVIEW_MAX_ITEMS) {
+    return true;
+  }
+
   for (const symbol of symbols) {
     const descriptor = objectActor._propertyDescriptor(symbol, true);
     if (!descriptor) {
@@ -542,12 +578,14 @@ function GenericObject(
     }
   }
 
-  if (i < OBJECT_PREVIEW_MAX_ITEMS) {
-    preview.safeGetterValues = objectActor._findSafeGetterValues(
-      Object.keys(preview.ownProperties),
-      OBJECT_PREVIEW_MAX_ITEMS - i
-    );
+  if (i === OBJECT_PREVIEW_MAX_ITEMS) {
+    return true;
   }
+
+  preview.safeGetterValues = objectActor._findSafeGetterValues(
+    Object.keys(preview.ownProperties),
+    OBJECT_PREVIEW_MAX_ITEMS - i
+  );
 
   return true;
 }
@@ -599,8 +637,10 @@ previewers.Object = [
       case "DebuggeeWouldRun":
       case "LinkError":
       case "RuntimeError":
-        const name = DevToolsUtils.getProperty(obj, "name");
-        const msg = DevToolsUtils.getProperty(obj, "message");
+        // The name and/or message could be getters, and even if it's unsafe, we do want
+        // to show it to the user (See Bug 1710694).
+        const name = DevToolsUtils.getProperty(obj, "name", true);
+        const msg = DevToolsUtils.getProperty(obj, "message", true);
         const stack = DevToolsUtils.getProperty(obj, "stack");
         const fileName = DevToolsUtils.getProperty(obj, "fileName");
         const lineNumber = DevToolsUtils.getProperty(obj, "lineNumber");

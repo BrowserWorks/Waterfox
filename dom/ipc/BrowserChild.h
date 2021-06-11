@@ -27,6 +27,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/dom/CoalescedMouseData.h"
+#include "mozilla/dom/CoalescedTouchData.h"
 #include "mozilla/dom/CoalescedWheelData.h"
 #include "mozilla/dom/MessageManagerCallback.h"
 #include "mozilla/dom/VsyncChild.h"
@@ -303,13 +304,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
 
   mozilla::ipc::IPCResult RecvDeactivate(uint64_t aActionId);
 
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY
-  mozilla::ipc::IPCResult RecvMouseEvent(const nsString& aType, const float& aX,
-                                         const float& aY,
-                                         const int32_t& aButton,
-                                         const int32_t& aClickCount,
-                                         const int32_t& aModifiers);
-
   mozilla::ipc::IPCResult RecvRealMouseMoveEvent(
       const mozilla::WidgetMouseEvent& aEvent, const ScrollableLayerGuid& aGuid,
       const uint64_t& aInputBlockId);
@@ -397,7 +391,7 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
 
   mozilla::ipc::IPCResult RecvUpdateEpoch(const uint32_t& aEpoch);
 
-  mozilla::ipc::IPCResult RecvUpdateSHistory(const bool& aImmediately);
+  mozilla::ipc::IPCResult RecvUpdateSHistory();
 
   mozilla::ipc::IPCResult RecvNativeSynthesisResponse(
       const uint64_t& aObserverId, const nsCString& aResponse);
@@ -655,7 +649,7 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   // Returns the portion of the visible rect of this remote document in the
   // top browser window coordinate system.  This is the result of being clipped
   // by all ancestor viewports.
-  mozilla::ScreenRect GetTopLevelViewportVisibleRectInBrowserCoords() const;
+  Maybe<ScreenRect> GetTopLevelViewportVisibleRectInBrowserCoords() const;
 
   // Similar to above GetTopLevelViewportVisibleRectInBrowserCoords(), but in
   // this out-of-process document's coordinate system.
@@ -669,6 +663,8 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   void FlushAllCoalescedMouseData();
   void ProcessPendingCoalescedMouseDataAndDispatchEvents();
 
+  void ProcessPendingColaescedTouchData();
+
   void HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
                                   const ScrollableLayerGuid& aGuid,
                                   const uint64_t& aInputBlockId);
@@ -677,7 +673,7 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
     mCancelContentJSEpoch = aEpoch;
   }
 
-  bool UpdateSessionStore(bool aIsFinal = false);
+  bool UpdateSessionStore();
 
 #ifdef XP_WIN
   // Check if the window this BrowserChild is associated with supports
@@ -759,12 +755,7 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
 
   void UpdateRepeatedKeyEventEndTime(const WidgetKeyboardEvent& aEvent);
 
-  bool MaybeCoalesceWheelEvent(const WidgetWheelEvent& aEvent,
-                               const ScrollableLayerGuid& aGuid,
-                               const uint64_t& aInputBlockId,
-                               bool* aIsNextWheelEvent);
-
-  void MaybeDispatchCoalescedWheelEvent();
+  void DispatchCoalescedWheelEvent();
 
   /**
    * Dispatch aEvent on aEvent.mWidget.
@@ -864,7 +855,10 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   nsDeque<CoalescedMouseData> mToBeDispatchedMouseData;
 
   CoalescedWheelData mCoalescedWheelData;
+  CoalescedTouchData mCoalescedTouchData;
+
   RefPtr<CoalescedMouseMoveFlusher> mCoalescedMouseEventFlusher;
+  RefPtr<CoalescedTouchMoveFlusher> mCoalescedTouchMoveEventFlusher;
 
   RefPtr<layers::IAPZCTreeManager> mApzcTreeManager;
   RefPtr<TabListener> mSessionStoreListener;
@@ -906,6 +900,7 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   int32_t mCancelContentJSEpoch;
 
   Maybe<LayoutDeviceToLayoutDeviceMatrix4x4> mChildToParentConversionMatrix;
+  // When mChildToParentConversionMatrix is Nothing() this value is invalid.
   ScreenRect mTopLevelViewportVisibleRectInBrowserCoords;
 
 #ifdef XP_WIN

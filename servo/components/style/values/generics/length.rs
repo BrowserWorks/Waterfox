@@ -158,6 +158,9 @@ pub enum GenericSize<LengthPercent> {
     MozFitContent,
     #[animation(error)]
     MozAvailable,
+    #[animation(error)]
+    #[css(function = "fit-content")]
+    FitContentFunction(LengthPercent),
 }
 
 pub use self::GenericSize as Size;
@@ -208,6 +211,9 @@ pub enum GenericMaxSize<LengthPercent> {
     MozFitContent,
     #[animation(error)]
     MozAvailable,
+    #[animation(error)]
+    #[css(function = "fit-content")]
+    FitContentFunction(LengthPercent),
 }
 
 pub use self::GenericMaxSize as MaxSize;
@@ -220,7 +226,7 @@ impl<LengthPercentage> MaxSize<LengthPercentage> {
     }
 }
 
-/// A generic `<length>` | `<number>` value for the `-moz-tab-size` property.
+/// A generic `<length>` | `<number>` value for the `tab-size` property.
 #[derive(
     Animate,
     Clone,
