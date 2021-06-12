@@ -3118,6 +3118,7 @@ pref("dom.animations-api.core.enabled", false);
 #else
 pref("dom.animations-api.core.enabled", true);
 #endif
+pref("dom.animations-api.timelines.enabled", false);
 
 // Is support for the Element.animate() function (a subset of the Web Animations
 // API) enabled?

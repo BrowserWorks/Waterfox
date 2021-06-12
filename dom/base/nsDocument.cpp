@@ -3247,6 +3247,15 @@ nsDocument::IsWebAnimationsEnabled(CallerType aCallerType)
          nsContentUtils::AnimationsAPICoreEnabled();
 }
 
+bool
+nsDocument::AreWebAnimationsTimelinesEnabled(JSContext* aCx, JSObject* /*unused*/)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  return nsContentUtils::IsSystemCaller(aCx) ||
+         Preferences::GetBool("dom.animations-api.timelines.enabled");
+}
+
 DocumentTimeline*
 nsDocument::Timeline()
 {
