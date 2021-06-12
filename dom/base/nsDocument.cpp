@@ -3256,6 +3256,15 @@ nsDocument::AreWebAnimationsTimelinesEnabled(JSContext* aCx, JSObject* /*unused*
          Preferences::GetBool("dom.animations-api.timelines.enabled");
 }
 
+bool
+nsDocument::AreWebAnimationsImplicitKeyframesEnabled(JSContext* aCx, JSObject* /*unused*/)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  return nsContentUtils::IsSystemCaller(aCx) ||
+         Preferences::GetBool("dom.animations-api.implicit-keyframes.enabled");
+}
+
 DocumentTimeline*
 nsDocument::Timeline()
 {

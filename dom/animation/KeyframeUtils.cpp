@@ -7,6 +7,7 @@
 
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Move.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/RangedArray.h"
 #include "mozilla/ServoBindings.h"
 #include "mozilla/ServoBindingTypes.h"
@@ -18,13 +19,12 @@
 #include "mozilla/dom/KeyframeEffect.h" // For PropertyValuesPair etc.uesPair etc.
 #include "jsapi.h" // For ForOfIterator etc.
 #include "nsClassHashtable.h"
-#include "nsContentUtils.h" // For GetContextForContent, and
-                            // AnimationsAPICoreEnabled
+#include "nsContentUtils.h" // For GetContextForContent
 #include "nsCSSParser.h"
 #include "nsCSSPropertyIDSet.h"
 #include "nsCSSProps.h"
 #include "nsCSSPseudoElements.h" // For CSSPseudoElementType
-#include "nsDocument.h" // For nsDocument::IsWebAnimationsEnabled
+#include "nsDocument.h" // For nsDocument::AreWebAnimationsImplicitKeyframesEnabled
 #include "nsIScriptError.h"
 #include "nsStyleContext.h"
 #include "nsTArray.h"
@@ -388,7 +388,7 @@ GetKeyframeListFromPropertyIndexedKeyframe(JSContext* aCx,
                                            ErrorResult& aRv);
 
 static bool
-RequiresAdditiveAnimation(const nsTArray<Keyframe>& aKeyframes,
+HasImplicitKeyframeValues(const nsTArray<Keyframe>& aKeyframes,
                           nsIDocument* aDocument);
 
 static void
@@ -438,8 +438,8 @@ KeyframeUtils::GetKeyframesFromObject(JSContext* aCx,
     return keyframes;
   }
 
-  if (!nsDocument::IsWebAnimationsEnabled(aCx, nullptr) &&
-      RequiresAdditiveAnimation(keyframes, aDocument)) {
+  if (!nsDocument::AreWebAnimationsImplicitKeyframesEnabled(aCx, nullptr) &&
+      HasImplicitKeyframeValues(keyframes, aDocument)) {
     keyframes.Clear();
     aRv.Throw(NS_ERROR_DOM_ANIM_MISSING_PROPS_ERR);
   }
@@ -1138,7 +1138,7 @@ AppendFinalSegment(AnimationProperty* aAnimationProperty,
 
 // Returns a newly created AnimationProperty if one was created to fill-in the
 // missing keyframe, nullptr otherwise (if we decided not to fill the keyframe
-// becase we don't support additive animation).
+// becase we don't support implicit keyframes).
 static AnimationProperty*
 HandleMissingInitialKeyframe(nsTArray<AnimationProperty>& aResult,
                              const KeyframeValueEntry& aEntry)
@@ -1146,10 +1146,7 @@ HandleMissingInitialKeyframe(nsTArray<AnimationProperty>& aResult,
   MOZ_ASSERT(aEntry.mOffset != 0.0f,
              "The offset of the entry should not be 0.0");
 
-  // If the preference of the core Web Animations API is not enabled, don't fill
-  // in the missing keyframe since the missing keyframe requires support for
-  // additive animation which is guarded by this pref.
-  if (!nsContentUtils::AnimationsAPICoreEnabled()) {
+  if (!Preferences::GetBool("dom.animations-api.implicit-keyframes.enabled")) {
     return nullptr;
   }
 
@@ -1169,10 +1166,7 @@ HandleMissingFinalKeyframe(nsTArray<AnimationProperty>& aResult,
   MOZ_ASSERT(aEntry.mOffset != 1.0f,
              "The offset of the entry should not be 1.0");
 
-  // If the preference of the core Web Animations API is not enabled, don't fill
-  // in the missing keyframe since the missing keyframe requires support for
-  // additive animation which is guarded by this pref.
-  if (!nsContentUtils::AnimationsAPICoreEnabled()) {
+  if (!Preferences::GetBool("dom.animations-api.implicit-keyframes.enabled")) {
     // If we have already appended a new entry for the property so we have to
     // remove it.
     if (aCurrentAnimationProperty) {
@@ -1414,9 +1408,9 @@ GetKeyframeListFromPropertyIndexedKeyframe(JSContext* aCx,
     }
 
     // If we only have one value, we should animate from the underlying value
-    // using additive animation--however, we don't support additive animation
-    // when the core animation API pref is switched off.
-    if (!nsContentUtils::AnimationsAPICoreEnabled() && count == 1) {
+    // but not if the pref for supporting implicit keyframes is disabled.
+    if (!Preferences::GetBool("dom.animations-api.implicit-keyframes.enabled") &&
+        count == 1) {
       aRv.Throw(NS_ERROR_DOM_ANIM_MISSING_PROPS_ERR);
       return;
     }
@@ -1575,17 +1569,15 @@ GetKeyframeListFromPropertyIndexedKeyframe(JSContext* aCx,
 /**
  * Returns true if the supplied set of keyframes has keyframe values for
  * any property for which it does not also supply a value for the 0% and 100%
- * offsets. In this case we are supposed to synthesize an additive zero value
- * but since we don't support additive animation yet we can't support this
- * case. We try to detect that here so we can throw an exception. The check is
- * not entirely accurate but should detect most common cases.
+ * offsets. The check is not entirely accurate but should detect most common
+ * cases.
  *
  * @param aKeyframes The set of keyframes to analyze.
  * @param aDocument The document to use when parsing keyframes so we can
  *   try to detect where we have an invalid value at 0%/100%.
  */
 static bool
-RequiresAdditiveAnimation(const nsTArray<Keyframe>& aKeyframes,
+HasImplicitKeyframeValues(const nsTArray<Keyframe>& aKeyframes,
                           nsIDocument* aDocument)
 {
   // We are looking to see if that every property referenced in |aKeyframes|
@@ -1596,7 +1588,7 @@ RequiresAdditiveAnimation(const nsTArray<Keyframe>& aKeyframes,
   // a document which we might not always have at the point where we want to
   // perform this check.
   //
-  // This is only a temporary measure until we implement additive animation.
+  // This is only a temporary measure until we implement implicit keyframes.
   // So as long as this check catches most cases, and we don't do anything
   // horrible in one of the cases we can't detect, it should be sufficient.
 
