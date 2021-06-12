@@ -3110,9 +3110,6 @@ pref("layout.idle_period.required_quiescent_frames", 2);
 pref("layout.idle_period.time_limit", 1);
 
 // Is support for the Web Animations API enabled?
-// Before enabling this by default, make sure also CSSPseudoElement interface
-// has been spec'ed properly, or we should add a separate pref for
-// CSSPseudoElement interface. See Bug 1174575 for further details.
 #ifdef RELEASE_OR_BETA
 pref("dom.animations-api.core.enabled", false);
 #else
@@ -3121,6 +3118,7 @@ pref("dom.animations-api.core.enabled", true);
 pref("dom.animations-api.timelines.enabled", false);
 pref("dom.animations-api.implicit-keyframes.enabled", false);
 pref("dom.animations-api.compositing.enabled", false);
+pref("dom.animations-api.getAnimations.enabled", false);
 
 // Is support for the Element.animate() function (a subset of the Web Animations
 // API) enabled?
