@@ -1536,18 +1536,6 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
   bool isVisible = aFrame->IsVisibleForPainting(aBuilder);
   bool isTable = aFrame->IsTableFrame();
 
-  // Note that we UpdateForFrameBackground() even if we're not visible, unless
-  // we're a table frame, because our backgrounds may paint anyway if the _cell_
-  // is visible.
-  if (isVisible || !isTable) {
-    nsDisplayTableItem* currentItem = aBuilder->GetCurrentTableItem();
-    // currentItem may be null, when none of the table parts have a
-    // background or border
-    if (currentItem) {
-      currentItem->UpdateForFrameBackground(aFrame);
-    }
-  }
-
   if (isVisible) {
     // XXXbz should box-shadow for rows/rowgroups/columns/colgroups get painted
     // just because we're visible?  Or should it depend on the cell visibility
