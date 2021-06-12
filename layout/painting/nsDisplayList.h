@@ -601,6 +601,15 @@ public:
    * Get the caret associated with the current presshell.
    */
   nsCaret* GetCaret();
+
+  /**
+   * Returns the root scroll frame for the current PresShell, if the PresShell
+   * is ignoring viewport scrolling.
+   */
+  nsIFrame* GetPresShellIgnoreScrollFrame() {
+    return CurrentPresShellState()->mPresShellIgnoreScrollFrame;
+  }
+
   /**
    * Notify the display list builder that we're entering a presshell.
    * aReferenceFrame should be a frame in the new presshell.
@@ -1458,6 +1467,7 @@ private:
     // in the document, and is set when we enter a subdocument for a pointer-
     // events:none frame.
     bool          mInsidePointerEventsNoneDoc;
+    nsIFrame*     mPresShellIgnoreScrollFrame;
   };
 
   PresShellState* CurrentPresShellState() {
