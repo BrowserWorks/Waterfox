@@ -3093,8 +3093,7 @@ static nsStyleContext* GetBackgroundStyleContext(nsIFrame* aFrame)
 
 /* static */ void
 SetBackgroundClipRegion(DisplayListClipState::AutoSaveRestore& aClipState,
-                        nsIFrame* aFrame, const nsPoint& aToReferenceFrame,
-                        const nsStyleImageLayers::Layer& aLayer,
+                        nsIFrame* aFrame, const nsStyleImageLayers::Layer& aLayer,
                         const nsRect& aBackgroundRect,
                         bool aWillPaintBorder)
 {
@@ -3198,8 +3197,6 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
                          !isThemed && !hasInsetShadow &&
                          borderStyle->HasBorder();
 
-  nsPoint toRef = aBuilder->ToReferenceFrame(aFrame);
-
   // An auxiliary list is necessary in case we have background blending; if that
   // is the case, background items need to be wrapped by a blend container to
   // isolate blending to the background
@@ -3219,7 +3216,7 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
       // artifacts along the rounded corners.
       bool useWillPaintBorderOptimization = willPaintBorder &&
           nsLayoutUtils::HasNonZeroCorner(borderStyle->mBorderRadius);
-      SetBackgroundClipRegion(clipState, aFrame, toRef,
+      SetBackgroundClipRegion(clipState, aFrame,
                               bg->BottomLayer(), bgRect,
                               useWillPaintBorderOptimization);
     }
@@ -3273,8 +3270,8 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
     DisplayListClipState::AutoSaveRestore clipState(aBuilder);
     if (!aBuilder->IsForEventDelivery()) {
       const nsStyleImageLayers::Layer& layer = bg->mImage.mLayers[i];
-      SetBackgroundClipRegion(clipState, aFrame, toRef,
-                              layer, bgRect, willPaintBorder);
+      SetBackgroundClipRegion(clipState, aFrame, layer, bgRect,
+                              willPaintBorder);
     }
 
     nsDisplayList thisItemList;
