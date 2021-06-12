@@ -218,9 +218,9 @@ DisplayRows(nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
   if (kid) {
     // have a cursor, use it
     while (kid) {
-      if (kid->GetRect().y - overflowAbove >= aBuilder->GetDirtyRect().YMost() &&
-          kid->GetNormalRect().y - overflowAbove >= aBuilder->GetDirtyRect().YMost())
+      if (kid->GetRect().y - overflowAbove >= aBuilder->GetDirtyRect().YMost()) {
         break;
+      }
       f->BuildDisplayListForChild(aBuilder, kid, aLists);
       kid = kid->GetNextSibling();
     }
@@ -1988,12 +1988,12 @@ nsTableRowGroupFrame::GetFirstRowContaining(nscoord aY, nscoord* aOverflowAbove)
   // encountering a row whose overflowArea.YMost() is <= aY but which has
   // a row above it containing cell(s) that span to include aY.
   while (cursorIndex > 0 &&
-         cursorFrame->GetNormalRect().YMost() + property->mOverflowBelow > aY) {
+         cursorFrame->GetRect().YMost() + property->mOverflowBelow > aY) {
     --cursorIndex;
     cursorFrame = property->mFrames[cursorIndex];
   }
   while (cursorIndex + 1 < frameCount &&
-         cursorFrame->GetNormalRect().YMost() + property->mOverflowBelow <= aY) {
+         cursorFrame->GetRect().YMost() + property->mOverflowBelow <= aY) {
     ++cursorIndex;
     cursorFrame = property->mFrames[cursorIndex];
   }
@@ -2006,13 +2006,12 @@ nsTableRowGroupFrame::GetFirstRowContaining(nscoord aY, nscoord* aOverflowAbove)
 bool
 nsTableRowGroupFrame::FrameCursorData::AppendFrame(nsIFrame* aFrame)
 {
-  // Relative positioning can cause table parts to move, but we will still paint
-  // the backgrounds for the parts under them at their 'normal' position. That
-  // means that we must consider the overflow rects at both positions. For
-  // example, if we use relative positioning to move a row-spanning cell, we
-  // will still paint the row background for that cell at its normal position,
-  // which will overflow the row.
-  // XXX(seth): This probably isn't correct in the presence of transforms.
+  // The cursor requires a monotonically increasing sequence in order to
+  // identify which rows can be skipped, and position:relative can move
+  // rows around such that the overflow areas don't provide this.
+  // We take the union of the overflow rect, and the frame's 'normal' position
+  // (excluding position:relative changes) and record the max difference between
+  // this combined overflow and the frame's rect.
   nsRect positionedOverflowRect = aFrame->GetVisualOverflowRect();
   nsPoint positionedToNormal = aFrame->GetNormalPosition() - aFrame->GetPosition();
   nsRect normalOverflowRect = positionedOverflowRect + positionedToNormal;
