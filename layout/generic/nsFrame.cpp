@@ -2131,7 +2131,9 @@ nsFrame::DisplayBorderBackgroundOutline(nsDisplayListBuilder*   aBuilder,
 
   // If there's a themed background, we should not create a border item.
   // It won't be rendered.
-  if (!bgIsThemed && StyleBorder()->HasBorder()) {
+  // Don't paint borders for tables here, since they paint them in a different
+  // order.
+  if (!bgIsThemed && StyleBorder()->HasBorder() && !IsTableFrame()) {
     aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
       nsDisplayBorder(aBuilder, this));
   }

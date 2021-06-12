@@ -80,6 +80,12 @@ public:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsDisplayListSet& aLists) override;
 
+  void PaintCellBackgroundsForColumns(nsIFrame* aFrame,
+                                      nsDisplayListBuilder* aBuilder,
+                                      const nsDisplayListSet& aLists,
+                                      const nsTArray<uint32_t>& aColIdx,
+                                      const nsPoint& aOffset);
+
    /** calls Reflow for all of its child rows.
     * Rows are all set to the same isize and stacked in the block direction.
     * <P> rows are not split unless absolutely necessary.
