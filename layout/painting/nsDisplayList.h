@@ -829,6 +829,11 @@ public:
   friend class AutoBuildingDisplayList;
   class AutoBuildingDisplayList {
   public:
+
+  AutoBuildingDisplayList(nsDisplayListBuilder* aBuilder, nsIFrame* aForChild)
+        : AutoBuildingDisplayList(
+                            aBuilder, aForChild, aBuilder->GetDirtyRect(), aForChild->IsTransformed()){}
+
     AutoBuildingDisplayList(nsDisplayListBuilder* aBuilder,
                             nsIFrame* aForChild,
                             const nsRect& aDirtyRect, bool aIsRoot)
@@ -3164,7 +3169,8 @@ public:
                                          bool aAllowWillPaintBorderOptimization = true,
                                          nsStyleContext* aStyleContext = nullptr,
                                          const nsRect& aBackgroundOriginRect = nsRect(),
-                                         nsIFrame* aSecondaryReferenceFrame = nullptr);
+                                         nsIFrame* aSecondaryReferenceFrame = nullptr,
+                                         mozilla::Maybe<nsDisplayListBuilder::AutoBuildingDisplayList>* aAutoBuildingDisplayList = nullptr);
 
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                    LayerManager* aManager,

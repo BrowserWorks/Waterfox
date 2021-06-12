@@ -3154,7 +3154,8 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
                                                      bool aAllowWillPaintBorderOptimization,
                                                      nsStyleContext* aStyleContext,
                                                      const nsRect& aBackgroundOriginRect,
-                                                     nsIFrame* aSecondaryReferenceFrame)
+                                                     nsIFrame* aSecondaryReferenceFrame,
+                                                     Maybe<nsDisplayListBuilder::AutoBuildingDisplayList>* aAutoBuildingDisplayList)
 {
   nsStyleContext* bgSC = aStyleContext;
   const nsStyleBackground* bg = nullptr;
@@ -3205,6 +3206,9 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
   // to create an item for hit testing.
   if ((drawBackgroundColor && color != NS_RGBA(0,0,0,0)) ||
       aBuilder->IsForEventDelivery()) {
+    if (aAutoBuildingDisplayList && !*aAutoBuildingDisplayList) {
+      aAutoBuildingDisplayList->emplace(aBuilder, aFrame);
+    }
     DisplayListClipState::AutoSaveRestore clipState(aBuilder);
     if (bg && !aBuilder->IsForEventDelivery()) {
       // Disable the will-paint-border optimization for background
@@ -3261,6 +3265,10 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
   NS_FOR_VISIBLE_IMAGE_LAYERS_BACK_TO_FRONT(i, bg->mImage) {
     if (bg->mImage.mLayers[i].mImage.IsEmpty()) {
       continue;
+    }
+
+    if (aAutoBuildingDisplayList && !*aAutoBuildingDisplayList) {
+      aAutoBuildingDisplayList->emplace(aBuilder, aFrame);
     }
 
     if (bg->mImage.mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
