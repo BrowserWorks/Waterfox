@@ -70,11 +70,15 @@ GetCommonUnit(nsCSSPropertyID aProperty,
               StyleAnimationValue::Unit aSecondUnit)
 {
   if (aFirstUnit != aSecondUnit) {
+    bool numberAsPixel =
+      nsCSSProps::PropHasFlags(aProperty, CSS_PROPERTY_NUMBERS_ARE_PIXELS);
     if (nsCSSProps::PropHasFlags(aProperty, CSS_PROPERTY_STORES_CALC) &&
-        (aFirstUnit == StyleAnimationValue::eUnit_Coord ||
+        ((aFirstUnit == StyleAnimationValue::eUnit_Float && numberAsPixel) ||
+         aFirstUnit == StyleAnimationValue::eUnit_Coord ||
          aFirstUnit == StyleAnimationValue::eUnit_Percent ||
          aFirstUnit == StyleAnimationValue::eUnit_Calc) &&
-        (aSecondUnit == StyleAnimationValue::eUnit_Coord ||
+        ((aSecondUnit == StyleAnimationValue::eUnit_Float && numberAsPixel) ||
+         aSecondUnit == StyleAnimationValue::eUnit_Coord ||
          aSecondUnit == StyleAnimationValue::eUnit_Percent ||
          aSecondUnit == StyleAnimationValue::eUnit_Calc)) {
       // We can use calc() as the common unit.
@@ -406,6 +410,12 @@ ExtractCalcValue(const StyleAnimationValue& aValue)
     result.mLength = 0.0f;
     result.mPercent = aValue.GetPercentValue();
     result.mHasPercent = true;
+    return result;
+  }
+  if (aValue.GetUnit() == StyleAnimationValue::eUnit_Float) {
+    result.mLength = aValue.GetFloatValue();
+    result.mPercent = 0.0f;
+    result.mHasPercent = false;
     return result;
   }
   MOZ_ASSERT(aValue.GetUnit() == StyleAnimationValue::eUnit_Calc,

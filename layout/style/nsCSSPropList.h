@@ -3860,7 +3860,8 @@ CSS_PROP_SVG(
     stroke_dashoffset,
     StrokeDashoffset,
     CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_NUMBERS_ARE_PIXELS,
+        CSS_PROPERTY_NUMBERS_ARE_PIXELS |
+        CSS_PROPERTY_STORES_CALC,
     "",
     VARIANT_HLPN | VARIANT_OPENTYPE_SVG_KEYWORD | VARIANT_CALC,
     kStrokeContextValueKTable,
