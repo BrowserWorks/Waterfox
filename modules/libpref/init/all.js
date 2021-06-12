@@ -3110,11 +3110,8 @@ pref("layout.idle_period.required_quiescent_frames", 2);
 pref("layout.idle_period.time_limit", 1);
 
 // Is support for the Web Animations API enabled?
-#ifdef RELEASE_OR_BETA
-pref("dom.animations-api.core.enabled", false);
-#else
 pref("dom.animations-api.core.enabled", true);
-#endif
+
 pref("dom.animations-api.timelines.enabled", false);
 pref("dom.animations-api.implicit-keyframes.enabled", false);
 pref("dom.animations-api.compositing.enabled", false);
