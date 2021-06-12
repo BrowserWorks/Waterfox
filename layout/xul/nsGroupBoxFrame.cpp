@@ -151,7 +151,8 @@ nsGroupBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   // Paint our background and border
   if (IsVisibleForPainting(aBuilder)) {
     nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
-      aBuilder, this, GetBackgroundRectRelativeToSelf(),
+      aBuilder, this,
+      GetBackgroundRectRelativeToSelf() + aBuilder->ToReferenceFrame(this),
       aLists.BorderBackground());
     aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
       nsDisplayXULGroupBorder(aBuilder, this));

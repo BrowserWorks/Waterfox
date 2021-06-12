@@ -469,14 +469,14 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
         new (aBuilder) nsDisplayBoxShadowOuter(aBuilder, this));
     }
 
+    nsRect bgRect = GetRectRelativeToSelf() + aBuilder->ToReferenceFrame(this);
+
     // display background if we need to.
     if (aBuilder->IsForEventDelivery() ||
         !StyleBackground()->IsTransparent(this) ||
         StyleDisplay()->mAppearance) {
-      nsDisplayBackgroundImage::AppendBackgroundItemsToTop(aBuilder,
-          this,
-          GetRectRelativeToSelf(),
-          aLists.BorderBackground());
+      nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
+        aBuilder, this, bgRect, aLists.BorderBackground());
     }
 
     // display inset box-shadows if we need to.

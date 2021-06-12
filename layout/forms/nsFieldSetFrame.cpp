@@ -160,9 +160,11 @@ nsFieldSetFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
         nsDisplayBoxShadowOuter(aBuilder, this));
     }
 
+    const nsRect rect =
+        VisualBorderRectRelativeToSelf() + aBuilder->ToReferenceFrame(this);
+
     nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
-      aBuilder, this, VisualBorderRectRelativeToSelf(),
-      aLists.BorderBackground(),
+      aBuilder, this, rect, aLists.BorderBackground(),
       /* aAllowWillPaintBorderOptimization = */ false);
 
     aLists.BorderBackground()->AppendNewToTop(new (aBuilder)

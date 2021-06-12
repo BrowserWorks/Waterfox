@@ -2104,7 +2104,9 @@ nsFrame::DisplayBackgroundUnconditional(nsDisplayListBuilder* aBuilder,
   if (aBuilder->IsForEventDelivery() || aForceBackground ||
       !StyleBackground()->IsTransparent(this) || StyleDisplay()->mAppearance) {
     return nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
-        aBuilder, this, GetRectRelativeToSelf(), aLists.BorderBackground());
+        aBuilder, this,
+        GetRectRelativeToSelf() + aBuilder->ToReferenceFrame(this),
+        aLists.BorderBackground());
   }
   return false;
 }
