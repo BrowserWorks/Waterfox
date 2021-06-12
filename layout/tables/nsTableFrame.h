@@ -77,9 +77,12 @@ class nsDisplayTableBackgroundSet {
 
   nsDisplayList* ColBackgrounds() { return &mColBackgrounds; }
 
-  explicit nsDisplayTableBackgroundSet(nsDisplayListBuilder* aBuilder)
+  nsDisplayTableBackgroundSet(nsDisplayListBuilder* aBuilder, nsIFrame* aTable)
       : mBuilder(aBuilder) {
     mPrevTableBackgroundSet = mBuilder->SetTableBackgroundSet(this);
+    mozilla::DebugOnly<const nsIFrame*> reference =
+        mBuilder->FindReferenceFrameFor(aTable, &mToReferenceFrame);
+    MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDoc(reference, aTable));
   }
 
   ~nsDisplayTableBackgroundSet() {
@@ -97,6 +100,12 @@ class nsDisplayTableBackgroundSet {
     aDestination.BorderBackground()->AppendToTop(ColBackgrounds());
   }
 
+  void AddColumn(nsTableColFrame* aFrame) { mColumns.AppendElement(aFrame); }
+
+  nsTableColFrame* GetColForIndex(int32_t aIndex) { return mColumns[aIndex]; }
+
+  const nsPoint& TableToReferenceFrame() { return mToReferenceFrame; }
+
  private:
   // This class is only used on stack, so we don't have to worry about leaking
   // it.  Don't let us be heap-allocated!
@@ -108,6 +117,9 @@ class nsDisplayTableBackgroundSet {
 
   nsDisplayList mColGroupBackgrounds;
   nsDisplayList mColBackgrounds;
+
+  nsTArray<nsTableColFrame*> mColumns;
+  nsPoint mToReferenceFrame;
 };
 
 /* ============================================================================ */
