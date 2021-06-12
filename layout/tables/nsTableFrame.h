@@ -83,6 +83,7 @@ class nsDisplayTableBackgroundSet {
     mozilla::DebugOnly<const nsIFrame*> reference =
         mBuilder->FindReferenceFrameFor(aTable, &mToReferenceFrame);
     MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDoc(reference, aTable));
+    mDirtyRect = mBuilder->GetDirtyRect();
   }
 
   ~nsDisplayTableBackgroundSet() {
@@ -106,6 +107,8 @@ class nsDisplayTableBackgroundSet {
 
   const nsPoint& TableToReferenceFrame() { return mToReferenceFrame; }
 
+  const nsRect& GetDirtyRect() { return mDirtyRect; }
+
  private:
   // This class is only used on stack, so we don't have to worry about leaking
   // it.  Don't let us be heap-allocated!
@@ -120,6 +123,7 @@ class nsDisplayTableBackgroundSet {
 
   nsTArray<nsTableColFrame*> mColumns;
   nsPoint mToReferenceFrame;
+  nsRect mDirtyRect;
 };
 
 /* ============================================================================ */
