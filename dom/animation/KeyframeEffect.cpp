@@ -21,6 +21,7 @@
 #include "mozilla/LayerAnimationInfo.h"
 #include "mozilla/LookAndFeel.h" // For LookAndFeel::GetInt
 #include "mozilla/KeyframeUtils.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/ServoBindings.h"
 #include "mozilla/TypeTraits.h"
 #include "Layers.h" // For Layer
@@ -90,23 +91,15 @@ KeyframeEffect::WrapObject(JSContext* aCx,
   return KeyframeEffectBinding::Wrap(aCx, this, aGivenProto);
 }
 
-IterationCompositeOperation KeyframeEffect::IterationComposite(
-  CallerType /*aCallerType*/) const
+IterationCompositeOperation KeyframeEffect::IterationComposite() const
 {
   return mEffectOptions.mIterationComposite;
 }
 
 void
 KeyframeEffect::SetIterationComposite(
-  const IterationCompositeOperation& aIterationComposite,
-  CallerType aCallerType)
+const IterationCompositeOperation& aIterationComposite)
 {
-  // Ignore iterationComposite if the Web Animations API is not enabled,
-  // then the default value 'Replace' will be used.
-  if (!nsDocument::IsWebAnimationsEnabled(aCallerType)) {
-    return;
-  }
-
   if (mEffectOptions.mIterationComposite == aIterationComposite) {
     return;
   }
@@ -861,9 +854,9 @@ KeyframeEffectParamsFromUnion(const OptionsType& aOptions,
 {
   KeyframeEffectParams result;
   if (aOptions.IsUnrestrictedDouble() ||
-      // Ignore iterationComposite if the Web Animations API is not enabled,
-      // then the default value 'Replace' will be used.
-      !nsDocument::IsWebAnimationsEnabled(aCallerType)) {
+      // Ignore iterationComposite and composite if the corresponding pref is
+      // not set. The default value 'Replace' will be used instead.
+      !Preferences::GetBool("dom.animations-api.compositing.enabled")) {
     return result;
   }
 
