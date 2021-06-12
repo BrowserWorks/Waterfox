@@ -391,17 +391,11 @@ void
 nsTableColGroupFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                        const nsDisplayListSet& aLists)
 {
-  if (IsVisibleForPainting()) {
-    // XXXbz should box-shadow for rows/rowgroups/columns/colgroups get painted
-    // just because we're visible?  Or should it depend on the cell visibility
-    // when we're not the whole table?
-
-    // Paint the outset box-shadows for the table frames
-    if (StyleEffects()->mBoxShadow) {
-      aLists.BorderBackground()->AppendNewToTop(
-        new (aBuilder) nsDisplayBoxShadowOuter(aBuilder, this));
-    }
-  }
+  // Per https://drafts.csswg.org/css-tables-3/#global-style-overrides:
+  // "All css properties of table-column and table-column-group boxes are
+  // ignored, except when explicitly specified by this specification."
+  // CSS outlines and box-shadows fall into this category, so we skip them
+  // on these boxes.
 
   // Collecting column index.
   AutoTArray<uint32_t, 1> colIdx;
@@ -426,23 +420,6 @@ nsTableColGroupFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                                offset);
     }
   }
-
-  if (IsVisibleForPainting()) {
-    // XXXbz should box-shadow for rows/rowgroups/columns/colgroups get painted
-    // just because we're visible?  Or should it depend on the cell visibility
-    // when we're not the whole table?
-
-    // Paint the inset box-shadows for the table frames
-    if (StyleEffects()->mBoxShadow) {
-      aLists.BorderBackground()->AppendNewToTop(
-        new (aBuilder) nsDisplayBoxShadowInner(aBuilder, this));
-    }
-  }
-
-  // Per https://drafts.csswg.org/css-tables-3/#global-style-overrides:
-  // "All css properties of table-column and table-column-group boxes are
-  // ignored, except when explicitly specified by this specification."
-  // CSS outlines fall into this category, so we skip them on these boxes.
 
   for (nsIFrame* kid : PrincipalChildList()) {
     BuildDisplayListForChild(aBuilder, kid, aLists);
