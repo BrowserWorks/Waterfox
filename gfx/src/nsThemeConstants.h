@@ -198,6 +198,7 @@ enum ThemeWidgetType : uint8_t {
 
   // The dropdown button(s) that open up a dropdown list.
   NS_THEME_MENULIST_BUTTON,
+  NS_THEME_MOZ_MENULIST_BUTTON,
 
   // The text part of a dropdown list, to left of button
   NS_THEME_MENULIST_TEXT,

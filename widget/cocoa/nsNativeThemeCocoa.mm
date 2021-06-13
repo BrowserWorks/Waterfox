@@ -2614,6 +2614,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(gfxContext* aContext,
       break;
 
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
       DrawButton(cgContext, kThemeArrowButton, macRect, false, kThemeButtonOn,
                  kThemeAdornmentArrowDownArrow, eventState, aFrame);
       break;
@@ -3014,6 +3015,7 @@ nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
 
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
       *aResult = DirectionAwareMargin(kAquaDropdownBorder, aFrame);
       break;
 
@@ -3138,6 +3140,7 @@ nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFram
     case NS_THEME_LISTBOX:
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_CHECKBOX:
     case NS_THEME_RADIO:
@@ -3266,6 +3269,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
 
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     {
       SInt32 popupHeight = 0;
       ::GetThemeMetric(kThemeMetricPopupButtonHeight, &popupHeight);
@@ -3579,7 +3583,8 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
                                       uint8_t aWidgetType)
 {
   // if this is a dropdown button in a combobox the answer is always no
-  if (aWidgetType == NS_THEME_MENULIST_BUTTON) {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
+      aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON) {
     nsIFrame* parentFrame = aFrame->GetParent();
     if (parentFrame && parentFrame->IsComboboxControlFrame())
       return false;
@@ -3589,6 +3594,7 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     // Combobox dropdowns don't support native theming in vertical mode.
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     case NS_THEME_MENULIST_TEXT:
     case NS_THEME_MENULIST_TEXTFIELD:
       if (aFrame && aFrame->GetWritingMode().IsVertical()) {
@@ -3711,6 +3717,7 @@ nsNativeThemeCocoa::WidgetIsContainer(uint8_t aWidgetType)
   // flesh this out at some point
   switch (aWidgetType) {
    case NS_THEME_MENULIST_BUTTON:
+   case NS_THEME_MOZ_MENULIST_BUTTON:
    case NS_THEME_RADIO:
    case NS_THEME_CHECKBOX:
    case NS_THEME_PROGRESSBAR:

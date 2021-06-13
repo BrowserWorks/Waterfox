@@ -770,6 +770,7 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(uint8_t aWidgetTy
       return Some(eUXStatus);
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
       return Some(eUXCombobox);
     case NS_THEME_TREEHEADERCELL:
     case NS_THEME_TREEHEADERSORTARROW:
@@ -1275,7 +1276,8 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
 
       return NS_OK;
     }
-    case NS_THEME_MENULIST_BUTTON: {
+    case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON: {
       bool isHTML = IsHTMLContent(aFrame);
       nsIFrame* parentFrame = aFrame->GetParent();
       bool isMenulist = !isHTML && parentFrame->IsMenuFrame();
@@ -1826,7 +1828,8 @@ RENDER_AGAIN:
   }
   // The following widgets need to be RTL-aware
   else if (aWidgetType == NS_THEME_RESIZER ||
-           aWidgetType == NS_THEME_MENULIST_BUTTON)
+           aWidgetType == NS_THEME_MENULIST_BUTTON ||
+           aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON)
   {
     DrawThemeBGRTLAware(theme, hdc, part, state,
                         &widgetRect, &clipRect, IsFrameRTL(aFrame));
@@ -2208,6 +2211,8 @@ nsNativeThemeWin::GetWidgetOverflow(nsDeviceContext* aContext,
    * where, if invalidated, the dropdown control probably won't be repainted.
    * This is fairly minor, as by default there is nothing in that area, and
    * a border only shows up if the widget is being hovered.
+   *
+   * TODO(jwatt): Figure out what do to about NS_THEME_MOZ_MENULIST_BUTTON too.
    */
 #if 0
   /* We explicitly draw dropdown buttons in HTML content 1px bigger up, right,
@@ -2303,7 +2308,8 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
     case NS_THEME_SCROLLBAR_HORIZONTAL:
     case NS_THEME_SCROLLBAR_VERTICAL:
-    case NS_THEME_MENULIST_BUTTON: {
+    case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON: {
       rv = ClassicGetMinimumWidgetSize(aFrame, aWidgetType, aResult, aIsOverridable);
       ScaleForFrameDPI(aResult, aFrame);
       return rv;
@@ -2518,7 +2524,9 @@ nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
 
   // We need to repaint the dropdown arrow in vista HTML combobox controls when
   // the control is closed to get rid of the hover effect.
-  if ((aWidgetType == NS_THEME_MENULIST || aWidgetType == NS_THEME_MENULIST_BUTTON) &&
+  if ((aWidgetType == NS_THEME_MENULIST ||
+      aWidgetType == NS_THEME_MENULIST_BUTTON ||
+      aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON) &&
       IsHTMLContent(aFrame))
   {
     *aShouldRepaint = true;
@@ -2594,6 +2602,7 @@ nsNativeThemeWin::WidgetIsContainer(uint8_t aWidgetType)
 {
   // XXXdwh At some point flesh all of this out.
   if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
+      aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_RADIO ||
       aWidgetType == NS_THEME_CHECKBOX)
     return false;
@@ -2768,6 +2777,7 @@ nsNativeThemeWin::ClassicThemeSupportsWidget(nsIFrame* aFrame,
     case NS_THEME_SCALETHUMB_HORIZONTAL:
     case NS_THEME_SCALETHUMB_VERTICAL:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
@@ -2984,6 +2994,7 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
       *aIsOverridable = false;
       break;
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
       (*aResult).width = ::GetSystemMetrics(SM_CXVSCROLL);
       break;
     case NS_THEME_MENULIST:
@@ -3275,7 +3286,8 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
     case NS_THEME_GROUPBOX:
       // these don't use DrawFrameControl
       return NS_OK;
-    case NS_THEME_MENULIST_BUTTON: {
+    case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON: {
 
       aPart = DFC_SCROLL;
       aState = DFCS_SCROLLCOMBOBOX;
@@ -3660,6 +3672,7 @@ RENDER_AGAIN:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     case NS_THEME_RESIZER: {
       int32_t oldTA;
       // setup DC to make DrawFrameControl draw correctly
@@ -4091,6 +4104,7 @@ nsNativeThemeWin::GetWidgetNativeDrawingFlags(uint8_t aWidgetType)
     // except that the graphic in the dropdown button (the downward arrow)
     // doesn't get scaled up.
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     // these are definitely no; they're all graphics that don't get scaled up
     case NS_THEME_CHECKBOX:
     case NS_THEME_RADIO:

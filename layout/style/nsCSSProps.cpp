@@ -810,6 +810,7 @@ const KTableEntry nsCSSProps::kAppearanceKTable[] = {
   { eCSSKeyword_searchfield,            NS_THEME_SEARCHFIELD },
   { eCSSKeyword_menulist,               NS_THEME_MENULIST },
   { eCSSKeyword_menulist_button,        NS_THEME_MENULIST_BUTTON },
+  { eCSSKeyword__moz_menulist_button,   NS_THEME_MOZ_MENULIST_BUTTON },
   { eCSSKeyword_menulist_text,          NS_THEME_MENULIST_TEXT },
   { eCSSKeyword_menulist_textfield,     NS_THEME_MENULIST_TEXTFIELD },
   { eCSSKeyword_range,                  NS_THEME_RANGE },
