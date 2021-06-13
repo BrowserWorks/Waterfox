@@ -2289,6 +2289,11 @@ nsNativeThemeCocoa::DrawWidgetBackground(gfxContext* aContext,
 
   DrawTarget& aDrawTarget = *aContext->GetDrawTarget();
 
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // setup to draw into the correct port
   int32_t p2a = aFrame->PresContext()->AppUnitsPerDevPixel();
 
@@ -2613,6 +2618,8 @@ nsNativeThemeCocoa::DrawWidgetBackground(gfxContext* aContext,
       DrawDropdown(cgContext, macRect, eventState, aWidgetType, aFrame);
       break;
 
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
     case NS_THEME_MENULIST_BUTTON:
     case NS_THEME_MOZ_MENULIST_BUTTON:
       DrawButton(cgContext, kThemeArrowButton, macRect, false, kThemeButtonOn,
@@ -3013,6 +3020,8 @@ nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
       break;
     }
 
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
     case NS_THEME_MOZ_MENULIST_BUTTON:
@@ -3138,6 +3147,8 @@ nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFram
     case NS_THEME_TEXTFIELD_MULTILINE:
     case NS_THEME_SEARCHFIELD:
     case NS_THEME_LISTBOX:
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
     case NS_THEME_MOZ_MENULIST_BUTTON:
@@ -3267,6 +3278,8 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
       break;
     }
 
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
     case NS_THEME_MOZ_MENULIST_BUTTON:
@@ -3582,6 +3595,11 @@ bool
 nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* aFrame,
                                       uint8_t aWidgetType)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // if this is a dropdown button in a combobox the answer is always no
   if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON) {
@@ -3714,6 +3732,11 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
 bool
 nsNativeThemeCocoa::WidgetIsContainer(uint8_t aWidgetType)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // flesh this out at some point
   switch (aWidgetType) {
    case NS_THEME_MENULIST_BUTTON:
@@ -3734,6 +3757,11 @@ nsNativeThemeCocoa::WidgetIsContainer(uint8_t aWidgetType)
 bool
 nsNativeThemeCocoa::ThemeDrawsFocusForWidget(uint8_t aWidgetType)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   if (aWidgetType == NS_THEME_MENULIST ||
       aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
       aWidgetType == NS_THEME_BUTTON ||
