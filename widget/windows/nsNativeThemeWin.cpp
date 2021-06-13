@@ -768,6 +768,8 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(uint8_t aWidgetTy
     case NS_THEME_RESIZERPANEL:
     case NS_THEME_RESIZER:
       return Some(eUXStatus);
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
     case NS_THEME_MOZ_MENULIST_BUTTON:
@@ -858,6 +860,11 @@ nsresult
 nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
                                        int32_t& aPart, int32_t& aState)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     case NS_THEME_BUTTON: {
       aPart = BP_BUTTON;
@@ -1542,6 +1549,11 @@ nsNativeThemeWin::DrawWidgetBackground(gfxContext* aContext,
                                        const nsRect& aRect,
                                        const nsRect& aDirtyRect)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   if (IsWidgetScrollbarPart(aWidgetType)) {
     nsStyleContext* style = nsLayoutUtils::StyleForScrollbar(aFrame);
     if (ShouldDrawCustomScrollbar(style)) {
@@ -2058,6 +2070,11 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
                                    uint8_t aWidgetType,
                                    nsIntMargin* aResult)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     // Radios and checkboxes return a fixed size in GetMinimumWidgetSize
     // and have a meaningful baseline, so they can't have
@@ -2255,6 +2272,11 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
                                        uint8_t aWidgetType,
                                        LayoutDeviceIntSize* aResult, bool* aIsOverridable)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   aResult->width = aResult->height = 0;
   *aIsOverridable = true;
   nsresult rv = NS_OK;
@@ -2487,6 +2509,11 @@ nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
                                      nsIAtom* aAttribute, bool* aShouldRepaint,
                                      const nsAttrValue* aOldValue)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // Some widget types just never change state.
   if (aWidgetType == NS_THEME_TOOLBOX ||
       aWidgetType == NS_THEME_WIN_MEDIA_TOOLBOX ||
@@ -2524,6 +2551,9 @@ nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
 
   // We need to repaint the dropdown arrow in vista HTML combobox controls when
   // the control is closed to get rid of the hover effect.
+  //
+  // NOTE: if you change Menulist and MenulistButton to behave differently,
+  // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
   if ((aWidgetType == NS_THEME_MENULIST ||
       aWidgetType == NS_THEME_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON) &&
@@ -2600,6 +2630,11 @@ nsNativeThemeWin::ThemeSupportsWidget(nsPresContext* aPresContext,
 bool
 nsNativeThemeWin::WidgetIsContainer(uint8_t aWidgetType)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // XXXdwh At some point flesh all of this out.
   if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON ||
@@ -2776,6 +2811,10 @@ nsNativeThemeWin::ClassicThemeSupportsWidget(nsIFrame* aFrame,
     case NS_THEME_SCALE_VERTICAL:
     case NS_THEME_SCALETHUMB_HORIZONTAL:
     case NS_THEME_SCALETHUMB_VERTICAL:
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
+    case NS_THEME_MENULIST:
+    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_MENULIST_BUTTON:
     case NS_THEME_MOZ_MENULIST_BUTTON:
     case NS_THEME_INNER_SPIN_BUTTON:
@@ -2783,8 +2822,6 @@ nsNativeThemeWin::ClassicThemeSupportsWidget(nsIFrame* aFrame,
     case NS_THEME_SPINNER_DOWNBUTTON:
     case NS_THEME_LISTBOX:
     case NS_THEME_TREEVIEW:
-    case NS_THEME_MENULIST_TEXTFIELD:
-    case NS_THEME_MENULIST:
     case NS_THEME_TOOLTIP:
     case NS_THEME_STATUSBAR:
     case NS_THEME_STATUSBARPANEL:
@@ -2826,6 +2863,11 @@ nsNativeThemeWin::ClassicGetWidgetBorder(nsDeviceContext* aContext,
                                   uint8_t aWidgetType,
                                   nsIntMargin* aResult)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     case NS_THEME_GROUPBOX:
     case NS_THEME_BUTTON:
@@ -2921,6 +2963,11 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
                                               LayoutDeviceIntSize* aResult,
                                               bool* aIsOverridable)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   (*aResult).width = (*aResult).height = 0;
   *aIsOverridable = true;
   switch (aWidgetType) {
@@ -3118,6 +3165,11 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
 nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
                                  int32_t& aPart, int32_t& aState, bool& aFocused)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   aFocused = false;
   switch (aWidgetType) {
     case NS_THEME_BUTTON: {
