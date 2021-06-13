@@ -191,6 +191,11 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
                                        GtkWidgetState* aState,
                                        gint* aWidgetFlags)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   if (aState) {
     // For XUL checkboxes and radio buttons, the state of the parent
     // determines our state.
@@ -1411,6 +1416,11 @@ nsNativeThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
                                    nsIFrame* aFrame, uint8_t aWidgetType,
                                    nsIntMargin* aResult)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     case NS_THEME_BUTTON_FOCUS:
     case NS_THEME_TOOLBARBUTTON:
@@ -1497,6 +1507,11 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
 {
   aResult->width = aResult->height = 0;
   *aIsOverridable = true;
+
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
 
   switch (aWidgetType) {
     case NS_THEME_SCROLLBARBUTTON_UP:
@@ -1870,6 +1885,11 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
   if (IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType))
     return false;
 
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   if (IsWidgetScrollbarPart(aWidgetType)) {
     nsStyleContext* cs = nsLayoutUtils::StyleForScrollbar(aFrame);
     if (cs->StyleUserInterface()->HasCustomScrollbars() ||
@@ -2007,6 +2027,11 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
 NS_IMETHODIMP_(bool)
 nsNativeThemeGTK::WidgetIsContainer(uint8_t aWidgetType)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // XXXdwh At some point flesh all of this out.
   if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON ||
@@ -2026,7 +2051,12 @@ nsNativeThemeGTK::WidgetIsContainer(uint8_t aWidgetType)
 bool
 nsNativeThemeGTK::ThemeDrawsFocusForWidget(uint8_t aWidgetType)
 {
-   if (aWidgetType == NS_THEME_MENULIST ||
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
+  if (aWidgetType == NS_THEME_MENULIST ||
       aWidgetType == NS_THEME_BUTTON ||
       aWidgetType == NS_THEME_TREEHEADERCELL)
     return true;
