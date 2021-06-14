@@ -17,9 +17,9 @@ interface MenuBuilder;
 // http://www.whatwg.org/specs/web-apps/current-work/#the-menu-element
 [HTMLConstructor]
 interface HTMLMenuElement : HTMLElement {
-           [CEReactions, SetterThrows]
+           [CEReactions, SetterThrows, Pref="dom.menuitem.enabled"]
            attribute DOMString type;
-           [CEReactions, SetterThrows]
+           [CEReactions, SetterThrows, Pref="dom.menuitem.enabled"]
            attribute DOMString label;
 };
 

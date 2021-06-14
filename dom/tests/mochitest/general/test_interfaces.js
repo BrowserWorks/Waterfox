@@ -479,8 +479,6 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLMenuElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "HTMLMenuItemElement",
-// IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLMetaElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLMeterElement",
