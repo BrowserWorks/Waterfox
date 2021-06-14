@@ -777,6 +777,7 @@ const KTableEntry nsCSSProps::kAppearanceKTable[] = {
   { eCSSKeyword_treeheadercell,         NS_THEME_TREEHEADERCELL },
   { eCSSKeyword_treeheadersortarrow,    NS_THEME_TREEHEADERSORTARROW },
   { eCSSKeyword_progressbar,            NS_THEME_PROGRESSBAR },
+  { eCSSKeyword_progress_bar,           NS_THEME_PROGRESSBAR },
   { eCSSKeyword_progresschunk,          NS_THEME_PROGRESSCHUNK },
   { eCSSKeyword_progressbar_vertical,   NS_THEME_PROGRESSBAR_VERTICAL },
   { eCSSKeyword_progresschunk_vertical, NS_THEME_PROGRESSCHUNK_VERTICAL },
