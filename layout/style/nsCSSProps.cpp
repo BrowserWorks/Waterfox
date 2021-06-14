@@ -757,6 +757,7 @@ const KTableEntry nsCSSProps::kAppearanceKTable[] = {
   { eCSSKeyword_button_arrow_down,      NS_THEME_BUTTON_ARROW_DOWN },
   { eCSSKeyword_button_arrow_next,      NS_THEME_BUTTON_ARROW_NEXT },
   { eCSSKeyword_button_arrow_previous,  NS_THEME_BUTTON_ARROW_PREVIOUS },
+  { eCSSKeyword_meter,                  NS_THEME_METERBAR },
   { eCSSKeyword_meterbar,               NS_THEME_METERBAR },
   { eCSSKeyword_meterchunk,             NS_THEME_METERCHUNK },
   { eCSSKeyword_number_input,           NS_THEME_NUMBER_INPUT },
