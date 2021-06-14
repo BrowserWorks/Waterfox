@@ -72,7 +72,7 @@ class MenuBarExtension extends ExtensibleUtils {
 
   _restartBrowser() {
     let browserBundle = Services.strings.createBundle(
-      "chrome://browser/locale/browser.properties"
+      "resource://extensibles/extensibles.properties"
     );
     let brandBundle = Services.strings.createBundle(
       "chrome://branding/locale/brand.properties"
