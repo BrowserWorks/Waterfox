@@ -38,4 +38,4 @@ ChromeUtils.defineModuleGetter(
 // define prefs
 const COPY_TAB_PREF = "browser.tabs.copyurl";
 const COPY_ALL_TABS_PREF = "browser.tabs.copyallurls";
-const SHOW_RESTART_BUTTON = "";
+const SHOW_RESTART_BUTTON_PREF = "browser.restart_menu.showpanelmenubtn";
