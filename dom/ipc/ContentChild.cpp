@@ -4753,8 +4753,18 @@ OpenBSDUnveilPaths(const nsACString& uPath, const nsACString& pledgePath) {
   if (disabled) {
     warnx("%s: disabled", PromiseFlatCString(uPath).get());
   } else {
-    if (unveil(PromiseFlatCString(pledgePath).get(), "r") == -1) {
-      err(1, "unveil(%s, r) failed", PromiseFlatCString(pledgePath).get());
+    struct stat st;
+
+    // Only unveil the pledgePath file if it's not already unveiled, otherwise
+    // some containing directory will lose visibility.
+    if (stat(PromiseFlatCString(pledgePath).get(), &st) == -1) {
+      if (errno == ENOENT) {
+        if (unveil(PromiseFlatCString(pledgePath).get(), "r") == -1) {
+          err(1, "unveil(%s, r) failed", PromiseFlatCString(pledgePath).get());
+        }
+      } else {
+        err(1, "stat(%s)", PromiseFlatCString(pledgePath).get());
+      }
     }
   }
 
@@ -4785,6 +4795,16 @@ bool StartOpenBSDSandbox(GeckoProcessType type) {
     case GeckoProcessType_GPU:
       OpenBSDFindPledgeUnveilFilePath("pledge.gpu", pledgeFile);
       OpenBSDFindPledgeUnveilFilePath("unveil.gpu", unveilFile);
+      break;
+
+    case GeckoProcessType_Socket:
+      OpenBSDFindPledgeUnveilFilePath("pledge.socket", pledgeFile);
+      OpenBSDFindPledgeUnveilFilePath("unveil.socket", unveilFile);
+      break;
+
+    case GeckoProcessType_RDD:
+      OpenBSDFindPledgeUnveilFilePath("pledge.rdd", pledgeFile);
+      OpenBSDFindPledgeUnveilFilePath("unveil.rdd", unveilFile);
       break;
 
     default:

@@ -203,12 +203,25 @@ class Buffer {
 
   void SkipWhitespace() {
     while (mLength > 0) {
-      if (!isspace(mBuf[0])) {
+      if (!IsSpace(mBuf[0])) {
         break;
       }
       mBuf++;
       mLength--;
     }
+  }
+
+  static bool IsSpace(char c) {
+    switch (c) {
+      case ' ':
+      case '\t':
+      case '\n':
+      case '\v':
+      case '\f':
+      case '\r':
+        return true;
+    }
+    return false;
   }
 
   /* Returns a sub-buffer of at most aLength characters. The "parent" buffer is
@@ -608,6 +621,9 @@ class Replay {
     mStdErr = reinterpret_cast<intptr_t>(GetStdHandle(STD_ERROR_HANDLE));
 #else
     mStdErr = fileno(stderr);
+#endif
+#ifdef XP_LINUX
+    BuildInitialMapInfo();
 #endif
   }
 
@@ -1053,10 +1069,11 @@ class Replay {
 #endif  // XP_LINUX
 };
 
+static Replay replay;
+
 int main(int argc, const char* argv[]) {
   size_t first_pid = 0;
   FdReader reader(0);
-  Replay replay;
 
   for (int i = 1; i < argc; i++) {
     const char* option = argv[i];
@@ -1071,10 +1088,6 @@ int main(int argc, const char* argv[]) {
       return EXIT_FAILURE;
     }
   }
-
-#ifdef XP_LINUX
-  replay.BuildInitialMapInfo();
-#endif
 
   /* Read log from stdin and dispatch function calls to the Replay instance.
    * The log format is essentially:

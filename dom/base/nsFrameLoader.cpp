@@ -18,6 +18,7 @@
 #include "nsDocShell.h"
 #include "nsIContentInlines.h"
 #include "nsIContentViewer.h"
+#include "nsIPrintSettings.h"
 #include "nsIPrintSettingsService.h"
 #include "mozilla/dom/Document.h"
 #include "nsPIDOMWindow.h"
@@ -55,6 +56,10 @@
 #include "nsIXULRuntime.h"
 #include "nsNetUtil.h"
 #include "nsFocusManager.h"
+#include "nsIINIParser.h"
+#include "nsAppRunner.h"
+#include "nsDirectoryService.h"
+#include "nsDirectoryServiceDefs.h"
 
 #include "nsGkAtoms.h"
 #include "nsNameSpaceManager.h"
@@ -135,6 +140,10 @@
 #  include "mozilla/embedding/printingui/PrintingParent.h"
 #  include "nsIWebBrowserPrint.h"
 #endif
+
+#if defined(MOZ_TELEMETRY_REPORTING)
+#  include "mozilla/Telemetry.h"
+#endif  // defined(MOZ_TELEMETRY_REPORTING)
 
 using namespace mozilla;
 using namespace mozilla::hal;
@@ -2829,8 +2838,10 @@ void nsFrameLoader::ActivateFrameEvent(const nsAString& aType, bool aCapture,
   }
 }
 
-nsresult nsFrameLoader::DoRemoteStaticClone(nsFrameLoader* aStaticCloneOf) {
+nsresult nsFrameLoader::DoRemoteStaticClone(nsFrameLoader* aStaticCloneOf,
+                                            nsIPrintSettings* aPrintSettings) {
   MOZ_ASSERT(aStaticCloneOf->IsRemoteFrame());
+  MOZ_ASSERT(aPrintSettings);
   auto* cc = ContentChild::GetSingleton();
   if (!cc) {
     MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess());
@@ -2843,12 +2854,25 @@ nsresult nsFrameLoader::DoRemoteStaticClone(nsFrameLoader* aStaticCloneOf) {
   }
   BrowsingContext* bc = GetBrowsingContext();
   MOZ_DIAGNOSTIC_ASSERT(bc);
-  cc->SendCloneDocumentTreeInto(bcToClone, bc);
+  nsCOMPtr<nsIPrintSettingsService> printSettingsSvc =
+      do_GetService("@mozilla.org/gfx/printsettings-service;1");
+  if (NS_WARN_IF(!printSettingsSvc)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+  embedding::PrintData printData;
+  nsresult rv =
+      printSettingsSvc->SerializeToPrintData(aPrintSettings, &printData);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  cc->SendCloneDocumentTreeInto(bcToClone, bc, printData);
   return NS_OK;
 }
 
 nsresult nsFrameLoader::FinishStaticClone(
-    nsFrameLoader* aStaticCloneOf, bool* aOutHasInProcessPrintCallbacks) {
+    nsFrameLoader* aStaticCloneOf, nsIPrintSettings* aPrintSettings,
+    bool* aOutHasInProcessPrintCallbacks) {
   MOZ_DIAGNOSTIC_ASSERT(
       !nsContentUtils::IsSafeToRunScript(),
       "A script blocker should be on the stack while FinishStaticClone is run");
@@ -2866,7 +2890,7 @@ nsresult nsFrameLoader::FinishStaticClone(
   }
 
   if (aStaticCloneOf->IsRemoteFrame()) {
-    return DoRemoteStaticClone(aStaticCloneOf);
+    return DoRemoteStaticClone(aStaticCloneOf, aPrintSettings);
   }
 
   nsIDocShell* origDocShell = aStaticCloneOf->GetDocShell();
@@ -2886,8 +2910,8 @@ nsresult nsFrameLoader::FinishStaticClone(
   docShell->GetContentViewer(getter_AddRefs(viewer));
   NS_ENSURE_STATE(viewer);
 
-  nsCOMPtr<Document> clonedDoc =
-      doc->CreateStaticClone(docShell, viewer, aOutHasInProcessPrintCallbacks);
+  nsCOMPtr<Document> clonedDoc = doc->CreateStaticClone(
+      docShell, viewer, aPrintSettings, aOutHasInProcessPrintCallbacks);
 
   return NS_OK;
 }
@@ -3215,7 +3239,7 @@ already_AddRefed<Promise> nsFrameLoader::RequestTabStateFlush(
 
 void nsFrameLoader::RequestFinalTabStateFlush() {
   BrowsingContext* context = GetExtantBrowsingContext();
-  if (!context || !context->IsTop()) {
+  if (!context || !context->IsTop() || context->Canonical()->IsReplaced()) {
     return;
   }
 
@@ -3660,6 +3684,32 @@ void nsFrameLoader::SetWillChangeProcess() {
   docshell->SetWillChangeProcess();
 }
 
+static mozilla::Result<bool, nsresult> DidBuildIDChange() {
+  nsresult rv;
+  nsCOMPtr<nsIFile> file;
+
+  rv = NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(file));
+  MOZ_TRY(rv);
+
+  rv = file->AppendNative("platform.ini"_ns);
+  MOZ_TRY(rv);
+
+  nsCOMPtr<nsIINIParserFactory> iniFactory =
+      do_GetService("@mozilla.org/xpcom/ini-parser-factory;1", &rv);
+  MOZ_TRY(rv);
+
+  nsCOMPtr<nsIINIParser> parser;
+  rv = iniFactory->CreateINIParser(file, getter_AddRefs(parser));
+  MOZ_TRY(rv);
+
+  nsAutoCString installedBuildID;
+  rv = parser->GetString("Build"_ns, "BuildID"_ns, installedBuildID);
+  MOZ_TRY(rv);
+
+  nsDependentCString runningBuildID(PlatformBuildID());
+  return (installedBuildID != runningBuildID);
+}
+
 void nsFrameLoader::MaybeNotifyCrashed(BrowsingContext* aBrowsingContext,
                                        ContentParentId aChildID,
                                        mozilla::ipc::MessageChannel* aChannel) {
@@ -3695,13 +3745,42 @@ void nsFrameLoader::MaybeNotifyCrashed(BrowsingContext* aBrowsingContext,
     return;
   }
 
+#if defined(MOZ_TELEMETRY_REPORTING)
+  bool sendTelemetry = false;
+#endif  // defined(MOZ_TELEMETRY_REPORTING)
+
   // Fire the actual crashed event.
   nsString eventName;
   if (aChannel && !aChannel->DoBuildIDsMatch()) {
-    eventName = u"oop-browser-buildid-mismatch"_ns;
+    auto changedOrError = DidBuildIDChange();
+    if (changedOrError.isErr()) {
+      NS_WARNING("Error while checking buildid mismatch");
+      eventName = u"oop-browser-buildid-mismatch"_ns;
+    } else {
+      bool aChanged = changedOrError.unwrap();
+      if (aChanged) {
+        NS_WARNING("True build ID mismatch");
+        eventName = u"oop-browser-buildid-mismatch"_ns;
+      } else {
+        NS_WARNING("build ID mismatch false alarm");
+        eventName = u"oop-browser-crashed"_ns;
+#if defined(MOZ_TELEMETRY_REPORTING)
+        sendTelemetry = true;
+#endif  // defined(MOZ_TELEMETRY_REPORTING)
+      }
+    }
   } else {
+    NS_WARNING("No build ID mismatch");
     eventName = u"oop-browser-crashed"_ns;
   }
+
+#if defined(MOZ_TELEMETRY_REPORTING)
+  if (sendTelemetry) {
+    Telemetry::ScalarAdd(
+        Telemetry::ScalarID::DOM_CONTENTPROCESS_BUILDID_MISMATCH_FALSE_POSITIVE,
+        1);
+  }
+#endif  // defined(MOZ_TELEMETRY_REPORTING)
 
   FrameCrashedEventInit init;
   init.mBubbles = true;

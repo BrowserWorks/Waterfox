@@ -729,7 +729,8 @@ DnsAndConnectSocket::OnTransportStatus(nsITransport* trans, nsresult status,
       do_GetInterface(mPrimaryTransport.mSocketTransport));
   if (status == NS_NET_STATUS_CONNECTING_TO && gHttpHandler->IsSpdyEnabled() &&
       gHttpHandler->CoalesceSpdy()) {
-    RefPtr<ConnectionEntry> ent = gHttpHandler->ConnMgr()->FindConnectionEntry(mConnInfo);
+    RefPtr<ConnectionEntry> ent =
+        gHttpHandler->ConnMgr()->FindConnectionEntry(mConnInfo);
     MOZ_DIAGNOSTIC_ASSERT(ent);
     if (ent) {
       if (ent->MaybeProcessCoalescingKeys(dnsRecord)) {
@@ -960,7 +961,7 @@ nsresult DnsAndConnectSocket::TransportSetup::CheckConnectedResult(
 
   if (retry) {
     CloseAll();
-    mState = TransportSetup::TransportSetupState::RESOLVING;
+    mState = TransportSetup::TransportSetupState::RETRY_RESOLVING;
     nsresult rv = ResolveHost(dnsAndSock);
     if (NS_FAILED(rv)) {
       CloseAll();
@@ -1011,8 +1012,7 @@ nsresult DnsAndConnectSocket::TransportSetup::SetupConn(
     RefPtr<HttpConnectionUDP> connUDP = do_QueryObject(conn);
     rv = connUDP->Init(ent->mConnInfo, mDNSRecord, status, callbacks, cap);
     if (NS_SUCCEEDED(rv)) {
-      if (gHttpHandler->IsHttp3Enabled() && gHttpHandler->CoalesceSpdy() &&
-          ent) {
+      if (gHttpHandler->IsHttp3Enabled() && gHttpHandler->CoalesceSpdy()) {
         if (ent->MaybeProcessCoalescingKeys(mDNSRecord, true)) {
           gHttpHandler->ConnMgr()->ProcessSpdyPendingQ(ent);
         }
@@ -1046,6 +1046,9 @@ nsresult DnsAndConnectSocket::TransportSetup::SetupConn(
 nsresult DnsAndConnectSocket::TransportSetup::SetupStreams(
     DnsAndConnectSocket* dnsAndSock) {
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
+  MOZ_DIAGNOSTIC_ASSERT(!mSocketTransport);
+  MOZ_DIAGNOSTIC_ASSERT(!mStreamOut);
+  MOZ_DIAGNOSTIC_ASSERT(!mDNSRequest);
 
   nsresult rv;
   nsTArray<nsCString> socketTypes;
@@ -1223,6 +1226,9 @@ nsresult DnsAndConnectSocket::TransportSetup::SetupStreams(
 
 nsresult DnsAndConnectSocket::TransportSetup::ResolveHost(
     DnsAndConnectSocket* dnsAndSock) {
+  MOZ_DIAGNOSTIC_ASSERT(!mSocketTransport);
+  MOZ_DIAGNOSTIC_ASSERT(!mStreamOut);
+  MOZ_DIAGNOSTIC_ASSERT(!mDNSRequest);
   LOG(("DnsAndConnectSocket::TransportSetup::ResolveHost [this=%p %s%s]", this,
        PromiseFlatCString(mHost).get(),
        (mDnsFlags & nsIDNSService::RESOLVE_BYPASS_CACHE) ? " bypass cache"
@@ -1246,6 +1252,9 @@ nsresult DnsAndConnectSocket::TransportSetup::ResolveHost(
         getter_AddRefs(mDNSRequest));
   } while (NS_FAILED(rv) && ShouldRetryDNS());
 
+  if (NS_FAILED(rv)) {
+    mDNSRequest = nullptr;
+  }
   return rv;
 }
 

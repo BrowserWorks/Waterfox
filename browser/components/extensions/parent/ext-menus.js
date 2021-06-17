@@ -137,7 +137,11 @@ var gMenuBuilder = {
     if (!this.canAccessContext(root.extension, contextData)) {
       return;
     }
-    if (contextData.onBrowserAction || contextData.onPageAction) {
+    if (
+      contextData.onAction ||
+      contextData.onBrowserAction ||
+      contextData.onPageAction
+    ) {
       if (contextData.extension.id !== root.extension.id) {
         return;
       }
@@ -436,16 +440,22 @@ var gMenuBuilder = {
 
         info.button = event.button;
 
+        let _execute_action =
+          item.extension.manifestVersion < 3
+            ? "_execute_browser_action"
+            : "_execute_action";
+
         // Allow menus to open various actions supported in webext prior
         // to notifying onclicked.
         let actionFor = {
+          [_execute_action]: global.browserActionFor,
           _execute_page_action: global.pageActionFor,
-          _execute_browser_action: global.browserActionFor,
           _execute_sidebar_action: global.sidebarActionFor,
         }[item.command];
         if (actionFor) {
           let win = event.target.ownerGlobal;
           actionFor(item.extension).triggerAction(win);
+          return;
         }
 
         item.extension.emit(
@@ -537,7 +547,11 @@ var gMenuBuilder = {
       extension.emit("webext-menu-shown", menuIds, contextData);
     };
 
-    if (contextData.onBrowserAction || contextData.onPageAction) {
+    if (
+      contextData.onAction ||
+      contextData.onBrowserAction ||
+      contextData.onPageAction
+    ) {
       dispatchOnShownEvent(contextData.extension);
     } else {
       for (const extension of gOnShownSubscribers.keys()) {
@@ -601,6 +615,7 @@ const contextsMap = {
   onVideo: "video",
 
   onBookmark: "bookmark",
+  onAction: "action",
   onBrowserAction: "browser_action",
   onPageAction: "page_action",
   onTab: "tab",

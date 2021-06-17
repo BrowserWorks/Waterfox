@@ -270,8 +270,14 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   mozilla::ipc::IPCResult RecvResumeLoad(const uint64_t& aPendingSwitchID,
                                          const ParentShowInfo&);
 
-  mozilla::ipc::IPCResult RecvCloneDocumentTreeIntoSelf(
-      const MaybeDiscarded<BrowsingContext>& aSourceBC);
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY mozilla::ipc::IPCResult
+  RecvCloneDocumentTreeIntoSelf(
+      const MaybeDiscarded<BrowsingContext>& aSourceBC,
+      const embedding::PrintData& aPrintData);
+
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  mozilla::ipc::IPCResult RecvUpdateRemotePrintSettings(
+      const embedding::PrintData& aPrintData);
 
   MOZ_CAN_RUN_SCRIPT_BOUNDARY
   mozilla::ipc::IPCResult RecvShow(const ParentShowInfo&, const OwnerShowInfo&);
@@ -837,6 +843,7 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   bool mDidLoadURLInit;
 
   bool mSkipKeyPress;
+  bool mDidSetEffectsInfo;
 
   // Store the end time of the handling of the last repeated keydown/keypress
   // event so that in case event handling takes time, some repeated events can

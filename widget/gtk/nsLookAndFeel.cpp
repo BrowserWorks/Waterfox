@@ -46,16 +46,17 @@
 #include "nsCSSColorUtils.h"
 
 using namespace mozilla;
-using mozilla::LookAndFeel;
 
 #ifdef MOZ_LOGGING
 #  include "mozilla/Logging.h"
 #  include "nsTArray.h"
 #  include "Units.h"
-static mozilla::LazyLogModule gLnfLog("LookAndFeel");
-#  define LOGLNF(args) MOZ_LOG(gLnfLog, mozilla::LogLevel::Debug, args)
+static LazyLogModule gLnfLog("LookAndFeel");
+#  define LOGLNF(...) MOZ_LOG(gLnfLog, LogLevel::Debug, (__VA_ARGS__))
+#  define LOGLNF_ENABLED() MOZ_LOG_TEST(gLnfLog, LogLevel::Debug)
 #else
 #  define LOGLNF(args)
+#  define LOGLNF_ENABLED() false
 #endif /* MOZ_LOGGING */
 
 #define GDK_COLOR_TO_NS_RGB(c) \
@@ -1031,17 +1032,21 @@ static bool IsGtkThemeCompatibleWithHTMLColors() {
   return HasGoodContrastVisibility(backgroundColor, black);
 }
 
-static nsCString GetGtkTheme() {
+static nsCString GetGtkSettingsStringKey(const char* aKey) {
   MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
   nsCString ret;
   GtkSettings* settings = gtk_settings_get_default();
-  char* themeName = nullptr;
-  g_object_get(settings, "gtk-theme-name", &themeName, nullptr);
-  if (themeName) {
-    ret.Assign(themeName);
-    g_free(themeName);
+  char* value = nullptr;
+  g_object_get(settings, aKey, &value, nullptr);
+  if (value) {
+    ret.Assign(value);
+    g_free(value);
   }
   return ret;
+}
+
+static nsCString GetGtkTheme() {
+  return GetGtkSettingsStringKey("gtk-theme-name");
 }
 
 static bool GetPreferDarkTheme() {
@@ -1073,6 +1078,9 @@ void nsLookAndFeel::ConfigureTheme(const LookAndFeelTheme& aTheme) {
 }
 
 void nsLookAndFeel::RestoreSystemTheme() {
+  LOGLNF("RestoreSystemTheme(%s, %d)\n", mSystemTheme.mName.get(),
+         mSystemTheme.mPreferDarkTheme);
+
   // Available on Gtk 3.20+.
   static auto sGtkSettingsResetProperty =
       (void (*)(GtkSettings*, const gchar*))dlsym(
@@ -1099,7 +1107,7 @@ void nsLookAndFeel::WithAltThemeConfigured(const Callback& aFn) {
   bool fellBackToDefaultTheme = false;
 
   // Try to select the opposite variant of the current theme first...
-  LOGLNF(("    toggling gtk-application-prefer-dark-theme\n"));
+  LOGLNF("    toggling gtk-application-prefer-dark-theme\n");
   g_object_set(settings, "gtk-application-prefer-dark-theme",
                !mSystemTheme.mIsDark, nullptr);
   moz_gtk_refresh();
@@ -1195,7 +1203,7 @@ void nsLookAndFeel::EnsureInit() {
     return;
   }
 
-  LOGLNF(("nsLookAndFeel::EnsureInit"));
+  LOGLNF("nsLookAndFeel::EnsureInit");
 
   // Gtk manages a screen's CSS in the settings object so we
   // ask Gtk to create it explicitly. Otherwise we may end up
@@ -1287,8 +1295,8 @@ void nsLookAndFeel::EnsureInit() {
     mAltTheme = mSystemTheme;
   }
 
-  LOGLNF(("System Theme: %s. Alt Theme: %s\n", mSystemTheme.mName.get(),
-          mAltTheme.mName.get()));
+  LOGLNF("System Theme: %s. Alt Theme: %s\n", mSystemTheme.mName.get(),
+         mAltTheme.mName.get());
 
   MatchFirefoxThemeIfNeeded();
 
@@ -1315,6 +1323,10 @@ bool nsLookAndFeel::MatchFirefoxThemeIfNeeded() {
   }();
 
   const bool usingSystem = GetThemeIsDark() == mSystemTheme.mIsDark;
+
+  LOGLNF("MatchFirefoxThemeIfNeeded(matchesSystem=%d, usingSystem=%d)\n",
+         matchesSystem, usingSystem);
+
   if (usingSystem == matchesSystem) {
     return false;
   }
@@ -1322,6 +1334,9 @@ bool nsLookAndFeel::MatchFirefoxThemeIfNeeded() {
   if (matchesSystem) {
     RestoreSystemTheme();
   } else {
+    LOGLNF("Setting theme %s, %d\n", mAltTheme.mName.get(),
+           mAltTheme.mPreferDarkTheme);
+
     GtkSettings* settings = gtk_settings_get_default();
     if (mSystemTheme.mName == mAltTheme.mName) {
       // Prefer setting only gtk-application-prefer-dark-theme, so we can still
@@ -1402,7 +1417,7 @@ void nsLookAndFeel::PerThemeData::Init() {
   GtkStyleContext* style;
 
   mHighContrast = StaticPrefs::widget_content_gtk_high_contrast_enabled() &&
-                  GetGtkTheme().Find("HighContrast"_ns) >= 0;
+                  mName.Find("HighContrast"_ns) >= 0;
 
   mPreferDarkTheme = GetPreferDarkTheme();
 
@@ -1737,6 +1752,17 @@ void nsLookAndFeel::PerThemeData::Init() {
 
   gtk_widget_destroy(window);
   g_object_unref(labelWidget);
+
+  if (LOGLNF_ENABLED()) {
+    LOGLNF("Initialized theme %s (%d)\n", mName.get(), mPreferDarkTheme);
+    for (auto id : MakeEnumeratedRange(ColorID::End)) {
+      nscolor color;
+      nsresult rv = GetColor(id, color);
+      LOGLNF(" * color %d: pref=%s success=%d value=%x\n", int(id),
+             GetColorPrefName(id), NS_SUCCEEDED(rv),
+             NS_SUCCEEDED(rv) ? color : 0);
+    }
+  }
 }
 
 // virtual
@@ -1800,3 +1826,4 @@ bool nsLookAndFeel::ShouldHonorThemeScrollbarColors() {
 }
 
 #undef LOGLNF
+#undef LOGLNF_ENABLED

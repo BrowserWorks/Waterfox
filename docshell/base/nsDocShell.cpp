@@ -139,6 +139,7 @@
 #include "nsIPrompt.h"
 #include "nsIPromptCollection.h"
 #include "nsIPromptFactory.h"
+#include "nsIPublicKeyPinningService.h"
 #include "nsIReflowObserver.h"
 #include "nsIScriptChannel.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -392,7 +393,6 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
 #endif
       mInitialized(false),
       mAllowSubframes(true),
-      mAllowJavascript(true),
       mAllowMetaRedirects(true),
       mAllowImages(true),
       mAllowMedia(true),
@@ -406,7 +406,6 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
       mDeviceSizeIsPageSize(false),
       mWindowDraggingAllowed(false),
       mInFrameSwap(false),
-      mCanExecuteScripts(false),
       mFiredUnloadEvent(false),
       mEODForCurrentDocument(false),
       mURIResultedInDocument(false),
@@ -1749,14 +1748,6 @@ nsDocShell::SetAllowPlugins(bool aAllowPlugins) {
 }
 
 NS_IMETHODIMP
-nsDocShell::GetAllowJavascript(bool* aAllowJavascript) {
-  NS_ENSURE_ARG_POINTER(aAllowJavascript);
-
-  *aAllowJavascript = mAllowJavascript;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsDocShell::GetCssErrorReportingEnabled(bool* aEnabled) {
   MOZ_ASSERT(aEnabled);
   *aEnabled = mCSSErrorReportingEnabled;
@@ -1766,13 +1757,6 @@ nsDocShell::GetCssErrorReportingEnabled(bool* aEnabled) {
 NS_IMETHODIMP
 nsDocShell::SetCssErrorReportingEnabled(bool aEnabled) {
   mCSSErrorReportingEnabled = aEnabled;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDocShell::SetAllowJavascript(bool aAllowJavascript) {
-  mAllowJavascript = aAllowJavascript;
-  RecomputeCanExecuteScripts();
   return NS_OK;
 }
 
@@ -2652,50 +2636,6 @@ Maybe<ClientInfo> nsDocShell::GetInitialClientInfo() const {
   return innerWindow->GetClientInfo();
 }
 
-void nsDocShell::RecomputeCanExecuteScripts() {
-  bool old = mCanExecuteScripts;
-  RefPtr<nsDocShell> parent = GetInProcessParentDocshell();
-
-  // If we have no tree owner, that means that we've been detached from the
-  // docshell tree (this is distinct from having no parent docshell, which
-  // is the case for root docshells). It would be nice to simply disallow
-  // script in detached docshells, but bug 986542 demonstrates that this
-  // behavior breaks at least one website.
-  //
-  // So instead, we use our previous value, unless mAllowJavascript has been
-  // explicitly set to false.
-  if (!mTreeOwner) {
-    mCanExecuteScripts = mCanExecuteScripts && mAllowJavascript;
-    // If scripting has been explicitly disabled on our docshell, we're done.
-  } else if (!mAllowJavascript) {
-    mCanExecuteScripts = false;
-    // If we have a parent, inherit.
-  } else if (parent) {
-    mCanExecuteScripts = parent->mCanExecuteScripts;
-    // Otherwise, we're the root of the tree, and we haven't explicitly disabled
-    // script. Allow.
-  } else {
-    mCanExecuteScripts = true;
-  }
-
-  // Inform our active DOM window.
-  //
-  // This will pass the outer, which will be in the scope of the active inner.
-  if (mScriptGlobal && mScriptGlobal->GetGlobalJSObject()) {
-    xpc::Scriptability& scriptability =
-        xpc::Scriptability::Get(mScriptGlobal->GetGlobalJSObject());
-    scriptability.SetDocShellAllowsScript(mCanExecuteScripts);
-  }
-
-  // If our value has changed, our children might be affected. Recompute their
-  // value as well.
-  if (old != mCanExecuteScripts) {
-    for (auto* child : mChildList.ForwardRange()) {
-      static_cast<nsDocShell*>(child)->RecomputeCanExecuteScripts();
-    }
-  }
-}
-
 nsresult nsDocShell::SetDocLoaderParent(nsDocLoader* aParent) {
   bool wasFrame = IsFrame();
 
@@ -2716,10 +2656,6 @@ nsresult nsDocShell::SetDocLoaderParent(nsDocLoader* aParent) {
   nsCOMPtr<nsIDocShell> parentAsDocShell(do_QueryInterface(parent));
 
   if (parentAsDocShell) {
-    if (mAllowJavascript &&
-        NS_SUCCEEDED(parentAsDocShell->GetAllowJavascript(&value))) {
-      SetAllowJavascript(value);
-    }
     if (mAllowMetaRedirects &&
         NS_SUCCEEDED(parentAsDocShell->GetAllowMetaRedirects(&value))) {
       SetAllowMetaRedirects(value);
@@ -2753,9 +2689,6 @@ nsresult nsDocShell::SetDocLoaderParent(nsDocLoader* aParent) {
   if (parentURIListener) {
     mContentListener->SetParentContentListener(parentURIListener);
   }
-
-  // Our parent has changed. Recompute scriptability.
-  RecomputeCanExecuteScripts();
 
   // Inform windows when they're being removed from their parent.
   if (!aParent) {
@@ -2980,16 +2913,6 @@ nsDocShell::SetTreeOwner(nsIDocShellTreeOwner* aTreeOwner) {
       mBrowserChild = do_GetWeakReference(newBrowserChild);
     }
   }
-
-  // Our tree owner has changed. Recompute scriptability.
-  //
-  // Note that this is near-redundant with the recomputation in
-  // SetDocLoaderParent(), but not so for the root DocShell, where the call to
-  // SetTreeOwner() happens after the initial AddDocLoaderAsChildOfRoot(),
-  // and we never set another parent. Given that this is neither expensive nor
-  // performance-critical, let's be safe and unconditionally recompute this
-  // state whenever dependent state changes.
-  RecomputeCanExecuteScripts();
 
   return NS_OK;
 }
@@ -3714,21 +3637,18 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
         nsCOMPtr<nsISiteSecurityService> sss =
             do_GetService(NS_SSSERVICE_CONTRACTID, &rv);
         NS_ENSURE_SUCCESS(rv, rv);
-        rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, aURI, flags,
-                              attrsForHSTS, nullptr, nullptr, &isStsHost);
-        NS_ENSURE_SUCCESS(rv, rv);
-        rv = sss->IsSecureURI(nsISiteSecurityService::STATIC_PINNING, aURI,
-                              flags, GetOriginAttributes(), nullptr, nullptr,
-                              &isPinnedHost);
+        rv = sss->IsSecureURI(aURI, flags, attrsForHSTS, nullptr, nullptr,
+                              &isStsHost);
         NS_ENSURE_SUCCESS(rv, rv);
       } else {
         mozilla::dom::ContentChild* cc =
             mozilla::dom::ContentChild::GetSingleton();
-        cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HSTS, aURI, flags,
-                            attrsForHSTS, &isStsHost);
-        cc->SendIsSecureURI(nsISiteSecurityService::STATIC_PINNING, aURI, flags,
-                            GetOriginAttributes(), &isPinnedHost);
+        cc->SendIsSecureURI(aURI, flags, attrsForHSTS, &isStsHost);
       }
+      nsCOMPtr<nsIPublicKeyPinningService> pkps =
+          do_GetService(NS_PKPSERVICE_CONTRACTID, &rv);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = pkps->HostHasPins(aURI, &isPinnedHost);
 
       if (Preferences::GetBool("browser.xul.error_pages.expert_bad_cert",
                                false)) {
@@ -7660,9 +7580,6 @@ nsresult nsDocShell::RestoreFromHistory() {
 
     // Make sure to not clobber the state of the child.  Since AddChild
     // always clobbers it, save it off first.
-    bool allowJavascript;
-    childShell->GetAllowJavascript(&allowJavascript);
-
     bool allowRedirects;
     childShell->GetAllowMetaRedirects(&allowRedirects);
 
@@ -7686,7 +7603,6 @@ nsresult nsDocShell::RestoreFromHistory() {
     // child inherits our mPrivateBrowsingId, which is what we want.
     AddChild(childItem);
 
-    childShell->SetAllowJavascript(allowJavascript);
     childShell->SetAllowMetaRedirects(allowRedirects);
     childShell->SetAllowSubframes(allowSubframes);
     childShell->SetAllowImages(allowImages);
@@ -13091,12 +13007,6 @@ NS_IMETHODIMP nsDocShell::ExitPrintPreview() {
 #else
   return NS_OK;
 #endif
-}
-
-NS_IMETHODIMP
-nsDocShell::GetCanExecuteScripts(bool* aResult) {
-  *aResult = mCanExecuteScripts;
-  return NS_OK;
 }
 
 /* [infallible] */

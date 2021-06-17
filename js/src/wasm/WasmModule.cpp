@@ -72,7 +72,8 @@ class Module::Tier2GeneratorTaskImpl : public Tier2GeneratorTask {
 
     // During shutdown the main thread will wait for any ongoing (cancelled)
     // tier-2 generation to shut down normally.  To do so, it waits on the
-    // CONSUMER condition for the count of finished generators to rise.
+    // HelperThreadState's condition variable for the count of finished
+    // generators to rise.
     HelperThreadState().incWasmTier2GeneratorsFinished(locked);
 
     // The task is finished, release it.
@@ -702,38 +703,35 @@ bool Module::instantiateMemory(JSContext* cx,
     return true;
   }
 
-  uint64_t declaredMin = metadata().minMemoryLength;
-  Maybe<uint64_t> declaredMax = metadata().maxMemoryLength;
-  bool declaredShared = metadata().memoryUsage == MemoryUsage::Shared;
+  MemoryDesc desc = *metadata().memory;
+  MOZ_ASSERT(desc.kind == MemoryKind::Memory32);
 
   if (memory) {
     MOZ_ASSERT_IF(metadata().isAsmJS(), memory->buffer().isPreparedForAsmJS());
     MOZ_ASSERT_IF(!metadata().isAsmJS(), memory->buffer().isWasm());
 
-    if (!CheckLimits(cx, declaredMin, declaredMax,
-                     /* defaultMax */ uint64_t(MaxMemory32Bytes()),
+    if (!CheckLimits(cx, desc.initialPages(), desc.maximumPages(),
+                     /* defaultMax */ MaxMemory32Pages(),
                      /* actualLength */
-                     uint64_t(memory->volatileMemoryLength()),
-                     memory->buffer().wasmMaxSize(), metadata().isAsmJS(),
-                     "Memory")) {
+                     memory->volatilePages(), memory->maxPages(),
+                     metadata().isAsmJS(), "Memory")) {
       return false;
     }
 
-    if (!CheckSharing(cx, declaredShared, memory->isShared())) {
+    if (!CheckSharing(cx, desc.isShared(), memory->isShared())) {
       return false;
     }
   } else {
     MOZ_ASSERT(!metadata().isAsmJS());
 
-    if (declaredMin > MaxMemory32Bytes()) {
+    if (desc.initialPages() > MaxMemory32Pages()) {
       JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
                                JSMSG_WASM_MEM_IMP_LIMIT);
       return false;
     }
 
     RootedArrayBufferObjectMaybeShared buffer(cx);
-    if (!CreateWasmBuffer32(cx, declaredMin, declaredMax, declaredShared,
-                            &buffer)) {
+    if (!CreateWasmBuffer32(cx, desc, &buffer)) {
       return false;
     }
 

@@ -17,8 +17,6 @@ import sys
 IS_NATIVE_WIN = sys.platform == "win32" and os.sep == "\\"
 IS_CYGWIN = sys.platform == "cygwin"
 
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
 
 UPGRADE_WINDOWS = """
 Please upgrade to the latest MozillaBuild development environment. See
@@ -39,27 +37,21 @@ here = os.path.abspath(os.path.dirname(__file__))
 # We can't import six.ensure_binary() or six.ensure_text() because this module
 # has to run stand-alone.  Instead we'll implement an abbreviated version of the
 # checks it does.
-if PY3:
-    text_type = str
-    binary_type = bytes
-else:
-    text_type = unicode
-    binary_type = str
 
 
 def ensure_binary(s, encoding="utf-8"):
-    if isinstance(s, text_type):
+    if isinstance(s, str):
         return s.encode(encoding, errors="strict")
-    elif isinstance(s, binary_type):
+    elif isinstance(s, bytes):
         return s
     else:
         raise TypeError("not expecting type '%s'" % type(s))
 
 
 def ensure_text(s, encoding="utf-8"):
-    if isinstance(s, binary_type):
+    if isinstance(s, bytes):
         return s.decode(encoding, errors="strict")
-    elif isinstance(s, text_type):
+    elif isinstance(s, str):
         return s
     else:
         raise TypeError("not expecting type '%s'" % type(s))
@@ -245,10 +237,7 @@ class VirtualenvManager(VirtualenvHelper):
         )
 
         for line in proc.stdout:
-            if PY2:
-                self.log_handle.write(line)
-            else:
-                self.log_handle.write(line.decode("UTF-8"))
+            self.log_handle.write(line.decode("UTF-8"))
 
         return proc.wait()
 
@@ -287,12 +276,11 @@ class VirtualenvManager(VirtualenvHelper):
         return self.virtualenv_root
 
     def packages(self):
-        mode = "rU" if PY2 else "r"
-        with open(self.manifest_path, mode) as fh:
+        with open(self.manifest_path, "r") as fh:
             packages = [line.rstrip().split(":") for line in fh]
         return packages
 
-    def populate(self, ignore_sitecustomize=False):
+    def populate(self):
         """Populate the virtualenv.
 
         The manifest file consists of colon-delimited fields. The first field
@@ -310,12 +298,6 @@ class VirtualenvManager(VirtualenvHelper):
         packages.txt -- Denotes that the specified path is a child manifest. It
             will be read and processed as if its contents were concatenated
             into the manifest being read.
-
-        windows -- This denotes that the action should only be taken when run
-            on Windows.
-
-        !windows -- This denotes that the action should only be taken when run
-            on non-Windows systems.
 
         set-variable -- Set the given environment variable; e.g.
             `set-variable FOO=1`.
@@ -344,7 +326,7 @@ class VirtualenvManager(VirtualenvHelper):
                     src,
                     populate_local_paths=self.populate_local_paths,
                 )
-                submanager.populate(ignore_sitecustomize=True)
+                submanager.populate()
             elif package[0].endswith(".pth"):
                 assert len(package) == 2
 
@@ -361,11 +343,6 @@ class VirtualenvManager(VirtualenvHelper):
                     f.write("%s\n" % os.path.relpath(path, python_lib))
             elif package[0] == "thunderbird":
                 if is_thunderbird:
-                    handle_package(package[1:])
-            elif package[0] in ("windows", "!windows"):
-                for_win = not package[0].startswith("!")
-                is_win = sys.platform == "win32"
-                if is_win == for_win:
                     handle_package(package[1:])
             else:
                 raise Exception("Unknown action: %s" % package[0])
@@ -411,19 +388,6 @@ class VirtualenvManager(VirtualenvHelper):
                 handle_package(package)
 
         finally:
-            # This hack isn't necessary for Python 3, or for the
-            # out-of-objdir virtualenvs.
-            if PY2 and self.populate_local_paths and not ignore_sitecustomize:
-                with open(
-                    os.path.join(os.path.dirname(python_lib), "sitecustomize.py"),
-                    mode="w",
-                ) as sitecustomize:
-                    sitecustomize.write(
-                        "# Importing mach_bootstrap has the side effect of\n"
-                        "# installing an import hook\n"
-                        "import mach_bootstrap\n"
-                    )
-
             os.environ.pop("MACOSX_DEPLOYMENT_TARGET", None)
 
             if old_target is not None:
@@ -530,6 +494,9 @@ class VirtualenvManager(VirtualenvHelper):
         If vendored is True, no package index will be used and no dependencies
         will be installed.
         """
+        import mozfile
+        from mozfile import TemporaryDirectory
+
         if sys.executable.startswith(self.bin_path):
             # If we're already running in this interpreter, we can optimize in
             # the case that the package requirement is already satisfied.
@@ -540,7 +507,8 @@ class VirtualenvManager(VirtualenvHelper):
             if req.satisfied_by is not None:
                 return
 
-        args = ["install", package]
+        args = ["install"]
+        vendored_dist_info_dir = None
 
         if vendored:
             args.extend(
@@ -559,8 +527,23 @@ class VirtualenvManager(VirtualenvHelper):
                     "--no-build-isolation",
                 ]
             )
+            vendored_dist_info_dir = next(
+                (d for d in os.listdir(package) if d.endswith(".dist-info")), None
+            )
 
-        return self._run_pip(args)
+        with TemporaryDirectory() as tmp:
+            if vendored_dist_info_dir:
+                # This is a vendored wheel. We have to re-pack it in order for pip
+                # to install it.
+                wheel_file = os.path.join(
+                    tmp, "{}-1.0-py3-none-any.whl".format(os.path.basename(package))
+                )
+                shutil.make_archive(wheel_file, "zip", package)
+                mozfile.move("{}.zip".format(wheel_file), wheel_file)
+                package = wheel_file
+
+            args.append(package)
+            return self._run_pip(args)
 
     def install_pip_requirements(
         self, path, require_hashes=True, quiet=False, vendored=False
@@ -658,7 +641,7 @@ class VirtualenvManager(VirtualenvHelper):
             stderr=subprocess.STDOUT,
             cwd=self.topsrcdir,
             env=env,
-            universal_newlines=PY3,
+            universal_newlines=True,
         )
 
 
@@ -708,7 +691,7 @@ def ensure_subprocess_env(env, encoding="utf-8"):
         encoding (str): Encoding to use when converting to/from bytes/text
                         (default: utf-8).
     """
-    ensure = ensure_binary if PY2 else ensure_text
+    ensure = ensure_text
 
     try:
         return {

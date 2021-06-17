@@ -1610,8 +1610,7 @@ void gfxTextRun::FetchGlyphExtents(DrawTarget* aRefDrawTarget) {
   for (uint32_t i = 0; i < runCount; ++i) {
     const GlyphRun& run = glyphRuns[i];
     gfxFont* font = run.mFont;
-    if (MOZ_UNLIKELY(font->GetStyle()->size == 0) ||
-        MOZ_UNLIKELY(font->GetStyle()->sizeAdjust == 0.0f)) {
+    if (MOZ_UNLIKELY(font->GetStyle()->AdjustedSizeMustBeZero())) {
       continue;
     }
 
@@ -2352,8 +2351,7 @@ already_AddRefed<gfxTextRun> gfxFontGroup::MakeSpaceTextRun(
   }
 
   gfxFont* font = GetFirstValidFont();
-  if (MOZ_UNLIKELY(GetStyle()->size == 0) ||
-      MOZ_UNLIKELY(GetStyle()->sizeAdjust == 0.0f)) {
+  if (MOZ_UNLIKELY(GetStyle()->AdjustedSizeMustBeZero())) {
     // Short-circuit for size-0 fonts, as Windows and ATSUI can't handle
     // them, and always create at least size 1 fonts, i.e. they still
     // render something for size 0 fonts.
@@ -2453,8 +2451,7 @@ already_AddRefed<gfxTextRun> gfxFontGroup::MakeTextRun(
 
   aFlags |= ShapedTextFlags::TEXT_IS_8BIT;
 
-  if (MOZ_UNLIKELY(GetStyle()->size == 0) ||
-      MOZ_UNLIKELY(GetStyle()->sizeAdjust == 0.0f)) {
+  if (MOZ_UNLIKELY(GetStyle()->AdjustedSizeMustBeZero())) {
     // Short-circuit for size-0 fonts, as Windows and ATSUI can't handle
     // them, and always create at least size 1 fonts, i.e. they still
     // render something for size 0 fonts.
@@ -2484,8 +2481,7 @@ already_AddRefed<gfxTextRun> gfxFontGroup::MakeTextRun(
   if (aLength == 1 && aString[0] == ' ') {
     return MakeSpaceTextRun(aParams, aFlags, aFlags2);
   }
-  if (MOZ_UNLIKELY(GetStyle()->size == 0) ||
-      MOZ_UNLIKELY(GetStyle()->sizeAdjust == 0.0f)) {
+  if (MOZ_UNLIKELY(GetStyle()->AdjustedSizeMustBeZero())) {
     return MakeBlankTextRun(aString, aLength, aParams, aFlags, aFlags2);
   }
 
@@ -2940,7 +2936,8 @@ gfxFont* gfxFontGroup::FindFallbackFaceForChar(
   // If async fallback is enabled, and the family isn't fully initialized yet,
   // just start the async cmap loading and return.
   if (!aFamily->IsFullyInitialized() &&
-      StaticPrefs::gfx_font_rendering_fallback_async()) {
+      StaticPrefs::gfx_font_rendering_fallback_async() &&
+      !XRE_IsParentProcess()) {
     pfl->StartCmapLoadingFromFamily(aFamily - list->Families());
     return nullptr;
   }

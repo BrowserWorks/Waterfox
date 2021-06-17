@@ -6,25 +6,22 @@
 #define PublicKeyPinningService_h
 
 #include "CertVerifier.h"
-#include "ScopedNSSTypes.h"
-#include "cert.h"
-#include "nsNSSCertificate.h"
+#include "nsIPublicKeyPinningService.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "mozilla/Span.h"
 #include "mozpkix/Time.h"
 
 namespace mozilla {
-class OriginAttributes;
-}
-
-using mozilla::OriginAttributes;
-
-namespace mozilla {
 namespace psm {
 
-class PublicKeyPinningService {
+class PublicKeyPinningService final : public nsIPublicKeyPinningService {
  public:
+  PublicKeyPinningService() = default;
+
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIPUBLICKEYPINNINGSERVICE
+
   /**
    * Sets chainHasValidPins to true if the given (host, certList) passes pinning
    * checks, or to false otherwise. If the host is pinned, returns true via
@@ -36,20 +33,9 @@ class PublicKeyPinningService {
    */
   static nsresult ChainHasValidPins(
       const nsTArray<Span<const uint8_t>>& certList, const char* hostname,
-      mozilla::pkix::Time time, bool enforceTestMode,
-      const OriginAttributes& originAttributes,
+      mozilla::pkix::Time time, bool isBuiltInRoot,
       /*out*/ bool& chainHasValidPins,
       /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo);
-
-  /**
-   * Returns true via the output parameter hostHasPins if there is pinning
-   * information for the given host that is valid at the given time, and false
-   * otherwise.
-   */
-  static nsresult HostHasPins(const char* hostname, mozilla::pkix::Time time,
-                              bool enforceTestMode,
-                              const OriginAttributes& originAttributes,
-                              /*out*/ bool& hostHasPins);
 
   /**
    * Given a hostname of potentially mixed case with potentially multiple
@@ -57,6 +43,9 @@ class PublicKeyPinningService {
    * trailing '.'.
    */
   static nsAutoCString CanonicalizeHostname(const char* hostname);
+
+ private:
+  ~PublicKeyPinningService() = default;
 };
 
 }  // namespace psm

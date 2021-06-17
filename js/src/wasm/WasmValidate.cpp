@@ -1845,44 +1845,30 @@ static bool DecodeGlobalType(Decoder& d, const TypeContext& types,
   return true;
 }
 
-void wasm::ConvertMemoryPagesToBytes(Limits* memory) {
-  memory->initial *= PageSize;
-
-  if (!memory->maximum) {
-    return;
-  }
-  *memory->maximum *= PageSize;
-}
-
 static bool DecodeMemoryLimits(Decoder& d, ModuleEnvironment* env) {
   if (env->usesMemory()) {
     return d.fail("already have default memory");
   }
 
-  Limits memory;
-  if (!DecodeLimits(d, &memory, Shareable::True)) {
+  Limits limits;
+  if (!DecodeLimits(d, &limits, Shareable::True)) {
     return false;
   }
 
-  if (memory.initial > MaxMemory32LimitField) {
+  if (limits.initial > MaxMemory32LimitField) {
     return d.fail("initial memory size too big");
   }
 
-  if (memory.maximum && *memory.maximum > MaxMemory32LimitField) {
+  if (limits.maximum && *limits.maximum > MaxMemory32LimitField) {
     return d.fail("maximum memory size too big");
   }
 
-  ConvertMemoryPagesToBytes(&memory);
-
-  if (memory.shared == Shareable::True &&
+  if (limits.shared == Shareable::True &&
       env->sharedMemoryEnabled() == Shareable::False) {
     return d.fail("shared memory is disabled");
   }
 
-  env->memoryUsage = memory.shared == Shareable::True ? MemoryUsage::Shared
-                                                      : MemoryUsage::Unshared;
-  env->minMemoryLength = memory.initial;
-  env->maxMemoryLength = memory.maximum;
+  env->memory = Some(MemoryDesc(MemoryKind::Memory32, limits));
   return true;
 }
 

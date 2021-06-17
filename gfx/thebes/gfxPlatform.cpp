@@ -766,7 +766,13 @@ WebRenderMemoryReporter::CollectReports(nsIHandleReportCallback* aHandleReport,
         helper.ReportTexture(aReport.gpu_cache_textures, "gpu-cache");
         helper.ReportTexture(aReport.vertex_data_textures, "vertex-data");
         helper.ReportTexture(aReport.render_target_textures, "render-targets");
-        helper.ReportTexture(aReport.texture_cache_textures, "texture-cache");
+        helper.ReportTexture(aReport.atlas_textures, "texture-cache/atlas");
+        helper.ReportTexture(aReport.standalone_textures,
+                             "texture-cache/standalone");
+        helper.ReportTexture(aReport.picture_tile_textures,
+                             "texture-cache/picture-tiles");
+        helper.ReportTexture(aReport.render_target_textures,
+                             "texture-cache/render-targets");
         helper.ReportTexture(aReport.depth_target_textures, "depth-targets");
         helper.ReportTexture(aReport.texture_upload_pbos,
                              "texture-upload-pbos");
@@ -2672,6 +2678,15 @@ void gfxPlatform::InitWebRenderConfig() {
   bool hasHardware = gfxConfig::IsEnabled(Feature::WEBRENDER);
   bool hasSoftware = gfxConfig::IsEnabled(Feature::WEBRENDER_SOFTWARE);
   bool hasWebRender = hasHardware || hasSoftware;
+
+#ifdef MOZ_WIDGET_GTK
+  // We require a hardware driver to back the GL context unless the user forced
+  // on WebRender.
+  if (!gfxConfig::IsForcedOnByUser(Feature::WEBRENDER) &&
+      StaticPrefs::gfx_webrender_reject_software_driver_AtStartup()) {
+    gfxVars::SetWebRenderRequiresHardwareDriver(true);
+  }
+#endif
 
 #ifdef XP_WIN
   if (gfxConfig::IsEnabled(Feature::WEBRENDER_ANGLE)) {

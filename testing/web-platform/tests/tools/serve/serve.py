@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
 import abc
 import argparse
 import importlib
@@ -11,7 +7,6 @@ import multiprocessing
 import os
 import platform
 import signal
-import socket
 import subprocess
 import sys
 import threading
@@ -21,10 +16,11 @@ import urllib
 import uuid
 from collections import defaultdict, OrderedDict
 from itertools import chain, product
+from typing import ClassVar, List, Set, Tuple
 
-from localpaths import repo_root
+from localpaths import repo_root  # type: ignore
 
-from manifest.sourcefile import read_script_metadata, js_meta_re, parse_variants
+from manifest.sourcefile import read_script_metadata, js_meta_re, parse_variants  # type: ignore
 from wptserve import server as wptserve, handlers
 from wptserve import stash
 from wptserve import config
@@ -61,7 +57,7 @@ class WrapperHandler(object):
 
     __meta__ = abc.ABCMeta
 
-    headers = []
+    headers = []  # type: ClassVar[List[Tuple[str, str]]]
 
     def __init__(self, base_path=None, url_base="/"):
         self.base_path = base_path
@@ -179,7 +175,7 @@ class WrapperHandler(object):
 
 
 class HtmlWrapperHandler(WrapperHandler):
-    global_type = None
+    global_type = None  # type: ClassVar[str]
     headers = [('Content-Type', 'text/html')]
 
     def check_exposure(self, request):
@@ -534,7 +530,7 @@ class ServerProc(object):
                 resource.setrlimit(resource.RLIMIT_NOFILE, (new_soft, hard))
         try:
             self.daemon = init_func(logger, host, port, paths, routes, bind_address, config, **kwargs)
-        except socket.error:
+        except OSError:
             logger.critical("Socket error on port %s" % port, file=sys.stderr)
             raise
         except Exception:
@@ -862,11 +858,11 @@ def iter_servers(servers):
             yield server
 
 
-def _make_subdomains_product(s, depth=2):
+def _make_subdomains_product(s: Set[str], depth: int = 2) -> Set[str]:
     return {u".".join(x) for x in chain(*(product(s, repeat=i) for i in range(1, depth+1)))}
 
 
-def _make_origin_policy_subdomains(limit):
+def _make_origin_policy_subdomains(limit: int) -> Set[str]:
     return {u"op%d" % x for x in range(1,limit+1)}
 
 

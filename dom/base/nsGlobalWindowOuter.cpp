@@ -1847,7 +1847,7 @@ WindowStateHolder::WindowStateHolder(nsGlobalWindowInner* aWindow)
   aWindow->Suspend();
 
   // When a global goes into the bfcache, we disable script.
-  xpc::Scriptability::Get(mInnerWindowReflector).SetDocShellAllowsScript(false);
+  xpc::Scriptability::Get(mInnerWindowReflector).SetWindowAllowsScript(false);
 }
 
 WindowStateHolder::~WindowStateHolder() {
@@ -2331,10 +2331,11 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
       mBrowsingContext->SetWindowProxy(outer);
     }
 
-    // Set scriptability based on the state of the docshell.
-    bool allow = GetDocShell()->GetCanExecuteScripts();
+    // Set scriptability based on the state of the WindowContext.
+    WindowContext* wc = mInnerWindow->GetWindowContext();
+    bool allow = wc ? wc->CanExecuteScripts() : mBrowsingContext->CanExecuteScripts();
     xpc::Scriptability::Get(GetWrapperPreserveColor())
-        .SetDocShellAllowsScript(allow);
+        .SetWindowAllowsScript(allow);
 
     if (!aState) {
       // Get the "window" property once so it will be cached on our inner.  We
@@ -5267,6 +5268,12 @@ Nullable<WindowProxyHolder> nsGlobalWindowOuter::Print(
     return nullptr;
   }
 
+  nsCOMPtr<nsIPrintSettings> ps = aPrintSettings;
+  if (!ps) {
+    printSettingsService->GetDefaultPrintSettingsForPrinting(
+        getter_AddRefs(ps));
+  }
+
   RefPtr<Document> docToPrint = mDoc;
   if (NS_WARN_IF(!docToPrint)) {
     aError.ThrowNotSupportedError("Document is gone");
@@ -5375,8 +5382,8 @@ Nullable<WindowProxyHolder> nsGlobalWindowOuter::Print(
     AutoPrintEventDispatcher dispatcher(*docToPrint);
 
     nsAutoScriptBlocker blockScripts;
-    RefPtr<Document> clone =
-        docToPrint->CreateStaticClone(cloneDocShell, cv, &hasPrintCallbacks);
+    RefPtr<Document> clone = docToPrint->CreateStaticClone(
+        cloneDocShell, cv, ps, &hasPrintCallbacks);
     if (!clone) {
       aError.ThrowNotSupportedError("Clone operation for printing failed");
       return nullptr;
@@ -5395,7 +5402,7 @@ Nullable<WindowProxyHolder> nsGlobalWindowOuter::Print(
     // wasted work (and use probably-incorrect settings). So skip it, the
     // preview UI will take care of calling PrintPreview again.
     if (aForWindowDotPrint == IsForWindowDotPrint::No) {
-      aError = webBrowserPrint->PrintPreview(aPrintSettings, aListener,
+      aError = webBrowserPrint->PrintPreview(ps, aListener,
                                              std::move(aPrintPreviewCallback));
       if (aError.Failed()) {
         return nullptr;
@@ -5403,7 +5410,7 @@ Nullable<WindowProxyHolder> nsGlobalWindowOuter::Print(
     }
   } else {
     // Historically we've eaten this error.
-    webBrowserPrint->Print(aPrintSettings, aListener);
+    webBrowserPrint->Print(ps, aListener);
   }
 
   // When using window.print() with the new UI, we usually want to block until

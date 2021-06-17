@@ -49,10 +49,10 @@ class Linter(visitor.Visitor):
 
         self.results = []
         self.identifier_re = re.compile(r"[a-z0-9-]+")
-        self.apostrophe_re = re.compile(r"\w\'\w")
+        self.apostrophe_re = re.compile(r"\w'")
         self.incorrect_apostrophe_re = re.compile(r"\w\u2018\w")
-        self.single_quote_re = re.compile(r"'.+'")
-        self.double_quote_re = re.compile(r"\"")
+        self.single_quote_re = re.compile(r"'(.+)'")
+        self.double_quote_re = re.compile(r"\".+\"")
         self.ellipsis_re = re.compile(r"\.\.\.")
 
         self.minimum_id_length = 9
@@ -101,7 +101,12 @@ class Linter(visitor.Visitor):
         pass
 
     def visit_Message(self, node):
-        # There must be at least one message between group comments.
+        # There must be at least one message or term between group comments.
+        self.state["can_have_group_comment"] = True
+        super().generic_visit(node)
+
+    def visit_Term(self, node):
+        # There must be at least one message or term between group comments.
         self.state["can_have_group_comment"] = True
         super().generic_visit(node)
 
@@ -134,7 +139,10 @@ class Linter(visitor.Visitor):
         parser = TextElementHTMLParser()
         parser.feed(node.value)
         for text in parser.extracted_text:
-            if self.apostrophe_re.search(text):
+            # To check for apostrophes, first remove pairs of straight quotes
+            # used as delimiters.
+            cleaned_str = re.sub(self.single_quote_re, "\1", node.value)
+            if self.apostrophe_re.search(cleaned_str):
                 self.add_error(
                     node,
                     "TE01",
@@ -214,9 +222,10 @@ class Linter(visitor.Visitor):
             self.add_error(
                 node,
                 "GC04",
-                "Group comments (##) must be followed by at least one message. Make sure "
-                "that a single group comment with multiple pararaphs is not separated by "
-                "whitespace, as it will be interpreted as two different comments.",
+                "Group comments (##) must be followed by at least one message "
+                "or term. Make sure that a single group comment with multiple "
+                "pararaphs is not separated by whitespace, as it will be "
+                "interpreted as two different comments.",
             )
             return
 

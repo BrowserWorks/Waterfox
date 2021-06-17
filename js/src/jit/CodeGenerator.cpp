@@ -14591,19 +14591,18 @@ void CodeGenerator::visitCheckObjCoercible(LCheckObjCoercible* ins) {
 
 void CodeGenerator::visitCheckClassHeritage(LCheckClassHeritage* ins) {
   ValueOperand heritage = ToValue(ins, LCheckClassHeritage::Heritage);
-  Register temp = ToRegister(ins->temp());
+  Register temp1 = ToRegister(ins->temp1());
+  Register temp2 = ToRegister(ins->temp2());
 
   using Fn = bool (*)(JSContext*, HandleValue);
   OutOfLineCode* ool = oolCallVM<Fn, CheckClassHeritageOperation>(
       ins, ArgList(heritage), StoreNothing());
 
   masm.branchTestNull(Assembler::Equal, heritage, ool->rejoin());
-  masm.branchTestObject(Assembler::NotEqual, heritage, ool->entry());
+  masm.fallibleUnboxObject(heritage, temp1, ool->entry());
 
-  Register object = masm.extractObject(heritage, temp);
-  masm.isConstructor(object, temp, ool->entry());
-
-  masm.branchTest32(Assembler::Zero, temp, temp, ool->entry());
+  masm.isConstructor(temp1, temp2, ool->entry());
+  masm.branchTest32(Assembler::Zero, temp2, temp2, ool->entry());
 
   masm.bind(ool->rejoin());
 }

@@ -318,6 +318,10 @@ static const char sColorPrefs[][41] = {
 static_assert(ArrayLength(sColorPrefs) == size_t(LookAndFeel::ColorID::End),
               "Should have a pref for each color value");
 
+const char* nsXPLookAndFeel::GetColorPrefName(ColorID aId) {
+  return sColorPrefs[size_t(aId)];
+}
+
 bool nsXPLookAndFeel::sInitialized = false;
 
 nsXPLookAndFeel* nsXPLookAndFeel::sInstance = nullptr;
@@ -421,7 +425,6 @@ void nsXPLookAndFeel::OnPrefChanged(const char* aPref, void* aClosure) {
 static constexpr nsLiteralCString kMediaQueryPrefs[] = {
     "browser.display.windows.native_menus"_ns,
     "browser.proton.enabled"_ns,
-    "browser.proton.modals.enabled"_ns,
     "browser.proton.places-tooltip.enabled"_ns,
     "browser.theme.toolbar-theme"_ns,
 };
@@ -1030,12 +1033,17 @@ static bool ColorIsCSSAccessible(LookAndFeel::ColorID aId) {
   return true;
 }
 
-Maybe<nscolor> LookAndFeel::GetColor(ColorID aId, const dom::Document& aDoc) {
-  const bool useStandins =
+LookAndFeel::UseStandins LookAndFeel::ShouldUseStandins(
+    const dom::Document& aDoc, ColorID aId) {
+  return UseStandins(
       ShouldUseStandinsForNativeColorForNonNativeTheme(aDoc, aId) ||
       (nsContentUtils::UseStandinsForNativeColors() &&
-       !nsContentUtils::IsChromeDoc(&aDoc) && ColorIsCSSAccessible(aId));
-  return GetColor(aId, ColorSchemeForDocument(aDoc), UseStandins(useStandins));
+       !nsContentUtils::IsChromeDoc(&aDoc) && ColorIsCSSAccessible(aId)));
+}
+
+Maybe<nscolor> LookAndFeel::GetColor(ColorID aId, const dom::Document& aDoc) {
+  return GetColor(aId, ColorSchemeForDocument(aDoc),
+                  ShouldUseStandins(aDoc, aId));
 }
 
 Maybe<nscolor> LookAndFeel::GetColor(ColorID aId, const nsIFrame* aFrame) {

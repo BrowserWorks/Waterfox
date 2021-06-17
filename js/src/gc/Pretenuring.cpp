@@ -19,6 +19,12 @@
 using namespace js;
 using namespace js::gc;
 
+// The number of nursery allocations at which to pay attention to an allocation
+// site. This must be large enough to ensure we have enough information to infer
+// the lifetime and also large enough to avoid pretenuring low volume allocation
+// sites.
+static constexpr size_t AllocSiteAttentionThreshold = 500;
+
 // The maximum number of alloc sites to create between each minor
 // collection. Stop tracking allocation after this limit is reached. This
 // prevents unbounded time traversing the list during minor GC.
@@ -55,9 +61,16 @@ static constexpr size_t HighNurserySurvivalCountBeforeRecovery = 2;
 
 AllocSite* const AllocSite::EndSentinel = reinterpret_cast<AllocSite*>(1);
 
+static bool SiteBasedPretenuringEnabled = true;
+
+JS_PUBLIC_API void JS::SetSiteBasedPretenuringEnabled(bool enable) {
+  SiteBasedPretenuringEnabled = enable;
+}
+
 bool PretenuringNursery::canCreateAllocSite() {
   MOZ_ASSERT(allocSitesCreated <= MaxAllocSitesPerMinorGC);
-  return allocSitesCreated < MaxAllocSitesPerMinorGC;
+  return SiteBasedPretenuringEnabled &&
+         allocSitesCreated < MaxAllocSitesPerMinorGC;
 }
 
 size_t PretenuringNursery::doPretenuring(GCRuntime* gc, bool validPromotionRate,
@@ -104,7 +117,7 @@ size_t PretenuringNursery::doPretenuring(GCRuntime* gc, bool validPromotionRate,
     if (site->hasScript()) {
       sitesActive++;
 
-      if (site->nurseryAllocCount > 100) {
+      if (site->nurseryAllocCount > AllocSiteAttentionThreshold) {
         promotionRate =
             double(site->nurseryTenuredCount) / double(site->nurseryAllocCount);
         hasPromotionRate = true;

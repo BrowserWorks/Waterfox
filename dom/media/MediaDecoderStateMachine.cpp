@@ -592,6 +592,16 @@ class MediaDecoderStateMachine::DecodingState
   }
 
   void HandleVideoDecoded(VideoData* aVideo, TimeStamp aDecodeStart) override {
+    const auto currentTime = mMaster->mMediaSink->IsStarted()
+                                 ? mMaster->GetClock()
+                                 : mMaster->GetMediaTime();
+    if (aVideo->GetEndTime() < currentTime) {
+      SLOG("video %" PRId64 " is too late (current=%" PRId64 ")",
+           aVideo->GetEndTime().ToMicroseconds(), currentTime.ToMicroseconds());
+      mRequestNextVideoKeyFrame = true;
+    } else {
+      mRequestNextVideoKeyFrame = false;
+    }
     mMaster->PushVideo(aVideo);
     DispatchDecodeTasksIfNeeded();
     MaybeStopPrerolling();
@@ -600,7 +610,8 @@ class MediaDecoderStateMachine::DecodingState
   void HandleAudioCanceled() override { mMaster->RequestAudioData(); }
 
   void HandleVideoCanceled() override {
-    mMaster->RequestVideoData(mMaster->GetMediaTime());
+    mMaster->RequestVideoData(mMaster->GetMediaTime(),
+                              mRequestNextVideoKeyFrame);
   }
 
   void HandleEndOfAudio() override;
@@ -621,7 +632,8 @@ class MediaDecoderStateMachine::DecodingState
   }
 
   void HandleVideoWaited(MediaData::Type aType) override {
-    mMaster->RequestVideoData(mMaster->GetMediaTime());
+    mMaster->RequestVideoData(mMaster->GetMediaTime(),
+                              mRequestNextVideoKeyFrame);
   }
 
   void HandleAudioCaptured() override {
@@ -766,6 +778,11 @@ class MediaDecoderStateMachine::DecodingState
 
   MediaEventListener mOnAudioPopped;
   MediaEventListener mOnVideoPopped;
+
+  // It will be set to true if the received decoded video frame is already late
+  // comparing to the current time. So we will want to directly request the next
+  // keyframe in order to catch up with the playback time.
+  bool mRequestNextVideoKeyFrame = false;
 };
 
 /**
@@ -2464,7 +2481,7 @@ void MediaDecoderStateMachine::DecodingState::EnsureVideoDecodeTaskQueued() {
       mMaster->IsWaitingVideoData()) {
     return;
   }
-  mMaster->RequestVideoData(mMaster->GetMediaTime());
+  mMaster->RequestVideoData(mMaster->GetMediaTime(), mRequestNextVideoKeyFrame);
 }
 
 void MediaDecoderStateMachine::DecodingState::MaybeStartBuffering() {
@@ -2878,7 +2895,18 @@ bool MediaDecoderStateMachine::HaveEnoughDecodedAudio() {
 
 bool MediaDecoderStateMachine::HaveEnoughDecodedVideo() {
   MOZ_ASSERT(OnTaskQueue());
-  return VideoQueue().GetSize() >= GetAmpleVideoFrames() * mPlaybackRate + 1;
+  // If the media has audio, then we should also consider audio decoding speed.
+  // Typically, video decoding is slower than audio decoding. In extreme
+  // situations (e.g. 4k+ video without hardware acceleration), the video
+  // decoding will be much slower than audio. In order to reduce frame drops,
+  // this check tries to keep the decoded video buffered as much as audio.
+  bool isVideoEnoughComparedWithAudio = true;
+  if (HasAudio()) {
+    isVideoEnoughComparedWithAudio =
+        VideoQueue().Duration() >= AudioQueue().Duration();
+  }
+  return VideoQueue().GetSize() >= GetAmpleVideoFrames() * mPlaybackRate + 1 &&
+         isVideoEnoughComparedWithAudio;
 }
 
 void MediaDecoderStateMachine::PushAudio(AudioData* aSample) {
@@ -3279,7 +3307,7 @@ void MediaDecoderStateMachine::RequestAudioData() {
 }
 
 void MediaDecoderStateMachine::RequestVideoData(
-    const media::TimeUnit& aCurrentTime) {
+    const media::TimeUnit& aCurrentTime, bool aRequestNextKeyFrame) {
   AUTO_PROFILER_LABEL("MediaDecoderStateMachine::RequestVideoData",
                       MEDIA_PLAYBACK);
   MOZ_ASSERT(OnTaskQueue());
@@ -3294,7 +3322,7 @@ void MediaDecoderStateMachine::RequestVideoData(
 
   TimeStamp videoDecodeStartTime = TimeStamp::Now();
   RefPtr<MediaDecoderStateMachine> self = this;
-  mReader->RequestVideoData(aCurrentTime)
+  mReader->RequestVideoData(aCurrentTime, aRequestNextKeyFrame)
       ->Then(
           OwnerThread(), __func__,
           [this, self, videoDecodeStartTime](RefPtr<VideoData> aVideo) {

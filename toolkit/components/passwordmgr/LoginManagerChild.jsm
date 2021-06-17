@@ -707,6 +707,14 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
         InsecurePasswordUtils.reportInsecurePasswords(formLike);
         break;
       }
+      case "DOMFormHasPossibleUsername": {
+        if (this.shouldIgnoreLoginManagerEvent(event)) {
+          break;
+        }
+
+        this.onDOMFormHasPossibleUsername(event);
+        break;
+      }
       case "DOMFormRemoved":
       case "DOMInputPasswordRemoved": {
         if (this.shouldIgnoreLoginManagerEvent(event)) {
@@ -961,6 +969,7 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
       "isMasterPasswordSet:",
       isMasterPasswordSet
     );
+
     if (document.visibilityState == "visible" || isMasterPasswordSet) {
       this._processDOMFormHasPasswordEvent(event);
     } else {
@@ -976,6 +985,63 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
     let formLike = LoginFormFactory.createFromForm(form);
     log("_processDOMFormHasPasswordEvent:", form, formLike);
     this._fetchLoginsFromParentAndFillForm(formLike);
+  }
+
+  onDOMFormHasPossibleUsername(event) {
+    if (!event.isTrusted) {
+      return;
+    }
+    let isMasterPasswordSet = Services.cpmm.sharedData.get(
+      "isMasterPasswordSet"
+    );
+    let document = event.target.ownerDocument;
+
+    log(
+      "onDOMFormHasPossibleUsername, visibilityState:",
+      document.visibilityState,
+      "isMasterPasswordSet:",
+      isMasterPasswordSet
+    );
+
+    // For simplicity, the result of the telemetry is stacked. This means if a
+    // document receives two `DOMFormHasPossibleEvent`, we add one counter to both
+    // bucket 1 & 2.
+    let docState = this.stateForDocument(document);
+    Services.telemetry
+      .getHistogramById("PWMGR_NUM_FORM_HAS_POSSIBLE_USERNAME_EVENT_PER_DOC")
+      .add(++docState.numFormHasPossibleUsernameEvent);
+
+    if (document.visibilityState == "visible" || isMasterPasswordSet) {
+      this._processDOMFormHasPossibleUsernameEvent(event);
+    } else {
+      // wait until the document becomes visible before handling this event
+      this._deferHandlingEventUntilDocumentVisible(event, document, () => {
+        this._processDOMFormHasPossibleUsernameEvent(event);
+      });
+    }
+  }
+
+  _processDOMFormHasPossibleUsernameEvent(event) {
+    let form = event.target;
+    let formLike = LoginFormFactory.createFromForm(form);
+    log("_processDOMFormHasPossibleUsernameEvent:", form, formLike);
+
+    // If the form contains a passoword field, `getUsernameFieldFromUsernameOnlyForm` returns
+    // null, so we don't trigger autofill for those forms here. In this function,
+    // we only care about username-only forms. For forms contain a password, they'll be handled
+    // in onDOMFormHasPassword.
+    let usernameField = this.getUsernameFieldFromUsernameOnlyForm(form);
+    if (usernameField) {
+      // Autofill the username-only form.
+      log(
+        "_processDOMFormHasPossibleUsernameEvent: A username-only form is found"
+      );
+      this._fetchLoginsFromParentAndFillForm(formLike);
+    }
+
+    Services.telemetry
+      .getHistogramById("PWMGR_IS_USERNAME_ONLY_FORM")
+      .add(!!usernameField);
   }
 
   onDOMInputPasswordAdded(event, window) {
@@ -1158,10 +1224,21 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
         formlessModifiedPasswordFields: new WeakFieldSet(),
 
         /**
-         * Caches the results of the username heuristic
+         * Caches the results of the username heuristics
          */
         cachedIsInferredUsernameField: new WeakMap(),
         cachedIsInferredEmailField: new WeakMap(),
+        cachedIsInferredLoginForm: new WeakMap(),
+
+        /**
+         * Records the mock username field when its associated form is submitted.
+         */
+        mockUsernameOnlyField: null,
+
+        /**
+         * Records the number of possible username event received for this document.
+         */
+        numFormHasPossibleUsernameEvent: 0,
       };
       this._loginFormStateByDocument.set(document, loginFormState);
     }
@@ -1349,33 +1426,40 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
       usernameField,
       newPasswordField: passwordField,
     } = this._getFormFields(acForm, false, recipes);
-    if (usernameField == acInputField && passwordField) {
-      this._getLoginDataFromParent(acForm, {
-        guid: loginGUID,
-        showMasterPassword: false,
-      })
-        .then(({ form, loginsFound, recipes }) => {
-          if (!loginGUID) {
-            // not an explicit autocomplete menu selection, filter for exact matches only
-            loginsFound = this._filterForExactFormOriginLogins(
-              loginsFound,
-              acForm
-            );
-            // filter the list for exact matches with the username
-            // NOTE: this could be an empty string which is a valid username
-            let searchString = usernameField.value.toLowerCase();
-            loginsFound = loginsFound.filter(
-              l => l.username.toLowerCase() == searchString
-            );
-          }
-
-          this._fillForm(form, loginsFound, recipes, {
-            autofillForm: true,
-            clobberPassword: true,
-            userTriggered: true,
-          });
+    if (usernameField == acInputField) {
+      // Fill the form when a password field is present.
+      if (passwordField) {
+        this._getLoginDataFromParent(acForm, {
+          guid: loginGUID,
+          showMasterPassword: false,
         })
-        .catch(Cu.reportError);
+          .then(({ form, loginsFound, recipes }) => {
+            if (!loginGUID) {
+              // not an explicit autocomplete menu selection, filter for exact matches only
+              loginsFound = this._filterForExactFormOriginLogins(
+                loginsFound,
+                acForm
+              );
+              // filter the list for exact matches with the username
+              // NOTE: this could be an empty string which is a valid username
+              let searchString = usernameField.value.toLowerCase();
+              loginsFound = loginsFound.filter(
+                l => l.username.toLowerCase() == searchString
+              );
+            }
+
+            this._fillForm(form, loginsFound, recipes, {
+              autofillForm: true,
+              clobberPassword: true,
+              userTriggered: true,
+            });
+          })
+          .catch(Cu.reportError);
+        // Use `loginGUID !== null` to distinguish whether this is called when the
+        // field is filled or tabbed away from. For the latter, don't highlight the field.
+      } else if (loginGUID !== null) {
+        this._highlightFilledField(usernameField);
+      }
     } else {
       // Ignore the event, it's for some input we don't care about.
     }
@@ -1481,7 +1565,7 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
    * @return {Object} {usernameField, newPasswordField, oldPasswordField, confirmPasswordField}
    *
    * usernameField may be null.
-   * newPasswordField will always be non-null.
+   * newPasswordField may be null. If null, this is a username-only form.
    * oldPasswordField may be null. If null, newPasswordField is just
    * "theLoginField". If not null, the form is apparently a
    * change-password field, with oldPasswordField containing the password
@@ -1546,8 +1630,35 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
       });
     }
 
+    // Check whether this is a username-only form when the form doesn't have
+    // a password field. Note that recipes are not supported in username-only
+    // forms currently (Bug 1708455).
     if (!pwFields) {
-      return emptyResult;
+      if (!LoginHelper.usernameOnlyFormEnabled) {
+        return emptyResult;
+      }
+
+      usernameField = this.getUsernameFieldFromUsernameOnlyForm(
+        form.rootElement
+      );
+      if (usernameField) {
+        let acFieldName = usernameField.getAutocompleteInfo().fieldName;
+        log(
+          "Username field ",
+          usernameField,
+          "has name/value/autocomplete:",
+          usernameField.name,
+          "/",
+          usernameField.value,
+          "/",
+          acFieldName
+        );
+      }
+
+      return {
+        ...emptyResult,
+        usernameField,
+      };
     }
 
     if (!usernameField) {
@@ -1582,7 +1693,7 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
           usernameField = element;
         }
 
-        if (this.isProbablyAnUsernameField(element)) {
+        if (this.isProbablyAUsernameField(element)) {
           // An username field is found, we are done.
           usernameField = element;
           break;
@@ -1800,6 +1911,23 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
   _onFormSubmit(form, reason) {
     log("_onFormSubmit", form);
 
+    // If the form is in a username-only form, record the username field before
+    // it is removed.
+    let usernameField = this.getUsernameFieldFromUsernameOnlyForm(
+      form.rootElement
+    );
+    if (usernameField) {
+      log(
+        "_onFormSubmit: username-only form. Record the username field but not sending prompt"
+      );
+      let docState = this.stateForDocument(form.ownerDocument);
+      docState.mockUsernameOnlyField = {
+        name: usernameField.name,
+        value: usernameField.value,
+      };
+      return;
+    }
+
     this._maybeSendFormInteractionMessage(
       form,
       "PasswordManager:onFormSubmit",
@@ -1900,6 +2028,18 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
         return;
       }
 
+      let docState = this.stateForDocument(doc);
+      // When the username field is empty, check whether we have found it previously from
+      // a username-only form, if yes, fill in its value.
+      // XXX This is not ideal, we only use the previous saved username field when the current
+      // form doesn't have one. This means if there is a username field found in the current
+      // form, we don't compare it to the saved one, which might be a better choice in some cases.
+      // The reason we are not doing it now is because we haven't found a real world example.
+      if (!usernameField) {
+        if (docState.mockUsernameOnlyField) {
+          usernameField = docState.mockUsernameOnlyField;
+        }
+      }
       if (usernameField && usernameField.value.match(/\.{3,}|\*{3,}|•{3,}/)) {
         log(
           `usernameField.value "${usernameField.value}" looks munged, setting to null`
@@ -1950,7 +2090,6 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
         dismissedPrompt = true;
       }
 
-      let docState = this.stateForDocument(doc);
       let fieldsModified = this._formHasModifiedFields(form);
       if (!fieldsModified && LoginHelper.userInputRequiredToCapture) {
         if (targetField) {
@@ -2354,6 +2493,7 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
       PASSWORD_AUTOCOMPLETE_NEW_PASSWORD: 11,
       TYPE_NO_LONGER_PASSWORD: 12,
       FORM_IN_CROSSORIGIN_SUBFRAME: 13,
+      FILLED_USERNAME_ONLY_FORM: 14,
     };
 
     // Heuristically determine what the user/pass fields are
@@ -2396,15 +2536,15 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
         }
       }
 
-      // Need a valid password field to do anything.
-      if (passwordField == null) {
-        log("not filling form, no password field found");
+      // Need a valid password or username field to do anything.
+      if (passwordField == null && usernameField == null) {
+        log("not filling form, no password and username field found");
         autofillResult = AUTOFILL_RESULT.NO_PASSWORD_FIELD;
         return;
       }
 
       // If the password field is disabled or read-only, there's nothing to do.
-      if (passwordField.disabled || passwordField.readOnly) {
+      if (passwordField?.disabled || passwordField?.readOnly) {
         log("not filling form, password field disabled or read-only");
         autofillResult = AUTOFILL_RESULT.PASSWORD_DISABLED_READONLY;
         return;
@@ -2422,7 +2562,7 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
 
       if (
         !userTriggered &&
-        !passwordField.ownerGlobal.windowGlobalChild.sameOriginWithTop
+        !form.rootElement.ownerGlobal.windowGlobalChild.sameOriginWithTop
       ) {
         log("not filling form; it is in a cross-origin subframe");
         autofillResult = AUTOFILL_RESULT.FORM_IN_CROSSORIGIN_SUBFRAME;
@@ -2463,10 +2603,10 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
       let maxPasswordLen = Number.MAX_VALUE;
 
       // If attribute wasn't set, default is -1.
-      if (usernameField && usernameField.maxLength >= 0) {
+      if (usernameField?.maxLength >= 0) {
         maxUsernameLen = usernameField.maxLength;
       }
-      if (passwordField.maxLength >= 0) {
+      if (passwordField?.maxLength >= 0) {
         maxPasswordLen = passwordField.maxLength;
       }
 
@@ -2487,31 +2627,34 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
         return;
       }
 
-      if (!userTriggered && passwordField.type != "password") {
-        // We don't want to autofill (without user interaction) into a field
-        // that's unmasked.
-        log("not autofilling, password field isn't currently type=password");
-        autofillResult = AUTOFILL_RESULT.TYPE_NO_LONGER_PASSWORD;
-        return;
-      }
+      const passwordACFieldName = passwordField?.getAutocompleteInfo()
+        .fieldName;
 
-      const passwordACFieldName = passwordField.getAutocompleteInfo().fieldName;
+      if (passwordField) {
+        if (!userTriggered && passwordField.type != "password") {
+          // We don't want to autofill (without user interaction) into a field
+          // that's unmasked.
+          log("not autofilling, password field isn't currently type=password");
+          autofillResult = AUTOFILL_RESULT.TYPE_NO_LONGER_PASSWORD;
+          return;
+        }
 
-      // If the password field has the autocomplete value of "new-password"
-      // and we're autofilling without user interaction, there's nothing to do.
-      if (!userTriggered && passwordACFieldName == "new-password") {
-        log(
-          "not filling form, password field has the autocomplete new-password value"
-        );
-        autofillResult = AUTOFILL_RESULT.PASSWORD_AUTOCOMPLETE_NEW_PASSWORD;
-        return;
-      }
+        // If the password field has the autocomplete value of "new-password"
+        // and we're autofilling without user interaction, there's nothing to do.
+        if (!userTriggered && passwordACFieldName == "new-password") {
+          log(
+            "not filling form, password field has the autocomplete new-password value"
+          );
+          autofillResult = AUTOFILL_RESULT.PASSWORD_AUTOCOMPLETE_NEW_PASSWORD;
+          return;
+        }
 
-      // Don't clobber an existing password.
-      if (passwordField.value && !clobberPassword) {
-        log("form not filled, the password field was already filled");
-        autofillResult = AUTOFILL_RESULT.EXISTING_PASSWORD;
-        return;
+        // Don't clobber an existing password.
+        if (passwordField.value && !clobberPassword) {
+          log("form not filled, the password field was already filled");
+          autofillResult = AUTOFILL_RESULT.EXISTING_PASSWORD;
+          return;
+        }
       }
 
       // Select a login to use for filling in the form.
@@ -2604,7 +2747,9 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
             ? Cu.getWeakReference(usernameField)
             : null,
           password: selectedLogin.password,
-          passwordField: Cu.getWeakReference(passwordField),
+          passwordField: passwordField
+            ? Cu.getWeakReference(passwordField)
+            : null,
         };
         // Ensure the state is updated before setUserInput is called.
         log(
@@ -2641,22 +2786,28 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
         }
       }
 
-      if (passwordField.value != selectedLogin.password) {
-        // Ensure the field gets re-masked in case a generated password was
-        // filled into it previously.
-        this._stopTreatingAsGeneratedPasswordField(passwordField);
+      if (passwordField) {
+        if (passwordField.value != selectedLogin.password) {
+          // Ensure the field gets re-masked in case a generated password was
+          // filled into it previously.
+          this._stopTreatingAsGeneratedPasswordField(passwordField);
 
-        passwordField.setUserInput(selectedLogin.password);
+          passwordField.setUserInput(selectedLogin.password);
+        }
+
+        this._highlightFilledField(passwordField);
       }
-
-      this._highlightFilledField(passwordField);
 
       if (style && style === "generatedPassword") {
         this._filledWithGeneratedPassword(passwordField);
       }
 
       log("_fillForm succeeded");
-      autofillResult = AUTOFILL_RESULT.FILLED;
+      if (passwordField) {
+        autofillResult = AUTOFILL_RESULT.FILLED;
+      } else if (usernameField) {
+        autofillResult = AUTOFILL_RESULT.FILLED_USERNAME_ONLY_FORM;
+      }
     } catch (ex) {
       Cu.reportError(ex);
       throw ex;
@@ -2676,7 +2827,10 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
           let focusedElement = gFormFillService.focusedInput;
           if (
             usernameField == focusedElement &&
-            autofillResult !== AUTOFILL_RESULT.FILLED
+            ![
+              AUTOFILL_RESULT.FILLED,
+              AUTOFILL_STATE.FILLED_USERNAME_ONLY_FORM,
+            ].includes(autofillResult)
           ) {
             log(
               "_fillForm: Opening username autocomplete popup since the form wasn't autofilled"
@@ -2766,18 +2920,16 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
     }
 
     // Unpack the weak references.
-    let autoFilledUsernameField = filledLogin.usernameField
-      ? filledLogin.usernameField.get()
-      : null;
-    let autoFilledPasswordField = filledLogin.passwordField.get();
+    let autoFilledUsernameField = filledLogin.usernameField?.get();
+    let autoFilledPasswordField = filledLogin.passwordField?.get();
 
     // Check username and password values match what was filled.
     if (
       !autoFilledUsernameField ||
       autoFilledUsernameField != aUsernameField ||
       autoFilledUsernameField.value != filledLogin.username ||
-      !autoFilledPasswordField ||
-      autoFilledPasswordField.value != filledLogin.password
+      (autoFilledPasswordField &&
+        autoFilledPasswordField.value != filledLogin.password)
     ) {
       return false;
     }
@@ -2864,7 +3016,10 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
       aField
     );
     if (indexOfFieldInUsernameAndPasswordFields == -1) {
-      fieldNameHint = hasBeenTypePassword ? "current-password" : "username";
+      // For fields in the form that are neither username nor password,
+      // set fieldNameHint to "other". Right now, in contextmenu, we treat both
+      // "username" and "other" field as username fields.
+      fieldNameHint = hasBeenTypePassword ? "current-password" : "other";
     } else {
       fieldNameHint =
         LOGIN_FIELD_ORDER[indexOfFieldInUsernameAndPasswordFields];
@@ -2887,6 +3042,65 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
   }
 
   /**
+   * Returns the username field of the passed form if the form is a
+   * username-only form.
+   * A form is considered a username-only form only if it meets all the
+   * following conditions:
+   * 1. Does not have any password field,
+   * 2. Only contains one input field whose type is username compatible.
+   * 3. The username compatible input field looks like a username field
+   *    or the form itself looks like a sign-in or sign-up form.
+   *
+   * @param {Element} formElement
+   *                  the form to check.
+   * @returns {Element} The username field or null (if the form is not a
+   *                    username-only form).
+   */
+  getUsernameFieldFromUsernameOnlyForm(formElement) {
+    if (ChromeUtils.getClassName(formElement) !== "HTMLFormElement") {
+      return null;
+    }
+
+    let candidate = null;
+    for (let element of formElement.elements) {
+      // Only care input fields in the form.
+      if (ChromeUtils.getClassName(element) !== "HTMLInputElement") {
+        continue;
+      }
+
+      // We are looking for a username-only form, so if there is a password
+      // field in the form, this is NOT a username-only form.
+      if (element.hasBeenTypePassword) {
+        return null;
+      }
+
+      // Ignore input fields whose type are not username compatiable, ex, hidden.
+      if (!LoginHelper.isUsernameFieldType(element)) {
+        continue;
+      }
+
+      // If there are more than two input fields whose type is username
+      // compatiable, this is NOT a username-only form.
+      if (candidate) {
+        return null;
+      }
+      candidate = element;
+    }
+
+    // Check whether the input field looks like a username field or the
+    // form looks like a sign-in or sign-up form.
+    if (
+      candidate &&
+      (this.isProbablyAUsernameField(candidate) ||
+        this.isProbablyALoginForm(formElement))
+    ) {
+      return candidate;
+    }
+
+    return null;
+  }
+
+  /**
    * Returns true if the input field is considered a username field by
    * 'LoginHelper.isInferredUsernameField'. The main purpose of this method
    * is to cache the result because _getFormFields has many call sites and we
@@ -2895,7 +3109,7 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
    * @param {Element} element the field to check.
    * @returns {boolean} True if the element is likely a username field
    */
-  isProbablyAnUsernameField(inputElement) {
+  isProbablyAUsernameField(inputElement) {
     let docState = this.stateForDocument(inputElement.ownerDocument);
     let result = docState.cachedIsInferredUsernameField.get(inputElement);
     if (result === undefined) {
@@ -2919,6 +3133,24 @@ this.LoginManagerChild = class LoginManagerChild extends JSWindowActorChild {
     if (result === undefined) {
       result = LoginHelper.isInferredEmailField(inputElement);
       docState.cachedIsInferredEmailField.set(inputElement, result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns true if the form is considered a login form by
+   * 'LoginHelper.isInferredLoginForm'.
+   *
+   * @param {Element} element the form to check.
+   * @returns {boolean} True if the element is likely a login form
+   */
+  isProbablyALoginForm(formElement) {
+    let docState = this.stateForDocument(formElement.ownerDocument);
+    let result = docState.cachedIsInferredLoginForm.get(formElement);
+    if (result === undefined) {
+      result = LoginHelper.isInferredLoginForm(formElement);
+      docState.cachedIsInferredLoginForm.set(formElement, result);
     }
 
     return result;

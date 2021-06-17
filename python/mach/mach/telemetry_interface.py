@@ -5,7 +5,7 @@
 from __future__ import print_function, absolute_import
 
 import sys
-from mock import Mock
+from unittest.mock import Mock
 
 
 class NoopTelemetry(object):

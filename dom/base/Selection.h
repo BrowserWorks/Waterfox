@@ -191,7 +191,7 @@ class Selection final : public nsSupportsWeakReference,
 
  public:
   nsresult RemoveCollapsedRanges();
-  nsresult Clear(nsPresContext* aPresContext);
+  void Clear(nsPresContext* aPresContext);
   MOZ_CAN_RUN_SCRIPT nsresult CollapseInLimiter(nsINode* aContainer,
                                                 int32_t aOffset) {
     if (!aContainer) {
@@ -559,6 +559,10 @@ class Selection final : public nsSupportsWeakReference,
     SetStartAndEndInLimiter(RawRangeBoundary(&aStartContainer, aStartOffset),
                             RawRangeBoundary(&aEndContainer, aEndOffset), aRv);
   }
+  MOZ_CAN_RUN_SCRIPT
+  Result<Ok, nsresult> SetStartAndEndInLimiter(
+      nsINode& aStartContainer, uint32_t aStartOffset, nsINode& aEndContainer,
+      uint32_t aEndOffset, nsDirection aDirection, int16_t aReason);
 
   /**
    * SetBaseAndExtent() is alternative of the JS API for internal use.
@@ -696,8 +700,8 @@ class Selection final : public nsSupportsWeakReference,
 
   SelectionCustomColors* GetCustomColors() const { return mCustomColors.get(); }
 
-  MOZ_CAN_RUN_SCRIPT nsresult NotifySelectionListeners(bool aCalledByJS);
-  MOZ_CAN_RUN_SCRIPT nsresult NotifySelectionListeners();
+  MOZ_CAN_RUN_SCRIPT void NotifySelectionListeners(bool aCalledByJS);
+  MOZ_CAN_RUN_SCRIPT void NotifySelectionListeners();
 
   friend struct AutoUserInitiated;
   struct MOZ_RAII AutoUserInitiated {

@@ -799,11 +799,8 @@ fn static_assert() {
     ${impl_simple_type_with_conversion("masonry_auto_flow", "mMasonryAutoFlow")}
 </%self:impl_trait>
 
-<% skip_outline_longhands = " ".join("outline-style outline-width".split() +
-                                     ["-moz-outline-radius-{0}".format(x.replace("_", ""))
-                                      for x in CORNERS]) %>
 <%self:impl_trait style_struct_name="Outline"
-                  skip_longhands="${skip_outline_longhands}">
+                  skip_longhands="outline-style outline-width">
 
     pub fn set_outline_style(&mut self, v: longhands::outline_style::computed_value::T) {
         self.gecko.mOutlineStyle = v;
@@ -830,12 +827,6 @@ fn static_assert() {
     <% impl_non_negative_length("outline_width", "mActualOutlineWidth",
                                 inherit_from="mOutlineWidth",
                                 round_to_pixels=True) %>
-
-    % for corner in CORNERS:
-    <% impl_corner_style_coord("_moz_outline_radius_%s" % corner.replace("_", ""),
-                               "mOutlineRadius",
-                               corner) %>
-    % endfor
 
     pub fn outline_has_nonzero_width(&self) -> bool {
         self.gecko.mActualOutlineWidth != 0
@@ -1008,26 +999,7 @@ fn static_assert() {
 
     ${impl_simple("font_variant_alternates", "mFont.variantAlternates")}
 
-    pub fn set_font_size_adjust(&mut self, v: longhands::font_size_adjust::computed_value::T) {
-        use crate::properties::longhands::font_size_adjust::computed_value::T;
-        match v {
-            T::None => self.gecko.mFont.sizeAdjust = -1.0 as f32,
-            T::Number(n) => self.gecko.mFont.sizeAdjust = n,
-        }
-    }
-
-    pub fn copy_font_size_adjust_from(&mut self, other: &Self) {
-        self.gecko.mFont.sizeAdjust = other.gecko.mFont.sizeAdjust;
-    }
-
-    pub fn reset_font_size_adjust(&mut self, other: &Self) {
-        self.copy_font_size_adjust_from(other)
-    }
-
-    pub fn clone_font_size_adjust(&self) -> longhands::font_size_adjust::computed_value::T {
-        use crate::properties::longhands::font_size_adjust::computed_value::T;
-        T::from_gecko_adjust(self.gecko.mFont.sizeAdjust)
-    }
+    ${impl_simple("font_size_adjust", "mFont.sizeAdjust")}
 
     #[allow(non_snake_case)]
     pub fn set__x_lang(&mut self, v: longhands::_x_lang::computed_value::T) {

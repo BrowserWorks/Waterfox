@@ -38,6 +38,7 @@
 #include "nsIFormControl.h"
 #include "nsIScrollableFrame.h"
 #include "nsISHistory.h"
+#include "nsIXULRuntime.h"
 #include "nsPresContext.h"
 #include "nsPrintfCString.h"
 
@@ -222,7 +223,6 @@ void SessionStoreUtils::CollectDocShellCapabilities(const GlobalObject& aGlobal,
 void SessionStoreUtils::RestoreDocShellCapabilities(
     nsIDocShell* aDocShell, const nsCString& aDisallowCapabilities) {
   aDocShell->SetAllowPlugins(true);
-  aDocShell->SetAllowJavascript(true);
   aDocShell->SetAllowMetaRedirects(true);
   aDocShell->SetAllowSubframes(true);
   aDocShell->SetAllowImages(true);
@@ -232,12 +232,13 @@ void SessionStoreUtils::RestoreDocShellCapabilities(
   aDocShell->SetAllowContentRetargeting(true);
   aDocShell->SetAllowContentRetargetingOnChildren(true);
 
+  bool allowJavascript = true;
   for (const nsACString& token :
        nsCCharSeparatedTokenizer(aDisallowCapabilities, ',').ToRange()) {
     if (token.EqualsLiteral("Plugins")) {
       aDocShell->SetAllowPlugins(false);
     } else if (token.EqualsLiteral("Javascript")) {
-      aDocShell->SetAllowJavascript(false);
+      allowJavascript = false;
     } else if (token.EqualsLiteral("MetaRedirects")) {
       aDocShell->SetAllowMetaRedirects(false);
     } else if (token.EqualsLiteral("Subframes")) {
@@ -260,6 +261,12 @@ void SessionStoreUtils::RestoreDocShellCapabilities(
     } else if (token.EqualsLiteral("ContentRetargetingOnChildren")) {
       aDocShell->SetAllowContentRetargetingOnChildren(false);
     }
+  }
+
+  if (!mozilla::SessionHistoryInParent()) {
+    // With SessionHistoryInParent, this is set from the parent process.
+    BrowsingContext* bc = aDocShell->GetBrowsingContext();
+    Unused << bc->SetAllowJavascript(allowJavascript);
   }
 }
 
@@ -1463,15 +1470,19 @@ already_AddRefed<Promise> SessionStoreUtils::RestoreDocShellState(
       }
     }
 
+    bool allowJavascript = true;
+    for (const nsACString& token :
+         nsCCharSeparatedTokenizer(aDocShellCaps, ',').ToRange()) {
+      if (token.EqualsLiteral("Javascript")) {
+        allowJavascript = false;
+      }
+    }
+
+    Unused << aContext.SetAllowJavascript(allowJavascript);
+
     DocShellRestoreState state = {uri, aDocShellCaps};
 
-    // We can't know at this point if the associated browser element will
-    // go through a remoteness change to load |aURL|, so forcing a round trip
-    // here even for non-remote documents gives SessionStore a chance to first
-    // flip the browser's remoteness, and then call this again. Note that this
-    // is only actually required as long as we're still doing an explicit
-    // remoteness flip during the session restore process, which will be removed
-    // in bug 1709136.
+    // TODO (anny): Investigate removing this roundtrip.
     wgp->SendRestoreDocShellState(state)->Then(
         GetMainThreadSerialEventTarget(), __func__,
         [promise](void) { promise->MaybeResolveWithUndefined(); },

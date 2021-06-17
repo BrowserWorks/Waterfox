@@ -3810,7 +3810,7 @@ static bool CloneIsLegal(ContentParent* aCp, CanonicalBrowsingContext& aSource,
 
 mozilla::ipc::IPCResult ContentParent::RecvCloneDocumentTreeInto(
     const MaybeDiscarded<BrowsingContext>& aSource,
-    const MaybeDiscarded<BrowsingContext>& aTarget) {
+    const MaybeDiscarded<BrowsingContext>& aTarget, PrintData&& aPrintData) {
   if (aSource.IsNullOrDiscarded() || aTarget.IsNullOrDiscarded()) {
     return IPC_OK();
   }
@@ -3845,14 +3845,31 @@ mozilla::ipc::IPCResult ContentParent::RecvCloneDocumentTreeInto(
   target->ChangeRemoteness(options, /* aPendingSwitchId = */ 0)
       ->Then(
           GetMainThreadSerialEventTarget(), __func__,
-          [source = RefPtr{source}](BrowserParent* aBp) {
-            Unused << aBp->SendCloneDocumentTreeIntoSelf(source);
+          [source = RefPtr{source},
+           data = std::move(aPrintData)](BrowserParent* aBp) {
+            Unused << aBp->SendCloneDocumentTreeIntoSelf(source, data);
           },
           [](nsresult aRv) {
             NS_WARNING(
                 nsPrintfCString("Remote clone failed: %x\n", unsigned(aRv))
                     .get());
           });
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvUpdateRemotePrintSettings(
+    const MaybeDiscarded<BrowsingContext>& aTarget, PrintData&& aPrintData) {
+  if (aTarget.IsNullOrDiscarded()) {
+    return IPC_OK();
+  }
+
+  auto* target = aTarget.get_canonical();
+  auto* bp = target->GetBrowserParent();
+  if (NS_WARN_IF(!bp)) {
+    return IPC_OK();
+  }
+
+  Unused << bp->SendUpdateRemotePrintSettings(std::move(aPrintData));
   return IPC_OK();
 }
 
@@ -4399,7 +4416,7 @@ mozilla::ipc::IPCResult ContentParent::RecvSetURITitle(nsIURI* uri,
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvIsSecureURI(
-    const uint32_t& aType, nsIURI* aURI, const uint32_t& aFlags,
+    nsIURI* aURI, const uint32_t& aFlags,
     const OriginAttributes& aOriginAttributes, bool* aIsSecureURI) {
   nsCOMPtr<nsISiteSecurityService> sss(do_GetService(NS_SSSERVICE_CONTRACTID));
   if (!sss) {
@@ -4408,8 +4425,8 @@ mozilla::ipc::IPCResult ContentParent::RecvIsSecureURI(
   if (!aURI) {
     return IPC_FAIL_NO_REASON(this);
   }
-  nsresult rv = sss->IsSecureURI(aType, aURI, aFlags, aOriginAttributes,
-                                 nullptr, nullptr, aIsSecureURI);
+  nsresult rv = sss->IsSecureURI(aURI, aFlags, aOriginAttributes, nullptr,
+                                 nullptr, aIsSecureURI);
   if (NS_FAILED(rv)) {
     return IPC_FAIL_NO_REASON(this);
   }
@@ -7240,12 +7257,12 @@ mozilla::ipc::IPCResult ContentParent::RecvHistoryGo(
 mozilla::ipc::IPCResult ContentParent::RecvSynchronizeLayoutHistoryState(
     const MaybeDiscarded<BrowsingContext>& aContext,
     nsILayoutHistoryState* aState) {
-  if (aContext.IsNullOrDiscarded()) {
+  if (aContext.IsNull()) {
     return IPC_OK();
   }
 
   SessionHistoryEntry* entry =
-      aContext.get_canonical()->GetActiveSessionHistoryEntry();
+      aContext.GetMaybeDiscarded()->Canonical()->GetActiveSessionHistoryEntry();
   if (entry) {
     entry->SetLayoutHistoryState(aState);
   }

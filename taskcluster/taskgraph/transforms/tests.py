@@ -184,6 +184,19 @@ def fission_filter(task):
 
 
 TEST_VARIANTS = {
+    "noqr": {
+        "description": "{description} with no webrender or software webrender",
+        "suffix": "noqr",
+        "merge": {
+            "webrender": False,
+            "mozharness": {
+                "extra-options": [
+                    "--setpref=gfx.webrender.software=false",
+                    "--setpref=layers.acceleration.disabled=true",
+                ],
+            },
+        },
+    },
     "a11y-checks": {
         "description": "{description} with accessibility checks enabled",
         "suffix": "a11y-checks",
@@ -242,7 +255,6 @@ TEST_VARIANTS = {
             "mozharness": {
                 "extra-options": [
                     "--setpref=fission.autostart=true",
-                    "--setpref=dom.serviceWorkers.parent_intercept=true",
                 ],
             },
         },
@@ -258,7 +270,6 @@ TEST_VARIANTS = {
             "mozharness": {
                 "extra-options": [
                     "--setpref=fission.autostart=true",
-                    "--setpref=dom.serviceWorkers.parent_intercept=true",
                     "--enable-xorigin-tests",
                 ],
             },

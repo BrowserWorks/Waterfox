@@ -161,6 +161,8 @@ int16_t gBadPortList[] = {
     587,    // smtp (outgoing)
     601,    // syslog-conn
     636,    // ldap+ssl
+    989,    // ftps-data
+    990,    // ftps
     993,    // imap+ssl
     995,    // pop3+ssl
     1719,   // h323gatestat
@@ -241,7 +243,6 @@ static const char* gCallbackSecurityPrefs[] = {
     "security.ssl.enable_ocsp_stapling",
     "security.ssl.enable_ocsp_must_staple",
     "security.pki.certificate_transparency.mode",
-    "security.cert_pinning.enforcement_level",
     "security.pki.name_matching_mode",
     nullptr,
 };
@@ -388,7 +389,6 @@ void nsIOService::OnTLSPrefChange(const char* aPref, void* aSelf) {
   } else if (pref.EqualsLiteral("security.ssl.enable_ocsp_stapling") ||
              pref.EqualsLiteral("security.ssl.enable_ocsp_must_staple") ||
              pref.EqualsLiteral("security.pki.certificate_transparency.mode") ||
-             pref.EqualsLiteral("security.cert_pinning.enforcement_level") ||
              pref.EqualsLiteral("security.pki.name_matching_mode")) {
     SetValidationOptionsCommon();
   }

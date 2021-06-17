@@ -32,6 +32,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "1 text field outside of a <form> without a password field",
@@ -44,6 +45,7 @@ const TESTCASES = [
     skipEmptyFields: undefined,
     // there is no password field to fill, so no sense testing with gen. passwords
     extraTestEnvironments: [],
+    extraTestPreferences: [],
   },
   {
     description: "1 username & password field outside of a <form>",
@@ -56,6 +58,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     beforeGetFunction(doc, formLike) {
@@ -77,6 +80,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "1 username & password field in a <form>",
@@ -91,6 +95,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "5 empty password fields outside of a <form>",
@@ -106,6 +111,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "6 empty password fields outside of a <form>",
@@ -122,6 +128,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
@@ -138,6 +145,7 @@ const TESTCASES = [
     skipEmptyFields: true,
     // This test assumes that pw1 has not been filled, so don't test prefilling it
     extraTestEnvironments: [],
+    extraTestPreferences: [],
   },
   {
     description: "Form with 1 password field",
@@ -149,6 +157,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "Form with 2 password fields",
@@ -160,6 +169,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "1 password field in a form, 1 outside (not processed)",
@@ -171,6 +181,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
@@ -183,6 +194,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
@@ -195,6 +207,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
@@ -208,6 +221,7 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
@@ -221,6 +235,7 @@ const TESTCASES = [
     },
     skipEmptyFields: true,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
@@ -234,6 +249,7 @@ const TESTCASES = [
     },
     skipEmptyFields: true,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
@@ -251,6 +267,7 @@ const TESTCASES = [
     generatedPWFieldSelectors: ["#pw2", "#pw3"],
     // this test doesn't make sense to run with different filled generated password values
     extraTestEnvironments: [],
+    extraTestPreferences: [],
   },
   // begin of getusername heuristic tests
   {
@@ -268,13 +285,14 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
       "1 username input and multiple non-username like input in a <form>",
     document: `<form>
       <input id="un1">
-      <input id="un2" name="username">
+      <input id="un2" autocomplete="username">
       <input id="un3">
       <input id="pw1" type=password>
       </form>`,
@@ -285,13 +303,14 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
       "1 email input and multiple non-username like input in a <form>",
     document: `<form>
       <input id="un1">
-      <input id="un2" name="email">
+      <input id="un2" autocomplete="email">
       <input id="un3">
       <input id="pw1" type=password>
       </form>`,
@@ -302,13 +321,14 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
       "1 username & 1 email field, the email field is more close to the password",
     document: `<form>
-      <input id="un1" name="username">
-      <input id="un2" name="email">
+      <input id="un1" autocomplete="username">
+      <input id="un2" autocomplete="email">
       <input id="pw1" type=password>
       </form>`,
     returnedFieldIDs: {
@@ -318,13 +338,14 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description:
       "1 username and 1 email field, the username field is more close to the password",
     document: `<form>
-      <input id="un1" name="email">
-      <input id="un2" name="username">
+      <input id="un1" autocomplete="email">
+      <input id="un2" autocomplete="username">
       <input id="pw1" type=password>
       </form>`,
     returnedFieldIDs: {
@@ -334,12 +355,13 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "2 username fields in a <form>",
     document: `<form>
-      <input id="un1" name="username">
-      <input id="un2" name="username">
+      <input id="un1" autocomplete="username">
+      <input id="un2" autocomplete="username">
       <input id="un3">
       <input id="pw1" type=password>
       </form>`,
@@ -350,12 +372,13 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "2 email fields in a <form>",
     document: `<form>
-      <input id="un1" name="email">
-      <input id="un2" name="email">
+      <input id="un1" autocomplete="email">
+      <input id="un2" autocomplete="email">
       <input id="un3">
       <input id="pw1" type=password>
       </form>`,
@@ -366,13 +389,14 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   {
     description: "the password field precedes the username field",
     document: `<form>
       <input id="un1">
       <input id="pw1" type=password>
-      <input id="un2" name="username">
+      <input id="un2" autocomplete="username">
       </form>`,
     returnedFieldIDs: {
       usernameField: "un1",
@@ -381,8 +405,51 @@ const TESTCASES = [
     },
     skipEmptyFields: undefined,
     extraTestEnvironments: [TESTENVIRONMENTS.filledPW1WithGeneratedPassword],
+    extraTestPreferences: [],
   },
   // end of getusername heuristic tests
+  {
+    description: "1 username field in a <form>",
+    document: `<form>
+      <input id="un1" autocomplete="username">
+      </form>`,
+    returnedFieldIDs: {
+      usernameField: "un1",
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
+    skipEmptyFields: undefined,
+    extraTestEnvironments: [],
+    extraTestPreferences: [],
+  },
+  {
+    description: "1 input field in a <form>",
+    document: `<form>
+      <input id="un1"">
+      </form>`,
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
+    skipEmptyFields: undefined,
+    extraTestEnvironments: [],
+    extraTestPreferences: [],
+  },
+  {
+    description: "1 username field in a <form> with usernameOnlyForm pref off",
+    document: `<form>
+      <input id="un1" autocomplete="username">
+      </form>`,
+    returnedFieldIDs: {
+      usernameField: null,
+      newPasswordField: null,
+      oldPasswordField: null,
+    },
+    skipEmptyFields: undefined,
+    extraTestEnvironments: [],
+    extraTestPreferences: [["signon.usernameOnlyForm.enabled", false]],
+  },
 ];
 
 const TEST_ENVIRONMENT_CASES = TESTCASES.flatMap(tc => {
@@ -404,6 +471,11 @@ for (let tc of TEST_ENVIRONMENT_CASES) {
     let testcase = tc;
     add_task(async function() {
       info("Starting testcase: " + testcase.description);
+
+      for (let pref of testcase.extraTestPreferences) {
+        Services.prefs.setBoolPref(pref[0], pref[1]);
+      }
+
       info("Document string: " + testcase.document);
       let document = MockDocument.createTestDocument(
         "http://localhost:8080/test/",
@@ -462,6 +534,10 @@ for (let tc of TEST_ENVIRONMENT_CASES) {
             "Check returned field " + key + " ID"
           );
         }
+      }
+
+      for (let pref of tc.extraTestPreferences) {
+        Services.prefs.clearUserPref(pref[0]);
       }
     });
   })();

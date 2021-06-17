@@ -75,6 +75,7 @@ pub struct FrameBuilderConfig {
     pub max_target_size: i32,
     pub force_invalidation: bool,
     pub is_software: bool,
+    pub low_quality_pinch_zoom: bool,
 }
 
 /// A set of common / global resources that are retained between
@@ -345,10 +346,10 @@ impl FrameBuilder {
             scene_properties,
             global_screen_world_rect,
             spatial_tree: &scene.spatial_tree,
-            max_local_clip: LayoutRect::new(
-                LayoutPoint::new(-MAX_CLIP_COORD, -MAX_CLIP_COORD),
-                LayoutSize::new(2.0 * MAX_CLIP_COORD, 2.0 * MAX_CLIP_COORD),
-            ),
+            max_local_clip: LayoutRect {
+                min: LayoutPoint::new(-MAX_CLIP_COORD, -MAX_CLIP_COORD),
+                max: LayoutPoint::new(MAX_CLIP_COORD, MAX_CLIP_COORD),
+            },
             debug_flags,
             fb_config: &scene.config,
         };
@@ -384,6 +385,7 @@ impl FrameBuilder {
                 gpu_cache,
                 &scene.clip_store,
                 data_stores,
+                tile_caches,
             );
         }
 
@@ -455,7 +457,7 @@ impl FrameBuilder {
             ROOT_SPATIAL_NODE_INDEX,
         );
         default_dirty_region.add_dirty_region(
-            frame_context.global_screen_world_rect.to_rect().cast_unit(),
+            frame_context.global_screen_world_rect.cast_unit(),
             SubSliceIndex::DEFAULT,
             frame_context.spatial_tree,
         );
@@ -726,13 +728,13 @@ impl FrameBuilder {
                     let map_local_to_world = SpaceMapper::new_with_target(
                         ROOT_SPATIAL_NODE_INDEX,
                         tile_cache.spatial_node_index,
-                        ctx.screen_world_rect.to_rect(),
+                        ctx.screen_world_rect,
                         ctx.spatial_tree,
                     );
                     let world_clip_rect = map_local_to_world
                         .map(&tile_cache.local_clip_rect)
                         .expect("bug: unable to map clip rect");
-                    let device_clip_rect = (world_clip_rect * ctx.global_device_pixel_scale).round().to_box2d();
+                    let device_clip_rect = (world_clip_rect * ctx.global_device_pixel_scale).round();
 
                     composite_state.push_surface(
                         tile_cache,

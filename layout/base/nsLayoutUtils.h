@@ -273,6 +273,14 @@ class nsLayoutUtils {
    */
   static nsIFrame* GetMarkerFrame(const nsIContent* aContent);
 
+#ifdef ACCESSIBILITY
+  /**
+   * Set aText to the spoken text for the given ::marker content (aContent)
+   * if it has a frame, or the empty string otherwise.
+   */
+  static void GetMarkerSpokenText(const nsIContent* aContent, nsAString& aText);
+#endif
+
   /**
    * Given a frame, search up the frame tree until we find an
    * ancestor that (or the frame itself) is of type aFrameType, if any.
@@ -518,6 +526,11 @@ class nsLayoutUtils {
    *
    * Just like IsProperAncestorFrameCrossDoc, except that it returns true when
    * aFrame == aAncestorFrame.
+   *
+   * NOTE: This function doesn't return true even if |aAncestorFrame| and
+   * |aFrame| is in the same process but they are not directly connected, e.g.
+   * both |aAncestorFrame| and |aFrame| in A domain documents, but there's
+   * another an iframe document domain B, such as A1 -> B1 ->A2 document tree.
    */
   static bool IsAncestorFrameCrossDocInProcess(
       const nsIFrame* aAncestorFrame, const nsIFrame* aFrame,

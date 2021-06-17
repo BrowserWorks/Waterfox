@@ -479,7 +479,7 @@ bool DOMLocalization::ApplyTranslations(
 
   nsTArray<L10nOverlaysError> errors;
   for (size_t i = 0; i < aTranslations.Length(); ++i) {
-    Element* elem = aElements[i];
+    nsCOMPtr elem = aElements[i];
     if (aTranslations[i].IsNull()) {
       hasMissingTranslation = true;
       continue;
@@ -490,6 +490,13 @@ bool DOMLocalization::ApplyTranslations(
     // This is an error in fluent use, but shouldn't be crashing. There's
     // also no point translating the element - skip it:
     if (aProto && !elem->IsInComposedDoc()) {
+      continue;
+    }
+
+    // It is possible that someone removed the `data-l10n-id` from the element
+    // before the async translation completed. In that case, skip applying
+    // the translation.
+    if (!elem->HasAttr(kNameSpaceID_None, nsGkAtoms::datal10nid)) {
       continue;
     }
     L10nOverlays::TranslateElement(*elem, aTranslations[i].Value(), errors,

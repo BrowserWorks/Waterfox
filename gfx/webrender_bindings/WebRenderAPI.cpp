@@ -167,7 +167,9 @@ class NewRenderer : public RendererEvent {
             compositor->ShouldDrawPreviousPartialPresentRegions(), mDocHandle,
             &wrRenderer, mMaxTextureSize, &errorMessage,
             StaticPrefs::gfx_webrender_enable_gpu_markers_AtStartup(),
-            panic_on_gl_error, picTileWidth, picTileHeight)) {
+            panic_on_gl_error, picTileWidth, picTileHeight,
+            gfx::gfxVars::WebRenderRequiresHardwareDriver(),
+            StaticPrefs::gfx_webrender_low_quality_pinch_zoom_AtStartup())) {
       // wr_window_new puts a message into gfxCriticalNote if it returns false
       MOZ_ASSERT(errorMessage);
       mError->AssignASCII(errorMessage);
@@ -1206,8 +1208,8 @@ void DisplayListBuilder::PushRoundedRect(const wr::LayoutRect& aBounds,
   // Made the borders thicker than one half the width/height, to avoid
   // little white dots at the center at some magnifications.
   wr::BorderSide side = {aColor, wr::BorderStyle::Solid};
-  float h = aBounds.size.width * 0.6f;
-  float v = aBounds.size.height * 0.6f;
+  float h = aBounds.width() * 0.6f;
+  float v = aBounds.height() * 0.6f;
   wr::LayoutSideOffsets widths = {v, h, v, h};
   wr::BorderRadius radii = {{h, v}, {h, v}, {h, v}, {h, v}};
 

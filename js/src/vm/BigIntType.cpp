@@ -2507,6 +2507,43 @@ bool BigInt::isInt64(BigInt* x, int64_t* result) {
   return false;
 }
 
+bool BigInt::isUint64(BigInt* x, uint64_t* result) {
+  MOZ_MAKE_MEM_UNDEFINED(result, sizeof(*result));
+
+  if (!x->absFitsInUint64() || x->isNegative()) {
+    return false;
+  }
+
+  if (x->isZero()) {
+    *result = 0;
+    return true;
+  }
+
+  *result = x->uint64FromAbsNonZero();
+  return true;
+}
+
+bool BigInt::isNumber(BigInt* x, double* result) {
+  MOZ_MAKE_MEM_UNDEFINED(result, sizeof(*result));
+
+  if (!x->absFitsInUint64()) {
+    return false;
+  }
+
+  if (x->isZero()) {
+    *result = 0;
+    return true;
+  }
+
+  uint64_t magnitude = x->uint64FromAbsNonZero();
+  if (magnitude < uint64_t(DOUBLE_INTEGRAL_PRECISION_LIMIT)) {
+    *result = x->isNegative() ? -double(magnitude) : double(magnitude);
+    return true;
+  }
+
+  return false;
+}
+
 // Compute `2**bits - (x & (2**bits - 1))`.  Used when treating BigInt values as
 // arbitrary-precision two's complement signed integers.
 BigInt* BigInt::truncateAndSubFromPowerOfTwo(JSContext* cx, HandleBigInt x,
@@ -3771,7 +3808,7 @@ BigInt* JS::StringToBigInt(JSContext* cx, Range<const char16_t> chars) {
 }
 
 static inline BigInt* SimpleStringToBigIntHelper(
-    JSContext* cx, mozilla::Span<const Latin1Char> chars, unsigned radix,
+    JSContext* cx, mozilla::Span<const Latin1Char> chars, uint8_t radix,
     bool* haveParseError) {
   if (chars.Length() > 1) {
     if (chars[0] == '+') {
@@ -3791,7 +3828,7 @@ static inline BigInt* SimpleStringToBigIntHelper(
 }
 
 BigInt* JS::SimpleStringToBigInt(JSContext* cx, mozilla::Span<const char> chars,
-                                 unsigned radix) {
+                                 uint8_t radix) {
   if (chars.empty()) {
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_BIGINT_INVALID_SYNTAX);
@@ -3825,6 +3862,24 @@ int64_t JS::ToBigInt64(JS::BigInt* bi) { return BigInt::toInt64(bi); }
 
 uint64_t JS::ToBigUint64(JS::BigInt* bi) { return BigInt::toUint64(bi); }
 
+double JS::BigIntToNumber(JS::BigInt* bi) { return BigInt::numberValue(bi); }
+
+bool JS::BigIntIsNegative(BigInt* bi) {
+  return !bi->isZero() && bi->isNegative();
+}
+
+bool JS::BigIntFitsNumber(BigInt* bi, double* out) {
+  return bi->isNumber(bi, out);
+}
+
+JSString* JS::BigIntToString(JSContext* cx, Handle<BigInt*> bi, uint8_t radix) {
+  if (radix < 2 || radix > 36) {
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_RADIX);
+    return nullptr;
+  }
+  return BigInt::toString<CanGC>(cx, bi, radix);
+}
+
 // Semi-public template details
 
 BigInt* JS::detail::BigIntFromInt64(JSContext* cx, int64_t num) {
@@ -3837,4 +3892,12 @@ BigInt* JS::detail::BigIntFromUint64(JSContext* cx, uint64_t num) {
 
 BigInt* JS::detail::BigIntFromBool(JSContext* cx, bool b) {
   return b ? BigInt::one(cx) : BigInt::zero(cx);
+}
+
+bool JS::detail::BigIntIsInt64(BigInt* bi, int64_t* result) {
+  return BigInt::isInt64(bi, result);
+}
+
+bool JS::detail::BigIntIsUint64(BigInt* bi, uint64_t* result) {
+  return BigInt::isUint64(bi, result);
 }

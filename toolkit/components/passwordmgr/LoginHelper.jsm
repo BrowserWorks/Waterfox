@@ -474,6 +474,9 @@ this.LoginHelper = {
     this.userInputRequiredToCapture = Services.prefs.getBoolPref(
       "signon.userInputRequiredToCapture.enabled"
     );
+    this.usernameOnlyFormEnabled = Services.prefs.getBoolPref(
+      "signon.usernameOnlyForm.enabled"
+    );
     this.remoteRecipesEnabled = Services.prefs.getBoolPref(
       "signon.recipes.remoteRecipes.enabled"
     );
@@ -1326,6 +1329,26 @@ this.LoginHelper = {
       return false;
     }
     return true;
+  },
+
+  /**
+   * Infer whether a form is a sign-in form by searching keywords
+   * in its attributes
+   *
+   * @param {Element} element
+   *                  the form we want to check.
+   *
+   * @returns {boolean} True if any of the rules matches
+   */
+  isInferredLoginForm(formElement) {
+    // This is copied from 'loginFormAttrRegex' in NewPasswordModel.jsm
+    const loginExpr = /login|log in|log on|log-on|sign in|sigin|sign\/in|sign-in|sign on|sign-on/i;
+
+    if (this._elementAttrsMatchRegex(formElement, loginExpr)) {
+      return true;
+    }
+
+    return false;
   },
 
   /**

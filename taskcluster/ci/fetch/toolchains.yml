@@ -460,12 +460,21 @@ clang-trunk:
         repo: https://github.com/llvm/llvm-project
         branch: main
 
-rust-1.47.0-dev:
-    description: Rust 1.47.0-dev source code
+# This revision currently corresponds to rust nightly-2021-03-24,
+# which is the first nightly with the version 1.53.0,
+# so it should be as close as possible to the behaviour of
+# stable-1.52.0.
+#
+# We use this to build from source, so the resulting non-official
+# artifacts will report their version as "1.53.0-dev", but will otherwise
+# behave like a nightly build. This means they will allow you to use
+# unstable features like -Zbuild-std and sanitizers.
+rust-1.53.0-dev:
+    description: Rust 1.53.0-dev source code
     fetch:
         type: git
         repo: https://github.com/rust-lang/rust/
-        revision: 18bf6b4f01a6feaf7259ba7cdae58031af1b7b39
+        revision: 07e0e2ec268c140e607e1ac7f49f145612d0f597
 
 wasi-sdk:
     description: wasi-sdk source code
@@ -507,7 +516,7 @@ dump-syms:
     fetch:
         type: git
         repo: https://github.com/mozilla/dump_syms/
-        revision: 1e64e56720131bcf0ab01f201ed89a337c73069d
+        revision: 3cfe1848ad3247890715168a7175260abe6f96bc
 
 fix-stacks:
     description: fix-stacks source code
@@ -561,6 +570,18 @@ nodejs-10-linux64:
         strip-components: 1
         add-prefix: node/
 
+nodejs-12-linux64:
+    description: nodejs 12 for x64 linux
+    fetch:
+        type: static-url
+        url: https://nodejs.org/dist/v12.22.1/node-v12.22.1-linux-x64.tar.xz
+        sha256: 8b537282c222ae4a40e019a52f769ca27b6640699bdde1510375e8d72da7d041
+        size: 14594952
+        artifact-name: nodejs.tar.zst
+        strip-components: 1
+        add-prefix: node/
+
+
 nodejs-10-macosx64:
     description: nodejs 10 for x64 macOS
     fetch:
@@ -568,6 +589,17 @@ nodejs-10-macosx64:
         url: https://nodejs.org/dist/v10.23.1/node-v10.23.1-darwin-x64.tar.xz
         sha256: febfdabd98ab5b8f8fdff32ab8c111d834083805bf042ab65c923cc22609c99d
         size: 12233276
+        artifact-name: nodejs.tar.zst
+        strip-components: 1
+        add-prefix: node/
+
+nodejs-12-macosx64:
+    description: nodejs 12 for x64 macOS
+    fetch:
+        type: static-url
+        url: https://nodejs.org/dist/v12.22.1/node-v12.22.1-darwin-x64.tar.xz
+        sha256: de5e317580732530961d83b0fb9b2c370d222bd0c5a1b331900e9ddc0fdfe086
+        size: 13670384
         artifact-name: nodejs.tar.zst
         strip-components: 1
         add-prefix: node/
@@ -594,6 +626,17 @@ nodejs-10-win32:
         strip-components: 1
         add-prefix: node/
 
+nodejs-12-win32:
+    description: nodejs 12 for x86 Windows
+    fetch:
+        type: static-url
+        url: https://nodejs.org/dist/v12.22.1/node-v12.22.1-win-x86.zip
+        sha256: 832bd047d3709e4229d1cc95d04391aceb991a5c957b8efd395e01f51832a774
+        size: 17132424
+        artifact-name: nodejs.tar.zst
+        strip-components: 1
+        add-prefix: node/
+
 nodejs-10-win64:
     description: nodejs 10 for x64 Windows
     fetch:
@@ -604,6 +647,18 @@ nodejs-10-win64:
         artifact-name: nodejs.tar.zst
         strip-components: 1
         add-prefix: node/
+
+nodejs-12-win64:
+    description: nodejs 12 for x64 Windows
+    fetch:
+        type: static-url
+        url: https://nodejs.org/dist/v12.22.1/node-v12.22.1-win-x64.zip
+        sha256: 0cf3545c1ff9717bf3196eed6a423d878709ed4560125fdc29b42bd80ee661c3
+        size: 18677788
+        artifact-name: nodejs.tar.zst
+        strip-components: 1
+        add-prefix: node/
+
 
 gnumake:
     description: GNU make source

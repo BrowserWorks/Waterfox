@@ -42,6 +42,7 @@
 #include "wasm/WasmBuiltins.h"
 #include "wasm/WasmConstants.h"
 #include "wasm/WasmInitExpr.h"
+#include "wasm/WasmPages.h"
 #include "wasm/WasmSerialize.h"
 #include "wasm/WasmShareable.h"
 #include "wasm/WasmTlsData.h"
@@ -1332,6 +1333,63 @@ struct Limits {
       : initial(initial), maximum(maximum), shared(shared) {}
 };
 
+// Memories can be 32-bit (indices are 32 bits and the max is 4GB) or 64-bit
+// (indices are 64 bits and the max is XXX).
+
+enum class MemoryKind { Memory32, Memory64 };
+
+// MemoryDesc describes a memory.
+
+struct MemoryDesc {
+  MemoryKind kind;
+  Limits limits;
+
+  bool isShared() const { return limits.shared == Shareable::True; }
+
+  // Whether a backing store for this memory may move when grown.
+  bool canMovingGrow() const { return limits.maximum.isNothing(); }
+
+  // Whether the bounds check limit (see the doc comment in
+  // ArrayBufferObject.cpp regarding linear memory structure) can ever be
+  // larger than 32-bits.
+  bool boundsCheckLimitIs32Bits() const {
+    return limits.maximum.isSome() &&
+           limits.maximum.value() < (0x100000000 / PageSize);
+  }
+
+  // The initial length of this memory in pages.
+  Pages initialPages() const { return Pages(limits.initial); }
+
+  // The maximum length of this memory in pages.
+  Maybe<Pages> maximumPages() const {
+    return limits.maximum.map([](uint64_t x) { return Pages(x); });
+  }
+
+  // The initial length of this memory in bytes. Only valid for memory32.
+  uint64_t initialLength32() const {
+    MOZ_ASSERT(kind == MemoryKind::Memory32);
+    // See static_assert after MemoryDesc for why this is safe.
+    return limits.initial * PageSize;
+  }
+
+  // The maximum length of this memory in bytes. Only valid for memory32.
+  Maybe<uint64_t> maximumLength32() const {
+    MOZ_ASSERT(kind == MemoryKind::Memory32);
+    if (limits.maximum) {
+      // See static_assert after MemoryDesc for why this is safe.
+      return Some(*limits.maximum * PageSize);
+    }
+    return Nothing();
+  }
+
+  MemoryDesc() = default;
+  MemoryDesc(MemoryKind kind, Limits limits) : kind(kind), limits(limits) {}
+};
+
+// We don't need to worry about overflow with a Memory32 field when
+// using a uint64_t.
+static_assert(MaxMemory32LimitField <= UINT64_MAX / PageSize);
+
 // TableDesc describes a table as well as the offset of the table's base pointer
 // in global memory.
 //
@@ -1480,11 +1538,6 @@ class CalleeDesc {
   }
 };
 
-// Memories can be 32-bit (indices are 32 bits and the max is 4GB) or 64-bit
-// (indices are 64 bits and the max is XXX).
-
-enum class MemoryKind { Memory32, Memory64 };
-
 // Because ARM has a fixed-width instruction encoding, ARM can only express a
 // limited subset of immediates (in a single instruction).
 
@@ -1555,13 +1608,13 @@ static const size_t MinOffsetGuardLimit = OffsetGuardLimit;
 
 extern bool IsValidBoundsCheckImmediate(uint32_t i);
 
-// For a given WebAssembly/asm.js max size, return the number of bytes to
+// For a given WebAssembly/asm.js max pages, return the number of bytes to
 // map which will necessarily be a multiple of the system page size and greater
-// than maxSize. For a returned mappedSize:
+// than maxPages in bytes. For a returned mappedSize:
 //   boundsCheckLimit = mappedSize - GuardSize
 //   IsValidBoundsCheckImmediate(boundsCheckLimit)
 
-extern size_t ComputeMappedSize(uint64_t maxSize);
+extern size_t ComputeMappedSize(Pages maxPages);
 
 // The following thresholds were derived from a microbenchmark. If we begin to
 // ship this optimization for more platforms, we will need to extend this list.

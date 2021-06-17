@@ -24,6 +24,8 @@
 #include "mozilla/TelemetryComms.h"
 #include "mozilla/Tokenizer.h"
 #include "mozilla/net/rust_helper.h"
+// Put DNSLogging.h at the end to avoid LOG being overwritten by other headers.
+#include "DNSLogging.h"
 
 #if defined(XP_WIN) && !defined(__MINGW32__)
 #  include <shlobj_core.h>  // for SHGetSpecialFolderPathA
@@ -39,10 +41,6 @@ static const char kDisableIpv6Pref[] = "network.dns.disableIPv6";
 
 namespace mozilla {
 namespace net {
-
-#undef LOG
-extern mozilla::LazyLogModule gHostResolverLog;
-#define LOG(args) MOZ_LOG(gHostResolverLog, mozilla::LogLevel::Debug, args)
 
 TRRService* gTRRService = nullptr;
 StaticRefPtr<nsIThread> sTRRBackgroundThread;
@@ -1007,7 +1005,10 @@ void TRRService::AddToBlocklist(const nsACString& aHost,
     bl->InsertOrUpdate(hashkey, NowInSeconds());
   }
 
-  if (aParentsToo) {
+  // See bug 1700405. Some test expects 15 trr consecutive failures, but the NS
+  // check against the base domain is successful. So, we skip this NS check when
+  // the pref said so in order to pass the test reliably.
+  if (aParentsToo && !StaticPrefs::network_trr_skip_check_for_blocked_host()) {
     // when given a full host name, verify its domain as well
     int32_t dot = aHost.FindChar('.');
     if (dot != kNotFound) {
@@ -1298,8 +1299,6 @@ AHostResolver::LookupStatus TRRService::CompleteLookupByType(
     uint32_t aTtl, bool aPb) {
   return LOOKUP_OK;
 }
-
-#undef LOG
 
 }  // namespace net
 }  // namespace mozilla

@@ -823,8 +823,8 @@ AnimatedGeometryRoot* nsDisplayListBuilder::WrapAGRForFrame(
   RefPtr<AnimatedGeometryRoot> result =
       mFrameToAnimatedGeometryRootMap.Get(aAnimatedGeometryRoot);
   if (!result) {
-    MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDoc(RootReferenceFrame(),
-                                                      aAnimatedGeometryRoot));
+    MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDocInProcess(
+        RootReferenceFrame(), aAnimatedGeometryRoot));
     RefPtr<AnimatedGeometryRoot> parent = aParent;
     if (!parent) {
       nsIFrame* parentFrame =
@@ -1689,8 +1689,8 @@ nsDisplayListBuilder::AGRState nsDisplayListBuilder::IsAnimatedGeometryRoot(
 
 nsIFrame* nsDisplayListBuilder::FindAnimatedGeometryRootFrameFor(
     nsIFrame* aFrame, bool& aIsAsync) {
-  MOZ_ASSERT(
-      nsLayoutUtils::IsAncestorFrameCrossDoc(RootReferenceFrame(), aFrame));
+  MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDocInProcess(
+      RootReferenceFrame(), aFrame));
   nsIFrame* cursor = aFrame;
   while (cursor != RootReferenceFrame()) {
     nsIFrame* next;
@@ -2993,7 +2993,7 @@ nsDisplayItem::nsDisplayItem(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
   // This can return the wrong result if the item override
   // ShouldFixToViewport(), the item needs to set it again in its constructor.
   mAnimatedGeometryRoot = aBuilder->FindAnimatedGeometryRootFor(aFrame);
-  MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDoc(
+  MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDocInProcess(
                  aBuilder->RootReferenceFrame(), *mAnimatedGeometryRoot),
              "Bad");
   NS_ASSERTION(
@@ -4937,10 +4937,7 @@ bool nsDisplayOutline::CreateWebRenderCommands(
 }
 
 bool nsDisplayOutline::HasRadius() const {
-  const auto& radius =
-      StaticPrefs::layout_css_outline_follows_border_radius_enabled()
-          ? mFrame->StyleBorder()->mBorderRadius
-          : mFrame->StyleOutline()->mOutlineRadius;
+  const auto& radius = mFrame->StyleBorder()->mBorderRadius;
   return !nsLayoutUtils::HasNonZeroCorner(radius);
 }
 
@@ -6219,6 +6216,9 @@ void nsDisplayBlendMode::Paint(nsDisplayListBuilder* aBuilder,
   int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
   IntRect rect =
       IntRect::RoundOut(NSRectToRect(GetPaintRect(), appUnitsPerDevPixel));
+  if (rect.IsEmpty()) {
+    return;
+  }
 
   RefPtr<DrawTarget> dt = aCtx->GetDrawTarget()->CreateSimilarDrawTarget(
       rect.Size(), SurfaceFormat::B8G8R8A8);
@@ -9773,9 +9773,8 @@ static Maybe<wr::WrClipId> CreateSimpleClipRegion(
   const nsRect refBox =
       nsLayoutUtils::ComputeGeometryBox(frame, clipPath.AsShape()._1);
 
-  AutoTArray<wr::ComplexClipRegion, 1> clipRegions;
+  wr::WrClipId clipId;
 
-  wr::LayoutRect rect;
   switch (shape.tag) {
     case StyleBasicShape::Tag::Inset: {
       const nsRect insetRect = ShapeUtils::ComputeInsetRect(shape, refBox) +
@@ -9784,12 +9783,13 @@ static Maybe<wr::WrClipId> CreateSimpleClipRegion(
       nscoord radii[8] = {0};
 
       if (ShapeUtils::ComputeInsetRadii(shape, refBox, radii)) {
-        clipRegions.AppendElement(
+        clipId = aBuilder.DefineRoundedRectClip(
             wr::ToComplexClipRegion(insetRect, radii, appUnitsPerDevPixel));
+      } else {
+        clipId = aBuilder.DefineRectClip(wr::ToLayoutRect(
+            LayoutDeviceRect::FromAppUnits(insetRect, appUnitsPerDevPixel)));
       }
 
-      rect = wr::ToLayoutRect(
-          LayoutDeviceRect::FromAppUnits(insetRect, appUnitsPerDevPixel));
       break;
     }
     case StyleBasicShape::Tag::Ellipse:
@@ -9814,11 +9814,9 @@ static Maybe<wr::WrClipId> CreateSimpleClipRegion(
             HalfCornerIsX(corner) ? radii.width : radii.height;
       }
 
-      clipRegions.AppendElement(wr::ToComplexClipRegion(
+      clipId = aBuilder.DefineRoundedRectClip(wr::ToComplexClipRegion(
           ellipseRect, ellipseRadii, appUnitsPerDevPixel));
 
-      rect = wr::ToLayoutRect(
-          LayoutDeviceRect::FromAppUnits(ellipseRect, appUnitsPerDevPixel));
       break;
     }
     default:
@@ -9830,7 +9828,7 @@ static Maybe<wr::WrClipId> CreateSimpleClipRegion(
       MOZ_ASSERT_UNREACHABLE("Unhandled shape id?");
       return Nothing();
   }
-  wr::WrClipId clipId = aBuilder.DefineClip(Nothing(), rect, &clipRegions);
+
   return Some(clipId);
 }
 
@@ -10559,7 +10557,7 @@ nsDisplayListBuilder::AutoBuildingDisplayList::AutoBuildingDisplayList(
     aBuilder->mCurrentAGR = aBuilder->FindAnimatedGeometryRootFor(aForChild);
   }
 
-  MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDoc(
+  MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDocInProcess(
       aBuilder->RootReferenceFrame(), *aBuilder->mCurrentAGR));
 
   // If aForChild is being visited from a frame other than it's ancestor frame,

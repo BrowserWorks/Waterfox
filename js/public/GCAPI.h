@@ -914,6 +914,12 @@ class JS_PUBLIC_API AutoDisableGenerationalGC {
 extern JS_PUBLIC_API bool IsGenerationalGCEnabled(JSRuntime* rt);
 
 /**
+ * Enable or disable support for pretenuring allocations based on their
+ * allocation site.
+ */
+extern JS_PUBLIC_API void SetSiteBasedPretenuringEnabled(bool enable);
+
+/**
  * Pass a subclass of this "abstract" class to callees to require that they
  * never GC. Subclasses can use assertions or the hazard analysis to ensure no
  * GC happens.
@@ -1021,7 +1027,7 @@ extern JS_PUBLIC_API void SetLowMemoryState(JSContext* cx, bool newState);
 /*
  * Internal to Firefox.
  */
-extern JS_FRIEND_API void NotifyGCRootsRemoved(JSContext* cx);
+extern JS_PUBLIC_API void NotifyGCRootsRemoved(JSContext* cx);
 
 } /* namespace JS */
 

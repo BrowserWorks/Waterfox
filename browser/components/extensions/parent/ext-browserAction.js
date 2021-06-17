@@ -119,7 +119,8 @@ this.browserAction = class extends ExtensionAPI {
   async onManifestEntry(entryName) {
     let { extension } = this;
 
-    let options = extension.manifest.browser_action;
+    let options =
+      extension.manifest.browser_action || extension.manifest.action;
 
     this.action = new BrowserAction(extension, this);
     await this.action.loadIconData();
@@ -152,7 +153,7 @@ this.browserAction = class extends ExtensionAPI {
   }
 
   static onUpdate(id, manifest) {
-    if (!("browser_action" in manifest)) {
+    if (!("browser_action" in manifest || "action" in manifest)) {
       // If the new version has no browser action then mark this widget as
       // hidden in the telemetry. If it is already marked hidden then this will
       // do nothing.
@@ -448,9 +449,11 @@ this.browserAction = class extends ExtensionAPI {
         ];
 
         if (contexts.includes(menu.id) && node && node.contains(trigger)) {
+          const action =
+            this.extension.manifestVersion < 3 ? "onBrowserAction" : "onAction";
           global.actionContextMenu({
             extension: this.extension,
-            onBrowserAction: true,
+            [action]: true,
             menu: menu,
           });
         }
@@ -632,14 +635,15 @@ this.browserAction = class extends ExtensionAPI {
     let { extension } = context;
     let { tabManager } = extension;
     let { action } = this;
+    let namespace = extension.manifestVersion < 3 ? "browserAction" : "action";
 
     return {
-      browserAction: {
+      [namespace]: {
         ...action.api(context),
 
         onClicked: new EventManager({
           context,
-          name: "browserAction.onClicked",
+          name: `${namespace}.onClicked`,
           inputHandling: true,
           register: fire => {
             let listener = (event, tab, clickInfo) => {

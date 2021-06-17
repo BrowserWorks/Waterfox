@@ -9359,6 +9359,8 @@ var gCSSProperties = {
       "auto",
       "first",
       "last",
+      "left",
+      "right",
     ],
   },
   "align-items": {
@@ -9395,6 +9397,8 @@ var gCSSProperties = {
       "safe stretch",
       "end end",
       "auto",
+      "left",
+      "right",
     ],
   },
   "align-self": {
@@ -9416,7 +9420,15 @@ var gCSSProperties = {
       "self-start",
       "safe self-end",
     ],
-    invalid_values: ["space-between", "abc", "30px", "stretch safe", "safe"],
+    invalid_values: [
+      "space-between",
+      "abc",
+      "30px",
+      "stretch safe",
+      "safe",
+      "left",
+      "right",
+    ],
   },
   "justify-content": {
     domProp: "justifyContent",
@@ -9566,7 +9578,15 @@ var gCSSProperties = {
       "baseline",
       "last baseline",
     ],
-    invalid_values: ["none", "center safe", "right / end"],
+    invalid_values: [
+      "none",
+      "center safe",
+      "right / end",
+      "left",
+      "right",
+      "left left",
+      "right right",
+    ],
   },
   "place-items": {
     domProp: "placeItems",
@@ -9592,6 +9612,10 @@ var gCSSProperties = {
       "end/end",
       "center safe",
       "auto start",
+      "left",
+      "right",
+      "left left",
+      "right right",
     ],
   },
   "place-self": {
@@ -9621,6 +9645,10 @@ var gCSSProperties = {
       "auto legacy left",
       "legacy left",
       "auto/auto",
+      "left",
+      "right",
+      "left left",
+      "right right",
     ],
   },
   flex: {
@@ -13429,121 +13457,6 @@ if (IsCSSPropertyPrefEnabled("layout.css.color-mix.enabled")) {
     "color-mix(in srgb, red blue)",
     "color-mix(in srgb, red 10% blue)"
   );
-}
-
-if (IsCSSPropertyPrefEnabled("layout.css.moz-outline-radius.enabled")) {
-  gCSSProperties["-moz-outline-radius"] = {
-    domProp: "MozOutlineRadius",
-    inherited: false,
-    type: CSS_TYPE_TRUE_SHORTHAND,
-    prerequisites: { width: "200px", height: "100px", display: "inline-block" },
-    subproperties: [
-      "-moz-outline-radius-bottomleft",
-      "-moz-outline-radius-bottomright",
-      "-moz-outline-radius-topleft",
-      "-moz-outline-radius-topright",
-    ],
-    initial_values: [
-      "0",
-      "0px",
-      "calc(-2px)",
-      "calc(0px) calc(0pt)",
-      "calc(0px) calc(0em)",
-    ],
-    other_values: [
-      "0%",
-      "3%",
-      "1px",
-      "2em",
-      "3em 2px",
-      "2pt 3% 4em",
-      "2px 2px 2px 2px", // circular
-      "3% / 2%",
-      "1px / 4px",
-      "2em / 1em",
-      "3em 2px / 2px 3em",
-      "2pt 3% 4em / 4pt 1% 5em",
-      "2px 2px 2px 2px / 4px 4px 4px 4px",
-      "1pt / 2pt 3pt",
-      "4pt 5pt / 3pt", // elliptical
-      "calc(-1%)",
-      "calc(2px)",
-      "calc(50%)",
-      "calc(3*25px)",
-      "calc(3*25px) 5px",
-      "5px calc(3*25px)",
-      "calc(20%) calc(3*25px)",
-      "calc(25px*3)",
-      "calc(3*25px + 50%)",
-      "2px 2px calc(2px + 1%) 2px",
-      "1px 2px 2px 2px / 2px 2px calc(2px + 1%) 2px",
-    ],
-    invalid_values: [
-      "2px -2px",
-      "inherit 2px",
-      "inherit / 2px",
-      "2px inherit",
-      "2px / inherit",
-      "2px 2px 2px 2px 2px",
-      "1px / 2px 2px 2px 2px 2px",
-      "2",
-      "2 2",
-      "2px 2px 2px 2px / 2px 2px 2 2px",
-      "unset 2px",
-      "unset / 2px",
-      "2px unset",
-      "2px / unset",
-    ],
-  };
-  for (let corner of ["bottomleft", "bottomright", "topleft", "topright"]) {
-    gCSSProperties["-moz-outline-radius-" + corner] = {
-      domProp:
-        "MozOutlineRadius" +
-        {
-          bottomleft: "Bottomleft",
-          bottomright: "Bottomright",
-          topleft: "Topleft",
-          topright: "Topright",
-        }[corner],
-      inherited: false,
-      type: CSS_TYPE_LONGHAND,
-      prerequisites: {
-        width: "200px",
-        height: "100px",
-        display: "inline-block",
-      },
-      initial_values: ["0", "0px", "calc(-2px)", "calc(0px)"],
-      other_values: [
-        "0%",
-        "3%",
-        "1px",
-        "2em", // circular
-        "3% 2%",
-        "1px 4px",
-        "2em 2pt", // elliptical
-        "calc(-1%)",
-        "calc(2px)",
-        "calc(50%)",
-        "calc(3*25px)",
-        "calc(3*25px) 5px",
-        "5px calc(3*25px)",
-        "calc(20%) calc(3*25px)",
-        "calc(25px*3)",
-        "calc(3*25px + 50%)",
-      ],
-      invalid_values: [
-        "-1px",
-        "4px -2px",
-        "inherit 2px",
-        "2px inherit",
-        "2",
-        "2px 2",
-        "2 2px",
-        "unset 2px",
-        "2px unset",
-      ],
-    };
-  }
 }
 
 // Copy aliased properties' fields from their alias targets. Keep this logic

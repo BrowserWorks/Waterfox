@@ -75,13 +75,10 @@ Maybe<DistributionData> TimingDistributionMetric::TestGetValue(
   }
   nsTArray<uint64_t> buckets;
   nsTArray<uint64_t> counts;
-  DistributionData ret;
-  fog_timing_distribution_test_get_value(mId, &aPingName, &ret.sum, &buckets,
+  uint64_t sum;
+  fog_timing_distribution_test_get_value(mId, &aPingName, &sum, &buckets,
                                          &counts);
-  for (size_t i = 0; i < buckets.Length(); ++i) {
-    ret.values.InsertOrUpdate(buckets[i], counts[i]);
-  }
-  return Some(std::move(ret));
+  return Some(DistributionData(buckets, counts, sum));
 #endif
 }
 

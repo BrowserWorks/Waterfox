@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_SessionHistoryEntry_h
 #define mozilla_dom_SessionHistoryEntry_h
 
+#include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 #include "nsILayoutHistoryState.h"
 #include "nsISHEntry.h"
@@ -160,12 +161,11 @@ class SessionHistoryInfo {
   int32_t mScrollPositionX = 0;
   int32_t mScrollPositionY = 0;
   RefPtr<nsStructuredCloneContainer> mStateData;
-  nsString mSrcdocData;
+  Maybe<nsString> mSrcdocData;
   nsCOMPtr<nsIURI> mBaseURI;
 
   bool mLoadReplace = false;
   bool mURIWasModified = false;
-  bool mIsSrcdocEntry = false;
   bool mScrollRestorationIsManual = false;
   bool mPersist = true;
   bool mHasUserInteraction = false;
@@ -213,7 +213,9 @@ class SessionHistoryInfo {
 struct LoadingSessionHistoryInfo {
   LoadingSessionHistoryInfo() = default;
   explicit LoadingSessionHistoryInfo(SessionHistoryEntry* aEntry);
-  LoadingSessionHistoryInfo(SessionHistoryEntry* aEntry, uint64_t aLoadId);
+  // Initializes mInfo using aEntry and otherwise copies the values from aInfo.
+  LoadingSessionHistoryInfo(SessionHistoryEntry* aEntry,
+                            LoadingSessionHistoryInfo* aInfo);
 
   already_AddRefed<nsDocShellLoadState> CreateLoadInfo() const;
 

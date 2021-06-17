@@ -6,19 +6,6 @@
 
 const Services = require("Services");
 
-// Note: this preference should be read from the client and propagated to the
-// server. However since target switching is only supported for local-tab
-// debugging scenarios, it is acceptable to temporarily read it both on the
-// client and server until we can just enable it by default.
-// Do not use a lazy getter in order to help test toggle this pref on/off
-// and have it to live update here.
-function isServerTargetSwitchingEnabled() {
-  return Services.prefs.getBoolPref(
-    "devtools.target-switching.server.enabled",
-    false
-  );
-}
-
 /**
  * Helper function to know if a given WindowGlobal should be exposed via watchTargets API
  * XXX: We probably want to share this function with DevToolsFrameChild,
@@ -42,12 +29,25 @@ function shouldNotifyWindowGlobal(
     return false;
   }
 
-  // Ignore globals running in the parent process for now as they won't be in a distinct process anyway.
-  // And JSWindowActor will most likely only be created if we toggle includeChrome
-  // on the JSWindowActor registration.
-  if (windowGlobal.osPid == -1 && windowGlobal.isInProcess) {
+  // Only accept WindowGlobal running in parent, but only for tab debugging.
+  //
+  // When we are in the browser toolbox, we don't want to create targets
+  // for all parent process document just yet.
+  // The very final check done in this function, `windowGlobal.isProcessRoot` will be true
+  // and we would start creating a target for all top level browser windows.
+  // For now, we expect the ParentProcessTargetActor to debug these.
+  // Note that we should probably revisit that, and have each WindowGlobal be debugged
+  // by one dedicated BrowsingContextTargetActor (bug 1685500). This requires some tweaks, at least in console-message
+  // resource watcher, which makes the ParentProcessTarget's console message resource watcher watch
+  // for all documents messages. It should probably only care about window-less messages and have one target per window global,
+  // each target fetching one window global messages.
+  const isParentProcessWindowGlobal =
+    windowGlobal.osPid == -1 && windowGlobal.isInProcess;
+  const isTabDebugging = !!watchedBrowserId;
+  if (isParentProcessWindowGlobal && !isTabDebugging) {
     return false;
   }
+
   // Ignore about:blank which are quickly replaced and destroyed by the final URI
   // bug 1625026 aims at removing this workaround and allow debugging any about:blank load
   if (
@@ -112,12 +112,10 @@ function getAllRemoteBrowsingContexts(topBrowsingContext) {
   // If a Browsing Context is passed, only walk through the given BrowsingContext
   if (topBrowsingContext) {
     walk(topBrowsingContext);
-    if (!isServerTargetSwitchingEnabled()) {
-      // If server side target switching is not enabled, remove the top level
-      // browsing context we just added by calling walk.
-      // The top level target will be created from the client instead.
-      browsingContexts.shift();
-    }
+    // Remove the top level browsing context we just added by calling walk()
+    // We expect to return only the remote iframe BrowserContext from this method,
+    // not the top level one.
+    browsingContexts.shift();
   } else {
     // Fetch all top level window's browsing contexts
     // Note that getWindowEnumerator works from all processes, including the content process.

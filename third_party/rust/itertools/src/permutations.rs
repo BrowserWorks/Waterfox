@@ -7,7 +7,7 @@ use super::lazy_buffer::LazyBuffer;
 /// An iterator adaptor that iterates through all the `k`-permutations of the
 /// elements from an iterator.
 ///
-/// See [`.permutations()`](../trait.Itertools.html#method.permutations) for
+/// See [`.permutations()`](crate::Itertools::permutations) for
 /// more information.
 #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
 pub struct Permutations<I: Iterator> {

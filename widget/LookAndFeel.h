@@ -32,6 +32,7 @@ class FullLookAndFeel;
 }  // namespace widget
 
 enum class StyleSystemColor : uint8_t;
+enum class StyleSystemColorScheme : uint8_t;
 enum class StyleSystemFont : uint8_t;
 
 class LookAndFeel {
@@ -435,6 +436,7 @@ class LookAndFeel {
   // Whether standins for native colors should be used (that is, colors faked,
   // taken from win7, mostly). This forces light appearance, effectively.
   enum class UseStandins : bool { No, Yes };
+  static UseStandins ShouldUseStandins(const dom::Document&, ColorID);
 
   // Returns a native color value (might be overwritten by prefs) for a given
   // color id.
@@ -563,10 +565,11 @@ class LookAndFeel {
 // ---------------------------------------------------------------------
 
 // For background color only.
-#define NS_TRANSPARENT NS_RGBA(0x01, 0x00, 0x00, 0x00)
+constexpr nscolor NS_TRANSPARENT = NS_RGBA(0x01, 0x00, 0x00, 0x00);
 // For foreground color only.
-#define NS_SAME_AS_FOREGROUND_COLOR NS_RGBA(0x02, 0x00, 0x00, 0x00)
-#define NS_40PERCENT_FOREGROUND_COLOR NS_RGBA(0x03, 0x00, 0x00, 0x00)
+constexpr nscolor NS_SAME_AS_FOREGROUND_COLOR = NS_RGBA(0x02, 0x00, 0x00, 0x00);
+constexpr nscolor NS_40PERCENT_FOREGROUND_COLOR =
+    NS_RGBA(0x03, 0x00, 0x00, 0x00);
 
 #define NS_IS_SELECTION_SPECIAL_COLOR(c)                          \
   ((c) == NS_TRANSPARENT || (c) == NS_SAME_AS_FOREGROUND_COLOR || \

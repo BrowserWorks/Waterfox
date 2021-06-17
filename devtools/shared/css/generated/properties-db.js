@@ -2988,10 +2988,6 @@ exports.CSS_PROPERTIES = {
       "outline-color",
       "outline-style",
       "outline-width",
-      "-moz-outline-radius-topleft",
-      "-moz-outline-radius-topright",
-      "-moz-outline-radius-bottomright",
-      "-moz-outline-radius-bottomleft",
       "outline-offset",
       "size",
       "padding-top",
@@ -6336,6 +6332,9 @@ exports.CSS_PROPERTIES = {
     ],
     "supports": [],
     "values": [
+      "cap",
+      "ch",
+      "ic",
       "inherit",
       "initial",
       "none",
@@ -11069,22 +11068,6 @@ exports.PREFERENCES = [
     "layout.css.motion-path.enabled"
   ],
   [
-    "-moz-outline-radius-bottomleft",
-    "layout.css.moz-outline-radius.enabled"
-  ],
-  [
-    "-moz-outline-radius-bottomright",
-    "layout.css.moz-outline-radius.enabled"
-  ],
-  [
-    "-moz-outline-radius-topleft",
-    "layout.css.moz-outline-radius.enabled"
-  ],
-  [
-    "-moz-outline-radius-topright",
-    "layout.css.moz-outline-radius.enabled"
-  ],
-  [
     "overflow-clip-box",
     "layout.css.overflow-clip-box.enabled"
   ],
@@ -11099,10 +11082,6 @@ exports.PREFERENCES = [
   [
     "zoom",
     "layout.css.zoom-transform-hack.enabled"
-  ],
-  [
-    "-moz-outline-radius",
-    "layout.css.moz-outline-radius.enabled"
   ],
   [
     "-moz-transition-duration",

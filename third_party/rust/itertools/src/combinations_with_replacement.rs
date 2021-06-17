@@ -1,11 +1,13 @@
 use alloc::vec::Vec;
 use std::fmt;
+use std::iter::FusedIterator;
 
 use super::lazy_buffer::LazyBuffer;
 
 /// An iterator to iterate through all the `n`-length combinations in an iterator, with replacement.
 ///
-/// See [`.combinations_with_replacement()`](../trait.Itertools.html#method.combinations_with_replacement) for more information.
+/// See [`.combinations_with_replacement()`](crate::Itertools::combinations_with_replacement)
+/// for more information.
 #[derive(Clone)]
 pub struct CombinationsWithReplacement<I>
 where
@@ -99,3 +101,9 @@ where
         }
     }
 }
+
+impl<I> FusedIterator for CombinationsWithReplacement<I>
+where
+    I: Iterator,
+    I::Item: Clone,
+{}

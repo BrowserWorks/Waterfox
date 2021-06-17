@@ -598,7 +598,7 @@ void NegativeSubmatchSuccess::Emit(RegExpCompiler* compiler, Trace* trace) {
     assembler->ClearRegisters(clear_capture_start_, clear_capture_end);
   }
   // Now that we have unwound the stack we find at the top of the stack the
-  // backtrack that the BeginSubmatch node got.
+  // backtrack that the BeginNegativeSubmatch node got.
   assembler->Backtrack();
 }
 
@@ -663,10 +663,19 @@ ActionNode* ActionNode::ClearCaptures(Interval range, RegExpNode* on_success) {
   return result;
 }
 
-ActionNode* ActionNode::BeginSubmatch(int stack_reg, int position_reg,
-                                      RegExpNode* on_success) {
+ActionNode* ActionNode::BeginPositiveSubmatch(int stack_reg, int position_reg,
+                                              RegExpNode* on_success) {
   ActionNode* result =
-      on_success->zone()->New<ActionNode>(BEGIN_SUBMATCH, on_success);
+      on_success->zone()->New<ActionNode>(BEGIN_POSITIVE_SUBMATCH, on_success);
+  result->data_.u_submatch.stack_pointer_register = stack_reg;
+  result->data_.u_submatch.current_position_register = position_reg;
+  return result;
+}
+
+ActionNode* ActionNode::BeginNegativeSubmatch(int stack_reg, int position_reg,
+                                              RegExpNode* on_success) {
+  ActionNode* result =
+      on_success->zone()->New<ActionNode>(BEGIN_NEGATIVE_SUBMATCH, on_success);
   result->data_.u_submatch.stack_pointer_register = stack_reg;
   result->data_.u_submatch.current_position_register = position_reg;
   return result;
@@ -1430,9 +1439,11 @@ EatsAtLeastInfo LoopChoiceNode::EatsAtLeastFromLoopEntry() {
   DCHECK_EQ(alternatives_->length(), 2);  // There's just loop and continue.
 
   if (read_backward()) {
-    // Can't do anything special for a backward loop, so return the basic values
-    // that we got during analysis.
-    return *eats_at_least_info();
+    // The eats_at_least value is not used if reading backward. The
+    // EatsAtLeastPropagator should've zeroed it as well.
+    DCHECK_EQ(eats_at_least_info()->eats_at_least_from_possibly_start, 0);
+    DCHECK_EQ(eats_at_least_info()->eats_at_least_from_not_start, 0);
+    return {};
   }
 
   // Figure out how much the loop body itself eats, not including anything in
@@ -3333,7 +3344,8 @@ void ActionNode::Emit(RegExpCompiler* compiler, Trace* trace) {
       on_success()->Emit(compiler, &new_trace);
       break;
     }
-    case BEGIN_SUBMATCH:
+    case BEGIN_POSITIVE_SUBMATCH:
+    case BEGIN_NEGATIVE_SUBMATCH:
       if (!trace->is_trivial()) {
         trace->Flush(compiler, this);
       } else {
@@ -3526,19 +3538,32 @@ class EatsAtLeastPropagator : public AllStatic {
   }
 
   static void VisitAction(ActionNode* that) {
-    // POSITIVE_SUBMATCH_SUCCESS rewinds input, so we must not consider
-    // successor nodes for eats_at_least. SET_REGISTER_FOR_LOOP indicates a loop
-    // entry point, which means the loop body will run at least the minimum
-    // number of times before the continuation case can run. Otherwise the
-    // current node eats at least as much as its successor.
     switch (that->action_type()) {
+      case ActionNode::BEGIN_POSITIVE_SUBMATCH:
       case ActionNode::POSITIVE_SUBMATCH_SUCCESS:
-        break;  // Was already initialized to zero.
+        // We do not propagate eats_at_least data through positive lookarounds,
+        // because they rewind input.
+        // TODO(v8:11859) Potential approaches for fixing this include:
+        // 1. Add a dedicated choice node for positive lookaround, similar to
+        //    NegativeLookaroundChoiceNode.
+        // 2. Add an eats_at_least_inside_loop field to EatsAtLeastInfo, which
+        //    is <= eats_at_least_from_possibly_start, and use that value in
+        //    EatsAtLeastFromLoopEntry.
+        DCHECK(that->eats_at_least_info()->IsZero());
+        break;
       case ActionNode::SET_REGISTER_FOR_LOOP:
+        // SET_REGISTER_FOR_LOOP indicates a loop entry point, which means the
+        // loop body will run at least the minimum number of times before the
+        // continuation case can run.
         that->set_eats_at_least_info(
             that->on_success()->EatsAtLeastFromLoopEntry());
         break;
+      case ActionNode::BEGIN_NEGATIVE_SUBMATCH:
       default:
+        // Otherwise, the current node eats at least as much as its successor.
+        // Note: we can propagate eats_at_least data for BEGIN_NEGATIVE_SUBMATCH
+        // because NegativeLookaroundChoiceNode ignores its lookaround successor
+        // when computing eats-at-least and quick check information.
         that->set_eats_at_least_info(*that->on_success()->eats_at_least_info());
         break;
     }
@@ -3555,7 +3580,10 @@ class EatsAtLeastPropagator : public AllStatic {
   }
 
   static void VisitLoopChoiceContinueNode(LoopChoiceNode* that) {
-    that->set_eats_at_least_info(*that->continue_node()->eats_at_least_info());
+    if (!that->read_backward()) {
+      that->set_eats_at_least_info(
+          *that->continue_node()->eats_at_least_info());
+    }
   }
 
   static void VisitLoopChoiceLoopNode(LoopChoiceNode* that) {}

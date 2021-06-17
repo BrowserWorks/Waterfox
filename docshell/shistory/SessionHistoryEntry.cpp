@@ -42,11 +42,11 @@ SessionHistoryInfo::SessionHistoryInfo(nsDocShellLoadState* aLoadState,
       mResultPrincipalURI(aLoadState->ResultPrincipalURI()),
       mPostData(aLoadState->PostDataStream()),
       mLoadType(aLoadState->LoadType()),
-      mSrcdocData(aLoadState->SrcdocData()),
+      mSrcdocData(aLoadState->SrcdocData().IsVoid()
+                      ? Nothing()
+                      : Some(aLoadState->SrcdocData())),
       mBaseURI(aLoadState->BaseURI()),
       mLoadReplace(aLoadState->LoadReplace()),
-      /* FIXME Should this be aLoadState->IsSrcdocLoad()? */
-      mIsSrcdocEntry(!aLoadState->SrcdocData().IsEmpty()),
       mHasUserInteraction(false),
       mHasUserActivation(aLoadState->HasValidUserGestureActivation()),
       mSharedState(SharedState::Create(
@@ -133,11 +133,10 @@ void SessionHistoryInfo::Reset(nsIURI* aURI, const nsID& aDocShellID,
   mScrollPositionX = 0;
   mScrollPositionY = 0;
   mStateData = nullptr;
-  mSrcdocData.Truncate();
+  mSrcdocData = Nothing();
   mBaseURI = nullptr;
   mLoadReplace = false;
   mURIWasModified = false;
-  mIsSrcdocEntry = false;
   mScrollRestorationIsManual = false;
   mPersist = false;
   mHasUserInteraction = false;
@@ -231,8 +230,8 @@ void SessionHistoryInfo::FillLoadInfo(nsDocShellLoadState& aLoadState) const {
   // first created. bug 947716 has been created to address this issue.
   nsAutoString srcdoc;
   nsCOMPtr<nsIURI> baseURI;
-  if (mIsSrcdocEntry) {
-    srcdoc = mSrcdocData;
+  if (mSrcdocData) {
+    srcdoc = mSrcdocData.value();
     baseURI = mBaseURI;
     flags |= nsDocShell::InternalLoad::INTERNAL_LOAD_FLAGS_IS_SRCDOC;
   } else {
@@ -345,10 +344,15 @@ LoadingSessionHistoryInfo::LoadingSessionHistoryInfo(
 }
 
 LoadingSessionHistoryInfo::LoadingSessionHistoryInfo(
-    SessionHistoryEntry* aEntry, uint64_t aLoadId)
-    : mInfo(aEntry->Info()), mLoadId(aLoadId) {
+    SessionHistoryEntry* aEntry, LoadingSessionHistoryInfo* aInfo)
+    : mInfo(aEntry->Info()),
+      mLoadId(aInfo->mLoadId),
+      mLoadIsFromSessionHistory(aInfo->mLoadIsFromSessionHistory),
+      mRequestedIndex(aInfo->mRequestedIndex),
+      mSessionHistoryLength(aInfo->mSessionHistoryLength),
+      mLoadingCurrentActiveEntry(aInfo->mLoadingCurrentActiveEntry) {
   MOZ_ASSERT(SessionHistoryEntry::sLoadIdToEntry &&
-             SessionHistoryEntry::sLoadIdToEntry->Get(aLoadId) == aEntry);
+             SessionHistoryEntry::sLoadIdToEntry->Get(mLoadId) == aEntry);
 }
 
 already_AddRefed<nsDocShellLoadState>
@@ -830,19 +834,19 @@ SessionHistoryEntry::SetDocshellID(const nsID& aDocshellID) {
 
 NS_IMETHODIMP
 SessionHistoryEntry::GetIsSrcdocEntry(bool* aIsSrcdocEntry) {
-  *aIsSrcdocEntry = mInfo->mIsSrcdocEntry;
+  *aIsSrcdocEntry = mInfo->mSrcdocData.isSome();
   return NS_OK;
 }
 
 NS_IMETHODIMP
 SessionHistoryEntry::GetSrcdocData(nsAString& aSrcdocData) {
-  aSrcdocData = mInfo->mSrcdocData;
+  aSrcdocData = mInfo->mSrcdocData.valueOr(EmptyString());
   return NS_OK;
 }
 
 NS_IMETHODIMP
 SessionHistoryEntry::SetSrcdocData(const nsAString& aSrcdocData) {
-  mInfo->mSrcdocData = aSrcdocData;
+  mInfo->mSrcdocData = Some(nsString(aSrcdocData));
   return NS_OK;
 }
 
@@ -1444,7 +1448,6 @@ void IPDLParamTraits<dom::SessionHistoryInfo>::Write(
   WriteIPDLParam(aMsg, aActor, aParam.mBaseURI);
   WriteIPDLParam(aMsg, aActor, aParam.mLoadReplace);
   WriteIPDLParam(aMsg, aActor, aParam.mURIWasModified);
-  WriteIPDLParam(aMsg, aActor, aParam.mIsSrcdocEntry);
   WriteIPDLParam(aMsg, aActor, aParam.mScrollRestorationIsManual);
   WriteIPDLParam(aMsg, aActor, aParam.mPersist);
   WriteIPDLParam(aMsg, aActor, aParam.mHasUserInteraction);
@@ -1481,7 +1484,6 @@ bool IPDLParamTraits<dom::SessionHistoryInfo>::Read(
       !ReadIPDLParam(aMsg, aIter, aActor, &aResult->mBaseURI) ||
       !ReadIPDLParam(aMsg, aIter, aActor, &aResult->mLoadReplace) ||
       !ReadIPDLParam(aMsg, aIter, aActor, &aResult->mURIWasModified) ||
-      !ReadIPDLParam(aMsg, aIter, aActor, &aResult->mIsSrcdocEntry) ||
       !ReadIPDLParam(aMsg, aIter, aActor,
                      &aResult->mScrollRestorationIsManual) ||
       !ReadIPDLParam(aMsg, aIter, aActor, &aResult->mPersist) ||

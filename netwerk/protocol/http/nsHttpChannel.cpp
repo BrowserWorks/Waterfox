@@ -134,6 +134,9 @@
 #include "mozilla/dom/SecFetch.h"
 #include "mozilla/net/TRRService.h"
 #include "mozilla/URLQueryStringStripper.h"
+#ifdef XP_WIN
+#  include "HttpWinUtils.h"
+#endif
 
 #ifdef MOZ_TASK_TRACER
 #  include "GeckoTaskTracer.h"
@@ -302,31 +305,7 @@ void AutoRedirectVetoNotifier::ReportRedirectResult(bool succeeded) {
 // nsHttpChannel <public>
 //-----------------------------------------------------------------------------
 
-nsHttpChannel::nsHttpChannel()
-    : HttpAsyncAborter<nsHttpChannel>(this),
-      mCacheDisposition(kCacheUnresolved),
-      mLogicalOffset(0),
-      mPostID(0),
-      mRequestTime(0),
-      mSuspendTotalTime(0),
-      mRedirectType(0),
-      mCacheOpenWithPriority(false),
-      mCacheQueueSizeWhenOpen(0),
-      mCachedContentIsValid(false),
-      mIsAuthChannel(false),
-      mAuthRetryPending(false),
-      mPushedStreamId(0),
-      mLocalBlocklist(false),
-      mOnTailUnblock(nullptr),
-      mWarningReporter(nullptr),
-      mIsReadingFromCache(false),
-      mFirstResponseSource(RESPONSE_PENDING),
-      mRaceCacheWithNetwork(false),
-      mRaceDelay(0),
-      mIgnoreCacheEntry(false),
-      mRCWNLock("nsHttpChannel.mRCWNLock"),
-      mProxyConnectResponseCode(0),
-      mDidReval(false) {
+nsHttpChannel::nsHttpChannel() : HttpAsyncAborter<nsHttpChannel>(this) {
   LOG(("Creating nsHttpChannel [this=%p]\n", this));
   mChannelCreationTime = PR_Now();
   mChannelCreationTimestamp = TimeStamp::Now();
@@ -412,6 +391,19 @@ nsresult nsHttpChannel::PrepareToConnect() {
   LOG(("nsHttpChannel::PrepareToConnect [this=%p]\n", this));
 
   AddCookiesToRequest();
+
+#ifdef XP_WIN
+  // If Windows 10 SSO is enabled, we potentially add auth information to
+  // secure top level loads (DOCUMENTs) that aren't anonymous or
+  // private browsing.
+  if (StaticPrefs::network_http_windows10_sso_enabled() &&
+      mURI->SchemeIs("https") &&
+      mLoadInfo->GetExternalContentPolicyType() ==
+          ExtContentPolicy::TYPE_DOCUMENT &&
+      !(mLoadFlags & LOAD_ANONYMOUS) && !mPrivateBrowsing) {
+    AddWindowsSSO(this);
+  }
+#endif
 
   // notify "http-on-modify-request" observers
   CallOnModifyRequestObservers();
@@ -1785,8 +1777,7 @@ nsresult nsHttpChannel::ProcessHSTSHeader(nsITransportSecurityInfo* aSecInfo,
 
   uint32_t failureResult;
   uint32_t headerSource = nsISiteSecurityService::SOURCE_ORGANIC_REQUEST;
-  rv = sss->ProcessHeader(nsISiteSecurityService::HEADER_HSTS, mURI,
-                          securityHeader, aSecInfo, aFlags, headerSource,
+  rv = sss->ProcessHeader(mURI, securityHeader, aSecInfo, aFlags, headerSource,
                           originAttributes, nullptr, nullptr, &failureResult);
   if (NS_FAILED(rv)) {
     nsAutoString consoleErrorCategory(u"Invalid HSTS Headers"_ns);
@@ -5065,6 +5056,9 @@ nsresult nsHttpChannel::AsyncProcessRedirection(uint32_t redirectType) {
                                     &isThirdPartyRedirectURI);
     if (isThirdPartyRedirectURI && mLoadInfo->GetExternalContentPolicyType() ==
                                        ExtContentPolicy::TYPE_DOCUMENT) {
+      Telemetry::AccumulateCategorical(
+          Telemetry::LABELS_QUERY_STRIPPING_COUNT::Redirect);
+
       nsCOMPtr<nsIPrincipal> prin;
       ContentBlockingAllowList::RecomputePrincipal(
           mRedirectURI, mLoadInfo->GetOriginAttributes(), getter_AddRefs(prin));
@@ -5080,6 +5074,9 @@ nsresult nsHttpChannel::AsyncProcessRedirection(uint32_t redirectType) {
           URLQueryStringStripper::Strip(mRedirectURI, strippedURI)) {
         mUnstrippedRedirectURI = mRedirectURI;
         mRedirectURI = strippedURI;
+
+        Telemetry::AccumulateCategorical(
+            Telemetry::LABELS_QUERY_STRIPPING_COUNT::StripForRedirect);
       }
     }
   }
@@ -9081,9 +9078,8 @@ nsHttpChannel::Notify(nsITimer* aTimer) {
   }
   if (aTimer == mNetworkTriggerTimer) {
     return TriggerNetwork();
-  } else {
-    MOZ_CRASH("Unknown timer");
   }
+  MOZ_CRASH("Unknown timer");
 
   return NS_OK;
 }

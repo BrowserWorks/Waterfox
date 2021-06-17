@@ -535,8 +535,7 @@ nsChangeHint nsStyleBorder::CalcDifference(
 }
 
 nsStyleOutline::nsStyleOutline(const Document& aDocument)
-    : mOutlineRadius(ZeroBorderRadius()),
-      mOutlineWidth(kMediumBorderWidth),
+    : mOutlineWidth(kMediumBorderWidth),
       mOutlineOffset({0.0f}),
       mOutlineColor(StyleColor::CurrentColor()),
       mOutlineStyle(StyleOutlineStyle::BorderStyle(StyleBorderStyle::None)),
@@ -546,8 +545,7 @@ nsStyleOutline::nsStyleOutline(const Document& aDocument)
 }
 
 nsStyleOutline::nsStyleOutline(const nsStyleOutline& aSrc)
-    : mOutlineRadius(aSrc.mOutlineRadius),
-      mOutlineWidth(aSrc.mOutlineWidth),
+    : mOutlineWidth(aSrc.mOutlineWidth),
       mOutlineOffset(aSrc.mOutlineOffset),
       mOutlineColor(aSrc.mOutlineColor),
       mOutlineStyle(aSrc.mOutlineStyle),
@@ -565,8 +563,7 @@ nsChangeHint nsStyleOutline::CalcDifference(
   }
 
   if (mOutlineStyle != aNewData.mOutlineStyle ||
-      mOutlineColor != aNewData.mOutlineColor ||
-      mOutlineRadius != aNewData.mOutlineRadius) {
+      mOutlineColor != aNewData.mOutlineColor) {
     if (mActualOutlineWidth > 0) {
       return nsChangeHint_RepaintFrame;
     }
@@ -631,11 +628,10 @@ nsChangeHint nsStyleList::CalcDifference(
   // relies on that when the display value changes from something else
   // to list-item, that change itself would cause ReconstructFrame.
   if (aOldDisplay.IsListItem()) {
-    if (mListStylePosition != aNewData.mListStylePosition) {
+    if (mListStylePosition != aNewData.mListStylePosition ||
+        mCounterStyle != aNewData.mCounterStyle ||
+        mListStyleImage != aNewData.mListStyleImage) {
       return nsChangeHint_ReconstructFrame;
-    }
-    if (mCounterStyle != aNewData.mCounterStyle) {
-      return NS_STYLE_HINT_REFLOW;
     }
   } else if (mListStylePosition != aNewData.mListStylePosition ||
              mCounterStyle != aNewData.mCounterStyle) {

@@ -236,8 +236,7 @@ nsIntRect HyperTextAccessible::GetBoundsInFrame(nsIFrame* aFrame,
     nsRect frameScreenRect = frame->GetScreenRectInAppUnits();
 
     // Get the length of the substring in this frame that we want the bounds for
-    int32_t startFrameTextOffset, endFrameTextOffset;
-    frame->GetOffsets(startFrameTextOffset, endFrameTextOffset);
+    auto [startFrameTextOffset, endFrameTextOffset] = frame->GetOffsets();
     int32_t frameTotalTextLength = endFrameTextOffset - startFrameTextOffset;
     int32_t seekLength = endContentOffset - startContentOffset;
     int32_t frameSubStringLength =
@@ -423,8 +422,8 @@ uint32_t HyperTextAccessible::TransformOffset(LocalAccessible* aDescendant,
       // We manually set the offset so the error doesn't propagate up.
       if (offset == 0 && parent && parent->IsHTMLListItem() &&
           descendant->LocalPrevSibling() &&
-          descendant->LocalPrevSibling()->GetFrame() &&
-          descendant->LocalPrevSibling()->GetFrame()->IsBulletFrame()) {
+          descendant->LocalPrevSibling() ==
+              parent->AsHTMLListItem()->Bullet()) {
         offset = 0;
       } else {
         offset = (offset > 0 || descendant->IndexInParent() > 0) ? 1 : 0;

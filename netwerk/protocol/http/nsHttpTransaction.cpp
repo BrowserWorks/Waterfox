@@ -74,82 +74,7 @@ namespace net {
 // nsHttpTransaction <public>
 //-----------------------------------------------------------------------------
 
-nsHttpTransaction::nsHttpTransaction()
-    : mLock("transaction lock"),
-      mChannelId(0),
-      mRequestSize(0),
-      mRequestHead(nullptr),
-      mResponseHead(nullptr),
-      mReader(nullptr),
-      mWriter(nullptr),
-      mContentLength(-1),
-      mContentRead(0),
-      mTransferSize(0),
-      mInvalidResponseBytesRead(0),
-      mPushedStream(nullptr),
-      mInitialRwin(0),
-      mChunkedDecoder(nullptr),
-      mStatus(NS_OK),
-      mPriority(0),
-      mRestartCount(0),
-      mCaps(0),
-      mHttpVersion(HttpVersion::UNKNOWN),
-      mHttpResponseCode(0),
-      mCurrentHttpResponseHeaderSize(0),
-      mThrottlingReadAllowance(THROTTLE_NO_LIMIT),
-      mCapsToClear(0),
-      mResponseIsComplete(false),
-      mClosed(false),
-      mReadingStopped(false),
-      mConnected(false),
-      mActivated(false),
-      mHaveStatusLine(false),
-      mHaveAllHeaders(false),
-      mTransactionDone(false),
-      mDidContentStart(false),
-      mNoContent(false),
-      mSentData(false),
-      mReceivedData(false),
-      mStatusEventPending(false),
-      mHasRequestBody(false),
-      mProxyConnectFailed(false),
-      mHttpResponseMatched(false),
-      mPreserveStream(false),
-      mDispatchedAsBlocking(false),
-      mResponseTimeoutEnabled(true),
-      mForceRestart(false),
-      mReuseOnRestart(false),
-      mContentDecoding(false),
-      mContentDecodingCheck(false),
-      mDeferredSendProgress(false),
-      mWaitingOnPipeOut(false),
-      mDoNotRemoveAltSvc(false),
-      mReportedStart(false),
-      mReportedResponseHeader(false),
-      mResponseHeadTaken(false),
-      mForTakeResponseTrailers(nullptr),
-      mResponseTrailersTaken(false),
-      mRestarted(false),
-      mTopBrowsingContextId(0),
-      mSubmittedRatePacing(false),
-      mPassedRatePacing(false),
-      mSynchronousRatePaceRequest(false),
-      mClassOfService(0),
-      mResolvedByTRR(false),
-      mEchConfigUsed(false),
-      m0RTTInProgress(false),
-      mDoNotTryEarlyData(false),
-      mEarlyDataDisposition(EARLY_NONE),
-      mTrafficCategory(HttpTrafficCategory::eInvalid),
-      mProxyConnectResponseCode(0),
-      mHTTPSSVCReceivedStage(HTTPSSVC_NOT_USED),
-      m421Received(false),
-      mDontRetryWithDirectRoute(false),
-      mFastFallbackTriggered(false),
-      mAllRecordsInH3ExcludedListBefore(false),
-      mHttp3BackupTimerCreated(false) {
-  this->mSelfAddr.inet = {};
-  this->mPeerAddr.inet = {};
+nsHttpTransaction::nsHttpTransaction() {
   LOG(("Creating nsHttpTransaction @%p\n", this));
 
 #ifdef MOZ_VALGRIND
@@ -465,7 +390,7 @@ nsresult nsHttpTransaction::Init(
 static inline void CreateAndStartTimer(nsCOMPtr<nsITimer>& aTimer,
                                        nsITimerCallback* aCallback,
                                        uint32_t aTimeout) {
-  MOZ_ASSERT(OnSocketThread(), "not on socket thread");
+  MOZ_DIAGNOSTIC_ASSERT(OnSocketThread(), "not on socket thread");
   MOZ_ASSERT(!aTimer);
 
   if (!aTimeout) {
@@ -3192,6 +3117,8 @@ uint32_t nsHttpTransaction::HTTPSSVCReceivedStage() {
 }
 
 void nsHttpTransaction::MaybeCancelFallbackTimer() {
+  MOZ_DIAGNOSTIC_ASSERT(OnSocketThread(), "not on socket thread");
+
   if (mFastFallbackTimer) {
     mFastFallbackTimer->Cancel();
     mFastFallbackTimer = nullptr;
@@ -3360,7 +3287,7 @@ void nsHttpTransaction::HandleFallback(
 
 NS_IMETHODIMP
 nsHttpTransaction::Notify(nsITimer* aTimer) {
-  MOZ_ASSERT(OnSocketThread(), "not on socket thread");
+  MOZ_DIAGNOSTIC_ASSERT(OnSocketThread(), "not on socket thread");
 
   if (!gHttpHandler || !gHttpHandler->ConnMgr()) {
     return NS_OK;
