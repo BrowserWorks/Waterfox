@@ -2,6 +2,7 @@
 
 if [[ $(uname -s) == *Darwin* ]]; then
     # Any macOS specific settings
+	# For release builds we should use -march=core2 -mtune=haswell
 	X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
 elif [[ $(uname -s) == *MINGW32* ]]; then
     # Any Windows specific settings
@@ -39,7 +40,6 @@ ac_add_options --disable-debug
 ac_add_options --disable-dmd
 ac_add_options --disable-geckodriver
 ac_add_options --disable-jprof
-ac_add_options --disable-marionette
 ac_add_options --disable-profiling
 ac_add_options --disable-tests
 ac_add_options --disable-trace-logging
