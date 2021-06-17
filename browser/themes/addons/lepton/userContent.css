@@ -1,0 +1,121 @@
+@media (-moz-proton) {
+    @-moz-document url("about:home"), url("about:newtab") {
+      /** Activity Stream - Search Focus Border: like URL ***********************/
+      /* At DarkMode, Color */
+      body[style*="--newtab-background-color:rgba(28, 27, 34, 1);"],
+      body[style*="--newtab-background-color:rgba(42, 42, 46, 1);"],
+      body[style*="--newtab-background-color: rgba(42, 42, 46, 1);"] {
+        /* inner */
+        --newtab-focus-border: rgba(0, 221, 255, 0.5) !important; /* Original: #B5D3FF, Better color-mix(in srgb, #B5D3FF 70%, transparent) */
+        --newtab-focus-border-selected: rgba(0, 221, 255, 0.5) !important; /* Original: #B5D3FF */
+      }
+  
+      /** Activity Stream - Web Site Icon: full size ****************************/
+      .top-site-outer .tile .icon-wrapper {
+        width:  100% !important; /* Original: 48px */
+        height: 100% !important; /* Original: 48px */
+      }
+    }
+  
+    /** Error Page - Restore illustrations **************************************/
+    @-moz-document url-prefix("about:neterror"),
+    url("about:restartrequired"), url("chrome://browser/content/aboutRestartRequired.xhtml"),
+    url("about:sessionrestore"),  url(chrome://browser/content/aboutSessionRestore.xhtml) {
+      /* Illustrations Position */
+      #errorPageContainer, .description-wrapper {
+        min-height: 300px;
+        background-position: left center;
+        background-repeat: no-repeat;
+        background-size: 38%;
+      }
+  
+      #errorPageContainer {
+        display: flex;
+        flex-direction: column;
+      }
+      .description-wrapper {
+        padding-inline-start: 38%;
+      }
+  
+      /* Container */
+      .container {
+        min-width: var(--in-content-container-min-width); /* 13em */
+        max-width: var(--in-content-container-max-width); /* 52em */
+      }
+  
+      /* Text Position */
+      #text-container {
+        margin: auto;
+        padding-inline-start: 38%;
+      }
+    }
+  
+    @-moz-document url-prefix("about:neterror?e=connectionFailure"),
+    url-prefix("about:neterror?e=netInterrupt"),
+    url-prefix("about:neterror?e=netTimeout"),
+    url-prefix("about:neterror?e=netReset"),
+    url-prefix("about:neterror?e=netOffline"),
+    url("about:restartrequired"), url("chrome://browser/content/aboutRestartRequired.xhtml") {
+      #errorPageContainer {
+        background-image: url("chrome://browser/skin/illustrations/error-connection-failure.svg");
+      }
+    }
+    @-moz-document url-prefix("about:neterror?e=dnsNotFound") {
+      #errorPageContainer {
+        background-image: url("chrome://browser/skin/illustrations/error-server-not-found.svg");
+      }
+    }
+    @-moz-document url-prefix("about:neterror?e=malformedURI") {
+      #errorPageContainer {
+        background-image: url("chrome://browser/skin/illustrations/error-malformed-url.svg");
+      }
+    }
+    @-moz-document url-prefix("about:neterror?e=clockSkewError"),
+    url-prefix("about:neterror?e=nssFailure") {
+      #errorPageContainer {
+        background-image: url("chrome://browser/skin/illustrations/blue-berror.svg");
+        background-size: 18.5em;
+      }
+    }
+  
+    @-moz-document url("about:sessionrestore"), url(chrome://browser/content/aboutSessionRestore.xhtml) {
+      .description-wrapper {
+        background-image: url("chrome://browser/skin/illustrations/error-session-restore.svg");
+      }
+    }
+  
+    @-moz-document url-prefix("about:neterror?e=fileNotFound") {
+      @media (min-width: 970px) {
+        .title {
+          background-image:
+            url("chrome://global/skin/icons/info.svg") !important;
+        }
+      }
+  
+      #text-container {
+        padding-inline-start: 0;
+      }
+    }
+    @-moz-document url-prefix("about:tabcrashed") {
+      @media (min-width: 970px) {
+        .title {
+          background-image: url("chrome://browser/skin/tab-crashed.svg") !important;
+        }
+      }
+    }
+    @-moz-document url("about:robots"), url("chrome://browser/content/aboutRobots.xhtml") {
+      @media (min-width: 970px) {
+        .title {
+          background-image: url("chrome://browser/content/aboutRobots-icon.png") !important;
+        }
+      }
+    }
+    @-moz-document url("about:welcomeBack"), url("chrome://browser/content/aboutWelcomeBack.xhtml") {
+      @media (min-width: 970px) {
+        .title {
+          background-image: url("chrome://browser/skin/welcome-back.svg") !important;
+        }
+      }
+    }
+  }
+  
