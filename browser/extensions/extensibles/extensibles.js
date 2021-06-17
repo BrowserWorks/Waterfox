@@ -15,6 +15,11 @@ ChromeUtils.defineModuleGetter(
 );
 ChromeUtils.defineModuleGetter(
   this,
+  "AboutConfigExtension",
+  "resource://extensibles/AboutConfigExtension.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
   "MenuBarExtension",
   "resource://extensibles/MenuBarExtension.jsm"
 );
@@ -35,6 +40,10 @@ var Extensibles = {
   // called in browser/components/preferences/main.js init
   init_prefToggles() {
     new AboutPreferencesExtension().init_prefTogglesInAllWindows();
+  },
+  // called in browser/components/aboutconfig/content/aboutconfig.js
+  init_configListener() {
+    new AboutConfigExtension().waitForUnload();
   },
   loadMenuBarOverlays() {
     new MenuBarExtension();

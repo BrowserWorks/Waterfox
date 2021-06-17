@@ -4,8 +4,6 @@
 
 var EXPORTED_SYMBOLS = ["AboutPreferencesExtension"];
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-
 const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
@@ -233,20 +231,6 @@ class AboutPreferencesExtension extends ExtensibleUtils {
     this.window.content.Preferences.addSyncFromPrefListener(aElement, () => {
       this._adjustElementStateFromPref(aMenuId, aPrefId);
     });
-  }
-
-  // if about:preferences checkbox toggled, hide/unhide context menu element in all windows
-  _adjustElementStateFromPref(aId, aPref) {
-    let enumerator = Services.wm.getEnumerator("navigator:browser");
-    var preference = Services.prefs.getBoolPref(aPref);
-    while (enumerator.hasMoreElements()) {
-      let win = enumerator.getNext();
-      let { document } = win;
-      let el = document.getElementById(aId);
-      if (el) {
-        el.hidden = !preference;
-      }
-    }
   }
 
   _registerPrefs(aPrefs) {

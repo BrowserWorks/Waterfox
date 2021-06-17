@@ -78,4 +78,17 @@ class ExtensibleUtils {
       }
     }
   }
+
+  adjustElementStateFromPref(aId, aPref) {
+    let enumerator = Services.wm.getEnumerator("navigator:browser");
+    var preference = Services.prefs.getBoolPref(aPref);
+    while (enumerator.hasMoreElements()) {
+      let win = enumerator.getNext();
+      let { document } = win;
+      let el = document.getElementById(aId);
+      if (el) {
+        el.hidden = !preference;
+      }
+    }
+  }
 }
