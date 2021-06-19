@@ -44,12 +44,9 @@ interface ResizeObserverSize {
     readonly attribute unrestricted double blockSize;
 };
 
-[Constructor(Element? target),
- ChromeOnly,
+[ChromeOnly,
  Pref="layout.css.resizeobserver.enabled"]
 interface ResizeObservation {
     readonly attribute Element target;
-/*    readonly attribute long broadcastWidth;
-    readonly attribute long broadcastHeight; */
     boolean isActive();
 };

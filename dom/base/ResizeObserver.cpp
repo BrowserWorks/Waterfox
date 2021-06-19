@@ -351,20 +351,6 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(ResizeObservation)
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ResizeObservation,
                                       mTarget, mOwner)
 
-already_AddRefed<ResizeObservation>
-ResizeObservation::Constructor(const GlobalObject& aGlobal,
-                               Element* aTarget,
-                               ErrorResult& aRv)
-{
-  ResizeObserverOptions options;
-  options.mBox = ResizeObserverBoxOptions::Content_box;
-  nsIFrame* frame = aTarget->GetPrimaryFrame();
-  WritingMode wm = frame ? frame->GetWritingMode() : WritingMode();  
-  RefPtr<ResizeObservation> observation =
-    new ResizeObservation(aGlobal.GetAsSupports(), aTarget, options.mBox, wm);
-  return observation.forget();
-}
-
 bool
 ResizeObservation::IsActive() const
 {
@@ -381,15 +367,6 @@ ResizeObservation::UpdateLastReportedSize(const nsSize& aSize) {
   mLastReportedWM = frame ? frame->GetWritingMode() : WritingMode();
   mLastReportedSize = LogicalSize(mLastReportedWM, aSize);
 }
-
-/*
-void
-ResizeObservation::UpdateBroadcastSize(nsRect aRect)
-{
-  mBroadcastWidth = aRect.width;
-  mBroadcastHeight = aRect.height;
-}
-*/
 
 ResizeObservation::~ResizeObservation()
 {
