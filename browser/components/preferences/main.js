@@ -125,6 +125,7 @@ Preferences.addAll([
 
   // Bookmarks Toolbar Position
   { id: "browser.bookmarksBar.position", type: "wstring" },
+  { id: "browser.bookmarksBar.moved", type: "bool" },
 
   // Menu Icon Style
   { id: "browser.menuIcon.style", type: "int" },

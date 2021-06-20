@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Abyss",
-  "version": "1.0",
+  "version": "1.0.8",
   "description":"Dark theme for Waterfox UI",
   "applications":{
     "gecko":{

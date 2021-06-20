@@ -1,5 +1,7 @@
 "use strict";
 
+var EXPORTED_SYMBOLS = ["StoreHandler"];
+
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -61,14 +63,17 @@ const ReusableStreamInstance = Components.Constructor(
 const uuidGenerator = Components.classes["@mozilla.org/uuid-generator;1"]
                     .getService(Components.interfaces.nsIUUIDGenerator);
 
-var EXPORTED_SYMBOLS = ["StoreHandler"];
 
-/**
- * API to handle manipulation of crx extensions to enable
- * installing into Waterfox
- * @class
- */
-var StoreHandler = {
+class StoreHandler {
+
+    // init vars
+    constructor() {
+        this.uuidString = this._getUUID().slice(1,-1);
+        this.xpiPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", this.uuidString, "extension.xpi");
+        this.manifestPath = OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp", this.uuidString, "new_manifest.json");
+        this.nsiFileXpi = this._getNsiFile(this.xpiPath);
+        this.nsiManifest = this._getNsiFile(this.manifestPath);
+    };
 
     /**
      * Remove dir if it exists
@@ -76,49 +81,49 @@ var StoreHandler = {
      */
     flushDir(dir) {
         return new Promise(resolve => {
-            const nsiDir = this.getNsiFile(dir);
+            const nsiDir = this._getNsiFile(dir);
             if (nsiDir.exists()) {
                 // remove all files
                 nsiDir.remove(true);
             }
             resolve();
         })
-    },
+    };
 
     /**
      * Return extension UUID, set and return if not already set
      */
-    getUUID: function __getUUID() {
+    _getUUID() {
         if (!this._extensionUUID) {
             this._setUUID();
         };
         return this._extensionUUID;
-    },
+    };
 
     /**
      * Set extension UUID
      */
-    _setUUID: function __setUUID() {
+    _setUUID() {
         let uuid = uuidGenerator.generateUUID();
         let uuidString = uuid.toString();
         this._extensionUUID = uuidString;
-    },
+    };
 
     /**
      * Reset extension UUID
      */
-    _resetUUID: function __resetUUID() {
+    _resetUUID() {
         return new Promise(resolve => {
             this._extensionUUID = undefined;
             resolve();
         })
-    },
+    };
 
     /**
      * Display prompt in event of failed installation
      * @param msg string message to display
      */
-    _installFailedMsg: function __installFailedMsg(msg="Encountered an error during extension installation") {
+    _installFailedMsg(msg="Encountered an error during extension installation") {
         const anchorID = "addons-notification-icon";
         const win = BrowserWindowTracker.getTopWindow();
         const browser = win.gBrowser.selectedBrowser;
@@ -140,78 +145,75 @@ var StoreHandler = {
             null,
             options
           );
-    },
+    };
 
     /**
      * Get an nsiFile object from a given path
      * @param path string path to file
      */
-    getNsiFile(path) {
+    _getNsiFile(path) {
         let nsiFile = new FileUtils.File(path);
         return nsiFile;
-    },
+    };
 
     /**
      * Attempt to install a crx extension
      * @param uri object uri of request
-     * @param xpiPath string path to tmp extension file
-     * @param nsiFileXpi nsiFile tmp xpi file
-     * @param nsiManifest nsiFile tmp manifest.json
      * @param retry bool is this a retry attempt or not
      */
-    attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest, retry=false) {
+    attemptInstall(uri, retry=false) {
         let channel = NetUtil.newChannel({uri: uri.spec, loadUsingSystemPrincipal: true});
         NetUtil.asyncFetch(channel, (aInputStream, aResult) => {
             // Check that we had success.
             if (!Components.isSuccessCode(aResult)) {
-                if (retry == false) {this.attemptInstall(uri, xpiPath, nsiFileXpi, nsiManifest, true);return false;}
+                if (retry == false) {this.attemptInstall(uri, true);return false;}
                 this._installFailedMsg("The add-on could not be downloaded because of a connection failure.");
                 return false;
             };
             // write nsiInputStream to nsiOutputStream
             // this was originally in a separate function but had error
             // passing input stream between funcs
-            let aOutputStream = FileUtils.openAtomicFileOutputStream(nsiFileXpi);
+            let aOutputStream = FileUtils.openAtomicFileOutputStream(this.nsiFileXpi);
             NetUtil.asyncCopy(aInputStream, aOutputStream, async (aResult) => {
                 // Check that we had success.
                 if (!Components.isSuccessCode(aResult)) {
                     // delete any tmp files
-                    this._cleanup(nsiFileXpi);
+                    this._cleanup(this.nsiFileXpi);
                     this._installFailedMsg("This add-on could not be installed because of a filesystem error.");
                     return false;
                 };
                 try {
-                    await this._removeChromeHeaders(xpiPath);
-                    let manifest = this._amendManifest(nsiFileXpi);
+                    await this._removeChromeHeaders(this.xpiPath);
+                    let manifest = this._amendManifest(this.nsiFileXpi);
                     if (manifest instanceof Array) {
-                        this._cleanup(nsiFileXpi);
+                        this._cleanup(this.nsiFileXpi);
                         this._installFailedMsg(
                             "This add-on could not be installed because not all of its features are supported."
                             );
                         Services.console.logStringMessage('CRX: Unsupported APIs: ' + manifest.join(","))
                         return false;
                     }
-                    this._writeTmpManifest(nsiManifest, manifest);
-                    this._replaceManifestInXpi(nsiFileXpi, nsiManifest);
-                    await this._installXpi(nsiFileXpi);
-                    // this._cleanup(nsiFileXpi);
+                    this._writeTmpManifest(this.nsiManifest, manifest);
+                    this._replaceManifestInXpi(this.nsiFileXpi, this.nsiManifest);
+                    await this._installXpi(this.nsiFileXpi);
+                    // this._cleanup(this.nsiFileXpi);
                     this._resetUUID();
                 } catch(e) {
                     // delete any tmp files
-                    this._cleanup(nsiFileXpi);
+                    this._cleanup(this.nsiFileXpi);
                     this._installFailedMsg("There was an issue while attempting to install the add-on.");
                     Services.console.logStringMessage('CRX: Error installing add-on: ' + e)
                     return false;
                 };
             });
         });
-    },
+    };
 
     /**
      * Remove Chrome headers from crx addon
      * @param path string path to downloaded extension file
      */
-    _removeChromeHeaders: async function __removeChromeHeaders(path) {
+    async _removeChromeHeaders(path) {
         try {
             // read using OS.File to enable data manipulation
             let arrayBuffer = await OS.File.read(path);
@@ -236,13 +238,13 @@ var StoreHandler = {
             Services.console.logStringMessage("CRX: Error removing Chrome headers");
             return false;
         }
-    },
+    };
 
     /**
      * Check API compatability and maybe add id and remove update_url from manifest
      * @param file nsiFile tmp extension file
      */
-    _amendManifest: function __amendManifest(file) {
+    _amendManifest(file) {
         try {
             // unzip nsiFile object
             let zr = new ZipReader(file);
@@ -261,7 +263,7 @@ var StoreHandler = {
             }
             manifest.applications = {
                 gecko: {
-                    id: this.getUUID()
+                    id: this._getUUID()
                 }
             };
             // cannot allow auto update of crx extensions
@@ -274,13 +276,13 @@ var StoreHandler = {
             Services.console.logStringMessage("CRX: Error updating manifest: " + e);
             return false;
         }
-    },
+    };
 
     /**
      * Parse manifest file into JS Object
      * @param zr nsiZipReader ZipReader object
      */
-    _parseManifest: function __parseManifest(zr) {
+    _parseManifest(zr) {
         let entryPointer = "manifest.json";
         if (zr.hasEntry(entryPointer)) {
             let entry = zr.getEntry(entryPointer);
@@ -290,13 +292,13 @@ var StoreHandler = {
             let manifest = JSON.parse(fileContents);
             return manifest;
         }
-    },
+    };
 
     /**
      * Check support for APIs in manifest
      * @param manifest Object manifest to compatibility check
      */
-    _manifestCompatCheck: function __manifestCompatCheck(manifest) {
+    _manifestCompatCheck(manifest) {
         let unsupported = {
             "externally_connectable":"",
             "storage":"",
@@ -390,14 +392,14 @@ var StoreHandler = {
             }
         })
         return unsupportedInManifest;
-    },
+    };
 
     /**
      * Ensure manifest compliance based on extension contents
      * @param manifest
      * @param zr
      */
-    _localeCheck: function __localeCheck(manifest, zr) {
+    _localeCheck(manifest, zr) {
         let entryPointer = "_locales/";
         if (zr.hasEntry(entryPointer)) {
             if (!manifest.default_locale) {
@@ -409,24 +411,24 @@ var StoreHandler = {
             }
         }
         return manifest;
-    },
+    };
 
     /**
      * Write amended manifest to temporary manifest.json
      * @param file nsiFile tmp manifest.json
      * @param manifest string JSON string of amended manifest
      */
-    _writeTmpManifest: function __writeTmpManifest(file, manifest) {
+    _writeTmpManifest(file, manifest) {
         let manifestOutputStream = FileUtils.openAtomicFileOutputStream(file);
         manifestOutputStream.write(manifest, manifest.length);
-    },
+    };
 
     /**
      * Replace the manifest in the tmp extension file with the amended version
      * @param xpiFile nsiFile tmp extension file
      * @param manifestFile nsiFile tmp manifest.json
      */
-    _replaceManifestInXpi: function __replaceManifestInXpi(xpiFile, manifestFile) {
+    _replaceManifestInXpi(xpiFile, manifestFile) {
         try {
             let pr = {
                 PR_RDONLY: 0x01, PR_WRONLY: 0x02, PR_RDWR: 0x04,
@@ -441,13 +443,13 @@ var StoreHandler = {
             Services.console.logStringMessage("CRX: Error replacing manifest")
             return false;
         }
-    },
+    };
 
     /**
      * Silently install extension
      * @param xpiFile nsiFile tmp extension file to install
      */
-    _installXpi: async function __installXpi(xpiFile) {
+    async _installXpi(xpiFile) {
         let install = await AddonManager.getInstallForFile(xpiFile);
         const win = BrowserWindowTracker.getTopWindow();
         const browser = win.gBrowser.selectedBrowser;
@@ -457,18 +459,18 @@ var StoreHandler = {
             document.documentURI,
             install
           );
-    },
+    };
 
     /**
      * Remove tmp files
      * @param zipFile nsiFile tmp extension file
      */
-    _cleanup: function __cleanup(zipFile) {
+    _cleanup(zipFile) {
         return new Promise(resolve => {
             let parent = zipFile.parent;
             parent.remove(true);
             resolve();
         })
 
-    }
+    };
 }

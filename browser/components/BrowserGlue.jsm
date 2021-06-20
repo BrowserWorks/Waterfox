@@ -707,7 +707,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SessionStartup: "resource:///modules/sessionstore/SessionStartup.jsm",
   SessionStore: "resource:///modules/sessionstore/SessionStore.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
-  StoreHandler: "resource://gre/modules/amStoreHandler.jsm",
+  StoreHandler: "resource://addon-stores/StoreHandler.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
   TabUnloader: "resource:///modules/TabUnloader.jsm",
   TRRRacer: "resource:///modules/TRRPerformance.jsm",
@@ -1331,15 +1331,14 @@ BrowserGlue.prototype = {
       "resource:///modules/themes/light/"
     );
 
-
     AddonManager.maybeInstallBuiltinAddon(
       "abyss@waterfox.net",
-      "1.0",
+      "1.0.8",
       "resource:///modules/themes/abyss/"
     );
     AddonManager.maybeInstallBuiltinAddon(
       "floe@waterfox.net",
-      "1.0",
+      "1.0.8",
       "resource:///modules/themes/floe/"
     );
 
@@ -2546,10 +2545,11 @@ BrowserGlue.prototype = {
       // flush extension tmp and staged dir
       {
         task: () => {
-          StoreHandler.flushDir(
+          let sh = new StoreHandler();
+          sh.flushDir(
             OS.Path.join(OS.Constants.Path.profileDir, "extensions", "tmp")
           );
-          StoreHandler.flushDir(
+          sh.flushDir(
             OS.Path.join(OS.Constants.Path.profileDir, "extensions", "staged")
           );
         }

@@ -103,11 +103,6 @@ ChromeUtils.defineModuleGetter(
   "setTimeout",
   "resource://gre/modules/Timer.jsm"
 );
-ChromeUtils.defineModuleGetter(
-  this,
-  "StoreHandler",
-  "resource://gre/modules/amStoreHandler.jsm"
-);
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
@@ -115,27 +110,6 @@ XPCOMUtils.defineLazyServiceGetter(
   "@mozilla.org/addons/addon-manager-startup;1",
   "amIAddonManagerStartup"
 );
-
-const ZipReader = Components.Constructor(
-  "@mozilla.org/libjar/zip-reader;1",
-  "nsIZipReader",
-  "open"
-);
-
-const ReusableStreamInstance = Components.Constructor(
-  "@mozilla.org/scriptableinputstream;1",
-  "nsIScriptableInputStream",
-  "init"
-);
-
-const FileStream = Components.Constructor(
-  "@mozilla.org/network/file-input-stream;1",
-  "nsIFileInputStream",
-  "init"
-);
-
-// var fileStream = Components.classes["@mozilla.org/network/file-input-stream;1"]
-//                   .createInstance(Components.interfaces.nsIFileInputStream);
 
 const {
   createAppInfo,

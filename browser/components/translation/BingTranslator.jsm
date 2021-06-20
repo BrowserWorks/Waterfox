@@ -384,7 +384,7 @@ var BingTokenManager = {
    */
   _getNewToken() {
     let url = getUrlParam(
-      "https://westeurope.api.cognitive.microsoft.com/sts/v1.0/issueToken",
+      "https://api.cognitive.microsoft.com/sts/v1.0/issueToken",
       "browser.translation.bing.authURL"
     );
     let headers = [
