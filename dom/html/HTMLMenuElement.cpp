@@ -116,7 +116,8 @@ HTMLMenuElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                               const nsAttrValue* aValue,
                               const nsAttrValue* aOldValue, bool aNotify)
 {
-  if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::type) {
+  if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::type &&
+      Preferences::GetBool("dom.menuitem.enabled")) {
     if (aValue) {
       mType = aValue->GetEnumValue();
     } else {
@@ -134,7 +135,8 @@ HTMLMenuElement::ParseAttribute(int32_t aNamespaceID,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult)
 {
-  if (aNamespaceID == kNameSpaceID_None && aAttribute == nsGkAtoms::type) {
+  if (aNamespaceID == kNameSpaceID_None && aAttribute == nsGkAtoms::type &&
+      Preferences::GetBool("dom.menuitem.enabled")) {
     return aResult.ParseEnumValue(aValue, kMenuTypeTable, false,
                                   kMenuDefaultType);
   }

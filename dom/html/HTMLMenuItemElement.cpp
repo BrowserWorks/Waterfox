@@ -8,12 +8,21 @@
 
 #include "mozilla/BasicEvents.h"
 #include "mozilla/EventDispatcher.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/dom/HTMLMenuItemElementBinding.h"
+#include "mozilla/dom/HTMLUnknownElement.h"
 #include "nsAttrValueInlines.h"
 #include "nsContentUtils.h"
 
-
-NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(MenuItem)
+nsGenericHTMLElement*
+NS_NewHTMLMenuItemElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
+                          mozilla::dom::FromParser aFromParser) {
+  if (mozilla::Preferences::GetBool("dom.menuitem.enabled")) {
+    return new mozilla::dom::HTMLMenuItemElement(aNodeInfo, aFromParser);
+  } else {
+    return new mozilla::dom::HTMLUnknownElement(aNodeInfo);
+  }
+}
 
 namespace mozilla {
 namespace dom {

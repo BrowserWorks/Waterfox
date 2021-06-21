@@ -72,7 +72,6 @@
   ['mark', ''],
   ['marquee', 'Div'],
   ['menu', 'Menu'],
-  ['menuitem', 'MenuItem'],
   ['meta', 'Meta'],
   ['meter', 'Meter'],
   ['nav', ''],

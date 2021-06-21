@@ -12,7 +12,7 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-menuitem-element
-[HTMLConstructor]
+[HTMLConstructor, Pref="dom.menuitem.enabled"]
 interface HTMLMenuItemElement : HTMLElement {
            [CEReactions, SetterThrows]
            attribute DOMString type;
