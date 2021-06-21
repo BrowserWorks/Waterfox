@@ -126,7 +126,12 @@ void
 nsTableColFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                   const nsDisplayListSet& aLists)
 {
-  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aLists);
+  // Per https://drafts.csswg.org/css-tables-3/#global-style-overrides:
+  // "All css properties of table-column and table-column-group boxes are
+  // ignored, except when explicitly specified by this specification."
+  // CSS outlines and box-shadows fall into this category, so we skip them
+  // on these boxes.
+  MOZ_ASSERT_UNREACHABLE("Cols don't paint themselves");
 }
 
 int32_t nsTableColFrame::GetSpan()
@@ -212,7 +217,9 @@ void
 nsTableColFrame::InvalidateFrame(uint32_t aDisplayItemKey)
 {
   nsIFrame::InvalidateFrame(aDisplayItemKey);
-  GetParent()->InvalidateFrameWithRect(GetVisualOverflowRect() + GetPosition(), aDisplayItemKey);
+  if (GetTableFrame()->IsBorderCollapse()) {
+    GetParent()->InvalidateFrameWithRect(GetVisualOverflowRect() + GetPosition(), aDisplayItemKey);
+  }
 }
 
 void

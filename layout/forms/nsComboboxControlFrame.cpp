@@ -1351,7 +1351,7 @@ void
 nsComboboxDisplayFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                          const nsDisplayListSet& aLists)
 {
-  nsDisplayListCollection set;
+  nsDisplayListCollection set(aBuilder);
   nsBlockFrame::BuildDisplayList(aBuilder, set);
 
   // remove background items if parent frame is themed

@@ -892,7 +892,6 @@ nsDisplayListBuilder::nsDisplayListBuilder(nsIFrame* aReferenceFrame,
     : mReferenceFrame(aReferenceFrame),
       mIgnoreScrollFrame(nullptr),
       mLayerEventRegions(nullptr),
-      mCurrentTableItem(nullptr),
       mCurrentActiveScrolledRoot(nullptr),
       mCurrentContainerASR(nullptr),
       mCurrentFrame(aReferenceFrame),
@@ -905,6 +904,7 @@ nsDisplayListBuilder::nsDisplayListBuilder(nsIFrame* aReferenceFrame,
       mScrollInfoItemsForHoisting(nullptr),
       mActiveScrolledRootForRootScrollframe(nullptr),
       mMode(aMode),
+      mTableBackgroundSet(nullptr),
       mCurrentScrollParentId(FrameMetrics::NULL_SCROLL_ID),
       mCurrentScrollbarTarget(FrameMetrics::NULL_SCROLL_ID),
       mCurrentScrollbarFlags(0),
@@ -1113,7 +1113,6 @@ nsDisplayListBuilder::~nsDisplayListBuilder() {
                "All frames should have been unmarked");
   NS_ASSERTION(mPresShellStates.Length() == 0,
                "All presshells should have been exited");
-  NS_ASSERTION(!mCurrentTableItem, "No table item should be active");
 
   nsCSSRendering::EndFrameTreesLocked();
 
@@ -1195,8 +1194,22 @@ nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
   }
   state->mInsidePointerEventsNoneDoc = pointerEventsNone;
 
-  if (!buildCaret)
+  state->mPresShellIgnoreScrollFrame =
+      state->mPresShell->IgnoringViewportScrolling()
+          ? state->mPresShell->GetRootScrollFrame()
+          : nullptr;
+
+  nsPresContext* pc = aReferenceFrame->PresContext();
+  nsCOMPtr<nsIDocShell> docShell = pc->GetDocShell();
+  if (docShell) {
+    docShell->GetWindowDraggingAllowed(&mWindowDraggingAllowed);
+  }
+
+  mIsInChromePresContext = pc->IsChrome();
+
+  if (!buildCaret) {
     return;
+  }
 
   RefPtr<nsCaret> caret = state->mPresShell->GetCaret();
   state->mCaretFrame = caret->GetPaintGeometry(&state->mCaretRect);
@@ -1204,13 +1217,6 @@ nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
     mFramesMarkedForDisplay.AppendElement(state->mCaretFrame);
     MarkFrameForDisplay(state->mCaretFrame, nullptr);
   }
-
-  nsPresContext* pc = aReferenceFrame->PresContext();
-  nsCOMPtr<nsIDocShell> docShell = pc->GetDocShell();
-  if (docShell) {
-    docShell->GetWindowDraggingAllowed(&mWindowDraggingAllowed);
-  }
-  mIsInChromePresContext = pc->IsChrome();
 }
 
 // A non-blank paint is a paint that does not just contain the canvas background.
@@ -3087,8 +3093,7 @@ static nsStyleContext* GetBackgroundStyleContext(nsIFrame* aFrame)
 
 /* static */ void
 SetBackgroundClipRegion(DisplayListClipState::AutoSaveRestore& aClipState,
-                        nsIFrame* aFrame, const nsPoint& aToReferenceFrame,
-                        const nsStyleImageLayers::Layer& aLayer,
+                        nsIFrame* aFrame, const nsStyleImageLayers::Layer& aLayer,
                         const nsRect& aBackgroundRect,
                         bool aWillPaintBorder)
 {
@@ -3149,14 +3154,15 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
                                                      bool aAllowWillPaintBorderOptimization,
                                                      nsStyleContext* aStyleContext,
                                                      const nsRect& aBackgroundOriginRect,
-                                                     nsIFrame* aSecondaryReferenceFrame)
+                                                     nsIFrame* aSecondaryReferenceFrame,
+                                                     Maybe<nsDisplayListBuilder::AutoBuildingDisplayList>* aAutoBuildingDisplayList)
 {
   nsStyleContext* bgSC = aStyleContext;
   const nsStyleBackground* bg = nullptr;
-  nsRect bgRect = aBackgroundRect + aBuilder->ToReferenceFrame(aFrame);
+  nsRect bgRect = aBackgroundRect;
   nsRect bgOriginRect = bgRect;
   if (!aBackgroundOriginRect.IsEmpty()) {
-    bgOriginRect = aBackgroundOriginRect + aBuilder->ToReferenceFrame(aFrame);
+    bgOriginRect = aBackgroundOriginRect;
   }
   nsPresContext* presContext = aFrame->PresContext();
   bool isThemed = aFrame->IsThemed();
@@ -3192,8 +3198,6 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
                          !isThemed && !hasInsetShadow &&
                          borderStyle->HasBorder();
 
-  nsPoint toRef = aBuilder->ToReferenceFrame(aFrame);
-
   // An auxiliary list is necessary in case we have background blending; if that
   // is the case, background items need to be wrapped by a blend container to
   // isolate blending to the background
@@ -3202,6 +3206,9 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
   // to create an item for hit testing.
   if ((drawBackgroundColor && color != NS_RGBA(0,0,0,0)) ||
       aBuilder->IsForEventDelivery()) {
+    if (aAutoBuildingDisplayList && !*aAutoBuildingDisplayList) {
+      aAutoBuildingDisplayList->emplace(aBuilder, aFrame);
+    }
     DisplayListClipState::AutoSaveRestore clipState(aBuilder);
     if (bg && !aBuilder->IsForEventDelivery()) {
       // Disable the will-paint-border optimization for background
@@ -3213,7 +3220,7 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
       // artifacts along the rounded corners.
       bool useWillPaintBorderOptimization = willPaintBorder &&
           nsLayoutUtils::HasNonZeroCorner(borderStyle->mBorderRadius);
-      SetBackgroundClipRegion(clipState, aFrame, toRef,
+      SetBackgroundClipRegion(clipState, aFrame,
                               bg->BottomLayer(), bgRect,
                               useWillPaintBorderOptimization);
     }
@@ -3260,6 +3267,10 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
       continue;
     }
 
+    if (aAutoBuildingDisplayList && !*aAutoBuildingDisplayList) {
+      aAutoBuildingDisplayList->emplace(aBuilder, aFrame);
+    }
+
     if (bg->mImage.mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
       needBlendContainer = true;
     }
@@ -3267,8 +3278,8 @@ nsDisplayBackgroundImage::AppendBackgroundItemsToTop(nsDisplayListBuilder* aBuil
     DisplayListClipState::AutoSaveRestore clipState(aBuilder);
     if (!aBuilder->IsForEventDelivery()) {
       const nsStyleImageLayers::Layer& layer = bg->mImage.mLayers[i];
-      SetBackgroundClipRegion(clipState, aFrame, toRef,
-                              layer, bgRect, willPaintBorder);
+      SetBackgroundClipRegion(clipState, aFrame, layer, bgRect,
+                              willPaintBorder);
     }
 
     nsDisplayList thisItemList;

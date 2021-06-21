@@ -514,7 +514,7 @@ void
 nsPageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                               const nsDisplayListSet& aLists)
 {
-  nsDisplayListCollection set;
+  nsDisplayListCollection set(aBuilder);
 
   if (PresContext()->IsScreen()) {
     DisplayBorderBackgroundOutline(aBuilder, aLists);

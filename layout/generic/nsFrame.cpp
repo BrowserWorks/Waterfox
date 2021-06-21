@@ -2053,6 +2053,12 @@ void
 nsFrame::DisplayOutlineUnconditional(nsDisplayListBuilder*   aBuilder,
                                      const nsDisplayListSet& aLists)
 {
+  // Per https://drafts.csswg.org/css-tables-3/#global-style-overrides:
+  // "All css properties of table-column and table-column-group boxes are
+  // ignored, except when explicitly specified by this specification."
+  // CSS outlines fall into this category, so we skip them on these boxes.
+  MOZ_ASSERT(!IsTableColGroupFrame() && !IsTableColFrame());
+
   if (!StyleOutline()->ShouldPaintOutline()) {
     return;
   }
@@ -2098,7 +2104,9 @@ nsFrame::DisplayBackgroundUnconditional(nsDisplayListBuilder* aBuilder,
   if (aBuilder->IsForEventDelivery() || aForceBackground ||
       !StyleBackground()->IsTransparent(this) || StyleDisplay()->mAppearance) {
     return nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
-        aBuilder, this, GetRectRelativeToSelf(), aLists.BorderBackground());
+        aBuilder, this,
+        GetRectRelativeToSelf() + aBuilder->ToReferenceFrame(this),
+        aLists.BorderBackground());
   }
   return false;
 }
@@ -2131,7 +2139,9 @@ nsFrame::DisplayBorderBackgroundOutline(nsDisplayListBuilder*   aBuilder,
 
   // If there's a themed background, we should not create a border item.
   // It won't be rendered.
-  if (!bgIsThemed && StyleBorder()->HasBorder()) {
+  // Don't paint borders for tables here, since they paint them in a different
+  // order.
+  if (!bgIsThemed && StyleBorder()->HasBorder() && !IsTableFrame()) {
     aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
       nsDisplayBorder(aBuilder, this));
   }
@@ -2578,7 +2588,7 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     clipState.Clear();
   }
 
-  nsDisplayListCollection set;
+  nsDisplayListCollection set(aBuilder);
   {
     DisplayListClipState::AutoSaveRestore nestedClipState(aBuilder);
     nsDisplayListBuilder::AutoInTransformSetter
@@ -2925,41 +2935,59 @@ WrapInWrapList(nsDisplayListBuilder* aBuilder,
 /**
  * Check if a frame should be visited for building display list.
  */
-static bool
-DescendIntoChild(nsDisplayListBuilder* aBuilder, nsIFrame *aChild,
-                 const nsRect& aDirty)
+static bool DescendIntoChild(nsDisplayListBuilder* aBuilder,
+                             const nsIFrame* aChild, const nsRect& aDirty)
 {
-  nsIFrame* child = aChild;
-  const nsRect& dirty = aDirty;
+  if (aChild->GetStateBits() & NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO) {
+    return true;
+  }
 
-  if (!(child->GetStateBits() & NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO)) {
-    // No need to descend into child to catch placeholders for visible
-    // positioned stuff. So see if we can short-circuit frame traversal here.
+  // If the child is a scrollframe that we want to ignore, then we need
+  // to descend into it because its scrolled child may intersect the dirty
+  // area even if the scrollframe itself doesn't.
+  if (aChild == aBuilder->GetIgnoreScrollFrame()) {
+    return true;
+  }
 
-    // We can stop if child's frame subtree's intersection with the
-    // dirty area is empty.
-    // If the child is a scrollframe that we want to ignore, then we need
-    // to descend into it because its scrolled child may intersect the dirty
-    // area even if the scrollframe itself doesn't.
-    // There are cases where the "ignore scroll frame" on the builder is not set
-    // correctly, and so we additionally want to catch cases where the child is
-    // a root scrollframe and we are ignoring scrolling on the viewport.
-    nsIPresShell* shell = child->PresContext()->PresShell();
-    bool keepDescending = child == aBuilder->GetIgnoreScrollFrame() ||
-      (shell->IgnoringViewportScrolling() && child == shell->GetRootScrollFrame());
-    if (!keepDescending) {
-      nsRect childDirty;
-      if (!childDirty.IntersectRect(dirty, child->GetVisualOverflowRect())) {
-        return false;
-      }
-      // Usually we could set dirty to childDirty now but there's no
-      // benefit, and it can be confusing. It can especially confuse
-      // situations where we're going to ignore a scrollframe's clipping;
-      // we wouldn't want to clip the dirty area to the scrollframe's
-      // bounds in that case.
+  // There are cases where the "ignore scroll frame" on the builder is not set
+  // correctly, and so we additionally want to catch cases where the child is
+  // a root scrollframe and we are ignoring scrolling on the viewport.
+  if (aChild == aBuilder->GetPresShellIgnoreScrollFrame()) {
+    return true;
+  }
+
+  const nsRect overflow = aChild->GetVisualOverflowRect();
+
+  if (aDirty.Intersects(overflow)) {
+    return true;
+  }
+
+  if (aChild->IsFrameOfType(nsIFrame::eTablePart)) {
+    // Relative positioning and transforms can cause table parts to move, but we
+    // will still paint the backgrounds for their ancestor parts under them at
+    // their 'normal' position. That means that we must consider the overflow
+    // rects at both positions.
+
+    // We convert the overflow rect into the nsTableFrame's coordinate
+    // space, applying the normal position offset at each step. Then we
+    // compare that against the builder's cached dirty rect in table
+    // coordinate space.
+    const nsIFrame* f = aChild;
+    nsRect normalPositionOverflowRelativeToTable = overflow;
+
+    while (f->IsFrameOfType(nsIFrame::eTablePart)) {
+      normalPositionOverflowRelativeToTable += f->GetNormalPosition();
+      f = f->GetParent();
+    }
+
+    nsDisplayTableBackgroundSet* tableBGs = aBuilder->GetTableBackgroundSet();
+    if (tableBGs &&
+        tableBGs->GetDirtyRect().Intersects(normalPositionOverflowRelativeToTable)) {
+      return true;
     }
   }
-  return true;
+
+  return false;
 }
 
 void
@@ -3273,7 +3301,7 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
     // We allow positioned descendants of the child to escape to our parent
     // stacking context's positioned descendant list, because they might be
     // z-index:non-auto
-    nsDisplayListCollection pseudoStack;
+    nsDisplayListCollection pseudoStack(aBuilder);
     aBuilder->AdjustWindowDraggingRegion(child);
     nsDisplayListBuilder::AutoContainerASRTracker contASRTracker(aBuilder);
     child->BuildDisplayList(aBuilder, pseudoStack);

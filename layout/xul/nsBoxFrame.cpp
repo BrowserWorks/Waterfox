@@ -1332,7 +1332,7 @@ nsBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     }
   }
 
-  nsDisplayListCollection tempLists;
+  nsDisplayListCollection tempLists(aBuilder);
   const nsDisplayListSet& destination = forceLayer ? tempLists : aLists;
 
   DisplayBorderBackgroundOutline(aBuilder, destination);

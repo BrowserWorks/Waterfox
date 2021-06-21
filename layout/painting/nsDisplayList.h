@@ -52,6 +52,7 @@ class nsISelection;
 class nsIScrollableFrame;
 class nsDisplayLayerEventRegions;
 class nsDisplayScrollInfoLayer;
+class nsDisplayTableBackgroundSet;
 class nsCaret;
 
 namespace mozilla {
@@ -601,6 +602,15 @@ public:
    * Get the caret associated with the current presshell.
    */
   nsCaret* GetCaret();
+
+  /**
+   * Returns the root scroll frame for the current PresShell, if the PresShell
+   * is ignoring viewport scrolling.
+   */
+  nsIFrame* GetPresShellIgnoreScrollFrame() {
+    return CurrentPresShellState()->mPresShellIgnoreScrollFrame;
+  }
+
   /**
    * Notify the display list builder that we're entering a presshell.
    * aReferenceFrame should be a frame in the new presshell.
@@ -659,6 +669,16 @@ public:
    */
   void SetSyncDecodeImages(bool aSyncDecodeImages) {
     mSyncDecodeImages = aSyncDecodeImages;
+  }
+
+  nsDisplayTableBackgroundSet* SetTableBackgroundSet(
+      nsDisplayTableBackgroundSet* aTableSet) {
+    nsDisplayTableBackgroundSet* old = mTableBackgroundSet;
+    mTableBackgroundSet = aTableSet;
+    return old;
+  }
+  nsDisplayTableBackgroundSet* GetTableBackgroundSet() const {
+    return mTableBackgroundSet;
   }
 
   /**
@@ -809,6 +829,11 @@ public:
   friend class AutoBuildingDisplayList;
   class AutoBuildingDisplayList {
   public:
+
+  AutoBuildingDisplayList(nsDisplayListBuilder* aBuilder, nsIFrame* aForChild)
+        : AutoBuildingDisplayList(
+                            aBuilder, aForChild, aBuilder->GetDirtyRect(), aForChild->IsTransformed()){}
+
     AutoBuildingDisplayList(nsDisplayListBuilder* aBuilder,
                             nsIFrame* aForChild,
                             const nsRect& aDirtyRect, bool aIsRoot)
@@ -1230,10 +1255,6 @@ public:
     return mPreserves3DCtx.mAccumulatedRectLevels;
   }
 
-  // Helpers for tables
-  nsDisplayTableItem* GetCurrentTableItem() { return mCurrentTableItem; }
-  void SetCurrentTableItem(nsDisplayTableItem* aTableItem) { mCurrentTableItem = aTableItem; }
-
   struct OutOfFlowDisplayData {
     OutOfFlowDisplayData(const DisplayItemClipChain* aContainingBlockClipChain,
                          const DisplayItemClipChain* aCombinedClipChain,
@@ -1458,6 +1479,7 @@ private:
     // in the document, and is set when we enter a subdocument for a pointer-
     // events:none frame.
     bool          mInsidePointerEventsNoneDoc;
+    nsIFrame*     mPresShellIgnoreScrollFrame;
   };
 
   PresShellState* CurrentPresShellState() {
@@ -1486,7 +1508,6 @@ private:
   AutoTArray<PresShellState,8> mPresShellStates;
   AutoTArray<nsIFrame*,400>    mFramesMarkedForDisplay;
   AutoTArray<ThemeGeometry,2>  mThemeGeometries;
-  nsDisplayTableItem*            mCurrentTableItem;
   DisplayListClipState           mClipState;
   const ActiveScrolledRoot*      mCurrentActiveScrolledRoot;
   const ActiveScrolledRoot*      mCurrentContainerASR;
@@ -1532,6 +1553,7 @@ private:
   nsTArray<DisplayItemClipChain*> mClipChainsToDestroy;
   const ActiveScrolledRoot*      mActiveScrolledRootForRootScrollframe;
   nsDisplayListBuilderMode       mMode;
+  nsDisplayTableBackgroundSet*   mTableBackgroundSet;
   ViewID                         mCurrentScrollParentId;
   ViewID                         mCurrentScrollbarTarget;
   uint32_t                       mCurrentScrollbarFlags;
@@ -2652,12 +2674,13 @@ protected:
  * to the object, and all distinct.
  */
 struct nsDisplayListCollection : public nsDisplayListSet {
-  nsDisplayListCollection() :
-    nsDisplayListSet(&mLists[0], &mLists[1], &mLists[2], &mLists[3], &mLists[4],
+  explicit nsDisplayListCollection(nsDisplayListBuilder* aBuilder)
+    : nsDisplayListSet(&mLists[0], &mLists[1], &mLists[2], &mLists[3], &mLists[4],
                      &mLists[5]) {}
-  explicit nsDisplayListCollection(nsDisplayList* aBorderBackground) :
-    nsDisplayListSet(aBorderBackground, &mLists[1], &mLists[2], &mLists[3], &mLists[4],
-                     &mLists[5]) {}
+  explicit nsDisplayListCollection(nsDisplayListBuilder* aBuilder,
+                                   nsDisplayList* aBorderBackground)
+     : nsDisplayListSet(aBorderBackground, &mLists[1], &mLists[2], &mLists[3], &mLists[4],
+                        &mLists[5]) {}
 
   /**
    * Sort all lists by content order.
@@ -3146,7 +3169,8 @@ public:
                                          bool aAllowWillPaintBorderOptimization = true,
                                          nsStyleContext* aStyleContext = nullptr,
                                          const nsRect& aBackgroundOriginRect = nsRect(),
-                                         nsIFrame* aSecondaryReferenceFrame = nullptr);
+                                         nsIFrame* aSecondaryReferenceFrame = nullptr,
+                                         mozilla::Maybe<nsDisplayListBuilder::AutoBuildingDisplayList>* aAutoBuildingDisplayList = nullptr);
 
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                    LayerManager* aManager,
