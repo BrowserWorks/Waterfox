@@ -1024,6 +1024,40 @@ moz_gtk_scrollbar_thumb_paint(WidgetNodeType widget,
 }
 
 static gint
+moz_gtk_inner_spin_paint(cairo_t *cr, GdkRectangle* rect,
+                         GtkWidgetState* state,
+                         GtkTextDirection direction)
+{
+    GtkStyleContext* style = GetStyleContext(MOZ_GTK_SPINBUTTON, direction,
+                                 GetStateFlagsFromGtkWidgetState(state));
+
+    gtk_render_background(style, cr, rect->x, rect->y, rect->width, rect->height);
+    gtk_render_frame(style, cr, rect->x, rect->y, rect->width, rect->height);
+
+    /* hard code these values */
+    GdkRectangle arrow_rect;
+    arrow_rect.width = 6;
+    arrow_rect.height = 6;
+
+    // align spin to the left
+    arrow_rect.x = rect->x;
+
+    // up button
+    arrow_rect.y = rect->y + (rect->height - arrow_rect.height) / 2 - 3;
+    gtk_render_arrow(style, cr, ARROW_UP,
+                    arrow_rect.x, arrow_rect.y,
+                    arrow_rect.width);
+
+    // down button
+    arrow_rect.y = rect->y + (rect->height - arrow_rect.height) / 2 + 3;
+    gtk_render_arrow(style, cr, ARROW_DOWN,
+                    arrow_rect.x, arrow_rect.y,
+                    arrow_rect.width);
+
+    return MOZ_GTK_SUCCESS;
+}
+
+static gint
 moz_gtk_spin_paint(cairo_t *cr, GdkRectangle* rect,
                    GtkTextDirection direction)
 {
@@ -1178,7 +1212,8 @@ moz_gtk_vpaned_paint(cairo_t *cr, GdkRectangle* rect,
 static gint
 moz_gtk_entry_paint(cairo_t *cr, GdkRectangle* rect,
                     GtkWidgetState* state,
-                    GtkStyleContext* style)
+                    GtkStyleContext* style,
+                    WidgetNodeType widget)
 {
     gint x = rect->x, y = rect->y, width = rect->width, height = rect->height;
     int draw_focus_outline_only = state->depressed; // NS_THEME_FOCUS_OUTLINE
@@ -1196,7 +1231,11 @@ moz_gtk_entry_paint(cairo_t *cr, GdkRectangle* rect,
     } else {
         gtk_render_background(style, cr, x, y, width, height);
     }
-    gtk_render_frame(style, cr, x, y, width, height);
+
+    // Paint the border, except for 'menulist-textfield' that isn't focused:
+    if (widget != MOZ_GTK_DROPDOWN_ENTRY || state->focused) {
+      gtk_render_frame(style, cr, x, y, width, height);
+    }
 
     return MOZ_GTK_SUCCESS;
 }
@@ -2317,8 +2356,9 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
             return MOZ_GTK_SUCCESS;
         }
     case MOZ_GTK_ENTRY:
+    case MOZ_GTK_DROPDOWN_ENTRY:
         {
-            style = GetStyleContext(MOZ_GTK_ENTRY);
+            style = GetStyleContext(widget);
 
             // XXX: Subtract 1 pixel from the padding to account for the default
             // padding in forms.css. See bug 1187385.
@@ -2351,9 +2391,6 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
         }
     case MOZ_GTK_TREE_HEADER_SORTARROW:
         w = GetWidget(MOZ_GTK_TREE_HEADER_SORTARROW);
-        break;
-    case MOZ_GTK_DROPDOWN_ENTRY:
-        w = GetWidget(MOZ_GTK_COMBOBOX_ENTRY_TEXTAREA);
         break;
     case MOZ_GTK_DROPDOWN_ARROW:
         w = GetWidget(MOZ_GTK_COMBOBOX_ENTRY_BUTTON);
@@ -2506,6 +2543,7 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
     case MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE:
     case MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE_RESTORE:
     /* These widgets have no borders.*/
+    case MOZ_GTK_INNER_SPIN_BUTTON:
     case MOZ_GTK_SPINBUTTON:
     case MOZ_GTK_WINDOW:
     case MOZ_GTK_RESIZER:
@@ -3065,6 +3103,9 @@ moz_gtk_widget_paint(WidgetNodeType widget, cairo_t *cr,
         return moz_gtk_scale_thumb_paint(cr, rect, state,
                                          (GtkOrientation) flags, direction);
         break;
+    case MOZ_GTK_INNER_SPIN_BUTTON:
+        return moz_gtk_inner_spin_paint(cr, rect, state, direction);
+        break;
     case MOZ_GTK_SPINBUTTON:
         return moz_gtk_spin_paint(cr, rect, direction);
         break;
@@ -3079,7 +3120,7 @@ moz_gtk_widget_paint(WidgetNodeType widget, cairo_t *cr,
             GtkStyleContext* style =
                 GetStyleContext(MOZ_GTK_SPINBUTTON_ENTRY, direction,
                                 GetStateFlagsFromGtkWidgetState(state));
-            gint ret = moz_gtk_entry_paint(cr, rect, state, style);
+            gint ret = moz_gtk_entry_paint(cr, rect, state, style, widget);
             return ret;
         }
         break;
@@ -3106,11 +3147,12 @@ moz_gtk_widget_paint(WidgetNodeType widget, cairo_t *cr,
                                                (GtkExpanderStyle) flags, direction);
         break;
     case MOZ_GTK_ENTRY:
+    case MOZ_GTK_DROPDOWN_ENTRY:
         {
             GtkStyleContext* style =
-                GetStyleContext(MOZ_GTK_ENTRY, direction,
+                GetStyleContext(widget, direction,
                                 GetStateFlagsFromGtkWidgetState(state));
-            gint ret = moz_gtk_entry_paint(cr, rect, state, style);
+            gint ret = moz_gtk_entry_paint(cr, rect, state, style, widget);
             return ret;
         }
     case MOZ_GTK_TEXT_VIEW:
@@ -3122,15 +3164,6 @@ moz_gtk_widget_paint(WidgetNodeType widget, cairo_t *cr,
     case MOZ_GTK_DROPDOWN_ARROW:
         return moz_gtk_combo_box_entry_button_paint(cr, rect,
                                                     state, flags, direction);
-        break;
-    case MOZ_GTK_DROPDOWN_ENTRY:
-        {
-            GtkStyleContext* style =
-                GetStyleContext(MOZ_GTK_COMBOBOX_ENTRY_TEXTAREA, direction,
-                                GetStateFlagsFromGtkWidgetState(state));
-            gint ret = moz_gtk_entry_paint(cr, rect, state, style);
-            return ret;
-        }
         break;
     case MOZ_GTK_CHECKBUTTON_CONTAINER:
     case MOZ_GTK_RADIOBUTTON_CONTAINER:

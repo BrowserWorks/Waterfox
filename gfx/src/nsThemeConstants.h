@@ -133,6 +133,9 @@ enum ThemeWidgetType : uint8_t {
   // A tooltip
   NS_THEME_TOOLTIP,
 
+  // A inner-spin control
+  NS_THEME_INNER_SPIN_BUTTON,
+
   // A spin control (up/down control for time/date pickers)
   NS_THEME_SPINNER,
 
@@ -195,6 +198,7 @@ enum ThemeWidgetType : uint8_t {
 
   // The dropdown button(s) that open up a dropdown list.
   NS_THEME_MENULIST_BUTTON,
+  NS_THEME_MOZ_MENULIST_BUTTON,
 
   // The text part of a dropdown list, to left of button
   NS_THEME_MENULIST_TEXT,

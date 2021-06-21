@@ -601,6 +601,22 @@ nsLayoutUtils::IsAnimationLoggingEnabled()
 }
 
 bool
+nsLayoutUtils::WebkitAppearanceEnabled()
+{
+  static bool sWebkitAppearanceEnabled;
+  static bool sWebkitAppearancePrefCached = false;
+
+  if (!sWebkitAppearancePrefCached) {
+    sWebkitAppearancePrefCached = true;
+    Preferences::AddBoolVarCache(&sWebkitAppearanceEnabled,
+                                 "layout.css.webkit-appearance.enabled",
+                                 false);
+  }
+
+  return sWebkitAppearanceEnabled;
+}
+
+bool
 nsLayoutUtils::GPUImageScalingEnabled()
 {
   static bool sGPUImageScalingEnabled;

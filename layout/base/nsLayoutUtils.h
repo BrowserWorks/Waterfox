@@ -2301,6 +2301,11 @@ public:
                                                   const nsSize& aDisplaySize);
 
   /**
+   * Checks if webkit-appearance is enabled
+   */
+  static bool WebkitAppearanceEnabled();
+
+  /**
    * Checks whether we want to use the GPU to scale images when
    * possible.
    */

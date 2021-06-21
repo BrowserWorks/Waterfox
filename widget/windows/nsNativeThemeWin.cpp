@@ -141,6 +141,14 @@ GetCheckboxMargins(HANDLE theme, HDC hdc)
     return checkboxContent;
 }
 
+static COLORREF
+GetTextfieldFillColor(HANDLE theme, int32_t part, int32_t state)
+{
+    COLORREF color = {0};
+    GetThemeColor(theme, part, state, TMT_FILLCOLOR, &color);
+    return color;
+}
+
 static SIZE
 GetCheckboxBGSize(HANDLE theme, HDC hdc)
 {
@@ -673,6 +681,7 @@ nsresult nsNativeThemeWin::GetCachedMinimumWidgetSize(nsIFrame * aFrame, HANDLE 
   aResult->height = sz.cy;
 
   switch (aWidgetType) {
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
       aResult->width++;
@@ -711,6 +720,7 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(uint8_t aWidgetTy
     case NS_THEME_CHECKBOX:
     case NS_THEME_GROUPBOX:
       return Some(eUXButton);
+    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE:
@@ -758,6 +768,7 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(uint8_t aWidgetTy
     case NS_THEME_SCALETHUMB_HORIZONTAL:
     case NS_THEME_SCALETHUMB_VERTICAL:
       return Some(eUXTrackbar);
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
       return Some(eUXSpin);
@@ -766,8 +777,11 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(uint8_t aWidgetTy
     case NS_THEME_RESIZERPANEL:
     case NS_THEME_RESIZER:
       return Some(eUXStatus);
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
       return Some(eUXCombobox);
     case NS_THEME_TREEHEADERCELL:
     case NS_THEME_TREEHEADERSORTARROW:
@@ -855,6 +869,11 @@ nsresult
 nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
                                        int32_t& aPart, int32_t& aState)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     case NS_THEME_BUTTON: {
       aPart = BP_BUTTON;
@@ -922,6 +941,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
       // same as GBS_NORMAL don't bother supporting GBS_DISABLED.
       return NS_OK;
     }
+    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE: {
@@ -1135,6 +1155,7 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
       }
       return NS_OK;
     }
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON: {
       aPart = (aWidgetType == NS_THEME_SPINNER_UPBUTTON) ?
@@ -1272,7 +1293,8 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
 
       return NS_OK;
     }
-    case NS_THEME_MENULIST_BUTTON: {
+    case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON: {
       bool isHTML = IsHTMLContent(aFrame);
       nsIFrame* parentFrame = aFrame->GetParent();
       bool isMenulist = !isHTML && parentFrame->IsMenuFrame();
@@ -1537,6 +1559,11 @@ nsNativeThemeWin::DrawWidgetBackground(gfxContext* aContext,
                                        const nsRect& aRect,
                                        const nsRect& aDirtyRect)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   if (IsWidgetScrollbarPart(aWidgetType)) {
     nsStyleContext* style = nsLayoutUtils::StyleForScrollbar(aFrame);
     if (ShouldDrawCustomScrollbar(style)) {
@@ -1823,16 +1850,30 @@ RENDER_AGAIN:
   }
   // The following widgets need to be RTL-aware
   else if (aWidgetType == NS_THEME_RESIZER ||
-           aWidgetType == NS_THEME_MENULIST_BUTTON)
+           aWidgetType == NS_THEME_MENULIST_BUTTON ||
+           aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON)
   {
     DrawThemeBGRTLAware(theme, hdc, part, state,
                         &widgetRect, &clipRect, IsFrameRTL(aFrame));
   }
-  else if (aWidgetType == NS_THEME_NUMBER_INPUT ||
+  else if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
+           aWidgetType == NS_THEME_NUMBER_INPUT ||
            aWidgetType == NS_THEME_TEXTFIELD ||
            aWidgetType == NS_THEME_TEXTFIELD_MULTILINE) {
-    DrawThemeBackground(theme, hdc, part, state, &widgetRect, &clipRect);
-     if (state == TFS_EDITBORDER_DISABLED) {
+    if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
+        state != TFS_EDITBORDER_FOCUSED) {
+      // We want 'menulist-textfield' to behave like 'textfield', except we
+      // don't want a border unless it's focused.  We have to handle the
+      // non-focused case manually here.
+      COLORREF color = GetTextfieldFillColor(theme, part, state);
+      HBRUSH brush = CreateSolidBrush(color);
+      ::FillRect(hdc, &widgetRect, brush);
+      DeleteObject(brush);
+    } else {
+      DrawThemeBackground(theme, hdc, part, state, &widgetRect, &clipRect);
+    }
+
+    if (state == TFS_EDITBORDER_DISABLED) {
       InflateRect(&widgetRect, -1, -1);
       ::FillRect(hdc, &widgetRect, reinterpret_cast<HBRUSH>(COLOR_BTNFACE+1));
     }
@@ -2028,7 +2069,8 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
       aResult->left = 0;
   }
 
-  if (aFrame && (aWidgetType == NS_THEME_NUMBER_INPUT ||
+  if (aFrame && (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
+                 aWidgetType == NS_THEME_NUMBER_INPUT ||
                  aWidgetType == NS_THEME_TEXTFIELD ||
                  aWidgetType == NS_THEME_TEXTFIELD_MULTILINE)) {
     nsIContent* content = aFrame->GetContent();
@@ -2052,6 +2094,11 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
                                    uint8_t aWidgetType,
                                    nsIntMargin* aResult)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     // Radios and checkboxes return a fixed size in GetMinimumWidgetSize
     // and have a meaningful baseline, so they can't have
@@ -2110,7 +2157,8 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
     return ok;
   }
 
-  if (aWidgetType == NS_THEME_NUMBER_INPUT ||
+  if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
+      aWidgetType == NS_THEME_NUMBER_INPUT ||
       aWidgetType == NS_THEME_TEXTFIELD ||
       aWidgetType == NS_THEME_TEXTFIELD_MULTILINE ||
       aWidgetType == NS_THEME_MENULIST)
@@ -2127,7 +2175,8 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
    * Instead, we add 2px padding for the contents and fix this. (Used to be 1px
    * added, see bug 430212)
    */
-  if (aWidgetType == NS_THEME_NUMBER_INPUT ||
+  if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
+      aWidgetType == NS_THEME_NUMBER_INPUT ||
       aWidgetType == NS_THEME_TEXTFIELD ||
       aWidgetType == NS_THEME_TEXTFIELD_MULTILINE) {
     aResult->top = aResult->bottom = 2;
@@ -2205,6 +2254,8 @@ nsNativeThemeWin::GetWidgetOverflow(nsDeviceContext* aContext,
    * where, if invalidated, the dropdown control probably won't be repainted.
    * This is fairly minor, as by default there is nothing in that area, and
    * a border only shows up if the widget is being hovered.
+   *
+   * TODO(jwatt): Figure out what do to about NS_THEME_MOZ_MENULIST_BUTTON too.
    */
 #if 0
   /* We explicitly draw dropdown buttons in HTML content 1px bigger up, right,
@@ -2247,6 +2298,11 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
                                        uint8_t aWidgetType,
                                        LayoutDeviceIntSize* aResult, bool* aIsOverridable)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   aResult->width = aResult->height = 0;
   *aIsOverridable = true;
   nsresult rv = NS_OK;
@@ -2264,6 +2320,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
 
   switch (aWidgetType) {
     case NS_THEME_GROUPBOX:
+    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TOOLBOX:
@@ -2300,7 +2357,8 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
     case NS_THEME_SCROLLBAR_HORIZONTAL:
     case NS_THEME_SCROLLBAR_VERTICAL:
-    case NS_THEME_MENULIST_BUTTON: {
+    case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON: {
       rv = ClassicGetMinimumWidgetSize(aFrame, aWidgetType, aResult, aIsOverridable);
       ScaleForFrameDPI(aResult, aFrame);
       return rv;
@@ -2478,6 +2536,11 @@ nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
                                      nsIAtom* aAttribute, bool* aShouldRepaint,
                                      const nsAttrValue* aOldValue)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // Some widget types just never change state.
   if (aWidgetType == NS_THEME_TOOLBOX ||
       aWidgetType == NS_THEME_WIN_MEDIA_TOOLBOX ||
@@ -2515,7 +2578,12 @@ nsNativeThemeWin::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
 
   // We need to repaint the dropdown arrow in vista HTML combobox controls when
   // the control is closed to get rid of the hover effect.
-  if ((aWidgetType == NS_THEME_MENULIST || aWidgetType == NS_THEME_MENULIST_BUTTON) &&
+  //
+  // NOTE: if you change Menulist and MenulistButton to behave differently,
+  // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
+  if ((aWidgetType == NS_THEME_MENULIST ||
+      aWidgetType == NS_THEME_MENULIST_BUTTON ||
+      aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON) &&
       IsHTMLContent(aFrame))
   {
     *aShouldRepaint = true;
@@ -2589,8 +2657,14 @@ nsNativeThemeWin::ThemeSupportsWidget(nsPresContext* aPresContext,
 bool
 nsNativeThemeWin::WidgetIsContainer(uint8_t aWidgetType)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // XXXdwh At some point flesh all of this out.
   if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
+      aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_RADIO ||
       aWidgetType == NS_THEME_CHECKBOX)
     return false;
@@ -2764,13 +2838,17 @@ nsNativeThemeWin::ClassicThemeSupportsWidget(nsIFrame* aFrame,
     case NS_THEME_SCALE_VERTICAL:
     case NS_THEME_SCALETHUMB_HORIZONTAL:
     case NS_THEME_SCALETHUMB_VERTICAL:
+    // NOTE: if you change Menulist and MenulistButton to behave differently,
+    // be sure to handle nsLayoutUtils::WebkitAppearanceEnabled().
+    case NS_THEME_MENULIST:
+    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
     case NS_THEME_LISTBOX:
     case NS_THEME_TREEVIEW:
-    case NS_THEME_MENULIST_TEXTFIELD:
-    case NS_THEME_MENULIST:
     case NS_THEME_TOOLTIP:
     case NS_THEME_STATUSBAR:
     case NS_THEME_STATUSBARPANEL:
@@ -2812,6 +2890,11 @@ nsNativeThemeWin::ClassicGetWidgetBorder(nsDeviceContext* aContext,
                                   uint8_t aWidgetType,
                                   nsIntMargin* aResult)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     case NS_THEME_GROUPBOX:
     case NS_THEME_BUTTON:
@@ -2907,6 +2990,11 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
                                               LayoutDeviceIntSize* aResult,
                                               bool* aIsOverridable)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   (*aResult).width = (*aResult).height = 0;
   *aIsOverridable = true;
   switch (aWidgetType) {
@@ -2920,6 +3008,7 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
       (*aResult).width = ::GetSystemMetrics(SM_CXMENUCHECK);
       (*aResult).height = ::GetSystemMetrics(SM_CYMENUCHECK);
       break;
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
       (*aResult).width = ::GetSystemMetrics(SM_CXVSCROLL);
@@ -2979,6 +3068,7 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
       *aIsOverridable = false;
       break;
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
       (*aResult).width = ::GetSystemMetrics(SM_CXVSCROLL);
       break;
     case NS_THEME_MENULIST:
@@ -3102,6 +3192,11 @@ nsNativeThemeWin::ClassicGetMinimumWidgetSize(nsIFrame* aFrame,
 nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
                                  int32_t& aPart, int32_t& aState, bool& aFocused)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   aFocused = false;
   switch (aWidgetType) {
     case NS_THEME_BUTTON: {
@@ -3270,7 +3365,8 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
     case NS_THEME_GROUPBOX:
       // these don't use DrawFrameControl
       return NS_OK;
-    case NS_THEME_MENULIST_BUTTON: {
+    case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON: {
 
       aPart = DFC_SCROLL;
       aState = DFCS_SCROLLCOMBOBOX;
@@ -3340,6 +3436,7 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
 
       return NS_OK;
     }
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON: {
       EventStates contentState = GetContentState(aFrame, aWidgetType);
@@ -3349,6 +3446,7 @@ nsresult nsNativeThemeWin::ClassicGetThemePartAndState(nsIFrame* aFrame, uint8_t
         case NS_THEME_SPINNER_UPBUTTON:
           aState = DFCS_SCROLLUP;
           break;
+        case NS_THEME_INNER_SPIN_BUTTON:
         case NS_THEME_SPINNER_DOWNBUTTON:
           aState = DFCS_SCROLLDOWN;
           break;
@@ -3649,9 +3747,11 @@ RENDER_AGAIN:
     case NS_THEME_SCROLLBARBUTTON_DOWN:
     case NS_THEME_SCROLLBARBUTTON_LEFT:
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     case NS_THEME_RESIZER: {
       int32_t oldTA;
       // setup DC to make DrawFrameControl draw correctly
@@ -3667,8 +3767,12 @@ RENDER_AGAIN:
     case NS_THEME_LISTBOX:
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_TEXTFIELD: {
-      // Draw inset edge
-      ::DrawEdge(hdc, &widgetRect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+      // Paint the border, except for 'menulist-textfield' that isn't focused:
+      if (aWidgetType != NS_THEME_MENULIST_TEXTFIELD || focused) {
+        // Draw inset edge
+        ::DrawEdge(hdc, &widgetRect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+      }
+
       EventStates eventState = GetContentState(aFrame, aWidgetType);
 
       // Fill in background
@@ -4057,6 +4161,7 @@ nsNativeThemeWin::GetWidgetNativeDrawingFlags(uint8_t aWidgetType)
     case NS_THEME_SCALE_VERTICAL:
     case NS_THEME_SCALETHUMB_HORIZONTAL:
     case NS_THEME_SCALETHUMB_VERTICAL:
+    case NS_THEME_INNER_SPIN_BUTTON:
     case NS_THEME_SPINNER_UPBUTTON:
     case NS_THEME_SPINNER_DOWNBUTTON:
     case NS_THEME_LISTBOX:
@@ -4082,6 +4187,7 @@ nsNativeThemeWin::GetWidgetNativeDrawingFlags(uint8_t aWidgetType)
     // except that the graphic in the dropdown button (the downward arrow)
     // doesn't get scaled up.
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     // these are definitely no; they're all graphics that don't get scaled up
     case NS_THEME_CHECKBOX:
     case NS_THEME_RADIO:

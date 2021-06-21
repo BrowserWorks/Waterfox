@@ -191,6 +191,11 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
                                        GtkWidgetState* aState,
                                        gint* aWidgetFlags)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   if (aState) {
     // For XUL checkboxes and radio buttons, the state of the parent
     // determines our state.
@@ -268,7 +273,8 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
                aWidgetType == NS_THEME_DUALBUTTON ||
                aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
                aWidgetType == NS_THEME_MENULIST ||
-               aWidgetType == NS_THEME_MENULIST_BUTTON) {
+               aWidgetType == NS_THEME_MENULIST_BUTTON ||
+               aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON) {
       aState->active &= aState->inHover;
     }
 
@@ -374,7 +380,8 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
           aWidgetType == NS_THEME_DUALBUTTON ||
           aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
           aWidgetType == NS_THEME_MENULIST ||
-          aWidgetType == NS_THEME_MENULIST_BUTTON) {
+          aWidgetType == NS_THEME_MENULIST_BUTTON ||
+          aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON) {
         bool menuOpen = IsOpenButton(aFrame);
         aState->depressed = IsCheckedButton(aFrame) || menuOpen;
         // we must not highlight buttons with open drop down menus on hover.
@@ -383,7 +390,9 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
 
       // When the input field of the drop down button has focus, some themes
       // should draw focus for the drop down button as well.
-      if (aWidgetType == NS_THEME_MENULIST_BUTTON && aWidgetFlags) {
+      if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
+          aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON &&
+          aWidgetFlags) {
         *aWidgetFlags = CheckBooleanAttr(aFrame, nsGkAtoms::parentfocused);
       }
     }
@@ -439,6 +448,9 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
     break;
   case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
     aGtkWidgetType = MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL;
+    break;
+  case NS_THEME_INNER_SPIN_BUTTON:
+    aGtkWidgetType = MOZ_GTK_INNER_SPIN_BUTTON;
     break;
   case NS_THEME_SPINNER:
     aGtkWidgetType = MOZ_GTK_SPINBUTTON;
@@ -573,6 +585,7 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
     aGtkWidgetType = MOZ_GTK_DROPDOWN_ENTRY;
     break;
   case NS_THEME_MENULIST_BUTTON:
+  case NS_THEME_MOZ_MENULIST_BUTTON:
     aGtkWidgetType = MOZ_GTK_DROPDOWN_ARROW;
     break;
   case NS_THEME_TOOLBARBUTTON_DROPDOWN:
@@ -1403,6 +1416,11 @@ nsNativeThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
                                    nsIFrame* aFrame, uint8_t aWidgetType,
                                    nsIntMargin* aResult)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   switch (aWidgetType) {
     case NS_THEME_BUTTON_FOCUS:
     case NS_THEME_TOOLBARBUTTON:
@@ -1414,6 +1432,7 @@ nsNativeThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
     case NS_THEME_TAB_SCROLL_ARROW_BACK:
     case NS_THEME_TAB_SCROLL_ARROW_FORWARD:
     case NS_THEME_MENULIST_BUTTON:
+    case NS_THEME_MOZ_MENULIST_BUTTON:
     case NS_THEME_TOOLBARBUTTON_DROPDOWN:
     case NS_THEME_BUTTON_ARROW_UP:
     case NS_THEME_BUTTON_ARROW_DOWN:
@@ -1488,6 +1507,11 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
 {
   aResult->width = aResult->height = 0;
   *aIsOverridable = true;
+
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
 
   switch (aWidgetType) {
     case NS_THEME_SCROLLBARBUTTON_UP:
@@ -1611,6 +1635,7 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
       }
       break;
   case NS_THEME_MENULIST_BUTTON:
+  case NS_THEME_MOZ_MENULIST_BUTTON:
     {
       moz_gtk_get_combo_box_entry_button_size(&aResult->width,
                                               &aResult->height);
@@ -1705,6 +1730,7 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
     }
     break;
 #if (MOZ_WIDGET_GTK == 3)
+  case NS_THEME_MENULIST_TEXTFIELD:
   case NS_THEME_NUMBER_INPUT:
   case NS_THEME_TEXTFIELD:
     {
@@ -1721,6 +1747,7 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
       aResult->width = separator_width;
     }
     break;
+  case NS_THEME_INNER_SPIN_BUTTON:
   case NS_THEME_SPINNER:
     // hard code these sizes
     aResult->width = 14;
@@ -1859,6 +1886,11 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
   if (IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType))
     return false;
 
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   if (IsWidgetScrollbarPart(aWidgetType)) {
     nsStyleContext* cs = nsLayoutUtils::StyleForScrollbar(aFrame);
     if (cs->StyleUserInterface()->HasCustomScrollbars() ||
@@ -1872,7 +1904,6 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
   // Combobox dropdowns don't support native theming in vertical mode.
   case NS_THEME_MENULIST:
   case NS_THEME_MENULIST_TEXT:
-  case NS_THEME_MENULIST_TEXTFIELD:
     if (aFrame && aFrame->GetWritingMode().IsVertical()) {
       return false;
     }
@@ -1917,6 +1948,7 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
     case NS_THEME_TAB_SCROLL_ARROW_BACK:
     case NS_THEME_TAB_SCROLL_ARROW_FORWARD:
   case NS_THEME_TOOLTIP:
+  case NS_THEME_INNER_SPIN_BUTTON:
   case NS_THEME_SPINNER:
   case NS_THEME_SPINNER_UPBUTTON:
   case NS_THEME_SPINNER_DOWNBUTTON:
@@ -1933,6 +1965,7 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
   case NS_THEME_SCROLLBARTRACK_VERTICAL:
   case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
   case NS_THEME_SCROLLBARTHUMB_VERTICAL:
+  case NS_THEME_MENULIST_TEXTFIELD:
   case NS_THEME_NUMBER_INPUT:
   case NS_THEME_TEXTFIELD:
   case NS_THEME_TEXTFIELD_MULTILINE:
@@ -1976,6 +2009,7 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
            !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
 
   case NS_THEME_MENULIST_BUTTON:
+  case NS_THEME_MOZ_MENULIST_BUTTON:
     if (aFrame && aFrame->GetWritingMode().IsVertical()) {
       return false;
     }
@@ -1994,8 +2028,14 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
 NS_IMETHODIMP_(bool)
 nsNativeThemeGTK::WidgetIsContainer(uint8_t aWidgetType)
 {
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
   // XXXdwh At some point flesh all of this out.
   if (aWidgetType == NS_THEME_MENULIST_BUTTON ||
+      aWidgetType == NS_THEME_MOZ_MENULIST_BUTTON ||
       aWidgetType == NS_THEME_RADIO ||
       aWidgetType == NS_THEME_RANGE_THUMB ||
       aWidgetType == NS_THEME_CHECKBOX ||
@@ -2012,7 +2052,12 @@ nsNativeThemeGTK::WidgetIsContainer(uint8_t aWidgetType)
 bool
 nsNativeThemeGTK::ThemeDrawsFocusForWidget(uint8_t aWidgetType)
 {
-   if (aWidgetType == NS_THEME_MENULIST ||
+  if (aWidgetType == NS_THEME_MENULIST_BUTTON &&
+      nsLayoutUtils::WebkitAppearanceEnabled()) {
+    aWidgetType = NS_THEME_MENULIST;
+  }
+
+  if (aWidgetType == NS_THEME_MENULIST ||
       aWidgetType == NS_THEME_BUTTON ||
       aWidgetType == NS_THEME_TREEHEADERCELL)
     return true;
