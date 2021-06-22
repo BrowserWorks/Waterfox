@@ -7808,6 +7808,13 @@
   value: false
   mirror: always
 
+# When this pref is true, we copy the host name to a fresh string before
+# calling into getaddrinfo.
+- name: network.dns.copy_string_before_call
+  type: RelaxedAtomicBool
+  value: true
+  mirror: always
+
 # Whether the SOCKS proxy should be in charge of DNS resolution.
 - name: network.proxy.socks_remote_dns
   type: bool
