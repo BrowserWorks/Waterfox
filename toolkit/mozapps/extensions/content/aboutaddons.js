@@ -97,7 +97,7 @@ const BUILTIN_THEME_PREVIEWS = new Map([
   ],
   [
     "lepton@waterfox.net",
-    "chrome://mozapps/content/extensions/firefox-compact-light.svg",
+    "chrome://mozapps/content/extensions/default-theme.svg",
   ],
 ]);
 

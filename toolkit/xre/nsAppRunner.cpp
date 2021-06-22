@@ -1998,6 +1998,8 @@ static void ReflectSkeletonUIPrefToRegistry(const char* aPref, void* aData) {
       Unused << SetPreXULSkeletonUIThemeId(ThemeMode::Dark);
     } else if (themeId.EqualsLiteral("firefox-compact-light@mozilla.org")) {
       Unused << SetPreXULSkeletonUIThemeId(ThemeMode::Light);
+    } else if (themeId.EqualsLiteral("lepton@waterfox.net")) {
+      Unused << SetPreXULSkeletonUIThemeId(ThemeMode::Default);
     } else {
       shouldBeEnabled = false;
     }
