@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "name": "Extensibles",
+  "description": "Additional built-in features for Waterfox",
+  "version": "1.0.0",
+
+  "hidden": true,
+
+  "applications": {
+    "gecko": {
+      "id": "extensibles@waterfox.net",
+      "strict_min_version": "72.0a1"
+    }
+  },
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "experiment_apis": {
+    "extensibles": {
+      "schema": "schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "api.js",
+        "paths": [["extensibles"]]
+      }
+    }
+  }
+}

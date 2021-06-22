@@ -36,6 +36,11 @@ ChromeUtils.defineModuleGetter(
   "UpdateUtils",
   "resource://gre/modules/UpdateUtils.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "Extensibles",
+  "resource:///modules/extensibles.js"
+);
 
 XPCOMUtils.defineLazyServiceGetters(this, {
   gHandlerService: [
@@ -108,13 +113,6 @@ Preferences.addAll([
   { id: "browser.restart_menu.purgecache", type: "bool" },
   { id: "browser.restart_menu.requireconfirm", type: "bool" },
   { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
-
-  // Tab Context Menu
-  { id: "browser.tabs.duplicateTab", type: "bool" },
-  { id: "browser.tabs.copyurl", type: "bool" },
-  { id: "browser.tabs.copyurl.activetab", type: "bool" },
-  { id: "browser.tabs.copyallurls", type: "bool" },
-
   // Status Bar
   { id: "browser.statusbar.mode", type: "int" },
   { id: "browser.statusbar.showbtn", type: "bool" },
@@ -780,6 +778,8 @@ var gMainPane = {
       browserBundle.getString("userContextBanking.label"),
       browserBundle.getString("userContextShopping.label"),
     ]);
+
+    Extensibles.init_prefToggles();
 
     // Notify observers that the UI is now ready
     Services.obs.notifyObservers(window, "main-pane-loaded");
