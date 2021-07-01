@@ -337,11 +337,7 @@ nsTextControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   nsAutoString placeholderTxt;
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::placeholder,
                     placeholderTxt);
-  if (IsTextArea()) { // <textarea>s preserve newlines...
-    nsContentUtils::PlatformToDOMLineBreaks(placeholderTxt);
-  } else { // ...<input>s don't
-    nsContentUtils::RemoveNewlines(placeholderTxt);
-  }
+  nsContentUtils::RemoveNewlines(placeholderTxt);
   mUsePlaceholder = !placeholderTxt.IsEmpty();
 
   // Create the placeholder anonymous content if needed.
