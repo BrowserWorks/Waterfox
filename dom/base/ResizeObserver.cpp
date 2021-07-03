@@ -6,12 +6,42 @@
 #include "mozilla/dom/ResizeObserver.h"
 
 #include "mozilla/dom/DOMRect.h"
-#include "nsContentUtils.h"
+#include "nsIContentInlines.h"
 #include "nsIFrame.h"
 #include "nsSVGUtils.h"
 
 namespace mozilla {
 namespace dom {
+
+/**
+ * Returns the length of the parent-traversal path (in terms of the number of
+ * nodes) to an unparented/root node from aNode. An unparented/root node is
+ * considered to have a depth of 1, its children have a depth of 2, etc.
+ * aNode is expected to be non-null.
+ * Note: The shadow root is not part of the calculation because the caller,
+ * ResizeObserver, doesn't observe the shadow root, and only needs relative
+ * depths among all the observed targets. In other words, we calculate the
+ * depth of the flattened tree.
+ *
+ * Note: these is a spec issue about how to handle shadow DOM case. We
+ * may need to update this function later.
+ *
+ *
+ * https://drafts.csswg.org/resize-observer/#calculate-depth-for-node-h
+ */
+static uint32_t GetNodeDepth(nsINode* aNode) {
+  uint32_t depth = 1;
+
+  MOZ_ASSERT(aNode, "Node shouldn't be null");
+
+  // Use GetFlattenedTreeParentNode to bypass the shadow root and cross the
+  // shadow boundary to calculate the node depth without the shadow root.
+  while ((aNode = aNode->GetFlattenedTreeParentNode())) {
+    ++depth;
+  }
+
+  return depth;
+}
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ResizeObserver)
   NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
@@ -128,8 +158,7 @@ ResizeObserver::GatherActiveObservations(uint32_t aDepth)
 
   for (auto observation : mObservationList) {
     if (observation->IsActive()) {
-      uint32_t targetDepth =
-        nsContentUtils::GetNodeDepth(observation->Target());
+      uint32_t targetDepth = GetNodeDepth(observation->Target());
 
       if (targetDepth > aDepth) {
         mActiveTargets.AppendElement(observation);
@@ -176,8 +205,7 @@ ResizeObserver::BroadcastActiveObservations()
       // will be based on the updated size from last delivered observations.
       observation->UpdateBroadcastSize(rect);
 
-      uint32_t targetDepth =
-        nsContentUtils::GetNodeDepth(observation->Target());
+      uint32_t targetDepth = GetNodeDepth(observation->Target());
 
       if (targetDepth < shallowestTargetDepth) {
         shallowestTargetDepth = targetDepth;
