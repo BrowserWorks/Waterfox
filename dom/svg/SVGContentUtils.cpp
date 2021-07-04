@@ -831,6 +831,14 @@ SVGContentUtils::CoordToFloat(nsSVGElement *aContent,
     SVGSVGElement* ctx = aContent->GetCtx();
     return ctx ? aCoord.GetPercentValue() * ctx->GetLength(SVGContentUtils::XY) : 0.0f;
   }
+  case eStyleUnit_Calc: {
+    MOZ_ASSERT(aCoord.GetCalcValue(), "Invalid calc value");
+    nsStyleCoord::Calc* calc = aCoord.GetCalcValue();
+    SVGSVGElement* ctx = aContent->GetCtx();
+    float len = nsPresContext::AppUnitsToFloatCSSPixels(calc->mLength);
+    return ctx ? len + calc->mPercent * ctx->GetLength(SVGContentUtils::XY)
+               : len;
+  }
   default:
     return 0.0f;
   }

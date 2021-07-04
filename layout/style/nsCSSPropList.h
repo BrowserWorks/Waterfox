@@ -3862,7 +3862,7 @@ CSS_PROP_SVG(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_NUMBERS_ARE_PIXELS,
     "",
-    VARIANT_HLPN | VARIANT_OPENTYPE_SVG_KEYWORD,
+    VARIANT_HLPN | VARIANT_OPENTYPE_SVG_KEYWORD | VARIANT_CALC,
     kStrokeContextValueKTable,
     offsetof(nsStyleSVG, mStrokeDashoffset),
     eStyleAnimType_Coord)
