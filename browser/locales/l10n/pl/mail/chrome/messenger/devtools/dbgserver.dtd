@@ -1,0 +1,4 @@
+<!ENTITY options.title "Opcje narzędzi">
+<!ENTITY options.status.label "Stan:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Zezwalaj na połączenia z innych komputerów">

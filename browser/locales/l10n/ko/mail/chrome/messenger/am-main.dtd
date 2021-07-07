@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "계정 설정">
+<!ENTITY accountName.label "계정 이름:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "아이디">
+<!ENTITY identityDesc.label "각 계정에는 다른 사람이 메일을 받을 때 표시되는 사용자 정보를 포함합니다.">
+<!ENTITY name.label "계정 이름:">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "메일 주소:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "배달 헤더가 일치 할 때 이 ID로 회신:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "회신 주소:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "수신자가 답장을 할 다른 메일 주소">
+<!ENTITY organization.label "소속:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "서명:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "HTML 사용 (e.g., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "(text, HTML, image) 파일로 서명 첨부:">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "편집…">
+<!ENTITY choose.label "선택…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "vCard 편집…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "vCard 첨부">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "아이디 관리…">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "보내는 서버 (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "기본 서버로 설정">
+
+<!ENTITY smtpServerEdit.label "SMTP 서버 수정 중…">
+<!ENTITY smtpServerEdit.accesskey "P">

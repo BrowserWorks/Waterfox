@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Sesuaikan Header">
+<!ENTITY addButton.label "Tambah">
+<!ENTITY addButton.accesskey "T">
+<!ENTITY removeButton.label "Hapus">
+<!ENTITY removeButton.accesskey "H">
+<!ENTITY newMsgHeader.label "Header pesan baru:">
+<!ENTITY newMsgHeader.accesskey "b">

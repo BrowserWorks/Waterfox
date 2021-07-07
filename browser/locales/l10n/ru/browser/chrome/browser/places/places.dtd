@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Библиотека">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Управление">
+<!ENTITY organize.accesskey    "а">
+<!ENTITY organize.tooltip      "Управление вашими закладками">
+
+<!ENTITY file.close.label               "Закрыть">
+<!ENTITY file.close.accesskey           "З">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Вид">
+<!ENTITY views.accesskey                "и">
+<!ENTITY views.tooltip                  "Изменение внешнего вида">
+<!ENTITY view.columns.label             "Показать колонки">
+<!ENTITY view.columns.accesskey         "к">
+<!ENTITY view.sort.label                "Сортировка">
+<!ENTITY view.sort.accesskey            "р">
+<!ENTITY view.unsorted.label            "Без сортировки">
+<!ENTITY view.unsorted.accesskey        "е">
+<!ENTITY view.sortAscending.label       "Сортировка по алфавиту">
+<!ENTITY view.sortAscending.accesskey   "С">
+<!ENTITY view.sortDescending.label      "В обратном порядке">
+<!ENTITY view.sortDescending.accesskey  "о">
+
+<!ENTITY importBookmarksFromHTML.label     "Импорт закладок из HTML-файла…">
+<!ENTITY importBookmarksFromHTML.accesskey "И">
+<!ENTITY exportBookmarksToHTML.label       "Экспорт закладок в HTML-файл…">
+<!ENTITY exportBookmarksToHTML.accesskey   "Э">
+<!ENTITY importOtherBrowser.label          "Импорт данных из другого браузера…">
+<!ENTITY importOtherBrowser.accesskey      "п">
+
+<!ENTITY cmd.backup.label               "Создать резервную копию…">
+<!ENTITY cmd.backup.accesskey           "р">
+<!ENTITY cmd.restore2.label             "Восстановить резервную копию от">
+<!ENTITY cmd.restore2.accesskey         "с">
+<!ENTITY cmd.restoreFromFile.label      "Выбрать файл…">
+<!ENTITY cmd.restoreFromFile.accesskey  "б">
+
+<!ENTITY col.name.label          "Имя">
+<!ENTITY col.tags.label          "Метки">
+<!ENTITY col.url.label           "Адрес">
+<!ENTITY col.mostrecentvisit.label "Последнее посещение">
+<!ENTITY col.visitcount.label    "Число посещений">
+<!ENTITY col.dateadded.label     "Добавлена">
+<!ENTITY col.lastmodified.label  "Посл. изменение">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Импорт и резервные копии">
+<!ENTITY maintenance.accesskey  "о">
+<!ENTITY maintenance.tooltip    "Импорт и резервные копии ваших закладок">
+
+<!ENTITY backButton.tooltip  "Перейти назад">
+
+<!ENTITY forwardButton.tooltip  "Перейти вперёд">
+
+<!ENTITY detailsPane.selectAnItemText.description "Выберите элемент для просмотра и редактирования его свойств">
+

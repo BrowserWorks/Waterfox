@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Upravit nastavení této identity:">
+
+<!ENTITY settingsTab.label       "Nastavení">
+<!ENTITY copiesFoldersTab.label "Kopie a složky">
+<!ENTITY addressingTab.label    "Vytváření zpráv a adresování">
+
+<!ENTITY publicData.label        "Veřejná data">
+<!ENTITY privateData.label       "Důvěrná data">
+<!ENTITY identityAlias.label     "Označení identity:">
+<!ENTITY identityAlias.accesskey "n">

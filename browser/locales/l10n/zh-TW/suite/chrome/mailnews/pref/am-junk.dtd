@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "垃圾郵件設定">
+<!ENTITY trainingDescription.label "啟用後，您必須透過垃圾信件工具列上的按鈕來將訊息標示為垃圾郵件或非垃圾郵件（兩種郵件都要），以訓練 &brandShortName; 來識別垃圾信。訓練完成後 &brandShortName; 才能正確地自動標示垃圾郵件。">
+<!ENTITY level.label "對此帳號啟用漸進式垃圾郵件控制">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "移動新垃圾郵件到:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "「垃圾郵件」匣於:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "其他郵件匣:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "下列時間後自動刪除垃圾郵件">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "天">
+
+<!ENTITY whitelistHeader.label "不要自動將郵件標示為垃圾郵件，若寄件者位於: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "若啟用，&brandShortName; 將會自動參考上列外部垃圾郵件分類器的分類結果來識別垃圾郵件。">
+<!ENTITY ispHeaders.label "信任下列程式設定的垃圾郵件標頭: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "選取範圍">
+<!ENTITY junkActions.label "目的地與保留時間">
+
+<!ENTITY globalJunkPrefs.label "全域垃圾郵件偏好設定…">
+<!ENTITY globalJunkPrefs.accesskey "G">
+

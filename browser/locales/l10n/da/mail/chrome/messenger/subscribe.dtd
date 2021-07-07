@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+ 
+<!ENTITY subscribeDialog.title "Abonner">
+<!ENTITY subscribeButton.label "Abonner">
+<!ENTITY subscribeButton.accesskey "A">
+<!ENTITY unsubscribeButton.label "Fjern abonnement">
+<!ENTITY unsubscribeButton.accesskey "F">
+<!ENTITY newGroupsTab.label           "Nye grupper">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label "Opdater">
+<!ENTITY refreshButton.accesskey "O">
+<!ENTITY stopButton.label "Stop">
+<!ENTITY stopButton.accesskey "S">
+<!ENTITY server.label "Konto:">
+<!ENTITY server.accesskey "K">
+<!ENTITY subscribedHeader.label "Abonner">
+<!ENTITY namefield.label "Vis emner som indeholder:">
+<!ENTITY namefield.accesskey "V">

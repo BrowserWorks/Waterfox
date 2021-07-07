@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Λογαριασμοί Firefox">
+<!ENTITY aboutAccounts.connected.description "Έχετε συνδεθεί ως">
+<!ENTITY aboutAccounts.syncPreferences.label "Πατήστε εδώ για να ελέγξετε τις ρυθμίσεις του Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Δεν υπάρχει σύνδεση στο διαδίκτυο">
+<!ENTITY aboutAccounts.retry.label "Προσπαθήστε ξανά">
+
+<!ENTITY aboutAccounts.restrictedError.title "Περιορισμένη">
+<!ENTITY aboutAccounts.restrictedError.description "Δεν μπορείτε να διαχειριστείτε λογαριασμούς Firefox από αυτό το προφίλ.">

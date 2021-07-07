@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Berichtenfilters">
+<!ENTITY nameColumn.label "Filternaam">
+<!ENTITY activeColumn.label "Ingeschakeld">
+<!ENTITY newButton.label "Nieuw…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopie…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Bewerken…">
+<!ENTITY editButton.accesskey "B">
+<!ENTITY deleteButton.label "Verwijderen">
+<!ENTITY deleteButton.accesskey "V">
+<!ENTITY reorderTopButton "Bovenaan plaatsen">
+<!ENTITY reorderTopButton.accessKey "e">
+<!ENTITY reorderTopButton.toolTip "Filter verplaatsen, zodat het als eerste wordt uitgevoerd">
+<!ENTITY reorderUpButton.label "Omhoog verplaatsen">
+<!ENTITY reorderUpButton.accesskey "m">
+<!ENTITY reorderDownButton.label "Omlaag verplaatsen">
+<!ENTITY reorderDownButton.accesskey "l">
+<!ENTITY reorderBottomButton "Onderaan plaatsen">
+<!ENTITY reorderBottomButton.accessKey "O">
+<!ENTITY reorderBottomButton.toolTip "Filter verplaatsen, zodat het als laatste wordt uitgevoerd">
+<!ENTITY filterHeader.label "Ingeschakelde filters worden automatisch in de onderstaande volgorde uitgevoerd.">
+<!ENTITY filtersForPrefix.label "Filters voor:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filterlogboek">
+<!ENTITY viewLogButton.accesskey "i">
+<!ENTITY runFilters.label "Nu uitvoeren">
+<!ENTITY runFilters.accesskey "u">
+<!ENTITY stopFilters.label "Stoppen">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Geselecteerde filter(s) uitvoeren op:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "Help">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Filters zoeken op naam…">

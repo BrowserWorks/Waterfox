@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Szerkesztés és címzés">
+<!ENTITY addressingGroupTitle.label "Címzés">
+<!ENTITY addressingText.label      "E-mail címek keresésekor:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "A globális LDAP-kiszolgáló beállításainak használata ennél a postafióknál">
+<!ENTITY useGlobal.accesskey       "D">
+<!ENTITY editDirectories.label     "Címtárak szerkesztése…">
+<!ENTITY editDirectories.accesskey "C">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Másik LDAP-kiszolgáló használata:">
+<!ENTITY directories.accesskey     "M">
+<!ENTITY directoriesNone.label     "Nincs">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Szerkesztés">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Levelek írása HTML formátumban">
+<!ENTITY useHtml.accesskey                    "L">
+<!ENTITY autoQuote.label                      "Válaszoláskor az eredeti szöveg automatikus idézése">
+<!ENTITY autoQuote.accesskey                  "V">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Idézéskor,">
+<!ENTITY quoting.accesskey                    "I">
+<!ENTITY aboveQuote.label                     "a válasz kezdése az idézett szöveg felett">
+<!ENTITY belowQuote.label                     "a válasz kezdése az idézett szöveg alatt">
+<!ENTITY selectAndQuote.label                 "az idézett szöveg kijelölése">
+<!ENTITY place.label                          "Az aláírás elhelyezése">
+<!ENTITY place.accesskey                      "e">
+<!ENTITY belowText.label                      "az idézet alá (javasolt)">
+<!ENTITY aboveText.label                      "a válasz alá (az idézet fölé)">
+<!ENTITY includeSigOnReply.label              "Aláírás a válaszoknál">
+<!ENTITY includeSigOnReply.accesskey          "A">
+<!ENTITY includeSigOnForward.label            "Aláírás a továbbításoknál">
+<!ENTITY includeSigOnForward.accesskey        "t">
+
+<!ENTITY globalComposingPrefs.label           "Globális szerkesztési beállítások…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globális címzési beállítások…">
+<!ENTITY globalAddressingPrefs.accesskey      "c">

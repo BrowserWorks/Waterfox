@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Skrifter">
+
+<!ENTITY  language.label                          "Skrifter for:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  typefaces.label                         "Skrifttype">
+<!ENTITY  sizes.label                             "Storleik (punkt)">
+
+<!ENTITY  proportional.label                      "Proporsjonal:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Seriffskrift:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Serifflaus skrift:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Fast breidde:">
+<!ENTITY  monospace.accesskey                     "F">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasi:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "Kursiv:">
+<!ENTITY  cursive.accesskey                       "K">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Vestleg">
+<!ENTITY  font.langGroup.japanese                 "Japansk">
+<!ENTITY  font.langGroup.trad-chinese             "Tradisjonell Kinesisk (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "KInesisk, forenkla">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tradisjonell Kinesisk (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreansk">
+<!ENTITY  font.langGroup.cyrillic                 "Kyrillisk">
+<!ENTITY  font.langGroup.el                       "Gresk">
+<!ENTITY  font.langGroup.thai                     "Thai">
+<!ENTITY  font.langGroup.hebrew                   "Hebraisk">
+<!ENTITY  font.langGroup.arabic                   "Arabisk">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamilsk">
+<!ENTITY  font.langGroup.armenian                 "Armensk">
+<!ENTITY  font.langGroup.bengali                  "Bengalsk">
+<!ENTITY  font.langGroup.canadian                 "Unified Canadian Syllabary">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopisk">
+<!ENTITY  font.langGroup.georgian                 "Georgisk">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Matematikk">
+<!ENTITY  font.langGroup.odia                     "Oriya">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Singalesisk">
+<!ENTITY  font.langGroup.tibetan                  "Tibetansk">
+<!ENTITY  font.langGroup.other                    "Andre skriftsystem">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minimum storleik:">
+<!ENTITY minSize.accesskey                        "M">
+<!ENTITY minSize.none                             "Ingen">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Seriffskrift">
+<!ENTITY  useDefaultFontSansSerif.label           "Serifflaus skrift">
+
+<!ENTITY  useDocumentFonts.label                  "Tillat dokument å bruke andre skrifttyper">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Når ei nettside vel sine eigne skrifttypar">
+<!ENTITY  useDefaultFont.label                    "Bruk standard skrifttypar, og ignorer nettsida sine føretrekte skrifttypar">
+<!ENTITY  useDefaultFont.accesskey                "s">

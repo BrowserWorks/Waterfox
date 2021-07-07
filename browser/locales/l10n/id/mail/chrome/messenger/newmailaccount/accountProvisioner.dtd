@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Selamat datang di &brandShortName;">
+<!ENTITY header2.label "Ingin punya alamat email baru?">
+<!ENTITY other.languages "Kami hanya menampilkan penyedia layanan email yang menawarkan akun email pada wilayah Anda. Klik di sini untuk menampilkan semua penyedia layanan.">
+<!ENTITY error.line1 "Maaf, kami tidak dapat menemukan alamat email yang disarankan.">
+<!ENTITY error.line2 "Anda bisa mencari nama panggilan atau sebarang istilah lain untuk menemukan lebih banyak surel.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Mungkin Anda juga dapat mencoba ">
+<!ENTITY error.suggest.middle "akun email gratis sebagai alternatif">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Halo ">
+<!ENTITY success.title.after ", alamat email berikut tersedia untuk Anda:">
+<!ENTITY success.tip "(Anda juga dapat mencari nama alias atau istilah lainnya untuk menemukan email yang lain)">
+<!ENTITY partnership.description "Dalam rangka kemitraan kami dengan beberapa penyedia jasa layanan, &brandShortName; menawarkan alamat email baru. Cukup isi nama depan dan nama belakang Anda, atau kata yang disukai pada bidang isian di atas untuk memulai.">
+<!ENTITY existing.header "Sudah punya alamat email yang ingin digunakan?">
+<!ENTITY tinyheader.title "Punya alamat?">
+<!ENTITY tinyheader.existing "Lewati saja dan gunakan alamat email yang sudah ada">
+<!ENTITY content.close "Saya akan mengkonfigurasi akun saya nanti.">
+<!ENTITY successful.title "Selamat!">
+<!ENTITY successful.successMessage "Anda sukses menyiapkan akun Anda.">
+<!ENTITY successful.write "Tulis email">
+<!ENTITY successful.write.desc "Kabari teman dan keluarga tentang alamat email baru Anda.<br/> Ini alasan Anda membuat alamat baru bukan?">
+<!ENTITY successful.customize "Ubahsuaikan &brandShortName; dengan pengaya keren">
+<!ENTITY successful.customize.desc "Ada ribuan pengaya yang dapat digunakan untuk mengubahsuai &brandShortName; agar sesuai dengan keinginan Anda.">
+<!ENTITY successful.attach "Tambahkan tanda tangan khusus untuk email Anda">
+<!ENTITY successful.attach.desc "Anda dapat menambahkan kutipan atau informasi tentang Anda pada setiap pesan yang dikirim secara otomatis.">
+<!ENTITY successful.close "Tutup jendela ini sekarang.">
+<!ENTITY input.namePlaceholder "Nama Anda, atau alias">
+<!ENTITY input.search "Cari">
+<!ENTITY search_engine.title "Ubahsuai mesin pencari Anda">
+<!ENTITY search_engine.message "Penyedia layanan email Anda juga dapat menyediakan fitur pencarian web.">
+<!ENTITY search_engine.button "Selesai">

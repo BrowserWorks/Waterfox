@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Email">
+<!ENTITY readMsgsLink.label           "Leggi messaggi">
+<!ENTITY composeMsgLink.label         "Scrivi un nuovo messaggio">
+
+<!ENTITY newsSectionHdr.label         "Gruppi di discussione">
+<!ENTITY subscribeNewsLink.label      "Gestisci la sottoscrizione ai gruppi di discussione">
+
+<!ENTITY feedsSectionHdr.label        "Feed">
+<!ENTITY subscribeFeeds.label         "Gestisci le sottoscrizioni">
+
+<!ENTITY chat.label                   "Chat">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Account">
+<!ENTITY subscribeImapFolders.label   "Gestisci la sottoscrizione alle cartelle">
+<!ENTITY settingsLink.label           "Visualizza impostazioni per questo account">
+<!ENTITY setupNewAcct.label           "Impostare un account:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Caratteristiche avanzate">
+<!ENTITY searchMsgsLink.label         "Cerca messaggi">
+<!ENTITY filtersLink.label            "Gestisci i filtri per i messaggi">
+<!ENTITY junkSettings.label           "Posta indesiderata">
+<!ENTITY offlineLink.label            "Impostazioni “non in linea”">

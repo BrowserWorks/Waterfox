@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Браузер">
+
+<!ENTITY navRadio.label                 "Открывать при">
+<!ENTITY navRadio.accesskey             "т">
+<!ENTITY navStartPageMenu.label         "запуске браузера">
+<!ENTITY newWinPageMenu.label           "создании окна">
+<!ENTITY newTabPageMenu.label           "создании вкладки">
+
+<!ENTITY blankPageRadio.label           "Пустую страницу">
+<!ENTITY blankPageRadio.accesskey       "у">
+<!ENTITY homePageRadio.label            "Домашнюю страницу">
+<!ENTITY homePageRadio.accesskey        "м">
+<!ENTITY lastPageRadio.label            "Последнюю просмотренную страницу">
+<!ENTITY lastPageRadio.accesskey        "о">
+<!ENTITY restoreSessionRadio.label      "Восстановить предыдущую сессию">
+<!ENTITY restoreSessionRadio.accesskey  "с">
+
+<!ENTITY restoreSessionIntro.label      "При восстановлении сессий и окон">
+<!ENTITY restoreImmediately.label       "Немедленно восстановить все вкладки">
+<!ENTITY restoreImmediately.accesskey   "е">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Восстановить">
+<!ENTITY restoreTabs.accesskey          "н">
+<!ENTITY restoreTabsAtATime.label       "вкладок за раз">
+<!ENTITY restoreDeferred.label          "Восстанавливать вкладки только когда мне нужно">
+<!ENTITY restoreDeferred.accesskey      "а">
+
+<!ENTITY homePageIntro.label            "При нажатии кнопки «Домашняя страница» загрузится следующая группа страниц:">
+<!ENTITY useCurrent.label               "Текущая страница">
+<!ENTITY useCurrent.accesskey           "щ">
+<!ENTITY useCurrentGroup.label          "Текущая группа страниц">
+<!ENTITY useCurrentGroup.accesskey      "я">
+<!ENTITY browseFile.label               "Выбрать файл…">
+<!ENTITY browseFile.accesskey           "б">
+<!ENTITY useDefault.label               "Восстановить">
+<!ENTITY useDefault.accesskey           "и">
+
+<!ENTITY defaultBrowserGroup.label      "Браузер по умолчанию">
+<!ENTITY defaultBrowserButton.label     "По умолчанию">
+<!ENTITY defaultBrowserButton.accesskey "ч">
+<!ENTITY alreadyDefaultText             "&brandShortName; уже является вашим браузером по умолчанию.">
+<!ENTITY defaultPendingText             "&brandShortName; станет вашим браузером по умолчанию после нажатия кнопки «OK».">
+<!ENTITY wasMadeDefaultText             "&brandShortName; был установлен в качестве вашего браузера по умолчанию.">
+<!ENTITY makeDefaultText                "Сделать &brandShortName; браузером по умолчанию.">

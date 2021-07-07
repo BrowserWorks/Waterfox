@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Cache">
+<!ENTITY pref.cache.caption              "Opções">
+<!ENTITY cachePara                       "O cache mantém em disco cópia das páginas visitadas frequentemente. (Clicar em Recarregar sempre exibe a versão mais recente da página.)">
+<!ENTITY cacheCheck.label                "Deixar o &brandShortName; gerenciar o tamanho do meu cache">
+<!ENTITY cacheCheck.accesskey            "D">
+<!ENTITY diskCacheUpTo.label             "Usar no máximo">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB de espaço em disco para o cache">
+<!ENTITY diskCacheFolder.label           "Pasta do cache:">
+<!ENTITY clearDiskCache.label            "Limpar o cache">
+<!ENTITY clearDiskCache.accesskey        "L">
+<!ENTITY chooseDiskCacheFolder.label     "Pasta...">
+<!ENTITY chooseDiskCacheFolder.accesskey "P">
+<!ENTITY diskCacheFolderExplanation      "Arquivos do cache serão armazenados em uma subpasta chamada &quot;Cache&quot;, na pasta que você especificar. Reinicie o &brandShortName; para que as mudanças ocorram.">
+<!ENTITY docCache.label                  "Comparar a página em cache com a página na rede:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Uma vez por sessão">
+<!ENTITY checkEveryTime.label            "Toda vez que eu visualizar a página">
+<!ENTITY checkNever.label                "Nunca">
+<!ENTITY checkAutomatically.label        "Quando a página estiver desatualizada">
+
+<!ENTITY prefetchTitle.label             "Baixar links antecipadamente">
+<!ENTITY enablePrefetch.label            "Pré-carregar páginas automaticamente se a conexão não estiver sendo utilizada (links que utilizem este recurso carregarão mais rápido)">
+<!ENTITY enablePrefetch.accesskey        "c">
+
+<!ENTITY debugCache.label                "Depuração">
+<!ENTITY debugEnableMemCache.label       "Ativar cache de memória">
+<!ENTITY debugEnableMemCache.accesskey   "A">
+<!ENTITY debugEnableDiskCache.label      "Ativar cache de disco">
+<!ENTITY debugEnableDiskCache.accesskey  "d">

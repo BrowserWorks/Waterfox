@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Message Header View Popup -->
+
+<!ENTITY AddToAddressBook.label            "Įtraukti į adresų knygą…">
+<!ENTITY AddToAddressBook.accesskey        "Į">
+<!ENTITY EditContact.label                 "Taisyti adresatą…">
+<!ENTITY EditContact.accesskey             "T">
+<!ENTITY ViewContact.label                 "Parodyti adresatą">
+<!ENTITY ViewContact.accesskey             "d">
+<!ENTITY SendMailTo.label                  "Rašyti laišką…">
+<!ENTITY SendMailTo.accesskey              "R">
+<!ENTITY CopyEmailAddress.label            "Kopijuoti el. pašto adresą">
+<!ENTITY CopyEmailAddress.accesskey        "K">
+<!ENTITY CreateFilterFrom.label            "Sukurti filtrą…">
+<!ENTITY CreateFilterFrom.accesskey        "f">
+<!ENTITY openInBrowser.label               "Atverti naršyklėje">
+<!ENTITY openInBrowser.accesskey           "A">
+<!ENTITY bookmarkLinkCmd.label             "Saitą įrašyti į adresyną…">
+<!ENTITY bookmarkLinkCmd.accesskey         "S">
+<!ENTITY copyLinkCmd.label                 "Kopijuoti saito adresą">
+<!ENTITY copyLinkCmd.accesskey             "K">
+<!ENTITY CopyMessageId.label               "Kopijuoti laiško ID">
+<!ENTITY CopyMessageId.accesskey           "K">
+<!ENTITY OpenMessageForMsgId.label         "Atverti laišką su šiuo ID">
+<!ENTITY OpenMessageForMsgId.accesskey     "A">
+<!ENTITY OpenBrowserWithMsgId.label        "Atverti naršyklę su laišku, kurio ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "n">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!ENTITY pref.cache.title "Pamięć podręczna">
+<!ENTITY pref.cache.caption "Ustawienia pamięci podręcznej">
+<!ENTITY cachePara "Kopie często oglądanych stron WWW przechowywane są na dysku twardym komputera, co pozwala na skrócenie czasu koniecznego do pobrania elementów strony (naciśnięcie przycisku Odśwież w oknie przeglądarki spowoduje pobranie aktualnej wersji strony).">
+<!ENTITY cacheCheck.label "Zezwalaj programowi &brandShortName; zarządzać wielkością pamięci podręcznej.">
+<!ENTITY cacheCheck.accesskey "r">
+<!ENTITY diskCacheUpTo.label "Używaj do">
+<!ENTITY diskCacheUpTo.accesskey "U">
+<!ENTITY spaceMbytes "MB miejsca na dysku dla pamięci podręcznej">
+<!ENTITY diskCacheFolder.label "Adres katalogu pamięci podręcznej:">
+<!ENTITY clearDiskCache.label "Wyczyść pamięć podręczną">
+<!ENTITY clearDiskCache.accesskey "d">
+<!ENTITY chooseDiskCacheFolder.label "Wybierz katalog…">
+<!ENTITY chooseDiskCacheFolder.accesskey "k">
+<!ENTITY diskCacheFolderExplanation "Pliki pamięci podręcznej będą przechowywane w podkatalogu „Cache” wybranego katalogu. Aby zmiany zostały zaktualizowane, należy ponownie uruchomić &brandShortName;.">
+<!ENTITY docCache.label "Porównuj stronę w pamięci podręcznej do strony w sieci:">
+<!ENTITY docCache.accesskey "s">
+<!ENTITY checkOncePerSession.label "Jednokrotnie w trakcie każdej sesji">
+<!ENTITY checkEveryTime.label "Podczas każdego połączenia">
+<!ENTITY checkNever.label "Nigdy">
+<!ENTITY checkAutomatically.label "Gdy strona jest nieaktualna">
+
+<!ENTITY prefetchTitle.label "Wstępne pobieranie ">
+<!ENTITY enablePrefetch.label "Pobierz wstępnie strony WWW w trakcie bezczynności, aby strony wskazywane przez odnośniki były szybciej otwierane">
+<!ENTITY enablePrefetch.accesskey "p">

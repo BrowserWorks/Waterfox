@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event			"新しい予定...">
+<!ENTITY event.new.event.accesskey		"N">
+
+<!ENTITY event.new.task				"新しい ToDo...">
+<!ENTITY event.new.task.accesskey		"k">
+
+<!ENTITY calendar.import.label			"ファイルからインポート...">
+<!ENTITY calendar.import.accesskey		"I">
+
+<!ENTITY calendar.export.label			"カレンダーをエクスポート...">
+<!ENTITY calendar.export.accesskey		"E">
+
+<!ENTITY calendar.publish.label			"予定を公開...">
+<!ENTITY calendar.publish.accesskey		"b">
+
+<!ENTITY calendar.deletecalendar.label		"選択したカレンダーを消去...">
+<!ENTITY calendar.deletecalendar.accesskey	"D">
+<!ENTITY calendar.unsubscribecalendar.label	"選択したカレンダーを購読解除...">
+<!ENTITY calendar.unsubscribecalendar.accesskey	"U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label		"選択したカレンダーを削除...">
+<!ENTITY calendar.removecalendar.accesskey	"R">
+
+<!ENTITY calendar.menu.customize.label		"カスタマイズ...">
+<!ENTITY calendar.menu.customize.accesskey	"C">
+
+<!ENTITY showUnifinderCmd.label			"予定を検索">
+<!ENTITY showUnifinderCmd.accesskey		"F">
+<!ENTITY showUnifinderCmd.tooltip		"予定検索ペインを開閉します">
+
+<!ENTITY calendar.displaytodos.checkbox.label	"ToDo を表示">
+<!ENTITY calendar.displaytodos.checkbox.accesskey 	"T">
+
+<!ENTITY goTodayCmd.label			"今日に移動">
+<!ENTITY goTodayCmd.accesskey			"T">
+
+<!ENTITY showCurrentView.label			"表示形式">
+<!ENTITY showCurrentView.accesskey		"V">
+
+<!ENTITY calendar.properties.label		"プロパティ..."><!-- Calendar Properties -->
+<!ENTITY calendar.properties.accesskey		"a">

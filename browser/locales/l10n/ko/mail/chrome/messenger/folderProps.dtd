@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "속성">
+
+<!ENTITY generalInfo.label                       "일반 정보">
+<!ENTITY folderCharsetFallback2.label            "기본 문자 인코딩:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "폴더 안의 모든 메시지에 인코딩 적용 (개별 메시지의 인코딩 설정과 자동 검출 인코딩은 무시 됩니다)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "요약 파일 색인을 재생성 합니다.">
+<!ENTITY folderRebuildSummaryFile2.label         "폴더 복구">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "폴더 색인 파일 (.msf) 손상되어 삭제한 메시지가 표시되는 경우가 있습니다. 이러한 문제가 일어났을 때 폴더를 복구해 주시기 바랍니다.">
+<!ENTITY folderIncludeInGlobalSearch.label       "이 폴더 메시지를 검색 대상으로 포함">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "메시지 보관 정책">
+<!ENTITY retentionUseAccount.label  "내 계정 설정으로 사용">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "일 전">
+<!ENTITY message.label "메시지">
+<!ENTITY retentionCleanup.label "디스크 용량을 늘리려면 오래된 메시지는 삭제해야 합니다.">
+<!ENTITY retentionCleanupImap.label "디스크 용량을 복구하기 위해 오래된 메시지는
+ 영구적으로 삭제합니다. 이 컴퓨터 및 원격 서버의 원본까지 제거 합니다.">
+<!ENTITY retentionCleanupPop.label "디스크 용량을 복구하기 위해 오래된 메시지는 영구적으로 삭제합니다. 원격 서버의 원본을 제거 합니다.">
+<!ENTITY retentionDeleteMsg.label "지정 용량 이상 메시지 삭제:">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "메시지 삭제하지 않기">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "최근 메시지만 남기고 모두 삭제하기">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "별표 메시지 항상 저장하기">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "동기화">
+<!ENTITY folderCheckForNewMessages2.label         "폴더에 새 메시지 도착 여부 확인">
+<!ENTITY folderCheckForNewMessages2.accesskey     "C">
+
+<!ENTITY offlineFolder.check.label               "오프라인 사용을 위한 폴더 선택">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "지금 받기">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "오프라인 사용을 위한 뉴스 그룹 선택">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "지금 받기">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "이름:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "아이콘 색상:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "기본 색상으로 복원">
+<!ENTITY folderProps.location.label              "주소:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "공유">
+<!ENTITY privileges.button.label                 "접근 권한…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "아래 권한 있음:">
+<!ENTITY folderOtherUsers.label                  "이 폴더에 액세스 할 수있는 다른 사람:">
+<!ENTITY folderType.label                        "폴더 형식:">
+
+<!ENTITY folderQuotaTab.label                    "용량">
+<!ENTITY folderQuotaUsage.label                  "사용:">
+<!ENTITY folderQuotaStatus.label                 "상태:">
+
+<!ENTITY numberOfMessages.label                  "메시지 갯수:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "알 수 없음">
+<!ENTITY sizeOnDisk.label                        "사용중인 디스크 용량:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "알 수 없음">

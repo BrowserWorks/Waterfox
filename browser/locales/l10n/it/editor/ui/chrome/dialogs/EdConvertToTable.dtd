@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Converti in tabella">
+<!ENTITY instructions1.label "Verrà creata una nuova riga della tabella per ciascun paragrafo selezionato.">
+<!ENTITY instructions2.label "Scegliere il carattere da utilizzare per suddividere la selezione in colonne:">
+<!ENTITY commaRadio.label "Virgola">
+<!ENTITY spaceRadio.label "Spazio">
+<!ENTITY otherRadio.label "Altro carattere:">
+<!ENTITY deleteCharCheck.label "Elimina carattere separatore">
+<!ENTITY collapseSpaces.label "Ignora spazi adiacenti">
+<!ENTITY collapseSpaces.tooltip "Converti spazi adiacenti in un unico separatore">

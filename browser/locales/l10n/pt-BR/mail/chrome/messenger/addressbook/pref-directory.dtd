@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "Servidores de diretório LDAP">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Servidor de diretório LDAP:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Selecione um servidor de diretório LDAP:">
+<!ENTITY directoriesText.accesskey "S">
+<!ENTITY addDirectory.label        "Adicionar">
+<!ENTITY addDirectory.accesskey    "a">
+<!ENTITY editDirectory.label       "Editar">
+<!ENTITY editDirectory.accesskey   "E">
+<!ENTITY deleteDirectory.label     "Excluir">
+<!ENTITY deleteDirectory.accesskey "x">

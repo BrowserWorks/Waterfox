@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Ανεπιθύμητη &amp; ύποπτη αλληλογραφία">
+<!ENTITY junkSettings.caption "Καθολικές ρυθμίσεις ανεπιθύμητης αλληλογραφίας">
+<!ENTITY junkMail.intro "Μεταβείτε στις Ρυθμίσεις λογαριασμού για να διαμορφώσετε τις ρυθμίσεις ανεπιθύμητων email για αυτό τον λογαριασμό.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Κατά την επισήμανση μηνυμάτων ως ανεπιθύμητων:">
+<!ENTITY manualMark.accesskey           "Κ">
+<!ENTITY manualMarkModeMove.label       "Μετακίνηση στον φάκελο &quot;Ανεπιθύμητα&quot; του λογαριασμού">
+<!ENTITY manualMarkModeMove.accesskey   "Μ">
+<!ENTITY manualMarkModeDelete.label     "Διαγραφή">
+<!ENTITY manualMarkModeDelete.accesskey "Δ">
+
+<!ENTITY markAsRead.intro               "Επισήμανση μηνυμάτων ως αναγνωσμένων:">
+<!ENTITY autoMarkAsRead.label           "Όταν το &brandShortName; αποφασίζει ότι είναι ανεπιθύμητα">
+<!ENTITY autoMarkAsRead.accesskey       "θ">
+<!ENTITY manualMarkAsRead.label         "Όταν τα επισημαίνω χειροκίνητα ως ανεπιθύμητα">
+<!ENTITY manualMarkAsRead.accesskey     "μ">
+
+<!ENTITY enableJunkLogging.label        "Ενεργοποίηση καταγραφής φίλτρου ανεπιθύμητων">
+<!ENTITY enableJunkLogging.accesskey    "Ε">
+<!ENTITY openJunkLog.label              "Εμφάνιση αρχείου καταγραφής">
+<!ENTITY openJunkLog.accesskey          "μ">
+<!ENTITY resetTrainingData.label        "Επαναφορά δεδομένων εκμάθησης">
+<!ENTITY resetTrainingData.accesskey    "φ">
+
+<!ENTITY pref.suspectMail.caption       "Ύποπτα email">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Απάτες email">
+<!ENTITY enablePhishingDetector.label     "Ειδοποίηση αν το μήνυμα που διαβάζω είναι ύποπτο για απάτη email">
+<!ENTITY enablePhishingDetector.accesskey "Ε">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Προστασία από ιούς">
+<!ENTITY antiVirus.label                  "Να επιτρέπεται η σάρωση εισερχόμενων μηνυμάτων από προγράμματα προστασίας">
+<!ENTITY antiVirus.accesskey              "Ν">

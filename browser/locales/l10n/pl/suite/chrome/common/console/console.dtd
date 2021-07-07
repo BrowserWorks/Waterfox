@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title "Konsola błędów">
+
+<!ENTITY errFile.label "Plik źródłowy:">
+<!ENTITY errLine.label "Wiersz:">
+<!ENTITY errColumn.label "Kolumna:">
+
+<!ENTITY all.label "Wszystkie">
+<!ENTITY all.accesskey "s">
+<!ENTITY errors.label "Błędy">
+<!ENTITY errors.accesskey "B">
+<!ENTITY warnings.label "Ostrzeżenia">
+<!ENTITY warnings.accesskey "O">
+<!ENTITY messages.label "Wiadomości">
+<!ENTITY messages.accesskey "W">
+<!ENTITY clear.label "Wyczyść">
+<!ENTITY clear.accesskey "c">
+<!ENTITY codeEval.label "Kod:">
+<!ENTITY codeEval.accesskey "K">
+<!ENTITY evaluate.label "Analizuj">
+<!ENTITY evaluate.accesskey "A">
+<!ENTITY filter2.label "Filtr:">
+<!ENTITY filter2.accesskey "F">
+
+<!ENTITY copyCmd.label "Kopiuj">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY copyCmd.commandkey "C">
+<!ENTITY sortFirst.label "Sortowanie od pierwszego do ostatniego">
+<!ENTITY sortFirst.accesskey "S">
+<!ENTITY sortLast.label "Sortowanie od ostatniego do pierwszego">
+<!ENTITY sortLast.accesskey "o">
+<!ENTITY closeCmd.commandkey "W">
+<!ENTITY focus1.commandkey "l">
+<!ENTITY focus2.commandkey "d">
+
+<!ENTITY menuBar.tooltip "Pasek menu">
+<!ENTITY modeToolbar.tooltip "Pasek narzędziowy trybu">
+<!ENTITY entryToolbar.tooltip "Pasek wprowadzania kodu JavaScript">
+<!ENTITY toolbarsCmd.label "Pokaż/Ukryj">
+<!ENTITY toolbarsCmd.accesskey "P">
+<!ENTITY toolbarMode.label "Tryb">
+<!ENTITY toolbarMode.accesskey "T">
+<!ENTITY toolbarEval.label "Wprowadzanie JavaScript">
+<!ENTITY toolbarEval.accesskey "J">

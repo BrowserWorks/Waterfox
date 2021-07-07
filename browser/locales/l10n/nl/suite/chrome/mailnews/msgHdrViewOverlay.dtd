@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Aan: ">
+<!ENTITY fromField.label "Van: ">
+<!ENTITY senderField.label "Afzender: ">
+<!ENTITY organizationField.label "Organisatie: ">
+<!ENTITY replyToField.label "Antwoord-naar: ">
+
+<!ENTITY subjectField.label "Onderwerp: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Bcc: ">
+<!ENTITY newsgroupsField.label "Nieuwsgroepen: ">
+<!ENTITY followupToField.label "Opvolgen-aan: ">
+
+<!ENTITY tagsHdr.label "Labels: ">
+<!ENTITY dateField.label "Datum:">
+<!ENTITY userAgentField.label "Useragent: ">
+<!ENTITY referencesField.label "Referenties: ">
+<!ENTITY messageIdField.label "Bericht-ID: ">
+<!ENTITY inReplyToField.label "In-antwoord-op: ">
+<!ENTITY originalWebsite.label "Website: ">
+
+<!ENTITY editMessage.label                 "Concept bewerken…">
+<!ENTITY editMessage.accesskey             "C">
+
+<!ENTITY attachmentsTree.label             "Bijlagen:">
+<!ENTITY attachmentsTree.accesskey         "n">
+<!ENTITY openAttachmentCmd.label           "Openen">
+<!ENTITY openAttachmentCmd.accesskey       "O">
+<!ENTITY viewAttachmentCmd.label           "Bron bekijken">
+<!ENTITY viewAttachmentCmd.accesskey       "B">
+<!ENTITY saveAsAttachmentCmd.label         "Opslaan als…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "l">
+<!ENTITY detachAttachmentCmd.label         "Ontkoppelen…">
+<!ENTITY detachAttachmentCmd.accesskey     "n">
+<!ENTITY deleteAttachmentCmd.label         "Verwijderen">
+<!ENTITY deleteAttachmentCmd.accesskey     "V">
+<!ENTITY saveAllAttachmentsCmd.label       "Alles opslaan…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "s">
+<!ENTITY detachAllAttachmentsCmd.label     "Alles ontkoppelen…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "k">
+<!ENTITY deleteAllAttachmentsCmd.label     "Alles verwijderen…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "v">

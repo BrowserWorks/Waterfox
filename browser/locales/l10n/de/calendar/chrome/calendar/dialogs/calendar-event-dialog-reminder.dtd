@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Erinnerung einrichten">
+<!ENTITY reminder.add.label                                "Hinzufügen">
+<!ENTITY reminder.add.accesskey                            "H">
+<!ENTITY reminder.remove.label                             "Entfernen">
+<!ENTITY reminder.remove.accesskey                         "F">
+
+<!ENTITY reminder.reminderDetails.label                    "Erinnerungsdetails">
+<!ENTITY reminder.action.label                             "Erinnerungsfunktion auswählen">
+
+<!ENTITY reminder.action.alert.label                       "Erinnerung anzeigen">
+<!ENTITY reminder.action.email.label                       "E-Mail senden">
+
+<!ENTITY alarm.units.minutes                               "Minuten" >
+<!ENTITY alarm.units.hours                                 "Stunden" >
+<!ENTITY alarm.units.days                                  "Tage" >

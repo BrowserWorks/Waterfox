@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "피드 구독">
+<!ENTITY learnMore.label             "피드에 대해 더 알아보기">
+
+<!ENTITY feedTitle.label             "제목:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "피드 URL:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "올바른 피드 URL을 입력해주세요.">
+<!ENTITY locationValidate.label      "피드 검사">
+<!ENTITY validateText.label          "피드가 유효한지 확인해 올바른 URL을 취득합니다.">
+
+<!ENTITY feedFolder.label            "보관 폴더:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "새글 확인 간격 ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "분">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "일">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "편집자 추천:">
+
+<!ENTITY quickMode.label             "웹 페이지를 읽지 않고 기사 요약을 표시">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "피드의 &lt;카테고리&gt; 이름에서 태그 자동으로 만들기">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "태그에 접두사 붙이기:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "접두사를 입력하세요">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "추가">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "확인">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "업데이트">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "제거">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "가져오기">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "내보내기">
+<!ENTITY button.exportOPML.accesskey "X">
+<!ENTITY button.exportOPML.tooltip   "피드를 폴더 구성으로 내 보내기 합니다. 피드를 목록으로 내 보내기 하려면 Ctrl 키를 누르면서 클릭하거나 Enter키를 누릅니다.">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "닫기">

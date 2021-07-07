@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Διαχείριση δεδομένων">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Όλοι οι τύποι δεδομένων">
+<!ENTITY select.cookies.label "Μόνο cookies">
+<!ENTITY select.permissions.label "Μόνο δικαιώματα">
+<!ENTITY select.preferences.label "Μόνο προτιμήσεις">
+<!ENTITY select.passwords.label "Μόνο κωδικοί πρόσβασης">
+<!ENTITY select.storage.label "Μόνο αποθήκευση">
+
+<!ENTITY domain.search.placeholder "Αναζήτηση τομέων">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Τομέας">
+
+<!ENTITY domain.ctx.forgetdomain.label "Διαγραφή στοιχείων τομέα">
+<!ENTITY domain.ctx.forgetdomain.accesskey "Δ">
+<!ENTITY domain.ctx.forgetglobal.label "Διαγραφή γενικών δεδομένων">
+<!ENTITY domain.ctx.forgetglobal.accesskey "Δ">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY tab.permissions.label "Δικαιώματα">
+<!ENTITY tab.preferences.label "Προτιμήσεις">
+<!ENTITY tab.passwords.label "Κωδικοί πρόσβασης">
+<!ENTITY tab.storage.label "Αποθήκευση">
+<!ENTITY tab.formdata.label "Δεδομένα φορμών">
+<!ENTITY tab.forget.label "Διαγραφή">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Αυτός ο τομέας έχει αποθηκεύσει τα εξής cookies στον υπολογιστή σας:">
+
+<!ENTITY cookies.tree.host.label "Ιστοσελίδα">
+<!ENTITY cookies.tree.name.label "Όνομα cookie">
+<!ENTITY cookies.tree.expires.label "Λήξη">
+
+<!ENTITY cookies.infobox.label "Πληροφορίες για το επιλεγμένο cookie">
+
+<!ENTITY cookies.info.name.label "Όνομα:">
+<!ENTITY cookies.info.value.label "Περιεχόμενο:">
+<!ENTITY cookies.info.host.label "Κεντρικός υπολογιστής:">
+<!ENTITY cookies.info.domain.label "Τομέας:">
+<!ENTITY cookies.info.path.label "Διαδρομή:">
+<!ENTITY cookies.info.sendtype.label "Αποστολή για:">
+<!ENTITY cookies.info.expires.label "Λήγει:">
+
+<!ENTITY cookies.ctx.remove.label "Αφαίρεση">
+<!ENTITY cookies.ctx.remove.accesskey "Α">
+<!ENTITY cookies.ctx.selectAll.label "Επιλογή όλων">
+<!ENTITY cookies.ctx.selectAll.accesskey "ό">
+
+<!ENTITY cookies.button.remove.label "Αφαίρεση">
+<!ENTITY cookies.button.remove.accesskey "Α">
+
+<!ENTITY cookies.blockOnRemove.label "Κατά την αφαίρεση, να αποκλείεται η τοποθέτηση νέων cookies από τις παρακάτω ιστοσελίδες">
+<!ENTITY cookies.blockOnRemove.accesskey "Κ">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Χρήση προεπιλογής">
+<!ENTITY perm.AskAlways "Πάντα ερώτηση">
+<!ENTITY perm.NeverSave "Ποτέ αποθήκευση">
+<!ENTITY perm.Allow "Αποδοχή">
+<!ENTITY perm.AllowSameDomain "Αποδοχή για τον ίδιο τομέα">
+<!ENTITY perm.AllowSession "Αποδοχή για τη συνεδρία">
+<!ENTITY perm.Block "Φραγή">
+
+<!ENTITY perm.host.placeholder "Εισάγετε όνομα συστήματος">
+<!ENTITY perm.button.add.label "Προσθήκη">
+<!ENTITY perm.button.add.accesskey "Π">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Οι προτιμήσεις περιεχομένου είναι ένας τρόπος για να αποθηκεύει το &brandShortName; τις ρυθμίσεις του, όπως επίπεδα ζουμ, συγκεκριμένα για κάθε ιστοσελίδα.">
+
+<!ENTITY prefs.tree.host.label "Ιστοσελίδα">
+<!ENTITY prefs.tree.name.label "Όνομα προτίμησης">
+<!ENTITY prefs.tree.value.label "Τιμή">
+
+<!ENTITY prefs.ctx.remove.label "Αφαίρεση">
+<!ENTITY prefs.ctx.remove.accesskey "Α">
+<!ENTITY prefs.ctx.selectAll.label "Επιλογή όλων">
+<!ENTITY prefs.ctx.selectAll.accesskey "ό">
+
+<!ENTITY prefs.button.remove.label "Αφαίρεση">
+<!ENTITY prefs.button.remove.accesskey "Α">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Έχετε αποθηκεύσει τους παρακάτω κωδικούς πρόσβασης για τον τομέα:">
+
+<!ENTITY pwd.tree.host.label "Ιστοσελίδα">
+<!ENTITY pwd.tree.username.label "Όνομα χρήστη">
+<!ENTITY pwd.tree.password.label "Κωδικός πρόσβασης">
+
+<!ENTITY pwd.ctx.remove.label "Αφαίρεση">
+<!ENTITY pwd.ctx.remove.accesskey "Α">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Αντιγραφή κωδικού πρόσβασης">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "Α">
+<!ENTITY pwd.ctx.selectAll.label "Επιλογή όλων">
+<!ENTITY pwd.ctx.selectAll.accesskey "ό">
+
+<!ENTITY pwd.button.remove.label "Αφαίρεση">
+<!ENTITY pwd.button.remove.accesskey "Α">
+
+<!-- storage -->
+<!ENTITY storage.description "Ο τομέας χρησιμοποιεί τα εξής δεδομένα αποθήκευση ιστού στον υπολογιστή σας:">
+
+<!ENTITY storage.tree.host.label "Ιστοσελίδα">
+<!ENTITY storage.tree.type.label "Τύπος">
+<!ENTITY storage.tree.size.label "Μέγεθος">
+
+<!ENTITY storage.ctx.remove.label "Αφαίρεση">
+<!ENTITY storage.ctx.remove.accesskey "Α">
+<!ENTITY storage.ctx.selectAll.label "Επιλογή όλων">
+<!ENTITY storage.ctx.selectAll.accesskey "ό">
+
+<!ENTITY storage.button.remove.label "Αφαίρεση">
+<!ENTITY storage.button.remove.accesskey "Α">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Δεδομένα πεδίου αναζήτησης">
+
+<!ENTITY fdata.tree.fieldname.label "Όνομα πεδίου">
+<!ENTITY fdata.tree.value.label "Εισηγμένη τιμή">
+<!ENTITY fdata.tree.usecount.label "Αριθμός χρήσεων">
+<!ENTITY fdata.tree.firstused.label "Πρώτη χρήση">
+<!ENTITY fdata.tree.lastused.label "Τελευταία χρήση">
+
+<!ENTITY fdata.ctx.remove.label "Αφαίρεση">
+<!ENTITY fdata.ctx.remove.accesskey "Α">
+<!ENTITY fdata.ctx.selectAll.label "Επιλογή όλων">
+<!ENTITY fdata.ctx.selectAll.accesskey "ό">
+
+<!ENTITY fdata.button.remove.label "Αφαίρεση">
+<!ENTITY fdata.button.remove.accesskey "Α">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "Δικαιώματα">
+<!ENTITY forget.permissions.accesskey "Δ">
+<!ENTITY forget.preferences.label "Προτιμήσεις περιεχομένου">
+<!ENTITY forget.preferences.accesskey "ο">
+<!ENTITY forget.passwords.label "Κωδικοί πρόσβασης">
+<!ENTITY forget.passwords.accesskey "ω">
+<!ENTITY forget.storage.label "Αποθηκευτικός χώρος">
+<!ENTITY forget.storage.accesskey "Α">
+<!ENTITY forget.formdata.label "Δεδομένα φορμών">
+<!ENTITY forget.formdata.accesskey "Δ">
+
+<!ENTITY forget.button.label "Διαγραφή δεδομένων">
+<!ENTITY forget.button.accesskey "φ">

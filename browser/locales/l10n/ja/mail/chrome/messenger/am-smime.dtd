@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label			"エンドツーエンド暗号化">
+<!ENTITY e2eLearnMore.label		"詳細情報">
+
+<!ENTITY e2eEnc.description		"エンドツーエンド暗号化をしないメッセージのコンテンツは、ご利用のメールプロバイダーや監視システムに容易にさらされます。">
+<!ENTITY e2eeReqWarning.description	"送信メッセージを暗号化する必要がある場合は、あなたの公開鍵またはすべての受信者の証明書を用意しなければなりません。">
+
+<!ENTITY e2eSigning.description		"デジタル署名により、メッセージの送信者があなたであり、コンテンツが改変されていないことを受信者が検証できます。">
+<!ENTITY e2eTechPref.description	"優先される暗号化技術:">
+
+<!ENTITY doNotEncrypt.label			"既定で暗号化を有効にしない">
+<!ENTITY doNotEncrypt.accesskey			"N">
+<!ENTITY requireEncryptMessage.label		"既定で暗号化を必須にする">
+<!ENTITY requireEncryptMessage.accesskey	"u">
+<!ENTITY encryptionCert2.message		"暗号化のための個人証明書:">
+<!ENTITY digitalSign.certificate.button		"選択...">
+<!ENTITY digitalSign.certificate.accesskey	"S">
+<!ENTITY digitalSign.certificate_clear.button	"消去">
+<!ENTITY digitalSign.certificate_clear.accesskey	"C">
+<!ENTITY encryption.certificate.button		"選択...">
+<!ENTITY encryption.certificate.accesskey	"t">
+<!ENTITY encryption.certificate_clear.button	"消去">
+<!ENTITY encryption.certificate_clear.accesskey	"e">
+<!ENTITY signingGroupTitle.label		"デジタル署名">
+<!ENTITY signMessage2.label			"既定でデジタル署名を追加する">
+<!ENTITY signMessage.accesskey			"D">
+<!ENTITY signingCert2.message			"デジタル署名のための個人証明書:">
+
+<!ENTITY sendingDefaults.label		"メッセージ送信の既定の設定">
+
+<!ENTITY technologyAutomatic.label	"利用可能な鍵または証明書をもとに自動的に選択する">
+
+<!ENTITY certificates2.label		"S/MIME">
+<!ENTITY manageCerts3.label		"S/MIME 証明書の管理">
+<!ENTITY manageCerts3.accesskey		"M">
+<!ENTITY manageDevices2.label		"S/MIME セキュリティデバイス">
+<!ENTITY manageDevices2.accesskey	"y">
+
+<!ENTITY technologySMIME.label		"S/MIME を優先する">
+<!ENTITY technologyOpenPGP.label	"OpenPGP を優先する">
+
+<!ENTITY openpgpKeys.label		"OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title		"証明書の選択">
+<!ENTITY certPicker.info		"証明書:">
+<!ENTITY certPicker.detailsLabel	"選択した証明書の詳細:">
+
+<!ENTITY openpgpKey.message		"暗号化およびデジタル署名のための秘密鍵:">
+<!ENTITY openpgpKey.button		"秘密鍵を設定...">
+<!ENTITY openpgpKey.accesskey		"o">

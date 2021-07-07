@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "聊天账户向导">
+
+<!ENTITY accountProtocolTitle.label   "聊天网络">
+<!ENTITY accountProtocolInfo.label    "请选择您聊天账户的网络。">
+<!ENTITY accountProtocolField.label   "网络：">
+<!ENTITY accountProtocolGetMore.label "获取更多…">
+
+<!ENTITY accountUsernameTitle.label   "用户名">
+<!ENTITY accountUsernameDuplicate.label "此账户已经配置！">
+
+<!ENTITY accountPasswordTitle.label   "密码">
+<!ENTITY accountPasswordInfo.label    "请在下面的框中输入您的密码。">
+<!ENTITY accountPasswordField.label   "密码：">
+<!ENTITY accountPasswordManager.label "这里输入的密码将被保存在账户管理器中。如果您想每次连接此账户时都提示输入密码，请留空此框。">
+
+<!ENTITY accountAdvancedTitle.label   "高级选项">
+<!ENTITY accountAdvancedInfo.label    "如果您想，可以随时跳过这一步。">
+<!ENTITY accountAdvanced.newMailNotification.label   "新邮件通知">
+<!ENTITY accountAliasGroupbox.caption "本地别名">
+<!ENTITY accountAliasField.label      "别名：">
+<!ENTITY accountAliasInfo.label       "这仅会在您交谈时显示在您的对话中，远程联系人不会看到它。">
+<!ENTITY accountProxySettings.caption "代理设置">
+<!ENTITY accountProxySettings.change.label     "更改…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "概述">
+<!ENTITY accountSummaryInfo.label    "您输入的信息摘要如下。创建账户前请检查它。">
+<!ENTITY accountSummary.connectNow.label "立即连接此账户">

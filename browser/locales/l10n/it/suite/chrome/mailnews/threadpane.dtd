@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Argomento">
+<!ENTITY fromColumn.label "Mittente">
+<!ENTITY recipientColumn.label "Destinatario">
+<!ENTITY attachmentColumn.label "Allegati">
+<!ENTITY subjectColumn.label "Oggetto">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "Priorità">
+<!ENTITY tagsColumn.label "Etichette">
+<!ENTITY accountColumn.label "Account">
+<!ENTITY statusColumn.label "Stato">
+<!ENTITY sizeColumn.label "Dimensione">
+<!ENTITY junkStatusColumn.label "Stato spam">
+<!ENTITY unreadColumn.label "Non letti per l'argomento">
+<!ENTITY totalColumn.label "Totali per l'argomento">
+<!ENTITY readColumn.label "Letto">
+<!ENTITY receivedColumn.label "Ricevuto">
+<!ENTITY flagColumn.label "Spuntato">
+<!ENTITY locationColumn.label "Indirizzo">
+<!ENTITY idColumn.label "Ordine di ricezione">
+<!ENTITY columnChooser2.tooltip "Seleziona colonne da visualizzare">
+<!ENTITY threadColumn2.tooltip "Visualizza i messaggi raggruppati per argomento">
+<!ENTITY fromColumn2.tooltip "Ordina per mittente">
+<!ENTITY recipientColumn2.tooltip "Ordina per destinatario">
+<!ENTITY attachmentColumn2.tooltip "Ordina per allegati">
+<!ENTITY subjectColumn2.tooltip "Ordina per oggetto">
+<!ENTITY dateColumn2.tooltip "Ordina per data">
+<!ENTITY priorityColumn2.tooltip "Ordina per priorità">
+<!ENTITY tagsColumn2.tooltip "Ordina per etichette">
+<!ENTITY accountColumn2.tooltip "Ordina per account">
+<!ENTITY statusColumn2.tooltip "Ordina per stato">
+<!ENTITY sizeColumn2.tooltip "Ordina per dimensione">
+<!ENTITY junkStatusColumn2.tooltip "Ordina per stato spam">
+<!ENTITY unreadColumn2.tooltip "Numero di messaggi non letti per argomento">
+<!ENTITY totalColumn2.tooltip "Numero totale dei messaggi per argomento">
+<!ENTITY readColumn2.tooltip "Ordina per messaggio letto">
+<!ENTITY receivedColumn2.tooltip "Ordina per data di ricezione">
+<!ENTITY flagColumn2.tooltip "Ordina per marcato">
+<!ENTITY locationColumn2.tooltip "Ordina per indirizzo">
+<!ENTITY idColumn2.tooltip "Ordina per ordine di ricezione">

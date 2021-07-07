@@ -1,0 +1,77 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY quickFilterBar.qfbShowFilterBar.label "Filtro veloce">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.menu.label "Barra filtro veloce">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.menu.accesskey "f">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.appmenu.label "Barra filtro veloce">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.button.tooltip "Attiva la barra del filtro veloce">
+
+<!ENTITY quickFilterBar.sticky.tooltip "Mantieni i filtri quando si cambia cartella">
+
+<!ENTITY quickFilterBar.unread.label "Non letti">
+
+<!ENTITY quickFilterBar.unread.tooltip "Mostra solo i messaggi ancora da leggere">
+
+<!ENTITY quickFilterBar.starred.label "Speciali">
+
+<!ENTITY quickFilterBar.starred.tooltip "Mostra solo i messaggi con attributo “speciale”">
+
+<!ENTITY quickFilterBar.inaddrbook.label "In rubrica">
+
+<!ENTITY quickFilterBar.inaddrbook.tooltip "Mostra solo i messaggi dei contatti presenti in rubrica">
+
+<!ENTITY quickFilterBar.tags.label "Etichette">
+
+<!ENTITY quickFilterBar.tags.tooltip "Mostra solo i messaggi con un’etichetta applicata">
+
+<!ENTITY quickFilterBar.attachment.label "Allegati">
+
+<!ENTITY quickFilterBar.attachment.tooltip "Mostra solo i messaggi con allegati">
+
+<!ENTITY quickFilterBar.resultsLabel.some.formatString "#1 messaggio;#1 messaggi">
+
+<!ENTITY quickFilterBar.resultsLabel.none "Nessun risultato">
+
+<!ENTITY quickFilterBar.resultsLabel.minWidth "100">
+
+<!ENTITY quickFilterBar.textbox.emptyText.base1 "Filtra questi messaggi #1">
+
+<!ENTITY quickFilterBar.show.key2 "k">
+
+<!ENTITY quickFilterBar.textbox.emptyText.keyLabel2.nonmac "&lt;Ctrl+Maiusc+K&gt;">
+
+<!ENTITY quickFilterBar.textbox.emptyText.keyLabel2.mac "&lt;⇧⌘K&gt;">
+
+<!ENTITY quickFilterBar.booleanMode.tooltip "Modalità filtro per etichette">
+
+<!ENTITY quickFilterBar.booleanModeAny.label "Qualunque di">
+
+<!ENTITY quickFilterBar.booleanModeAny.tooltip "Almeno uno dei criteri di filtro per etichetta deve essere soddisfatto">
+
+<!ENTITY quickFilterBar.booleanModeAll.label "Tutti di">
+
+<!ENTITY quickFilterBar.booleanModeAll.tooltip "Tutti i criteri devono essere soddisfatti">
+
+<!ENTITY quickFilterBar.textbox.idealWidth "320">
+
+<!ENTITY quickFilterBar.textbox.minWidth "280">
+
+<!ENTITY quickFilterBar.textFilter.explanation.label "Filtra i messaggi per:">
+
+<!ENTITY quickFilterBar.textFilter.sender.label "Mittente">
+
+<!ENTITY quickFilterBar.textFilter.recipients.label "Destinatari">
+
+<!ENTITY quickFilterBar.textFilter.subject.label "Oggetto">
+
+<!ENTITY quickFilterBar.textFilter.body.label "Corpo">
+
+<!ENTITY quickFilterBar.glodaUpsell.continueSearch "Continua questa ricerca nelle altre cartelle">
+
+<!ENTITY quickFilterBar.glodaUpsell.pressEnterAndCurrent "Premere “Invio” nuovamente per continuare la ricerca per: #1">

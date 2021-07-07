@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title       "Spis treści">
+<!ENTITY buildToc.label     "Utwórz spis treści:">
+<!ENTITY tag.label          "Znacznik:">
+<!ENTITY class.label        "Klasa:">
+<!ENTITY header1.label      "Poziom 1">
+<!ENTITY header2.label      "Poziom 2">
+<!ENTITY header3.label      "Poziom 3">
+<!ENTITY header4.label      "Poziom 4">
+<!ENTITY header5.label      "Poziom 5">
+<!ENTITY header6.label      "Poziom 6">
+<!ENTITY makeReadOnly.label "Ustaw spis treści w trybie tylko do odczytu">
+<!ENTITY orderedList.label  "Numeruj wszystkie pozycje spisu treści">

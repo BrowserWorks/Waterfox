@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Laiškų saugojimas">
+<!ENTITY securitySettings.label "Saugumo nuostatos">
+<!ENTITY serverSettings.label "Serverio nuostatos">
+<!ENTITY serverType.label "Serverio tipas:">
+<!ENTITY serverName.label "Serverio vardas:">
+<!ENTITY serverName.accesskey "d">
+<!ENTITY userName.label "Abonento vardas:">
+<!ENTITY userName.accesskey "A">
+<!ENTITY port.label "Prievadas:">
+<!ENTITY port.accesskey "v">
+<!ENTITY serverPortDefault.label "Numatytasis:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Tikrinti paštą kas">
+<!ENTITY biffStart.accesskey "T">
+<!ENTITY biffEnd.label "min.">
+<!ENTITY useIdleNotifications.label "Leisti serveriui siųsti informacinius pranešimus apie naujų laiškų gavimą.">
+<!ENTITY useIdleNotifications.accesskey "w">
+<!ENTITY connectionSecurity.label "Saugusis ryšys:">
+<!ENTITY connectionSecurity.accesskey "S">
+<!ENTITY connectionSecurityType-0.label "nenaudoti">
+<!ENTITY connectionSecurityType-1.label "STARTTLS (jei įmanoma)">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Tapatumo tikrinimo metodas:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Palikti laiškų kopijas serveryje">
+<!ENTITY leaveOnServer.accesskey "l">
+<!ENTITY headersOnly.label "Atsiųsti tik laiškų antraštes">
+<!ENTITY headersOnly.accesskey "A">
+<!ENTITY deleteByAgeFromServer.label "ne daugiau kaip">
+<!ENTITY deleteByAgeFromServer.accesskey "d">
+<!ENTITY daysEnd.label "dienas(-ų)">
+<!ENTITY deleteOnServer2.label "kol jie nėra pašalinti iš disko">
+<!ENTITY deleteOnServer2.accesskey "k">
+<!ENTITY downloadOnBiff.label "Jei patikrinus paštą rasta laiškų, tai juos atsiųsti">
+<!ENTITY downloadOnBiff.accesskey "J">
+<!ENTITY deleteMessagePrefix.label "Šalintiną laišką:">
+<!ENTITY modelMoveToTrash.label "Perkelti į šį katalogą:">
+<!ENTITY modelMoveToTrash.accesskey "š">
+<!ENTITY modelMarkDeleted.label "pažymėti kaip pašalintą">
+<!ENTITY modelMarkDeleted.accesskey "ž">
+<!ENTITY modelDeleteImmediately.label "sunaikinti">
+<!ENTITY modelDeleteImmediately.accesskey "n">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Baigus darbą su pašto programa, sunaikinti pašalintus laiškus">
+<!ENTITY expungeOnExit.accesskey "B">
+<!ENTITY emptyTrashOnExit.label "Baigus darbą su pašto programa, išvalyti šiukšlinę">
+<!ENTITY emptyTrashOnExit.accesskey "B">
+<!ENTITY loginAtStartup.label "Paleidus pašto programą, patikrinti, ar yra naujų laiškų">
+<!ENTITY loginAtStartup.accesskey "P">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Paklausti prieš atsiunčiant daugiau kaip">
+<!ENTITY maxMessagesStart.accesskey "k">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "laiškų">
+<!ENTITY alwaysAuthenticate.label "Nurodyti serveriui, kad jis patikrintų abonento vardą ir slaptažodį">
+<!ENTITY alwaysAuthenticate.accesskey "N">
+<!ENTITY newsrcFilePath1.label "„News.rc“ failas:">
+<!ENTITY newsrcPicker1.label "Parinkite „News.rc“ failą">
+<!ENTITY abbreviate.label "Naujienų grupių vardus pašto aplankų polangyje rodyti:">
+<!ENTITY abbreviateOn.label "pilnus (pvz., „netscape.public.mozilla.mail-news“)">
+<!ENTITY abbreviateOff.label "sutrumpintus (pvz., „n.p.m.mail-news“)">
+<!ENTITY advancedButton.label "Papildomai…">
+<!ENTITY advancedButton.accesskey "P">
+<!ENTITY serverDefaultCharset2.label "Numatytoji teksto koduotė:">
+<!ENTITY localPath1.label "Vietinis aplankas">
+<!ENTITY localFolderPicker.label "Vietinio aplanko parinkimas">
+<!ENTITY browseFolder.label "Parinkti…">
+<!ENTITY browseFolder.accesskey "r">
+<!ENTITY browseNewsrc.label "Parinkti…">
+<!ENTITY browseNewsrc.accesskey "n">
+
+<!ENTITY accountTitle.label "Paskyros nuostatos">
+<!ENTITY accountSettingsDesc.label "Tai – speciali paskyra. Su ja nesusieti jokie tapatybės (asmeniniai) duomenys.">
+<!ENTITY storeType.label "Laiškų saugojimo būdas">
+<!ENTITY storeType.accesskey "b">
+<!ENTITY mboxStore2.label "Atskiras failas kiekvienam aplankui („mbox“)">
+<!ENTITY maildirStore.label "Atskiras failas kiekvienam laiškui („Maildir“)">

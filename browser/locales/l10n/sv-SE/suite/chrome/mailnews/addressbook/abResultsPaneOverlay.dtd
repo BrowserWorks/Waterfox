@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adressbok">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "Namn">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-post">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Företag">
+<!ENTITY Company.accesskey                     "ö">
+<!ENTITY _PhoneticName.label                   "Fonetiskt namn">
+<!ENTITY _PhoneticName.accesskey               "F">
+<!ENTITY NickName.label                        "Smeknamn">
+<!ENTITY NickName.accesskey                    "S">
+<!ENTITY SecondEmail.label                     "Ytterligare e-post">
+<!ENTITY SecondEmail.accesskey                 "y">
+<!ENTITY Department.label                      "Avdelning">
+<!ENTITY Department.accesskey                  "d">
+<!ENTITY JobTitle.label                        "Titel">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobiltelefon">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Personsökare">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "x">
+<!ENTITY HomePhone.label                       "Telefon hem">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "Telefon arbete">
+<!ENTITY WorkPhone.accesskey                   "a">
+<!ENTITY ScreenName.label                      "Skärmnamn">
+<!ENTITY ScreenName.accesskey                  "ä">
+<!ENTITY ChatName.label                        "Chattnamn">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Stigande">
+<!ENTITY sortAscending.accesskey               "t">
+<!ENTITY sortDescending.label                  "Fallande">
+<!ENTITY sortDescending.accesskey              "f">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Skriv meddelande till">
+<!ENTITY composeEmail.accesskey                "S">
+<!ENTITY copyAddress.label                     "Kopiera e-postadress">
+<!ENTITY copyAddress.accesskey                 "K">
+<!ENTITY deleteAddrBookCard.label              "Ta bort">
+<!ENTITY deleteAddrBookCard.accesskey          "T">
+<!ENTITY newAddrBookCard.label                 "Nytt kort i adressbok…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "Ny sändlista…">
+<!ENTITY newAddrBookMailingList.accesskey      "l">
+<!ENTITY addrBookCardProperties.label          "Egenskaper">
+<!ENTITY addrBookCardProperties.accesskey      "E">

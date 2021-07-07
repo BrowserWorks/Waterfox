@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeCmd.label "Cerrar">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY quitApplicationCmd.label "Salir">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "S">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findTypeTextCmd.key "/">
+<!ENTITY findTypeLinksCmd.key "'">
+<!ENTITY accel.emacs_conflict "accel">
+<!ENTITY openHelpCmd.label "Contenido de la ayuda">
+<!ENTITY openHelpCmd.accesskey "C">
+<!ENTITY openHelpCmd.key "VK_F1">
+<!ENTITY helpForIEUsers.label "Para usuarios de Internet Explorer">
+<!ENTITY helpForIEUsers.accesskey "I">
+<!ENTITY helpMenu.label "Ayuda">
+<!ENTITY helpMenu.accesskey "u">
+<!ENTITY ctrlKey.label "Ctrl">
+<!ENTITY altKey.label "Alt">
+<!ENTITY shiftKey.label "Mayús">
+<!ENTITY menubarCmd.label "Barra de menú">
+<!ENTITY menubarCmd.accesskey "B">

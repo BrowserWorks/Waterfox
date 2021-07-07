@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label		"온라인 연락처">
+<!ENTITY offlineContactsHeader.label		"오프라인 연락처">
+<!ENTITY conversationsHeader.label		"대화">
+<!ENTITY searchResultConversation.label		"검색 결과">
+<!ENTITY chat.noConv.title			"여기에 대화가 표시됩니다.">
+<!ENTITY chat.noConv.description		"왼쪽 패널 목록에서 대화를 시작할 계정을 선택해 주십시오.">
+<!ENTITY chat.noPreviousConv.description	"&brandShortName;는 현재 계정의 이전 대화가 저장되어 있지 않습니다.">
+<!ENTITY chat.noAccount.title			"채팅 계정을 설정해 주십시오.">
+<!ENTITY chat.noAccount.description		"&brandShortName;는 채팅 계정 설정을 진행합니다.">
+<!ENTITY chat.accountWizard.button		"설정 시작">
+<!ENTITY chat.noConnectedAccount.title		"채팅 계정이 접속되지 않습니다.">
+<!ENTITY chat.noConnectedAccount.description	"'인스턴트 메시지 상태' 대화에 접속할 수 있습니다:">
+<!ENTITY chat.showAccountManager.button		"채팅 상태 표시">
+
+<!ENTITY chat.participants			"참여자:">
+<!ENTITY chat.previousConversations		"이전 대화:">
+<!ENTITY chat.ongoingConversation		"진행 중 대화:">
+
+<!ENTITY openConversationCmd.label		"대화 열기">
+<!ENTITY openConversationCmd.accesskey		"c">
+<!ENTITY closeConversationCmd.label		"대화 닫기">
+<!ENTITY closeConversationCmd.accesskey		"C">
+<!ENTITY aliasCmd.label				"이름 변경">
+<!ENTITY aliasCmd.accesskey			"R">
+<!ENTITY deleteCmd.label			"연락처 삭제">
+<!ENTITY deleteCmd.accesskey			"v">
+
+<!ENTITY openConversationButton.tooltip		"대화 열기">
+<!ENTITY closeConversationButton.tooltip	"대화 닫기">
+
+<!ENTITY addBuddyButton.label			"연락처 추가">
+<!ENTITY joinChatButton.label			"채팅 참가">
+<!ENTITY chatAccountsButton.label		"계정 표시">
+
+<!-- LOCALIZATION NOTE (searchAllChatMessages.label.base):
+     This is the base of the empty text for the chat search box.  We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform (defined in messenger/messenger.dtd).
+     The goal is to convey to the user that typing in the box will allow them
+     to search for conversations and that there is a hotkey they can press
+     to get to the box faster.  If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+     -->
+<!-- LOCALICATION NOTE (searchAllChatMessages.label.base):
+     DELETED
+		 -->
+
+<!ENTITY status.available			"이용 가능">
+<!ENTITY status.unavailable			"이용 불가">
+<!ENTITY status.offline				"오프라인">
+
+<!ENTITY openLinkCmd.label			"링크 열기…">
+<!ENTITY openLinkCmd.accesskey			"O">

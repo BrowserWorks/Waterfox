@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Om skräppost">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; upptäcker automatiskt inkommande meddelanden som ger intryck av att vara skräppost (även kallad spam). Meddelanden som &brandShortName; klassar som skräp kommer att indikeras med hjälp av en skräp-ikon">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Till att börja med måste du träna &brandShortName; till att känna igen skräppost genom att använda knappen Skräppost från verktygsfältet för att märka meddelanden som skräp eller inte skräp.">
+<!ENTITY info3.label   "När &brandShortName; har lärt sig att korrekt identifiera skräppost kan du använda skräppost-kontrollen till att automatiskt flytta inkommande skräppost till Skräp-mappen.">
+<!ENTITY info4.label   "För mer information, klicka på Hjälp.">

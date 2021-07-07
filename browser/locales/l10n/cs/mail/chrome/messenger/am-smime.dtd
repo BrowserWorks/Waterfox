@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Koncové šifrování">
+<!ENTITY e2eLearnMore.label "Zjistit více">
+
+<!ENTITY e2eEnc.description "Bez koncového šifrování je obsah zpráv snadno přístupný vašemu poskytovateli e-mailové schránky nebo systémům pro hromadné sledování.">
+<!ENTITY e2eeReqWarning.description "Pro šifrování musíte mít k odeslání zprávy veřejný klíč nebo certifikát každého z příjemců.">
+
+<!ENTITY e2eSigning.description "Elektronický podpis umožňuje příjemcům ověřit, že jste zprávu poslali vy a že nebyl její obsah změněn.">
+<!ENTITY e2eTechPref.description "Preferovaná technologie šifrování:">
+
+<!ENTITY doNotEncrypt.label "Ve výchozím nastavení nešifrovat">
+<!ENTITY doNotEncrypt.accesskey "n">
+<!ENTITY requireEncryptMessage.label "Šifrovat ve výchozím nastavení">
+<!ENTITY requireEncryptMessage.accesskey "v">
+<!ENTITY encryptionCert2.message "Osobní certifikát pro šifrování:">
+<!ENTITY digitalSign.certificate.button "Vybrat…">
+<!ENTITY digitalSign.certificate.accesskey "b">
+<!ENTITY digitalSign.certificate_clear.button "Vymazat">
+<!ENTITY digitalSign.certificate_clear.accesskey "y">
+<!ENTITY encryption.certificate.button "Vybrat…">
+<!ENTITY encryption.certificate.accesskey "r">
+<!ENTITY encryption.certificate_clear.button "Vymazat">
+<!ENTITY encryption.certificate_clear.accesskey "m">
+<!ENTITY signingGroupTitle.label "Elektronický podpis">
+<!ENTITY signMessage2.label "Standardně připojit můj elektronický podpis">
+<!ENTITY signMessage.accesskey "D">
+<!ENTITY signingCert2.message "Osobní certifikát pro elektronický podpis:">
+
+<!ENTITY sendingDefaults.label "Výchozí nastavení pro odesílání zpráv">
+
+<!ENTITY technologyAutomatic.label "Vybrat automaticky na základě dostupných klíčů či certifikátů">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Správa certifikátů S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Bezpečnostní zařízení S/MIME">
+<!ENTITY manageDevices2.accesskey "B">
+
+<!ENTITY technologySMIME.label "Upřednostňovat S/MIME">
+<!ENTITY technologyOpenPGP.label "Upřednostňovat OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Výběr certifikátu">
+<!ENTITY certPicker.info  "Certifikát:">
+<!ENTITY certPicker.detailsLabel "Podrobnosti o vybraném certifikátu:">
+
+<!ENTITY openpgpKey.message "Osobní klíč pro šifrování a elektronické podepisování:">
+<!ENTITY openpgpKey.button "Nastavit osobní klíč…">
+<!ENTITY openpgpKey.accesskey "o">

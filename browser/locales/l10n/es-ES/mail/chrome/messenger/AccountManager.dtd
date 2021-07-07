@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xul -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Configuración de la cuenta">
+
+<!ENTITY accountManagerCloseButton.label "Cerrar">
+
+<!ENTITY accountActionsButton.label "Operaciones sobre la cuenta">
+<!ENTITY accountActionsButton.accesskey "O">
+<!ENTITY addMailAccountButton.label "Añadir cuenta de correo…">
+<!ENTITY addMailAccountButton.accesskey "A">
+<!ENTITY addIMAccountButton.label "Añadir cuenta de chat…">
+<!ENTITY addIMAccountButton.accesskey "C">
+<!ENTITY addFeedAccountButton.label "Añadir cuenta de canales web…">
+<!ENTITY addFeedAccountButton.accesskey "w">
+<!ENTITY addOtherAccountButton.label "Añadir otra cuenta…">
+<!ENTITY addOtherAccountButton.accesskey "c">
+<!ENTITY setDefaultButton.label "Definir como predet.">
+<!ENTITY setDefaultButton.accesskey "D">
+<!ENTITY removeButton.label "Eliminar cuenta">
+<!ENTITY removeButton.accesskey "R">
+
+<!-- AccountManager.xul -->
+
+<!-- AccountManager.xhtml -->
+<!-- AccountManager.xhtml -->
+<!ENTITY accountManager.size "width: 120ch; height: 56em;">
+<!ENTITY accountTree.width "width: 32ch;">

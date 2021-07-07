@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox-accounts">
+<!ENTITY aboutAccounts.connected.description "U bent verbonden als">
+<!ENTITY aboutAccounts.syncPreferences.label "Tik hier om Sync-instellingen te controleren">
+
+<!ENTITY aboutAccounts.noConnection.title "Geen internetverbinding">
+<!ENTITY aboutAccounts.retry.label "Opnieuw proberen">
+
+<!ENTITY aboutAccounts.restrictedError.title "Beperkt">
+<!ENTITY aboutAccounts.restrictedError.description "U kunt geen Firefox-accounts beheren vanuit dit profiel.">

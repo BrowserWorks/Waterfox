@@ -1,0 +1,5 @@
+<!ENTITY options.title "開發者工具選項">
+<!ENTITY options.status.label "狀態:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "允許來自其他電腦的連線">
+

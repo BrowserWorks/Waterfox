@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "Mídia">
+<!ENTITY mediaHTML5Preferences.label    "Áudio/Vídeo">
+<!ENTITY allowMediaAutoplay.label       "Ativar execução automática para conteúdo em HTML5">
+<!ENTITY allowMediaAutoplay.accesskey   "H">
+
+<!ENTITY enableDrmMedia.label           "Ativar Gestão dos Direitos Digitais para">
+<!ENTITY enableEmeForSuite.label        "Módulos de terceiros para decodificação de conteúdo">
+<!ENTITY enableEmeForSuite.accesskey    "c">
+
+<!ENTITY animLoopingTitle.label         "Limitar a repetição de imagens animadas">
+<!ENTITY animLoopAsSpecified.label      "Tantas vezes quanto a imagem especifica">
+<!ENTITY animLoopAsSpecified.accesskey  "T">
+<!ENTITY animLoopOnce.label             "Repetir uma vez">
+<!ENTITY animLoopOnce.accesskey         "R">
+<!ENTITY animLoopNever.label            "Nunca repetir">
+<!ENTITY animLoopNever.accesskey        "u">

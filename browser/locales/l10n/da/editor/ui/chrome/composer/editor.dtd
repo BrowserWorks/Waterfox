@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Redigering">
+<!ENTITY editorWindow.titlemodifiermenuseparator "-">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Kompositionslinje">
+<!ENTITY previewToolbarCmd.label "Browser">
+<!ENTITY previewToolbarCmd.tooltip "Vis denne side i browseren">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Eksporter til tekst…">
+<!ENTITY exportToTextCmd.accesskey "T">
+<!ENTITY previewCmd.label "Vis side">
+<!ENTITY previewCmd.accesskey "V">
+<!ENTITY sendPageCmd.label "Send side…">
+<!ENTITY sendPageCmd.accesskey "S">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Kompositionslinje">
+<!ENTITY compositionToolbarCmd.accesskey "k">
+<!ENTITY formattingToolbarCmd.label "Formateringslinje">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Redigeringslinje">
+<!ENTITY editmodeToolbarCmd.accesskey "e">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "F">
+<!ENTITY grid.label "Gitter">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "Sidens titel og egenskaber…">
+<!ENTITY pageProperties.accesskey "g">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Valider HTML">
+<!ENTITY validateCmd.accesskey "H">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Normal redigeringstilstand">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Vis tabelrammer og navngivne ankre">
+<!ENTITY AllTagsModeTab.label "HTML-tags">
+<!ENTITY AllTagsMode.label "HTML-tags">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Vis ikoner for alle HTML-tags">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Kilde">
+<!ENTITY HTMLSourceMode.label "HTML-kilde">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Rediger HTML-kilde">
+<!ENTITY PreviewModeTab.label "Vis prøve">
+<!ENTITY PreviewMode.label "Vis prøve">
+<!ENTITY PreviewMode.accesskey "p">
+<!ENTITY PreviewMode.tooltip "Vis som WYSIWYG (som i browseren)">

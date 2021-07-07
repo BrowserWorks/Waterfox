@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Adresų knygos importas">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Įrašas:">
+<!ENTITY fieldMapImport.next.label "Tolesnis">
+<!ENTITY fieldMapImport.next.accesskey "T">
+<!ENTITY fieldMapImport.previous.label "Ankstesnis">
+<!ENTITY fieldMapImport.previous.accesskey "A">
+<!ENTITY fieldMapImport.text "Pertvarkykite laukus mygtukais „Pakelti“ bei „Nuleisti“ taip, kad dešinėje pusėje esantys importuojami duomenys atitiktų kairėje pusėje esančius adresų knygos laukus. Pašalinkite žymėjimą šalia elementų, kurių nenorite importuoti.">
+<!ENTITY fieldMapImport.up.label "Pakelti">
+<!ENTITY fieldMapImport.up.accesskey "k">
+<!ENTITY fieldMapImport.down.label "Nuleisti">
+<!ENTITY fieldMapImport.down.accesskey "l">
+<!ENTITY fieldMapImport.fieldListTitle "Adresų knygos laukai:">
+<!ENTITY fieldMapImport.dataTitle "Importuojami duomenų įrašai:">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Pirmąjį įrašą laikyti laukų pavadinimais">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "p">

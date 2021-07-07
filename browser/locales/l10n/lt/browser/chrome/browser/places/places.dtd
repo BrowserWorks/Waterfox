@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Archyvas">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Tvarkyti">
+<!ENTITY organize.accesskey    "T">
+<!ENTITY organize.tooltip      "Tvarkyti adresyną">
+
+<!ENTITY file.close.label               "Užverti">
+<!ENTITY file.close.accesskey           "U">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Rodymas">
+<!ENTITY views.accesskey                "R">
+<!ENTITY views.tooltip                  "Keisti rodymą">
+<!ENTITY view.columns.label             "Rodomi stulpeliai">
+<!ENTITY view.columns.accesskey         "s">
+<!ENTITY view.sort.label                "Rikiavimas">
+<!ENTITY view.sort.accesskey            "R">
+<!ENTITY view.unsorted.label            "Nerikiuoti">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "Pagal abėcėlę">
+<!ENTITY view.sortAscending.accesskey   "a">
+<!ENTITY view.sortDescending.label      "Atvirkščiai">
+<!ENTITY view.sortDescending.accesskey  "v">
+
+<!ENTITY importBookmarksFromHTML.label     "Importuoti adresyną iš HTML failo…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksportuoti adresyną į HTML failą…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importuoti duomenis iš kitos naršyklės…">
+<!ENTITY importOtherBrowser.accesskey      "m">
+
+<!ENTITY cmd.backup.label               "Kurti atsarginę kopiją…">
+<!ENTITY cmd.backup.accesskey           "K">
+<!ENTITY cmd.restore2.label             "Atkurti">
+<!ENTITY cmd.restore2.accesskey         "A">
+<!ENTITY cmd.restoreFromFile.label      "Pasirinkite failą…">
+<!ENTITY cmd.restoreFromFile.accesskey  "f">
+
+<!ENTITY col.name.label          "Pavadinimas">
+<!ENTITY col.tags.label          "Gairės">
+<!ENTITY col.url.label           "Adresas">
+<!ENTITY col.mostrecentvisit.label "Paskiausiai lankytasi">
+<!ENTITY col.visitcount.label    "Aplankymų kiekis">
+<!ENTITY col.dateadded.label     "Įtrauktas">
+<!ENTITY col.lastmodified.label  "Atnaujintas">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importas ir atsarginės kopijos">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importuoti adresyną arba kurti jo atsarginę kopiją">
+
+<!ENTITY backButton.tooltip  "Eiti atgal">
+
+<!ENTITY forwardButton.tooltip  "Eiti pirmyn">
+
+<!ENTITY detailsPane.selectAnItemText.description "Pažymėkite objektą, kurio savybes norite peržiūrėti ar redaguoti">
+

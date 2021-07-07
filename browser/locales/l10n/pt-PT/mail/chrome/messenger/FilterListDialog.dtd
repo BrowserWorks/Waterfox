@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtros de mensagens">
+<!ENTITY nameColumn.label "Nome do filtro">
+<!ENTITY activeColumn.label "Ativo">
+<!ENTITY newButton.label "Novo...">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Copiar…">
+<!ENTITY newButton.popupCopy.accesskey "C">
+<!ENTITY editButton.label "Editar...">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Apagar">
+<!ENTITY deleteButton.accesskey "A">
+<!ENTITY reorderTopButton "Mover para o topo">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Arranjar filtro para que seja executado antes de todos os outros">
+<!ENTITY reorderUpButton.label "Mover para cima">
+<!ENTITY reorderUpButton.accesskey "c">
+<!ENTITY reorderDownButton.label "Mover para baixo">
+<!ENTITY reorderDownButton.accesskey "b">
+<!ENTITY reorderBottomButton "Mover para o fim">
+<!ENTITY reorderBottomButton.accessKey "M">
+<!ENTITY reorderBottomButton.toolTip "Arranjar filtro para que seja executado depois de todos os outros">
+<!ENTITY filterHeader.label "Os filtros ativos são executados automaticamente pela ordem mostrada abaixo.">
+<!ENTITY filtersForPrefix.label "Filtros para:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Registo do filtro">
+<!ENTITY viewLogButton.accesskey "g">
+<!ENTITY runFilters.label "Executar agora">
+<!ENTITY runFilters.accesskey "E">
+<!ENTITY stopFilters.label "Parar">
+<!ENTITY stopFilters.accesskey "P">
+<!ENTITY folderPickerPrefix.label "Executar o(s) filtro(s) selecionado(s) em:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "Ajuda">
+<!ENTITY helpButton.accesskey "u">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Pesquisar filtros por nome…">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Nhập">
+<!ENTITY importAll.label          "Nhập mọi thứ">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "Thư">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "Nguồn cấp đă đăng kí">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Sổ địa chỉ">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Cài đặt">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "Bộ lọc">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Trình nhập dữ liệu vào &brandShortName;">
+<!ENTITY importShortDesc.label    "Nhập thư, sổ địa chỉ, cài đặt và bộ lọc từ chương trình khác">
+
+<!ENTITY importDescription1.label "Trình hướng dẫn này sẽ nhập thư, sổ địa chỉ, tùy chỉnh và/hoặc bộ lọc từ các chương trình gửi thư và các định dạng sổ địa chỉ phổ biến khác vào &brandShortName;.">
+<!ENTITY importDescription2.label "Khi chúng đã được nhập, bạn có thể truy cập chúng ngay trong &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Vui lòng chọn kiểu tập tin mà bạn muốn nhập:">
+<!ENTITY selectDescriptionB.label "Vui lòng chọn một tài khoản hiện có hoặc tạo một tài khoản mới:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Tên:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Không tìm thấy ứng dụng hoặc tập tin để nhập dữ liệu.">
+
+<!ENTITY back.label               "&lt; Quay lại">
+<!ENTITY forward.label            "Tiến &gt;">
+<!ENTITY finish.label             "Hoàn thành">
+<!ENTITY cancel.label             "Hủy bỏ">
+
+<!ENTITY select.label             "hoặc chọn các mục muốn nhập:">
+
+<!ENTITY title.label              "Tiêu đề">
+<!ENTITY processing.label         "Đang nhập…">

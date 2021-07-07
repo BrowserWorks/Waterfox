@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "下載及同步郵件">
+<!ENTITY MsgSelect.label "選擇可離線閱讀的項目">
+<!ENTITY MsgSyncDesc.label "如果您已經選好了要離線閱讀的郵件匣或新聞群組，您可以立刻下載或進行同步。否則請按「選擇」以選擇要離線閱讀的郵件匣與新聞群組。">
+<!ENTITY MsgSyncDirections.label "下載與同步下列項目:">
+<!ENTITY syncTypeMail.label "郵件訊息">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "新聞群組訊息">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "寄出未寄郵件">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "下載或同步完成後立刻離線">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "選擇…">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "選擇要離線閱讀的郵件匣及新聞群組。">
+<!ENTITY MsgSelectInd.label "下載">
+<!ENTITY MsgSelectItems.label "郵件匣與新聞群組">

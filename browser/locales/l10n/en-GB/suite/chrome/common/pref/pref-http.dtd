@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP Networking">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Direct Connection Options">
+<!ENTITY prefProxy.label                     "Proxy Connection Options">
+<!ENTITY prefEnableHTTP10.label              "Use HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "Use HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "E">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "HTTP connections may be fine-tuned using these options to enhance either performance or compatibility. Some proxy servers, for example, are known to require HTTP/1.0 (see the release notes for details).">
+<!ENTITY prefUseragent.label                 "User Agent String">
+<!ENTITY prefFirefoxCompat.label             "Advertise Firefox compatibility">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Advertise Lightning installation">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "WARNING: disabling these settings may result in web sites or services not working properly.">
+<!ENTITY prefFirefoxStrict.label             "Identify as Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "Identify as SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Identify as SeaMonkey and advertise Firefox compatibility">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "WARNING: changing this setting may result in web sites or services not working properly.">

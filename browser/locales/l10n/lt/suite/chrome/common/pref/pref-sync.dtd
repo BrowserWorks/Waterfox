@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when not logged in... -->
+
+<!ENTITY setupButton.label          "Konfigūruoti „&syncBrand.fullName.label;“">
+<!ENTITY setupButton.accesskey      "K">
+<!ENTITY weaveDesc.label            "„&syncBrand.fullName.label;“ padeda sinchronizuoti naršymo žurnalą, adresyną, įrašytus slaptažodžius ir atvertas korteles skirtinguose įrenginiuose.">
+<!-- The page shown when logged in... -->
+
+<!ENTITY accountGroupboxCaption.label "„&syncBrand.fullName.label;“ paskyra">
+<!ENTITY accountName.label            "Naudojama paskyra:">
+<!-- Login error feedback -->
+
+<!ENTITY resetPass.label              "Perkurti">
+<!ENTITY resetPass.accesskey          "P">
+<!-- Manage Account -->
+
+<!ENTITY manageAccount.label          "Tvarkyti paskyrą">
+<!ENTITY manageAccount.accesskey      "T">
+<!ENTITY viewQuota.label              "Kvota">
+<!ENTITY viewQuota.accesskey          "K">
+<!ENTITY changePassword.label         "Keisti slaptažodį">
+<!ENTITY changePassword.accesskey     "e">
+<!ENTITY myRecoveryKey.label          "Mano atkūrimo raktas">
+<!ENTITY myRecoveryKey.accesskey      "r">
+<!ENTITY resetSync.label              "Šviežiai sinchronizuoti duomenis">
+<!ENTITY resetSync.accesskey          "Š">
+<!ENTITY unlinkDevice.label           "Atsieti šį įrenginį">
+<!ENTITY unlinkDevice.accesskey       "A">
+<!ENTITY addDevice.label              "Pridėti įrenginį">
+<!ENTITY addDevice.accesskey          "d">
+<!-- Sync Settings -->
+
+<!ENTITY syncComputerName.label       "Kompiuterio vardas:">
+<!ENTITY syncComputerName.accesskey   "v">
+
+<!ENTITY syncMy2.label              "Sinchronizuoti:">
+<!ENTITY engine.addons.label        "programos priedus">
+<!ENTITY engine.addons.accesskey    "p">
+
+
+
+
+<!ENTITY engine.history.label       "žurnalą">
+<!ENTITY engine.history.accesskey   "ž">
+<!ENTITY engine.passwords.label     "slaptažodžius">
+<!ENTITY engine.passwords.accesskey "s">
+<!ENTITY engine.prefs.label         "nuostatas">
+<!ENTITY engine.prefs.accesskey     "n">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Paslaugos teikimo nuostatais">
+<!ENTITY prefs.ppLink.label         "Privatumo nuostatais">

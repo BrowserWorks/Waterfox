@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Открыть файл…">
+<!ENTITY openFileCmd.accesskey "к">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Открыть адрес в Интернете…">
+<!ENTITY openRemoteCmd.accesskey "а">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Последние страницы">
+<!ENTITY fileRecentMenu.accesskey "с">
+<!ENTITY saveCmd.label "Сохранить">
+<!ENTITY saveCmd.accesskey "х">
+<!ENTITY saveAsCmd.label "Сохранить как…">
+<!ENTITY saveAsCmd.accesskey "к">
+<!ENTITY saveAsChangeEncodingCmd2.label "Изменить и сохранить кодировку текста">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "з">
+<!ENTITY publishCmd.label "Опубликовать">
+<!ENTITY publishCmd.accesskey "п">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Опубликовать как…">
+<!ENTITY publishAsCmd.accesskey "у">
+<!ENTITY fileRevert.label "Вернуть">
+<!ENTITY fileRevert.accesskey "н">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Параметры сайта публикации…">
+<!ENTITY publishSettings.accesskey "б">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Формы">
+<!ENTITY insertFormMenu.accesskey "Ф">
+<!ENTITY insertFormCmd.label "Создать форму…">
+<!ENTITY insertFormCmd.accesskey "С">
+<!ENTITY insertInputTagCmd.label "Поле формы…">
+<!ENTITY insertInputTagCmd.accesskey "о">
+<!ENTITY insertInputImageCmd.label "Изображение формы…">
+<!ENTITY insertInputImageCmd.accesskey "И">
+<!ENTITY insertTextAreaCmd.label "Текстовая область…">
+<!ENTITY insertTextAreaCmd.accesskey "Т">
+<!ENTITY insertSelectCmd.label "Список выборов…">
+<!ENTITY insertSelectCmd.accesskey "в">
+<!ENTITY insertButtonCmd.label "Создать кнопку…">
+<!ENTITY insertButtonCmd.accesskey "к">
+<!ENTITY insertLabelCmd.label "Создать метку">
+<!ENTITY insertLabelCmd.accesskey "м">
+<!ENTITY insertFieldSetCmd.label "Создать набор полей…">
+<!ENTITY insertFieldSetCmd.accesskey "н">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Создать">
+<!ENTITY newToolbarCmd.tooltip "Создать новую страницу Компоновщика">
+<!ENTITY openToolbarCmd.label "Открыть">
+<!ENTITY openToolbarCmd.tooltip "Открыть локальный файл">
+<!ENTITY saveToolbarCmd.tooltip "Сохранить файл локально">
+<!ENTITY publishToolbarCmd.tooltip "Выгрузить файл на удалённый сервер">
+<!ENTITY printToolbarCmd.label "Печать">
+<!ENTITY printToolbarCmd.tooltip "Распечатать эту страницу">
+<!ENTITY formToolbarCmd.label "Форма">
+<!ENTITY formToolbarCmd.tooltip "Вставить новую форму или изменить свойства выбранной формы">

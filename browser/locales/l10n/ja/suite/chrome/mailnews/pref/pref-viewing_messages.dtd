@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "メッセージの表示">
+<!ENTITY style.label                      "スタイル:">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "標準">
+<!ENTITY bold.label                       "太字">
+<!ENTITY italic.label                     "イタリック体">
+<!ENTITY boldItalic.label                 "太字イタリック体">
+<!ENTITY size.label                       "サイズ:">
+<!ENTITY size.accesskey                   "z">
+<!ENTITY bigger.label                     "大きく">
+<!ENTITY smaller.label                    "小さく">
+<!ENTITY color.label                      "色:">
+<!ENTITY color.accesskey                  "C">
+<!ENTITY displayPlainText.caption         "プレーンテキストメッセージの表示">
+<!ENTITY fontPlainText.label              "フォント:">
+<!ENTITY fontPlainText.accesskey          "F">
+<!ENTITY displayQuoted.label              "引用文の表示設定:">
+<!ENTITY wrapInMsg.label                  "ウィンドウ幅に合わせてテキストを改行する">
+<!ENTITY wrapInMsg.accesskey              "W">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "顔文字を画像で表示する">
+<!ENTITY convertEmoticons.accesskey       "D">
+<!ENTITY generalMessageDisplay.caption    "一般">
+<!ENTITY autoMarkAsRead.label             "メッセージを自動的に既読にする">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "メッセージを表示してから">
+<!ENTITY markAsReadAfter.accesskey        "t">
+<!ENTITY secondsLabel.label               "秒後">
+
+<!ENTITY openingMessages.label            "メッセージを次の場所に開く:">
+<!ENTITY newWindowRadio.label             "新しいメッセージウィンドウ">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "既存のメッセージウィンドウ">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "メッセージに含まれる画像などのリモートコンテンツを読み込まない">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "アドレス帳に登録されているユーザーは [表示名] を表示する">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "削除時にメッセージウィンドウを閉じる">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

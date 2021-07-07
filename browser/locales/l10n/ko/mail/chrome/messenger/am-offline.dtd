@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "디스크 용량을 확보하려면 메시지를 저장하지 마십시오.">
+<!ENTITY doNotDownloadNntp.label "디스크 용량을 확보하려면 오프라인 사용을 위한 메시지 저장을 하지 마십시오.">
+<!ENTITY doNotDownloadImap.label "디스크 용량을 확보하려면, 서버에서 받은 메시지와 오프라인을 위한 로컬 복사본 유지에 기간 또는 크기 제한을 하십시오.">
+<!ENTITY allFoldersOffline2.label "이 컴퓨터에 이 계정의 모든 폴더의 메시지를 유지합니다.">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "노트: 변경시 이 계정의 모든 폴더가 영향을 받습니다. 개별 폴더를 설정하려면 고급… 버튼을 이용하세요.">
+<!ENTITY offlineNotDownload.label "다음에 지정된 용량 이상은 메시지를 저장하지 않음:">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "지정한 사이즈 보다 큰 메시지 받지 않음: ">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "일 전">
+<!ENTITY message.label "메시지">
+<!ENTITY nntpNotDownloadRead.label "메시지 읽기">
+<!ENTITY nntpNotDownloadRead.accesskey "d">
+<!ENTITY nntpDownloadMsg.label "메시지 본문 받기">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "디스크 용량을 확보하려면 오래된 메시지는 삭제해야 합니다.">
+<!ENTITY retentionCleanupImap.label "디스크 용량을 확보하기 위해 오래된 메시지를 완전히 삭제합니다. 이 컴퓨터 및 원격 서버의 원본까지 제거 합니다.">
+<!ENTITY retentionCleanupPop.label "디스크 용량을 확보하기 위해 오래된 메시지를 완전히 삭제 합니>다. 원격 서버의 원본을 제거 합니다.">
+<!ENTITY retentionKeepMsg.label "오래된 메시지 삭제하기">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "메시지 삭제하지 않기">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "최근 메시지만 남기고 모두 삭제하기">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "별표한 메시지는 항상 남기기">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "오래된 메시지 본문 삭제하기">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "오프라인 사용으로 뉴스 그룹 선택…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "고급 설정…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "v">
+<!ENTITY syncGroupTitle.label "메시지 동기화">
+<!ENTITY diskspaceGroupTitle.label "디스크 용량">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "기간에 상관 없이 모든 메시지 동기화">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "최신으로 동기화">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "일">
+<!ENTITY weekAgeInterval.label           "주">
+<!ENTITY monthAgeInterval.label          "개월">
+<!ENTITY yearAgeInterval.label           "년">
+<!ENTITY ageAutosyncAfter.label          "">

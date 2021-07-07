@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Källa till: ">
+
+<!ENTITY editMenu.label "Redigera">
+<!ENTITY editMenu.accesskey "R">
+<!ENTITY fileMenu.label "Arkiv">
+<!ENTITY fileMenu.accesskey "A">
+<!ENTITY savePageCmd.label "Spara sida som…">
+<!ENTITY savePageCmd.accesskey "S">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Utskriftsformat…">
+<!ENTITY pageSetupCmd.accesskey "U">
+<!ENTITY printPreviewCmd.label "Förhandsgranska">
+<!ENTITY printPreviewCmd.accesskey "F">
+<!ENTITY printCmd.label "Skriv ut…">
+<!ENTITY printCmd.accesskey "k">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Stäng">
+<!ENTITY closeCmd.accesskey "t">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Gå till rad…">
+<!ENTITY goToLineCmd.accesskey "G">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Visa">
+<!ENTITY viewMenu.accesskey       "V">
+<!ENTITY reloadCmd.label "Uppdatera">
+<!ENTITY reloadCmd.accesskey "U">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Radbryt långa rader">
+<!ENTITY menu_wrapLongLines.accesskey "R">
+<!ENTITY menu_highlightSyntax.label "Syntaxmarkering">
+<!ENTITY menu_highlightSyntax.accesskey "m">
+<!ENTITY menu_textSize.label "Textstorlek">
+<!ENTITY menu_textSize.accesskey "o">
+<!ENTITY menu_textEnlarge.label "Större">
+<!ENTITY menu_textEnlarge.accesskey "S">
+<!ENTITY menu_textReduce.label "Mindre">
+<!ENTITY menu_textReduce.accesskey "M">
+<!ENTITY menu_textReset.label "Normal">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Sök på den här sidan…">
+<!ENTITY findOnCmd.accesskey "S">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Sök igen">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Tillbaka">
+<!ENTITY backCmd.accesskey "T">
+<!ENTITY forwardCmd.label "Framåt">
+<!ENTITY forwardCmd.accesskey "F">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Kopiera länkadress">
+<!ENTITY copyLinkCmd.accesskey "n">
+<!ENTITY copyEmailCmd.label "Kopiera e-postadress">
+<!ENTITY copyEmailCmd.accesskey "t">

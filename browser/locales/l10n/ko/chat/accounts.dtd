@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "계정 - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "메신저 상태">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "새 계정">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "닫기">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "설정된 계정 없음">
+<!ENTITY accountManager.noAccount.description "&accountManager.newAccount.label; 버튼을 클릭해 &brandShortName; 이 계정 설정을 도와줄 수 있게 해 주세요.">
+<!ENTITY account.autoSignOn.label     "시작 시 자동 로그인">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "연결">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "연결 끊기">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "삭제">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "속성">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "위로 이동">
+<!ENTITY account.movedown.label       "아래로 이동">
+<!ENTITY account.cancelReconnection.label         "재접속 취소">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "디버그 로그 복사하기">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "디버그 로그 보기">
+<!ENTITY account.showDebugLog.accesskey "H">
+<!ENTITY account.connecting           "연결 중…">
+<!ENTITY account.disconnecting        "연결을 끊는 중…">
+<!ENTITY account.disconnected         "연결 안 됨">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY print.label "Stampa…">
+<!ENTITY print.accesskey "p">
+<!ENTITY pageSetup.label "Imposta pagina…">
+<!ENTITY pageSetup.accesskey "I">
+<!ENTITY page.label "Pagina:">
+<!ENTITY page.accesskey "a">
+<!ENTITY of.label "di">
+<!ENTITY scale.label "Scala:">
+<!ENTITY scale.accesskey "S">
+<!ENTITY portrait.label "Verticale">
+<!ENTITY portrait.accesskey "V">
+<!ENTITY landscape.label "Orizzontale">
+<!ENTITY landscape.accesskey "O">
+<!ENTITY close.label "Chiudi">
+<!ENTITY close.accesskey "C">
+<!ENTITY p30.label "30&#037;">
+<!ENTITY p40.label "40&#037;">
+<!ENTITY p50.label "50&#037;">
+<!ENTITY p60.label "60&#037;">
+<!ENTITY p70.label "70&#037;">
+<!ENTITY p80.label "80&#037;">
+<!ENTITY p90.label "90&#037;">
+<!ENTITY p100.label "100&#037;">
+<!ENTITY p125.label "125&#037;">
+<!ENTITY p150.label "150&#037;">
+<!ENTITY p175.label "175&#037;">
+<!ENTITY p200.label "200&#037;">
+<!ENTITY Custom.label "Personalizzata…">
+<!ENTITY ShrinkToFit.label "Adatta al foglio">
+<!ENTITY customPrompt.title "Scala personalizzata…">
+<!ENTITY homearrow.tooltip "Prima pagina">
+<!ENTITY endarrow.tooltip "Ultima pagina">
+<!ENTITY rightarrow.tooltip "Pagina successiva">
+<!ENTITY leftarrow.tooltip "Pagina precedente">

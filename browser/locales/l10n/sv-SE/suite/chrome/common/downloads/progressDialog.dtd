@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Hämtning pågår…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Pause">
+<!ENTITY cmd.resume.tooltip              "Återuppta">
+<!ENTITY cmd.retry.tooltip               "Försök igen">
+<!ENTITY cmd.cancel.tooltip              "Avbryt">
+<!ENTITY cmd.open.label                  "Öppna">
+<!ENTITY cmd.open.accesskey              "Ö">
+<!ENTITY cmd.show.label                  "Öppna mappen">
+<!ENTITY cmd.show.accesskey              "m">
+<!ENTITY cmd.goToDownloadPage.label      "Gå till hämtningssidan">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "Kopiera hämtningens länk">
+<!ENTITY cmd.copyDownloadLink.accesskey  "l">
+<!ENTITY closeWhenDone.label             "Stäng det här fönstret när hämtningen är klar.">
+<!ENTITY closeWhenDone.accesskey         "S">

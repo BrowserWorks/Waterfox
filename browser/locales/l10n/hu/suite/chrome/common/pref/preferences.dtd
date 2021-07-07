@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Beállítások">
+<!ENTITY  preferencesDefaultTitleWin.title "Beállítások">
+<!ENTITY  preferencesCloseButton.label "Bezárás">
+<!ENTITY  preferencesCloseButton.accesskey "B">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Beállítások">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;">
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;">
+<!ENTITY categoryHeader "Kategória">
+
+<!ENTITY appear.label "Megjelenés">
+<!ENTITY content.label "Tartalom">
+<!ENTITY fonts.label "Betűk">
+<!ENTITY colors.label "Színek">
+<!ENTITY media.label "Média">
+<!ENTITY spellingPane.label "Helyesírás-ellenőrzés">
+
+<!ENTITY navigator.label "Böngésző">
+<!ENTITY history.label "Előzmények">
+<!ENTITY languages.label "Nyelvek">
+<!ENTITY applications.label "Segédalkalmazások">
+<!ENTITY locationBar.label "Címsor">
+<!ENTITY search.label "Internetes keresés">
+<!ENTITY tabWindows.label "Böngészőlapok">
+<!ENTITY links.label "Hivatkozások viselkedése">
+<!ENTITY download.label "Letöltések">
+
+<!ENTITY security.label "Adatvédelem és biztonság">
+<!ENTITY privatedata.label "Személyes adatok">
+<!ENTITY cookies.label "Sütik">
+<!ENTITY images.label "Képek">
+<!ENTITY popups.label "Felugró ablakok">
+<!ENTITY passwords.label "Jelszavak">
+<!ENTITY masterpass.label "Mesterjelszó">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Tanúsítványok">
+
+<!ENTITY sync.label "Szinkronizálás">
+
+<!ENTITY advance.label "Speciális">
+<!ENTITY scriptsAndWindows.label "Parancsfájlok és bővítmények">
+<!ENTITY keynav.label "Navigálás a billentyűzettel">
+<!ENTITY findAsYouType.label "Gépelőkeresés">
+<!ENTITY cache.label "Gyorsítótár">
+<!ENTITY offlineApps.label "Webalkalmazások">
+<!ENTITY proxies.label "Proxyk">
+<!ENTITY httpnetworking.label "HTTP-beállítások">
+<!ENTITY smart.label "Szoftvertelepítés">
+<!ENTITY mousewheel.label "Egérgörgő">
+
+<!ENTITY debugging.label "Hibakeresés">
+
+<!ENTITY focusSearch.key "f">

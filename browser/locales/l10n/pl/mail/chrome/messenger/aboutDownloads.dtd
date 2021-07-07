@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title "Zapisane pliki">
+<!ENTITY aboutDownloads.empty "Brak zapisanych plików">
+
+<!ENTITY cmd.show.label "Otwórz folder nadrzędny">
+<!ENTITY cmd.show.accesskey "f">
+<!ENTITY cmd.showMac.label "Pokaż w Finderze">
+<!ENTITY cmd.showMac.accesskey "F">
+<!ENTITY cmd.open.label "Otwórz">
+<!ENTITY cmd.open.accesskey "O">
+<!ENTITY cmd.removeFromHistory.label "Usuń z historii">
+<!ENTITY cmd.removeFromHistory.accesskey "U">
+<!ENTITY cmd.clearList.label "Wyczyść listę">
+<!ENTITY cmd.clearList.accesskey "c">
+<!ENTITY cmd.clearList.tooltip "Usuń wszystkie pobierania z listy, poza aktywnymi.">
+<!ENTITY cmd.searchDownloads.label "Szukaj…">
+<!ENTITY cmd.searchDownloads.key "F">

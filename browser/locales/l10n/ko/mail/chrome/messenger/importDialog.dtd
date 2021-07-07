@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "가져오기">
+<!ENTITY importAll.label          "전체 가져오기">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "메일">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "구독 피드">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "주소록">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "설정">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "필터">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; 가져오기 마법사">
+<!ENTITY importShortDesc.label    "다른 프로그램에서 메일, 설정, 주소록, 스팸 필터 가져오기">
+
+<!ENTITY importDescription1.label "이 마법사는 다른 프로그램의 메일 메시지, 주소록, 설정, 필터 등을 가져와 &brandShortName;에서 쓸 수 있도록 돕습니다. 가져오기가 완료된 이후부터 &brandShortName;에서 사용할 수 있습니다.">
+<!ENTITY importDescription2.label "일단 가져오기가 완료되면 &brandShortName;에서 사용할 수 있게 됩니다.">
+
+<!ENTITY selectDescription.label  "가져오기를 할 파일 형식을 선택하십시오:">
+<!ENTITY selectDescriptionB.label "기존의 계정을 선택하거나 새로운 계정을 생성하세요: ">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "계정 이름:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "데이터를 가져올 어플리케이션이나 파일을 찾지 못했습니다.">
+
+<!ENTITY back.label               "&lt; 이전">
+<!ENTITY forward.label            "다음 &gt;">
+<!ENTITY finish.label             "종료">
+<!ENTITY cancel.label             "취소">
+
+<!ENTITY select.label             "또는 가져올 형식 선택:">
+
+<!ENTITY title.label              "제목">
+<!ENTITY processing.label         "가져오기…">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Non crittare">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "N">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Richiedi crittografia">
+<!ENTITY menu_securityEncryptRequire.accesskey "C">
+
+<!ENTITY menu_securitySign.label "Apponi firma digitale">
+<!ENTITY menu_securitySign.accesskey "A">
+
+<!ENTITY menu_securityAttachMyKey.label "Allega la mia chiave pubblica">
+<!ENTITY menu_securityAttachMyKey.accesskey "A">
+
+<!ENTITY menu_securityTech.label "Tecnologia di crittografia">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Sicurezza messaggio">
+<!ENTITY menu_securityStatus.accesskey "S">
+
+<!ENTITY securityButton.label "Sicurezza">
+<!ENTITY securityButton.tooltip "Visualizza o modifica le impostazioni di sicurezza">
+
+<!ENTITY menu_viewSecurityStatus.label "Informazioni sicurezza messaggio">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+      SYSTEM "chrome://branding/locale/brand.dtd">
+    %brandDTD;
+<!ENTITY aboutLogins.title                       "로그인">
+<!ENTITY aboutLogins.update                      "업데이트">
+<!ENTITY aboutLogins.emptyLoginText              "안전하게 로그인 유지Keep your logins safe">
+<!ENTITY aboutLogins.emptyLoginHint              "&brandShortName;에 저장된 로그인과 비밀번호가 여기에 표시됩니다.">

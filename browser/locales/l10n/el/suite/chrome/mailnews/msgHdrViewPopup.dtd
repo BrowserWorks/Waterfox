@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Προσθήκη σε ευρετήριο…">
+<!ENTITY AddToAddressBook.accesskey        "ε">
+<!ENTITY EditContact.label                 "Επεξεργασία επαφής…">
+<!ENTITY EditContact.accesskey             "Ε">
+<!ENTITY ViewContact.label                 "Προβολή επαφής">
+<!ENTITY ViewContact.accesskey             "Π">
+<!ENTITY SendMailTo.label                  "Σύνθεση email προς…">
+<!ENTITY SendMailTo.accesskey              "θ">
+<!ENTITY CopyEmailAddress.label            "Αντιγραφή διεύθυνσης email">
+<!ENTITY CopyEmailAddress.accesskey        "Α">
+<!ENTITY CopyNameAndEmailAddress.label     "Αντιγραφή ονόματος και διεύθυνσης email">
+<!ENTITY CopyNameAndEmailAddress.accesskey "ο">
+<!ENTITY CreateFilterFrom.label            "Δημιουργία φίλτρου από…">
+<!ENTITY CreateFilterFrom.accesskey        "φ">
+<!ENTITY openInBrowser.label               "Άνοιγμα στο πρόγραμμα περιήγησης">
+<!ENTITY openInBrowser.accesskey           "Ά">
+<!ENTITY bookmarkLinkCmd.label             "Προσθήκη σελιδοδείκτη συνδέσμου…">
+<!ENTITY bookmarkLinkCmd.accesskey         "Π">
+<!ENTITY copyLinkCmd.label                 "Αντιγραφή τοποθεσίας συνδέσμου">
+<!ENTITY copyLinkCmd.accesskey             "Α">
+<!ENTITY CopyMessageId.label               "Αντιγραφή ID μηνύματος">
+<!ENTITY CopyMessageId.accesskey           "Α">
+<!ENTITY OpenMessageForMsgId.label         "Άνοιγμα μηνύματος για ID">
+<!ENTITY OpenMessageForMsgId.accesskey     "Ά">
+<!ENTITY OpenBrowserWithMsgId.label        "Άνοιγμα προγράμματος περιήγησης με ID μηνύματος">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "π">

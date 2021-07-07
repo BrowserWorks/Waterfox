@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Inställningar">
+<!ENTITY security.caption "Säkerhet och autentisering">
+<!ENTITY serverName.label "Server:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "Beskrivning:">
+<!ENTITY serverDescription.accesskey "B">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Användarnamn:">
+<!ENTITY userName.accesskey "A">
+<!ENTITY connectionSecurity.label "Anslutningssäkerhet:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Ingen">
+<!ENTITY connectionSecurityType-1.label "STARTTLS (om tillgängligt)">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Server för utgående e-post (SMTP)">
+<!ENTITY serverPortDefault.label "Standard:">
+<!ENTITY authMethod.label "Autentiseringmetod:">
+<!ENTITY authMethod.accesskey "i">

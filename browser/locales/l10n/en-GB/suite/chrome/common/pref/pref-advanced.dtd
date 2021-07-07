@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Advanced">
+
+<!ENTITY systemPref.caption               "System Preferences">
+<!ENTITY systemPrefCheck.label            "Use Preferences from System">
+<!ENTITY systemPrefCheck.accesskey        "U">
+<!ENTITY systemPref.desc                  "With this option, &brandShortName; inherits preferences from the system. These system settings will override the &brandShortName; preferences.">
+
+<!ENTITY prefCheckDefault.caption         "System Integration">
+<!ENTITY prefCheckDefaultClient.label     "Check default application settings on startup">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY printing.label                   "Printing">
+<!ENTITY useNativePrintDialog.label       "Use Native Print Dialogue (where supported)">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "Use Global Print Settings">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "Crash Reporter">
+<!ENTITY submitCrashes.label              "Submit crash reports">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "Developer Tools">
+<!ENTITY allowDebugger.label              "Allow a debugger to connect to &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "A">
+<!ENTITY allowRemoteConnections.label     "Allow connections from other computers">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "Prompt for incoming connections">
+<!ENTITY connectionPrompt.accesskey       "P">
+<!ENTITY remoteDebuggerPort.label         "Port number for connection:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

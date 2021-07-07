@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Įtraukti į žodyną">
+<!ENTITY spellAddToDictionary.accesskey "t">
+<!ENTITY spellUndoAddToDictionary.label "Atšaukti įtraukimą į žodyną">
+<!ENTITY spellUndoAddToDictionary.accesskey "u">
+<!ENTITY spellCheckToggle.label "Tikrinti rašybą">
+<!ENTITY spellCheckToggle.accesskey "r">
+<!ENTITY spellNoSuggestions.label "(Nėra rašybos siūlymų)">
+<!ENTITY spellDictionaries.label "Kalbos">
+<!ENTITY spellDictionaries.accesskey "K">
+
+<!ENTITY searchTextBox.clear.label "Valyti">
+
+<!ENTITY fillLoginMenu.label          "Užpildyti naudotojo vardą">
+<!ENTITY fillLoginMenu.accesskey      "U">
+<!ENTITY fillPasswordMenu.label       "Užpildyti slaptažodį">
+<!ENTITY fillPasswordMenu.accesskey   "U">
+<!ENTITY fillUsernameMenu.label       "Užpildyti naudotojo vardą">
+<!ENTITY fillUsernameMenu.accesskey   "U">
+<!ENTITY noLoginSuggestions.label     "(Nėra prisijungimo siūlymų)">
+<!ENTITY viewSavedLogins.label        "Peržiūrėti įrašytus prisijungimus">

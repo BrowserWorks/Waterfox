@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption "Versioni protocollo SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption "Avvisi SSL/TLS">
+<!ENTITY SSLMixedContent.caption "Contenuto misto">
+<!ENTITY SSLClientAuthMethod.caption "Selezione certificato lato client">
+<!ENTITY pref.ssltls.title "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description "È possibile restringere il numero di protocolli di cifratura da usare per le connessioni sicure. Scegliere una singola versione o un gruppo di versioni contigue.">
+<!ENTITY limit.enable.label "Abilita:">
+<!ENTITY limit.tls10.label "TLS 1.0">
+<!ENTITY limit.tls10.accesskey "T">
+<!ENTITY limit.tls11.label "TLS 1.1">
+<!ENTITY limit.tls11.accesskey "1">
+<!ENTITY limit.tls12.label "TLS 1.2">
+<!ENTITY limit.tls12.accesskey "2">
+<!ENTITY limit.tls13.label "TLS 1.3">
+<!ENTITY limit.tls13.accesskey "3">
+<!ENTITY warn.description2 "&brandShortName; può avvisare riguardo allo stato della sicurezza della pagina web che si sta visitando. Impostare &brandShortName; per mostrare un avviso quando:">
+<!ENTITY warn.enteringsecure "Caricare una pagina che gestisce la cifratura">
+<!ENTITY warn.enteringsecure.accesskey "C">
+<!ENTITY warn.insecurepost "Inviare dati di un modulo da una pagina non sicura ad un'altra non sicura">
+<!ENTITY warn.insecurepost.accesskey "n">
+<!ENTITY warn.leavingsecure "Uscire da una pagina sicura">
+<!ENTITY warn.leavingsecure.accesskey "U">
+<!ENTITY mixed.description "Le pagine cifrate possono contenere contenuto non cifrato che è vulnerabile a intercettazioni e contraffazioni. &brandShortName; può individuarlo e bloccarlo:">
+<!ENTITY warn.mixedactivecontent "Avvisa quando le pagine cifrate contengono contenuto non sicuro">
+<!ENTITY warn.mixedactivecontent.accesskey "A">
+<!ENTITY block.activecontent "Non caricare contenuto non sicuro nelle pagine cifrate">
+<!ENTITY block.activecontent.accesskey "N">
+<!ENTITY warn.mixeddisplaycontent "Avvisa quando le pagine cifrate contengono altri tipi di contenuto misto">
+<!ENTITY warn.mixeddisplaycontent.accesskey "v">
+<!ENTITY block.displaycontent "Non caricare altri tipi di contenuto misto nelle pagine cifrate">
+<!ENTITY block.displaycontent.accesskey "o">
+<!ENTITY certselect.description "Decidere come &brandShortName; selezionerà un certificato di sicurezza da offrire quando un sito lo richieda:">
+<!ENTITY certselect.auto "Seleziona automaticamente">
+<!ENTITY certselect.auto.accesskey "S">
+<!ENTITY certselect.ask "Chiedi ogni volta">
+<!ENTITY certselect.ask.accesskey "h">

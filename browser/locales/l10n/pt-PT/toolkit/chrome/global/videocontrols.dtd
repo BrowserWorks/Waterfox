@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Reproduzir">
+<!ENTITY playButton.pauseLabel "Pausa">
+<!ENTITY muteButton.muteLabel "Silenciar">
+<!ENTITY muteButton.unmuteLabel "Repor som">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Ecrã completo">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Sair de ecrã completo">
+<!ENTITY castingButton.castingLabel "Lançar para o ecrã">
+<!ENTITY closedCaption.off "Desligado">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Controlo de deslize de volume">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Vídeo em janela flutuante">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Ver o vídeo numa janela flutuante">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Reproduzir vídeo em primeiro plano enquanto faz outras coisas no &brandShortName;">
+
+<!ENTITY error.aborted "O carregamento do vídeo parou.">
+<!ENTITY error.network "Reprodução de vídeo abortada devido a um erro de rede.">
+<!ENTITY error.decode "O vídeo não pode ser reproduzido porque o ficheiro está danificado.">
+<!ENTITY error.srcNotSupported "Formato de vídeo ou tipo MIME não suportado.">
+<!ENTITY error.noSource2 "Não foi encontrado nenhum vídeo com um formato e tipo MIME suportado.">
+<!ENTITY error.generic "Reprodução de vídeo abortada devido a um erro desconhecido.">
+
+<!ENTITY status.pictureInPicture "Este vídeo está a ser reproduzido numa janela flutuante.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

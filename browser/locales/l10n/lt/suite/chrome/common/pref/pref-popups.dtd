@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY popupBlock.label               "Užblokuoti iškylančius langus">
+<!ENTITY popupBlock.accesskey           "U">
+
+<!ENTITY viewPermissions.label          "Tvarkyti leidimus">
+<!ENTITY viewPermissions.accesskey      "T">
+
+<!ENTITY whenBlock.description          "Naršyklei neleidus atsirasti iškylančiajam langui:">
+<!ENTITY playSound.label                "pranešti garsu:">
+<!ENTITY playSound.accesskey            "g">
+<!ENTITY systemSound.label              "pyptelėti">
+<!ENTITY systemSound.accesskey          "p">
+<!ENTITY customSound.label              "parinkti kitą garso failą">
+<!ENTITY customSound.accesskey          "f">
+
+<!ENTITY selectSound.label              "Parinkti…">
+<!ENTITY selectSound.accesskey          "P">
+<!ENTITY playSoundButton.label          "Perklausyti">
+<!ENTITY playSoundButton.accesskey      "k">
+
+<!ENTITY displayIcon.label              "Rodyti įspėjamajį ženkliuką naršyklės būsenos juostoje">
+<!ENTITY displayIcon.accesskey          "ž">
+
+<!ENTITY displayNotification.label      "Rodyti informacijos juostą">
+<!ENTITY displayNotification.accesskey  "R">
+
+<!ENTITY popupNote.description          "Pastaba. Jei visiškai uždrausite iškylančiuosius langus, tai gali atsitikti taip, kad neturėsite galimybės pasinaudoti kai kurių svetainių svarbiomis savybėmis (pvz., registravimosi banko arba parduotuvių svetainėse langai). Daugiau informacijos apie tai, kaip vienoms svetainėms leisti atverti tokius langus, o kitoms – ne, galima rasti elektroniniame žinyne (spustelėkite mygtuką „Žinynas“). Taip pat reikia turėti omenyje, kad net uždraudus svetainei atverti iškylančius langus, ji gali panaudoti ir kitus būdus tokiems langams atverti.">
+

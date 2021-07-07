@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Masukkan Karakter">
+<!ENTITY category.label "Kategori">
+<!ENTITY letter.label "Huruf:">
+<!ENTITY letter.accessKey "H">
+<!ENTITY character.label "Karakter:">
+<!ENTITY character.accessKey "K">
+<!ENTITY accentUpper.label "Huruf Besar dengan Tanda">
+<!ENTITY accentLower.label "Huruf Kecil dengan Tanda">
+<!ENTITY otherUpper.label "Huruf Besar Lainnya">
+<!ENTITY otherLower.label "Huruf Kecil Lainnya">
+<!ENTITY commonSymbols.label "Simbol Umum">
+<!ENTITY insertButton.label "Masukkan">
+<!ENTITY closeButton.label "Tutup">

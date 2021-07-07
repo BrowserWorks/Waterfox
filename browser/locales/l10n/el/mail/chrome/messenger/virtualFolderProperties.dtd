@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Νέος αποθηκευμένος φάκελος αναζήτησης">
+<!ENTITY name.label                 "Όνομα:">
+<!ENTITY name.accesskey             "ν">
+<!ENTITY description.label          "Δημιουργία υποφακέλου σε:">
+<!ENTITY description.accesskey      "Δ">
+
+<!ENTITY searchTermCaption.label "Ρύθμιση κριτηρίων αναζήτησης για αυτόν τον αποθηκευμένο φάκελο αναζήτησης:">
+
+<!ENTITY folderSelectionCaption.label "Επιλογή φακέλων για αναζήτηση:">
+<!ENTITY chooseFoldersButton.label "Επιλογή…">
+<!ENTITY chooseFoldersButton.accesskey "ι">
+
+<!ENTITY searchOnline.label "Διαδικτυακή αναζήτηση (Παρέχει ενημερωμένα αποτελέσματα για φακέλους IMAP και συζητήσεων, αλλά αυξάνει το χρόνο ανοίγματος του φακέλου)">
+<!ENTITY searchOnline.accesskey "ζ">
+<!ENTITY newFolderButton.label       "Δημιουργία">
+<!ENTITY newFolderButton.accesskey   "ρ">
+<!ENTITY editFolderButton.label      "Ενημέρωση">
+<!ENTITY editFolderButton.accesskey  "η">

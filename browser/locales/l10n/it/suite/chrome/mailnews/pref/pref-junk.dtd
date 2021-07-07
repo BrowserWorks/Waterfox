@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Posta spam sospetta">
+<!ENTITY junkSettings.caption "Impostazioni globali posta spam">
+<!ENTITY junkMail.intro "Utilizza Configurazione account per configurare le impostazioni di posta spam specifiche per ogni account.">
+<!ENTITY manualMark.label "Quando marco i messaggi come indesiderati:">
+<!ENTITY manualMark.accesskey "Q">
+<!ENTITY manualMarkModeMove.label "Spostali nella cartella &quot;Spam&quot; dell'account">
+<!ENTITY manualMarkModeMove.accesskey "S">
+<!ENTITY manualMarkModeDelete.label "Eliminali">
+<!ENTITY manualMarkModeDelete.accesskey "E">
+<!ENTITY markAsRead.intro "Marca i messaggi come letti:">
+<!ENTITY autoMarkAsRead.label "Quando &brandShortName; li riconosce come posta spam">
+<!ENTITY autoMarkAsRead.accesskey "u">
+<!ENTITY manualMarkAsRead.label "Quando li marco come indesiderati">
+<!ENTITY manualMarkAsRead.accesskey "d">
+<!ENTITY enableJunkLogging.label "Attiva il log del filtro antispam">
+<!ENTITY enableJunkLogging.accesskey "A">
+<!ENTITY openJunkLog.label "Mostra log">
+<!ENTITY openJunkLog.accesskey "M">
+<!ENTITY resetTrainingData.label "Cancella dati addestramento">
+<!ENTITY resetTrainingData.accesskey "C">
+<!ENTITY pref.suspectMail.caption "Mail sospetta">
+<!ENTITY pref.phishing.caption "Frodi via posta">
+<!ENTITY enablePhishingDetector.label "Avvisami se il messaggio che sto leggendo è un possibile tentativo di frode">
+<!ENTITY enablePhishingDetector.accesskey "v">
+<!ENTITY pref.antivirus.caption "Antivirus">
+<!ENTITY antiVirus.label "Permetti agli antivirus di analizzare i messaggi in arrivo più facilmente">
+<!ENTITY antiVirus.accesskey "P">

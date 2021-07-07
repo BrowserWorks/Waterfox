@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Junk-Mail">
+<!ENTITY junkSettings.caption "Allgemeine Junk-Mail-Einstellungen">
+<!ENTITY junkMail.intro "Gehen Sie in die Account-Einstellungen, um Account-spezifische Junk-Mail-Einstellungen zu konfigurieren.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Wenn Nachrichten als Junk markiert werden:">
+<!ENTITY manualMark.accesskey           "W">
+<!ENTITY manualMarkModeMove.label       "Diese in den &quot;Junk&quot;-Ordner des Accounts verschieben">
+<!ENTITY manualMarkModeMove.accesskey   "D">
+<!ENTITY manualMarkModeDelete.label     "Diese löschen">
+<!ENTITY manualMarkModeDelete.accesskey "s">
+
+<!ENTITY markAsRead.intro               "Nachrichten als gelesen markieren:">
+<!ENTITY autoMarkAsRead.label           "Wenn &brandShortName; sie als Junk erkennt">
+<!ENTITY autoMarkAsRead.accesskey       "e">
+<!ENTITY manualMarkAsRead.label         "Wenn sie manuell als Junk markiert werden">
+<!ENTITY manualMarkAsRead.accesskey     "m">
+
+<!ENTITY enableJunkLogging.label        "Junk-Filter-Log aktivieren">
+<!ENTITY enableJunkLogging.accesskey    "J">
+<!ENTITY openJunkLog.label              "Log anzeigen">
+<!ENTITY openJunkLog.accesskey          "L">
+<!ENTITY resetTrainingData.label        "Training-Daten zurücksetzen">
+<!ENTITY resetTrainingData.accesskey    "T">
+
+<!ENTITY pref.suspectMail.caption       "Suspekte Nachrichten">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Betrügerische E-Mails">
+<!ENTITY enablePhishingDetector.label     "Warnung bei Verdacht auf betrügerische E-Mails anzeigen">
+<!ENTITY enablePhishingDetector.accesskey "V">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Antivirus">
+<!ENTITY antiVirus.label                  "Antivirus-Programmen das Scannen eingehender Nachrichten erleichtern">
+<!ENTITY antiVirus.accesskey              "A">

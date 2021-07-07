@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Nustatyti darbalaukio foną">
+
+<!ENTITY position.label             "Padėtis:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "išdėstyti išklotine">
+<!ENTITY position.stretch.label     "ištempti">
+<!ENTITY position.center.label      "centruoti">
+<!ENTITY position.fill.label        "užpildyti">
+<!ENTITY position.fit.label         "talpinti">
+<!ENTITY picker.label               "Spalva:">
+<!ENTITY picker.accesskey           "S">
+<!ENTITY preview.caption            "Peržiūra">
+<!ENTITY apply.label                "Pritaikyti">
+<!ENTITY apply.accesskey            "t">
+<!ENTITY close.label                "Užverti">

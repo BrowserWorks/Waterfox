@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Förvalt program">
+<!ENTITY defaultClient.intro  "Använd &brandShortName; som förvalt program för:">
+
+<!ENTITY browser.label "Webbläsare">
+<!ENTITY email.label "E-post">
+<!ENTITY newsgroups.label "Diskussionsgrupper">
+<!ENTITY feeds.label "Flöden och bloggar">
+
+<!ENTITY checkOnStartup.label "Kontrollera alltid detta när du startar &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "K">

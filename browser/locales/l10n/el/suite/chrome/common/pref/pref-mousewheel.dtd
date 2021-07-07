@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Τροχός ποντικιού">
+<!ENTITY mouseWheelPanel.label           "Καθορίστε τη συμπεριφορά του τροχού ποντικιού όταν χρησιμοποιείται με αυτό το πλήκτρο τροποποίησης: ">
+<!ENTITY usingJustTheWheel.label         "Κανένα πλήκτρο τροποποίησης">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "Κάθετη κύλιση">
+<!ENTITY mouseWheelHorizGroup.label      "Οριζόντια κύλιση">
+<!ENTITY sameAsVertical.label            "Ίδια με την κάθετη κύλιση">
+<!ENTITY sameAsVertical.accesskey        "κ">
+<!ENTITY doNothing.label                 "Καμία ενέργεια">
+<!ENTITY doNothing.accesskey             "Κ">
+<!ENTITY doNothingHoriz.accesskey        "ν">
+<!ENTITY scrollDocument.label            "Κύλιση εγγράφου">
+<!ENTITY scrollDocument.accesskey        "Κ">
+<!ENTITY scrollDocumentHoriz.accesskey   "γ">
+<!ENTITY history.label                   "Μετάβαση εμπρός και πίσω στο ιστορικό περιήγησης">
+<!ENTITY history.accesskey               "Μ">
+<!ENTITY historyHoriz.accesskey          "ε">
+<!ENTITY zoom.label                      "Μεγέθυνση ή σμίκρυνση σελίδας">
+<!ENTITY zoom.accesskey                  "Μ">
+<!ENTITY zoomHoriz.accesskey             "ε">
+<!ENTITY wheelSpeed.label                "Ταχύτητα τροχού ποντικιού:">
+<!ENTITY wheelSpeed.accesskey            "τ">
+<!ENTITY wheelSpeedHoriz.accesskey       "ι">
+<!ENTITY reverseDirection.label          "Αντίστροφη κατεύθυνση">
+<!ENTITY reverseDirection.accesskey      "Α">
+<!ENTITY reverseDirectionHoriz.accesskey "θ">

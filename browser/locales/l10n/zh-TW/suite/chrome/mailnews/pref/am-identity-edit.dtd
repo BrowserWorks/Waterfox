@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (identityDialog.style): This value should be roughly
+     equal to the value of accountManager.size entity minus the value
+     of accountTree.width entity. -->
+<!ENTITY identityDialog.style "min-width: 75ch;">
+<!ENTITY identityListDesc.label "此身份的詳細資訊:">
+
+<!ENTITY settingsTab.label       "設定">
+<!ENTITY copiesFoldersTab.label "備份與郵件匣">
+<!ENTITY addressingTab.label    "寫信與通訊錄">
+
+<!ENTITY publicData.label        "公開資料">
+<!ENTITY privateData.label       "私人資料">
+<!ENTITY identityAlias.label     "身份識別標籤:">
+<!ENTITY identityAlias.accesskey "b">

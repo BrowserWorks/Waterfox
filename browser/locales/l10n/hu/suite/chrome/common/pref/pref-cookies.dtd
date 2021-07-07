@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Sütik">
+<!-- cookies -->
+
+
+<!ENTITY cookiePolicy.label             "Sütikezelési házirend">
+
+<!ENTITY disableCookies.label           "Sütik blokkolása">
+<!ENTITY disableCookies.accesskey       "b">
+
+<!ENTITY accNo3rdPartyCookies.label     "Süti elfogadása a származási webhelyről (nincsenek harmadik féltől származó sütik)">
+<!ENTITY accNo3rdPartyCookies.accesskey "a">
+
+<!ENTITY acc3rdPartyVisited.label       "Harmadik féltől származó süti elfogadása csak a már meglátogatott webhelynél">
+<!ENTITY acc3rdPartyVisited.accesskey   "m">
+
+<!ENTITY accAllCookies.label            "Összes süti elfogadása">
+<!ENTITY accAllCookies.accesskey        "e">
+
+<!ENTITY cookieRetentionPolicy.label    "Sütitárolási házirend">
+
+<!ENTITY acceptNormally.label           "Sütik normál elfogadása">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Elfogadás csak az aktuális munkamenetre">
+<!ENTITY acceptForSession.accesskey     "E">
+
+<!ENTITY acceptforNDays.label           "Sütik elfogadása">
+<!ENTITY acceptforNDays.accesskey       "f">
+<!ENTITY days.label                     "napra">
+
+<!ENTITY manageCookies.label            "Sütik és webhelyek kezelése">
+<!ENTITY manageCookiesDescription.label "Lehetővé teszi a tárol sütik megtekintését ls kezelését, valamint a sütik elfogadásánal vagy visszautasításának szabályozását webhelyekre lebontva. A webhelyre megadott beállítás felülbírálja a fenti beállításokat.">
+
+<!ENTITY viewCookies.label              "Sütikezelő">
+<!ENTITY viewCookies.accesskey          "t">
+

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Új mentett keresés mappa">
+<!ENTITY name.label                 "Név:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Almappa létrehozása a következőben:">
+<!ENTITY description.accesskey      "A">
+
+<!ENTITY searchTermCaption.label "A mentett keresés keresési feltételének beállítása:">
+
+<!ENTITY folderSelectionCaption.label "Keresés a következő mappákban:   ">
+<!ENTITY chooseFoldersButton.label "Tallózás…">
+<!ENTITY chooseFoldersButton.accesskey "T">
+
+<!ENTITY searchOnline.label "Online keresés (naprakész eredményeket ad az IMAP- és News-mappákhoz, de megnövekszik a mappa megnyitásához szükséges idő)">
+<!ENTITY searchOnline.accesskey "s">
+<!ENTITY newFolderButton.label       "Létrehozás">
+<!ENTITY newFolderButton.accesskey   "L">
+<!ENTITY editFolderButton.label      "Frissítés">
+<!ENTITY editFolderButton.accesskey  "F">

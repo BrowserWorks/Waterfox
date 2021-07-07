@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "التقويم">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "حدث…">
+<!ENTITY lightning.menupopup.new.event.accesskey "ح">
+<!ENTITY lightning.menupopup.new.task.label     "مهمة…">
+<!ENTITY lightning.menupopup.new.task.accesskey "م">
+<!ENTITY lightning.menupopup.new.calendar.label "تقويم…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "ت">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "ملف تقويم…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "ت">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "التقويم">
+<!ENTITY lightning.menu.view.calendar.accesskey        "ت">
+<!ENTITY lightning.menu.view.tasks.label               "المهام">
+<!ENTITY lightning.menu.view.tasks.accesskey           "م">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "الأحداث و المهام">
+<!ENTITY lightning.menu.eventtask.accesskey            "ح">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "البريد الإلكتروني:">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "اقبل">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "اقبل دعوة الحدث">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "اقبل الكل">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "اقبل الدعوة لجميع تكرارات الحدث">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "أضف">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "أَضف الحدث للتقويم">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "ارفض">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "ارفض دعوة الحدث">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "ارفض الكل">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "ارفض الدعوة لجميع تكرارات الحدث">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "ارفض">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "ارفض العرض المضاد">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "احذف">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "احذف من التقويم">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "التفاصيل…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "أظهر تفاصيل الحدث">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "لا تعرض لي هذه الرسائل">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "التقويم">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "انتقل إلى لسان التقويم">
+<!ENTITY lightning.imipbar.btnMore.label                                    "المزيد">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "انقر لرؤية المزيد من الخيارات">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "أعد التأكيد">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "يُرسل إعادة تأكيد للمنظم">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "أعِد الجدولة">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "أعِد جدولة الحدث">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "احفظ نسخة">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "احفظ نسخة من الحدث في التقويم، بشكل مستقل عن الرد على المنظم. قائمة الحضور ستُمسح.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "مبدئي">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "اقبل دعوة الحدث مبدئيًا">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "مبدئيًا للكل">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "اقبل الدعوة مبدئيًا لجميع تكرارات الحدث">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "حدّث">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "حدّث الحدث في التقويم">
+<!ENTITY lightning.imipbar.description                                      "تحتوي هذه الرسالة دعوة لحدث.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "أرسِل ردًا الآن">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "أرسِل ردًا للمنظّم">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "أرسِل ردًا إلى المنظّم على السلسلة كاملةً">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "لا تُرسل ردًا">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "غيّر حالة المشاركة بدون إرسال ردّ إلى المنظّم">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "غيّر حالة المشاركة على السلسلة بدون إرسال ردّ إلى المنظّم">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "أنشئ تقويمًا جديدًا">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "أظهر شهر مصغّر">
+<!ENTITY todaypane.showMinimonth.accesskey "ش">
+<!ENTITY todaypane.showMiniday.label "أظهر يوم مصغّر">
+<!ENTITY todaypane.showMiniday.accesskey  "ي">
+<!ENTITY todaypane.showNone.label "لا تظهر شيء">
+<!ENTITY todaypane.showNone.accesskey "ه">
+<!ENTITY todaypane.showTodayPane.label "أظهر لوحة اليوم">
+<!ENTITY todaypane.showTodayPane.accesskey "ح">
+<!ENTITY todaypane.statusButton.label "لوحة اليوم">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Geavanceerde accountinstellingen">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-servermap">
+<!ENTITY serverDirectory.accesskey "m">
+<!ENTITY usingSubscription.label "Alleen geabonneerde mappen tonen">
+<!ENTITY usingSubscription.accesskey "a">
+<!ENTITY dualUseFolders.label "Server ondersteunt mappen met submappen en berichten">
+<!ENTITY dualUseFolders.accesskey "o">
+<!ENTITY maximumConnectionsNumber.label "Maximumaantal serververbindingen in de buffer">
+<!ENTITY maximumConnectionsNumber.accesskey "n">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Deze instellingen omschrijven de namespaces op uw IMAP-server">
+<!ENTITY personalNamespace.label "Persoonlijke namespace:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Openbaar (gedeeld):">
+<!ENTITY publicNamespace.accesskey "b">
+<!ENTITY otherUsersNamespace.label "Andere gebruikers:">
+<!ENTITY otherUsersNamespace.accesskey "d">
+<!ENTITY overrideNamespaces.label "Server toestaan om deze namespaces te negeren">
+<!ENTITY overrideNamespaces.accesskey "S">
+<!ENTITY pop3DeferringDesc.label "Bij het downloaden van e-mail van de server van deze account, de volgende map voor het opslaan van nieuwe berichten gebruiken:">
+<!ENTITY accountInbox.label "Postvak IN van deze account">
+<!ENTITY accountInbox.accesskey "P">
+<!ENTITY deferToServer.label "Postvak IN van een andere account">
+<!ENTITY deferToServer.accesskey "r">
+<!ENTITY deferGetNewMail.label "Deze server bij het ophalen van nieuwe berichten betrekken">
+<!ENTITY deferGetNewMail.accesskey "b">

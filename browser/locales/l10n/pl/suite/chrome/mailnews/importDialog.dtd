@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Kreator importu">
+<!ENTITY importAll.label "Importowanie wszystkich danych">
+<!ENTITY importAll.accesskey "m">
+<!ENTITY importMail.label "Wiadomości pocztowe">
+<!ENTITY importMail.accesskey "W">
+<!ENTITY importFeeds.label "Subskrypcje źródeł">
+<!ENTITY importFeeds.accesskey "S">
+<!ENTITY importAddressbook.label "Książki adresowe">
+<!ENTITY importAddressbook.accesskey "k">
+<!ENTITY importSettings.label "Ustawienia">
+<!ENTITY importSettings.accesskey "U">
+<!ENTITY importFilters.label "Filtry">
+<!ENTITY importFilters.accesskey "F">
+
+<!ENTITY window.width "42em">
+<!ENTITY window.macWidth "47em">
+
+<!ENTITY importTitle.label "Kreator importu">
+<!ENTITY importShortDesc.label "Kreator umożliwia import poczty, książek adresowych, ustawień oraz filtrów z innych programów.">
+
+<!ENTITY importDescription1.label "Za pomocą Kreatora importu możliwe jest przeprowadzenie automatycznej konwersji danych z innych popularnych programów pocztowych do programu &brandShortName;. W tym celu należy wybrać rodzaj importowanych danych, a następnie nacisnąć Dalej.">
+<!ENTITY importDescription2.label "Po zakończeniu importu wszystkie dane będą dostępne bezpośrednio w programie &brandShortName;.">
+
+<!ENTITY selectDescription.label "Wybierz program lub format pliku, z którego będą importowane dane:">
+<!ENTITY selectDescriptionB.label "Wybierz istniejące konto lub utwórz nowe:">
+<!ENTITY selectDescription.accesskey "z">
+<!ENTITY acctName.label "Nazwa:">
+<!ENTITY acctName.accesskey "N">
+<!ENTITY noModulesFound.label "Nie znaleziono żadnych aplikacji lub plików, z których można importować dane.">
+
+<!ENTITY back.label "&lt; Wstecz">
+<!ENTITY forward.label "Dalej &gt;">
+<!ENTITY finish.label "Zakończ">
+<!ENTITY cancel.label "Anuluj">
+
+<!ENTITY select.label "lub wybierz rodzaj danych, które zostaną importowane:">
+
+<!ENTITY title.label "Tytuł">
+<!ENTITY processing.label "Importowanie…">

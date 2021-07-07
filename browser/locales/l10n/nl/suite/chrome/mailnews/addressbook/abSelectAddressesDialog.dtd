@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Adressen selecteren">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Aan->">
+<!ENTITY toButton.accesskey                  "A">
+<!ENTITY ccButton.label                      "Cc->">
+<!ENTITY ccButton.accesskey                  "C">
+<!ENTITY bccButton.label                     "Bcc->">
+<!ENTITY bccButton.accesskey                 "B">
+<!ENTITY newButton.label                     "Nieuw…">
+<!ENTITY newButton.accesskey                 "N">
+<!ENTITY editButton.label                    "Bewerken…">
+<!ENTITY editButton.accesskey                "e">
+<!ENTITY removeButton.label                  "Verwijderen">
+<!ENTITY removeButton.accesskey              "V">
+<!ENTITY lookIn.label                        "Zoeken in:">
+<!ENTITY lookIn.accesskey                    "Z">
+<!ENTITY for.label                           "naar:">
+<!ENTITY for.accesskey                       "r">
+<!ENTITY for.placeholder                     "Naam of e-mailadres">
+<!ENTITY addressMessageTo.label              "Bericht adresseren aan:">
+
+<!-- Tooltips items -->
+<!ENTITY addressPickerNewButton.tooltip      "Een nieuwe adresboekkaart creëren">
+<!ENTITY addressPickerEditButton.tooltip     "De geselecteerde kaart bewerken">

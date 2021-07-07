@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "أشِّر الرسائل المقروءة بالتاريخ">
+<!ENTITY markByDateLower.label "أشِّر كمقروءة الرسائل منذ:">
+<!ENTITY markByDateLower.accesskey "م">
+<!ENTITY markByDateUpper.label "إلى:">
+<!ENTITY markByDateUpper.accesskey "ل">

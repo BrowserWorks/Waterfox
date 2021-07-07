@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-search.xul -->
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+
+
+<!ENTITY pref.search.title                "Internetes keresés">
+<!ENTITY legendHeader                     "Alapértelmezett keresőszolgáltatás">
+<!ENTITY defaultSearchEngine.label        "Keresés ezzel:">
+<!ENTITY defaultSearchEngine.accesskey    "K">
+
+<!ENTITY engineManager.label              "Keresőszolgáltatások kezelése">
+
+<!ENTITY searchResults.label              "Találatok">
+
+<!ENTITY openInTab.label                  "Oldalsáv keresési eredményeinek megjelnítése új lapon">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "Új lap nyitása, új ablak helyett, a helyi menüből indított kereséskor">
+<!ENTITY openContextSearchTab.accesskey   "l">
+<!ENTITY openSidebarSearchPanel.label     "A Keresés panellap megnyitása az Oldalsávon, amikor a keresés eredménye rendelkezésre áll">
+<!ENTITY openSidebarSearchPanel.accesskey "m">

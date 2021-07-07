@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "óra">
+<!ENTITY time.minute.label "perc">
+<!ENTITY time.second.label "másodperc">
+<!ENTITY time.millisecond.label "ezredmásodperc">
+<!ENTITY time.dayperiod.label "de./du.">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "éééé">
+<!ENTITY date.month.placeholder "hh">
+<!ENTITY date.day.placeholder "nn">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "év">
+<!ENTITY date.month.label "hónap">
+<!ENTITY date.day.label "nap">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "Törlés">

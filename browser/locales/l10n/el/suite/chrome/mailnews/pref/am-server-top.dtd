@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Αποθήκευση μηνυμάτων">
+<!ENTITY securitySettings.label "Ρυθμίσεις ασφαλείας">
+<!ENTITY serverSettings.label "Ρυθμίσεις διακομιστή">
+<!ENTITY serverType.label "Τύπος διακομιστή:">
+<!ENTITY serverName.label "Όνομα διακομιστή:">
+<!ENTITY serverName.accesskey "δ">
+<!ENTITY userName.label "Όνομα χρήστη:">
+<!ENTITY userName.accesskey "Ό">
+<!ENTITY port.label "Θύρα:">
+<!ENTITY port.accesskey "Θ">
+<!ENTITY serverPortDefault.label "Προεπιλογή:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Έλεγχος για νέα μηνύματα κάθε ">
+<!ENTITY biffStart.accesskey "ν">
+<!ENTITY biffEnd.label "λεπτά">
+<!ENTITY useIdleNotifications.label "Αποδοχή άμεσων ειδοποιήσεων διακομιστή όταν έρχονται νέα μηνύματα">
+<!ENTITY useIdleNotifications.accesskey "χ">
+<!ENTITY connectionSecurity.label "Ασφάλεια σύνδεσης:">
+<!ENTITY connectionSecurity.accesskey "σ">
+<!ENTITY connectionSecurityType-0.label "Καμία">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, αν υπάρχει">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Μέθοδος ταυτοποίησης:">
+<!ENTITY authMethod.accesskey "θ">
+<!ENTITY leaveOnServer.label "Διατήρηση μηνυμάτων στον διακομιστή">
+<!ENTITY leaveOnServer.accesskey "τ">
+<!ENTITY headersOnly.label "Λήψη κεφαλίδων μόνο">
+<!ENTITY headersOnly.accesskey "ψ">
+<!ENTITY deleteByAgeFromServer.label "Για το πολύ">
+<!ENTITY deleteByAgeFromServer.accesskey "ο">
+<!ENTITY daysEnd.label "ημέρες">
+<!ENTITY deleteOnServer2.label "Μέχρι να τα διαγράψω">
+<!ENTITY deleteOnServer2.accesskey "δ">
+<!ENTITY downloadOnBiff.label "Αυτόματη λήψη νέων μηνυμάτων">
+<!ENTITY downloadOnBiff.accesskey "μ">
+<!ENTITY deleteMessagePrefix.label "Κατά τη διαγραφή ενός μηνύματος:">
+<!ENTITY modelMoveToTrash.label "Μετακίνηση στο φάκελο:">
+<!ENTITY modelMoveToTrash.accesskey "φ">
+<!ENTITY modelMarkDeleted.label "Επισήμανση ως διαγραμμένο">
+<!ENTITY modelMarkDeleted.accesskey "μ">
+<!ENTITY modelDeleteImmediately.label "Άμεση αφαίρεση">
+<!ENTITY modelDeleteImmediately.accesskey "φ">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Εκκαθάριση (&quot;Διαγραφή&quot;) εισερχομένων κατά την έξοδο">
+<!ENTITY expungeOnExit.accesskey "Ε">
+<!ENTITY emptyTrashOnExit.label "Άδειασμα απορριμάτων κατά την έξοδο">
+<!ENTITY emptyTrashOnExit.accesskey "δ">
+<!ENTITY loginAtStartup.label "Έλεγχος για νέα μηνύματα κατά την εκκίνηση">
+<!ENTITY loginAtStartup.accesskey "Έ">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+     maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+     of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Ερώτηση πριν τη λήψη περισσοτέρων από">
+<!ENTITY maxMessagesStart.accesskey "π">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "μηνυμάτων">
+<!ENTITY alwaysAuthenticate.label "Να απαιτείται πάντα ταυτοποίηση κατά τη σύνδεση στον διακομιστή">
+<!ENTITY alwaysAuthenticate.accesskey "π">
+<!ENTITY newsrcFilePath.label "Αρχείο newsrc:">
+<!ENTITY newsrcPicker.label "Επιλογή αρχείου newsrc">
+<!ENTITY abbreviate.label "Εμφάνιση ονομάτων ομάδων συζήτησης στην προβολή φακέλων αλληλογραφίας με:">
+<!ENTITY abbreviateOn.label "Πλήρη ονόματα (για παράδειγμα, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Σύντομα ονόματα (για παράδειγμα, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Για προχωρημένους…">
+<!ENTITY serverDefaultCharset2.label "Προεπιλεγμένη κωδικοποίηση κειμένου:">
+<!ENTITY advancedButton.accesskey "χ">
+<!ENTITY localPath.label "Τοπικός κατάλογος:">
+<!ENTITY localFolderPicker.label "Επιλογή τοπικού καταλόγου">
+<!ENTITY browseFolder.label "Περιήγηση…">
+<!ENTITY browseFolder.accesskey "Π">
+<!ENTITY browseNewsrc.label "Περιήγηση…">
+<!ENTITY browseNewsrc.accesskey "ρ">
+
+<!ENTITY accountTitle.label "Ρυθμίσεις λογαριασμού">
+<!ENTITY accountSettingsDesc.label "Ο ακόλουθος λογαριασμός είναι ειδικός. Δεν υπάρχουν ταυτότητες που να σχετίζονται με αυτόν.">
+<!ENTITY storeType.label "Τρόπος αποθήκευσης μηνυμάτων:">
+<!ENTITY storeType.accesskey "Τ">
+<!ENTITY mboxStore2.label "Αρχείο ανά φάκελο (mbox)">
+<!ENTITY maildirStore.label "Αρχείο ανά μήνυμα (maildir)">

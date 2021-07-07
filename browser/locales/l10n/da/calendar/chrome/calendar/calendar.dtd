@@ -1,0 +1,411 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Kalender">
+<!ENTITY calendar.calendar.accesskey "K">
+
+<!ENTITY calendar.newevent.button.tooltip         "Opret en ny begivenhed" >
+<!ENTITY calendar.newtask.button.tooltip          "Opret en ny opgave" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "Opgaver" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Vis fuldførte opgaver">
+
+<!ENTITY calendar.today.button.label          "I dag">
+<!ENTITY calendar.tomorrow.button.label       "I morgen">
+<!ENTITY calendar.upcoming.button.label       "Kommende">
+
+<!ENTITY calendar.events.filter.all.label "Alle begivenheder">
+<!ENTITY calendar.events.filter.today.label "Begivenheder i dag">
+<!ENTITY calendar.events.filter.future.label "Alle fremtidige begivenheder">
+<!ENTITY calendar.events.filter.current.label "Aktuel markeret dag">
+<!ENTITY calendar.events.filter.currentview.label "Begivenheder i aktuel visning">
+<!ENTITY calendar.events.filter.next7Days.label "Begivenheder i de næste 7 dage">
+<!ENTITY calendar.events.filter.next14Days.label "Begivenheder i de næste 14 dage">
+<!ENTITY calendar.events.filter.next31Days.label "Begivenheder i de næste 31 dage">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "Begivenheder for denne kalendermåned">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Færdig">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "Sorter efter færdig">
+<!ENTITY calendar.unifinder.tree.priority.label            "Prioritet">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Sorter efter prioritet">
+<!ENTITY calendar.unifinder.tree.title.label               "Titel">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Sorter efter titel">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#037; færdig">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Sorter efter &#37; færdig">
+<!ENTITY calendar.unifinder.tree.startdate.label           "Start">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Sorter efter start">
+<!ENTITY calendar.unifinder.tree.enddate.label             "Slut">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Sorter efter slut">
+<!ENTITY calendar.unifinder.tree.duedate.label             "Forfalder">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "Sorter efter forfalder">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Færdiggjort">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "Sorter efter færdiggjort">
+<!ENTITY calendar.unifinder.tree.categories.label          "Kategori">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "Sorter efter kategori">
+<!ENTITY calendar.unifinder.tree.location.label            "Sted">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Sorter efter sted">
+<!ENTITY calendar.unifinder.tree.status.label              "Status">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Sorter efter status">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "Kalendernavn">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "Sorter efter kalendernavn">
+<!ENTITY calendar.unifinder.tree.duration.label            "Varighed">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "Sorter efter varighed">
+<!ENTITY calendar.unifinder.close.tooltip                  "Luk begivenhedssøgning og begivenhedsoversigten">
+
+<!ENTITY calendar.today.button.tooltip          "Gå til i dag" >
+<!ENTITY calendar.todaypane.button.tooltip      "Vis i dag-panel" >
+
+<!ENTITY calendar.day.button.tooltip            "Skift til dagsoversigt" >
+<!ENTITY calendar.week.button.tooltip           "Skift til ugeoversigt" >
+<!ENTITY calendar.month.button.tooltip          "Skift til månedoversigt" >
+<!ENTITY calendar.multiweek.button.tooltip      "Skift til multiugeoversigt" >
+
+<!ENTITY calendar.nextday.label                 "Næste dag" >
+<!ENTITY calendar.prevday.label                 "Forrige dag" >
+<!ENTITY calendar.nextday.accesskey             "æ" >
+<!ENTITY calendar.prevday.accesskey             "F" >
+<!ENTITY calendar.nextweek.label                "Næste uge" >
+<!ENTITY calendar.prevweek.label                "Forrige uge" >
+<!ENTITY calendar.nextweek.accesskey            "æ" >
+<!ENTITY calendar.prevweek.accesskey            "F" >
+<!ENTITY calendar.nextmonth.label               "Næste måned" >
+<!ENTITY calendar.prevmonth.label               "Forrige måned" >
+<!ENTITY calendar.nextmonth.accesskey           "æ" >
+<!ENTITY calendar.prevmonth.accesskey           "F" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "En dag frem" >
+<!ENTITY calendar.navigation.prevday.tooltip    "En dag tilbage" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "En uge frem" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "En uge tilbage" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "En måned frem" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "En måned tilbage" >
+
+<!ENTITY calendar.newevent.button.label         "Ny begivenhed" >
+<!ENTITY calendar.newtask.button.label          "Ny opgave" >
+<!ENTITY calendar.print.button.label            "Udskriv" >
+<!ENTITY calendar.print.button.accesskey        "U">
+
+<!ENTITY calendar.day.button.label              "Dag" >
+<!ENTITY calendar.week.button.label             "Uge" >
+<!ENTITY calendar.month.button.label            "Måned" >
+<!ENTITY calendar.multiweek.button.label        "Multiuge" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "Kun arbejdsdage" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "a" >
+<!ENTITY calendar.displaytodos.checkbox.label   "Vis opgaver" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "V" >
+<!ENTITY calendar.completedtasks.checkbox.label     "Vis fuldførte opgaver" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "f" >
+
+<!ENTITY calendar.orientation.label "Roter visning" >
+<!ENTITY calendar.orientation.accesskey "R" >
+
+<!ENTITY calendar.search.options.searchfor "som indeholder">
+
+<!ENTITY calendar.list.header.label                 "Kalender">
+
+<!ENTITY calendar.task.filter.title.label           "Vis">
+<!ENTITY calendar.task.filter.all.label             "Alle">
+<!ENTITY calendar.task.filter.all.accesskey         "A">
+<!ENTITY calendar.task.filter.today.label           "I dag">
+<!ENTITY calendar.task.filter.today.accesskey       "i">
+<!ENTITY calendar.task.filter.next7days.label       "Næste syv dage">
+<!ENTITY calendar.task.filter.next7days.accesskey   "N">
+<!ENTITY calendar.task.filter.notstarted.label      "Ikke-påbegyndte opgaver">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "å">
+<!ENTITY calendar.task.filter.overdue.label         "Overskredne opgaver">
+<!ENTITY calendar.task.filter.overdue.accesskey     "O">
+<!ENTITY calendar.task.filter.completed.label       "Fuldførte opgaver">
+<!ENTITY calendar.task.filter.completed.accesskey   "d">
+<!ENTITY calendar.task.filter.open.label            "Ufuldførte opgaver">
+<!ENTITY calendar.task.filter.open.accesskey        "U">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "Aktive opgaver">
+<!ENTITY calendar.task.filter.current.accesskey     "k">
+
+<!ENTITY calendar.task-details.title.label           "Titel">
+<!ENTITY calendar.task-details.organizer.label       "Fra">
+<!ENTITY calendar.task-details.priority.label        "Prioritet">
+<!ENTITY calendar.task-details.priority.low.label    "Lav">
+<!ENTITY calendar.task-details.priority.normal.label "Normal">
+<!ENTITY calendar.task-details.priority.high.label   "Høj">
+<!ENTITY calendar.task-details.status.label          "Status">
+<!ENTITY calendar.task-details.category.label        "Kategori">
+<!ENTITY calendar.task-details.repeat.label          "Gentag">
+<!ENTITY calendar.task-details.attachments.label     "Vedhæftede filer:">
+<!ENTITY calendar.task-details.start.label           "Startdato">
+<!ENTITY calendar.task-details.due.label             "Slutdato">
+
+<!ENTITY calendar.task.category.button.tooltip  "Kategoriser opgaver">
+<!ENTITY calendar.task.complete.button.tooltip  "Marker valgte opgaver som fuldførte">
+<!ENTITY calendar.task.priority.button.tooltip  "Skift vigtighed">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "Opgavefilter #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Skift+F&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;F&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "Åbn">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "Å">
+<!ENTITY calendar.context.modifyorviewtask.label      "Åbn opgave…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "Å">
+<!ENTITY calendar.context.newevent.label              "Ny begivenhed…">
+<!ENTITY calendar.context.newevent.accesskey          "N">
+<!ENTITY calendar.context.newtodo.label               "Ny opgave…">
+<!ENTITY calendar.context.newtodo.accesskey           "y">
+<!ENTITY calendar.context.deletetask.label            "Slet opgave">
+<!ENTITY calendar.context.deletetask.accesskey        "S">
+<!ENTITY calendar.context.deleteevent.label           "Slet begivenhed">
+<!ENTITY calendar.context.deleteevent.accesskey       "b">
+<!ENTITY calendar.context.cutevent.label              "Klip">
+<!ENTITY calendar.context.cutevent.accesskey          "k">
+<!ENTITY calendar.context.copyevent.label             "Kopier">
+<!ENTITY calendar.context.copyevent.accesskey         "o">
+<!ENTITY calendar.context.pasteevent.label            "Indsæt">
+<!ENTITY calendar.context.pasteevent.accesskey        "I">
+<!ENTITY calendar.context.button.label                "Dags dato-panel">
+<!ENTITY calendar.context.button.accesskey            "D">
+
+<!ENTITY calendar.context.attendance.menu.label                 "Deltagelse">
+<!ENTITY calendar.context.attendance.menu.accesskey             "d">
+<!ENTITY calendar.context.attendance.occurrence.label           "Denne forekomst">
+<!ENTITY calendar.context.attendance.all2.label                 "Hele rækken">
+<!ENTITY calendar.context.attendance.send.label                 "Send en mail nu">
+<!ENTITY calendar.context.attendance.send.accesskey             "S">
+<!ENTITY calendar.context.attendance.dontsend.label             "Send ikke en mail">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "e">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "A">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "Accepteret">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "m">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "Accepteret midlertidigt">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "f">
+<!ENTITY calendar.context.attendance.occ.declined.label         "Afvist">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "U">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "Uddelegeret">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "M">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "Mangler stadig handling">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "g">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "I gang">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "f">
+<!ENTITY calendar.context.attendance.occ.completed.label        "Afsluttet">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "c">
+<!ENTITY calendar.context.attendance.all.accepted.label         "Accepteret">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "p">
+<!ENTITY calendar.context.attendance.all.tentative.label        "Accepteret midlertidigt">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "v">
+<!ENTITY calendar.context.attendance.all.declined.label         "Afvist">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "t">
+<!ENTITY calendar.context.attendance.all.delegated.label        "Uddelegeret">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "g">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "Mangler stadig handling">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "n">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "I gang">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "u">
+<!ENTITY calendar.context.attendance.all.completed.label        "Afsluttet">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Fremgang">
+<!ENTITY calendar.context.progress.accesskey          "m">
+<!ENTITY calendar.context.priority.label              "Prioritet">
+<!ENTITY calendar.context.priority.accesskey          "r">
+<!ENTITY calendar.context.postpone.label              "Udsæt opgave">
+<!ENTITY calendar.context.postpone.accesskey          "d">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "Marker som fuldført">
+<!ENTITY calendar.context.markcompleted.accesskey "u">
+
+<!ENTITY progress.level.0             "0&percnt;">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt;">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt;">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt;">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt;">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "Ikke angivet">
+<!ENTITY priority.level.none.accesskey      "I">
+<!ENTITY priority.level.low                 "Lav">
+<!ENTITY priority.level.low.accesskey       "L">
+<!ENTITY priority.level.normal              "Normal">
+<!ENTITY priority.level.normal.accesskey    "N">
+<!ENTITY priority.level.high                "Høj">
+<!ENTITY priority.level.high.accesskey      "H">
+
+<!ENTITY calendar.context.postpone.1hour.label      "1 time">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "t">
+<!ENTITY calendar.context.postpone.1day.label       "1 dag">
+<!ENTITY calendar.context.postpone.1day.accesskey   "d">
+<!ENTITY calendar.context.postpone.1week.label      "1 uge">
+<!ENTITY calendar.context.postpone.1week.accesskey  "u">
+
+<!ENTITY calendar.copylink.label       "Kopier linkadresse">
+<!ENTITY calendar.copylink.accesskey   "K">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Slet">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "Ny kalender">
+<!ENTITY calendar.context.newserver.accesskey          "N">
+<!ENTITY calendar.context.findcalendar.label           "Find kalender…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "F" >
+<!ENTITY calendar.context.deleteserver2.label          "Slet kalender…">
+<!ENTITY calendar.context.deleteserver2.accesskey      "t">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "Fjern kalender…">
+<!ENTITY calendar.context.removeserver.accesskey       "F">
+<!ENTITY calendar.context.unsubscribeserver.label      "Stop abonnement på kalender…">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "t">
+<!ENTITY calendar.context.synccalendars.label          "Synkroniser kalendere">
+<!ENTITY calendar.context.synccalendars.accesskey      "y">
+<!ENTITY calendar.context.publish.label                "Udgiv hele kalenderen">
+<!ENTITY calendar.context.publish.accesskey            "U">
+<!ENTITY calendar.context.export.label                 "Eksporter kalender…">
+<!ENTITY calendar.context.export.accesskey             "k">
+<!ENTITY calendar.context.properties.label             "Egenskaber">
+<!ENTITY calendar.context.properties.accesskey         "E">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "s">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "s">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "k">
+<!ENTITY calendar.context.showall.label                "Vis alle kalendere">
+<!ENTITY calendar.context.showall.accesskey            "a">
+
+<!ENTITY calendar.context.convertmenu.label              "Konverter til">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "n">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "v">
+<!ENTITY calendar.context.convertmenu.event.label        "Begivenhed…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "B">
+<!ENTITY calendar.context.convertmenu.message.label      "Meddelelse…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "M">
+<!ENTITY calendar.context.convertmenu.task.label         "Opgave…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "O">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "Minimåned">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "å">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "Kalenderliste">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "K">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "Filtrer opgaver">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "F">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Sted:" >
+<!ENTITY calendar.alarm.details.label               "Detaljer…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "Udsæt i" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "Udsæt alle i" >
+<!ENTITY calendar.alarm.title.label                 "Kalenderalarm" >
+<!ENTITY calendar.alarm.dismiss.label               "Slå fra" >
+<!ENTITY calendar.alarm.dismissall.label            "Slå alle fra" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 minutter" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 minutter" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 minutter" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 minutter" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 minutter" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 time" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 timer" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 dag" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "Fortryd udsættelse">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "Rediger kalender">
+<!ENTITY calendar.server.dialog.name.label          "Kalendernavn:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "Farve:">
+<!ENTITY calendarproperties.webdav.label                   "WebDAV">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.wcap.label                     "Sun Java System Calendar Server (WCAP)">
+<!ENTITY calendarproperties.format.label                   "Format:">
+<!ENTITY calendarproperties.location.label                 "Adresse:">
+<!ENTITY calendarproperties.refreshInterval.label          "Opdater kalender:">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "Manuelt">
+<!ENTITY calendarproperties.name.label                     "Navn:">
+<!ENTITY calendarproperties.readonly.label                 "Skrivebeskyttet">
+<!ENTITY calendarproperties.firealarms.label               "Vis alarmer">
+<!ENTITY calendarproperties.cache3.label                   "Offline-understøttelse">
+<!ENTITY calendarproperties.enabled.label                  "Slå denne kalender til">
+<!ENTITY calendarproperties.enabled2.label                 "Aktiver denne kalender">
+<!ENTITY calendarproperties.forceDisabled.label            "Kunne ikke finde kalenderens udgiver. Dette kan ofte ske, hvis du afinstallerer eller slår en bestemt udvidelse fra.">
+<!ENTITY calendarproperties.unsubscribe.label              "Stop abonnement">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "A">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "Udgiv kalender">
+<!ENTITY calendar.publish.url.label                 "Udgivelsesadresse">
+<!ENTITY calendar.publish.publish.button      "Udgiv">
+<!ENTITY calendar.publish.close.button      "Luk">
+
+<!ENTITY calendar.publish.example.url.description   "Fx http://www.eksempel.dk/webdav/test.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "Vælg kalender">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "Udskriv en kalender">
+<!ENTITY calendar.print.title.label "Titel:">
+<!ENTITY calendar.print.layout.label "Layout:">
+<!ENTITY calendar.print.range.label "Hvad der skal udskrives">
+<!ENTITY calendar.print.currentView2.label "Aktuel visning">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "Valgte begivenheder/opgaver">
+<!ENTITY calendar.print.tasks.label "Opgaver">
+<!ENTITY calendar.print.events.label "Begivenheder">
+<!ENTITY calendar.print.custom.label "Valgfrit tidsrum">
+<!ENTITY calendar.print.from.label "Fra:">
+<!ENTITY calendar.print.to.label "Til:">
+<!ENTITY calendar.print.settingsGroup.label "Sideopsætning">
+<!ENTITY calendar.print.optionsGroup.label "Indstillinger">
+<!ENTITY calendar.print.taskswithnoduedate.label "Opgaver uden sluttid">
+<!ENTITY calendar.print.completedtasks.label "Afsluttede opgaver">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Detaljer…">
+<!ENTITY calendar.error.code "Fejlkode:">
+<!ENTITY calendar.error.description "Beskrivelse:">
+<!ENTITY calendar.error.title "Der opstod en fejl">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "Tilføj som begivenhed">
+<!ENTITY calendar.extract.task.button          "Tilføj som opgave">
+<!ENTITY calendar.extract.event.button.tooltip "Hent kalenderdata fra en meddelelse, og føj den til din kalender som en begivenhed">
+<!ENTITY calendar.extract.task.button.tooltip  "Hent kalenderdata fra en meddelelse, og føj den til din kalender som en opgave">

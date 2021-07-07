@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; 安全模式">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; 正在以安全模式运行，这将暂时禁用您的设置、主题以及扩展。">
+<!ENTITY safeModeDescription2.label   "您可以永久更改它们：">
+
+<!ENTITY disableAddons.label          "禁用全部附加组件">
+<!ENTITY disableAddons.accesskey      "D">
+
+<!ENTITY resetToolbars.label          "重置工具栏和窗口大小">
+<!ENTITY resetToolbars.accesskey      "R">
+
+<!ENTITY deleteBookmarks.label        "删除全部书签（备份除外）">
+<!ENTITY deleteBookmarks.accesskey    "b">
+
+<!ENTITY resetUserPrefs.label         "重置所有的用户首选项至 &brandShortName; 默认值">
+<!ENTITY resetUserPrefs.accesskey     "p">
+
+<!ENTITY restoreSearch.label          "恢复默认搜索引擎">
+<!ENTITY restoreSearch.accesskey      "s">
+
+<!ENTITY changeAndRestartButton.label "保存改动并重新开始">
+<!ENTITY continueButton.label         "继续使用安全模式">

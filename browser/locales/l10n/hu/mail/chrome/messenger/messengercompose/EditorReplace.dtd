@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Keresés és csere">
+<!ENTITY findField.label "Keresés:">
+<!ENTITY findField.accesskey "K">
+<!ENTITY replaceField.label "Csere erre:">
+<!ENTITY replaceField.accesskey "C">
+<!ENTITY caseSensitiveCheckbox.label "Kis- és nagybetűk megkülönböztetése">
+<!ENTITY caseSensitiveCheckbox.accesskey "i">
+<!ENTITY wrapCheckbox.label "Folytatás az elejéről">
+<!ENTITY wrapCheckbox.accesskey "e">
+<!ENTITY backwardsCheckbox.label "Keresés visszafelé">
+<!ENTITY backwardsCheckbox.accesskey "v">
+<!ENTITY findNextButton.label "Következő keresése">
+<!ENTITY findNextButton.accesskey "t">
+<!ENTITY replaceButton.label "Csere">
+<!ENTITY replaceButton.accesskey "s">
+<!ENTITY replaceAndFindButton.label "Csere és keresés">
+<!ENTITY replaceAndFindButton.accesskey "r">
+<!ENTITY replaceAllButton.label "Mindet cseréli">
+<!ENTITY replaceAllButton.accesskey "M">
+<!ENTITY closeButton.label "Bezárás">
+<!ENTITY closeButton.accesskey "B">

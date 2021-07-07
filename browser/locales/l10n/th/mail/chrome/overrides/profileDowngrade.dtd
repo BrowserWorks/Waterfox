@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "คุณได้เรียกใช้ &brandProductName; รุ่นเก่า">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "รุ่นที่ใหม่กว่าของ &brandProductName; อาจได้ทำการเปลี่ยนแปลงโปรไฟล์ของคุณซึ่งไม่สามารถใช้งานร่วมกับรุ่นนี้ซึ่งเก่ากว่าได้อีกต่อไป ใช้โปรไฟล์นี้เฉพาะกับรุ่นที่ใหม่กว่านั้น หรือสร้างโปรไฟล์ใหม่สำหรับ &brandShortName; รุ่นที่ติดตั้งนี้ การสร้างโปรไฟล์ใหม่จำเป็นต้องมีการตั้งค่าบัญชี ปฏิทิน และส่วนเสริมของคุณอีกครั้ง">
+
+<!ENTITY window.moreinfo "ข้อมูลเพิ่มเติม…">
+<!ENTITY window.create "สร้างโปรไฟล์ใหม่">
+<!ENTITY window.quit-win "ออก">
+<!ENTITY window.quit-nonwin "ออก">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editfield0.label "用户名："> 
+<!ENTITY editfield1.label "密码："> 
+<!ENTITY copyCmd.label    "复制">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "全选">
+<!ENTITY selectAllCmd.accesskey "A">

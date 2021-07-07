@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "檢查拼字">
+
+<!ENTITY misspelledWord.label "拼錯的字:">
+<!ENTITY wordEditField.label "取代為:">
+<!ENTITY wordEditField.accessKey "w">
+<!ENTITY checkwordButton.label "檢查拼字">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "建議:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "忽略">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "全部忽略">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "取代">
+<!ENTITY replaceButton.accessKey "R">
+<!ENTITY replaceAllButton.label "全部取代">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "停止">
+<!ENTITY stopButton.accessKey "t">
+<!ENTITY userDictionary.label "使用者自訂字典:">
+<!ENTITY moreDictionaries.label "下載其它字典">
+<!ENTITY addToUserDictionaryButton.label "新增詞彙">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "編輯…">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton2.label "重新檢查文字">
+<!ENTITY recheckButton2.accessKey "T">
+<!ENTITY closeButton.label "關閉">
+<!ENTITY closeButton.accessKey "C">
+<!ENTITY sendButton.label "傳送">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "語言:">
+<!ENTITY languagePopup.accessKey "L">
+

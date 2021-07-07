@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Γραμμή πλοήγησης ιστοσελίδας">
+<!ENTITY linkToolbar.accesskey "μ">
+<!ENTITY linkToolbar.tooltip "Γραμμή πλοήγησης ιστοσελίδας">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Πάντα εμφάνιση">
+<!ENTITY linkToolbarAlways.accesskey "ε">
+<!ENTITY linkToolbarAsNeeded.label "Εμφάνιση μόνο αν χρειάζεται">
+<!ENTITY linkToolbarAsNeeded.accesskey "μ">
+<!ENTITY linkToolbarNever.label "Πάντα απόκρυψη">
+<!ENTITY linkToolbarNever.accesskey "α">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Κορυφή">
+<!ENTITY upButton.label "Πάνω">
+<!ENTITY firstButton.label "Πρώτο">
+<!ENTITY prevButton.label "Προηγούμενο">
+<!ENTITY nextButton.label "Επόμενο">
+<!ENTITY lastButton.label "Τελευταίο">
+
+<!ENTITY documentButton.label "Έγγραφο">
+
+<!ENTITY tocButton.label "Πίνακας περιεχομένων">
+<!ENTITY chapterButton.label "Κεφάλαια">
+<!ENTITY sectionButton.label "Ενότητες">
+<!ENTITY subSectionButton.label "Υπό-ενότητες">
+<!ENTITY appendixButton.label "Παραρτήματα">
+<!ENTITY glossaryButton.label "Γλωσσάριο">
+<!ENTITY indexButton.label "Ευρετήριο">
+
+<!ENTITY moreButton.label "Περισσότερα">
+
+<!ENTITY helpButton.label "Βοήθεια">
+<!ENTITY searchButton.label "Αναζήτηση">
+
+<!ENTITY authorButton.label "Δημιουργοί">
+<!ENTITY copyrightButton.label "Πνευματικά δικαιώματα">
+
+<!ENTITY bookmarkButton.label "Σελιδοδείκτες">
+
+<!ENTITY alternateButton.label "Άλλες εκδόσεις">
+
+<!ENTITY feedButton.label "Εγγραφή">

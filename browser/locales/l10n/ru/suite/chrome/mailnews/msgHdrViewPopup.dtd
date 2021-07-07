@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Добавить в адресную книгу…">
+<!ENTITY AddToAddressBook.accesskey        "б">
+<!ENTITY EditContact.label                 "Изменение контакта…">
+<!ENTITY EditContact.accesskey             "м">
+<!ENTITY ViewContact.label                 "Просмотр контакта">
+<!ENTITY ViewContact.accesskey             "с">
+<!ENTITY SendMailTo.label                  "Составить письмо для…">
+<!ENTITY SendMailTo.accesskey              "о">
+<!ENTITY CopyEmailAddress.label            "Копировать адрес электронной почты">
+<!ENTITY CopyEmailAddress.accesskey        "п">
+<!ENTITY CopyNameAndEmailAddress.label     "Копировать имя и адрес электронной почты">
+<!ENTITY CopyNameAndEmailAddress.accesskey "я">
+<!ENTITY CreateFilterFrom.label            "Создать фильтр из…">
+<!ENTITY CreateFilterFrom.accesskey        "з">
+<!ENTITY openInBrowser.label               "Открыть в браузере">
+<!ENTITY openInBrowser.accesskey           "ы">
+<!ENTITY bookmarkLinkCmd.label             "Добавить ссылку в закладки…">
+<!ENTITY bookmarkLinkCmd.accesskey         "б">
+<!ENTITY copyLinkCmd.label                 "Копировать ссылку">
+<!ENTITY copyLinkCmd.accesskey             "п">
+<!ENTITY CopyMessageId.label               "Копировать идентификатор">
+<!ENTITY CopyMessageId.accesskey           "п">
+<!ENTITY OpenMessageForMsgId.label         "Открыть сообщение по идентификатору">
+<!ENTITY OpenMessageForMsgId.accesskey     "ы">
+<!ENTITY OpenBrowserWithMsgId.label        "Открыть сообщение с идентификатором в браузере">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "к">

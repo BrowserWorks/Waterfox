@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtry zpráv">
+<!ENTITY nameColumn.label "Název filtru">
+<!ENTITY activeColumn.label "Povoleno">
+<!ENTITY newButton.label "Nový…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopírovat…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Upravit…">
+<!ENTITY editButton.accesskey "p">
+<!ENTITY deleteButton.label "Smazat">
+<!ENTITY deleteButton.accesskey "m">
+<!ENTITY reorderTopButton "Přesunout nahoru">
+<!ENTITY reorderTopButton.accessKey "h">
+<!ENTITY reorderTopButton.toolTip "Přesune filtr tak, aby se spouštěl jako první">
+<!ENTITY reorderUpButton.label "Posunout výše">
+<!ENTITY reorderUpButton.accesskey "v">
+<!ENTITY reorderDownButton.label "Posunout níže">
+<!ENTITY reorderDownButton.accesskey "t">
+<!ENTITY reorderBottomButton "Přesunout dolů">
+<!ENTITY reorderBottomButton.accessKey "d">
+<!ENTITY reorderBottomButton.toolTip "Přesune filtr tak, aby se spouštěl jako poslední">
+<!ENTITY filterHeader.label "Aktivní filtry jsou automaticky prováděny v níže uvedeném pořadí.">
+<!ENTITY filtersForPrefix.label "Filtr pro:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Protokol filtrů">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Spustit teď">
+<!ENTITY runFilters.accesskey "S">
+<!ENTITY stopFilters.label "Zastavit">
+<!ENTITY stopFilters.accesskey "Z">
+<!ENTITY folderPickerPrefix.label "Ručně spustit vybraný filtr na složce:">
+<!ENTITY folderPickerPrefix.accesskey "R">
+<!ENTITY helpButton.label "Nápověda">
+<!ENTITY helpButton.accesskey "v">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Hledat filtry podle názvu…">

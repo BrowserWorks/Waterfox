@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Définition de rappels">
+<!ENTITY reminder.add.label                                "Ajouter">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Retirer">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "Détails du rappel">
+<!ENTITY reminder.action.label                             "Choisir une action de rappel">
+
+<!ENTITY reminder.action.alert.label                       "Afficher une alerte">
+<!ENTITY reminder.action.email.label                       "Envoyer un courrier électronique">
+
+<!ENTITY alarm.units.minutes                               "minutes" >
+<!ENTITY alarm.units.hours                                 "heures" >
+<!ENTITY alarm.units.days                                  "jours" >

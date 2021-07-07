@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Γραμμή εργαλείων ημερολογίου">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "η">
+<!ENTITY lightning.toolbar.task.name "Γραμμή εργαλείων εργασιών">
+<!ENTITY lightning.toolbar.task.name.accesskey "ε">
+
+<!ENTITY lightning.toolbar.sync.label "Συγχρονισμός">
+<!ENTITY lightning.toolbar.sync.tooltip "Ανανέωση ημερολογίων και συγχρονισμός αλλαγών">
+<!ENTITY lightning.toolbar.delete.label "Διαγραφή">
+<!ENTITY lightning.toolbar.delete.tooltip "Διαγραφή επιλεγμένων εκδηλώσεων ή εργασιών">
+<!ENTITY lightning.toolbar.edit.label "Επεξεργασία">
+<!ENTITY lightning.toolbar.edit.tooltip "Επεξεργασία επιλεγμένης εκδήλωσης ή εργασίας">
+<!ENTITY lightning.toolbar.gototoday.label "Μετάβαση στο σήμερα">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Μετάβαση στο σήμερα">
+<!ENTITY lightning.toolbar.print.label "Εκτύπωση">
+<!ENTITY lightning.toolbar.print.tooltip "Εκτύπωση εκδηλώσεων ή εργασιών">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Ημερολόγιο">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Μετάβαση στην καρτέλα ημερολογίου">
+<!ENTITY lightning.toolbar.calendar.accesskey "η">
+<!ENTITY lightning.toolbar.task.label         "Εργασίες">
+<!ENTITY lightning.toolbar.task.tooltip       "Μετάβαση στην καρτέλα εργασιών">
+<!ENTITY lightning.toolbar.task.accesskey     "ε">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Εκδήλωση">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Δημιουργία νέας εκδήλωσης">
+<!ENTITY lightning.toolbar.newtask.label      "Εργασία">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Δημιουργία νέας εργασίας">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Ημέρα">
+<!ENTITY lightning.toolbar.day.accesskey             "Η">
+<!ENTITY lightning.toolbar.week.label                "Εβδομάδα">
+<!ENTITY lightning.toolbar.week.accesskey            "Ε">
+<!ENTITY lightning.toolbar.multiweek.label           "Πολλές εβδομάδες">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "Π">
+<!ENTITY lightning.toolbar.month.label               "Μήνας">
+<!ENTITY lightning.toolbar.month.accesskey           "Μ">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Εμφάνιση του μενού του &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Παράθυρο ημερολογίου">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "θ">
+<!ENTITY lightning.toolbar.calendarpane.label        "Εμφάνιση παραθύρου ημερολογίου">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "η">

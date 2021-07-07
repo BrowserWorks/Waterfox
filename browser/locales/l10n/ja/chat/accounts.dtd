@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title				"アカウント - &brandShortName;">
+<!ENTITY accountManager.width			"450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title			"インスタントメッセージの状態">
+<!ENTITY accountsWindow2.style			"width: 41em; height: 27em;"><!-- en-US: "width: 41em; height: 27em;" -->
+
+<!ENTITY accountManager.newAccount.label	"新しいアカウント">
+<!ENTITY accountManager.newAccount.accesskey	"N">
+<!ENTITY accountManager.close.label		"閉じる">
+<!ENTITY accountManager.close.accesskey		"l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey	"a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title		"アカウントが設定されていません">
+<!ENTITY accountManager.noAccount.description	"[&accountManager.newAccount.label;] ボタンをクリックし、&brandShortName; に従ってアカウントを設定してください。">
+<!ENTITY account.autoSignOn.label		"起動時に自動ログインする">
+<!ENTITY account.autoSignOn.accesskey		"S">
+<!ENTITY account.connect.label			"接続">
+<!ENTITY account.connect.accesskey		"o">
+<!ENTITY account.disconnect.label		"切断">
+<!ENTITY account.disconnect.accesskey		 "i">
+<!ENTITY account.delete.label			"削除">
+<!ENTITY account.delete.accesskey		"D">
+<!ENTITY account.edit.label			"プロパティ">
+<!ENTITY account.edit.accesskey			"P">
+<!ENTITY account.moveup.label			"上へ移動">
+<!ENTITY account.movedown.label			"下へ移動">
+<!ENTITY account.cancelReconnection.label	"再接続をキャンセル">
+<!ENTITY account.cancelReconnection.accesskey	"A">
+<!ENTITY account.copyDebugLog.label		"デバッグログをコピー">
+<!ENTITY account.copyDebugLog.accesskey		"C">
+<!ENTITY account.showDebugLog.label		"デバッグログを表示">
+<!ENTITY account.showDebugLog.accesskey		"H">
+<!ENTITY account.connecting			"接続中...">
+<!ENTITY account.disconnecting			"切断中...">
+<!ENTITY account.disconnected			"未接続">

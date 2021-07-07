@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "鍵盤瀏覽">
+<!ENTITY tabNavigationBehavior.label "TAB 鍵瀏覽">
+<!ENTITY tabNavigationLinks.label "鏈結">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "按鈕、選擇鈕、及列表等等">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "注意:文字方塊永遠都在 TAB 選取範圍內。">
+<!ENTITY tabNavigationDesc.label "按下 Tab 或 Shift+Tab 時在此範圍中移動:">
+<!ENTITY accessibilityBrowseWithCaret.label "鍵盤瀏覽">
+<!ENTITY browseWithCaretDesc.label "鍵盤瀏覽功能可以在網頁上顯示游標，讓您只用鍵盤就能選取文字或瀏覽網頁。">
+<!ENTITY browseWithCaretUse.label "使用鍵盤瀏覽">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "請按 F7 鍵切換是否打開鍵盤瀏覽功能。">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "開啟鍵盤瀏覽前警告我">
+<!ENTITY browseWithCaretWarn.accesskey "W">
+
+<!ENTITY modifiers.label "快捷鍵">
+<!ENTITY acceleratorKey.label "加速鍵:">
+<!ENTITY acceleratorKey.accesskey "A">
+<!ENTITY menuAccessKey.label "選單快捷鍵:">
+<!ENTITY menuAccessKey.accesskey "M">
+<!ENTITY modifiersDesc.label "註: 值為 0 的時候就會停用快捷鍵。">

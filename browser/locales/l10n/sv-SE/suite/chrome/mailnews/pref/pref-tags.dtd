@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Etiketter">
+<!ENTITY pref.tags.caption          "Anpassa etiketter">
+<!ENTITY pref.tags.description      "Etiketter kan användas för att kategorisera och sortera dina meddelanden. Med inställningarna nedan kan du redigera betydelsen och utseendet på etiketten. Etiketter upptill är viktigare än de längre ned.">
+<!ENTITY tagColumn.label            "Etikett">
+<!ENTITY colorColumn.label          "Färg">
+<!ENTITY defaultTagName.label       "Namnlös etikett">
+<!ENTITY addTagButton.label         "Lägg till">
+<!ENTITY addTagButton.accesskey     "g">
+<!ENTITY deleteTagButton.label      "Ta bort">
+<!ENTITY deleteTagButton.accesskey  "T">
+<!ENTITY raiseTagButton.label       "Högre prioritet">
+<!ENTITY raiseTagButton.accesskey   "ö">
+<!ENTITY lowerTagButton.label       "Lägre prioritet">
+<!ENTITY lowerTagButton.accesskey   "L">
+<!ENTITY restoreButton.label        "Återställ förinställda värden">
+<!ENTITY restoreButton.accesskey    "Å">
+

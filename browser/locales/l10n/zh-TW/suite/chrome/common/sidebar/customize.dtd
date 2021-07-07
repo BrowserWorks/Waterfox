@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "自訂 &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "&sidebarName; 目前有的面板:">
+<!ENTITY sidebar.customize.current.accesskey    "T">
+
+<!ENTITY sidebar.customize.title                "自訂側邊欄">
+<!ENTITY sidebar.customize.current2.label       "側邊欄中的分頁:">
+<!ENTITY sidebar.customize.current2.accesskey   "T">
+<!ENTITY sidebar.customize.customize.label      "自訂面板…">
+<!ENTITY sidebar.customize.customize.accesskey  "C">
+<!ENTITY sidebar.customize.remove.label         "移除">
+<!ENTITY sidebar.customize.remove.accesskey     "R">
+<!ENTITY sidebar.customize.additional.label     "可用面板:">
+<!ENTITY sidebar.customize.additional.accesskey "v">
+<!ENTITY sidebar.customize.add.label            "新增">
+<!ENTITY sidebar.customize.add.accesskey        "A">
+<!ENTITY sidebar.customize.preview.label        "預覽…">
+<!ENTITY sidebar.customize.preview.accesskey    "P">
+<!ENTITY sidebar.customize.up.label             "上移">
+<!ENTITY sidebar.customize.up.accesskey         "U">
+<!ENTITY sidebar.customize.down.label           "下移">
+<!ENTITY sidebar.customize.down.accesskey       "D">
+<!ENTITY sidebar.more.label                     "更多面板…">
+<!ENTITY sidebar.more.accesskey                 "F">

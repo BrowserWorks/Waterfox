@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Ihr &syncBrand.fullName.label;-Schlüssel">
+<!ENTITY syncKey.page.description         "Dieser Schlüssel wird verwendet, um die Daten in Ihrem &syncBrand.fullName.label;-Account zu dekodieren. Sie benötigen diesen Schlüssel jedes Mal, wenn Sie &syncBrand.fullName.label; auf einem neuen Computer oder Gerät einrichten.">
+<!ENTITY syncKey.keepItSecret.heading     "Halten Sie ihn geheim">
+<!ENTITY syncKey.keepItSecret.description "Ihr &syncBrand.fullName.label;-Account ist verschlüsselt, um Ihre Privatsphäre zu wahren. Ohne diesen Schlüssel würde es Jahre dauern, Ihre persönlichen Daten zu entschlüsseln. Sie sind die einzige Person, die diesen Schlüssel kennt. Das bedeutet, Sie sind die einzige Person, die auf Ihre &syncBrand.fullName.label;-Daten zugreifen kann. ">
+<!ENTITY syncKey.keepItSafe.heading       "Bewahren Sie ihn gut auf">
+<!ENTITY syncKey.keepItSafe1.description  "Verlieren Sie diesen Schlüssel nicht.">
+<!ENTITY syncKey.keepItSafe2.description  " Wir bewahren keine Kopie Ihres Schlüssels auf (das wäre nicht sicher). ">
+<!ENTITY syncKey.keepItSafe3.description  "Wir können Ihnen also nicht dabei helfen, ihn wieder zu finden,">
+<!ENTITY syncKey.keepItSafe4.description  " wenn Sie ihn verloren haben. Sie benötigen diesen Schlüssel jedes Mal, wenn Sie &syncBrand.fullName.label; auf einem neuen Computer oder Gerät einrichten.">
+<!ENTITY syncKey.findOutMore1.label       "Lernen Sie mehr über &syncBrand.fullName.label; und Ihre Privatsphäre unter ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Die Nutzungsbedingungen für &syncBrand.fullName.label; sind verfügbar unter ">
+<!ENTITY syncKey.footer2.label            ". Die Datenschutzrichtlinie ist verfügbar unter ">
+<!ENTITY syncKey.footer3.label            ".">

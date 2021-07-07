@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Eigenskapar">
+
+<!ENTITY generalInfo.label                       "Generell informasjon">
+<!ENTITY folderCharsetFallback2.label            "Reserve-teiknkoding:">
+<!ENTITY folderCharsetFallback2.accesskey        "e">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparer mappe">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+
+<!ENTITY retentionUseAccount.label "Bruk innstillingane frå kontoen min">
+<!ENTITY retentionUseAccount.accesskey "B">
+<!ENTITY daysOld.label "dager gammal">
+<!ENTITY message.label "meldingane">
+
+
+
+<!ENTITY offlineNewsgroup.button.label           "Last ned no">
+
+<!ENTITY folderProps.name.label                  "Namn:">
+<!ENTITY folderProps.name.accesskey              "N">
+
+<!ENTITY folderSharingTab.label                  "Deling">
+<!ENTITY privileges.button.label                 "Løyve…">
+<!ENTITY privileges.button.accesskey             "L">
+<!ENTITY permissionsDesc.label                   "Du har følgjande løyve:">
+<!ENTITY folderType.label                        "Mappetype:">
+
+<!ENTITY folderQuotaTab.label                    "Kvote">
+<!ENTITY folderQuotaRoot.label                   "Kvoterot:">
+<!ENTITY folderQuotaUsage.label                  "Bruk:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Tal på meldingar:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "ukjend">
+<!ENTITY sizeOnDisk.label                        "Størleik på disk:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "ukjend">

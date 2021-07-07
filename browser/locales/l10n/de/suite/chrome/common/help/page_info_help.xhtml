@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Seiteninformationen anzeigen</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+</head>
+<body>
+
+<h1 id="viewing_page_info">Seiteninformationen anzeigen</h1>
+
+<p>Die Seiteninformationsdialogbox besteht aus mehreren Kategorien (Tabs) die
+verschiedene Informationen &#252;ber die zur Zeit besuchte Webseite anzeigen. Diese
+Abschnitte zeigen einen &#220;berblick &#252;ber die einzelnen Kategorien und deren
+Informationen.</p>
+
+<p>Um sich die Seiteninformationen &#252;ber die aktuelle Webseite anzeigen zu lassen,
+&#246;ffnen Sie das Men&#252; <q>Ansicht</q> und klicken dort auf
+<q>Seiteninformationen</q>. Dort k&#246;nnen Sie dann die entsprechende
+Kategorie f&#252;r die ben&#246;tigten Informationen ausw&#228;hlen.</p>
+
+<p>Die meisten Informationen die Sie unter den Kategorien Allgemein, Formulare,
+Links und Medien finden, werden aus dem Quelltext der HTML-Seite geholt. Diese
+Informationen sind normalerweise nur w&#252;r Webdesigner und andere Spezialsisten
+notwendig.</p>
+
+<p>F&#252;r detailiertere Informationen &#252;ber HTML, inklusive der angezeigten Tags
+in den Seiteninformationen lesen Sie
+<a href="http://www.edition-w3.de/TR/1999/REC-html401-19991224/">HTML 4.01 Spezifikationen</a>.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+<ul>
+  <li><a href="#general_tab">Allgemein-Tab</a></li>
+  <li><a href="#forms_tab">Formulare-Tab</a></li>
+  <li><a href="#links_tab">Links-Tab</a></li>
+  <li><a href="#media_tab">Medien-Tab</a></li>
+  <li><a href="#privacy_tab">Datenschutz-Tab</a></li>
+  <li><a href="#security_tab">Sicherheits-Tab</a></li>
+</ul>
+</div>
+
+<h2 id="general_tab">Allgemein (Seiteninformations Tab)</h2>
+
+<p>Wenn Sie die Seiteninformationen aus dem Ansichts-Men&#252; aufrufen, sehen
+Sie zuerst das Allgemein-Tab, welches grundlegende Informationen zur gerade
+angezeigten Webseite darstellt.</p>
+
+<p>Oben sehen Sie den Namen der Webseite (falls es einen gibt) und die folgenden
+Informationen</p>
+
+<ul>
+  <li><strong>URL</strong>: Der
+      <a href="glossary.xhtml#url">Uniform Resource Locator</a>
+	  dieser Webseite. Dies ist die standardisierte Adresse, die Sie auch in der
+	  Adresszeile des Browsersfensters sehen k&#246;nnen.</li>
+  <li><strong>Anzeigemodus</strong>: Zeigt an ob der Browser den
+      <strong>Kompatibilit&#228;tsmodus (Quirks)</strong> oder den
+	  <strong>Standardkonformen Modus</strong> zum Darstellen der Webseite benutzt.
+	  Der Quirks-Modus ist zur Darstellung von nicht standardisierten Webseiten
+	  (zB: Webseiten die schon &#228;lter sind und sich an &#228;ltere Browser
+	  richten). Der Standardkonforme Modus h&#228;lt sich hingegen an die
+	  striken Spezifikationen. Mozilla verwendet je nach Quelltext den richtigen
+	  Render-Modus.</li>
+  <li><strong>Quelle</strong>: Hier sieht man ob die Webseite aus dem Cache oder
+      nicht abgerufen wird.</li>
+  <li><strong>Kodierung</strong>: Gibt den verwendeten Zeichensatz f&#252;r dieses
+      HTML-Dokument an.</li>
+  <li><strong>Gr&#246;&#223;e</strong>: Zeigt, falls verf&#252;gbar, die
+      Gr&#246;&#223;e der Datei an.</li>
+  <li><strong>Modifiziert</strong>: Zeigt das letzte &#196;nderungsdatum an
+      (falls verf&#252;gbar).</li>
+  <li><strong>L&#228;uft ab</strong>: Das Datum an dem die Information auf dieser
+      Webseite ab l&#228;uft wird.</li>
+</ul>
+
+<p>Der untere Abschnitt zeigt die verwendeten Metatags der Webseite an. Metatags
+geben Auskunft &#252;ber die Art des Inhalts dieser Webseite. Dabei handelt es
+sich um Informationen wie eine generelle Beschreibung zur Webseite,
+Schl&#252;sselw&#246;rter f&#252;r Suchmaschinen, Copyright Information usw.</p>
+
+<h2 id="forms_tab">Formulare (Seiteninformations Tab)</h2>
+
+<p>Wenn Sie die Seiteninformationen aus dem Ansichts-Men&#252; aufrufen und auf
+das Formulare-Tab klicken, sehen Sie Informationen &#252;ber die verwendeten
+Formulare auf dieser Webseite.</p>
+
+<p>Im oberen Teil sehen Sie grundlegende Informationen &#252;ber die Art wie
+jedes Formular in den HTML-Quelltext integriert wurde.</p>
+
+<ul>
+  <li><strong>Name</strong>: Falls vorhanden der Formularname.</li>
+  <li><strong>Methode</strong>: Die benutze HTML-Methode, wie die Informationen
+      des Formulars an den Webserver &#252;bermittelt werden. <tt>GET</tt>
+	  h&#228;ngt die eingebenen Daten des Formulars an die zu schickende Adresse.
+	  <tt>POST</tt> schickt die Daten als Parameter an eine Webseite, wo Sie
+	  von einem Programm weiter verarbeitet werden k&#246;nnen.</li>
+  <li><strong>Aktion</strong>: Die URL des Programms, welches durch das Formular
+      angesteuert wird.</li>
+</ul>
+
+<p>Wenn Sie eines der aufgelisteten Formulare des oberen Teils ausw&#228;hlen,
+werden in der unteren H&#228;lfte genauere Informationen &#252;ber die einzelnen
+verwendeteten Formularelemente angezeigt:</p>
+
+<ul>
+  <li><strong>Beschreibung</strong>: Die Beschreibung (falls angegeben) des
+      Elements.</li>
+  <li><strong>Feldname</strong>: Der Name des Elements.</li>
+  <li><strong>Typ</strong>: Der Eingabetyps des Elements, wie <tt>TEXT</tt>
+      (f&#252;r Text), <tt>RADIO</tt> (f&#252;r einen Radio-Button) oder
+      <tt>HIDDEN</tt> (f&#252;r gespeicherte Information die zwar &#252;bermittelt
+	  aber nicht am Bildschirm angezeigt wird).</li>
+  <li><strong>Aktueller Wert</strong>: Der aktuelle Wert des Elements. Zum
+      Beispiel ist der aktuelle Wert eines Text-Elements der Text den es derzeit
+	  enth&#228;lt.</li>
+</ul>
+
+<h2 id="links_tab">Links (Seiteninformations Tab)</h2>
+
+<p>Wenn Sie die Seiteninformationen aus dem Ansichts-Men&#252; aufrufen und auf
+das Links-Tab klicken, sehen Sie eine Liste aller Links auf dieser Webseite. Die
+folgenden Informationen werden f&#252;r jeden Link angezeigt:</p>
+
+<ul>
+  <li><strong>Name</strong>: Der Text der im Browser als Link erscheint.</li>
+  <li><strong>Addresse</strong>: Die
+      <a href="glossary.xhtml#url">URL</a> der Webseite, auf
+	  die der Link verweist.</li>
+  <li><strong>Typ</strong>: Die Art des Links, wie Anker (f&#252;r einen Link zu
+      einer speziellen Stelle in einem HTML-Dokument) oder Formular absenden.</li>
+</ul>
+
+<h2 id="media_tab">Medien (Seiteninformations Tab)</h2>
+
+<p>Wenn Sie die Seiteninformationen aus dem Ansichts-Men&#252; aufrufen und auf
+das Medien-Tab klicken, sehen Sie eine Liste aller Grafiken und anderer
+Medienelemente dieser Webseite.</p>
+
+<p>Der obere Teil listet die Adresse
+(<a href="glossary.xhtml#url">URL</a>) und den Typ jedes
+Elements auf.</p>
+
+<p>Wenn Sie nun ein Medienelement aus dem oberen Teil markieren, sehen Sie im
+unteren Abschnitt verf&#252;gbare Informationen wie Beschreibung, Gr&#246;&#223;e oder
+Dimensionen dieses Elements.</p>
+
+<p>Au&#223;erdem sehen Sie das ausgew&#228;hlte Element am unteren Ende der Dialogbox.
+Um gr&#246;&#223;ere Bilder anschauen zu k&#246;nnen, k&#246;nnen Sie das
+Seiteninformationsfenster durch klicken in der rechten unteren Ecke
+vergr&#246;&#223;ern (klicken und ziehen).</p>
+
+<p>Um ein Medienelement als seperate Datei zu speichern:</p>
+
+<ul>
+  <li><strong>Speichern unter...</strong>: W&#228;hlen Sie das Element das sie
+      speichern wollen und klicken Sie auf <q>Speichern unter...</q> und
+	  w&#228;hlen Sie das Verzeichnis in dem Sie die Datei speichern wollen.</li>
+</ul>
+
+<h2 id="privacy_tab">Datenschutz (Seiteninformations Tab)</h2>                               
+
+<p>Wenn Sie sich die Seiteninformationen ansehn, klicken Sie auf <q>Datenschutz</q> um eine 
+  Liste von Elementen zu sehen, welche Teil der Webseite sind.</p>         
+
+<ul>                                                                            
+  <li><strong>Seitenkomponenten</strong>: Unter der Adresse der Webseite sind einige Kategorien. 
+    Um eine Liste der Kategorien zu sehen, doppelklicken Sie auf dessen Name:
+    <ul>                                                                        
+      <li><strong>Links</strong>: Zeigt alle Links.</li>                  
+      <li><strong>Java-Applets</strong>: Zeige eine Liste der Java-Applets (sofern es welche gibt).</li>  
+      <li><strong>Image-Maps</strong>: Zeige die gesamten Image-Maps.</li>        
+      <li><strong>Formulareingaben</strong>: Zeige eine Liste der Scripts welche von der Seite genutzt werden
+        um Daten anzufordern.</li>                                      
+      <li><strong>Frames</strong>: Zeige die Frames auf der Webseite.</li>
+      <li><strong>Grafiken</strong>: Zeige alle Grafiken, welche auf der Webseite benutzt wurden.</li>                                                              
+      <li><strong>Extern geladene Dokumente</strong>: Zeigt eine Liste der externen Dokumente, welche zur Anzeige
+        der Seite geladen sind (wie zum Beispiel CSS-Dateien oder Grafiken).</li>                                                           
+      <li><strong>Generische Objekte</strong>: Zeigt eine Liste der generischen Objeckte.</li>                                                           
+      <li><strong>Skripte</strong>: Zeigt eine Liste aller Scripte auf der Webseite.</li>  
+    </ul>                                                                       
+  </li>                                                                         
+  <li><strong>Richtlinien</strong>: Diese Schaltfl&#228;che versucht, die Datenschutz-Richtliniendatei der Webseite
+    zu &#246;ffnen.</li>                                
+  <li><strong>Zusammenfassung</strong>: W&#228;hlen Sie diese Schaltfl&#228;che um eine Zusammenfassung
+    der Datenschutz-Richtlinien der aktuellen Site zu erhalten.</li>                                                      
+  <li><strong>Optionen</strong>: Beim Klick auf diese Schaltfl&#228;che wird versucht, ein Fenster zu &#246;ffnen, in welchem Sie
+    Ihre pers&#246;nlichen Daten welche auf der Webseite gespeichert sind, in welchem Sie diese &#228;ndern k&#246;nnen.</li>                                                           
+</ul>                                                                           
+
+<h2 id="security_tab">Sicherheit (Seiteninformations Tab)</h2>
+
+<p>Wenn Sie die Seiteninformationen aus dem Ansichts-Men&#252; aufrufen und auf
+das Sicherheits-Tab klicken, sehen Sie Informationen &#252;ber die
+<a href="glossary.xhtml#authentication">Authentifikation</a> und
+<a href="glossary.xhtml#encryption">Verschl&#252;sselung</a> dieser Webseite.
+Der obere Teil zeigt ob die Identit&#228;t der Webseite verifiziert wurde,
+w&#228;hrend der untere Teil angibt ob die Webseite verschl&#252;sselt war, als Sie
+der Browser erhielt.</p>
+
+<p>Sie k&#246;nnen das Sicherheits-Tab auch direkt &#246;ffnen, indem Sie
+auf das Schlo&#223;-Symbol in der rechten unteren Ecke Ihres Browsers klicken.</p>
+
+<p>Der obere Teil des Sicherheits-Tabs kann folgendes anzeigen:</p>
+
+<ul>
+  <li><strong>Website-Identit&#228;t nicht verifiziert</strong>_ Die Webseite
+      die Sie zur Zeit besuchen, besitzt kein Zertifikat um sich selbst zu
+      authentifizieren. Deswegen kann der Zertifikat-Manager die Identit&#228;t
+      dieser Webseite nicht verifizieren. Es ist m&#246;glich, obwohl
+	  unwahrscheinlich, dass diese Webseite nicht das ist was sie zu seien scheint.</li>
+  <li><strong>Website-Identit&#228;t verifiziert</strong>: Das Zertifikat das der
+      Zertifikats-Manager f&#252;r die Identit&#228;t dieser Webseite verwendet hat,
+	  wurde von einer Zertifizierungsstelle (CA) best&#228;tigt. Sie k&#246;nnen
+	  sich sicher sein, dass diese Webseite das ist was sie vorgibt zu sein.</li>
+</ul>
+
+<p>Der untere Abschnitt des Sicherheits-Tabs kann eine der folgenden Meldungen
+anzeigen:</p>
+
+<ul>
+  <li><strong>Verbindung nicht verschl&#252;sselt</strong>: Es ist m&#246;glich
+      das andere Leute Zugriff auf die gesendeten und empfangenen Informationen
+	  zwischen Computer und Webseite erlangen k&#246;nnen (wenn auch unwahrscheinlich).</li>
+  <li><strong>Verbindung verschl&#252;sselt</strong>: Im allgemeinen basiert die
+      St&#228;rke der Verschl&#252;sselung auf die L&#228;nge des Schl&#252;sseln gemessen
+	  in Bit. Umso l&#228;nger der Schl&#252;ssel ist, umso st&#228;rker ist auch die
+	  Verschl&#252;sselung. Dies wiederum bedeutet, dass das Entschl&#252;sseln
+	  durch eine unauthorizierte Person immer schwieriger wird. 
+
+      <p>Im Sicherheits-Tab wird die Verschl&#252;ssungsst&#228;rke auf drei
+	  Arten angegeben:</p>
+
+      <ul>
+        <li><strong>hochgradige Verschl&#252;sselung</strong>: St&#228;rkste
+		    verf&#252;gbare Verschl&#252;sselung mit 128-bit Schl&#252;sseln als
+			Minimum.</li>
+        <li><strong>mittelgradige Verschl&#252;sselung</strong>: Um einiges
+		    st&#228;rker als eine niedrigere Verschl&#252;sselung. Hierbei werden
+			Schl&#252;ssell&#228;ngen von 56- oder 64-Bit verwendet.</li>
+        <li><strong>niedrige Verschl&#252;sselung</strong>: Schw&#228;chste
+		    verf&#252;gbare Verschl&#252;sselung mit 40-Bit Schl&#252;sseln.</li>
+      </ul>
+
+  <p>Viele Webseiten unterst&#252;tzen eine hochgradige Verschl&#252;sselung.
+  Wenn sie auf Seiten mit einer schw&#228;cheren Verschl&#252;sselung sind, ist es
+  m&#246;glich die gesendeten und empfangenen Infomrationen abzuh&#246;ren.
+  Allerdings ist es sehr unwahrscheinlich.</p></li>
+</ul>
+
+<p>Das nicht vorhanden sein einer Verschls&#252;&#252;elung oder einer hochgradigen
+Verschl&#252;sselung, sollte Ihnen bei vertraulichen Daten wie
+Kreditkartennummern zu denken geben.</p>
+
+<p>Sie k&#246;nnen schnell den Verschl&#252;sselungsstatus einer Webseite anhand
+des Schlo&#223;-Symbols in der rechten unteren Ecke des Browsers kontrollieren.
+F&#252;r mehr Informationen lesen Sie bitte
+<a href="using_certs_help.xhtml#checking_security_for_a_web_page">Sicherheit einer Webseite kontrollieren</a>.</p>
+
+<!-- &#220;bersetzung auf v1.13 von Michael Stadlbauer (mozilla.mista.at) 2004-10-28 -->
+
+</body>
+</html>

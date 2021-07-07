@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label	"文字や記号を挿入">
+<!ENTITY category.label		"文字種別">
+<!ENTITY letter.label		"英字:">
+<!ENTITY letter.accessKey	"L">
+<!ENTITY character.label	"文字:">
+<!ENTITY character.accessKey	"C">
+<!ENTITY accentUpper.label	"アクセント付き大文字">
+<!ENTITY accentLower.label	"アクセント付き小文字">
+<!ENTITY otherUpper.label	"その他の大文字">
+<!ENTITY otherLower.label	"その他の小文字">
+<!ENTITY commonSymbols.label	"一般記号">
+<!ENTITY insertButton.label	"挿入">
+<!ENTITY closeButton.label	"閉じる">

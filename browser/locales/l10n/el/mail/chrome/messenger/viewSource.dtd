@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Kώδικας του: ">
+
+<!ENTITY editMenu.label "Επεξεργασία">
+<!ENTITY editMenu.accesskey "Ε">
+<!ENTITY fileMenu.label "Αρχείο">
+<!ENTITY fileMenu.accesskey "Α">
+<!ENTITY savePageCmd.label "Αποθήκευση σελίδας ως…">
+<!ENTITY savePageCmd.accesskey "Α">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Διαμόρφωση σελίδας…">
+<!ENTITY pageSetupCmd.accesskey "δ">
+<!ENTITY printPreviewCmd.label "Προεπισκόπηση εκτύπωσης">
+<!ENTITY printPreviewCmd.accesskey "π">
+<!ENTITY printCmd.label "Εκτύπωση…">
+<!ENTITY printCmd.accesskey "Ε">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Κλείσιμο">
+<!ENTITY closeCmd.accesskey "Κ">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Μετάβαση στη γραμμή…">
+<!ENTITY goToLineCmd.accesskey "Μ">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Προβολή">
+<!ENTITY viewMenu.accesskey       "Π">
+<!ENTITY reloadCmd.label "Ανανέωση">
+<!ENTITY reloadCmd.accesskey "Α">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Αναδίπλωση μεγάλων γραμμών">
+<!ENTITY menu_wrapLongLines.accesskey "γ">
+<!ENTITY menu_highlightSyntax.label "Επισήμανση σύνταξης">
+<!ENTITY menu_highlightSyntax.accesskey "Ε">
+<!ENTITY menu_textSize.label "Μέγεθος κειμένου">
+<!ENTITY menu_textSize.accesskey "θ">
+<!ENTITY menu_textEnlarge.label "Αύξηση">
+<!ENTITY menu_textEnlarge.accesskey "Α">
+<!ENTITY menu_textReduce.label "Μείωση">
+<!ENTITY menu_textReduce.accesskey "Μ">
+<!ENTITY menu_textReset.label "Κανονικό">
+<!ENTITY menu_textReset.accesskey "ο">
+
+<!ENTITY findOnCmd.label     "Εύρεση στη σελίδα…">
+<!ENTITY findOnCmd.accesskey "σ">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Εύρεση ξανά">
+<!ENTITY findAgainCmd.accesskey "ξ">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Πίσω">
+<!ENTITY backCmd.accesskey "Π">
+<!ENTITY forwardCmd.label "Εμπρός">
+<!ENTITY forwardCmd.accesskey "Ε">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Αντιγραφή τοποθεσίας συνδέσμου">
+<!ENTITY copyLinkCmd.accesskey "φ">
+<!ENTITY copyEmailCmd.label "Αντιγραφή διεύθυνσης email">
+<!ENTITY copyEmailCmd.accesskey "e">

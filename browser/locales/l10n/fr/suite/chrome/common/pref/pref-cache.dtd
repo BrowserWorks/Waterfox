@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Cache">
+<!ENTITY pref.cache.caption              "Définition des options du cache">
+<!ENTITY cachePara                       "Le cache garde sur votre disque dur une copie des pages web fréquemment visitées (en cliquant sur « Recharger », la page affichée sera toujours la dernière version).">
+<!ENTITY cacheCheck.label                "Permettre à &brandShortName; de gérer la taille du cache.">
+<!ENTITY cacheCheck.accesskey            "P">
+<!ENTITY diskCacheUpTo.label             "Utiliser jusqu’à">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "Mo d’espace disque pour le cache.">
+<!ENTITY diskCacheFolder.label           "Répertoire du cache :">
+<!ENTITY clearDiskCache.label            "Vider le cache">
+<!ENTITY clearDiskCache.accesskey        "V">
+<!ENTITY chooseDiskCacheFolder.label     "Choisir un répertoire…">
+<!ENTITY chooseDiskCacheFolder.accesskey "h">
+<!ENTITY diskCacheFolderExplanation      "Les fichiers du cache seront stockés dans un sous-répertoire nommé « Cache » dans le répertoire que vous spécifierez. Redémarrez &brandShortName; pour que les changements soient pris en compte.">
+<!ENTITY docCache.label                  "Comparer la page dans le cache avec la page sur le réseau :">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Une fois par session">
+<!ENTITY checkEveryTime.label            "À chaque visite de la page">
+<!ENTITY checkNever.label                "Jamais">
+<!ENTITY checkAutomatically.label        "Lorsque la page a expiré">
+
+<!ENTITY prefetchTitle.label             "Préchargement des liens">
+<!ENTITY enablePrefetch.label            "Précharger les pages web pendant les pauses du navigateur afin que les liens des pages utilisant cette fonction soient affichés plus rapidement.">
+<!ENTITY enablePrefetch.accesskey        "P">
+
+<!ENTITY debugCache.label                "Débogage">
+<!ENTITY debugEnableMemCache.label       "Activer le cache mémoire">
+<!ENTITY debugEnableMemCache.accesskey   "e">
+<!ENTITY debugEnableDiskCache.label      "Activer le cache de disque">
+<!ENTITY debugEnableDiskCache.accesskey  "d">

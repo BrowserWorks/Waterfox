@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Profileringsværktøjet gemmer prøver i en cirkulær buffer. Derfor overskriver nyere prøver ældre prøver ved begyndelsen af optagelsen, så snart bufferen når grænsen for en optagelse.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Aktiver multiproces Firefox i Indstilinger for at kunne optage data i realtid.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Bufferen er fuld. Ældre prøver bliver nu overskrevet.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Det er i øjeblikket ikke muligt at optage en profil. Luk alle private vinduer og prøv igen.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the call list view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Indlæser…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Tidslinje">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Vis de forskellige operationer, browseren foretager undervejs i optagelsen, som lineær rækkefølge.">
+<!ENTITY performanceUI.toolbar.js-calltree "JavaScript">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Fremhæv de JavaScript-funktioner, hvor browseren brugte mest tid under optagelsen.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Allokationer">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Vis, hvor hukommelsen blev allokeret under optagelsen.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS Flame Chart">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Vis JavaScript-Callstack i løbet af optagelsen.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Allokations-Flame Chart">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration   "Samlet tid">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Mængde af tid tilbragt i denne funktion og de funktioner, den kalder.">
+<!ENTITY performanceUI.table.selfDuration    "Egen tid">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Mængde af tid tilbragt udelukkende i denne funktion.">
+<!ENTITY performanceUI.table.totalPercentage "Total omkostning">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Procentdel tid tilbragt i denne funktion og de funktioner, den kalder.">
+<!ENTITY performanceUI.table.selfPercentage  "Egen omkostning">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Procentdel tid tilbragt udelukkende i denne funktion.">
+<!ENTITY performanceUI.table.samples         "Prøver">
+<!ENTITY performanceUI.table.samples.tooltip          "Antal gange denne funktion var på stakken, når ydelsesværktøjet udtog prøver.">
+<!ENTITY performanceUI.table.function        "Funktion">
+<!ENTITY performanceUI.table.function.tooltip         "Navn og kilde for den prøveudtagne funktion.">
+<!ENTITY performanceUI.table.totalAlloc       "Totale allokeringer">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Det totale antal objektallokeringer foretaget af denne fuktion, og funktioner den kalder.">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Vælg data til visning på tidslinjen">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.tooltiptext): This is the tooltip
+  -  for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Sæt ydelsesindstillinger">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the performanceUI's call tree. -->
+<!ENTITY performanceUI.invertTree             "Inverter kaldetræ">
+<!ENTITY performanceUI.invertTree.tooltiptext "Ved at invertere kaldetræet vises de profilerede funktionskald startende fra de yngste frames og foldes ud til ældre frames.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Inverter Flame Chart">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Ved at invertere flame chart'et vises de profilerede funktionskald startende fra de yngste frames og foldes ud til ældre frames.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Vis Gecko-platformsdata">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Ved at vise platformsdata kan Gecko-platformssymboler inkluderes i rapporter fra Profileringsværktøjet til JavaScript.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Vis JIT-optimeringer">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Vis JIT-optimerings-data udtaget i hver JavaScript-frame">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Udflad rekursion i træet">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Udflad rekursion når funktioner inspiceres.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Optag hukommmelse">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Optag hukommelsesforbrug under profilering.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Optag allokationer">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Optag object-allokationer under profilering.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Optag framerate">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Optag framerate under profilering.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Optager i øjeblikket via">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profilEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Stop optagelsen ved at indtaste">
+<!ENTITY performanceUI.console.stopCommandEnd   "i konsollen.">

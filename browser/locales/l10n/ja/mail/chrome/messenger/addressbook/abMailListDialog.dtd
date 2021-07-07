@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title	"新しいアドレスリスト">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label		"リストの追加先: ">
+<!ENTITY addToAddressBook.accesskey	"A">
+<!ENTITY ListName.label			"リストの名前:">
+<!ENTITY ListName.accesskey		"L">
+<!ENTITY ListNickName.label		"リストのニックネーム:">
+<!ENTITY ListNickName.accesskey		"N">
+<!ENTITY ListDescription.label		"説明:">
+<!ENTITY ListDescription.accesskey	"D">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label		"アドレスリストに追加するメールアドレスを入力してください:">
+<!ENTITY AddressTitle.accesskey		"m">
+<!ENTITY UpButton.label			"上へ">
+<!ENTITY DownButton.label		"下へ">

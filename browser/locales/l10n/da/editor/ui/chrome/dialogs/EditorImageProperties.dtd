@@ -1,0 +1,80 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Egenskaber for billede">
+
+<!ENTITY pixelsPopup.value "pixler">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Billedets placering:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "Skriv billedets navn eller adresse">
+<!ENTITY locationEditField.shortenedDataURI "Forkortet data-URI (ved kopiering vil den fulde URI blive kopieret)">
+<!ENTITY title.label "Titel">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "HTML-attributten &quot;title&quot; der vises som et værktøjstip">
+<!ENTITY altText.label "Alternativ tekst:">
+<!ENTITY altText.accessKey "e">
+<!ENTITY altTextEditField.tooltip "Skriv den tekst, der skal skrives på billedets plads">
+<!ENTITY noAltText.label "Brug ikke alternativ tekst">
+<!ENTITY noAltText.accessKey "B">
+
+<!ENTITY previewBox.label "Billedoplysninger">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Billedets egen størrelse:">
+<!ENTITY actualSizeRadio.label "Billedets egen størrelse">
+<!ENTITY actualSizeRadio.accessKey "d">
+<!ENTITY actualSizeRadio.tooltip "Brug billedets egen størrelse">
+<!ENTITY customSizeRadio.label "Indstil størrelse">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "Skift billedets størrelse, når det vises på siden">
+<!ENTITY heightEditField.label "Højde:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Bredde:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY constrainCheckbox.label "Bundet">
+<!ENTITY constrainCheckbox.accessKey "u">
+<!ENTITY constrainCheckbox.tooltip "Bevar billedets størrelsesforhold">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Aktive billedområder">
+<!ENTITY removeImageMapButton.label "Fjern">
+<!ENTITY removeImageMapButton.accessKey "R">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Juster teksten langs billedet">
+<!ENTITY bottomPopup.value "Forneden">
+<!ENTITY topPopup.value "Foroven">
+<!ENTITY centerPopup.value "I centrum">
+<!ENTITY wrapRightPopup.value "Ombryd til højre">
+<!ENTITY wrapLeftPopup.value "Ombryd til venstre">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Afstand">
+<!ENTITY leftRightEditField.label "Venstre og højre:">
+<!ENTITY leftRightEditField.accessKey "V">
+<!ENTITY topBottomEditField.label "Top og bund:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "Udfyldt ramme:">
+<!ENTITY borderEditField.accessKey "U">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Farvet kant rundt om billeder der er links">
+<!ENTITY showImageLinkBorder.accessKey "U">
+
+<!ENTITY LinkAdvancedEditButton.label "Avanceret linkredigering…">
+<!ENTITY LinkAdvancedEditButton.accessKey "l">
+<!ENTITY LinkAdvancedEditButton.tooltip "Tilføj eller rediger HTML-attributter, CSS-attributter og JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formular">
+<!ENTITY imageLocationTab.label "Placering">
+<!ENTITY imageDimensionsTab.label "Dimensioner">
+<!ENTITY imageAppearanceTab.label "Udseende">
+<!ENTITY imageLinkTab.label "Link">

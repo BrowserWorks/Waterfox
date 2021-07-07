@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Atsiuntimai">
+
+<!ENTITY downloadBehavior.label         "Prasidėjus siuntimui">
+<!ENTITY doNothing.label                "Nieko neatverti">
+<!ENTITY doNothing.accesskey            "N">
+<!ENTITY openProgressDialog.label       "Atverti eigos langą">
+<!ENTITY openProgressDialog.accesskey   "e">
+<!ENTITY openDM.label                   "Atverti atsiuntimo tvarkytuvę">
+<!ENTITY openDM.accesskey               "t">
+<!ENTITY flashWhenOpen.label            "Mirktelėti atsiuntimų tvarkytuvės langą, jei jis jau atvertas">
+<!ENTITY flashWhenOpen.accesskey        "M">
+
+<!ENTITY downloadLocation.label         "Įrašant failą">
+<!ENTITY saveTo.label                   "Atsiunčiamus failus įrašyti į">
+<!ENTITY saveTo.accesskey               "f">
+<!ENTITY chooseDownloadFolder.label     "Parinkti aplanką…">
+<!ENTITY chooseDownloadFolder.accesskey "r">
+<!ENTITY alwaysAsk.label                "Klausti, kur įrašyti kiekvieną atsiunčiamą failą">
+<!ENTITY alwaysAsk.accesskey            "K">
+
+<!ENTITY downloadHistory.label          "Parsiuntimų žurnalas">
+<!ENTITY removeEntries.label            "Šalinti įrašus apie parsiųstus failus">
+<!ENTITY removeEntries.accesskey        "Š">
+<!ENTITY whenCompleted.label            "užbaigus siuntimą">
+<!ENTITY whenQuittingApp.label          "baigiant „&brandShortName;“ darbą">
+<!ENTITY neverRemove.label              "nešalinti">
+
+<!ENTITY finishedBehavior.label         "Pasibaigus siuntimui">
+<!ENTITY playSound.label                "Groti garsą">
+<!ENTITY playSound.accesskey            "G">
+<!ENTITY showAlert.label                "Rodyti pranešimą">
+<!ENTITY showAlert.accesskey            "o">
+<!ENTITY browse.label                   "Parinkti…">
+<!ENTITY browse.accesskey               "r">
+<!ENTITY playButton.label               "Perklausyti">
+<!ENTITY playButton.accesskey           "k">

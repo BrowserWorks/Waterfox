@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "لتوفير مساحة القرص، لا تنزّل:">
+<!ENTITY doNotDownloadNntp.label "لتوفير مساحة القرص، لا تنزّل من أجل الاستخدام بلا اتصال:">
+<!ENTITY doNotDownloadImap.label "لتوفير مساحة القرص، يمكن أن يكون تنزيل الرسائل من الخادوم والاحتفاظ بنسخ محلية منها مقيّدًا بحجمها أو عمرها.">
+<!ENTITY allFoldersOffline2.label "احتفظ بالرسائل في كل مجلدات هذا الحساب على الحاسوب">
+<!ENTITY allFoldersOffline2.accesskey "ح">
+<!ENTITY allFoldersOfflineNote.label "ملاحظة: يؤثر هذا التغيير على كل مجلدات هذا الحساب. لضبط كل مجلد على حدة استخدم زر ”متقدم…“.">
+<!ENTITY offlineNotDownload.label "الرسائل الأكبر من">
+<!ENTITY offlineNotDownload.accesskey "ئ">
+<!ENTITY autosyncNotDownload.label "لا تنزل الرسائل الأكبر من">
+<!ENTITY autosyncNotDownload.accesskey "م">
+<!ENTITY kb.label "ك.بايت">
+<!ENTITY daysOld.label "أيّام">
+<!ENTITY message.label "الرسائل">
+<!ENTITY nntpNotDownloadRead.label "الرسائل المقروءة">
+<!ENTITY nntpNotDownloadRead.accesskey "ء">
+<!ENTITY nntpDownloadMsg.label "الرسائل أكثر من">
+<!ENTITY nntpDownloadMsg.accesskey "س">
+<!ENTITY retentionCleanup.label "لاستعادة مساحة القرص يمكن حذف الرسائل القديمة نهائيًّا.">
+<!ENTITY retentionCleanupImap.label "لاستعادة مساحة القرص، يمكن حذف الرسائل القديمة نهائيًا من جهازك ومن الخادوم البعيد.">
+<!ENTITY retentionCleanupPop.label "لاستعادة مساحة القرص، يمكن حذف الرسائل القديمة نهائيًا، ويشمل ذلك نسخها الأصلية في الخادوم البعيد.">
+<!ENTITY retentionKeepMsg.label "احذف الرسائل الأكثر من">
+<!ENTITY retentionKeepMsg.accesskey "ف">
+<!ENTITY retentionKeepAll.label "لا تحذف أيًّا من الرسائل">
+<!ENTITY retentionKeepAll.accesskey "ل">
+<!ENTITY retentionKeepRecent.label "احذف الكل ما عدا الأحدث">
+<!ENTITY retentionKeepRecent.accesskey "ث">
+<!ENTITY retentionApplyToFlagged.label "احتفظ دائمًا بالرسائل ذات النجمة">
+<!ENTITY retentionApplyToFlagged.accesskey "ج">
+<!ENTITY nntpRemoveMsgBody.label "أزِل المتون من الرسائل التي تزيد عن">
+<!ENTITY nntpRemoveMsgBody.accesskey "ت">
+<!ENTITY offlineSelectNntp.label "اختر مجموعات أخبار لتُستخدم في طور اللااتصال…">
+<!ENTITY offlineSelectNntp.accesskey "خ">
+<!ENTITY offlineImapAdvancedOffline.label "متقدم…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "م">
+<!ENTITY syncGroupTitle.label "مزامنة الرسائل">
+<!ENTITY diskspaceGroupTitle.label "مساحة القرص">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "زامِن كل الرسائل محليًا بغض النظر عن عمرها">
+<!ENTITY allAutosync.accesskey           "ز">
+<!ENTITY ageAutosyncBefore.label         "زأمِن الأحدث">
+<!ENTITY ageAutosync.accesskey           "ث">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "أيام">
+<!ENTITY weekAgeInterval.label           "أسابيع">
+<!ENTITY monthAgeInterval.label          "شهور">
+<!ENTITY yearAgeInterval.label           "سنين">
+<!ENTITY ageAutosyncAfter.label          "">

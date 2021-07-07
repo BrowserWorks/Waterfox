@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Nenhuma propriedade definida.">
+
+<!ENTITY caption.label         "Propriedades do objeto">
+<!ENTITY image-sec.label       "Imagem">
+<!ENTITY image-url.label       "Endereço:">
+<!ENTITY image-desc.label      "Descrição longa em:">
+<!ENTITY image-alt.label       "Texto substituto:">
+<!ENTITY image-width.label     "Largura:">
+<!ENTITY image-height.label    "Altura:">
+<!ENTITY image-filesize.label  "Tam. do arquivo:">
+<!ENTITY image-filesize.value  "Desconhecido">
+<!ENTITY insdel-sec.label      "Inserir/Excluir">
+<!ENTITY insdel-cite.label     "Informações:">
+<!ENTITY insdel-date.label     "Data:">
+<!ENTITY link-sec.label        "Propriedades do link">
+<!ENTITY link-url.label        "Endereço:">
+<!ENTITY link-target.label     "Abre em:">
+<!ENTITY link-type.label       "Tipo do destino:">
+<!ENTITY link-lang.label       "Idioma do destino:">
+<!ENTITY link-rel.label        "Relação:">
+<!ENTITY link-rev.label        "Relação reversa:">
+<!ENTITY misc-sec.label        "Geral">
+<!ENTITY misc-lang.label       "Idioma:">
+<!ENTITY misc-title.label      "Descrição:">
+<!ENTITY misc-tblsummary.label "Descrição da tabela:">
+<!ENTITY quote-sec.label       "Quote">
+<!ENTITY quote-cite.label      "Info:">

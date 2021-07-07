@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "启动时检查是否有新文章。">
+<!ENTITY loginAtStartup.accesskey "C">
+<!ENTITY biffAll.label "启用所有收取点的更新">
+<!ENTITY biffAll.accesskey "E">
+
+<!ENTITY newFeedSettings.label "新收取点的默认设置">
+
+<!ENTITY manageSubscriptions.label "管理订阅…">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "博客和新闻收取点">
+<!ENTITY feeds.wizardShortName "收取点">
+<!ENTITY feeds.wizardLongName "博客和新闻收取点">
+<!ENTITY feeds.wizardLongName.accesskey "F">

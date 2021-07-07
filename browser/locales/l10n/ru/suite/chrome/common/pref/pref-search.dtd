@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Поиск в Интернете">
+<!ENTITY legendHeader                     "Поисковая система по умолчанию">
+<!ENTITY defaultSearchEngine.label        "Искать с помощью:">
+<!ENTITY defaultSearchEngine.accesskey    "к">
+
+<!ENTITY engineManager.label              "Управление поисковыми системами…">
+
+<!ENTITY searchResults.label              "Результаты поиска">
+
+<!ENTITY openInTab.label                  "Открывать результаты поиска боковой панели в новых вкладках">
+<!ENTITY openInTab.accesskey              "в">
+<!ENTITY openContextSearchTab.label       "Открывать вкладку вместо окна при запуске поиска из контекстного меню">
+<!ENTITY openContextSearchTab.accesskey   "ы">
+<!ENTITY openSidebarSearchPanel.label     "При запуске поиска открывать в боковой панели вкладку поиска">
+<!ENTITY openSidebarSearchPanel.accesskey "а">

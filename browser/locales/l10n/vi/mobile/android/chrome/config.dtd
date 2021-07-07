@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Tìm kiếm">
+
+<!ENTITY newPref.namePlaceholder       "Tên">
+
+<!ENTITY newPref.valueBoolean          "Luận lí">
+<!ENTITY newPref.valueString           "Chuỗi">
+<!ENTITY newPref.valueInteger          "Số nguyên">
+
+<!ENTITY newPref.stringPlaceholder     "Nhập một chuỗi">
+<!ENTITY newPref.numberPlaceholder     "Nhập một số">
+
+<!ENTITY newPref.toggleButton          "Bật tắt">
+<!ENTITY newPref.cancelButton          "Hủy bỏ">
+
+<!ENTITY contextMenu.copyPrefName      "Sao chép tên">
+<!ENTITY contextMenu.copyPrefValue     "Sao chép giá trị">

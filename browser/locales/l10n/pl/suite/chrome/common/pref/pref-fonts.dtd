@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY pref.fonts.title "Czcionki">
+
+<!ENTITY language.label "Czcionki:">
+<!ENTITY language.accesskey "C">
+
+<!ENTITY typefaces.label "Krój czcionki">
+<!ENTITY sizes.label "Rozmiar (piksele)">
+
+<!ENTITY proportional.label "Proporcjonalna:">
+<!ENTITY proportional.accesskey "r">
+
+<!ENTITY serif.label "Szeryfowa:">
+<!ENTITY serif.accesskey "S">
+<!ENTITY sans-serif.label "Bezszeryfowa:">
+<!ENTITY sans-serif.accesskey "B">
+<!ENTITY monospace.label "O stałej szerokości:">
+<!ENTITY monospace.accesskey "O">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY fantasy.label "Fantazyjna:">
+<!ENTITY fantasy.accesskey "F">
+<!ENTITY cursive.label "Kursywa:">
+<!ENTITY cursive.accesskey "K">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY font.langGroup.latin "Łacińskie">
+<!ENTITY font.langGroup.japanese "Japońskie">
+<!ENTITY font.langGroup.trad-chinese "Chińskie tradycyjne (Tajwan)">
+<!ENTITY font.langGroup.simpl-chinese "Chińskie uproszczone">
+<!ENTITY font.langGroup.trad-chinese-hk "Chińskie tradycyjne (Hong Kong)">
+<!ENTITY font.langGroup.korean "Koreańskie">
+<!ENTITY font.langGroup.cyrillic "Cyrylica">
+<!ENTITY font.langGroup.el "Greckie">
+<!ENTITY font.langGroup.thai "Tajskie">
+<!ENTITY font.langGroup.hebrew "Hebrajskie">
+<!ENTITY font.langGroup.arabic "Arabskie">
+<!ENTITY font.langGroup.devanagari "Dewanagari">
+<!ENTITY font.langGroup.tamil "Tamilskie">
+<!ENTITY font.langGroup.armenian "Ormiańskie">
+<!ENTITY font.langGroup.bengali "Bengalskie">
+<!ENTITY font.langGroup.canadian "Ujednolicony sylabariusz kanadyjski">
+<!ENTITY font.langGroup.ethiopic "Etiopskie">
+<!ENTITY font.langGroup.georgian "Gruzińskie">
+<!ENTITY font.langGroup.gujarati "Gudżarati">
+<!ENTITY font.langGroup.gurmukhi "Gurmukhi">
+<!ENTITY font.langGroup.khmer "Khmerskie">
+<!ENTITY font.langGroup.malayalam "Malajalam">
+<!ENTITY font.langGroup.math "Matematyczne">
+<!ENTITY font.langGroup.odia "Orija">
+<!ENTITY font.langGroup.telugu "Telugu">
+<!ENTITY font.langGroup.kannada "Kannada">
+<!ENTITY font.langGroup.sinhala "Syngaleskie">
+<!ENTITY font.langGroup.tibetan "Tybetańskie">
+<!ENTITY font.langGroup.other "innych systemów pisma">
+<!-- Minimum font size -->
+<!ENTITY minSize.label "Minimalny rozmiar czcionki:">
+<!ENTITY minSize.accesskey "z">
+<!ENTITY minSize.none "Brak">
+
+<!-- default font type -->
+<!ENTITY useDefaultFontSerif.label "Szeryfowa">
+<!ENTITY useDefaultFontSansSerif.label "Bezszeryfowa">
+
+<!ENTITY useDocumentFonts.label "Zezwalaj na użycie czcionek zadeklarowanych w wyświetlanych dokumentach">
+<!ENTITY useDocumentFonts.accesskey "e">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY header2 "Kiedy strona używa określonych przez jej twórcę czcionek">
+<!ENTITY useDefaultFont.label "Użyj moich domyślnych czcionek, ignorując te określone przez twórcę strony">
+<!ENTITY useDefaultFont.accesskey "d">

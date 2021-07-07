@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Copies et dossiers">
+<!ENTITY sendingPrefix.label "Lors de l’envoi de messages, automatiquement :">
+<!ENTITY fccMailFolder.label "Placer une copie dans :">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "Placer les réponses dans le dossier du message auquel il a été répondu">
+<!ENTITY fccReplyFollowsParent.accesskey "n">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Mettre en copie ces adresses :">
+<!ENTITY ccAddress.accesskey "M">
+<!ENTITY ccAddressList.placeholder "Adresses séparées par des virgules">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Mettre en copie cachée ces adresses :">
+<!ENTITY bccAddress.accesskey "c">
+<!ENTITY bccAddressList.placeholder "Adresses séparées par des virgules">
+<!ENTITY saveMessageDlg.label "Demander une confirmation quand les messages sont enregistrés">
+<!ENTITY saveMessageDlg.accesskey "q">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Dossier « Envoyés » de :">
+<!ENTITY sentFolderOn.accesskey "v">
+<!ENTITY sentInOtherFolder.label "Autre :">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archives des messages">
+<!ENTITY keepArchives.label "Conserver les archives dans :">
+<!ENTITY keepArchives.accesskey "h">
+<!ENTITY archiveHierarchyButton.label "Options d’archivage…">
+<!ENTITY archiveHierarchyButton.accesskey "O">
+<!ENTITY archivesFolderOn.label "Dossier « Archives » dans :">
+<!ENTITY archivesFolderOn.accesskey "D">
+<!ENTITY archiveInOtherFolder.label "Autre :">
+<!ENTITY archiveInOtherFolder.accesskey "u">
+<!ENTITY specialFolders.label "Brouillons et modèles">
+<!ENTITY keepDrafts2.label "Conserver les brouillons dans :">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Dossier « Brouillons » de :">
+<!ENTITY draftsFolderOn.accesskey "r">
+<!ENTITY draftInOtherFolder.label "Autre dossier :">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Conserver les modèles dans :">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Dossier « Modèles » de :">
+<!ENTITY templatesFolderOn.accesskey "l">
+<!ENTITY templateInOtherFolder.label "Autre :">
+<!ENTITY templateInOtherFolder.accesskey "e">

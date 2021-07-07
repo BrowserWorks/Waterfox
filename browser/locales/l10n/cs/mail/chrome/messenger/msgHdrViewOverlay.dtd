@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Komu">
+<!ENTITY fromField4.label "Od">
+<!ENTITY senderField4.label "Odesílatel">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Společnost">
+<!ENTITY replyToField4.label "Odpověď">
+
+<!ENTITY subjectField4.label "Předmět">
+<!ENTITY ccField4.label "Kopie">
+<!ENTITY bccField4.label "Skrytá kopie">
+<!ENTITY newsgroupsField4.label "Diskusní skupiny">
+<!ENTITY followupToField4.label "Pokračování v">
+<!ENTITY tagsHdr4.label "Štítky">
+<!ENTITY dateField4.label "Datum">
+<!ENTITY userAgentField4.label "Poštovní klient">
+<!ENTITY referencesField4.label "Reference">
+<!ENTITY messageIdField4.label "Id zprávy">
+<!ENTITY inReplyToField4.label "V odpovědi na">
+<!ENTITY originalWebsite4.label "Server">
+
+<!ENTITY hdrArchiveButton1.label "Archivovat">
+<!ENTITY hdrArchiveButton1.tooltip "Archivuje tuto zprávu">
+<!ENTITY hdrSmartReplyButton1.label "Odpovědět chytře">
+<!ENTITY hdrReplyButton1.label "Odpovědět">
+<!ENTITY hdrReplyButton2.tooltip "Odpoví odesilateli této zprávy">
+<!ENTITY hdrReplyAllButton1.label "Odpovědět všem">
+<!ENTITY hdrReplyAllButton1.tooltip "Odpoví na zprávu odesílateli a všem příjemcům">
+<!ENTITY hdrReplyListButton1.label "Odpovědět do konference">
+<!ENTITY hdrReplyListButton1.tooltip "Odpoví na zprávu do skupiny">
+<!ENTITY hdrFollowupButton1.label "Odpovědět">
+<!ENTITY hdrFollowupButton1.tooltip "Zašle odpověď to této diskusní skupiny">
+<!ENTITY hdrForwardButton1.label "Přeposlat">
+<!ENTITY hdrForwardButton1.tooltip "Přepošle tuto zprávu">
+<!ENTITY hdrJunkButton1.label "Nevyžádaná pošta">
+<!ENTITY hdrJunkButton1.tooltip "Označí tuto zprávu jako nevyžádaná">
+<!ENTITY hdrTrashButton1.label "Smazat">
+<!ENTITY hdrTrashButton1.tooltip "Smaže tuto zprávu">
+
+<!ENTITY hdrViewToolbarShowFull.label "Zobrazit ikony a text">
+<!ENTITY hdrViewToolbarShowFull.accesskey "Z">
+<!ENTITY hdrViewToolbarShowIcons.label "Zobrazit pouze ikony">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Zobrazit pouze text">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Vždy zobrazit Odpovědět odesílateli">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "V">
+
+<!ENTITY otherActionsButton2.label "Více">
+<!ENTITY otherActionsButton.tooltip "Další akce">
+<!ENTITY otherActionsOpenConversation1.label "Otevřít v konverzaci">
+<!ENTITY otherActionsOpenConversation1.accesskey "k">
+<!ENTITY otherActionsOpenInNewWindow1.label "Otevřít v novém okně">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "O">
+<!ENTITY otherActionsOpenInNewTab1.label "Otevřít v novém panelu">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "p">
+<!ENTITY markAsReadMenuItem1.label "Označit jako přečtená">
+<!ENTITY markAsReadMenuItem1.accesskey "z">
+<!ENTITY markAsUnreadMenuItem1.label "Označit jako nepřečtená">
+<!ENTITY markAsUnreadMenuItem1.accesskey "z">
+<!ENTITY saveAsMenuItem1.label "Uložit jako…">
+<!ENTITY saveAsMenuItem1.accesskey "U">
+<!ENTITY viewSourceMenuItem1.label "Zobrazit zdrojový kód">
+<!ENTITY viewSourceMenuItem1.accesskey "r">
+<!ENTITY otherActionsPrint1.label "Tisk…">
+<!ENTITY otherActionsPrint1.accesskey "T">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Zobrazovat panel příloh">
+<!ENTITY startExpandedCmd.accesskey    "Z">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Otevřít">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "Uložit jako…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "j">
+<!ENTITY detachAttachmentCmd.label    "Vyčlenit…">
+<!ENTITY detachAttachmentCmd.accesskey    "V">
+<!ENTITY deleteAttachmentCmd.label    "Smazat">
+<!ENTITY deleteAttachmentCmd.accesskey    "m">
+<!ENTITY openAllAttachmentsCmd.label    "Otevřít vše…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "t">
+<!ENTITY saveAllAttachmentsCmd.label    "Uložit vše…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "U">
+<!ENTITY detachAllAttachmentsCmd.label    "Vyčlenit vše…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "V">
+<!ENTITY deleteAllAttachmentsCmd.label    "Smazat vše">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "S">
+
+<!ENTITY openAttachment.tooltip "Otevře přiložený soubor">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Otevřít složku">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "s">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Zobrazit ve Finderu">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Uložit">
+<!ENTITY saveAttachmentButton1.tooltip     "Uloží soubor přílohy">
+<!ENTITY saveAllAttachmentsButton1.label   "Uložit vše">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Uloží všechny soubory přílohy">
+
+<!ENTITY copyLinkCmd.label        "Kopírovat adresu odkazu">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+<!ENTITY CopyMessageId.label "Kopírovat id zprávy">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Otevřít zprávu s id">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "Otevřít prohlížeč s id zprávy">
+<!ENTITY OpenBrowserWithMsgId.accesskey "p">

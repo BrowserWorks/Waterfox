@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Właściwości strony">
+<!ENTITY location.label "Adres:">
+<!ENTITY lastModified.label "Ostatnio zmodyfikowano:">
+<!ENTITY titleInput.label "Tytuł:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Autor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Opis:">
+<!ENTITY descriptionInput.accessKey "O">
+<!ENTITY locationNewPage.label "[Ta strona nie została jeszcze zapisana]">
+<!ENTITY EditHEADSource1.label "Zaawansowani użytkownicy:">
+<!ENTITY EditHEADSource2.label "W celu edycji innych elementów nagłówka &lt;head&gt;, należy przełączyć się do trybu edycji źródła wybierając „Źródło HTML” w menu Widok lub klikając zakładkę „Źródło” na Pasku trybu edycji.">

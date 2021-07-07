@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Fargar">
+<!ENTITY color                             "Tekst og bakgrunn">
+<!ENTITY textColor.label                   "Tekst:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Bakgrunn:">
+<!ENTITY backgroundColor.accesskey         "B">
+<!ENTITY useSystemColors.label             "Bruk systemfargar">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Understrek lenkjer">
+<!ENTITY underlineLinks.accesskey          "U">
+<!ENTITY links                             "Lenkjer">
+<!ENTITY linkColor.label                   "Ubesøkte:">
+<!ENTITY linkColor.accesskey               "ø">
+<!ENTITY activeLinkColor.label             "Aktive lenkjer:">
+<!ENTITY activeLinkColor.accesskey         "k">
+<!ENTITY visitedLinkColor.label            "Besøkte lenkjer:">
+<!ENTITY visitedLinkColor.accesskey        "e">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Når ei nettside har eigne fargar">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Bruk fargar og bakgrunn spesifisert av nettsida">
+<!ENTITY alwaysUseDocumentColors.accesskey "n">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Bruk mine fargar, og ignorer spesifiserte fargar og bakgrunnsbilde">
+<!ENTITY useMyColors.accesskey             "m">
+<!ENTITY automaticColors.label             "Berre ignorer sidefargane når du brukar eit høgkontrast-tema">
+<!ENTITY automaticColors.accesskey         "B">

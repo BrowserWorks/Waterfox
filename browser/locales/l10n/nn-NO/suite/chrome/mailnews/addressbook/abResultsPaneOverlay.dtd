@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label                   "Namn">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-post">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organisasjon">
+<!ENTITY Company.accesskey                     "O">
+<!ENTITY _PhoneticName.label                   "Fonetisk namn">
+<!ENTITY _PhoneticName.accesskey               "F">
+<!ENTITY NickName.label                        "Kallenamn">
+<!ENTITY NickName.accesskey                    "K">
+<!ENTITY SecondEmail.label                     "E-post (anna)">
+<!ENTITY SecondEmail.accesskey                 "a">
+<!ENTITY Department.label                      "Avdeling">
+<!ENTITY Department.accesskey                  "A">
+<!ENTITY JobTitle.label                        "Tittel">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobiltelefon">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Personsøkjar">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Heimetelefon">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "Arbeidstelefon">
+<!ENTITY WorkPhone.accesskey                   "t">
+<!ENTITY sortAscending.label                   "Stigande">
+<!ENTITY sortAscending.accesskey               "S">
+<!ENTITY sortDescending.label                  "Søkkande">
+<!ENTITY sortDescending.accesskey              "ø">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Skriv e-post til">
+<!ENTITY composeEmail.accesskey                "e">
+<!ENTITY copyAddress.label                     "Kopier e-postadresse">
+<!ENTITY copyAddress.accesskey                 "K">
+<!ENTITY deleteAddrBookCard.label              "Slett">
+<!ENTITY deleteAddrBookCard.accesskey          "S">
+<!ENTITY newAddrBookCard.label                 "Ny kontakt…">
+<!ENTITY newAddrBookCard.accesskey             "k">
+<!ENTITY newAddrBookMailingList.label          "Ny e-postliste…">
+<!ENTITY newAddrBookMailingList.accesskey      "p">
+<!ENTITY addrBookCardProperties.label          "Eigenskaper">
+<!ENTITY addrBookCardProperties.accesskey      "p">

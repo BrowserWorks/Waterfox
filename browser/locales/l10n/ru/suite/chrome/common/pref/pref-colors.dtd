@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Цвета">
+<!ENTITY color                             "Текст и фон">
+<!ENTITY textColor.label                   "Текст:">
+<!ENTITY textColor.accesskey               "к">
+<!ENTITY backgroundColor.label             "Фон:">
+<!ENTITY backgroundColor.accesskey         "н">
+<!ENTITY useSystemColors.label             "Использовать системные цвета">
+<!ENTITY useSystemColors.accesskey         "л">
+
+<!ENTITY underlineLinks.label              "Подчёркивать ссылки">
+<!ENTITY underlineLinks.accesskey          "о">
+<!ENTITY links                             "Цвет ссылок">
+<!ENTITY linkColor.label                   "Непросмотренные ссылки:">
+<!ENTITY linkColor.accesskey               "п">
+<!ENTITY activeLinkColor.label             "Активные ссылки:">
+<!ENTITY activeLinkColor.accesskey         "и">
+<!ENTITY visitedLinkColor.label            "Просмотренные ссылки:">
+<!ENTITY visitedLinkColor.accesskey        "с">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Если веб-страница предоставляет свои цвета и фон">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Всегда использовать цвета и фон, указанные веб-страницей">
+<!ENTITY alwaysUseDocumentColors.accesskey "е">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Использовать выбранные мною цвета, игнорируя указанные цвета и фон">
+<!ENTITY useMyColors.accesskey             "з">
+<!ENTITY automaticColors.label             "Игнорировать цвета страниц только при использовании высококонтрастной темы">
+<!ENTITY automaticColors.accesskey         "в">

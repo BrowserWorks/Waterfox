@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "مرشد حسابات الدردشة">
+
+<!ENTITY accountProtocolTitle.label   "شبكة الدردشة">
+<!ENTITY accountProtocolInfo.label    "من فضلك اختر شبكة حساب الدردشة.">
+<!ENTITY accountProtocolField.label   "الشبكة:">
+<!ENTITY accountProtocolGetMore.label "احصل على المزيد…">
+
+<!ENTITY accountUsernameTitle.label   "اسم المستخدم">
+<!ENTITY accountUsernameDuplicate.label "لقط أُعِدّ هذا الحساب من قبل!">
+
+<!ENTITY accountPasswordTitle.label   "كلمة السر">
+<!ENTITY accountPasswordInfo.label    "من فضلك أدخل كلمة السر في المربع أدناه.">
+<!ENTITY accountPasswordField.label   "كلمة السر:">
+<!ENTITY accountPasswordManager.label "كلمة السر المُدخلة هنا ستُحفظ في مدير كلمات السر. اترك هذا المربع فارغا إذا كنت تريد أن تُسأل عن كلمة السر في كل مرة يُتّل فيها بالحساب.">
+
+<!ENTITY accountAdvancedTitle.label   "خيارات متقدمة">
+<!ENTITY accountAdvancedInfo.label    "يمكنك تخطي هذا الخطوة إذا منت تريد هذا.">
+<!ENTITY accountAdvanced.newMailNotification.label   "أعلِم بوصول بريد جديد">
+<!ENTITY accountAliasGroupbox.caption "الكنية المحلية">
+<!ENTITY accountAliasField.label      "الكنية:">
+<!ENTITY accountAliasInfo.label       "ستُعرض هذه في محادثاتك عندما تتكلم، ولن تراها جهات الاتصال.">
+<!ENTITY accountProxySettings.caption "إعدادات الوسيط">
+<!ENTITY accountProxySettings.change.label     "غيّر…">
+<!ENTITY accountProxySettings.change.accessKey "غ">
+
+<!ENTITY accountSummaryTitle.label   "ملخّص">
+<!ENTITY accountSummaryInfo.label    "يعرض أدناه ملخص بالمعلومات التي أدخلتها. من فضلك راجعها قبل إنشاء الحساب.">
+<!ENTITY accountSummary.connectNow.label "اتصل بهذا الحساب الآن.">

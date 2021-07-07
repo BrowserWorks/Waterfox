@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Mail &amp; Newsgroups">
+<!ENTITY generalSettings.caption          "General Settings">
+<!ENTITY confirmMove.label                "Confirm when moving folders to the Deleted folder">
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "Preserve threading when sorting messages">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY loadInBackground.label           "Switch to new tabs when opened">
+<!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailBiffOnNewWindow.label        "Only check for new mail after opening Mail &amp; Newsgroups">
+<!ENTITY mailBiffOnNewWindow.accesskey    "O">
+
+<!ENTITY defaultMailSettings.description  "Make &brandShortName; the default application for:">
+<!ENTITY setDefaultMail.label             "Mail">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "News">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Feeds">
+<!ENTITY setDefaultFeed.accesskey         "e">
+
+<!ENTITY useInternalSettings.description  "Use &brandShortName; Mail &amp; News when opening browser links for:">
+<!ENTITY useInternalMail.label            "Mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "News (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "Mail Start Page">
+<!ENTITY enableStartPage.label            "When Mail launches, show the Start Page in the message area">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "Location:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "Restore Default">
+<!ENTITY useDefault.accesskey             "D">
+<!ENTITY rememberLastMsg.label            "Remember the last selected message">
+<!ENTITY rememberLastMsg.accesskey        "R">

@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Vlastnosti">
+
+<!ENTITY generalInfo.label                       "Obecné informace">
+<!ENTITY folderCharsetFallback2.label            "Výchozí znaková sada:">
+<!ENTITY folderCharsetFallback2.accesskey        "k">
+<!ENTITY folderCharsetEnforce2.label             "Použít znakovou sadu pro všechny zprávy ve složce (individuální znaková sada zprávy nebo automatická detekce bude ignorována)">
+<!ENTITY folderCharsetEnforce2.accesskey         "a">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Obnoví indexový soubor">
+<!ENTITY folderRebuildSummaryFile2.label         "Opravit složku">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "O">
+<!ENTITY folderRebuildSummaryFile.explanation    "Pokud se ve složce nezobrazují existující zprávy či se objevují zprávy smazané, je pravděpodobně poškozen soubor s indexem. Oprava složky může tyto problémy vyřešit.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Zahrnout zprávy v této složce do výsledků globálního hledání">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "Z">
+
+<!ENTITY retention.label "Pravidla uchovávání zpráv">
+<!ENTITY retentionUseAccount.label "Použít nastavení účtu">
+<!ENTITY retentionUseAccount.accesskey "n">
+<!ENTITY daysOld.label "dny(ů)">
+<!ENTITY message.label "zpráv">
+<!ENTITY retentionCleanup.label "Pro ušetření místa na disku lze automaticky mazat staré zprávy.">
+<!ENTITY retentionCleanupImap.label "Pro ušetření místa na disku lze automaticky mazat staré zprávy, jak místní kopie, tak originály na vzdáleném serveru.">
+<!ENTITY retentionCleanupPop.label "Pro ušetření místa na disku lze automaticky mazat staré zprávy, včetně originálů na vzdáleném serveru.">
+<!ENTITY retentionDeleteMsg.label "Smazat zprávy starší než">
+<!ENTITY retentionDeleteMsg.accesskey "S">
+<!ENTITY retentionKeepAll.label "Nemazat žádné zprávy">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Smazat vše mimo posledních">
+<!ENTITY retentionKeepRecent.accesskey "m">
+<!ENTITY retentionApplyToFlagged.label "Vždy ukládat zprávy s praporkem">
+<!ENTITY retentionApplyToFlagged.accesskey "u">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronizace">
+<!ENTITY folderCheckForNewMessages2.label        "Při přijímání zpráv pro tento účet kontrolovat nové zprávy v této složce">
+<!ENTITY folderCheckForNewMessages2.accesskey    "k">
+
+<!ENTITY offlineFolder.check.label               "Označit složku pro použití v režimu offline">
+<!ENTITY offlineFolder.check.accesskey           "O">
+<!ENTITY offlineFolder.button.label              "Stáhnout">
+<!ENTITY offlineFolder.button.accesskey          "S">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Označit diskusní skupinu pro použití v režimu offline">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "O">
+<!ENTITY offlineNewsgroup.button.label           "Stáhnout">
+<!ENTITY offlineNewsgroup.button.accesskey       "S">
+
+<!ENTITY folderProps.name.label                  "Název:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Adresa:">
+<!ENTITY folderProps.location.accesskey          "A">
+
+<!ENTITY folderSharingTab.label                  "Sdílení">
+<!ENTITY privileges.button.label                 "Oprávnění…">
+<!ENTITY privileges.button.accesskey             "p">
+<!ENTITY permissionsDesc.label                   "Máte následující oprávnění:">
+<!ENTITY folderType.label                        "Typ složky:">
+
+<!ENTITY folderQuotaTab.label                    "Kvóta">
+<!ENTITY folderQuotaRoot.label                   "Hlavní kvóta:">
+<!ENTITY folderQuotaUsage.label                  "Využito:">
+<!ENTITY folderQuotaStatus.label                 "Stav:">
+
+<!ENTITY numberOfMessages.label                  "Počet zpráv:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "neznámý">
+<!ENTITY sizeOnDisk.label                        "Velikost na disku:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "neznámá">

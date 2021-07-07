@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Защита">
+<!ENTITY securityTab.label "Защита">
+<!ENTITY securityHeading.label "Чтобы получать и отправлять зашифрованные сообщения или сообщения с цифровой подписью, вам нужно указать сертификат ключа шифрования и сертификат ключа подписи.">
+<!ENTITY encryptionGroupTitle.label "Шифрование">
+<!ENTITY encryptionChoiceLabel.label "Использовать шифрование при отправке сообщений:">
+<!ENTITY neverEncrypt.label "Никогда (не использовать шифрование)">
+<!ENTITY neverEncrypt.accesskey "к">
+<!ENTITY alwaysEncryptMessage.label "Всегда (сообщение не будет отправлено, если не у всех адресатов есть сертификаты)">
+<!ENTITY alwaysEncryptMessage.accesskey "с">
+<!ENTITY encryptionCert.message "Личный сертификат для шифрования: ">
+<!ENTITY digitalSign.certificate.button "Выбрать…">
+<!ENTITY digitalSign.certificate.accesskey "б">
+<!ENTITY digitalSign.certificate_clear.button "Очистить">
+<!ENTITY digitalSign.certificate_clear.accesskey "ч">
+<!ENTITY encryption.certificate.button "Выбрать…">
+<!ENTITY encryption.certificate.accesskey "ы">
+<!ENTITY encryption.certificate_clear.button "Очистить">
+<!ENTITY encryption.certificate_clear.accesskey "и">
+<!ENTITY signingGroupTitle.label "Цифровая подпись">
+<!ENTITY signMessage.label "Подписывать сообщения цифровой подписью (по умолчанию)">
+<!ENTITY signMessage.accesskey "д">
+<!ENTITY signingCert.message "Личный сертификат для подписи:">
+
+<!ENTITY certificates.label "Сертификаты">
+<!ENTITY manageCerts2.label "Управление сертификатами…">
+<!ENTITY manageCerts2.accesskey "п">
+<!ENTITY manageDevices.label "Управление устройствами…">
+<!ENTITY manageDevices.accesskey "р">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Выбор сертификата">
+<!ENTITY certPicker.info  "Сертификат:">
+<!ENTITY certPicker.detailsLabel "Информация о выбранном сертификате:">

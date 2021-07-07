@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Standardprogram">
+<!ENTITY defaultClient.intro  "Bruk &brandShortName; som standard klientprogram for:">
+
+<!ENTITY browser.label "Nettlesar">
+<!ENTITY email.label "E-post">
+<!ENTITY newsgroups.label "Nyheitsgrupper">
+<!ENTITY feeds.label "RSS-kjelder">
+
+<!ENTITY checkOnStartup.label "Alltid kontroller standardprogram når &brandShortName; startar">
+<!ENTITY checkOnStartup.accesskey "A">

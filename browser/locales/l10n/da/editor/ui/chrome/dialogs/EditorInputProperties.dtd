@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Egenskaber for formularfelter">
+<!ENTITY windowTitleImage.label "Egenskaber for billeder">
+<!ENTITY InputType.label "Felttype">
+<!ENTITY InputType.accesskey "F">
+<!ENTITY text.value "Tekst">
+<!ENTITY password.value "Adgangskode">
+<!ENTITY checkbox.value "Afkrydsningsboks">
+<!ENTITY radio.value "Radioknap">
+<!ENTITY submit.value "Sendknap">
+<!ENTITY reset.value "Annullerknap">
+<!ENTITY file.value "Fil">
+<!ENTITY hidden.value "Skjult">
+<!ENTITY image.value "Billede">
+<!ENTITY button.value "Knap">
+<!ENTITY InputSettings.label "Egenskaber for felt">
+<!ENTITY InputName.label "Feltnavn:">
+<!ENTITY InputName.accesskey "F">
+<!ENTITY GroupName.label "Gruppenavn:">
+<!ENTITY GroupName.accesskey "G">
+<!ENTITY InputValue.label "Feltværdi:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InitialValue.label "Startværdi:">
+<!ENTITY InputValue.accesskey "æ">
+<!ENTITY InputChecked.label "Afkrydset">
+<!ENTITY InputChecked.accesskey "k">
+<!ENTITY InputSelected.label "Valgt">
+<!ENTITY InputSelected.accesskey "a">
+<!ENTITY InputReadOnly.label "Skrivebeskyttet">
+<!ENTITY InputReadOnly.accesskey "S">
+<!ENTITY InputDisabled.label "Deaktiveret">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Tabulatorindeks:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Feltstørrelse:">
+<!ENTITY TextSize.accesskey "ø">
+<!ENTITY TextLength.label "Maksimumslængde:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Genvejstast:">
+<!ENTITY AccessKey.accesskey "G">
+<!ENTITY Accept.label "Accepttyper:">
+<!ENTITY Accept.accesskey "A">
+<!ENTITY ImageProperties.label "Billedegenskaber…">
+<!ENTITY ImageProperties.accesskey "B">

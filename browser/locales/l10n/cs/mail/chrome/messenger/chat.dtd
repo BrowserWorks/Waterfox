@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Kontakty online">
+<!ENTITY offlineContactsHeader.label   "Kontakty offline">
+<!ENTITY conversationsHeader.label     "Konverzace">
+<!ENTITY searchResultConversation.label "Výsledek hledání">
+<!ENTITY chat.noConv.title             "Zde se zobrazí konverzace.">
+<!ENTITY chat.noConv.description       "Konverzaci zahájíte v seznamu kontaktů v levém podokně.">
+<!ENTITY chat.noPreviousConv.description       "Pro tento kontakt nemá &brandShortName; uloženou žádnou konverzaci.">
+<!ENTITY chat.noAccount.title             "Zatím nebyl nastaven žádný účet chatu.">
+<!ENTITY chat.noAccount.description       "&brandShortName; vás provede procesem založení účtu.">
+<!ENTITY chat.accountWizard.button       "Začít">
+<!ENTITY chat.noConnectedAccount.title             "Účty chatu nejsou připojeny.">
+<!ENTITY chat.noConnectedAccount.description       "Účty lze připojit z dialogu „Účty a stav chatu“:">
+<!ENTITY chat.showAccountManager.button       "Zobrazit stav">
+
+<!ENTITY chat.participants             "Účastníci:">
+<!ENTITY chat.previousConversations    "Předchozí konverzace:">
+<!ENTITY chat.ongoingConversation      "Aktuální konverzace">
+
+<!ENTITY openConversationCmd.label     "Zahájit konverzaci">
+<!ENTITY openConversationCmd.accesskey "Z">
+<!ENTITY closeConversationCmd.label    "Ukončit konverzaci">
+<!ENTITY closeConversationCmd.accesskey "U">
+<!ENTITY aliasCmd.label                "Přejmenovat">
+<!ENTITY aliasCmd.accesskey            "P">
+<!ENTITY deleteCmd.label               "Smazat kontakt">
+<!ENTITY deleteCmd.accesskey           "m">
+
+<!ENTITY openConversationButton.tooltip  "Zahájí konverzaci">
+<!ENTITY closeConversationButton.tooltip "Ukončit konverzaci">
+
+<!ENTITY addBuddyButton.label          "Přidat kontakt">
+<!ENTITY joinChatButton.label          "Připojit se k chatu">
+<!ENTITY chatAccountsButton.label      "Zobrazit účty">
+
+<!ENTITY status.available          "Dostupný">
+<!ENTITY status.unavailable        "Nedostupný">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Otevřít odkaz…">
+<!ENTITY openLinkCmd.accesskey        "O">

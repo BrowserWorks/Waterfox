@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "Denna sida är på">
+<!ENTITY translation.translateThisPage.label    "Översätta denna sidan?">
+<!ENTITY translation.translate.button           "Översätt">
+<!ENTITY translation.notNow.button              "Inte nu">
+
+<!ENTITY translation.translatingContent.label   "Översätter sidans innehåll...">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "Denna sida har blivit översatt från">
+<!ENTITY translation.translatedTo.label         "till">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "Visa originalet">
+<!ENTITY translation.showTranslation.button     "Visa översättning">
+
+<!ENTITY translation.errorTranslating.label     "Det uppstod ett problem då denna sida skulle översättas.">
+<!ENTITY translation.tryAgain.button            "Försök igen">
+
+<!ENTITY translation.serviceUnavailable.label   "Finns ingen översättning just nu. Snälla titta in senare.">
+
+<!ENTITY translation.options.menu               "Alternativ">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Översätt aldrig denna sida">
+<!ENTITY translation.options.neverForSite.accesskey "a">
+<!ENTITY translation.options.preferences.label  "Översättningsinställningar">
+<!ENTITY translation.options.preferences.accesskey "Ö">

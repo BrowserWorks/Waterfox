@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "مجلد جديد">
+<!ENTITY name.label                 "الاسم:">
+<!ENTITY name.accesskey             "س">
+<!ENTITY description.label          "أنشئ كمجلد فرعي من:">
+<!ENTITY description.accesskey      "ف">
+<!ENTITY folderRestriction1.label   "يحصر هذا الخادوم المجلدات في نوعين خاصّين.">
+<!ENTITY folderRestriction2.label   "اسمح للمجلد الجديد أن يحتوي:">
+<!ENTITY foldersOnly.label          "مجلدات فقط">
+<!ENTITY messagesOnly.label         "رسائل فقط">
+<!ENTITY accept.label               "أنشئ المجلد">
+<!ENTITY accept.accesskey           "ش">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label "Właściwości">
+<!ENTITY propertiesMenu.accesskey "W">
+<!ENTITY propertiesCmd.key "i">
+<!ENTITY abPropertiesMenu.label "Właściwości książki adresowej">
+<!ENTITY abPropertiesMenu.accesskey "W">
+<!ENTITY contactPropertiesMenu.label "Właściwości kontaktu">
+<!ENTITY contactPropertiesMenu.accesskey "W">
+<!ENTITY mailingListPropertiesMenu.label "Właściwości listy dystrybucyjnej">
+<!ENTITY mailingListPropertiesMenu.accesskey "W">
+
+<!ENTITY abContextMenuButton.tooltip "Wyświetl menu kontekstowe książki adresowej">
+<!ENTITY addressbookPicker.label "Książka adresowa:">
+<!ENTITY addressbookPicker.accesskey "K">
+<!ENTITY searchContacts.label "Szukaj:">
+<!ENTITY searchContacts.accesskey "S">
+<!ENTITY SearchNameOrEmail.label "Imię, nazwisko lub e-mail">
+
+<!ENTITY addtoToFieldMenu.label "Dodaj do pola „Do”">
+<!ENTITY addtoToFieldMenu.accesskey "o">
+<!ENTITY addtoCcFieldMenu.label "Dodaj do pola „Kopia”">
+<!ENTITY addtoCcFieldMenu.accesskey "a">
+<!ENTITY addtoBccFieldMenu.label "Dodaj do pola „Ukryta kopia”">
+<!ENTITY addtoBccFieldMenu.accesskey "r">
+<!ENTITY deleteAddrBookCard.label "Usuń">
+<!ENTITY deleteAddrBookCard.accesskey "U">
+<!ENTITY propertiesContext.label "Właściwości">
+<!ENTITY propertiesContext.accesskey "W">
+<!ENTITY abPropertiesContext.label "Właściwości">
+<!ENTITY abPropertiesContext.accesskey "W">
+<!ENTITY editContactContext.label "Edytuj kontakt">
+<!ENTITY editContactContext.accesskey "E">
+<!ENTITY editMailingListContext.label "Edytuj listę">
+<!ENTITY editMailingListContext.accesskey "E">
+
+<!ENTITY newContactAbContext.label "Nowy kontakt">
+<!ENTITY newContactAbContext.accesskey "N">
+<!ENTITY newListAbContext.label "Nowa lista">
+<!ENTITY newListAbContext.accesskey "o">
+
+<!ENTITY toButton.label "„Do:”">
+<!ENTITY toButton.accesskey "D">
+<!ENTITY ccButton.label "„Kopia:”">
+<!ENTITY ccButton.accesskey "i">
+<!ENTITY bccButton.label "„Ukryta kopia:”">
+<!ENTITY bccButton.accesskey "U">
